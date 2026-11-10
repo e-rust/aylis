@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aylis</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="modulepreload" href="./pkg/landing-f86dd6c00e.js">
+  <link rel="preload" href="./pkg/landing_bg-f86dd6c00e.wasm" as="fetch" type="application/wasm" crossorigin>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #f3f4f6; }
+    @media (prefers-color-scheme: dark) { html, body { background: #111; } }
+    /* O form ocupa a janela do navegador (como no celular). */
+    canvas { display: block; outline: none; width: 100vw !important; height: 100vh !important; }
+  </style>
+</head>
+<body>
+  <!-- Gerado pelo Aylis. Sirva esta pasta com qualquer servidor web (o .wasm não abre direto do disco). -->
+  <script type="module">
+    import init from "./pkg/landing-f86dd6c00e.js";
+    const wasm = await init({ module_or_path: "./pkg/landing_bg-f86dd6c00e.wasm" });
+    wasm.aylis_start();
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  </script>
+</body>
+</html>

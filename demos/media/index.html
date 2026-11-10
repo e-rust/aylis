@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aylis — Media</title>
+  <link rel="modulepreload" href="./pkg/aylis_demos-410c7fdf78.js">
+  <link rel="preload" href="./pkg/aylis_demos_bg-410c7fdf78.wasm" as="fetch" type="application/wasm" crossorigin>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg, #f3f4f6); color: #555; font: 14px system-ui, sans-serif; }
+    html.dark, html.dark body { background: var(--bg, #1e1f24); color: #9aa0ad; }
+    canvas { display: block; outline: none; width: 100vw !important; height: 100vh !important; }
+    /* O skeleton até o componente desenhar: o mesmo do `WebView` com `skeleton` (a barra e o
+       bloco, nas mesmas medidas e no mesmo tom), para a troca do canvas para o `<iframe>` não
+       aparecer; aqui com um brilho passando (só CSS). */
+    #carregando { position: fixed; inset: 0; z-index: 1; box-sizing: border-box; padding: clamp(8px, 8vmin, 24px); display: flex; flex-direction: column; gap: 14px; --osso: rgba(17,24,39,.07); --luz: rgba(17,24,39,.13); }
+    html.dark #carregando { --osso: rgba(230,232,239,.07); --luz: rgba(230,232,239,.13); }
+    #carregando b, #carregando i { display: block; background: linear-gradient(100deg, var(--osso) 30%, var(--luz) 50%, var(--osso) 70%); background-size: 200% 100%; animation: brilho 1.4s linear infinite; }
+    #carregando b { width: 45%; height: 14px; border-radius: 7px; }
+    #carregando i { flex: 1; border-radius: 10px; }
+    @keyframes brilho { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+    @media (prefers-reduced-motion: reduce) { #carregando b, #carregando i { animation: none; } }
+  </style>
+  <script>
+    // O tema e o fundo da página em volta (`bg`), antes do wasm chegar; com `fill=1` (o
+    // componente como parte da página, o lingote do topo), o fundo da página.
+    const q = new URLSearchParams(location.search);
+    if (q.get("theme") !== "light") document.documentElement.classList.add("dark");
+    const bg = q.get("bg");
+    if (/^[0-9a-fA-F]{6}$/.test(bg || "")) document.documentElement.style.setProperty("--bg", '#' + bg);
+    if (q.get("fill") === "1") document.documentElement.classList.add("fill");
+  </script>
+</head>
+<body>
+  <!-- Gerado pelo aylis-tool demos: a família Media de componentes de verdade. -->
+  <div id="carregando" role="progressbar" aria-label="Carregando"><b></b><i></i></div>
+  <script type="module">
+    import init from "./pkg/aylis_demos-410c7fdf78.js";
+    const wasm = await init({ module_or_path: "./pkg/aylis_demos_bg-410c7fdf78.wasm" });
+    wasm.aylis_demo_start();
+    // Sai depois do primeiro quadro do componente (antes, ficaria um instante só o fundo).
+    requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById("carregando").remove()));
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  </script>
+</body>
+</html>
