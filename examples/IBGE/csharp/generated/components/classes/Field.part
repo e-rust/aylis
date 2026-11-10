@@ -1,0 +1,31 @@
+
+    /// <summary>Um Field de um form.</summary>
+    public class Field(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public string FieldName { get => Text(GetProp("field_name")); set => SetProp("field_name", value); }
+        public string Type { get => Text(GetProp("type")); set => SetProp("type", value); }
+        public long Size { get => (long)Number(GetProp("size")); set => SetProp("size", value); }
+        public long Scale { get => (long)Number(GetProp("scale")); set => SetProp("scale", value); }
+        public string Rounding { get => Text(GetProp("rounding")); set => SetProp("rounding", value); }
+        public string DisplayLabel { get => Text(GetProp("display_label")); set => SetProp("display_label", value); }
+        public double DisplayWidth { get => Number(GetProp("display_width")); set => SetProp("display_width", value); }
+        public string DisplayFormat { get => Text(GetProp("display_format")); set => SetProp("display_format", value); }
+        public string EditFormat { get => Text(GetProp("edit_format")); set => SetProp("edit_format", value); }
+        public string Alignment { get => Text(GetProp("alignment")); set => SetProp("alignment", value); }
+        public bool Required { get => Bool(GetProp("required")); set => SetProp("required", value); }
+        public bool ReadOnly { get => Bool(GetProp("read_only")); set => SetProp("read_only", value); }
+        public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
+        public double Min { get => Number(GetProp("min")); set => SetProp("min", value); }
+        public double Max { get => Number(GetProp("max")); set => SetProp("max", value); }
+        public string DefaultValue { get => Text(GetProp("default_value")); set => SetProp("default_value", value); }
+        public string DisplayValues { get => Text(GetProp("display_values")); set => SetProp("display_values", value); }
+        public string CharCase { get => Text(GetProp("char_case")); set => SetProp("char_case", value); }
+        public string EditMask { get => Text(GetProp("edit_mask")); set => SetProp("edit_mask", value); }
+        public bool Sensitive { get => Bool(GetProp("sensitive")); set => SetProp("sensitive", value); }
+        public string Kind { get => Text(GetProp("kind")); set => SetProp("kind", value); }
+        public string Expression { get => Text(GetProp("expression")); set => SetProp("expression", value); }
+        public string LookupDataSet { get => Text(GetProp("lookup_data_set")); set => SetProp("lookup_data_set", value); }
+        public string KeyFields { get => Text(GetProp("key_fields")); set => SetProp("key_fields", value); }
+        public string LookupKeyFields { get => Text(GetProp("lookup_key_fields")); set => SetProp("lookup_key_fields", value); }
+        public string LookupResultField { get => Text(GetProp("lookup_result_field")); set => SetProp("lookup_result_field", value); }
+    }

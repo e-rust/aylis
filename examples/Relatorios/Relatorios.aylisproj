@@ -1,0 +1,25 @@
+{
+  "aylis_project": 1,
+  "name": "Relatorios",
+  "language": "rust",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true,
+      "modified": 1794011367733
+    }
+  ],
+  "locale": "pt-BR",
+  "publish": {
+    "version": "1.0.0"
+  },
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

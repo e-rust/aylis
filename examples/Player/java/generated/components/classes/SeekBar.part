@@ -1,0 +1,455 @@
+
+    /** Um SeekBar de um form. */
+    public static class SeekBar extends Aylis.AylisComponent {
+        public SeekBar(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        public double getPosition() {
+            return asNumber(getProp("position"));
+        }
+
+        public void setPosition(double value) {
+            setProp("position", value);
+        }
+
+        public double getDuration() {
+            return asNumber(getProp("duration"));
+        }
+
+        public void setDuration(double value) {
+            setProp("duration", value);
+        }
+
+        public double getBuffered() {
+            return asNumber(getProp("buffered"));
+        }
+
+        public void setBuffered(double value) {
+            setProp("buffered", value);
+        }
+
+        public String getMarkers() {
+            return asText(getProp("markers"));
+        }
+
+        public void setMarkers(String value) {
+            setProp("markers", value);
+        }
+
+        public boolean isShowTime() {
+            return asBool(getProp("show_time"));
+        }
+
+        public void setShowTime(boolean value) {
+            setProp("show_time", value);
+        }
+
+        public double getLeft() {
+            return asNumber(getProp("left"));
+        }
+
+        public void setLeft(double value) {
+            setProp("left", value);
+        }
+
+        public double getTop() {
+            return asNumber(getProp("top"));
+        }
+
+        public void setTop(double value) {
+            setProp("top", value);
+        }
+
+        public double getWidth() {
+            return asNumber(getProp("width"));
+        }
+
+        public void setWidth(double value) {
+            setProp("width", value);
+        }
+
+        public double getHeight() {
+            return asNumber(getProp("height"));
+        }
+
+        public void setHeight(double value) {
+            setProp("height", value);
+        }
+
+        public String getAlign() {
+            return asText(getProp("align"));
+        }
+
+        public void setAlign(String value) {
+            setProp("align", value);
+        }
+
+        public boolean isVisible() {
+            return asBool(getProp("visible"));
+        }
+
+        public void setVisible(boolean value) {
+            setProp("visible", value);
+        }
+
+        public boolean isEnabled() {
+            return asBool(getProp("enabled"));
+        }
+
+        public void setEnabled(boolean value) {
+            setProp("enabled", value);
+        }
+
+        public boolean isHitTest() {
+            return asBool(getProp("hit_test"));
+        }
+
+        public void setHitTest(boolean value) {
+            setProp("hit_test", value);
+        }
+
+        public boolean isClipChildren() {
+            return asBool(getProp("clip_children"));
+        }
+
+        public void setClipChildren(boolean value) {
+            setProp("clip_children", value);
+        }
+
+        public boolean isCapturesWheel() {
+            return asBool(getProp("captures_wheel"));
+        }
+
+        public void setCapturesWheel(boolean value) {
+            setProp("captures_wheel", value);
+        }
+
+        public boolean isCanFocus() {
+            return asBool(getProp("can_focus"));
+        }
+
+        public void setCanFocus(boolean value) {
+            setProp("can_focus", value);
+        }
+
+        public boolean isDraggable() {
+            return asBool(getProp("draggable"));
+        }
+
+        public void setDraggable(boolean value) {
+            setProp("draggable", value);
+        }
+
+        public boolean isAcceptsDrops() {
+            return asBool(getProp("accepts_drops"));
+        }
+
+        public void setAcceptsDrops(boolean value) {
+            setProp("accepts_drops", value);
+        }
+
+        public String getDragData() {
+            return asText(getProp("drag_data"));
+        }
+
+        public void setDragData(String value) {
+            setProp("drag_data", value);
+        }
+
+        public String getDragLabel() {
+            return asText(getProp("drag_label"));
+        }
+
+        public void setDragLabel(String value) {
+            setProp("drag_label", value);
+        }
+
+        public String getDragImage() {
+            return asText(getProp("drag_image"));
+        }
+
+        public void setDragImage(String value) {
+            setProp("drag_image", value);
+        }
+
+        public String getDropTypes() {
+            return asText(getProp("drop_types"));
+        }
+
+        public void setDropTypes(String value) {
+            setProp("drop_types", value);
+        }
+
+        public boolean isTabStop() {
+            return asBool(getProp("tab_stop"));
+        }
+
+        public void setTabStop(boolean value) {
+            setProp("tab_stop", value);
+        }
+
+        public String getCursor() {
+            return asText(getProp("cursor"));
+        }
+
+        public void setCursor(String value) {
+            setProp("cursor", value);
+        }
+
+        public double getOpacity() {
+            return asNumber(getProp("opacity"));
+        }
+
+        public void setOpacity(double value) {
+            setProp("opacity", value);
+        }
+
+        public boolean isCacheLayer() {
+            return asBool(getProp("cache_layer"));
+        }
+
+        public void setCacheLayer(boolean value) {
+            setProp("cache_layer", value);
+        }
+
+        public double getRotation() {
+            return asNumber(getProp("rotation"));
+        }
+
+        public void setRotation(double value) {
+            setProp("rotation", value);
+        }
+
+        public double getTranslateX() {
+            return asNumber(getProp("translate_x"));
+        }
+
+        public void setTranslateX(double value) {
+            setProp("translate_x", value);
+        }
+
+        public double getTranslateY() {
+            return asNumber(getProp("translate_y"));
+        }
+
+        public void setTranslateY(double value) {
+            setProp("translate_y", value);
+        }
+
+        public double getAspectRatio() {
+            return asNumber(getProp("aspect_ratio"));
+        }
+
+        public void setAspectRatio(double value) {
+            setProp("aspect_ratio", value);
+        }
+
+        public double getMaxWidth() {
+            return asNumber(getProp("max_width"));
+        }
+
+        public void setMaxWidth(double value) {
+            setProp("max_width", value);
+        }
+
+        public double getMinWidth() {
+            return asNumber(getProp("min_width"));
+        }
+
+        public void setMinWidth(double value) {
+            setProp("min_width", value);
+        }
+
+        public double getMinHeight() {
+            return asNumber(getProp("min_height"));
+        }
+
+        public void setMinHeight(double value) {
+            setProp("min_height", value);
+        }
+
+        public double getMaxHeight() {
+            return asNumber(getProp("max_height"));
+        }
+
+        public void setMaxHeight(double value) {
+            setProp("max_height", value);
+        }
+
+        public String getSelfAlign() {
+            return asText(getProp("self_align"));
+        }
+
+        public void setSelfAlign(String value) {
+            setProp("self_align", value);
+        }
+
+        public boolean isAutoSize() {
+            return asBool(getProp("auto_size"));
+        }
+
+        public void setAutoSize(boolean value) {
+            setProp("auto_size", value);
+        }
+
+        public long getColumnSpan() {
+            return (long) asNumber(getProp("column_span"));
+        }
+
+        public void setColumnSpan(long value) {
+            setProp("column_span", value);
+        }
+
+        public String getShadow() {
+            return asText(getProp("shadow"));
+        }
+
+        public void setShadow(String value) {
+            setProp("shadow", value);
+        }
+
+        public String getStyle() {
+            return asText(getProp("style"));
+        }
+
+        public void setStyle(String value) {
+            setProp("style", value);
+        }
+
+        public String getTheme() {
+            return asText(getProp("theme"));
+        }
+
+        public void setTheme(String value) {
+            setProp("theme", value);
+        }
+
+        public String getFill() {
+            return asText(getProp("fill"));
+        }
+
+        public void setFill(String value) {
+            setProp("fill", value);
+        }
+
+        public String getBorderColor() {
+            return asText(getProp("border_color"));
+        }
+
+        public void setBorderColor(String value) {
+            setProp("border_color", value);
+        }
+
+        public String getTextColor() {
+            return asText(getProp("text_color"));
+        }
+
+        public void setTextColor(String value) {
+            setProp("text_color", value);
+        }
+
+        public String getAccentColor() {
+            return asText(getProp("accent_color"));
+        }
+
+        public void setAccentColor(String value) {
+            setProp("accent_color", value);
+        }
+
+        public String getSuccessColor() {
+            return asText(getProp("success_color"));
+        }
+
+        public void setSuccessColor(String value) {
+            setProp("success_color", value);
+        }
+
+        public String getWarningColor() {
+            return asText(getProp("warning_color"));
+        }
+
+        public void setWarningColor(String value) {
+            setProp("warning_color", value);
+        }
+
+        public String getDangerColor() {
+            return asText(getProp("danger_color"));
+        }
+
+        public void setDangerColor(String value) {
+            setProp("danger_color", value);
+        }
+
+        public String getFontFamily() {
+            return asText(getProp("font_family"));
+        }
+
+        public void setFontFamily(String value) {
+            setProp("font_family", value);
+        }
+
+        public double getFontSize() {
+            return asNumber(getProp("font_size"));
+        }
+
+        public void setFontSize(double value) {
+            setProp("font_size", value);
+        }
+
+        public String getFontWeight() {
+            return asText(getProp("font_weight"));
+        }
+
+        public void setFontWeight(String value) {
+            setProp("font_weight", value);
+        }
+
+        public boolean isFontItalic() {
+            return asBool(getProp("font_italic"));
+        }
+
+        public void setFontItalic(boolean value) {
+            setProp("font_italic", value);
+        }
+
+        public boolean isFontUnderline() {
+            return asBool(getProp("font_underline"));
+        }
+
+        public void setFontUnderline(boolean value) {
+            setProp("font_underline", value);
+        }
+
+        public boolean isFontStrikeout() {
+            return asBool(getProp("font_strikeout"));
+        }
+
+        public void setFontStrikeout(boolean value) {
+            setProp("font_strikeout", value);
+        }
+
+        public String getHint() {
+            return asText(getProp("hint"));
+        }
+
+        public void setHint(String value) {
+            setProp("hint", value);
+        }
+
+        public long getTag() {
+            return (long) asNumber(getProp("tag"));
+        }
+
+        public void setTag(long value) {
+            setProp("tag", value);
+        }
+
+        public String getPopupMenu() {
+            return asText(getProp("popup_menu"));
+        }
+
+        public void setPopupMenu(String value) {
+            setProp("popup_menu", value);
+        }
+    }

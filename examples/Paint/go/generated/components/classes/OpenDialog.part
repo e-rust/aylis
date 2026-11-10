@@ -1,0 +1,19 @@
+
+// aylisOpenDialog é um OpenDialog de um form.
+type aylisOpenDialog struct{ aylis.Component }
+
+func (c aylisOpenDialog) Title() string { return asText(c.Get("title")) }
+func (c aylisOpenDialog) SetTitle(v string) { c.Set("title", v) }
+
+func (c aylisOpenDialog) Filter() string { return asText(c.Get("filter")) }
+func (c aylisOpenDialog) SetFilter(v string) { c.Set("filter", v) }
+
+func (c aylisOpenDialog) InitialDir() string { return asText(c.Get("initial_dir")) }
+func (c aylisOpenDialog) SetInitialDir(v string) { c.Set("initial_dir", v) }
+
+func (c aylisOpenDialog) FileName() string { return asText(c.Get("file_name")) }
+func (c aylisOpenDialog) SetFileName(v string) { c.Set("file_name", v) }
+
+func (c aylisOpenDialog) Multiple() bool { return asBool(c.Get("multiple")) }
+func (c aylisOpenDialog) SetMultiple(v bool) { c.Set("multiple", v) }
+func (c aylisOpenDialog) Execute() { c.App.Send("execute", aylis.M{"target": c.ID}) }

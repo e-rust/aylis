@@ -1,0 +1,11 @@
+
+    /// <summary>Um SaveDialog de um form.</summary>
+    public class SaveDialog(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public string Title { get => Text(GetProp("title")); set => SetProp("title", value); }
+        public string Filter { get => Text(GetProp("filter")); set => SetProp("filter", value); }
+        public string InitialDir { get => Text(GetProp("initial_dir")); set => SetProp("initial_dir", value); }
+        public string FileName { get => Text(GetProp("file_name")); set => SetProp("file_name", value); }
+        public bool Multiple { get => Bool(GetProp("multiple")); set => SetProp("multiple", value); }
+        public void Execute() => Aylis.Send("execute", new JsonObject { ["target"] = Id });
+    }

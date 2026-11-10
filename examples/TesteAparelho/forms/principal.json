@@ -1,0 +1,516 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Teste do aparelho",
+    "width": 400,
+    "height": 800,
+    "children": [
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "text": "Pronto",
+        "height": 28,
+        "align": "top",
+        "margins": [8, 4, 8, 0]
+      },
+      {
+        "class": "TabControl",
+        "name": "tabTestes",
+        "align": "client",
+        "children": [
+          {
+            "class": "TabItem",
+            "name": "tabTeclado",
+            "caption": "Teclado",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblTec1",
+                "text": "Com sugestões do teclado:",
+                "height": 24,
+                "align": "top",
+                "margins": [8, 8, 8, 0]
+              },
+              {
+                "class": "Edit",
+                "name": "edtNormal",
+                "height": 44,
+                "align": "top",
+                "margins": [8, 4, 8, 0]
+              },
+              {
+                "class": "Label",
+                "name": "lblTec2",
+                "text": "Sem sugestões (keyboard_suggestions = false):",
+                "height": 24,
+                "align": "top",
+                "margins": [8, 12, 8, 0]
+              },
+              {
+                "class": "Edit",
+                "name": "edtSemSugestao",
+                "keyboard_suggestions": false,
+                "height": 44,
+                "align": "top",
+                "margins": [8, 4, 8, 0]
+              },
+              {
+                "class": "Label",
+                "name": "lblTec3",
+                "text": "Senha:",
+                "height": 24,
+                "align": "top",
+                "margins": [8, 12, 8, 0]
+              },
+              {
+                "class": "Edit",
+                "name": "edtSenha",
+                "password": true,
+                "height": 44,
+                "align": "top",
+                "margins": [8, 4, 8, 0]
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tab3D",
+            "caption": "3D",
+            "children": [
+              {
+                "class": "Model3D",
+                "name": "m3dCena",
+                "background": "#161821",
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabCamera",
+            "caption": "Câmera",
+            "children": [
+              {
+                "class": "Panel",
+                "name": "pnlCamBotoes",
+                "height": 56,
+                "align": "bottom",
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnCamLigar",
+                    "text": "Ligar/desligar",
+                    "width": 100,
+                    "align": "left",
+                    "margins": [8, 8, 4, 8],
+                    "on_click": "cam_ligar_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnCamTrocar",
+                    "text": "Trocar",
+                    "width": 72,
+                    "align": "left",
+                    "margins": [4, 8],
+                    "on_click": "cam_trocar_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnCamFoto",
+                    "text": "Foto",
+                    "width": 60,
+                    "align": "left",
+                    "margins": [4, 8],
+                    "on_click": "cam_foto_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnCamCiclo",
+                    "text": "Ciclo 20x",
+                    "align": "client",
+                    "margins": [4, 8, 8, 8],
+                    "on_click": "cam_ciclo_click"
+                  }
+                ]
+              },
+              {
+                "class": "Panel",
+                "name": "pnlCamQualidade",
+                "height": 48,
+                "align": "bottom",
+                "children": [
+                  {
+                    "class": "SegmentedControl",
+                    "name": "segCamQualidade",
+                    "items": "low;medium;high;max",
+                    "item_index": 1,
+                    "on_change": "cam_qualidade_change",
+                    "align": "left",
+                    "margins": [8, 4, 4, 4]
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnCamFlash",
+                    "text": "Flash",
+                    "width": 80,
+                    "align": "left",
+                    "margins": 4,
+                    "on_click": "cam_flash_click"
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblCamInfo",
+                    "align": "client",
+                    "margins": [4, 4, 8, 4]
+                  }
+                ]
+              },
+              {
+                "class": "CameraView",
+                "name": "camView",
+                "camera": "back",
+                "on_ready": "cam_pronta",
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabMicrofone",
+            "caption": "Microfone",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnMicLigar",
+                "text": "Ligar/desligar o microfone",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "mic_ligar_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMicGravar",
+                "text": "Gravar 5 s",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "mic_gravar_click"
+              },
+              {
+                "class": "LevelMeter",
+                "name": "lvlMic",
+                "height": 40,
+                "align": "top",
+                "margins": [8, 12, 8, 0]
+              },
+              {
+                "class": "Label",
+                "name": "lblMic",
+                "text": "Nível: -",
+                "height": 24,
+                "align": "top",
+                "margins": [8, 8, 8, 0]
+              },
+              {
+                "class": "Microphone",
+                "name": "micEntrada"
+              },
+              {
+                "class": "Button",
+                "name": "btnMicApps",
+                "text": "Som dos apps (loopback)",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 12, 8, 0],
+                "on_click": "mic_apps_click"
+              },
+              {
+                "class": "Microphone",
+                "name": "micApps",
+                "device": "loopback:Android"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabVideo",
+            "caption": "Vídeo",
+            "children": [
+              {
+                "class": "Panel",
+                "name": "pnlVidBotoes",
+                "height": 56,
+                "align": "bottom",
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnVidTocar",
+                    "text": "Tocar",
+                    "width": 120,
+                    "align": "left",
+                    "margins": [8, 8, 4, 8],
+                    "on_click": "vid_tocar_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnVidParar",
+                    "text": "Parar",
+                    "width": 120,
+                    "align": "left",
+                    "margins": [4, 8],
+                    "on_click": "vid_parar_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnVidCiclo",
+                    "text": "Abrir/fechar 10x",
+                    "align": "client",
+                    "margins": [4, 8, 8, 8],
+                    "on_click": "vid_ciclo_click"
+                  }
+                ]
+              },
+              {
+                "class": "VideoPlayer",
+                "name": "vpVideo",
+                "file": "assets/video/sample.mp4",
+                "looping": true,
+                "volume": 0.8,
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabNotificacao",
+            "caption": "Notificação",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnNotSimples",
+                "text": "Notificação simples",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "not_simples_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnNotBotoes",
+                "text": "Com botões",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "not_botoes_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnNotProgresso",
+                "text": "Com progresso",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "not_progresso_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnNotForm",
+                "text": "Com a imagem de um form",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "not_form_click"
+              },
+              {
+                "class": "Notification",
+                "name": "ntfSimples",
+                "title": "Teste do aylis",
+                "text": "Notificação simples",
+                "channel": "testes",
+                "channel_name": "Testes"
+              },
+              {
+                "class": "Notification",
+                "name": "ntfBotoes",
+                "title": "Teste do aylis",
+                "text": "Escolha uma opção",
+                "notification_id": 2,
+                "channel": "testes",
+                "channel_name": "Testes",
+                "actions": "sim:Sim;nao:Não",
+                "on_action": "not_acao"
+              },
+              {
+                "class": "Notification",
+                "name": "ntfProgresso",
+                "title": "Baixando",
+                "text": "Progresso",
+                "notification_id": 3,
+                "channel": "testes",
+                "channel_name": "Testes",
+                "ongoing": true,
+                "progress": 0
+              },
+              {
+                "class": "Notification",
+                "name": "ntfForm",
+                "title": "Resumo",
+                "text": "Com a imagem de um form",
+                "form": "frmPrincipal",
+                "form_height": 200,
+                "notification_id": 4,
+                "channel": "testes",
+                "channel_name": "Testes"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabSistema",
+            "caption": "Sistema",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnTema",
+                "text": "Tema claro/escuro",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "tema_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnFps",
+                "text": "Limitar a 30 quadros/s",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "fps_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnAbrirSite",
+                "text": "Abrir site (AppLink)",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "abrir_site_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnCompartilhar",
+                "text": "Compartilhar texto (AppLink)",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "compartilhar_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnVibrar",
+                "text": "Vibrar (Vibration)",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "vibrar_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnServico",
+                "text": "Serviço em segundo plano",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "servico_click"
+              },
+              {
+                "class": "BackgroundService",
+                "name": "svcFundo",
+                "title": "Teste do aylis",
+                "text": "Contando em segundo plano",
+                "keep_alive": true,
+                "on_message": "servico_mensagem",
+                "on_error": "link_erro"
+              },
+              {
+                "class": "Button",
+                "name": "btnDiscar",
+                "text": "Discar (Phone)",
+                "height": 48,
+                "align": "top",
+                "margins": [8, 8, 8, 0],
+                "on_click": "discar_click"
+              },
+              {
+                "class": "Phone",
+                "name": "fonTelefone",
+                "watch_state": true,
+                "on_call_state": "chamada_estado"
+              },
+              {
+                "class": "Battery",
+                "name": "batBateria"
+              },
+              {
+                "class": "Network",
+                "name": "netRede"
+              },
+              {
+                "class": "Location",
+                "name": "locLocal",
+                "active": true
+              },
+              {
+                "class": "MotionSensor",
+                "name": "motMovimento",
+                "active": true
+              },
+              {
+                "class": "Compass",
+                "name": "cmpBussola",
+                "active": true
+              },
+              {
+                "class": "ProximitySensor",
+                "name": "proxPerto",
+                "active": true
+              },
+              {
+                "class": "LightSensor",
+                "name": "luzAmbiente",
+                "active": true
+              },
+              {
+                "class": "Vibration",
+                "name": "vibVibra"
+              },
+              {
+                "class": "AppLink",
+                "name": "lnkApp",
+                "on_link": "link_recebido",
+                "on_shared": "compartilhado_recebido",
+                "on_error": "link_erro"
+              },
+              {
+                "class": "Label",
+                "name": "lblSistema",
+                "height": 300,
+                "align": "top",
+                "margins": [8, 8, 8, 0]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "Timer",
+        "name": "tmrTick",
+        "interval": 200,
+        "on_timer": "tick_timer"
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+
+    /// <summary>Um ClientDataSet de um form.</summary>
+    public class ClientDataSet(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public string KeyFields { get => Text(GetProp("key_fields")); set => SetProp("key_fields", value); }
+        public string ApplyMode { get => Text(GetProp("apply_mode")); set => SetProp("apply_mode", value); }
+        public bool ReadOnly { get => Bool(GetProp("read_only")); set => SetProp("read_only", value); }
+        public bool Active { get => Bool(GetProp("active")); set => SetProp("active", value); }
+        public string Filter { get => Text(GetProp("filter")); set => SetProp("filter", value); }
+        public bool Filtered { get => Bool(GetProp("filtered")); set => SetProp("filtered", value); }
+        public string IndexFieldNames { get => Text(GetProp("index_field_names")); set => SetProp("index_field_names", value); }
+        public string Indexes { get => Text(GetProp("indexes")); set => SetProp("indexes", value); }
+        public string IndexName { get => Text(GetProp("index_name")); set => SetProp("index_name", value); }
+        public string Params { get => Text(GetProp("params")); set => SetProp("params", value); }
+        public string StatusFilter { get => Text(GetProp("status_filter")); set => SetProp("status_filter", value); }
+        public string MasterSource { get => Text(GetProp("master_source")); set => SetProp("master_source", value); }
+        public string MasterFields { get => Text(GetProp("master_fields")); set => SetProp("master_fields", value); }
+        public bool ApplySeparately { get => Bool(GetProp("apply_separately")); set => SetProp("apply_separately", value); }
+        public long RecordTotal { get => (long)Number(GetProp("record_total")); set => SetProp("record_total", value); }
+        public long MaxRecords { get => (long)Number(GetProp("max_records")); set => SetProp("max_records", value); }
+        public string PartialNotice => Text(GetProp("partial_notice"));
+    }

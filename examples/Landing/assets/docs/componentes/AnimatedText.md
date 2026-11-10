@@ -1,0 +1,52 @@
+# AnimatedText
+
+![AnimatedText](img/AnimatedText.png)
+
+Texto com efeitos animados (entrada, saída, contínuos), por letra, palavra ou linha. para a lista de efeitos.
+
+**Paleta:** Standard · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `text` | Texto | texto |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |
+| `wrap` | Quebra de linha | lógico |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `effects` | Efeitos | texto |
+| `autoplay` | Toca sozinho | lógico |
+| `looping` | Repetindo | lógico |
+| `loop_delay` | Pausa entre repetições | número |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_finish` | — | — |  |
+
+## Em código
+
+No form, o `AnimatedText1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "AnimatedText", "name": "AnimatedText1", "on_finish": "animated_text1_finish" }
+```
+
+E o handler, um método do form (`self.AnimatedText1` já é um `AnimatedText`):
+
+```rust
+impl FrmPrincipal {
+    pub fn animated_text1_finish(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.AnimatedText1.text(ui);
+        self.AnimatedText1.set_text(ui, format!("{atual}!"));
+    }
+}
+```

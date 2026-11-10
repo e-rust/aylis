@@ -1,0 +1,13 @@
+[package]
+name = "aylis-core"
+description = "Núcleo do aylis: componentes, layout no estilo FMX, propriedades, temas e interfaces de plataforma"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# O core não depende de nada do sistema operacional.
+[dependencies]
+# O motor de texto do núcleo (os modos `layout` e `core` do item 10): ler as fontes e montar as
+# letras (árabe, acentos combinados, kerning), em Rust puro, igual em todas as plataformas.
+harfrust = "0.15"

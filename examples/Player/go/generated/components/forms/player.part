@@ -1,0 +1,575 @@
+
+// frmPlayerComponents: o form frmPlayer e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+type frmPlayerComponents struct {
+	aylisForm
+	mnuPrincipal aylisMainMenu
+	mnuArquivo aylisMenuItem
+	mnuAbrir aylisMenuItem
+	mnuLimparFila aylisMenuItem
+	mnuSep1 aylisMenuItem
+	mnuSair aylisMenuItem
+	mnuReproduzir aylisMenuItem
+	mnuReproduzirPausar aylisMenuItem
+	mnuParar aylisMenuItem
+	mnuAnterior aylisMenuItem
+	mnuProxima aylisMenuItem
+	mnuSep2 aylisMenuItem
+	mnuEmbaralhar aylisMenuItem
+	mnuRepetir aylisMenuItem
+	mnuExibir aylisMenuItem
+	mnuAgora aylisMenuItem
+	mnuFila aylisMenuItem
+	pnlControles aylisPanel
+	lytBarra aylisLayout
+	lblTempo aylisLabel
+	lblDuracao aylisLabel
+	sbPosicao aylisSeekBar
+	lytInfo aylisLayout
+	icoCapa aylisIcon
+	lytTextos aylisLayout
+	lblTitulo aylisLabel
+	lblDetalhe aylisLabel
+	lytVolume aylisLayout
+	btnMudo aylisButton
+	tbVolume aylisTrackBar
+	lytBotoes aylisLayout
+	lytBotoesCentro aylisLayout
+	btnEmbaralhar aylisButton
+	btnAnterior aylisButton
+	btnReproduzir aylisButton
+	btnProxima aylisButton
+	btnRepetir aylisButton
+	lytNavegacao aylisLayout
+	btnAgora aylisButton
+	btnFila aylisButton
+	divNavegacao aylisDivider
+	btnAbrirArquivos aylisButton
+	pnlAgora aylisPanel
+	vpVideo aylisVideoPlayer
+	pnlFila aylisPanel
+	lblFila aylisLabel
+	lytFilaBotoes aylisLayout
+	btnAdicionar aylisButton
+	btnLimparFila aylisButton
+	lvFila aylisListView
+	dlgAbrir aylisOpenDialog
+	tmrPosicao aylisTimer
+}
+
+// Bind monta os componentes da janela (o form que não bate com o código é erro).
+func (f *frmPlayerComponents) Bind(list []any) error {
+	if c, err := f.Resolve(list, "mnuPrincipal", "MainMenu"); err != nil {
+		return err
+	} else {
+		f.mnuPrincipal = aylisMainMenu{c}
+	}
+	if c, err := f.Resolve(list, "mnuArquivo", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuArquivo = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuAbrir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuAbrir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuLimparFila", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuLimparFila = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSep1", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSep1 = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSair", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSair = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuReproduzir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuReproduzir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuReproduzirPausar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuReproduzirPausar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuParar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuParar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuAnterior", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuAnterior = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuProxima", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuProxima = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSep2", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSep2 = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuEmbaralhar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuEmbaralhar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuRepetir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuRepetir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuExibir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuExibir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuAgora", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuAgora = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuFila", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuFila = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "pnlControles", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlControles = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "lytBarra", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytBarra = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblTempo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblTempo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblDuracao", "Label"); err != nil {
+		return err
+	} else {
+		f.lblDuracao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "sbPosicao", "SeekBar"); err != nil {
+		return err
+	} else {
+		f.sbPosicao = aylisSeekBar{c}
+	}
+	if c, err := f.Resolve(list, "lytInfo", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytInfo = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "icoCapa", "Icon"); err != nil {
+		return err
+	} else {
+		f.icoCapa = aylisIcon{c}
+	}
+	if c, err := f.Resolve(list, "lytTextos", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytTextos = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblTitulo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblTitulo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblDetalhe", "Label"); err != nil {
+		return err
+	} else {
+		f.lblDetalhe = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lytVolume", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytVolume = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnMudo", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMudo = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "tbVolume", "TrackBar"); err != nil {
+		return err
+	} else {
+		f.tbVolume = aylisTrackBar{c}
+	}
+	if c, err := f.Resolve(list, "lytBotoes", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytBotoes = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lytBotoesCentro", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytBotoesCentro = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnEmbaralhar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnEmbaralhar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnAnterior", "Button"); err != nil {
+		return err
+	} else {
+		f.btnAnterior = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnReproduzir", "Button"); err != nil {
+		return err
+	} else {
+		f.btnReproduzir = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnProxima", "Button"); err != nil {
+		return err
+	} else {
+		f.btnProxima = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnRepetir", "Button"); err != nil {
+		return err
+	} else {
+		f.btnRepetir = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "lytNavegacao", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytNavegacao = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnAgora", "Button"); err != nil {
+		return err
+	} else {
+		f.btnAgora = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnFila", "Button"); err != nil {
+		return err
+	} else {
+		f.btnFila = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "divNavegacao", "Divider"); err != nil {
+		return err
+	} else {
+		f.divNavegacao = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "btnAbrirArquivos", "Button"); err != nil {
+		return err
+	} else {
+		f.btnAbrirArquivos = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "pnlAgora", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlAgora = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "vpVideo", "VideoPlayer"); err != nil {
+		return err
+	} else {
+		f.vpVideo = aylisVideoPlayer{c}
+	}
+	if c, err := f.Resolve(list, "pnlFila", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlFila = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "lblFila", "Label"); err != nil {
+		return err
+	} else {
+		f.lblFila = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lytFilaBotoes", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytFilaBotoes = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnAdicionar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnAdicionar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnLimparFila", "Button"); err != nil {
+		return err
+	} else {
+		f.btnLimparFila = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "lvFila", "ListView"); err != nil {
+		return err
+	} else {
+		f.lvFila = aylisListView{c}
+	}
+	if c, err := f.Resolve(list, "dlgAbrir", "OpenDialog"); err != nil {
+		return err
+	} else {
+		f.dlgAbrir = aylisOpenDialog{c}
+	}
+	if c, err := f.Resolve(list, "tmrPosicao", "Timer"); err != nil {
+		return err
+	} else {
+		f.tmrPosicao = aylisTimer{c}
+	}
+	return nil
+}
+
+// frmPlayer é a janela de frmPlayer cujo evento está rodando (a primeira, fora dos handlers).
+var frmPlayer *frmPlayerComponents
+
+func init() {
+	aylis.RegisterFormClass("frmPlayer", func(app *aylis.Aylis, id int64, name string) aylis.FormInstance {
+		return &frmPlayerComponents{aylisForm: aylisForm{aylis.Form{Component: aylis.Component{App: app, ID: id, Name: name}}}}
+	}, func(form aylis.FormInstance) { frmPlayer = form.(*frmPlayerComponents) })
+}
+
+// FindButton é o Button deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindButton(name string) aylisButton {
+	switch name {
+	case "btnMudo":
+		return f.btnMudo
+	case "btnEmbaralhar":
+		return f.btnEmbaralhar
+	case "btnAnterior":
+		return f.btnAnterior
+	case "btnReproduzir":
+		return f.btnReproduzir
+	case "btnProxima":
+		return f.btnProxima
+	case "btnRepetir":
+		return f.btnRepetir
+	case "btnAgora":
+		return f.btnAgora
+	case "btnFila":
+		return f.btnFila
+	case "btnAbrirArquivos":
+		return f.btnAbrirArquivos
+	case "btnAdicionar":
+		return f.btnAdicionar
+	case "btnLimparFila":
+		return f.btnLimparFila
+	}
+	return aylisButton{}
+}
+
+// SenderAsButton é o Button que disparou o evento.
+func (f *frmPlayerComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
+
+// FindDivider é o Divider deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindDivider(name string) aylisDivider {
+	switch name {
+	case "divNavegacao":
+		return f.divNavegacao
+	}
+	return aylisDivider{}
+}
+
+// SenderAsDivider é o Divider que disparou o evento.
+func (f *frmPlayerComponents) SenderAsDivider(ev aylis.Event) aylisDivider { return f.FindDivider(ev.Sender.Name) }
+
+// FindIcon é o Icon deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindIcon(name string) aylisIcon {
+	switch name {
+	case "icoCapa":
+		return f.icoCapa
+	}
+	return aylisIcon{}
+}
+
+// SenderAsIcon é o Icon que disparou o evento.
+func (f *frmPlayerComponents) SenderAsIcon(ev aylis.Event) aylisIcon { return f.FindIcon(ev.Sender.Name) }
+
+// FindLabel é o Label deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindLabel(name string) aylisLabel {
+	switch name {
+	case "lblTempo":
+		return f.lblTempo
+	case "lblDuracao":
+		return f.lblDuracao
+	case "lblTitulo":
+		return f.lblTitulo
+	case "lblDetalhe":
+		return f.lblDetalhe
+	case "lblFila":
+		return f.lblFila
+	}
+	return aylisLabel{}
+}
+
+// SenderAsLabel é o Label que disparou o evento.
+func (f *frmPlayerComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
+
+// FindLayout é o Layout deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindLayout(name string) aylisLayout {
+	switch name {
+	case "lytBarra":
+		return f.lytBarra
+	case "lytInfo":
+		return f.lytInfo
+	case "lytTextos":
+		return f.lytTextos
+	case "lytVolume":
+		return f.lytVolume
+	case "lytBotoes":
+		return f.lytBotoes
+	case "lytBotoesCentro":
+		return f.lytBotoesCentro
+	case "lytNavegacao":
+		return f.lytNavegacao
+	case "lytFilaBotoes":
+		return f.lytFilaBotoes
+	}
+	return aylisLayout{}
+}
+
+// SenderAsLayout é o Layout que disparou o evento.
+func (f *frmPlayerComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
+
+// FindListView é o ListView deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindListView(name string) aylisListView {
+	switch name {
+	case "lvFila":
+		return f.lvFila
+	}
+	return aylisListView{}
+}
+
+// SenderAsListView é o ListView que disparou o evento.
+func (f *frmPlayerComponents) SenderAsListView(ev aylis.Event) aylisListView { return f.FindListView(ev.Sender.Name) }
+
+// FindMainMenu é o MainMenu deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindMainMenu(name string) aylisMainMenu {
+	switch name {
+	case "mnuPrincipal":
+		return f.mnuPrincipal
+	}
+	return aylisMainMenu{}
+}
+
+// SenderAsMainMenu é o MainMenu que disparou o evento.
+func (f *frmPlayerComponents) SenderAsMainMenu(ev aylis.Event) aylisMainMenu { return f.FindMainMenu(ev.Sender.Name) }
+
+// FindMenuItem é o MenuItem deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindMenuItem(name string) aylisMenuItem {
+	switch name {
+	case "mnuArquivo":
+		return f.mnuArquivo
+	case "mnuAbrir":
+		return f.mnuAbrir
+	case "mnuLimparFila":
+		return f.mnuLimparFila
+	case "mnuSep1":
+		return f.mnuSep1
+	case "mnuSair":
+		return f.mnuSair
+	case "mnuReproduzir":
+		return f.mnuReproduzir
+	case "mnuReproduzirPausar":
+		return f.mnuReproduzirPausar
+	case "mnuParar":
+		return f.mnuParar
+	case "mnuAnterior":
+		return f.mnuAnterior
+	case "mnuProxima":
+		return f.mnuProxima
+	case "mnuSep2":
+		return f.mnuSep2
+	case "mnuEmbaralhar":
+		return f.mnuEmbaralhar
+	case "mnuRepetir":
+		return f.mnuRepetir
+	case "mnuExibir":
+		return f.mnuExibir
+	case "mnuAgora":
+		return f.mnuAgora
+	case "mnuFila":
+		return f.mnuFila
+	}
+	return aylisMenuItem{}
+}
+
+// SenderAsMenuItem é o MenuItem que disparou o evento.
+func (f *frmPlayerComponents) SenderAsMenuItem(ev aylis.Event) aylisMenuItem { return f.FindMenuItem(ev.Sender.Name) }
+
+// FindOpenDialog é o OpenDialog deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindOpenDialog(name string) aylisOpenDialog {
+	switch name {
+	case "dlgAbrir":
+		return f.dlgAbrir
+	}
+	return aylisOpenDialog{}
+}
+
+// SenderAsOpenDialog é o OpenDialog que disparou o evento.
+func (f *frmPlayerComponents) SenderAsOpenDialog(ev aylis.Event) aylisOpenDialog { return f.FindOpenDialog(ev.Sender.Name) }
+
+// FindPanel é o Panel deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindPanel(name string) aylisPanel {
+	switch name {
+	case "pnlControles":
+		return f.pnlControles
+	case "pnlAgora":
+		return f.pnlAgora
+	case "pnlFila":
+		return f.pnlFila
+	}
+	return aylisPanel{}
+}
+
+// SenderAsPanel é o Panel que disparou o evento.
+func (f *frmPlayerComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
+
+// FindSeekBar é o SeekBar deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindSeekBar(name string) aylisSeekBar {
+	switch name {
+	case "sbPosicao":
+		return f.sbPosicao
+	}
+	return aylisSeekBar{}
+}
+
+// SenderAsSeekBar é o SeekBar que disparou o evento.
+func (f *frmPlayerComponents) SenderAsSeekBar(ev aylis.Event) aylisSeekBar { return f.FindSeekBar(ev.Sender.Name) }
+
+// FindTimer é o Timer deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindTimer(name string) aylisTimer {
+	switch name {
+	case "tmrPosicao":
+		return f.tmrPosicao
+	}
+	return aylisTimer{}
+}
+
+// SenderAsTimer é o Timer que disparou o evento.
+func (f *frmPlayerComponents) SenderAsTimer(ev aylis.Event) aylisTimer { return f.FindTimer(ev.Sender.Name) }
+
+// FindTrackBar é o TrackBar deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindTrackBar(name string) aylisTrackBar {
+	switch name {
+	case "tbVolume":
+		return f.tbVolume
+	}
+	return aylisTrackBar{}
+}
+
+// SenderAsTrackBar é o TrackBar que disparou o evento.
+func (f *frmPlayerComponents) SenderAsTrackBar(ev aylis.Event) aylisTrackBar { return f.FindTrackBar(ev.Sender.Name) }
+
+// FindVideoPlayer é o VideoPlayer deste form com o nome (como o FindComponent).
+func (f *frmPlayerComponents) FindVideoPlayer(name string) aylisVideoPlayer {
+	switch name {
+	case "vpVideo":
+		return f.vpVideo
+	}
+	return aylisVideoPlayer{}
+}
+
+// SenderAsVideoPlayer é o VideoPlayer que disparou o evento.
+func (f *frmPlayerComponents) SenderAsVideoPlayer(ev aylis.Event) aylisVideoPlayer { return f.FindVideoPlayer(ev.Sender.Name) }

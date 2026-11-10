@@ -1,0 +1,139 @@
+
+    /** Um ClientDataSet de um form. */
+    public static class ClientDataSet extends Aylis.AylisComponent {
+        public ClientDataSet(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        public String getKeyFields() {
+            return asText(getProp("key_fields"));
+        }
+
+        public void setKeyFields(String value) {
+            setProp("key_fields", value);
+        }
+
+        public String getApplyMode() {
+            return asText(getProp("apply_mode"));
+        }
+
+        public void setApplyMode(String value) {
+            setProp("apply_mode", value);
+        }
+
+        public boolean isReadOnly() {
+            return asBool(getProp("read_only"));
+        }
+
+        public void setReadOnly(boolean value) {
+            setProp("read_only", value);
+        }
+
+        public boolean isActive() {
+            return asBool(getProp("active"));
+        }
+
+        public void setActive(boolean value) {
+            setProp("active", value);
+        }
+
+        public String getFilter() {
+            return asText(getProp("filter"));
+        }
+
+        public void setFilter(String value) {
+            setProp("filter", value);
+        }
+
+        public boolean isFiltered() {
+            return asBool(getProp("filtered"));
+        }
+
+        public void setFiltered(boolean value) {
+            setProp("filtered", value);
+        }
+
+        public String getIndexFieldNames() {
+            return asText(getProp("index_field_names"));
+        }
+
+        public void setIndexFieldNames(String value) {
+            setProp("index_field_names", value);
+        }
+
+        public String getIndexes() {
+            return asText(getProp("indexes"));
+        }
+
+        public void setIndexes(String value) {
+            setProp("indexes", value);
+        }
+
+        public String getIndexName() {
+            return asText(getProp("index_name"));
+        }
+
+        public void setIndexName(String value) {
+            setProp("index_name", value);
+        }
+
+        public String getParams() {
+            return asText(getProp("params"));
+        }
+
+        public void setParams(String value) {
+            setProp("params", value);
+        }
+
+        public String getStatusFilter() {
+            return asText(getProp("status_filter"));
+        }
+
+        public void setStatusFilter(String value) {
+            setProp("status_filter", value);
+        }
+
+        public String getMasterSource() {
+            return asText(getProp("master_source"));
+        }
+
+        public void setMasterSource(String value) {
+            setProp("master_source", value);
+        }
+
+        public String getMasterFields() {
+            return asText(getProp("master_fields"));
+        }
+
+        public void setMasterFields(String value) {
+            setProp("master_fields", value);
+        }
+
+        public boolean isApplySeparately() {
+            return asBool(getProp("apply_separately"));
+        }
+
+        public void setApplySeparately(boolean value) {
+            setProp("apply_separately", value);
+        }
+
+        public long getRecordTotal() {
+            return (long) asNumber(getProp("record_total"));
+        }
+
+        public void setRecordTotal(long value) {
+            setProp("record_total", value);
+        }
+
+        public long getMaxRecords() {
+            return (long) asNumber(getProp("max_records"));
+        }
+
+        public void setMaxRecords(long value) {
+            setProp("max_records", value);
+        }
+
+        public String getPartialNotice() {
+            return asText(getProp("partial_notice"));
+        }
+    }

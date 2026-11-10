@@ -1,0 +1,36 @@
+{
+  "revisions": {
+    "frmPrincipal.abas_add": 1,
+    "frmPrincipal.abas_change": 2,
+    "frmPrincipal.principal_show": 1
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/frmPrincipal.on_show": "principal_show",
+        "frmPrincipal/tbsAbas.on_add": "abas_add",
+        "frmPrincipal/tbsAbas.on_change": "abas_change"
+      },
+      "handlers": {
+        "frmPrincipal.abas_add": {
+          "hash": "52eea43536613f87",
+          "seen": 1
+        },
+        "frmPrincipal.abas_change": {
+          "hash": "080ce8bedc04498d",
+          "seen": 2
+        },
+        "frmPrincipal.principal_show": {
+          "hash": "c2670b5407bb6a11",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "frmPrincipal",
+    "lytPaginas",
+    "stbDica",
+    "tbsAbas"
+  ]
+}

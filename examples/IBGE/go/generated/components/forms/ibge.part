@@ -1,0 +1,915 @@
+
+// frmIBGEComponents: o form frmIBGE e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+type frmIBGEComponents struct {
+	aylisForm
+	cdsEstados aylisClientDataSet
+	cdsEstadosId aylisField
+	cdsEstadosSigla aylisField
+	cdsEstadosNome aylisField
+	cdsEstadosRegiao aylisField
+	cdsEstadosPopulacao aylisField
+	cdsEstadosArea aylisField
+	cdsEstadosDensidade aylisField
+	cdsEstadosPib aylisField
+	cdsEstadosPibPerCapita aylisField
+	cdsEstadosEstimativa aylisField
+	cdsEstadosEstimativaAno aylisField
+	cdsEstadosMunicipios aylisField
+	cdsEstadosBandeira aylisField
+	dsEstados aylisDataSource
+	cdsMunicipios aylisClientDataSet
+	cdsMunicipiosId aylisField
+	cdsMunicipiosUfId aylisField
+	cdsMunicipiosUf aylisField
+	cdsMunicipiosNome aylisField
+	cdsMunicipiosMesorregiao aylisField
+	cdsMunicipiosMicrorregiao aylisField
+	cdsMunicipiosRegiaoIntermediaria aylisField
+	cdsMunicipiosRegiaoImediata aylisField
+	cdsMunicipiosPopulacao aylisField
+	cdsMunicipiosArea aylisField
+	cdsMunicipiosDensidade aylisField
+	cdsMunicipiosPib aylisField
+	cdsMunicipiosPibParticipacao aylisField
+	cdsMunicipiosPibPerCapita aylisField
+	cdsMunicipiosEstimativa aylisField
+	cdsMunicipiosEstimativaAno aylisField
+	cdsMunicipiosDistritos aylisField
+	cdsMunicipiosBandeira aylisField
+	dsMunicipios aylisDataSource
+	cdsDistritos aylisClientDataSet
+	cdsDistritosId aylisField
+	cdsDistritosMunicipioId aylisField
+	cdsDistritosNome aylisField
+	dsDistritos aylisDataSource
+	cdsPopulacao aylisClientDataSet
+	cdsPopulacaoAno aylisField
+	cdsPopulacaoHabitantes aylisField
+	dsPopulacao aylisDataSource
+	cdsMaiores aylisClientDataSet
+	cdsMaioresNome aylisField
+	cdsMaioresHabitantes aylisField
+	dsMaiores aylisDataSource
+	lblFonte aylisLabel
+	lytListas aylisLayout
+	gbEstados aylisGroupBox
+	grdEstados aylisDataGrid
+	gbDistritos aylisGroupBox
+	grdDistritos aylisDataGrid
+	gbMunicipios aylisGroupBox
+	grdMunicipios aylisDataGrid
+	splListas aylisSplitter
+	lytPainel aylisLayout
+	pnlEstado aylisPanel
+	svgBrasil aylisSvg
+	lytBandeiraEstado aylisLayout
+	lblEstado aylisLabel
+	lblRegiao aylisLabel
+	imgBandeiraEstado aylisImage
+	lytNumerosEstado aylisLayout
+	dbtEstadoPopulacao aylisLabel
+	lblEstadoEstimativa aylisLabel
+	dbtEstadoEstimativa aylisLabel
+	dbtEstadoArea aylisLabel
+	dbtEstadoDensidade aylisLabel
+	dbtEstadoPib aylisLabel
+	dbtEstadoPibPerCapita aylisLabel
+	dbtEstadoMunicipios aylisLabel
+	pnlMunicipio aylisPanel
+	svgMunicipio aylisSvg
+	svgEstado aylisSvg
+	lytBandeiraMunicipio aylisLayout
+	lblMunicipio aylisLabel
+	lblCodigo aylisLabel
+	imgBandeiraMunicipio aylisImage
+	lblSemBandeira aylisLabel
+	lytNumerosMunicipio aylisLayout
+	dbtMesorregiao aylisLabel
+	dbtMicrorregiao aylisLabel
+	dbtRegiaoImediata aylisLabel
+	dbtPopulacao aylisLabel
+	lblEstimativa aylisLabel
+	dbtEstimativa aylisLabel
+	dbtArea aylisLabel
+	dbtDensidade aylisLabel
+	dbtPib aylisLabel
+	dbtPibPerCapita aylisLabel
+	dbtPibParticipacao aylisLabel
+	lytGraficos aylisLayout
+	dbcPopulacao aylisDBChart
+	dbcMaiores aylisDBChart
+	dbcEstados aylisDBChart
+}
+
+// Bind monta os componentes da janela (o form que não bate com o código é erro).
+func (f *frmIBGEComponents) Bind(list []any) error {
+	if c, err := f.Resolve(list, "cdsEstados", "ClientDataSet"); err != nil {
+		return err
+	} else {
+		f.cdsEstados = aylisClientDataSet{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosId", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosId = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosSigla", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosSigla = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosNome", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosNome = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosRegiao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosRegiao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosPopulacao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosPopulacao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosArea", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosArea = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosDensidade", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosDensidade = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosPib", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosPib = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosPibPerCapita", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosPibPerCapita = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosEstimativa", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosEstimativa = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosEstimativaAno", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosEstimativaAno = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosMunicipios", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosMunicipios = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsEstadosBandeira", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsEstadosBandeira = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "dsEstados", "DataSource"); err != nil {
+		return err
+	} else {
+		f.dsEstados = aylisDataSource{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipios", "ClientDataSet"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipios = aylisClientDataSet{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosId", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosId = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosUfId", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosUfId = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosUf", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosUf = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosNome", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosNome = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosMesorregiao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosMesorregiao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosMicrorregiao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosMicrorregiao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosRegiaoIntermediaria", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosRegiaoIntermediaria = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosRegiaoImediata", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosRegiaoImediata = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosPopulacao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosPopulacao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosArea", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosArea = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosDensidade", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosDensidade = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosPib", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosPib = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosPibParticipacao", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosPibParticipacao = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosPibPerCapita", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosPibPerCapita = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosEstimativa", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosEstimativa = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosEstimativaAno", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosEstimativaAno = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosDistritos", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosDistritos = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMunicipiosBandeira", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMunicipiosBandeira = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "dsMunicipios", "DataSource"); err != nil {
+		return err
+	} else {
+		f.dsMunicipios = aylisDataSource{c}
+	}
+	if c, err := f.Resolve(list, "cdsDistritos", "ClientDataSet"); err != nil {
+		return err
+	} else {
+		f.cdsDistritos = aylisClientDataSet{c}
+	}
+	if c, err := f.Resolve(list, "cdsDistritosId", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsDistritosId = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsDistritosMunicipioId", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsDistritosMunicipioId = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsDistritosNome", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsDistritosNome = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "dsDistritos", "DataSource"); err != nil {
+		return err
+	} else {
+		f.dsDistritos = aylisDataSource{c}
+	}
+	if c, err := f.Resolve(list, "cdsPopulacao", "ClientDataSet"); err != nil {
+		return err
+	} else {
+		f.cdsPopulacao = aylisClientDataSet{c}
+	}
+	if c, err := f.Resolve(list, "cdsPopulacaoAno", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsPopulacaoAno = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsPopulacaoHabitantes", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsPopulacaoHabitantes = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "dsPopulacao", "DataSource"); err != nil {
+		return err
+	} else {
+		f.dsPopulacao = aylisDataSource{c}
+	}
+	if c, err := f.Resolve(list, "cdsMaiores", "ClientDataSet"); err != nil {
+		return err
+	} else {
+		f.cdsMaiores = aylisClientDataSet{c}
+	}
+	if c, err := f.Resolve(list, "cdsMaioresNome", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMaioresNome = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "cdsMaioresHabitantes", "Field"); err != nil {
+		return err
+	} else {
+		f.cdsMaioresHabitantes = aylisField{c}
+	}
+	if c, err := f.Resolve(list, "dsMaiores", "DataSource"); err != nil {
+		return err
+	} else {
+		f.dsMaiores = aylisDataSource{c}
+	}
+	if c, err := f.Resolve(list, "lblFonte", "Label"); err != nil {
+		return err
+	} else {
+		f.lblFonte = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lytListas", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytListas = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "gbEstados", "GroupBox"); err != nil {
+		return err
+	} else {
+		f.gbEstados = aylisGroupBox{c}
+	}
+	if c, err := f.Resolve(list, "grdEstados", "DataGrid"); err != nil {
+		return err
+	} else {
+		f.grdEstados = aylisDataGrid{c}
+	}
+	if c, err := f.Resolve(list, "gbDistritos", "GroupBox"); err != nil {
+		return err
+	} else {
+		f.gbDistritos = aylisGroupBox{c}
+	}
+	if c, err := f.Resolve(list, "grdDistritos", "DataGrid"); err != nil {
+		return err
+	} else {
+		f.grdDistritos = aylisDataGrid{c}
+	}
+	if c, err := f.Resolve(list, "gbMunicipios", "GroupBox"); err != nil {
+		return err
+	} else {
+		f.gbMunicipios = aylisGroupBox{c}
+	}
+	if c, err := f.Resolve(list, "grdMunicipios", "DataGrid"); err != nil {
+		return err
+	} else {
+		f.grdMunicipios = aylisDataGrid{c}
+	}
+	if c, err := f.Resolve(list, "splListas", "Splitter"); err != nil {
+		return err
+	} else {
+		f.splListas = aylisSplitter{c}
+	}
+	if c, err := f.Resolve(list, "lytPainel", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytPainel = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "pnlEstado", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlEstado = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "svgBrasil", "Svg"); err != nil {
+		return err
+	} else {
+		f.svgBrasil = aylisSvg{c}
+	}
+	if c, err := f.Resolve(list, "lytBandeiraEstado", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytBandeiraEstado = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblEstado", "Label"); err != nil {
+		return err
+	} else {
+		f.lblEstado = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblRegiao", "Label"); err != nil {
+		return err
+	} else {
+		f.lblRegiao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "imgBandeiraEstado", "Image"); err != nil {
+		return err
+	} else {
+		f.imgBandeiraEstado = aylisImage{c}
+	}
+	if c, err := f.Resolve(list, "lytNumerosEstado", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytNumerosEstado = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoPopulacao", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoPopulacao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblEstadoEstimativa", "Label"); err != nil {
+		return err
+	} else {
+		f.lblEstadoEstimativa = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoEstimativa", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoEstimativa = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoArea", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoArea = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoDensidade", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoDensidade = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoPib", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoPib = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoPibPerCapita", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoPibPerCapita = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstadoMunicipios", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstadoMunicipios = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "pnlMunicipio", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlMunicipio = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "svgMunicipio", "Svg"); err != nil {
+		return err
+	} else {
+		f.svgMunicipio = aylisSvg{c}
+	}
+	if c, err := f.Resolve(list, "svgEstado", "Svg"); err != nil {
+		return err
+	} else {
+		f.svgEstado = aylisSvg{c}
+	}
+	if c, err := f.Resolve(list, "lytBandeiraMunicipio", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytBandeiraMunicipio = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblMunicipio", "Label"); err != nil {
+		return err
+	} else {
+		f.lblMunicipio = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblCodigo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblCodigo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "imgBandeiraMunicipio", "Image"); err != nil {
+		return err
+	} else {
+		f.imgBandeiraMunicipio = aylisImage{c}
+	}
+	if c, err := f.Resolve(list, "lblSemBandeira", "Label"); err != nil {
+		return err
+	} else {
+		f.lblSemBandeira = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lytNumerosMunicipio", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytNumerosMunicipio = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "dbtMesorregiao", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtMesorregiao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtMicrorregiao", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtMicrorregiao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtRegiaoImediata", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtRegiaoImediata = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtPopulacao", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtPopulacao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblEstimativa", "Label"); err != nil {
+		return err
+	} else {
+		f.lblEstimativa = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtEstimativa", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtEstimativa = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtArea", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtArea = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtDensidade", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtDensidade = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtPib", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtPib = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtPibPerCapita", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtPibPerCapita = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "dbtPibParticipacao", "Label"); err != nil {
+		return err
+	} else {
+		f.dbtPibParticipacao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lytGraficos", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytGraficos = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "dbcPopulacao", "DBChart"); err != nil {
+		return err
+	} else {
+		f.dbcPopulacao = aylisDBChart{c}
+	}
+	if c, err := f.Resolve(list, "dbcMaiores", "DBChart"); err != nil {
+		return err
+	} else {
+		f.dbcMaiores = aylisDBChart{c}
+	}
+	if c, err := f.Resolve(list, "dbcEstados", "DBChart"); err != nil {
+		return err
+	} else {
+		f.dbcEstados = aylisDBChart{c}
+	}
+	return nil
+}
+
+// frmIBGE é a janela de frmIBGE cujo evento está rodando (a primeira, fora dos handlers).
+var frmIBGE *frmIBGEComponents
+
+func init() {
+	aylis.RegisterFormClass("frmIBGE", func(app *aylis.Aylis, id int64, name string) aylis.FormInstance {
+		return &frmIBGEComponents{aylisForm: aylisForm{aylis.Form{Component: aylis.Component{App: app, ID: id, Name: name}}}}
+	}, func(form aylis.FormInstance) { frmIBGE = form.(*frmIBGEComponents) })
+}
+
+// FindClientDataSet é o ClientDataSet deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindClientDataSet(name string) aylisClientDataSet {
+	switch name {
+	case "cdsEstados":
+		return f.cdsEstados
+	case "cdsMunicipios":
+		return f.cdsMunicipios
+	case "cdsDistritos":
+		return f.cdsDistritos
+	case "cdsPopulacao":
+		return f.cdsPopulacao
+	case "cdsMaiores":
+		return f.cdsMaiores
+	}
+	return aylisClientDataSet{}
+}
+
+// SenderAsClientDataSet é o ClientDataSet que disparou o evento.
+func (f *frmIBGEComponents) SenderAsClientDataSet(ev aylis.Event) aylisClientDataSet { return f.FindClientDataSet(ev.Sender.Name) }
+
+// FindDBChart é o DBChart deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindDBChart(name string) aylisDBChart {
+	switch name {
+	case "dbcPopulacao":
+		return f.dbcPopulacao
+	case "dbcMaiores":
+		return f.dbcMaiores
+	case "dbcEstados":
+		return f.dbcEstados
+	}
+	return aylisDBChart{}
+}
+
+// SenderAsDBChart é o DBChart que disparou o evento.
+func (f *frmIBGEComponents) SenderAsDBChart(ev aylis.Event) aylisDBChart { return f.FindDBChart(ev.Sender.Name) }
+
+// FindDataGrid é o DataGrid deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindDataGrid(name string) aylisDataGrid {
+	switch name {
+	case "grdEstados":
+		return f.grdEstados
+	case "grdDistritos":
+		return f.grdDistritos
+	case "grdMunicipios":
+		return f.grdMunicipios
+	}
+	return aylisDataGrid{}
+}
+
+// SenderAsDataGrid é o DataGrid que disparou o evento.
+func (f *frmIBGEComponents) SenderAsDataGrid(ev aylis.Event) aylisDataGrid { return f.FindDataGrid(ev.Sender.Name) }
+
+// FindDataSource é o DataSource deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindDataSource(name string) aylisDataSource {
+	switch name {
+	case "dsEstados":
+		return f.dsEstados
+	case "dsMunicipios":
+		return f.dsMunicipios
+	case "dsDistritos":
+		return f.dsDistritos
+	case "dsPopulacao":
+		return f.dsPopulacao
+	case "dsMaiores":
+		return f.dsMaiores
+	}
+	return aylisDataSource{}
+}
+
+// SenderAsDataSource é o DataSource que disparou o evento.
+func (f *frmIBGEComponents) SenderAsDataSource(ev aylis.Event) aylisDataSource { return f.FindDataSource(ev.Sender.Name) }
+
+// FindField é o Field deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindField(name string) aylisField {
+	switch name {
+	case "cdsEstadosId":
+		return f.cdsEstadosId
+	case "cdsEstadosSigla":
+		return f.cdsEstadosSigla
+	case "cdsEstadosNome":
+		return f.cdsEstadosNome
+	case "cdsEstadosRegiao":
+		return f.cdsEstadosRegiao
+	case "cdsEstadosPopulacao":
+		return f.cdsEstadosPopulacao
+	case "cdsEstadosArea":
+		return f.cdsEstadosArea
+	case "cdsEstadosDensidade":
+		return f.cdsEstadosDensidade
+	case "cdsEstadosPib":
+		return f.cdsEstadosPib
+	case "cdsEstadosPibPerCapita":
+		return f.cdsEstadosPibPerCapita
+	case "cdsEstadosEstimativa":
+		return f.cdsEstadosEstimativa
+	case "cdsEstadosEstimativaAno":
+		return f.cdsEstadosEstimativaAno
+	case "cdsEstadosMunicipios":
+		return f.cdsEstadosMunicipios
+	case "cdsEstadosBandeira":
+		return f.cdsEstadosBandeira
+	case "cdsMunicipiosId":
+		return f.cdsMunicipiosId
+	case "cdsMunicipiosUfId":
+		return f.cdsMunicipiosUfId
+	case "cdsMunicipiosUf":
+		return f.cdsMunicipiosUf
+	case "cdsMunicipiosNome":
+		return f.cdsMunicipiosNome
+	case "cdsMunicipiosMesorregiao":
+		return f.cdsMunicipiosMesorregiao
+	case "cdsMunicipiosMicrorregiao":
+		return f.cdsMunicipiosMicrorregiao
+	case "cdsMunicipiosRegiaoIntermediaria":
+		return f.cdsMunicipiosRegiaoIntermediaria
+	case "cdsMunicipiosRegiaoImediata":
+		return f.cdsMunicipiosRegiaoImediata
+	case "cdsMunicipiosPopulacao":
+		return f.cdsMunicipiosPopulacao
+	case "cdsMunicipiosArea":
+		return f.cdsMunicipiosArea
+	case "cdsMunicipiosDensidade":
+		return f.cdsMunicipiosDensidade
+	case "cdsMunicipiosPib":
+		return f.cdsMunicipiosPib
+	case "cdsMunicipiosPibParticipacao":
+		return f.cdsMunicipiosPibParticipacao
+	case "cdsMunicipiosPibPerCapita":
+		return f.cdsMunicipiosPibPerCapita
+	case "cdsMunicipiosEstimativa":
+		return f.cdsMunicipiosEstimativa
+	case "cdsMunicipiosEstimativaAno":
+		return f.cdsMunicipiosEstimativaAno
+	case "cdsMunicipiosDistritos":
+		return f.cdsMunicipiosDistritos
+	case "cdsMunicipiosBandeira":
+		return f.cdsMunicipiosBandeira
+	case "cdsDistritosId":
+		return f.cdsDistritosId
+	case "cdsDistritosMunicipioId":
+		return f.cdsDistritosMunicipioId
+	case "cdsDistritosNome":
+		return f.cdsDistritosNome
+	case "cdsPopulacaoAno":
+		return f.cdsPopulacaoAno
+	case "cdsPopulacaoHabitantes":
+		return f.cdsPopulacaoHabitantes
+	case "cdsMaioresNome":
+		return f.cdsMaioresNome
+	case "cdsMaioresHabitantes":
+		return f.cdsMaioresHabitantes
+	}
+	return aylisField{}
+}
+
+// SenderAsField é o Field que disparou o evento.
+func (f *frmIBGEComponents) SenderAsField(ev aylis.Event) aylisField { return f.FindField(ev.Sender.Name) }
+
+// FindGroupBox é o GroupBox deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindGroupBox(name string) aylisGroupBox {
+	switch name {
+	case "gbEstados":
+		return f.gbEstados
+	case "gbDistritos":
+		return f.gbDistritos
+	case "gbMunicipios":
+		return f.gbMunicipios
+	}
+	return aylisGroupBox{}
+}
+
+// SenderAsGroupBox é o GroupBox que disparou o evento.
+func (f *frmIBGEComponents) SenderAsGroupBox(ev aylis.Event) aylisGroupBox { return f.FindGroupBox(ev.Sender.Name) }
+
+// FindImage é o Image deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindImage(name string) aylisImage {
+	switch name {
+	case "imgBandeiraEstado":
+		return f.imgBandeiraEstado
+	case "imgBandeiraMunicipio":
+		return f.imgBandeiraMunicipio
+	}
+	return aylisImage{}
+}
+
+// SenderAsImage é o Image que disparou o evento.
+func (f *frmIBGEComponents) SenderAsImage(ev aylis.Event) aylisImage { return f.FindImage(ev.Sender.Name) }
+
+// FindLabel é o Label deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindLabel(name string) aylisLabel {
+	switch name {
+	case "lblFonte":
+		return f.lblFonte
+	case "lblEstado":
+		return f.lblEstado
+	case "lblRegiao":
+		return f.lblRegiao
+	case "dbtEstadoPopulacao":
+		return f.dbtEstadoPopulacao
+	case "lblEstadoEstimativa":
+		return f.lblEstadoEstimativa
+	case "dbtEstadoEstimativa":
+		return f.dbtEstadoEstimativa
+	case "dbtEstadoArea":
+		return f.dbtEstadoArea
+	case "dbtEstadoDensidade":
+		return f.dbtEstadoDensidade
+	case "dbtEstadoPib":
+		return f.dbtEstadoPib
+	case "dbtEstadoPibPerCapita":
+		return f.dbtEstadoPibPerCapita
+	case "dbtEstadoMunicipios":
+		return f.dbtEstadoMunicipios
+	case "lblMunicipio":
+		return f.lblMunicipio
+	case "lblCodigo":
+		return f.lblCodigo
+	case "lblSemBandeira":
+		return f.lblSemBandeira
+	case "dbtMesorregiao":
+		return f.dbtMesorregiao
+	case "dbtMicrorregiao":
+		return f.dbtMicrorregiao
+	case "dbtRegiaoImediata":
+		return f.dbtRegiaoImediata
+	case "dbtPopulacao":
+		return f.dbtPopulacao
+	case "lblEstimativa":
+		return f.lblEstimativa
+	case "dbtEstimativa":
+		return f.dbtEstimativa
+	case "dbtArea":
+		return f.dbtArea
+	case "dbtDensidade":
+		return f.dbtDensidade
+	case "dbtPib":
+		return f.dbtPib
+	case "dbtPibPerCapita":
+		return f.dbtPibPerCapita
+	case "dbtPibParticipacao":
+		return f.dbtPibParticipacao
+	}
+	return aylisLabel{}
+}
+
+// SenderAsLabel é o Label que disparou o evento.
+func (f *frmIBGEComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
+
+// FindLayout é o Layout deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindLayout(name string) aylisLayout {
+	switch name {
+	case "lytListas":
+		return f.lytListas
+	case "lytPainel":
+		return f.lytPainel
+	case "lytBandeiraEstado":
+		return f.lytBandeiraEstado
+	case "lytNumerosEstado":
+		return f.lytNumerosEstado
+	case "lytBandeiraMunicipio":
+		return f.lytBandeiraMunicipio
+	case "lytNumerosMunicipio":
+		return f.lytNumerosMunicipio
+	case "lytGraficos":
+		return f.lytGraficos
+	}
+	return aylisLayout{}
+}
+
+// SenderAsLayout é o Layout que disparou o evento.
+func (f *frmIBGEComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
+
+// FindPanel é o Panel deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindPanel(name string) aylisPanel {
+	switch name {
+	case "pnlEstado":
+		return f.pnlEstado
+	case "pnlMunicipio":
+		return f.pnlMunicipio
+	}
+	return aylisPanel{}
+}
+
+// SenderAsPanel é o Panel que disparou o evento.
+func (f *frmIBGEComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
+
+// FindSplitter é o Splitter deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindSplitter(name string) aylisSplitter {
+	switch name {
+	case "splListas":
+		return f.splListas
+	}
+	return aylisSplitter{}
+}
+
+// SenderAsSplitter é o Splitter que disparou o evento.
+func (f *frmIBGEComponents) SenderAsSplitter(ev aylis.Event) aylisSplitter { return f.FindSplitter(ev.Sender.Name) }
+
+// FindSvg é o Svg deste form com o nome (como o FindComponent).
+func (f *frmIBGEComponents) FindSvg(name string) aylisSvg {
+	switch name {
+	case "svgBrasil":
+		return f.svgBrasil
+	case "svgMunicipio":
+		return f.svgMunicipio
+	case "svgEstado":
+		return f.svgEstado
+	}
+	return aylisSvg{}
+}
+
+// SenderAsSvg é o Svg que disparou o evento.
+func (f *frmIBGEComponents) SenderAsSvg(ev aylis.Event) aylisSvg { return f.FindSvg(ev.Sender.Name) }

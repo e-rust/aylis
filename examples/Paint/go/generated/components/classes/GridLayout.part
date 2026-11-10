@@ -1,0 +1,168 @@
+
+// aylisGridLayout é um GridLayout de um form.
+type aylisGridLayout struct{ aylis.Component }
+
+func (c aylisGridLayout) Columns() int64 { return int64(asNumber(c.Get("columns"))) }
+func (c aylisGridLayout) SetColumns(v int64) { c.Set("columns", v) }
+
+func (c aylisGridLayout) MinColumnWidth() float64 { return asNumber(c.Get("min_column_width")) }
+func (c aylisGridLayout) SetMinColumnWidth(v float64) { c.Set("min_column_width", v) }
+
+func (c aylisGridLayout) Gap() float64 { return asNumber(c.Get("gap")) }
+func (c aylisGridLayout) SetGap(v float64) { c.Set("gap", v) }
+
+func (c aylisGridLayout) RowHeight() float64 { return asNumber(c.Get("row_height")) }
+func (c aylisGridLayout) SetRowHeight(v float64) { c.Set("row_height", v) }
+
+func (c aylisGridLayout) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisGridLayout) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisGridLayout) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisGridLayout) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisGridLayout) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisGridLayout) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisGridLayout) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisGridLayout) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisGridLayout) Align() string { return asText(c.Get("align")) }
+func (c aylisGridLayout) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisGridLayout) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisGridLayout) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisGridLayout) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisGridLayout) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisGridLayout) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisGridLayout) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisGridLayout) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisGridLayout) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisGridLayout) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisGridLayout) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisGridLayout) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisGridLayout) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisGridLayout) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisGridLayout) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisGridLayout) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisGridLayout) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisGridLayout) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisGridLayout) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisGridLayout) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisGridLayout) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisGridLayout) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisGridLayout) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisGridLayout) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisGridLayout) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisGridLayout) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisGridLayout) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisGridLayout) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisGridLayout) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisGridLayout) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisGridLayout) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisGridLayout) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisGridLayout) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisGridLayout) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisGridLayout) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisGridLayout) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisGridLayout) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisGridLayout) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisGridLayout) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisGridLayout) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisGridLayout) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisGridLayout) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisGridLayout) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisGridLayout) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisGridLayout) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisGridLayout) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisGridLayout) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisGridLayout) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisGridLayout) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisGridLayout) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisGridLayout) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisGridLayout) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisGridLayout) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisGridLayout) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisGridLayout) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisGridLayout) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisGridLayout) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisGridLayout) Style() string { return asText(c.Get("style")) }
+func (c aylisGridLayout) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisGridLayout) Theme() string { return asText(c.Get("theme")) }
+func (c aylisGridLayout) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisGridLayout) Fill() string { return asText(c.Get("fill")) }
+func (c aylisGridLayout) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisGridLayout) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisGridLayout) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisGridLayout) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisGridLayout) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisGridLayout) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisGridLayout) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisGridLayout) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisGridLayout) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisGridLayout) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisGridLayout) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisGridLayout) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisGridLayout) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisGridLayout) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisGridLayout) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisGridLayout) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisGridLayout) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisGridLayout) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisGridLayout) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisGridLayout) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisGridLayout) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisGridLayout) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisGridLayout) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisGridLayout) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisGridLayout) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisGridLayout) Hint() string { return asText(c.Get("hint")) }
+func (c aylisGridLayout) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisGridLayout) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisGridLayout) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisGridLayout) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisGridLayout) SetPopupMenu(v string) { c.Set("popup_menu", v) }

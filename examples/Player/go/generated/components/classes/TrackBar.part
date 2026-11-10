@@ -1,0 +1,184 @@
+
+// aylisTrackBar é um TrackBar de um form.
+type aylisTrackBar struct{ aylis.Component }
+
+func (c aylisTrackBar) Value() float64 { return asNumber(c.Get("value")) }
+func (c aylisTrackBar) SetValue(v float64) { c.Set("value", v) }
+
+func (c aylisTrackBar) Min() float64 { return asNumber(c.Get("min")) }
+func (c aylisTrackBar) SetMin(v float64) { c.Set("min", v) }
+
+func (c aylisTrackBar) Max() float64 { return asNumber(c.Get("max")) }
+func (c aylisTrackBar) SetMax(v float64) { c.Set("max", v) }
+
+func (c aylisTrackBar) Frequency() float64 { return asNumber(c.Get("frequency")) }
+func (c aylisTrackBar) SetFrequency(v float64) { c.Set("frequency", v) }
+
+func (c aylisTrackBar) Vertical() bool { return asBool(c.Get("vertical")) }
+func (c aylisTrackBar) SetVertical(v bool) { c.Set("vertical", v) }
+
+func (c aylisTrackBar) ThumbSize() float64 { return asNumber(c.Get("thumb_size")) }
+func (c aylisTrackBar) SetThumbSize(v float64) { c.Set("thumb_size", v) }
+
+func (c aylisTrackBar) TrackSize() float64 { return asNumber(c.Get("track_size")) }
+func (c aylisTrackBar) SetTrackSize(v float64) { c.Set("track_size", v) }
+
+func (c aylisTrackBar) SolidThumb() bool { return asBool(c.Get("solid_thumb")) }
+func (c aylisTrackBar) SetSolidThumb(v bool) { c.Set("solid_thumb", v) }
+
+func (c aylisTrackBar) Limit() float64 { return asNumber(c.Get("limit")) }
+func (c aylisTrackBar) SetLimit(v float64) { c.Set("limit", v) }
+
+func (c aylisTrackBar) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisTrackBar) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisTrackBar) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisTrackBar) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisTrackBar) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisTrackBar) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisTrackBar) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisTrackBar) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisTrackBar) Align() string { return asText(c.Get("align")) }
+func (c aylisTrackBar) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisTrackBar) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisTrackBar) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisTrackBar) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisTrackBar) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisTrackBar) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisTrackBar) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisTrackBar) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisTrackBar) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisTrackBar) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisTrackBar) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisTrackBar) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisTrackBar) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisTrackBar) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisTrackBar) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisTrackBar) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisTrackBar) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisTrackBar) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisTrackBar) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisTrackBar) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisTrackBar) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisTrackBar) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisTrackBar) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisTrackBar) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisTrackBar) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisTrackBar) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisTrackBar) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisTrackBar) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisTrackBar) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisTrackBar) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisTrackBar) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisTrackBar) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisTrackBar) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisTrackBar) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisTrackBar) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisTrackBar) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisTrackBar) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisTrackBar) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisTrackBar) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisTrackBar) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisTrackBar) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisTrackBar) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisTrackBar) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisTrackBar) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisTrackBar) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisTrackBar) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisTrackBar) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisTrackBar) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisTrackBar) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisTrackBar) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisTrackBar) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisTrackBar) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisTrackBar) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisTrackBar) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisTrackBar) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisTrackBar) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisTrackBar) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisTrackBar) Style() string { return asText(c.Get("style")) }
+func (c aylisTrackBar) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisTrackBar) Theme() string { return asText(c.Get("theme")) }
+func (c aylisTrackBar) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisTrackBar) Fill() string { return asText(c.Get("fill")) }
+func (c aylisTrackBar) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisTrackBar) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisTrackBar) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisTrackBar) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisTrackBar) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisTrackBar) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisTrackBar) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisTrackBar) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisTrackBar) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisTrackBar) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisTrackBar) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisTrackBar) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisTrackBar) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisTrackBar) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisTrackBar) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisTrackBar) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisTrackBar) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisTrackBar) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisTrackBar) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisTrackBar) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisTrackBar) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisTrackBar) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisTrackBar) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisTrackBar) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisTrackBar) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisTrackBar) Hint() string { return asText(c.Get("hint")) }
+func (c aylisTrackBar) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisTrackBar) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisTrackBar) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisTrackBar) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisTrackBar) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisTrackBar) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

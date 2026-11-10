@@ -1,0 +1,34 @@
+
+/** Um Timer de um form. */
+export class Timer extends AylisComponent {
+    get interval(): Promise<number> {
+        return this.getProp("interval");
+    }
+    set interval(value: number) {
+        this.setProp("interval", value);
+    }
+    get enabled(): Promise<boolean> {
+        return this.getProp("enabled");
+    }
+    set enabled(value: boolean) {
+        this.setProp("enabled", value);
+    }
+    get precision(): Promise<string> {
+        return this.getProp("precision");
+    }
+    set precision(value: string) {
+        this.setProp("precision", value);
+    }
+    get background(): Promise<boolean> {
+        return this.getProp("background");
+    }
+    set background(value: boolean) {
+        this.setProp("background", value);
+    }
+    get drift(): Promise<number> {
+        return this.getProp("drift");
+    }
+    set drift(value: number) {
+        this.setProp("drift", value);
+    }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Medidor",
+  "version": "1.0.0",
+  "author": "aylis",
+  "description": "Mostrador circular com o valor e um alarme acima do limite (pacote de código de exemplo).",
+  "category": "Industrial",
+  "kind": "code",
+  "crate": "medidor-aylis",
+  "component": "PressureDial",
+  "properties": [
+    { "name": "valor", "type": "number", "target": "value", "default": 0 },
+    { "name": "limite", "type": "number", "target": "alarm", "default": 80 },
+    { "name": "titulo", "type": "text", "target": "caption", "default": "Pressão" }
+  ],
+  "events": [{ "name": "on_alarme", "target": "on_alarm" }]
+}

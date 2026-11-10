@@ -1,0 +1,172 @@
+
+// aylisSeekBar é um SeekBar de um form.
+type aylisSeekBar struct{ aylis.Component }
+
+func (c aylisSeekBar) Position() float64 { return asNumber(c.Get("position")) }
+func (c aylisSeekBar) SetPosition(v float64) { c.Set("position", v) }
+
+func (c aylisSeekBar) Duration() float64 { return asNumber(c.Get("duration")) }
+func (c aylisSeekBar) SetDuration(v float64) { c.Set("duration", v) }
+
+func (c aylisSeekBar) Buffered() float64 { return asNumber(c.Get("buffered")) }
+func (c aylisSeekBar) SetBuffered(v float64) { c.Set("buffered", v) }
+
+func (c aylisSeekBar) Markers() string { return asText(c.Get("markers")) }
+func (c aylisSeekBar) SetMarkers(v string) { c.Set("markers", v) }
+
+func (c aylisSeekBar) ShowTime() bool { return asBool(c.Get("show_time")) }
+func (c aylisSeekBar) SetShowTime(v bool) { c.Set("show_time", v) }
+
+func (c aylisSeekBar) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisSeekBar) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisSeekBar) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisSeekBar) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisSeekBar) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisSeekBar) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisSeekBar) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisSeekBar) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisSeekBar) Align() string { return asText(c.Get("align")) }
+func (c aylisSeekBar) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisSeekBar) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisSeekBar) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisSeekBar) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisSeekBar) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisSeekBar) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisSeekBar) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisSeekBar) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisSeekBar) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisSeekBar) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisSeekBar) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisSeekBar) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisSeekBar) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisSeekBar) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisSeekBar) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisSeekBar) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisSeekBar) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisSeekBar) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisSeekBar) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisSeekBar) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisSeekBar) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisSeekBar) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisSeekBar) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisSeekBar) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisSeekBar) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisSeekBar) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisSeekBar) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisSeekBar) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisSeekBar) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisSeekBar) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisSeekBar) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisSeekBar) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisSeekBar) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisSeekBar) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisSeekBar) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisSeekBar) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisSeekBar) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisSeekBar) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisSeekBar) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisSeekBar) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisSeekBar) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisSeekBar) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisSeekBar) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisSeekBar) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisSeekBar) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisSeekBar) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisSeekBar) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisSeekBar) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisSeekBar) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisSeekBar) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisSeekBar) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisSeekBar) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisSeekBar) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisSeekBar) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisSeekBar) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisSeekBar) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisSeekBar) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisSeekBar) Style() string { return asText(c.Get("style")) }
+func (c aylisSeekBar) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisSeekBar) Theme() string { return asText(c.Get("theme")) }
+func (c aylisSeekBar) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisSeekBar) Fill() string { return asText(c.Get("fill")) }
+func (c aylisSeekBar) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisSeekBar) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisSeekBar) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisSeekBar) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisSeekBar) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisSeekBar) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisSeekBar) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisSeekBar) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisSeekBar) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisSeekBar) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisSeekBar) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisSeekBar) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisSeekBar) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisSeekBar) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisSeekBar) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisSeekBar) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisSeekBar) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisSeekBar) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisSeekBar) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisSeekBar) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisSeekBar) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisSeekBar) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisSeekBar) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisSeekBar) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisSeekBar) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisSeekBar) Hint() string { return asText(c.Get("hint")) }
+func (c aylisSeekBar) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisSeekBar) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisSeekBar) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisSeekBar) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisSeekBar) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisSeekBar) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

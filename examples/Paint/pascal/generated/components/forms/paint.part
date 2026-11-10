@@ -1,0 +1,726 @@
+  { O form frmPaint: a classe base com os componentes. A do form (TFrmPaint), com os
+    handlers (métodos published) e o estado, fica na unit dele. }
+  TFrmPaintBase = class(TForm)
+  published
+    lytTopo: TLayout;
+    mnuPrincipal: TMainMenu;
+    mnuArquivo: TMenuItem;
+    mnuNovo: TMenuItem;
+    mnuAbrir: TMenuItem;
+    mnuSalvar: TMenuItem;
+    mnuSalvarComo: TMenuItem;
+    mnuSep1: TMenuItem;
+    mnuSair: TMenuItem;
+    mnuEditar: TMenuItem;
+    mnuDesfazer: TMenuItem;
+    mnuRefazer: TMenuItem;
+    mnuSep2: TMenuItem;
+    mnuRecortar: TMenuItem;
+    mnuCopiar: TMenuItem;
+    mnuColar: TMenuItem;
+    mnuExcluir: TMenuItem;
+    mnuSelecionarTudo: TMenuItem;
+    mnuSep3: TMenuItem;
+    mnuLimpar: TMenuItem;
+    mnuExibir: TMenuItem;
+    mnuAmpliar: TMenuItem;
+    mnuReduzir: TMenuItem;
+    mnuTamanhoReal: TMenuItem;
+    divTopo: TDivider;
+    btnSalvar: TButton;
+    btnDesfazer: TButton;
+    btnRefazer: TButton;
+    pnlFaixa: TPanel;
+    lytSelecao: TLayout;
+    lblSelecaoGrupo: TLabel;
+    btnSelecionar: TButton;
+    divSelecao: TDivider;
+    lytFerramentas: TLayout;
+    lblFerramentasGrupo: TLabel;
+    grdFerramentas: TGridLayout;
+    btnLapis: TButton;
+    btnBalde: TButton;
+    btnBorracha: TButton;
+    btnContaGotas: TButton;
+    divFerramentas: TDivider;
+    lytPinceis: TLayout;
+    lblPinceis: TLabel;
+    btnPincel: TButton;
+    divPinceis: TDivider;
+    lytFormas: TLayout;
+    lblFormas: TLabel;
+    chkPreencher: TCheckBox;
+    grdFormas: TGridLayout;
+    btnLinha: TButton;
+    btnRetangulo: TButton;
+    btnElipse: TButton;
+    divFormas: TDivider;
+    lytTamanho: TLayout;
+    lblTamanhoGrupo: TLabel;
+    cbEspessura: TComboBox;
+    divTamanho: TDivider;
+    lytCores: TLayout;
+    lblCores: TLabel;
+    btnCor1: TCircle;
+    btnCor2: TCircle;
+    grdPaleta: TGridLayout;
+    btnPaleta01: TCircle;
+    btnPaleta02: TCircle;
+    btnPaleta03: TCircle;
+    btnPaleta04: TCircle;
+    btnPaleta05: TCircle;
+    btnPaleta06: TCircle;
+    btnPaleta07: TCircle;
+    btnPaleta08: TCircle;
+    btnPaleta09: TCircle;
+    btnPaleta10: TCircle;
+    btnPaleta11: TCircle;
+    btnPaleta12: TCircle;
+    btnPaleta13: TCircle;
+    btnPaleta14: TCircle;
+    btnPaleta15: TCircle;
+    btnPaleta16: TCircle;
+    btnPaleta17: TCircle;
+    btnPaleta18: TCircle;
+    btnPaleta19: TCircle;
+    btnPaleta20: TCircle;
+    stbStatus: TStatusBar;
+    lblPosicao: TLabel;
+    lblTamanho: TLabel;
+    lblZoom: TLabel;
+    sbxArea: TScrollBox;
+    pcDesenho: TPaintCanvas;
+    dlgAbrir: TOpenDialog;
+    dlgSalvar: TSaveDialog;
+  protected
+    procedure BindComponents(List: TJSONArray); override;
+  public
+    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    function FindButton(const Nome: string): TButton;
+    { O Button que disparou o evento (nil se não é um Button deste form). }
+    function SenderAsButton(Sender: TAylisComponent): TButton; overload;
+    function SenderAsButton(Event: TJSONObject): TButton; overload;
+    { O CheckBox deste form com o nome, como o FindComponent (nil se não há). }
+    function FindCheckBox(const Nome: string): TCheckBox;
+    { O CheckBox que disparou o evento (nil se não é um CheckBox deste form). }
+    function SenderAsCheckBox(Sender: TAylisComponent): TCheckBox; overload;
+    function SenderAsCheckBox(Event: TJSONObject): TCheckBox; overload;
+    { O Circle deste form com o nome, como o FindComponent (nil se não há). }
+    function FindCircle(const Nome: string): TCircle;
+    { O Circle que disparou o evento (nil se não é um Circle deste form). }
+    function SenderAsCircle(Sender: TAylisComponent): TCircle; overload;
+    function SenderAsCircle(Event: TJSONObject): TCircle; overload;
+    { O ComboBox deste form com o nome, como o FindComponent (nil se não há). }
+    function FindComboBox(const Nome: string): TComboBox;
+    { O ComboBox que disparou o evento (nil se não é um ComboBox deste form). }
+    function SenderAsComboBox(Sender: TAylisComponent): TComboBox; overload;
+    function SenderAsComboBox(Event: TJSONObject): TComboBox; overload;
+    { O Divider deste form com o nome, como o FindComponent (nil se não há). }
+    function FindDivider(const Nome: string): TDivider;
+    { O Divider que disparou o evento (nil se não é um Divider deste form). }
+    function SenderAsDivider(Sender: TAylisComponent): TDivider; overload;
+    function SenderAsDivider(Event: TJSONObject): TDivider; overload;
+    { O GridLayout deste form com o nome, como o FindComponent (nil se não há). }
+    function FindGridLayout(const Nome: string): TGridLayout;
+    { O GridLayout que disparou o evento (nil se não é um GridLayout deste form). }
+    function SenderAsGridLayout(Sender: TAylisComponent): TGridLayout; overload;
+    function SenderAsGridLayout(Event: TJSONObject): TGridLayout; overload;
+    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLabel(const Nome: string): TLabel;
+    { O Label que disparou o evento (nil se não é um Label deste form). }
+    function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
+    function SenderAsLabel(Event: TJSONObject): TLabel; overload;
+    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLayout(const Nome: string): TLayout;
+    { O Layout que disparou o evento (nil se não é um Layout deste form). }
+    function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
+    function SenderAsLayout(Event: TJSONObject): TLayout; overload;
+    { O MainMenu deste form com o nome, como o FindComponent (nil se não há). }
+    function FindMainMenu(const Nome: string): TMainMenu;
+    { O MainMenu que disparou o evento (nil se não é um MainMenu deste form). }
+    function SenderAsMainMenu(Sender: TAylisComponent): TMainMenu; overload;
+    function SenderAsMainMenu(Event: TJSONObject): TMainMenu; overload;
+    { O MenuItem deste form com o nome, como o FindComponent (nil se não há). }
+    function FindMenuItem(const Nome: string): TMenuItem;
+    { O MenuItem que disparou o evento (nil se não é um MenuItem deste form). }
+    function SenderAsMenuItem(Sender: TAylisComponent): TMenuItem; overload;
+    function SenderAsMenuItem(Event: TJSONObject): TMenuItem; overload;
+    { O OpenDialog deste form com o nome, como o FindComponent (nil se não há). }
+    function FindOpenDialog(const Nome: string): TOpenDialog;
+    { O OpenDialog que disparou o evento (nil se não é um OpenDialog deste form). }
+    function SenderAsOpenDialog(Sender: TAylisComponent): TOpenDialog; overload;
+    function SenderAsOpenDialog(Event: TJSONObject): TOpenDialog; overload;
+    { O PaintCanvas deste form com o nome, como o FindComponent (nil se não há). }
+    function FindPaintCanvas(const Nome: string): TPaintCanvas;
+    { O PaintCanvas que disparou o evento (nil se não é um PaintCanvas deste form). }
+    function SenderAsPaintCanvas(Sender: TAylisComponent): TPaintCanvas; overload;
+    function SenderAsPaintCanvas(Event: TJSONObject): TPaintCanvas; overload;
+    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    function FindPanel(const Nome: string): TPanel;
+    { O Panel que disparou o evento (nil se não é um Panel deste form). }
+    function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
+    function SenderAsPanel(Event: TJSONObject): TPanel; overload;
+    { O SaveDialog deste form com o nome, como o FindComponent (nil se não há). }
+    function FindSaveDialog(const Nome: string): TSaveDialog;
+    { O SaveDialog que disparou o evento (nil se não é um SaveDialog deste form). }
+    function SenderAsSaveDialog(Sender: TAylisComponent): TSaveDialog; overload;
+    function SenderAsSaveDialog(Event: TJSONObject): TSaveDialog; overload;
+    { O ScrollBox deste form com o nome, como o FindComponent (nil se não há). }
+    function FindScrollBox(const Nome: string): TScrollBox;
+    { O ScrollBox que disparou o evento (nil se não é um ScrollBox deste form). }
+    function SenderAsScrollBox(Sender: TAylisComponent): TScrollBox; overload;
+    function SenderAsScrollBox(Event: TJSONObject): TScrollBox; overload;
+    { O StatusBar deste form com o nome, como o FindComponent (nil se não há). }
+    function FindStatusBar(const Nome: string): TStatusBar;
+    { O StatusBar que disparou o evento (nil se não é um StatusBar deste form). }
+    function SenderAsStatusBar(Sender: TAylisComponent): TStatusBar; overload;
+    function SenderAsStatusBar(Event: TJSONObject): TStatusBar; overload;
+  end;
+
+
+procedure TFrmPaintBase.BindComponents(List: TJSONArray);
+begin
+  lytTopo := TLayout(Resolve(List, 'lytTopo', 'Layout', TLayout));
+  mnuPrincipal := TMainMenu(Resolve(List, 'mnuPrincipal', 'MainMenu', TMainMenu));
+  mnuArquivo := TMenuItem(Resolve(List, 'mnuArquivo', 'MenuItem', TMenuItem));
+  mnuNovo := TMenuItem(Resolve(List, 'mnuNovo', 'MenuItem', TMenuItem));
+  mnuAbrir := TMenuItem(Resolve(List, 'mnuAbrir', 'MenuItem', TMenuItem));
+  mnuSalvar := TMenuItem(Resolve(List, 'mnuSalvar', 'MenuItem', TMenuItem));
+  mnuSalvarComo := TMenuItem(Resolve(List, 'mnuSalvarComo', 'MenuItem', TMenuItem));
+  mnuSep1 := TMenuItem(Resolve(List, 'mnuSep1', 'MenuItem', TMenuItem));
+  mnuSair := TMenuItem(Resolve(List, 'mnuSair', 'MenuItem', TMenuItem));
+  mnuEditar := TMenuItem(Resolve(List, 'mnuEditar', 'MenuItem', TMenuItem));
+  mnuDesfazer := TMenuItem(Resolve(List, 'mnuDesfazer', 'MenuItem', TMenuItem));
+  mnuRefazer := TMenuItem(Resolve(List, 'mnuRefazer', 'MenuItem', TMenuItem));
+  mnuSep2 := TMenuItem(Resolve(List, 'mnuSep2', 'MenuItem', TMenuItem));
+  mnuRecortar := TMenuItem(Resolve(List, 'mnuRecortar', 'MenuItem', TMenuItem));
+  mnuCopiar := TMenuItem(Resolve(List, 'mnuCopiar', 'MenuItem', TMenuItem));
+  mnuColar := TMenuItem(Resolve(List, 'mnuColar', 'MenuItem', TMenuItem));
+  mnuExcluir := TMenuItem(Resolve(List, 'mnuExcluir', 'MenuItem', TMenuItem));
+  mnuSelecionarTudo := TMenuItem(Resolve(List, 'mnuSelecionarTudo', 'MenuItem', TMenuItem));
+  mnuSep3 := TMenuItem(Resolve(List, 'mnuSep3', 'MenuItem', TMenuItem));
+  mnuLimpar := TMenuItem(Resolve(List, 'mnuLimpar', 'MenuItem', TMenuItem));
+  mnuExibir := TMenuItem(Resolve(List, 'mnuExibir', 'MenuItem', TMenuItem));
+  mnuAmpliar := TMenuItem(Resolve(List, 'mnuAmpliar', 'MenuItem', TMenuItem));
+  mnuReduzir := TMenuItem(Resolve(List, 'mnuReduzir', 'MenuItem', TMenuItem));
+  mnuTamanhoReal := TMenuItem(Resolve(List, 'mnuTamanhoReal', 'MenuItem', TMenuItem));
+  divTopo := TDivider(Resolve(List, 'divTopo', 'Divider', TDivider));
+  btnSalvar := TButton(Resolve(List, 'btnSalvar', 'Button', TButton));
+  btnDesfazer := TButton(Resolve(List, 'btnDesfazer', 'Button', TButton));
+  btnRefazer := TButton(Resolve(List, 'btnRefazer', 'Button', TButton));
+  pnlFaixa := TPanel(Resolve(List, 'pnlFaixa', 'Panel', TPanel));
+  lytSelecao := TLayout(Resolve(List, 'lytSelecao', 'Layout', TLayout));
+  lblSelecaoGrupo := TLabel(Resolve(List, 'lblSelecaoGrupo', 'Label', TLabel));
+  btnSelecionar := TButton(Resolve(List, 'btnSelecionar', 'Button', TButton));
+  divSelecao := TDivider(Resolve(List, 'divSelecao', 'Divider', TDivider));
+  lytFerramentas := TLayout(Resolve(List, 'lytFerramentas', 'Layout', TLayout));
+  lblFerramentasGrupo := TLabel(Resolve(List, 'lblFerramentasGrupo', 'Label', TLabel));
+  grdFerramentas := TGridLayout(Resolve(List, 'grdFerramentas', 'GridLayout', TGridLayout));
+  btnLapis := TButton(Resolve(List, 'btnLapis', 'Button', TButton));
+  btnBalde := TButton(Resolve(List, 'btnBalde', 'Button', TButton));
+  btnBorracha := TButton(Resolve(List, 'btnBorracha', 'Button', TButton));
+  btnContaGotas := TButton(Resolve(List, 'btnContaGotas', 'Button', TButton));
+  divFerramentas := TDivider(Resolve(List, 'divFerramentas', 'Divider', TDivider));
+  lytPinceis := TLayout(Resolve(List, 'lytPinceis', 'Layout', TLayout));
+  lblPinceis := TLabel(Resolve(List, 'lblPinceis', 'Label', TLabel));
+  btnPincel := TButton(Resolve(List, 'btnPincel', 'Button', TButton));
+  divPinceis := TDivider(Resolve(List, 'divPinceis', 'Divider', TDivider));
+  lytFormas := TLayout(Resolve(List, 'lytFormas', 'Layout', TLayout));
+  lblFormas := TLabel(Resolve(List, 'lblFormas', 'Label', TLabel));
+  chkPreencher := TCheckBox(Resolve(List, 'chkPreencher', 'CheckBox', TCheckBox));
+  grdFormas := TGridLayout(Resolve(List, 'grdFormas', 'GridLayout', TGridLayout));
+  btnLinha := TButton(Resolve(List, 'btnLinha', 'Button', TButton));
+  btnRetangulo := TButton(Resolve(List, 'btnRetangulo', 'Button', TButton));
+  btnElipse := TButton(Resolve(List, 'btnElipse', 'Button', TButton));
+  divFormas := TDivider(Resolve(List, 'divFormas', 'Divider', TDivider));
+  lytTamanho := TLayout(Resolve(List, 'lytTamanho', 'Layout', TLayout));
+  lblTamanhoGrupo := TLabel(Resolve(List, 'lblTamanhoGrupo', 'Label', TLabel));
+  cbEspessura := TComboBox(Resolve(List, 'cbEspessura', 'ComboBox', TComboBox));
+  divTamanho := TDivider(Resolve(List, 'divTamanho', 'Divider', TDivider));
+  lytCores := TLayout(Resolve(List, 'lytCores', 'Layout', TLayout));
+  lblCores := TLabel(Resolve(List, 'lblCores', 'Label', TLabel));
+  btnCor1 := TCircle(Resolve(List, 'btnCor1', 'Circle', TCircle));
+  btnCor2 := TCircle(Resolve(List, 'btnCor2', 'Circle', TCircle));
+  grdPaleta := TGridLayout(Resolve(List, 'grdPaleta', 'GridLayout', TGridLayout));
+  btnPaleta01 := TCircle(Resolve(List, 'btnPaleta01', 'Circle', TCircle));
+  btnPaleta02 := TCircle(Resolve(List, 'btnPaleta02', 'Circle', TCircle));
+  btnPaleta03 := TCircle(Resolve(List, 'btnPaleta03', 'Circle', TCircle));
+  btnPaleta04 := TCircle(Resolve(List, 'btnPaleta04', 'Circle', TCircle));
+  btnPaleta05 := TCircle(Resolve(List, 'btnPaleta05', 'Circle', TCircle));
+  btnPaleta06 := TCircle(Resolve(List, 'btnPaleta06', 'Circle', TCircle));
+  btnPaleta07 := TCircle(Resolve(List, 'btnPaleta07', 'Circle', TCircle));
+  btnPaleta08 := TCircle(Resolve(List, 'btnPaleta08', 'Circle', TCircle));
+  btnPaleta09 := TCircle(Resolve(List, 'btnPaleta09', 'Circle', TCircle));
+  btnPaleta10 := TCircle(Resolve(List, 'btnPaleta10', 'Circle', TCircle));
+  btnPaleta11 := TCircle(Resolve(List, 'btnPaleta11', 'Circle', TCircle));
+  btnPaleta12 := TCircle(Resolve(List, 'btnPaleta12', 'Circle', TCircle));
+  btnPaleta13 := TCircle(Resolve(List, 'btnPaleta13', 'Circle', TCircle));
+  btnPaleta14 := TCircle(Resolve(List, 'btnPaleta14', 'Circle', TCircle));
+  btnPaleta15 := TCircle(Resolve(List, 'btnPaleta15', 'Circle', TCircle));
+  btnPaleta16 := TCircle(Resolve(List, 'btnPaleta16', 'Circle', TCircle));
+  btnPaleta17 := TCircle(Resolve(List, 'btnPaleta17', 'Circle', TCircle));
+  btnPaleta18 := TCircle(Resolve(List, 'btnPaleta18', 'Circle', TCircle));
+  btnPaleta19 := TCircle(Resolve(List, 'btnPaleta19', 'Circle', TCircle));
+  btnPaleta20 := TCircle(Resolve(List, 'btnPaleta20', 'Circle', TCircle));
+  stbStatus := TStatusBar(Resolve(List, 'stbStatus', 'StatusBar', TStatusBar));
+  lblPosicao := TLabel(Resolve(List, 'lblPosicao', 'Label', TLabel));
+  lblTamanho := TLabel(Resolve(List, 'lblTamanho', 'Label', TLabel));
+  lblZoom := TLabel(Resolve(List, 'lblZoom', 'Label', TLabel));
+  sbxArea := TScrollBox(Resolve(List, 'sbxArea', 'ScrollBox', TScrollBox));
+  pcDesenho := TPaintCanvas(Resolve(List, 'pcDesenho', 'PaintCanvas', TPaintCanvas));
+  dlgAbrir := TOpenDialog(Resolve(List, 'dlgAbrir', 'OpenDialog', TOpenDialog));
+  dlgSalvar := TSaveDialog(Resolve(List, 'dlgSalvar', 'SaveDialog', TSaveDialog));
+end;
+
+function TFrmPaintBase.FindButton(const Nome: string): TButton;
+begin
+  Result := nil;
+  if Nome = 'btnSalvar' then
+    Result := btnSalvar;
+  if Nome = 'btnDesfazer' then
+    Result := btnDesfazer;
+  if Nome = 'btnRefazer' then
+    Result := btnRefazer;
+  if Nome = 'btnSelecionar' then
+    Result := btnSelecionar;
+  if Nome = 'btnLapis' then
+    Result := btnLapis;
+  if Nome = 'btnBalde' then
+    Result := btnBalde;
+  if Nome = 'btnBorracha' then
+    Result := btnBorracha;
+  if Nome = 'btnContaGotas' then
+    Result := btnContaGotas;
+  if Nome = 'btnPincel' then
+    Result := btnPincel;
+  if Nome = 'btnLinha' then
+    Result := btnLinha;
+  if Nome = 'btnRetangulo' then
+    Result := btnRetangulo;
+  if Nome = 'btnElipse' then
+    Result := btnElipse;
+end;
+
+function TFrmPaintBase.SenderAsButton(Sender: TAylisComponent): TButton;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindButton(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsButton(Event: TJSONObject): TButton;
+begin
+  Result := FindButton(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindCheckBox(const Nome: string): TCheckBox;
+begin
+  Result := nil;
+  if Nome = 'chkPreencher' then
+    Result := chkPreencher;
+end;
+
+function TFrmPaintBase.SenderAsCheckBox(Sender: TAylisComponent): TCheckBox;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindCheckBox(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsCheckBox(Event: TJSONObject): TCheckBox;
+begin
+  Result := FindCheckBox(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindCircle(const Nome: string): TCircle;
+begin
+  Result := nil;
+  if Nome = 'btnCor1' then
+    Result := btnCor1;
+  if Nome = 'btnCor2' then
+    Result := btnCor2;
+  if Nome = 'btnPaleta01' then
+    Result := btnPaleta01;
+  if Nome = 'btnPaleta02' then
+    Result := btnPaleta02;
+  if Nome = 'btnPaleta03' then
+    Result := btnPaleta03;
+  if Nome = 'btnPaleta04' then
+    Result := btnPaleta04;
+  if Nome = 'btnPaleta05' then
+    Result := btnPaleta05;
+  if Nome = 'btnPaleta06' then
+    Result := btnPaleta06;
+  if Nome = 'btnPaleta07' then
+    Result := btnPaleta07;
+  if Nome = 'btnPaleta08' then
+    Result := btnPaleta08;
+  if Nome = 'btnPaleta09' then
+    Result := btnPaleta09;
+  if Nome = 'btnPaleta10' then
+    Result := btnPaleta10;
+  if Nome = 'btnPaleta11' then
+    Result := btnPaleta11;
+  if Nome = 'btnPaleta12' then
+    Result := btnPaleta12;
+  if Nome = 'btnPaleta13' then
+    Result := btnPaleta13;
+  if Nome = 'btnPaleta14' then
+    Result := btnPaleta14;
+  if Nome = 'btnPaleta15' then
+    Result := btnPaleta15;
+  if Nome = 'btnPaleta16' then
+    Result := btnPaleta16;
+  if Nome = 'btnPaleta17' then
+    Result := btnPaleta17;
+  if Nome = 'btnPaleta18' then
+    Result := btnPaleta18;
+  if Nome = 'btnPaleta19' then
+    Result := btnPaleta19;
+  if Nome = 'btnPaleta20' then
+    Result := btnPaleta20;
+end;
+
+function TFrmPaintBase.SenderAsCircle(Sender: TAylisComponent): TCircle;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindCircle(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsCircle(Event: TJSONObject): TCircle;
+begin
+  Result := FindCircle(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindComboBox(const Nome: string): TComboBox;
+begin
+  Result := nil;
+  if Nome = 'cbEspessura' then
+    Result := cbEspessura;
+end;
+
+function TFrmPaintBase.SenderAsComboBox(Sender: TAylisComponent): TComboBox;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindComboBox(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsComboBox(Event: TJSONObject): TComboBox;
+begin
+  Result := FindComboBox(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindDivider(const Nome: string): TDivider;
+begin
+  Result := nil;
+  if Nome = 'divTopo' then
+    Result := divTopo;
+  if Nome = 'divSelecao' then
+    Result := divSelecao;
+  if Nome = 'divFerramentas' then
+    Result := divFerramentas;
+  if Nome = 'divPinceis' then
+    Result := divPinceis;
+  if Nome = 'divFormas' then
+    Result := divFormas;
+  if Nome = 'divTamanho' then
+    Result := divTamanho;
+end;
+
+function TFrmPaintBase.SenderAsDivider(Sender: TAylisComponent): TDivider;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindDivider(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsDivider(Event: TJSONObject): TDivider;
+begin
+  Result := FindDivider(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindGridLayout(const Nome: string): TGridLayout;
+begin
+  Result := nil;
+  if Nome = 'grdFerramentas' then
+    Result := grdFerramentas;
+  if Nome = 'grdFormas' then
+    Result := grdFormas;
+  if Nome = 'grdPaleta' then
+    Result := grdPaleta;
+end;
+
+function TFrmPaintBase.SenderAsGridLayout(Sender: TAylisComponent): TGridLayout;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindGridLayout(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsGridLayout(Event: TJSONObject): TGridLayout;
+begin
+  Result := FindGridLayout(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindLabel(const Nome: string): TLabel;
+begin
+  Result := nil;
+  if Nome = 'lblSelecaoGrupo' then
+    Result := lblSelecaoGrupo;
+  if Nome = 'lblFerramentasGrupo' then
+    Result := lblFerramentasGrupo;
+  if Nome = 'lblPinceis' then
+    Result := lblPinceis;
+  if Nome = 'lblFormas' then
+    Result := lblFormas;
+  if Nome = 'lblTamanhoGrupo' then
+    Result := lblTamanhoGrupo;
+  if Nome = 'lblCores' then
+    Result := lblCores;
+  if Nome = 'lblPosicao' then
+    Result := lblPosicao;
+  if Nome = 'lblTamanho' then
+    Result := lblTamanho;
+  if Nome = 'lblZoom' then
+    Result := lblZoom;
+end;
+
+function TFrmPaintBase.SenderAsLabel(Sender: TAylisComponent): TLabel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLabel(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsLabel(Event: TJSONObject): TLabel;
+begin
+  Result := FindLabel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindLayout(const Nome: string): TLayout;
+begin
+  Result := nil;
+  if Nome = 'lytTopo' then
+    Result := lytTopo;
+  if Nome = 'lytSelecao' then
+    Result := lytSelecao;
+  if Nome = 'lytFerramentas' then
+    Result := lytFerramentas;
+  if Nome = 'lytPinceis' then
+    Result := lytPinceis;
+  if Nome = 'lytFormas' then
+    Result := lytFormas;
+  if Nome = 'lytTamanho' then
+    Result := lytTamanho;
+  if Nome = 'lytCores' then
+    Result := lytCores;
+end;
+
+function TFrmPaintBase.SenderAsLayout(Sender: TAylisComponent): TLayout;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLayout(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsLayout(Event: TJSONObject): TLayout;
+begin
+  Result := FindLayout(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindMainMenu(const Nome: string): TMainMenu;
+begin
+  Result := nil;
+  if Nome = 'mnuPrincipal' then
+    Result := mnuPrincipal;
+end;
+
+function TFrmPaintBase.SenderAsMainMenu(Sender: TAylisComponent): TMainMenu;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindMainMenu(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsMainMenu(Event: TJSONObject): TMainMenu;
+begin
+  Result := FindMainMenu(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindMenuItem(const Nome: string): TMenuItem;
+begin
+  Result := nil;
+  if Nome = 'mnuArquivo' then
+    Result := mnuArquivo;
+  if Nome = 'mnuNovo' then
+    Result := mnuNovo;
+  if Nome = 'mnuAbrir' then
+    Result := mnuAbrir;
+  if Nome = 'mnuSalvar' then
+    Result := mnuSalvar;
+  if Nome = 'mnuSalvarComo' then
+    Result := mnuSalvarComo;
+  if Nome = 'mnuSep1' then
+    Result := mnuSep1;
+  if Nome = 'mnuSair' then
+    Result := mnuSair;
+  if Nome = 'mnuEditar' then
+    Result := mnuEditar;
+  if Nome = 'mnuDesfazer' then
+    Result := mnuDesfazer;
+  if Nome = 'mnuRefazer' then
+    Result := mnuRefazer;
+  if Nome = 'mnuSep2' then
+    Result := mnuSep2;
+  if Nome = 'mnuRecortar' then
+    Result := mnuRecortar;
+  if Nome = 'mnuCopiar' then
+    Result := mnuCopiar;
+  if Nome = 'mnuColar' then
+    Result := mnuColar;
+  if Nome = 'mnuExcluir' then
+    Result := mnuExcluir;
+  if Nome = 'mnuSelecionarTudo' then
+    Result := mnuSelecionarTudo;
+  if Nome = 'mnuSep3' then
+    Result := mnuSep3;
+  if Nome = 'mnuLimpar' then
+    Result := mnuLimpar;
+  if Nome = 'mnuExibir' then
+    Result := mnuExibir;
+  if Nome = 'mnuAmpliar' then
+    Result := mnuAmpliar;
+  if Nome = 'mnuReduzir' then
+    Result := mnuReduzir;
+  if Nome = 'mnuTamanhoReal' then
+    Result := mnuTamanhoReal;
+end;
+
+function TFrmPaintBase.SenderAsMenuItem(Sender: TAylisComponent): TMenuItem;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindMenuItem(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsMenuItem(Event: TJSONObject): TMenuItem;
+begin
+  Result := FindMenuItem(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindOpenDialog(const Nome: string): TOpenDialog;
+begin
+  Result := nil;
+  if Nome = 'dlgAbrir' then
+    Result := dlgAbrir;
+end;
+
+function TFrmPaintBase.SenderAsOpenDialog(Sender: TAylisComponent): TOpenDialog;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindOpenDialog(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsOpenDialog(Event: TJSONObject): TOpenDialog;
+begin
+  Result := FindOpenDialog(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindPaintCanvas(const Nome: string): TPaintCanvas;
+begin
+  Result := nil;
+  if Nome = 'pcDesenho' then
+    Result := pcDesenho;
+end;
+
+function TFrmPaintBase.SenderAsPaintCanvas(Sender: TAylisComponent): TPaintCanvas;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindPaintCanvas(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsPaintCanvas(Event: TJSONObject): TPaintCanvas;
+begin
+  Result := FindPaintCanvas(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindPanel(const Nome: string): TPanel;
+begin
+  Result := nil;
+  if Nome = 'pnlFaixa' then
+    Result := pnlFaixa;
+end;
+
+function TFrmPaintBase.SenderAsPanel(Sender: TAylisComponent): TPanel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindPanel(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsPanel(Event: TJSONObject): TPanel;
+begin
+  Result := FindPanel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindSaveDialog(const Nome: string): TSaveDialog;
+begin
+  Result := nil;
+  if Nome = 'dlgSalvar' then
+    Result := dlgSalvar;
+end;
+
+function TFrmPaintBase.SenderAsSaveDialog(Sender: TAylisComponent): TSaveDialog;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindSaveDialog(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsSaveDialog(Event: TJSONObject): TSaveDialog;
+begin
+  Result := FindSaveDialog(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindScrollBox(const Nome: string): TScrollBox;
+begin
+  Result := nil;
+  if Nome = 'sbxArea' then
+    Result := sbxArea;
+end;
+
+function TFrmPaintBase.SenderAsScrollBox(Sender: TAylisComponent): TScrollBox;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindScrollBox(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsScrollBox(Event: TJSONObject): TScrollBox;
+begin
+  Result := FindScrollBox(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPaintBase.FindStatusBar(const Nome: string): TStatusBar;
+begin
+  Result := nil;
+  if Nome = 'stbStatus' then
+    Result := stbStatus;
+end;
+
+function TFrmPaintBase.SenderAsStatusBar(Sender: TAylisComponent): TStatusBar;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindStatusBar(Sender.Name);
+end;
+
+function TFrmPaintBase.SenderAsStatusBar(Event: TJSONObject): TStatusBar;
+begin
+  Result := FindStatusBar(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+

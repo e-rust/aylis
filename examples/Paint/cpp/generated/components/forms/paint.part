@@ -1,0 +1,383 @@
+
+// O form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+struct FrmPaintComponents : Form {
+    Layout lytTopo;
+    MainMenu mnuPrincipal;
+    MenuItem mnuArquivo;
+    MenuItem mnuNovo;
+    MenuItem mnuAbrir;
+    MenuItem mnuSalvar;
+    MenuItem mnuSalvarComo;
+    MenuItem mnuSep1;
+    MenuItem mnuSair;
+    MenuItem mnuEditar;
+    MenuItem mnuDesfazer;
+    MenuItem mnuRefazer;
+    MenuItem mnuSep2;
+    MenuItem mnuRecortar;
+    MenuItem mnuCopiar;
+    MenuItem mnuColar;
+    MenuItem mnuExcluir;
+    MenuItem mnuSelecionarTudo;
+    MenuItem mnuSep3;
+    MenuItem mnuLimpar;
+    MenuItem mnuExibir;
+    MenuItem mnuAmpliar;
+    MenuItem mnuReduzir;
+    MenuItem mnuTamanhoReal;
+    Divider divTopo;
+    Button btnSalvar;
+    Button btnDesfazer;
+    Button btnRefazer;
+    Panel pnlFaixa;
+    Layout lytSelecao;
+    Label lblSelecaoGrupo;
+    Button btnSelecionar;
+    Divider divSelecao;
+    Layout lytFerramentas;
+    Label lblFerramentasGrupo;
+    GridLayout grdFerramentas;
+    Button btnLapis;
+    Button btnBalde;
+    Button btnBorracha;
+    Button btnContaGotas;
+    Divider divFerramentas;
+    Layout lytPinceis;
+    Label lblPinceis;
+    Button btnPincel;
+    Divider divPinceis;
+    Layout lytFormas;
+    Label lblFormas;
+    CheckBox chkPreencher;
+    GridLayout grdFormas;
+    Button btnLinha;
+    Button btnRetangulo;
+    Button btnElipse;
+    Divider divFormas;
+    Layout lytTamanho;
+    Label lblTamanhoGrupo;
+    ComboBox cbEspessura;
+    Divider divTamanho;
+    Layout lytCores;
+    Label lblCores;
+    Circle btnCor1;
+    Circle btnCor2;
+    GridLayout grdPaleta;
+    Circle btnPaleta01;
+    Circle btnPaleta02;
+    Circle btnPaleta03;
+    Circle btnPaleta04;
+    Circle btnPaleta05;
+    Circle btnPaleta06;
+    Circle btnPaleta07;
+    Circle btnPaleta08;
+    Circle btnPaleta09;
+    Circle btnPaleta10;
+    Circle btnPaleta11;
+    Circle btnPaleta12;
+    Circle btnPaleta13;
+    Circle btnPaleta14;
+    Circle btnPaleta15;
+    Circle btnPaleta16;
+    Circle btnPaleta17;
+    Circle btnPaleta18;
+    Circle btnPaleta19;
+    Circle btnPaleta20;
+    StatusBar stbStatus;
+    Label lblPosicao;
+    Label lblTamanho;
+    Label lblZoom;
+    ScrollBox sbxArea;
+    PaintCanvas pcDesenho;
+    OpenDialog dlgAbrir;
+    SaveDialog dlgSalvar;
+
+    FrmPaintComponents() = default;
+    using Form::Form;
+
+    // Monta os componentes da janela (o form que não bate com o código é erro).
+    void bind(const aylis::Json& list) override {
+        lytTopo = Layout(resolve_(list, "lytTopo", "Layout"));
+        mnuPrincipal = MainMenu(resolve_(list, "mnuPrincipal", "MainMenu"));
+        mnuArquivo = MenuItem(resolve_(list, "mnuArquivo", "MenuItem"));
+        mnuNovo = MenuItem(resolve_(list, "mnuNovo", "MenuItem"));
+        mnuAbrir = MenuItem(resolve_(list, "mnuAbrir", "MenuItem"));
+        mnuSalvar = MenuItem(resolve_(list, "mnuSalvar", "MenuItem"));
+        mnuSalvarComo = MenuItem(resolve_(list, "mnuSalvarComo", "MenuItem"));
+        mnuSep1 = MenuItem(resolve_(list, "mnuSep1", "MenuItem"));
+        mnuSair = MenuItem(resolve_(list, "mnuSair", "MenuItem"));
+        mnuEditar = MenuItem(resolve_(list, "mnuEditar", "MenuItem"));
+        mnuDesfazer = MenuItem(resolve_(list, "mnuDesfazer", "MenuItem"));
+        mnuRefazer = MenuItem(resolve_(list, "mnuRefazer", "MenuItem"));
+        mnuSep2 = MenuItem(resolve_(list, "mnuSep2", "MenuItem"));
+        mnuRecortar = MenuItem(resolve_(list, "mnuRecortar", "MenuItem"));
+        mnuCopiar = MenuItem(resolve_(list, "mnuCopiar", "MenuItem"));
+        mnuColar = MenuItem(resolve_(list, "mnuColar", "MenuItem"));
+        mnuExcluir = MenuItem(resolve_(list, "mnuExcluir", "MenuItem"));
+        mnuSelecionarTudo = MenuItem(resolve_(list, "mnuSelecionarTudo", "MenuItem"));
+        mnuSep3 = MenuItem(resolve_(list, "mnuSep3", "MenuItem"));
+        mnuLimpar = MenuItem(resolve_(list, "mnuLimpar", "MenuItem"));
+        mnuExibir = MenuItem(resolve_(list, "mnuExibir", "MenuItem"));
+        mnuAmpliar = MenuItem(resolve_(list, "mnuAmpliar", "MenuItem"));
+        mnuReduzir = MenuItem(resolve_(list, "mnuReduzir", "MenuItem"));
+        mnuTamanhoReal = MenuItem(resolve_(list, "mnuTamanhoReal", "MenuItem"));
+        divTopo = Divider(resolve_(list, "divTopo", "Divider"));
+        btnSalvar = Button(resolve_(list, "btnSalvar", "Button"));
+        btnDesfazer = Button(resolve_(list, "btnDesfazer", "Button"));
+        btnRefazer = Button(resolve_(list, "btnRefazer", "Button"));
+        pnlFaixa = Panel(resolve_(list, "pnlFaixa", "Panel"));
+        lytSelecao = Layout(resolve_(list, "lytSelecao", "Layout"));
+        lblSelecaoGrupo = Label(resolve_(list, "lblSelecaoGrupo", "Label"));
+        btnSelecionar = Button(resolve_(list, "btnSelecionar", "Button"));
+        divSelecao = Divider(resolve_(list, "divSelecao", "Divider"));
+        lytFerramentas = Layout(resolve_(list, "lytFerramentas", "Layout"));
+        lblFerramentasGrupo = Label(resolve_(list, "lblFerramentasGrupo", "Label"));
+        grdFerramentas = GridLayout(resolve_(list, "grdFerramentas", "GridLayout"));
+        btnLapis = Button(resolve_(list, "btnLapis", "Button"));
+        btnBalde = Button(resolve_(list, "btnBalde", "Button"));
+        btnBorracha = Button(resolve_(list, "btnBorracha", "Button"));
+        btnContaGotas = Button(resolve_(list, "btnContaGotas", "Button"));
+        divFerramentas = Divider(resolve_(list, "divFerramentas", "Divider"));
+        lytPinceis = Layout(resolve_(list, "lytPinceis", "Layout"));
+        lblPinceis = Label(resolve_(list, "lblPinceis", "Label"));
+        btnPincel = Button(resolve_(list, "btnPincel", "Button"));
+        divPinceis = Divider(resolve_(list, "divPinceis", "Divider"));
+        lytFormas = Layout(resolve_(list, "lytFormas", "Layout"));
+        lblFormas = Label(resolve_(list, "lblFormas", "Label"));
+        chkPreencher = CheckBox(resolve_(list, "chkPreencher", "CheckBox"));
+        grdFormas = GridLayout(resolve_(list, "grdFormas", "GridLayout"));
+        btnLinha = Button(resolve_(list, "btnLinha", "Button"));
+        btnRetangulo = Button(resolve_(list, "btnRetangulo", "Button"));
+        btnElipse = Button(resolve_(list, "btnElipse", "Button"));
+        divFormas = Divider(resolve_(list, "divFormas", "Divider"));
+        lytTamanho = Layout(resolve_(list, "lytTamanho", "Layout"));
+        lblTamanhoGrupo = Label(resolve_(list, "lblTamanhoGrupo", "Label"));
+        cbEspessura = ComboBox(resolve_(list, "cbEspessura", "ComboBox"));
+        divTamanho = Divider(resolve_(list, "divTamanho", "Divider"));
+        lytCores = Layout(resolve_(list, "lytCores", "Layout"));
+        lblCores = Label(resolve_(list, "lblCores", "Label"));
+        btnCor1 = Circle(resolve_(list, "btnCor1", "Circle"));
+        btnCor2 = Circle(resolve_(list, "btnCor2", "Circle"));
+        grdPaleta = GridLayout(resolve_(list, "grdPaleta", "GridLayout"));
+        btnPaleta01 = Circle(resolve_(list, "btnPaleta01", "Circle"));
+        btnPaleta02 = Circle(resolve_(list, "btnPaleta02", "Circle"));
+        btnPaleta03 = Circle(resolve_(list, "btnPaleta03", "Circle"));
+        btnPaleta04 = Circle(resolve_(list, "btnPaleta04", "Circle"));
+        btnPaleta05 = Circle(resolve_(list, "btnPaleta05", "Circle"));
+        btnPaleta06 = Circle(resolve_(list, "btnPaleta06", "Circle"));
+        btnPaleta07 = Circle(resolve_(list, "btnPaleta07", "Circle"));
+        btnPaleta08 = Circle(resolve_(list, "btnPaleta08", "Circle"));
+        btnPaleta09 = Circle(resolve_(list, "btnPaleta09", "Circle"));
+        btnPaleta10 = Circle(resolve_(list, "btnPaleta10", "Circle"));
+        btnPaleta11 = Circle(resolve_(list, "btnPaleta11", "Circle"));
+        btnPaleta12 = Circle(resolve_(list, "btnPaleta12", "Circle"));
+        btnPaleta13 = Circle(resolve_(list, "btnPaleta13", "Circle"));
+        btnPaleta14 = Circle(resolve_(list, "btnPaleta14", "Circle"));
+        btnPaleta15 = Circle(resolve_(list, "btnPaleta15", "Circle"));
+        btnPaleta16 = Circle(resolve_(list, "btnPaleta16", "Circle"));
+        btnPaleta17 = Circle(resolve_(list, "btnPaleta17", "Circle"));
+        btnPaleta18 = Circle(resolve_(list, "btnPaleta18", "Circle"));
+        btnPaleta19 = Circle(resolve_(list, "btnPaleta19", "Circle"));
+        btnPaleta20 = Circle(resolve_(list, "btnPaleta20", "Circle"));
+        stbStatus = StatusBar(resolve_(list, "stbStatus", "StatusBar"));
+        lblPosicao = Label(resolve_(list, "lblPosicao", "Label"));
+        lblTamanho = Label(resolve_(list, "lblTamanho", "Label"));
+        lblZoom = Label(resolve_(list, "lblZoom", "Label"));
+        sbxArea = ScrollBox(resolve_(list, "sbxArea", "ScrollBox"));
+        pcDesenho = PaintCanvas(resolve_(list, "pcDesenho", "PaintCanvas"));
+        dlgAbrir = OpenDialog(resolve_(list, "dlgAbrir", "OpenDialog"));
+        dlgSalvar = SaveDialog(resolve_(list, "dlgSalvar", "SaveDialog"));
+    }
+    // O Button deste form com o nome (como o FindComponent; vazio se não há).
+    Button find_button(const std::string& name) const {
+        if (name == "btnSalvar") return btnSalvar;
+        if (name == "btnDesfazer") return btnDesfazer;
+        if (name == "btnRefazer") return btnRefazer;
+        if (name == "btnSelecionar") return btnSelecionar;
+        if (name == "btnLapis") return btnLapis;
+        if (name == "btnBalde") return btnBalde;
+        if (name == "btnBorracha") return btnBorracha;
+        if (name == "btnContaGotas") return btnContaGotas;
+        if (name == "btnPincel") return btnPincel;
+        if (name == "btnLinha") return btnLinha;
+        if (name == "btnRetangulo") return btnRetangulo;
+        if (name == "btnElipse") return btnElipse;
+        return Button();
+    }
+    // O Button que disparou o evento.
+    Button sender_as_button(const aylis::Event& ev) const { return find_button(ev.sender_name); }
+    // O CheckBox deste form com o nome (como o FindComponent; vazio se não há).
+    CheckBox find_check_box(const std::string& name) const {
+        if (name == "chkPreencher") return chkPreencher;
+        return CheckBox();
+    }
+    // O CheckBox que disparou o evento.
+    CheckBox sender_as_check_box(const aylis::Event& ev) const { return find_check_box(ev.sender_name); }
+    // O Circle deste form com o nome (como o FindComponent; vazio se não há).
+    Circle find_circle(const std::string& name) const {
+        if (name == "btnCor1") return btnCor1;
+        if (name == "btnCor2") return btnCor2;
+        if (name == "btnPaleta01") return btnPaleta01;
+        if (name == "btnPaleta02") return btnPaleta02;
+        if (name == "btnPaleta03") return btnPaleta03;
+        if (name == "btnPaleta04") return btnPaleta04;
+        if (name == "btnPaleta05") return btnPaleta05;
+        if (name == "btnPaleta06") return btnPaleta06;
+        if (name == "btnPaleta07") return btnPaleta07;
+        if (name == "btnPaleta08") return btnPaleta08;
+        if (name == "btnPaleta09") return btnPaleta09;
+        if (name == "btnPaleta10") return btnPaleta10;
+        if (name == "btnPaleta11") return btnPaleta11;
+        if (name == "btnPaleta12") return btnPaleta12;
+        if (name == "btnPaleta13") return btnPaleta13;
+        if (name == "btnPaleta14") return btnPaleta14;
+        if (name == "btnPaleta15") return btnPaleta15;
+        if (name == "btnPaleta16") return btnPaleta16;
+        if (name == "btnPaleta17") return btnPaleta17;
+        if (name == "btnPaleta18") return btnPaleta18;
+        if (name == "btnPaleta19") return btnPaleta19;
+        if (name == "btnPaleta20") return btnPaleta20;
+        return Circle();
+    }
+    // O Circle que disparou o evento.
+    Circle sender_as_circle(const aylis::Event& ev) const { return find_circle(ev.sender_name); }
+    // O ComboBox deste form com o nome (como o FindComponent; vazio se não há).
+    ComboBox find_combo_box(const std::string& name) const {
+        if (name == "cbEspessura") return cbEspessura;
+        return ComboBox();
+    }
+    // O ComboBox que disparou o evento.
+    ComboBox sender_as_combo_box(const aylis::Event& ev) const { return find_combo_box(ev.sender_name); }
+    // O Divider deste form com o nome (como o FindComponent; vazio se não há).
+    Divider find_divider(const std::string& name) const {
+        if (name == "divTopo") return divTopo;
+        if (name == "divSelecao") return divSelecao;
+        if (name == "divFerramentas") return divFerramentas;
+        if (name == "divPinceis") return divPinceis;
+        if (name == "divFormas") return divFormas;
+        if (name == "divTamanho") return divTamanho;
+        return Divider();
+    }
+    // O Divider que disparou o evento.
+    Divider sender_as_divider(const aylis::Event& ev) const { return find_divider(ev.sender_name); }
+    // O GridLayout deste form com o nome (como o FindComponent; vazio se não há).
+    GridLayout find_grid_layout(const std::string& name) const {
+        if (name == "grdFerramentas") return grdFerramentas;
+        if (name == "grdFormas") return grdFormas;
+        if (name == "grdPaleta") return grdPaleta;
+        return GridLayout();
+    }
+    // O GridLayout que disparou o evento.
+    GridLayout sender_as_grid_layout(const aylis::Event& ev) const { return find_grid_layout(ev.sender_name); }
+    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    Label find_label(const std::string& name) const {
+        if (name == "lblSelecaoGrupo") return lblSelecaoGrupo;
+        if (name == "lblFerramentasGrupo") return lblFerramentasGrupo;
+        if (name == "lblPinceis") return lblPinceis;
+        if (name == "lblFormas") return lblFormas;
+        if (name == "lblTamanhoGrupo") return lblTamanhoGrupo;
+        if (name == "lblCores") return lblCores;
+        if (name == "lblPosicao") return lblPosicao;
+        if (name == "lblTamanho") return lblTamanho;
+        if (name == "lblZoom") return lblZoom;
+        return Label();
+    }
+    // O Label que disparou o evento.
+    Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
+    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    Layout find_layout(const std::string& name) const {
+        if (name == "lytTopo") return lytTopo;
+        if (name == "lytSelecao") return lytSelecao;
+        if (name == "lytFerramentas") return lytFerramentas;
+        if (name == "lytPinceis") return lytPinceis;
+        if (name == "lytFormas") return lytFormas;
+        if (name == "lytTamanho") return lytTamanho;
+        if (name == "lytCores") return lytCores;
+        return Layout();
+    }
+    // O Layout que disparou o evento.
+    Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
+    // O MainMenu deste form com o nome (como o FindComponent; vazio se não há).
+    MainMenu find_main_menu(const std::string& name) const {
+        if (name == "mnuPrincipal") return mnuPrincipal;
+        return MainMenu();
+    }
+    // O MainMenu que disparou o evento.
+    MainMenu sender_as_main_menu(const aylis::Event& ev) const { return find_main_menu(ev.sender_name); }
+    // O MenuItem deste form com o nome (como o FindComponent; vazio se não há).
+    MenuItem find_menu_item(const std::string& name) const {
+        if (name == "mnuArquivo") return mnuArquivo;
+        if (name == "mnuNovo") return mnuNovo;
+        if (name == "mnuAbrir") return mnuAbrir;
+        if (name == "mnuSalvar") return mnuSalvar;
+        if (name == "mnuSalvarComo") return mnuSalvarComo;
+        if (name == "mnuSep1") return mnuSep1;
+        if (name == "mnuSair") return mnuSair;
+        if (name == "mnuEditar") return mnuEditar;
+        if (name == "mnuDesfazer") return mnuDesfazer;
+        if (name == "mnuRefazer") return mnuRefazer;
+        if (name == "mnuSep2") return mnuSep2;
+        if (name == "mnuRecortar") return mnuRecortar;
+        if (name == "mnuCopiar") return mnuCopiar;
+        if (name == "mnuColar") return mnuColar;
+        if (name == "mnuExcluir") return mnuExcluir;
+        if (name == "mnuSelecionarTudo") return mnuSelecionarTudo;
+        if (name == "mnuSep3") return mnuSep3;
+        if (name == "mnuLimpar") return mnuLimpar;
+        if (name == "mnuExibir") return mnuExibir;
+        if (name == "mnuAmpliar") return mnuAmpliar;
+        if (name == "mnuReduzir") return mnuReduzir;
+        if (name == "mnuTamanhoReal") return mnuTamanhoReal;
+        return MenuItem();
+    }
+    // O MenuItem que disparou o evento.
+    MenuItem sender_as_menu_item(const aylis::Event& ev) const { return find_menu_item(ev.sender_name); }
+    // O OpenDialog deste form com o nome (como o FindComponent; vazio se não há).
+    OpenDialog find_open_dialog(const std::string& name) const {
+        if (name == "dlgAbrir") return dlgAbrir;
+        return OpenDialog();
+    }
+    // O OpenDialog que disparou o evento.
+    OpenDialog sender_as_open_dialog(const aylis::Event& ev) const { return find_open_dialog(ev.sender_name); }
+    // O PaintCanvas deste form com o nome (como o FindComponent; vazio se não há).
+    PaintCanvas find_paint_canvas(const std::string& name) const {
+        if (name == "pcDesenho") return pcDesenho;
+        return PaintCanvas();
+    }
+    // O PaintCanvas que disparou o evento.
+    PaintCanvas sender_as_paint_canvas(const aylis::Event& ev) const { return find_paint_canvas(ev.sender_name); }
+    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    Panel find_panel(const std::string& name) const {
+        if (name == "pnlFaixa") return pnlFaixa;
+        return Panel();
+    }
+    // O Panel que disparou o evento.
+    Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
+    // O SaveDialog deste form com o nome (como o FindComponent; vazio se não há).
+    SaveDialog find_save_dialog(const std::string& name) const {
+        if (name == "dlgSalvar") return dlgSalvar;
+        return SaveDialog();
+    }
+    // O SaveDialog que disparou o evento.
+    SaveDialog sender_as_save_dialog(const aylis::Event& ev) const { return find_save_dialog(ev.sender_name); }
+    // O ScrollBox deste form com o nome (como o FindComponent; vazio se não há).
+    ScrollBox find_scroll_box(const std::string& name) const {
+        if (name == "sbxArea") return sbxArea;
+        return ScrollBox();
+    }
+    // O ScrollBox que disparou o evento.
+    ScrollBox sender_as_scroll_box(const aylis::Event& ev) const { return find_scroll_box(ev.sender_name); }
+    // O StatusBar deste form com o nome (como o FindComponent; vazio se não há).
+    StatusBar find_status_bar(const std::string& name) const {
+        if (name == "stbStatus") return stbStatus;
+        return StatusBar();
+    }
+    // O StatusBar que disparou o evento.
+    StatusBar sender_as_status_bar(const aylis::Event& ev) const { return find_status_bar(ev.sender_name); }
+};
+
+inline aylis_components::FrmPaintComponents frmPaint;
+
+    aylis::Aylis::register_form_class(
+        "frmPaint", [](aylis::Aylis* app, long long id, const std::string& name) -> std::unique_ptr<aylis::FormBase> { return std::make_unique<FrmPaintComponents>(app, id, name); },
+        [](aylis::FormBase& form) { ::frmPaint = static_cast<FrmPaintComponents&>(form); });

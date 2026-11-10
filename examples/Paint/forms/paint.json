@@ -1,0 +1,811 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPaint",
+    "caption": "Sem título - Paint",
+    "width": 1040,
+    "height": 700,
+    "children": [
+      {
+        "class": "Layout",
+        "name": "lytTopo",
+        "height": 32,
+        "align": "top",
+        "children": [
+          {
+            "class": "MainMenu",
+            "name": "mnuPrincipal",
+            "width": 190,
+            "align": "left",
+            "children": [
+              {
+                "class": "MenuItem",
+                "name": "mnuArquivo",
+                "text": "Arquivo",
+                "children": [
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuNovo",
+                    "text": "Novo",
+                    "shortcut": "Ctrl+N",
+                    "icon": "file",
+                    "on_click": "novo_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuAbrir",
+                    "text": "Abrir",
+                    "shortcut": "Ctrl+O",
+                    "icon": "folder",
+                    "on_click": "abrir_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSalvar",
+                    "text": "Salvar",
+                    "shortcut": "Ctrl+S",
+                    "icon": "download",
+                    "on_click": "salvar_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSalvarComo",
+                    "text": "Salvar como",
+                    "shortcut": "Ctrl+Shift+S",
+                    "on_click": "salvar_como_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSep1",
+                    "text": "-"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSair",
+                    "text": "Sair",
+                    "on_click": "sair_click"
+                  }
+                ]
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuEditar",
+                "text": "Editar",
+                "children": [
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuDesfazer",
+                    "text": "Desfazer",
+                    "shortcut": "Ctrl+Z",
+                    "enabled": false,
+                    "icon": "undo",
+                    "on_click": "desfazer_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuRefazer",
+                    "text": "Refazer",
+                    "shortcut": "Ctrl+Y",
+                    "enabled": false,
+                    "icon": "redo",
+                    "on_click": "refazer_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSep2",
+                    "text": "-"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuRecortar",
+                    "text": "Recortar",
+                    "shortcut": "Ctrl+X",
+                    "icon": "scissors",
+                    "on_click": "recortar_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuCopiar",
+                    "text": "Copiar",
+                    "shortcut": "Ctrl+C",
+                    "icon": "copy",
+                    "on_click": "copiar_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuColar",
+                    "text": "Colar",
+                    "shortcut": "Ctrl+V",
+                    "on_click": "colar_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuExcluir",
+                    "text": "Excluir a seleção",
+                    "shortcut": "Delete",
+                    "icon": "trash",
+                    "on_click": "excluir_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSelecionarTudo",
+                    "text": "Selecionar tudo",
+                    "shortcut": "Ctrl+A",
+                    "icon": "select",
+                    "on_click": "selecionar_tudo_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuSep3",
+                    "text": "-"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuLimpar",
+                    "text": "Limpar a imagem",
+                    "shortcut": "Ctrl+Shift+N",
+                    "on_click": "limpar_click"
+                  }
+                ]
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuExibir",
+                "text": "Exibir",
+                "children": [
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuAmpliar",
+                    "text": "Ampliar",
+                    "shortcut": "Ctrl+PgUp",
+                    "on_click": "ampliar_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuReduzir",
+                    "text": "Reduzir",
+                    "shortcut": "Ctrl+PgDn",
+                    "on_click": "reduzir_click"
+                  },
+                  {
+                    "class": "MenuItem",
+                    "name": "mnuTamanhoReal",
+                    "text": "100%",
+                    "shortcut": "Ctrl+0",
+                    "on_click": "tamanho_real_click"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divTopo",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [4, 7, 8, 7]
+          },
+          {
+            "class": "Button",
+            "name": "btnSalvar",
+            "icon": "download",
+            "icon_size": 16,
+            "width": 32,
+            "align": "left",
+            "margins": [0, 2, 2, 2],
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "hint": "Salvar (Ctrl+S)",
+            "on_click": "salvar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnDesfazer",
+            "icon": "undo",
+            "icon_size": 16,
+            "width": 32,
+            "align": "left",
+            "margins": [0, 2, 2, 2],
+            "enabled": false,
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "hint": "Desfazer (Ctrl+Z)",
+            "on_click": "desfazer_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnRefazer",
+            "icon": "redo",
+            "icon_size": 16,
+            "width": 32,
+            "align": "left",
+            "margins": [0, 2, 2, 2],
+            "enabled": false,
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "hint": "Refazer (Ctrl+Y)",
+            "on_click": "refazer_click"
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlFaixa",
+        "align": "top",
+        "margins": [6, 0, 6, 6],
+        "padding": [8, 6, 8, 2],
+        "children": [
+          {
+            "class": "Layout",
+            "name": "lytSelecao",
+            "width": 64,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblSelecaoGrupo",
+                "text": "Seleção",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "Button",
+                "name": "btnSelecionar",
+                "icon": "select",
+                "icon_size": 24,
+                "checkable": true,
+                "left": 8,
+                "top": 6,
+                "width": 48,
+                "height": 48,
+                "can_focus": false,
+                "style": "flat",
+                "border_color": "#00000000",
+                "hint": "Seleção retangular (arraste; as setas movem)",
+                "on_click": "ferramenta_click"
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divSelecao",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [6, 4]
+          },
+          {
+            "class": "Layout",
+            "name": "lytFerramentas",
+            "width": 84,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblFerramentasGrupo",
+                "text": "Ferramentas",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdFerramentas",
+                "columns": 2,
+                "gap": 4,
+                "row_height": 32,
+                "align": "client",
+                "margins": [6, 2, 6, 0],
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnLapis",
+                    "icon": "pencil",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "checked": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Lápis",
+                    "on_click": "ferramenta_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnBalde",
+                    "icon": "bucket",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Preencher com cor",
+                    "on_click": "ferramenta_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnBorracha",
+                    "icon": "eraser",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Borracha",
+                    "on_click": "ferramenta_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnContaGotas",
+                    "icon": "eyedropper",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Selecionador de cor",
+                    "on_click": "ferramenta_click"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divFerramentas",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [6, 4]
+          },
+          {
+            "class": "Layout",
+            "name": "lytPinceis",
+            "width": 64,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblPinceis",
+                "text": "Pincéis",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "Button",
+                "name": "btnPincel",
+                "icon": "brush",
+                "icon_size": 24,
+                "checkable": true,
+                "left": 8,
+                "top": 6,
+                "width": 48,
+                "height": 48,
+                "can_focus": false,
+                "style": "flat",
+                "border_color": "#00000000",
+                "hint": "Pincel",
+                "on_click": "ferramenta_click"
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divPinceis",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [6, 4]
+          },
+          {
+            "class": "Layout",
+            "name": "lytFormas",
+            "width": 128,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblFormas",
+                "text": "Formas",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "CheckBox",
+                "name": "chkPreencher",
+                "text": "Preencher",
+                "on_change": "preencher_change",
+                "align": "bottom",
+                "margins": [6, 0, 0, 0],
+                "font_size": 12
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdFormas",
+                "columns": 3,
+                "gap": 4,
+                "row_height": 32,
+                "align": "client",
+                "margins": [6, 2, 6, 0],
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnLinha",
+                    "icon": "line",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Linha",
+                    "on_click": "ferramenta_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnRetangulo",
+                    "icon": "square",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Retângulo",
+                    "on_click": "ferramenta_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnElipse",
+                    "icon": "ellipse",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Elipse",
+                    "on_click": "ferramenta_click"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divFormas",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [6, 4]
+          },
+          {
+            "class": "Layout",
+            "name": "lytTamanho",
+            "width": 96,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblTamanhoGrupo",
+                "text": "Tamanho",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "ComboBox",
+                "name": "cbEspessura",
+                "items": "1 px;3 px;5 px;8 px;12 px;20 px",
+                "item_index": 1,
+                "on_change": "espessura_change",
+                "align": "top",
+                "margins": [4, 12, 4, 0]
+              }
+            ]
+          },
+          {
+            "class": "Divider",
+            "name": "divTamanho",
+            "vertical": true,
+            "width": 1,
+            "align": "left",
+            "margins": [6, 4]
+          },
+          {
+            "class": "Layout",
+            "name": "lytCores",
+            "width": 380,
+            "align": "left",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblCores",
+                "text": "Cores",
+                "h_align": "center",
+                "color": "text_muted",
+                "height": 18,
+                "align": "bottom",
+                "font_size": 11
+              },
+              {
+                "class": "Circle",
+                "name": "btnCor1",
+                "fill": "#000000",
+                "stroke": "#0067C0",
+                "stroke_width": 3,
+                "width": 40,
+                "align": "left",
+                "margins": [4, 8, 6, 22],
+                "cursor": "pointer",
+                "hint": "Cor 1 (botão esquerdo)",
+                "on_click": "cor1_click"
+              },
+              {
+                "class": "Circle",
+                "name": "btnCor2",
+                "fill": "#FFFFFF",
+                "stroke": "#9A9A9A",
+                "width": 30,
+                "align": "left",
+                "margins": [0, 13, 12, 27],
+                "cursor": "pointer",
+                "hint": "Cor 2 (botão direito e preenchimento)",
+                "on_click": "cor2_click"
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdPaleta",
+                "columns": 10,
+                "gap": 4,
+                "row_height": 22,
+                "align": "client",
+                "margins": [0, 6, 0, 0],
+                "children": [
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta01",
+                    "fill": "#000000",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta02",
+                    "fill": "#7F7F7F",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta03",
+                    "fill": "#880015",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta04",
+                    "fill": "#ED1C24",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta05",
+                    "fill": "#FF7F27",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta06",
+                    "fill": "#FFF200",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta07",
+                    "fill": "#22B14C",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta08",
+                    "fill": "#00A2E8",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta09",
+                    "fill": "#3F48CC",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta10",
+                    "fill": "#A349A4",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta11",
+                    "fill": "#FFFFFF",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta12",
+                    "fill": "#C3C3C3",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta13",
+                    "fill": "#B97A57",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta14",
+                    "fill": "#FFAEC9",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta15",
+                    "fill": "#FFC90E",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta16",
+                    "fill": "#EFE4B0",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta17",
+                    "fill": "#B5E61D",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta18",
+                    "fill": "#99D9EA",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta19",
+                    "fill": "#7092BE",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  },
+                  {
+                    "class": "Circle",
+                    "name": "btnPaleta20",
+                    "fill": "#C8BFE7",
+                    "stroke": "#C8C8C8",
+                    "cursor": "pointer",
+                    "on_click": "paleta_click"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "StatusBar",
+        "name": "stbStatus",
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblPosicao",
+            "width": 150,
+            "align": "left",
+            "font_size": 12
+          },
+          {
+            "class": "Label",
+            "name": "lblTamanho",
+            "text": "640 × 400px",
+            "width": 150,
+            "align": "left",
+            "font_size": 12
+          },
+          {
+            "class": "Label",
+            "name": "lblZoom",
+            "text": "100%",
+            "h_align": "trailing",
+            "width": 70,
+            "align": "right",
+            "font_size": 12
+          }
+        ]
+      },
+      {
+        "class": "ScrollBox",
+        "name": "sbxArea",
+        "horizontal": true,
+        "align": "client",
+        "padding": [0, 0, 0, 10],
+        "fill": "#EEF0F4",
+        "children": [
+          {
+            "class": "PaintCanvas",
+            "name": "pcDesenho",
+            "on_change": "desenho_change",
+            "on_pick": "desenho_pick",
+            "on_cursor": "desenho_cursor",
+            "left": 16,
+            "top": 16
+          }
+        ]
+      },
+      {
+        "class": "OpenDialog",
+        "name": "dlgAbrir",
+        "title": "Abrir",
+        "filter": "Imagens|*.png;*.jpg;*.jpeg;*.bmp;*.gif|Todos os arquivos|*.*",
+        "on_select": "abrir_select"
+      },
+      {
+        "class": "SaveDialog",
+        "name": "dlgSalvar",
+        "title": "Salvar como",
+        "filter": "PNG|*.png|JPEG|*.jpg|Bitmap|*.bmp",
+        "on_select": "salvar_select"
+      }
+    ]
+  }
+}

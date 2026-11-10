@@ -1,0 +1,10 @@
+
+    /// <summary>Um Timer de um form.</summary>
+    public class Timer(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public double Interval { get => Number(GetProp("interval")); set => SetProp("interval", value); }
+        public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
+        public string Precision { get => Text(GetProp("precision")); set => SetProp("precision", value); }
+        public bool Background { get => Bool(GetProp("background")); set => SetProp("background", value); }
+        public double Drift { get => Number(GetProp("drift")); set => SetProp("drift", value); }
+    }

@@ -1,0 +1,31 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Abas",
+    "on_show": "principal_show",
+    "width": 1000,
+    "height": 640,
+    "children": [
+      {
+        "class": "TabStrip",
+        "name": "tbsAbas",
+        "page_host": "lytPaginas",
+        "on_change": "abas_change",
+        "on_add": "abas_add",
+        "align": "top"
+      },
+      {
+        "class": "StatusBar",
+        "name": "stbDica",
+        "text": "Arraste uma aba para fora: vira janela. Arraste para a faixa de outra janela: ela vai para lá (a janela de uma aba só vai inteira)."
+      },
+      {
+        "class": "Layout",
+        "name": "lytPaginas",
+        "align": "client"
+      }
+    ]
+  }
+}

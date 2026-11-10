@@ -1,0 +1,479 @@
+
+    public static FrmPaintComponents frmPaint;
+
+        Aylis.registerFormClass("frmPaint", FrmPaintComponents::new, form -> frmPaint = (FrmPaintComponents) form);
+
+
+    /** O form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+    public static final class FrmPaintComponents extends Form {
+        public Layout lytTopo;
+        public MainMenu mnuPrincipal;
+        public MenuItem mnuArquivo;
+        public MenuItem mnuNovo;
+        public MenuItem mnuAbrir;
+        public MenuItem mnuSalvar;
+        public MenuItem mnuSalvarComo;
+        public MenuItem mnuSep1;
+        public MenuItem mnuSair;
+        public MenuItem mnuEditar;
+        public MenuItem mnuDesfazer;
+        public MenuItem mnuRefazer;
+        public MenuItem mnuSep2;
+        public MenuItem mnuRecortar;
+        public MenuItem mnuCopiar;
+        public MenuItem mnuColar;
+        public MenuItem mnuExcluir;
+        public MenuItem mnuSelecionarTudo;
+        public MenuItem mnuSep3;
+        public MenuItem mnuLimpar;
+        public MenuItem mnuExibir;
+        public MenuItem mnuAmpliar;
+        public MenuItem mnuReduzir;
+        public MenuItem mnuTamanhoReal;
+        public Divider divTopo;
+        public Button btnSalvar;
+        public Button btnDesfazer;
+        public Button btnRefazer;
+        public Panel pnlFaixa;
+        public Layout lytSelecao;
+        public Label lblSelecaoGrupo;
+        public Button btnSelecionar;
+        public Divider divSelecao;
+        public Layout lytFerramentas;
+        public Label lblFerramentasGrupo;
+        public GridLayout grdFerramentas;
+        public Button btnLapis;
+        public Button btnBalde;
+        public Button btnBorracha;
+        public Button btnContaGotas;
+        public Divider divFerramentas;
+        public Layout lytPinceis;
+        public Label lblPinceis;
+        public Button btnPincel;
+        public Divider divPinceis;
+        public Layout lytFormas;
+        public Label lblFormas;
+        public CheckBox chkPreencher;
+        public GridLayout grdFormas;
+        public Button btnLinha;
+        public Button btnRetangulo;
+        public Button btnElipse;
+        public Divider divFormas;
+        public Layout lytTamanho;
+        public Label lblTamanhoGrupo;
+        public ComboBox cbEspessura;
+        public Divider divTamanho;
+        public Layout lytCores;
+        public Label lblCores;
+        public Circle btnCor1;
+        public Circle btnCor2;
+        public GridLayout grdPaleta;
+        public Circle btnPaleta01;
+        public Circle btnPaleta02;
+        public Circle btnPaleta03;
+        public Circle btnPaleta04;
+        public Circle btnPaleta05;
+        public Circle btnPaleta06;
+        public Circle btnPaleta07;
+        public Circle btnPaleta08;
+        public Circle btnPaleta09;
+        public Circle btnPaleta10;
+        public Circle btnPaleta11;
+        public Circle btnPaleta12;
+        public Circle btnPaleta13;
+        public Circle btnPaleta14;
+        public Circle btnPaleta15;
+        public Circle btnPaleta16;
+        public Circle btnPaleta17;
+        public Circle btnPaleta18;
+        public Circle btnPaleta19;
+        public Circle btnPaleta20;
+        public StatusBar stbStatus;
+        public Label lblPosicao;
+        public Label lblTamanho;
+        public Label lblZoom;
+        public ScrollBox sbxArea;
+        public PaintCanvas pcDesenho;
+        public OpenDialog dlgAbrir;
+        public SaveDialog dlgSalvar;
+
+        public FrmPaintComponents(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        @Override
+        public void bind(java.util.List<java.util.Map<String, Object>> list) {
+            lytTopo = resolve(list, "lytTopo", "Layout", Layout::new);
+            mnuPrincipal = resolve(list, "mnuPrincipal", "MainMenu", MainMenu::new);
+            mnuArquivo = resolve(list, "mnuArquivo", "MenuItem", MenuItem::new);
+            mnuNovo = resolve(list, "mnuNovo", "MenuItem", MenuItem::new);
+            mnuAbrir = resolve(list, "mnuAbrir", "MenuItem", MenuItem::new);
+            mnuSalvar = resolve(list, "mnuSalvar", "MenuItem", MenuItem::new);
+            mnuSalvarComo = resolve(list, "mnuSalvarComo", "MenuItem", MenuItem::new);
+            mnuSep1 = resolve(list, "mnuSep1", "MenuItem", MenuItem::new);
+            mnuSair = resolve(list, "mnuSair", "MenuItem", MenuItem::new);
+            mnuEditar = resolve(list, "mnuEditar", "MenuItem", MenuItem::new);
+            mnuDesfazer = resolve(list, "mnuDesfazer", "MenuItem", MenuItem::new);
+            mnuRefazer = resolve(list, "mnuRefazer", "MenuItem", MenuItem::new);
+            mnuSep2 = resolve(list, "mnuSep2", "MenuItem", MenuItem::new);
+            mnuRecortar = resolve(list, "mnuRecortar", "MenuItem", MenuItem::new);
+            mnuCopiar = resolve(list, "mnuCopiar", "MenuItem", MenuItem::new);
+            mnuColar = resolve(list, "mnuColar", "MenuItem", MenuItem::new);
+            mnuExcluir = resolve(list, "mnuExcluir", "MenuItem", MenuItem::new);
+            mnuSelecionarTudo = resolve(list, "mnuSelecionarTudo", "MenuItem", MenuItem::new);
+            mnuSep3 = resolve(list, "mnuSep3", "MenuItem", MenuItem::new);
+            mnuLimpar = resolve(list, "mnuLimpar", "MenuItem", MenuItem::new);
+            mnuExibir = resolve(list, "mnuExibir", "MenuItem", MenuItem::new);
+            mnuAmpliar = resolve(list, "mnuAmpliar", "MenuItem", MenuItem::new);
+            mnuReduzir = resolve(list, "mnuReduzir", "MenuItem", MenuItem::new);
+            mnuTamanhoReal = resolve(list, "mnuTamanhoReal", "MenuItem", MenuItem::new);
+            divTopo = resolve(list, "divTopo", "Divider", Divider::new);
+            btnSalvar = resolve(list, "btnSalvar", "Button", Button::new);
+            btnDesfazer = resolve(list, "btnDesfazer", "Button", Button::new);
+            btnRefazer = resolve(list, "btnRefazer", "Button", Button::new);
+            pnlFaixa = resolve(list, "pnlFaixa", "Panel", Panel::new);
+            lytSelecao = resolve(list, "lytSelecao", "Layout", Layout::new);
+            lblSelecaoGrupo = resolve(list, "lblSelecaoGrupo", "Label", Label::new);
+            btnSelecionar = resolve(list, "btnSelecionar", "Button", Button::new);
+            divSelecao = resolve(list, "divSelecao", "Divider", Divider::new);
+            lytFerramentas = resolve(list, "lytFerramentas", "Layout", Layout::new);
+            lblFerramentasGrupo = resolve(list, "lblFerramentasGrupo", "Label", Label::new);
+            grdFerramentas = resolve(list, "grdFerramentas", "GridLayout", GridLayout::new);
+            btnLapis = resolve(list, "btnLapis", "Button", Button::new);
+            btnBalde = resolve(list, "btnBalde", "Button", Button::new);
+            btnBorracha = resolve(list, "btnBorracha", "Button", Button::new);
+            btnContaGotas = resolve(list, "btnContaGotas", "Button", Button::new);
+            divFerramentas = resolve(list, "divFerramentas", "Divider", Divider::new);
+            lytPinceis = resolve(list, "lytPinceis", "Layout", Layout::new);
+            lblPinceis = resolve(list, "lblPinceis", "Label", Label::new);
+            btnPincel = resolve(list, "btnPincel", "Button", Button::new);
+            divPinceis = resolve(list, "divPinceis", "Divider", Divider::new);
+            lytFormas = resolve(list, "lytFormas", "Layout", Layout::new);
+            lblFormas = resolve(list, "lblFormas", "Label", Label::new);
+            chkPreencher = resolve(list, "chkPreencher", "CheckBox", CheckBox::new);
+            grdFormas = resolve(list, "grdFormas", "GridLayout", GridLayout::new);
+            btnLinha = resolve(list, "btnLinha", "Button", Button::new);
+            btnRetangulo = resolve(list, "btnRetangulo", "Button", Button::new);
+            btnElipse = resolve(list, "btnElipse", "Button", Button::new);
+            divFormas = resolve(list, "divFormas", "Divider", Divider::new);
+            lytTamanho = resolve(list, "lytTamanho", "Layout", Layout::new);
+            lblTamanhoGrupo = resolve(list, "lblTamanhoGrupo", "Label", Label::new);
+            cbEspessura = resolve(list, "cbEspessura", "ComboBox", ComboBox::new);
+            divTamanho = resolve(list, "divTamanho", "Divider", Divider::new);
+            lytCores = resolve(list, "lytCores", "Layout", Layout::new);
+            lblCores = resolve(list, "lblCores", "Label", Label::new);
+            btnCor1 = resolve(list, "btnCor1", "Circle", Circle::new);
+            btnCor2 = resolve(list, "btnCor2", "Circle", Circle::new);
+            grdPaleta = resolve(list, "grdPaleta", "GridLayout", GridLayout::new);
+            btnPaleta01 = resolve(list, "btnPaleta01", "Circle", Circle::new);
+            btnPaleta02 = resolve(list, "btnPaleta02", "Circle", Circle::new);
+            btnPaleta03 = resolve(list, "btnPaleta03", "Circle", Circle::new);
+            btnPaleta04 = resolve(list, "btnPaleta04", "Circle", Circle::new);
+            btnPaleta05 = resolve(list, "btnPaleta05", "Circle", Circle::new);
+            btnPaleta06 = resolve(list, "btnPaleta06", "Circle", Circle::new);
+            btnPaleta07 = resolve(list, "btnPaleta07", "Circle", Circle::new);
+            btnPaleta08 = resolve(list, "btnPaleta08", "Circle", Circle::new);
+            btnPaleta09 = resolve(list, "btnPaleta09", "Circle", Circle::new);
+            btnPaleta10 = resolve(list, "btnPaleta10", "Circle", Circle::new);
+            btnPaleta11 = resolve(list, "btnPaleta11", "Circle", Circle::new);
+            btnPaleta12 = resolve(list, "btnPaleta12", "Circle", Circle::new);
+            btnPaleta13 = resolve(list, "btnPaleta13", "Circle", Circle::new);
+            btnPaleta14 = resolve(list, "btnPaleta14", "Circle", Circle::new);
+            btnPaleta15 = resolve(list, "btnPaleta15", "Circle", Circle::new);
+            btnPaleta16 = resolve(list, "btnPaleta16", "Circle", Circle::new);
+            btnPaleta17 = resolve(list, "btnPaleta17", "Circle", Circle::new);
+            btnPaleta18 = resolve(list, "btnPaleta18", "Circle", Circle::new);
+            btnPaleta19 = resolve(list, "btnPaleta19", "Circle", Circle::new);
+            btnPaleta20 = resolve(list, "btnPaleta20", "Circle", Circle::new);
+            stbStatus = resolve(list, "stbStatus", "StatusBar", StatusBar::new);
+            lblPosicao = resolve(list, "lblPosicao", "Label", Label::new);
+            lblTamanho = resolve(list, "lblTamanho", "Label", Label::new);
+            lblZoom = resolve(list, "lblZoom", "Label", Label::new);
+            sbxArea = resolve(list, "sbxArea", "ScrollBox", ScrollBox::new);
+            pcDesenho = resolve(list, "pcDesenho", "PaintCanvas", PaintCanvas::new);
+            dlgAbrir = resolve(list, "dlgAbrir", "OpenDialog", OpenDialog::new);
+            dlgSalvar = resolve(list, "dlgSalvar", "SaveDialog", SaveDialog::new);
+        }
+
+        /** O Button deste form com o nome (como o FindComponent). */
+        public Button findButton(String name) {
+            return switch (name) {
+                case "btnSalvar" -> btnSalvar;
+                case "btnDesfazer" -> btnDesfazer;
+                case "btnRefazer" -> btnRefazer;
+                case "btnSelecionar" -> btnSelecionar;
+                case "btnLapis" -> btnLapis;
+                case "btnBalde" -> btnBalde;
+                case "btnBorracha" -> btnBorracha;
+                case "btnContaGotas" -> btnContaGotas;
+                case "btnPincel" -> btnPincel;
+                case "btnLinha" -> btnLinha;
+                case "btnRetangulo" -> btnRetangulo;
+                case "btnElipse" -> btnElipse;
+                default -> null;
+            };
+        }
+
+        /** O Button que disparou o evento. */
+        public Button senderAsButton(Aylis.Event ev) {
+            return findButton(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O CheckBox deste form com o nome (como o FindComponent). */
+        public CheckBox findCheckBox(String name) {
+            return switch (name) {
+                case "chkPreencher" -> chkPreencher;
+                default -> null;
+            };
+        }
+
+        /** O CheckBox que disparou o evento. */
+        public CheckBox senderAsCheckBox(Aylis.Event ev) {
+            return findCheckBox(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Circle deste form com o nome (como o FindComponent). */
+        public Circle findCircle(String name) {
+            return switch (name) {
+                case "btnCor1" -> btnCor1;
+                case "btnCor2" -> btnCor2;
+                case "btnPaleta01" -> btnPaleta01;
+                case "btnPaleta02" -> btnPaleta02;
+                case "btnPaleta03" -> btnPaleta03;
+                case "btnPaleta04" -> btnPaleta04;
+                case "btnPaleta05" -> btnPaleta05;
+                case "btnPaleta06" -> btnPaleta06;
+                case "btnPaleta07" -> btnPaleta07;
+                case "btnPaleta08" -> btnPaleta08;
+                case "btnPaleta09" -> btnPaleta09;
+                case "btnPaleta10" -> btnPaleta10;
+                case "btnPaleta11" -> btnPaleta11;
+                case "btnPaleta12" -> btnPaleta12;
+                case "btnPaleta13" -> btnPaleta13;
+                case "btnPaleta14" -> btnPaleta14;
+                case "btnPaleta15" -> btnPaleta15;
+                case "btnPaleta16" -> btnPaleta16;
+                case "btnPaleta17" -> btnPaleta17;
+                case "btnPaleta18" -> btnPaleta18;
+                case "btnPaleta19" -> btnPaleta19;
+                case "btnPaleta20" -> btnPaleta20;
+                default -> null;
+            };
+        }
+
+        /** O Circle que disparou o evento. */
+        public Circle senderAsCircle(Aylis.Event ev) {
+            return findCircle(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O ComboBox deste form com o nome (como o FindComponent). */
+        public ComboBox findComboBox(String name) {
+            return switch (name) {
+                case "cbEspessura" -> cbEspessura;
+                default -> null;
+            };
+        }
+
+        /** O ComboBox que disparou o evento. */
+        public ComboBox senderAsComboBox(Aylis.Event ev) {
+            return findComboBox(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Divider deste form com o nome (como o FindComponent). */
+        public Divider findDivider(String name) {
+            return switch (name) {
+                case "divTopo" -> divTopo;
+                case "divSelecao" -> divSelecao;
+                case "divFerramentas" -> divFerramentas;
+                case "divPinceis" -> divPinceis;
+                case "divFormas" -> divFormas;
+                case "divTamanho" -> divTamanho;
+                default -> null;
+            };
+        }
+
+        /** O Divider que disparou o evento. */
+        public Divider senderAsDivider(Aylis.Event ev) {
+            return findDivider(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O GridLayout deste form com o nome (como o FindComponent). */
+        public GridLayout findGridLayout(String name) {
+            return switch (name) {
+                case "grdFerramentas" -> grdFerramentas;
+                case "grdFormas" -> grdFormas;
+                case "grdPaleta" -> grdPaleta;
+                default -> null;
+            };
+        }
+
+        /** O GridLayout que disparou o evento. */
+        public GridLayout senderAsGridLayout(Aylis.Event ev) {
+            return findGridLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Label deste form com o nome (como o FindComponent). */
+        public Label findLabel(String name) {
+            return switch (name) {
+                case "lblSelecaoGrupo" -> lblSelecaoGrupo;
+                case "lblFerramentasGrupo" -> lblFerramentasGrupo;
+                case "lblPinceis" -> lblPinceis;
+                case "lblFormas" -> lblFormas;
+                case "lblTamanhoGrupo" -> lblTamanhoGrupo;
+                case "lblCores" -> lblCores;
+                case "lblPosicao" -> lblPosicao;
+                case "lblTamanho" -> lblTamanho;
+                case "lblZoom" -> lblZoom;
+                default -> null;
+            };
+        }
+
+        /** O Label que disparou o evento. */
+        public Label senderAsLabel(Aylis.Event ev) {
+            return findLabel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Layout deste form com o nome (como o FindComponent). */
+        public Layout findLayout(String name) {
+            return switch (name) {
+                case "lytTopo" -> lytTopo;
+                case "lytSelecao" -> lytSelecao;
+                case "lytFerramentas" -> lytFerramentas;
+                case "lytPinceis" -> lytPinceis;
+                case "lytFormas" -> lytFormas;
+                case "lytTamanho" -> lytTamanho;
+                case "lytCores" -> lytCores;
+                default -> null;
+            };
+        }
+
+        /** O Layout que disparou o evento. */
+        public Layout senderAsLayout(Aylis.Event ev) {
+            return findLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O MainMenu deste form com o nome (como o FindComponent). */
+        public MainMenu findMainMenu(String name) {
+            return switch (name) {
+                case "mnuPrincipal" -> mnuPrincipal;
+                default -> null;
+            };
+        }
+
+        /** O MainMenu que disparou o evento. */
+        public MainMenu senderAsMainMenu(Aylis.Event ev) {
+            return findMainMenu(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O MenuItem deste form com o nome (como o FindComponent). */
+        public MenuItem findMenuItem(String name) {
+            return switch (name) {
+                case "mnuArquivo" -> mnuArquivo;
+                case "mnuNovo" -> mnuNovo;
+                case "mnuAbrir" -> mnuAbrir;
+                case "mnuSalvar" -> mnuSalvar;
+                case "mnuSalvarComo" -> mnuSalvarComo;
+                case "mnuSep1" -> mnuSep1;
+                case "mnuSair" -> mnuSair;
+                case "mnuEditar" -> mnuEditar;
+                case "mnuDesfazer" -> mnuDesfazer;
+                case "mnuRefazer" -> mnuRefazer;
+                case "mnuSep2" -> mnuSep2;
+                case "mnuRecortar" -> mnuRecortar;
+                case "mnuCopiar" -> mnuCopiar;
+                case "mnuColar" -> mnuColar;
+                case "mnuExcluir" -> mnuExcluir;
+                case "mnuSelecionarTudo" -> mnuSelecionarTudo;
+                case "mnuSep3" -> mnuSep3;
+                case "mnuLimpar" -> mnuLimpar;
+                case "mnuExibir" -> mnuExibir;
+                case "mnuAmpliar" -> mnuAmpliar;
+                case "mnuReduzir" -> mnuReduzir;
+                case "mnuTamanhoReal" -> mnuTamanhoReal;
+                default -> null;
+            };
+        }
+
+        /** O MenuItem que disparou o evento. */
+        public MenuItem senderAsMenuItem(Aylis.Event ev) {
+            return findMenuItem(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O OpenDialog deste form com o nome (como o FindComponent). */
+        public OpenDialog findOpenDialog(String name) {
+            return switch (name) {
+                case "dlgAbrir" -> dlgAbrir;
+                default -> null;
+            };
+        }
+
+        /** O OpenDialog que disparou o evento. */
+        public OpenDialog senderAsOpenDialog(Aylis.Event ev) {
+            return findOpenDialog(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O PaintCanvas deste form com o nome (como o FindComponent). */
+        public PaintCanvas findPaintCanvas(String name) {
+            return switch (name) {
+                case "pcDesenho" -> pcDesenho;
+                default -> null;
+            };
+        }
+
+        /** O PaintCanvas que disparou o evento. */
+        public PaintCanvas senderAsPaintCanvas(Aylis.Event ev) {
+            return findPaintCanvas(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Panel deste form com o nome (como o FindComponent). */
+        public Panel findPanel(String name) {
+            return switch (name) {
+                case "pnlFaixa" -> pnlFaixa;
+                default -> null;
+            };
+        }
+
+        /** O Panel que disparou o evento. */
+        public Panel senderAsPanel(Aylis.Event ev) {
+            return findPanel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O SaveDialog deste form com o nome (como o FindComponent). */
+        public SaveDialog findSaveDialog(String name) {
+            return switch (name) {
+                case "dlgSalvar" -> dlgSalvar;
+                default -> null;
+            };
+        }
+
+        /** O SaveDialog que disparou o evento. */
+        public SaveDialog senderAsSaveDialog(Aylis.Event ev) {
+            return findSaveDialog(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O ScrollBox deste form com o nome (como o FindComponent). */
+        public ScrollBox findScrollBox(String name) {
+            return switch (name) {
+                case "sbxArea" -> sbxArea;
+                default -> null;
+            };
+        }
+
+        /** O ScrollBox que disparou o evento. */
+        public ScrollBox senderAsScrollBox(Aylis.Event ev) {
+            return findScrollBox(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O StatusBar deste form com o nome (como o FindComponent). */
+        public StatusBar findStatusBar(String name) {
+            return switch (name) {
+                case "stbStatus" -> stbStatus;
+                default -> null;
+            };
+        }
+
+        /** O StatusBar que disparou o evento. */
+        public StatusBar senderAsStatusBar(Aylis.Event ev) {
+            return findStatusBar(String.valueOf(ev.sender().get("name")));
+        }
+    }

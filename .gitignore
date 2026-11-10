@@ -1,0 +1,25 @@
+/target
+target/
+examples/web/pkg/
+dist/
+__pycache__/
+*.pyc
+.claude/settings.local.json
+# Saídas dos clientes de outras linguagens
+clients/**/bin/
+clients/**/obj/
+crates/aylis-host/tests/data/**/bin/
+crates/aylis-host/tests/data/**/obj/
+clients/**/out/
+clients/**/*.exe
+clients/**/*.obj
+# O que o servidor de linguagem do Java (jdtls) pede na pasta do código
+examples/**/java/.project
+examples/**/java/.classpath
+examples/**/java/.settings/
+# O cache das respostas da API do IBGE (aylis-tool ibge refaz)
+examples/IBGE/ibge-cache/
+examples/**/cpp/compile_commands.json
+
+# Configuração local das sessões do Claude (caminhos desta máquina)
+.claude/launch.json

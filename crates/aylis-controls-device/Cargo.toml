@@ -1,0 +1,10 @@
+[package]
+name = "aylis-controls-device"
+description = "Sensores e recursos do aparelho (localização, bateria, permissões, biometria...)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }

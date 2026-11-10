@@ -1,0 +1,71 @@
+
+    /** Um MenuItem de um form. */
+    public static class MenuItem extends Aylis.AylisComponent {
+        public MenuItem(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        public String getText() {
+            return asText(getProp("text"));
+        }
+
+        public void setText(String value) {
+            setProp("text", value);
+        }
+
+        public String getShortcut() {
+            return asText(getProp("shortcut"));
+        }
+
+        public void setShortcut(String value) {
+            setProp("shortcut", value);
+        }
+
+        public boolean isEnabled() {
+            return asBool(getProp("enabled"));
+        }
+
+        public void setEnabled(boolean value) {
+            setProp("enabled", value);
+        }
+
+        public boolean isChecked() {
+            return asBool(getProp("checked"));
+        }
+
+        public void setChecked(boolean value) {
+            setProp("checked", value);
+        }
+
+        public boolean isAutoCheck() {
+            return asBool(getProp("auto_check"));
+        }
+
+        public void setAutoCheck(boolean value) {
+            setProp("auto_check", value);
+        }
+
+        public String getIcon() {
+            return asText(getProp("icon"));
+        }
+
+        public void setIcon(String value) {
+            setProp("icon", value);
+        }
+
+        public boolean isVisible() {
+            return asBool(getProp("visible"));
+        }
+
+        public void setVisible(boolean value) {
+            setProp("visible", value);
+        }
+
+        public boolean isDanger() {
+            return asBool(getProp("danger"));
+        }
+
+        public void setDanger(boolean value) {
+            setProp("danger", value);
+        }
+    }

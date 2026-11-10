@@ -1,0 +1,40 @@
+{
+  "data": "2026-10-25",
+  "windows_direct2d (sem o overlay da Epic)": {
+    "3d_puro_ms": 0.269,
+    "so_controles_ms": 0.476,
+    "aylis_mais_3d_ms": 0.654,
+    "copia_cpu_ms": 9.92
+  },
+  "windows_skia_gpu_opengl": {
+    "3d_puro_ms": 0.252,
+    "so_controles_ms": 0.407,
+    "aylis_mais_3d_ms": 0.571,
+    "copia_cpu_ms": 7.112
+  },
+  "navegador_webgpu (Chrome do painel, relogio de 0,1 ms)": {
+    "so_3d_ms": [
+      0.22,
+      0.267
+    ],
+    "so_controles_ms": [
+      0.529,
+      0.398
+    ],
+    "aylis_mais_3d_ms": [
+      0.601,
+      0.54
+    ]
+  },
+  "android_emulador_swiftshader (GPU em software)": {
+    "so_controles_ms": [
+      17.302,
+      17.233
+    ],
+    "aylis_mais_3d_ms": [
+      24.856,
+      25.519
+    ]
+  },
+  "observacao": "Medicoes do Direct2D repetidas no fim da sessao sairam ~50% piores tambem em exemplos sem 3D e nao recompilados (componentes 0,58 -> 0,80 ms), com o overlay da Epic (EOSOverlayRenderer) ativo; o caminho OpenGL nao mudou."
+}

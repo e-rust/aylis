@@ -1,0 +1,10 @@
+[package]
+name = "aylis-build"
+description = "Usado no build.rs dos projetos do aylis: embute forms, temas e assets no executável e o ícone no .exe"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde_json = "1"

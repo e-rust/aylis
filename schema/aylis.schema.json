@@ -1,0 +1,4132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Layout do aylis",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "aylis": {
+      "const": 1,
+      "description": "Versão do formato"
+    },
+    "root": {
+      "$ref": "#/$defs/node"
+    }
+  },
+  "required": [
+    "root"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Button": {
+      "type": "object",
+      "description": "Button (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Button"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "CheckBox": {
+      "type": "object",
+      "description": "CheckBox (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "CheckBox"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "checked": {
+          "type": "boolean",
+          "description": "Data · true/false"
+        },
+        "on_change": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "ColorAnimation": {
+      "type": "object",
+      "description": "ColorAnimation (paleta: Animations)",
+      "properties": {
+        "class": {
+          "const": "ColorAnimation"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "property": {
+          "type": "string",
+          "description": "Animation · texto"
+        },
+        "start_value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Animation · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "stop_value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Animation · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "duration": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Animation · número"
+        },
+        "easing": {
+          "enum": [
+            "linear",
+            "in_quad",
+            "out_quad",
+            "in_out_quad",
+            "out_cubic",
+            "in_out_cubic",
+            "out_back"
+          ],
+          "description": "Animation · um dos valores"
+        },
+        "trigger": {
+          "enum": [
+            "none",
+            "hover",
+            "pressed",
+            "focused",
+            "checked"
+          ],
+          "description": "Animation · um dos valores"
+        },
+        "auto_reverse": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "looping": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Edit": {
+      "type": "object",
+      "description": "Edit (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Edit"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Data · texto"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "max_length": {
+          "type": "integer",
+          "description": "Behavior · inteiro"
+        },
+        "read_only": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "password": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "on_change": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "FloatAnimation": {
+      "type": "object",
+      "description": "FloatAnimation (paleta: Animations)",
+      "properties": {
+        "class": {
+          "const": "FloatAnimation"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "property": {
+          "type": "string",
+          "description": "Animation · texto"
+        },
+        "start_value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Animation · número"
+        },
+        "stop_value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Animation · número"
+        },
+        "duration": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Animation · número"
+        },
+        "easing": {
+          "enum": [
+            "linear",
+            "in_quad",
+            "out_quad",
+            "in_out_quad",
+            "out_cubic",
+            "in_out_cubic",
+            "out_back"
+          ],
+          "description": "Animation · um dos valores"
+        },
+        "trigger": {
+          "enum": [
+            "none",
+            "hover",
+            "pressed",
+            "focused",
+            "checked"
+          ],
+          "description": "Animation · um dos valores"
+        },
+        "auto_reverse": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "looping": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Animation · true/false"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Form": {
+      "type": "object",
+      "description": "Form (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Form"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Label": {
+      "type": "object",
+      "description": "Label (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Label"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "h_align": {
+          "enum": [
+            "leading",
+            "center",
+            "trailing",
+            "justify"
+          ],
+          "description": "Appearance · um dos valores"
+        },
+        "v_align": {
+          "enum": [
+            "leading",
+            "center",
+            "trailing",
+            "justify"
+          ],
+          "description": "Appearance · um dos valores"
+        },
+        "wrap": {
+          "type": "boolean",
+          "description": "Appearance · true/false"
+        },
+        "font_size": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "color": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Layout": {
+      "type": "object",
+      "description": "Layout (paleta: Layouts)",
+      "properties": {
+        "class": {
+          "const": "Layout"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Panel": {
+      "type": "object",
+      "description": "Panel (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Panel"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "fill": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "stroke": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "stroke_width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "radius": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "ProgressBar": {
+      "type": "object",
+      "description": "ProgressBar (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "ProgressBar"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Data · número"
+        },
+        "min": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Data · número"
+        },
+        "max": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Data · número"
+        },
+        "color": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "RadioButton": {
+      "type": "object",
+      "description": "RadioButton (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "RadioButton"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "checked": {
+          "type": "boolean",
+          "description": "Data · true/false"
+        },
+        "group": {
+          "type": "string",
+          "description": "Behavior · texto"
+        },
+        "on_change": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Rectangle": {
+      "type": "object",
+      "description": "Rectangle (paleta: Shapes)",
+      "properties": {
+        "class": {
+          "const": "Rectangle"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "fill": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "stroke": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "#2563EB",
+            "primary",
+            "text_muted"
+          ],
+          "description": "Appearance · cor: \"#RRGGBB\" ou token do tema"
+        },
+        "stroke_width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "radius": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "Switch": {
+      "type": "object",
+      "description": "Switch (paleta: Standard)",
+      "properties": {
+        "class": {
+          "const": "Switch"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Nome do componente (único no form)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "checked": {
+          "type": "boolean",
+          "description": "Data · true/false"
+        },
+        "on_change": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "left": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "top": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "width": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "height": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Layout · número"
+        },
+        "align": {
+          "enum": [
+            "none",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "most_top",
+            "most_bottom",
+            "most_left",
+            "most_right",
+            "client",
+            "contents",
+            "center",
+            "vert_center",
+            "horz_center",
+            "horizontal",
+            "vertical",
+            "fit"
+          ],
+          "description": "Layout · um dos valores"
+        },
+        "anchors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "left",
+                  "top",
+                  "right",
+                  "bottom"
+                ]
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Layout · lista de valores"
+        },
+        "margins": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "number"
+                },
+                "top": {
+                  "type": "number"
+                },
+                "right": {
+                  "type": "number"
+                },
+                "bottom": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Layout · número, [h, v], [l, t, r, b] ou objeto"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "hit_test": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "clip_children": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "can_focus": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "tab_stop": {
+          "type": "boolean",
+          "description": "Behavior · true/false"
+        },
+        "cursor": {
+          "enum": [
+            "default",
+            "pointer",
+            "text",
+            "wait",
+            "crosshair",
+            "move",
+            "not_allowed",
+            "resize_horizontal",
+            "resize_vertical",
+            "resize_ne_sw",
+            "resize_nw_se"
+          ],
+          "description": "Behavior · um dos valores"
+        },
+        "opacity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Appearance · número"
+        },
+        "style": {
+          "type": "string",
+          "description": "Appearance · texto"
+        },
+        "tag": {
+          "type": "integer",
+          "description": "Misc · inteiro"
+        },
+        "on_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_dbl_click": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_move": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_pointer_leave": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_wheel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_down": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_key_up": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_enter": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "on_resize": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Events · nome do handler"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(margins|padding)\\.(left|top|right|bottom)$": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "class": {
+          "enum": [
+            "Button",
+            "CheckBox",
+            "ColorAnimation",
+            "Edit",
+            "FloatAnimation",
+            "Form",
+            "Label",
+            "Layout",
+            "Panel",
+            "ProgressBar",
+            "RadioButton",
+            "Rectangle",
+            "Switch"
+          ]
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Button"
+        },
+        {
+          "$ref": "#/$defs/CheckBox"
+        },
+        {
+          "$ref": "#/$defs/ColorAnimation"
+        },
+        {
+          "$ref": "#/$defs/Edit"
+        },
+        {
+          "$ref": "#/$defs/FloatAnimation"
+        },
+        {
+          "$ref": "#/$defs/Form"
+        },
+        {
+          "$ref": "#/$defs/Label"
+        },
+        {
+          "$ref": "#/$defs/Layout"
+        },
+        {
+          "$ref": "#/$defs/Panel"
+        },
+        {
+          "$ref": "#/$defs/ProgressBar"
+        },
+        {
+          "$ref": "#/$defs/RadioButton"
+        },
+        {
+          "$ref": "#/$defs/Rectangle"
+        },
+        {
+          "$ref": "#/$defs/Switch"
+        }
+      ]
+    }
+  }
+}

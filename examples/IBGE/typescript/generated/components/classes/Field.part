@@ -1,0 +1,160 @@
+
+/** Um Field de um form. */
+export class Field extends AylisComponent {
+    get fieldName(): Promise<string> {
+        return this.getProp("field_name");
+    }
+    set fieldName(value: string) {
+        this.setProp("field_name", value);
+    }
+    get type(): Promise<string> {
+        return this.getProp("type");
+    }
+    set type(value: string) {
+        this.setProp("type", value);
+    }
+    get size(): Promise<number> {
+        return this.getProp("size");
+    }
+    set size(value: number) {
+        this.setProp("size", value);
+    }
+    get scale(): Promise<number> {
+        return this.getProp("scale");
+    }
+    set scale(value: number) {
+        this.setProp("scale", value);
+    }
+    get rounding(): Promise<string> {
+        return this.getProp("rounding");
+    }
+    set rounding(value: string) {
+        this.setProp("rounding", value);
+    }
+    get displayLabel(): Promise<string> {
+        return this.getProp("display_label");
+    }
+    set displayLabel(value: string) {
+        this.setProp("display_label", value);
+    }
+    get displayWidth(): Promise<number> {
+        return this.getProp("display_width");
+    }
+    set displayWidth(value: number) {
+        this.setProp("display_width", value);
+    }
+    get displayFormat(): Promise<string> {
+        return this.getProp("display_format");
+    }
+    set displayFormat(value: string) {
+        this.setProp("display_format", value);
+    }
+    get editFormat(): Promise<string> {
+        return this.getProp("edit_format");
+    }
+    set editFormat(value: string) {
+        this.setProp("edit_format", value);
+    }
+    get alignment(): Promise<string> {
+        return this.getProp("alignment");
+    }
+    set alignment(value: string) {
+        this.setProp("alignment", value);
+    }
+    get required(): Promise<boolean> {
+        return this.getProp("required");
+    }
+    set required(value: boolean) {
+        this.setProp("required", value);
+    }
+    get readOnly(): Promise<boolean> {
+        return this.getProp("read_only");
+    }
+    set readOnly(value: boolean) {
+        this.setProp("read_only", value);
+    }
+    get visible(): Promise<boolean> {
+        return this.getProp("visible");
+    }
+    set visible(value: boolean) {
+        this.setProp("visible", value);
+    }
+    get min(): Promise<number> {
+        return this.getProp("min");
+    }
+    set min(value: number) {
+        this.setProp("min", value);
+    }
+    get max(): Promise<number> {
+        return this.getProp("max");
+    }
+    set max(value: number) {
+        this.setProp("max", value);
+    }
+    get defaultValue(): Promise<string> {
+        return this.getProp("default_value");
+    }
+    set defaultValue(value: string) {
+        this.setProp("default_value", value);
+    }
+    get displayValues(): Promise<string> {
+        return this.getProp("display_values");
+    }
+    set displayValues(value: string) {
+        this.setProp("display_values", value);
+    }
+    get charCase(): Promise<string> {
+        return this.getProp("char_case");
+    }
+    set charCase(value: string) {
+        this.setProp("char_case", value);
+    }
+    get editMask(): Promise<string> {
+        return this.getProp("edit_mask");
+    }
+    set editMask(value: string) {
+        this.setProp("edit_mask", value);
+    }
+    get sensitive(): Promise<boolean> {
+        return this.getProp("sensitive");
+    }
+    set sensitive(value: boolean) {
+        this.setProp("sensitive", value);
+    }
+    get kind(): Promise<string> {
+        return this.getProp("kind");
+    }
+    set kind(value: string) {
+        this.setProp("kind", value);
+    }
+    get expression(): Promise<string> {
+        return this.getProp("expression");
+    }
+    set expression(value: string) {
+        this.setProp("expression", value);
+    }
+    get lookupDataSet(): Promise<string> {
+        return this.getProp("lookup_data_set");
+    }
+    set lookupDataSet(value: string) {
+        this.setProp("lookup_data_set", value);
+    }
+    get keyFields(): Promise<string> {
+        return this.getProp("key_fields");
+    }
+    set keyFields(value: string) {
+        this.setProp("key_fields", value);
+    }
+    get lookupKeyFields(): Promise<string> {
+        return this.getProp("lookup_key_fields");
+    }
+    set lookupKeyFields(value: string) {
+        this.setProp("lookup_key_fields", value);
+    }
+    get lookupResultField(): Promise<string> {
+        return this.getProp("lookup_result_field");
+    }
+    set lookupResultField(value: string) {
+        this.setProp("lookup_result_field", value);
+    }
+}

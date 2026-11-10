@@ -1,0 +1,66 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Estresse 3D",
+    "width": 400,
+    "height": 800,
+    "fill": "#161821",
+    "children": [
+      {
+        "class": "Panel",
+        "name": "pnlTopo",
+        "fill": "#161821",
+        "height": 96,
+        "align": "top",
+        "padding": 8,
+        "children": [
+          {
+            "class": "SegmentedControl",
+            "name": "segNivel",
+            "items": "1;4;9;16;25;36",
+            "on_change": "nivel_change",
+            "height": 40,
+            "align": "top"
+          },
+          {
+            "class": "FpsMeter",
+            "name": "fpsMedidor",
+            "width": 150,
+            "align": "left",
+            "margins": [0, 8, 8, 0]
+          },
+          {
+            "class": "Label",
+            "name": "lblInfo",
+            "text": "1 lingote",
+            "align": "client",
+            "margins": [0, 8, 0, 0]
+          }
+        ]
+      },
+      {
+        "class": "GridLayout",
+        "name": "grdLingotes",
+        "columns": 1,
+        "gap": 2,
+        "align": "client",
+        "margins": 4,
+        "children": [
+          {
+            "class": "Model3D",
+            "name": "m3dLingote",
+            "background": "#161821"
+          }
+        ]
+      },
+      {
+        "class": "Timer",
+        "name": "tmrAjuste",
+        "interval": 250,
+        "on_timer": "ajuste_timer"
+      }
+    ]
+  }
+}

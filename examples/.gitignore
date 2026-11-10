@@ -1,0 +1,8 @@
+# Saídas de compilação dos apps de demonstração (cada linguagem gera as suas).
+.aylis/
+obj/
+bin/
+*.pdb
+*.ilk
+*.obj
+script-*

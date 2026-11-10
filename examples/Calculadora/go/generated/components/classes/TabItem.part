@@ -1,0 +1,159 @@
+
+// aylisTabItem é um TabItem de um form.
+type aylisTabItem struct{ aylis.Component }
+
+func (c aylisTabItem) Caption() string { return asText(c.Get("caption")) }
+func (c aylisTabItem) SetCaption(v string) { c.Set("caption", v) }
+
+func (c aylisTabItem) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisTabItem) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisTabItem) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisTabItem) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisTabItem) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisTabItem) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisTabItem) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisTabItem) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisTabItem) Align() string { return asText(c.Get("align")) }
+func (c aylisTabItem) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisTabItem) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisTabItem) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisTabItem) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisTabItem) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisTabItem) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisTabItem) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisTabItem) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisTabItem) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisTabItem) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisTabItem) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisTabItem) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisTabItem) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisTabItem) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisTabItem) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisTabItem) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisTabItem) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisTabItem) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisTabItem) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisTabItem) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisTabItem) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisTabItem) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisTabItem) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisTabItem) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisTabItem) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisTabItem) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisTabItem) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisTabItem) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisTabItem) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisTabItem) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisTabItem) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisTabItem) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisTabItem) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisTabItem) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisTabItem) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisTabItem) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisTabItem) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisTabItem) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisTabItem) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisTabItem) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisTabItem) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisTabItem) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisTabItem) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisTabItem) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisTabItem) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisTabItem) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisTabItem) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisTabItem) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisTabItem) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisTabItem) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisTabItem) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisTabItem) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisTabItem) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisTabItem) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisTabItem) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisTabItem) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisTabItem) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisTabItem) Style() string { return asText(c.Get("style")) }
+func (c aylisTabItem) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisTabItem) Theme() string { return asText(c.Get("theme")) }
+func (c aylisTabItem) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisTabItem) Fill() string { return asText(c.Get("fill")) }
+func (c aylisTabItem) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisTabItem) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisTabItem) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisTabItem) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisTabItem) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisTabItem) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisTabItem) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisTabItem) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisTabItem) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisTabItem) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisTabItem) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisTabItem) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisTabItem) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisTabItem) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisTabItem) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisTabItem) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisTabItem) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisTabItem) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisTabItem) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisTabItem) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisTabItem) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisTabItem) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisTabItem) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisTabItem) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisTabItem) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisTabItem) Hint() string { return asText(c.Get("hint")) }
+func (c aylisTabItem) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisTabItem) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisTabItem) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisTabItem) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisTabItem) SetPopupMenu(v string) { c.Set("popup_menu", v) }

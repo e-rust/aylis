@@ -1,0 +1,281 @@
+{
+ "title": "Noto (emojis animados do Google)",
+ "license": "Animated Noto Emoji © Google, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+ "animations": [
+  {
+   "name": "chorando-de-rir",
+   "title": "Chorando de rir",
+   "code": "1f602"
+  },
+  {
+   "name": "rolando-de-rir",
+   "title": "Rolando de rir",
+   "code": "1f923"
+  },
+  {
+   "name": "sorriso",
+   "title": "Sorriso",
+   "code": "1f60a"
+  },
+  {
+   "name": "ufa",
+   "title": "Ufa",
+   "code": "1f605"
+  },
+  {
+   "name": "piscadinha",
+   "title": "Piscadinha",
+   "code": "1f609"
+  },
+  {
+   "name": "apaixonado",
+   "title": "Apaixonado",
+   "code": "1f60d"
+  },
+  {
+   "name": "cheio-de-amor",
+   "title": "Cheio de amor",
+   "code": "1f970"
+  },
+  {
+   "name": "beijinho",
+   "title": "Beijinho",
+   "code": "1f618"
+  },
+  {
+   "name": "legal",
+   "title": "Legal",
+   "code": "1f60e"
+  },
+  {
+   "name": "deslumbrado",
+   "title": "Deslumbrado",
+   "code": "1f929"
+  },
+  {
+   "name": "festejando",
+   "title": "Festejando",
+   "code": "1f973"
+  },
+  {
+   "name": "abraco",
+   "title": "Abraço",
+   "code": "1f917"
+  },
+  {
+   "name": "ops",
+   "title": "Ops",
+   "code": "1f92d"
+  },
+  {
+   "name": "pensando",
+   "title": "Pensando",
+   "code": "1f914"
+  },
+  {
+   "name": "desconfiado",
+   "title": "Desconfiado",
+   "code": "1f928"
+  },
+  {
+   "name": "revirando-os-olhos",
+   "title": "Revirando os olhos",
+   "code": "1f644"
+  },
+  {
+   "name": "de-cabeca-para-baixo",
+   "title": "De cabeça para baixo",
+   "code": "1f643"
+  },
+  {
+   "name": "envergonhado",
+   "title": "Envergonhado",
+   "code": "1f633"
+  },
+  {
+   "name": "por-favorzinho",
+   "title": "Por favorzinho",
+   "code": "1f97a"
+  },
+  {
+   "name": "triste",
+   "title": "Triste",
+   "code": "1f622"
+  },
+  {
+   "name": "chorando",
+   "title": "Chorando",
+   "code": "1f62d"
+  },
+  {
+   "name": "bravo",
+   "title": "Bravo",
+   "code": "1f621"
+  },
+  {
+   "name": "assustado",
+   "title": "Assustado",
+   "code": "1f631"
+  },
+  {
+   "name": "cabeca-explodindo",
+   "title": "Cabeça explodindo",
+   "code": "1f92f"
+  },
+  {
+   "name": "bocejando",
+   "title": "Bocejando",
+   "code": "1f971"
+  },
+  {
+   "name": "dormindo",
+   "title": "Dormindo",
+   "code": "1f634"
+  },
+  {
+   "name": "doente",
+   "title": "Doente",
+   "code": "1f912"
+  },
+  {
+   "name": "morri",
+   "title": "Morri",
+   "code": "1f480"
+  },
+  {
+   "name": "palhaco",
+   "title": "Palhaço",
+   "code": "1f921"
+  },
+  {
+   "name": "fantasma",
+   "title": "Fantasma",
+   "code": "1f47b"
+  },
+  {
+   "name": "joinha",
+   "title": "Joinha",
+   "code": "1f44d"
+  },
+  {
+   "name": "negativo",
+   "title": "Negativo",
+   "code": "1f44e"
+  },
+  {
+   "name": "palmas",
+   "title": "Palmas",
+   "code": "1f44f"
+  },
+  {
+   "name": "aleluia",
+   "title": "Aleluia",
+   "code": "1f64c"
+  },
+  {
+   "name": "por-favor",
+   "title": "Por favor",
+   "code": "1f64f"
+  },
+  {
+   "name": "tchau",
+   "title": "Tchau",
+   "code": "1f44b"
+  },
+  {
+   "name": "forca",
+   "title": "Força",
+   "code": "1f4aa"
+  },
+  {
+   "name": "combinado",
+   "title": "Combinado",
+   "code": "1f91d"
+  },
+  {
+   "name": "paz",
+   "title": "Paz",
+   "code": "270c_fe0f"
+  },
+  {
+   "name": "de-olho",
+   "title": "De olho",
+   "code": "1f440"
+  },
+  {
+   "name": "coracao",
+   "title": "Coração",
+   "code": "2764_fe0f"
+  },
+  {
+   "name": "coracao-partido",
+   "title": "Coração partido",
+   "code": "1f494"
+  },
+  {
+   "name": "fogo",
+   "title": "Fogo",
+   "code": "1f525"
+  },
+  {
+   "name": "cem",
+   "title": "Cem",
+   "code": "1f4af"
+  },
+  {
+   "name": "brilhos",
+   "title": "Brilhos",
+   "code": "2728"
+  },
+  {
+   "name": "festa",
+   "title": "Festa",
+   "code": "1f389"
+  },
+  {
+   "name": "confete",
+   "title": "Confete",
+   "code": "1f38a"
+  },
+  {
+   "name": "presente",
+   "title": "Presente",
+   "code": "1f381"
+  },
+  {
+   "name": "bolo",
+   "title": "Bolo",
+   "code": "1f382"
+  },
+  {
+   "name": "foguete",
+   "title": "Foguete",
+   "code": "1f680"
+  },
+  {
+   "name": "ideia",
+   "title": "Ideia",
+   "code": "1f4a1"
+  },
+  {
+   "name": "raio",
+   "title": "Raio",
+   "code": "26a1"
+  },
+  {
+   "name": "arco-iris",
+   "title": "Arco-íris",
+   "code": "1f308"
+  },
+  {
+   "name": "cafe",
+   "title": "Café",
+   "code": "2615"
+  },
+  {
+   "name": "brinde",
+   "title": "Brinde",
+   "code": "1f37b"
+  }
+ ]
+}

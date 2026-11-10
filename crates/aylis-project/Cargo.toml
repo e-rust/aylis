@@ -1,0 +1,25 @@
+[package]
+name = "aylis-project"
+description = "Projetos do aylis: o .aylisproj, a pasta do projeto, a fábrica de forms, os recursos e a geração de código"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-vector = { path = "../aylis-vector" }
+aylis-json = { path = "../aylis-json" }
+aylis-build = { path = "../aylis-build" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+# Para atualizar o Cargo.toml de projetos antigos sem perder comentários e edições.
+toml_edit = "0.25"
+
+# A junção `.aylis/sdk` do projeto até o aylis instalado (sem administrador, sem shell).
+[target.'cfg(windows)'.dependencies]
+junction = "1"
+
+[dev-dependencies]
+aylis-build = { path = "../aylis-build" }
+aylis-controls = { path = "../aylis-controls" }

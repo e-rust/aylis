@@ -1,0 +1,68 @@
+
+
+class MenuItem(AylisComponent):
+    """Um MenuItem de um form."""
+
+    @property
+    def text(self):
+        return self._get("text")
+
+    @text.setter
+    def text(self, value):
+        self._set("text", value)
+
+    @property
+    def shortcut(self):
+        return self._get("shortcut")
+
+    @shortcut.setter
+    def shortcut(self, value):
+        self._set("shortcut", value)
+
+    @property
+    def enabled(self):
+        return self._get("enabled")
+
+    @enabled.setter
+    def enabled(self, value):
+        self._set("enabled", value)
+
+    @property
+    def checked(self):
+        return self._get("checked")
+
+    @checked.setter
+    def checked(self, value):
+        self._set("checked", value)
+
+    @property
+    def auto_check(self):
+        return self._get("auto_check")
+
+    @auto_check.setter
+    def auto_check(self, value):
+        self._set("auto_check", value)
+
+    @property
+    def icon(self):
+        return self._get("icon")
+
+    @icon.setter
+    def icon(self, value):
+        self._set("icon", value)
+
+    @property
+    def visible(self):
+        return self._get("visible")
+
+    @visible.setter
+    def visible(self, value):
+        self._set("visible", value)
+
+    @property
+    def danger(self):
+        return self._get("danger")
+
+    @danger.setter
+    def danger(self, value):
+        self._set("danger", value)

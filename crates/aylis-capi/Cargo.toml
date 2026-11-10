@@ -1,0 +1,27 @@
+[package]
+name = "aylis-capi"
+description = "C ABI do aylis: use a interface a partir de C, Delphi, C#, Go, Python..."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "aylis"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-remote = { path = "../aylis-remote" }
+aylis-platform-winit = { path = "../aylis-platform-winit" }
+aylis-skia = { path = "../aylis-skia" }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+# Abre uma janela de verdade: o laço de eventos precisa da thread principal, então o
+# teste tem o próprio `main` (sem o executor de testes, que roda em outras threads).
+[[test]]
+name = "post"
+harness = false
+
+[dev-dependencies]
+serde_json = "1"

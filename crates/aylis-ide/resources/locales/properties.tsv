@@ -1,0 +1,623 @@
+name	pt	en	es	fr	de	ru	zh	ja	ar	bn	hi	id
+name	Nome	Name	Nombre	Nom	Name	Имя	名称	名前	الاسم	নাম	नाम	Nama
+accent_color	Cor de destaque	Accent color	Color de acento	Couleur d'accent	Akzentfarbe	Цвет акцента	强调色	アクセント色	لون التمييز	অ্যাকসেন্ট রং	एक्सेंट रंग	Warna aksen
+accepts_drops	Aceita soltar	Accepts drops	Acepta soltar	Accepte le dépôt	Akzeptiert Ablegen	Принимает перетаскивание	接受拖放	ドロップを受け付ける	يقبل الإفلات	ড্রপ গ্রহণ করে	ड्रॉप स्वीकार करे	Menerima jatuhan
+accessory	Seta à direita	Accessory arrow	Flecha a la derecha	Flèche à droite	Pfeil rechts	Стрелка справа	右侧箭头	右矢印	سهم جانبي	ডান তীর	दायाँ तीर	Panah kanan
+action	Ação	Action	Acción	Action	Aktion	Действие	操作	アクション	الإجراء	ক্রিয়া	क्रिया	Aksi
+actions	Ações	Actions	Acciones	Actions	Aktionen	Действия	操作	アクション一覧	الإجراءات	ক্রিয়াসমূহ	क्रियाएँ	Aksi-aksi
+active	Ativo	Active	Activo	Actif	Aktiv	Активно	激活	有効	نشط	সক্রিয়	सक्रिय	Aktif
+active_control	Controle ativo	Active control	Control activo	Contrôle actif	Aktives Steuerelement	Активный элемент	活动控件	アクティブなコントロール	عنصر التحكم النشط	সক্রিয় কন্ট্রোল	सक्रिय नियंत्रण	Kontrol aktif
+aggregate	Agregação	Aggregate	Agregación	Agrégation	Aggregation	Агрегирование	聚合	集計	التجميع	সমষ্টি	समुच्चय	Agregasi
+alarm_above	Alarme acima de	Alarm above	Alarma por encima de	Alarme au-dessus de	Alarm über	Тревога выше	高于此值报警	この値以上で警報	إنذار فوق	এর উপরে অ্যালার্ম	इससे ऊपर अलार्म	Alarm di atas
+alarm	Alarme	Alarm	Alarma	Alarme	Alarm	Тревога	报警	アラーム	إنذار	অ্যালার্ম	अलार्म	Alarm
+align	Alinhamento	Align	Alineación	Alignement	Ausrichtung	Выравнивание	对齐	配置	المحاذاة	সারিবদ্ধ	संरेखण	Perataan
+alignment	Alinhamento do texto	Text alignment	Alineación del texto	Alignement du texte	Textausrichtung	Выравнивание текста	文本对齐	文字の配置	محاذاة النص	লেখার সারিবদ্ধতা	पाठ संरेखण	Perataan teks
+allow_device_credential	Aceita a senha do aparelho	Allow device credential	Permitir credencial del dispositivo	Autoriser l'identifiant de l'appareil	Geräteanmeldung erlauben	Разрешить пароль устройства	允许设备凭据	端末の認証情報を許可	السماح ببيانات اعتماد الجهاز	ডিভাইসের পাসওয়ার্ড অনুমোদন	डिवाइस क्रेडेंशियल की अनुमति	Izinkan kredensial perangkat
+allowed_chars	Caracteres permitidos	Allowed characters	Caracteres permitidos	Caractères autorisés	Erlaubte Zeichen	Разрешённые символы	允许的字符	許可する文字	الأحرف المسموح بها	অনুমোদিত অক্ষর	अनुमत वर्ण	Karakter yang diizinkan
+alpha	Transparência (alfa)	Alpha	Transparencia (alfa)	Transparence (alpha)	Transparenz (Alpha)	Прозрачность (альфа)	透明度 (Alpha)	透明度 (アルファ)	الشفافية (ألفا)	স্বচ্ছতা (আলফা)	पारदर्शिता (अल्फा)	Transparansi (alfa)
+anchor	Âncora	Anchor	Anclaje	Ancre	Anker	Привязка	锚点	アンカー	المرساة	নোঙর	एंकर	Jangkar
+anchors	Âncoras	Anchors	Anclajes	Ancres	Anker	Привязки	锚定	アンカー	المراسي	নোঙরসমূহ	एंकर	Jangkar-jangkar
+angle	Ângulo	Angle	Ángulo	Angle	Winkel	Угол	角度	角度	الزاوية	কোণ	कोण	Sudut
+animate	Animar	Animate	Animar	Animer	Animieren	Анимировать	动画	アニメーション	تحريك	অ্যানিমেট	एनिमेट करें	Animasikan
+animated	Animado	Animated	Animado	Animé	Animiert	Анимированный	动画效果	アニメーションあり	متحرك	অ্যানিমেটেড	एनिमेटेड	Beranimasi
+animation	Animação	Animation	Animación	Animation	Animation	Анимация	动画	アニメーション	الحركة	অ্যানিমেশন	एनिमेशन	Animasi
+app_id	ID do aplicativo	App ID	ID de la aplicación	ID de l'application	App-ID	ID приложения	应用 ID	アプリ ID	معرّف التطبيق	অ্যাপ আইডি	ऐप आईडी	ID aplikasi
+app_name	Nome do aplicativo	App name	Nombre de la aplicación	Nom de l'application	App-Name	Имя приложения	应用名称	アプリ名	اسم التطبيق	অ্যাপের নাম	ऐप का नाम	Nama aplikasi
+apply_mode	Modo de aplicar	Apply mode	Modo de aplicar	Mode d'application	Übernahmemodus	Режим применения	应用模式	適用モード	وضع التطبيق	প্রয়োগ মোড	लागू करने का मोड	Mode penerapan
+arrow	Seta	Arrow	Flecha	Flèche	Pfeil	Стрелка	箭头	矢印	السهم	তীর	तीर	Panah
+asks	Ofertas de venda	Asks	Ofertas de venta	Offres de vente	Briefkurse	Предложения на продажу	卖单	売り注文	عروض البيع	বিক্রয়ের প্রস্তাব	बिक्री प्रस्ताव	Penawaran jual
+aspect_ratio	Proporção	Aspect ratio	Relación de aspecto	Rapport d'aspect	Seitenverhältnis	Соотношение сторон	宽高比	アスペクト比	نسبة العرض إلى الارتفاع	আকৃতির অনুপাত	पक्षानुपात	Rasio aspek
+attribution	Atribuição	Attribution	Atribución	Attribution	Quellenangabe	Атрибуция	署名	帰属表示	الإسناد	স্বীকৃতি	श्रेय	Atribusi
+author	Autor	Author	Autor	Auteur	Autor	Автор	作者	作成者	المؤلف	লেখক	लेखक	Penulis
+auto_check	Marca sozinho	Auto check	Marcar automáticamente	Cocher automatiquement	Automatisch abhaken	Автоотметка	自动勾选	自動チェック	تحديد تلقائي	স্বয়ংক্রিয় চিহ্ন	स्वतः चिह्नित	Centang otomatis
+auto_close	Fecha sozinho	Auto close	Cerrar automáticamente	Fermer automatiquement	Automatisch schließen	Автозакрытие	自动关闭	自動で閉じる	إغلاق تلقائي	স্বয়ংক্রিয় বন্ধ	स्वतः बंद	Tutup otomatis
+auto_edit	Edita sozinho	Auto edit	Editar automáticamente	Édition automatique	Automatisch bearbeiten	Автоправка	自动编辑	自動編集	تحرير تلقائي	স্বয়ংক্রিয় সম্পাদনা	स्वतः संपादन	Edit otomatis
+auto_reverse	Volta sozinho	Auto reverse	Revertir automáticamente	Inversion automatique	Automatisch umkehren	Автореверс	自动反向	自動反転	عكس تلقائي	স্বয়ংক্রিয় উল্টো	स्वतः उलटें	Balik otomatis
+auto_rotate	Gira sozinho	Auto rotate	Girar automáticamente	Rotation automatique	Automatisch drehen	Автовращение	自动旋转	自動回転	تدوير تلقائي	স্বয়ংক্রিয় ঘোরানো	स्वतः घुमाएँ	Putar otomatis
+auto_scale	Escala automática	Auto scale	Escala automática	Échelle automatique	Automatische Skalierung	Автомасштаб	自动缩放	自動スケール	مقياس تلقائي	স্বয়ংক্রিয় স্কেল	स्वतः स्केल	Skala otomatis
+auto_size	Tamanho automático	Auto size	Tamaño automático	Taille automatique	Automatische Größe	Авторазмер	自动大小	自動サイズ	حجم تلقائي	স্বয়ংক্রিয় আকার	स्वतः आकार	Ukuran otomatis
+auto_upload	Envia sozinho	Auto upload	Subir automáticamente	Envoi automatique	Automatisch hochladen	Автозагрузка	自动上传	自動アップロード	رفع تلقائي	স্বয়ংক্রিয় আপলোড	स्वतः अपलोड	Unggah otomatis
+autocomplete	Completar sozinho	Autocomplete	Autocompletar	Saisie semi-automatique	Autovervollständigung	Автодополнение	自动完成	オートコンプリート	إكمال تلقائي	স্বয়ংক্রিয় পূরণ	स्वतः पूर्ण	Lengkapi otomatis
+autoplay	Toca sozinho	Autoplay	Reproducción automática	Lecture automatique	Automatisch abspielen	Автовоспроизведение	自动播放	自動再生	تشغيل تلقائي	স্বয়ংক্রিয় চালু	स्वतः चलाएँ	Putar otomatis
+avatar	Avatar	Avatar	Avatar	Avatar	Avatar	Аватар	头像	アバター	الصورة الرمزية	অবতার	अवतार	Avatar
+back_color	Cor de fundo	Background color	Color de fondo	Couleur de fond	Hintergrundfarbe	Цвет фона	背景色	背景色	لون الخلفية	পটভূমির রং	पृष्ठभूमि रंग	Warna latar
+back_tab_keys	Teclas de voltar campo	Back tab keys	Teclas de campo anterior	Touches de champ précédent	Tasten für vorheriges Feld	Клавиши предыдущего поля	返回字段的按键	前のフィールドへ移るキー	مفاتيح الحقل السابق	আগের ঘরের কী	पिछले फ़ील्ड की कुंजियाँ	Tombol kolom sebelumnya
+back_text	Texto do voltar	Back text	Texto de atrás	Texte de retour	Zurück-Text	Текст «Назад»	返回文字	戻るのテキスト	نص الرجوع	ফিরে যাওয়ার লেখা	वापस का पाठ	Teks kembali
+background	Fundo	Background	Fondo	Arrière-plan	Hintergrund	Фон	背景	背景	الخلفية	পটভূমি	पृष्ठभूमि	Latar belakang
+badge	Selo	Badge	Insignia	Badge	Abzeichen	Значок	徽标	バッジ	الشارة	ব্যাজ	बैज	Lencana
+badge_color	Cor do selo	Badge color	Color de la insignia	Couleur du badge	Abzeichenfarbe	Цвет значка	徽标颜色	バッジの色	لون الشارة	ব্যাজের রং	बैज का रंग	Warna lencana
+badges	Selos	Badges	Insignias	Badges	Abzeichen	Значки	徽标	バッジ	الشارات	ব্যাজসমূহ	बैज	Lencana-lencana
+bids	Ofertas de compra	Bids	Ofertas de compra	Offres d'achat	Geldkurse	Предложения на покупку	买单	買い注文	عروض الشراء	ক্রয়ের প্রস্তাব	खरीद प्रस्ताव	Penawaran beli
+big_size	Volume grande	Big size	Volumen grande	Gros volume	Großes Volumen	Крупный объём	大单量	大口数量	حجم كبير	বড় পরিমাণ	बड़ा आकार	Volume besar
+bindings	Ligações	Bindings	Vínculos	Liaisons	Bindungen	Привязки данных	绑定	バインド	الارتباطات	সংযোগসমূহ	बाइंडिंग	Pengikatan
+blink	Piscar	Blink	Parpadear	Clignoter	Blinken	Мигание	闪烁	点滅	وميض	ঝলকানো	टिमटिमाना	Berkedip
+blocked_chars	Caracteres bloqueados	Blocked characters	Caracteres bloqueados	Caractères bloqués	Gesperrte Zeichen	Запрещённые символы	禁止的字符	禁止する文字	الأحرف المحظورة	নিষিদ্ধ অক্ষর	अवरुद्ध वर्ण	Karakter yang diblokir
+blur	Desfoque	Blur	Desenfoque	Flou	Unschärfe	Размытие	模糊	ぼかし	التمويه	ঝাপসা	धुंधलापन	Buram
+bold	Negrito	Bold	Negrita	Gras	Fett	Жирный	粗体	太字	عريض	মোটা	बोल्ड	Tebal
+border	Borda	Border	Borde	Bordure	Rahmen	Рамка	边框	枠線	الحد	সীমানা	किनारा	Bingkai
+border_color	Cor da borda	Border color	Color del borde	Couleur de la bordure	Rahmenfarbe	Цвет рамки	边框颜色	枠線の色	لون الحد	সীমানার রং	किनारे का रंग	Warna bingkai
+border_style	Estilo da borda	Border style	Estilo del borde	Style de bordure	Rahmenstil	Стиль рамки	边框样式	枠のスタイル	نمط الحد	সীমানার ধরন	किनारे की शैली	Gaya bingkai
+box_size	Tamanho da caixa	Box size	Tamaño de la casilla	Taille de la case	Kästchengröße	Размер флажка	方框大小	ボックスのサイズ	حجم المربع	বাক্সের আকার	बॉक्स का आकार	Ukuran kotak
+brush_size	Tamanho do pincel	Brush size	Tamaño del pincel	Taille du pinceau	Pinselgröße	Размер кисти	画笔大小	ブラシのサイズ	حجم الفرشاة	তুলির আকার	ब्रश का आकार	Ukuran kuas
+buffered	Carregado	Buffered	En búfer	Mis en mémoire tampon	Gepuffert	Буферизовано	已缓冲	バッファ済み	المُخزَّن مؤقتًا	বাফার করা	बफ़र किया गया	Ter-buffer
+cache_layer	Guardar desenho em camada	Cache as layer	Guardar dibujo en capa	Mettre le dessin en cache	Zeichnung als Ebene puffern	Кэшировать как слой	缓存为图层	レイヤーとしてキャッシュ	تخزين الرسم كطبقة	স্তর হিসেবে আঁকা সংরক্ষণ	परत के रूप में कैश करें	Simpan gambar sebagai lapisan
+buttons	Botões	Buttons	Botones	Boutons	Schaltflächen	Кнопки	按钮	ボタン	الأزرار	বোতামসমূহ	बटन	Tombol
+camera	Câmera	Camera	Cámara	Caméra	Kamera	Камера	摄像头	カメラ	الكاميرا	ক্যামেরা	कैमरा	Kamera
+can_focus	Recebe foco	Can focus	Puede recibir el foco	Peut recevoir le focus	Kann Fokus erhalten	Может получать фокус	可获得焦点	フォーカス可能	يقبل التركيز	ফোকাস পেতে পারে	फ़ोकस ले सकता है	Dapat fokus
+caption	Título	Caption	Título	Titre	Beschriftung	Заголовок	标题	タイトル	العنوان	শিরোনাম	शीर्षक	Judul
+caret_blink	Piscar do cursor (ms)	Caret blink (ms)	Parpadeo del cursor (ms)	Clignotement du curseur (ms)	Cursorblinken (ms)	Мигание курсора (мс)	光标闪烁 (毫秒)	カーソルの点滅 (ミリ秒)	وميض المؤشر (مللي ثانية)	কার্সরের ঝলক (মি.সে.)	कर्सर झपकना (मि.से.)	Kedipan kursor (md)
+caret_color	Cor do cursor	Caret color	Color del cursor	Couleur du curseur	Cursorfarbe	Цвет курсора	光标颜色	カーソルの色	لون المؤشر	কার্সরের রং	कर्सर का रंग	Warna kursor
+caret_column	Coluna do cursor	Caret column	Columna del cursor	Colonne du curseur	Cursorspalte	Столбец курсора	光标列	カーソルの列	عمود المؤشر	কার্সরের কলাম	कर्सर का स्तंभ	Kolom kursor
+caret_line	Linha do cursor	Caret line	Línea del cursor	Ligne du curseur	Cursorzeile	Строка курсора	光标行	カーソルの行	سطر المؤشر	কার্সরের লাইন	कर्सर की पंक्ति	Baris kursor
+caret_style	Forma do cursor	Caret style	Forma del cursor	Forme du curseur	Cursorform	Форма курсора	光标样式	カーソルの形	شكل المؤشر	কার্সরের ধরন	कर्सर की शैली	Gaya kursor
+caret_width	Largura do cursor	Caret width	Ancho del cursor	Largeur du curseur	Cursorbreite	Ширина курсора	光标宽度	カーソルの幅	عرض المؤشر	কার্সরের প্রস্থ	कर्सर की चौड़ाई	Lebar kursor
+center_icon	Ícone do centro	Center icon	Icono central	Icône centrale	Mittleres Symbol	Значок в центре	中心图标	中央のアイコン	أيقونة المنتصف	মাঝের আইকন	बीच का आइकन	Ikon tengah
+channel	Canal	Channel	Canal	Canal	Kanal	Канал	频道	チャンネル	القناة	চ্যানেল	चैनल	Saluran
+channel_name	Nome do canal	Channel name	Nombre del canal	Nom du canal	Kanalname	Имя канала	频道名称	チャンネル名	اسم القناة	চ্যানেলের নাম	चैनल का नाम	Nama saluran
+char_case	Maiúsculas/minúsculas	Character case	Mayúsculas/minúsculas	Casse	Groß-/Kleinschreibung	Регистр	大小写	大文字/小文字	حالة الأحرف	বড়/ছোট হাতের অক্ষর	अक्षरों का केस	Huruf besar/kecil
+chars_override	Força os caracteres	Characters override	Forzar los caracteres	Imposer les caractères	Zeichen erzwingen	Принудительные символы	强制字符规则	文字制限を優先	فرض الأحرف	অক্ষরের নিয়ম চাপানো	वर्ण नियम लागू करें	Paksa aturan karakter
+checkable	Marcável	Checkable	Marcable	Cochable	Ankreuzbar	Можно отметить	可勾选	チェック可能	قابل للتحديد	চিহ্নিতযোগ্য	चिह्नित करने योग्य	Dapat dicentang
+checked	Marcado	Checked	Marcado	Coché	Angekreuzt	Отмечено	已勾选	チェック済み	محدد	চিহ্নিত	चिह्नित	Dicentang
+checked_icon	Ícone marcado	Checked icon	Icono marcado	Icône cochée	Symbol angekreuzt	Значок отметки	勾选图标	チェック時のアイコン	أيقونة التحديد	চিহ্নিত আইকন	चिह्नित आइकन	Ikon dicentang
+chip_height	Altura dos chips	Chip height	Altura de los chips	Hauteur des puces	Chiphöhe	Высота чипов	标签高度	チップの高さ	ارتفاع الرقائق	চিপের উচ্চতা	चिप की ऊँचाई	Tinggi chip
+clear_button	Botão de limpar	Clear button	Botón de borrar	Bouton d'effacement	Löschen-Schaltfläche	Кнопка очистки	清除按钮	クリアボタン	زر المسح	মোছার বোতাম	साफ़ करें बटन	Tombol hapus
+clicked_index	Item clicado	Clicked index	Elemento pulsado	Élément cliqué	Angeklickter Index	Индекс нажатия	点击的索引	クリックした位置	العنصر المنقور	ক্লিক করা সূচক	क्लिक किया गया सूचकांक	Indeks yang diklik
+clicked_series	Série clicada	Clicked series	Serie pulsada	Série cliquée	Angeklickte Reihe	Выбранный ряд	点击的系列	クリックした系列	السلسلة المنقورة	ক্লিক করা সিরিজ	क्लिक की गई श्रृंखला	Seri yang diklik
+clip_children	Recorta o conteúdo	Clip children	Recortar el contenido	Rogner le contenu	Inhalt beschneiden	Обрезать содержимое	裁剪子元素	子要素を切り抜く	قص المحتوى	ভেতরের অংশ কাটা	सामग्री काटें	Potong isi
+closable	Pode fechar	Closable	Se puede cerrar	Fermable	Schließbar	Можно закрыть	可关闭	閉じられる	قابل للإغلاق	বন্ধ করা যায়	बंद किया जा सकता है	Dapat ditutup
+close_empty	Fecha a janela vazia	Close empty window	Cerrar ventana vacía	Fermer la fenêtre vide	Leeres Fenster schließen	Закрывать пустое окно	关闭空窗口	空のウィンドウを閉じる	إغلاق النافذة الفارغة	খালি উইন্ডো বন্ধ	खाली विंडो बंद करें	Tutup jendela kosong
+code_language	Linguagem do código	Code language	Lenguaje del código	Langage du code	Codesprache	Язык кода	代码语言	コードの言語	لغة الشيفرة	কোডের ভাষা	कोड की भाषा	Bahasa kode
+code_theme	Tema do código	Code theme	Tema del código	Thème du code	Code-Design	Тема кода	代码主题	コードのテーマ	سمة الشيفرة	কোডের থিম	कोड थीम	Tema kode
+color	Cor	Color	Color	Couleur	Farbe	Цвет	颜色	色	اللون	রং	रंग	Warna
+color_theme	Tema de cores	Color theme	Tema de colores	Thème de couleurs	Farbschema	Цветовая тема	配色主题	配色テーマ	سمة الألوان	রঙের থিম	रंग थीम	Tema warna
+column_move	Arrastar colunas	Column move	Mover columnas	Déplacer les colonnes	Spalten verschieben	Перемещение столбцов	移动列	列の移動	نقل الأعمدة	কলাম সরানো	स्तंभ खिसकाएँ	Pindahkan kolom
+columns	Colunas	Columns	Columnas	Colonnes	Spalten	Столбцы	列	列	الأعمدة	কলামসমূহ	स्तंभ	Kolom
+columns_field	Campo das colunas	Columns field	Campo de columnas	Champ des colonnes	Spaltenfeld	Поле столбцов	列字段	列のフィールド	حقل الأعمدة	কলামের ঘর	स्तंभ फ़ील्ड	Bidang kolom
+compact	Compacto	Compact	Compacto	Compact	Kompakt	Компактный	紧凑	コンパクト	مضغوط	সংক্ষিপ্ত	संक्षिप्त	Ringkas
+connected	Juntos	Connected	Unidos	Joints	Verbunden	Соединённые	相连	連結	متصلة	যুক্ত	जुड़े हुए	Tersambung
+contained	Com fundo	Contained	Con fondo	Avec fond	Mit Hintergrund	С фоном	带背景	背景あり	بخلفية	পটভূমিসহ	पृष्ठभूमि सहित	Dengan latar
+count	Quantidade	Count	Cantidad	Nombre	Anzahl	Количество	数量	個数	العدد	সংখ্যা	संख्या	Jumlah
+countdown	Contagem regressiva	Countdown	Cuenta regresiva	Compte à rebours	Countdown	Обратный отсчёт	倒计时	カウントダウン	العد التنازلي	কাউন্টডাউন	उलटी गिनती	Hitung mundur
+countdown_fraction	Fração da contagem	Countdown fraction	Fracción de la cuenta	Fraction du compte à rebours	Countdown-Anteil	Доля отсчёта	倒计时进度	カウントダウンの割合	نسبة العد التنازلي	কাউন্টডাউনের অংশ	उलटी गिनती का भाग	Pecahan hitung mundur
+counter	Contador	Counter	Contador	Compteur	Zähler	Счётчик	计数器	カウンター	العداد	গণক	गणक	Penghitung
+crossfade	Transição suave	Crossfade	Fundido	Fondu enchaîné	Überblendung	Плавный переход	淡入淡出	クロスフェード	تلاشٍ متقاطع	ক্রসফেড	क्रॉसफ़ेड	Transisi silang
+cursor	Cursor do mouse	Mouse cursor	Cursor del ratón	Curseur de la souris	Mauszeiger	Курсор мыши	鼠标指针	マウスカーソル	مؤشر الفأرة	মাউসের কার্সর	माउस कर्सर	Kursor mouse
+cursor_color	Cor da linha atual	Cursor color	Color de la fila actual	Couleur de la ligne courante	Farbe der aktuellen Zeile	Цвет текущей строки	当前行颜色	現在行の色	لون الصف الحالي	বর্তমান সারির রং	वर्तमान पंक्ति का रंग	Warna baris saat ini
+cycle	Circular	Cycle	Circular	Boucler	Zyklisch	Зацикленно	循环	ループ	دوري	চক্রাকার	चक्रीय	Berputar
+danger	Perigoso	Danger	Peligroso	Dangereux	Gefährlich	Опасное	危险	危険	خطر	বিপজ্জনক	खतरनाक	Berbahaya
+danger_color	Cor de perigo	Danger color	Color de peligro	Couleur de danger	Gefahrenfarbe	Цвет опасности	危险色	危険の色	لون الخطر	বিপদের রং	खतरे का रंग	Warna bahaya
+data	Dados	Data	Datos	Données	Daten	Данные	数据	データ	البيانات	তথ্য	डेटा	Data
+data_field	Campo de dados	Data field	Campo de datos	Champ de données	Datenfeld	Поле данных	数据字段	データフィールド	حقل البيانات	তথ্যের ঘর	डेटा फ़ील्ड	Bidang data
+data_set	Conjunto de dados	Dataset	Conjunto de datos	Jeu de données	Datenmenge	Набор данных	数据集	データセット	مجموعة البيانات	ডেটাসেট	डेटासेट	Kumpulan data
+data_source	Fonte de dados	Data source	Origen de datos	Source de données	Datenquelle	Источник данных	数据源	データソース	مصدر البيانات	তথ্যের উৎস	डेटा स्रोत	Sumber data
+date	Data	Date	Fecha	Date	Datum	Дата	日期	日付	التاريخ	তারিখ	तारीख	Tanggal
+decimals	Casas decimais	Decimals	Decimales	Décimales	Nachkommastellen	Знаков после запятой	小数位数	小数点以下の桁数	المنازل العشرية	দশমিক ঘর	दशमलव स्थान	Desimal
+default_value	Valor padrão	Default value	Valor predeterminado	Valeur par défaut	Standardwert	Значение по умолчанию	默认值	既定値	القيمة الافتراضية	ডিফল্ট মান	डिफ़ॉल्ट मान	Nilai bawaan
+delay	Atraso	Delay	Retraso	Délai	Verzögerung	Задержка	延迟	遅延	التأخير	বিলম্ব	विलंब	Penundaan
+dense	Compacto	Dense	Denso	Dense	Dicht	Плотный	紧凑	詰める	كثيف	ঘন	सघन	Padat
+detail	Detalhe	Detail	Detalle	Détail	Detail	Подробности	详情	詳細	التفاصيل	বিস্তারিত	विवरण	Detail
+detents	Alturas de parada	Detents	Alturas de parada	Hauteurs d'arrêt	Rasthöhen	Высоты фиксации	停靠高度	停止位置	ارتفاعات التوقف	থামার উচ্চতা	रुकने की ऊँचाइयाँ	Tinggi berhenti
+device	Dispositivo	Device	Dispositivo	Appareil	Gerät	Устройство	设备	デバイス	الجهاز	ডিভাইস	डिवाइस	Perangkat
+diagonals	Diagonais	Diagonals	Diagonales	Diagonales	Diagonalen	Диагонали	对角方向	斜め方向	الأقطار	কর্ণসমূহ	विकर्ण	Diagonal
+digits	Só números	Digits only	Solo dígitos	Chiffres uniquement	Nur Ziffern	Только цифры	仅数字	数字のみ	أرقام فقط	শুধু সংখ্যা	केवल अंक	Hanya angka
+dim	Escurecer	Dim	Atenuar	Assombrir	Abdunkeln	Затемнение	变暗	暗くする	تعتيم	ম্লান	धुंधला करें	Redupkan
+dimmed	Apagado	Dimmed	Atenuado	Assombri	Abgedunkelt	Затемнено	已变暗	暗くした	معتم	ম্লান করা	धुंधला किया गया	Diredupkan
+direction	Direção	Direction	Dirección	Direction	Richtung	Направление	方向	方向	الاتجاه	দিক	दिशा	Arah
+display_format	Formato de exibição	Display format	Formato de visualización	Format d'affichage	Anzeigeformat	Формат отображения	显示格式	表示形式	تنسيق العرض	দেখানোর বিন্যাস	प्रदर्शन प्रारूप	Format tampilan
+display_label	Rótulo de exibição	Display label	Etiqueta de visualización	Libellé d'affichage	Anzeigebeschriftung	Отображаемая подпись	显示标签	表示ラベル	تسمية العرض	দেখানোর লেবেল	प्रदर्शन लेबल	Label tampilan
+display_name	Nome exibido	Display name	Nombre mostrado	Nom affiché	Anzeigename	Отображаемое имя	显示名称	表示名	الاسم المعروض	প্রদর্শিত নাম	प्रदर्शित नाम	Nama tampilan
+display_values	Valores exibidos	Display values	Valores mostrados	Valeurs affichées	Anzeigewerte	Отображаемые значения	显示值	表示値	القيم المعروضة	প্রদর্শিত মান	प्रदर्शित मान	Nilai tampilan
+display_width	Largura de exibição	Display width	Ancho de visualización	Largeur d'affichage	Anzeigebreite	Ширина отображения	显示宽度	表示幅	عرض العرض	প্রদর্শনের প্রস্থ	प्रदर्शन चौड़ाई	Lebar tampilan
+dot	Ponto	Dot	Punto	Point	Punkt	Точка	圆点	ドット	نقطة	বিন্দু	बिंदु	Titik
+draggable	Arrastável	Draggable	Arrastrable	Déplaçable	Ziehbar	Перетаскиваемый	可拖动	ドラッグ可能	قابل للسحب	টেনে সরানো যায়	खींचने योग्य	Dapat diseret
+draw_mode	Modo de desenho	Draw mode	Modo de dibujo	Mode de dessin	Zeichenmodus	Режим отрисовки	绘制模式	描画モード	وضع الرسم	আঁকার মোড	चित्र मोड	Mode gambar
+drawer_width	Largura da gaveta	Drawer width	Ancho del cajón	Largeur du tiroir	Schubladenbreite	Ширина панели	抽屉宽度	ドロワーの幅	عرض الدرج	ড্রয়ারের প্রস্থ	दराज की चौड़ाई	Lebar laci
+drift	Atraso	Drift	Desfase	Dérive	Abweichung	Отклонение	偏差	ずれ	الانحراف	বিচ্যুতি	विचलन	Penyimpangan
+duration	Duração	Duration	Duración	Durée	Dauer	Длительность	时长	時間	المدة	সময়কাল	अवधि	Durasi
+easing	Curva de aceleração	Easing	Curva de aceleración	Courbe d'accélération	Beschleunigungskurve	Кривая сглаживания	缓动	イージング	منحنى التسارع	গতির বক্ররেখা	ईज़िंग वक्र	Kurva percepatan
+edit_format	Formato de edição	Edit format	Formato de edición	Format de saisie	Bearbeitungsformat	Формат редактирования	编辑格式	編集形式	تنسيق التحرير	সম্পাদনার বিন্যাস	संपादन प्रारूप	Format edit
+edit_mask	Máscara de edição	Edit mask	Máscara de edición	Masque de saisie	Eingabemaske	Маска ввода	输入掩码	入力マスク	قناع الإدخال	ইনপুট মাস্ক	इनपुट मास्क	Masker input
+editor_look	Código como no editor	Code like the editor	Código como en el editor	Code comme dans l'éditeur	Code wie im Editor	Код как в редакторе	代码同编辑器样式	エディターと同じコード表示	الشيفرة كما في المحرر	এডিটরের মতো কোড	एडिटर जैसा कोड	Kode seperti di editor
+effects	Efeitos	Effects	Efectos	Effets	Effekte	Эффекты	效果	エフェクト	المؤثرات	প্রভাবসমূহ	प्रभाव	Efek
+enabled	Habilitado	Enabled	Habilitado	Activé	Aktiviert	Включено	启用	有効	مُفعّل	সক্রিয়	सक्षम	Aktif
+end_angle	Ângulo final	End angle	Ángulo final	Angle de fin	Endwinkel	Конечный угол	结束角度	終了角度	زاوية النهاية	শেষ কোণ	अंतिम कोण	Sudut akhir
+end_date	Data final	End date	Fecha final	Date de fin	Enddatum	Дата окончания	结束日期	終了日	تاريخ النهاية	শেষ তারিখ	अंतिम तारीख	Tanggal akhir
+end_hour	Hora final	End hour	Hora final	Heure de fin	Endstunde	Последний час	结束小时	終了時刻	ساعة النهاية	শেষ ঘণ্টা	अंतिम घंटा	Jam akhir
+energized	Energizado	Energized	Energizado	Sous tension	Unter Spannung	Под напряжением	通电	通電中	مُكهرب	বিদ্যুৎযুক্ত	ऊर्जित	Bertegangan
+error	Erro	Error	Error	Erreur	Fehler	Ошибка	错误	エラー	الخطأ	ত্রুটি	त्रुटि	Galat
+error_correction	Correção de erros	Error correction	Corrección de errores	Correction d'erreurs	Fehlerkorrektur	Коррекция ошибок	纠错级别	誤り訂正	تصحيح الأخطاء	ত্রুটি সংশোধন	त्रुटि सुधार	Koreksi kesalahan
+events	Eventos	Events	Eventos	Événements	Ereignisse	События	事件	イベント	الأحداث	ঘটনাসমূহ	घटनाएँ	Acara
+expanded	Aberto	Expanded	Expandido	Déplié	Aufgeklappt	Развёрнуто	已展开	展開	موسّع	প্রসারিত	विस्तारित	Terbuka
+expression	Expressão	Expression	Expresión	Expression	Ausdruck	Выражение	表达式	式	التعبير	রাশি	व्यंजक	Ekspresi
+fab_icon	Ícone do botão flutuante	FAB icon	Icono del botón flotante	Icône du bouton flottant	Symbol der schwebenden Schaltfläche	Значок плавающей кнопки	悬浮按钮图标	フローティングボタンのアイコン	أيقونة الزر العائم	ভাসমান বোতামের আইকন	फ़्लोटिंग बटन का आइकन	Ikon tombol mengambang
+field_name	Nome do campo	Field name	Nombre del campo	Nom du champ	Feldname	Имя поля	字段名	フィールド名	اسم الحقل	ঘরের নাম	फ़ील्ड का नाम	Nama bidang
+file	Arquivo	File	Archivo	Fichier	Datei	Файл	文件	ファイル	الملف	ফাইল	फ़ाइल	Berkas
+file_lights	Luzes do arquivo	File lights	Luces del archivo	Lumières du fichier	Lichter aus der Datei	Свет из файла	文件中的灯光	ファイルのライト	إضاءة الملف	ফাইলের আলো	फ़ाइल की रोशनी	Lampu dari berkas
+file_name	Nome do arquivo	File name	Nombre del archivo	Nom du fichier	Dateiname	Имя файла	文件名	ファイル名	اسم الملف	ফাইলের নাম	फ़ाइल का नाम	Nama berkas
+files	Arquivos	Files	Archivos	Fichiers	Dateien	Файлы	文件	ファイル	الملفات	ফাইলসমূহ	फ़ाइलें	Berkas-berkas
+fill	Preenchimento	Fill	Relleno	Remplissage	Füllung	Заливка	填充	塗りつぶし	التعبئة	ভরাট	भराव	Isian
+fill2	Segunda cor do degradê	Gradient second color	Segundo color del degradado	Deuxième couleur du dégradé	Zweite Verlaufsfarbe	Второй цвет градиента	渐变第二色	グラデーションの2色目	اللون الثاني للتدرج	গ্রেডিয়েন্টের দ্বিতীয় রং	ग्रेडिएंट का दूसरा रंग	Warna kedua gradien
+fill_mid	Cor do meio do degradê	Gradient middle color	Color central del degradado	Couleur centrale du dégradé	Mittlere Verlaufsfarbe	Средний цвет градиента	渐变中间色	グラデーションの中間色	اللون الأوسط للتدرج	গ্রেডিয়েন্টের মাঝের রং	ग्रेडिएंट का बीच का रंग	Warna tengah gradien
+fill_mid_at	Posição da cor do meio	Middle color position	Posición del color central	Position de la couleur centrale	Position der Mittelfarbe	Положение среднего цвета	中间色位置	中間色の位置	موضع اللون الأوسط	মাঝের রঙের অবস্থান	बीच के रंग की स्थिति	Posisi warna tengah
+filled	Preenchido	Filled	Relleno	Rempli	Gefüllt	Заполненный	填充	塗りつぶし	مملوء	ভরাট করা	भरा हुआ	Terisi
+filter	Filtro	Filter	Filtro	Filtre	Filter	Фильтр	筛选	フィルター	المرشح	ফিল্টার	फ़िल्टर	Filter
+filter_row	Linha de filtro	Filter row	Fila de filtro	Ligne de filtre	Filterzeile	Строка фильтра	筛选行	フィルター行	صف التصفية	ফিল্টার সারি	फ़िल्टर पंक्ति	Baris filter
+filtered	Filtrado	Filtered	Filtrado	Filtré	Gefiltert	Отфильтровано	已筛选	フィルター適用	مُصفّى	ফিল্টার করা	फ़िल्टर किया गया	Difilter
+finalizing	Finalizando	Finalizing	Finalizando	Finalisation	Wird abgeschlossen	Завершение	正在完成	完了処理中	جارٍ الإنهاء	শেষ করা হচ্ছে	पूरा हो रहा है	Menyelesaikan
+fit	Ajuste	Fit	Ajuste	Ajustement	Anpassung	Вписывание	适应方式	フィット	الملاءمة	মানানো	समायोजन	Penyesuaian
+fixed_columns	Colunas fixas	Fixed columns	Columnas fijas	Colonnes fixes	Feste Spalten	Закреплённые столбцы	固定列	固定列	الأعمدة الثابتة	স্থির কলাম	स्थिर स्तंभ	Kolom tetap
+flow_color	Cor do fluxo	Flow color	Color del flujo	Couleur du flux	Flussfarbe	Цвет потока	流体颜色	流れの色	لون التدفق	প্রবাহের রং	प्रवाह रंग	Warna aliran
+focus_control	Controle do foco	Focus control	Control de foco	Contrôle de focus	Fokussteuerelement	Элемент для фокуса	焦点控件	フォーカス先	عنصر التركيز	ফোকাসের কন্ট্রোল	फ़ोकस नियंत्रण	Kontrol fokus
+folder	Pasta	Folder	Carpeta	Dossier	Ordner	Папка	文件夹	フォルダー	المجلد	ফোল্ডার	फ़ोल्डर	Folder
+folding	Dobrar blocos	Folding	Plegado de bloques	Repli des blocs	Blöcke falten	Сворачивание блоков	代码折叠	折りたたみ	طي الكتل	ব্লক ভাঁজ	ब्लॉक मोड़ना	Lipat blok
+font_family	Fonte	Font family	Fuente	Police	Schriftart	Шрифт	字体	フォント	الخط	ফন্ট	फ़ॉन्ट	Fon
+font_italic	Itálico	Italic	Cursiva	Italique	Kursiv	Курсив	斜体	斜体	مائل	তির্যক	इटैलिक	Miring
+font_size	Tamanho da fonte	Font size	Tamaño de fuente	Taille de police	Schriftgröße	Размер шрифта	字号	フォントサイズ	حجم الخط	ফন্টের আকার	फ़ॉन्ट आकार	Ukuran fon
+font_strikeout	Tachado	Strikeout	Tachado	Barré	Durchgestrichen	Зачёркнутый	删除线	取り消し線	يتوسطه خط	কাটা দাগ	काट रेखा	Coret
+font_underline	Sublinhado	Underline	Subrayado	Souligné	Unterstrichen	Подчёркнутый	下划线	下線	تسطير	নিম্নরেখা	रेखांकित	Garis bawah
+font_weight	Peso da fonte	Font weight	Grosor de fuente	Graisse de police	Schriftstärke	Насыщенность шрифта	字重	フォントの太さ	سُمك الخط	ফন্টের ঘনত্ব	फ़ॉन्ट मोटाई	Ketebalan fon
+footer	Rodapé	Footer	Pie	Pied	Fußzeile	Нижний колонтитул	页脚	フッター	التذييل	পাদচরণ	फ़ुटर	Kaki
+form	Form	Form	Formulario	Formulaire	Formular	Форма	窗体	フォーム	النموذج	ফর্ম	फ़ॉर्म	Formulir
+form_height	Altura do form	Form height	Altura del formulario	Hauteur du formulaire	Formularhöhe	Высота формы	窗体高度	フォームの高さ	ارتفاع النموذج	ফর্মের উচ্চতা	फ़ॉर्म की ऊँचाई	Tinggi formulir
+form_width	Largura do form	Form width	Ancho del formulario	Largeur du formulaire	Formularbreite	Ширина формы	窗体宽度	フォームの幅	عرض النموذج	ফর্মের প্রস্থ	फ़ॉर्म की चौड़ाई	Lebar formulir
+format	Formato	Format	Formato	Format	Format	Формат	格式	書式	التنسيق	বিন্যাস	प्रारूप	Format
+framed	Com moldura	Framed	Con marco	Encadré	Gerahmt	В рамке	带边框	枠付き	مؤطر	ফ্রেমসহ	फ़्रेम सहित	Berbingkai
+frequency	Frequência das marcas	Tick frequency	Frecuencia de marcas	Fréquence des graduations	Teilstrichabstand	Частота делений	刻度频率	目盛りの間隔	تردد العلامات	দাগের ঘনত্ব	निशानों की आवृत्ति	Frekuensi tanda
+from	De	From	Desde	De	Von	От	起点	接続元	من	থেকে	से	Dari
+from_port	Lado de saída	From side	Lado de salida	Côté de départ	Ausgangsseite	Сторона начала	起点侧	接続元の辺	جانب البداية	শুরুর দিক	प्रारंभ पक्ष	Sisi asal
+gap	Espaço entre itens	Gap	Espacio entre elementos	Espacement	Abstand	Промежуток	间距	間隔	الفجوة	ফাঁক	अंतराल	Jarak
+geojson	Mapa (GeoJSON)	Map (GeoJSON)	Mapa (GeoJSON)	Carte (GeoJSON)	Karte (GeoJSON)	Карта (GeoJSON)	地图 (GeoJSON)	地図 (GeoJSON)	الخريطة (GeoJSON)	মানচিত্র (GeoJSON)	मानचित्र (GeoJSON)	Peta (GeoJSON)
+glow	Brilho	Glow	Brillo	Lueur	Leuchten	Свечение	发光	グロー	التوهج	আভা	चमक	Pendar
+gradient	Degradê	Gradient	Degradado	Dégradé	Verlauf	Градиент	渐变	グラデーション	التدرج	গ্রেডিয়েন্ট	ग्रेडिएंट	Gradien
+gradient_angle	Ângulo do degradê	Gradient angle	Ángulo del degradado	Angle du dégradé	Verlaufswinkel	Угол градиента	渐变角度	グラデーションの角度	زاوية التدرج	গ্রেডিয়েন্টের কোণ	ग्रेडिएंट कोण	Sudut gradien
+gradient_radial	Degradê circular	Radial gradient	Degradado radial	Dégradé radial	Radialer Verlauf	Радиальный градиент	径向渐变	放射グラデーション	تدرج دائري	বৃত্তাকার গ্রেডিয়েন্ট	वृत्ताकार ग्रेडिएंट	Gradien radial
+group	Grupo	Group	Grupo	Groupe	Gruppe	Группа	分组	グループ	المجموعة	দল	समूह	Grup
+group_field	Campo de grupo	Group field	Campo de grupo	Champ de groupe	Gruppenfeld	Поле группировки	分组字段	グループフィールド	حقل التجميع	দলের ঘর	समूह फ़ील्ड	Bidang grup
+h_align	Alinhamento horizontal	Horizontal alignment	Alineación horizontal	Alignement horizontal	Horizontale Ausrichtung	Горизонтальное выравнивание	水平对齐	水平方向の配置	المحاذاة الأفقية	অনুভূমিক সারিবদ্ধতা	क्षैतिज संरेखण	Perataan horizontal
+half	Meia estrela	Half stars	Media estrella	Demi-étoile	Halbe Sterne	Половина звезды	半星	半分の星	نصف نجمة	অর্ধেক তারা	आधा तारा	Setengah bintang
+height	Altura	Height	Altura	Hauteur	Höhe	Высота	高度	高さ	الارتفاع	উচ্চতা	ऊँचाई	Tinggi
+helper	Texto de ajuda	Helper text	Texto de ayuda	Texte d'aide	Hilfetext	Подсказка под полем	帮助文本	ヘルプテキスト	نص المساعدة	সহায়ক লেখা	सहायक पाठ	Teks bantuan
+high	Limite alto	High	Límite alto	Seuil haut	Obere Grenze	Верхний порог	高阈值	上限	الحد الأعلى	উচ্চ সীমা	ऊपरी सीमा	Batas atas
+high_color	Cor do maior valor	High color	Color del valor alto	Couleur haute	Farbe für hohe Werte	Цвет высокого значения	高值颜色	高い値の色	لون القيمة العالية	উচ্চ মানের রং	उच्च मान का रंग	Warna nilai tinggi
+higher_is_better	Maior é melhor	Higher is better	Mayor es mejor	Plus haut est mieux	Höher ist besser	Больше — лучше	越高越好	高いほど良い	الأعلى أفضل	বেশি হলে ভালো	अधिक बेहतर है	Lebih tinggi lebih baik
+highlight	Destacar	Highlight	Resaltar	Surligner	Hervorheben	Выделение	高亮	強調	تمييز	হাইলাইট	हाइलाइट	Sorot
+highlight_color	Cor de destaque da área	Highlight color	Color de resaltado	Couleur de surbrillance	Hervorhebungsfarbe	Цвет подсветки	高亮颜色	強調色	لون التمييز	হাইলাইটের রং	हाइलाइट रंग	Warna sorotan
+highlighted	Destacado	Highlighted	Resaltado	Mis en évidence	Hervorgehoben	Выделено	已高亮	強調表示	مميَّز	হাইলাইট করা	हाइलाइट किया गया	Disorot
+hint	Dica	Hint	Sugerencia	Info-bulle	Hinweis	Подсказка	提示	ヒント	التلميح	ইঙ্গিত	संकेत	Petunjuk
+hit_test	Recebe cliques	Hit test	Recibe clics	Reçoit les clics	Empfängt Klicks	Принимает нажатия	可点击	クリックを受け付ける	يستقبل النقرات	ক্লিক গ্রহণ করে	क्लिक लेता है	Menerima klik
+horizontal	Horizontal	Horizontal	Horizontal	Horizontal	Horizontal	Горизонтально	水平	水平	أفقي	অনুভূমিক	क्षैतिज	Horizontal
+hotkey	Atalho	Hotkey	Atajo	Raccourci	Tastenkürzel	Горячая клавиша	快捷键	ショートカット	مفتاح الاختصار	শর্টকাট	शॉर्टकट	Pintasan
+html	Conteúdo (HTML)	Content (HTML)	Contenido (HTML)	Contenu (HTML)	Inhalt (HTML)	Содержимое (HTML)	内容 (HTML)	内容 (HTML)	المحتوى (HTML)	বিষয়বস্তু (HTML)	सामग्री (HTML)	Konten (HTML)
+icon	Ícone	Icon	Icono	Icône	Symbol	Значок	图标	アイコン	الأيقونة	আইকন	आइकन	Ikon
+icon_position	Posição do ícone	Icon position	Posición del icono	Position de l'icône	Symbolposition	Положение значка	图标位置	アイコンの位置	موضع الأيقونة	আইকনের অবস্থান	आइकन की स्थिति	Posisi ikon
+icon_size	Tamanho do ícone	Icon size	Tamaño del icono	Taille de l'icône	Symbolgröße	Размер значка	图标大小	アイコンのサイズ	حجم الأيقونة	আইকনের আকার	आइकन का आकार	Ukuran ikon
+icons	Ícones	Icons	Iconos	Icônes	Symbole	Значки	图标	アイコン一覧	الأيقونات	আইকনসমূহ	आइकन	Ikon-ikon
+image	Imagem	Image	Imagen	Image	Bild	Изображение	图像	画像	الصورة	ছবি	छवि	Gambar
+increment	Incremento	Increment	Incremento	Incrément	Schrittweite	Шаг	增量	増分	الزيادة	বৃদ্ধি	वृद्धि	Kenaikan
+incremental_search	Busca ao digitar	Incremental search	Búsqueda al escribir	Recherche incrémentielle	Inkrementelle Suche	Поиск при вводе	增量搜索	インクリメンタル検索	بحث تزايدي	টাইপ করতেই খোঁজ	टाइप करते ही खोज	Cari saat mengetik
+indeterminate	Sem progresso definido	Indeterminate	Indeterminado	Indéterminé	Unbestimmt	Неопределённый	不确定	不確定	غير محدد	অনির্দিষ্ট	अनिश्चित	Tak tentu
+index	Índice	Index	Índice	Index	Index	Индекс	索引	インデックス	الفهرس	সূচক	सूचकांक	Indeks
+index_field_names	Campos do índice	Index field names	Campos del índice	Champs de l'index	Indexfelder	Поля индекса	索引字段	インデックスのフィールド	حقول الفهرس	সূচকের ঘর	सूचकांक फ़ील्ड	Bidang indeks
+index_name	Nome do índice	Index name	Nombre del índice	Nom de l'index	Indexname	Имя индекса	索引名称	インデックス名	اسم الفهرس	সূচকের নাম	सूचकांक का नाम	Nama indeks
+indexes	Índices	Indexes	Índices	Index	Indizes	Индексы	索引列表	インデックス一覧	الفهارس	সূচকসমূহ	सूचकांक सूची	Indeks-indeks
+indicators	Indicadores	Indicators	Indicadores	Indicateurs	Indikatoren	Индикаторы	指标	インジケーター	المؤشرات	সূচকগুলো	संकेतक	Indikator
+initial_dir	Pasta inicial	Initial folder	Carpeta inicial	Dossier initial	Startordner	Начальная папка	初始文件夹	初期フォルダー	المجلد الأولي	শুরুর ফোল্ডার	प्रारंभिक फ़ोल्डर	Folder awal
+inline	Na mesma linha	Inline	En línea	En ligne	In einer Zeile	В одну строку	同一行	横並び	في سطر واحد	এক লাইনে	एक पंक्ति में	Sebaris
+inner	Raio interno	Inner radius	Radio interior	Rayon intérieur	Innenradius	Внутренний радиус	内半径	内側の半径	نصف القطر الداخلي	ভেতরের ব্যাসার্ধ	भीतरी त्रिज्या	Jari-jari dalam
+interval	Intervalo	Interval	Intervalo	Intervalle	Intervall	Интервал	间隔	間隔	الفاصل الزمني	বিরতি	अंतराल समय	Interval
+item_count	Quantidade de itens	Item count	Cantidad de elementos	Nombre d'éléments	Anzahl der Elemente	Количество элементов	项目数	項目数	عدد العناصر	আইটেমের সংখ্যা	आइटम की संख्या	Jumlah item
+item_form	Form de cada item	Item form	Formulario de cada elemento	Formulaire d'élément	Elementformular	Форма элемента	项目窗体	項目のフォーム	نموذج العنصر	আইটেমের ফর্ম	आइटम फ़ॉर्म	Formulir item
+item_height	Altura do item	Item height	Altura del elemento	Hauteur de l'élément	Elementhöhe	Высота элемента	项目高度	項目の高さ	ارتفاع العنصر	আইটেমের উচ্চতা	आइटम की ऊँचाई	Tinggi item
+item_index	Item escolhido	Item index	Elemento elegido	Élément choisi	Gewähltes Element	Выбранный элемент	选中项	選択項目	العنصر المختار	নির্বাচিত আইটেম	चुना गया आइटम	Item terpilih
+item_width	Largura do item	Item width	Ancho del elemento	Largeur de l'élément	Elementbreite	Ширина элемента	项目宽度	項目の幅	عرض العنصر	আইটেমের প্রস্থ	आइटम की चौड़ाई	Lebar item
+items	Itens	Items	Elementos	Éléments	Elemente	Элементы	项目	項目	العناصر	আইটেমসমূহ	आइटम	Item
+json	Dados (JSON)	Data (JSON)	Datos (JSON)	Données (JSON)	Daten (JSON)	Данные (JSON)	数据 (JSON)	データ (JSON)	البيانات (JSON)	তথ্য (JSON)	डेटा (JSON)	Data (JSON)
+keep	Quantas guardar	Keep	Cuántas conservar	Nombre à conserver	Anzahl behalten	Сколько хранить	保留数量	保持する数	العدد المحفوظ	কতগুলো রাখা হবে	कितने रखें	Jumlah disimpan
+keep_aspect	Mantém a proporção	Keep aspect	Mantener proporción	Conserver les proportions	Seitenverhältnis beibehalten	Сохранять пропорции	保持比例	比率を維持	الحفاظ على النسبة	অনুপাত বজায় রাখা	अनुपात बनाए रखें	Pertahankan rasio
+key_field	Campo chave	Key field	Campo clave	Champ clé	Schlüsselfeld	Ключевое поле	键字段	キーフィールド	حقل المفتاح	মূল ঘর	कुंजी फ़ील्ड	Bidang kunci
+key_fields	Campos chave	Key fields	Campos clave	Champs clés	Schlüsselfelder	Ключевые поля	键字段列表	キーフィールド一覧	حقول المفتاح	মূল ঘরসমূহ	कुंजी फ़ील्ड सूची	Bidang-bidang kunci
+keyboard_suggestions	Sugestões do teclado	Keyboard suggestions	Sugerencias del teclado	Suggestions du clavier	Tastaturvorschläge	Подсказки клавиатуры	键盘建议	キーボードの候補	اقتراحات لوحة المفاتيح	কীবোর্ডের পরামর্শ	कीबोर्ड सुझाव	Saran papan ketik
+keyframes	Passos (keyframes)	Keyframes	Fotogramas clave	Images clés	Keyframes	Ключевые кадры	关键帧	キーフレーム	الإطارات الرئيسية	কীফ্রেম	कीफ़्रेम	Keyframe
+kind	Tipo	Kind	Tipo	Type	Art	Вид	类型	種類	النوع	ধরন	प्रकार	Jenis
+label	Rótulo	Label	Etiqueta	Libellé	Beschriftung	Подпись	标签	ラベル	التسمية	লেবেল	लेबल	Label
+label_field	Campo dos rótulos	Label field	Campo de etiquetas	Champ des libellés	Beschriftungsfeld	Поле подписей	标签字段	ラベルのフィールド	حقل التسميات	লেবেলের ঘর	लेबल फ़ील्ड	Bidang label
+labels	Rótulos	Labels	Etiquetas	Libellés	Beschriftungen	Подписи	标签列表	ラベル一覧	التسميات	লেবেলসমূহ	लेबल सूची	Label-label
+landscape	Paisagem	Landscape	Horizontal	Paysage	Querformat	Альбомная	横向	横向き	أفقي (عرضي)	আড়াআড়ি	लैंडस्केप	Lanskap
+language	Idioma	Language	Idioma	Langue	Sprache	Язык	语言	言語	اللغة	ভাষা	भाषा	Bahasa
+latitude	Latitude	Latitude	Latitud	Latitude	Breitengrad	Широта	纬度	緯度	خط العرض	অক্ষাংশ	अक्षांश	Lintang
+layout	Disposição	Layout	Disposición	Disposition	Anordnung	Компоновка	布局	レイアウト	التخطيط	বিন্যাস নকশা	लेआउट	Tata letak
+left	Esquerda	Left	Izquierda	Gauche	Links	Слева	左	左	اليسار	বাম	बायाँ	Kiri
+left_color	Cor da esquerda	Left color	Color izquierdo	Couleur gauche	Linke Farbe	Цвет слева	左侧颜色	左の色	لون اليسار	বাঁয়ের রং	बाएँ का रंग	Warna kiri
+left_icon	Ícone da esquerda	Left icon	Icono izquierdo	Icône gauche	Linkes Symbol	Значок слева	左侧图标	左のアイコン	أيقونة اليسار	বাঁয়ের আইকন	बाएँ का आइकन	Ikon kiri
+left_text	Texto da esquerda	Left text	Texto izquierdo	Texte gauche	Linker Text	Текст слева	左侧文字	左のテキスト	نص اليسار	বাঁয়ের লেখা	बाएँ का पाठ	Teks kiri
+legend	Legenda	Legend	Leyenda	Légende	Legende	Легенда	图例	凡例	وسيلة الإيضاح	কিংবদন্তি	किंवदंती	Legenda
+length	Comprimento	Length	Longitud	Longueur	Länge	Длина	长度	長さ	الطول	দৈর্ঘ্য	लंबाई	Panjang
+letter_spacing	Espaço entre letras	Letter spacing	Espaciado entre letras	Espacement des lettres	Zeichenabstand	Межбуквенный интервал	字间距	文字間隔	تباعد الأحرف	অক্ষরের ফাঁক	अक्षर अंतराल	Jarak huruf
+levels	Níveis	Levels	Niveles	Niveaux	Stufen	Уровни	档位	レベル数	المستويات	স্তরসমূহ	स्तर	Level
+lights	Luzes	Lights	Luces	Feux	Leuchten	Огни	灯	ランプ	الأضواء	আলো	लाइटें	Lampu
+limit	Limite	Limit	Límite	Limite	Grenze	Предел	上限值	上限	الحد	সীমা	सीमा	Batas
+line_gap	Espaço entre linhas	Line gap	Espacio entre líneas	Espacement des lignes	Zeilenabstand	Межстрочный промежуток	行间距	行間	التباعد بين الأسطر	লাইনের ফাঁক	पंक्ति अंतराल	Jarak baris
+line_numbers	Números das linhas	Line numbers	Números de línea	Numéros de ligne	Zeilennummern	Номера строк	行号	行番号	أرقام الأسطر	লাইন নম্বর	पंक्ति संख्या	Nomor baris
+liquid	Líquido	Liquid	Líquido	Liquide	Flüssigkeit	Жидкость	液体	液体	السائل	তরল	तरल	Cairan
+list_field	Campo da lista	List field	Campo de la lista	Champ de la liste	Listenfeld	Поле списка	列表字段	リストのフィールド	حقل القائمة	তালিকার ঘর	सूची फ़ील्ड	Bidang daftar
+list_source	Fonte da lista	List source	Origen de la lista	Source de la liste	Listenquelle	Источник списка	列表数据源	リストのソース	مصدر القائمة	তালিকার উৎস	सूची स्रोत	Sumber daftar
+live	Ao vivo	Live	En vivo	En direct	Live	В реальном времени	实时	ライブ	مباشر	সরাসরি	लाइव	Langsung
+locked	Travado	Locked	Bloqueado	Verrouillé	Gesperrt	Заблокировано	已锁定	ロック	مقفل	লক করা	लॉक	Terkunci
+log_scale	Escala logarítmica	Log scale	Escala logarítmica	Échelle logarithmique	Logarithmische Skala	Логарифмическая шкала	对数刻度	対数目盛り	مقياس لوغاريتمي	লগারিদমিক স্কেল	लघुगणकीय पैमाना	Skala logaritmik
+longitude	Longitude	Longitude	Longitud	Longitude	Längengrad	Долгота	经度	経度	خط الطول	দ্রাঘিমাংশ	देशांतर	Bujur
+lookup_data_set	Dados de pesquisa	Lookup dataset	Datos de búsqueda	Données de recherche	Nachschlagedaten	Набор данных подстановки	查找数据集	参照データセット	بيانات البحث	খোঁজার ডেটাসেট	लुकअप डेटासेट	Data pencarian
+lookup_key_fields	Campos chave da pesquisa	Lookup key fields	Campos clave de búsqueda	Champs clés de recherche	Nachschlage-Schlüsselfelder	Ключевые поля подстановки	查找键字段	参照キーフィールド	حقول مفتاح البحث	খোঁজার মূল ঘর	लुकअप कुंजी फ़ील्ड	Bidang kunci pencarian
+lookup_result_field	Campo do resultado da pesquisa	Lookup result field	Campo de resultado de búsqueda	Champ de résultat de recherche	Nachschlage-Ergebnisfeld	Поле результата подстановки	查找结果字段	参照結果フィールド	حقل نتيجة البحث	খোঁজার ফলাফলের ঘর	लुकअप परिणाम फ़ील्ड	Bidang hasil pencarian
+loop_delay	Pausa entre repetições	Loop delay	Pausa entre repeticiones	Pause entre les boucles	Pause zwischen Wiederholungen	Пауза между повторами	循环间隔	ループ間の待ち時間	التأخير بين التكرارات	পুনরাবৃত্তির বিরতি	दोहराव के बीच विराम	Jeda antar-ulangan
+looping	Repetindo	Looping	En bucle	En boucle	Wiederholend	Повтор	循环播放	繰り返し	تكرار	পুনরাবৃত্তি	दोहराना	Berulang
+low	Limite baixo	Low	Límite bajo	Seuil bas	Untere Grenze	Нижний порог	低阈值	下限	الحد الأدنى	নিম্ন সীমা	निचली सीमा	Batas bawah
+low_color	Cor do menor valor	Low color	Color del valor bajo	Couleur basse	Farbe für niedrige Werte	Цвет низкого значения	低值颜色	低い値の色	لون القيمة المنخفضة	নিম্ন মানের রং	निम्न मान का रंग	Warna nilai rendah
+lower	Indicador de baixo	Lower indicator	Indicador inferior	Indicateur inférieur	Unterer Indikator	Нижний индикатор	下方指标	下部のインジケーター	المؤشر السفلي	নিচের সূচক	निचला संकेतक	Indikator bawah
+margin	Margem	Margin	Margen	Marge	Rand	Поле	页边距	余白	الهامش	মার্জিন	हाशिया	Margin
+margins	Margens	Margins	Márgenes	Marges	Außenabstände	Внешние отступы	外边距	外側の余白	الهوامش	মার্জিনসমূহ	हाशिये	Margin luar
+markers	Marcadores	Markers	Marcadores	Repères	Markierungen	Маркеры	标记	マーカー	العلامات	চিহ্নসমূহ	मार्कर	Penanda
+markup	Formatação no texto	Markup	Formato en el texto	Mise en forme du texte	Textauszeichnung	Разметка текста	文本标记	マークアップ	ترميز النص	লেখার মার্কআপ	पाठ मार्कअप	Markup teks
+mask	Máscara	Mask	Máscara	Masque	Maske	Маска	掩码	マスク	القناع	মাস্ক	मास्क	Masker
+mask_text	Esconde o texto digitado	Mask text	Ocultar el texto	Masquer le texte	Text maskieren	Скрывать текст	隐藏文本	テキストを隠す	إخفاء النص	লেখা লুকানো	पाठ छिपाएँ	Sembunyikan teks
+master_fields	Campos mestre	Master fields	Campos maestros	Champs maîtres	Masterfelder	Главные поля	主字段	マスターフィールド	الحقول الرئيسية	প্রধান ঘরসমূহ	मास्टर फ़ील्ड	Bidang induk
+master_source	Fonte mestre	Master source	Origen maestro	Source maître	Masterquelle	Главный источник	主数据源	マスターソース	المصدر الرئيسي	প্রধান উৎস	मास्टर स्रोत	Sumber induk
+material	Material	Material	Material	Matériau	Material	Материал	物料	材料	المادة	উপাদান	सामग्री	Material
+max	Máximo	Maximum	Máximo	Maximum	Maximum	Максимум	最大值	最大	الحد الأقصى	সর্বোচ্চ	अधिकतम	Maksimum
+max_length	Tamanho máximo	Max length	Longitud máxima	Longueur maximale	Maximale Länge	Макс. длина	最大长度	最大文字数	الطول الأقصى	সর্বোচ্চ দৈর্ঘ্য	अधिकतम लंबाई	Panjang maksimum
+max_recent	Máximo de recentes	Max recent	Máximo de recientes	Maximum de récents	Maximal zuletzt verwendet	Макс. недавних	最近项上限	最近の最大数	الحد الأقصى للحديثة	সাম্প্রতিকের সর্বোচ্চ	अधिकतम हाल के	Maksimum terbaru
+max_rows	Máximo de linhas	Max rows	Máximo de filas	Nombre maximal de lignes	Maximale Zeilen	Макс. строк	最大行数	最大行数	الحد الأقصى للصفوف	সর্বোচ্চ সারি	अधिकतम पंक्तियाँ	Baris maksimum
+max_tab_width	Largura máxima da aba	Max tab width	Ancho máximo de pestaña	Largeur maximale d'onglet	Maximale Registerbreite	Макс. ширина вкладки	标签页最大宽度	タブの最大幅	أقصى عرض للتبويب	ট্যাবের সর্বোচ্চ প্রস্থ	टैब की अधिकतम चौड़ाई	Lebar tab maksimum
+menu_items	Itens do menu	Menu items	Elementos del menú	Éléments du menu	Menüeinträge	Пункты меню	菜单项	メニュー項目	عناصر القائمة	মেনুর আইটেম	मेनू आइटम	Item menu
+menu_theme	Tema do menu	Menu theme	Tema del menú	Thème du menu	Menüdesign	Тема меню	菜单主题	メニューのテーマ	سمة القائمة	মেনুর থিম	मेनू थीम	Tema menu
+mid	Limite do meio	Middle	Límite medio	Seuil moyen	Mittlere Grenze	Средний порог	中阈值	中間値	الحد الأوسط	মধ্য সীমা	मध्य सीमा	Batas tengah
+min	Mínimo	Minimum	Mínimo	Minimum	Minimum	Минимум	最小值	最小	الحد الأدنى للقيمة	সর্বনিম্ন	न्यूनतम	Minimum
+min_column_width	Largura mínima da coluna	Min column width	Ancho mínimo de columna	Largeur minimale de colonne	Minimale Spaltenbreite	Мин. ширина столбца	最小列宽	列の最小幅	أدنى عرض للعمود	কলামের সর্বনিম্ন প্রস্থ	स्तंभ की न्यूनतम चौड़ाई	Lebar kolom minimum
+min_size	Tamanho mínimo	Min size	Tamaño mínimo	Taille minimale	Mindestgröße	Мин. размер	最小尺寸	最小サイズ	الحجم الأدنى	সর্বনিম্ন আকার	न्यूनतम आकार	Ukuran minimum
+minimap	Minimapa	Minimap	Minimapa	Minicarte	Minikarte	Миникарта	缩略图	ミニマップ	الخريطة المصغرة	মিনিম্যাপ	मिनीमैप	Peta mini
+minutes_mode	Escolhendo os minutos	Minutes mode	Modo de minutos	Mode minutes	Minutenmodus	Режим минут	分钟模式	分の選択	وضع الدقائق	মিনিট মোড	मिनट मोड	Mode menit
+mirror	Espelhado	Mirror	Espejo	Miroir	Gespiegelt	Зеркально	镜像	ミラー	معكوس	আয়না	दर्पण	Cermin
+modal_result	Resultado do modal	Modal result	Resultado modal	Résultat modal	Modales Ergebnis	Результат модального окна	模态结果	モーダルの結果	نتيجة النافذة المشروطة	মোডাল ফলাফল	मॉडल परिणाम	Hasil modal
+model_rotation	Rotação do modelo	Model rotation	Rotación del modelo	Rotation du modèle	Modelldrehung	Поворот модели	模型旋转	モデルの回転	دوران النموذج	মডেলের ঘূর্ণন	मॉडल घुमाव	Rotasi model
+month	Mês	Month	Mes	Mois	Monat	Месяц	月份	月	الشهر	মাস	महीना	Bulan
+month_mode	Escolhendo o mês	Month mode	Modo de mes	Mode mois	Monatsmodus	Режим месяца	月份模式	月の選択	وضع الشهر	মাস মোড	महीना मोड	Mode bulan
+multi	Várias escolhas	Multiple choice	Selección múltiple	Choix multiple	Mehrfachauswahl	Множественный выбор	多选	複数選択	اختيار متعدد	একাধিক পছন্দ	बहु-चयन	Pilihan ganda
+multi_select	Seleção múltipla	Multi-select	Selección múltiple	Sélection multiple	Mehrfachauswahl	Множественное выделение	多重选择	複数行選択	تحديد متعدد	একাধিক নির্বাচন	एकाधिक चयन	Pilih banyak
+multiple	Vários	Multiple	Varios	Plusieurs	Mehrere	Несколько	多个	複数	متعدد	একাধিক	एकाधिक	Banyak
+muted	Mudo	Muted	Silenciado	Muet	Stumm	Без звука	静音	ミュート	مكتوم	নিঃশব্দ	मौन	Senyap
+name_property	Propriedade do nome	Name property	Propiedad del nombre	Propriété du nom	Namenseigenschaft	Свойство имени	名称属性	名前のプロパティ	خاصية الاسم	নামের বৈশিষ্ট্য	नाम गुण	Properti nama
+names	Nomes	Names	Nombres	Noms	Namen	Имена	名称列表	名前一覧	الأسماء	নামসমূহ	नाम सूची	Nama-nama
+nav_icon	Ícone de navegação	Navigation icon	Icono de navegación	Icône de navigation	Navigationssymbol	Значок навигации	导航图标	ナビゲーションのアイコン	أيقونة التنقل	নেভিগেশন আইকন	नेविगेशन आइकन	Ikon navigasi
+new_page	Nova página	New page	Nueva página	Nouvelle page	Neue Seite	Новая страница	新页面	改ページ	صفحة جديدة	নতুন পৃষ্ঠা	नया पृष्ठ	Halaman baru
+notification_id	ID da notificação	Notification ID	ID de la notificación	ID de la notification	Benachrichtigungs-ID	ID уведомления	通知 ID	通知 ID	معرّف الإشعار	বিজ্ঞপ্তির আইডি	सूचना आईडी	ID notifikasi
+offset_x	Deslocamento X	Offset X	Desplazamiento X	Décalage X	Versatz X	Смещение X	X 偏移	X オフセット	الإزاحة X	X সরণ	X विस्थापन	Geser X
+offset_y	Deslocamento Y	Offset Y	Desplazamiento Y	Décalage Y	Versatz Y	Смещение Y	Y 偏移	Y オフセット	الإزاحة Y	Y সরণ	Y विस्थापन	Geser Y
+ongoing	Em andamento	Ongoing	En curso	En cours	Laufend	Текущее	持续进行	進行中	مستمر	চলমান	जारी	Berlangsung
+only_allowed	Só os permitidos	Only allowed	Solo los permitidos	Uniquement autorisés	Nur erlaubte	Только разрешённые	仅允许的字符	許可文字のみ	المسموح بها فقط	শুধু অনুমোদিত	केवल अनुमत	Hanya yang diizinkan
+opacity	Opacidade	Opacity	Opacidad	Opacité	Deckkraft	Непрозрачность	不透明度	不透明度	العتامة	অস্বচ্ছতা	अपारदर्शिता	Opasitas
+open	Aberto	Open	Abierto	Ouvert	Offen	Открыто	打开	開いている	مفتوح	খোলা	खुला	Terbuka
+orbit	Girar com o mouse	Orbit	Órbita con el ratón	Orbite à la souris	Mit der Maus drehen	Вращение мышью	鼠标环绕	マウスで回転	الدوران بالفأرة	মাউসে ঘোরানো	माउस से घुमाएँ	Orbit dengan mouse
+order	Ordem	Order	Orden	Ordre	Reihenfolge	Порядок	顺序	順序	الترتيب	ক্রম	क्रम	Urutan
+orientation	Orientação	Orientation	Orientación	Orientation	Ausrichtung	Ориентация	方向	向き	الاتجاه	অভিমুখ	अभिविन्यास	Orientasi
+outline	Contorno	Outline	Contorno	Contour	Kontur	Контур	轮廓	アウトライン	المخطط	রূপরেখা	रूपरेखा	Garis tepi
+outline_width	Largura do contorno	Outline width	Ancho del contorno	Largeur du contour	Konturbreite	Ширина контура	轮廓宽度	アウトラインの幅	عرض المخطط	রূপরেখার প্রস্থ	रूपरेखा की चौड़ाई	Lebar garis tepi
+padding	Espaçamento interno	Padding	Relleno interior	Marge intérieure	Innenabstand	Внутренние отступы	内边距	内側の余白	الحشو الداخلي	ভেতরের ফাঁক	आंतरिक अंतराल	Padding
+page	Página	Page	Página	Page	Seite	Страница	页码	ページ	الصفحة	পৃষ্ঠা	पृष्ठ	Halaman
+page_height	Altura da página	Page height	Altura de página	Hauteur de page	Seitenhöhe	Высота страницы	页面高度	ページの高さ	ارتفاع الصفحة	পৃষ্ঠার উচ্চতা	पृष्ठ की ऊँचाई	Tinggi halaman
+page_host	Lugar das páginas	Page host	Contenedor de páginas	Conteneur des pages	Seitencontainer	Контейнер страниц	页面容器	ページの置き場所	حاوية الصفحات	পৃষ্ঠার ধারক	पृष्ठ धारक	Wadah halaman
+page_width	Largura da página	Page width	Ancho de página	Largeur de page	Seitenbreite	Ширина страницы	页面宽度	ページの幅	عرض الصفحة	পৃষ্ঠার প্রস্থ	पृष्ठ की चौड़ाई	Lebar halaman
+params	Parâmetros	Parameters	Parámetros	Paramètres	Parameter	Параметры	参数	パラメーター	المعاملات	প্যারামিটার	पैरामीटर	Parameter
+password	Senha (esconde o texto)	Password	Contraseña	Mot de passe	Passwort	Пароль	密码	パスワード	كلمة المرور	পাসওয়ার্ড	पासवर्ड	Kata sandi
+paused	Pausado	Paused	En pausa	En pause	Pausiert	На паузе	已暂停	一時停止	متوقف مؤقتًا	বিরতিতে	रुका हुआ	Dijeda
+permissions	Permissões	Permissions	Permisos	Autorisations	Berechtigungen	Разрешения	权限	権限	الأذونات	অনুমতিসমূহ	अनुमतियाँ	Izin
+pitch	Inclinação	Pitch	Inclinación	Inclinaison	Neigung	Наклон	俯仰	ピッチ	الميل	ঢাল	झुकाव	Kemiringan
+placeholder	Texto de exemplo	Placeholder	Texto de ejemplo	Texte indicatif	Platzhalter	Подсказка в поле	占位文字	プレースホルダー	نص العنصر النائب	নমুনা লেখা	प्लेसहोल्डर	Teks contoh
+playing	Tocando	Playing	Reproduciendo	En lecture	Wird abgespielt	Воспроизводится	正在播放	再生中	قيد التشغيل	চলছে	चल रहा है	Diputar
+pointer_moves	Movimentos do mouse	Pointer moves	Movimientos del ratón	Mouvements de la souris	Mausbewegungen	Движения мыши	指针移动	ポインターの移動	حركات المؤشر	মাউসের নড়াচড়া	पॉइंटर की हलचल	Gerakan penunjuk
+points	Pontos	Points	Puntos	Points	Punkte	Точки	点	点	النقاط	বিন্দুসমূহ	बिंदु	Titik-titik
+popup_menu	Menu de contexto	Popup menu	Menú contextual	Menu contextuel	Kontextmenü	Контекстное меню	弹出菜单	ポップアップメニュー	القائمة المنبثقة	পপআপ মেনু	पॉपअप मेनू	Menu konteks
+position	Posição	Position	Posición	Position	Position	Положение	位置	位置	الموضع	অবস্থান	स्थिति	Posisi
+positions	Posições	Positions	Posiciones	Positions	Positionen	Положения	位置	位置	المواضع	অবস্থান	स्थितियाँ	Posisi
+precision	Precisão	Precision	Precisión	Précision	Genauigkeit	Точность	精度	精度	الدقة	নির্ভুলতা	परिशुद्धता	Presisi
+prefix	Prefixo	Prefix	Prefijo	Préfixe	Präfix	Префикс	前缀	接頭辞	البادئة	উপসর্গ	उपसर्ग	Awalan
+presence	Presença	Presence	Presencia	Présence	Anwesenheit	Присутствие	在线状态	在席状況	الحضور	উপস্থিতি	उपस्थिति	Kehadiran
+pressed	Pressionado	Pressed	Presionado	Enfoncé	Gedrückt	Нажата	已按下	押下	مضغوط	চাপা	दबा हुआ	Ditekan
+preview	Prévia	Preview	Vista previa	Aperçu	Vorschau	Предпросмотр	预览	プレビュー	المعاينة	পূর্বরূপ	पूर्वावलोकन	Pratinjau
+previous	Valor anterior	Previous value	Valor anterior	Valeur précédente	Vorheriger Wert	Предыдущее значение	上一个值	前回の値	القيمة السابقة	আগের মান	पिछला मान	Nilai sebelumnya
+priority	Prioridade	Priority	Prioridad	Priorité	Priorität	Приоритет	优先级	優先度	الأولوية	অগ্রাধিকার	प्राथमिकता	Prioritas
+progress	Progresso	Progress	Progreso	Progression	Fortschritt	Прогресс	进度	進捗	التقدم	অগ্রগতি	प्रगति	Kemajuan
+progress_text	Texto do progresso	Progress text	Texto del progreso	Texte de progression	Fortschrittstext	Текст прогресса	进度文字	進捗のテキスト	نص التقدم	অগ্রগতির লেখা	प्रगति पाठ	Teks kemajuan
+property	Propriedade	Property	Propiedad	Propriété	Eigenschaft	Свойство	属性	プロパティ	الخاصية	বৈশিষ্ট্য	गुण	Properti
+pull_to_refresh	Puxar para atualizar	Pull to refresh	Tirar para actualizar	Tirer pour actualiser	Zum Aktualisieren ziehen	Потянуть для обновления	下拉刷新	引っ張って更新	اسحب للتحديث	টেনে রিফ্রেশ	खींचकर रीफ़्रेश	Tarik untuk segarkan
+query	Busca	Query	Búsqueda	Recherche	Suche	Запрос	查询	検索語	الاستعلام	খোঁজ	खोज	Pencarian
+radius	Raio dos cantos	Corner radius	Radio de las esquinas	Rayon des coins	Eckenradius	Радиус углов	圆角半径	角の半径	نصف قطر الزوايا	কোণের ব্যাসার্ধ	कोनों की त्रिज्या	Radius sudut
+rail	Só ícones	Rail	Solo iconos	Icônes seules	Nur Symbole	Только значки	仅图标	アイコンのみ	أيقونات فقط	শুধু আইকন	केवल आइकन	Hanya ikon
+rail_width	Largura só com ícones	Rail width	Ancho con solo iconos	Largeur en icônes seules	Breite nur Symbole	Ширина в режиме значков	仅图标宽度	アイコンのみの幅	عرض الأيقونات فقط	শুধু আইকনের প্রস্থ	केवल आइकन की चौड़ाई	Lebar hanya ikon
+range	Intervalo de datas	Date range	Rango de fechas	Plage de dates	Datumsbereich	Диапазон дат	日期范围	日付範囲	نطاق التاريخ	তারিখের পরিসর	तारीख सीमा	Rentang tanggal
+rate	Velocidade	Rate	Velocidad	Vitesse	Geschwindigkeit	Скорость	速率	再生速度	المعدل	গতি	दर	Kecepatan
+ray_traced	Traçado de raios	Ray traced	Trazado de rayos	Lancer de rayons	Raytracing	Трассировка лучей	光线追踪	レイトレーシング	تتبع الأشعة	রে ট্রেসিং	रे ट्रेसिंग	Ray tracing
+read_only	Somente leitura	Read only	Solo lectura	Lecture seule	Schreibgeschützt	Только чтение	只读	読み取り専用	للقراءة فقط	শুধু পড়া	केवल पठन	Hanya baca
+reason	Motivo	Reason	Motivo	Motif	Grund	Причина	原因	理由	السبب	কারণ	कारण	Alasan
+reasons	Motivos	Reasons	Motivos	Motifs	Gründe	Причины	原因列表	理由一覧	الأسباب	কারণসমূহ	कारण सूची	Alasan-alasan
+recent	Recentes	Recent	Recientes	Récents	Zuletzt verwendet	Недавние	最近使用	最近	الأحدث	সাম্প্রতিক	हाल के	Terbaru
+recording	Gravando	Recording	Grabando	Enregistrement	Aufnahme	Запись	正在录制	録画中	جارٍ التسجيل	রেকর্ড হচ্ছে	रिकॉर्ड हो रहा है	Merekam
+refreshing	Atualizando	Refreshing	Actualizando	Actualisation	Wird aktualisiert	Обновление	正在刷新	更新中	جارٍ التحديث	রিফ্রেশ হচ্ছে	रीफ़्रेश हो रहा है	Menyegarkan
+repeat	Repetir	Repeat	Repetir	Répéter	Wiederholen	Повторять	重复	繰り返す	تكرار	পুনরাবৃত্তি	दोहराएँ	Ulangi
+repeat_enter	Repetir com Enter	Repeat on Enter	Repetir con Enter	Répéter avec Entrée	Mit Eingabe wiederholen	Повтор по Enter	按住回车重复	Enterで繰り返す	التكرار مع Enter	Enter-এ পুনরাবৃত্তি	Enter पर दोहराएँ	Ulangi dengan Enter
+report	Relatório	Report	Informe	Rapport	Bericht	Отчёт	报表	レポート	التقرير	প্রতিবেদন	रिपोर्ट	Laporan
+required	Obrigatório	Required	Obligatorio	Obligatoire	Pflichtfeld	Обязательное	必填	必須	مطلوب	আবশ্যক	आवश्यक	Wajib
+resolution	Resolução do 3D	3D resolution	Resolución del 3D	Résolution 3D	3D-Auflösung	Разрешение 3D	3D 分辨率	3D の解像度	دقة ثلاثية الأبعاد	৩ডি রেজোলিউশন	3D रिज़ॉल्यूशन	Resolusi 3D
+reverse	Invertido	Reverse	Invertido	Inversé	Umgekehrt	Обратный порядок	反向	逆順	معكوس	উল্টো	उलटा	Terbalik
+right_color	Cor da direita	Right color	Color derecho	Couleur droite	Rechte Farbe	Цвет справа	右侧颜色	右の色	لون اليمين	ডানের রং	दाएँ का रंग	Warna kanan
+right_icon	Ícone da direita	Right icon	Icono derecho	Icône droite	Rechtes Symbol	Значок справа	右侧图标	右のアイコン	أيقونة اليمين	ডানের আইকন	दाएँ का आइकन	Ikon kanan
+right_text	Texto da direita	Right text	Texto derecho	Texte droit	Rechter Text	Текст справа	右侧文字	右のテキスト	نص اليمين	ডানের লেখা	दाएँ का पाठ	Teks kanan
+ring_colors	Cores dos anéis	Ring colors	Colores de los anillos	Couleurs des anneaux	Ringfarben	Цвета колец	圆环颜色	リングの色	ألوان الحلقات	আংটির রং	वलयों के रंग	Warna cincin
+rotation	Rotação	Rotation	Rotación	Rotation	Drehung	Поворот	旋转	回転	الدوران	ঘূর্ণন	घुमाव	Rotasi
+rounding	Arredondamento	Rounding	Redondeo	Arrondi	Rundung	Округление	舍入	丸め	التقريب	পূর্ণসংখ্যায় রূপান্তর	पूर्णांकन	Pembulatan
+row_height	Altura da linha	Row height	Altura de fila	Hauteur de ligne	Zeilenhöhe	Высота строки	行高	行の高さ	ارتفاع الصف	সারির উচ্চতা	पंक्ति की ऊँचाई	Tinggi baris
+rows	Linhas	Rows	Filas	Lignes	Zeilen	Строки	行	行	الصفوف	সারিসমূহ	पंक्तियाँ	Baris
+rows_field	Campo das linhas	Rows field	Campo de filas	Champ des lignes	Zeilenfeld	Поле строк	行字段	行のフィールド	حقل الصفوف	সারির ঘর	पंक्ति फ़ील्ड	Bidang baris
+rules	Regras de validação	Validation rules	Reglas de validación	Règles de validation	Prüfregeln	Правила проверки	验证规则	検証ルール	قواعد التحقق	যাচাইয়ের নিয়ম	सत्यापन नियम	Aturan validasi
+running	Ligado	Running	En marcha	En marche	Läuft	Работает	运行中	運転中	قيد التشغيل	চালু	चालू	Berjalan
+scale	Escala	Scale	Escala	Échelle	Skalierung	Масштаб	比例	スケール	المقياس	স্কেল	पैमाना	Skala
+seconds	Com segundos	Seconds	Con segundos	Avec secondes	Mit Sekunden	С секундами	显示秒	秒を表示	مع الثواني	সেকেন্ডসহ	सेकंड सहित	Dengan detik
+seek_bar	Barra de posição	Seek bar	Barra de posición	Barre de position	Positionsleiste	Полоса перемотки	进度条	シークバー	شريط التقديم	সিক বার	सीक बार	Bilah posisi
+segments	Segmentos	Segments	Segmentos	Segments	Segmente	Сегменты	分段数	セグメント数	المقاطع	অংশসমূহ	खंड	Segmen
+sel_height	Altura da seleção	Selection height	Altura de la selección	Hauteur de la sélection	Auswahlhöhe	Высота выделения	选区高度	選択範囲の高さ	ارتفاع التحديد	নির্বাচনের উচ্চতা	चयन की ऊँचाई	Tinggi pilihan
+sel_length	Tamanho da seleção	Selection length	Longitud de la selección	Longueur de la sélection	Auswahllänge	Длина выделения	选区长度	選択範囲の長さ	طول التحديد	নির্বাচনের দৈর্ঘ্য	चयन की लंबाई	Panjang pilihan
+sel_start	Início da seleção	Selection start	Inicio de la selección	Début de la sélection	Auswahlbeginn	Начало выделения	选区起点	選択範囲の開始	بداية التحديد	নির্বাচনের শুরু	चयन की शुरुआत	Awal pilihan
+sel_text	Texto selecionado	Selected text	Texto seleccionado	Texte sélectionné	Ausgewählter Text	Выделенный текст	选中文本	選択テキスト	النص المحدد	নির্বাচিত লেখা	चयनित पाठ	Teks terpilih
+sel_width	Largura da seleção	Selection width	Ancho de la selección	Largeur de la sélection	Auswahlbreite	Ширина выделения	选区宽度	選択範囲の幅	عرض التحديد	নির্বাচনের প্রস্থ	चयन की चौड़ाई	Lebar pilihan
+sel_x	X da seleção	Selection X	X de la selección	X de la sélection	Auswahl X	X выделения	选区 X	選択範囲の X	س التحديد	নির্বাচনের X	चयन का X	X pilihan
+sel_y	Y da seleção	Selection Y	Y de la selección	Y de la sélection	Auswahl Y	Y выделения	选区 Y	選択範囲の Y	ص التحديد	নির্বাচনের Y	चयन का Y	Y pilihan
+selected	Escolhidos	Selected	Seleccionados	Sélectionnés	Ausgewählt	Выбранные	已选项	選択済み	المحدد	নির্বাচিত	चयनित	Terpilih
+selection_mode	Modo de seleção	Selection mode	Modo de selección	Mode sélection	Auswahlmodus	Режим выбора	选择模式	選択モード	وضع التحديد	নির্বাচন মোড	चयन मोड	Mode pilihan
+sent	Enviada	Sent	Enviado	Envoyé	Gesendet	Отправлено	已发送	送信済み	مُرسلة	পাঠানো	भेजा गया	Terkirim
+separator	Separadores	Separator	Separadores	Séparateurs	Trennlinien	Разделители	分隔线	区切り線	الفواصل	বিভাজক	विभाजक	Pemisah
+series	Séries	Series	Series	Séries	Datenreihen	Ряды данных	数据系列	系列	السلاسل	সিরিজ	श्रृंखलाएँ	Seri
+shade	Sombreamento	Shade	Sombreado	Ombrage	Abdunklung	Затенение	遮罩色	シェード	التظليل	ছায়া রং	छाया रंग	Bayangan
+shadow	Sombra	Shadow	Sombra	Ombre	Schatten	Тень	阴影	影	الظل	ছায়া	छाया	Bayangan
+shadows	Sombras	Shadows	Sombras	Ombres	Schatten	Тени	阴影效果	影の描画	الظلال	ছায়াসমূহ	छायाएँ	Bayang-bayang
+sheet_height	Altura da folha	Sheet height	Altura de la hoja	Hauteur du panneau	Blatthöhe	Высота панели	面板高度	シートの高さ	ارتفاع اللوحة	শিটের উচ্চতা	शीट की ऊँचाई	Tinggi lembar
+sheet_width	Largura da folha	Sheet width	Ancho de la hoja	Largeur du panneau	Blattbreite	Ширина панели	面板宽度	シートの幅	عرض اللوحة	শিটের প্রস্থ	शीट की चौड़ाई	Lebar lembar
+shortcut	Atalho	Shortcut	Atajo	Raccourci	Tastenkürzel	Сочетание клавиш	快捷方式	ショートカット	الاختصار	শর্টকাট	शॉर्टकट	Pintasan
+show_add	Mostra o "+"	Show add	Mostrar el "+"	Afficher le «+»	"+" anzeigen	Показывать «+»	显示 "+"	「+」を表示	إظهار "+"	"+" দেখানো	"+" दिखाएँ	Tampilkan "+"
+show_arrows	Mostra as setas	Show arrows	Mostrar flechas	Afficher les flèches	Pfeile anzeigen	Показывать стрелки	显示箭头	矢印を表示	إظهار الأسهم	তীর দেখানো	तीर दिखाएँ	Tampilkan panah
+show_authors	Mostra os autores	Show authors	Mostrar autores	Afficher les auteurs	Autoren anzeigen	Показывать авторов	显示作者	作成者を表示	إظهار المؤلفين	লেখক দেখানো	लेखक दिखाएँ	Tampilkan penulis
+show_close	Mostra o fechar	Show close	Mostrar cerrar	Afficher fermer	Schließen anzeigen	Кнопка «Закрыть»	显示关闭	閉じるを表示	إظهار الإغلاق	বন্ধ দেখানো	बंद करें दिखाएँ	Tampilkan tutup
+show_grid	Mostra a grade	Show grid	Mostrar cuadrícula	Afficher la grille	Raster anzeigen	Показывать сетку	显示网格	グリッドを表示	إظهار الشبكة	গ্রিড দেখানো	ग्रिड दिखाएँ	Tampilkan kisi
+show_in_taskbar	Na barra de tarefas	Show in taskbar	En la barra de tareas	Dans la barre des tâches	In der Taskleiste	На панели задач	显示在任务栏	タスクバーに表示	في شريط المهام	টাস্কবারে দেখানো	टास्कबार में दिखाएँ	Di bilah tugas
+show_maximize	Mostra o maximizar	Show maximize	Mostrar maximizar	Afficher agrandir	Maximieren anzeigen	Кнопка «Развернуть»	显示最大化	最大化を表示	إظهار التكبير	বড় করা দেখানো	अधिकतम करें दिखाएँ	Tampilkan maksimalkan
+show_minimize	Mostra o minimizar	Show minimize	Mostrar minimizar	Afficher réduire	Minimieren anzeigen	Кнопка «Свернуть»	显示最小化	最小化を表示	إظهار التصغير	ছোট করা দেখানো	छोटा करें दिखाएँ	Tampilkan minimalkan
+show_peak	Mostra o pico	Show peak	Mostrar pico	Afficher le pic	Spitze anzeigen	Показывать пик	显示峰值	ピークを表示	إظهار الذروة	শিখর দেখানো	शिखर दिखाएँ	Tampilkan puncak
+show_tabs	Mostra as abas	Show tabs	Mostrar pestañas	Afficher les onglets	Register anzeigen	Показывать вкладки	显示标签页	タブを表示	إظهار علامات التبويب	ট্যাব দেখানো	टैब दिखाएँ	Tampilkan tab
+show_time	Mostra o tempo	Show time	Mostrar tiempo	Afficher le temps	Zeit anzeigen	Показывать время	显示时间	時間を表示	إظهار الوقت	সময় দেখানো	समय दिखाएँ	Tampilkan waktu
+show_value	Mostra o valor	Show value	Mostrar valor	Afficher la valeur	Wert anzeigen	Показывать значение	显示数值	値を表示	إظهار القيمة	মান দেখানো	मान दिखाएँ	Tampilkan nilai
+showing	Mostrando	Showing	Mostrando	Affiché	Angezeigt	Показано	显示中	表示中	معروض	দেখানো হচ্ছে	दिखाया जा रहा है	Ditampilkan
+sides	Lados	Sides	Lados	Côtés	Seiten	Стороны	边数	辺の数	الأضلاع	বাহুসমূহ	भुजाएँ	Sisi
+size	Tamanho	Size	Tamaño	Taille	Größe	Размер	大小	サイズ	الحجم	আকার	आकार	Ukuran
+sizes	Tamanhos	Sizes	Tamaños	Tailles	Größen	Размеры	尺寸列表	サイズ一覧	الأحجام	আকারসমূহ	आकार सूची	Ukuran-ukuran
+smooth	Rolagem suave	Smooth scrolling	Desplazamiento suave	Défilement fluide	Sanftes Scrollen	Плавная прокрутка	平滑滚动	スムーズスクロール	تمرير سلس	মসৃণ স্ক্রল	सहज स्क्रॉल	Gulir halus
+smoothing	Suavização	Smoothing	Suavizado	Lissage	Glättung	Сглаживание	平滑	スムージング	التنعيم	মসৃণকরণ	स्मूथिंग	Penghalusan
+snap	Passo com Shift	Snap	Paso con Mayús	Pas avec Maj	Schritt mit Umschalt	Шаг с Shift	Shift 步长	Shift での刻み	الخطوة مع Shift	Shift দিয়ে ধাপ	Shift के साथ चरण	Langkah dengan Shift
+solid_thumb	Botão cheio	Solid thumb	Control relleno	Curseur plein	Gefüllter Regler	Сплошной ползунок	实心滑块	塗りつぶしつまみ	مقبض مصمت	ভরাট বোতাম	भरा हुआ अंगूठा	Pegangan penuh
+sortable	Ordenável	Sortable	Ordenable	Triable	Sortierbar	Сортировка	可排序	並べ替え可能	قابل للفرز	সাজানো যায়	क्रमबद्ध करने योग्य	Dapat diurutkan
+source	Origem	Source	Origen	Source	Quelle	Источник	来源	ソース	المصدر	উৎস	स्रोत	Sumber
+source_height	Altura da origem	Source height	Altura de origen	Hauteur source	Quellhöhe	Высота источника	源高度	元の高さ	ارتفاع المصدر	উৎসের উচ্চতা	स्रोत की ऊँचाई	Tinggi sumber
+source_width	Largura da origem	Source width	Ancho de origen	Largeur source	Quellbreite	Ширина источника	源宽度	元の幅	عرض المصدر	উৎসের প্রস্থ	स्रोत की चौड़ाई	Lebar sumber
+speed	Velocidade	Speed	Velocidad	Vitesse	Geschwindigkeit	Скорость	速度	速度	السرعة	গতি	गति	Kecepatan
+spellcheck	Corretor ortográfico	Spell check	Corrector ortográfico	Correcteur orthographique	Rechtschreibprüfung	Проверка орфографии	拼写检查	スペルチェック	التدقيق الإملائي	বানান পরীক্ষা	वर्तनी जाँच	Pemeriksa ejaan
+spread	Expansão	Spread	Extensión	Étendue	Ausbreitung	Растяжение	扩展	広がり	الانتشار	বিস্তার	फैलाव	Sebaran
+stamp	Hora	Timestamp	Hora	Horodatage	Zeitstempel	Время	时间戳	タイムスタンプ	الوقت	সময়	समय	Waktu
+start_angle	Ângulo inicial	Start angle	Ángulo inicial	Angle de début	Startwinkel	Начальный угол	起始角度	開始角度	زاوية البداية	শুরুর কোণ	प्रारंभ कोण	Sudut awal
+start_hour	Hora inicial	Start hour	Hora inicial	Heure de début	Startstunde	Первый час	开始小时	開始時刻	ساعة البداية	শুরুর ঘণ্টা	प्रारंभ घंटा	Jam awal
+start_value	Valor inicial	Start value	Valor inicial	Valeur de départ	Startwert	Начальное значение	起始值	開始値	القيمة الأولى	শুরুর মান	प्रारंभ मान	Nilai awal
+state	Estado	State	Estado	État	Zustand	Состояние	状态	状態	الحالة	অবস্থা	स्थिति	Status
+status_filter	Filtro de situação	Status filter	Filtro de estado	Filtre d'état	Statusfilter	Фильтр состояния	状态筛选	状態フィルター	مرشح الحالة	অবস্থার ফিল্টার	स्थिति फ़िल्टर	Filter status
+step	Passo	Step	Paso	Pas	Schritt	Шаг	步长	刻み	الخطوة	ধাপ	चरण	Langkah
+stepped	Em degraus	Stepped	Escalonado	En escalier	Gestuft	Ступенчатый	阶梯	階段状	متدرج	ধাপে ধাপে	सीढ़ीदार	Bertangga
+stereo	Estéreo	Stereo	Estéreo	Stéréo	Stereo	Стерео	立体声	ステレオ	ستيريو	স্টেরিও	स्टीरियो	Stereo
+stop_value	Valor final	Stop value	Valor final	Valeur d'arrivée	Endwert	Конечное значение	结束值	終了値	القيمة الأخيرة	শেষ মান	अंतिम मान	Nilai akhir
+strict	Só da lista	Strict	Solo de la lista	Liste stricte	Nur aus der Liste	Только из списка	仅限列表	リストのみ	من القائمة فقط	শুধু তালিকা থেকে	केवल सूची से	Hanya dari daftar
+striped	Listrado	Striped	Rayado	Rayé	Gestreift	Полосатый	斑马纹	縞模様	مخطط	ডোরাকাটা	धारीदार	Bergaris
+stroke	Cor do traço	Stroke color	Color del trazo	Couleur du trait	Strichfarbe	Цвет линии	描边颜色	線の色	لون الخط	রেখার রং	रेखा का रंग	Warna garis
+stroke_width	Largura do traço	Stroke width	Ancho del trazo	Épaisseur du trait	Strichstärke	Толщина линии	描边宽度	線の太さ	عرض الخط	রেখার প্রস্থ	रेखा की मोटाई	Tebal garis
+style	Estilo	Style	Estilo	Style	Stil	Стиль	样式	スタイル	النمط	শৈলী	शैली	Gaya
+subtitle	Subtítulo	Subtitle	Subtítulo	Sous-titre	Untertitel	Подзаголовок	副标题	サブタイトル	العنوان الفرعي	উপশিরোনাম	उपशीर्षक	Subjudul
+success_color	Cor de sucesso	Success color	Color de éxito	Couleur de succès	Erfolgsfarbe	Цвет успеха	成功色	成功の色	لون النجاح	সফলতার রং	सफलता का रंग	Warna sukses
+suffix	Sufixo	Suffix	Sufijo	Suffixe	Suffix	Суффикс	后缀	接尾辞	اللاحقة	প্রত্যয়	प्रत्यय	Akhiran
+swatches	Amostras de cor	Swatches	Muestras de color	Nuancier	Farbmuster	Образцы цветов	色板	カラースウォッチ	عينات الألوان	রঙের নমুনা	रंग नमूने	Contoh warna
+symbol	Símbolo	Symbol	Símbolo	Symbole	Symbol	Символ	符号	記号	الرمز	প্রতীক	प्रतीक	Simbol
+symbols	Símbolos	Symbols	Símbolos	Symboles	Symbole	Символы	代码列表	銘柄	الرموز	প্রতীকসমূহ	प्रतीक	Simbol
+syntax	Linguagem do realce	Syntax	Sintaxis	Syntaxe	Syntax	Синтаксис	语法	構文	الصياغة	সিনট্যাক্স	सिंटैक्स	Sintaks
+tab_index	Aba escolhida	Tab index	Pestaña elegida	Onglet choisi	Gewähltes Register	Выбранная вкладка	当前标签页	選択タブ	علامة التبويب المختارة	নির্বাচিত ট্যাব	चुना गया टैब	Tab terpilih
+tab_keys	Teclas de avançar campo	Tab keys	Teclas de campo siguiente	Touches de champ suivant	Tasten für nächstes Feld	Клавиши следующего поля	前进字段的按键	次のフィールドへ移るキー	مفاتيح الحقل التالي	পরের ঘরের কী	अगले फ़ील्ड की कुंजियाँ	Tombol kolom berikutnya
+tab_order	Ordem de tabulação	Tab order	Orden de tabulación	Ordre de tabulation	Tabulatorreihenfolge	Порядок обхода	Tab 顺序	タブ順	ترتيب التنقل	ট্যাব ক্রম	टैब क्रम	Urutan tab
+tab_stop	Para no Tab	Tab stop	Parada de tabulación	Arrêt de tabulation	Tabstopp	Остановка по Tab	Tab 停靠	タブで止まる	التوقف عند Tab	Tab-এ থামে	Tab पर रुके	Berhenti di Tab
+tabs	Abas	Tabs	Pestañas	Onglets	Register	Вкладки	标签页	タブ	علامات التبويب	ট্যাবসমূহ	टैब	Tab
+tag	Marca (número)	Tag	Etiqueta (número)	Étiquette (nombre)	Markierung (Zahl)	Метка (число)	标记 (数字)	タグ (数値)	الوسم (رقم)	ট্যাগ (সংখ্যা)	टैग (संख्या)	Tag (angka)
+target	Alvo	Target	Destino	Cible	Ziel	Цель	目标	対象	الهدف	লক্ষ্য	लक्ष्य	Target
+tasks	Tarefas	Tasks	Tareas	Tâches	Aufgaben	Задачи	任务	タスク	المهام	কাজসমূহ	कार्य	Tugas
+tear_off	Arrancar abas	Tear off tabs	Desprender pestañas	Détacher les onglets	Tabs abreißen	Отрывать вкладки	拖出标签页	タブの切り離し	فصل علامات التبويب	ট্যাব আলাদা করা	टैब अलग करना	Lepas tab
+tension	Curvatura	Tension	Tensión	Tension	Spannung	Натяжение	张力	曲線の張り	الانحناء	বক্রতা	तनाव	Ketegangan
+text	Texto	Text	Texto	Texte	Text	Текст	文本	テキスト	النص	লেখা	पाठ	Teks
+text_case	Maiúsculas/minúsculas	Text case	Mayúsculas/minúsculas	Casse du texte	Groß-/Kleinschreibung	Регистр текста	文本大小写	大文字/小文字	حالة النص	লেখার হাতের ধরন	पाठ का केस	Huruf teks
+text_color	Cor do texto	Text color	Color del texto	Couleur du texte	Textfarbe	Цвет текста	文字颜色	文字の色	لون النص	লেখার রং	पाठ का रंग	Warna teks
+theme	Tema	Theme	Tema	Thème	Design	Тема	主题	テーマ	السمة	থিম	थीम	Tema
+thickness	Espessura	Thickness	Grosor	Épaisseur	Dicke	Толщина	粗细	太さ	السُمك	পুরুত্ব	मोटाई	Ketebalan
+thumb_size	Tamanho do botão	Thumb size	Tamaño del control	Taille du curseur	Reglergröße	Размер ползунка	滑块大小	つまみのサイズ	حجم المقبض	বোতামের আকার	अंगूठे का आकार	Ukuran pegangan
+tile_url	Endereço dos mapas	Tile URL	URL de mosaicos	URL des tuiles	Kachel-URL	Адрес плиток	瓦片地址	タイル URL	عنوان البلاطات	টাইলের ঠিকানা	टाइल URL	URL ubin
+time	Hora	Time	Hora	Heure	Uhrzeit	Время	时间	時刻	الوقت	সময়	समय	Waktu
+time_axis	Eixo de tempo	Time axis	Eje de tiempo	Axe du temps	Zeitachse	Ось времени	时间轴	時間軸	محور الزمن	সময় অক্ষ	समय अक्ष	Sumbu waktu
+timeout	Tempo para sumir	Timeout	Tiempo de espera	Délai d'expiration	Zeitlimit	Время показа	超时	タイムアウト	المهلة	সময়সীমা	समय सीमा	Batas waktu
+timers	Temporizadores	Timers	Temporizadores	Minuteries	Timer	Таймеры	计时器	タイマー	المؤقتات	টাইমারসমূহ	टाइमर	Pewaktu
+title	Título	Title	Título	Titre	Titel	Заголовок	标题	タイトル	العنوان	শিরোনাম	शीर्षक	Judul
+to_port	Lado de chegada	To side	Lado de llegada	Côté d'arrivée	Zielseite	Сторона конца	终点侧	接続先の辺	جانب النهاية	শেষের দিক	अंत पक्ष	Sisi tujuan
+to	Para	To	Hasta	Vers	Nach	К	终点	接続先	إلى	পর্যন্ত	तक	Ke
+tool	Ferramenta	Tool	Herramienta	Outil	Werkzeug	Инструмент	工具	ツール	الأداة	সরঞ্জাম	उपकरण	Alat
+toolbar	Barra de ferramentas	Toolbar	Barra de herramientas	Barre d'outils	Symbolleiste	Панель инструментов	工具栏	ツールバー	شريط الأدوات	টুলবার	टूलबार	Bilah alat
+top	Topo	Top	Arriba	Haut	Oben	Сверху	上	上	الأعلى	উপর	ऊपर	Atas
+topmost	Sempre na frente	Topmost	Siempre encima	Toujours au premier plan	Immer im Vordergrund	Поверх всех окон	置顶	常に手前	دائمًا في المقدمة	সবসময় সামনে	हमेशा सबसे ऊपर	Selalu di depan
+total_visible	Páginas visíveis	Total visible	Páginas visibles	Pages visibles	Sichtbare Seiten	Видимых страниц	可见页数	表示ページ数	الصفحات المرئية	দৃশ্যমান পৃষ্ঠা	दृश्य पृष्ठ	Halaman terlihat
+totals	Totais	Totals	Totales	Totaux	Summen	Итоги	合计	合計	الإجماليات	মোট	योग	Total
+track_size	Espessura do trilho	Track size	Grosor de la pista	Épaisseur de la piste	Spurdicke	Толщина дорожки	轨道粗细	トラックの太さ	سُمك المسار	ট্র্যাকের পুরুত্ব	ट्रैक की मोटाई	Tebal lintasan
+transition	Transição	Transition	Transición	Transition	Übergang	Переход	过渡	トランジション	الانتقال	রূপান্তর	संक्रमण	Transisi
+translate_x	Deslocar X	Translate X	Desplazar X	Translation X	Verschieben X	Сдвиг X	平移 X	移動 X	إزاحة X	X সরানো	X खिसकाएँ	Geser X
+translate_y	Deslocar Y	Translate Y	Desplazar Y	Translation Y	Verschieben Y	Сдвиг Y	平移 Y	移動 Y	إزاحة Y	Y সরানো	Y खिसकाएँ	Geser Y
+trend	Tendência	Trend	Tendencia	Tendance	Trend	Тренд	趋势	傾向	الاتجاه العام	প্রবণতা	रुझान	Tren
+trigger	Gatilho	Trigger	Disparador	Déclencheur	Auslöser	Триггер	触发	トリガー	المُشغِّل	ট্রিগার	ट्रिगर	Pemicu
+trimming	Reticências	Trimming	Recorte	Troncature	Abschneiden	Обрезка текста	截断	省略	الاقتطاع	ছাঁটাই	काट-छाँट	Pemotongan
+type	Tipo de dado	Data type	Tipo de dato	Type de donnée	Datentyp	Тип данных	数据类型	データ型	نوع البيانات	তথ্যের ধরন	डेटा प्रकार	Tipe data
+unit	Unidade	Unit	Unidad	Unité	Einheit	Единица	单位	単位	الوحدة	একক	इकाई	Satuan
+url	Endereço (URL)	URL	Dirección (URL)	Adresse (URL)	Adresse (URL)	Адрес (URL)	网址	URL	العنوان (URL)	ঠিকানা (URL)	पता (URL)	Alamat (URL)
+v_align	Alinhamento vertical	Vertical alignment	Alineación vertical	Alignement vertical	Vertikale Ausrichtung	Вертикальное выравнивание	垂直对齐	垂直方向の配置	المحاذاة الرأسية	উল্লম্ব সারিবদ্ধতা	लंबवत संरेखण	Perataan vertikal
+value	Valor	Value	Valor	Valeur	Wert	Значение	值	値	القيمة	মান	मान	Nilai
+value_fields	Campos dos valores	Value fields	Campos de valores	Champs des valeurs	Wertfelder	Поля значений	值字段	値のフィールド	حقول القيم	মানের ঘরসমূহ	मान फ़ील्ड	Bidang nilai
+value_right	Valor da direita	Right value	Valor derecho	Valeur droite	Rechter Wert	Правое значение	右声道值	右の値	القيمة اليمنى	ডানের মান	दायाँ मान	Nilai kanan
+values	Valores	Values	Valores	Valeurs	Werte	Значения	值列表	値一覧	القيم	মানসমূহ	मान सूची	Nilai-nilai
+values_field	Campo dos valores	Values field	Campo de valores	Champ des valeurs	Wertefeld	Поле значений	数值字段	値フィールド	حقل القيم	মানের ঘর	मान फ़ील्ड	Bidang nilai
+vertical	Vertical	Vertical	Vertical	Vertical	Vertikal	Вертикально	垂直	垂直	رأسي	উল্লম্ব	लंबवत	Vertikal
+view	Visão	View	Vista	Vue	Ansicht	Вид	视图	表示	العرض	দৃশ্য	दृश्य	Tampilan
+visible	Visível	Visible	Visible	Visible	Sichtbar	Видимый	可见	表示	مرئي	দৃশ্যমান	दृश्यमान	Terlihat
+volume	Volume	Volume	Volumen	Volume	Lautstärke	Громкость	音量	音量	مستوى الصوت	ভলিউম	वॉल्यूम	Volume
+volume_profile	Perfil de volume	Volume profile	Perfil de volumen	Profil de volume	Volumenprofil	Профиль объёма	成交量分布	出来高プロファイル	ملف الحجم	ভলিউম প্রোফাইল	वॉल्यूम प्रोफ़ाइल	Profil volume
+want_tabs	Aceita Tab	Want tabs	Acepta Tab	Accepte la tabulation	Tab erlauben	Принимает Tab	接受 Tab	Tab を入力	يقبل Tab	Tab গ্রহণ	Tab स्वीकार करे	Terima Tab
+warning_color	Cor de atenção	Warning color	Color de advertencia	Couleur d'avertissement	Warnfarbe	Цвет предупреждения	警告色	警告の色	لون التحذير	সতর্কতার রং	चेतावनी का रंग	Warna peringatan
+wheel_step	Passo da roda	Wheel step	Paso de la rueda	Pas de la molette	Mausradschritt	Шаг колеса	滚轮步长	ホイールの移動量	خطوة العجلة	চাকার ধাপ	पहिए का चरण	Langkah roda
+width	Largura	Width	Ancho	Largeur	Breite	Ширина	宽度	幅	العرض	প্রস্থ	चौड़ाई	Lebar
+window_state	Estado da janela	Window state	Estado de la ventana	État de la fenêtre	Fensterzustand	Состояние окна	窗口状态	ウィンドウの状態	حالة النافذة	উইন্ডোর অবস্থা	विंडो की स्थिति	Status jendela
+wrap	Quebra de linha	Word wrap	Ajuste de línea	Retour à la ligne	Zeilenumbruch	Перенос строк	自动换行	折り返し	التفاف النص	লাইন মোড়ানো	पंक्ति लपेट	Bungkus kata
+x1	X1 da curva	Curve X1	X1 de la curva	X1 de la courbe	Kurve X1	X1 кривой	曲线 X1	曲線 X1	X1 للمنحنى	বক্ররেখার X1	वक्र X1	X1 kurva
+x2	X2 da curva	Curve X2	X2 de la curva	X2 de la courbe	Kurve X2	X2 кривой	曲线 X2	曲線 X2	X2 للمنحنى	বক্ররেখার X2	वक्र X2	X2 kurva
+y1	Y1 da curva	Curve Y1	Y1 de la curva	Y1 de la courbe	Kurve Y1	Y1 кривой	曲线 Y1	曲線 Y1	Y1 للمنحنى	বক্ররেখার Y1	वक्र Y1	Y1 kurva
+y2	Y2 da curva	Curve Y2	Y2 de la curva	Y2 de la courbe	Kurve Y2	Y2 кривой	曲线 Y2	曲線 Y2	Y2 للمنحنى	বক্ররেখার Y2	वक्र Y2	Y2 kurva
+y_max	Máximo do eixo Y	Y axis max	Máximo del eje Y	Maximum de l'axe Y	Y-Achse Maximum	Максимум оси Y	Y 轴最大值	Y 軸の最大	الحد الأقصى لمحور Y	Y অক্ষের সর্বোচ্চ	Y अक्ष अधिकतम	Maksimum sumbu Y
+y_min	Mínimo do eixo Y	Y axis min	Mínimo del eje Y	Minimum de l'axe Y	Y-Achse Minimum	Минимум оси Y	Y 轴最小值	Y 軸の最小	الحد الأدنى لمحور Y	Y অক্ষের সর্বনিম্ন	Y अक्ष न्यूनतम	Minimum sumbu Y
+yaw	Giro horizontal	Yaw	Giro horizontal	Lacet	Gierwinkel	Рыскание	偏航	ヨー	الانعراج	ইয়	यॉ	Yaw
+zoom	Zoom	Zoom	Zoom	Zoom	Zoom	Масштаб	缩放	ズーム	التكبير	জুম	ज़ूम	Zoom
+zoom_to	Aproximar até	Zoom to	Acercar a	Zoomer sur	Zoomen auf	Приблизить к	缩放到	ズーム先	التكبير إلى	জুম করে দেখানো	ज़ूम करें	Perbesar ke
+@Identidade	Identidade	Identity	Identidad	Identité	Identität	Идентификация	标识	識別	الهوية	পরিচয়	पहचान	Identitas
+@Layout	Posição e tamanho	Layout	Posición y tamaño	Position et taille	Position und Größe	Положение и размер	布局	レイアウト	الموضع والحجم	অবস্থান ও আকার	स्थिति और आकार	Tata letak
+@Appearance	Aparência	Appearance	Apariencia	Apparence	Aussehen	Внешний вид	外观	外観	المظهر	চেহারা	रूप	Tampilan
+@Font	Fonte	Font	Fuente	Police	Schrift	Шрифт	字体	フォント	الخط	ফন্ট	फ़ॉन्ट	Fon
+@Text	Texto	Text	Texto	Texte	Text	Текст	文本	テキスト	النص	লেখা	पाठ	Teks
+@Caret	Cursor	Caret	Cursor	Curseur	Cursor	Курсор	光标	カーソル	المؤشر	কার্সর	कर्सर	Kursor
+@Keyboard	Teclado	Keyboard	Teclado	Clavier	Tastatur	Клавиатура	键盘	キーボード	لوحة المفاتيح	কীবোর্ড	कीबोर्ड	Papan ketik
+@Behavior	Comportamento	Behavior	Comportamiento	Comportement	Verhalten	Поведение	行为	動作	السلوك	আচরণ	व्यवहार	Perilaku
+@Data	Dados	Data	Datos	Données	Daten	Данные	数据	データ	البيانات	তথ্য	डेटा	Data
+@Lookup	Pesquisa (lookup)	Lookup	Búsqueda (lookup)	Recherche (lookup)	Nachschlagen	Подстановка	查找	参照	البحث	খোঁজ (lookup)	लुकअप	Pencarian
+@Animation	Animação	Animation	Animación	Animation	Animation	Анимация	动画	アニメーション	الحركة	অ্যানিমেশন	एनिमेशन	Animasi
+@Misc	Outros	Other	Otros	Autres	Sonstiges	Прочее	其他	その他	أخرى	অন্যান্য	अन्य	Lainnya
+@Industrial	Industrial	Industrial	Industrial	Industriel	Industrie	Промышленность	工业	産業	صناعي	শিল্প	औद्योगिक	Industri
+@Electrical	Elétrica	Electrical	Eléctrica	Électrique	Elektrik	Электрика	电气	電気	كهرباء	বৈদ্যুতিক	विद्युत	Kelistrikan
+allowed_navigation	Navegação permitida	Allowed navigation	Navegación permitida	Navigation autorisée	Erlaubte Navigation	Разрешённая навигация	允许的导航	許可するナビゲーション	التنقل المسموح	অনুমোদিত নেভিগেশন	अनुमत नेविगेशन	Navigasi yang diizinkan
+allowed_origins	Origens permitidas	Allowed origins	Orígenes permitidos	Origines autorisées	Erlaubte Ursprünge	Разрешённые источники	允许的来源	許可するオリジン	المصادر المسموحة	অনুমোদিত উৎস	अनुमत स्रोत	Asal yang diizinkan
+max_document_size	Tamanho máximo do documento (MB)	Max document size (MB)	Tamaño máximo del documento (MB)	Taille maximale du document (Mo)	Maximale Dokumentgröße (MB)	Макс. размер документа (МБ)	文档最大大小 (MB)	文書の最大サイズ (MB)	الحجم الأقصى للمستند (ميغابايت)	নথির সর্বোচ্চ আকার (MB)	दस्तावेज़ का अधिकतम आकार (MB)	Ukuran dokumen maksimum (MB)
+max_pixels	Máximo de megapixels por página	Max megapixels per page	Máximo de megapíxeles por página	Mégapixels max. par page	Max. Megapixel pro Seite	Макс. мегапикселей на страницу	每页最大百万像素	ページあたりの最大メガピクセル	الحد الأقصى للميغابكسل لكل صفحة	প্রতি পৃষ্ঠায় সর্বোচ্চ মেগাপিক্সেল	प्रति पृष्ठ अधिकतम मेगापिक्सेल	Megapiksel maksimum per halaman
+sandbox	Restrições do iframe (sandbox)	Iframe restrictions (sandbox)	Restricciones del iframe (sandbox)	Restrictions de l'iframe (sandbox)	Iframe-Einschränkungen (Sandbox)	Ограничения iframe (sandbox)	iframe 限制 (sandbox)	iframe の制限 (sandbox)	قيود iframe (sandbox)	iframe সীমাবদ্ধতা (sandbox)	iframe प्रतिबंध (sandbox)	Batasan iframe (sandbox)
+sensitive	Dado pessoal (LGPD: mascarado nas gravações)	Sensitive (personal data)	Dato personal (LGPD)	Donnée personnelle (RGPD)	Personenbezogene Daten (DSGVO)	Персональные данные	个人数据	個人データ	بيانات شخصية	ব্যক্তিগত তথ্য	व्यक्तिगत डेटा	Data pribadi
+field_sensitive	Campo com dado pessoal (do Field)	Field is sensitive	Campo con dato personal	Champ avec donnée personnelle	Feld mit personenbezogenen Daten	Поле с персональными данными	字段含个人数据	個人データのフィールド	حقل ببيانات شخصية	ব্যক্তিগত তথ্যের ফিল্ড	व्यक्तिगत डेटा वाला फ़ील्ड	Kolom data pribadi
+record_sensitive	Grava os dados pessoais (LGPD)	Record sensitive data	Grabar datos personales	Enregistrer les données personnelles	Personenbezogene Daten aufzeichnen	Записывать персональные данные	记录个人数据	個人データを記録	تسجيل البيانات الشخصية	ব্যক্তিগত তথ্য রেকর্ড করুন	व्यक्तिगत डेटा रिकॉर्ड करें	Rekam data pribadi
+quality	Qualidade	Quality	Calidad	Qualité	Qualität	Качество	质量	品質	الجودة	গুণমান	गुणवत्ता	Kualitas
+torch	Lanterna (flash aceso)	Torch (flash on)	Linterna (flash encendido)	Lampe torche (flash allumé)	Taschenlampe (Blitz an)	Фонарик (вспышка)	手电筒（闪光灯常亮）	ライト（フラッシュ点灯）	المصباح (الفلاش مضاء)	টর্চ (ফ্ল্যাশ জ্বালানো)	टॉर्च (फ़्लैश चालू)	Senter (lampu kilat menyala)
+CameraView.resolution	Resolução exata (largura x altura)	Exact resolution (width x height)	Resolución exacta (ancho x alto)	Résolution exacte (largeur x hauteur)	Genaue Auflösung (Breite x Höhe)	Точное разрешение (ширина x высота)	精确分辨率（宽 x 高）	正確な解像度（幅 x 高さ）	دقة محددة (العرض × الارتفاع)	নির্দিষ্ট রেজোলিউশন (প্রস্থ x উচ্চতা)	सटीक रिज़ॉल्यूशन (चौड़ाई x ऊँचाई)	Resolusi tepat (lebar x tinggi)
+sizes	Tamanhos da câmera	Camera sizes	Tamaños de la cámara	Tailles de la caméra	Kameragrößen	Размеры камеры	相机尺寸	カメラのサイズ	أحجام الكاميرا	ক্যামেরার আকার	कैमरे के आकार	Ukuran kamera
+frame_size	Tamanho do quadro	Frame size	Tamaño del cuadro	Taille de l'image	Bildgröße	Размер кадра	帧尺寸	フレームサイズ	حجم الإطار	ফ্রেমের আকার	फ़्रेम का आकार	Ukuran bingkai
+has_flash	Tem flash	Has flash	Tiene flash	A un flash	Hat Blitz	Есть вспышка	有闪光灯	フラッシュあり	يحتوي على فلاش	ফ্ল্যাশ আছে	फ़्लैश है	Memiliki lampu kilat
+output	Saída	Output	Salida	Sortie	Ausgabe	Выход	输出	出力	الإخراج	আউটপুট	आउटपुट	Keluaran
+monitor	Retorno	Monitor	Retorno	Retour	Mithören	Мониторинг	监听	モニター	المراقبة	মনিটর	मॉनिटर	Monitor
+polyphony	Toques ao mesmo tempo	Polyphony	Polifonía	Polyphonie	Polyphonie	Полифония	复音数	同時発音数	تعدد الأصوات	একসঙ্গে বাজানো	एक साथ बजने वाले	Polifoni
+sources	Fontes	Sources	Fuentes	Sources	Quellen	Источники	音源	ソース	المصادر	উৎস	स्रोत	Sumber
+keep_samples	Guardar amostras	Keep samples	Guardar muestras	Conserver les échantillons	Samples behalten	Хранить сэмплы	保留采样	サンプルを保持	الاحتفاظ بالعينات	নমুনা রাখুন	सैंपल रखें	Simpan sampel
+watch	Acompanhar mudanças	Watch changes	Seguir cambios	Suivre les changements	Änderungen beobachten	Следить за изменениями	监视变化	変更を監視	متابعة التغييرات	পরিবর্তন লক্ষ রাখুন	बदलाव पर नज़र	Pantau perubahan
+devices	Dispositivos	Devices	Dispositivos	Appareils	Geräte	Устройства	设备	デバイス	الأجهزة	ডিভাইসগুলো	डिवाइस	Perangkat
+default_device	Dispositivo padrão	Default device	Dispositivo predeterminado	Appareil par défaut	Standardgerät	Устройство по умолчанию	默认设备	既定のデバイス	الجهاز الافتراضي	ডিফল্ট ডিভাইস	डिफ़ॉल्ट डिवाइस	Perangkat bawaan
+keep_alive	Manter vivo	Keep alive	Mantener activo	Maintenir actif	Am Leben halten	Не завершать	保持运行	常駐させる	إبقاء نشط	সচল রাখুন	चालू रखें	Tetap hidup
+full_screen	Tela cheia	Full screen	Pantalla completa	Plein écran	Vollbild	Во весь экран	全屏	全画面	ملء الشاشة	পূর্ণ পর্দা	पूर्ण स्क्रीन	Layar penuh
+dialer_app	App de telefone	Phone app	App de teléfono	Application téléphone	Telefon-App	Приложение телефона	电话应用	電話アプリ	تطبيق الهاتف	ফোন অ্যাপ	फ़ोन ऐप	Aplikasi telepon
+direct_call	Ligar direto	Call directly	Llamar directamente	Appeler directement	Direkt anrufen	Звонить сразу	直接拨打	直接発信	اتصال مباشر	সরাসরি কল	सीधे कॉल करें	Panggil langsung
+watch_state	Acompanhar o estado	Watch state	Seguir el estado	Suivre l'état	Status verfolgen	Следить за состоянием	监视状态	状態を監視	متابعة الحالة	অবস্থা দেখুন	स्थिति देखें	Pantau status
+show_when_locked	Mostrar no bloqueio	Show when locked	Mostrar con bloqueo	Afficher verrouillé	Bei Sperre anzeigen	Показывать на блокировке	锁屏时显示	ロック中に表示	العرض عند القفل	লক থাকলে দেখান	लॉक पर दिखाएँ	Tampilkan saat terkunci
+turn_screen_on	Acender a tela	Turn screen on	Encender la pantalla	Allumer l'écran	Bildschirm einschalten	Включать экран	点亮屏幕	画面をオン	تشغيل الشاشة	স্ক্রিন চালু করুন	स्क्रीन चालू करें	Nyalakan layar
+dead_zone	Zona morta	Dead zone	Zona muerta	Zone morte	Totzone	Мёртвая зона	死区	デッドゾーン	المنطقة الميتة	ডেড জোন	डेड ज़ोन	Zona mati
+spring	Volta ao centro	Return to center	Vuelve al centro	Retour au centre	Zurück zur Mitte	Возврат в центр	自动回中	中央に戻る	العودة إلى المركز	কেন্দ্রে ফেরে	केंद्र पर लौटे	Kembali ke tengah
+max_width	Largura máxima	Max width	Ancho máximo	Largeur maximale	Maximale Breite	Максимальная ширина	最大宽度	最大幅	العرض الأقصى	সর্বোচ্চ প্রস্থ	अधिकतम चौड़ाई	Lebar maksimum
+remember_placement	Lembrar a posição	Remember placement	Recordar la posición	Mémoriser la position	Position merken	Запоминать положение	记住位置	位置を記憶	تذكر الموضع	অবস্থান মনে রাখুন	स्थिति याद रखें	Ingat posisi
+wheel_lines	Linhas por rolagem	Lines per scroll	Líneas por desplazamiento	Lignes par défilement	Zeilen pro Bildlauf	Строк за прокрутку	每次滚动行数	スクロール行数	أسطر لكل تمرير	প্রতি স্ক্রলে লাইন	प्रति स्क्रॉल पंक्तियाँ	Baris per gulir
+char_map	Trocas de caracteres	Character map	Cambios de caracteres	Remplacement de caractères	Zeichenersetzung	Замена символов	字符替换	文字の置き換え	استبدال الأحرف	অক্ষর বদল	वर्ण बदलाव	Penggantian karakter
+char_case	Maiúsculas e minúsculas	Character case	Mayúsculas y minúsculas	Casse des caractères	Groß-/Kleinschreibung	Регистр символов	大小写	大文字と小文字	حالة الأحرف	বড় ও ছোট হাতের অক্ষর	बड़े और छोटे अक्षर	Huruf besar dan kecil
+key_preview	Recebe as teclas antes	Key preview	Recibe las teclas antes	Aperçu des touches	Tastenvorschau	Предпросмотр клавиш	预先接收按键	キーを先に受け取る	استقبال المفاتيح أولاً	আগে কী গ্রহণ	कुंजियाँ पहले प्राप्त करें	Terima tombol lebih dulu
+drag_data	Dados do arrasto	Drag data	Datos del arrastre	Données du glisser	Ziehdaten	Данные перетаскивания	拖动数据	ドラッグのデータ	بيانات السحب	টেনে আনার তথ্য	खींचने का डेटा	Data seret
+drag_label	Rótulo do arrasto	Drag label	Etiqueta del arrastre	Étiquette du glisser	Ziehbeschriftung	Подпись перетаскивания	拖动标签	ドラッグのラベル	تسمية السحب	টেনে আনার লেবেল	खींचने का लेबल	Label seret
+drop_types	Tipos aceitos ao soltar	Accepted drop types	Tipos aceptados al soltar	Types acceptés au dépôt	Akzeptierte Ablagetypen	Принимаемые типы	可放置的类型	受け付けるドロップの種類	الأنواع المقبولة عند الإفلات	ছাড়ার সময় গ্রহণযোগ্য ধরন	छोड़ने पर स्वीकृत प्रकार	Jenis yang diterima saat dilepas
+drop_group	Grupo de arrasto	Drop group	Grupo de arrastre	Groupe de dépôt	Ablagegruppe	Группа перетаскивания	拖放组	ドロップグループ	مجموعة الإفلات	ড্রপ গ্রুপ	ड्रॉप समूह	Grup lepas
+block_input	Bloquear a entrada	Block input	Bloquear la entrada	Bloquer la saisie	Eingabe sperren	Блокировать ввод	阻止输入	入力をブロック	حظر الإدخال	ইনপুট আটকানো	इनपुट रोकें	Blokir input
+busy_form	Form de espera	Busy form	Formulario de espera	Formulaire d'attente	Warteformular	Форма ожидания	等待窗体	待機フォーム	نموذج الانتظار	অপেক্ষার ফর্ম	प्रतीक्षा फ़ॉर्म	Formulir tunggu
+min_visible	Tempo mínimo à mostra	Minimum visible time	Tiempo mínimo visible	Durée minimale affichée	Mindestanzeigedauer	Минимальное время показа	最短显示时间	最小表示時間	أقل مدة ظهور	ন্যূনতম দেখানোর সময়	न्यूनतम दिखने का समय	Waktu tampil minimum
+service_filter	Filtro de serviços	Service filter	Filtro de servicios	Filtre de services	Dienstfilter	Фильтр служб	服务筛选	サービスの絞り込み	مرشح الخدمات	সেবা ফিল্টার	सेवा फ़िल्टर	Filter layanan
+name_filter	Filtro de nome	Name filter	Filtro de nombre	Filtre de nom	Namensfilter	Фильтр по имени	名称筛选	名前の絞り込み	مرشح الاسم	নাম ফিল্টার	नाम फ़िल्टर	Filter nama
+drag_image	Imagem do arrasto	Drag image	Imagen del arrastre	Image du glisser	Ziehbild	Изображение перетаскивания	拖动图像	ドラッグ画像	صورة السحب	টেনে আনার ছবি	खींचने की छवि	Gambar seret
+hot_x	Ponto no cursor (X)	Cursor point (X)	Punto en el cursor (X)	Point sous le curseur (X)	Cursorpunkt (X)	Точка под курсором (X)	光标点 (X)	カーソル位置 (X)	نقطة المؤشر (X)	কার্সরের বিন্দু (X)	कर्सर बिंदु (X)	Titik kursor (X)
+hot_y	Ponto no cursor (Y)	Cursor point (Y)	Punto en el cursor (Y)	Point sous le curseur (Y)	Cursorpunkt (Y)	Точка под курсором (Y)	光标点 (Y)	カーソル位置 (Y)	نقطة المؤشر (Y)	কার্সরের বিন্দু (Y)	कर्सर बिंदु (Y)	Titik kursor (Y)
+control	Controle desenhado	Drawn control	Control dibujado	Contrôle dessiné	Gezeichnetes Steuerelement	Отрисованный элемент	绘制的控件	描画するコントロール	عنصر التحكم المرسوم	আঁকা নিয়ন্ত্রণ	चित्रित नियंत्रण	Kontrol yang digambar
+apply_separately	Gravar à parte do mestre	Apply separately from master	Grabar aparte del maestro	Enregistrer séparément du maître	Getrennt vom Master speichern	Сохранять отдельно от главного	与主表分开保存	マスターとは別に保存	الحفظ بشكل منفصل عن الرئيسي	মাস্টার থেকে আলাদাভাবে সংরক্ষণ	मास्टर से अलग सहेजें	Simpan terpisah dari master
+scope	Alcance	Scope	Alcance	Portée	Geltungsbereich	Область	范围	範囲	النطاق	পরিসর	दायरा	Cakupan
+classes	Classes	Classes	Clases	Classes	Klassen	Классы	类	クラス	الفئات	ক্লাস	क्लास	Kelas
+on_intercept	Ao interceptar	On intercept	Al interceptar	À l'interception	Beim Abfangen	При перехвате	拦截时	インターセプト時	عند الاعتراض	বাধা দেওয়ার সময়	रोकने पर	Saat dicegat
+after_intercept	Depois de interceptar	After intercept	Después de interceptar	Après l'interception	Nach dem Abfangen	После перехвата	拦截后	インターセプト後	بعد الاعتراض	বাধা দেওয়ার পরে	रोकने के बाद	Setelah dicegat
+before_action	Antes da ação	Before action	Antes de la acción	Avant l'action	Vor der Aktion	Перед действием	操作前	アクション前	قبل الإجراء	কাজের আগে	क्रिया से पहले	Sebelum aksi
+min_width	Largura mínima	Min width	Ancho mínimo	Largeur minimale	Minimale Breite	Минимальная ширина	最小宽度	最小幅	العرض الأدنى	সর্বনিম্ন প্রস্থ	न्यूनतम चौड़ाई	Lebar minimum
+min_height	Altura mínima	Min height	Alto mínimo	Hauteur minimale	Minimale Höhe	Минимальная высота	最小高度	最小高さ	الارتفاع الأدنى	সর্বনিম্ন উচ্চতা	न्यूनतम ऊँचाई	Tinggi minimum
+max_height	Altura máxima	Max height	Alto máximo	Hauteur maximale	Maximale Höhe	Максимальная высота	最大高度	最大高さ	الارتفاع الأقصى	সর্বোচ্চ উচ্চতা	अधिकतम ऊँचाई	Tinggi maksimum
+port	Porta	Port	Puerto	Port	Port	Порт	端口	ポート	المنفذ	পোর্ট	पोर्ट	Port
+token	Token de acesso	Access token	Token de acceso	Jeton d'accès	Zugriffstoken	Токен доступа	访问令牌	アクセストークン	رمز الوصول	অ্যাক্সেস টোকেন	एक्सेस टोकन	Token akses
+server_name	Nome do servidor	Server name	Nombre del servidor	Nom du serveur	Servername	Имя сервера	服务器名称	サーバー名	اسم الخادم	সার্ভারের নাম	सर्वर का नाम	Nama server
+instructions	Instruções	Instructions	Instrucciones	Instructions	Anweisungen	Инструкции	说明	指示	التعليمات	নির্দেশনা	निर्देश	Instruksi
+expose_ui	Expor a tela	Expose the UI	Exponer la interfaz	Exposer l'interface	Oberfläche freigeben	Открыть интерфейс	开放界面	画面を公開	كشف الواجهة	ইন্টারফেস উন্মুক্ত	इंटरफ़ेस उजागर करें	Buka antarmuka
+forms	Forms liberados	Allowed forms	Formularios permitidos	Formulaires autorisés	Erlaubte Formulare	Разрешённые формы	允许的窗体	許可するフォーム	النماذج المسموح بها	অনুমোদিত ফর্ম	अनुमत फ़ॉर्म	Form yang diizinkan
+tool_name	Nome da ferramenta	Tool name	Nombre de la herramienta	Nom de l'outil	Werkzeugname	Имя инструмента	工具名称	ツール名	اسم الأداة	টুলের নাম	टूल का नाम	Nama alat
+description	Descrição	Description	Descripción	Description	Beschreibung	Описание	描述	説明	الوصف	বিবরণ	विवरण	Deskripsi
+call_timeout	Tempo limite da chamada	Call timeout	Tiempo límite de la llamada	Délai de l’appel	Aufruf-Zeitlimit	Тайм-аут вызова	调用超时	呼び出しのタイムアウト	مهلة الاستدعاء	কলের সময়সীমা	कॉल टाइमआउट	Batas waktu panggilan
+self_align	Alinhamento próprio	Self align	Alineación propia	Alignement propre	Eigene Ausrichtung	Собственное выравнивание	自身对齐	自身の配置	المحاذاة الذاتية	নিজস্ব সারিবদ্ধতা	स्वयं संरेखण	Perataan sendiri
+show_in_foreground	Mostrar com o app aberto	Show while open	Mostrar con la app abierta	Afficher avec l'app ouverte	Bei geöffneter App anzeigen	Показывать при открытом приложении	应用打开时显示	アプリ表示中も表示	إظهار والتطبيق مفتوح	অ্যাপ খোলা থাকলেও দেখান	ऐप खुला होने पर दिखाएँ	Tampilkan saat aplikasi terbuka
+sender_id	ID do remetente (FCM)	Sender ID (FCM)	ID del remitente (FCM)	ID de l'expéditeur (FCM)	Absender-ID (FCM)	ID отправителя (FCM)	发送者 ID (FCM)	送信者 ID (FCM)	معرّف المرسل (FCM)	প্রেরক আইডি (FCM)	प्रेषक आईडी (FCM)	ID pengirim (FCM)
+project_id	ID do projeto (FCM)	Project ID (FCM)	ID del proyecto (FCM)	ID du projet (FCM)	Projekt-ID (FCM)	ID проекта (FCM)	项目 ID (FCM)	プロジェクト ID (FCM)	معرّف المشروع (FCM)	প্রকল্প আইডি (FCM)	प्रोजेक्ट आईडी (FCM)	ID proyek (FCM)
+api_key	Chave da API	API key	Clave de API	Clé d'API	API-Schlüssel	Ключ API	API 密钥	API キー	مفتاح API	API কী	API कुंजी	Kunci API
+vapid_key	Chave VAPID (Web Push)	VAPID key (Web Push)	Clave VAPID (Web Push)	Clé VAPID (Web Push)	VAPID-Schlüssel (Web Push)	Ключ VAPID (Web Push)	VAPID 密钥 (Web Push)	VAPID キー (Web Push)	مفتاح VAPID (Web Push)	VAPID কী (Web Push)	VAPID कुंजी (Web Push)	Kunci VAPID (Web Push)
+replace_default	Substituir a notificação comum	Replace default notification	Reemplazar la notificación común	Remplacer la notification par défaut	Standardbenachrichtigung ersetzen	Заменять обычное уведомление	替换默认通知	通常の通知を置き換え	استبدال الإشعار العادي	সাধারণ বিজ্ঞপ্তি বদলান	सामान्य सूचना बदलें	Ganti notifikasi biasa
+open_buttons	Botões que abrem o app	Buttons that open the app	Botones que abren la app	Boutons qui ouvrent l'app	Schaltflächen, die die App öffnen	Кнопки, открывающие приложение	打开应用的按钮	アプリを開くボタン	أزرار تفتح التطبيق	যে বোতাম অ্যাপ খোলে	ऐप खोलने वाले बटन	Tombol yang membuka aplikasi
+ringtone	Toque	Ringtone	Tono de llamada	Sonnerie	Klingelton	Мелодия звонка	铃声	着信音	نغمة الرنين	রিংটোন	रिंगटोन	Nada dering
+vibrate	Vibrar	Vibrate	Vibrar	Vibrer	Vibrieren	Вибрация	振动	バイブレーション	اهتزاز	কম্পন	कंपन	Getar
+call_style	Estilo de chamada	Call style	Estilo de llamada	Style d'appel	Anrufstil	Стиль звонка	来电样式	通話スタイル	نمط المكالمة	কল স্টাইল	कॉल शैली	Gaya panggilan
+skeleton	Skeleton ao carregar	Loading skeleton	Skeleton al cargar	Squelette au chargement	Skeleton beim Laden	Скелет при загрузке	加载骨架屏	読み込み中のスケルトン	هيكل أثناء التحميل	লোড হওয়ার সময় স্কেলেটন	लोड होते समय स्केलेटन	Skeleton saat memuat
+column_span	Colunas ocupadas	Column span	Columnas ocupadas	Colonnes occupées	Spaltenspanne	Занимаемые столбцы	跨列数	列の結合数	الأعمدة المشغولة	দখল করা কলাম	घेरे गए कॉलम	Kolom yang ditempati
+record_total	Total de registros	Record total	Total de registros	Nombre total d'enregistrements	Datensätze gesamt	Всего записей	记录总数	総レコード数	إجمالي السجلات	মোট রেকর্ড	कुल रिकॉर्ड	Total rekaman
+max_records	Máximo de registros	Max records	Máximo de registros	Enregistrements max.	Max. Datensätze	Макс. записей	最大记录数	最大レコード数	الحد الأقصى للسجلات	সর্বোচ্চ রেকর্ড	अधिकतम रिकॉर्ड	Rekaman maksimum
+partial_notice	Aviso de dados parciais	Partial data notice	Aviso de datos parciales	Avis de données partielles	Hinweis auf Teildaten	Уведомление о частичных данных	部分数据提示	部分データの通知	تنبيه البيانات الجزئية	আংশিক ডেটার বিজ্ঞপ্তি	आंशिक डेटा सूचना	Pemberitahuan data parsial
+provider	Provedor	Provider	Proveedor	Fournisseur	Anbieter	Поставщик	提供程序	プロバイダー	المزوّد	প্রদানকারী	प्रदाता	Penyedia
+show_text	Mostrar o texto	Show text	Mostrar el texto	Afficher le texte	Text anzeigen	Показывать текст	显示文本	テキストを表示	إظهار النص	লেখা দেখান	टेक्स्ट दिखाएँ	Tampilkan teks
+fields	Campos	Fields	Campos	Champs	Felder	Поля	字段	フィールド	الحقول	ক্ষেত্রসমূহ	फ़ील्ड	Bidang
+sheet_name	Nome da aba	Sheet name	Nombre de la hoja	Nom de la feuille	Blattname	Имя листа	工作表名称	シート名	اسم الورقة	শিটের নাম	शीट का नाम	Nama lembar
+decimal_comma	Vírgula decimal	Decimal comma	Coma decimal	Virgule décimale	Dezimalkomma	Десятичная запятая	小数逗号	小数点にカンマ	الفاصلة العشرية	দশমিক কমা	दशमलव अल्पविराम	Koma desimal
+bom	Marca BOM (UTF-8)	BOM mark (UTF-8)	Marca BOM (UTF-8)	Marque BOM (UTF-8)	BOM-Markierung (UTF-8)	Метка BOM (UTF-8)	BOM 标记 (UTF-8)	BOM マーク (UTF-8)	علامة BOM (UTF-8)	BOM চিহ্ন (UTF-8)	BOM चिह्न (UTF-8)	Tanda BOM (UTF-8)
+header	Linha de títulos	Header row	Fila de títulos	Ligne d'en-tête	Kopfzeile	Строка заголовков	标题行	見出し行	صف العناوين	শিরোনামের সারি	शीर्षक पंक्ति	Baris judul
+captures_wheel	Segura a roda do mouse	Captures mouse wheel	Retiene la rueda del ratón	Garde la molette	Behält das Mausrad	Удерживает колесо мыши	独占鼠标滚轮	マウスホイールを保持	يحتفظ بعجلة الفأرة	মাউস হুইল ধরে রাখে	माउस व्हील रोकता है	Menahan roda mouse

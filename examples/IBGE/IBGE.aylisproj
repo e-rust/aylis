@@ -1,0 +1,22 @@
+{
+  "aylis_project": 1,
+  "name": "IBGE",
+  "language": "rust",
+  "main_form": "frmIBGE",
+  "forms": [
+    {
+      "name": "frmIBGE",
+      "file": "forms/ibge.json",
+      "auto_create": true
+    }
+  ],
+  "theme": "Windows 11 Light",
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

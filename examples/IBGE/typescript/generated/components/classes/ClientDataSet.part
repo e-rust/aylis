@@ -1,0 +1,103 @@
+
+/** Um ClientDataSet de um form. */
+export class ClientDataSet extends AylisComponent {
+    get keyFields(): Promise<string> {
+        return this.getProp("key_fields");
+    }
+    set keyFields(value: string) {
+        this.setProp("key_fields", value);
+    }
+    get applyMode(): Promise<string> {
+        return this.getProp("apply_mode");
+    }
+    set applyMode(value: string) {
+        this.setProp("apply_mode", value);
+    }
+    get readOnly(): Promise<boolean> {
+        return this.getProp("read_only");
+    }
+    set readOnly(value: boolean) {
+        this.setProp("read_only", value);
+    }
+    get active(): Promise<boolean> {
+        return this.getProp("active");
+    }
+    set active(value: boolean) {
+        this.setProp("active", value);
+    }
+    get filter(): Promise<string> {
+        return this.getProp("filter");
+    }
+    set filter(value: string) {
+        this.setProp("filter", value);
+    }
+    get filtered(): Promise<boolean> {
+        return this.getProp("filtered");
+    }
+    set filtered(value: boolean) {
+        this.setProp("filtered", value);
+    }
+    get indexFieldNames(): Promise<string> {
+        return this.getProp("index_field_names");
+    }
+    set indexFieldNames(value: string) {
+        this.setProp("index_field_names", value);
+    }
+    get indexes(): Promise<string> {
+        return this.getProp("indexes");
+    }
+    set indexes(value: string) {
+        this.setProp("indexes", value);
+    }
+    get indexName(): Promise<string> {
+        return this.getProp("index_name");
+    }
+    set indexName(value: string) {
+        this.setProp("index_name", value);
+    }
+    get params(): Promise<string> {
+        return this.getProp("params");
+    }
+    set params(value: string) {
+        this.setProp("params", value);
+    }
+    get statusFilter(): Promise<string> {
+        return this.getProp("status_filter");
+    }
+    set statusFilter(value: string) {
+        this.setProp("status_filter", value);
+    }
+    get masterSource(): Promise<string> {
+        return this.getProp("master_source");
+    }
+    set masterSource(value: string) {
+        this.setProp("master_source", value);
+    }
+    get masterFields(): Promise<string> {
+        return this.getProp("master_fields");
+    }
+    set masterFields(value: string) {
+        this.setProp("master_fields", value);
+    }
+    get applySeparately(): Promise<boolean> {
+        return this.getProp("apply_separately");
+    }
+    set applySeparately(value: boolean) {
+        this.setProp("apply_separately", value);
+    }
+    get recordTotal(): Promise<number> {
+        return this.getProp("record_total");
+    }
+    set recordTotal(value: number) {
+        this.setProp("record_total", value);
+    }
+    get maxRecords(): Promise<number> {
+        return this.getProp("max_records");
+    }
+    set maxRecords(value: number) {
+        this.setProp("max_records", value);
+    }
+    get partialNotice(): Promise<string> {
+        return this.getProp("partial_notice");
+    }
+}

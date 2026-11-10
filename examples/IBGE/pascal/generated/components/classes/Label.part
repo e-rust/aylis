@@ -1,0 +1,852 @@
+  { Um Label de um form. }
+  TLabel = class(TAylisComponent)
+  private
+    function GetText: string;
+    procedure SetText(Value: string);
+    function GetHAlign: string;
+    procedure SetHAlign(Value: string);
+    function GetVAlign: string;
+    procedure SetVAlign(Value: string);
+    function GetWrap: Boolean;
+    procedure SetWrap(Value: Boolean);
+    function GetTrimming: string;
+    procedure SetTrimming(Value: string);
+    function GetBold: Boolean;
+    procedure SetBold(Value: Boolean);
+    function GetColor: string;
+    procedure SetColor(Value: string);
+    function GetHighlight: string;
+    procedure SetHighlight(Value: string);
+    function GetLetterSpacing: Double;
+    procedure SetLetterSpacing(Value: Double);
+    function GetTextCase: string;
+    procedure SetTextCase(Value: string);
+    function GetMarkup: Boolean;
+    procedure SetMarkup(Value: Boolean);
+    function GetOutline: string;
+    procedure SetOutline(Value: string);
+    function GetOutlineWidth: Double;
+    procedure SetOutlineWidth(Value: Double);
+    function GetFocusControl: string;
+    procedure SetFocusControl(Value: string);
+    function GetLeft: Double;
+    procedure SetLeft(Value: Double);
+    function GetTop: Double;
+    procedure SetTop(Value: Double);
+    function GetWidth: Double;
+    procedure SetWidth(Value: Double);
+    function GetHeight: Double;
+    procedure SetHeight(Value: Double);
+    function GetAlign: string;
+    procedure SetAlign(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetHitTest: Boolean;
+    procedure SetHitTest(Value: Boolean);
+    function GetClipChildren: Boolean;
+    procedure SetClipChildren(Value: Boolean);
+    function GetCapturesWheel: Boolean;
+    procedure SetCapturesWheel(Value: Boolean);
+    function GetCanFocus: Boolean;
+    procedure SetCanFocus(Value: Boolean);
+    function GetDraggable: Boolean;
+    procedure SetDraggable(Value: Boolean);
+    function GetAcceptsDrops: Boolean;
+    procedure SetAcceptsDrops(Value: Boolean);
+    function GetDragData: string;
+    procedure SetDragData(Value: string);
+    function GetDragLabel: string;
+    procedure SetDragLabel(Value: string);
+    function GetDragImage: string;
+    procedure SetDragImage(Value: string);
+    function GetDropTypes: string;
+    procedure SetDropTypes(Value: string);
+    function GetTabStop: Boolean;
+    procedure SetTabStop(Value: Boolean);
+    function GetCursor: string;
+    procedure SetCursor(Value: string);
+    function GetOpacity: Double;
+    procedure SetOpacity(Value: Double);
+    function GetCacheLayer: Boolean;
+    procedure SetCacheLayer(Value: Boolean);
+    function GetRotation: Double;
+    procedure SetRotation(Value: Double);
+    function GetTranslateX: Double;
+    procedure SetTranslateX(Value: Double);
+    function GetTranslateY: Double;
+    procedure SetTranslateY(Value: Double);
+    function GetAspectRatio: Double;
+    procedure SetAspectRatio(Value: Double);
+    function GetMaxWidth: Double;
+    procedure SetMaxWidth(Value: Double);
+    function GetMinWidth: Double;
+    procedure SetMinWidth(Value: Double);
+    function GetMinHeight: Double;
+    procedure SetMinHeight(Value: Double);
+    function GetMaxHeight: Double;
+    procedure SetMaxHeight(Value: Double);
+    function GetSelfAlign: string;
+    procedure SetSelfAlign(Value: string);
+    function GetAutoSize: Boolean;
+    procedure SetAutoSize(Value: Boolean);
+    function GetColumnSpan: Int64;
+    procedure SetColumnSpan(Value: Int64);
+    function GetShadow: string;
+    procedure SetShadow(Value: string);
+    function GetStyle: string;
+    procedure SetStyle(Value: string);
+    function GetTheme: string;
+    procedure SetTheme(Value: string);
+    function GetFill: string;
+    procedure SetFill(Value: string);
+    function GetBorderColor: string;
+    procedure SetBorderColor(Value: string);
+    function GetTextColor: string;
+    procedure SetTextColor(Value: string);
+    function GetAccentColor: string;
+    procedure SetAccentColor(Value: string);
+    function GetSuccessColor: string;
+    procedure SetSuccessColor(Value: string);
+    function GetWarningColor: string;
+    procedure SetWarningColor(Value: string);
+    function GetDangerColor: string;
+    procedure SetDangerColor(Value: string);
+    function GetFontFamily: string;
+    procedure SetFontFamily(Value: string);
+    function GetFontSize: Double;
+    procedure SetFontSize(Value: Double);
+    function GetFontWeight: string;
+    procedure SetFontWeight(Value: string);
+    function GetFontItalic: Boolean;
+    procedure SetFontItalic(Value: Boolean);
+    function GetFontUnderline: Boolean;
+    procedure SetFontUnderline(Value: Boolean);
+    function GetFontStrikeout: Boolean;
+    procedure SetFontStrikeout(Value: Boolean);
+    function GetHint: string;
+    procedure SetHint(Value: string);
+    function GetTag: Int64;
+    procedure SetTag(Value: Int64);
+    function GetPopupMenu: string;
+    procedure SetPopupMenu(Value: string);
+  public
+    property Text: string read GetText write SetText;
+    property HAlign: string read GetHAlign write SetHAlign;
+    property VAlign: string read GetVAlign write SetVAlign;
+    property Wrap: Boolean read GetWrap write SetWrap;
+    property Trimming: string read GetTrimming write SetTrimming;
+    property Bold: Boolean read GetBold write SetBold;
+    property Color: string read GetColor write SetColor;
+    property Highlight: string read GetHighlight write SetHighlight;
+    property LetterSpacing: Double read GetLetterSpacing write SetLetterSpacing;
+    property TextCase: string read GetTextCase write SetTextCase;
+    property Markup: Boolean read GetMarkup write SetMarkup;
+    property Outline: string read GetOutline write SetOutline;
+    property OutlineWidth: Double read GetOutlineWidth write SetOutlineWidth;
+    property FocusControl: string read GetFocusControl write SetFocusControl;
+    property Left: Double read GetLeft write SetLeft;
+    property Top: Double read GetTop write SetTop;
+    property Width: Double read GetWidth write SetWidth;
+    property Height: Double read GetHeight write SetHeight;
+    property Align: string read GetAlign write SetAlign;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property HitTest: Boolean read GetHitTest write SetHitTest;
+    property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CanFocus: Boolean read GetCanFocus write SetCanFocus;
+    property Draggable: Boolean read GetDraggable write SetDraggable;
+    property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
+    property DragData: string read GetDragData write SetDragData;
+    property DragLabel: string read GetDragLabel write SetDragLabel;
+    property DragImage: string read GetDragImage write SetDragImage;
+    property DropTypes: string read GetDropTypes write SetDropTypes;
+    property TabStop: Boolean read GetTabStop write SetTabStop;
+    property Cursor: string read GetCursor write SetCursor;
+    property Opacity: Double read GetOpacity write SetOpacity;
+    property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
+    property Rotation: Double read GetRotation write SetRotation;
+    property TranslateX: Double read GetTranslateX write SetTranslateX;
+    property TranslateY: Double read GetTranslateY write SetTranslateY;
+    property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
+    property MaxWidth: Double read GetMaxWidth write SetMaxWidth;
+    property MinWidth: Double read GetMinWidth write SetMinWidth;
+    property MinHeight: Double read GetMinHeight write SetMinHeight;
+    property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
+    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property AutoSize: Boolean read GetAutoSize write SetAutoSize;
+    property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property Shadow: string read GetShadow write SetShadow;
+    property Style: string read GetStyle write SetStyle;
+    property Theme: string read GetTheme write SetTheme;
+    property Fill: string read GetFill write SetFill;
+    property BorderColor: string read GetBorderColor write SetBorderColor;
+    property TextColor: string read GetTextColor write SetTextColor;
+    property AccentColor: string read GetAccentColor write SetAccentColor;
+    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
+    property WarningColor: string read GetWarningColor write SetWarningColor;
+    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property FontFamily: string read GetFontFamily write SetFontFamily;
+    property FontSize: Double read GetFontSize write SetFontSize;
+    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontItalic: Boolean read GetFontItalic write SetFontItalic;
+    property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
+    property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
+    property Hint: string read GetHint write SetHint;
+    property Tag: Int64 read GetTag write SetTag;
+    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+  end;
+
+
+function TLabel.GetText: string;
+begin
+  Result := AsText(GetProp('text'));
+end;
+
+procedure TLabel.SetText(Value: string);
+begin
+  SetProp('text', TJSONString.Create(Value));
+end;
+
+function TLabel.GetHAlign: string;
+begin
+  Result := AsText(GetProp('h_align'));
+end;
+
+procedure TLabel.SetHAlign(Value: string);
+begin
+  SetProp('h_align', TJSONString.Create(Value));
+end;
+
+function TLabel.GetVAlign: string;
+begin
+  Result := AsText(GetProp('v_align'));
+end;
+
+procedure TLabel.SetVAlign(Value: string);
+begin
+  SetProp('v_align', TJSONString.Create(Value));
+end;
+
+function TLabel.GetWrap: Boolean;
+begin
+  Result := GetProp('wrap').AsBoolean;
+end;
+
+procedure TLabel.SetWrap(Value: Boolean);
+begin
+  SetProp('wrap', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetTrimming: string;
+begin
+  Result := AsText(GetProp('trimming'));
+end;
+
+procedure TLabel.SetTrimming(Value: string);
+begin
+  SetProp('trimming', TJSONString.Create(Value));
+end;
+
+function TLabel.GetBold: Boolean;
+begin
+  Result := GetProp('bold').AsBoolean;
+end;
+
+procedure TLabel.SetBold(Value: Boolean);
+begin
+  SetProp('bold', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetColor: string;
+begin
+  Result := AsText(GetProp('color'));
+end;
+
+procedure TLabel.SetColor(Value: string);
+begin
+  SetProp('color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetHighlight: string;
+begin
+  Result := AsText(GetProp('highlight'));
+end;
+
+procedure TLabel.SetHighlight(Value: string);
+begin
+  SetProp('highlight', TJSONString.Create(Value));
+end;
+
+function TLabel.GetLetterSpacing: Double;
+begin
+  Result := GetProp('letter_spacing').AsFloat;
+end;
+
+procedure TLabel.SetLetterSpacing(Value: Double);
+begin
+  SetProp('letter_spacing', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetTextCase: string;
+begin
+  Result := AsText(GetProp('text_case'));
+end;
+
+procedure TLabel.SetTextCase(Value: string);
+begin
+  SetProp('text_case', TJSONString.Create(Value));
+end;
+
+function TLabel.GetMarkup: Boolean;
+begin
+  Result := GetProp('markup').AsBoolean;
+end;
+
+procedure TLabel.SetMarkup(Value: Boolean);
+begin
+  SetProp('markup', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetOutline: string;
+begin
+  Result := AsText(GetProp('outline'));
+end;
+
+procedure TLabel.SetOutline(Value: string);
+begin
+  SetProp('outline', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOutlineWidth: Double;
+begin
+  Result := GetProp('outline_width').AsFloat;
+end;
+
+procedure TLabel.SetOutlineWidth(Value: Double);
+begin
+  SetProp('outline_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetFocusControl: string;
+begin
+  Result := AsText(GetProp('focus_control'));
+end;
+
+procedure TLabel.SetFocusControl(Value: string);
+begin
+  SetProp('focus_control', TJSONString.Create(Value));
+end;
+
+function TLabel.GetLeft: Double;
+begin
+  Result := GetProp('left').AsFloat;
+end;
+
+procedure TLabel.SetLeft(Value: Double);
+begin
+  SetProp('left', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetTop: Double;
+begin
+  Result := GetProp('top').AsFloat;
+end;
+
+procedure TLabel.SetTop(Value: Double);
+begin
+  SetProp('top', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetWidth: Double;
+begin
+  Result := GetProp('width').AsFloat;
+end;
+
+procedure TLabel.SetWidth(Value: Double);
+begin
+  SetProp('width', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetHeight: Double;
+begin
+  Result := GetProp('height').AsFloat;
+end;
+
+procedure TLabel.SetHeight(Value: Double);
+begin
+  SetProp('height', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetAlign: string;
+begin
+  Result := AsText(GetProp('align'));
+end;
+
+procedure TLabel.SetAlign(Value: string);
+begin
+  SetProp('align', TJSONString.Create(Value));
+end;
+
+function TLabel.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TLabel.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TLabel.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetHitTest: Boolean;
+begin
+  Result := GetProp('hit_test').AsBoolean;
+end;
+
+procedure TLabel.SetHitTest(Value: Boolean);
+begin
+  SetProp('hit_test', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetClipChildren: Boolean;
+begin
+  Result := GetProp('clip_children').AsBoolean;
+end;
+
+procedure TLabel.SetClipChildren(Value: Boolean);
+begin
+  SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetCapturesWheel: Boolean;
+begin
+  Result := GetProp('captures_wheel').AsBoolean;
+end;
+
+procedure TLabel.SetCapturesWheel(Value: Boolean);
+begin
+  SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetCanFocus: Boolean;
+begin
+  Result := GetProp('can_focus').AsBoolean;
+end;
+
+procedure TLabel.SetCanFocus(Value: Boolean);
+begin
+  SetProp('can_focus', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetDraggable: Boolean;
+begin
+  Result := GetProp('draggable').AsBoolean;
+end;
+
+procedure TLabel.SetDraggable(Value: Boolean);
+begin
+  SetProp('draggable', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetAcceptsDrops: Boolean;
+begin
+  Result := GetProp('accepts_drops').AsBoolean;
+end;
+
+procedure TLabel.SetAcceptsDrops(Value: Boolean);
+begin
+  SetProp('accepts_drops', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetDragData: string;
+begin
+  Result := AsText(GetProp('drag_data'));
+end;
+
+procedure TLabel.SetDragData(Value: string);
+begin
+  SetProp('drag_data', TJSONString.Create(Value));
+end;
+
+function TLabel.GetDragLabel: string;
+begin
+  Result := AsText(GetProp('drag_label'));
+end;
+
+procedure TLabel.SetDragLabel(Value: string);
+begin
+  SetProp('drag_label', TJSONString.Create(Value));
+end;
+
+function TLabel.GetDragImage: string;
+begin
+  Result := AsText(GetProp('drag_image'));
+end;
+
+procedure TLabel.SetDragImage(Value: string);
+begin
+  SetProp('drag_image', TJSONString.Create(Value));
+end;
+
+function TLabel.GetDropTypes: string;
+begin
+  Result := AsText(GetProp('drop_types'));
+end;
+
+procedure TLabel.SetDropTypes(Value: string);
+begin
+  SetProp('drop_types', TJSONString.Create(Value));
+end;
+
+function TLabel.GetTabStop: Boolean;
+begin
+  Result := GetProp('tab_stop').AsBoolean;
+end;
+
+procedure TLabel.SetTabStop(Value: Boolean);
+begin
+  SetProp('tab_stop', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetCursor: string;
+begin
+  Result := AsText(GetProp('cursor'));
+end;
+
+procedure TLabel.SetCursor(Value: string);
+begin
+  SetProp('cursor', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOpacity: Double;
+begin
+  Result := GetProp('opacity').AsFloat;
+end;
+
+procedure TLabel.SetOpacity(Value: Double);
+begin
+  SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetCacheLayer: Boolean;
+begin
+  Result := GetProp('cache_layer').AsBoolean;
+end;
+
+procedure TLabel.SetCacheLayer(Value: Boolean);
+begin
+  SetProp('cache_layer', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetRotation: Double;
+begin
+  Result := GetProp('rotation').AsFloat;
+end;
+
+procedure TLabel.SetRotation(Value: Double);
+begin
+  SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetTranslateX: Double;
+begin
+  Result := GetProp('translate_x').AsFloat;
+end;
+
+procedure TLabel.SetTranslateX(Value: Double);
+begin
+  SetProp('translate_x', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetTranslateY: Double;
+begin
+  Result := GetProp('translate_y').AsFloat;
+end;
+
+procedure TLabel.SetTranslateY(Value: Double);
+begin
+  SetProp('translate_y', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetAspectRatio: Double;
+begin
+  Result := GetProp('aspect_ratio').AsFloat;
+end;
+
+procedure TLabel.SetAspectRatio(Value: Double);
+begin
+  SetProp('aspect_ratio', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetMaxWidth: Double;
+begin
+  Result := GetProp('max_width').AsFloat;
+end;
+
+procedure TLabel.SetMaxWidth(Value: Double);
+begin
+  SetProp('max_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetMinWidth: Double;
+begin
+  Result := GetProp('min_width').AsFloat;
+end;
+
+procedure TLabel.SetMinWidth(Value: Double);
+begin
+  SetProp('min_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetMinHeight: Double;
+begin
+  Result := GetProp('min_height').AsFloat;
+end;
+
+procedure TLabel.SetMinHeight(Value: Double);
+begin
+  SetProp('min_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetMaxHeight: Double;
+begin
+  Result := GetProp('max_height').AsFloat;
+end;
+
+procedure TLabel.SetMaxHeight(Value: Double);
+begin
+  SetProp('max_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetSelfAlign: string;
+begin
+  Result := AsText(GetProp('self_align'));
+end;
+
+procedure TLabel.SetSelfAlign(Value: string);
+begin
+  SetProp('self_align', TJSONString.Create(Value));
+end;
+
+function TLabel.GetAutoSize: Boolean;
+begin
+  Result := GetProp('auto_size').AsBoolean;
+end;
+
+procedure TLabel.SetAutoSize(Value: Boolean);
+begin
+  SetProp('auto_size', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetColumnSpan: Int64;
+begin
+  Result := GetProp('column_span').AsInt64;
+end;
+
+procedure TLabel.SetColumnSpan(Value: Int64);
+begin
+  SetProp('column_span', TJSONInt64Number.Create(Value));
+end;
+
+function TLabel.GetShadow: string;
+begin
+  Result := AsText(GetProp('shadow'));
+end;
+
+procedure TLabel.SetShadow(Value: string);
+begin
+  SetProp('shadow', TJSONString.Create(Value));
+end;
+
+function TLabel.GetStyle: string;
+begin
+  Result := AsText(GetProp('style'));
+end;
+
+procedure TLabel.SetStyle(Value: string);
+begin
+  SetProp('style', TJSONString.Create(Value));
+end;
+
+function TLabel.GetTheme: string;
+begin
+  Result := AsText(GetProp('theme'));
+end;
+
+procedure TLabel.SetTheme(Value: string);
+begin
+  SetProp('theme', TJSONString.Create(Value));
+end;
+
+function TLabel.GetFill: string;
+begin
+  Result := AsText(GetProp('fill'));
+end;
+
+procedure TLabel.SetFill(Value: string);
+begin
+  SetProp('fill', TJSONString.Create(Value));
+end;
+
+function TLabel.GetBorderColor: string;
+begin
+  Result := AsText(GetProp('border_color'));
+end;
+
+procedure TLabel.SetBorderColor(Value: string);
+begin
+  SetProp('border_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetTextColor: string;
+begin
+  Result := AsText(GetProp('text_color'));
+end;
+
+procedure TLabel.SetTextColor(Value: string);
+begin
+  SetProp('text_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetAccentColor: string;
+begin
+  Result := AsText(GetProp('accent_color'));
+end;
+
+procedure TLabel.SetAccentColor(Value: string);
+begin
+  SetProp('accent_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetSuccessColor: string;
+begin
+  Result := AsText(GetProp('success_color'));
+end;
+
+procedure TLabel.SetSuccessColor(Value: string);
+begin
+  SetProp('success_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetWarningColor: string;
+begin
+  Result := AsText(GetProp('warning_color'));
+end;
+
+procedure TLabel.SetWarningColor(Value: string);
+begin
+  SetProp('warning_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetDangerColor: string;
+begin
+  Result := AsText(GetProp('danger_color'));
+end;
+
+procedure TLabel.SetDangerColor(Value: string);
+begin
+  SetProp('danger_color', TJSONString.Create(Value));
+end;
+
+function TLabel.GetFontFamily: string;
+begin
+  Result := AsText(GetProp('font_family'));
+end;
+
+procedure TLabel.SetFontFamily(Value: string);
+begin
+  SetProp('font_family', TJSONString.Create(Value));
+end;
+
+function TLabel.GetFontSize: Double;
+begin
+  Result := GetProp('font_size').AsFloat;
+end;
+
+procedure TLabel.SetFontSize(Value: Double);
+begin
+  SetProp('font_size', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetFontWeight: string;
+begin
+  Result := AsText(GetProp('font_weight'));
+end;
+
+procedure TLabel.SetFontWeight(Value: string);
+begin
+  SetProp('font_weight', TJSONString.Create(Value));
+end;
+
+function TLabel.GetFontItalic: Boolean;
+begin
+  Result := GetProp('font_italic').AsBoolean;
+end;
+
+procedure TLabel.SetFontItalic(Value: Boolean);
+begin
+  SetProp('font_italic', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetFontUnderline: Boolean;
+begin
+  Result := GetProp('font_underline').AsBoolean;
+end;
+
+procedure TLabel.SetFontUnderline(Value: Boolean);
+begin
+  SetProp('font_underline', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetFontStrikeout: Boolean;
+begin
+  Result := GetProp('font_strikeout').AsBoolean;
+end;
+
+procedure TLabel.SetFontStrikeout(Value: Boolean);
+begin
+  SetProp('font_strikeout', TJSONBoolean.Create(Value));
+end;
+
+function TLabel.GetHint: string;
+begin
+  Result := AsText(GetProp('hint'));
+end;
+
+procedure TLabel.SetHint(Value: string);
+begin
+  SetProp('hint', TJSONString.Create(Value));
+end;
+
+function TLabel.GetTag: Int64;
+begin
+  Result := GetProp('tag').AsInt64;
+end;
+
+procedure TLabel.SetTag(Value: Int64);
+begin
+  SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TLabel.GetPopupMenu: string;
+begin
+  Result := AsText(GetProp('popup_menu'));
+end;
+
+procedure TLabel.SetPopupMenu(Value: string);
+begin
+  SetProp('popup_menu', TJSONString.Create(Value));
+end;
+

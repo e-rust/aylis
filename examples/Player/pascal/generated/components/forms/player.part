@@ -1,0 +1,530 @@
+  { O form frmPlayer: a classe base com os componentes. A do form (TFrmPlayer), com os
+    handlers (métodos published) e o estado, fica na unit dele. }
+  TFrmPlayerBase = class(TForm)
+  published
+    mnuPrincipal: TMainMenu;
+    mnuArquivo: TMenuItem;
+    mnuAbrir: TMenuItem;
+    mnuLimparFila: TMenuItem;
+    mnuSep1: TMenuItem;
+    mnuSair: TMenuItem;
+    mnuReproduzir: TMenuItem;
+    mnuReproduzirPausar: TMenuItem;
+    mnuParar: TMenuItem;
+    mnuAnterior: TMenuItem;
+    mnuProxima: TMenuItem;
+    mnuSep2: TMenuItem;
+    mnuEmbaralhar: TMenuItem;
+    mnuRepetir: TMenuItem;
+    mnuExibir: TMenuItem;
+    mnuAgora: TMenuItem;
+    mnuFila: TMenuItem;
+    pnlControles: TPanel;
+    lytBarra: TLayout;
+    lblTempo: TLabel;
+    lblDuracao: TLabel;
+    sbPosicao: TSeekBar;
+    lytInfo: TLayout;
+    icoCapa: TIcon;
+    lytTextos: TLayout;
+    lblTitulo: TLabel;
+    lblDetalhe: TLabel;
+    lytVolume: TLayout;
+    btnMudo: TButton;
+    tbVolume: TTrackBar;
+    lytBotoes: TLayout;
+    lytBotoesCentro: TLayout;
+    btnEmbaralhar: TButton;
+    btnAnterior: TButton;
+    btnReproduzir: TButton;
+    btnProxima: TButton;
+    btnRepetir: TButton;
+    lytNavegacao: TLayout;
+    btnAgora: TButton;
+    btnFila: TButton;
+    divNavegacao: TDivider;
+    btnAbrirArquivos: TButton;
+    pnlAgora: TPanel;
+    vpVideo: TVideoPlayer;
+    pnlFila: TPanel;
+    lblFila: TLabel;
+    lytFilaBotoes: TLayout;
+    btnAdicionar: TButton;
+    btnLimparFila: TButton;
+    lvFila: TListView;
+    dlgAbrir: TOpenDialog;
+    tmrPosicao: TTimer;
+  protected
+    procedure BindComponents(List: TJSONArray); override;
+  public
+    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    function FindButton(const Nome: string): TButton;
+    { O Button que disparou o evento (nil se não é um Button deste form). }
+    function SenderAsButton(Sender: TAylisComponent): TButton; overload;
+    function SenderAsButton(Event: TJSONObject): TButton; overload;
+    { O Divider deste form com o nome, como o FindComponent (nil se não há). }
+    function FindDivider(const Nome: string): TDivider;
+    { O Divider que disparou o evento (nil se não é um Divider deste form). }
+    function SenderAsDivider(Sender: TAylisComponent): TDivider; overload;
+    function SenderAsDivider(Event: TJSONObject): TDivider; overload;
+    { O Icon deste form com o nome, como o FindComponent (nil se não há). }
+    function FindIcon(const Nome: string): TIcon;
+    { O Icon que disparou o evento (nil se não é um Icon deste form). }
+    function SenderAsIcon(Sender: TAylisComponent): TIcon; overload;
+    function SenderAsIcon(Event: TJSONObject): TIcon; overload;
+    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLabel(const Nome: string): TLabel;
+    { O Label que disparou o evento (nil se não é um Label deste form). }
+    function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
+    function SenderAsLabel(Event: TJSONObject): TLabel; overload;
+    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLayout(const Nome: string): TLayout;
+    { O Layout que disparou o evento (nil se não é um Layout deste form). }
+    function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
+    function SenderAsLayout(Event: TJSONObject): TLayout; overload;
+    { O ListView deste form com o nome, como o FindComponent (nil se não há). }
+    function FindListView(const Nome: string): TListView;
+    { O ListView que disparou o evento (nil se não é um ListView deste form). }
+    function SenderAsListView(Sender: TAylisComponent): TListView; overload;
+    function SenderAsListView(Event: TJSONObject): TListView; overload;
+    { O MainMenu deste form com o nome, como o FindComponent (nil se não há). }
+    function FindMainMenu(const Nome: string): TMainMenu;
+    { O MainMenu que disparou o evento (nil se não é um MainMenu deste form). }
+    function SenderAsMainMenu(Sender: TAylisComponent): TMainMenu; overload;
+    function SenderAsMainMenu(Event: TJSONObject): TMainMenu; overload;
+    { O MenuItem deste form com o nome, como o FindComponent (nil se não há). }
+    function FindMenuItem(const Nome: string): TMenuItem;
+    { O MenuItem que disparou o evento (nil se não é um MenuItem deste form). }
+    function SenderAsMenuItem(Sender: TAylisComponent): TMenuItem; overload;
+    function SenderAsMenuItem(Event: TJSONObject): TMenuItem; overload;
+    { O OpenDialog deste form com o nome, como o FindComponent (nil se não há). }
+    function FindOpenDialog(const Nome: string): TOpenDialog;
+    { O OpenDialog que disparou o evento (nil se não é um OpenDialog deste form). }
+    function SenderAsOpenDialog(Sender: TAylisComponent): TOpenDialog; overload;
+    function SenderAsOpenDialog(Event: TJSONObject): TOpenDialog; overload;
+    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    function FindPanel(const Nome: string): TPanel;
+    { O Panel que disparou o evento (nil se não é um Panel deste form). }
+    function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
+    function SenderAsPanel(Event: TJSONObject): TPanel; overload;
+    { O SeekBar deste form com o nome, como o FindComponent (nil se não há). }
+    function FindSeekBar(const Nome: string): TSeekBar;
+    { O SeekBar que disparou o evento (nil se não é um SeekBar deste form). }
+    function SenderAsSeekBar(Sender: TAylisComponent): TSeekBar; overload;
+    function SenderAsSeekBar(Event: TJSONObject): TSeekBar; overload;
+    { O Timer deste form com o nome, como o FindComponent (nil se não há). }
+    function FindTimer(const Nome: string): TTimer;
+    { O Timer que disparou o evento (nil se não é um Timer deste form). }
+    function SenderAsTimer(Sender: TAylisComponent): TTimer; overload;
+    function SenderAsTimer(Event: TJSONObject): TTimer; overload;
+    { O TrackBar deste form com o nome, como o FindComponent (nil se não há). }
+    function FindTrackBar(const Nome: string): TTrackBar;
+    { O TrackBar que disparou o evento (nil se não é um TrackBar deste form). }
+    function SenderAsTrackBar(Sender: TAylisComponent): TTrackBar; overload;
+    function SenderAsTrackBar(Event: TJSONObject): TTrackBar; overload;
+    { O VideoPlayer deste form com o nome, como o FindComponent (nil se não há). }
+    function FindVideoPlayer(const Nome: string): TVideoPlayer;
+    { O VideoPlayer que disparou o evento (nil se não é um VideoPlayer deste form). }
+    function SenderAsVideoPlayer(Sender: TAylisComponent): TVideoPlayer; overload;
+    function SenderAsVideoPlayer(Event: TJSONObject): TVideoPlayer; overload;
+  end;
+
+
+procedure TFrmPlayerBase.BindComponents(List: TJSONArray);
+begin
+  mnuPrincipal := TMainMenu(Resolve(List, 'mnuPrincipal', 'MainMenu', TMainMenu));
+  mnuArquivo := TMenuItem(Resolve(List, 'mnuArquivo', 'MenuItem', TMenuItem));
+  mnuAbrir := TMenuItem(Resolve(List, 'mnuAbrir', 'MenuItem', TMenuItem));
+  mnuLimparFila := TMenuItem(Resolve(List, 'mnuLimparFila', 'MenuItem', TMenuItem));
+  mnuSep1 := TMenuItem(Resolve(List, 'mnuSep1', 'MenuItem', TMenuItem));
+  mnuSair := TMenuItem(Resolve(List, 'mnuSair', 'MenuItem', TMenuItem));
+  mnuReproduzir := TMenuItem(Resolve(List, 'mnuReproduzir', 'MenuItem', TMenuItem));
+  mnuReproduzirPausar := TMenuItem(Resolve(List, 'mnuReproduzirPausar', 'MenuItem', TMenuItem));
+  mnuParar := TMenuItem(Resolve(List, 'mnuParar', 'MenuItem', TMenuItem));
+  mnuAnterior := TMenuItem(Resolve(List, 'mnuAnterior', 'MenuItem', TMenuItem));
+  mnuProxima := TMenuItem(Resolve(List, 'mnuProxima', 'MenuItem', TMenuItem));
+  mnuSep2 := TMenuItem(Resolve(List, 'mnuSep2', 'MenuItem', TMenuItem));
+  mnuEmbaralhar := TMenuItem(Resolve(List, 'mnuEmbaralhar', 'MenuItem', TMenuItem));
+  mnuRepetir := TMenuItem(Resolve(List, 'mnuRepetir', 'MenuItem', TMenuItem));
+  mnuExibir := TMenuItem(Resolve(List, 'mnuExibir', 'MenuItem', TMenuItem));
+  mnuAgora := TMenuItem(Resolve(List, 'mnuAgora', 'MenuItem', TMenuItem));
+  mnuFila := TMenuItem(Resolve(List, 'mnuFila', 'MenuItem', TMenuItem));
+  pnlControles := TPanel(Resolve(List, 'pnlControles', 'Panel', TPanel));
+  lytBarra := TLayout(Resolve(List, 'lytBarra', 'Layout', TLayout));
+  lblTempo := TLabel(Resolve(List, 'lblTempo', 'Label', TLabel));
+  lblDuracao := TLabel(Resolve(List, 'lblDuracao', 'Label', TLabel));
+  sbPosicao := TSeekBar(Resolve(List, 'sbPosicao', 'SeekBar', TSeekBar));
+  lytInfo := TLayout(Resolve(List, 'lytInfo', 'Layout', TLayout));
+  icoCapa := TIcon(Resolve(List, 'icoCapa', 'Icon', TIcon));
+  lytTextos := TLayout(Resolve(List, 'lytTextos', 'Layout', TLayout));
+  lblTitulo := TLabel(Resolve(List, 'lblTitulo', 'Label', TLabel));
+  lblDetalhe := TLabel(Resolve(List, 'lblDetalhe', 'Label', TLabel));
+  lytVolume := TLayout(Resolve(List, 'lytVolume', 'Layout', TLayout));
+  btnMudo := TButton(Resolve(List, 'btnMudo', 'Button', TButton));
+  tbVolume := TTrackBar(Resolve(List, 'tbVolume', 'TrackBar', TTrackBar));
+  lytBotoes := TLayout(Resolve(List, 'lytBotoes', 'Layout', TLayout));
+  lytBotoesCentro := TLayout(Resolve(List, 'lytBotoesCentro', 'Layout', TLayout));
+  btnEmbaralhar := TButton(Resolve(List, 'btnEmbaralhar', 'Button', TButton));
+  btnAnterior := TButton(Resolve(List, 'btnAnterior', 'Button', TButton));
+  btnReproduzir := TButton(Resolve(List, 'btnReproduzir', 'Button', TButton));
+  btnProxima := TButton(Resolve(List, 'btnProxima', 'Button', TButton));
+  btnRepetir := TButton(Resolve(List, 'btnRepetir', 'Button', TButton));
+  lytNavegacao := TLayout(Resolve(List, 'lytNavegacao', 'Layout', TLayout));
+  btnAgora := TButton(Resolve(List, 'btnAgora', 'Button', TButton));
+  btnFila := TButton(Resolve(List, 'btnFila', 'Button', TButton));
+  divNavegacao := TDivider(Resolve(List, 'divNavegacao', 'Divider', TDivider));
+  btnAbrirArquivos := TButton(Resolve(List, 'btnAbrirArquivos', 'Button', TButton));
+  pnlAgora := TPanel(Resolve(List, 'pnlAgora', 'Panel', TPanel));
+  vpVideo := TVideoPlayer(Resolve(List, 'vpVideo', 'VideoPlayer', TVideoPlayer));
+  pnlFila := TPanel(Resolve(List, 'pnlFila', 'Panel', TPanel));
+  lblFila := TLabel(Resolve(List, 'lblFila', 'Label', TLabel));
+  lytFilaBotoes := TLayout(Resolve(List, 'lytFilaBotoes', 'Layout', TLayout));
+  btnAdicionar := TButton(Resolve(List, 'btnAdicionar', 'Button', TButton));
+  btnLimparFila := TButton(Resolve(List, 'btnLimparFila', 'Button', TButton));
+  lvFila := TListView(Resolve(List, 'lvFila', 'ListView', TListView));
+  dlgAbrir := TOpenDialog(Resolve(List, 'dlgAbrir', 'OpenDialog', TOpenDialog));
+  tmrPosicao := TTimer(Resolve(List, 'tmrPosicao', 'Timer', TTimer));
+end;
+
+function TFrmPlayerBase.FindButton(const Nome: string): TButton;
+begin
+  Result := nil;
+  if Nome = 'btnMudo' then
+    Result := btnMudo;
+  if Nome = 'btnEmbaralhar' then
+    Result := btnEmbaralhar;
+  if Nome = 'btnAnterior' then
+    Result := btnAnterior;
+  if Nome = 'btnReproduzir' then
+    Result := btnReproduzir;
+  if Nome = 'btnProxima' then
+    Result := btnProxima;
+  if Nome = 'btnRepetir' then
+    Result := btnRepetir;
+  if Nome = 'btnAgora' then
+    Result := btnAgora;
+  if Nome = 'btnFila' then
+    Result := btnFila;
+  if Nome = 'btnAbrirArquivos' then
+    Result := btnAbrirArquivos;
+  if Nome = 'btnAdicionar' then
+    Result := btnAdicionar;
+  if Nome = 'btnLimparFila' then
+    Result := btnLimparFila;
+end;
+
+function TFrmPlayerBase.SenderAsButton(Sender: TAylisComponent): TButton;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindButton(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsButton(Event: TJSONObject): TButton;
+begin
+  Result := FindButton(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindDivider(const Nome: string): TDivider;
+begin
+  Result := nil;
+  if Nome = 'divNavegacao' then
+    Result := divNavegacao;
+end;
+
+function TFrmPlayerBase.SenderAsDivider(Sender: TAylisComponent): TDivider;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindDivider(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsDivider(Event: TJSONObject): TDivider;
+begin
+  Result := FindDivider(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindIcon(const Nome: string): TIcon;
+begin
+  Result := nil;
+  if Nome = 'icoCapa' then
+    Result := icoCapa;
+end;
+
+function TFrmPlayerBase.SenderAsIcon(Sender: TAylisComponent): TIcon;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindIcon(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsIcon(Event: TJSONObject): TIcon;
+begin
+  Result := FindIcon(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindLabel(const Nome: string): TLabel;
+begin
+  Result := nil;
+  if Nome = 'lblTempo' then
+    Result := lblTempo;
+  if Nome = 'lblDuracao' then
+    Result := lblDuracao;
+  if Nome = 'lblTitulo' then
+    Result := lblTitulo;
+  if Nome = 'lblDetalhe' then
+    Result := lblDetalhe;
+  if Nome = 'lblFila' then
+    Result := lblFila;
+end;
+
+function TFrmPlayerBase.SenderAsLabel(Sender: TAylisComponent): TLabel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLabel(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsLabel(Event: TJSONObject): TLabel;
+begin
+  Result := FindLabel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindLayout(const Nome: string): TLayout;
+begin
+  Result := nil;
+  if Nome = 'lytBarra' then
+    Result := lytBarra;
+  if Nome = 'lytInfo' then
+    Result := lytInfo;
+  if Nome = 'lytTextos' then
+    Result := lytTextos;
+  if Nome = 'lytVolume' then
+    Result := lytVolume;
+  if Nome = 'lytBotoes' then
+    Result := lytBotoes;
+  if Nome = 'lytBotoesCentro' then
+    Result := lytBotoesCentro;
+  if Nome = 'lytNavegacao' then
+    Result := lytNavegacao;
+  if Nome = 'lytFilaBotoes' then
+    Result := lytFilaBotoes;
+end;
+
+function TFrmPlayerBase.SenderAsLayout(Sender: TAylisComponent): TLayout;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLayout(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsLayout(Event: TJSONObject): TLayout;
+begin
+  Result := FindLayout(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindListView(const Nome: string): TListView;
+begin
+  Result := nil;
+  if Nome = 'lvFila' then
+    Result := lvFila;
+end;
+
+function TFrmPlayerBase.SenderAsListView(Sender: TAylisComponent): TListView;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindListView(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsListView(Event: TJSONObject): TListView;
+begin
+  Result := FindListView(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindMainMenu(const Nome: string): TMainMenu;
+begin
+  Result := nil;
+  if Nome = 'mnuPrincipal' then
+    Result := mnuPrincipal;
+end;
+
+function TFrmPlayerBase.SenderAsMainMenu(Sender: TAylisComponent): TMainMenu;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindMainMenu(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsMainMenu(Event: TJSONObject): TMainMenu;
+begin
+  Result := FindMainMenu(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindMenuItem(const Nome: string): TMenuItem;
+begin
+  Result := nil;
+  if Nome = 'mnuArquivo' then
+    Result := mnuArquivo;
+  if Nome = 'mnuAbrir' then
+    Result := mnuAbrir;
+  if Nome = 'mnuLimparFila' then
+    Result := mnuLimparFila;
+  if Nome = 'mnuSep1' then
+    Result := mnuSep1;
+  if Nome = 'mnuSair' then
+    Result := mnuSair;
+  if Nome = 'mnuReproduzir' then
+    Result := mnuReproduzir;
+  if Nome = 'mnuReproduzirPausar' then
+    Result := mnuReproduzirPausar;
+  if Nome = 'mnuParar' then
+    Result := mnuParar;
+  if Nome = 'mnuAnterior' then
+    Result := mnuAnterior;
+  if Nome = 'mnuProxima' then
+    Result := mnuProxima;
+  if Nome = 'mnuSep2' then
+    Result := mnuSep2;
+  if Nome = 'mnuEmbaralhar' then
+    Result := mnuEmbaralhar;
+  if Nome = 'mnuRepetir' then
+    Result := mnuRepetir;
+  if Nome = 'mnuExibir' then
+    Result := mnuExibir;
+  if Nome = 'mnuAgora' then
+    Result := mnuAgora;
+  if Nome = 'mnuFila' then
+    Result := mnuFila;
+end;
+
+function TFrmPlayerBase.SenderAsMenuItem(Sender: TAylisComponent): TMenuItem;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindMenuItem(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsMenuItem(Event: TJSONObject): TMenuItem;
+begin
+  Result := FindMenuItem(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindOpenDialog(const Nome: string): TOpenDialog;
+begin
+  Result := nil;
+  if Nome = 'dlgAbrir' then
+    Result := dlgAbrir;
+end;
+
+function TFrmPlayerBase.SenderAsOpenDialog(Sender: TAylisComponent): TOpenDialog;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindOpenDialog(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsOpenDialog(Event: TJSONObject): TOpenDialog;
+begin
+  Result := FindOpenDialog(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindPanel(const Nome: string): TPanel;
+begin
+  Result := nil;
+  if Nome = 'pnlControles' then
+    Result := pnlControles;
+  if Nome = 'pnlAgora' then
+    Result := pnlAgora;
+  if Nome = 'pnlFila' then
+    Result := pnlFila;
+end;
+
+function TFrmPlayerBase.SenderAsPanel(Sender: TAylisComponent): TPanel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindPanel(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsPanel(Event: TJSONObject): TPanel;
+begin
+  Result := FindPanel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindSeekBar(const Nome: string): TSeekBar;
+begin
+  Result := nil;
+  if Nome = 'sbPosicao' then
+    Result := sbPosicao;
+end;
+
+function TFrmPlayerBase.SenderAsSeekBar(Sender: TAylisComponent): TSeekBar;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindSeekBar(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsSeekBar(Event: TJSONObject): TSeekBar;
+begin
+  Result := FindSeekBar(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindTimer(const Nome: string): TTimer;
+begin
+  Result := nil;
+  if Nome = 'tmrPosicao' then
+    Result := tmrPosicao;
+end;
+
+function TFrmPlayerBase.SenderAsTimer(Sender: TAylisComponent): TTimer;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindTimer(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsTimer(Event: TJSONObject): TTimer;
+begin
+  Result := FindTimer(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindTrackBar(const Nome: string): TTrackBar;
+begin
+  Result := nil;
+  if Nome = 'tbVolume' then
+    Result := tbVolume;
+end;
+
+function TFrmPlayerBase.SenderAsTrackBar(Sender: TAylisComponent): TTrackBar;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindTrackBar(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsTrackBar(Event: TJSONObject): TTrackBar;
+begin
+  Result := FindTrackBar(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPlayerBase.FindVideoPlayer(const Nome: string): TVideoPlayer;
+begin
+  Result := nil;
+  if Nome = 'vpVideo' then
+    Result := vpVideo;
+end;
+
+function TFrmPlayerBase.SenderAsVideoPlayer(Sender: TAylisComponent): TVideoPlayer;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindVideoPlayer(Sender.Name);
+end;
+
+function TFrmPlayerBase.SenderAsVideoPlayer(Event: TJSONObject): TVideoPlayer;
+begin
+  Result := FindVideoPlayer(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+

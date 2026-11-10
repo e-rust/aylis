@@ -1,0 +1,78 @@
+  { Um SaveDialog de um form. }
+  TSaveDialog = class(TAylisComponent)
+  private
+    function GetTitle: string;
+    procedure SetTitle(Value: string);
+    function GetFilter: string;
+    procedure SetFilter(Value: string);
+    function GetInitialDir: string;
+    procedure SetInitialDir(Value: string);
+    function GetFileName: string;
+    procedure SetFileName(Value: string);
+    function GetMultiple: Boolean;
+    procedure SetMultiple(Value: Boolean);
+  public
+    procedure Execute;
+    property Title: string read GetTitle write SetTitle;
+    property Filter: string read GetFilter write SetFilter;
+    property InitialDir: string read GetInitialDir write SetInitialDir;
+    property FileName: string read GetFileName write SetFileName;
+    property Multiple: Boolean read GetMultiple write SetMultiple;
+  end;
+
+
+function TSaveDialog.GetTitle: string;
+begin
+  Result := AsText(GetProp('title'));
+end;
+
+procedure TSaveDialog.SetTitle(Value: string);
+begin
+  SetProp('title', TJSONString.Create(Value));
+end;
+
+function TSaveDialog.GetFilter: string;
+begin
+  Result := AsText(GetProp('filter'));
+end;
+
+procedure TSaveDialog.SetFilter(Value: string);
+begin
+  SetProp('filter', TJSONString.Create(Value));
+end;
+
+function TSaveDialog.GetInitialDir: string;
+begin
+  Result := AsText(GetProp('initial_dir'));
+end;
+
+procedure TSaveDialog.SetInitialDir(Value: string);
+begin
+  SetProp('initial_dir', TJSONString.Create(Value));
+end;
+
+function TSaveDialog.GetFileName: string;
+begin
+  Result := AsText(GetProp('file_name'));
+end;
+
+procedure TSaveDialog.SetFileName(Value: string);
+begin
+  SetProp('file_name', TJSONString.Create(Value));
+end;
+
+function TSaveDialog.GetMultiple: Boolean;
+begin
+  Result := GetProp('multiple').AsBoolean;
+end;
+
+procedure TSaveDialog.SetMultiple(Value: Boolean);
+begin
+  SetProp('multiple', TJSONBoolean.Create(Value));
+end;
+
+procedure TSaveDialog.Execute;
+begin
+  Aylis.Send('execute', TJSONObject.Create(['target', Id]));
+end;
+

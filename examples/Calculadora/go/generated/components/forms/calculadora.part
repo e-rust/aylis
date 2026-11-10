@@ -1,0 +1,451 @@
+
+// frmCalculadoraComponents: o form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+type frmCalculadoraComponents struct {
+	aylisForm
+	pnlLateral aylisPanel
+	tabLateral aylisTabControl
+	tabHistorico aylisTabItem
+	btnLimparHistorico aylisButton
+	lvHistorico aylisListView
+	tabMemoria aylisTabItem
+	lvMemoria aylisListView
+	lytCorpo aylisLayout
+	lytTopo aylisLayout
+	btnHistorico aylisButton
+	lblTitulo aylisLabel
+	lblExpressao aylisLabel
+	lblVisor aylisLabel
+	grdMemoria aylisGridLayout
+	btnMC aylisButton
+	btnMR aylisButton
+	btnMMais aylisButton
+	btnMMenos aylisButton
+	btnMS aylisButton
+	grdTeclado aylisGridLayout
+	btnPorcento aylisButton
+	btnCE aylisButton
+	btnC aylisButton
+	btnApagar aylisButton
+	btnInverso aylisButton
+	btnQuadrado aylisButton
+	btnRaiz aylisButton
+	btnDividir aylisButton
+	btn7 aylisButton
+	btn8 aylisButton
+	btn9 aylisButton
+	btnMultiplicar aylisButton
+	btn4 aylisButton
+	btn5 aylisButton
+	btn6 aylisButton
+	btnSubtrair aylisButton
+	btn1 aylisButton
+	btn2 aylisButton
+	btn3 aylisButton
+	btnSomar aylisButton
+	btnSinal aylisButton
+	btn0 aylisButton
+	btnVirgula aylisButton
+	btnIgual aylisButton
+}
+
+// Bind monta os componentes da janela (o form que não bate com o código é erro).
+func (f *frmCalculadoraComponents) Bind(list []any) error {
+	if c, err := f.Resolve(list, "pnlLateral", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlLateral = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "tabLateral", "TabControl"); err != nil {
+		return err
+	} else {
+		f.tabLateral = aylisTabControl{c}
+	}
+	if c, err := f.Resolve(list, "tabHistorico", "TabItem"); err != nil {
+		return err
+	} else {
+		f.tabHistorico = aylisTabItem{c}
+	}
+	if c, err := f.Resolve(list, "btnLimparHistorico", "Button"); err != nil {
+		return err
+	} else {
+		f.btnLimparHistorico = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "lvHistorico", "ListView"); err != nil {
+		return err
+	} else {
+		f.lvHistorico = aylisListView{c}
+	}
+	if c, err := f.Resolve(list, "tabMemoria", "TabItem"); err != nil {
+		return err
+	} else {
+		f.tabMemoria = aylisTabItem{c}
+	}
+	if c, err := f.Resolve(list, "lvMemoria", "ListView"); err != nil {
+		return err
+	} else {
+		f.lvMemoria = aylisListView{c}
+	}
+	if c, err := f.Resolve(list, "lytCorpo", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytCorpo = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lytTopo", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytTopo = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnHistorico", "Button"); err != nil {
+		return err
+	} else {
+		f.btnHistorico = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "lblTitulo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblTitulo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblExpressao", "Label"); err != nil {
+		return err
+	} else {
+		f.lblExpressao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblVisor", "Label"); err != nil {
+		return err
+	} else {
+		f.lblVisor = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "grdMemoria", "GridLayout"); err != nil {
+		return err
+	} else {
+		f.grdMemoria = aylisGridLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnMC", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMC = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnMR", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMR = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnMMais", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMMais = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnMMenos", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMMenos = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnMS", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMS = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "grdTeclado", "GridLayout"); err != nil {
+		return err
+	} else {
+		f.grdTeclado = aylisGridLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnPorcento", "Button"); err != nil {
+		return err
+	} else {
+		f.btnPorcento = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnCE", "Button"); err != nil {
+		return err
+	} else {
+		f.btnCE = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnC", "Button"); err != nil {
+		return err
+	} else {
+		f.btnC = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnApagar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnApagar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnInverso", "Button"); err != nil {
+		return err
+	} else {
+		f.btnInverso = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnQuadrado", "Button"); err != nil {
+		return err
+	} else {
+		f.btnQuadrado = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnRaiz", "Button"); err != nil {
+		return err
+	} else {
+		f.btnRaiz = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnDividir", "Button"); err != nil {
+		return err
+	} else {
+		f.btnDividir = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn7", "Button"); err != nil {
+		return err
+	} else {
+		f.btn7 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn8", "Button"); err != nil {
+		return err
+	} else {
+		f.btn8 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn9", "Button"); err != nil {
+		return err
+	} else {
+		f.btn9 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnMultiplicar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnMultiplicar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn4", "Button"); err != nil {
+		return err
+	} else {
+		f.btn4 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn5", "Button"); err != nil {
+		return err
+	} else {
+		f.btn5 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn6", "Button"); err != nil {
+		return err
+	} else {
+		f.btn6 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnSubtrair", "Button"); err != nil {
+		return err
+	} else {
+		f.btnSubtrair = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn1", "Button"); err != nil {
+		return err
+	} else {
+		f.btn1 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn2", "Button"); err != nil {
+		return err
+	} else {
+		f.btn2 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn3", "Button"); err != nil {
+		return err
+	} else {
+		f.btn3 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnSomar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnSomar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnSinal", "Button"); err != nil {
+		return err
+	} else {
+		f.btnSinal = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btn0", "Button"); err != nil {
+		return err
+	} else {
+		f.btn0 = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnVirgula", "Button"); err != nil {
+		return err
+	} else {
+		f.btnVirgula = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnIgual", "Button"); err != nil {
+		return err
+	} else {
+		f.btnIgual = aylisButton{c}
+	}
+	return nil
+}
+
+// frmCalculadora é a janela de frmCalculadora cujo evento está rodando (a primeira, fora dos handlers).
+var frmCalculadora *frmCalculadoraComponents
+
+func init() {
+	aylis.RegisterFormClass("frmCalculadora", func(app *aylis.Aylis, id int64, name string) aylis.FormInstance {
+		return &frmCalculadoraComponents{aylisForm: aylisForm{aylis.Form{Component: aylis.Component{App: app, ID: id, Name: name}}}}
+	}, func(form aylis.FormInstance) { frmCalculadora = form.(*frmCalculadoraComponents) })
+}
+
+// FindButton é o Button deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindButton(name string) aylisButton {
+	switch name {
+	case "btnLimparHistorico":
+		return f.btnLimparHistorico
+	case "btnHistorico":
+		return f.btnHistorico
+	case "btnMC":
+		return f.btnMC
+	case "btnMR":
+		return f.btnMR
+	case "btnMMais":
+		return f.btnMMais
+	case "btnMMenos":
+		return f.btnMMenos
+	case "btnMS":
+		return f.btnMS
+	case "btnPorcento":
+		return f.btnPorcento
+	case "btnCE":
+		return f.btnCE
+	case "btnC":
+		return f.btnC
+	case "btnApagar":
+		return f.btnApagar
+	case "btnInverso":
+		return f.btnInverso
+	case "btnQuadrado":
+		return f.btnQuadrado
+	case "btnRaiz":
+		return f.btnRaiz
+	case "btnDividir":
+		return f.btnDividir
+	case "btn7":
+		return f.btn7
+	case "btn8":
+		return f.btn8
+	case "btn9":
+		return f.btn9
+	case "btnMultiplicar":
+		return f.btnMultiplicar
+	case "btn4":
+		return f.btn4
+	case "btn5":
+		return f.btn5
+	case "btn6":
+		return f.btn6
+	case "btnSubtrair":
+		return f.btnSubtrair
+	case "btn1":
+		return f.btn1
+	case "btn2":
+		return f.btn2
+	case "btn3":
+		return f.btn3
+	case "btnSomar":
+		return f.btnSomar
+	case "btnSinal":
+		return f.btnSinal
+	case "btn0":
+		return f.btn0
+	case "btnVirgula":
+		return f.btnVirgula
+	case "btnIgual":
+		return f.btnIgual
+	}
+	return aylisButton{}
+}
+
+// SenderAsButton é o Button que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
+
+// FindGridLayout é o GridLayout deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindGridLayout(name string) aylisGridLayout {
+	switch name {
+	case "grdMemoria":
+		return f.grdMemoria
+	case "grdTeclado":
+		return f.grdTeclado
+	}
+	return aylisGridLayout{}
+}
+
+// SenderAsGridLayout é o GridLayout que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsGridLayout(ev aylis.Event) aylisGridLayout { return f.FindGridLayout(ev.Sender.Name) }
+
+// FindLabel é o Label deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindLabel(name string) aylisLabel {
+	switch name {
+	case "lblTitulo":
+		return f.lblTitulo
+	case "lblExpressao":
+		return f.lblExpressao
+	case "lblVisor":
+		return f.lblVisor
+	}
+	return aylisLabel{}
+}
+
+// SenderAsLabel é o Label que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
+
+// FindLayout é o Layout deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindLayout(name string) aylisLayout {
+	switch name {
+	case "lytCorpo":
+		return f.lytCorpo
+	case "lytTopo":
+		return f.lytTopo
+	}
+	return aylisLayout{}
+}
+
+// SenderAsLayout é o Layout que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
+
+// FindListView é o ListView deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindListView(name string) aylisListView {
+	switch name {
+	case "lvHistorico":
+		return f.lvHistorico
+	case "lvMemoria":
+		return f.lvMemoria
+	}
+	return aylisListView{}
+}
+
+// SenderAsListView é o ListView que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsListView(ev aylis.Event) aylisListView { return f.FindListView(ev.Sender.Name) }
+
+// FindPanel é o Panel deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindPanel(name string) aylisPanel {
+	switch name {
+	case "pnlLateral":
+		return f.pnlLateral
+	}
+	return aylisPanel{}
+}
+
+// SenderAsPanel é o Panel que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
+
+// FindTabControl é o TabControl deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindTabControl(name string) aylisTabControl {
+	switch name {
+	case "tabLateral":
+		return f.tabLateral
+	}
+	return aylisTabControl{}
+}
+
+// SenderAsTabControl é o TabControl que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsTabControl(ev aylis.Event) aylisTabControl { return f.FindTabControl(ev.Sender.Name) }
+
+// FindTabItem é o TabItem deste form com o nome (como o FindComponent).
+func (f *frmCalculadoraComponents) FindTabItem(name string) aylisTabItem {
+	switch name {
+	case "tabHistorico":
+		return f.tabHistorico
+	case "tabMemoria":
+		return f.tabMemoria
+	}
+	return aylisTabItem{}
+}
+
+// SenderAsTabItem é o TabItem que disparou o evento.
+func (f *frmCalculadoraComponents) SenderAsTabItem(ev aylis.Event) aylisTabItem { return f.FindTabItem(ev.Sender.Name) }

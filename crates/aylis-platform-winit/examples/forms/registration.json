@@ -1,0 +1,102 @@
+{
+  "$schema": "../../schema/aylis.schema.json",
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "FrmClientes",
+    "caption": "aylis — Cadastro (carregado de JSON)",
+    "width": 860,
+    "height": 560,
+    "padding": 8,
+    "children": [
+      {
+        "class": "Layout",
+        "name": "pnlStatus",
+        "align": "bottom",
+        "height": 24,
+        "children": [
+          { "class": "Label", "name": "lblStatus", "align": "client", "font_size": 12, "color": "text_muted",
+            "text": "Tela carregada de crates/aylis-platform-winit/examples/forms/registration.json · eventos ligados por nome" }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlToolbar",
+        "align": "top",
+        "height": 48,
+        "padding": 6,
+        "margins": [0, 0, 0, 8],
+        "children": [
+          { "class": "Button", "name": "btnNovo", "text": "Novo", "align": "left", "margins": [0, 0, 6, 0], "on_click": "btn_novo_click" },
+          { "class": "Button", "name": "btnSalvar", "text": "Salvar", "align": "left", "margins": [0, 0, 6, 0], "on_click": "btn_salvar_click" },
+          { "class": "Button", "name": "btnExcluir", "text": "Excluir", "align": "left", "style": "danger", "on_click": "btn_excluir_click" },
+          { "class": "Edit", "name": "edtPesquisa", "align": "right", "width": 220, "placeholder": "Pesquisar cliente…", "on_change": "pesquisa_change" }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlMenu",
+        "align": "left",
+        "width": 180,
+        "padding": 8,
+        "margins": [0, 0, 8, 0],
+        "children": [
+          { "class": "Rectangle", "name": "mnuClientes", "align": "top", "height": 34, "radius": 6, "margins": [0, 0, 0, 2],
+            "fill": "#2563EB26", "cursor": "pointer", "on_click": "menu_click",
+            "children": [ { "class": "Label", "text": "Clientes", "align": "client", "margins": [12, 0, 8, 0] } ] },
+          { "class": "Rectangle", "name": "mnuPedidos", "align": "top", "height": 34, "radius": 6, "margins": [0, 0, 0, 2],
+            "fill": "#00000000", "cursor": "pointer", "on_click": "menu_click",
+            "children": [
+              { "class": "ColorAnimation", "property": "fill", "stop_value": "#00000012", "trigger": "hover", "duration": 150 },
+              { "class": "Label", "text": "Pedidos", "align": "client", "margins": [12, 0, 8, 0] }
+            ] },
+          { "class": "Rectangle", "name": "mnuProdutos", "align": "top", "height": 34, "radius": 6, "margins": [0, 0, 0, 2],
+            "fill": "#00000000", "cursor": "pointer", "on_click": "menu_click",
+            "children": [
+              { "class": "ColorAnimation", "property": "fill", "stop_value": "#00000012", "trigger": "hover", "duration": 150 },
+              { "class": "Label", "text": "Produtos", "align": "client", "margins": [12, 0, 8, 0] }
+            ] }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlConteudo",
+        "align": "client",
+        "padding": 16,
+        "children": [
+          { "class": "Label", "name": "lblTitulo", "text": "Cliente", "align": "top", "height": 36, "font_size": 22 },
+          {
+            "class": "Layout", "align": "top", "height": 34, "margins": [0, 0, 0, 6],
+            "children": [
+              { "class": "Label", "text": "Nome", "align": "left", "width": 90, "color": "text_muted" },
+              { "class": "Edit", "name": "edtNome", "align": "client", "text": "Maria da Silva" }
+            ]
+          },
+          {
+            "class": "Layout", "align": "top", "height": 34, "margins": [0, 0, 0, 6],
+            "children": [
+              { "class": "Label", "text": "E-mail", "align": "left", "width": 90, "color": "text_muted" },
+              { "class": "Edit", "name": "edtEmail", "align": "client", "placeholder": "nome@exemplo.com.br" }
+            ]
+          },
+          {
+            "class": "Layout", "align": "top", "height": 34, "margins": [0, 0, 0, 6],
+            "children": [
+              { "class": "Label", "text": "Senha", "align": "left", "width": 90, "color": "text_muted" },
+              { "class": "Edit", "name": "edtSenha", "align": "client", "password": true, "max_length": 20 }
+            ]
+          },
+          {
+            "class": "Layout", "align": "top", "height": 28, "margins": [90, 6, 0, 0],
+            "children": [
+              { "class": "CheckBox", "name": "chkAtivo", "text": "Ativo", "checked": true, "align": "left", "width": 90, "on_change": "ativo_change" },
+              { "class": "Switch", "name": "swEmails", "text": "Receber e-mails", "align": "left", "width": 170 }
+            ]
+          },
+          { "class": "Button", "name": "btnOk", "text": "OK", "left": 500, "top": 400, "width": 110, "height": 34,
+            "anchors": ["right", "bottom"], "on_click": "ok_click" }
+        ]
+      }
+    ]
+  }
+}

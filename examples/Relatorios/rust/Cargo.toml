@@ -1,0 +1,51 @@
+[package]
+name = "relatorios"
+version = "1.0.0"
+edition = "2024"
+publish = false
+
+# lib: o aplicativo (forms, handlers, entradas do Android e da web).
+# bin: o executável do desktop (e do iOS).
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "relatorios"
+path = "src/main.rs"
+
+# O aylis fica nesta pasta (a da instalação da IDE). As features (dados, mídia...) são
+# as que os forms usam; a IDE atualiza a lista a cada "Gerar código".
+[dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["data", "dbcontrols"] }
+
+[features]
+# Ligada pela IDE ao executar: o canal cifrado com a IDE (inspetor, hot reload,
+# rastro). Fica fora do app publicado.
+dev = ["aylis/dev"]
+
+# Embute forms, temas e assets no executável (e o ícone no .exe do Windows).
+[build-dependencies]
+aylis-build = { path = "../../../crates/aylis-build" }
+
+# aylis:render: o renderizador de cada plataforma (Projeto → Opções; a IDE reescreve este bloco)
+# Windows: Direct2D
+[target.'cfg(windows)'.dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["d2d"] }
+
+# Linux: Automático (Skia GPU, senão CPU)
+[target.'cfg(target_os = "linux")'.dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["skia-gpu", "skia-cpu"] }
+
+# macOS: Automático (Skia GPU, senão CPU)
+[target.'cfg(target_os = "macos")'.dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["skia-gpu", "skia-cpu"] }
+
+# Android: Automático (Skia GPU, senão CPU)
+[target.'cfg(target_os = "android")'.dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["skia-gpu", "skia-cpu"] }
+
+# iOS: Skia CPU
+[target.'cfg(target_os = "ios")'.dependencies]
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["skia-cpu"] }
+
+# aylis:render-end

@@ -1,0 +1,215 @@
+
+    /** Um Field de um form. */
+    public static class Field extends Aylis.AylisComponent {
+        public Field(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        public String getFieldName() {
+            return asText(getProp("field_name"));
+        }
+
+        public void setFieldName(String value) {
+            setProp("field_name", value);
+        }
+
+        public String getType() {
+            return asText(getProp("type"));
+        }
+
+        public void setType(String value) {
+            setProp("type", value);
+        }
+
+        public long getSize() {
+            return (long) asNumber(getProp("size"));
+        }
+
+        public void setSize(long value) {
+            setProp("size", value);
+        }
+
+        public long getScale() {
+            return (long) asNumber(getProp("scale"));
+        }
+
+        public void setScale(long value) {
+            setProp("scale", value);
+        }
+
+        public String getRounding() {
+            return asText(getProp("rounding"));
+        }
+
+        public void setRounding(String value) {
+            setProp("rounding", value);
+        }
+
+        public String getDisplayLabel() {
+            return asText(getProp("display_label"));
+        }
+
+        public void setDisplayLabel(String value) {
+            setProp("display_label", value);
+        }
+
+        public double getDisplayWidth() {
+            return asNumber(getProp("display_width"));
+        }
+
+        public void setDisplayWidth(double value) {
+            setProp("display_width", value);
+        }
+
+        public String getDisplayFormat() {
+            return asText(getProp("display_format"));
+        }
+
+        public void setDisplayFormat(String value) {
+            setProp("display_format", value);
+        }
+
+        public String getEditFormat() {
+            return asText(getProp("edit_format"));
+        }
+
+        public void setEditFormat(String value) {
+            setProp("edit_format", value);
+        }
+
+        public String getAlignment() {
+            return asText(getProp("alignment"));
+        }
+
+        public void setAlignment(String value) {
+            setProp("alignment", value);
+        }
+
+        public boolean isRequired() {
+            return asBool(getProp("required"));
+        }
+
+        public void setRequired(boolean value) {
+            setProp("required", value);
+        }
+
+        public boolean isReadOnly() {
+            return asBool(getProp("read_only"));
+        }
+
+        public void setReadOnly(boolean value) {
+            setProp("read_only", value);
+        }
+
+        public boolean isVisible() {
+            return asBool(getProp("visible"));
+        }
+
+        public void setVisible(boolean value) {
+            setProp("visible", value);
+        }
+
+        public double getMin() {
+            return asNumber(getProp("min"));
+        }
+
+        public void setMin(double value) {
+            setProp("min", value);
+        }
+
+        public double getMax() {
+            return asNumber(getProp("max"));
+        }
+
+        public void setMax(double value) {
+            setProp("max", value);
+        }
+
+        public String getDefaultValue() {
+            return asText(getProp("default_value"));
+        }
+
+        public void setDefaultValue(String value) {
+            setProp("default_value", value);
+        }
+
+        public String getDisplayValues() {
+            return asText(getProp("display_values"));
+        }
+
+        public void setDisplayValues(String value) {
+            setProp("display_values", value);
+        }
+
+        public String getCharCase() {
+            return asText(getProp("char_case"));
+        }
+
+        public void setCharCase(String value) {
+            setProp("char_case", value);
+        }
+
+        public String getEditMask() {
+            return asText(getProp("edit_mask"));
+        }
+
+        public void setEditMask(String value) {
+            setProp("edit_mask", value);
+        }
+
+        public boolean isSensitive() {
+            return asBool(getProp("sensitive"));
+        }
+
+        public void setSensitive(boolean value) {
+            setProp("sensitive", value);
+        }
+
+        public String getKind() {
+            return asText(getProp("kind"));
+        }
+
+        public void setKind(String value) {
+            setProp("kind", value);
+        }
+
+        public String getExpression() {
+            return asText(getProp("expression"));
+        }
+
+        public void setExpression(String value) {
+            setProp("expression", value);
+        }
+
+        public String getLookupDataSet() {
+            return asText(getProp("lookup_data_set"));
+        }
+
+        public void setLookupDataSet(String value) {
+            setProp("lookup_data_set", value);
+        }
+
+        public String getKeyFields() {
+            return asText(getProp("key_fields"));
+        }
+
+        public void setKeyFields(String value) {
+            setProp("key_fields", value);
+        }
+
+        public String getLookupKeyFields() {
+            return asText(getProp("lookup_key_fields"));
+        }
+
+        public void setLookupKeyFields(String value) {
+            setProp("lookup_key_fields", value);
+        }
+
+        public String getLookupResultField() {
+            return asText(getProp("lookup_result_field"));
+        }
+
+        public void setLookupResultField(String value) {
+            setProp("lookup_result_field", value);
+        }
+    }

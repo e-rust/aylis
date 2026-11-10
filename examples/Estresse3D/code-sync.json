@@ -1,0 +1,34 @@
+{
+  "revisions": {
+    "frmPrincipal.ajuste_timer": 2,
+    "frmPrincipal.nivel_change": 1
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/segNivel.on_change": "nivel_change",
+        "frmPrincipal/tmrAjuste.on_timer": "ajuste_timer"
+      },
+      "handlers": {
+        "frmPrincipal.ajuste_timer": {
+          "hash": "dfc96d163dd40d32",
+          "seen": 2
+        },
+        "frmPrincipal.nivel_change": {
+          "hash": "f132367b0c778d0e",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "fpsMedidor",
+    "frmPrincipal",
+    "grdLingotes",
+    "lblInfo",
+    "m3dLingote",
+    "pnlTopo",
+    "segNivel",
+    "tmrAjuste"
+  ]
+}

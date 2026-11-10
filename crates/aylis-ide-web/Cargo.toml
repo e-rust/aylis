@@ -1,0 +1,18 @@
+[package]
+name = "aylis-ide-web"
+description = "A IDE lite do aylis no navegador: a entrada que a página chama (o resto é o aylis-ide sem a feature desktop)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aylis-ide = { path = "../aylis-ide", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["console"] }

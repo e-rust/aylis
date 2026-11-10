@@ -1,0 +1,22 @@
+{
+  "aylis_project": 1,
+  "name": "Galeria",
+  "language": "rust",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true
+    }
+  ],
+  "theme": "Aylis Dark",
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

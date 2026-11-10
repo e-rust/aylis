@@ -1,0 +1,37 @@
+
+/** Um OpenDialog de um form. */
+export class OpenDialog extends AylisComponent {
+    get title(): Promise<string> {
+        return this.getProp("title");
+    }
+    set title(value: string) {
+        this.setProp("title", value);
+    }
+    get filter(): Promise<string> {
+        return this.getProp("filter");
+    }
+    set filter(value: string) {
+        this.setProp("filter", value);
+    }
+    get initialDir(): Promise<string> {
+        return this.getProp("initial_dir");
+    }
+    set initialDir(value: string) {
+        this.setProp("initial_dir", value);
+    }
+    get fileName(): Promise<string> {
+        return this.getProp("file_name");
+    }
+    set fileName(value: string) {
+        this.setProp("file_name", value);
+    }
+    get multiple(): Promise<boolean> {
+        return this.getProp("multiple");
+    }
+    set multiple(value: boolean) {
+        this.setProp("multiple", value);
+    }
+    execute() {
+        this.aylis.send("execute", { target: this.id });
+    }
+}

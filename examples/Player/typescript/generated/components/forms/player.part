@@ -1,0 +1,308 @@
+
+/** O form frmPlayer e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+export class FrmPlayerComponents extends Form {
+    mnuPrincipal!: MainMenu;
+    mnuArquivo!: MenuItem;
+    mnuAbrir!: MenuItem;
+    mnuLimparFila!: MenuItem;
+    mnuSep1!: MenuItem;
+    mnuSair!: MenuItem;
+    mnuReproduzir!: MenuItem;
+    mnuReproduzirPausar!: MenuItem;
+    mnuParar!: MenuItem;
+    mnuAnterior!: MenuItem;
+    mnuProxima!: MenuItem;
+    mnuSep2!: MenuItem;
+    mnuEmbaralhar!: MenuItem;
+    mnuRepetir!: MenuItem;
+    mnuExibir!: MenuItem;
+    mnuAgora!: MenuItem;
+    mnuFila!: MenuItem;
+    pnlControles!: Panel;
+    lytBarra!: Layout;
+    lblTempo!: Label;
+    lblDuracao!: Label;
+    sbPosicao!: SeekBar;
+    lytInfo!: Layout;
+    icoCapa!: Icon;
+    lytTextos!: Layout;
+    lblTitulo!: Label;
+    lblDetalhe!: Label;
+    lytVolume!: Layout;
+    btnMudo!: Button;
+    tbVolume!: TrackBar;
+    lytBotoes!: Layout;
+    lytBotoesCentro!: Layout;
+    btnEmbaralhar!: Button;
+    btnAnterior!: Button;
+    btnReproduzir!: Button;
+    btnProxima!: Button;
+    btnRepetir!: Button;
+    lytNavegacao!: Layout;
+    btnAgora!: Button;
+    btnFila!: Button;
+    divNavegacao!: Divider;
+    btnAbrirArquivos!: Button;
+    pnlAgora!: Panel;
+    vpVideo!: VideoPlayer;
+    pnlFila!: Panel;
+    lblFila!: Label;
+    lytFilaBotoes!: Layout;
+    btnAdicionar!: Button;
+    btnLimparFila!: Button;
+    lvFila!: ListView;
+    dlgAbrir!: OpenDialog;
+    tmrPosicao!: Timer;
+    bind(list: ComponentInfo[]) {
+        this.mnuPrincipal = this.resolve(list, "mnuPrincipal", "MainMenu", MainMenu);
+        this.mnuArquivo = this.resolve(list, "mnuArquivo", "MenuItem", MenuItem);
+        this.mnuAbrir = this.resolve(list, "mnuAbrir", "MenuItem", MenuItem);
+        this.mnuLimparFila = this.resolve(list, "mnuLimparFila", "MenuItem", MenuItem);
+        this.mnuSep1 = this.resolve(list, "mnuSep1", "MenuItem", MenuItem);
+        this.mnuSair = this.resolve(list, "mnuSair", "MenuItem", MenuItem);
+        this.mnuReproduzir = this.resolve(list, "mnuReproduzir", "MenuItem", MenuItem);
+        this.mnuReproduzirPausar = this.resolve(list, "mnuReproduzirPausar", "MenuItem", MenuItem);
+        this.mnuParar = this.resolve(list, "mnuParar", "MenuItem", MenuItem);
+        this.mnuAnterior = this.resolve(list, "mnuAnterior", "MenuItem", MenuItem);
+        this.mnuProxima = this.resolve(list, "mnuProxima", "MenuItem", MenuItem);
+        this.mnuSep2 = this.resolve(list, "mnuSep2", "MenuItem", MenuItem);
+        this.mnuEmbaralhar = this.resolve(list, "mnuEmbaralhar", "MenuItem", MenuItem);
+        this.mnuRepetir = this.resolve(list, "mnuRepetir", "MenuItem", MenuItem);
+        this.mnuExibir = this.resolve(list, "mnuExibir", "MenuItem", MenuItem);
+        this.mnuAgora = this.resolve(list, "mnuAgora", "MenuItem", MenuItem);
+        this.mnuFila = this.resolve(list, "mnuFila", "MenuItem", MenuItem);
+        this.pnlControles = this.resolve(list, "pnlControles", "Panel", Panel);
+        this.lytBarra = this.resolve(list, "lytBarra", "Layout", Layout);
+        this.lblTempo = this.resolve(list, "lblTempo", "Label", Label);
+        this.lblDuracao = this.resolve(list, "lblDuracao", "Label", Label);
+        this.sbPosicao = this.resolve(list, "sbPosicao", "SeekBar", SeekBar);
+        this.lytInfo = this.resolve(list, "lytInfo", "Layout", Layout);
+        this.icoCapa = this.resolve(list, "icoCapa", "Icon", Icon);
+        this.lytTextos = this.resolve(list, "lytTextos", "Layout", Layout);
+        this.lblTitulo = this.resolve(list, "lblTitulo", "Label", Label);
+        this.lblDetalhe = this.resolve(list, "lblDetalhe", "Label", Label);
+        this.lytVolume = this.resolve(list, "lytVolume", "Layout", Layout);
+        this.btnMudo = this.resolve(list, "btnMudo", "Button", Button);
+        this.tbVolume = this.resolve(list, "tbVolume", "TrackBar", TrackBar);
+        this.lytBotoes = this.resolve(list, "lytBotoes", "Layout", Layout);
+        this.lytBotoesCentro = this.resolve(list, "lytBotoesCentro", "Layout", Layout);
+        this.btnEmbaralhar = this.resolve(list, "btnEmbaralhar", "Button", Button);
+        this.btnAnterior = this.resolve(list, "btnAnterior", "Button", Button);
+        this.btnReproduzir = this.resolve(list, "btnReproduzir", "Button", Button);
+        this.btnProxima = this.resolve(list, "btnProxima", "Button", Button);
+        this.btnRepetir = this.resolve(list, "btnRepetir", "Button", Button);
+        this.lytNavegacao = this.resolve(list, "lytNavegacao", "Layout", Layout);
+        this.btnAgora = this.resolve(list, "btnAgora", "Button", Button);
+        this.btnFila = this.resolve(list, "btnFila", "Button", Button);
+        this.divNavegacao = this.resolve(list, "divNavegacao", "Divider", Divider);
+        this.btnAbrirArquivos = this.resolve(list, "btnAbrirArquivos", "Button", Button);
+        this.pnlAgora = this.resolve(list, "pnlAgora", "Panel", Panel);
+        this.vpVideo = this.resolve(list, "vpVideo", "VideoPlayer", VideoPlayer);
+        this.pnlFila = this.resolve(list, "pnlFila", "Panel", Panel);
+        this.lblFila = this.resolve(list, "lblFila", "Label", Label);
+        this.lytFilaBotoes = this.resolve(list, "lytFilaBotoes", "Layout", Layout);
+        this.btnAdicionar = this.resolve(list, "btnAdicionar", "Button", Button);
+        this.btnLimparFila = this.resolve(list, "btnLimparFila", "Button", Button);
+        this.lvFila = this.resolve(list, "lvFila", "ListView", ListView);
+        this.dlgAbrir = this.resolve(list, "dlgAbrir", "OpenDialog", OpenDialog);
+        this.tmrPosicao = this.resolve(list, "tmrPosicao", "Timer", Timer);
+    }
+    /** O Button deste form com o nome (como o FindComponent). */
+    findButton(name: string): Button | undefined {
+        switch (name) {
+            case "btnMudo": return this.btnMudo;
+            case "btnEmbaralhar": return this.btnEmbaralhar;
+            case "btnAnterior": return this.btnAnterior;
+            case "btnReproduzir": return this.btnReproduzir;
+            case "btnProxima": return this.btnProxima;
+            case "btnRepetir": return this.btnRepetir;
+            case "btnAgora": return this.btnAgora;
+            case "btnFila": return this.btnFila;
+            case "btnAbrirArquivos": return this.btnAbrirArquivos;
+            case "btnAdicionar": return this.btnAdicionar;
+            case "btnLimparFila": return this.btnLimparFila;
+        }
+        return undefined;
+    }
+    /** O Button que disparou o evento. */
+    senderAsButton(ev: AylisEvent): Button | undefined {
+        return this.findButton(ev.sender.name);
+    }
+    /** O Divider deste form com o nome (como o FindComponent). */
+    findDivider(name: string): Divider | undefined {
+        switch (name) {
+            case "divNavegacao": return this.divNavegacao;
+        }
+        return undefined;
+    }
+    /** O Divider que disparou o evento. */
+    senderAsDivider(ev: AylisEvent): Divider | undefined {
+        return this.findDivider(ev.sender.name);
+    }
+    /** O Icon deste form com o nome (como o FindComponent). */
+    findIcon(name: string): Icon | undefined {
+        switch (name) {
+            case "icoCapa": return this.icoCapa;
+        }
+        return undefined;
+    }
+    /** O Icon que disparou o evento. */
+    senderAsIcon(ev: AylisEvent): Icon | undefined {
+        return this.findIcon(ev.sender.name);
+    }
+    /** O Label deste form com o nome (como o FindComponent). */
+    findLabel(name: string): Label | undefined {
+        switch (name) {
+            case "lblTempo": return this.lblTempo;
+            case "lblDuracao": return this.lblDuracao;
+            case "lblTitulo": return this.lblTitulo;
+            case "lblDetalhe": return this.lblDetalhe;
+            case "lblFila": return this.lblFila;
+        }
+        return undefined;
+    }
+    /** O Label que disparou o evento. */
+    senderAsLabel(ev: AylisEvent): Label | undefined {
+        return this.findLabel(ev.sender.name);
+    }
+    /** O Layout deste form com o nome (como o FindComponent). */
+    findLayout(name: string): Layout | undefined {
+        switch (name) {
+            case "lytBarra": return this.lytBarra;
+            case "lytInfo": return this.lytInfo;
+            case "lytTextos": return this.lytTextos;
+            case "lytVolume": return this.lytVolume;
+            case "lytBotoes": return this.lytBotoes;
+            case "lytBotoesCentro": return this.lytBotoesCentro;
+            case "lytNavegacao": return this.lytNavegacao;
+            case "lytFilaBotoes": return this.lytFilaBotoes;
+        }
+        return undefined;
+    }
+    /** O Layout que disparou o evento. */
+    senderAsLayout(ev: AylisEvent): Layout | undefined {
+        return this.findLayout(ev.sender.name);
+    }
+    /** O ListView deste form com o nome (como o FindComponent). */
+    findListView(name: string): ListView | undefined {
+        switch (name) {
+            case "lvFila": return this.lvFila;
+        }
+        return undefined;
+    }
+    /** O ListView que disparou o evento. */
+    senderAsListView(ev: AylisEvent): ListView | undefined {
+        return this.findListView(ev.sender.name);
+    }
+    /** O MainMenu deste form com o nome (como o FindComponent). */
+    findMainMenu(name: string): MainMenu | undefined {
+        switch (name) {
+            case "mnuPrincipal": return this.mnuPrincipal;
+        }
+        return undefined;
+    }
+    /** O MainMenu que disparou o evento. */
+    senderAsMainMenu(ev: AylisEvent): MainMenu | undefined {
+        return this.findMainMenu(ev.sender.name);
+    }
+    /** O MenuItem deste form com o nome (como o FindComponent). */
+    findMenuItem(name: string): MenuItem | undefined {
+        switch (name) {
+            case "mnuArquivo": return this.mnuArquivo;
+            case "mnuAbrir": return this.mnuAbrir;
+            case "mnuLimparFila": return this.mnuLimparFila;
+            case "mnuSep1": return this.mnuSep1;
+            case "mnuSair": return this.mnuSair;
+            case "mnuReproduzir": return this.mnuReproduzir;
+            case "mnuReproduzirPausar": return this.mnuReproduzirPausar;
+            case "mnuParar": return this.mnuParar;
+            case "mnuAnterior": return this.mnuAnterior;
+            case "mnuProxima": return this.mnuProxima;
+            case "mnuSep2": return this.mnuSep2;
+            case "mnuEmbaralhar": return this.mnuEmbaralhar;
+            case "mnuRepetir": return this.mnuRepetir;
+            case "mnuExibir": return this.mnuExibir;
+            case "mnuAgora": return this.mnuAgora;
+            case "mnuFila": return this.mnuFila;
+        }
+        return undefined;
+    }
+    /** O MenuItem que disparou o evento. */
+    senderAsMenuItem(ev: AylisEvent): MenuItem | undefined {
+        return this.findMenuItem(ev.sender.name);
+    }
+    /** O OpenDialog deste form com o nome (como o FindComponent). */
+    findOpenDialog(name: string): OpenDialog | undefined {
+        switch (name) {
+            case "dlgAbrir": return this.dlgAbrir;
+        }
+        return undefined;
+    }
+    /** O OpenDialog que disparou o evento. */
+    senderAsOpenDialog(ev: AylisEvent): OpenDialog | undefined {
+        return this.findOpenDialog(ev.sender.name);
+    }
+    /** O Panel deste form com o nome (como o FindComponent). */
+    findPanel(name: string): Panel | undefined {
+        switch (name) {
+            case "pnlControles": return this.pnlControles;
+            case "pnlAgora": return this.pnlAgora;
+            case "pnlFila": return this.pnlFila;
+        }
+        return undefined;
+    }
+    /** O Panel que disparou o evento. */
+    senderAsPanel(ev: AylisEvent): Panel | undefined {
+        return this.findPanel(ev.sender.name);
+    }
+    /** O SeekBar deste form com o nome (como o FindComponent). */
+    findSeekBar(name: string): SeekBar | undefined {
+        switch (name) {
+            case "sbPosicao": return this.sbPosicao;
+        }
+        return undefined;
+    }
+    /** O SeekBar que disparou o evento. */
+    senderAsSeekBar(ev: AylisEvent): SeekBar | undefined {
+        return this.findSeekBar(ev.sender.name);
+    }
+    /** O Timer deste form com o nome (como o FindComponent). */
+    findTimer(name: string): Timer | undefined {
+        switch (name) {
+            case "tmrPosicao": return this.tmrPosicao;
+        }
+        return undefined;
+    }
+    /** O Timer que disparou o evento. */
+    senderAsTimer(ev: AylisEvent): Timer | undefined {
+        return this.findTimer(ev.sender.name);
+    }
+    /** O TrackBar deste form com o nome (como o FindComponent). */
+    findTrackBar(name: string): TrackBar | undefined {
+        switch (name) {
+            case "tbVolume": return this.tbVolume;
+        }
+        return undefined;
+    }
+    /** O TrackBar que disparou o evento. */
+    senderAsTrackBar(ev: AylisEvent): TrackBar | undefined {
+        return this.findTrackBar(ev.sender.name);
+    }
+    /** O VideoPlayer deste form com o nome (como o FindComponent). */
+    findVideoPlayer(name: string): VideoPlayer | undefined {
+        switch (name) {
+            case "vpVideo": return this.vpVideo;
+        }
+        return undefined;
+    }
+    /** O VideoPlayer que disparou o evento. */
+    senderAsVideoPlayer(ev: AylisEvent): VideoPlayer | undefined {
+        return this.findVideoPlayer(ev.sender.name);
+    }
+}
+
+/** A janela de frmPlayer cujo evento está rodando (a primeira, fora dos handlers). */
+export let frmPlayer: FrmPlayerComponents;
+registerFormClass("frmPlayer", FrmPlayerComponents, (form) => {
+    frmPlayer = form as FrmPlayerComponents;
+});

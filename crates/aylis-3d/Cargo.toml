@@ -1,0 +1,48 @@
+[package]
+name = "aylis-3d"
+description = "3D do aylis: modelos glTF/GLB com esqueleto, morph targets e animação, desenhados com wgpu e compostos com os controles"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[features]
+# O 3D no contexto OpenGL do Skia (sem cópia). Nas plataformas em que o Skia desenha com
+# OpenGL; a fachada liga junto com o Skia na GPU.
+gl = ["wgpu/gles"]
+# Ler FBX (ufbx) e converter para o modelo do aylis; usado pela IDE ao importar.
+fbx = ["dep:ufbx"]
+# As variáveis de diagnóstico (AYLIS_3D_TRACE, AYLIS_3D_DEBUG, AYLIS_DXC...): o app com `dev`.
+diagnostics = []
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+# Cada plataforma leva só o backend dela (o resto entra nas seções abaixo).
+wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "wgsl"] }
+gltf = { version = "1.4", default-features = false, features = ["import", "utils", "names", "KHR_lights_punctual", "KHR_texture_transform", "extensions"] }
+glam = { version = "0.34", features = ["bytemuck"] }
+bytemuck = { version = "1", features = ["derive"] }
+pollster = "0.4"
+serde_json = "1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+ufbx = { version = "0.11", optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+wgpu-hal = "30"
+
+[target.'cfg(windows)'.dependencies]
+wgpu = { version = "30", default-features = false, features = ["dx12"] }
+wgpu-hal = { version = "30", features = ["dx12"] }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Security", "Win32_Graphics_Direct3D12", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common"] }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+wgpu = { version = "30", default-features = false, features = ["metal"] }
+
+[target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
+wgpu = { version = "30", default-features = false, features = ["vulkan", "gles"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "30", default-features = false, features = ["webgpu", "webgl"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Document", "Element", "HtmlCanvasElement", "HtmlElement", "CssStyleDeclaration", "Node", "Window"] }

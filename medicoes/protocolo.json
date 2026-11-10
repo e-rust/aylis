@@ -1,0 +1,21 @@
+{
+  "descricao": "Custo do protocolo JSON (item 13), em release, nesta máquina: uma tela comum (get e set de propriedades, eventos) e uma carga de 100 mil registros com 5 campos. Sem a ida e volta do processo (stdio ou WebSocket), que soma o tempo do sistema.",
+  "tela_comum": {
+    "comando_us": 8.46,
+    "bytes_por_comando": 69,
+    "evento_us": 3.32,
+    "bytes_por_evento": 155
+  },
+  "carga_100_mil": {
+    "bytes": 8277206,
+    "montar_texto_ms": 121.56,
+    "ler_json_ms": 88.55,
+    "carregar_ms": 158.35
+  },
+  "carga_100_mil_colunar": {
+    "bytes": 4477274,
+    "montar_texto_ms": 32.9,
+    "ler_json_ms": 24.39,
+    "carregar_ms": 147.48
+  }
+}

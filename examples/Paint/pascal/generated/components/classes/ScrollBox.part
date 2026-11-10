@@ -1,0 +1,825 @@
+  { Um ScrollBox de um form. }
+  TScrollBox = class(TAylisComponent)
+  private
+    function GetHorizontal: Boolean;
+    procedure SetHorizontal(Value: Boolean);
+    function GetPullToRefresh: Boolean;
+    procedure SetPullToRefresh(Value: Boolean);
+    function GetRefreshing: Boolean;
+    procedure SetRefreshing(Value: Boolean);
+    function GetWheelStep: Double;
+    procedure SetWheelStep(Value: Double);
+    function GetSmooth: string;
+    procedure SetSmooth(Value: string);
+    function GetAllowedChars: string;
+    procedure SetAllowedChars(Value: string);
+    function GetBlockedChars: string;
+    procedure SetBlockedChars(Value: string);
+    function GetOnlyAllowed: Boolean;
+    procedure SetOnlyAllowed(Value: Boolean);
+    function GetCharsOverride: Boolean;
+    procedure SetCharsOverride(Value: Boolean);
+    function GetCharMap: string;
+    procedure SetCharMap(Value: string);
+    function GetScrollPosition: Double;
+    procedure SetScrollPosition(Value: Double);
+    function GetLeft: Double;
+    procedure SetLeft(Value: Double);
+    function GetTop: Double;
+    procedure SetTop(Value: Double);
+    function GetWidth: Double;
+    procedure SetWidth(Value: Double);
+    function GetHeight: Double;
+    procedure SetHeight(Value: Double);
+    function GetAlign: string;
+    procedure SetAlign(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetHitTest: Boolean;
+    procedure SetHitTest(Value: Boolean);
+    function GetClipChildren: Boolean;
+    procedure SetClipChildren(Value: Boolean);
+    function GetCapturesWheel: Boolean;
+    procedure SetCapturesWheel(Value: Boolean);
+    function GetCanFocus: Boolean;
+    procedure SetCanFocus(Value: Boolean);
+    function GetDraggable: Boolean;
+    procedure SetDraggable(Value: Boolean);
+    function GetAcceptsDrops: Boolean;
+    procedure SetAcceptsDrops(Value: Boolean);
+    function GetDragData: string;
+    procedure SetDragData(Value: string);
+    function GetDragLabel: string;
+    procedure SetDragLabel(Value: string);
+    function GetDragImage: string;
+    procedure SetDragImage(Value: string);
+    function GetDropTypes: string;
+    procedure SetDropTypes(Value: string);
+    function GetTabStop: Boolean;
+    procedure SetTabStop(Value: Boolean);
+    function GetCursor: string;
+    procedure SetCursor(Value: string);
+    function GetOpacity: Double;
+    procedure SetOpacity(Value: Double);
+    function GetCacheLayer: Boolean;
+    procedure SetCacheLayer(Value: Boolean);
+    function GetRotation: Double;
+    procedure SetRotation(Value: Double);
+    function GetTranslateX: Double;
+    procedure SetTranslateX(Value: Double);
+    function GetTranslateY: Double;
+    procedure SetTranslateY(Value: Double);
+    function GetAspectRatio: Double;
+    procedure SetAspectRatio(Value: Double);
+    function GetMaxWidth: Double;
+    procedure SetMaxWidth(Value: Double);
+    function GetMinWidth: Double;
+    procedure SetMinWidth(Value: Double);
+    function GetMinHeight: Double;
+    procedure SetMinHeight(Value: Double);
+    function GetMaxHeight: Double;
+    procedure SetMaxHeight(Value: Double);
+    function GetSelfAlign: string;
+    procedure SetSelfAlign(Value: string);
+    function GetAutoSize: Boolean;
+    procedure SetAutoSize(Value: Boolean);
+    function GetColumnSpan: Int64;
+    procedure SetColumnSpan(Value: Int64);
+    function GetShadow: string;
+    procedure SetShadow(Value: string);
+    function GetStyle: string;
+    procedure SetStyle(Value: string);
+    function GetTheme: string;
+    procedure SetTheme(Value: string);
+    function GetFill: string;
+    procedure SetFill(Value: string);
+    function GetBorderColor: string;
+    procedure SetBorderColor(Value: string);
+    function GetTextColor: string;
+    procedure SetTextColor(Value: string);
+    function GetAccentColor: string;
+    procedure SetAccentColor(Value: string);
+    function GetSuccessColor: string;
+    procedure SetSuccessColor(Value: string);
+    function GetWarningColor: string;
+    procedure SetWarningColor(Value: string);
+    function GetDangerColor: string;
+    procedure SetDangerColor(Value: string);
+    function GetFontFamily: string;
+    procedure SetFontFamily(Value: string);
+    function GetFontSize: Double;
+    procedure SetFontSize(Value: Double);
+    function GetFontWeight: string;
+    procedure SetFontWeight(Value: string);
+    function GetFontItalic: Boolean;
+    procedure SetFontItalic(Value: Boolean);
+    function GetFontUnderline: Boolean;
+    procedure SetFontUnderline(Value: Boolean);
+    function GetFontStrikeout: Boolean;
+    procedure SetFontStrikeout(Value: Boolean);
+    function GetHint: string;
+    procedure SetHint(Value: string);
+    function GetTag: Int64;
+    procedure SetTag(Value: Int64);
+    function GetPopupMenu: string;
+    procedure SetPopupMenu(Value: string);
+  public
+    procedure ScrollTo(A1: TAylisComponent);
+    function VisibleComponents(A1: TAylisComponent; A2: Boolean): string;
+    property Horizontal: Boolean read GetHorizontal write SetHorizontal;
+    property PullToRefresh: Boolean read GetPullToRefresh write SetPullToRefresh;
+    property Refreshing: Boolean read GetRefreshing write SetRefreshing;
+    property WheelStep: Double read GetWheelStep write SetWheelStep;
+    property Smooth: string read GetSmooth write SetSmooth;
+    property AllowedChars: string read GetAllowedChars write SetAllowedChars;
+    property BlockedChars: string read GetBlockedChars write SetBlockedChars;
+    property OnlyAllowed: Boolean read GetOnlyAllowed write SetOnlyAllowed;
+    property CharsOverride: Boolean read GetCharsOverride write SetCharsOverride;
+    property CharMap: string read GetCharMap write SetCharMap;
+    property ScrollPosition: Double read GetScrollPosition write SetScrollPosition;
+    property Left: Double read GetLeft write SetLeft;
+    property Top: Double read GetTop write SetTop;
+    property Width: Double read GetWidth write SetWidth;
+    property Height: Double read GetHeight write SetHeight;
+    property Align: string read GetAlign write SetAlign;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property HitTest: Boolean read GetHitTest write SetHitTest;
+    property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CanFocus: Boolean read GetCanFocus write SetCanFocus;
+    property Draggable: Boolean read GetDraggable write SetDraggable;
+    property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
+    property DragData: string read GetDragData write SetDragData;
+    property DragLabel: string read GetDragLabel write SetDragLabel;
+    property DragImage: string read GetDragImage write SetDragImage;
+    property DropTypes: string read GetDropTypes write SetDropTypes;
+    property TabStop: Boolean read GetTabStop write SetTabStop;
+    property Cursor: string read GetCursor write SetCursor;
+    property Opacity: Double read GetOpacity write SetOpacity;
+    property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
+    property Rotation: Double read GetRotation write SetRotation;
+    property TranslateX: Double read GetTranslateX write SetTranslateX;
+    property TranslateY: Double read GetTranslateY write SetTranslateY;
+    property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
+    property MaxWidth: Double read GetMaxWidth write SetMaxWidth;
+    property MinWidth: Double read GetMinWidth write SetMinWidth;
+    property MinHeight: Double read GetMinHeight write SetMinHeight;
+    property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
+    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property AutoSize: Boolean read GetAutoSize write SetAutoSize;
+    property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property Shadow: string read GetShadow write SetShadow;
+    property Style: string read GetStyle write SetStyle;
+    property Theme: string read GetTheme write SetTheme;
+    property Fill: string read GetFill write SetFill;
+    property BorderColor: string read GetBorderColor write SetBorderColor;
+    property TextColor: string read GetTextColor write SetTextColor;
+    property AccentColor: string read GetAccentColor write SetAccentColor;
+    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
+    property WarningColor: string read GetWarningColor write SetWarningColor;
+    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property FontFamily: string read GetFontFamily write SetFontFamily;
+    property FontSize: Double read GetFontSize write SetFontSize;
+    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontItalic: Boolean read GetFontItalic write SetFontItalic;
+    property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
+    property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
+    property Hint: string read GetHint write SetHint;
+    property Tag: Int64 read GetTag write SetTag;
+    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+  end;
+
+
+function TScrollBox.GetHorizontal: Boolean;
+begin
+  Result := GetProp('horizontal').AsBoolean;
+end;
+
+procedure TScrollBox.SetHorizontal(Value: Boolean);
+begin
+  SetProp('horizontal', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetPullToRefresh: Boolean;
+begin
+  Result := GetProp('pull_to_refresh').AsBoolean;
+end;
+
+procedure TScrollBox.SetPullToRefresh(Value: Boolean);
+begin
+  SetProp('pull_to_refresh', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetRefreshing: Boolean;
+begin
+  Result := GetProp('refreshing').AsBoolean;
+end;
+
+procedure TScrollBox.SetRefreshing(Value: Boolean);
+begin
+  SetProp('refreshing', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetWheelStep: Double;
+begin
+  Result := GetProp('wheel_step').AsFloat;
+end;
+
+procedure TScrollBox.SetWheelStep(Value: Double);
+begin
+  SetProp('wheel_step', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetSmooth: string;
+begin
+  Result := AsText(GetProp('smooth'));
+end;
+
+procedure TScrollBox.SetSmooth(Value: string);
+begin
+  SetProp('smooth', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetAllowedChars: string;
+begin
+  Result := AsText(GetProp('allowed_chars'));
+end;
+
+procedure TScrollBox.SetAllowedChars(Value: string);
+begin
+  SetProp('allowed_chars', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetBlockedChars: string;
+begin
+  Result := AsText(GetProp('blocked_chars'));
+end;
+
+procedure TScrollBox.SetBlockedChars(Value: string);
+begin
+  SetProp('blocked_chars', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetOnlyAllowed: Boolean;
+begin
+  Result := GetProp('only_allowed').AsBoolean;
+end;
+
+procedure TScrollBox.SetOnlyAllowed(Value: Boolean);
+begin
+  SetProp('only_allowed', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetCharsOverride: Boolean;
+begin
+  Result := GetProp('chars_override').AsBoolean;
+end;
+
+procedure TScrollBox.SetCharsOverride(Value: Boolean);
+begin
+  SetProp('chars_override', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetCharMap: string;
+begin
+  Result := AsText(GetProp('char_map'));
+end;
+
+procedure TScrollBox.SetCharMap(Value: string);
+begin
+  SetProp('char_map', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetScrollPosition: Double;
+begin
+  Result := GetProp('scroll_position').AsFloat;
+end;
+
+procedure TScrollBox.SetScrollPosition(Value: Double);
+begin
+  SetProp('scroll_position', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetLeft: Double;
+begin
+  Result := GetProp('left').AsFloat;
+end;
+
+procedure TScrollBox.SetLeft(Value: Double);
+begin
+  SetProp('left', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetTop: Double;
+begin
+  Result := GetProp('top').AsFloat;
+end;
+
+procedure TScrollBox.SetTop(Value: Double);
+begin
+  SetProp('top', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetWidth: Double;
+begin
+  Result := GetProp('width').AsFloat;
+end;
+
+procedure TScrollBox.SetWidth(Value: Double);
+begin
+  SetProp('width', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetHeight: Double;
+begin
+  Result := GetProp('height').AsFloat;
+end;
+
+procedure TScrollBox.SetHeight(Value: Double);
+begin
+  SetProp('height', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetAlign: string;
+begin
+  Result := AsText(GetProp('align'));
+end;
+
+procedure TScrollBox.SetAlign(Value: string);
+begin
+  SetProp('align', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TScrollBox.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TScrollBox.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetHitTest: Boolean;
+begin
+  Result := GetProp('hit_test').AsBoolean;
+end;
+
+procedure TScrollBox.SetHitTest(Value: Boolean);
+begin
+  SetProp('hit_test', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetClipChildren: Boolean;
+begin
+  Result := GetProp('clip_children').AsBoolean;
+end;
+
+procedure TScrollBox.SetClipChildren(Value: Boolean);
+begin
+  SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetCapturesWheel: Boolean;
+begin
+  Result := GetProp('captures_wheel').AsBoolean;
+end;
+
+procedure TScrollBox.SetCapturesWheel(Value: Boolean);
+begin
+  SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetCanFocus: Boolean;
+begin
+  Result := GetProp('can_focus').AsBoolean;
+end;
+
+procedure TScrollBox.SetCanFocus(Value: Boolean);
+begin
+  SetProp('can_focus', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetDraggable: Boolean;
+begin
+  Result := GetProp('draggable').AsBoolean;
+end;
+
+procedure TScrollBox.SetDraggable(Value: Boolean);
+begin
+  SetProp('draggable', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetAcceptsDrops: Boolean;
+begin
+  Result := GetProp('accepts_drops').AsBoolean;
+end;
+
+procedure TScrollBox.SetAcceptsDrops(Value: Boolean);
+begin
+  SetProp('accepts_drops', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetDragData: string;
+begin
+  Result := AsText(GetProp('drag_data'));
+end;
+
+procedure TScrollBox.SetDragData(Value: string);
+begin
+  SetProp('drag_data', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetDragLabel: string;
+begin
+  Result := AsText(GetProp('drag_label'));
+end;
+
+procedure TScrollBox.SetDragLabel(Value: string);
+begin
+  SetProp('drag_label', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetDragImage: string;
+begin
+  Result := AsText(GetProp('drag_image'));
+end;
+
+procedure TScrollBox.SetDragImage(Value: string);
+begin
+  SetProp('drag_image', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetDropTypes: string;
+begin
+  Result := AsText(GetProp('drop_types'));
+end;
+
+procedure TScrollBox.SetDropTypes(Value: string);
+begin
+  SetProp('drop_types', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetTabStop: Boolean;
+begin
+  Result := GetProp('tab_stop').AsBoolean;
+end;
+
+procedure TScrollBox.SetTabStop(Value: Boolean);
+begin
+  SetProp('tab_stop', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetCursor: string;
+begin
+  Result := AsText(GetProp('cursor'));
+end;
+
+procedure TScrollBox.SetCursor(Value: string);
+begin
+  SetProp('cursor', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetOpacity: Double;
+begin
+  Result := GetProp('opacity').AsFloat;
+end;
+
+procedure TScrollBox.SetOpacity(Value: Double);
+begin
+  SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetCacheLayer: Boolean;
+begin
+  Result := GetProp('cache_layer').AsBoolean;
+end;
+
+procedure TScrollBox.SetCacheLayer(Value: Boolean);
+begin
+  SetProp('cache_layer', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetRotation: Double;
+begin
+  Result := GetProp('rotation').AsFloat;
+end;
+
+procedure TScrollBox.SetRotation(Value: Double);
+begin
+  SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetTranslateX: Double;
+begin
+  Result := GetProp('translate_x').AsFloat;
+end;
+
+procedure TScrollBox.SetTranslateX(Value: Double);
+begin
+  SetProp('translate_x', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetTranslateY: Double;
+begin
+  Result := GetProp('translate_y').AsFloat;
+end;
+
+procedure TScrollBox.SetTranslateY(Value: Double);
+begin
+  SetProp('translate_y', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetAspectRatio: Double;
+begin
+  Result := GetProp('aspect_ratio').AsFloat;
+end;
+
+procedure TScrollBox.SetAspectRatio(Value: Double);
+begin
+  SetProp('aspect_ratio', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetMaxWidth: Double;
+begin
+  Result := GetProp('max_width').AsFloat;
+end;
+
+procedure TScrollBox.SetMaxWidth(Value: Double);
+begin
+  SetProp('max_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetMinWidth: Double;
+begin
+  Result := GetProp('min_width').AsFloat;
+end;
+
+procedure TScrollBox.SetMinWidth(Value: Double);
+begin
+  SetProp('min_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetMinHeight: Double;
+begin
+  Result := GetProp('min_height').AsFloat;
+end;
+
+procedure TScrollBox.SetMinHeight(Value: Double);
+begin
+  SetProp('min_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetMaxHeight: Double;
+begin
+  Result := GetProp('max_height').AsFloat;
+end;
+
+procedure TScrollBox.SetMaxHeight(Value: Double);
+begin
+  SetProp('max_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetSelfAlign: string;
+begin
+  Result := AsText(GetProp('self_align'));
+end;
+
+procedure TScrollBox.SetSelfAlign(Value: string);
+begin
+  SetProp('self_align', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetAutoSize: Boolean;
+begin
+  Result := GetProp('auto_size').AsBoolean;
+end;
+
+procedure TScrollBox.SetAutoSize(Value: Boolean);
+begin
+  SetProp('auto_size', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetColumnSpan: Int64;
+begin
+  Result := GetProp('column_span').AsInt64;
+end;
+
+procedure TScrollBox.SetColumnSpan(Value: Int64);
+begin
+  SetProp('column_span', TJSONInt64Number.Create(Value));
+end;
+
+function TScrollBox.GetShadow: string;
+begin
+  Result := AsText(GetProp('shadow'));
+end;
+
+procedure TScrollBox.SetShadow(Value: string);
+begin
+  SetProp('shadow', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetStyle: string;
+begin
+  Result := AsText(GetProp('style'));
+end;
+
+procedure TScrollBox.SetStyle(Value: string);
+begin
+  SetProp('style', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetTheme: string;
+begin
+  Result := AsText(GetProp('theme'));
+end;
+
+procedure TScrollBox.SetTheme(Value: string);
+begin
+  SetProp('theme', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetFill: string;
+begin
+  Result := AsText(GetProp('fill'));
+end;
+
+procedure TScrollBox.SetFill(Value: string);
+begin
+  SetProp('fill', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetBorderColor: string;
+begin
+  Result := AsText(GetProp('border_color'));
+end;
+
+procedure TScrollBox.SetBorderColor(Value: string);
+begin
+  SetProp('border_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetTextColor: string;
+begin
+  Result := AsText(GetProp('text_color'));
+end;
+
+procedure TScrollBox.SetTextColor(Value: string);
+begin
+  SetProp('text_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetAccentColor: string;
+begin
+  Result := AsText(GetProp('accent_color'));
+end;
+
+procedure TScrollBox.SetAccentColor(Value: string);
+begin
+  SetProp('accent_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetSuccessColor: string;
+begin
+  Result := AsText(GetProp('success_color'));
+end;
+
+procedure TScrollBox.SetSuccessColor(Value: string);
+begin
+  SetProp('success_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetWarningColor: string;
+begin
+  Result := AsText(GetProp('warning_color'));
+end;
+
+procedure TScrollBox.SetWarningColor(Value: string);
+begin
+  SetProp('warning_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetDangerColor: string;
+begin
+  Result := AsText(GetProp('danger_color'));
+end;
+
+procedure TScrollBox.SetDangerColor(Value: string);
+begin
+  SetProp('danger_color', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetFontFamily: string;
+begin
+  Result := AsText(GetProp('font_family'));
+end;
+
+procedure TScrollBox.SetFontFamily(Value: string);
+begin
+  SetProp('font_family', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetFontSize: Double;
+begin
+  Result := GetProp('font_size').AsFloat;
+end;
+
+procedure TScrollBox.SetFontSize(Value: Double);
+begin
+  SetProp('font_size', TJSONFloatNumber.Create(Value));
+end;
+
+function TScrollBox.GetFontWeight: string;
+begin
+  Result := AsText(GetProp('font_weight'));
+end;
+
+procedure TScrollBox.SetFontWeight(Value: string);
+begin
+  SetProp('font_weight', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetFontItalic: Boolean;
+begin
+  Result := GetProp('font_italic').AsBoolean;
+end;
+
+procedure TScrollBox.SetFontItalic(Value: Boolean);
+begin
+  SetProp('font_italic', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetFontUnderline: Boolean;
+begin
+  Result := GetProp('font_underline').AsBoolean;
+end;
+
+procedure TScrollBox.SetFontUnderline(Value: Boolean);
+begin
+  SetProp('font_underline', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetFontStrikeout: Boolean;
+begin
+  Result := GetProp('font_strikeout').AsBoolean;
+end;
+
+procedure TScrollBox.SetFontStrikeout(Value: Boolean);
+begin
+  SetProp('font_strikeout', TJSONBoolean.Create(Value));
+end;
+
+function TScrollBox.GetHint: string;
+begin
+  Result := AsText(GetProp('hint'));
+end;
+
+procedure TScrollBox.SetHint(Value: string);
+begin
+  SetProp('hint', TJSONString.Create(Value));
+end;
+
+function TScrollBox.GetTag: Int64;
+begin
+  Result := GetProp('tag').AsInt64;
+end;
+
+procedure TScrollBox.SetTag(Value: Int64);
+begin
+  SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TScrollBox.GetPopupMenu: string;
+begin
+  Result := AsText(GetProp('popup_menu'));
+end;
+
+procedure TScrollBox.SetPopupMenu(Value: string);
+begin
+  SetProp('popup_menu', TJSONString.Create(Value));
+end;
+
+procedure TScrollBox.ScrollTo(A1: TAylisComponent);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'scroll_to', 'args', TJSONArray.Create([A1.Id])]));
+end;
+
+function TScrollBox.VisibleComponents(A1: TAylisComponent; A2: Boolean): string;
+begin
+  Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'visible_components', 'args', TJSONArray.Create([A1.Id, A2])])));
+end;
+

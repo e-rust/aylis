@@ -1,0 +1,32 @@
+{
+  "componentes/d2d": {
+    "media_ms": 0.583,
+    "p50_ms": 0.575,
+    "p95_ms": 0.638,
+    "memoria_privada_mb": 46.4
+  },
+  "grade/d2d": {
+    "media_ms": 0.481,
+    "p50_ms": 0.471,
+    "p95_ms": 0.535,
+    "memoria_privada_mb": 42.6
+  },
+  "moderno/d2d": {
+    "media_ms": 2.901,
+    "p50_ms": 2.88,
+    "p95_ms": 3.022,
+    "memoria_privada_mb": 57.9
+  },
+  "catalogo/d2d": {
+    "media_ms": 2.699,
+    "p50_ms": 2.648,
+    "p95_ms": 3.102,
+    "memoria_privada_mb": 62.8
+  },
+  "galeria/d2d": {
+    "media_ms": 3.249,
+    "p50_ms": 3.232,
+    "p95_ms": 3.449,
+    "memoria_privada_mb": 52.2
+  }
+}

@@ -1,0 +1,16 @@
+
+// Um Timer de um form.
+struct Timer : aylis::Component {
+    Timer() = default;
+    explicit Timer(const aylis::Component& c) : aylis::Component(c) {}
+    double interval() const { return get_prop_("interval").number(); }
+    void set_interval(double v) const { set_prop_("interval", v); }
+    bool enabled() const { return get_prop_("enabled").boolean(); }
+    void set_enabled(bool v) const { set_prop_("enabled", v); }
+    std::string precision() const { return get_prop_("precision").str(); }
+    void set_precision(const std::string& v) const { set_prop_("precision", v); }
+    bool background() const { return get_prop_("background").boolean(); }
+    void set_background(bool v) const { set_prop_("background", v); }
+    double drift() const { return get_prop_("drift").number(); }
+    void set_drift(double v) const { set_prop_("drift", v); }
+};

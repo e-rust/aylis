@@ -1,0 +1,69 @@
+
+    /// <summary>Um ScrollBox de um form.</summary>
+    public class ScrollBox(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public bool Horizontal { get => Bool(GetProp("horizontal")); set => SetProp("horizontal", value); }
+        public bool PullToRefresh { get => Bool(GetProp("pull_to_refresh")); set => SetProp("pull_to_refresh", value); }
+        public bool Refreshing { get => Bool(GetProp("refreshing")); set => SetProp("refreshing", value); }
+        public double WheelStep { get => Number(GetProp("wheel_step")); set => SetProp("wheel_step", value); }
+        public string Smooth { get => Text(GetProp("smooth")); set => SetProp("smooth", value); }
+        public string AllowedChars { get => Text(GetProp("allowed_chars")); set => SetProp("allowed_chars", value); }
+        public string BlockedChars { get => Text(GetProp("blocked_chars")); set => SetProp("blocked_chars", value); }
+        public bool OnlyAllowed { get => Bool(GetProp("only_allowed")); set => SetProp("only_allowed", value); }
+        public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
+        public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
+        public double ScrollPosition { get => Number(GetProp("scroll_position")); set => SetProp("scroll_position", value); }
+        public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
+        public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
+        public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
+        public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
+        public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
+        public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
+        public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
+        public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
+        public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
+        public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
+        public bool AcceptsDrops { get => Bool(GetProp("accepts_drops")); set => SetProp("accepts_drops", value); }
+        public string DragData { get => Text(GetProp("drag_data")); set => SetProp("drag_data", value); }
+        public string DragLabel { get => Text(GetProp("drag_label")); set => SetProp("drag_label", value); }
+        public string DragImage { get => Text(GetProp("drag_image")); set => SetProp("drag_image", value); }
+        public string DropTypes { get => Text(GetProp("drop_types")); set => SetProp("drop_types", value); }
+        public bool TabStop { get => Bool(GetProp("tab_stop")); set => SetProp("tab_stop", value); }
+        public string Cursor { get => Text(GetProp("cursor")); set => SetProp("cursor", value); }
+        public double Opacity { get => Number(GetProp("opacity")); set => SetProp("opacity", value); }
+        public bool CacheLayer { get => Bool(GetProp("cache_layer")); set => SetProp("cache_layer", value); }
+        public double Rotation { get => Number(GetProp("rotation")); set => SetProp("rotation", value); }
+        public double TranslateX { get => Number(GetProp("translate_x")); set => SetProp("translate_x", value); }
+        public double TranslateY { get => Number(GetProp("translate_y")); set => SetProp("translate_y", value); }
+        public double AspectRatio { get => Number(GetProp("aspect_ratio")); set => SetProp("aspect_ratio", value); }
+        public double MaxWidth { get => Number(GetProp("max_width")); set => SetProp("max_width", value); }
+        public double MinWidth { get => Number(GetProp("min_width")); set => SetProp("min_width", value); }
+        public double MinHeight { get => Number(GetProp("min_height")); set => SetProp("min_height", value); }
+        public double MaxHeight { get => Number(GetProp("max_height")); set => SetProp("max_height", value); }
+        public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
+        public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
+        public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
+        public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
+        public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
+        public string Fill { get => Text(GetProp("fill")); set => SetProp("fill", value); }
+        public string BorderColor { get => Text(GetProp("border_color")); set => SetProp("border_color", value); }
+        public string TextColor { get => Text(GetProp("text_color")); set => SetProp("text_color", value); }
+        public string AccentColor { get => Text(GetProp("accent_color")); set => SetProp("accent_color", value); }
+        public string SuccessColor { get => Text(GetProp("success_color")); set => SetProp("success_color", value); }
+        public string WarningColor { get => Text(GetProp("warning_color")); set => SetProp("warning_color", value); }
+        public string DangerColor { get => Text(GetProp("danger_color")); set => SetProp("danger_color", value); }
+        public string FontFamily { get => Text(GetProp("font_family")); set => SetProp("font_family", value); }
+        public double FontSize { get => Number(GetProp("font_size")); set => SetProp("font_size", value); }
+        public string FontWeight { get => Text(GetProp("font_weight")); set => SetProp("font_weight", value); }
+        public bool FontItalic { get => Bool(GetProp("font_italic")); set => SetProp("font_italic", value); }
+        public bool FontUnderline { get => Bool(GetProp("font_underline")); set => SetProp("font_underline", value); }
+        public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
+        public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
+        public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
+        public void ScrollTo(AylisComponent a1) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "scroll_to", ["args"] = new JsonArray(a1.Id) });
+        public string VisibleComponents(AylisComponent a1, bool a2) => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "visible_components", ["args"] = new JsonArray(a1.Id, a2) }));
+    }

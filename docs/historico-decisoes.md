@@ -1,0 +1,276 @@
+# Histórico de pedidos e decisões
+
+Registro do que foi pedido e decidido na sessão de criação do aylis (24 a 26/10/2026), na
+ordem em que aconteceu. As citações são do autor do projeto; "Decisão" é o que ficou
+combinado e "Resultado" é o que foi feito. O plano inicial está no [PLANO.md](../PLANO.md); os ajustes, em
+[AJUSTES-PENDENTES.md](../AJUSTES-PENDENTES.md) e [AJUSTES-CONCLUIDOS.md](../AJUSTES-CONCLUIDOS.md).
+
+## 1. A ideia e as regras de base (24/10)
+
+| Pedido | Decisão |
+|---|---|
+| "nenhum [projeto de interface em Rust] me agradou… cada componente sabe como se pintar… herdando de um ancestral comum… margem, padding, width, height, top, left… alinhamento… eventos" | Um core de UI em Rust: ancestral comum (`ControlBase` + trait `Component`), controles aninhados, `Align`/`Anchors`/`Margins`/`Padding` e eventos. |
+| Compatível depois com Linux, web, Android e iOS; "o core não [pode ter] comunicação direta com o que depende do sistema operacional, deve usar interfaces" | O `aylis-core` não tem código de sistema; tudo passa por traits de serviço, e cada plataforma fornece a sua. |
+| "compatível com CPU e GPU facilmente, Skia será o motor da GPU e da CPU você escolhe" | Skia nos dois (raster na CPU, OpenGL na GPU), trocando por feature. |
+| Criar componentes em tempo de execução | Obrigatório: criar por nome de classe, mudar propriedade por nome, liberar e trocar de pai em execução. |
+| Uma IDE visual (paleta, form, inspetor) | Prevista desde o core: metadados das propriedades e modo design; a IDE é feita com o próprio aylis. |
+| "a tela sendo só o frontend… se comunicasse com o processo em Rust ou outra linguagem (o backend)" | A tela é o frontend; o backend pode ser em qualquer linguagem, por um protocolo JSON (outro processo, WebSocket ou C ABI). Toda operação se expressa por classe + propriedade + valor. |
+| DBGrid com milhões de registros sem várias idas à API | O grid recebe os dados em pacotes e é virtualizado (só pinta o que aparece); busca sob demanda. |
+| "dataset… datasource e field… não usaria o binding automático" | Camada de dados: `ClientDataSet` + `Field` + `DataSource`, controles `DB*` ligados por `data_source` + `data_field`. |
+| "não devemos ter uma connection… com consulta SQL, o backend deve receber via evento os dados alterados… eventos gettext, settext e validate… máscaras e tipos de campo" | Nada de banco no frontend: o dataset guarda os dados e um delta; o backend recebe o delta (`apply_updates`) e responde por registro. Tipos, máscaras, formatos e os eventos de Field ficam no cliente. |
+| "não quero criar uma linguagem intermediária… nem expressões"; o `gettext` remoto aguenta mil chamadas num scroll? | Sem linguagem própria. Eventos remotos com cache por valor, em lote e assíncronos, nunca uma ida por célula (feito depois, ver seção 6). |
+| "tem que ser fácil de expandir… pegar a base [do botão] e personalizar a pintura… bordas coloridas animadas… temas" | Extensão por composição e delegação (o `inherited`); comportamento separado da aparência; temas com tokens, estados, variantes, claro/escuro. Prova: o `GlowButton`. |
+| Sintaxe do layout: rejeitou `Button #btnSalvar {`, preferiu chave/valor; "ou poderíamos já padronizar em JSON" → "sim" | Layout, tema e protocolo em JSON (`{"aylis": 1, "root": {...}}`; `class`, `name`, `children`; o resto é propriedade, inclusive `on_*`), com JSON Schema. |
+
+## 2. As fases (25/10)
+
+O autor aprovou as fases uma a uma ("Pode seguir para a fase N"):
+
+1. Core. 2. Skia e janela no Windows. 3. GPU com OpenGL. 4. Eventos. 5. Controles básicos e
+temas. 6. Web e Linux — o Skia não compila para o navegador; **decisão:** a web usa o Canvas
+2D do navegador (`aylis-web`). O Linux foi testado num container (o autor pediu para usar o
+Docker Desktop). 7. JSON. 8. Dados. 9. DBGrid. 10. C ABI e protocolo. 11. IDE.
+12. Android e iOS (o iOS sem teste: precisa de Mac).
+
+Correções pedidas no caminho: "tentei rodar o exemplo e não abriu nada"; "ao clicar em
+'Novo' a IDE trava"; o clique no fim de uma palavra posicionava o cursor no lugar errado.
+
+## 3. IDE profissional e projeto (25/10)
+
+| Pedido | Decisão |
+|---|---|
+| "projeto que tenha vários formulários… chamar um formulário dentro de outro e externo como modal e como show" | `show`, `show_modal` (não bloqueia: o resultado chega numa função), `close`, `on_close_query`, `ModalResult`; uma janela por form. |
+| "é bem comum termos nomes iguais em vários formulários… não posso impedir isso" | Cada form é um escopo de nomes (como o `Owner`); caminhos `frmClientes.btnSalvar`. |
+| Novo projeto numa pasta própria, com `.aylisproj` indexando tudo; usar `forms`, `assets`, `themes`, `src` | Feito assim. |
+| Linguagem por projeto: "faz alguma diferença?" | A linguagem só muda o código dos eventos; o visual é o mesmo e dá para trocar. |
+| Player de áudio, imagem e vídeo; "o vídeo deve ser uma interface simples que permita… decodificação própria e pintar quadro a quadro… o mais compatível possível, mas não pode impedir FFmpeg ou codecs próprios" | Vídeo em três camadas: quadros empurrados de qualquer thread, `VideoDecoder` plugável e fábricas por extensão. Padrão: o decodificador do sistema. |
+| Um botão "Executar", validando o ambiente antes | Verificar ambiente com correções sugeridas, F9 com lista de erros, Publicar. |
+| "tiraria as etapas 18 por enquanto… pode fazer sem interrupção… quero testar só no final" | Relatórios e impressão (fase 18) adiados; as outras fases seguiram sem parar. |
+| Inputs com alinhamento, quebra de linha e reticências (por caractere, por palavra ou desligado) | Feito em todos os campos de texto. |
+
+## 4. Componentes dos apps reais, temas e renderizador (25/10)
+
+| Pedido | Decisão |
+|---|---|
+| Analisar NoOBS, RTSPlayer, audioroute, conversa-web e fii-postgres e criar os componentes que eles precisam, "sem copiar as cores… subtipos… mesclar temas de componentes" | Componentes criados com as cores do aylis; subtipos na paleta; tema por componente e mistura por classe. |
+| "o acesso ao postgres é só para ter dados de backend e não para o frontend, certo?" | Certo: o Postgres fica no backend; o frontend só recebe os dados. |
+| "testar a renderização sem o Skia no Windows… tamanho do executável… memória… velocidade" | Direct2D medido: executável 19,3 → 2,2 MB; quadro do DBGrid 0,57 ms (Direct2D) contra 1,07 (Skia GPU). |
+| "quando criar um novo projeto deve ter opção de selecionar isso por plataforma… por padrão Direct2D no Windows" | Renderizador por plataforma no projeto (Novo projeto e Opções, com os números medidos); padrão Direct2D no Windows. |
+| Estilos de plataforma (Material, iOS, Windows), aparência do projeto e a lista de quem usa qual tema | Feito (Projeto → Aparência). |
+| Lottie, Markdown, WebView e SVG | Feitos. |
+| "Deixa o 3D para depois"; conferir os componentes do Vuetify; fechar os itens parciais (relógio do seletor de hora, Badge preso a outro controle, fila do snackbar, semana/dia do calendário, destaque de busca, rolagem horizontal) | Feitos (`docs/vuetify.md`). |
+| Material 3 e iOS com Liquid Glass | Feitos, com o desfoque de fundo de verdade nos três renderizadores. |
+
+## 5. 3D (25/10)
+
+| Pedido | Decisão |
+|---|---|
+| "O 3D falta decidir algo?" → aprovou ".glb… sem ordem de onde rodar primeiro… que funcione em todas as plataformas… vou precisar de controles em cima do 3D" | glTF/GLB em tempo de execução; FBX só importado na IDE (vira `.glb`). O 3D é composto com os controles na GPU, sem passar pela CPU, para os controles ficarem por cima sem perder velocidade. |
+| "teste antes de prosseguir para as outras plataformas, isso não pode reduzir o desempenho tanto do 3D muito menos dos componentes… tenha uma métrica antes para comparar depois" | Linha de base medida antes (`medicoes/`) e comparada depois de cada etapa. |
+| "Pode seguir para outras plataformas" | Skia GPU, navegador (WebGPU) e Android sem cópia; macOS e iOS por cópia (precisam de Mac). |
+| Importar FBX na IDE | Feito com o ufbx. |
+
+## 6. Pendências antes de novidades (25/10)
+
+Perguntas respondidas: escolher a placa de vídeo (ainda não dá), fontes em qualquer idioma
+(sim), i18n (sim), LTR/RTL (só LTR), taxa de quadros (vsync, redesenho só quando algo
+muda).
+
+| Pedido | Decisão |
+|---|---|
+| "Publicação: APK assinado, AAB, .msi, Python só no desktop… será a última coisa que iremos testar" | A publicação fica por último na lista. |
+| "Escolher a placa de vídeo… não é prioridade" | Fora da lista ativa. |
+| "vamos resolver todos os itens que ficaram pendentes antes de desenvolver novas melhorias" | A lista oficial ficou no PLANO (seção 11.16); hoje está em AJUSTES-CONCLUIDOS.md. Novos pedidos entram numa fila depois dela. |
+
+Resolvidos desde então (detalhes no PLANO): rotação no clique, sombra e gradiente cônico
+no Direct2D, ListBox com várias seleções, "hoje" no fuso local, proporção fixa, SVG com
+formas, vidro no navegador, fim de clipe e materiais, luzes, câmeras e sombra no 3D, grid
+(caixa de marcar, várias linhas, totais, busca incremental), índices nomeados, filtro com
+parâmetros, situação de cada registro, eventos de Field remotos em lote, teste do
+`aylis_post`, `wss://`, editor de fonte, posição da janela e dos painéis, editor de código
+com realce, migração do `Cargo.toml` antigo, e inspetor e hot reload no Android e no
+navegador.
+
+## 7. Pedidos para depois das pendências (25/10)
+
+Anotados na fila do PLANO, antes da publicação:
+
+- "limitar a taxa para economizar bateria e um método para obter o FPS atual".
+- Ícone da bandeja com animação ou indicador e menu com cor própria; notificação do
+  Windows; barra de título personalizada (botões próprios ou a barra padrão alterável);
+  componente da barra de tarefas (controles na miniatura, ações no botão direito,
+  indicador como nos apps de mensagem).
+- DBGrid: evento de pintura personalizada da célula e da linha, recebendo os dados da linha
+  (objeto/JSON) e o índice.
+- MCP na IDE: **decisão:** a IDE vira um servidor MCP que expõe as ações dela (abrir forms, mudar propriedades, executar, inspecionar o app) para assistentes como o Claude.
+
+Perguntas respondidas na mesma mensagem:
+- **Efeitos de transição:** existem as transições de estado do tema (hover, pressionado,
+  foco), as animações de propriedade com gatilho e a troca de clipe do 3D; ainda não existe
+  transição de página ou de form (deslizar, esmaecer).
+- **WebSocket:** cada conexão é uma tela. O `aylis-host --listen` atende uma conexão por
+  processo; com o app no navegador (`?ws=`), o servidor é o do backend, e um servidor pode
+  atender vários navegadores, cada um com a sua tela.
+
+Pedidos durante o trabalho:
+- "verificar se múltiplas threads correm risco de concorrência com a interface e explicar
+  isso na documentação" → [docs/threads.md](threads.md). Dois riscos foram corrigidos: o
+  fechamento de áudio e vídeo esperava a thread de decodificação, e o cliente Python e a C
+  ABI permitiam uso concorrente.
+- "um documento com todos os pedidos dessa sessão para documentar um histórico de decisões
+  do projeto" → este arquivo.
+
+## 8. Depuração na IDE e transições (25/10)
+
+| Pedido | Decisão |
+|---|---|
+| "Siga" (pontos de parada dentro da IDE) | A IDE fala o protocolo de depuração do VS Code (DAP), com o CodeLLDB para Rust e o `debugpy` para Python. Teclas F5, F7, F8, Shift+F8, F9 e Ctrl+F2, mais Ctrl+F5 para depurar. Os dois adaptadores foram baixados com autorização do autor; o "Verificar ambiente" passa a oferecer a instalação. |
+| "sobre o MCP use Expor as ações da IDE" | Decidido: a IDE como servidor MCP (na fila de pedidos novos). |
+| "Transição de página ou de form (deslizar, esmaecer)… adicione na fila de pendências" | Anotado nas pendências (seção Efeitos do PLANO). |
+
+## 9. Pendências finais, pedidos novos e a rodada autônoma (26/10)
+
+| Pedido | Decisão e resultado |
+|---|---|
+| "Faltam ponto de parada com condição e 'rodar até o cursor' (F4)" | Feitos na janela de código da IDE: condição e contagem de passagens por ponto, F4 roda até a linha. |
+| "qual a possibilidade de ter suporte para as linguagens: C#, C++, Go, Pascal, TypeScript (Node e Bun) e Java?" — "o pascal é com freepascal igual ao lazarus" | Todas sobre o protocolo do `aylis-host`: clientes em `clients/` (testados com Node, Bun, .NET 8, JDK 17, Go 1.23, Visual C++ e Free Pascal 3.2.2) e linguagens de projeto na IDE (gerador de handlers, F9, publicação desktop, VS Code). As ferramentas foram baixadas com autorização do autor. |
+| "preciso de componentes para acesso a camera e outro para microfone" | `CameraView` (Windows, Linux, navegador, Android com Camera2) e `Microphone` (cpal), com foto PNG e gravação WAV; permissões do Android pedidas em fila. Testes não salvam nem abrem imagens da câmera do autor. |
+| "trocar o modelo 3D de teste para cubo e bola em movimento, verificar suporte para raytracing e pathtracing" | Cena de demonstração nova; avaliação em `docs/3d.md` (ray query disponível na RX 9070 XT pelo DX12; a implementação ficou como melhoria). |
+| Mover para `Documentos\git\aylis`, commitar e dar push numa branch; "siga… sem interrupção até terminar tudo… no final desligue o computador" | Branch `desenvolvimento`; commits e push a cada item; desligar no fim. |
+| Logo no README; "a pasta target ja tem quase 20 GB, limpe ela e ajuste para remover os arquivos… sem uso" | `README.md` com o logo; a pasta antiga (87,7 GB) foi apagada; limpeza automática diária das unidades sem uso há 7 dias (`aylis-tool limpar`). |
+| "No mobile… o teclado não fique sobre os componentes" | `Ui::reveal`: o form rola para manter o campo com foco acima do teclado (Android `adjustResize`, iOS pela área segura). |
+| "já é possível interceptar qualquer mensagem do windows?… impedir… ou trocar a mensagem" | `aylis::platform::win::on_message(form, \|m\| ...)` com `Default`, `Handled` ou `Replace`. |
+| "Os componentes que dependem de plataforma a IDE deve informar visualmente… com ícone da plataforma" | Ícones das plataformas na paleta, com a lista na dica (`aylis_build::CLASS_PLATFORMS`). |
+| Notificações próprias do Android, "talvez… um formulário inteiro" | O `Notification` ganhou canal, prioridade, botões, progresso, fixa e `form`: um form inteiro desenhado como a imagem grande. Testado no emulador. |
+| DataModule; "o formulário também precisa de componentes não visuais"; "não precisa… herança de formulários nem de datamodule" | `DataModule` como raiz não visual, `uses` no form, referências `dmDados.x`; os forms continuam aceitando não visuais; sem herança. |
+| "ter um mesmo formulário em versões diferentes, um para windows, outro para Android… quero sua opinião" | Opinião: vale na forma simples. Feito: `principal.android.json` etc., os mesmos handlers, `Componentes` com `Option` para o que só existe em algumas variantes. |
+| "A IDE precisa ser multi idioma… por padrão… o do sistema operacional" | 12 idiomas, o do sistema por padrão, Exibir → Idioma. |
+| "componentes de formas geométricas, com possibilidade de clique" | Nove formas; o clique acerta a figura (`contains_point` no núcleo). |
+| "todos os componentes usados em plataformas de BI e também trader" | Paletas "BI" (KPI, tabela dinâmica, segmentador, mapa coroplético e seis tipos novos no `Chart`) e "Trader" (candles com indicadores e desenhos, livro de ofertas, profundidade, faixa de cotações, lista que pisca, times & trades). |
+| "Já tem um componente que seja como um layout? E… como o recyleview… listas infinitas conectada a dataset ou não" | O `Layout` já existia. Novo: `VirtualList` (modelo de item, reciclagem, `on_bind`, `on_load_more`) e `DBVirtualList` (ligada a um DataSource). |
+| MCP na IDE (decidido em 25/10) | Servidor MCP HTTP local com as ações da IDE (abrir, ler e mudar componentes, salvar, gerar código, executar, comandar o app). |
+| Publicação (por último) | APK assinado com a chave do desenvolvedor, AAB validado pelo `bundletool`, `.msi` pelo WiX, e as outras linguagens no celular e no navegador por um app casca ligado a um servidor (`aylis-host --bridge`). |
+
+Ficam para quando houver o hardware: o Mac (3D sem cópia, Metal, câmera no macOS/iOS), o
+celular de verdade e arquivos FBX reais. Ficam como melhorias anotadas no PLANO: ray tracing
+no `Model3D`, altura variável na `VirtualList`, depurar as outras linguagens dentro da IDE e
+traduzir as mensagens montadas com valores.
+
+## 10. Organização da IDE (26/10)
+
+| Pedido | O que foi feito |
+|---|---|
+| "tudo ja foi migrado para o git? pode remover a pasta antiga" | Conferido arquivo a arquivo; a pasta antiga foi esvaziada. |
+| "preciso de uma pasta dist que tenha tudo que precisa para executar, a pasta target não serve" | `aylis-tool dist-ide` monta `dist/aylis-ide/` (IDE, aylis-host e aylis-tool em release + `aylis/` com o código que os projetos em Rust usam, ~170 MB). A pasta do aylis passou a ser achada em tempo de execução (`AYLIS_ROOT`, depois `aylis/` ao lado do executável, depois o repositório). |
+| "não quero depender de python pra nada no desenvolvimento do aylis" | A montagem da dist é um comando do `aylis-tool` (Rust), não script. |
+| "não tem como fazer algo que não precise ter duas vezes?" → "vamos colocar o aylis-ide para gerar um instalador nsis" | A pasta `dist/aylis-ide` (cópia do código) deu lugar ao `aylis-tool installer-ide`: instalador NSIS com componentes (IDE; projetos em Rust; clientes; documentação; atalho), por usuário, ~48 MB. Instalada, a IDE compila os projetos em `%LOCALAPPDATA%\aylis\target`; no repositório, usa o código e o `target` dele (nada em dobro). |
+| "ao dar dois cliques no aylis-ide ele fica com um console aberto junto" | A IDE virou programa de janela (`windows_subsystem`); aberta de um terminal, escreve no console dele. As ferramentas que ela chama (cmd, vswhere, depurador) também sem console. |
+| "as propriedades dos componentes devem ficar a esquerda na IDE e a lista de componentes a direita" | Estrutura e Object Inspector à esquerda; Projeto e Paleta à direita. |
+| "um botão que abra uma janela com a lista dos componentes de forma que eu possa ver o componente" | Galeria de componentes (botão "Galeria" ao lado da busca da paleta e Exibir → Galeria de componentes…): cada componente e subtipo desenhado com o tema do form, por categoria, com busca; clicar escolhe, como na paleta. |
+| "por que não criar de fato o componente como ele é?" / "o tamanho do componente não pode ser igual pra todos" | A galeria cria cada componente de verdade (hover, clique, digitação, animação), no tamanho padrão dele e com o tema do form; os DB* ligados a um ClientDataSet de exemplo; "Usar" escolhe. Os que mexem no sistema (bandeja, barra de tarefas, barra de título, WebView, câmera, microfone) e o 3D continuam desenhados. |
+| "adicionei um icone… use no aylis-ide" | `crates/aylis-ide/resources/aylis-ide.ico`: no executável (todos os tamanhos, pelo `build.rs`), na janela e no instalador. `aylis_build::ico_res` lê `.ico` com várias imagens. |
+| "ao fechar a IDE ela abre uma mensagem de confirmação no estilo do windows xp… essas mensagens devem ser componentes" | Componente `MessageDialog` (como o `TTaskDialog`), feito com o aylis: `title`, `text`, `kind`, `buttons`, `execute` e `on_close`. As confirmações da IDE (sair, fechar aba, remover form, correções do ambiente) usam ele; a caixa do sistema saiu. |
+| "preciso de um componente de analytics… e um modo de captura de todos os eventos executados pelo usuário… esse arquivo pode ser importado pelo aylis-ide" | Observadores de atividade no núcleo (`Ui::add_observer`); componentes `EventRecorder` (gravação `.aylisrec`, inclusive pânicos) e `Analytics` (métricas somadas entre sessões); na IDE, Arquivo → Abrir gravação… (resumo e linha do tempo) e a própria IDE gravando o uso em `%LOCALAPPDATA%\aylis\gravacoes` (Ajuda → Gravar o uso da IDE). |
+| "quando dou Ctrl+Shift+N… se eu cancelo esse modal fica só a tela preta" | Os itens de menu guardavam os ids de quando foram criados (o "Recentes" ainda era o form): o refresh apagava a IDE. Agora leem os ids finais no clique. |
+| "do nada ficou assim, veja no log" (IDE só com o form, sem painéis; antes, triângulos de lixo) | A gravação mostrou: o "…" da sombra abriu o diálogo, fechado pelo X; o `Ui` continuou inteiro (os cliques acertavam os painéis), só o desenho quebrou. A IDE usa Skia sobre OpenGL (AMD Radeon RX 9070 XT), um contexto por janela, e ao fechar um diálogo o Skia soltava os recursos dele no contexto da janela que desenhou por último. Agora a janela torna o próprio contexto atual antes de soltar. As gravações passaram a ter o renderizador e a placa no cabeçalho e a abertura/fechamento das janelas na linha do tempo. |
+| "encontrei outro bug.. ao rotacionar um componente" (alças e contorno no retângulo sem giro) | O designer passou a desenhar contorno e alças no retângulo girado (giro do controle e dos contêineres, e o `translate`), a achar as alças ali, a selecionar pelo clique onde o controle aparece e a redimensionar no eixo do controle. |
+| "poderia ter o evento de duplo clique do designer no componente e abrir algo personalizado ou chamar a inserção de código" | Duplo clique no designer: o editor do componente quando a classe tem (campos do ClientDataSet, testar o MessageDialog), senão o handler do evento padrão, criado se preciso, aberto no código. `Component::default_event` (Button e Chip: `on_click`); sem ele, o `on_change`/`on_timer`/`on_select`/`on_close` da classe ou o `on_click`; no form, `on_show`. A seta → do Object Inspector com o evento vazio cria o handler antes de abrir. |
+| "o dataset por exemplo, ao dar duplo clique ele abre a lista de fields e permite mudar a propriedade deles" | Janela "Campos de …", não modal: lista os campos na ordem; clicar seleciona o campo e o Object Inspector mostra todas as propriedades dele; + Adicionar, Excluir, ↑/↓ (ordem) e "Editar todos…" (a tabela de antes). Abre no duplo clique do ClientDataSet e no "Editor de campos…" do Object Inspector, e acompanha as mudanças. |
+| "a pesquisa de componentes da paleta não está funcionando" | A gravação mostrou que a busca filtrava (on_change a cada letra); a paleta estava rolada para baixo e a rolagem ficava além do fim do conteúdo novo, com os resultados acima da parte visível. O layout passou a limitar a rolagem de qualquer contêiner ao tamanho do conteúdo. |
+| "a lista nunca ficou curta e ao testar novamente o problema continua" | A busca nunca filtrou: o Edit manda o texto novo no `on_change` como `EventArgs::Value`, e os handlers da busca (paleta, Object Inspector, galeria) só liam `EventArgs::Text`. Novo `EventArgs::text()` no núcleo lê os dois; o teste agora digita de verdade (foco + `text_input`). |
+| "Preciso que tenha autocomplete nativo da plataforma para os componentes de texto com possibilidade de definir outro motor de sugestão ou correção de texto" | `TextAssist` no núcleo (check, suggest, complete, add_word), motor nativo do Windows (`ISpellChecker` + `TextPredictionGenerator`), `WordList` e `Chain`; `spellcheck`, `autocomplete`, `language` e `keyboard_suggestions` (Android) no Edit e no Memo. |
+| "Nos componentes de texto já é possível personalizar o caret?" / "selecionar textos, definir posição inicial do caret" | `caret_color`, `caret_width`, `caret_style`, `caret_blink`; `sel_start`, `sel_length`, `sel_text` (e no Memo `caret_line`, `caret_column`) como propriedades só de execução (`PropInfo::runtime`, seção `computed:` do `properties!`); `on_caret_move` no Edit. |
+| "agora preciso que tenha um x no componente não visual para que eu possa remove-lo com o mouse" | X em cada chip da bandeja de não visuais (realçado no hover); exclui pelo mesmo caminho do Delete (desfazer funciona). |
+| "o popupmenu não tem como eu adicionar itens nele? ... com capacidade de divisor, com icones, checks e cada item com seu evento de clique, ou apenas um evento de clique no popup que receba o item clicado" | Editor de menu (duplo clique no PopupMenu/MainMenu): itens, divisórias, ícone, `checked`/`auto_check`, atalho, `on_click` por item; `on_item_click` no menu recebe o item clicado. |
+| "as opções quando seleciono a propriedade de um popup, não sumiu quando mudei de componente" | Listas suspensas declaram `dies_with(dono)`: o `Ui::free` do dono leva a lista junto (o Object Inspector refeito não deixa lista órfã). |
+| "criar categoria de componentes não visuais e outra para os visuais ... ordenação do tab personalizável, sendo possível pular de um componente para outro independente do nível" | Seção "NÃO VISUAIS" na paleta com ícone por classe e descrição, janela própria, fora da galeria; `tab_order` e `active_control` no Form, com o diálogo "Ordem de tabulação…". |
+| "permite mover um componente para fora da tela corretamente, mas se eu clico fora dele ele desaparece completamente" / "quando abro um popup para escolher algo e faço o scroll da janela o popup fica parado" | O designer pinta apagado o que passa da borda do form (`Ui::paint_overflow`) e deixa pegar; `Ui::follow` prende as listas suspensas ao controle que as abriu (somem quando ele sai da parte visível). A lista do `popup_menu` passou a oferecer só PopupMenus. |
+| "vamos dividir a paleta de componentes visuais nos estilos de cada plataforma" | Abas Windows / Apple / Android / aylis; cada versão é um grupo; o componente entra com `theme` = família, que segue o claro/escuro do app (`theme_named` aceita família). |
+| "ao alterar a propriedade de visível de um componente na IDE, ele não deve desaparecer completamente, deve ficar translucido" | No modo de design, `visible` pela propriedade vira `design_hidden` (translúcido, no layout e clicável); o JSON continua `false`; a visibilidade interna dos controles não muda. |
+| "o enable do botão não está ficando visível na IDE" | No designer o relógio não anda e a transição de estilo nunca terminava; o designer passou a pular as transições. |
+| "o demonstrador ... trava e fica parado na mesma posição" | O pedido de quadro era um só para o `Ui` e cada janela zerava ao pintar; agora é guardado por form (`frame_requests`). |
+| "vários menus ficam habilitados mesmo que eu não esteja com um projeto aberto" | Os itens cujas ações exigem projeto (e o botão Publicar) ficam em `State::project_only` e o refresh liga/desliga pelo projeto aberto; os que funcionam com form solto (Novo form, Gerar código, Executar → prévia) continuam habilitados. |
+| "na statusbar poderia mostrar em tempo real o tempo decorrido desde o inicio do processo" | O `Job` guarda o início; um Timer de 1 s da IDE mostra "… 1 min 05 s" enquanto compila; quando o programa começa, "✔ Compilado em …" nas mensagens; sem programa (Publicar, erro), o tempo total na mensagem final. |
+| "o botão não poderia ter opção de selecionar a cor do conteúdo e a cor da borda e a cor da fonte?" | `fill`, `border_color` e `text_color` no Button (vazio = tema), com hover e pressionado derivados da cor; `PaintCtx::with_style`. |
+| "é possível alterar a fonte, permitindo escolher a fonte, o tamanho, negrito, italico entre outros?" | Fonte no `ControlBase` para todos os controles (`font_family`, `font_size`, `font_weight`, `font_italic`, `font_underline`, `font_strikeout`), herdada do pai como o `ParentFont`; sublinhado/tachado nos três renderizadores; editor de fonte com as fontes do sistema. O Label perdeu `font_family`/`font_size` próprios (mesmos nomes, agora da base). |
+| "o botão tem a propriedade icone mais não tem nenhuma tela que mostre os icones disponíveis, deve ter um seletor" | "…" nas propriedades de ícone abre o seletor de ícones (o de Projeto → Ícones, agora `actions::pick_icon`), que funciona sem projeto, começa no ícone atual e tem "Sem ícone". |
+| "ao executar um form com um botão que tem icone o icone não exibe" | A prévia (F9 sem projeto) não tinha os ícones de pacote, que só a IDE registra; agora registra os citados no JSON do form a partir dos pacotes da IDE e, com projeto, instala as fontes e ícones de `assets/`. |
+| "preciso das abas de plataforma na galeria de componentes" | Abas Windows / Apple / Android / aylis e versões na galeria; os cartões vivos usam o tema da versão e o "Usar" escolhe `Classe@Família`. |
+| "Corrija o texto dos botões Perigo e Sucesso no tema iOS 26." | Perigo e Sucesso herdavam o texto do botão comum (azul no iOS); tokens `on_danger`/`on_success` no tema base (Material 3 escuro: texto escuro no vermelho claro); teste de contraste em todos os temas. |
+| "adicionei um campo mais não mostra todas as propriedades que um field precisa, não tem get_text nem set_text" | Evento `on_set_text` no Field (por nome: o handler grava com `set_value` ou recusa com `set_field_error`); `aylis::data::get_text`/`set_text` para responder com uma closure; o esqueleto gerado de `*_get_text`/`*_set_text` já vem com a chamada; dica na janela de campos (clique no campo → Object Inspector). |
+| "ao colocar um modelo 3D e usar a scroll em cima dele empurra o formulário inteiro" | A roda do designer rolava sem limite; agora só rola no eixo em que o form (e o que passou da borda) não cabe, presa às bordas. |
+| "Feche as lacunas de automação: AutomationId pelo nome do componente e as ações nos menus, abas, listas e grid." | `author_id` = nome do componente (AutomationId); `aylis_core::automation` (`access_items`/`access_action`) com abas, linhas de ListBox/ComboBox, itens de menu (barra e aberto) e cabeçalhos/linhas/células do DBGrid como nós do AccessKit; `ui.click_item`; comandos `items`/`click_item` no inspetor. Verificado pelo UI Automation do Windows (Invoke e SelectionItem). |
+| "vamos separar o plano inicial dos ajustes que estão aparecendo agora e dos ajustes que já foram concluidos, preciso de um documento pra cada coisa" | `PLANO.md` fica só com o plano inicial (princípios, arquitetura, fases); `AJUSTES-PENDENTES.md` com o que falta (sem Mac nem celular); `AJUSTES-CONCLUIDOS.md` com o que foi feito e testado (a lista de 25/10 e os ajustes de 26/10, com os commits); `docs/testes-em-dispositivos.md` continua com o que depende de aparelho. |
+| "agora faça todos os ajustes pendentes anotados e os que possam aparecer no caminho (sem deixar nada incompleto), teste tudo depois e faça commit e push" (27/10) | A lista de 26/10 inteira: depuração das linguagens do aylis-host (Delve, netcoredbg, js-debug no Node, adaptador próprio sobre o jdb, CodeLLDB), GLBs do autor (cores por vértice, `KHR_texture_transform`, verniz), traçado de raios no `Model3D` com amostras acumuladas, escolha da placa de vídeo, `Chart` com os tipos do Chart.js e o `DBChart`, relatório de bandas com PDF e impressão, `VirtualList` variável/horizontal/em grade, Enchant no Linux, traduções com `aylis-tool idiomas` e modelos com valores, interface espelhada (RTL). O que só dá para conferir com outro hardware (impressora, duas GPUs, ray query fora do DX12) foi para `docs/testes-em-dispositivos.md`. |
+| "Os componentes devem ter propriedades para troca de cores como fizemos nos botões, todos os componentes que tenha alguma cor.. depois revise todos" | `ColorOverride` no `ControlBase` (`fill`, `border_color`, `text_color`, `accent_color`, `success_color`, `warning_color`, `danger_color`): a pintura recolore os tokens do tema daquele controle (com cache) em vez de cada controle ter os seus campos; os controles que usavam cores fixas passaram a ler `ctx.colors`; `transparent_background` para quem não pinta fundo. Revisão: um teste pinta cada controle registrado com cada cor e confere que ela aparece. |
+| "Também serve para a fonte do texto" | `ctx.font(tamanho)` e `ctx.monospace_font` aplicam a fonte do controle (`font_family`, `font_size`...) em todos os textos que o controle desenha, inclusive os que tinham tamanho próprio (títulos, legendas, editores de código); o mesmo teste confere a fonte em cada controle. |
+| "Depois crie alguns apps de demonstração do uso do Aylis, apps famosos do windows como o Paint, calculadora e media player" / "Faça os projetos que te dei de exemplo usando cada linguagem suportada pelo aylis" / "Em todas linguagem o resultado deve ser o mesmo" | `examples/apps/<linguagem>/{Calculadora,Paint,Player}`: projetos do aylis nas 8 linguagens com o mesmo form JSON. O pesado fica nos componentes (`PaintCanvas` novo, `VideoPlayer`), cada linguagem só tem a lógica. Para provar que é igual: roteiros de teste sem janela (`aylis_remote::roteiro`) que rodam em Rust no processo e nas outras pelo aylis-host (ping/pong com a lógica); o teste `apps` do aylis-tools compara o estado das 8. As contas da Calculadora evitam o que muda entre linguagens (log10, número quebrado em JSON, a formatação de `double` do Free Pascal). |
+| "O Paint deve ter os atalhos que permita selecionar e usar a seta para mover a seleção" | Ferramenta de seleção no `PaintCanvas`: puxar seleciona, arrastar por dentro ou as setas movem (Shift: 10 px), Delete apaga com a cor 2, Esc/Enter soltam; Ctrl+A/C/X/V pelos menus (`select_all`, `copy`, `cut`, `paste`). |
+| "Coloque os ícones nos botões do paint" / "Se necessário abra o Paint do windows para comparar o visual, deve ficar idêntico" | Ícones novos no conjunto do aylis (lápis, pincel, borracha, balde, conta-gotas, linha, retângulo, elipse, seleção, desfazer, refazer; e os do player). O acesso ao Paint do Windows foi negado, então a faixa foi refeita como a do Paint do Windows 11 de memória: grupos com rótulo (Seleção, Ferramentas, Pincéis, Formas, Tamanho, Cores), botões só com ícone, cores redondas com o anel azul na cor ativa, área cinza clara. |
+| "Depois que terminar verifique o desempenho do componente 3D na ide pois eu tinha sentido uma lentidão" | Medido com `AYLIS_BENCH` na IDE: um form com `Model3D` deixava cada quadro em 15,3 ms (8,0 sem o 3D). Três causas: a IDE compilava o aylis-3d sem a feature `gl` (o 3D saía no Direct3D 12, o Skia no OpenGL recusava a textura e o quadro passava pela CPU); o designer pintava o form duas vezes (a camada do que passa da borda, mesmo sem nada para fora); e o modelo animado pedia quadros sem parar. Agora: `gl` ligada, a camada só com o que passa da borda, e no designer o modelo fica parado. Ficou em 8,1 ms. A gravação mostrava também um erro ao fechar ("Thread Local Storage ... destruction"), que não se repetiu; os acessos que podem rodar com o app fechando passaram a `try_with`. |
+
+## 11. Análise de arquitetura para software grande (02/11)
+
+| Pedido | Decisão |
+|---|---|
+| "Faça uma análise independente sobre o funcionamento do Aylis, procure por pontos fracos e o que possa quebrar ou atrapalhar no desenvolvimento de grandes softwares" | 15 críticas com motivo e recomendação; viraram a seção "Arquitetura para software grande" dos pendentes, cada item com o critério de pronto. |
+| "colocar a IDE para fazer uma checagem antes de compilar" | Item 1b: "Executar", "Publicar" e `aylis-tool check` carregam os forms num `Ui` sem janela e conferem handlers, referências, campos, assets e nomes em texto no código; erro bloqueia, aviso não. |
+| Item 1 (acesso tipado): a mudança na API dos projetos existentes e a falha dura | Impacto baixo na API; o form que não bate com o código não abre (a falha dura é a esperada). Componentes criados em execução ficam fora do acesso gerado. |
+| Item 2 (form com instância): o exemplo em Pascal | Aprovado: a classe do form (`TFrmIBGE = class(TAylisForm)`) com os componentes como campos `published` geridos pela IDE, o estado em campos `private`, os handlers achados pelo nome nos métodos `published` e um `RegisterForm` no lugar do bloco de registro; o mesmo modelo em Rust (struct gerada e `impl` no arquivo do usuário). |
+| Evento do mesmo form disparado dentro de um handler dele | Adiar até o handler terminar, também no Rust (as outras linguagens já fazem assim pela fila de eventos do cliente). |
+| Item 3.1: o que fazer quando o backend não responde a uma pergunta (fechar o form) | Sem prazo automático enquanto a conexão estiver viva; o segundo clique no X pergunta "Fechar mesmo assim?"; a conexão caída fecha. O autor pediu um componente para a demora: um disparador que, passado um tempo com o backend ocupado, mostra um form ou frame próprio ou só dispara eventos antes e depois, no lugar do congelamento padrão, sem valer quando a espera é uma janela do próprio backend. |
+| O componente de espera proposto para o 3.1 | Aprovado: `BusyWatcher` (não visual; `delay`, `scope`, `action`, `busy_form`, `block_input`, `min_visible`; `on_busy_start`/`on_busy_end` do lado da tela). O protocolo ganha `seq` no evento e `done` automático do cliente; sem o componente, o padrão bloqueia a entrada e mostra o cursor de espera, sem tela branca; janela aberta pelo próprio pedido pausa o relógio. |
+| "se o usuário está encerrando a tela o backend deve ser encerrado junto" / "como o backend aceitaria eventos de outros formulários? ele já não estaria ocupado?" | A saída de emergência encerra o programa (no desktop, o processo do backend; no servidor, só a sessão daquela tela). Ocupado é do backend, não do form: todos os forms ligados a ele recusam a entrada enquanto um handler roda; o `BusyWatcher` perdeu o `scope`. |
+| "é trabalho que fica por conta da própria linguagem ... criar uma thread própria para fazer o trabalho pesado e abrir um form em showmodal" | Paralelismo é escolha do programador: sem handlers em paralelo, sem `Aylis.Background`, sem thread de comunicação e sem cancelamento declarado. O aylis dá o que o programador não consegue fazer sozinho: trava na escrita e `Post` também no modo desktop de todos os clientes, e a rede de segurança para quem não usou thread (entrada recusada, cursor de espera, saída de emergência, eventos repetidos juntados). O `BusyWatcher` fica como conveniência, com prioridade baixa. |
+| "estou com muita dificuldade em entender o que é o Aylis que gera e o que é programação própria da tela" | Entrou no item 12: uma pasta por dono no disco (`src/` do usuário, `generated/` do aylis), o cliente do protocolo vindo da instalação do aylis em vez de copiado no projeto, a unit de form só com a seção `published` gerenciada (modelo do item 2, como no Delphi) e a árvore de fontes da IDE agrupada por dono, com o gerado somente leitura. |
+| Item 3.4: um `MessageDlg` ou `ShowModal` dentro do handler (o `close_query` que pergunta "Descartar?") | Opção C: nos clientes remotos, `MessageDlg` e `ShowModal` esperam como no Delphi, com resposta adiada da tela (`"wait": true`) e um laço de eventos interno enquanto o diálogo está aberto; a versão com callback continua. Em Rust, só callback (a thread da tela não pode esperar). O 3.3 ficou coberto pelo 3.1. |
+| Item 3.5: `before_post` com backend remoto ("Recusar como no Delphi: com exceção" / "enquanto o post está executando a tela tem que esperar naturalmente, como no delphi") | `before_post` e `before_delete` viram eventos do form em todas as linguagens. Recusa por exceção (em Rust, `Result`, com o `?`); a tela espera o `post` com a entrada bloqueada e o cursor de espera, sem parar de pintar; o código do backend depois do `Post` só segue com o `post` concluído (o evento-pergunta roda durante o `Call`). |
+| Item 3.6: teclas ("no edit comum também tem que ter essa possibilidade, quando ele estiver ligado a um field, o field é quem manda" / "deve ter no form e também um evento da aplicação inteira" / "deve ser possível [nas linguagens remotas], vai acontecer casos legítimos" / "uma propriedade nos componentes de texto que permita informar o caractere digitado pelo usuário e o caractere que é pra ser entregue") | `char_map` (digitado → entregue) e `char_case` em todos os controles de texto, com o Field mandando quando ligado; `key_preview` no form e um evento de teclado da aplicação; o handler engole ou troca a tecla em todas as linguagens (nas remotas, `on_key_down`/`on_key_press` viram pergunta só onde estão ligados, com as teclas seguintes numa fila em ordem). Ordem: `char_map` → `char_case` → filtros → `on_key_press` → controle. |
+| "char_map e char_case não poderia ser a mesma coisa?" | Ficam separados: o `char_case` é regra sobre o valor (digitar, colar e o `text` gravado pelo código; Unicode e idioma), o `char_map` só troca o que o teclado produz. Na IDE, os dois e os filtros ficam num editor só, "Entrada de texto". |
+| Item 3.7: arrastar e soltar | Aprovado: `drag_data`/`drag_label` na origem e `drop_types` no destino (sem código e sem ida e volta), listas e grades mandando o item sozinhas; `on_drag_start` e `on_drag_over` como pergunta nas linguagens remotas, com recusa por exceção; arrasto entre forms do mesmo app; arrastar para fora do app fica para depois. |
+| Item 3.8: a forma da API dos eventos-pergunta nos clientes | Aprovado: recusar é sempre exceção (`Err` em Rust, `error` em Go); responder um valor é com `var` em Pascal (como no Delphi) e com um objeto de argumentos graváveis nas outras; a resposta é automática ao fim do handler; o catálogo marca as perguntas e a IDE gera as assinaturas. O `on_validate` do Field também vira pergunta. Fecha o item 3. |
+| Item 4: o componente "ocupado" ("me mostre o exemplo do componente composto") | Só afeta quem escreve componentes. Erro próprio e claro (`Error::Busy`, com o caminho e a dica) e o guia de componentes com a regra do composto (o pai lê os filhos; o filho avisa o pai por evento). Adiar a mensagem foi descartado: gravaria o dado no lugar errado. Tirar o `ControlBase` do componente fica guardado. |
+| Item 5: layout e pintura por parte ("se fizer como o delphi faz resolve?" / "na web é como?" / "e se fizer como o navegador? é muito complicado?") | Hoje o aylis repinta como o FMX. Plano no modelo do Flutter, em etapas: medir (com a web); o nível da VCL (layout por parte, pintura por retângulo, com o teste que compara as duas pinturas); desenho gravado por controle; camadas automáticas na rolagem e nas animações, mais `cache_layer`. Sem compositor em outra thread, que no aylis ajuda pouco e exigiria reformar o núcleo. |
+| Item 6: achar componentes sem percorrer a árvore | Aprovado: primeiro as listas de ligação do dataset (os `DataSource` e os controles ligados, como os `TDataLink` do Delphi), depois o índice de nomes por form e o despacho de eventos sem montar texto; verificação em modo debug contra a busca antiga e medição antes e depois. |
+| Item 7: o trait `Component` com 60 métodos | Reavaliado e reduzido (prioridade baixa): só os ganchos raros de plataforma e de designer vão para traits à parte (`PlatformHooks`, `DesignHooks`); o resto fica, como o `TControl` do Delphi; o `inherited` esquecido vai para o guia. |
+| Item 8.1: o `Decimal` ("no protocolo deveria enviar como numérico" / "não teria como mandar o número inteiro? e a casa decimal separada?" / "vamos manter o texto") | O decimal continua como texto no protocolo (número no JSON passa por `Double`; inteiro tem o limite de 2⁵³ no JavaScript), e os clientes devolvem o tipo exato de cada linguagem. A divisão nas expressões fica decimal; o Field ganha `rounding` (`half_up`, `half_even`, `truncate`, `up`); o Rust ganha os operadores; estouro vira erro. |
+| Item 8.2: data e hora com fuso | Aprovado: corrigir o `today()` (hoje em UTC) e criar o `now()`; ler `Z` e `±hh:mm` sem ignorar o fuso; `DateTime` continua como hora de parede e entra o `Timestamp` (instante em UTC, como o `ftTimeStampOffset` do FireDAC); o local é o do aparelho, com `time_zone` opcional no projeto. |
+| Item 8.3: `apply_updates` | Aprovado no modelo do 3.5: nas linguagens remotas, `on_apply_updates` vira pergunta, a tela espera e o `ApplyUpdates` só volta com tudo gravado, devolvendo o número de erros como no Delphi; em Rust, uma variante pendente com thread e `post`, com o dataset "aplicando". |
+| Item 9: erro no handler | Aprovado: o comportamento do Delphi nas 8 linguagens. Em Rust, handlers e métodos protegidos (devolvendo o componente que estava fora); a caixa de erro do aylis; um evento de exceção da aplicação; nas remotas, o cliente avisa a tela; erro na pintura marca o componente; na web, tela de erro com recarregar. |
+| Item 10: o mesmo texto nos renderizadores ("um motor de texto único no núcleo parece ser o certo mas tenho medo disso interferir no desempenho" / "podemos ter os 2 e decidir por projeto?" / "por plataforma e sem opção de form") | Agora: fonte embutida por padrão, designer no renderizador da plataforma, teste de medidas e o guia. Depois: modo de texto por plataforma no `.aylisproj` (`native`, `layout`, `core`), com `core` no desktop e no celular e `layout` na web nos projetos novos; sem opção por form. O custo do motor único é só na web (download e primeiro desenho). |
+| Item 11.1: features padrão do crate `aylis` ("a ideia é que o aylis não seja usado fora da IDE") | Descartado: o projeto gerado pela IDE já liga só as features e registra só as classes usadas nos forms (o linker descarta o resto). |
+| Item 11.2 a 11.5 ("hoje a compilação demora muito" / "é quase impossível testar tudo visualmente" / "única forma de garantir que foi testado" / "são várias sessões trabalhando em conjunto") | 11.2 aprovado (dividir o `aylis-controls` por família); 11.3 aprovado com foco na IDE (imagens da IDE, da galeria e das gravações comparadas na CI); 11.4 aprovado (cobertura por crate na CI); 11.5 não se aplica por enquanto: a sessão que faz o commit roda os testes e relata as falhas ao autor, que encaminha à sessão responsável. |
+| Item 13: evolução do formato e do protocolo ("não quero ficar arrastando coisas antigas de uma versão pra outra, vamos tratar como incompatíveis ... um migrador de uma versão pra outra, outro .exe à parte") | Sem nomes antigos nem obsoletas no núcleo; o número de formato só sobe numa mudança incompatível e só o próprio formato abre; o `aylis-migrate.exe` converte em cadeia, com cópia antes e relatório do código do usuário; a IDE oferece o migrador; o protocolo tem "olá" e só aceita a mesma versão, com a tela antiga mandada à loja. |
+| "estou pensando em mudar [o protocolo] para Protobuf" / "já tem compactação na comunicação entre o host e a tela?" | O protocolo continua em JSON (Protobuf sem suporte oficial para Pascal, protocolo dinâmico, depuração pior); medir e, se só a carga de dados pesar, um caminho binário só para ela. Não havia compactação: entra a `permessage-deflate` no WebSocket (não no stdio), e os clientes dividem cargas acima do limite de 1 MB por mensagem. |
+| Item 14: trabalho em segundo plano | Aprovado: `post_to(dono, ...)` descartado quando o dono foi liberado (o Access Violation clássico do `TThread.Queue` com o form fechado), em todas as linguagens; `spawn_local` com `async` na thread da tela para a web e bibliotecas `async`; no desktop, thread + `post_to`. |
+| "um código gerado para desktop que use thread não funcionaria para a web?" | Nas linguagens remotas funciona (o backend roda no servidor). Em Rust, `std::thread::spawn` compila para a web e falha ao rodar: entra o `aylis::background(dono, trabalho, fim)`, com thread no desktop e no celular e a thread da tela na web, e o aviso na verificação antes de compilar. |
+| Item 15: os menores ("em todo caso deve dar erro, e deve ser configurável o limite no projeto" / "pode fazer") | Os limites de profundidade e de eventos aninhados dão erro sempre e são configuráveis no `.aylisproj`; as referências a componentes liberados se limpam sozinhas; o nome da cor vai junto com o componente; roteiro de teste de leitor de tela e IME. Fecha a análise de 02/11: os 15 itens decididos. |
+| "a outra sessão corrigiu um problema de desempenho na pintura do editor de código ... minha preocupação é a lógica de repintura ficar duplicada entre o core e o componente" | Conferido: o editor marca a área pelo `ctx.repaint()` e desliza pelo `frame()` do núcleo, sem repintura própria; a pintura por área está no núcleo (`Ui::damage`) e no Skia GPU. Regra no item 5: o componente só diz o que mudou; área, imagem guardada e cópia de rolagem são do núcleo, que vai dar uma API de rolagem para quem rola por dentro (Memo, DataGrid); o cache de texto do Skia passa ao núcleo com o item 10. |
+| "pode commitar e começar a fazer todos os pontos ... seguir para a próxima automaticamente" | Feitos e commitados em sequência: item 5 até a etapa 2 (a medição mostrou que o nível da VCL basta), item 10 (o "agora"), 11.3/11.4, 1b, e os forms com instância em Rust e em Pascal (itens 1, 2 e 12). O 11.2 foi medido e ficou para o autor decidir. |
+| "o migrador pode ser atualizado para o estado atual do Aylis depois de migrar meus projetos, pois não vai sobrar nenhum projeto fora daqui para ser migrado, pode zerar o numero de layout e versão do Aylis" | Os exemplos e o NoOBS foram convertidos com o passo do `aylis-migrate`; depois o passo e o código de conversão saíram e o formato do projeto voltou a 1 (o dos forms já era 1). |
+
+## 12. Componentes novos (06/11)
+
+| Pedido | Decisão |
+|---|---|
+| "deve criar um componente para notificações push (FCM/APNs) para todas as plataformas" (06/11) | O `PushNotifications`: um trait de serviço no núcleo e um serviço por plataforma, o próprio do sistema em cada uma (FCM no Android, APNs no iOS e no macOS, Web Push no navegador, WNS no Windows, UnifiedPush no Linux), com o mesmo formato de mensagem. No Android, o FCM sem o SDK do Firebase (o build do aylis não usa Gradle): o aylis faz a instalação e o pedido do token como o SDK faz. Guia em `docs/push.md`. |
+| "eu preciso que seja modular em mais de um componente que seja possível fazer um app que faça ligações" / "a lógica de interligar tudo é por conta de quem for usar ... nada que envolva o audio ou vídeo nem transmissão" | Peças separadas, cada uma com os seus eventos: `PushTrigger` (filtro sobre os dados → ação), `WakeAppAction` (abre o app por cima do bloqueio, tocando) e `NotifyAction` (notificação com modelos). Como com o app fechado o Rust ainda não roda, no Android as regras e as ações ficam gravadas no aparelho e o Java executa; nas outras plataformas valem com o app aberto. |
+
+## 13. Conferência das Sessões 3 a 7 do roteiro (08/11)
+
+| Pedido | Decisão |
+|---|---|
+| "vamos fazer o roteiro-de-conferencia.md, você se conecta ao Aylis pelo MCP ... caso tenha algum ajuste vamos anotar para ser resolvido só no final" | A conferência foi feita pelo Claude Code ligado à IDE pelo MCP: ele prepara cada teste (projetos de teste fora do repositório), executa e pergunta; os ajustes ficam anotados e só são resolvidos depois. |
+| "se o MCP não funcionou, precisamos resolver ele e não fazer gambiarra em script pra isso" | Corrigido na ponte: a lista das ferramentas da IDE fica no `aylis-tools` (`ide_tools`) e a ponte responde a lista completa mesmo com a IDE fechada (o Claude Code não pede a lista de novo quando ela muda). |
+| "pode encerrar os executáveis quando precisar recompilar" | Liberado encerrar o `aylis-ide`/`aylis-tool` presos para recompilar. |
+| Modelo "Landing page" no Novo projeto: "não vejo muito sentido de abrir um projeto de exemplo tão cheio de coisas.. o modelo deveria ser em branco ... deveria ter os modelos: Desktop, Smartphone, Web" | Os modelos passam a ser Desktop, Smartphone e Web, em branco e já configurados (tamanho de tela, linguagem, plataformas, renderizador; no Smartphone, a moldura do aparelho). O "Landing page" sai; a Landing fica só como exemplo. |
+| Handler apagado do código que o form ainda cita (a geração recriava vazio) | "Avisar, não recriar": a geração só cria handler para evento ligado agora no form; o handler citado e ausente é erro da verificação antes de compilar. |
+| "o funcionamento atual do app está correto, não precisa mostrar dados enquanto não tiver terminado de carregar tudo" (GradeGigante) | A carga em segundo plano entrega tudo no fim (`load_batch`), como está; o roteiro é que muda. |
+| "Mudar o text de um Edit pelo código deve disparar o on_change, como na VCL?" — "Sim, como na VCL" | Mudar o valor de um controle pelo código (`text`, `checked`, `value`, `item_index`...) dispara o `on_change`, como a mudança do usuário, também pelo protocolo. O limite de eventos aninhados segura o laço. |
+| O "em uso · N" no catálogo de fontes ("só de estar marcada deve significar que está em uso.. ou estou enganado?") — "Só avisar a falta" | Marcada = o app leva; em uso = o projeto usa. Sai o "em uso · N" e aparece só a falta ("usada, mas não embutida"). |
+| A diretriz "Sem linguagem própria nem expressões" contra as expressões do `aylis-data` — "Ficam; ajustar a diretriz" | As expressões ficam (o `filter`, os campos calculados, os `[...]` do relatório). A diretriz passa a ser: sem linguagem própria (nada de script, comandos, laços ou funções do usuário); expressões só de valor, sem efeito colateral; regra de negócio continua sendo código do app. |
+| "Remover citação do delphi" (a diretriz "Eventos como no Delphi") | A diretriz vira só "Eventos: reentrantes, um handler por vez, nunca em paralelo...". |
+| As 5 decisões do estudo de CI com LLM (`docs/proposta-llm-ci.md`) | Ordem: as ferramentas que faltam no MCP (2b) primeiro, depois 1a → 2a → 4b → 3a/3b → 4a → 1d → 1b/1c; o agente na CI só comenta; o guia do agente no projeto novo é opção marcada por padrão, com `AGENTS.md`, um `CLAUDE.md` de uma linha e o `.mcp.json`; na CI a cobertura reprova e o tempo só avisa; as métricas de desempenho no app publicado só quando o app pede. |
+| "poderia ter uma propriedade no projeto que permite encerrar o processo se ele já estiver aberto.. e validar antes de começar a compilar se a saída vai conseguir sobescrever o .exe.. juntamente com comandos personalizados de cmd ou powershell para permitir executar antes ou depois da compilação" — "permitir cmd e powershell só em projetos confiáveis, e na janela que define o projeto confiável deve mostrar esses comandos" | A propriedade e a checagem do `.exe` entram. Os comandos antes e depois da compilação (cmd e PowerShell) só rodam em projeto confiado, e o "Confiar neste projeto?" mostra os comandos. Exceção à diretriz "Texto não vira código nem comando". |
+| "o modal ... deve ser corrigido para abrir onde está a janela do Aylis" | Todo diálogo da IDE abre sobre a janela do Aylis que o chamou, no mesmo monitor, na frente e com o foco (com a dona minimizada, pela posição restaurada dela). |
+| "não estou gostando de cada vez que eu renomear um componente ou handler eu ter que confirmar.. queria que fosse automático" (conferência do item 59, 08/11) | O renomear troca direto quando o servidor de linguagem achou os usos (só o que é de fato aquele símbolo), como o Delphi; a situação diz quantas trocas e o Ctrl+Z desfaz nos abertos. Só por texto (sem o servidor pronto), a prévia continua, porque a mesma palavra num comentário ou noutro escopo também casaria. Muda a decisão de 04/11 ("nada é trocado sem a prévia"). Completado pelo autor em seguida ("pode dar um erro e avisar que o LSP ainda está carregando"; "só deve abrir o diálogo de renomear caso não tenha LSP"): com o servidor ainda carregando e o nome usado no código, o renomear é recusado com a caixa de erro e o nome não muda; com servidor que não acha usos, trocam só os outros forms, sem a prévia; a prévia (por texto) só abre sem servidor de linguagem. |

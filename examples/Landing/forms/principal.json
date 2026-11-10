@@ -1,0 +1,2179 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Aylis — interfaces nativas em Rust",
+    "on_show": "abrir",
+    "width": 1200,
+    "height": 820,
+    "fill": "#0F1117",
+    "text_color": "#E6E8EF",
+    "views": [
+      {
+        "name": "phone",
+        "max_width": 599,
+        "changes": {
+          "pnlHeroTexto": {
+            "width": 340,
+            "padding": [20, 36, 20, 16]
+          },
+          "pnlTopo": {
+            "padding": [20, 12]
+          },
+          "lblTitulo": {
+            "font_size": 30
+          },
+          "lblSubtitulo": {
+            "font_size": 16
+          },
+          "layLingote": {
+            "visible": false
+          },
+          "pnlHero": {
+            "height": 460
+          },
+          "fluAcoes": {
+            "height": 116
+          },
+          "lblLinguagensTitulo": {
+            "font_size": 24
+          },
+          "lblPlataformasTitulo": {
+            "font_size": 24
+          },
+          "lblComponentesTitulo": {
+            "font_size": 24
+          },
+          "lblIdiomasTitulo": {
+            "font_size": 24
+          },
+          "lblRecursosTitulo": {
+            "font_size": 24
+          },
+          "secLinguagens": {
+            "padding": [20, 32, 20, 24]
+          },
+          "secPlataformas": {
+            "padding": [20, 24]
+          },
+          "secComponentes": {
+            "padding": [20, 32, 20, 24]
+          },
+          "secIdiomas": {
+            "padding": [20, 32, 20, 24]
+          },
+          "secRecursos": {
+            "padding": [20, 32, 20, 24]
+          },
+          "pnlRodape": {
+            "padding": [20, 24]
+          },
+          "fluMenu": {
+            "visible": false
+          },
+          "grdLinguagens": {
+            "columns": 1
+          },
+          "grdPlataformas": {
+            "columns": 1
+          },
+          "grdComponentes": {
+            "columns": 1
+          },
+          "grdIdiomas": {
+            "columns": 2
+          },
+          "grdRecursos": {
+            "columns": 1
+          }
+        }
+      },
+      {
+        "name": "tablet",
+        "max_width": 1023,
+        "changes": {
+          "pnlHeroTexto": {
+            "width": 470
+          },
+          "lblTitulo": {
+            "font_size": 40
+          },
+          "grdLinguagens": {
+            "columns": 2
+          },
+          "grdPlataformas": {
+            "columns": 2
+          },
+          "grdComponentes": {
+            "columns": 2
+          },
+          "grdIdiomas": {
+            "columns": 3
+          },
+          "grdRecursos": {
+            "columns": 2
+          }
+        }
+      }
+    ],
+    "children": [
+      {
+        "class": "AppLink",
+        "name": "lnkSite"
+      },
+      {
+        "class": "Layout",
+        "name": "pnlTopo",
+        "height": 64,
+        "align": "top",
+        "padding": [24, 12],
+        "max_width": 1180,
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblLogo",
+            "text": "Aylis",
+            "bold": true,
+            "color": "#FF8A3D",
+            "align": "left",
+            "font_size": 32
+          },
+          {
+            "class": "FlowLayout",
+            "name": "fluMenu",
+            "h_align": "trailing",
+            "align": "client",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnDocumentacao",
+                "text": "Documentação",
+                "width": 140,
+                "height": 40,
+                "style": "flat",
+                "text_color": "#E6E8EF",
+                "on_click": "abrir_documentacao"
+              },
+              {
+                "class": "Button",
+                "name": "btnExperimentar",
+                "text": "Experimentar",
+                "width": 140,
+                "height": 40,
+                "accent_color": "#FF8A3D",
+                "on_click": "experimentar"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "ScrollBox",
+        "name": "scrPagina",
+        "align": "client",
+        "children": [
+          {
+            "class": "Layout",
+            "name": "pnlHero",
+            "height": 540,
+            "align": "top",
+            "max_width": 1180,
+            "children": [
+              {
+                "class": "Layout",
+                "name": "pnlHeroTexto",
+                "width": 600,
+                "align": "left",
+                "padding": [56, 72, 24, 24],
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblSelo",
+                    "text": "IDE · 8 linguagens · 6 plataformas",
+                    "bold": true,
+                    "color": "#FF8A3D",
+                    "letter_spacing": 1.5,
+                    "text_case": "upper",
+                    "height": 28,
+                    "align": "top",
+                    "font_size": 13
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblTitulo",
+                    "text": "Interfaces nativas em Rust, montadas visualmente",
+                    "wrap": true,
+                    "bold": true,
+                    "height": 196,
+                    "align": "top",
+                    "margins": [0, 8, 0, 0],
+                    "auto_size": true,
+                    "font_size": 50,
+                    "children": [
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniTitulo",
+                        "start_value": 0,
+                        "duration": 0.8,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblSubtitulo",
+                    "text": "Monte a tela arrastando componentes, ligue os eventos e publique o mesmo projeto para Windows, Linux, macOS, Android, iOS e web. O Aylis desenha cada pixel, sem HTML e sem webview.",
+                    "wrap": true,
+                    "color": "#A7ADBD",
+                    "height": 100,
+                    "align": "top",
+                    "margins": [0, 20, 0, 0],
+                    "auto_size": true,
+                    "font_size": 19,
+                    "children": [
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniSubtitulo",
+                        "start_value": 0,
+                        "duration": 0.8,
+                        "delay": 0.25,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "FlowLayout",
+                    "name": "fluAcoes",
+                    "gap": 12,
+                    "height": 52,
+                    "align": "top",
+                    "margins": [0, 32, 0, 0],
+                    "children": [
+                      {
+                        "class": "Button",
+                        "name": "btnBaixar",
+                        "text": "Baixar a IDE",
+                        "width": 210,
+                        "height": 52,
+                        "accent_color": "#FF8A3D",
+                        "font_size": 19,
+                        "on_click": "baixar"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layLingote",
+                "align": "client",
+                "margins": [0, 24, 24, 24],
+                "children": [
+                  {
+                    "class": "WebView",
+                    "name": "wbLingote",
+                    "skeleton": true,
+                    "align": "client",
+                    "visible": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "secLinguagens",
+            "height": 477,
+            "align": "top",
+            "padding": [56, 40, 56, 24],
+            "max_width": 1180,
+            "auto_size": true,
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblLinguagensContador",
+                "text": "8 linguagens",
+                "bold": true,
+                "color": "#FF8A3D",
+                "letter_spacing": 1.5,
+                "text_case": "upper",
+                "height": 40,
+                "align": "top",
+                "font_size": 22
+              },
+              {
+                "class": "Label",
+                "name": "lblLinguagensTitulo",
+                "text": "O código na sua linguagem",
+                "wrap": true,
+                "bold": true,
+                "height": 43,
+                "align": "top",
+                "margins": [0, 0, 0, 12],
+                "auto_size": true,
+                "font_size": 32
+              },
+              {
+                "class": "Label",
+                "name": "lblLinguagensTexto",
+                "text": "O visual é um só; o código fica numa pasta por linguagem, com os handlers gerados pela IDE e o acesso tipado aos componentes.",
+                "wrap": true,
+                "color": "#A7ADBD",
+                "height": 46,
+                "align": "top",
+                "margins": [0, 0, 0, 24],
+                "auto_size": true,
+                "font_size": 17
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdLinguagens",
+                "columns": 4,
+                "gap": 16,
+                "row_height": 116,
+                "height": 248,
+                "align": "top",
+                "auto_size": true,
+                "children": [
+                  {
+                    "class": "Card",
+                    "name": "crdRust",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytRust",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgRust",
+                            "source": "assets/images/linguagens/rust.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblRust",
+                            "text": "Rust",
+                            "bold": true,
+                            "color": "#FF8A3D",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblRustTexto",
+                        "text": "Compilado junto, com depurador, profiler e hot reload.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdPython",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytPython",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgPython",
+                            "source": "assets/images/linguagens/python.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblPython",
+                            "text": "Python",
+                            "bold": true,
+                            "color": "#4B8BBE",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPythonTexto",
+                        "text": "Os handlers em Python, com sessões para muitos usuários.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdTypeScript",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytTypeScript",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgTypeScript",
+                            "source": "assets/images/linguagens/typescript.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblTypeScript",
+                            "text": "TypeScript",
+                            "bold": true,
+                            "color": "#3178C6",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblTypeScriptTexto",
+                        "text": "No Node ou no Bun, com o acesso tipado dos forms.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCSharp",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytCSharp",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgCSharp",
+                            "source": "assets/images/linguagens/csharp.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblCSharp",
+                            "text": "C#",
+                            "bold": true,
+                            "color": "#9B4F96",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCSharpTexto",
+                        "text": ".NET com o depurador anexado pela IDE.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdJava",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytJava",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgJava",
+                            "source": "assets/images/linguagens/java.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblJava",
+                            "text": "Java",
+                            "bold": true,
+                            "color": "#E76F00",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblJavaTexto",
+                        "text": "Os eventos chegam como métodos; a tela é do Aylis.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdGo",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytGo",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgGo",
+                            "source": "assets/images/linguagens/go.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblGo",
+                            "text": "Go",
+                            "bold": true,
+                            "color": "#00ADD8",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblGoTexto",
+                        "text": "Goroutines à vontade; a tela continua livre.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCpp",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytCpp",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgCpp",
+                            "source": "assets/images/linguagens/cpp.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblCpp",
+                            "text": "C++",
+                            "bold": true,
+                            "color": "#659AD2",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCppTexto",
+                        "text": "Um cabeçalho só, sem biblioteca para instalar.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdPascal",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytPascal",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgPascal",
+                            "source": "assets/images/linguagens/pascal.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblPascal",
+                            "text": "Free Pascal",
+                            "bold": true,
+                            "color": "#E0B03B",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPascalTexto",
+                        "text": "Units, classes e eventos com var, no jeito do Pascal.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "secPlataformas",
+            "height": 419,
+            "align": "top",
+            "padding": [56, 40, 56, 24],
+            "max_width": 1180,
+            "auto_size": true,
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblPlataformasContador",
+                "text": "6 plataformas",
+                "bold": true,
+                "color": "#FF8A3D",
+                "letter_spacing": 1.5,
+                "text_case": "upper",
+                "height": 40,
+                "align": "top",
+                "font_size": 22
+              },
+              {
+                "class": "Label",
+                "name": "lblPlataformasTitulo",
+                "text": "Roda onde o seu usuário está",
+                "wrap": true,
+                "bold": true,
+                "height": 43,
+                "align": "top",
+                "margins": [0, 0, 0, 24],
+                "auto_size": true,
+                "font_size": 32
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdPlataformas",
+                "columns": 3,
+                "gap": 16,
+                "row_height": 116,
+                "height": 248,
+                "align": "top",
+                "auto_size": true,
+                "children": [
+                  {
+                    "class": "Card",
+                    "name": "crdWindows",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytWindows",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgWindows",
+                            "source": "assets/images/plataformas/windows.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblWindows",
+                            "text": "Windows",
+                            "bold": true,
+                            "color": "#4CA3F5",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblWindowsTexto",
+                        "text": "Direct2D e DirectWrite, sem Skia no executável.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdLinux",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytLinux",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgLinux",
+                            "source": "assets/images/plataformas/linux.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblLinux",
+                            "text": "Linux",
+                            "bold": true,
+                            "color": "#E6E8EF",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblLinuxTexto",
+                        "text": "Skia na GPU ou na CPU, no X11 e no Wayland.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdMac",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytMac",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgMac",
+                            "source": "assets/images/plataformas/apple.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblMac",
+                            "text": "macOS",
+                            "bold": true,
+                            "color": "#E6E8EF",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblMacTexto",
+                        "text": "Skia na GPU, com o menu e os atalhos do Mac.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdAndroid",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytAndroid",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgAndroid",
+                            "source": "assets/images/plataformas/android.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblAndroid",
+                            "text": "Android",
+                            "bold": true,
+                            "color": "#3DDC84",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblAndroidTexto",
+                        "text": "O mesmo projeto num APK, com o teclado e os gestos do celular.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIos",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytIos",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgIos",
+                            "source": "assets/images/plataformas/apple.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblIos",
+                            "text": "iOS",
+                            "bold": true,
+                            "color": "#E6E8EF",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIosTexto",
+                        "text": "No iPhone e no iPad, respeitando a área segura da tela.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdWeb",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytWeb",
+                        "height": 32,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Svg",
+                            "name": "svgWeb",
+                            "source": "assets/images/plataformas/web.svg",
+                            "width": 28,
+                            "align": "left",
+                            "margins": [0, 0, 10, 0]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblWeb",
+                            "text": "Navegador",
+                            "bold": true,
+                            "color": "#8B7CF6",
+                            "align": "client",
+                            "font_size": 20
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblWebTexto",
+                        "text": "WebAssembly e o canvas do navegador, como esta página.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "secComponentes",
+            "height": 911,
+            "align": "top",
+            "padding": [56, 40, 56, 24],
+            "max_width": 1180,
+            "auto_size": true,
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblComponentesContador",
+                "text": "229 componentes",
+                "bold": true,
+                "color": "#FF8A3D",
+                "letter_spacing": 1.5,
+                "text_case": "upper",
+                "height": 40,
+                "align": "top",
+                "font_size": 22
+              },
+              {
+                "class": "Label",
+                "name": "lblComponentesTitulo",
+                "text": "Prontos para arrastar no form",
+                "wrap": true,
+                "bold": true,
+                "height": 43,
+                "align": "top",
+                "margins": [0, 0, 0, 24],
+                "auto_size": true,
+                "font_size": 32
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdComponentes",
+                "columns": 4,
+                "gap": 16,
+                "row_height": 236,
+                "height": 740,
+                "align": "top",
+                "auto_size": true,
+                "children": [
+                  {
+                    "class": "Card",
+                    "name": "crdCompVelas",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompVelas",
+                        "image": "assets/docs/componentes/img/CandleChart.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompVelas",
+                        "text": "CandleChart",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompVelasTexto",
+                        "text": "Velas, médias e volume.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompGrafico",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompGrafico",
+                        "image": "assets/docs/componentes/img/Chart.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompGrafico",
+                        "text": "Chart",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompGraficoTexto",
+                        "text": "Linhas, barras e áreas ligadas aos dados.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompAgenda",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompAgenda",
+                        "image": "assets/docs/componentes/img/EventCalendar.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompAgenda",
+                        "text": "EventCalendar",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompAgendaTexto",
+                        "text": "A agenda do mês, com os eventos.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompCor",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompCor",
+                        "image": "assets/docs/componentes/img/ColorPicker.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompCor",
+                        "text": "ColorPicker",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompCorTexto",
+                        "text": "Cor, transparência e paleta.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompOfertas",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompOfertas",
+                        "image": "assets/docs/componentes/img/OrderBook.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompOfertas",
+                        "text": "OrderBook",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompOfertasTexto",
+                        "text": "O livro de ofertas ao vivo.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompProfundidade",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompProfundidade",
+                        "image": "assets/docs/componentes/img/DepthChart.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompProfundidade",
+                        "text": "DepthChart",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompProfundidadeTexto",
+                        "text": "A profundidade de compra e venda.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompMedidor",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompMedidor",
+                        "image": "assets/docs/componentes/img/Gauge.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompMedidor",
+                        "text": "Gauge",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompMedidorTexto",
+                        "text": "Indicador com faixas de cor.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompAneis",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompAneis",
+                        "image": "assets/docs/componentes/img/ActivityRings.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompAneis",
+                        "text": "ActivityRings",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompAneisTexto",
+                        "text": "Metas em anéis de progresso.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompHora",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompHora",
+                        "image": "assets/docs/componentes/img/TimePicker.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompHora",
+                        "text": "TimePicker",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompHoraTexto",
+                        "text": "A hora no relógio, com toque.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompTanque",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompTanque",
+                        "image": "assets/docs/componentes/img/TankLevel.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompTanque",
+                        "text": "TankLevel",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompTanqueTexto",
+                        "text": "O nível do tanque, com a onda.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompLinhaTempo",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 12,
+                    "children": [
+                      {
+                        "class": "Image",
+                        "name": "imgCompLinhaTempo",
+                        "image": "assets/docs/componentes/img/Timeline.png",
+                        "radius": 10,
+                        "height": 150,
+                        "align": "top",
+                        "margins": [0, 0, 0, 10]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompLinhaTempo",
+                        "text": "Timeline",
+                        "bold": true,
+                        "height": 24,
+                        "align": "top",
+                        "font_size": 16
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompLinhaTempoTexto",
+                        "text": "As etapas de um pedido.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdCompMais",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "border_color": "#FF8A3D",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblCompMais",
+                        "text": "e muito mais",
+                        "bold": true,
+                        "color": "#FF8A3D",
+                        "height": 40,
+                        "align": "top",
+                        "margins": [0, 40, 0, 4],
+                        "font_size": 24
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblCompMaisTexto",
+                        "text": "Grades, formulários, mapas, relatórios, mídia, 3D, industrial e o celular.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "height": 56,
+                        "align": "top",
+                        "margins": [0, 0, 0, 16],
+                        "auto_size": true
+                      },
+                      {
+                        "class": "Button",
+                        "name": "btnCompMais",
+                        "text": "Ver todos na documentação",
+                        "height": 40,
+                        "align": "top",
+                        "style": "outline",
+                        "accent_color": "#FF8A3D",
+                        "on_click": "abrir_documentacao"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "secIdiomas",
+            "height": 351,
+            "align": "top",
+            "padding": [56, 40, 56, 24],
+            "max_width": 1180,
+            "auto_size": true,
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblIdiomasContador",
+                "text": "12 idiomas",
+                "bold": true,
+                "color": "#FF8A3D",
+                "letter_spacing": 1.5,
+                "text_case": "upper",
+                "height": 40,
+                "align": "top",
+                "font_size": 22
+              },
+              {
+                "class": "Label",
+                "name": "lblIdiomasTitulo",
+                "text": "A IDE fala a sua língua",
+                "wrap": true,
+                "bold": true,
+                "height": 43,
+                "align": "top",
+                "margins": [0, 0, 0, 24],
+                "auto_size": true,
+                "font_size": 32
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdIdiomas",
+                "columns": 6,
+                "row_height": 84,
+                "height": 180,
+                "align": "top",
+                "auto_size": true,
+                "children": [
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaPt",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaPt",
+                        "text": "Português",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaPtNome",
+                        "text": "Português",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaEn",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaEn",
+                        "text": "English",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaEnNome",
+                        "text": "Inglês",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaEs",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaEs",
+                        "text": "Español",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaEsNome",
+                        "text": "Espanhol",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaFr",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaFr",
+                        "text": "Français",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaFrNome",
+                        "text": "Francês",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaDe",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaDe",
+                        "text": "Deutsch",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaDeNome",
+                        "text": "Alemão",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaRu",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaRu",
+                        "text": "Русский",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaRuNome",
+                        "text": "Russo",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaZh",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaZh",
+                        "text": "中文",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaZhNome",
+                        "text": "Chinês",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaJa",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaJa",
+                        "text": "日本語",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaJaNome",
+                        "text": "Japonês",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaAr",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaAr",
+                        "text": "العربية",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaArNome",
+                        "text": "Árabe",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaHi",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaHi",
+                        "text": "हिन्दी",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaHiNome",
+                        "text": "Hindi",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaBn",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaBn",
+                        "text": "বাংলা",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaBnNome",
+                        "text": "Bengali",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIdiomaId",
+                    "fill": "#181B25",
+                    "radius": 12,
+                    "padding": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaId",
+                        "text": "Indonesia",
+                        "bold": true,
+                        "height": 28,
+                        "align": "top",
+                        "font_size": 18
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIdiomaIdNome",
+                        "text": "Indonésio",
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "secRecursos",
+            "height": 395,
+            "align": "top",
+            "padding": [56, 40, 56, 24],
+            "max_width": 1180,
+            "auto_size": true,
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblRecursosTitulo",
+                "text": "Tudo o que um sistema de verdade pede",
+                "wrap": true,
+                "bold": true,
+                "height": 43,
+                "align": "top",
+                "margins": [0, 0, 0, 12],
+                "auto_size": true,
+                "font_size": 32
+              },
+              {
+                "class": "GridLayout",
+                "name": "grdRecursos",
+                "columns": 3,
+                "gap": 16,
+                "row_height": 130,
+                "height": 276,
+                "align": "top",
+                "auto_size": true,
+                "children": [
+                  {
+                    "class": "Card",
+                    "name": "crdDesigner",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytDesigner",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "icoDesigner",
+                            "icon": "material:design_services",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblDesigner",
+                            "text": "Designer visual",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblDesignerTexto",
+                        "text": "Paleta, Object Inspector, vistas de celular e tablet, desfazer e hot reload no app aberto.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec1",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdDados",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytDados",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "icoDados",
+                            "icon": "material:database",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblDados",
+                            "text": "Dados ligados",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblDadosTexto",
+                        "text": "ClientDataSet, DataGrid com milhões de linhas, gráficos e relatórios ligados a campo.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec2",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "delay": 0.1,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crd3d",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lyt3d",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "ico3d",
+                            "icon": "material:view_in_ar",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lbl3d",
+                            "text": "3D e mídia",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lbl3dTexto",
+                        "text": "Modelos glTF e FBX, câmera, vídeo, áudio em várias saídas e mixer.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec3",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "delay": 0.2,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdIndustrial",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytIndustrial",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "icoIndustrial",
+                            "icon": "material:precision_manufacturing",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblIndustrial",
+                            "text": "Industrial",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblIndustrialTexto",
+                        "text": "Tanques, válvulas, motores, canos e fios ligados arrastando, como num supervisório.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec4",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdDepurar",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytDepurar",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "icoDepurar",
+                            "icon": "material:bug_report",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblDepurar",
+                            "text": "Depurar e medir",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblDepurarTexto",
+                        "text": "Pontos de parada, tempo e memória no fim da linha e o profiler com a linha do tempo.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec5",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "delay": 0.1,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Card",
+                    "name": "crdPacotes",
+                    "fill": "#181B25",
+                    "radius": 14,
+                    "padding": 18,
+                    "children": [
+                      {
+                        "class": "Layout",
+                        "name": "lytPacotes",
+                        "height": 30,
+                        "align": "top",
+                        "margins": [0, 0, 0, 6],
+                        "children": [
+                          {
+                            "class": "Icon",
+                            "name": "icoPacotes",
+                            "icon": "material:verified_user",
+                            "color": "#FF8A3D",
+                            "width": 26,
+                            "align": "left",
+                            "margins": [0, 2, 10, 2]
+                          },
+                          {
+                            "class": "Label",
+                            "name": "lblPacotes",
+                            "text": "Pacotes assinados",
+                            "bold": true,
+                            "align": "client",
+                            "font_size": 18
+                          }
+                        ]
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPacotesTexto",
+                        "text": "Componentes de terceiros, de form ou de código, com a assinatura do autor conferida.",
+                        "wrap": true,
+                        "color": "#A7ADBD",
+                        "align": "client"
+                      },
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniRec6",
+                        "property": "translate_y",
+                        "start_value": 40,
+                        "stop_value": 0,
+                        "duration": 0.6,
+                        "delay": 0.2,
+                        "easing": "out_cubic",
+                        "trigger": "appear"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "pnlRodape",
+            "height": 96,
+            "align": "top",
+            "padding": [56, 24],
+            "fill": "#0A0C11",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblRodape",
+                "text": "Aylis · licença MIT · feito com o próprio Aylis",
+                "color": "#6B7183",
+                "align": "client",
+                "max_width": 1068
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

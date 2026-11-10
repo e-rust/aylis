@@ -1,0 +1,954 @@
+  { Um Form de um form. }
+  TForm = class(TAylisForm)
+  private
+    function GetCaption: string;
+    procedure SetCaption(Value: string);
+    function GetPosition: string;
+    procedure SetPosition(Value: string);
+    function GetBorderStyle: string;
+    procedure SetBorderStyle(Value: string);
+    function GetWindowState: string;
+    procedure SetWindowState(Value: string);
+    function GetTransition: string;
+    procedure SetTransition(Value: string);
+    function GetTopmost: Boolean;
+    procedure SetTopmost(Value: Boolean);
+    function GetShowInTaskbar: Boolean;
+    procedure SetShowInTaskbar(Value: Boolean);
+    function GetActiveControl: string;
+    procedure SetActiveControl(Value: string);
+    function GetTabOrder: string;
+    procedure SetTabOrder(Value: string);
+    function GetTabKeys: string;
+    procedure SetTabKeys(Value: string);
+    function GetBackTabKeys: string;
+    procedure SetBackTabKeys(Value: string);
+    function GetAllowedChars: string;
+    procedure SetAllowedChars(Value: string);
+    function GetBlockedChars: string;
+    procedure SetBlockedChars(Value: string);
+    function GetOnlyAllowed: Boolean;
+    procedure SetOnlyAllowed(Value: Boolean);
+    function GetCharsOverride: Boolean;
+    procedure SetCharsOverride(Value: Boolean);
+    function GetCharMap: string;
+    procedure SetCharMap(Value: string);
+    function GetKeyPreview: Boolean;
+    procedure SetKeyPreview(Value: Boolean);
+    function GetZoom: Double;
+    procedure SetZoom(Value: Double);
+    function GetMonitor: Int64;
+    procedure SetMonitor(Value: Int64);
+    function GetRememberPlacement: Boolean;
+    procedure SetRememberPlacement(Value: Boolean);
+    function GetLeft: Double;
+    procedure SetLeft(Value: Double);
+    function GetTop: Double;
+    procedure SetTop(Value: Double);
+    function GetWidth: Double;
+    procedure SetWidth(Value: Double);
+    function GetHeight: Double;
+    procedure SetHeight(Value: Double);
+    function GetAlign: string;
+    procedure SetAlign(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetHitTest: Boolean;
+    procedure SetHitTest(Value: Boolean);
+    function GetClipChildren: Boolean;
+    procedure SetClipChildren(Value: Boolean);
+    function GetCapturesWheel: Boolean;
+    procedure SetCapturesWheel(Value: Boolean);
+    function GetCanFocus: Boolean;
+    procedure SetCanFocus(Value: Boolean);
+    function GetDraggable: Boolean;
+    procedure SetDraggable(Value: Boolean);
+    function GetAcceptsDrops: Boolean;
+    procedure SetAcceptsDrops(Value: Boolean);
+    function GetDragData: string;
+    procedure SetDragData(Value: string);
+    function GetDragLabel: string;
+    procedure SetDragLabel(Value: string);
+    function GetDragImage: string;
+    procedure SetDragImage(Value: string);
+    function GetDropTypes: string;
+    procedure SetDropTypes(Value: string);
+    function GetTabStop: Boolean;
+    procedure SetTabStop(Value: Boolean);
+    function GetCursor: string;
+    procedure SetCursor(Value: string);
+    function GetOpacity: Double;
+    procedure SetOpacity(Value: Double);
+    function GetCacheLayer: Boolean;
+    procedure SetCacheLayer(Value: Boolean);
+    function GetRotation: Double;
+    procedure SetRotation(Value: Double);
+    function GetTranslateX: Double;
+    procedure SetTranslateX(Value: Double);
+    function GetTranslateY: Double;
+    procedure SetTranslateY(Value: Double);
+    function GetAspectRatio: Double;
+    procedure SetAspectRatio(Value: Double);
+    function GetMaxWidth: Double;
+    procedure SetMaxWidth(Value: Double);
+    function GetMinWidth: Double;
+    procedure SetMinWidth(Value: Double);
+    function GetMinHeight: Double;
+    procedure SetMinHeight(Value: Double);
+    function GetMaxHeight: Double;
+    procedure SetMaxHeight(Value: Double);
+    function GetSelfAlign: string;
+    procedure SetSelfAlign(Value: string);
+    function GetAutoSize: Boolean;
+    procedure SetAutoSize(Value: Boolean);
+    function GetColumnSpan: Int64;
+    procedure SetColumnSpan(Value: Int64);
+    function GetShadow: string;
+    procedure SetShadow(Value: string);
+    function GetStyle: string;
+    procedure SetStyle(Value: string);
+    function GetTheme: string;
+    procedure SetTheme(Value: string);
+    function GetFill: string;
+    procedure SetFill(Value: string);
+    function GetBorderColor: string;
+    procedure SetBorderColor(Value: string);
+    function GetTextColor: string;
+    procedure SetTextColor(Value: string);
+    function GetAccentColor: string;
+    procedure SetAccentColor(Value: string);
+    function GetSuccessColor: string;
+    procedure SetSuccessColor(Value: string);
+    function GetWarningColor: string;
+    procedure SetWarningColor(Value: string);
+    function GetDangerColor: string;
+    procedure SetDangerColor(Value: string);
+    function GetFontFamily: string;
+    procedure SetFontFamily(Value: string);
+    function GetFontSize: Double;
+    procedure SetFontSize(Value: Double);
+    function GetFontWeight: string;
+    procedure SetFontWeight(Value: string);
+    function GetFontItalic: Boolean;
+    procedure SetFontItalic(Value: Boolean);
+    function GetFontUnderline: Boolean;
+    procedure SetFontUnderline(Value: Boolean);
+    function GetFontStrikeout: Boolean;
+    procedure SetFontStrikeout(Value: Boolean);
+    function GetHint: string;
+    procedure SetHint(Value: string);
+    function GetTag: Int64;
+    procedure SetTag(Value: Int64);
+    function GetPopupMenu: string;
+    procedure SetPopupMenu(Value: string);
+  public
+    procedure MoveToMonitor(A1: Int64);
+    function Focused: string;
+    procedure FocusNext;
+    procedure FocusPrev;
+    property Caption: string read GetCaption write SetCaption;
+    property Position: string read GetPosition write SetPosition;
+    property BorderStyle: string read GetBorderStyle write SetBorderStyle;
+    property WindowState: string read GetWindowState write SetWindowState;
+    property Transition: string read GetTransition write SetTransition;
+    property Topmost: Boolean read GetTopmost write SetTopmost;
+    property ShowInTaskbar: Boolean read GetShowInTaskbar write SetShowInTaskbar;
+    property ActiveControl: string read GetActiveControl write SetActiveControl;
+    property TabOrder: string read GetTabOrder write SetTabOrder;
+    property TabKeys: string read GetTabKeys write SetTabKeys;
+    property BackTabKeys: string read GetBackTabKeys write SetBackTabKeys;
+    property AllowedChars: string read GetAllowedChars write SetAllowedChars;
+    property BlockedChars: string read GetBlockedChars write SetBlockedChars;
+    property OnlyAllowed: Boolean read GetOnlyAllowed write SetOnlyAllowed;
+    property CharsOverride: Boolean read GetCharsOverride write SetCharsOverride;
+    property CharMap: string read GetCharMap write SetCharMap;
+    property KeyPreview: Boolean read GetKeyPreview write SetKeyPreview;
+    property Zoom: Double read GetZoom write SetZoom;
+    property Monitor: Int64 read GetMonitor write SetMonitor;
+    property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
+    property Left: Double read GetLeft write SetLeft;
+    property Top: Double read GetTop write SetTop;
+    property Width: Double read GetWidth write SetWidth;
+    property Height: Double read GetHeight write SetHeight;
+    property Align: string read GetAlign write SetAlign;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property HitTest: Boolean read GetHitTest write SetHitTest;
+    property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CanFocus: Boolean read GetCanFocus write SetCanFocus;
+    property Draggable: Boolean read GetDraggable write SetDraggable;
+    property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
+    property DragData: string read GetDragData write SetDragData;
+    property DragLabel: string read GetDragLabel write SetDragLabel;
+    property DragImage: string read GetDragImage write SetDragImage;
+    property DropTypes: string read GetDropTypes write SetDropTypes;
+    property TabStop: Boolean read GetTabStop write SetTabStop;
+    property Cursor: string read GetCursor write SetCursor;
+    property Opacity: Double read GetOpacity write SetOpacity;
+    property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
+    property Rotation: Double read GetRotation write SetRotation;
+    property TranslateX: Double read GetTranslateX write SetTranslateX;
+    property TranslateY: Double read GetTranslateY write SetTranslateY;
+    property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
+    property MaxWidth: Double read GetMaxWidth write SetMaxWidth;
+    property MinWidth: Double read GetMinWidth write SetMinWidth;
+    property MinHeight: Double read GetMinHeight write SetMinHeight;
+    property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
+    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property AutoSize: Boolean read GetAutoSize write SetAutoSize;
+    property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property Shadow: string read GetShadow write SetShadow;
+    property Style: string read GetStyle write SetStyle;
+    property Theme: string read GetTheme write SetTheme;
+    property Fill: string read GetFill write SetFill;
+    property BorderColor: string read GetBorderColor write SetBorderColor;
+    property TextColor: string read GetTextColor write SetTextColor;
+    property AccentColor: string read GetAccentColor write SetAccentColor;
+    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
+    property WarningColor: string read GetWarningColor write SetWarningColor;
+    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property FontFamily: string read GetFontFamily write SetFontFamily;
+    property FontSize: Double read GetFontSize write SetFontSize;
+    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontItalic: Boolean read GetFontItalic write SetFontItalic;
+    property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
+    property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
+    property Hint: string read GetHint write SetHint;
+    property Tag: Int64 read GetTag write SetTag;
+    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+  end;
+
+
+function TForm.GetCaption: string;
+begin
+  Result := AsText(GetProp('caption'));
+end;
+
+procedure TForm.SetCaption(Value: string);
+begin
+  SetProp('caption', TJSONString.Create(Value));
+end;
+
+function TForm.GetPosition: string;
+begin
+  Result := AsText(GetProp('position'));
+end;
+
+procedure TForm.SetPosition(Value: string);
+begin
+  SetProp('position', TJSONString.Create(Value));
+end;
+
+function TForm.GetBorderStyle: string;
+begin
+  Result := AsText(GetProp('border_style'));
+end;
+
+procedure TForm.SetBorderStyle(Value: string);
+begin
+  SetProp('border_style', TJSONString.Create(Value));
+end;
+
+function TForm.GetWindowState: string;
+begin
+  Result := AsText(GetProp('window_state'));
+end;
+
+procedure TForm.SetWindowState(Value: string);
+begin
+  SetProp('window_state', TJSONString.Create(Value));
+end;
+
+function TForm.GetTransition: string;
+begin
+  Result := AsText(GetProp('transition'));
+end;
+
+procedure TForm.SetTransition(Value: string);
+begin
+  SetProp('transition', TJSONString.Create(Value));
+end;
+
+function TForm.GetTopmost: Boolean;
+begin
+  Result := GetProp('topmost').AsBoolean;
+end;
+
+procedure TForm.SetTopmost(Value: Boolean);
+begin
+  SetProp('topmost', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetShowInTaskbar: Boolean;
+begin
+  Result := GetProp('show_in_taskbar').AsBoolean;
+end;
+
+procedure TForm.SetShowInTaskbar(Value: Boolean);
+begin
+  SetProp('show_in_taskbar', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetActiveControl: string;
+begin
+  Result := AsText(GetProp('active_control'));
+end;
+
+procedure TForm.SetActiveControl(Value: string);
+begin
+  SetProp('active_control', TJSONString.Create(Value));
+end;
+
+function TForm.GetTabOrder: string;
+begin
+  Result := AsText(GetProp('tab_order'));
+end;
+
+procedure TForm.SetTabOrder(Value: string);
+begin
+  SetProp('tab_order', TJSONString.Create(Value));
+end;
+
+function TForm.GetTabKeys: string;
+begin
+  Result := AsText(GetProp('tab_keys'));
+end;
+
+procedure TForm.SetTabKeys(Value: string);
+begin
+  SetProp('tab_keys', TJSONString.Create(Value));
+end;
+
+function TForm.GetBackTabKeys: string;
+begin
+  Result := AsText(GetProp('back_tab_keys'));
+end;
+
+procedure TForm.SetBackTabKeys(Value: string);
+begin
+  SetProp('back_tab_keys', TJSONString.Create(Value));
+end;
+
+function TForm.GetAllowedChars: string;
+begin
+  Result := AsText(GetProp('allowed_chars'));
+end;
+
+procedure TForm.SetAllowedChars(Value: string);
+begin
+  SetProp('allowed_chars', TJSONString.Create(Value));
+end;
+
+function TForm.GetBlockedChars: string;
+begin
+  Result := AsText(GetProp('blocked_chars'));
+end;
+
+procedure TForm.SetBlockedChars(Value: string);
+begin
+  SetProp('blocked_chars', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnlyAllowed: Boolean;
+begin
+  Result := GetProp('only_allowed').AsBoolean;
+end;
+
+procedure TForm.SetOnlyAllowed(Value: Boolean);
+begin
+  SetProp('only_allowed', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCharsOverride: Boolean;
+begin
+  Result := GetProp('chars_override').AsBoolean;
+end;
+
+procedure TForm.SetCharsOverride(Value: Boolean);
+begin
+  SetProp('chars_override', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCharMap: string;
+begin
+  Result := AsText(GetProp('char_map'));
+end;
+
+procedure TForm.SetCharMap(Value: string);
+begin
+  SetProp('char_map', TJSONString.Create(Value));
+end;
+
+function TForm.GetKeyPreview: Boolean;
+begin
+  Result := GetProp('key_preview').AsBoolean;
+end;
+
+procedure TForm.SetKeyPreview(Value: Boolean);
+begin
+  SetProp('key_preview', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetZoom: Double;
+begin
+  Result := GetProp('zoom').AsFloat;
+end;
+
+procedure TForm.SetZoom(Value: Double);
+begin
+  SetProp('zoom', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMonitor: Int64;
+begin
+  Result := GetProp('monitor').AsInt64;
+end;
+
+procedure TForm.SetMonitor(Value: Int64);
+begin
+  SetProp('monitor', TJSONInt64Number.Create(Value));
+end;
+
+function TForm.GetRememberPlacement: Boolean;
+begin
+  Result := GetProp('remember_placement').AsBoolean;
+end;
+
+procedure TForm.SetRememberPlacement(Value: Boolean);
+begin
+  SetProp('remember_placement', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetLeft: Double;
+begin
+  Result := GetProp('left').AsFloat;
+end;
+
+procedure TForm.SetLeft(Value: Double);
+begin
+  SetProp('left', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetTop: Double;
+begin
+  Result := GetProp('top').AsFloat;
+end;
+
+procedure TForm.SetTop(Value: Double);
+begin
+  SetProp('top', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetWidth: Double;
+begin
+  Result := GetProp('width').AsFloat;
+end;
+
+procedure TForm.SetWidth(Value: Double);
+begin
+  SetProp('width', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetHeight: Double;
+begin
+  Result := GetProp('height').AsFloat;
+end;
+
+procedure TForm.SetHeight(Value: Double);
+begin
+  SetProp('height', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetAlign: string;
+begin
+  Result := AsText(GetProp('align'));
+end;
+
+procedure TForm.SetAlign(Value: string);
+begin
+  SetProp('align', TJSONString.Create(Value));
+end;
+
+function TForm.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TForm.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TForm.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetHitTest: Boolean;
+begin
+  Result := GetProp('hit_test').AsBoolean;
+end;
+
+procedure TForm.SetHitTest(Value: Boolean);
+begin
+  SetProp('hit_test', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetClipChildren: Boolean;
+begin
+  Result := GetProp('clip_children').AsBoolean;
+end;
+
+procedure TForm.SetClipChildren(Value: Boolean);
+begin
+  SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCapturesWheel: Boolean;
+begin
+  Result := GetProp('captures_wheel').AsBoolean;
+end;
+
+procedure TForm.SetCapturesWheel(Value: Boolean);
+begin
+  SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCanFocus: Boolean;
+begin
+  Result := GetProp('can_focus').AsBoolean;
+end;
+
+procedure TForm.SetCanFocus(Value: Boolean);
+begin
+  SetProp('can_focus', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetDraggable: Boolean;
+begin
+  Result := GetProp('draggable').AsBoolean;
+end;
+
+procedure TForm.SetDraggable(Value: Boolean);
+begin
+  SetProp('draggable', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetAcceptsDrops: Boolean;
+begin
+  Result := GetProp('accepts_drops').AsBoolean;
+end;
+
+procedure TForm.SetAcceptsDrops(Value: Boolean);
+begin
+  SetProp('accepts_drops', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetDragData: string;
+begin
+  Result := AsText(GetProp('drag_data'));
+end;
+
+procedure TForm.SetDragData(Value: string);
+begin
+  SetProp('drag_data', TJSONString.Create(Value));
+end;
+
+function TForm.GetDragLabel: string;
+begin
+  Result := AsText(GetProp('drag_label'));
+end;
+
+procedure TForm.SetDragLabel(Value: string);
+begin
+  SetProp('drag_label', TJSONString.Create(Value));
+end;
+
+function TForm.GetDragImage: string;
+begin
+  Result := AsText(GetProp('drag_image'));
+end;
+
+procedure TForm.SetDragImage(Value: string);
+begin
+  SetProp('drag_image', TJSONString.Create(Value));
+end;
+
+function TForm.GetDropTypes: string;
+begin
+  Result := AsText(GetProp('drop_types'));
+end;
+
+procedure TForm.SetDropTypes(Value: string);
+begin
+  SetProp('drop_types', TJSONString.Create(Value));
+end;
+
+function TForm.GetTabStop: Boolean;
+begin
+  Result := GetProp('tab_stop').AsBoolean;
+end;
+
+procedure TForm.SetTabStop(Value: Boolean);
+begin
+  SetProp('tab_stop', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCursor: string;
+begin
+  Result := AsText(GetProp('cursor'));
+end;
+
+procedure TForm.SetCursor(Value: string);
+begin
+  SetProp('cursor', TJSONString.Create(Value));
+end;
+
+function TForm.GetOpacity: Double;
+begin
+  Result := GetProp('opacity').AsFloat;
+end;
+
+procedure TForm.SetOpacity(Value: Double);
+begin
+  SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetCacheLayer: Boolean;
+begin
+  Result := GetProp('cache_layer').AsBoolean;
+end;
+
+procedure TForm.SetCacheLayer(Value: Boolean);
+begin
+  SetProp('cache_layer', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetRotation: Double;
+begin
+  Result := GetProp('rotation').AsFloat;
+end;
+
+procedure TForm.SetRotation(Value: Double);
+begin
+  SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetTranslateX: Double;
+begin
+  Result := GetProp('translate_x').AsFloat;
+end;
+
+procedure TForm.SetTranslateX(Value: Double);
+begin
+  SetProp('translate_x', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetTranslateY: Double;
+begin
+  Result := GetProp('translate_y').AsFloat;
+end;
+
+procedure TForm.SetTranslateY(Value: Double);
+begin
+  SetProp('translate_y', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetAspectRatio: Double;
+begin
+  Result := GetProp('aspect_ratio').AsFloat;
+end;
+
+procedure TForm.SetAspectRatio(Value: Double);
+begin
+  SetProp('aspect_ratio', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMaxWidth: Double;
+begin
+  Result := GetProp('max_width').AsFloat;
+end;
+
+procedure TForm.SetMaxWidth(Value: Double);
+begin
+  SetProp('max_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMinWidth: Double;
+begin
+  Result := GetProp('min_width').AsFloat;
+end;
+
+procedure TForm.SetMinWidth(Value: Double);
+begin
+  SetProp('min_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMinHeight: Double;
+begin
+  Result := GetProp('min_height').AsFloat;
+end;
+
+procedure TForm.SetMinHeight(Value: Double);
+begin
+  SetProp('min_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMaxHeight: Double;
+begin
+  Result := GetProp('max_height').AsFloat;
+end;
+
+procedure TForm.SetMaxHeight(Value: Double);
+begin
+  SetProp('max_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetSelfAlign: string;
+begin
+  Result := AsText(GetProp('self_align'));
+end;
+
+procedure TForm.SetSelfAlign(Value: string);
+begin
+  SetProp('self_align', TJSONString.Create(Value));
+end;
+
+function TForm.GetAutoSize: Boolean;
+begin
+  Result := GetProp('auto_size').AsBoolean;
+end;
+
+procedure TForm.SetAutoSize(Value: Boolean);
+begin
+  SetProp('auto_size', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetColumnSpan: Int64;
+begin
+  Result := GetProp('column_span').AsInt64;
+end;
+
+procedure TForm.SetColumnSpan(Value: Int64);
+begin
+  SetProp('column_span', TJSONInt64Number.Create(Value));
+end;
+
+function TForm.GetShadow: string;
+begin
+  Result := AsText(GetProp('shadow'));
+end;
+
+procedure TForm.SetShadow(Value: string);
+begin
+  SetProp('shadow', TJSONString.Create(Value));
+end;
+
+function TForm.GetStyle: string;
+begin
+  Result := AsText(GetProp('style'));
+end;
+
+procedure TForm.SetStyle(Value: string);
+begin
+  SetProp('style', TJSONString.Create(Value));
+end;
+
+function TForm.GetTheme: string;
+begin
+  Result := AsText(GetProp('theme'));
+end;
+
+procedure TForm.SetTheme(Value: string);
+begin
+  SetProp('theme', TJSONString.Create(Value));
+end;
+
+function TForm.GetFill: string;
+begin
+  Result := AsText(GetProp('fill'));
+end;
+
+procedure TForm.SetFill(Value: string);
+begin
+  SetProp('fill', TJSONString.Create(Value));
+end;
+
+function TForm.GetBorderColor: string;
+begin
+  Result := AsText(GetProp('border_color'));
+end;
+
+procedure TForm.SetBorderColor(Value: string);
+begin
+  SetProp('border_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetTextColor: string;
+begin
+  Result := AsText(GetProp('text_color'));
+end;
+
+procedure TForm.SetTextColor(Value: string);
+begin
+  SetProp('text_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetAccentColor: string;
+begin
+  Result := AsText(GetProp('accent_color'));
+end;
+
+procedure TForm.SetAccentColor(Value: string);
+begin
+  SetProp('accent_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetSuccessColor: string;
+begin
+  Result := AsText(GetProp('success_color'));
+end;
+
+procedure TForm.SetSuccessColor(Value: string);
+begin
+  SetProp('success_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetWarningColor: string;
+begin
+  Result := AsText(GetProp('warning_color'));
+end;
+
+procedure TForm.SetWarningColor(Value: string);
+begin
+  SetProp('warning_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetDangerColor: string;
+begin
+  Result := AsText(GetProp('danger_color'));
+end;
+
+procedure TForm.SetDangerColor(Value: string);
+begin
+  SetProp('danger_color', TJSONString.Create(Value));
+end;
+
+function TForm.GetFontFamily: string;
+begin
+  Result := AsText(GetProp('font_family'));
+end;
+
+procedure TForm.SetFontFamily(Value: string);
+begin
+  SetProp('font_family', TJSONString.Create(Value));
+end;
+
+function TForm.GetFontSize: Double;
+begin
+  Result := GetProp('font_size').AsFloat;
+end;
+
+procedure TForm.SetFontSize(Value: Double);
+begin
+  SetProp('font_size', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetFontWeight: string;
+begin
+  Result := AsText(GetProp('font_weight'));
+end;
+
+procedure TForm.SetFontWeight(Value: string);
+begin
+  SetProp('font_weight', TJSONString.Create(Value));
+end;
+
+function TForm.GetFontItalic: Boolean;
+begin
+  Result := GetProp('font_italic').AsBoolean;
+end;
+
+procedure TForm.SetFontItalic(Value: Boolean);
+begin
+  SetProp('font_italic', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetFontUnderline: Boolean;
+begin
+  Result := GetProp('font_underline').AsBoolean;
+end;
+
+procedure TForm.SetFontUnderline(Value: Boolean);
+begin
+  SetProp('font_underline', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetFontStrikeout: Boolean;
+begin
+  Result := GetProp('font_strikeout').AsBoolean;
+end;
+
+procedure TForm.SetFontStrikeout(Value: Boolean);
+begin
+  SetProp('font_strikeout', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetHint: string;
+begin
+  Result := AsText(GetProp('hint'));
+end;
+
+procedure TForm.SetHint(Value: string);
+begin
+  SetProp('hint', TJSONString.Create(Value));
+end;
+
+function TForm.GetTag: Int64;
+begin
+  Result := GetProp('tag').AsInt64;
+end;
+
+procedure TForm.SetTag(Value: Int64);
+begin
+  SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TForm.GetPopupMenu: string;
+begin
+  Result := AsText(GetProp('popup_menu'));
+end;
+
+procedure TForm.SetPopupMenu(Value: string);
+begin
+  SetProp('popup_menu', TJSONString.Create(Value));
+end;
+
+procedure TForm.MoveToMonitor(A1: Int64);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'move_to_monitor', 'args', TJSONArray.Create([A1])]));
+end;
+
+function TForm.Focused: string;
+begin
+  Result := AsText(Aylis.Call('focused', TJSONObject.Create(['target', Id])));
+end;
+
+procedure TForm.FocusNext;
+begin
+  Aylis.Send('focus_next', TJSONObject.Create(['target', Id]));
+end;
+
+procedure TForm.FocusPrev;
+begin
+  Aylis.Send('focus_prev', TJSONObject.Create(['target', Id]));
+end;
+

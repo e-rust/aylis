@@ -1,0 +1,11 @@
+{
+  "description": "ProcessamentoAssincrono: o fechamento vai até o fim numa thread própria e o Post fecha o modal de progresso.",
+  "steps": [
+    {"click": "btnFecharMes"},
+    {"wait": 5000},
+    {"wait": 500}
+  ],
+  "state": [
+    {"component": "lblStatus", "prop": "text"}
+  ]
+}

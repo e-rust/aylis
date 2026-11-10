@@ -1,0 +1,1603 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Como o aylis funciona</title>
+<meta name="description" content="Explicação visual e interativa do aylis por dentro: núcleo, componentes, layout, pintura, forms em JSON, dados e as linguagens.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 8h14v4h-5v8h5v4H9v-4h5v-8H9z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f6f7f9; --fg: #17191d; --muted: #5d6470; --card: #ffffff; --line: #dfe3e8;
+  --soft: #eef1f5; --accent: #2563eb; --accent-soft: #dbe7ff; --accent-fg: #ffffff;
+  --warm: #d97706; --warm-soft: #fdecc8; --ok: #15803d; --ok-soft: #d7f2df;
+  --bad: #b91c1c; --code: #f1f3f6; --code-fg: #1f2937; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+  --mono: ui-monospace, "Cascadia Code", "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --fg: #e8eaee; --muted: #9aa2ae; --card: #1a1d23; --line: #2c313a;
+    --soft: #22262d; --accent: #6ea0ff; --accent-soft: #1f2d4d; --accent-fg: #0b1220;
+    --warm: #f0a742; --warm-soft: #3f2e12; --ok: #4ade80; --ok-soft: #173723;
+    --bad: #f87171; --code: #161a20; --code-fg: #d6dbe3; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --fg: #e8eaee; --muted: #9aa2ae; --card: #1a1d23; --line: #2c313a;
+  --soft: #22262d; --accent: #6ea0ff; --accent-soft: #1f2d4d; --accent-fg: #0b1220;
+  --warm: #f0a742; --warm-soft: #3f2e12; --ok: #4ade80; --ok-soft: #173723;
+  --bad: #f87171; --code: #161a20; --code-fg: #d6dbe3; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+code, pre, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--code); color: var(--code-fg); padding: .08em .35em; border-radius: 4px; }
+a { color: var(--accent); }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5em; }
+p { margin: 0 0 .8em; }
+
+/* ---------- topo e navegação ---------- */
+header.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line); }
+.logo { width: 28px; height: 28px; flex: none; }
+header.top b { font-size: 16px; }
+header.top .sp { flex: 1; }
+.icon-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.icon-btn:hover { border-color: var(--accent); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+.wrap { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 28px; max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+nav.side { position: sticky; top: 64px; align-self: start; padding: 22px 0; }
+nav.side a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; font-size: 14px; }
+nav.side a svg { width: 18px; height: 18px; flex: none; }
+nav.side a:hover { background: var(--soft); color: var(--fg); }
+nav.side a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+nav.side .n { font-variant-numeric: tabular-nums; font-size: 12px; opacity: .7; width: 14px; }
+main { padding: 26px 0 80px; min-width: 0; }
+
+section.part { scroll-margin-top: 70px; padding: 8px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 30px; }
+section.part:last-of-type { border-bottom: 0; }
+.kicker { color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+section.part > h2 { font-size: 26px; }
+.lead { color: var(--muted); max-width: 70ch; font-size: 16px; }
+.hero h1 { font-size: 34px; letter-spacing: -.01em; }
+.hero .lead { font-size: 17px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin: 18px 0 6px; }
+.cards a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; text-decoration: none; color: var(--fg); box-shadow: var(--shadow); transition: transform .15s, border-color .15s; }
+.cards a:hover { transform: translateY(-2px); border-color: var(--accent); }
+.cards a small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.cards a b { font-size: 14px; }
+.next { display: flex; justify-content: flex-end; margin-top: 16px; }
+.next a { text-decoration: none; font-size: 14px; }
+
+/* ---------- caixas genéricas ---------- */
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.note { border-left: 3px solid var(--warm); background: var(--warm-soft); padding: 10px 14px; border-radius: 0 10px 10px 0; margin: 12px 0; font-size: 14px; }
+
+/* ---------- passo a passo ---------- */
+.stepper { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); gap: 0; overflow: hidden; margin-top: 16px; }
+.stepper .stage { position: relative; padding: 16px; border-right: 1px solid var(--line); min-width: 0; background:
+  radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--fg) 9%, transparent) 1px, transparent 0) 0 0 / 18px 18px; }
+.stepper .panel { display: flex; flex-direction: column; padding: 14px 16px 16px; min-width: 0; }
+.ctrl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ctrl button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; min-width: 34px; padding: 0 10px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); font: inherit; font-size: 13px; cursor: pointer; }
+.ctrl button svg { width: 15px; height: 15px; }
+.ctrl button:hover:not(:disabled) { border-color: var(--accent); }
+.ctrl button:disabled { opacity: .4; cursor: default; }
+.ctrl button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.ctrl .count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; margin-left: auto; }
+.dots { display: flex; gap: 4px; margin: 12px 0 10px; flex-wrap: wrap; }
+.dots i { width: 18px; height: 5px; border-radius: 3px; background: var(--line); cursor: pointer; transition: background .2s; }
+.dots i.on { background: var(--accent); }
+.dots i.past { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.s-title { font-size: 17px; margin: 0 0 6px; }
+.s-text { font-size: 14.5px; }
+.s-text p:last-child { margin-bottom: 0; }
+pre.s-code { margin: 10px 0 0; background: var(--code); color: var(--code-fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  overflow: auto; font-size: 12.5px; line-height: 1.5; white-space: pre; max-height: 260px; }
+pre.s-code:empty { display: none; }
+.s-file { font-size: 12px; color: var(--muted); margin-top: 10px; }
+.s-file:empty { display: none; }
+
+/* elementos marcáveis dentro dos palcos */
+[data-k] { transition: opacity .35s, transform .35s, background-color .3s, border-color .3s, color .3s, fill .3s, stroke .3s, box-shadow .3s; }
+.lazy { opacity: 0; pointer-events: none; }
+.lazy.shown { opacity: 1; pointer-events: auto; }
+.pipe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.pipe .p { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 4px 8px; font: 12px/1.3 var(--mono); color: var(--muted); }
+.pipe .p small { display: block; font-family: var(--sans); font-size: 10.5px; opacity: .8; }
+.pipe .p.done { color: var(--fg); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.pipe .p.hl { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); transform: translateY(-2px); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+.pipe .arr { color: var(--muted); font-size: 11px; }
+.grp-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 10px 0 2px; width: 100%; }
+
+svg text { font-family: var(--sans); }
+svg .t-mono { font-family: var(--mono); }
+.svg-full { width: 100%; height: auto; display: block; }
+
+/* ---------- visão geral ---------- */
+.layers { display: grid; gap: 8px; margin-top: 16px; }
+.layer { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: stretch; }
+.layer > .lname { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; justify-content: flex-end; text-align: right; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border-radius: 12px; border: 1px dashed var(--line); background: var(--card); }
+.chip { border: 1px solid var(--line); background: var(--soft); color: var(--fg); border-radius: 8px; padding: 5px 9px; cursor: pointer; font: 12.5px var(--mono); }
+.chip:hover { border-color: var(--accent); }
+.chip.sel { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.chip.core { font-weight: 700; padding: 8px 16px; font-size: 14px; }
+.layer.core .chips { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.detail { margin-top: 14px; padding: 14px 16px; min-height: 96px; }
+.detail h4 { font-family: var(--mono); font-size: 15px; }
+.detail ul { margin: 6px 0 0; padding-left: 18px; }
+.overview-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; align-items: start; }
+
+/* ---------- árvore ---------- */
+.arena { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 4px; margin-top: 10px; }
+.slot { border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; font: 11px/1.35 var(--mono); background: var(--card); color: var(--muted); }
+.slot b { color: var(--fg); font-weight: 600; }
+.slot.hl { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+.slot.dead { text-decoration: line-through; opacity: .55; }
+.node rect { fill: var(--card); stroke: var(--line); stroke-width: 1.2; }
+.node .cls { fill: var(--muted); font-size: 9.5px; }
+.node .nm { fill: var(--fg); font-size: 11.5px; font-weight: 600; }
+.node.hl rect { stroke: var(--accent); stroke-width: 2.2; fill: var(--accent-soft); }
+.node.nv rect { stroke-dasharray: 4 3; }
+.node.frame rect { stroke: var(--warm); }
+.node.emb rect { fill: var(--warm-soft); stroke: var(--warm); }
+.edge { stroke: var(--line); stroke-width: 1.6; fill: none; }
+.edge.hl { stroke: var(--accent); }
+.edge.emb { stroke: var(--warm); stroke-dasharray: 4 3; }
+.node.lazy, .edge.lazy { opacity: 0; }
+.node.lazy.shown, .edge.lazy.shown { opacity: 1; }
+.node.gone { opacity: .2; }
+
+/* ---------- clique ---------- */
+.mock-btn { fill: var(--accent); }
+.mock-btn.pressed { fill: color-mix(in srgb, var(--accent) 70%, #000); }
+.mock-btn.hover { fill: color-mix(in srgb, var(--accent) 88%, #fff); }
+.hitbox { fill: none; stroke: var(--warm); stroke-width: 1.6; stroke-dasharray: 5 3; }
+.backend-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.backend-row .be { border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; background: var(--card); font-size: 12px; }
+.backend-row .be b { display: block; font-family: var(--mono); font-size: 12.5px; }
+.backend-row .be.hl { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.backend-row canvas, .backend-row .mini { display: block; width: 100%; height: 46px; margin-top: 6px; border-radius: 6px; background: var(--soft); }
+
+/* ---------- layout ---------- */
+.lay-ctrls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13.5px; margin-bottom: 10px; }
+.lay-ctrls label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.lay-ctrls input[type=range] { width: 130px; accent-color: var(--accent); }
+.lay-ctrls input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.form-box { position: relative; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--card); overflow: hidden; transition: aspect-ratio .3s; }
+.form-holder { margin: 0 auto; transition: width .3s; max-width: 100%; }
+#st-layout, #st-host, #st-data { grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr); }
+#st-json { grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); }
+.bn .ref { display: block; font-size: 10.5px; color: var(--warm); white-space: normal; }
+.bn .ref:empty { display: none; }
+.lb { position: absolute; border-radius: 6px; border: 1.5px solid; display: flex; align-items: center; justify-content: center; text-align: center;
+  font: 10px/1.2 var(--mono); overflow: hidden; padding: 1px; transition: left .45s, top .45s, width .45s, height .45s, opacity .35s, transform .35s; }
+.lb.unplaced { opacity: 0; transform: scale(.92); }
+.lb.top { border-color: #2563eb; background: color-mix(in srgb, #2563eb 16%, var(--card)); }
+.lb.bottom { border-color: #7c3aed; background: color-mix(in srgb, #7c3aed 16%, var(--card)); }
+.lb.left { border-color: #0d9488; background: color-mix(in srgb, #0d9488 16%, var(--card)); }
+.lb.client { border-color: #64748b; background: color-mix(in srgb, #64748b 12%, var(--card)); }
+.lb.none { border-color: var(--warm); background: var(--warm-soft); z-index: 3; }
+.lb.child { border-style: dashed; font-size: 10px; z-index: 2; }
+.lb.hl { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); z-index: 4; }
+.lb.skipped { opacity: .0; }
+.area { position: absolute; border: 2px dashed var(--bad); border-radius: 6px; pointer-events: none; transition: all .45s; z-index: 5; }
+.area span { position: absolute; top: -1px; right: 4px; font: 10px var(--mono); color: var(--bad); background: var(--card); padding: 0 3px; border-radius: 3px; }
+.badge-skip { position: absolute; z-index: 6; font: 10.5px var(--sans); background: var(--bad); color: #fff; border-radius: 6px; padding: 2px 6px; transition: opacity .3s; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; border: 1.5px solid; }
+
+/* ---------- JSON ---------- */
+.json-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+pre.json { margin: 0; background: var(--code); color: var(--code-fg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 0; font-size: 11.5px; line-height: 1.55; overflow: auto; }
+pre.json span.ln { display: block; padding: 0 10px; border-left: 3px solid transparent; white-space: pre; }
+pre.json span.ln.hl { background: var(--accent-soft); border-left-color: var(--accent); }
+pre.json span.ln.done { color: var(--code-fg); }
+.json-k { color: #2563eb; } .json-s { color: #b45309; } .json-n { color: #15803d; }
+:root[data-theme="dark"] .json-k { color: #8ab4ff; } :root[data-theme="dark"] .json-s { color: #f0b46a; } :root[data-theme="dark"] .json-n { color: #6fdc95; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .json-k { color: #8ab4ff; } :root:not([data-theme="light"]) .json-s { color: #f0b46a; } :root:not([data-theme="light"]) .json-n { color: #6fdc95; } }
+.built { display: flex; flex-direction: column; gap: 4px; font: 12px/1.3 var(--mono); }
+.bn { border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 4px 8px; }
+.bn small { color: var(--muted); font-family: var(--sans); }
+.bn.hl { border-color: var(--accent); background: var(--accent-soft); }
+.bn.wait { border-style: dashed; border-color: var(--warm); }
+.insp { margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 12px; }
+.insp .row { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.insp .row:first-child { border-top: 0; }
+.insp .row > * { padding: 3px 8px; }
+.insp .row > :first-child { color: var(--muted); border-right: 1px solid var(--line); }
+.insp .cap { background: var(--soft); font-weight: 600; padding: 4px 8px; display: block; }
+.insp .row.hl > :last-child { background: var(--accent-soft); }
+
+/* ---------- dados ---------- */
+.data-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; }
+table.rows { border-collapse: collapse; width: 100%; font: 11.5px/1.3 var(--mono); }
+table.rows th, table.rows td { border: 1px solid var(--line); padding: 3px 5px; text-align: left; }
+table.rows th { background: var(--soft); font-weight: 600; }
+table.rows td.null { color: var(--muted); font-style: italic; }
+.cols { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; }
+.col { flex: 1 1 60px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); min-width: 58px; font: 11px/1.3 var(--mono); overflow: hidden; }
+.col .h { background: var(--soft); padding: 3px 6px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.col .h small { display: block; font-weight: 400; color: var(--muted); font-family: var(--sans); font-size: 10px; }
+.col .c { padding: 2px 6px; border-top: 1px solid var(--soft); white-space: nowrap; }
+.col .c.idx { color: var(--accent); font-weight: 700; }
+.col.hl { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dict { border: 1.5px solid var(--warm); border-radius: 8px; background: var(--warm-soft); padding: 4px 8px; font: 11px/1.4 var(--mono); }
+.dict b { font-family: var(--sans); font-size: 11px; display: block; }
+.bits { font: 12px var(--mono); letter-spacing: 3px; }
+.threads { display: grid; gap: 5px; margin-top: 8px; }
+.thr { display: grid; grid-template-columns: 70px 1fr; gap: 6px; align-items: center; font: 11px var(--mono); }
+.bar { height: 14px; border-radius: 4px; background: var(--soft); overflow: hidden; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--ok))); }
+.bar.go i { animation: fill 1.6s ease-out forwards; }
+.bar.full i { width: 100%; }
+@keyframes fill { to { width: 100%; } }
+.merge { margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font: 11.5px var(--mono); }
+.merge span { border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; background: var(--card); }
+.merge span.hl { border-color: var(--accent); background: var(--accent-soft); }
+.dbgrid { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; position: relative; font: 11px var(--mono); background: var(--card); }
+.dbgrid .gh, .dbgrid .gr { display: grid; grid-template-columns: 70px 1fr 1fr 60px; }
+.dbgrid .gh > *, .dbgrid .gr > * { padding: 3px 6px; border-right: 1px solid var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dbgrid .gh { background: var(--soft); font-weight: 600; }
+.dbgrid .gr { border-top: 1px solid var(--soft); }
+.dbgrid .gr.cur { background: var(--accent-soft); }
+.dbgrid .gr.edit > :nth-child(4) { outline: 2px solid var(--warm); outline-offset: -2px; }
+.dbgrid .sb { position: absolute; right: 2px; top: 22px; bottom: 2px; width: 6px; border-radius: 3px; background: var(--soft); }
+.dbgrid .sb i { position: absolute; left: 0; right: 0; height: 10px; border-radius: 3px; background: var(--accent); transition: top .5s; }
+.flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font: 11.5px var(--mono); margin-top: 8px; }
+.flow span { border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; background: var(--card); }
+.flow span.hl { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- linguagens ---------- */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+.tabs button { border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.tabs button.sel { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.langs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; }
+.langs button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.langs button i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.langs button.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); font-weight: 600; }
+.tabpane { display: none; }
+.tabpane.sel { display: block; }
+.procs { display: grid; grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr); gap: 0; align-items: stretch; }
+.proc { border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); padding: 10px; min-width: 0; }
+.proc h5 { margin: 0 0 6px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.proc h5 small { font-weight: 400; color: var(--muted); }
+.proc .part { overflow-wrap: anywhere; border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; margin-top: 6px; font: 11.5px/1.35 var(--mono); background: var(--soft); }
+.proc .part small { display: block; font-family: var(--sans); color: var(--muted); font-size: 10.5px; }
+.proc .part.hl { border-color: var(--accent); background: var(--accent-soft); }
+.wire { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10.5px; color: var(--muted); text-align: center; }
+.wire::before { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; border-top: 2px dashed var(--line); }
+.wire span { position: relative; background: var(--bg); padding: 1px 4px; border-radius: 4px; z-index: 1; }
+.packet { position: absolute; z-index: 30; pointer-events: none; padding: 3px 8px; border-radius: 999px; font: 11px var(--mono); white-space: nowrap;
+  background: var(--accent); color: var(--accent-fg); box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+.packet.ev { background: var(--warm); color: #1b1203; }
+.packet.res { background: var(--ok); color: #04180b; }
+.log { margin-top: 10px; background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: 11.5px/1.5 var(--mono); color: var(--code-fg); min-height: 64px; max-height: 190px; overflow: auto; }
+.log div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; padding: 1px 0; }
+.log div > span:last-child { white-space: pre-wrap; word-break: break-all; }
+.log .dir { color: var(--muted); white-space: nowrap; }
+.log .new { animation: flash 1.2s; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.lang-info { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; font-size: 13px; }
+.lang-info > div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--card); min-width: 0; }
+.lang-info b { display: block; font-size: 11.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.lang-info code { word-break: break-all; }
+.win { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 6px; background: var(--bg); }
+.win .bar2 { background: var(--soft); font-size: 10.5px; padding: 2px 8px; color: var(--muted); }
+.win .body { padding: 6px 8px; display: grid; gap: 4px; font-size: 12px; }
+.win .fake-edit { border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; background: var(--card); }
+.win .fake-btn { border-radius: 5px; padding: 3px 6px; background: var(--accent); color: var(--accent-fg); text-align: center; transition: transform .15s, filter .15s; }
+.win .fake-btn.press { transform: scale(.96); filter: brightness(.8); }
+.win .fake-lbl { min-height: 18px; color: var(--ok); font-weight: 600; }
+
+/* ---------- tela estreita ---------- */
+@media (max-width: 1100px) { .json-wrap { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); padding: 0 16px; gap: 0; }
+  nav.side { position: sticky; top: 49px; z-index: 15; display: flex; gap: 4px; overflow-x: auto; padding: 8px 0; margin: 0 -16px; padding-left: 16px; padding-right: 16px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+  nav.side a { white-space: nowrap; padding: 6px 10px; }
+  nav.side a .n { display: none; }
+  section.part { scroll-margin-top: 110px; }
+  .stepper, #st-layout, #st-host, #st-data, #st-json { grid-template-columns: minmax(0, 1fr); }
+  .stepper .stage { border-right: 0; border-bottom: 1px solid var(--line); }
+  .overview-grid, .json-wrap, .data-grid { grid-template-columns: minmax(0, 1fr); }
+  .layer { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .layer > .lname { justify-content: flex-start; text-align: left; }
+  .hero h1 { font-size: 27px; }
+}
+@media (max-width: 560px) {
+  header.top { padding: 8px 16px; }
+  .procs { grid-template-columns: minmax(0, 1fr); }
+  .wire { min-height: 54px; }
+  .wire::before { left: 50%; right: auto; top: 4px; bottom: 4px; border-top: 0; border-left: 2px dashed var(--line); }
+  .backend-row { grid-template-columns: minmax(0, 1fr); }
+  .ctrl .count { margin-left: 0; }
+  .log div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2563eb"/><path d="M9 8h14v4h-5v8h5v4H9v-4h5v-8H9z" fill="#fff"/></svg>
+  <b>aylis por dentro</b>
+  <span class="sp"></span>
+  <button class="icon-btn" id="themeBtn" type="button" title="Trocar o tema">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <span id="themeLbl">Automático</span>
+  </button>
+</header>
+
+<div class="wrap">
+<nav class="side" id="nav">
+  <a href="#inicio"><span class="n">0</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</a>
+  <a href="#camadas"><span class="n">1</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>As camadas</a>
+  <a href="#arvore"><span class="n">2</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 7v4M5 16v-3h14v3"/></svg>Componentes</a>
+  <a href="#clique"><span class="n">3</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9l11 4-5 2-2 5z"/><path d="M5 3v3M3 5h3M9 4l1 2M4 9l2 1"/></svg>Um clique</a>
+  <a href="#layout"><span class="n">4</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M8 8v13"/></svg>Layout</a>
+  <a href="#json"><span class="n">5</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H7a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h1M16 4h1a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-1"/></svg>Form JSON</a>
+  <a href="#dados"><span class="n">6</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Dados</a>
+  <a href="#linguagens"><span class="n">7</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/></svg>Linguagens</a>
+</nav>
+
+<main>
+
+<!-- ======================================================= 0 -->
+<section class="part hero" id="inicio">
+  <div class="kicker">Explicação interativa</div>
+  <h1>Como o aylis funciona por dentro</h1>
+  <p class="lead">O aylis é um framework de interface em Rust. Os componentes descendem de um ancestral comum, o layout usa
+  <code>align</code>, <code>anchors</code>, <code>margins</code> e <code>padding</code>, os eventos se ligam por nome, os forms são JSON
+  editados numa IDE feita com o próprio aylis e os dados ficam num <code>ClientDataSet</code>. O código do app pode ser em
+  Rust, Python, TypeScript, C#, Java, Go, C++ ou Pascal.</p>
+  <p class="lead">Cada parte abaixo tem um diagrama. Use <b>Avançar</b> para seguir passo a passo, <b>Repetir</b> para voltar ao começo e
+  <b>Tocar</b> para ver tudo sozinho. Os nomes são os do código.</p>
+  <div class="cards">
+    <a href="#camadas"><b>1. As camadas</b><small>Os crates e quem depende de quem</small></a>
+    <a href="#arvore"><b>2. Componentes e a árvore</b><small><code>Ui</code>, <code>ComponentId</code>, <code>Frame</code></small></a>
+    <a href="#clique"><b>3. O caminho de um clique</b><small>Da plataforma ao pixel</small></a>
+    <a href="#layout"><b>4. O ciclo de layout</b><small>Encaixe, <code>auto_size</code>, ramos escondidos</small></a>
+    <a href="#json"><b>5. Do JSON aos componentes</b><small><code>aylis-json</code> e o designer</small></a>
+    <a href="#dados"><b>6. Os dados em colunas</b><small><code>ClientDataSet</code>, <code>RowBatch</code>, <code>DataGrid</code></small></a>
+    <a href="#linguagens"><b>7. As linguagens</b><small>No processo, pelo <code>aylis-host</code> e pela C ABI</small></a>
+  </div>
+</section>
+
+<!-- ======================================================= 1 -->
+<section class="part" id="camadas">
+  <div class="kicker">Parte 1</div>
+  <h2>As camadas</h2>
+  <p class="lead">O repositório é um workspace de crates. O centro é o <code>aylis-core</code>, que não conhece sistema operacional nem
+  biblioteca de desenho: o que depende do sistema vira um trait (em <code>platform.rs</code>, e o <code>Canvas</code> para desenhar) e
+  cada plataforma implementa. Clique num crate para ver o que ele faz.</p>
+  <div class="overview-grid">
+    <div class="layers" id="layers"></div>
+    <div class="box detail" id="crateDetail">
+      <h4>Clique num crate</h4>
+      <p style="color:var(--muted);margin:0">A descrição aparece aqui.</p>
+    </div>
+  </div>
+  <div class="next"><a href="#arvore">Próximo: componentes e a árvore →</a></div>
+</section>
+
+<!-- ======================================================= 2 -->
+<section class="part" id="arvore">
+  <div class="kicker">Parte 2</div>
+  <h2>Componentes e a árvore</h2>
+  <p class="lead">O <code>Ui</code> guarda todos os componentes numa arena. Cada um é uma <code>struct</code> que implementa o trait
+  <code>Component</code> e é achado por um <code>ComponentId</code>, um índice com geração: depois de liberado, o id antigo não aponta
+  para mais nada.</p>
+  <div class="stepper box" id="st-tree">
+    <div class="stage">
+      <svg class="svg-full" viewBox="0 0 520 330" id="treeSvg" role="img" aria-label="Árvore de componentes">
+        <g id="treeEdges"></g>
+        <g id="treeNodes"></g>
+        <text x="448" y="200" font-size="10" fill="var(--warm)" text-anchor="end" class="lazy" data-k="embLbl">form carregado dentro do frame</text>
+      </svg>
+      <div class="grp-label">A arena do <code>Ui</code> (slots)</div>
+      <div class="arena" id="arena"></div>
+    </div>
+    <div class="panel"></div>
+  </div>
+  <div class="next"><a href="#clique">Próximo: o caminho de um clique →</a></div>
+</section>
+
+<!-- ======================================================= 3 -->
+<section class="part" id="clique">
+  <div class="kicker">Parte 3</div>
+  <h2>O caminho de um clique</h2>
+  <p class="lead">Do botão do mouse até os pixels novos na tela: a plataforma entrega o evento ao <code>Ui</code>, o <code>Ui</code> acha o
+  controle, dispara o evento, o handler chama <code>set_prop</code>, a mudança marca o layout e a pintura sai pelo <code>Canvas</code>
+  do renderizador.</p>
+  <div class="stepper box" id="st-click">
+    <div class="stage">
+      <svg class="svg-full" viewBox="0 0 340 168" id="clickSvg" role="img" aria-label="Form de exemplo">
+        <rect x="6" y="6" width="328" height="156" rx="9" fill="var(--card)" stroke="var(--line)"/>
+        <rect x="6" y="6" width="328" height="24" rx="9" fill="var(--soft)"/>
+        <rect x="6" y="22" width="328" height="8" fill="var(--soft)"/>
+        <text x="18" y="22" font-size="11" fill="var(--muted)">frmClientes</text>
+        <rect x="14" y="38" width="312" height="44" rx="6" fill="none" stroke="var(--line)" stroke-dasharray="3 3"/>
+        <text x="18" y="94" font-size="9" fill="var(--muted)" class="t-mono">pnlTopo (align: top)</text>
+        <rect x="22" y="46" width="190" height="28" rx="5" fill="var(--bg)" stroke="var(--line)"/>
+        <text x="30" y="64" font-size="12" fill="var(--fg)">Ana</text>
+        <rect class="mock-btn" data-k="btn" x="220" y="46" width="98" height="28" rx="6"/>
+        <text x="269" y="64" font-size="12" fill="#fff" text-anchor="middle" font-weight="600" pointer-events="none">Salvar</text>
+        <text x="22" y="124" font-size="10" fill="var(--muted)" class="t-mono">lblStatus.text =</text>
+        <text x="134" y="124" font-size="13" fill="var(--ok)" font-weight="700" data-t="status">""</text>
+        <rect class="hitbox lazy" data-k="hit1" x="8" y="8" width="324" height="152" rx="8"/>
+        <rect class="hitbox lazy" data-k="hit2" x="14" y="38" width="312" height="44" rx="6"/>
+        <rect class="hitbox lazy" data-k="hit3" x="218" y="44" width="102" height="32" rx="7" style="stroke:var(--bad);stroke-dasharray:none;stroke-width:2.2"/>
+        <text class="lazy" data-k="hitTxt" x="200" y="148" font-size="10" fill="var(--bad)" text-anchor="middle">hit_test → btnSalvar</text>
+        <rect class="lazy" data-k="dirty" x="126" y="110" width="120" height="20" rx="4" fill="none" stroke="var(--warm)" stroke-width="2"/>
+        <g id="cursor" transform="translate(300,150)">
+          <path d="M0 0 L0 16 L4 12 L7 19 L10 18 L7 11 L12 11 Z" fill="var(--fg)" stroke="var(--card)" stroke-width="1.2"/>
+        </g>
+      </svg>
+      <div class="pipe" id="clickPipe">
+        <div class="grp-label">Entrada</div>
+        <span class="p" data-k="plat">plataforma<small>aylis-platform-winit</small></span><span class="arr">→</span>
+        <span class="p" data-k="down">Ui::pointer_down</span><span class="arr">→</span>
+        <span class="p" data-k="hit">hit_test</span><span class="arr">→</span>
+        <span class="p" data-k="state">hover · pressed · foco</span><span class="arr">→</span>
+        <span class="p" data-k="up">Ui::pointer_up</span>
+        <div class="grp-label">Evento</div>
+        <span class="p" data-k="click">Component::click</span><span class="arr">→</span>
+        <span class="p" data-k="fire">Ui::fire("on_click")</span><span class="arr">→</span>
+        <span class="p" data-k="named">frmClientes.btn_salvar_click</span><span class="arr">→</span>
+        <span class="p" data-k="handler">handler</span><span class="arr">→</span>
+        <span class="p" data-k="setprop">set_prop</span><span class="arr">→</span>
+        <span class="p" data-k="inval">invalidate</span>
+        <div class="grp-label">Quadro</div>
+        <span class="p" data-k="frame">needs_repaint</span><span class="arr">→</span>
+        <span class="p" data-k="layout">layout</span><span class="arr">→</span>
+        <span class="p" data-k="paint">paint_node</span><span class="arr">→</span>
+        <span class="p" data-k="canvas">dyn Canvas</span>
+      </div>
+      <div class="backend-row lazy" data-k="backs">
+        <div class="be" data-k="be-d2d"><b>D2dCanvas</b>aylis-d2d · Direct2D<canvas width="200" height="46"></canvas></div>
+        <div class="be" data-k="be-skia"><b>SkiaCanvas</b>aylis-skia · CPU/GPU<canvas width="200" height="46"></canvas></div>
+        <div class="be" data-k="be-web"><b>Canvas2d</b>aylis-web · navegador<canvas width="200" height="46"></canvas></div>
+      </div>
+    </div>
+    <div class="panel"></div>
+  </div>
+  <div class="next"><a href="#layout">Próximo: o ciclo de layout →</a></div>
+</section>
+
+<!-- ======================================================= 4 -->
+<section class="part" id="layout">
+  <div class="kicker">Parte 4</div>
+  <h2>O ciclo de layout</h2>
+  <p class="lead">Quando algo muda, o <code>Ui</code> marca <code>layout_dirty</code>. No próximo <code>update_layout</code>, o
+  <code>realign</code> percorre a árvore de cima para baixo: para cada contêiner, os filhos encaixados consomem a área livre e o que
+  sobra vai para o <code>client</code>. Mexa nos controles para ver o mesmo cálculo (feito aqui em JavaScript, com a ordem do
+  <code>layout.rs</code>).</p>
+  <div class="stepper box" id="st-layout">
+    <div class="stage">
+      <div class="lay-ctrls">
+        <label>largura do form <input type="range" id="lw" min="300" max="520" value="400"> <span class="mono" id="lwv">400</span></label>
+        <label><input type="checkbox" id="lvis" checked> <code>pnlAviso.visible</code></label>
+        <label><input type="checkbox" id="llong"> texto longo no <code>lblTitulo</code></label>
+      </div>
+      <div class="form-holder" id="formHolder"><div class="form-box" id="formBox"></div></div>
+      <div class="legend">
+        <span><i style="border-color:#2563eb"></i>top</span><span><i style="border-color:#7c3aed"></i>bottom</span>
+        <span><i style="border-color:#0d9488"></i>left</span><span><i style="border-color:#64748b"></i>client</span>
+        <span><i style="border-color:var(--warm)"></i>none + anchors</span><span><i style="border-color:var(--bad);border-style:dashed"></i>área livre</span>
+      </div>
+    </div>
+    <div class="panel"></div>
+  </div>
+  <div class="next"><a href="#json">Próximo: do JSON aos componentes →</a></div>
+</section>
+
+<!-- ======================================================= 5 -->
+<section class="part" id="json">
+  <div class="kicker">Parte 5</div>
+  <h2>Do form JSON aos componentes</h2>
+  <p class="lead">Um form é um arquivo JSON em <code>forms/</code>. O <code>aylis-json</code> lê o arquivo e cria os componentes pelo
+  nome da classe, no mesmo <code>Ui</code> que vai mostrar a tela. A IDE usa o mesmo carregador num <code>Ui</code> em modo de design.</p>
+  <div class="stepper box" id="st-json">
+    <div class="stage">
+      <div class="json-wrap">
+        <pre class="json" id="jsonPre"></pre>
+        <div>
+          <div class="grp-label" style="margin-top:0">Componentes criados</div>
+          <div class="built" id="built"></div>
+          <div class="insp lazy" data-k="insp" id="insp"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel"></div>
+  </div>
+  <div class="next"><a href="#dados">Próximo: os dados em colunas →</a></div>
+</section>
+
+<!-- ======================================================= 6 -->
+<section class="part" id="dados">
+  <div class="kicker">Parte 6</div>
+  <h2>Os dados em colunas</h2>
+  <p class="lead">A camada de dados não sabe nada de banco: os registros chegam do backend, o usuário edita e as alterações voltam
+  como delta. Por dentro, o <code>ClientDataSet</code> guarda os registros em colunas, e o <code>DataGrid</code> só lê as linhas que
+  estão na tela.</p>
+  <div class="stepper box" id="st-data">
+    <div class="stage">
+      <div class="data-grid">
+        <div>
+          <div class="grp-label" style="margin-top:0">Chegam do backend (linhas)</div>
+          <table class="rows" id="rowsTbl" data-k="rows"></table>
+          <div class="lazy" data-k="batch">
+            <div class="grp-label">RowBatch montado em threads</div>
+            <div class="threads" id="threads"></div>
+            <div class="merge"><span data-k="m-append">append</span>→<span data-k="m-load">load_batch</span>→<span data-k="m-sort">ordem e filtro, uma vez</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="grp-label" style="margin-top:0">Dentro do ClientDataSet (colunas)</div>
+          <div class="cols lazy" data-k="cols" id="cols"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <div class="dict lazy" data-k="dict" id="dict"></div>
+            <div class="dict lazy" data-k="nulls" style="border-color:var(--line);background:var(--card)"><b>nulos de valor (mapa de bits)</b><span class="bits">1 1 0 1 1 1</span></div>
+          </div>
+          <div class="lazy" data-k="grid">
+            <div class="grp-label">DataSource → DataGrid</div>
+            <div class="dbgrid" id="dbgrid"></div>
+            <div class="flow lazy" data-k="delta"><span data-k="f-edit">edição</span>→<span data-k="f-delta">delta()</span>→<span data-k="f-be">backend</span>→<span data-k="f-rec">reconcile</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel"></div>
+  </div>
+  <div class="next"><a href="#linguagens">Próximo: as linguagens →</a></div>
+</section>
+
+<!-- ======================================================= 7 -->
+<section class="part" id="linguagens">
+  <div class="kicker">Parte 7</div>
+  <h2>As linguagens</h2>
+  <p class="lead">Num projeto, o visual (forms, temas, assets) é um só e o código fica numa pasta por linguagem
+  (<code>rust/</code>, <code>python/</code>, <code>typescript/</code>...). Rust roda no mesmo processo da tela. As outras rodam um
+  backend que conversa com o <code>aylis-host</code> pelo protocolo JSON do <code>aylis-remote</code>, uma mensagem por linha. Quem
+  tem FFI também pode usar a C ABI (<code>aylis-capi</code>), no mesmo processo.</p>
+  <div class="tabs" id="langTabs">
+    <button type="button" data-tab="rust" class="sel">Rust, no processo</button>
+    <button type="button" data-tab="host">Outras linguagens, pelo aylis-host</button>
+    <button type="button" data-tab="capi">C ABI (aylis-capi)</button>
+  </div>
+
+  <div class="tabpane sel" id="tab-rust">
+    <div class="stepper box" id="st-rust">
+      <div class="stage">
+        <div class="proc" style="border-color:var(--accent)">
+          <h5>Um processo <small>o executável do app</small></h5>
+          <div class="part" data-k="r-lib">src/lib.rs<small>app(): aylis::Application::bundled(aylis::include_project!())</small></div>
+          <div class="part" data-k="r-mod">src/forms/mod.rs<small>forms::register(&amp;mut app.ui) chama o register de cada form</small></div>
+          <div class="part" data-k="r-form">src/forms/frm_clientes.rs<small>ui.register_handler("frmClientes.btn_salvar_click", btn_salvar_click)</small></div>
+          <div class="part" data-k="r-comp">src/forms/components.rs<small>frmClientes.lblStatus.set_text(ui, …) → ui.set_prop</small></div>
+          <div class="part" data-k="r-ui">Ui (aylis-core)<small>a árvore, os eventos, o layout e a pintura</small></div>
+          <div class="part" data-k="r-plat">aylis-platform-winit + renderizador<small>desktop; android_main no Android; aylis_start no navegador</small></div>
+        </div>
+      </div>
+      <div class="panel"></div>
+    </div>
+  </div>
+
+  <div class="tabpane" id="tab-host">
+    <div class="langs" id="langPick"></div>
+    <div class="stepper box" id="st-host">
+      <div class="stage">
+        <div class="procs" id="procs">
+          <div class="proc" id="pBackend">
+            <h5><span id="beName">Backend</span> <small>outro processo</small></h5>
+            <div class="part" data-k="h-client"><span id="beClient">cliente</span><small>send · call · on · run/loop</small></div>
+            <div class="part" data-k="h-handler">on("hello", …)<small>o handler pelo nome usado no layout</small></div>
+            <div class="part" data-k="h-typed"><span id="beComp">components</span><small>acesso tipado gerado: ler é um get, gravar é um set</small></div>
+          </div>
+          <div class="wire"><span>stdin / stdout</span><span>1 JSON por linha</span></div>
+          <div class="proc" id="pHost">
+            <h5>aylis-host <small>a tela</small></h5>
+            <div class="part" data-k="h-remote">aylis-remote<small>handle_message · forward_events</small></div>
+            <div class="part" data-k="h-ui">Ui<small>set_prop, get_prop, click, fire</small></div>
+            <div class="win" data-k="h-win"><div class="bar2">frmDemo</div><div class="body">
+              <div class="fake-edit">Ana</div><div class="fake-btn" id="fakeBtn">Dizer olá</div><div class="fake-lbl" data-t="lblMsg"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="log" id="hostLog" aria-live="polite"></div>
+      </div>
+      <div class="panel"></div>
+    </div>
+    <div class="lang-info" id="langInfo"></div>
+  </div>
+
+  <div class="tabpane" id="tab-capi">
+    <div class="stepper box" id="st-capi">
+      <div class="stage">
+        <div class="procs">
+          <div class="proc">
+            <h5>Seu programa <small>C, C#, Go, Python (ctypes)…</small></h5>
+            <div class="part" data-k="c-new">AylisApp* app = aylis_new();</div>
+            <div class="part" data-k="c-exec">aylis_execute(app, json)<small>antes do aylis_run, na thread que criou o app</small></div>
+            <div class="part" data-k="c-cb">on_event(ctx, event_json, user)<small>registrado com aylis_set_event_callback</small></div>
+            <div class="part" data-k="c-free">aylis_string_free(r) · aylis_free(app)</div>
+          </div>
+          <div class="wire"><span>mesmo processo</span><span>chamada de função</span></div>
+          <div class="proc">
+            <h5>aylis.dll <small>libaylis.so · libaylis.dylib</small></h5>
+            <div class="part" data-k="c-remote">aylis_remote::handle_message<small>os mesmos comandos do protocolo</small></div>
+            <div class="part" data-k="c-run">aylis_run(app, "FrmClientes")<small>abre a janela e bloqueia até fechar</small></div>
+            <div class="part" data-k="c-post">aylis_post(app, json)<small>de outra thread: executa na thread da tela</small></div>
+          </div>
+        </div>
+        <div class="log" id="capiLog"></div>
+      </div>
+      <div class="panel"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+"use strict";
+/* ================================================================
+   Utilidades
+   ================================================================ */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ICON = {
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  again: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+};
+
+/** Tema: automático, claro ou escuro (guardado no navegador quando dá). */
+(function theme() {
+  const order = ["auto", "light", "dark"], names = { auto: "Automático", light: "Claro", dark: "Escuro" };
+  let cur = "auto";
+  try { cur = localStorage.getItem("aylis-theme") || "auto"; } catch (e) {}
+  const apply = () => {
+    if (cur === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", cur);
+    $("#themeLbl").textContent = names[cur];
+    document.dispatchEvent(new Event("themechange"));
+  };
+  $("#themeBtn").addEventListener("click", () => {
+    cur = order[(order.indexOf(cur) + 1) % 3];
+    try { localStorage.setItem("aylis-theme", cur); } catch (e) {}
+    apply();
+  });
+  apply();
+})();
+
+/** Navegação: marca a seção à vista. */
+(function scrollspy() {
+  const links = $$("#nav a");
+  const byId = Object.fromEntries(links.map(a => [a.getAttribute("href").slice(1), a]));
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove("active"));
+        const a = byId[e.target.id];
+        if (a) { a.classList.add("active"); a.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+      }
+    });
+  }, { rootMargin: "-30% 0px -60% 0px" });
+  $$("section.part").forEach(s => io.observe(s));
+})();
+
+/** Um "pacote" que voa de um elemento a outro dentro do palco. */
+function packet(stage, from, to, label, cls = "", ms = 900) {
+  return new Promise(resolve => {
+    if (reduced || !from || !to) return resolve();
+    const sr = stage.getBoundingClientRect(), a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    const p = document.createElement("div");
+    p.className = "packet " + cls;
+    p.textContent = label;
+    stage.appendChild(p);
+    const w = p.offsetWidth, h = p.offsetHeight;
+    const x0 = a.left + a.width / 2 - sr.left - w / 2, y0 = a.top + a.height / 2 - sr.top - h / 2;
+    const x1 = b.left + b.width / 2 - sr.left - w / 2, y1 = b.top + b.height / 2 - sr.top - h / 2;
+    p.style.left = "0px"; p.style.top = "0px";
+    const anim = p.animate([
+      { transform: `translate(${x0}px,${y0}px) scale(.6)`, opacity: 0 },
+      { transform: `translate(${x0}px,${y0}px) scale(1)`, opacity: 1, offset: .15 },
+      { transform: `translate(${x1}px,${y1}px) scale(1)`, opacity: 1, offset: .85 },
+      { transform: `translate(${x1}px,${y1}px) scale(.6)`, opacity: 0 },
+    ], { duration: ms, easing: "cubic-bezier(.4,0,.2,1)" });
+    anim.onfinish = () => { p.remove(); resolve(); };
+  });
+}
+
+/* ================================================================
+   O passo a passo genérico
+   Cada passo: { t: título, d: html, code?, file?, set(S) acumulativo, anim?(stage, S) }
+   O estado é refeito do zero a cada passo (dá para voltar), e só a animação do passo
+   atual roda quando se avança.
+   ================================================================ */
+function stepper(root, cfg) {
+  const stage = $(".stage", root), panel = $(".panel", root);
+  panel.innerHTML = `
+    <div class="ctrl">
+      <button type="button" data-a="again" title="Repetir do começo">${ICON.again}<span>Repetir</span></button>
+      <button type="button" data-a="back" title="Voltar">${ICON.back}</button>
+      <button type="button" data-a="next" class="primary" title="Avançar">Avançar ${ICON.next}</button>
+      <button type="button" data-a="play" title="Tocar sozinho">${ICON.play}<span>Tocar</span></button>
+      <span class="count"></span>
+    </div>
+    <div class="dots"></div>
+    <h4 class="s-title"></h4>
+    <div class="s-text"></div>
+    <pre class="s-code"></pre>
+    <div class="s-file"></div>`;
+  const steps = cfg.steps, n = steps.length;
+  const dots = $(".dots", panel);
+  steps.forEach((s, i) => { const d = document.createElement("i"); d.title = s.t; d.onclick = () => go(i, false); dots.appendChild(d); });
+  stage.querySelectorAll("[data-t]").forEach(el => { el.dataset.def = el.textContent; });
+  let i = 0, timer = null, S = null;
+
+  function state(upto) {
+    const S = { hl: new Set(), done: new Set(), show: new Set(), text: {}, log: [], x: {} };
+    cfg.init && cfg.init(S);
+    for (let k = 0; k <= upto; k++) {
+      S.hl.forEach(h => S.done.add(h));
+      S.hl = new Set();
+      steps[k].set && steps[k].set(S);
+    }
+    return S;
+  }
+  function draw(S) {
+    stage.querySelectorAll("[data-k]").forEach(el => {
+      const k = el.dataset.k;
+      el.classList.toggle("hl", S.hl.has(k));
+      el.classList.toggle("done", S.done.has(k) && !S.hl.has(k));
+      if (el.classList.contains("lazy")) el.classList.toggle("shown", S.show.has(k));
+    });
+    stage.querySelectorAll("[data-t]").forEach(el => {
+      const v = S.text[el.dataset.t];
+      el.textContent = v === undefined ? el.dataset.def : v;
+    });
+    cfg.draw && cfg.draw(S, stage);
+  }
+  function go(to, animate) {
+    i = Math.max(0, Math.min(n - 1, to));
+    S = state(i);
+    draw(S);
+    const s = steps[i];
+    $(".s-title", panel).textContent = `${i + 1}. ${s.t}`;
+    $(".s-text", panel).innerHTML = s.d;
+    $(".s-code", panel).textContent = s.code || "";
+    $(".s-file", panel).innerHTML = s.file ? "Onde: " + s.file : "";
+    $(".count", panel).textContent = `${i + 1} / ${n}`;
+    $$(".dots i", panel).forEach((d, k) => { d.className = k === i ? "on" : k < i ? "past" : ""; });
+    $('[data-a="back"]', panel).disabled = i === 0;
+    $('[data-a="next"]', panel).disabled = i === n - 1;
+    if (animate && s.anim) s.anim(stage, S);
+    if (i === n - 1) stop();
+  }
+  function stop() {
+    clearInterval(timer); timer = null;
+    $('[data-a="play"]', panel).innerHTML = `${ICON.play}<span>Tocar</span>`;
+  }
+  function play() {
+    if (timer) return stop();
+    if (i === n - 1) go(0, true);
+    $('[data-a="play"]', panel).innerHTML = `${ICON.pause}<span>Pausar</span>`;
+    timer = setInterval(() => go(i + 1, true), cfg.interval || 3200);
+  }
+  panel.addEventListener("click", e => {
+    const b = e.target.closest("button[data-a]"); if (!b) return;
+    const a = b.dataset.a;
+    if (a === "next") { stop(); go(i + 1, true); }
+    else if (a === "back") { stop(); go(i - 1, false); }
+    else if (a === "again") { stop(); go(0, true); }
+    else if (a === "play") play();
+  });
+  root.tabIndex = 0;
+  root.addEventListener("keydown", e => {
+    if (e.target.closest("input")) return;
+    if (e.key === "ArrowRight") { stop(); go(i + 1, true); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { stop(); go(i - 1, false); e.preventDefault(); }
+  });
+  go(0, false);
+  return { redraw: () => draw(state(i)), get index() { return i; }, go };
+}
+
+/* ================================================================
+   1. Camadas
+   ================================================================ */
+(function layers() {
+  const L = [
+    ["Seu app", [["forms/*.json", "app-forms"], ["handlers", "app-code"]]],
+    ["Fachada", [["aylis", "aylis"]]],
+    ["Componentes", [["aylis-controls"], ["aylis-data"], ["aylis-dbcontrols"], ["aylis-media"], ["aylis-3d"], ["aylis-docview"], ["aylis-vector"], ["aylis-markdown"], ["aylis-webview"]]],
+    ["Formatos", [["aylis-json"], ["aylis-project"], ["aylis-build"]]],
+    ["Núcleo", [["aylis-core"]], "core"],
+    ["Desenho", [["aylis-d2d"], ["aylis-skia"], ["aylis-web"]]],
+    ["Sistema", [["aylis-platform-winit"]]],
+    ["Outras linguagens", [["aylis-remote"], ["aylis-host"], ["aylis-capi"], ["clients/"]]],
+    ["Ferramentas", [["aylis-ide"], ["aylis-tools"]]],
+  ];
+  const D = {
+    "app-forms": ["forms/*.json", "O visual do projeto: um arquivo por form, mais <code>themes/</code>, <code>assets/</code> e <code>locales/</code>. É um só para todas as linguagens.", ["Lidos pelo <code>aylis-json</code>", "Editados no designer da IDE"]],
+    "app-code": ["handlers", "O código dos eventos, numa pasta por linguagem (<code>rust/</code>, <code>python/</code>…; <code>Project::code_dir</code>). Ligado aos forms pelo nome do handler.", ["<code>\"on_click\": \"btn_salvar_click\"</code> no form", "<code>aylis_project::sync</code> diz o que falta portar entre linguagens (<code>code-sync.json</code>)"]],
+    "aylis": ["aylis", "A fachada que os apps usam: junta tudo e tem o <code>aylis::Application</code> e o <code>aylis::classes</code>.", ["<code>Application::bundled(aylis::include_project!())</code>: o projeto embutido no executável", "<code>run_android</code>, <code>run_web</code>, <code>connect_backend</code>"]],
+    "aylis-controls": ["aylis-controls", "Os controles: Button, Edit, Memo, ComboBox, TabControl, Chart, VirtualList, Frame, formas, BI, trader…", ["Classe nova: registrar em <code>aylis_controls::register</code>, em <code>aylis_build::CLASSES</code> e em <code>aylis::classes</code>", "O teste <code>crates/aylis/tests/classes.rs</code> confere as três listas"]],
+    "aylis-data": ["aylis-data", "<code>ClientDataSet</code>, <code>Field</code> e <code>DataSource</code>: registros em memória (em colunas), cursor, filtros, índices, delta e reconciliação.", ["Não sabe nada de banco: os dados vêm do backend", "<code>RowBatch</code> e <code>load_batch</code> para milhões de linhas"]],
+    "aylis-dbcontrols": ["aylis-dbcontrols", "Os controles ligados a dados: <code>DataGrid</code>, <code>DataNavigator</code>, <code>DBChart</code>, <code>DataRepeater</code>…", ["Ligados por <code>data_source</code> e <code>data_field</code>"]],
+    "aylis-media": ["aylis-media", "Vídeo, áudio, câmera e microfone: <code>MediaPlayer</code>, <code>VideoPlayer</code>, <code>Sound</code>, <code>AudioOutput</code>, <code>AudioMixer</code>, <code>CameraView</code>, <code>Microphone</code>.", []],
+    "aylis-3d": ["aylis-3d", "Cenas 3D com wgpu (<code>Model3D</code>).", []],
+    "aylis-docview": ["aylis-docview", "Visualização de PDF e documentos Office.", []],
+    "aylis-vector": ["aylis-vector", "Lottie e SVG.", []],
+    "aylis-markdown": ["aylis-markdown", "Markdown desenhado pelo aylis.", []],
+    "aylis-webview": ["aylis-webview", "A WebView nativa de cada sistema, posta sobre a tela do aylis.", []],
+    "aylis-json": ["aylis-json", "Layouts e temas em JSON: carregar (<code>load</code>, <code>load_value</code>), salvar (<code>save</code>), JSON Schema e o recarregar sem recriar (<code>reload</code>).", ["Também é o formato do protocolo remoto"]],
+    "aylis-project": ["aylis-project", "O projeto <code>.aylisproj</code>, a fábrica de forms (com os <code>Frame</code>), a geração de código (<code>codegen.rs</code>, <code>hostlang.rs</code>), o acesso tipado (<code>bindings.rs</code>) e as traduções.", []],
+    "aylis-build": ["aylis-build", "O <code>build.rs</code> dos projetos em Rust: embute o projeto e gera o registro só com as classes usadas.", ["<code>CLASSES</code> e <code>CLASS_PLATFORMS</code>"]],
+    "aylis-core": ["aylis-core", "O núcleo, sem sistema operacional: <code>Ui</code> (a árvore), o trait <code>Component</code>, <code>ControlBase</code>, propriedades, layout (<code>layout.rs</code>), entrada (<code>input.rs</code>), pintura (<code>paint.rs</code>), tema, animações, timers e o trait <code>Canvas</code>.", ["O que é do sistema vira trait em <code>platform.rs</code> e a plataforma implementa", "Nada de Skia, Direct2D ou winit aqui", "Mensagens ao usuário final: <code>aylis_core::messages::t</code>"]],
+    "aylis-d2d": ["aylis-d2d", "O <code>Canvas</code> em Direct2D, DirectWrite e WIC: o renderizador padrão no Windows.", ["<code>Renderer::D2d</code>"]],
+    "aylis-skia": ["aylis-skia", "O <code>Canvas</code> em Skia, na CPU ou na GPU, e a medição de texto.", ["<code>Renderer::Cpu</code>, <code>Renderer::Gpu</code>, <code>Renderer::Auto</code>"]],
+    "aylis-web": ["aylis-web", "O <code>Canvas</code> no navegador, com o canvas 2D (WebAssembly).", []],
+    "aylis-platform-winit": ["aylis-platform-winit", "Janelas e serviços de cada sistema (Windows, Linux, macOS, Android, iOS, web): teclado, mouse, toque, IME, acessibilidade, área de transferência.", ["Entrega a entrada ao <code>Ui</code> (<code>pointer_down</code>, <code>key_down</code>…) e pinta quando <code>needs_repaint()</code>"]],
+    "aylis-remote": ["aylis-remote", "O protocolo JSON: comandos (<code>load</code>, <code>set</code>, <code>get</code>, <code>click</code>, <code>data</code>…), respostas com <code>id</code> e eventos voltando ao backend.", ["<code>handle_message</code> serve ao <code>aylis-host</code> e à C ABI"]],
+    "aylis-host": ["aylis-host", "Abre a tela e inicia o backend em outro processo; conversa por stdin/stdout, uma mensagem por linha, ou por WebSocket (<code>--connect</code>, <code>--listen</code>, <code>--bridge</code>).", []],
+    "aylis-capi": ["aylis-capi", "A C ABI (<code>aylis.dll</code>, <code>libaylis.so</code>, <code>libaylis.dylib</code>): o mesmo protocolo no mesmo processo, com eventos síncronos.", []],
+    "clients/": ["clients/", "Os clientes do protocolo, sem dependências além da biblioteca padrão: TypeScript, C#, Java, Go, C++, Free Pascal e Python.", ["API igual em todos: <code>send</code>, <code>call</code>, <code>on</code>, <code>run</code>/<code>loop</code>"]],
+    "aylis-ide": ["aylis-ide", "A IDE, feita com o próprio aylis: paleta, designer, Object Inspector, editor de código, depurador, F9 e publicação.", []],
+    "aylis-tools": ["aylis-tools", "O <code>aylis-tool</code>: compilar, executar, publicar, verificar o ambiente, <code>new</code>, <code>generate</code>, <code>script</code>, <code>setup</code>…", []],
+  };
+  const host = $("#layers"), det = $("#crateDetail");
+  L.forEach(([label, chips, cls]) => {
+    const row = document.createElement("div");
+    row.className = "layer" + (cls ? " " + cls : "");
+    row.innerHTML = `<div class="lname">${label}</div><div class="chips"></div>`;
+    chips.forEach(([name, key]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip" + (cls === "core" ? " core" : ""); b.textContent = name; b.dataset.key = key || name;
+      row.lastElementChild.appendChild(b);
+    });
+    host.appendChild(row);
+  });
+  host.addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    $$(".chip", host).forEach(c => c.classList.toggle("sel", c === b));
+    const [t, d, list] = D[b.dataset.key];
+    det.innerHTML = `<h4>${t}</h4><p style="margin:0">${d}</p>` + (list.length ? `<ul>${list.map(x => `<li>${x}</li>`).join("")}</ul>` : "");
+  });
+  $('.chip[data-key="aylis-core"]', host).click();
+})();
+
+/* ================================================================
+   2. Árvore de componentes
+   ================================================================ */
+(function tree() {
+  const N = [
+    // key, classe, nome, x, y, extra
+    ["form", "Form", "frmClientes", 200, 14],
+    ["pnl", "Panel", "pnlTopo", 40, 92],
+    ["grid", "DataGrid", "grdClientes", 165, 92],
+    ["cds", "ClientDataSet", "cdsClientes", 290, 92, "nv"],
+    ["frame", "Frame", "frGeral", 400, 92, "frame"],
+    ["edt", "Edit", "edtNome", 4, 172],
+    ["btn", "Button", "btnSalvar", 104, 172],
+    ["fra", "Form", "fraGeral", 400, 214, "emb"],
+    ["pasta", "Edit", "edtPasta", 400, 286, "emb"],
+  ];
+  const E = [["form", "pnl"], ["form", "grid"], ["form", "cds"], ["form", "frame"], ["pnl", "edt"], ["pnl", "btn"], ["frame", "fra", "emb"], ["fra", "pasta"]];
+  const W = 112, H = 40;
+  const pos = Object.fromEntries(N.map(n => [n[0], [n[3], n[4]]]));
+  const ns = "http://www.w3.org/2000/svg";
+  const gE = $("#treeEdges"), gN = $("#treeNodes");
+  E.forEach(([a, b, c]) => {
+    const [x1, y1] = pos[a], [x2, y2] = pos[b];
+    const p = document.createElementNS(ns, "path");
+    const sx = x1 + W / 2, sy = y1 + H, ex = x2 + W / 2, ey = y2, my = (sy + ey) / 2;
+    p.setAttribute("d", `M${sx} ${sy} C${sx} ${my} ${ex} ${my} ${ex} ${ey}`);
+    p.setAttribute("class", "edge lazy" + (c ? " " + c : ""));
+    p.dataset.k = "e-" + b;
+    gE.appendChild(p);
+  });
+  N.forEach(([k, cls, nm, x, y, extra]) => {
+    const g = document.createElementNS(ns, "g");
+    g.setAttribute("class", "node lazy" + (extra ? " " + extra : ""));
+    g.dataset.k = k;
+    g.innerHTML = `<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="8"/><text class="cls" x="${x + 10}" y="${y + 15}">${cls}</text><text class="nm" x="${x + 10}" y="${y + 31}">${nm}</text>`;
+    gN.appendChild(g);
+  });
+  const arena = $("#arena");
+  const slots = ["frmClientes", "pnlTopo", "edtNome", "btnSalvar", "grdClientes", "cdsClientes", "frGeral", "fraGeral", "edtPasta"];
+  const keyOf = { frmClientes: "form", pnlTopo: "pnl", edtNome: "edt", btnSalvar: "btn", grdClientes: "grid", cdsClientes: "cds", frGeral: "frame", fraGeral: "fra", edtPasta: "pasta" };
+
+  const show = (S, ...ks) => ks.forEach(k => { S.show.add(k); S.show.add("e-" + k); });
+  stepper($("#st-tree"), {
+    init: S => { S.x.slots = 0; S.x.dead = -1; S.x.gen = 0; S.x.hlSlot = -1; },
+    draw: (S) => {
+      arena.innerHTML = "";
+      for (let i = 0; i < S.x.slots; i++) {
+        const dead = i === S.x.dead;
+        const gen = dead ? 0 : (i === 2 && S.x.gen ? S.x.gen : 0);
+        const d = document.createElement("div");
+        d.className = "slot" + (i === S.x.hlSlot ? " hl" : "") + (dead ? " dead" : "");
+        d.innerHTML = `[${i}] g${gen}<br><b>${slots[i]}</b>`;
+        arena.appendChild(d);
+      }
+      if (S.x.dead >= 0) {
+        const d = document.createElement("div");
+        d.className = "slot hl";
+        d.innerHTML = `[2] g1<br><b>(livre)</b>`;
+        arena.replaceChild(d, arena.children[2]);
+      }
+      $$(".node", gN).forEach(n => n.classList.toggle("gone", S.x.gone === n.dataset.k));
+    },
+    steps: [
+      { t: "Um Ui e o registro de classes",
+        d: "<p>Tudo começa com um <code>Ui</code> vazio. <code>aylis_controls::register</code> põe no registro as classes criáveis pelo nome: é assim que o JSON e o protocolo criam um <code>\"Button\"</code> sem conhecer o tipo em Rust.</p>",
+        code: "let mut ui = Ui::new();\naylis_controls::register(&mut ui);   // classes criáveis pelo nome\nlet id = ui.create(\"Button\", Some(form))?;",
+        file: "<code>aylis-core/src/ui.rs</code>, <code>registry.rs</code>",
+        set: S => {} },
+      { t: "O form é uma raiz",
+        d: "<p><code>add_root</code> cria um componente sem pai (um form, um DataModule). Ele ocupa um slot da arena e recebe um <code>ComponentId</code>: o índice do slot e a geração.</p>",
+        code: "let form = ui.add_root(Form::new(\"Clientes\", 480.0, 320.0));\n// ComponentId { index: 0, generation: 0 }",
+        set: S => { show(S, "form"); S.hl.add("form"); S.x.slots = 1; S.x.hlSlot = 0; } },
+      { t: "Filhos: pai, filhos e nome",
+        d: "<p><code>add</code> cria como filho de um pai. Cada entrada da arena guarda o componente, o pai, os filhos, o nome e os handlers de evento. O <code>ClientDataSet</code> também é componente, mas não visual: o <code>control()</code> dele devolve <code>None</code> e ele não tem retângulo.</p>",
+        code: "let pnl = ui.add(Panel::default(), form);\nlet ok  = ui.add(Button::new(\"Salvar\"), pnl);\nui.set_name(ok, \"btnSalvar\")?;",
+        set: S => { show(S, "pnl", "edt", "btn", "grid", "cds"); ["pnl", "edt", "btn", "grid", "cds"].forEach(k => S.hl.add(k)); S.x.slots = 6; S.x.hlSlot = 3; } },
+      { t: "O trait Component",
+        d: "<p>Todo componente implementa <code>Component</code>. Só <code>class_name</code> é obrigatório; o resto tem padrão:</p><ul><li><code>control()</code>: o <code>ControlBase</code> (posição, <code>align</code>, <code>margins</code>, <code>visible</code>, <code>style</code>…);</li><li><code>props</code>/<code>get_prop</code>/<code>set_prop</code>: o que o Object Inspector, o JSON e o protocolo enxergam (a macro <code>properties!</code> escreve os três);</li><li><code>paint</code>, <code>pointer_down</code>, <code>key_down</code>…;</li><li><code>inner()</code>: herança por composição (um <code>NumberBox</code> guarda um <code>Edit</code>);</li><li><code>invoke()</code>: métodos pelo nome (<code>undo</code>, <code>save</code>).</li></ul>",
+        code: "impl Component for Button {\n    fn class_name(&self) -> &'static str { \"Button\" }\n    fn control(&self) -> Option<&ControlBase> { Some(&self.base) }\n    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx) { … }\n    fn click(&mut self, ctx: &mut EventCtx) { ctx.fire(\"on_click\", EventArgs::None) }\n}",
+        file: "<code>aylis-core/src/component.rs</code>",
+        set: S => { S.hl.add("btn"); S.x.slots = 6; S.x.hlSlot = 3; } },
+      { t: "Achar pelo nome ou pelo caminho",
+        d: "<p><code>find</code> procura o nome; <code>find_path</code> aceita o caminho com o form na frente, sem ambiguidade quando dois forms têm componentes com o mesmo nome. O protocolo aceita os dois, e também o id numérico.</p>",
+        code: "ui.find(\"btnSalvar\")\nui.find_path(\"frmClientes.btnSalvar\")",
+        set: S => { S.hl.add("form"); S.hl.add("pnl"); S.hl.add("btn"); S.hl.add("e-pnl"); S.hl.add("e-btn"); S.x.slots = 6; S.x.hlSlot = 3; } },
+      { t: "Frame: um form dentro do form",
+        d: "<p>O <code>Frame</code> só reserva o lugar e diz qual form mostrar (<code>form</code>). Ao criar o form, a fábrica de forms do projeto cria o form do frame e o põe dentro, ocupando a área toda. O form de dentro tem os próprios nomes (<code>set_name_scope</code>): pode repetir nomes do form de fora.</p><p>Os componentes se acham pelo nome do form do frame, e os eventos vão para os handlers <b>desse</b> form (<code>fraGeral.salvar</code>). Um frame que usa o próprio form, direto ou por outro, dá erro ao carregar.</p>",
+        code: "{ \"class\": \"Frame\", \"name\": \"frGeral\", \"form\": \"fraGeral\", \"align\": \"client\" }\n\nui.find_path(\"fraGeral.edtPasta\")\nfraGeral.edtPasta          // acesso tipado",
+        file: "<code>aylis-controls/src/basic.rs</code> (<code>Frame</code>), <code>aylis-project/src/lib.rs</code> (a fábrica)",
+        set: S => { show(S, "frame", "fra", "pasta"); S.show.add("embLbl"); ["frame", "fra", "pasta", "e-fra", "e-pasta"].forEach(k => S.hl.add(k)); S.x.slots = 9; S.x.hlSlot = 7; } },
+      { t: "Liberar: a geração muda",
+        d: "<p><code>ui.free(id)</code> libera o componente e os filhos. O slot volta a ficar livre com a geração seguinte; quem guardou o id antigo recebe <code>Error::InvalidId</code> em vez de mexer em outro componente que ocupe o mesmo slot depois.</p>",
+        code: "ui.free(edt_nome);\nui.set_prop(edt_nome, \"text\", \"x\")   // Err(InvalidId)",
+        set: S => { show(S, "frame", "fra", "pasta"); S.show.add("embLbl"); S.hl.add("edt"); S.x.gone = "edt"; S.x.slots = 9; S.x.dead = 2; S.x.hlSlot = 2; } },
+    ],
+  });
+})();
+
+/* ================================================================
+   3. O caminho de um clique
+   ================================================================ */
+(function click() {
+  const svg = $("#clickSvg"), cursor = $("#cursor"), btn = $('#clickSvg [data-k="btn"]');
+  // A posição anterior do cursor (o draw já pôs a nova quando a animação começa).
+  let prevCursor = [300, 150], curCursor = [300, 150];
+  const moveCursor = (ms = 700) => {
+    const [x0, y0] = prevCursor, [x, y] = curCursor;
+    if (reduced || !cursor.animate || (x0 === x && y0 === y)) return;
+    cursor.animate([{ transform: `translate(${x0}px,${y0}px)` }, { transform: `translate(${x}px,${y}px)` }], { duration: ms, easing: "ease-in-out" });
+  };
+  const canvases = $$(".backend-row canvas");
+  function drawBackends(text) {
+    const css = getComputedStyle(document.documentElement);
+    const fg = css.getPropertyValue("--fg").trim(), ok = css.getPropertyValue("--ok").trim(), soft = css.getPropertyValue("--card").trim(), acc = css.getPropertyValue("--accent").trim();
+    canvases.forEach((c, i) => {
+      const g = c.getContext("2d");
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = soft; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = acc; g.beginPath();
+      if (g.roundRect) g.roundRect(118, 9, 72, 28, 6); else g.rect(118, 9, 72, 28);
+      g.fill();
+      g.fillStyle = "#fff"; g.font = "600 12px sans-serif"; g.fillText("Salvar", 134, 27);
+      g.fillStyle = fg; g.font = "11px monospace"; g.fillText("lblStatus", 8, 18);
+      g.fillStyle = ok; g.font = "700 13px sans-serif"; g.fillText(text, 8, 35);
+    });
+  }
+  document.addEventListener("themechange", () => setTimeout(() => drawBackends(lastText), 30));
+  let lastText = "";
+
+  stepper($("#st-click"), {
+    init: S => { S.x.cursor = [300, 150]; S.x.btn = ""; },
+    draw: S => {
+      const [x, y] = S.x.cursor;
+      prevCursor = curCursor; curCursor = [x, y];
+      cursor.setAttribute("transform", `translate(${x},${y})`);
+      btn.classList.toggle("pressed", S.x.btn === "pressed");
+      btn.classList.toggle("hover", S.x.btn === "hover");
+      lastText = S.text.status === undefined ? "" : S.text.status.replace(/"/g, "");
+      drawBackends(lastText);
+    },
+    interval: 3600,
+    steps: [
+      { t: "A plataforma recebe o mouse",
+        d: "<p>O <code>aylis-platform-winit</code> recebe o botão do mouse da janela do sistema e entrega ao <code>Ui</code> um <code>PointerEvent</code> em coordenadas do form. O núcleo não sabe de onde veio: no navegador e no celular o caminho é o mesmo, só muda quem chama.</p>",
+        code: "ui.pointer_down(root, PointerEvent { position, button: PointerButton::Primary, .. });",
+        file: "<code>aylis-platform-winit</code> → <code>aylis-core/src/input.rs</code>",
+        set: S => { S.hl.add("plat"); S.x.cursor = [262, 58]; },
+        anim: () => moveCursor() },
+      { t: "Ui::pointer_down",
+        d: "<p>Primeiro, avisa os observadores de atividade (é assim que o <code>EventRecorder</code> grava a sessão) e confere se um form modal bloqueia a entrada. Depois garante o layout em dia (<code>update_layout</code>) e procura o controle sob o mouse.</p>",
+        code: "self.report(&Activity::PointerDown { form: root, event });\nif self.input_blocked(root) { return; }   // modal aberto por cima\nself.update_layout();\nlet hit = self.enabled_hit(root, event.position);",
+        set: S => { S.hl.add("down"); S.x.cursor = [262, 58]; } },
+      { t: "hit_test: quem está sob o mouse",
+        d: "<p><code>hit_node</code> desce pela árvore. Os filhos são testados <b>de trás para frente</b> (o desenhado por último, que está por cima, primeiro). Pula quem está invisível, respeita o recorte (<code>clip_children</code>), a propriedade <code>hit_test</code> e a forma do controle (<code>contains_point</code>: o canto vazio de um círculo deixa o clique passar).</p>",
+        code: "if let Some(hit) = self.children(id).iter().rev()\n        .find_map(|&c| self.hit_node(c, local)) {\n    return Some(hit);\n}\n(inside && cb.hit_test() && shape()).then_some(id)",
+        file: "<code>Ui::hit_test</code> em <code>input.rs</code>",
+        set: S => { S.hl.add("hit"); ["hit1", "hit2", "hit3", "hitTxt"].forEach(k => S.show.add(k)); S.x.cursor = [262, 58]; } },
+      { t: "Estado visual, foco e o pointer_down do controle",
+        d: "<p><code>set_hover</code> e o gatilho <code>Pressed</code> mudam o estado que o tema usa (o botão escurece). O foco vai para o primeiro ancestral focável. O evento <code>on_pointer_down</code> dispara e o método <code>pointer_down</code> do componente recebe o ponto já em coordenadas locais.</p>",
+        code: "self.set_hover(root, hit);\nself.set_state_flag(target, Trigger::Pressed, true);\nself.set_focus(focusable);\nself.fire(target, \"on_pointer_down\", &EventArgs::Pointer(e));\nself.deliver(target, |c, ctx| c.pointer_down(ctx, &e));",
+        set: S => { S.hl.add("state"); S.x.cursor = [262, 58]; S.x.btn = "pressed"; } },
+      { t: "Ui::pointer_up gera o clique",
+        d: "<p>Ao soltar, o botão principal sobre o <b>mesmo</b> controle em que foi pressionado (o capturado) vira clique. Soltar fora não clica; o botão direito abre o <code>popup_menu</code>.</p>",
+        code: "if event.button == PointerButton::Primary && hit == Some(target)\n    && self.is_effectively_enabled(target) && !long_pressed {\n    self.click(target);\n}",
+        set: S => { S.hl.add("up"); ["hit1", "hit2", "hit3", "hitTxt"].forEach(k => S.show.delete(k)); S.x.cursor = [262, 58]; S.x.btn = "hover"; } },
+      { t: "Component::click dispara on_click",
+        d: "<p><code>Ui::click</code> chama o método <code>click</code> do componente. O padrão dispara o evento publicado <code>on_click</code>. Eventos disparados <b>dentro</b> de um método de componente são entregues depois que o método termina (<code>process_events</code>), por isso o handler pode mexer no próprio componente.</p>",
+        code: "fn click(&mut self, ctx: &mut EventCtx<'_>) {\n    ctx.fire(\"on_click\", EventArgs::None)\n}",
+        file: "<code>aylis-core/src/component.rs</code>",
+        set: S => { S.hl.add("click"); S.x.cursor = [262, 58]; S.x.btn = "hover"; } },
+      { t: "Ui::fire: qual handler?",
+        d: "<p>O evento pode ter uma closure (<code>ui.on(id, \"on_click\", …)</code>) ou um nome, vindo do form: <code>\"on_click\": \"btn_salvar_click\"</code> vira <code>Handler::Named</code>. Antes de chamar, avisa os observadores e o rastro de eventos.</p>",
+        code: "match handler {\n    Handler::Closure(mut f) => f(self, id, args),\n    Handler::Named(handler_name) =>\n        self.call_named(id, &event_name, &handler_name, args),\n}",
+        set: S => { S.hl.add("fire"); S.x.cursor = [262, 58]; } },
+      { t: "O handler pelo nome do form",
+        d: "<p><code>call_named</code> procura primeiro o nome com o form na frente (<code>frmClientes.btn_salvar_click</code>), depois o nome sozinho. Dois forms podem ter handlers com o mesmo nome.</p><p>Se nenhum foi registrado em Rust, o evento vai para o <b>receptor de eventos</b> (<code>set_event_sink</code>): é por ali que ele vira JSON e segue para o backend em outra linguagem (parte 7).</p>",
+        code: "for key in [\"frmClientes.btn_salvar_click\", \"btn_salvar_click\"] {\n    if let Some(f) = self.handlers.remove(key) { f(self, id, args); return true; }\n}\nif let Some(sink) = self.event_sink.take() { sink(self, id, event, handler_name, args); }",
+        set: S => { S.hl.add("named"); S.x.cursor = [262, 58]; } },
+      { t: "O seu código roda",
+        d: "<p>O handler gerado pela IDE recebe o <code>Ui</code> inteiro, quem disparou e os argumentos. Com o acesso tipado, <code>frmClientes.lblStatus.set_text</code> acha o componente pelo caminho e chama <code>set_prop</code>.</p>",
+        code: "pub fn btn_salvar_click(ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n    frmClientes.lblStatus.set_text(ui, \"Salvo\");\n}",
+        file: "<code>rust/src/forms/frm_clientes.rs</code>",
+        set: S => { S.hl.add("handler"); S.x.cursor = [262, 58]; } },
+      { t: "set_prop e invalidate",
+        d: "<p><code>set_prop</code> confere a propriedade (<code>prop_info</code>, só leitura, cor com nome do tema), grava pela cadeia de <code>inner()</code> ou no <code>ControlBase</code> e chama <code>invalidate</code>. Nada é desenhado agora: só fica marcado que o layout e a tela estão velhos.</p>",
+        code: "pub fn invalidate(&mut self) {\n    self.layout_dirty = true;\n    self.repaint_requested = true;\n}",
+        file: "<code>Ui::set_prop</code>, <code>Ui::invalidate</code> em <code>ui.rs</code>",
+        set: S => { S.hl.add("setprop"); S.done.add("handler"); S.hl.add("inval"); S.show.add("dirty"); S.text.status = '"Salvo"'; S.x.cursor = [262, 58]; } },
+      { t: "Um quadro novo: layout",
+        d: "<p>A plataforma pergunta <code>needs_repaint()</code> (mudança, layout pendente ou animação) e pede um quadro. <code>Ui::paint</code> começa com <code>update_layout</code>: como <code>layout_dirty</code> está ligado, o <code>layout</code> refaz posições e tamanhos (parte 4) e dispara <code>on_resize</code> em quem mudou de tamanho.</p>",
+        code: "pub fn paint(&mut self, root: ComponentId, canvas: &mut dyn Canvas) {\n    self.update_layout();      // só se layout_dirty\n    self.paint_node(root, canvas, …);\n    …\n}",
+        set: S => { S.hl.add("frame"); S.hl.add("layout"); S.show.delete("dirty"); S.text.status = '"Salvo"'; S.x.cursor = [262, 58]; } },
+      { t: "paint_node percorre a árvore",
+        d: "<p>Para cada controle visível: resolve o <b>estilo</b> do tema para a classe, a variante (<code>style</code>) e o estado (hover, pressed…), com transição quando o tema pede; desenha a sombra; chama <code>paint(canvas, ctx)</code> com <code>ctx.style</code>, <code>ctx.theme</code>, <code>ctx.rect</code> e <code>ctx.time</code>; pinta os filhos e chama <code>paint_after</code>. Por fim, o que fica por cima: overlays, arrasto e dica.</p>",
+        file: "<code>aylis-core/src/paint.rs</code>",
+        set: S => { S.hl.add("paint"); S.text.status = '"Salvo"'; S.x.cursor = [262, 58]; } },
+      { t: "O Canvas de cada renderizador",
+        d: "<p><code>Canvas</code> é um trait: retângulos, elipses, linhas, caminhos (<code>fill_path</code>, com SVG <code>d</code>), texto, imagens, recorte, camadas. Cada renderizador implementa o mesmo trait, e o núcleo não sabe qual está em uso:</p><ul><li><code>D2dCanvas</code> (Direct2D, padrão no Windows);</li><li><code>SkiaCanvas</code> (Skia na CPU ou na GPU);</li><li><code>Canvas2d</code> (canvas 2D do navegador).</li></ul><p>Na janela, a escolha é o <code>Renderer</code>: <code>Auto</code>, <code>Cpu</code>, <code>Gpu</code> ou <code>D2d</code>.</p>",
+        code: "pub trait Canvas {\n    fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush);\n    fn draw_text(&mut self, text: &str, rect: RectF, style: &TextStyle);\n    fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF;\n    …\n}",
+        file: "<code>aylis-core/src/canvas.rs</code>; <code>aylis-d2d</code>, <code>aylis-skia</code>, <code>aylis-web</code>",
+        set: S => { S.hl.add("canvas"); S.show.add("backs"); ["be-d2d", "be-skia", "be-web"].forEach(k => S.hl.add(k)); S.text.status = '"Salvo"'; S.x.cursor = [300, 150]; },
+        anim: () => moveCursor(500) },
+    ],
+  });
+})();
+
+/* ================================================================
+   4. Layout
+   ================================================================ */
+(function layout() {
+  const H = 270, PAD = 8, W0 = 400;
+  const box = $("#formBox"), holder = $("#formHolder");
+  const opts = { W: 400, aviso: true, long: false };
+  const ITEMS = [
+    { k: "lblTitulo", align: "top", auto: true, m: [0, 0, 0, 4] },
+    { k: "pnlAviso", align: "top", h: 30, m: [0, 0, 0, 4], kids: [{ k: "lblAviso", align: "client", m: [4, 4, 4, 4] }] },
+    { k: "pnlStatus", align: "bottom", h: 24, m: [0, 4, 0, 0] },
+    { k: "pnlMenu", align: "left", w: 92, m: [0, 0, 6, 0], pad: 4, kids: [
+      { k: "btnInicio", align: "top", h: 24, m: [0, 0, 0, 4] }, { k: "btnVendas", align: "top", h: 24, m: [0, 0, 0, 4] }, { k: "btnSair", align: "bottom", h: 24, m: [0, 0, 0, 0] } ] },
+    { k: "grdDados", align: "client" },
+    { k: "btnNovo", align: "none", rect: [W0 - PAD - 12 - 72, H - PAD - 24 - 4 - 12 - 28, 72, 28], anchors: "right,bottom" },
+  ];
+  const TXT_S = "Clientes", TXT_L = "Clientes ativos no último trimestre, com o total vendido e a cidade de cada um";
+  // passos: 0 área, 1 auto_size, 2 top, 3 bottom, 4 left, 5 client + none, 6 filhos, 7 on_resize
+  function compute() {
+    const W = opts.W, out = {}, areas = [];
+    let area = { x: PAD, y: PAD, w: W - 2 * PAD, h: H - 2 * PAD };
+    areas[0] = { ...area };
+    const vis = it => it.k !== "pnlAviso" || opts.aviso;
+    // auto_size: altura do conteúdo na largura que o filho vai ter
+    const lbl = ITEMS[0], width = area.w;
+    const cpl = Math.max(8, Math.floor((width - 8) / 6.6));
+    const text = opts.long ? TXT_L : TXT_S;
+    lbl.h = Math.ceil(text.length / cpl) * 16 + 8;
+    areas[1] = { ...area };
+    const dock = (it, a) => {
+      const [ml, mt, mr, mb] = it.m || [0, 0, 0, 0];
+      if (it.align === "top") { const r = [a.x + ml, a.y + mt, a.w - ml - mr, it.h]; a.y += it.h + mt + mb; a.h = Math.max(0, a.h - it.h - mt - mb); return r; }
+      if (it.align === "bottom") { const r = [a.x + ml, a.y + a.h - mb - it.h, a.w - ml - mr, it.h]; a.h = Math.max(0, a.h - it.h - mt - mb); return r; }
+      if (it.align === "left") { const r = [a.x + ml, a.y + mt, it.w, a.h - mt - mb]; a.x += it.w + ml + mr; a.w = Math.max(0, a.w - it.w - ml - mr); return r; }
+      return null;
+    };
+    const pass = (al, step) => { ITEMS.forEach(it => { if (it.align === al && vis(it)) out[it.k] = { r: dock(it, area), step }; }); areas[step] = { ...area }; };
+    pass("top", 2); pass("bottom", 3); pass("left", 4);
+    ITEMS.forEach(it => {
+      if (it.align === "client" && vis(it)) { const [ml, mt, mr, mb] = it.m || [0, 0, 0, 0]; out[it.k] = { r: [area.x + ml, area.y + mt, area.w - ml - mr, area.h - mt - mb], step: 5 }; }
+      if (it.align === "none") { const [x, y, w, h] = it.rect; out[it.k] = { r: [x + (W - W0), y, w, h], step: 5 }; } // anchors right,bottom
+    });
+    areas[5] = { ...area };
+    // filhos de cada contêiner visível (o escondido fica para quando aparecer)
+    ITEMS.forEach(it => {
+      if (!it.kids || !out[it.k]) return;
+      const [px, py, pw, ph] = out[it.k].r, p = it.pad || 0;
+      const a = { x: px + p, y: py + p, w: pw - 2 * p, h: ph - 2 * p };
+      ["top", "bottom", "left"].forEach(al => it.kids.forEach(c => { if (c.align === al) out[c.k] = { r: dock(c, a), step: 6, child: true }; }));
+      it.kids.forEach(c => { if (c.align === "client") { const [ml, mt, mr, mb] = c.m; out[c.k] = { r: [a.x + ml, a.y + mt, a.w - ml - mr, a.h - mt - mb], step: 6, child: true }; } });
+    });
+    return { out, areas, text };
+  }
+  const els = {};
+  const alignOf = {};
+  ITEMS.forEach(it => { alignOf[it.k] = it.align; (it.kids || []).forEach(c => alignOf[c.k] = "child"); });
+  Object.keys(alignOf).forEach(k => {
+    const d = document.createElement("div");
+    d.className = "lb " + alignOf[k] + " unplaced";
+    d.dataset.k = k;
+    box.appendChild(d);
+    els[k] = d;
+  });
+  const areaEl = document.createElement("div"); areaEl.className = "area"; areaEl.innerHTML = "<span>área livre</span>"; box.appendChild(areaEl);
+  const skip = document.createElement("div"); skip.className = "badge-skip"; skip.textContent = "pnlAviso escondido: o ramo é pulado"; box.appendChild(skip);
+  const pct = (v, t) => (v / t * 100) + "%";
+  let st;
+  function render(S) {
+    const { out, areas, text } = compute();
+    const W = opts.W, step = S.x.step;
+    holder.style.width = pct(W, 440);
+    box.style.aspectRatio = `${W} / ${H}`;
+    Object.entries(els).forEach(([k, el]) => {
+      const o = out[k];
+      const label = k === "lblTitulo" ? `${k} · auto_size ${Math.round(ITEMS[0].h)} px` : k === "btnNovo" ? `${k}<br>anchors` : k;
+      el.innerHTML = label;
+      if (k === "lblTitulo") el.title = text;
+      if (!o) { el.classList.add("unplaced"); return; }
+      const [x, y, w, h] = o.r;
+      el.style.left = pct(x, W); el.style.top = pct(y, H); el.style.width = pct(Math.max(0, w), W); el.style.height = pct(Math.max(0, h), H);
+      const placed = o.step <= step;
+      el.classList.toggle("unplaced", !placed);
+    });
+    // lblTitulo no passo 1: aparece medido, ainda sem lugar definitivo
+    if (step === 1) { els.lblTitulo.classList.remove("unplaced"); }
+    const a = areas[Math.min(step, 5)];
+    const showArea = step <= 5;
+    areaEl.style.opacity = showArea ? 1 : 0;
+    if (a) { areaEl.style.left = pct(a.x, W); areaEl.style.top = pct(a.y, H); areaEl.style.width = pct(a.w, W); areaEl.style.height = pct(a.h, H); }
+    skip.style.opacity = (!opts.aviso && step >= 2) ? 1 : 0;
+    skip.style.left = "10%"; skip.style.top = pct(PAD + ITEMS[0].h + 6, H);
+    Object.entries(els).forEach(([k, el]) => el.classList.toggle("hl", S.hl.has(k)));
+  }
+  st = stepper($("#st-layout"), {
+    init: S => { S.x.step = 0; },
+    draw: S => render(S),
+    steps: [
+      { t: "A área livre começa sem o padding",
+        d: "<p>Para cada contêiner, o <code>realign</code> parte do retângulo dele menos o <code>padding</code> (e a área segura do celular). Essa é a <b>área livre</b> (o tracejado vermelho), que os filhos encaixados vão consumir.</p>",
+        code: "let mut area = full.deflate(cb.padding()).deflate(cb.safe_area);",
+        file: "<code>Ui::realign</code> em <code>aylis-core/src/layout.rs</code>",
+        set: S => { S.x.step = 0; } },
+      { t: "auto_size mede antes de encaixar",
+        d: "<p>Filhos com <code>auto_size</code> recebem primeiro a altura do conteúdo, medida na largura que vão ter (a da área menos as margens, para <code>top</code>/<code>bottom</code>). Num contêiner sem medida própria, a altura é a soma dos filhos encaixados em cima e embaixo. Marque <b>texto longo</b> para ver a altura mudar.</p>",
+        code: "for &child in &children {\n    let Some(cb) = self.cb(child).filter(|cb| cb.visible() && cb.auto_size()) else { continue };\n    let width = match cb.align() {\n        Align::Top | Align::Bottom => area.width - cb.margins().horizontal(),\n        …\n    };\n    if let Some(h) = self.auto_height_of(child, width) { … cb.set_height(h); }\n}",
+        set: S => { S.x.step = 1; S.hl.add("lblTitulo"); } },
+      { t: "Encaixe: top",
+        d: "<p>Os encaixes consomem a área numa ordem fixa: <code>MostTop</code>, <code>MostBottom</code>, <code>MostLeft</code>, <code>MostRight</code>, <code>Top</code>, <code>Bottom</code>, <code>Left</code>, <code>Right</code>. Com o mesmo alinhamento vale a ordem dos filhos. Cada um usa o próprio tamanho mais as <code>margins</code>. Invisíveis não ocupam espaço: desmarque <code>pnlAviso.visible</code>.</p>",
+        code: "for pass in DOCK_ORDER {\n    for &child in &children {\n        if cb.visible() && cb.align() == pass { dock(cb, &mut area); }\n    }\n}",
+        set: S => { S.x.step = 2; S.hl.add("lblTitulo"); S.hl.add("pnlAviso"); } },
+      { t: "Encaixe: bottom",
+        d: "<p><code>bottom</code> se apoia no fim da área e diminui a altura dela. A largura é a da área que sobrou depois dos encaixes anteriores.</p>",
+        code: "Align::Bottom | Align::MostBottom => {\n    cb.bounds = RectF::new(area.x + m.left, area.bottom() - m.bottom - h, area.width - m.horizontal(), h);\n    area.height -= h + m.vertical();\n}",
+        set: S => { S.x.step = 3; S.hl.add("pnlStatus"); } },
+      { t: "Encaixe: left",
+        d: "<p><code>left</code> ocupa a altura que sobrou entre o que foi para cima e para baixo, e empurra a área para a direita.</p>",
+        set: S => { S.x.step = 4; S.hl.add("pnlMenu"); } },
+      { t: "client, center e os soltos (none + anchors)",
+        d: "<p>Depois dos encaixes, <code>client</code>, <code>center</code>, <code>fit</code>… usam a área que sobrou. <code>none</code> usa <code>left</code>/<code>top</code>/<code>width</code>/<code>height</code>, ajustados pelas <code>anchors</code> quando o pai muda de tamanho: o <code>btnNovo</code> tem <code>right</code> e <code>bottom</code> e fica sempre à mesma distância do canto. Arraste a largura.</p><p>Um contêiner que organiza os filhos (grade, fluxo) pode cuidar dos soltos com <code>Component::arrange</code>.</p>",
+        code: "Align::Client => inner,\nAlign::None => anchored(cb, full.size()),",
+        set: S => { S.x.step = 5; S.hl.add("grdDados"); S.hl.add("btnNovo"); } },
+      { t: "Desce para os filhos; ramos escondidos ficam de fora",
+        d: "<p>Com os filhos no lugar, o <code>realign</code> chama a si mesmo para cada filho <b>visível</b>, que faz o mesmo com os dele (o <code>pnlMenu</code> encaixa os três botões). Um filho escondido é pulado com o ramo inteiro: telas e abas escondidas não custam nada a cada layout. Mostrar de novo marca o layout, e o ramo é calculado quando aparece.</p>",
+        code: "for (&child, old) in children.iter().zip(old_sizes) {\n    // Escondido: o ramo inteiro fica para quando aparecer.\n    if !self.cb(child).is_some_and(|cb| cb.visible()) { continue; }\n    …\n    self.realign(child, resized);\n}",
+        set: S => { S.x.step = 6; ["btnInicio", "btnVendas", "btnSair", "lblAviso"].forEach(k => S.hl.add(k)); } },
+      { t: "on_resize em quem mudou",
+        d: "<p>No fim, quem mudou de tamanho recebe <code>resized</code> e o evento <code>on_resize</code>, e a tela é repintada. Tudo numa thread só, a da interface. O layout só roda de novo quando algo chamar <code>invalidate</code> (uma propriedade, o tamanho da janela, mostrar ou esconder).</p>",
+        code: "for &id in &resized { self.with_component(id, |c, ctx| c.resized(ctx)); }\nfor id in resized { self.queue_event(id, \"on_resize\", EventArgs::None); }\nself.request_repaint();",
+        set: S => { S.x.step = 7; } },
+    ],
+  });
+  const lw = $("#lw");
+  lw.addEventListener("input", () => { opts.W = +lw.value; $("#lwv").textContent = lw.value; st.redraw(); });
+  $("#lvis").addEventListener("change", e => { opts.aviso = e.target.checked; st.redraw(); });
+  $("#llong").addEventListener("change", e => { opts.long = e.target.checked; st.redraw(); });
+})();
+
+/* ================================================================
+   5. Do JSON aos componentes
+   ================================================================ */
+(function json() {
+  const LINES = [
+    '{',
+    '  "aylis": 1,',
+    '  "root": {',
+    '    "class": "Form", "name": "frmClientes",',
+    '    "caption": "Clientes", "width": 480, "height": 320,',
+    '    "children": [',
+    '      { "class": "Panel", "name": "pnlTopo", "align": "top", "height": 44,',
+    '        "children": [',
+    '          { "class": "Edit", "name": "edtNome", "align": "client" },',
+    '          { "class": "Button", "name": "btnSalvar", "align": "right",',
+    '            "text": "Salvar", "on_click": "btn_salvar_click" }',
+    '        ] },',
+    '      { "class": "DataGrid", "name": "grdClientes", "align": "client",',
+    '        "data_source": "dsClientes" },',
+    '      { "class": "DataSource", "name": "dsClientes", "data_set": "cdsClientes" },',
+    '      { "class": "ClientDataSet", "name": "cdsClientes" }',
+    '    ]',
+    '  }',
+    '}',
+  ];
+  const hl = s => s.replace(/("[^"]*")(\s*:)?|\b(\d+)\b/g, (m, str, colon, num) =>
+    num ? `<span class="json-n">${num}</span>` : colon ? `<span class="json-k">${str}</span>${colon}` : `<span class="json-s">${str}</span>`);
+  const pre = $("#jsonPre");
+  pre.innerHTML = LINES.map((l, i) => `<span class="ln" data-k="L${i}">${hl(l.replace(/&/g, "&amp;").replace(/</g, "&lt;"))}</span>`).join("");
+  const B = [
+    ["form", "Form", "frmClientes", 0],
+    ["pnl", "Panel", "pnlTopo", 1],
+    ["edt", "Edit", "edtNome", 2],
+    ["btn", "Button", "btnSalvar", 2],
+    ["grid", "DataGrid", "grdClientes", 1],
+    ["ds", "DataSource", "dsClientes", 1],
+    ["cds", "ClientDataSet", "cdsClientes", 1],
+  ];
+  const built = $("#built");
+  B.forEach(([k, c, n, depth]) => {
+    const d = document.createElement("div");
+    d.className = "bn lazy"; d.dataset.k = "b-" + k; d.style.marginLeft = depth * 16 + "px";
+    d.innerHTML = `${n} <small>${c}</small><span class="ref"></span>`;
+    built.appendChild(d);
+  });
+  const insp = $("#insp");
+  const lines = (S, ...ns) => ns.forEach(n => S.hl.add("L" + n));
+  const showB = (S, ...ks) => ks.forEach(k => S.show.add("b-" + k));
+  stepper($("#st-json"), {
+    init: S => { S.x.wait = false; S.x.insp = null; },
+    draw: S => {
+      const g = $('[data-k="b-grid"]', built);
+      g.classList.toggle("wait", S.x.wait === true);
+      $(".ref", g).textContent = S.x.wait === true ? "data_source: \"dsClientes\" (adiado)" : S.x.wait === "ok" ? "data_source → dsClientes ✓" : "";
+      const ds = $('[data-k="b-ds"]', built);
+      ds.classList.toggle("wait", S.x.wait === true);
+      $(".ref", ds).textContent = S.x.wait === true ? "data_set: \"cdsClientes\" (adiado)" : S.x.wait === "ok" ? "data_set → cdsClientes ✓" : "";
+      if (S.x.insp) {
+        insp.innerHTML = `<span class="cap">Object Inspector · btnSalvar: Button</span>` + S.x.insp.map(([p, v, h]) => `<div class="row${h ? " hl" : ""}"><span>${p}</span><span class="mono">${v}</span></div>`).join("");
+      }
+    },
+    steps: [
+      { t: "aylis_json::load lê o documento",
+        d: "<p>O texto vira <code>serde_json::Value</code> (um BOM no começo é ignorado). O documento só aceita <code>\"aylis\"</code> (a versão do formato; mais nova que <code>FORMAT_VERSION</code> dá erro), <code>\"root\"</code> e <code>\"$schema\"</code>.</p>",
+        code: "let id = aylis_json::load(&mut ui, &texto, None)?;   // None: um form raiz",
+        file: "<code>aylis-json/src/layout.rs</code>",
+        set: S => lines(S, 0, 1, 2, 17, 18) },
+      { t: "Cada nó: ui.create pela classe",
+        d: "<p>Para cada nó, <code>\"class\"</code> vai para <code>ui.create(class, parent)</code>, que acha o construtor no registro de classes. Depois, <code>\"name\"</code> vira <code>set_name</code>. As chaves reservadas são só <code>class</code>, <code>name</code> e <code>children</code>; todo o resto é propriedade.</p>",
+        code: "let id = self.ui.create(class, parent)?;\nif let Some(name) = name { self.ui.set_name(id, name)?; }",
+        set: S => { lines(S, 3); showB(S, "form"); S.hl.add("b-form"); } },
+      { t: "Cada chave: uma propriedade",
+        d: "<p>Para cada chave, <code>prop_info</code> diz o tipo; <code>to_prop</code> converte o JSON (número, cor, enum, <code>margins</code> como <code>8</code>, <code>[h, v]</code> ou <code>[l, t, r, b]</code>) e <code>set_prop</code> grava. Textos da tela (<code>caption</code>, <code>text</code>…) passam por <code>set_translated</code>: vão no idioma atual e o original fica lembrado para a troca de idioma.</p>",
+        code: "let info = self.ui.prop_info(id, key)?;\nlet prop = to_prop(value, info.kind, self.ui.theme())?;\nself.ui.set_prop(id, key, prop)?;",
+        set: S => { lines(S, 4); showB(S, "form"); S.hl.add("b-form"); } },
+      { t: "Os filhos, recursivamente",
+        d: "<p><code>\"children\"</code> é uma lista: cada item é criado com o nó atual como pai, na ordem do arquivo (a ordem dos filhos importa para o layout). O evento é uma propriedade como as outras: <code>\"on_click\": \"btn_salvar_click\"</code> guarda o <b>nome</b> do handler, que só será procurado quando o evento disparar.</p>",
+        code: "for child in children {\n    self.node(child, Some(id), path)?;\n}",
+        set: S => { lines(S, 5, 6, 7, 8, 9, 10, 11); showB(S, "form", "pnl", "edt", "btn"); ["b-pnl", "b-edt", "b-btn"].forEach(k => S.hl.add(k)); } },
+      { t: "Referências esperam o fim",
+        d: "<p><code>data_source</code> cita <code>dsClientes</code>, que ainda não existe (vem duas linhas depois). Propriedades de referência a outro componente não são gravadas na hora: entram na lista <code>deferred</code>.</p>",
+        code: "if info.kind == PropKind::Component {\n    self.deferred.push((id, key.clone(), target, here.clone()));\n    continue;\n}",
+        set: S => { lines(S, 12, 13, 14, 15); showB(S, "form", "pnl", "edt", "btn", "grid", "ds", "cds"); S.hl.add("b-grid"); S.hl.add("b-ds"); S.x.wait = true; } },
+      { t: "fixup resolve as referências",
+        d: "<p>Com tudo criado, <code>fixup</code> grava cada referência pelo nome. Por isso a ordem no arquivo não importa. Se algo falhar, o erro diz onde (<code>frmClientes &gt; pnlTopo &gt; Button</code>) e o que já foi criado é liberado.</p>",
+        code: "pub(crate) fn fixup(&mut self) -> Result<()> {\n    for (id, property, target, path) in std::mem::take(&mut self.deferred) {\n        self.ui.set_prop(id, &property, target.as_str())?;\n    }\n    Ok(())\n}",
+        set: S => { showB(S, "form", "pnl", "edt", "btn", "grid", "ds", "cds"); S.hl.add("b-grid"); S.hl.add("b-ds"); S.x.wait = "ok"; } },
+      { t: "O designer usa o mesmo Ui",
+        d: "<p>A IDE abre cada form num <code>Ui</code> próprio (<code>new_document_ui</code>): registra todas as classes e liga <code>set_design_mode(true)</code>. O form é carregado pelo mesmo <code>aylis-json</code>; os controles se desenham como no app, e o designer usa o hit test para selecionar.</p><p>O Object Inspector lista o <code>props()</code> do componente (nome, tipo, categoria) e grava com <code>set_prop</code>. Num <code>Frame</code>, o designer mostra o form de dentro, mas não deixa selecionar nem salva o que é dele.</p>",
+        code: "let mut ui = Ui::new();\naylis_remote::register_all(&mut ui);\nui.set_design_mode(true);",
+        file: "<code>aylis-ide/src/document.rs</code>",
+        set: S => { showB(S, "form", "pnl", "edt", "btn", "grid", "ds", "cds"); S.hl.add("b-btn"); S.show.add("insp"); S.x.wait = "ok";
+          S.x.insp = [["name", "btnSalvar"], ["align", "right"], ["text", "Salvar"], ["width", "88"], ["on_click", "btn_salvar_click"]]; } },
+      { t: "Salvar só o que mudou; recarregar sem recriar",
+        d: "<p>Mudou o texto no Object Inspector: <code>set_prop</code> no <code>Ui</code> do documento. Ao salvar, <code>aylis_json::save</code> grava só o que difere do valor padrão da classe, então o arquivo fica curto e legível.</p><p>Com o app rodando, <code>aylis_json::reload</code> aplica o layout novo no form aberto: casa os filhos pelo nome, mantém dados, foco, rolagem e handlers, cria os novos e libera os que saíram.</p>",
+        code: "ui.set_prop(btn, \"text\", \"Gravar\")?;\nlet json = aylis_json::save(&ui, form)?;    // só o que difere do padrão",
+        set: S => { lines(S, 10); showB(S, "form", "pnl", "edt", "btn", "grid", "ds", "cds"); S.hl.add("b-btn"); S.show.add("insp"); S.x.wait = "ok";
+          S.x.insp = [["name", "btnSalvar"], ["align", "right"], ["text", "Gravar", true], ["width", "88"], ["on_click", "btn_salvar_click"]]; } },
+    ],
+  });
+})();
+
+/* ================================================================
+   6. Dados
+   ================================================================ */
+(function data() {
+  const ROWS = [[1, "Ana", "São Paulo", 120.5], [2, "Bruno", "Recife", 80], [3, "Carla", "São Paulo", null], [4, "Davi", "Belo Horizonte", 42.9], [5, "Elis", "Recife", 310], [6, "Fábio", "São Paulo", 15]];
+  const CITIES = ["São Paulo", "Recife", "Belo Horizonte"];
+  const fmt = v => v === null ? "null" : typeof v === "number" ? String(v).replace(".", ",") : v;
+  $("#rowsTbl").innerHTML = "<tr><th>id</th><th>nome</th><th>cidade</th><th>valor</th></tr>" +
+    ROWS.map(r => "<tr>" + r.map(v => `<td${v === null ? ' class="null"' : ""}>${fmt(v)}</td>`).join("") + "</tr>").join("");
+  const cols = $("#cols");
+  const colDef = [["id", "Int32 · 4 bytes", "c-id"], ["nome", "texto · dicionário", "c-nome"], ["cidade", "texto · dicionário", "c-cid"], ["valor", "Float · 8 bytes", "c-val"]];
+  colDef.forEach(([n, t, k], ci) => {
+    const d = document.createElement("div");
+    d.className = "col"; d.dataset.k = k;
+    d.innerHTML = `<div class="h">${n}<small>${t}</small></div>` + ROWS.map((r, ri) => `<div class="c" data-c="${ci}-${ri}"></div>`).join("");
+    cols.appendChild(d);
+  });
+  $("#dict").innerHTML = "<b>dicionário de cidade</b>" + CITIES.map((c, i) => `<div>${i} → ${c}</div>`).join("");
+  const thr = $("#threads");
+  for (let t = 0; t < 4; t++) thr.insertAdjacentHTML("beforeend", `<div class="thr"><span>thread ${t + 1}</span><div class="bar" data-bar><i></i></div></div>`);
+  const grid = $("#dbgrid");
+  stepper($("#st-data"), {
+    init: S => { S.x.dictMode = false; S.x.grid = 0; S.x.bars = ""; },
+    draw: S => {
+      ROWS.forEach((r, ri) => r.forEach((v, ci) => {
+        const c = $(`[data-c="${ci}-${ri}"]`, cols);
+        if (ci === 2 && S.x.dictMode) { c.textContent = CITIES.indexOf(v); c.className = "c idx"; }
+        else if (ci === 1 && S.x.dictMode) { c.textContent = ri; c.className = "c idx"; c.title = v; }
+        else { c.textContent = ci === 3 && v === null ? "·" : fmt(v); c.className = "c"; }
+      }));
+      $$("[data-bar]", thr).forEach(b => { b.classList.remove("go"); b.classList.toggle("full", S.x.bars === "full"); });
+      const big = S.x.grid >= 1;
+      const top = S.x.grid === 2 ? 9999992 : 0;
+      const names = ["Ana", "Bruno", "Carla", "Davi", "Elis", "Fábio", "Gil", "Hana"], cities = ["São Paulo", "Recife", "São Paulo", "Belo Horizonte", "Recife", "São Paulo", "Recife", "São Paulo"];
+      let html = `<div class="gh"><span>id</span><span>nome</span><span>cidade</span><span>valor</span></div>`;
+      for (let i = 0; i < 6; i++) {
+        const n = top + i + 1;
+        const edit = S.x.edit && i === 0;
+        html += `<div class="gr${i === 0 ? " cur" : ""}${edit ? " edit" : ""}"><span>${n.toLocaleString("pt-BR")}</span><span>${names[(n - 1) % 8]}</span><span>${cities[(n - 1) % 8]}</span><span>${edit ? "99,9" : ((n * 37) % 400 + .5).toFixed(1).replace(".", ",")}</span></div>`;
+      }
+      html += `<div class="sb"><i style="top:${S.x.grid === 2 ? "calc(100% - 10px)" : "0"}"></i></div>`;
+      grid.innerHTML = html;
+      grid.title = big ? "10.000.000 registros; o grid lê só as 6 linhas à vista" : "";
+    },
+    steps: [
+      { t: "Os registros chegam do backend",
+        d: "<p>O <code>ClientDataSet</code> não abre banco. Os registros chegam prontos: <code>load_rows</code> ou <code>load_json</code> em Rust, ou pelo protocolo, de qualquer linguagem.</p>",
+        code: "{\"cmd\": \"data\", \"target\": \"cdsClientes\", \"op\": \"load\",\n \"rows\": [[1, \"Ana\", \"São Paulo\", 120.5], …]}",
+        file: "<code>aylis-data/src/handle.rs</code>, comando <code>data</code> do <code>aylis-remote</code>",
+        set: S => { S.hl.add("rows"); } },
+      { t: "Cada campo vira uma coluna tipada",
+        d: "<p>Em vez de uma lista de registros, uma coluna por campo. Inteiros ocupam 4 bytes enquanto couberem (depois a coluna passa a 8), números ocupam 8, lógicos um byte. Ler a coluna inteira (ordenar, filtrar) anda na memória em sequência.</p>",
+        file: "<code>aylis-data/src/store.rs</code>",
+        set: S => { S.show.add("cols"); S.hl.add("c-id"); S.hl.add("c-val"); } },
+      { t: "Textos num dicionário",
+        d: "<p>Cada texto diferente é guardado uma vez; o registro guarda um número de 4 bytes. \"São Paulo\" repetido em milhares de linhas existe uma vez só. Ordenar por texto usa a posição no dicionário como chave, calculada uma vez por registro.</p>",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.hl.add("c-cid"); S.hl.add("c-nome"); S.hl.add("dict"); S.x.dictMode = true; } },
+      { t: "Nulos num mapa de bits",
+        d: "<p>O valor da Carla é nulo: a coluna de números guarda um espaço qualquer e o mapa de bits marca quem tem valor. As colunas crescem em blocos de 64 mil posições (<code>CHUNK = 1 &lt;&lt; 16</code>), sem realocar nem copiar o que já está guardado. Um registro editado ou incluído passa a ter valores próprios, sem mexer nas colunas.</p>",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.show.add("nulls"); S.hl.add("nulls"); S.hl.add("c-val"); S.x.dictMode = true; } },
+      { t: "RowBatch: milhões de linhas fora da interface",
+        d: "<p>Para cargas grandes, os registros são montados em threads, já nas colunas do dataset. Cada thread monta uma parte; partes com múltiplos de <code>RowBatch::PART</code> registros se juntam com <code>append</code> passando os blocos de memória de um lote para o outro, sem copiar.</p>",
+        code: "let mut lote = RowBatch::new(4);\nlote.int(1).text(\"Ana\").text(\"São Paulo\").float(120.5).end_row();\n// em cada thread, uma parte; depois:\nparte1.append(parte2);",
+        file: "<code>RowBatch</code> em <code>aylis-data/src/store.rs</code>",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.show.add("nulls"); S.show.add("batch"); S.hl.add("m-append"); S.x.dictMode = true; },
+        anim: stage => { $$("[data-bar]", stage).forEach((b, i) => { b.classList.remove("full"); void b.offsetWidth; b.style.animationDelay = ""; b.classList.add("go"); b.firstElementChild.style.animationDelay = (i * 0.15) + "s"; }); } },
+      { t: "load_batch: uma troca só",
+        d: "<p><code>load_batch</code> entra com o lote de uma vez: uma troca e uma única reconstrução da ordem e do filtro, sem conferir valor por valor (os valores já vêm no tipo de cada campo). Em pacotes, cada <code>append_rows</code> refaz a ordem de tudo o que já está carregado.</p><p>Medido com 10 milhões de registros e 100 colunas: carga de uma vez em 10,7 s (16 threads), contra 120 s em pacotes de 50 mil.</p>",
+        code: "data_set(ui, cds).load_batch(lote)?;",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.show.add("nulls"); S.show.add("batch"); S.hl.add("m-load"); S.hl.add("m-sort"); S.done.add("m-append"); S.x.dictMode = true; S.x.bars = "full"; } },
+      { t: "DataSource → DataGrid: só as linhas à vista",
+        d: "<p>O <code>DataGrid</code> se liga a um <code>DataSource</code> (<code>data_source</code>), que aponta para o dataset (<code>data_set</code>). O grid pergunta só pelas linhas que cabem na tela (<code>visible_rows</code>): com 10 milhões de registros, pintar, ir ao último, Page Down e a roda levam menos de 5 ms cada.</p>",
+        code: "{ \"class\": \"DataSource\", \"name\": \"dsClientes\", \"data_set\": \"cdsClientes\" },\n{ \"class\": \"DataGrid\", \"data_source\": \"dsClientes\", \"align\": \"client\" }",
+        file: "<code>aylis-dbcontrols/src/grid.rs</code>",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.show.add("nulls"); S.show.add("batch"); S.show.add("grid"); S.hl.add("grid"); S.x.dictMode = true; S.x.bars = "full"; S.x.grid = 2; } },
+      { t: "Edição, delta e reconciliação",
+        d: "<p>O usuário edita no grid; o registro fica com os valores próprios e entra no change log. <code>delta()</code> devolve as alterações, <code>apply_updates</code> as entrega ao backend (pelo protocolo, no evento <code>on_apply_updates</code>, já como JSON), e o backend responde registro a registro com <code>reconcile</code>.</p>",
+        code: "{\"cmd\": \"data\", \"target\": \"cdsClientes\", \"op\": \"reconcile\", \"results\": [ … ]}",
+        set: S => { S.show.add("cols"); S.show.add("dict"); S.show.add("nulls"); S.show.add("batch"); S.show.add("grid"); S.show.add("delta"); ["f-edit", "f-delta", "f-be", "f-rec"].forEach(k => S.hl.add(k)); S.x.dictMode = true; S.x.bars = "full"; S.x.grid = 1; S.x.edit = true; } },
+    ],
+  });
+})();
+
+/* ================================================================
+   7. Linguagens
+   ================================================================ */
+(function languages() {
+  // abas
+  $("#langTabs").addEventListener("click", e => {
+    const b = e.target.closest("button[data-tab]"); if (!b) return;
+    $$("#langTabs button").forEach(x => x.classList.toggle("sel", x === b));
+    $$(".tabpane").forEach(p => p.classList.toggle("sel", p.id === "tab-" + b.dataset.tab));
+  });
+
+  /* ---------- Rust ---------- */
+  stepper($("#st-rust"), {
+    steps: [
+      { t: "O app é uma biblioteca Rust",
+        d: "<p>A geração de código cria <code>rust/</code> com <code>Cargo.toml</code>, <code>build.rs</code> (o <code>aylis_build</code> embute forms, temas e assets no executável), <code>src/lib.rs</code> e <code>src/main.rs</code>. A função <code>app()</code> abre o projeto embutido e registra os handlers de todos os forms.</p>",
+        code: "pub fn app() -> Result<aylis::Application, aylis::Error> {\n    let mut app = aylis::Application::bundled(aylis::include_project!())?;\n    forms::register(&mut app.ui);\n    Ok(app)\n}",
+        file: "<code>rust/src/lib.rs</code> (gerado por <code>aylis-project/src/codegen.rs</code>)",
+        set: S => S.hl.add("r-lib") },
+      { t: "Um arquivo de eventos por form",
+        d: "<p><code>src/forms/mod.rs</code> é sempre refeito e chama o <code>register</code> de cada form. No arquivo do form, a IDE refaz só o bloco de registro; as funções que você escreveu ficam. Os nomes vêm do form (<code>btnSalvar</code> + <code>on_click</code> → <code>btn_salvar_click</code>), com o form na frente.</p>",
+        code: "pub fn register(ui: &mut Ui) {\n    // (gerado pela IDE; não edite este bloco)\n    ui.register_handler(\"frmClientes.btn_salvar_click\", btn_salvar_click);\n}\n\npub fn btn_salvar_click(ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n    …\n}",
+        file: "<code>rust/src/forms/frm_clientes.rs</code>",
+        set: S => { S.hl.add("r-mod"); S.hl.add("r-form"); } },
+      { t: "Acesso tipado: components.rs",
+        d: "<p>Para cada form, uma instância global com o nome dele e um campo por componente; cada classe usada vira uma <code>struct</code> com as propriedades no tipo certo. Em Rust, ler e gravar chamam direto <code>get_prop</code> e <code>set_prop</code>, sem serializar nada.</p>",
+        code: "frmCalculadora.pnlLateral.set_visible(ui, !frmCalculadora.pnlLateral.visible(ui));\n\n// gerado:\nfn set(ui: &mut Ui, target: &str, prop: &str, value: impl Into<PropValue>) {\n    if let Some(id) = ui.find_path(target) { let _ = ui.set_prop(id, prop, value); }\n}",
+        file: "<code>rust/src/forms/components.rs</code> (de <code>aylis-project/src/bindings.rs</code>, a partir de <code>resources/components.json</code>)",
+        set: S => S.hl.add("r-comp") },
+      { t: "O clique chama a função na mesma thread",
+        d: "<p>Um clique segue o caminho da parte 3 até <code>call_named</code>, que acha <code>frmClientes.btn_salvar_click</code> no mapa de handlers e chama a função Rust: mesma thread, mesmo <code>Ui</code>, sem mensagem nem cópia. O resultado de <code>set_prop</code> aparece no próximo quadro.</p>",
+        set: S => { S.hl.add("r-ui"); S.hl.add("r-form"); } },
+      { t: "O mesmo código em cada plataforma",
+        d: "<p>No desktop, o <code>main.rs</code> roda o <code>app()</code> numa janela do <code>aylis-platform-winit</code>. No Android, a <code>NativeActivity</code> chama <code>android_main</code>; no navegador, a página chama <code>aylis_start</code> depois de carregar o WebAssembly. Os três usam o mesmo <code>app()</code>.</p>",
+        code: "#[cfg(target_os = \"android\")]\nfn android_main(android: aylis::platform::android::AndroidApp) { aylis::run_android(android, app); }\n\n#[cfg(target_arch = \"wasm32\")]\npub extern \"C\" fn aylis_start() { aylis::run_web(app); }",
+        set: S => S.hl.add("r-plat") },
+    ],
+  });
+
+  /* ---------- outras linguagens ---------- */
+  const LANGS = {
+    python: { name: "Python", color: "#3776ab", client: "clients/python/aylis_client.py", comp: "src/forms/components.py",
+      run: "aylis-host -- python clients/python/registration_backend.py", build: "interpretado (Python 3)", debug: "debugpy",
+      typed: "frmCalculadora.pnlLateral.visible = not frmCalculadora.pnlLateral.visible", sender: "frmCalculadora.sender_as_button(event).text" },
+    typescript: { name: "TypeScript", color: "#3178c6", client: "clients/typescript/aylis.ts", comp: "src/forms/components.ts",
+      run: "aylis-host -- bun clients/typescript/demo.ts", build: "Node 22.6+ ou Bun", debug: "Node --inspect / Bun",
+      typed: "frmCalculadora.pnlLateral.visible = !(await frmCalculadora.pnlLateral.visible);", sender: "await frmCalculadora.senderAsButton(ev).text" },
+    csharp: { name: "C#", color: "#68217a", client: "clients/csharp/Aylis.cs", comp: "src/Forms/Components.cs",
+      run: "aylis-host -- dotnet clients/csharp/bin/.../AylisDemo.dll", build: "dotnet build (.NET 6+)", debug: "netcoredbg",
+      typed: "frmCalculadora.pnlLateral.Visible = !frmCalculadora.pnlLateral.Visible;", sender: "frmCalculadora.SenderAsButton(ev).Text" },
+    java: { name: "Java", color: "#e76f00", client: "clients/java/dev/aylis/Aylis.java", comp: "src/forms/Components.java",
+      run: "aylis-host -- java -cp out Demo", build: "javac (Java 17+)", debug: "JDWP",
+      typed: "frmCalculadora.pnlLateral.setVisible(!frmCalculadora.pnlLateral.isVisible());", sender: "frmCalculadora.senderAsButton(ev).getText()" },
+    go: { name: "Go", color: "#00add8", client: "clients/go/aylis/aylis.go", comp: "src/forms/components.go",
+      run: "aylis-host -- clients/go/demo.exe", build: "go build (Go 1.21+)", debug: "Delve (DAP)",
+      typed: "frmCalculadora.pnlLateral.SetVisible(!frmCalculadora.pnlLateral.Visible())", sender: "frmCalculadora.SenderAsButton(ev).Text()" },
+    cpp: { name: "C++", color: "#00599c", client: "clients/cpp/aylis.hpp (um cabeçalho)", comp: "src/forms/components.hpp",
+      run: "cl /std:c++17 /EHsc /utf-8 clients\\cpp\\demo.cpp", build: "cl ou g++ -std=c++17", debug: "cppvsdbg / gdb / lldb",
+      typed: "frmCalculadora.pnlLateral.set_visible(!frmCalculadora.pnlLateral.visible());", sender: "frmCalculadora.sender_as_button(ev).text()" },
+    pascal: { name: "Pascal", color: "#c8102e", client: "clients/pascal/aylis.pas (fpjson)", comp: "src/forms/ayliscomponents.pas",
+      run: "fpc -Mobjfpc clients/pascal/demo.lpr", build: "Free Pascal / Lazarus", debug: "gdb",
+      typed: "frmCalculadora.pnlLateral.Visible := not frmCalculadora.pnlLateral.Visible;", sender: "Texto := frmCalculadora.SenderAsButton(Event).Text;" },
+  };
+  let lang = "typescript";
+  const pick = $("#langPick");
+  Object.entries(LANGS).forEach(([k, L]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.lang = k; b.innerHTML = `<i style="background:${L.color}"></i>${L.name}`;
+    pick.appendChild(b);
+  });
+  function showLang() {
+    const L = LANGS[lang];
+    $$("button", pick).forEach(b => b.classList.toggle("sel", b.dataset.lang === lang));
+    $("#beName").textContent = "Backend em " + L.name;
+    $("#beClient").textContent = L.client;
+    $("#beComp").textContent = L.comp;
+    $("#pBackend").style.borderColor = L.color;
+    $("#langInfo").innerHTML = `
+      <div><b>Cliente do protocolo</b><code>${L.client}</code></div>
+      <div><b>Demonstração</b><code>${L.run}</code></div>
+      <div><b>Compilar</b>${L.build}<br><small style="color:var(--muted)">o F9 compila em <code>.aylis/build</code> e executa</small></div>
+      <div><b>Depurar</b>${L.debug}</div>
+      <div style="grid-column:1/-1"><b>Acesso tipado (${L.comp})</b><code>${L.typed}</code></div>
+      <div style="grid-column:1/-1"><b>Quem disparou o evento</b><code>${L.sender}</code></div>`;
+  }
+  pick.addEventListener("click", e => { const b = e.target.closest("button[data-lang]"); if (!b) return; lang = b.dataset.lang; showLang(); });
+  showLang();
+
+  const M = {
+    load: '{"cmd": "load", "layout": {"aylis": 1, "root": {"class": "Form", "name": "frmDemo", …}}}',
+    run: '{"id": 1, "cmd": "run", "form": "frmDemo"}',
+    runOk: '{"id": 1, "result": null}',
+    ev: '{"event": "on_click", "handler": "hello", "form": "frmDemo", "sender": {"id": 4294967301, "name": "btnHello", "path": "frmDemo.btnHello", "class": "Button"}, "args": null}',
+    get: '{"id": 2, "cmd": "get", "target": "edtName", "prop": "text"}',
+    getOk: '{"id": 2, "result": "Ana"}',
+    set: '{"cmd": "set", "target": "lblMsg", "props": {"text": "Olá, Ana!"}}',
+    closed: '{"event": "closed"}',
+  };
+  const TO_HOST = "backend → tela", TO_BE = "tela → backend";
+  const logEl = $("#hostLog");
+  const renderLog = (el, S) => {
+    el.innerHTML = S.log.map((l, i) => `<div class="${i === S.log.length - 1 && S.x.fresh ? "new" : ""}"><span class="dir">${l[0]}</span><span>${l[1].replace(/</g, "&lt;")}</span></div>`).join("") || '<div style="color:var(--muted)">(as mensagens aparecem aqui)</div>';
+    el.scrollTop = el.scrollHeight;
+  };
+  const fly = (stage, dir, label, cls) => {
+    const be = $("#pBackend", stage), host = $("#pHost", stage);
+    return dir === "h" ? packet(stage, be, host, label, cls) : packet(stage, host, be, label, cls);
+  };
+  stepper($("#st-host"), {
+    interval: 3800,
+    draw: (S, stage) => {
+      renderLog(logEl, S);
+      $("#fakeBtn").classList.toggle("press", !!S.x.press);
+    },
+    steps: [
+      { t: "O aylis-host inicia o backend",
+        d: "<p>No F9, a IDE compila o backend (<code>dotnet build</code>, <code>javac</code>, <code>go build</code>, <code>cl</code>/<code>g++</code>, <code>fpc</code>) e roda o <code>aylis-host</code> com o projeto. O host abre o projeto (tema, idioma, assets, forms \"criar no início\"), inicia o backend na pasta dele e liga os dois pelo stdin/stdout. O que o backend escreve no stderr aparece no console do host.</p>",
+        code: "aylis-host --project Vendas/Vendas.aylisproj -- <comando do backend>",
+        file: "<code>aylis-host/src/main.rs</code>; escolha a linguagem nos botões acima",
+        set: S => { S.hl.add("h-remote"); S.hl.add("h-client"); } },
+      { t: "Comandos: backend → tela",
+        d: "<p>O backend escreve comandos, um JSON por linha. Sem <code>\"id\"</code>, não há resposta (se falhar, volta um evento <code>error</code>). Aqui a demonstração carrega o layout; num projeto, os forms já vêm do <code>.aylisproj</code> e o backend cria outros com <code>create_form</code>.</p>",
+        code: M.load,
+        set: S => { S.hl.add("h-client"); S.hl.add("h-remote"); S.log.push([TO_HOST, M.load]); S.x.fresh = 1; },
+        anim: st => fly(st, "h", "load") },
+      { t: "run abre a janela",
+        d: "<p>Até chegar <code>run</code>, o host só aplica comandos (<code>startup</code>). Com <code>\"id\"</code>, a resposta volta com o mesmo número; o cliente espera por ela (<code>call</code>). Depois a janela abre e uma thread fica lendo as linhas do backend.</p>",
+        set: S => { S.hl.add("h-win"); S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk]); S.x.fresh = 1; },
+        anim: async st => { await fly(st, "h", "run"); fly(st, "b", "result", "res"); } },
+      { t: "O clique vira um evento JSON",
+        d: "<p>O usuário clica em \"Dizer olá\". O caminho é o da parte 3 até <code>call_named</code>: não há handler <code>hello</code> registrado em Rust, então o evento vai para o receptor (<code>forward_events</code> chama <code>set_event_sink</code>) e sai como JSON no stdin do backend, com quem disparou e o form.</p>",
+        code: "\"on_click\": \"hello\"     // no layout do botão",
+        set: S => { S.hl.add("h-ui"); S.hl.add("h-remote"); S.x.press = true; S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev]); S.x.fresh = 1; },
+        anim: st => fly(st, "b", "on_click", "ev") },
+      { t: "O cliente chama o handler pelo nome",
+        d: "<p>O cliente da linguagem lê a linha e chama o handler registrado com <code>on(\"hello\", …)</code> (ou <code>\"frmDemo.hello\"</code>, só para aquele form). No projeto gerado pela IDE, o registro dos forms faz isso por você.</p>",
+        code: "aylis.on(\"hello\", async () => { … });     // TypeScript; nas outras, o mesmo com os nomes da linguagem",
+        set: S => { S.hl.add("h-handler"); S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev]); } },
+      { t: "get: ler da tela",
+        d: "<p>Ler uma propriedade é um <code>get</code> com <code>id</code>: o handler espera a resposta (no TypeScript, <code>await</code>). Na tela, a thread de leitura acorda a janela e o laço aplica <code>handle_message</code> entre os quadros, na thread da interface.</p>",
+        code: M.get,
+        set: S => { S.hl.add("h-typed"); S.hl.add("h-ui"); S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk]); S.x.fresh = 1; },
+        anim: async st => { await fly(st, "h", "get edtName.text"); fly(st, "b", "\"Ana\"", "res"); } },
+      { t: "set: gravar na tela",
+        d: "<p>Gravar é um <code>set</code> sem resposta. Na tela vira <code>set_prop</code> → <code>invalidate</code> → um quadro novo, como em Rust. O acesso tipado gerado (<code>frmDemo.lblMsg.text = …</code>, com a grafia de cada linguagem) escreve exatamente esse comando.</p>",
+        code: M.set,
+        set: S => { S.hl.add("h-typed"); S.hl.add("h-win"); S.text.lblMsg = "Olá, Ana!"; S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk], [TO_HOST, M.set]); S.x.fresh = 1; },
+        anim: st => fly(st, "h", "set lblMsg") },
+      { t: "Fechar, e o backend em outra máquina",
+        d: "<p>Ao fechar a janela, o backend recebe <code>{\"event\": \"closed\"}</code> e o stdin dele é fechado; <code>{\"cmd\": \"close\"}</code> fecha pelo backend. O mesmo protocolo anda por WebSocket: <code>--connect</code> (o backend é servidor), <code>--listen</code> (o backend conecta) e <code>--bridge</code>, o servidor dos apps publicados no celular e no navegador, com um backend por tela conectada.</p>",
+        code: "aylis-host --connect ws://servidor:9000/aylis\naylis-host --listen 127.0.0.1:9000\naylis-host --bridge 0.0.0.0:9000 -- python src/main.py",
+        set: S => { S.text.lblMsg = "Olá, Ana!"; S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk], [TO_HOST, M.set], [TO_BE, M.closed]); S.x.fresh = 1; },
+        anim: st => fly(st, "b", "closed", "ev") },
+    ],
+  });
+
+  /* ---------- C ABI ---------- */
+  const capiLog = $("#capiLog");
+  stepper($("#st-capi"), {
+    draw: S => renderLog(capiLog, S),
+    steps: [
+      { t: "Uma biblioteca com funções C",
+        d: "<p>O <code>aylis-capi</code> gera <code>aylis.dll</code> / <code>libaylis.so</code> / <code>libaylis.dylib</code>. Qualquer linguagem com FFI usa a tela no <b>mesmo processo</b>. <code>aylis_new</code> cria o app com todas as classes registradas.</p>",
+        code: "AylisApp* app = aylis_new();",
+        file: "<code>aylis-capi/src/lib.rs</code>",
+        set: S => { S.hl.add("c-new"); } },
+      { t: "aylis_execute: os comandos do protocolo",
+        d: "<p>Tudo passa pelo mesmo <code>handle_message</code> do <code>aylis-remote</code>: os comandos são os mesmos JSON do <code>aylis-host</code>. A resposta é <code>{\"result\": …}</code> ou <code>{\"error\": \"…\"}</code>, e toda string devolvida é liberada com <code>aylis_string_free</code>.</p>",
+        code: "char* r = aylis_execute(app, \"{\\\"cmd\\\":\\\"load\\\",\\\"layout\\\":{...}}\");\naylis_string_free(r);",
+        set: S => { S.hl.add("c-exec"); S.hl.add("c-remote"); S.hl.add("c-free"); S.log.push(["execute", '{"cmd":"load","layout":{…}}'], ["resposta", '{"result":{"id":…,"name":"FrmClientes"}}']); S.x.fresh = 1; } },
+      { t: "O callback de eventos",
+        d: "<p><code>aylis_set_event_callback</code> registra quem recebe os eventos com handler por nome. Eles chegam em JSON, no mesmo formato do protocolo.</p>",
+        code: "void on_event(AylisCtx* ctx, const char* event_json, void* user) { … }\naylis_set_event_callback(app, on_event, NULL);",
+        set: S => { S.hl.add("c-cb"); S.log.push(["execute", '{"cmd":"load","layout":{…}}'], ["resposta", '{"result":{"id":…,"name":"FrmClientes"}}']); } },
+      { t: "aylis_run abre a janela",
+        d: "<p><code>aylis_run</code> abre o form numa janela e bloqueia até ela fechar. Durante a execução, <code>aylis_execute</code> de outra thread devolve erro: a tela não pode ser mexida por duas threads ao mesmo tempo.</p>",
+        code: "aylis_run(app, \"FrmClientes\");   // bloqueia até fechar\naylis_free(app);",
+        set: S => { S.hl.add("c-run"); S.log.push(["execute", '{"cmd":"load","layout":{…}}'], ["resposta", '{"result":{"id":…,"name":"FrmClientes"}}']); } },
+      { t: "Eventos síncronos, com o ctx",
+        d: "<p>Um clique chama o callback <b>na hora</b>, na thread da tela. Dentro dele, use o <code>ctx</code> recebido com <code>aylis_ctx_execute</code>: o comando é aplicado antes de o evento terminar. De outras threads, <code>aylis_post</code> agenda o comando para a thread da tela.</p>",
+        code: "char* r = aylis_ctx_execute(ctx,\n    \"{\\\"cmd\\\":\\\"set\\\",\\\"target\\\":\\\"lblStatus\\\",\\\"props\\\":{\\\"text\\\":\\\"Salvo\\\"}}\");\naylis_string_free(r);",
+        set: S => { S.hl.add("c-cb"); S.hl.add("c-remote"); S.hl.add("c-post");
+          S.log.push(["execute", '{"cmd":"load","layout":{…}}'], ["resposta", '{"result":{"id":…,"name":"FrmClientes"}}'], ["evento", '{"event":"on_click","handler":"btn_salvar_click","form":"FrmClientes",…}'], ["ctx_execute", '{"cmd":"set","target":"lblStatus","props":{"text":"Salvo"}}']); S.x.fresh = 1; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

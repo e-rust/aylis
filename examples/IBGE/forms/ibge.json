@@ -1,0 +1,1094 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmIBGE",
+    "caption": "Brasil em números — dados abertos do IBGE",
+    "on_show": "form_show",
+    "width": 1440,
+    "height": 900,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsEstados",
+        "key_fields": "id",
+        "read_only": true,
+        "index_field_names": "nome",
+        "after_scroll": "estado_mudou",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsEstadosId",
+            "field_name": "id",
+            "type": "integer",
+            "display_label": "Código",
+            "display_width": 64
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosSigla",
+            "field_name": "sigla",
+            "size": 2,
+            "display_label": "UF",
+            "display_width": 44
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosNome",
+            "field_name": "nome",
+            "display_label": "Estado",
+            "display_width": 170
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosRegiao",
+            "field_name": "regiao",
+            "display_label": "Região",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosPopulacao",
+            "field_name": "populacao",
+            "type": "integer",
+            "display_label": "População (Censo 2022)",
+            "display_width": 120,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosArea",
+            "field_name": "area",
+            "type": "float",
+            "display_label": "Área (km²)",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosDensidade",
+            "field_name": "densidade",
+            "type": "float",
+            "display_label": "Hab/km²",
+            "display_width": 80,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosPib",
+            "field_name": "pib",
+            "type": "integer",
+            "display_label": "PIB 2021 (R$ mil)",
+            "display_width": 120,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosPibPerCapita",
+            "field_name": "pib_per_capita",
+            "type": "float",
+            "display_label": "PIB per capita (R$)",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosEstimativa",
+            "field_name": "estimativa",
+            "type": "integer",
+            "display_label": "Estimativa",
+            "display_width": 110,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosEstimativaAno",
+            "field_name": "estimativa_ano",
+            "type": "integer",
+            "display_label": "Ano da estimativa",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosMunicipios",
+            "field_name": "municipios",
+            "type": "integer",
+            "display_label": "Municípios",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsEstadosBandeira",
+            "field_name": "bandeira",
+            "visible": false
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsEstados",
+        "data_set": "cdsEstados"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMunicipios",
+        "key_fields": "id",
+        "read_only": true,
+        "index_field_names": "nome",
+        "master_source": "dsEstados",
+        "master_fields": "uf_id=id",
+        "after_scroll": "municipio_mudou",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosId",
+            "field_name": "id",
+            "type": "integer",
+            "display_label": "Código",
+            "display_width": 70
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosUfId",
+            "field_name": "uf_id",
+            "type": "integer",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosUf",
+            "field_name": "uf",
+            "size": 2,
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosNome",
+            "field_name": "nome",
+            "display_label": "Município",
+            "display_width": 180
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosMesorregiao",
+            "field_name": "mesorregiao",
+            "display_label": "Mesorregião",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosMicrorregiao",
+            "field_name": "microrregiao",
+            "display_label": "Microrregião",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosRegiaoIntermediaria",
+            "field_name": "regiao_intermediaria",
+            "display_label": "Região intermediária",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosRegiaoImediata",
+            "field_name": "regiao_imediata",
+            "display_label": "Região imediata",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosPopulacao",
+            "field_name": "populacao",
+            "type": "integer",
+            "display_label": "População",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosArea",
+            "field_name": "area",
+            "type": "float",
+            "display_label": "Área (km²)",
+            "display_width": 90,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosDensidade",
+            "field_name": "densidade",
+            "type": "float",
+            "display_label": "Hab/km²",
+            "display_width": 80,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosPib",
+            "field_name": "pib",
+            "type": "integer",
+            "display_label": "PIB 2021 (R$ mil)",
+            "display_format": "#,##0",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosPibParticipacao",
+            "field_name": "pib_participacao",
+            "type": "float",
+            "display_label": "Parte do PIB do estado (%)",
+            "display_format": "#,##0.000",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosPibPerCapita",
+            "field_name": "pib_per_capita",
+            "type": "float",
+            "display_label": "PIB per capita (R$)",
+            "display_format": "#,##0.00",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosEstimativa",
+            "field_name": "estimativa",
+            "type": "integer",
+            "display_label": "Estimativa",
+            "display_format": "#,##0",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosEstimativaAno",
+            "field_name": "estimativa_ano",
+            "type": "integer",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosDistritos",
+            "field_name": "distritos",
+            "type": "integer",
+            "display_label": "Distritos",
+            "display_width": 60
+          },
+          {
+            "class": "Field",
+            "name": "cdsMunicipiosBandeira",
+            "field_name": "bandeira",
+            "visible": false
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMunicipios",
+        "data_set": "cdsMunicipios"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsDistritos",
+        "key_fields": "id",
+        "read_only": true,
+        "index_field_names": "nome",
+        "master_source": "dsMunicipios",
+        "master_fields": "municipio_id=id",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsDistritosId",
+            "field_name": "id",
+            "type": "integer",
+            "display_label": "Código",
+            "display_width": 90
+          },
+          {
+            "class": "Field",
+            "name": "cdsDistritosMunicipioId",
+            "field_name": "municipio_id",
+            "type": "integer",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsDistritosNome",
+            "field_name": "nome",
+            "display_label": "Distrito",
+            "display_width": 220
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsDistritos",
+        "data_set": "cdsDistritos"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsPopulacao",
+        "read_only": true,
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsPopulacaoAno",
+            "field_name": "ano",
+            "display_label": "Ano"
+          },
+          {
+            "class": "Field",
+            "name": "cdsPopulacaoHabitantes",
+            "field_name": "habitantes",
+            "type": "integer",
+            "display_label": "Habitantes",
+            "display_format": "#,##0"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsPopulacao",
+        "data_set": "cdsPopulacao"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMaiores",
+        "read_only": true,
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMaioresNome",
+            "field_name": "nome",
+            "display_label": "Município"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMaioresHabitantes",
+            "field_name": "habitantes",
+            "type": "integer",
+            "display_label": "Habitantes",
+            "display_format": "#,##0"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMaiores",
+        "data_set": "cdsMaiores"
+      },
+      {
+        "class": "Label",
+        "name": "lblFonte",
+        "text": "Fonte: IBGE — API de localidades, Censo 2022 (tabela 4714), PIB dos municípios 2021 (5938), estimativas de população (6579) e malhas territoriais. Bandeiras: Wikimedia Commons.",
+        "color": "text_muted",
+        "height": 22,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "Layout",
+        "name": "lytListas",
+        "width": 470,
+        "align": "left",
+        "children": [
+          {
+            "class": "GroupBox",
+            "name": "gbEstados",
+            "caption": "Estados",
+            "height": 300,
+            "align": "top",
+            "children": [
+              {
+                "class": "DataGrid",
+                "name": "grdEstados",
+                "data_source": "dsEstados",
+                "columns": "sigla;nome;populacao;municipios;regiao",
+                "read_only": true,
+                "filter_row": true,
+                "incremental_search": true,
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "GroupBox",
+            "name": "gbDistritos",
+            "caption": "Distritos do município",
+            "height": 210,
+            "align": "bottom",
+            "children": [
+              {
+                "class": "DataGrid",
+                "name": "grdDistritos",
+                "data_source": "dsDistritos",
+                "columns": "nome;id",
+                "read_only": true,
+                "filter_row": true,
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "GroupBox",
+            "name": "gbMunicipios",
+            "caption": "Municípios do estado",
+            "align": "client",
+            "margins": [0, 6],
+            "children": [
+              {
+                "class": "DataGrid",
+                "name": "grdMunicipios",
+                "data_source": "dsMunicipios",
+                "columns": "nome;populacao;area;densidade;distritos",
+                "read_only": true,
+                "filter_row": true,
+                "incremental_search": true,
+                "align": "client"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "Splitter",
+        "name": "splListas"
+      },
+      {
+        "class": "Layout",
+        "name": "lytPainel",
+        "align": "client",
+        "margins": [4, 0, 0, 0],
+        "children": [
+          {
+            "class": "Panel",
+            "name": "pnlEstado",
+            "radius": 8,
+            "height": 236,
+            "align": "top",
+            "padding": 10,
+            "children": [
+              {
+                "class": "Svg",
+                "name": "svgBrasil",
+                "width": 250,
+                "align": "right",
+                "hint": "O Brasil, com o estado escolhido em destaque"
+              },
+              {
+                "class": "Layout",
+                "name": "lytBandeiraEstado",
+                "width": 165,
+                "align": "left",
+                "margins": [0, 0, 12, 0],
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblEstado",
+                    "text": "—",
+                    "bold": true,
+                    "height": 34,
+                    "align": "top",
+                    "font_size": 20
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblRegiao",
+                    "color": "text_muted",
+                    "height": 22,
+                    "align": "top"
+                  },
+                  {
+                    "class": "Image",
+                    "name": "imgBandeiraEstado",
+                    "height": 120,
+                    "align": "top",
+                    "margins": [0, 8, 0, 0]
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "lytNumerosEstado",
+                "align": "client",
+                "children": [
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "População (Censo 2022)",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoPopulacao",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "populacao"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblEstadoEstimativa",
+                        "text": "Estimativa mais recente",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoEstimativa",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "estimativa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Área (km²)",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoArea",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "area"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Densidade (hab/km²)",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoDensidade",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "densidade"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "PIB 2021 (R$ mil)",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoPib",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "pib"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "PIB per capita (R$)",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoPibPerCapita",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "pib_per_capita"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Municípios",
+                        "color": "text_muted",
+                        "width": 230,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstadoMunicipios",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsEstados",
+                            "field": "municipios"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Panel",
+            "name": "pnlMunicipio",
+            "radius": 8,
+            "height": 300,
+            "align": "top",
+            "margins": [0, 8, 0, 0],
+            "padding": 10,
+            "children": [
+              {
+                "class": "Svg",
+                "name": "svgMunicipio",
+                "width": 170,
+                "align": "right",
+                "margins": [8, 0, 0, 0],
+                "hint": "O município (e os vizinhos)"
+              },
+              {
+                "class": "Svg",
+                "name": "svgEstado",
+                "width": 210,
+                "align": "right",
+                "hint": "O estado, com o município escolhido em destaque"
+              },
+              {
+                "class": "Layout",
+                "name": "lytBandeiraMunicipio",
+                "width": 165,
+                "align": "left",
+                "margins": [0, 0, 12, 0],
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblMunicipio",
+                    "text": "—",
+                    "wrap": true,
+                    "bold": true,
+                    "height": 52,
+                    "align": "top",
+                    "font_size": 18
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblCodigo",
+                    "color": "text_muted",
+                    "height": 22,
+                    "align": "top"
+                  },
+                  {
+                    "class": "Image",
+                    "name": "imgBandeiraMunicipio",
+                    "height": 110,
+                    "align": "top",
+                    "margins": [0, 8, 0, 0]
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblSemBandeira",
+                    "text": "Bandeira não encontrada no Wikimedia Commons",
+                    "wrap": true,
+                    "color": "text_muted",
+                    "height": 40,
+                    "align": "top",
+                    "visible": false
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "lytNumerosMunicipio",
+                "align": "client",
+                "children": [
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Mesorregião",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtMesorregiao",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "mesorregiao"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Microrregião",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtMicrorregiao",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "microrregiao"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Região imediata",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtRegiaoImediata",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "regiao_imediata"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "População (Censo 2022)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtPopulacao",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "populacao"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblEstimativa",
+                        "text": "Estimativa mais recente",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtEstimativa",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "estimativa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Área (km²)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtArea",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "area"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Densidade (hab/km²)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtDensidade",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "densidade"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "PIB 2021 (R$ mil)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtPib",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "pib"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "PIB per capita (R$)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtPibPerCapita",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "pib_per_capita"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "class": "Layout",
+                    "height": 26,
+                    "align": "top",
+                    "children": [
+                      {
+                        "class": "Label",
+                        "text": "Parte do PIB do estado (%)",
+                        "color": "text_muted",
+                        "width": 170,
+                        "align": "left"
+                      },
+                      {
+                        "class": "Label",
+                        "name": "dbtPibParticipacao",
+                        "bold": true,
+                        "align": "client",
+                        "bindings": {
+                          "text": {
+                            "source": "dsMunicipios",
+                            "field": "pib_participacao"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "lytGraficos",
+            "align": "client",
+            "margins": [0, 8, 0, 0],
+            "children": [
+              {
+                "class": "DBChart",
+                "name": "dbcPopulacao",
+                "data_source": "dsPopulacao",
+                "label_field": "ano",
+                "value_fields": "habitantes",
+                "title": "População do município (estimativas e Censo 2022)",
+                "labels": "",
+                "series": "habitantes=",
+                "legend": false,
+                "width": 330,
+                "align": "left"
+              },
+              {
+                "class": "DBChart",
+                "name": "dbcMaiores",
+                "data_source": "dsMaiores",
+                "label_field": "nome",
+                "value_fields": "habitantes",
+                "kind": "horizontal_bar",
+                "title": "Os 10 municípios mais populosos do estado",
+                "labels": "",
+                "series": "habitantes=",
+                "legend": false,
+                "width": 330,
+                "align": "left",
+                "margins": [8, 0, 0, 0]
+              },
+              {
+                "class": "DBChart",
+                "name": "dbcEstados",
+                "data_source": "dsEstados",
+                "label_field": "sigla",
+                "value_fields": "populacao",
+                "kind": "bar",
+                "title": "População por estado (Censo 2022)",
+                "labels": "",
+                "series": "populacao=",
+                "legend": false,
+                "align": "client",
+                "margins": [8, 0, 0, 0]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

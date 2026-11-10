@@ -1,0 +1,15 @@
+{
+  "name": "BotaoContador",
+  "version": "1.0.0",
+  "author": "aylis",
+  "description": "Botão que conta os cliques e mostra o número num selo (o pacote do tutorial de componente).",
+  "category": "Standard",
+  "kind": "code",
+  "crate": "counter-button-aylis",
+  "component": "CounterButton",
+  "properties": [
+    { "name": "texto", "type": "text", "target": "text", "default": "Curtir" },
+    { "name": "contagem", "type": "number", "target": "count", "default": 0 }
+  ],
+  "events": [{ "name": "on_click", "target": "on_click" }]
+}

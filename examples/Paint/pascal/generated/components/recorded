@@ -1,0 +1,34 @@
+{
+  "cpp/frmPaint": {
+    "nanos": 1794070378213431200,
+    "len": 8270
+  },
+  "csharp/frmPaint": {
+    "nanos": 1794070889514214200,
+    "len": 8201
+  },
+  "go/frmPaint": {
+    "nanos": 1794070358544429100,
+    "len": 7864
+  },
+  "java/frmPaint": {
+    "nanos": 1794070333553268400,
+    "len": 8690
+  },
+  "pascal/frmPaint": {
+    "nanos": 1794070411115179100,
+    "len": 11117
+  },
+  "python/frmPaint": {
+    "nanos": 1794163074655016600,
+    "len": 6305
+  },
+  "rust/frmPaint": {
+    "nanos": 1794069060814027700,
+    "len": 10615
+  },
+  "typescript/frmPaint": {
+    "nanos": 1794070270974830100,
+    "len": 7857
+  }
+}

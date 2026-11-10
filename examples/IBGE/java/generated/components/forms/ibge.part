@@ -1,0 +1,452 @@
+
+    public static FrmIBGEComponents frmIBGE;
+
+        Aylis.registerFormClass("frmIBGE", FrmIBGEComponents::new, form -> frmIBGE = (FrmIBGEComponents) form);
+
+
+    /** O form frmIBGE e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+    public static final class FrmIBGEComponents extends Form {
+        public ClientDataSet cdsEstados;
+        public Field cdsEstadosId;
+        public Field cdsEstadosSigla;
+        public Field cdsEstadosNome;
+        public Field cdsEstadosRegiao;
+        public Field cdsEstadosPopulacao;
+        public Field cdsEstadosArea;
+        public Field cdsEstadosDensidade;
+        public Field cdsEstadosPib;
+        public Field cdsEstadosPibPerCapita;
+        public Field cdsEstadosEstimativa;
+        public Field cdsEstadosEstimativaAno;
+        public Field cdsEstadosMunicipios;
+        public Field cdsEstadosBandeira;
+        public DataSource dsEstados;
+        public ClientDataSet cdsMunicipios;
+        public Field cdsMunicipiosId;
+        public Field cdsMunicipiosUfId;
+        public Field cdsMunicipiosUf;
+        public Field cdsMunicipiosNome;
+        public Field cdsMunicipiosMesorregiao;
+        public Field cdsMunicipiosMicrorregiao;
+        public Field cdsMunicipiosRegiaoIntermediaria;
+        public Field cdsMunicipiosRegiaoImediata;
+        public Field cdsMunicipiosPopulacao;
+        public Field cdsMunicipiosArea;
+        public Field cdsMunicipiosDensidade;
+        public Field cdsMunicipiosPib;
+        public Field cdsMunicipiosPibParticipacao;
+        public Field cdsMunicipiosPibPerCapita;
+        public Field cdsMunicipiosEstimativa;
+        public Field cdsMunicipiosEstimativaAno;
+        public Field cdsMunicipiosDistritos;
+        public Field cdsMunicipiosBandeira;
+        public DataSource dsMunicipios;
+        public ClientDataSet cdsDistritos;
+        public Field cdsDistritosId;
+        public Field cdsDistritosMunicipioId;
+        public Field cdsDistritosNome;
+        public DataSource dsDistritos;
+        public ClientDataSet cdsPopulacao;
+        public Field cdsPopulacaoAno;
+        public Field cdsPopulacaoHabitantes;
+        public DataSource dsPopulacao;
+        public ClientDataSet cdsMaiores;
+        public Field cdsMaioresNome;
+        public Field cdsMaioresHabitantes;
+        public DataSource dsMaiores;
+        public Label lblFonte;
+        public Layout lytListas;
+        public GroupBox gbEstados;
+        public DataGrid grdEstados;
+        public GroupBox gbDistritos;
+        public DataGrid grdDistritos;
+        public GroupBox gbMunicipios;
+        public DataGrid grdMunicipios;
+        public Splitter splListas;
+        public Layout lytPainel;
+        public Panel pnlEstado;
+        public Svg svgBrasil;
+        public Layout lytBandeiraEstado;
+        public Label lblEstado;
+        public Label lblRegiao;
+        public Image imgBandeiraEstado;
+        public Layout lytNumerosEstado;
+        public Label dbtEstadoPopulacao;
+        public Label lblEstadoEstimativa;
+        public Label dbtEstadoEstimativa;
+        public Label dbtEstadoArea;
+        public Label dbtEstadoDensidade;
+        public Label dbtEstadoPib;
+        public Label dbtEstadoPibPerCapita;
+        public Label dbtEstadoMunicipios;
+        public Panel pnlMunicipio;
+        public Svg svgMunicipio;
+        public Svg svgEstado;
+        public Layout lytBandeiraMunicipio;
+        public Label lblMunicipio;
+        public Label lblCodigo;
+        public Image imgBandeiraMunicipio;
+        public Label lblSemBandeira;
+        public Layout lytNumerosMunicipio;
+        public Label dbtMesorregiao;
+        public Label dbtMicrorregiao;
+        public Label dbtRegiaoImediata;
+        public Label dbtPopulacao;
+        public Label lblEstimativa;
+        public Label dbtEstimativa;
+        public Label dbtArea;
+        public Label dbtDensidade;
+        public Label dbtPib;
+        public Label dbtPibPerCapita;
+        public Label dbtPibParticipacao;
+        public Layout lytGraficos;
+        public DBChart dbcPopulacao;
+        public DBChart dbcMaiores;
+        public DBChart dbcEstados;
+
+        public FrmIBGEComponents(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        @Override
+        public void bind(java.util.List<java.util.Map<String, Object>> list) {
+            cdsEstados = resolve(list, "cdsEstados", "ClientDataSet", ClientDataSet::new);
+            cdsEstadosId = resolve(list, "cdsEstadosId", "Field", Field::new);
+            cdsEstadosSigla = resolve(list, "cdsEstadosSigla", "Field", Field::new);
+            cdsEstadosNome = resolve(list, "cdsEstadosNome", "Field", Field::new);
+            cdsEstadosRegiao = resolve(list, "cdsEstadosRegiao", "Field", Field::new);
+            cdsEstadosPopulacao = resolve(list, "cdsEstadosPopulacao", "Field", Field::new);
+            cdsEstadosArea = resolve(list, "cdsEstadosArea", "Field", Field::new);
+            cdsEstadosDensidade = resolve(list, "cdsEstadosDensidade", "Field", Field::new);
+            cdsEstadosPib = resolve(list, "cdsEstadosPib", "Field", Field::new);
+            cdsEstadosPibPerCapita = resolve(list, "cdsEstadosPibPerCapita", "Field", Field::new);
+            cdsEstadosEstimativa = resolve(list, "cdsEstadosEstimativa", "Field", Field::new);
+            cdsEstadosEstimativaAno = resolve(list, "cdsEstadosEstimativaAno", "Field", Field::new);
+            cdsEstadosMunicipios = resolve(list, "cdsEstadosMunicipios", "Field", Field::new);
+            cdsEstadosBandeira = resolve(list, "cdsEstadosBandeira", "Field", Field::new);
+            dsEstados = resolve(list, "dsEstados", "DataSource", DataSource::new);
+            cdsMunicipios = resolve(list, "cdsMunicipios", "ClientDataSet", ClientDataSet::new);
+            cdsMunicipiosId = resolve(list, "cdsMunicipiosId", "Field", Field::new);
+            cdsMunicipiosUfId = resolve(list, "cdsMunicipiosUfId", "Field", Field::new);
+            cdsMunicipiosUf = resolve(list, "cdsMunicipiosUf", "Field", Field::new);
+            cdsMunicipiosNome = resolve(list, "cdsMunicipiosNome", "Field", Field::new);
+            cdsMunicipiosMesorregiao = resolve(list, "cdsMunicipiosMesorregiao", "Field", Field::new);
+            cdsMunicipiosMicrorregiao = resolve(list, "cdsMunicipiosMicrorregiao", "Field", Field::new);
+            cdsMunicipiosRegiaoIntermediaria = resolve(list, "cdsMunicipiosRegiaoIntermediaria", "Field", Field::new);
+            cdsMunicipiosRegiaoImediata = resolve(list, "cdsMunicipiosRegiaoImediata", "Field", Field::new);
+            cdsMunicipiosPopulacao = resolve(list, "cdsMunicipiosPopulacao", "Field", Field::new);
+            cdsMunicipiosArea = resolve(list, "cdsMunicipiosArea", "Field", Field::new);
+            cdsMunicipiosDensidade = resolve(list, "cdsMunicipiosDensidade", "Field", Field::new);
+            cdsMunicipiosPib = resolve(list, "cdsMunicipiosPib", "Field", Field::new);
+            cdsMunicipiosPibParticipacao = resolve(list, "cdsMunicipiosPibParticipacao", "Field", Field::new);
+            cdsMunicipiosPibPerCapita = resolve(list, "cdsMunicipiosPibPerCapita", "Field", Field::new);
+            cdsMunicipiosEstimativa = resolve(list, "cdsMunicipiosEstimativa", "Field", Field::new);
+            cdsMunicipiosEstimativaAno = resolve(list, "cdsMunicipiosEstimativaAno", "Field", Field::new);
+            cdsMunicipiosDistritos = resolve(list, "cdsMunicipiosDistritos", "Field", Field::new);
+            cdsMunicipiosBandeira = resolve(list, "cdsMunicipiosBandeira", "Field", Field::new);
+            dsMunicipios = resolve(list, "dsMunicipios", "DataSource", DataSource::new);
+            cdsDistritos = resolve(list, "cdsDistritos", "ClientDataSet", ClientDataSet::new);
+            cdsDistritosId = resolve(list, "cdsDistritosId", "Field", Field::new);
+            cdsDistritosMunicipioId = resolve(list, "cdsDistritosMunicipioId", "Field", Field::new);
+            cdsDistritosNome = resolve(list, "cdsDistritosNome", "Field", Field::new);
+            dsDistritos = resolve(list, "dsDistritos", "DataSource", DataSource::new);
+            cdsPopulacao = resolve(list, "cdsPopulacao", "ClientDataSet", ClientDataSet::new);
+            cdsPopulacaoAno = resolve(list, "cdsPopulacaoAno", "Field", Field::new);
+            cdsPopulacaoHabitantes = resolve(list, "cdsPopulacaoHabitantes", "Field", Field::new);
+            dsPopulacao = resolve(list, "dsPopulacao", "DataSource", DataSource::new);
+            cdsMaiores = resolve(list, "cdsMaiores", "ClientDataSet", ClientDataSet::new);
+            cdsMaioresNome = resolve(list, "cdsMaioresNome", "Field", Field::new);
+            cdsMaioresHabitantes = resolve(list, "cdsMaioresHabitantes", "Field", Field::new);
+            dsMaiores = resolve(list, "dsMaiores", "DataSource", DataSource::new);
+            lblFonte = resolve(list, "lblFonte", "Label", Label::new);
+            lytListas = resolve(list, "lytListas", "Layout", Layout::new);
+            gbEstados = resolve(list, "gbEstados", "GroupBox", GroupBox::new);
+            grdEstados = resolve(list, "grdEstados", "DataGrid", DataGrid::new);
+            gbDistritos = resolve(list, "gbDistritos", "GroupBox", GroupBox::new);
+            grdDistritos = resolve(list, "grdDistritos", "DataGrid", DataGrid::new);
+            gbMunicipios = resolve(list, "gbMunicipios", "GroupBox", GroupBox::new);
+            grdMunicipios = resolve(list, "grdMunicipios", "DataGrid", DataGrid::new);
+            splListas = resolve(list, "splListas", "Splitter", Splitter::new);
+            lytPainel = resolve(list, "lytPainel", "Layout", Layout::new);
+            pnlEstado = resolve(list, "pnlEstado", "Panel", Panel::new);
+            svgBrasil = resolve(list, "svgBrasil", "Svg", Svg::new);
+            lytBandeiraEstado = resolve(list, "lytBandeiraEstado", "Layout", Layout::new);
+            lblEstado = resolve(list, "lblEstado", "Label", Label::new);
+            lblRegiao = resolve(list, "lblRegiao", "Label", Label::new);
+            imgBandeiraEstado = resolve(list, "imgBandeiraEstado", "Image", Image::new);
+            lytNumerosEstado = resolve(list, "lytNumerosEstado", "Layout", Layout::new);
+            dbtEstadoPopulacao = resolve(list, "dbtEstadoPopulacao", "Label", Label::new);
+            lblEstadoEstimativa = resolve(list, "lblEstadoEstimativa", "Label", Label::new);
+            dbtEstadoEstimativa = resolve(list, "dbtEstadoEstimativa", "Label", Label::new);
+            dbtEstadoArea = resolve(list, "dbtEstadoArea", "Label", Label::new);
+            dbtEstadoDensidade = resolve(list, "dbtEstadoDensidade", "Label", Label::new);
+            dbtEstadoPib = resolve(list, "dbtEstadoPib", "Label", Label::new);
+            dbtEstadoPibPerCapita = resolve(list, "dbtEstadoPibPerCapita", "Label", Label::new);
+            dbtEstadoMunicipios = resolve(list, "dbtEstadoMunicipios", "Label", Label::new);
+            pnlMunicipio = resolve(list, "pnlMunicipio", "Panel", Panel::new);
+            svgMunicipio = resolve(list, "svgMunicipio", "Svg", Svg::new);
+            svgEstado = resolve(list, "svgEstado", "Svg", Svg::new);
+            lytBandeiraMunicipio = resolve(list, "lytBandeiraMunicipio", "Layout", Layout::new);
+            lblMunicipio = resolve(list, "lblMunicipio", "Label", Label::new);
+            lblCodigo = resolve(list, "lblCodigo", "Label", Label::new);
+            imgBandeiraMunicipio = resolve(list, "imgBandeiraMunicipio", "Image", Image::new);
+            lblSemBandeira = resolve(list, "lblSemBandeira", "Label", Label::new);
+            lytNumerosMunicipio = resolve(list, "lytNumerosMunicipio", "Layout", Layout::new);
+            dbtMesorregiao = resolve(list, "dbtMesorregiao", "Label", Label::new);
+            dbtMicrorregiao = resolve(list, "dbtMicrorregiao", "Label", Label::new);
+            dbtRegiaoImediata = resolve(list, "dbtRegiaoImediata", "Label", Label::new);
+            dbtPopulacao = resolve(list, "dbtPopulacao", "Label", Label::new);
+            lblEstimativa = resolve(list, "lblEstimativa", "Label", Label::new);
+            dbtEstimativa = resolve(list, "dbtEstimativa", "Label", Label::new);
+            dbtArea = resolve(list, "dbtArea", "Label", Label::new);
+            dbtDensidade = resolve(list, "dbtDensidade", "Label", Label::new);
+            dbtPib = resolve(list, "dbtPib", "Label", Label::new);
+            dbtPibPerCapita = resolve(list, "dbtPibPerCapita", "Label", Label::new);
+            dbtPibParticipacao = resolve(list, "dbtPibParticipacao", "Label", Label::new);
+            lytGraficos = resolve(list, "lytGraficos", "Layout", Layout::new);
+            dbcPopulacao = resolve(list, "dbcPopulacao", "DBChart", DBChart::new);
+            dbcMaiores = resolve(list, "dbcMaiores", "DBChart", DBChart::new);
+            dbcEstados = resolve(list, "dbcEstados", "DBChart", DBChart::new);
+        }
+
+        /** O ClientDataSet deste form com o nome (como o FindComponent). */
+        public ClientDataSet findClientDataSet(String name) {
+            return switch (name) {
+                case "cdsEstados" -> cdsEstados;
+                case "cdsMunicipios" -> cdsMunicipios;
+                case "cdsDistritos" -> cdsDistritos;
+                case "cdsPopulacao" -> cdsPopulacao;
+                case "cdsMaiores" -> cdsMaiores;
+                default -> null;
+            };
+        }
+
+        /** O ClientDataSet que disparou o evento. */
+        public ClientDataSet senderAsClientDataSet(Aylis.Event ev) {
+            return findClientDataSet(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O DBChart deste form com o nome (como o FindComponent). */
+        public DBChart findDBChart(String name) {
+            return switch (name) {
+                case "dbcPopulacao" -> dbcPopulacao;
+                case "dbcMaiores" -> dbcMaiores;
+                case "dbcEstados" -> dbcEstados;
+                default -> null;
+            };
+        }
+
+        /** O DBChart que disparou o evento. */
+        public DBChart senderAsDBChart(Aylis.Event ev) {
+            return findDBChart(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O DataGrid deste form com o nome (como o FindComponent). */
+        public DataGrid findDataGrid(String name) {
+            return switch (name) {
+                case "grdEstados" -> grdEstados;
+                case "grdDistritos" -> grdDistritos;
+                case "grdMunicipios" -> grdMunicipios;
+                default -> null;
+            };
+        }
+
+        /** O DataGrid que disparou o evento. */
+        public DataGrid senderAsDataGrid(Aylis.Event ev) {
+            return findDataGrid(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O DataSource deste form com o nome (como o FindComponent). */
+        public DataSource findDataSource(String name) {
+            return switch (name) {
+                case "dsEstados" -> dsEstados;
+                case "dsMunicipios" -> dsMunicipios;
+                case "dsDistritos" -> dsDistritos;
+                case "dsPopulacao" -> dsPopulacao;
+                case "dsMaiores" -> dsMaiores;
+                default -> null;
+            };
+        }
+
+        /** O DataSource que disparou o evento. */
+        public DataSource senderAsDataSource(Aylis.Event ev) {
+            return findDataSource(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Field deste form com o nome (como o FindComponent). */
+        public Field findField(String name) {
+            return switch (name) {
+                case "cdsEstadosId" -> cdsEstadosId;
+                case "cdsEstadosSigla" -> cdsEstadosSigla;
+                case "cdsEstadosNome" -> cdsEstadosNome;
+                case "cdsEstadosRegiao" -> cdsEstadosRegiao;
+                case "cdsEstadosPopulacao" -> cdsEstadosPopulacao;
+                case "cdsEstadosArea" -> cdsEstadosArea;
+                case "cdsEstadosDensidade" -> cdsEstadosDensidade;
+                case "cdsEstadosPib" -> cdsEstadosPib;
+                case "cdsEstadosPibPerCapita" -> cdsEstadosPibPerCapita;
+                case "cdsEstadosEstimativa" -> cdsEstadosEstimativa;
+                case "cdsEstadosEstimativaAno" -> cdsEstadosEstimativaAno;
+                case "cdsEstadosMunicipios" -> cdsEstadosMunicipios;
+                case "cdsEstadosBandeira" -> cdsEstadosBandeira;
+                case "cdsMunicipiosId" -> cdsMunicipiosId;
+                case "cdsMunicipiosUfId" -> cdsMunicipiosUfId;
+                case "cdsMunicipiosUf" -> cdsMunicipiosUf;
+                case "cdsMunicipiosNome" -> cdsMunicipiosNome;
+                case "cdsMunicipiosMesorregiao" -> cdsMunicipiosMesorregiao;
+                case "cdsMunicipiosMicrorregiao" -> cdsMunicipiosMicrorregiao;
+                case "cdsMunicipiosRegiaoIntermediaria" -> cdsMunicipiosRegiaoIntermediaria;
+                case "cdsMunicipiosRegiaoImediata" -> cdsMunicipiosRegiaoImediata;
+                case "cdsMunicipiosPopulacao" -> cdsMunicipiosPopulacao;
+                case "cdsMunicipiosArea" -> cdsMunicipiosArea;
+                case "cdsMunicipiosDensidade" -> cdsMunicipiosDensidade;
+                case "cdsMunicipiosPib" -> cdsMunicipiosPib;
+                case "cdsMunicipiosPibParticipacao" -> cdsMunicipiosPibParticipacao;
+                case "cdsMunicipiosPibPerCapita" -> cdsMunicipiosPibPerCapita;
+                case "cdsMunicipiosEstimativa" -> cdsMunicipiosEstimativa;
+                case "cdsMunicipiosEstimativaAno" -> cdsMunicipiosEstimativaAno;
+                case "cdsMunicipiosDistritos" -> cdsMunicipiosDistritos;
+                case "cdsMunicipiosBandeira" -> cdsMunicipiosBandeira;
+                case "cdsDistritosId" -> cdsDistritosId;
+                case "cdsDistritosMunicipioId" -> cdsDistritosMunicipioId;
+                case "cdsDistritosNome" -> cdsDistritosNome;
+                case "cdsPopulacaoAno" -> cdsPopulacaoAno;
+                case "cdsPopulacaoHabitantes" -> cdsPopulacaoHabitantes;
+                case "cdsMaioresNome" -> cdsMaioresNome;
+                case "cdsMaioresHabitantes" -> cdsMaioresHabitantes;
+                default -> null;
+            };
+        }
+
+        /** O Field que disparou o evento. */
+        public Field senderAsField(Aylis.Event ev) {
+            return findField(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O GroupBox deste form com o nome (como o FindComponent). */
+        public GroupBox findGroupBox(String name) {
+            return switch (name) {
+                case "gbEstados" -> gbEstados;
+                case "gbDistritos" -> gbDistritos;
+                case "gbMunicipios" -> gbMunicipios;
+                default -> null;
+            };
+        }
+
+        /** O GroupBox que disparou o evento. */
+        public GroupBox senderAsGroupBox(Aylis.Event ev) {
+            return findGroupBox(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Image deste form com o nome (como o FindComponent). */
+        public Image findImage(String name) {
+            return switch (name) {
+                case "imgBandeiraEstado" -> imgBandeiraEstado;
+                case "imgBandeiraMunicipio" -> imgBandeiraMunicipio;
+                default -> null;
+            };
+        }
+
+        /** O Image que disparou o evento. */
+        public Image senderAsImage(Aylis.Event ev) {
+            return findImage(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Label deste form com o nome (como o FindComponent). */
+        public Label findLabel(String name) {
+            return switch (name) {
+                case "lblFonte" -> lblFonte;
+                case "lblEstado" -> lblEstado;
+                case "lblRegiao" -> lblRegiao;
+                case "dbtEstadoPopulacao" -> dbtEstadoPopulacao;
+                case "lblEstadoEstimativa" -> lblEstadoEstimativa;
+                case "dbtEstadoEstimativa" -> dbtEstadoEstimativa;
+                case "dbtEstadoArea" -> dbtEstadoArea;
+                case "dbtEstadoDensidade" -> dbtEstadoDensidade;
+                case "dbtEstadoPib" -> dbtEstadoPib;
+                case "dbtEstadoPibPerCapita" -> dbtEstadoPibPerCapita;
+                case "dbtEstadoMunicipios" -> dbtEstadoMunicipios;
+                case "lblMunicipio" -> lblMunicipio;
+                case "lblCodigo" -> lblCodigo;
+                case "lblSemBandeira" -> lblSemBandeira;
+                case "dbtMesorregiao" -> dbtMesorregiao;
+                case "dbtMicrorregiao" -> dbtMicrorregiao;
+                case "dbtRegiaoImediata" -> dbtRegiaoImediata;
+                case "dbtPopulacao" -> dbtPopulacao;
+                case "lblEstimativa" -> lblEstimativa;
+                case "dbtEstimativa" -> dbtEstimativa;
+                case "dbtArea" -> dbtArea;
+                case "dbtDensidade" -> dbtDensidade;
+                case "dbtPib" -> dbtPib;
+                case "dbtPibPerCapita" -> dbtPibPerCapita;
+                case "dbtPibParticipacao" -> dbtPibParticipacao;
+                default -> null;
+            };
+        }
+
+        /** O Label que disparou o evento. */
+        public Label senderAsLabel(Aylis.Event ev) {
+            return findLabel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Layout deste form com o nome (como o FindComponent). */
+        public Layout findLayout(String name) {
+            return switch (name) {
+                case "lytListas" -> lytListas;
+                case "lytPainel" -> lytPainel;
+                case "lytBandeiraEstado" -> lytBandeiraEstado;
+                case "lytNumerosEstado" -> lytNumerosEstado;
+                case "lytBandeiraMunicipio" -> lytBandeiraMunicipio;
+                case "lytNumerosMunicipio" -> lytNumerosMunicipio;
+                case "lytGraficos" -> lytGraficos;
+                default -> null;
+            };
+        }
+
+        /** O Layout que disparou o evento. */
+        public Layout senderAsLayout(Aylis.Event ev) {
+            return findLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Panel deste form com o nome (como o FindComponent). */
+        public Panel findPanel(String name) {
+            return switch (name) {
+                case "pnlEstado" -> pnlEstado;
+                case "pnlMunicipio" -> pnlMunicipio;
+                default -> null;
+            };
+        }
+
+        /** O Panel que disparou o evento. */
+        public Panel senderAsPanel(Aylis.Event ev) {
+            return findPanel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Splitter deste form com o nome (como o FindComponent). */
+        public Splitter findSplitter(String name) {
+            return switch (name) {
+                case "splListas" -> splListas;
+                default -> null;
+            };
+        }
+
+        /** O Splitter que disparou o evento. */
+        public Splitter senderAsSplitter(Aylis.Event ev) {
+            return findSplitter(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Svg deste form com o nome (como o FindComponent). */
+        public Svg findSvg(String name) {
+            return switch (name) {
+                case "svgBrasil" -> svgBrasil;
+                case "svgMunicipio" -> svgMunicipio;
+                case "svgEstado" -> svgEstado;
+                default -> null;
+            };
+        }
+
+        /** O Svg que disparou o evento. */
+        public Svg senderAsSvg(Aylis.Event ev) {
+            return findSvg(String.valueOf(ev.sender().get("name")));
+        }
+    }

@@ -1,0 +1,118 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmVenRepresentantesLista",
+    "caption": "Representantes — lista (Vendas)",
+    "on_show": "form_show",
+    "width": 1100,
+    "height": 700,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMestre",
+        "key_fields": "id",
+        "index_field_names": "nome",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMestreId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreCodigo",
+            "field_name": "codigo",
+            "size": 10,
+            "display_label": "Código",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreNome",
+            "field_name": "nome",
+            "size": 80,
+            "display_label": "Nome",
+            "display_width": 220,
+            "required": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreAtivo",
+            "field_name": "ativo",
+            "type": "boolean",
+            "display_label": "Ativo",
+            "display_width": 50
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreCriadoEm",
+            "field_name": "criado_em",
+            "type": "date",
+            "display_label": "Cadastrado em",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreObservacao",
+            "field_name": "observacao",
+            "size": 200,
+            "display_label": "Observação",
+            "display_width": 220
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMestre",
+        "data_set": "cdsMestre"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlBarra",
+        "height": 44,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnAbrir",
+            "text": "Abrir cadastro",
+            "width": 140,
+            "align": "left",
+            "on_click": "btn_abrir_click"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar representantes…",
+            "on_change": "edt_busca_change",
+            "width": 260,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdLista",
+        "data_source": "dsMestre",
+        "read_only": true,
+        "filter_row": true,
+        "align": "client",
+        "on_dbl_click": "grd_lista_dbl_click"
+      }
+    ]
+  }
+}

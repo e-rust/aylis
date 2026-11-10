@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="240" height="120" viewBox="0 0 240 120">
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A90E2"/>
+      <stop offset="1" stop-color="#9013FE" stop-opacity="0.8"/>
+    </linearGradient>
+    <radialGradient id="sol" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF59D"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </radialGradient>
+    <path id="estrela" d="M0,-10 L3,-3 L10,-3 L4,2 L6,9 L0,5 L-6,9 L-4,2 L-10,-3 L-3,-3 Z"/>
+  </defs>
+  <rect x="2" y="2" width="236" height="116" rx="14" fill="url(#ceu)"/>
+  <circle cx="60" cy="58" r="30" fill="url(#sol)" stroke="#fff" stroke-width="3"/>
+  <g transform="translate(150 40) rotate(15)" fill="#FFEB3B">
+    <use xlink:href="#estrela"/>
+    <use href="#estrela" x="30" y="10" style="fill: white; opacity: .7"/>
+  </g>
+  <path fill-rule="evenodd" fill="rgba(255,255,255,0.85)" d="M120 70h90v40h-90z M140 80h50v20h-50z"/>
+  <polyline points="10,110 40,90 70,105 100,85" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 6"/>
+  <ellipse cx="200" cy="20" rx="20" ry="8" fill="none" stroke="white"/>
+  <text x="10" y="20">ignorado</text>
+</svg>

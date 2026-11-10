@@ -1,0 +1,92 @@
+  { O form frmProgresso: a classe base com os componentes. A do form (TFrmProgresso), com os
+    handlers (métodos published) e o estado, fica na unit dele. }
+  TFrmProgressoBase = class(TForm)
+  published
+    lblEtapa: TLabel;
+    pbProgresso: TProgressBar;
+    btnCancelar: TButton;
+  protected
+    procedure BindComponents(List: TJSONArray); override;
+  public
+    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    function FindButton(const Nome: string): TButton;
+    { O Button que disparou o evento (nil se não é um Button deste form). }
+    function SenderAsButton(Sender: TAylisComponent): TButton; overload;
+    function SenderAsButton(Event: TJSONObject): TButton; overload;
+    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLabel(const Nome: string): TLabel;
+    { O Label que disparou o evento (nil se não é um Label deste form). }
+    function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
+    function SenderAsLabel(Event: TJSONObject): TLabel; overload;
+    { O ProgressBar deste form com o nome, como o FindComponent (nil se não há). }
+    function FindProgressBar(const Nome: string): TProgressBar;
+    { O ProgressBar que disparou o evento (nil se não é um ProgressBar deste form). }
+    function SenderAsProgressBar(Sender: TAylisComponent): TProgressBar; overload;
+    function SenderAsProgressBar(Event: TJSONObject): TProgressBar; overload;
+  end;
+
+
+procedure TFrmProgressoBase.BindComponents(List: TJSONArray);
+begin
+  lblEtapa := TLabel(Resolve(List, 'lblEtapa', 'Label', TLabel));
+  pbProgresso := TProgressBar(Resolve(List, 'pbProgresso', 'ProgressBar', TProgressBar));
+  btnCancelar := TButton(Resolve(List, 'btnCancelar', 'Button', TButton));
+end;
+
+function TFrmProgressoBase.FindButton(const Nome: string): TButton;
+begin
+  Result := nil;
+  if Nome = 'btnCancelar' then
+    Result := btnCancelar;
+end;
+
+function TFrmProgressoBase.SenderAsButton(Sender: TAylisComponent): TButton;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindButton(Sender.Name);
+end;
+
+function TFrmProgressoBase.SenderAsButton(Event: TJSONObject): TButton;
+begin
+  Result := FindButton(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmProgressoBase.FindLabel(const Nome: string): TLabel;
+begin
+  Result := nil;
+  if Nome = 'lblEtapa' then
+    Result := lblEtapa;
+end;
+
+function TFrmProgressoBase.SenderAsLabel(Sender: TAylisComponent): TLabel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLabel(Sender.Name);
+end;
+
+function TFrmProgressoBase.SenderAsLabel(Event: TJSONObject): TLabel;
+begin
+  Result := FindLabel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmProgressoBase.FindProgressBar(const Nome: string): TProgressBar;
+begin
+  Result := nil;
+  if Nome = 'pbProgresso' then
+    Result := pbProgresso;
+end;
+
+function TFrmProgressoBase.SenderAsProgressBar(Sender: TAylisComponent): TProgressBar;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindProgressBar(Sender.Name);
+end;
+
+function TFrmProgressoBase.SenderAsProgressBar(Event: TJSONObject): TProgressBar;
+begin
+  Result := FindProgressBar(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+

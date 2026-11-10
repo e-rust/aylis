@@ -1,0 +1,442 @@
+
+/** O form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+export class FrmPaintComponents extends Form {
+    lytTopo!: Layout;
+    mnuPrincipal!: MainMenu;
+    mnuArquivo!: MenuItem;
+    mnuNovo!: MenuItem;
+    mnuAbrir!: MenuItem;
+    mnuSalvar!: MenuItem;
+    mnuSalvarComo!: MenuItem;
+    mnuSep1!: MenuItem;
+    mnuSair!: MenuItem;
+    mnuEditar!: MenuItem;
+    mnuDesfazer!: MenuItem;
+    mnuRefazer!: MenuItem;
+    mnuSep2!: MenuItem;
+    mnuRecortar!: MenuItem;
+    mnuCopiar!: MenuItem;
+    mnuColar!: MenuItem;
+    mnuExcluir!: MenuItem;
+    mnuSelecionarTudo!: MenuItem;
+    mnuSep3!: MenuItem;
+    mnuLimpar!: MenuItem;
+    mnuExibir!: MenuItem;
+    mnuAmpliar!: MenuItem;
+    mnuReduzir!: MenuItem;
+    mnuTamanhoReal!: MenuItem;
+    divTopo!: Divider;
+    btnSalvar!: Button;
+    btnDesfazer!: Button;
+    btnRefazer!: Button;
+    pnlFaixa!: Panel;
+    lytSelecao!: Layout;
+    lblSelecaoGrupo!: Label;
+    btnSelecionar!: Button;
+    divSelecao!: Divider;
+    lytFerramentas!: Layout;
+    lblFerramentasGrupo!: Label;
+    grdFerramentas!: GridLayout;
+    btnLapis!: Button;
+    btnBalde!: Button;
+    btnBorracha!: Button;
+    btnContaGotas!: Button;
+    divFerramentas!: Divider;
+    lytPinceis!: Layout;
+    lblPinceis!: Label;
+    btnPincel!: Button;
+    divPinceis!: Divider;
+    lytFormas!: Layout;
+    lblFormas!: Label;
+    chkPreencher!: CheckBox;
+    grdFormas!: GridLayout;
+    btnLinha!: Button;
+    btnRetangulo!: Button;
+    btnElipse!: Button;
+    divFormas!: Divider;
+    lytTamanho!: Layout;
+    lblTamanhoGrupo!: Label;
+    cbEspessura!: ComboBox;
+    divTamanho!: Divider;
+    lytCores!: Layout;
+    lblCores!: Label;
+    btnCor1!: Circle;
+    btnCor2!: Circle;
+    grdPaleta!: GridLayout;
+    btnPaleta01!: Circle;
+    btnPaleta02!: Circle;
+    btnPaleta03!: Circle;
+    btnPaleta04!: Circle;
+    btnPaleta05!: Circle;
+    btnPaleta06!: Circle;
+    btnPaleta07!: Circle;
+    btnPaleta08!: Circle;
+    btnPaleta09!: Circle;
+    btnPaleta10!: Circle;
+    btnPaleta11!: Circle;
+    btnPaleta12!: Circle;
+    btnPaleta13!: Circle;
+    btnPaleta14!: Circle;
+    btnPaleta15!: Circle;
+    btnPaleta16!: Circle;
+    btnPaleta17!: Circle;
+    btnPaleta18!: Circle;
+    btnPaleta19!: Circle;
+    btnPaleta20!: Circle;
+    stbStatus!: StatusBar;
+    lblPosicao!: Label;
+    lblTamanho!: Label;
+    lblZoom!: Label;
+    sbxArea!: ScrollBox;
+    pcDesenho!: PaintCanvas;
+    dlgAbrir!: OpenDialog;
+    dlgSalvar!: SaveDialog;
+    bind(list: ComponentInfo[]) {
+        this.lytTopo = this.resolve(list, "lytTopo", "Layout", Layout);
+        this.mnuPrincipal = this.resolve(list, "mnuPrincipal", "MainMenu", MainMenu);
+        this.mnuArquivo = this.resolve(list, "mnuArquivo", "MenuItem", MenuItem);
+        this.mnuNovo = this.resolve(list, "mnuNovo", "MenuItem", MenuItem);
+        this.mnuAbrir = this.resolve(list, "mnuAbrir", "MenuItem", MenuItem);
+        this.mnuSalvar = this.resolve(list, "mnuSalvar", "MenuItem", MenuItem);
+        this.mnuSalvarComo = this.resolve(list, "mnuSalvarComo", "MenuItem", MenuItem);
+        this.mnuSep1 = this.resolve(list, "mnuSep1", "MenuItem", MenuItem);
+        this.mnuSair = this.resolve(list, "mnuSair", "MenuItem", MenuItem);
+        this.mnuEditar = this.resolve(list, "mnuEditar", "MenuItem", MenuItem);
+        this.mnuDesfazer = this.resolve(list, "mnuDesfazer", "MenuItem", MenuItem);
+        this.mnuRefazer = this.resolve(list, "mnuRefazer", "MenuItem", MenuItem);
+        this.mnuSep2 = this.resolve(list, "mnuSep2", "MenuItem", MenuItem);
+        this.mnuRecortar = this.resolve(list, "mnuRecortar", "MenuItem", MenuItem);
+        this.mnuCopiar = this.resolve(list, "mnuCopiar", "MenuItem", MenuItem);
+        this.mnuColar = this.resolve(list, "mnuColar", "MenuItem", MenuItem);
+        this.mnuExcluir = this.resolve(list, "mnuExcluir", "MenuItem", MenuItem);
+        this.mnuSelecionarTudo = this.resolve(list, "mnuSelecionarTudo", "MenuItem", MenuItem);
+        this.mnuSep3 = this.resolve(list, "mnuSep3", "MenuItem", MenuItem);
+        this.mnuLimpar = this.resolve(list, "mnuLimpar", "MenuItem", MenuItem);
+        this.mnuExibir = this.resolve(list, "mnuExibir", "MenuItem", MenuItem);
+        this.mnuAmpliar = this.resolve(list, "mnuAmpliar", "MenuItem", MenuItem);
+        this.mnuReduzir = this.resolve(list, "mnuReduzir", "MenuItem", MenuItem);
+        this.mnuTamanhoReal = this.resolve(list, "mnuTamanhoReal", "MenuItem", MenuItem);
+        this.divTopo = this.resolve(list, "divTopo", "Divider", Divider);
+        this.btnSalvar = this.resolve(list, "btnSalvar", "Button", Button);
+        this.btnDesfazer = this.resolve(list, "btnDesfazer", "Button", Button);
+        this.btnRefazer = this.resolve(list, "btnRefazer", "Button", Button);
+        this.pnlFaixa = this.resolve(list, "pnlFaixa", "Panel", Panel);
+        this.lytSelecao = this.resolve(list, "lytSelecao", "Layout", Layout);
+        this.lblSelecaoGrupo = this.resolve(list, "lblSelecaoGrupo", "Label", Label);
+        this.btnSelecionar = this.resolve(list, "btnSelecionar", "Button", Button);
+        this.divSelecao = this.resolve(list, "divSelecao", "Divider", Divider);
+        this.lytFerramentas = this.resolve(list, "lytFerramentas", "Layout", Layout);
+        this.lblFerramentasGrupo = this.resolve(list, "lblFerramentasGrupo", "Label", Label);
+        this.grdFerramentas = this.resolve(list, "grdFerramentas", "GridLayout", GridLayout);
+        this.btnLapis = this.resolve(list, "btnLapis", "Button", Button);
+        this.btnBalde = this.resolve(list, "btnBalde", "Button", Button);
+        this.btnBorracha = this.resolve(list, "btnBorracha", "Button", Button);
+        this.btnContaGotas = this.resolve(list, "btnContaGotas", "Button", Button);
+        this.divFerramentas = this.resolve(list, "divFerramentas", "Divider", Divider);
+        this.lytPinceis = this.resolve(list, "lytPinceis", "Layout", Layout);
+        this.lblPinceis = this.resolve(list, "lblPinceis", "Label", Label);
+        this.btnPincel = this.resolve(list, "btnPincel", "Button", Button);
+        this.divPinceis = this.resolve(list, "divPinceis", "Divider", Divider);
+        this.lytFormas = this.resolve(list, "lytFormas", "Layout", Layout);
+        this.lblFormas = this.resolve(list, "lblFormas", "Label", Label);
+        this.chkPreencher = this.resolve(list, "chkPreencher", "CheckBox", CheckBox);
+        this.grdFormas = this.resolve(list, "grdFormas", "GridLayout", GridLayout);
+        this.btnLinha = this.resolve(list, "btnLinha", "Button", Button);
+        this.btnRetangulo = this.resolve(list, "btnRetangulo", "Button", Button);
+        this.btnElipse = this.resolve(list, "btnElipse", "Button", Button);
+        this.divFormas = this.resolve(list, "divFormas", "Divider", Divider);
+        this.lytTamanho = this.resolve(list, "lytTamanho", "Layout", Layout);
+        this.lblTamanhoGrupo = this.resolve(list, "lblTamanhoGrupo", "Label", Label);
+        this.cbEspessura = this.resolve(list, "cbEspessura", "ComboBox", ComboBox);
+        this.divTamanho = this.resolve(list, "divTamanho", "Divider", Divider);
+        this.lytCores = this.resolve(list, "lytCores", "Layout", Layout);
+        this.lblCores = this.resolve(list, "lblCores", "Label", Label);
+        this.btnCor1 = this.resolve(list, "btnCor1", "Circle", Circle);
+        this.btnCor2 = this.resolve(list, "btnCor2", "Circle", Circle);
+        this.grdPaleta = this.resolve(list, "grdPaleta", "GridLayout", GridLayout);
+        this.btnPaleta01 = this.resolve(list, "btnPaleta01", "Circle", Circle);
+        this.btnPaleta02 = this.resolve(list, "btnPaleta02", "Circle", Circle);
+        this.btnPaleta03 = this.resolve(list, "btnPaleta03", "Circle", Circle);
+        this.btnPaleta04 = this.resolve(list, "btnPaleta04", "Circle", Circle);
+        this.btnPaleta05 = this.resolve(list, "btnPaleta05", "Circle", Circle);
+        this.btnPaleta06 = this.resolve(list, "btnPaleta06", "Circle", Circle);
+        this.btnPaleta07 = this.resolve(list, "btnPaleta07", "Circle", Circle);
+        this.btnPaleta08 = this.resolve(list, "btnPaleta08", "Circle", Circle);
+        this.btnPaleta09 = this.resolve(list, "btnPaleta09", "Circle", Circle);
+        this.btnPaleta10 = this.resolve(list, "btnPaleta10", "Circle", Circle);
+        this.btnPaleta11 = this.resolve(list, "btnPaleta11", "Circle", Circle);
+        this.btnPaleta12 = this.resolve(list, "btnPaleta12", "Circle", Circle);
+        this.btnPaleta13 = this.resolve(list, "btnPaleta13", "Circle", Circle);
+        this.btnPaleta14 = this.resolve(list, "btnPaleta14", "Circle", Circle);
+        this.btnPaleta15 = this.resolve(list, "btnPaleta15", "Circle", Circle);
+        this.btnPaleta16 = this.resolve(list, "btnPaleta16", "Circle", Circle);
+        this.btnPaleta17 = this.resolve(list, "btnPaleta17", "Circle", Circle);
+        this.btnPaleta18 = this.resolve(list, "btnPaleta18", "Circle", Circle);
+        this.btnPaleta19 = this.resolve(list, "btnPaleta19", "Circle", Circle);
+        this.btnPaleta20 = this.resolve(list, "btnPaleta20", "Circle", Circle);
+        this.stbStatus = this.resolve(list, "stbStatus", "StatusBar", StatusBar);
+        this.lblPosicao = this.resolve(list, "lblPosicao", "Label", Label);
+        this.lblTamanho = this.resolve(list, "lblTamanho", "Label", Label);
+        this.lblZoom = this.resolve(list, "lblZoom", "Label", Label);
+        this.sbxArea = this.resolve(list, "sbxArea", "ScrollBox", ScrollBox);
+        this.pcDesenho = this.resolve(list, "pcDesenho", "PaintCanvas", PaintCanvas);
+        this.dlgAbrir = this.resolve(list, "dlgAbrir", "OpenDialog", OpenDialog);
+        this.dlgSalvar = this.resolve(list, "dlgSalvar", "SaveDialog", SaveDialog);
+    }
+    /** O Button deste form com o nome (como o FindComponent). */
+    findButton(name: string): Button | undefined {
+        switch (name) {
+            case "btnSalvar": return this.btnSalvar;
+            case "btnDesfazer": return this.btnDesfazer;
+            case "btnRefazer": return this.btnRefazer;
+            case "btnSelecionar": return this.btnSelecionar;
+            case "btnLapis": return this.btnLapis;
+            case "btnBalde": return this.btnBalde;
+            case "btnBorracha": return this.btnBorracha;
+            case "btnContaGotas": return this.btnContaGotas;
+            case "btnPincel": return this.btnPincel;
+            case "btnLinha": return this.btnLinha;
+            case "btnRetangulo": return this.btnRetangulo;
+            case "btnElipse": return this.btnElipse;
+        }
+        return undefined;
+    }
+    /** O Button que disparou o evento. */
+    senderAsButton(ev: AylisEvent): Button | undefined {
+        return this.findButton(ev.sender.name);
+    }
+    /** O CheckBox deste form com o nome (como o FindComponent). */
+    findCheckBox(name: string): CheckBox | undefined {
+        switch (name) {
+            case "chkPreencher": return this.chkPreencher;
+        }
+        return undefined;
+    }
+    /** O CheckBox que disparou o evento. */
+    senderAsCheckBox(ev: AylisEvent): CheckBox | undefined {
+        return this.findCheckBox(ev.sender.name);
+    }
+    /** O Circle deste form com o nome (como o FindComponent). */
+    findCircle(name: string): Circle | undefined {
+        switch (name) {
+            case "btnCor1": return this.btnCor1;
+            case "btnCor2": return this.btnCor2;
+            case "btnPaleta01": return this.btnPaleta01;
+            case "btnPaleta02": return this.btnPaleta02;
+            case "btnPaleta03": return this.btnPaleta03;
+            case "btnPaleta04": return this.btnPaleta04;
+            case "btnPaleta05": return this.btnPaleta05;
+            case "btnPaleta06": return this.btnPaleta06;
+            case "btnPaleta07": return this.btnPaleta07;
+            case "btnPaleta08": return this.btnPaleta08;
+            case "btnPaleta09": return this.btnPaleta09;
+            case "btnPaleta10": return this.btnPaleta10;
+            case "btnPaleta11": return this.btnPaleta11;
+            case "btnPaleta12": return this.btnPaleta12;
+            case "btnPaleta13": return this.btnPaleta13;
+            case "btnPaleta14": return this.btnPaleta14;
+            case "btnPaleta15": return this.btnPaleta15;
+            case "btnPaleta16": return this.btnPaleta16;
+            case "btnPaleta17": return this.btnPaleta17;
+            case "btnPaleta18": return this.btnPaleta18;
+            case "btnPaleta19": return this.btnPaleta19;
+            case "btnPaleta20": return this.btnPaleta20;
+        }
+        return undefined;
+    }
+    /** O Circle que disparou o evento. */
+    senderAsCircle(ev: AylisEvent): Circle | undefined {
+        return this.findCircle(ev.sender.name);
+    }
+    /** O ComboBox deste form com o nome (como o FindComponent). */
+    findComboBox(name: string): ComboBox | undefined {
+        switch (name) {
+            case "cbEspessura": return this.cbEspessura;
+        }
+        return undefined;
+    }
+    /** O ComboBox que disparou o evento. */
+    senderAsComboBox(ev: AylisEvent): ComboBox | undefined {
+        return this.findComboBox(ev.sender.name);
+    }
+    /** O Divider deste form com o nome (como o FindComponent). */
+    findDivider(name: string): Divider | undefined {
+        switch (name) {
+            case "divTopo": return this.divTopo;
+            case "divSelecao": return this.divSelecao;
+            case "divFerramentas": return this.divFerramentas;
+            case "divPinceis": return this.divPinceis;
+            case "divFormas": return this.divFormas;
+            case "divTamanho": return this.divTamanho;
+        }
+        return undefined;
+    }
+    /** O Divider que disparou o evento. */
+    senderAsDivider(ev: AylisEvent): Divider | undefined {
+        return this.findDivider(ev.sender.name);
+    }
+    /** O GridLayout deste form com o nome (como o FindComponent). */
+    findGridLayout(name: string): GridLayout | undefined {
+        switch (name) {
+            case "grdFerramentas": return this.grdFerramentas;
+            case "grdFormas": return this.grdFormas;
+            case "grdPaleta": return this.grdPaleta;
+        }
+        return undefined;
+    }
+    /** O GridLayout que disparou o evento. */
+    senderAsGridLayout(ev: AylisEvent): GridLayout | undefined {
+        return this.findGridLayout(ev.sender.name);
+    }
+    /** O Label deste form com o nome (como o FindComponent). */
+    findLabel(name: string): Label | undefined {
+        switch (name) {
+            case "lblSelecaoGrupo": return this.lblSelecaoGrupo;
+            case "lblFerramentasGrupo": return this.lblFerramentasGrupo;
+            case "lblPinceis": return this.lblPinceis;
+            case "lblFormas": return this.lblFormas;
+            case "lblTamanhoGrupo": return this.lblTamanhoGrupo;
+            case "lblCores": return this.lblCores;
+            case "lblPosicao": return this.lblPosicao;
+            case "lblTamanho": return this.lblTamanho;
+            case "lblZoom": return this.lblZoom;
+        }
+        return undefined;
+    }
+    /** O Label que disparou o evento. */
+    senderAsLabel(ev: AylisEvent): Label | undefined {
+        return this.findLabel(ev.sender.name);
+    }
+    /** O Layout deste form com o nome (como o FindComponent). */
+    findLayout(name: string): Layout | undefined {
+        switch (name) {
+            case "lytTopo": return this.lytTopo;
+            case "lytSelecao": return this.lytSelecao;
+            case "lytFerramentas": return this.lytFerramentas;
+            case "lytPinceis": return this.lytPinceis;
+            case "lytFormas": return this.lytFormas;
+            case "lytTamanho": return this.lytTamanho;
+            case "lytCores": return this.lytCores;
+        }
+        return undefined;
+    }
+    /** O Layout que disparou o evento. */
+    senderAsLayout(ev: AylisEvent): Layout | undefined {
+        return this.findLayout(ev.sender.name);
+    }
+    /** O MainMenu deste form com o nome (como o FindComponent). */
+    findMainMenu(name: string): MainMenu | undefined {
+        switch (name) {
+            case "mnuPrincipal": return this.mnuPrincipal;
+        }
+        return undefined;
+    }
+    /** O MainMenu que disparou o evento. */
+    senderAsMainMenu(ev: AylisEvent): MainMenu | undefined {
+        return this.findMainMenu(ev.sender.name);
+    }
+    /** O MenuItem deste form com o nome (como o FindComponent). */
+    findMenuItem(name: string): MenuItem | undefined {
+        switch (name) {
+            case "mnuArquivo": return this.mnuArquivo;
+            case "mnuNovo": return this.mnuNovo;
+            case "mnuAbrir": return this.mnuAbrir;
+            case "mnuSalvar": return this.mnuSalvar;
+            case "mnuSalvarComo": return this.mnuSalvarComo;
+            case "mnuSep1": return this.mnuSep1;
+            case "mnuSair": return this.mnuSair;
+            case "mnuEditar": return this.mnuEditar;
+            case "mnuDesfazer": return this.mnuDesfazer;
+            case "mnuRefazer": return this.mnuRefazer;
+            case "mnuSep2": return this.mnuSep2;
+            case "mnuRecortar": return this.mnuRecortar;
+            case "mnuCopiar": return this.mnuCopiar;
+            case "mnuColar": return this.mnuColar;
+            case "mnuExcluir": return this.mnuExcluir;
+            case "mnuSelecionarTudo": return this.mnuSelecionarTudo;
+            case "mnuSep3": return this.mnuSep3;
+            case "mnuLimpar": return this.mnuLimpar;
+            case "mnuExibir": return this.mnuExibir;
+            case "mnuAmpliar": return this.mnuAmpliar;
+            case "mnuReduzir": return this.mnuReduzir;
+            case "mnuTamanhoReal": return this.mnuTamanhoReal;
+        }
+        return undefined;
+    }
+    /** O MenuItem que disparou o evento. */
+    senderAsMenuItem(ev: AylisEvent): MenuItem | undefined {
+        return this.findMenuItem(ev.sender.name);
+    }
+    /** O OpenDialog deste form com o nome (como o FindComponent). */
+    findOpenDialog(name: string): OpenDialog | undefined {
+        switch (name) {
+            case "dlgAbrir": return this.dlgAbrir;
+        }
+        return undefined;
+    }
+    /** O OpenDialog que disparou o evento. */
+    senderAsOpenDialog(ev: AylisEvent): OpenDialog | undefined {
+        return this.findOpenDialog(ev.sender.name);
+    }
+    /** O PaintCanvas deste form com o nome (como o FindComponent). */
+    findPaintCanvas(name: string): PaintCanvas | undefined {
+        switch (name) {
+            case "pcDesenho": return this.pcDesenho;
+        }
+        return undefined;
+    }
+    /** O PaintCanvas que disparou o evento. */
+    senderAsPaintCanvas(ev: AylisEvent): PaintCanvas | undefined {
+        return this.findPaintCanvas(ev.sender.name);
+    }
+    /** O Panel deste form com o nome (como o FindComponent). */
+    findPanel(name: string): Panel | undefined {
+        switch (name) {
+            case "pnlFaixa": return this.pnlFaixa;
+        }
+        return undefined;
+    }
+    /** O Panel que disparou o evento. */
+    senderAsPanel(ev: AylisEvent): Panel | undefined {
+        return this.findPanel(ev.sender.name);
+    }
+    /** O SaveDialog deste form com o nome (como o FindComponent). */
+    findSaveDialog(name: string): SaveDialog | undefined {
+        switch (name) {
+            case "dlgSalvar": return this.dlgSalvar;
+        }
+        return undefined;
+    }
+    /** O SaveDialog que disparou o evento. */
+    senderAsSaveDialog(ev: AylisEvent): SaveDialog | undefined {
+        return this.findSaveDialog(ev.sender.name);
+    }
+    /** O ScrollBox deste form com o nome (como o FindComponent). */
+    findScrollBox(name: string): ScrollBox | undefined {
+        switch (name) {
+            case "sbxArea": return this.sbxArea;
+        }
+        return undefined;
+    }
+    /** O ScrollBox que disparou o evento. */
+    senderAsScrollBox(ev: AylisEvent): ScrollBox | undefined {
+        return this.findScrollBox(ev.sender.name);
+    }
+    /** O StatusBar deste form com o nome (como o FindComponent). */
+    findStatusBar(name: string): StatusBar | undefined {
+        switch (name) {
+            case "stbStatus": return this.stbStatus;
+        }
+        return undefined;
+    }
+    /** O StatusBar que disparou o evento. */
+    senderAsStatusBar(ev: AylisEvent): StatusBar | undefined {
+        return this.findStatusBar(ev.sender.name);
+    }
+}
+
+/** A janela de frmPaint cujo evento está rodando (a primeira, fora dos handlers). */
+export let frmPaint: FrmPaintComponents;
+registerFormClass("frmPaint", FrmPaintComponents, (form) => {
+    frmPaint = form as FrmPaintComponents;
+});

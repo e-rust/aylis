@@ -1,0 +1,31 @@
+[package]
+name = "aylis-host"
+description = "Abre telas do aylis controladas por um backend em outro processo (qualquer linguagem) via stdin/stdout"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-remote = { path = "../aylis-remote" }
+aylis-project = { path = "../aylis-project" }
+aylis-platform-winit = { path = "../aylis-platform-winit" }
+aylis-skia = { path = "../aylis-skia" }
+# O canal de desenvolvimento (`--dev`): o mesmo atendimento do app em Rust.
+aylis = { path = "../aylis", default-features = false, features = ["dev"] }
+aylis-devlink = { path = "../aylis-devlink" }
+serde_json = { version = "1", features = ["preserve_order"] }
+# wss:// com rustls (Rust puro, sem OpenSSL) e as raízes de certificado do sistema.
+tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-native-certs = "0.8"
+rustls-pki-types = { version = "1", features = ["std"] }
+
+[dev-dependencies]
+tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rcgen = "0.14"
+serde_json = "1"
+aylis-tools = { path = "../aylis-tools" }
+aylis = { path = "../aylis", default-features = false, features = ["remote", "skia"] }

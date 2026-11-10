@@ -1,0 +1,53 @@
+
+// aylisClientDataSet é um ClientDataSet de um form.
+type aylisClientDataSet struct{ aylis.Component }
+
+func (c aylisClientDataSet) KeyFields() string { return asText(c.Get("key_fields")) }
+func (c aylisClientDataSet) SetKeyFields(v string) { c.Set("key_fields", v) }
+
+func (c aylisClientDataSet) ApplyMode() string { return asText(c.Get("apply_mode")) }
+func (c aylisClientDataSet) SetApplyMode(v string) { c.Set("apply_mode", v) }
+
+func (c aylisClientDataSet) ReadOnly() bool { return asBool(c.Get("read_only")) }
+func (c aylisClientDataSet) SetReadOnly(v bool) { c.Set("read_only", v) }
+
+func (c aylisClientDataSet) Active() bool { return asBool(c.Get("active")) }
+func (c aylisClientDataSet) SetActive(v bool) { c.Set("active", v) }
+
+func (c aylisClientDataSet) Filter() string { return asText(c.Get("filter")) }
+func (c aylisClientDataSet) SetFilter(v string) { c.Set("filter", v) }
+
+func (c aylisClientDataSet) Filtered() bool { return asBool(c.Get("filtered")) }
+func (c aylisClientDataSet) SetFiltered(v bool) { c.Set("filtered", v) }
+
+func (c aylisClientDataSet) IndexFieldNames() string { return asText(c.Get("index_field_names")) }
+func (c aylisClientDataSet) SetIndexFieldNames(v string) { c.Set("index_field_names", v) }
+
+func (c aylisClientDataSet) Indexes() string { return asText(c.Get("indexes")) }
+func (c aylisClientDataSet) SetIndexes(v string) { c.Set("indexes", v) }
+
+func (c aylisClientDataSet) IndexName() string { return asText(c.Get("index_name")) }
+func (c aylisClientDataSet) SetIndexName(v string) { c.Set("index_name", v) }
+
+func (c aylisClientDataSet) Params() string { return asText(c.Get("params")) }
+func (c aylisClientDataSet) SetParams(v string) { c.Set("params", v) }
+
+func (c aylisClientDataSet) StatusFilter() string { return asText(c.Get("status_filter")) }
+func (c aylisClientDataSet) SetStatusFilter(v string) { c.Set("status_filter", v) }
+
+func (c aylisClientDataSet) MasterSource() string { return asText(c.Get("master_source")) }
+func (c aylisClientDataSet) SetMasterSource(v string) { c.Set("master_source", v) }
+
+func (c aylisClientDataSet) MasterFields() string { return asText(c.Get("master_fields")) }
+func (c aylisClientDataSet) SetMasterFields(v string) { c.Set("master_fields", v) }
+
+func (c aylisClientDataSet) ApplySeparately() bool { return asBool(c.Get("apply_separately")) }
+func (c aylisClientDataSet) SetApplySeparately(v bool) { c.Set("apply_separately", v) }
+
+func (c aylisClientDataSet) RecordTotal() int64 { return int64(asNumber(c.Get("record_total"))) }
+func (c aylisClientDataSet) SetRecordTotal(v int64) { c.Set("record_total", v) }
+
+func (c aylisClientDataSet) MaxRecords() int64 { return int64(asNumber(c.Get("max_records"))) }
+func (c aylisClientDataSet) SetMaxRecords(v int64) { c.Set("max_records", v) }
+
+func (c aylisClientDataSet) PartialNotice() string { return asText(c.Get("partial_notice")) }

@@ -1,0 +1,968 @@
+{
+  "revisions": {
+    "frmPlayer.abrir_click": 1,
+    "frmPlayer.abrir_select": 1,
+    "frmPlayer.agora_click": 1,
+    "frmPlayer.anterior_click": 1,
+    "frmPlayer.embaralhar_click": 1,
+    "frmPlayer.fila_click": 1,
+    "frmPlayer.fila_item_click": 1,
+    "frmPlayer.limpar_fila_click": 1,
+    "frmPlayer.mudo_click": 1,
+    "frmPlayer.parar_click": 1,
+    "frmPlayer.posicao_seek": 1,
+    "frmPlayer.posicao_timer": 1,
+    "frmPlayer.proxima_click": 1,
+    "frmPlayer.repetir_click": 1,
+    "frmPlayer.reproduzir_click": 1,
+    "frmPlayer.sair_click": 1,
+    "frmPlayer.video_erro": 1,
+    "frmPlayer.video_fim": 1,
+    "frmPlayer.volume_change": 1
+  },
+  "languages": {
+    "cpp": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "560b01e0bb4ac6aa",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "4e77eeb15b40a6eb",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "4e4a48e1918a93ff",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "8e8cc442aab724f7",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "39cee5e062a407a2",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "9e7a79e908da9f3a",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "8628f190e72db358",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "495cc4d6b4cd1b19",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "ef1a03e89f7899ac",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "517492921fb6cf70",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "b51036209643877e",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "05e2e3b919fcf6d5",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "b7bdceea4e68156d",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "671aee9a09358436",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "08d7b26585c65858",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "8d1016366da7f07c",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "69c9fa36cb61c73e",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "5f307d2034d6e987",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "48eaa58f3a0f8631",
+          "seen": 1
+        }
+      }
+    },
+    "csharp": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "6b87848ac5af135a",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "6b87848ac5af135a",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "633371286c685bec",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "c6a8beb6199dd435",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "fa42c5e5d243aa12",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "633371286c685bec",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "75ec279877ebff0a",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "d58ab602d70ea0d3",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "54dd02d7f363a472",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "a813a0c58f5e7bd8",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "633371286c685bec",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "a6a0e8e87c1a4ff6",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "f2fa295fcdd47484",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "5d24bf19f682a4f4",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "fc55302d642214a2",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "fc55302d642214a2",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "ee207bd74afbec2a",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "e312db6d14c55199",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "7a9b550dc2d57d0e",
+          "seen": 1
+        }
+      }
+    },
+    "go": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "c326ea81bbcba7d0",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "032565f80b22898a",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "8f601f4be30374eb",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "6643672d0a851b37",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "c1c4cc8f09f85768",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "7bfaa8797c6dde36",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "77cbab7c301c9a52",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "a6472e29af57ca58",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "cdbf82d26cf4049f",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "4e5c7d7bc5969f9d",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "d31c5f9cceab1913",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "e99abf29661e0b4c",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "a599c153fcb565aa",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "2a06aa0b2b0e7375",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "68e580ec424af3af",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "6ddcd79188d7ae88",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "4f0de8530034b73c",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "b2c2eb627597c384",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "556362e6c885d937",
+          "seen": 1
+        }
+      }
+    },
+    "java": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "7dd2f5a5a2e67c31",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "5a0135a3b57a17a7",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "55d9e967bcb37565",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "785418e6093b16fe",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "92007b369a67e19e",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "fed0adb8ab9b5340",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "be7060c3c34e0d59",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "59353d9443cbf317",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "17b4eb59ef039674",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "ae2041fddab9a3a0",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "104490abb5fd1475",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "116fac638762be24",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "fe381a05448f4704",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "ddac375138e19899",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "204f16cd8a1ae736",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "27e06a7cc6592d49",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "f72b2deb13897f94",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "13ca95b4e3de33d9",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "f58a22d835f79f59",
+          "seen": 1
+        }
+      }
+    },
+    "pascal": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "b31f60cabbb153e7",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "9d147da32a349a10",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "23bb569863707bd4",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "db210d38d1dfaebc",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "bf07ebcf5cb2e3c8",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "7ea1e25118d644c7",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "4cc42feb9da81a64",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "d330c6bee559182a",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "89337df686e73ae6",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "360d6016f2912d44",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "4a20f52888b5cc26",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "be2f94be60a957cd",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "869f181b7a56ace4",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "4a7868c1ca96bd93",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "e2b7b3da060829d8",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "7ed79c9d21e90a31",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "b6948b57453c50d3",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "df6798fd23c55a2e",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "34cfca3360bc2550",
+          "seen": 1
+        }
+      }
+    },
+    "python": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "1ab50b6d411c30b0",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "385fa0f9290704bf",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "a8addbbd4bf5471c",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "c03208ed66bda448",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "d76422a19cd68136",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "1bda269a74d0a5db",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "b9c399fafc43f09a",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "0a5c5003d9625157",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "c950be5806d0d121",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "a65a504962793dad",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "d9e5aed692cbfe08",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "0939f810626174aa",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "108032bb83c94ecf",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "8f9ebfcbda1dce01",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "3339f24a273f5c6d",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "f3868cda9f5a3f28",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "eb1aa5cbad734476",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "79495242646853f9",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "f87a637030720b26",
+          "seen": 1
+        }
+      }
+    },
+    "rust": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "4367d7fc7d34a421",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "a68dacf8ed28444c",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "fcaabdeda5513513",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "f04ac4b3504a85b1",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "c4feec6b6e9aea42",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "cce2bfe3b6853256",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "d2de4ca2770d193f",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "060d1c249b86d7eb",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "0c7b07371272ce71",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "39760ba66a06f8b6",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "29740bb2cc852123",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "b87ffba7641c5e36",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "4ecea01bb11d8842",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "4b76ee27d660927f",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "0b2bc7ef7e7d1a1f",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "d117222643288be1",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "35acfb47e9a888b6",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "57fe80aaa7cb49bc",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "7173e8c06828f30f",
+          "seen": 1
+        }
+      }
+    },
+    "typescript": {
+      "bindings": {
+        "frmPlayer/btnAbrirArquivos.on_click": "abrir_click",
+        "frmPlayer/btnAdicionar.on_click": "abrir_click",
+        "frmPlayer/btnAgora.on_click": "agora_click",
+        "frmPlayer/btnAnterior.on_click": "anterior_click",
+        "frmPlayer/btnEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/btnFila.on_click": "fila_click",
+        "frmPlayer/btnLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/btnMudo.on_click": "mudo_click",
+        "frmPlayer/btnProxima.on_click": "proxima_click",
+        "frmPlayer/btnRepetir.on_click": "repetir_click",
+        "frmPlayer/btnReproduzir.on_click": "reproduzir_click",
+        "frmPlayer/dlgAbrir.on_select": "abrir_select",
+        "frmPlayer/lvFila.on_item_click": "fila_item_click",
+        "frmPlayer/mnuAbrir.on_click": "abrir_click",
+        "frmPlayer/mnuAgora.on_click": "agora_click",
+        "frmPlayer/mnuAnterior.on_click": "anterior_click",
+        "frmPlayer/mnuEmbaralhar.on_click": "embaralhar_click",
+        "frmPlayer/mnuFila.on_click": "fila_click",
+        "frmPlayer/mnuLimparFila.on_click": "limpar_fila_click",
+        "frmPlayer/mnuParar.on_click": "parar_click",
+        "frmPlayer/mnuProxima.on_click": "proxima_click",
+        "frmPlayer/mnuRepetir.on_click": "repetir_click",
+        "frmPlayer/mnuReproduzirPausar.on_click": "reproduzir_click",
+        "frmPlayer/mnuSair.on_click": "sair_click",
+        "frmPlayer/sbPosicao.on_seek": "posicao_seek",
+        "frmPlayer/tbVolume.on_change": "volume_change",
+        "frmPlayer/tmrPosicao.on_timer": "posicao_timer",
+        "frmPlayer/vpVideo.on_end": "video_fim",
+        "frmPlayer/vpVideo.on_error": "video_erro"
+      },
+      "handlers": {
+        "frmPlayer.abrir_click": {
+          "hash": "5eb412d52036388d",
+          "seen": 1
+        },
+        "frmPlayer.abrir_select": {
+          "hash": "51eaf1aebf391425",
+          "seen": 1
+        },
+        "frmPlayer.agora_click": {
+          "hash": "6cae8fb2fcfbf839",
+          "seen": 1
+        },
+        "frmPlayer.anterior_click": {
+          "hash": "2deca512929d1e44",
+          "seen": 1
+        },
+        "frmPlayer.embaralhar_click": {
+          "hash": "51202712d0ea02a7",
+          "seen": 1
+        },
+        "frmPlayer.fila_click": {
+          "hash": "cf460b4c8a54583c",
+          "seen": 1
+        },
+        "frmPlayer.fila_item_click": {
+          "hash": "907c182e4b25e5f4",
+          "seen": 1
+        },
+        "frmPlayer.limpar_fila_click": {
+          "hash": "4b43d13962274480",
+          "seen": 1
+        },
+        "frmPlayer.mudo_click": {
+          "hash": "669fe7129da171c9",
+          "seen": 1
+        },
+        "frmPlayer.parar_click": {
+          "hash": "d07a7b608b2390b6",
+          "seen": 1
+        },
+        "frmPlayer.posicao_seek": {
+          "hash": "b09536b2129fd519",
+          "seen": 1
+        },
+        "frmPlayer.posicao_timer": {
+          "hash": "f61d8c5191a50074",
+          "seen": 1
+        },
+        "frmPlayer.proxima_click": {
+          "hash": "6d3e9b35c6d29ab2",
+          "seen": 1
+        },
+        "frmPlayer.repetir_click": {
+          "hash": "7004521197fab0b4",
+          "seen": 1
+        },
+        "frmPlayer.reproduzir_click": {
+          "hash": "4883518471b55027",
+          "seen": 1
+        },
+        "frmPlayer.sair_click": {
+          "hash": "72ab605a6d948c3d",
+          "seen": 1
+        },
+        "frmPlayer.video_erro": {
+          "hash": "dacff3d9cdcc2f8c",
+          "seen": 1
+        },
+        "frmPlayer.video_fim": {
+          "hash": "4e0766749c05adb2",
+          "seen": 1
+        },
+        "frmPlayer.volume_change": {
+          "hash": "1a49d85d96b3819b",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "btnAbrirArquivos",
+    "btnAdicionar",
+    "btnAgora",
+    "btnAnterior",
+    "btnEmbaralhar",
+    "btnFila",
+    "btnLimparFila",
+    "btnMudo",
+    "btnProxima",
+    "btnRepetir",
+    "btnReproduzir",
+    "divNavegacao",
+    "dlgAbrir",
+    "frmPlayer",
+    "icoCapa",
+    "lblDetalhe",
+    "lblDuracao",
+    "lblFila",
+    "lblTempo",
+    "lblTitulo",
+    "lvFila",
+    "lytBarra",
+    "lytBotoes",
+    "lytBotoesCentro",
+    "lytFilaBotoes",
+    "lytInfo",
+    "lytNavegacao",
+    "lytTextos",
+    "lytVolume",
+    "mnuAbrir",
+    "mnuAgora",
+    "mnuAnterior",
+    "mnuArquivo",
+    "mnuEmbaralhar",
+    "mnuExibir",
+    "mnuFila",
+    "mnuLimparFila",
+    "mnuParar",
+    "mnuPrincipal",
+    "mnuProxima",
+    "mnuRepetir",
+    "mnuReproduzir",
+    "mnuReproduzirPausar",
+    "mnuSair",
+    "mnuSep1",
+    "mnuSep2",
+    "pnlAgora",
+    "pnlControles",
+    "pnlFila",
+    "sbPosicao",
+    "tbVolume",
+    "tmrPosicao",
+    "vpVideo"
+  ]
+}

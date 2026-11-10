@@ -1,0 +1,17 @@
+
+// Um OpenDialog de um form.
+struct OpenDialog : aylis::Component {
+    OpenDialog() = default;
+    explicit OpenDialog(const aylis::Component& c) : aylis::Component(c) {}
+    std::string title() const { return get_prop_("title").str(); }
+    void set_title(const std::string& v) const { set_prop_("title", v); }
+    std::string filter() const { return get_prop_("filter").str(); }
+    void set_filter(const std::string& v) const { set_prop_("filter", v); }
+    std::string initial_dir() const { return get_prop_("initial_dir").str(); }
+    void set_initial_dir(const std::string& v) const { set_prop_("initial_dir", v); }
+    std::string file_name() const { return get_prop_("file_name").str(); }
+    void set_file_name(const std::string& v) const { set_prop_("file_name", v); }
+    bool multiple() const { return get_prop_("multiple").boolean(); }
+    void set_multiple(bool v) const { set_prop_("multiple", v); }
+    void execute() const { tell_("execute", {{"target", aylis::Json(id_)}}); }
+};

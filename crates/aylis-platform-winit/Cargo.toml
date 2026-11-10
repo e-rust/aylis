@@ -1,0 +1,250 @@
+[package]
+name = "aylis-platform-winit"
+description = "Plataforma do aylis sobre winit: desktop e celular (Skia na CPU ou GPU) e navegador (Canvas 2D)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["cpu", "gpu", "clipboard", "diagnostics"]
+# Diagnósticos por variável de ambiente (AYLIS_SNAPSHOT, AYLIS_BENCH, AYLIS_RENDERER, AYLIS_GPU...)
+# e, no Android, pelas propriedades debug.aylis.*: os exemplos e testes do aylis e o app com
+# a feature `dev`. O app publicado (o `aylis` sem `dev`) não lê nada disso.
+diagnostics = ["aylis-d2d?/diagnostics"]
+# Desktop: desenho na CPU, pixels mostrados com softbuffer.
+cpu = ["dep:softbuffer", "dep:aylis-skia"]
+# Desktop: desenho na GPU com OpenGL (glutin).
+gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl"]
+# Windows sem Skia: Direct2D + DirectWrite (já vêm no sistema). Executável bem menor;
+# use com `default-features = false` para tirar o Skia de vez.
+d2d = ["dep:aylis-d2d"]
+# Desktop: área de transferência do sistema (Ctrl+C / Ctrl+V nos campos de texto).
+# Sem efeito no Android e no iOS.
+clipboard = ["dep:arboard"]
+# Navegador embutido (componente WebView): WebView2 no Windows, WKWebView no macOS e no
+# iOS, WebKitGTK no Linux (precisa da libwebkit2gtk-4.1), o WebView do Android.
+webview = ["dep:wry", "dep:gtk"]
+# Ícone na bandeja (TrayIcon): Windows e macOS.
+tray = ["dep:tray-icon"]
+# Leitores NFC USB (o componente Nfc no desktop) pelo PC/SC: o winscard do Windows, o
+# PCSC.framework do macOS e o pcsclite no Linux (precisa da libpcsclite-dev para compilar).
+nfc = ["dep:pcsc"]
+# Bluetooth BLE (o componente Bluetooth no desktop) pelo btleplug: WinRT no Windows, Core
+# Bluetooth no macOS e o BlueZ no Linux (precisa da libdbus-1-dev para compilar).
+bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+winit = "0.30"
+web-time = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# A posição guardada dos forms (`remember_placement`).
+serde_json = "1"
+aylis-skia = { path = "../aylis-skia", optional = true }
+# HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
+ureq = "3"
+softbuffer = { version = "0.4", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+aylis-d2d = { path = "../aylis-d2d", optional = true }
+# A operação assíncrona do WinRT (a mesma versão que o windows 0.61 usa).
+windows-future = "0.3"
+# Notificações do Windows (toast): WinRT e o registro do AppUserModelID.
+windows = { version = "0.62", features = [
+    "Data_Xml_Dom", "UI_Notifications", "Foundation", "Win32_System_Registry", "Win32_Foundation", "Win32_Security",
+    "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_UI_WindowsAndMessaging", "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage", "Win32_System_Variant", "Win32_Storage_EnhancedStorage", "Win32_Graphics_Gdi",
+    # Correção e previsão de texto do sistema (o motor nativo dos campos de texto).
+    "Win32_Globalization", "Data_Text", "Foundation_Collections",
+    # Impressão: o diálogo do sistema e o documento na impressora.
+    "Win32_UI_Controls_Dialogs", "Win32_Storage_Xps",
+    # Windows Hello (o componente Biometrics).
+    "Security_Credentials_UI", "Win32_System_WinRT", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse",
+    # O relógio de 1 ms dos timers `high` e `exact` (timeBeginPeriod).
+    "Win32_Media",
+    # Os sensores (bateria, rede e localização do Windows).
+    "Win32_System_Power", "Networking_Connectivity", "Devices_Geolocation",
+    # Os monitores: o nome do aparelho (a configuração de vídeo).
+    "Win32_Devices_Display",
+    # A amostragem da pilha do profiler (desenrolar a pilha e os nomes do PDB).
+    "Win32_System_Diagnostics_Debug", "Win32_System_Kernel",
+    # Notificações push (o PushNotifications): o canal do WNS e a identidade de pacote.
+    "Networking_PushNotifications", "Win32_Storage_Packaging_Appx",
+] }
+
+[target.'cfg(any(windows, target_os = "macos", target_os = "linux", target_os = "ios"))'.dependencies]
+wry = { version = "0.57", optional = true }
+
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+tray-icon = { version = "0.25", optional = true, default-features = false }
+
+# Linux: o WebKitGTK do wry roda no laço do GTK, que o aylis avança junto com o dele.
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = { version = "0.18", optional = true }
+# Notificações push pelo UnifiedPush (D-Bus); o mesmo zbus que a acessibilidade já usa.
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
+# O corretor do sistema (Enchant), aberto em tempo de execução.
+libloading = "0.8"
+
+# OpenGL: desktop e Android (o iOS não tem OpenGL no glutin).
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "ios")))'.dependencies]
+glutin = { version = "0.32", optional = true }
+glutin-winit = { version = "0.5", optional = true }
+raw-window-handle = { version = "0.6", optional = true }
+
+# Acessibilidade (leitores de tela) no desktop e no iOS; o Android usa o accesskit_android.
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
+accesskit = "0.25"
+accesskit_winit = { version = "0.34", default-features = false, features = ["accesskit_unix", "async-io", "rwh_06"] }
+
+# Área de transferência do sistema só no desktop (no celular fica para depois).
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))'.dependencies]
+arboard = { version = "3", optional = true, default-features = false }
+# Diálogos de arquivo do sistema (OpenDialog/SaveDialog).
+rfd = "0.17"
+pcsc = { version = "2", optional = true }
+btleplug = { version = "0.13", optional = true }
+tokio = { version = "1", optional = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
+futures = { version = "0.3", optional = true }
+uuid = { version = "1", optional = true }
+
+# Controles de jogo (o `Gamepad`) no desktop e no navegador; no Android vêm pela entrada do
+# winit (android_gamepad.rs).
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+gilrs = "0.11"
+
+# Android: o app é uma NativeActivity (sem Java); a entrada é `android_main`.
+[target.'cfg(target_os = "android")'.dependencies]
+winit = { version = "0.30", features = ["android-native-activity"] }
+# Teclado completo, área de transferência, "voltar" e reabrir a Activity (a mesma
+# versão que o android-activity usa).
+jni = "0.21"
+# Acessibilidade (TalkBack): a árvore do aylis como nós virtuais da janela.
+accesskit = "0.25"
+# Cópia com a correção do Android 9 (third_party/accesskit_android/AYLIS.md).
+accesskit_android = { path = "../../third_party/accesskit_android", features = ["embedded-dex"] }
+# Os avisos e erros do `log` (os do wgpu, por exemplo) vão para o logcat (diag::android_logger).
+log = "0.4"
+
+# iOS: o teclado virtual; iOS e macOS: o push do APNs (as mesmas versões que o winit usa).
+[target.'cfg(any(target_os = "ios", target_os = "macos"))'.dependencies]
+objc2 = "0.5"
+block2 = "0.5"
+objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
+
+# No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+aylis-web = { path = "../aylis-web" }
+# A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
+accesskit = "0.25"
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "CanvasRenderingContext2d", "HtmlCanvasElement", "console", "HtmlIFrameElement", "CssStyleDeclaration", "Document",
+    "DomRect", "Element", "Event", "EventTarget", "History", "HtmlElement", "Location", "MessageEvent", "Node", "Response", "Window",
+] }
+
+[dev-dependencies]
+aylis-controls = { path = "../aylis-controls" }
+aylis-webview = { path = "../aylis-webview" }
+aylis-json = { path = "../aylis-json" }
+aylis-data = { path = "../aylis-data" }
+aylis-dbcontrols = { path = "../aylis-dbcontrols" }
+serde_json = "1"
+aylis-3d = { path = "../aylis-3d", features = ["gl", "diagnostics"] }
+aylis-docview = { path = "../aylis-docview" }
+wgpu = { version = "30", default-features = false, features = ["std", "wgsl", "dx12"] }
+glam = "0.34"
+pollster = "0.4"
+log = "0.4"
+
+# Estes exemplos também geram PNG com o Skia direto: precisam dele.
+[[example]]
+name = "registration"
+required-features = ["cpu"]
+
+[[example]]
+name = "compare"
+required-features = ["cpu"]
+
+[[example]]
+name = "json_form"
+required-features = ["cpu"]
+
+[[example]]
+name = "taskbar"
+required-features = ["cpu"]
+
+[[example]]
+name = "notification"
+required-features = ["cpu"]
+
+[[example]]
+name = "gamepad"
+required-features = ["cpu"]
+
+[[example]]
+name = "monitors"
+required-features = ["cpu"]
+
+[[example]]
+name = "tray"
+required-features = ["cpu", "tray"]
+
+[[example]]
+name = "titlebar"
+required-features = ["cpu"]
+
+[[example]]
+name = "fps"
+required-features = ["cpu"]
+
+[[example]]
+name = "documents"
+required-features = ["cpu"]
+
+[[example]]
+name = "map"
+required-features = ["cpu"]
+
+[[example]]
+name = "emojis"
+required-features = ["cpu"]
+
+[[example]]
+name = "browser"
+required-features = ["webview"]
+
+# O 3D no contexto OpenGL do Skia, numa janela invisível (o winit precisa da thread
+# principal: sem o harness de testes).
+[[test]]
+name = "three_d"
+harness = false
+required-features = ["gpu"]
+
+[[example]]
+name = "shapes"
+required-features = ["cpu"]
+
+[[example]]
+name = "infinite_list"
+required-features = ["cpu"]
+
+[[example]]
+name = "dashboard"
+required-features = ["cpu"]
+
+[[example]]
+name = "charts"
+required-features = ["cpu"]
+
+[[example]]
+name = "report"
+required-features = ["cpu"]
+
+[[example]]
+name = "colors"
+required-features = ["cpu"]

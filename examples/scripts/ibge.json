@@ -1,0 +1,34 @@
+{
+  "description": "IBGE: o mestre-detalhe (estado → municípios → distritos), as bandeiras, os mapas com o destaque e os dados dos gráficos. Os dados vêm de examples/IBGE/assets/dados: o estado tem de sair igual nas 8 linguagens.",
+  "steps": [
+    {"locate": "cdsEstados", "field": "sigla", "value": "SP"},
+    {"locate": "cdsMunicipios", "field": "nome", "value": "Campinas"},
+    {"locate": "cdsEstados", "field": "sigla", "value": "MG"},
+    {"locate": "cdsMunicipios", "field": "id", "value": 3106200},
+    {"locate": "cdsEstados", "field": "sigla", "value": "AM"},
+    {"locate": "cdsEstados", "field": "sigla", "value": "RJ"},
+    {"locate": "cdsMunicipios", "field": "nome", "value": "Petrópolis"}
+  ],
+  "state": [
+    {"component": "lblEstado", "prop": "text"},
+    {"component": "lblRegiao", "prop": "text"},
+    {"component": "imgBandeiraEstado", "prop": "image"},
+    {"component": "lblEstadoEstimativa", "prop": "text"},
+    {"component": "svgBrasil", "prop": "source"},
+    {"component": "svgBrasil", "prop": "highlight"},
+    {"component": "svgEstado", "prop": "source"},
+    {"component": "svgEstado", "prop": "highlight"},
+    {"component": "svgMunicipio", "prop": "zoom_to"},
+    {"component": "lblMunicipio", "prop": "text"},
+    {"component": "lblCodigo", "prop": "text"},
+    {"component": "imgBandeiraMunicipio", "prop": "image"},
+    {"component": "lblSemBandeira", "prop": "visible"},
+    {"component": "lblEstimativa", "prop": "text"},
+    {"component": "dbtPopulacao", "prop": "text"},
+    {"component": "dbtPibPerCapita", "prop": "text"},
+    {"component": "cdsMunicipios", "data": "record"},
+    {"component": "cdsDistritos", "data": "rows"},
+    {"component": "cdsMaiores", "data": "rows"},
+    {"component": "cdsPopulacao", "data": "rows"}
+  ]
+}

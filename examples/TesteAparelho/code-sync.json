@@ -1,0 +1,268 @@
+{
+  "revisions": {
+    "frmPrincipal.abrir_site_click": 1,
+    "frmPrincipal.cam_ciclo_click": 1,
+    "frmPrincipal.cam_flash_click": 2,
+    "frmPrincipal.cam_foto_click": 2,
+    "frmPrincipal.cam_ligar_click": 1,
+    "frmPrincipal.cam_pronta": 2,
+    "frmPrincipal.cam_qualidade_change": 2,
+    "frmPrincipal.cam_trocar_click": 2,
+    "frmPrincipal.chamada_estado": 1,
+    "frmPrincipal.compartilhado_recebido": 1,
+    "frmPrincipal.compartilhar_click": 1,
+    "frmPrincipal.discar_click": 2,
+    "frmPrincipal.fps_click": 1,
+    "frmPrincipal.link_erro": 1,
+    "frmPrincipal.link_recebido": 1,
+    "frmPrincipal.mic_apps_click": 1,
+    "frmPrincipal.mic_gravar_click": 2,
+    "frmPrincipal.mic_ligar_click": 1,
+    "frmPrincipal.not_acao": 1,
+    "frmPrincipal.not_botoes_click": 2,
+    "frmPrincipal.not_form_click": 2,
+    "frmPrincipal.not_progresso_click": 2,
+    "frmPrincipal.not_simples_click": 2,
+    "frmPrincipal.servico_click": 1,
+    "frmPrincipal.servico_mensagem": 1,
+    "frmPrincipal.tema_click": 1,
+    "frmPrincipal.tick_timer": 9,
+    "frmPrincipal.vibrar_click": 1,
+    "frmPrincipal.vid_ciclo_click": 1,
+    "frmPrincipal.vid_parar_click": 1,
+    "frmPrincipal.vid_tocar_click": 1
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/btnAbrirSite.on_click": "abrir_site_click",
+        "frmPrincipal/btnCamCiclo.on_click": "cam_ciclo_click",
+        "frmPrincipal/btnCamFlash.on_click": "cam_flash_click",
+        "frmPrincipal/btnCamFoto.on_click": "cam_foto_click",
+        "frmPrincipal/btnCamLigar.on_click": "cam_ligar_click",
+        "frmPrincipal/btnCamTrocar.on_click": "cam_trocar_click",
+        "frmPrincipal/btnCompartilhar.on_click": "compartilhar_click",
+        "frmPrincipal/btnDiscar.on_click": "discar_click",
+        "frmPrincipal/btnFps.on_click": "fps_click",
+        "frmPrincipal/btnMicApps.on_click": "mic_apps_click",
+        "frmPrincipal/btnMicGravar.on_click": "mic_gravar_click",
+        "frmPrincipal/btnMicLigar.on_click": "mic_ligar_click",
+        "frmPrincipal/btnNotBotoes.on_click": "not_botoes_click",
+        "frmPrincipal/btnNotForm.on_click": "not_form_click",
+        "frmPrincipal/btnNotProgresso.on_click": "not_progresso_click",
+        "frmPrincipal/btnNotSimples.on_click": "not_simples_click",
+        "frmPrincipal/btnServico.on_click": "servico_click",
+        "frmPrincipal/btnTema.on_click": "tema_click",
+        "frmPrincipal/btnVibrar.on_click": "vibrar_click",
+        "frmPrincipal/btnVidCiclo.on_click": "vid_ciclo_click",
+        "frmPrincipal/btnVidParar.on_click": "vid_parar_click",
+        "frmPrincipal/btnVidTocar.on_click": "vid_tocar_click",
+        "frmPrincipal/camView.on_ready": "cam_pronta",
+        "frmPrincipal/fonTelefone.on_call_state": "chamada_estado",
+        "frmPrincipal/lnkApp.on_error": "link_erro",
+        "frmPrincipal/lnkApp.on_link": "link_recebido",
+        "frmPrincipal/lnkApp.on_shared": "compartilhado_recebido",
+        "frmPrincipal/ntfBotoes.on_action": "not_acao",
+        "frmPrincipal/segCamQualidade.on_change": "cam_qualidade_change",
+        "frmPrincipal/svcFundo.on_error": "link_erro",
+        "frmPrincipal/svcFundo.on_message": "servico_mensagem",
+        "frmPrincipal/tmrTick.on_timer": "tick_timer"
+      },
+      "handlers": {
+        "frmPrincipal.abrir_site_click": {
+          "hash": "6c8f26d397dbaa12",
+          "seen": 1
+        },
+        "frmPrincipal.cam_ciclo_click": {
+          "hash": "1c7f33ef166f001a",
+          "seen": 1
+        },
+        "frmPrincipal.cam_flash_click": {
+          "hash": "1af80ed57a92edd0",
+          "seen": 2
+        },
+        "frmPrincipal.cam_foto_click": {
+          "hash": "c278acd19c105fa1",
+          "seen": 2
+        },
+        "frmPrincipal.cam_ligar_click": {
+          "hash": "5de6abf354228421",
+          "seen": 1
+        },
+        "frmPrincipal.cam_pronta": {
+          "hash": "22d52aa8264cfd52",
+          "seen": 2
+        },
+        "frmPrincipal.cam_qualidade_change": {
+          "hash": "06e054382ddfdc71",
+          "seen": 2
+        },
+        "frmPrincipal.cam_trocar_click": {
+          "hash": "bd2a35f469ad18dc",
+          "seen": 2
+        },
+        "frmPrincipal.chamada_estado": {
+          "hash": "5dd91f47cfb2c61e",
+          "seen": 1
+        },
+        "frmPrincipal.compartilhado_recebido": {
+          "hash": "5ab54cfcecf66984",
+          "seen": 1
+        },
+        "frmPrincipal.compartilhar_click": {
+          "hash": "e58acd833a66214b",
+          "seen": 1
+        },
+        "frmPrincipal.discar_click": {
+          "hash": "a6248eb0444e4c0b",
+          "seen": 2
+        },
+        "frmPrincipal.fps_click": {
+          "hash": "1cda02dddde4d801",
+          "seen": 1
+        },
+        "frmPrincipal.link_erro": {
+          "hash": "eaa373b61a6c2c7c",
+          "seen": 1
+        },
+        "frmPrincipal.link_recebido": {
+          "hash": "9d04795ad3acc687",
+          "seen": 1
+        },
+        "frmPrincipal.mic_apps_click": {
+          "hash": "7d4c21b721c24da7",
+          "seen": 1
+        },
+        "frmPrincipal.mic_gravar_click": {
+          "hash": "919e05cf207ae1be",
+          "seen": 2
+        },
+        "frmPrincipal.mic_ligar_click": {
+          "hash": "fc429a32ff1901f3",
+          "seen": 1
+        },
+        "frmPrincipal.not_acao": {
+          "hash": "031e7b06d15e025d",
+          "seen": 1
+        },
+        "frmPrincipal.not_botoes_click": {
+          "hash": "fd8e587d86302f2c",
+          "seen": 2
+        },
+        "frmPrincipal.not_form_click": {
+          "hash": "c7ba4bed8d43cbc0",
+          "seen": 2
+        },
+        "frmPrincipal.not_progresso_click": {
+          "hash": "f1a9ef369ecb764d",
+          "seen": 2
+        },
+        "frmPrincipal.not_simples_click": {
+          "hash": "845dc08d96893d25",
+          "seen": 2
+        },
+        "frmPrincipal.servico_click": {
+          "hash": "d53f3b2fdbc05673",
+          "seen": 1
+        },
+        "frmPrincipal.servico_mensagem": {
+          "hash": "9ffe636915f448a5",
+          "seen": 1
+        },
+        "frmPrincipal.tema_click": {
+          "hash": "8286c8694dd9575d",
+          "seen": 1
+        },
+        "frmPrincipal.tick_timer": {
+          "hash": "28eebbbb6d4f772d",
+          "seen": 9
+        },
+        "frmPrincipal.vibrar_click": {
+          "hash": "d628a02670f08736",
+          "seen": 1
+        },
+        "frmPrincipal.vid_ciclo_click": {
+          "hash": "25aeac069efe7dc0",
+          "seen": 1
+        },
+        "frmPrincipal.vid_parar_click": {
+          "hash": "478dd937c82dcafb",
+          "seen": 1
+        },
+        "frmPrincipal.vid_tocar_click": {
+          "hash": "457c07c3ff13b2bc",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "batBateria",
+    "btnAbrirSite",
+    "btnCamCiclo",
+    "btnCamFlash",
+    "btnCamFoto",
+    "btnCamLigar",
+    "btnCamTrocar",
+    "btnCompartilhar",
+    "btnDiscar",
+    "btnFps",
+    "btnMicApps",
+    "btnMicGravar",
+    "btnMicLigar",
+    "btnNotBotoes",
+    "btnNotForm",
+    "btnNotProgresso",
+    "btnNotSimples",
+    "btnServico",
+    "btnTema",
+    "btnVibrar",
+    "btnVidCiclo",
+    "btnVidParar",
+    "btnVidTocar",
+    "camView",
+    "cmpBussola",
+    "edtNormal",
+    "edtSemSugestao",
+    "edtSenha",
+    "fonTelefone",
+    "frmPrincipal",
+    "lblCamInfo",
+    "lblMic",
+    "lblSistema",
+    "lblStatus",
+    "lblTec1",
+    "lblTec2",
+    "lblTec3",
+    "lnkApp",
+    "locLocal",
+    "luzAmbiente",
+    "lvlMic",
+    "m3dCena",
+    "micApps",
+    "micEntrada",
+    "motMovimento",
+    "netRede",
+    "ntfBotoes",
+    "ntfForm",
+    "ntfProgresso",
+    "ntfSimples",
+    "pnlCamBotoes",
+    "pnlCamQualidade",
+    "pnlVidBotoes",
+    "proxPerto",
+    "segCamQualidade",
+    "svcFundo",
+    "tab3D",
+    "tabCamera",
+    "tabMicrofone",
+    "tabNotificacao",
+    "tabSistema",
+    "tabTeclado",
+    "tabTestes",
+    "tabVideo",
+    "tmrTick",
+    "vibVibra",
+    "vpVideo"
+  ]
+}

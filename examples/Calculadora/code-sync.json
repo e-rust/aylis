@@ -1,0 +1,571 @@
+{
+  "revisions": {
+    "frmCalculadora.form_key_down": 1,
+    "frmCalculadora.historico_click": 1,
+    "frmCalculadora.historico_item_click": 1,
+    "frmCalculadora.limpar_historico_click": 1,
+    "frmCalculadora.memoria_item_click": 1,
+    "frmCalculadora.tecla_click": 2
+  },
+  "languages": {
+    "cpp": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "404e3b1fc812a8ba",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "1094f04d7cd51981",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "e2779fa1ba6648bc",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "df0952df1f9f5228",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "3153e1c008be8be7",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "b4845d5c60b4defc",
+          "seen": 2
+        }
+      }
+    },
+    "csharp": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "2c13e7a3f31a28da",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "5b1fe3e971e58be2",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "1ccf9f2194f07449",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "b0d32b72b84f5fc0",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "de04c0fd895092f0",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "a021443e7c4d8dfb",
+          "seen": 2
+        }
+      }
+    },
+    "go": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "4a60d18f037c0099",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "9c69cd5704536394",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "1f4a2dca098903dc",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "63be7f3f15b33d5b",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "d080a02412326e27",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "2ce8a5f8a2e5710b",
+          "seen": 2
+        }
+      }
+    },
+    "java": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "c48afae5c5e7f8dd",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "3d03fb25926463c5",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "c458d4558b2befc5",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "59ea0c8d5b0da760",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "80258ccc231670bd",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "a567637ad5de7eed",
+          "seen": 2
+        }
+      }
+    },
+    "pascal": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "f69f2727d5fe2e48",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "f33c4f6d6e610d1d",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "283b1e3fe2fc9725",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "d22333fcb80eda34",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "41958a1fac766c52",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "1ffb2fdc89a6d8ed",
+          "seen": 2
+        }
+      }
+    },
+    "python": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "a7c3c9d57a8d9238",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "a5540b42c570ee13",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "2f731cac7169409b",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "9e7bada1e37c3415",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "3c47319b18f2cbbb",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "4007f0959c16cc8f",
+          "seen": 2
+        }
+      }
+    },
+    "rust": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "4b759b6fd8b15a13",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "85217dda73f5b091",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "370a10d290883ee9",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "99e73a9158d91d1d",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "e68e9fe493b562b4",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "1985b7ebd139d8e9",
+          "seen": 2
+        }
+      }
+    },
+    "typescript": {
+      "bindings": {
+        "frmCalculadora/btn0.on_click": "tecla_click",
+        "frmCalculadora/btn1.on_click": "tecla_click",
+        "frmCalculadora/btn2.on_click": "tecla_click",
+        "frmCalculadora/btn3.on_click": "tecla_click",
+        "frmCalculadora/btn4.on_click": "tecla_click",
+        "frmCalculadora/btn5.on_click": "tecla_click",
+        "frmCalculadora/btn6.on_click": "tecla_click",
+        "frmCalculadora/btn7.on_click": "tecla_click",
+        "frmCalculadora/btn8.on_click": "tecla_click",
+        "frmCalculadora/btn9.on_click": "tecla_click",
+        "frmCalculadora/btnApagar.on_click": "tecla_click",
+        "frmCalculadora/btnC.on_click": "tecla_click",
+        "frmCalculadora/btnCE.on_click": "tecla_click",
+        "frmCalculadora/btnDividir.on_click": "tecla_click",
+        "frmCalculadora/btnHistorico.on_click": "historico_click",
+        "frmCalculadora/btnIgual.on_click": "tecla_click",
+        "frmCalculadora/btnInverso.on_click": "tecla_click",
+        "frmCalculadora/btnLimparHistorico.on_click": "limpar_historico_click",
+        "frmCalculadora/btnMC.on_click": "tecla_click",
+        "frmCalculadora/btnMMais.on_click": "tecla_click",
+        "frmCalculadora/btnMMenos.on_click": "tecla_click",
+        "frmCalculadora/btnMR.on_click": "tecla_click",
+        "frmCalculadora/btnMS.on_click": "tecla_click",
+        "frmCalculadora/btnMultiplicar.on_click": "tecla_click",
+        "frmCalculadora/btnPorcento.on_click": "tecla_click",
+        "frmCalculadora/btnQuadrado.on_click": "tecla_click",
+        "frmCalculadora/btnRaiz.on_click": "tecla_click",
+        "frmCalculadora/btnSinal.on_click": "tecla_click",
+        "frmCalculadora/btnSomar.on_click": "tecla_click",
+        "frmCalculadora/btnSubtrair.on_click": "tecla_click",
+        "frmCalculadora/btnVirgula.on_click": "tecla_click",
+        "frmCalculadora/frmCalculadora.on_key_down": "form_key_down",
+        "frmCalculadora/lvHistorico.on_item_click": "historico_item_click",
+        "frmCalculadora/lvMemoria.on_item_click": "memoria_item_click"
+      },
+      "handlers": {
+        "frmCalculadora.form_key_down": {
+          "hash": "7925b2c32061727c",
+          "seen": 1
+        },
+        "frmCalculadora.historico_click": {
+          "hash": "efcfe3c92b81173f",
+          "seen": 1
+        },
+        "frmCalculadora.historico_item_click": {
+          "hash": "2d2d66d4138f3e31",
+          "seen": 1
+        },
+        "frmCalculadora.limpar_historico_click": {
+          "hash": "a3bf01562be7abc1",
+          "seen": 1
+        },
+        "frmCalculadora.memoria_item_click": {
+          "hash": "3d5fdb7d18e88a44",
+          "seen": 1
+        },
+        "frmCalculadora.tecla_click": {
+          "hash": "ed27c162045c03f6",
+          "seen": 2
+        }
+      }
+    }
+  },
+  "components": [
+    "btn0",
+    "btn1",
+    "btn2",
+    "btn3",
+    "btn4",
+    "btn5",
+    "btn6",
+    "btn7",
+    "btn8",
+    "btn9",
+    "btnApagar",
+    "btnC",
+    "btnCE",
+    "btnDividir",
+    "btnHistorico",
+    "btnIgual",
+    "btnInverso",
+    "btnLimparHistorico",
+    "btnMC",
+    "btnMMais",
+    "btnMMenos",
+    "btnMR",
+    "btnMS",
+    "btnMultiplicar",
+    "btnPorcento",
+    "btnQuadrado",
+    "btnRaiz",
+    "btnSinal",
+    "btnSomar",
+    "btnSubtrair",
+    "btnVirgula",
+    "frmCalculadora",
+    "grdMemoria",
+    "grdTeclado",
+    "lblExpressao",
+    "lblTitulo",
+    "lblVisor",
+    "lvHistorico",
+    "lvMemoria",
+    "lytCorpo",
+    "lytTopo",
+    "pnlLateral",
+    "tabHistorico",
+    "tabLateral",
+    "tabMemoria"
+  ]
+}

@@ -1,0 +1,905 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Grade gigante — milhões de registros no DataGrid",
+    "width": 1280,
+    "height": 800,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsDados",
+        "key_fields": "id",
+        "read_only": true,
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsDadosId",
+            "field_name": "id",
+            "type": "integer",
+            "display_label": "Código",
+            "display_width": 90
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT0",
+            "field_name": "t0",
+            "display_label": "Cliente 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT1",
+            "field_name": "t1",
+            "display_label": "Cidade 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT2",
+            "field_name": "t2",
+            "display_label": "Produto 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT3",
+            "field_name": "t3",
+            "display_label": "Categoria 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT4",
+            "field_name": "t4",
+            "display_label": "Vendedor 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT5",
+            "field_name": "t5",
+            "display_label": "Região 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT6",
+            "field_name": "t6",
+            "display_label": "Situação 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT7",
+            "field_name": "t7",
+            "display_label": "Marca 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT8",
+            "field_name": "t8",
+            "display_label": "Fornecedor 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT9",
+            "field_name": "t9",
+            "display_label": "Setor 1",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT10",
+            "field_name": "t10",
+            "display_label": "Cliente 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT11",
+            "field_name": "t11",
+            "display_label": "Cidade 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT12",
+            "field_name": "t12",
+            "display_label": "Produto 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT13",
+            "field_name": "t13",
+            "display_label": "Categoria 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT14",
+            "field_name": "t14",
+            "display_label": "Vendedor 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT15",
+            "field_name": "t15",
+            "display_label": "Região 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT16",
+            "field_name": "t16",
+            "display_label": "Situação 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT17",
+            "field_name": "t17",
+            "display_label": "Marca 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT18",
+            "field_name": "t18",
+            "display_label": "Fornecedor 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT19",
+            "field_name": "t19",
+            "display_label": "Setor 2",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT20",
+            "field_name": "t20",
+            "display_label": "Cliente 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT21",
+            "field_name": "t21",
+            "display_label": "Cidade 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT22",
+            "field_name": "t22",
+            "display_label": "Produto 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT23",
+            "field_name": "t23",
+            "display_label": "Categoria 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT24",
+            "field_name": "t24",
+            "display_label": "Vendedor 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT25",
+            "field_name": "t25",
+            "display_label": "Região 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT26",
+            "field_name": "t26",
+            "display_label": "Situação 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT27",
+            "field_name": "t27",
+            "display_label": "Marca 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT28",
+            "field_name": "t28",
+            "display_label": "Fornecedor 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT29",
+            "field_name": "t29",
+            "display_label": "Setor 3",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT30",
+            "field_name": "t30",
+            "display_label": "Cliente 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT31",
+            "field_name": "t31",
+            "display_label": "Cidade 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT32",
+            "field_name": "t32",
+            "display_label": "Produto 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT33",
+            "field_name": "t33",
+            "display_label": "Categoria 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT34",
+            "field_name": "t34",
+            "display_label": "Vendedor 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT35",
+            "field_name": "t35",
+            "display_label": "Região 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT36",
+            "field_name": "t36",
+            "display_label": "Situação 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT37",
+            "field_name": "t37",
+            "display_label": "Marca 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT38",
+            "field_name": "t38",
+            "display_label": "Fornecedor 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT39",
+            "field_name": "t39",
+            "display_label": "Setor 4",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT40",
+            "field_name": "t40",
+            "display_label": "Cliente 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT41",
+            "field_name": "t41",
+            "display_label": "Cidade 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT42",
+            "field_name": "t42",
+            "display_label": "Produto 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT43",
+            "field_name": "t43",
+            "display_label": "Categoria 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT44",
+            "field_name": "t44",
+            "display_label": "Vendedor 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT45",
+            "field_name": "t45",
+            "display_label": "Região 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT46",
+            "field_name": "t46",
+            "display_label": "Situação 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT47",
+            "field_name": "t47",
+            "display_label": "Marca 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT48",
+            "field_name": "t48",
+            "display_label": "Fornecedor 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosT49",
+            "field_name": "t49",
+            "display_label": "Setor 5",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN0",
+            "field_name": "n0",
+            "type": "integer",
+            "display_label": "Quantidade 1",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN1",
+            "field_name": "n1",
+            "type": "float",
+            "display_label": "Valor 1",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN2",
+            "field_name": "n2",
+            "type": "integer",
+            "display_label": "Quantidade 2",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN3",
+            "field_name": "n3",
+            "type": "float",
+            "display_label": "Valor 2",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN4",
+            "field_name": "n4",
+            "type": "integer",
+            "display_label": "Quantidade 3",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN5",
+            "field_name": "n5",
+            "type": "float",
+            "display_label": "Valor 3",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN6",
+            "field_name": "n6",
+            "type": "integer",
+            "display_label": "Quantidade 4",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN7",
+            "field_name": "n7",
+            "type": "float",
+            "display_label": "Valor 4",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN8",
+            "field_name": "n8",
+            "type": "integer",
+            "display_label": "Quantidade 5",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN9",
+            "field_name": "n9",
+            "type": "float",
+            "display_label": "Valor 5",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN10",
+            "field_name": "n10",
+            "type": "integer",
+            "display_label": "Quantidade 6",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN11",
+            "field_name": "n11",
+            "type": "float",
+            "display_label": "Valor 6",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN12",
+            "field_name": "n12",
+            "type": "integer",
+            "display_label": "Quantidade 7",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN13",
+            "field_name": "n13",
+            "type": "float",
+            "display_label": "Valor 7",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN14",
+            "field_name": "n14",
+            "type": "integer",
+            "display_label": "Quantidade 8",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN15",
+            "field_name": "n15",
+            "type": "float",
+            "display_label": "Valor 8",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN16",
+            "field_name": "n16",
+            "type": "integer",
+            "display_label": "Quantidade 9",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN17",
+            "field_name": "n17",
+            "type": "float",
+            "display_label": "Valor 9",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN18",
+            "field_name": "n18",
+            "type": "integer",
+            "display_label": "Quantidade 10",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN19",
+            "field_name": "n19",
+            "type": "float",
+            "display_label": "Valor 10",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN20",
+            "field_name": "n20",
+            "type": "integer",
+            "display_label": "Quantidade 11",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN21",
+            "field_name": "n21",
+            "type": "float",
+            "display_label": "Valor 11",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN22",
+            "field_name": "n22",
+            "type": "integer",
+            "display_label": "Quantidade 12",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN23",
+            "field_name": "n23",
+            "type": "float",
+            "display_label": "Valor 12",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN24",
+            "field_name": "n24",
+            "type": "integer",
+            "display_label": "Quantidade 13",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN25",
+            "field_name": "n25",
+            "type": "float",
+            "display_label": "Valor 13",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN26",
+            "field_name": "n26",
+            "type": "integer",
+            "display_label": "Quantidade 14",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN27",
+            "field_name": "n27",
+            "type": "float",
+            "display_label": "Valor 14",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN28",
+            "field_name": "n28",
+            "type": "integer",
+            "display_label": "Quantidade 15",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN29",
+            "field_name": "n29",
+            "type": "float",
+            "display_label": "Valor 15",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN30",
+            "field_name": "n30",
+            "type": "integer",
+            "display_label": "Quantidade 16",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN31",
+            "field_name": "n31",
+            "type": "float",
+            "display_label": "Valor 16",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN32",
+            "field_name": "n32",
+            "type": "integer",
+            "display_label": "Quantidade 17",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN33",
+            "field_name": "n33",
+            "type": "float",
+            "display_label": "Valor 17",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN34",
+            "field_name": "n34",
+            "type": "integer",
+            "display_label": "Quantidade 18",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN35",
+            "field_name": "n35",
+            "type": "float",
+            "display_label": "Valor 18",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN36",
+            "field_name": "n36",
+            "type": "integer",
+            "display_label": "Quantidade 19",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN37",
+            "field_name": "n37",
+            "type": "float",
+            "display_label": "Valor 19",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN38",
+            "field_name": "n38",
+            "type": "integer",
+            "display_label": "Quantidade 20",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN39",
+            "field_name": "n39",
+            "type": "float",
+            "display_label": "Valor 20",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN40",
+            "field_name": "n40",
+            "type": "integer",
+            "display_label": "Quantidade 21",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN41",
+            "field_name": "n41",
+            "type": "float",
+            "display_label": "Valor 21",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN42",
+            "field_name": "n42",
+            "type": "integer",
+            "display_label": "Quantidade 22",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN43",
+            "field_name": "n43",
+            "type": "float",
+            "display_label": "Valor 22",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN44",
+            "field_name": "n44",
+            "type": "integer",
+            "display_label": "Quantidade 23",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN45",
+            "field_name": "n45",
+            "type": "float",
+            "display_label": "Valor 23",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN46",
+            "field_name": "n46",
+            "type": "integer",
+            "display_label": "Quantidade 24",
+            "display_width": 100,
+            "display_format": "#,##0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN47",
+            "field_name": "n47",
+            "type": "float",
+            "display_label": "Valor 24",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsDadosN48",
+            "field_name": "n48",
+            "type": "integer",
+            "display_label": "Quantidade 25",
+            "display_width": 100,
+            "display_format": "#,##0"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsDados",
+        "data_set": "cdsDados"
+      },
+      {
+        "class": "Layout",
+        "name": "lytTopo",
+        "height": 40,
+        "align": "top",
+        "margins": [0, 0, 0, 8],
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblRegistros",
+            "text": "Registros",
+            "width": 80,
+            "align": "left"
+          },
+          {
+            "class": "NumberBox",
+            "name": "nbRegistros",
+            "value": 10000000,
+            "min": 1000,
+            "max": 20000000,
+            "increment": 1000000,
+            "text": "10000000",
+            "width": 150,
+            "align": "left"
+          },
+          {
+            "class": "Button",
+            "name": "btnCarregar",
+            "text": "Carregar",
+            "width": 120,
+            "align": "left",
+            "margins": [8, 0, 0, 0],
+            "on_click": "carregar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnParar",
+            "text": "Parar",
+            "width": 100,
+            "align": "left",
+            "margins": [8, 0, 0, 0],
+            "enabled": false,
+            "style": "flat",
+            "on_click": "parar_click"
+          },
+          {
+            "class": "ProgressBar",
+            "name": "pbCarga",
+            "width": 220,
+            "align": "left",
+            "margins": [16, 14, 0, 14]
+          },
+          {
+            "class": "Label",
+            "name": "lblStatus",
+            "text": "Escolha quantos registros e clique em Carregar.",
+            "color": "text_muted",
+            "align": "client",
+            "margins": [16, 0, 0, 0]
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblDica",
+        "text": "Clique no título para ordenar (Ctrl+clique soma colunas à ordem), arraste o título para mudar a ordem das colunas, filtre na linha de baixo dos títulos.",
+        "color": "text_muted",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 6, 4, 0]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdDados",
+        "data_source": "dsDados",
+        "read_only": true,
+        "fixed_columns": 1,
+        "filter_row": true,
+        "align": "client"
+      }
+    ]
+  }
+}

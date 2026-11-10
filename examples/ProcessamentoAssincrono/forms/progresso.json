@@ -1,0 +1,36 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmProgresso",
+    "caption": "Fechando o mês",
+    "on_close_query": "form_close_query",
+    "width": 380,
+    "height": 170,
+    "padding": 16,
+    "children": [
+      {
+        "class": "Label",
+        "name": "lblEtapa",
+        "text": "Começando...",
+        "height": 28,
+        "align": "top"
+      },
+      {
+        "class": "ProgressBar",
+        "name": "pbProgresso",
+        "height": 10,
+        "align": "top",
+        "margins": [0, 8, 0, 0]
+      },
+      {
+        "class": "Button",
+        "name": "btnCancelar",
+        "text": "Cancelar",
+        "height": 36,
+        "align": "bottom",
+        "on_click": "cancelar_click"
+      }
+    ]
+  }
+}

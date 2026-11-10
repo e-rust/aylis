@@ -1,0 +1,14 @@
+{
+  "description": "ProcessamentoAssincrono: o X do modal com a thread trabalhando não fecha no meio; o on_close_query cancela a thread, e o fim dela fecha o modal.",
+  "steps": [
+    {"click": "btnFecharMes"},
+    {"wait": 800},
+    {"close": "frmProgresso"},
+    {"wait": 1500},
+    {"wait": 500}
+  ],
+  "state": [
+    {"component": "lblStatus", "prop": "text"},
+    {"component": "btnCancelar", "prop": "enabled"}
+  ]
+}

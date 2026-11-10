@@ -1,0 +1,1 @@
+{"ibge":{"form":"frmIBGE","handlers":["form_show","estado_mudou","municipio_mudou"],"questions":[],"classes":["Form","ClientDataSet","Field","DataSource","Label","Layout","GroupBox","DataGrid","Splitter","Panel","Svg","Image","DBChart"],"cited":[]}}

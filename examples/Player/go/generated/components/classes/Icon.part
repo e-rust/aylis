@@ -1,0 +1,162 @@
+
+// aylisIcon é um Icon de um form.
+type aylisIcon struct{ aylis.Component }
+
+func (c aylisIcon) Icon() string { return asText(c.Get("icon")) }
+func (c aylisIcon) SetIcon(v string) { c.Set("icon", v) }
+
+func (c aylisIcon) Color() string { return asText(c.Get("color")) }
+func (c aylisIcon) SetColor(v string) { c.Set("color", v) }
+
+func (c aylisIcon) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisIcon) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisIcon) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisIcon) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisIcon) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisIcon) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisIcon) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisIcon) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisIcon) Align() string { return asText(c.Get("align")) }
+func (c aylisIcon) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisIcon) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisIcon) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisIcon) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisIcon) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisIcon) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisIcon) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisIcon) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisIcon) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisIcon) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisIcon) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisIcon) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisIcon) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisIcon) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisIcon) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisIcon) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisIcon) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisIcon) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisIcon) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisIcon) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisIcon) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisIcon) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisIcon) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisIcon) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisIcon) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisIcon) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisIcon) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisIcon) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisIcon) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisIcon) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisIcon) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisIcon) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisIcon) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisIcon) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisIcon) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisIcon) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisIcon) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisIcon) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisIcon) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisIcon) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisIcon) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisIcon) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisIcon) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisIcon) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisIcon) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisIcon) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisIcon) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisIcon) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisIcon) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisIcon) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisIcon) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisIcon) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisIcon) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisIcon) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisIcon) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisIcon) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisIcon) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisIcon) Style() string { return asText(c.Get("style")) }
+func (c aylisIcon) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisIcon) Theme() string { return asText(c.Get("theme")) }
+func (c aylisIcon) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisIcon) Fill() string { return asText(c.Get("fill")) }
+func (c aylisIcon) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisIcon) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisIcon) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisIcon) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisIcon) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisIcon) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisIcon) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisIcon) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisIcon) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisIcon) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisIcon) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisIcon) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisIcon) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisIcon) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisIcon) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisIcon) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisIcon) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisIcon) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisIcon) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisIcon) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisIcon) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisIcon) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisIcon) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisIcon) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisIcon) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisIcon) Hint() string { return asText(c.Get("hint")) }
+func (c aylisIcon) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisIcon) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisIcon) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisIcon) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisIcon) SetPopupMenu(v string) { c.Set("popup_menu", v) }

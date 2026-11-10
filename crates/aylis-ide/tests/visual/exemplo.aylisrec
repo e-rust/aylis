@@ -1,0 +1,9 @@
+{"type":"start","format":1,"app":"Calculadora","start_ms":1793600000000,"os":"windows","arch":"x86_64","aylis":"0.1.0","record_sensitive":false,"open_forms":["frmCalculadora"],"platform":{"renderizador":"Direct2D"}}
+{"t":0.120,"type":"form_shown","form":"frmCalculadora","title":"Calculadora"}
+{"t":1.500,"type":"event","event":"on_click","component":"btn7","component_class":"Button","component_text":"7"}
+{"t":1.900,"type":"event","event":"on_click","component":"btnSomar","component_class":"Button","component_text":"+"}
+{"t":2.300,"type":"event","event":"on_click","component":"btn5","component_class":"Button","component_text":"5"}
+{"t":2.700,"type":"event","event":"on_click","component":"btnIgual","component_class":"Button","component_text":"="}
+{"t":3.100,"type":"metric","name":"visor","value":"12"}
+{"t":4.000,"type":"error","message":"exemplo de erro gravado (frmCalculadora.btnRaiz.on_click)"}
+{"t":5.250,"type":"form_closed","form":"frmCalculadora"}

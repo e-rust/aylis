@@ -1,0 +1,47 @@
+
+    /** Um Timer de um form. */
+    public static class Timer extends Aylis.AylisComponent {
+        public Timer(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        public double getInterval() {
+            return asNumber(getProp("interval"));
+        }
+
+        public void setInterval(double value) {
+            setProp("interval", value);
+        }
+
+        public boolean isEnabled() {
+            return asBool(getProp("enabled"));
+        }
+
+        public void setEnabled(boolean value) {
+            setProp("enabled", value);
+        }
+
+        public String getPrecision() {
+            return asText(getProp("precision"));
+        }
+
+        public void setPrecision(String value) {
+            setProp("precision", value);
+        }
+
+        public boolean isBackground() {
+            return asBool(getProp("background"));
+        }
+
+        public void setBackground(boolean value) {
+            setProp("background", value);
+        }
+
+        public double getDrift() {
+            return asNumber(getProp("drift"));
+        }
+
+        public void setDrift(double value) {
+            setProp("drift", value);
+        }
+    }

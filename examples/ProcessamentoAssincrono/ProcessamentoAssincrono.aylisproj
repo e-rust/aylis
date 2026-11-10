@@ -1,0 +1,26 @@
+{
+  "aylis_project": 1,
+  "name": "ProcessamentoAssincrono",
+  "language": "pascal",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true
+    },
+    {
+      "name": "frmProgresso",
+      "file": "forms/progresso.json",
+      "auto_create": false
+    }
+  ],
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

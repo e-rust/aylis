@@ -1,0 +1,145 @@
+# CI do aylis (item P1 da revisão de segurança de 31/10/2026).
+#
+# - audit: as dependências passam pelo cargo-deny (falhas de segurança conhecidas, licenças,
+#   origens; regras em deny.toml), como no instalador da IDE;
+# - windows: compila tudo e roda os testes (quase todos; os que precisam de uma ferramenta
+#   que não está na máquina se pulam sozinhos), inclusive as telas da IDE comparadas com as
+#   imagens de referência e a pintura por parte comparada com a inteira;
+# - linux: compila tudo e roda os testes do núcleo e dos controles;
+# - web e android: o que vai para o navegador e para o celular compila;
+# - coverage: a cobertura dos testes por crate, no resumo (sem meta obrigatória).
+name: CI
+
+on:
+  push:
+    branches: [desenvolvimento, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  audit:
+    name: Auditoria das dependências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories licenses sources bans
+
+  windows:
+    name: Windows (compilar e testar)
+    runs-on: windows-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Compilar tudo (com testes e exemplos)
+        run: cargo check --workspace --all-targets
+      - name: Testes
+        run: cargo test --workspace --exclude aylis-platform-winit --no-fail-fast
+      # As telas da IDE comparadas com as imagens de referência (crates/aylis-ide/tests/visual):
+      # numa falha, as imagens novas ficam no artefato para comparar.
+      - name: Imagens das telas que mudaram
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telas-que-mudaram
+          path: target/visual/
+          if-no-files-found: ignore
+
+  linux:
+    name: Linux (compilar e testar o núcleo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bibliotecas do sistema (as do aylis-tools/src/wsl.rs)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config curl libx11-dev libxcursor-dev libxrandr-dev libxi-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libfontconfig1-dev libfreetype-dev \
+            libgl1-mesa-dev libegl1-mesa-dev libasound2-dev libudev-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Compilar tudo
+        run: cargo check --workspace --all-targets
+      - name: Testes do núcleo, dos controles e dos dados
+        run: cargo test -p aylis-core -p aylis-controls -p aylis-json -p aylis-data -p aylis-dbcontrols -p aylis-project -p aylis-remote --no-fail-fast
+      # As telas da IDE, os exemplos e o visualizador de gravações com as referências do Linux
+      # (crates/aylis-ide/tests/visual/*-linux.png; desenhadas sem janela, sem o Xvfb).
+      - name: Telas comparadas com as referências
+        run: cargo test -p aylis-ide --test visual
+      - name: Imagens das telas que mudaram
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telas-que-mudaram-linux
+          path: target/visual/
+          if-no-files-found: ignore
+
+  # Cobertura por crate (item 11.4): aparece no resumo da execução, sem meta obrigatória.
+  coverage:
+    name: Cobertura dos testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bibliotecas do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libfontconfig1-dev libfreetype-dev libgl1-mesa-dev libegl1-mesa-dev libasound2-dev libudev-dev libxkbcommon-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Medir
+        run: |
+          cargo llvm-cov --no-fail-fast -p aylis-core -p aylis-controls -p aylis-json -p aylis-data -p aylis-dbcontrols -p aylis-project -p aylis-remote --summary-only > cobertura.txt
+          echo '## Cobertura dos testes' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat cobertura.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  web:
+    name: Navegador (wasm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --target wasm32-unknown-unknown -p aylis-core -p aylis-controls -p aylis-json -p aylis-data -p aylis-media -p aylis-web
+      # A IDE lite do navegador: a IDE sem a feature `desktop` precisa compilar para wasm.
+      - run: cargo check --target wasm32-unknown-unknown -p aylis-ide-web
+
+  android:
+    name: Android (compilar)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo-ndk
+        run: cargo install cargo-ndk --locked
+      - name: Compilar para o celular
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
+        run: cargo ndk -t arm64-v8a -P 26 check -p aylis-controls -p aylis-media -p aylis-platform-winit -p aylis-3d

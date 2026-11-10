@@ -1,0 +1,36 @@
+{
+  "description": "Calculadora: botões, teclado, memória, histórico e erro. O estado final tem de ser igual em todas as linguagens.",
+  "steps": [
+    {"click": "btn7"}, {"click": "btnMultiplicar"}, {"click": "btn6"}, {"click": "btnIgual"},
+    {"click": "btnMS"},
+    {"key": "1"}, {"key": "0"}, {"key": "0"}, {"key": "/"}, {"key": "8"}, {"key": "Enter"},
+    {"key": "Enter"},
+    {"click": "btn2"}, {"click": "btn0"}, {"click": "btn0"}, {"click": "btnSomar"}, {"click": "btn1"}, {"click": "btn0"},
+    {"click": "btnPorcento"}, {"click": "btnIgual"},
+    {"click": "btnMMais"},
+    {"click": "btn9"}, {"click": "btnRaiz"}, {"click": "btnQuadrado"}, {"click": "btnSinal"}, {"click": "btnInverso"},
+    {"key": "Escape"},
+    {"click": "btn1"}, {"click": "btnVirgula"}, {"click": "btn5"}, {"click": "btnApagar"}, {"click": "btn2"},
+    {"key": "shift+8"}, {"key": "3"}, {"key": "Enter"},
+    {"item": "lvHistorico", "text": "42, 7 × 6 ="},
+    {"click": "btnSomar"}, {"item": "lvMemoria", "text": "262"}, {"click": "btnIgual"},
+    {"click": "btn1"}, {"click": "btn2"}, {"click": "btn3"}, {"click": "btn4"}, {"click": "btn5"}, {"click": "btn6"},
+    {"click": "btn7"}, {"click": "btn8"}, {"click": "btn9"}, {"click": "btn0"}, {"click": "btn1"}, {"click": "btn2"},
+    {"click": "btnMultiplicar"}, {"click": "btn9"}, {"click": "btn9"}, {"click": "btn9"}, {"click": "btn9"},
+    {"click": "btn9"}, {"click": "btn9"}, {"click": "btn9"}, {"click": "btn9"}, {"click": "btnIgual"},
+    {"click": "btnMS"},
+    {"click": "btn5"}, {"click": "btnDividir"}, {"click": "btn0"}, {"click": "btnIgual"},
+    {"key": "ctrl+h"}
+  ],
+  "state": [
+    {"component": "lblVisor", "prop": "text"},
+    {"component": "lblVisor", "prop": "font_size"},
+    {"component": "lblExpressao", "prop": "text"},
+    {"component": "lvHistorico", "prop": "items"},
+    {"component": "lvMemoria", "prop": "items"},
+    {"component": "btnMC", "prop": "enabled"},
+    {"component": "btnSomar", "prop": "enabled"},
+    {"component": "btn7", "prop": "enabled"},
+    {"component": "pnlLateral", "prop": "visible"}
+  ]
+}

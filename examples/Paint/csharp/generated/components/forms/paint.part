@@ -1,0 +1,428 @@
+
+        public static AylisUi.FrmPaintComponents frmPaint = null!;
+
+            Aylis.RegisterFormClass("frmPaint", (aylis, id, name) => new AylisUi.FrmPaintComponents(aylis, id, name), form => frmPaint = (AylisUi.FrmPaintComponents)form);
+
+
+    /// <summary>O form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).</summary>
+    public sealed class FrmPaintComponents(Aylis aylis, long id, string name) : Form(aylis, id, name)
+    {
+        public Layout lytTopo = null!;
+        public MainMenu mnuPrincipal = null!;
+        public MenuItem mnuArquivo = null!;
+        public MenuItem mnuNovo = null!;
+        public MenuItem mnuAbrir = null!;
+        public MenuItem mnuSalvar = null!;
+        public MenuItem mnuSalvarComo = null!;
+        public MenuItem mnuSep1 = null!;
+        public MenuItem mnuSair = null!;
+        public MenuItem mnuEditar = null!;
+        public MenuItem mnuDesfazer = null!;
+        public MenuItem mnuRefazer = null!;
+        public MenuItem mnuSep2 = null!;
+        public MenuItem mnuRecortar = null!;
+        public MenuItem mnuCopiar = null!;
+        public MenuItem mnuColar = null!;
+        public MenuItem mnuExcluir = null!;
+        public MenuItem mnuSelecionarTudo = null!;
+        public MenuItem mnuSep3 = null!;
+        public MenuItem mnuLimpar = null!;
+        public MenuItem mnuExibir = null!;
+        public MenuItem mnuAmpliar = null!;
+        public MenuItem mnuReduzir = null!;
+        public MenuItem mnuTamanhoReal = null!;
+        public Divider divTopo = null!;
+        public Button btnSalvar = null!;
+        public Button btnDesfazer = null!;
+        public Button btnRefazer = null!;
+        public Panel pnlFaixa = null!;
+        public Layout lytSelecao = null!;
+        public Label lblSelecaoGrupo = null!;
+        public Button btnSelecionar = null!;
+        public Divider divSelecao = null!;
+        public Layout lytFerramentas = null!;
+        public Label lblFerramentasGrupo = null!;
+        public GridLayout grdFerramentas = null!;
+        public Button btnLapis = null!;
+        public Button btnBalde = null!;
+        public Button btnBorracha = null!;
+        public Button btnContaGotas = null!;
+        public Divider divFerramentas = null!;
+        public Layout lytPinceis = null!;
+        public Label lblPinceis = null!;
+        public Button btnPincel = null!;
+        public Divider divPinceis = null!;
+        public Layout lytFormas = null!;
+        public Label lblFormas = null!;
+        public CheckBox chkPreencher = null!;
+        public GridLayout grdFormas = null!;
+        public Button btnLinha = null!;
+        public Button btnRetangulo = null!;
+        public Button btnElipse = null!;
+        public Divider divFormas = null!;
+        public Layout lytTamanho = null!;
+        public Label lblTamanhoGrupo = null!;
+        public ComboBox cbEspessura = null!;
+        public Divider divTamanho = null!;
+        public Layout lytCores = null!;
+        public Label lblCores = null!;
+        public Circle btnCor1 = null!;
+        public Circle btnCor2 = null!;
+        public GridLayout grdPaleta = null!;
+        public Circle btnPaleta01 = null!;
+        public Circle btnPaleta02 = null!;
+        public Circle btnPaleta03 = null!;
+        public Circle btnPaleta04 = null!;
+        public Circle btnPaleta05 = null!;
+        public Circle btnPaleta06 = null!;
+        public Circle btnPaleta07 = null!;
+        public Circle btnPaleta08 = null!;
+        public Circle btnPaleta09 = null!;
+        public Circle btnPaleta10 = null!;
+        public Circle btnPaleta11 = null!;
+        public Circle btnPaleta12 = null!;
+        public Circle btnPaleta13 = null!;
+        public Circle btnPaleta14 = null!;
+        public Circle btnPaleta15 = null!;
+        public Circle btnPaleta16 = null!;
+        public Circle btnPaleta17 = null!;
+        public Circle btnPaleta18 = null!;
+        public Circle btnPaleta19 = null!;
+        public Circle btnPaleta20 = null!;
+        public StatusBar stbStatus = null!;
+        public Label lblPosicao = null!;
+        public Label lblTamanho = null!;
+        public Label lblZoom = null!;
+        public ScrollBox sbxArea = null!;
+        public PaintCanvas pcDesenho = null!;
+        public OpenDialog dlgAbrir = null!;
+        public SaveDialog dlgSalvar = null!;
+
+        public override void Bind(JsonArray list)
+        {
+            lytTopo = Resolve(list, "lytTopo", "Layout", (i, d, n) => new Layout(i, d, n));
+            mnuPrincipal = Resolve(list, "mnuPrincipal", "MainMenu", (i, d, n) => new MainMenu(i, d, n));
+            mnuArquivo = Resolve(list, "mnuArquivo", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuNovo = Resolve(list, "mnuNovo", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuAbrir = Resolve(list, "mnuAbrir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSalvar = Resolve(list, "mnuSalvar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSalvarComo = Resolve(list, "mnuSalvarComo", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSep1 = Resolve(list, "mnuSep1", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSair = Resolve(list, "mnuSair", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuEditar = Resolve(list, "mnuEditar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuDesfazer = Resolve(list, "mnuDesfazer", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuRefazer = Resolve(list, "mnuRefazer", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSep2 = Resolve(list, "mnuSep2", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuRecortar = Resolve(list, "mnuRecortar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuCopiar = Resolve(list, "mnuCopiar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuColar = Resolve(list, "mnuColar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuExcluir = Resolve(list, "mnuExcluir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSelecionarTudo = Resolve(list, "mnuSelecionarTudo", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSep3 = Resolve(list, "mnuSep3", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuLimpar = Resolve(list, "mnuLimpar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuExibir = Resolve(list, "mnuExibir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuAmpliar = Resolve(list, "mnuAmpliar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuReduzir = Resolve(list, "mnuReduzir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuTamanhoReal = Resolve(list, "mnuTamanhoReal", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            divTopo = Resolve(list, "divTopo", "Divider", (i, d, n) => new Divider(i, d, n));
+            btnSalvar = Resolve(list, "btnSalvar", "Button", (i, d, n) => new Button(i, d, n));
+            btnDesfazer = Resolve(list, "btnDesfazer", "Button", (i, d, n) => new Button(i, d, n));
+            btnRefazer = Resolve(list, "btnRefazer", "Button", (i, d, n) => new Button(i, d, n));
+            pnlFaixa = Resolve(list, "pnlFaixa", "Panel", (i, d, n) => new Panel(i, d, n));
+            lytSelecao = Resolve(list, "lytSelecao", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblSelecaoGrupo = Resolve(list, "lblSelecaoGrupo", "Label", (i, d, n) => new Label(i, d, n));
+            btnSelecionar = Resolve(list, "btnSelecionar", "Button", (i, d, n) => new Button(i, d, n));
+            divSelecao = Resolve(list, "divSelecao", "Divider", (i, d, n) => new Divider(i, d, n));
+            lytFerramentas = Resolve(list, "lytFerramentas", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblFerramentasGrupo = Resolve(list, "lblFerramentasGrupo", "Label", (i, d, n) => new Label(i, d, n));
+            grdFerramentas = Resolve(list, "grdFerramentas", "GridLayout", (i, d, n) => new GridLayout(i, d, n));
+            btnLapis = Resolve(list, "btnLapis", "Button", (i, d, n) => new Button(i, d, n));
+            btnBalde = Resolve(list, "btnBalde", "Button", (i, d, n) => new Button(i, d, n));
+            btnBorracha = Resolve(list, "btnBorracha", "Button", (i, d, n) => new Button(i, d, n));
+            btnContaGotas = Resolve(list, "btnContaGotas", "Button", (i, d, n) => new Button(i, d, n));
+            divFerramentas = Resolve(list, "divFerramentas", "Divider", (i, d, n) => new Divider(i, d, n));
+            lytPinceis = Resolve(list, "lytPinceis", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblPinceis = Resolve(list, "lblPinceis", "Label", (i, d, n) => new Label(i, d, n));
+            btnPincel = Resolve(list, "btnPincel", "Button", (i, d, n) => new Button(i, d, n));
+            divPinceis = Resolve(list, "divPinceis", "Divider", (i, d, n) => new Divider(i, d, n));
+            lytFormas = Resolve(list, "lytFormas", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblFormas = Resolve(list, "lblFormas", "Label", (i, d, n) => new Label(i, d, n));
+            chkPreencher = Resolve(list, "chkPreencher", "CheckBox", (i, d, n) => new CheckBox(i, d, n));
+            grdFormas = Resolve(list, "grdFormas", "GridLayout", (i, d, n) => new GridLayout(i, d, n));
+            btnLinha = Resolve(list, "btnLinha", "Button", (i, d, n) => new Button(i, d, n));
+            btnRetangulo = Resolve(list, "btnRetangulo", "Button", (i, d, n) => new Button(i, d, n));
+            btnElipse = Resolve(list, "btnElipse", "Button", (i, d, n) => new Button(i, d, n));
+            divFormas = Resolve(list, "divFormas", "Divider", (i, d, n) => new Divider(i, d, n));
+            lytTamanho = Resolve(list, "lytTamanho", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblTamanhoGrupo = Resolve(list, "lblTamanhoGrupo", "Label", (i, d, n) => new Label(i, d, n));
+            cbEspessura = Resolve(list, "cbEspessura", "ComboBox", (i, d, n) => new ComboBox(i, d, n));
+            divTamanho = Resolve(list, "divTamanho", "Divider", (i, d, n) => new Divider(i, d, n));
+            lytCores = Resolve(list, "lytCores", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblCores = Resolve(list, "lblCores", "Label", (i, d, n) => new Label(i, d, n));
+            btnCor1 = Resolve(list, "btnCor1", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnCor2 = Resolve(list, "btnCor2", "Circle", (i, d, n) => new Circle(i, d, n));
+            grdPaleta = Resolve(list, "grdPaleta", "GridLayout", (i, d, n) => new GridLayout(i, d, n));
+            btnPaleta01 = Resolve(list, "btnPaleta01", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta02 = Resolve(list, "btnPaleta02", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta03 = Resolve(list, "btnPaleta03", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta04 = Resolve(list, "btnPaleta04", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta05 = Resolve(list, "btnPaleta05", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta06 = Resolve(list, "btnPaleta06", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta07 = Resolve(list, "btnPaleta07", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta08 = Resolve(list, "btnPaleta08", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta09 = Resolve(list, "btnPaleta09", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta10 = Resolve(list, "btnPaleta10", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta11 = Resolve(list, "btnPaleta11", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta12 = Resolve(list, "btnPaleta12", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta13 = Resolve(list, "btnPaleta13", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta14 = Resolve(list, "btnPaleta14", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta15 = Resolve(list, "btnPaleta15", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta16 = Resolve(list, "btnPaleta16", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta17 = Resolve(list, "btnPaleta17", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta18 = Resolve(list, "btnPaleta18", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta19 = Resolve(list, "btnPaleta19", "Circle", (i, d, n) => new Circle(i, d, n));
+            btnPaleta20 = Resolve(list, "btnPaleta20", "Circle", (i, d, n) => new Circle(i, d, n));
+            stbStatus = Resolve(list, "stbStatus", "StatusBar", (i, d, n) => new StatusBar(i, d, n));
+            lblPosicao = Resolve(list, "lblPosicao", "Label", (i, d, n) => new Label(i, d, n));
+            lblTamanho = Resolve(list, "lblTamanho", "Label", (i, d, n) => new Label(i, d, n));
+            lblZoom = Resolve(list, "lblZoom", "Label", (i, d, n) => new Label(i, d, n));
+            sbxArea = Resolve(list, "sbxArea", "ScrollBox", (i, d, n) => new ScrollBox(i, d, n));
+            pcDesenho = Resolve(list, "pcDesenho", "PaintCanvas", (i, d, n) => new PaintCanvas(i, d, n));
+            dlgAbrir = Resolve(list, "dlgAbrir", "OpenDialog", (i, d, n) => new OpenDialog(i, d, n));
+            dlgSalvar = Resolve(list, "dlgSalvar", "SaveDialog", (i, d, n) => new SaveDialog(i, d, n));
+        }
+
+        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        public Button? FindButton(string name) => name switch
+        {
+            "btnSalvar" => btnSalvar,
+            "btnDesfazer" => btnDesfazer,
+            "btnRefazer" => btnRefazer,
+            "btnSelecionar" => btnSelecionar,
+            "btnLapis" => btnLapis,
+            "btnBalde" => btnBalde,
+            "btnBorracha" => btnBorracha,
+            "btnContaGotas" => btnContaGotas,
+            "btnPincel" => btnPincel,
+            "btnLinha" => btnLinha,
+            "btnRetangulo" => btnRetangulo,
+            "btnElipse" => btnElipse,
+            _ => null,
+        };
+
+        /// <summary>O Button que disparou o evento.</summary>
+        public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
+
+        /// <summary>O CheckBox deste form com o nome (como o FindComponent).</summary>
+        public CheckBox? FindCheckBox(string name) => name switch
+        {
+            "chkPreencher" => chkPreencher,
+            _ => null,
+        };
+
+        /// <summary>O CheckBox que disparou o evento.</summary>
+        public CheckBox? SenderAsCheckBox(AylisClient.AylisEvent ev) => FindCheckBox(ev.SenderName);
+
+        /// <summary>O Circle deste form com o nome (como o FindComponent).</summary>
+        public Circle? FindCircle(string name) => name switch
+        {
+            "btnCor1" => btnCor1,
+            "btnCor2" => btnCor2,
+            "btnPaleta01" => btnPaleta01,
+            "btnPaleta02" => btnPaleta02,
+            "btnPaleta03" => btnPaleta03,
+            "btnPaleta04" => btnPaleta04,
+            "btnPaleta05" => btnPaleta05,
+            "btnPaleta06" => btnPaleta06,
+            "btnPaleta07" => btnPaleta07,
+            "btnPaleta08" => btnPaleta08,
+            "btnPaleta09" => btnPaleta09,
+            "btnPaleta10" => btnPaleta10,
+            "btnPaleta11" => btnPaleta11,
+            "btnPaleta12" => btnPaleta12,
+            "btnPaleta13" => btnPaleta13,
+            "btnPaleta14" => btnPaleta14,
+            "btnPaleta15" => btnPaleta15,
+            "btnPaleta16" => btnPaleta16,
+            "btnPaleta17" => btnPaleta17,
+            "btnPaleta18" => btnPaleta18,
+            "btnPaleta19" => btnPaleta19,
+            "btnPaleta20" => btnPaleta20,
+            _ => null,
+        };
+
+        /// <summary>O Circle que disparou o evento.</summary>
+        public Circle? SenderAsCircle(AylisClient.AylisEvent ev) => FindCircle(ev.SenderName);
+
+        /// <summary>O ComboBox deste form com o nome (como o FindComponent).</summary>
+        public ComboBox? FindComboBox(string name) => name switch
+        {
+            "cbEspessura" => cbEspessura,
+            _ => null,
+        };
+
+        /// <summary>O ComboBox que disparou o evento.</summary>
+        public ComboBox? SenderAsComboBox(AylisClient.AylisEvent ev) => FindComboBox(ev.SenderName);
+
+        /// <summary>O Divider deste form com o nome (como o FindComponent).</summary>
+        public Divider? FindDivider(string name) => name switch
+        {
+            "divTopo" => divTopo,
+            "divSelecao" => divSelecao,
+            "divFerramentas" => divFerramentas,
+            "divPinceis" => divPinceis,
+            "divFormas" => divFormas,
+            "divTamanho" => divTamanho,
+            _ => null,
+        };
+
+        /// <summary>O Divider que disparou o evento.</summary>
+        public Divider? SenderAsDivider(AylisClient.AylisEvent ev) => FindDivider(ev.SenderName);
+
+        /// <summary>O GridLayout deste form com o nome (como o FindComponent).</summary>
+        public GridLayout? FindGridLayout(string name) => name switch
+        {
+            "grdFerramentas" => grdFerramentas,
+            "grdFormas" => grdFormas,
+            "grdPaleta" => grdPaleta,
+            _ => null,
+        };
+
+        /// <summary>O GridLayout que disparou o evento.</summary>
+        public GridLayout? SenderAsGridLayout(AylisClient.AylisEvent ev) => FindGridLayout(ev.SenderName);
+
+        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        public Label? FindLabel(string name) => name switch
+        {
+            "lblSelecaoGrupo" => lblSelecaoGrupo,
+            "lblFerramentasGrupo" => lblFerramentasGrupo,
+            "lblPinceis" => lblPinceis,
+            "lblFormas" => lblFormas,
+            "lblTamanhoGrupo" => lblTamanhoGrupo,
+            "lblCores" => lblCores,
+            "lblPosicao" => lblPosicao,
+            "lblTamanho" => lblTamanho,
+            "lblZoom" => lblZoom,
+            _ => null,
+        };
+
+        /// <summary>O Label que disparou o evento.</summary>
+        public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
+
+        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        public Layout? FindLayout(string name) => name switch
+        {
+            "lytTopo" => lytTopo,
+            "lytSelecao" => lytSelecao,
+            "lytFerramentas" => lytFerramentas,
+            "lytPinceis" => lytPinceis,
+            "lytFormas" => lytFormas,
+            "lytTamanho" => lytTamanho,
+            "lytCores" => lytCores,
+            _ => null,
+        };
+
+        /// <summary>O Layout que disparou o evento.</summary>
+        public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
+
+        /// <summary>O MainMenu deste form com o nome (como o FindComponent).</summary>
+        public MainMenu? FindMainMenu(string name) => name switch
+        {
+            "mnuPrincipal" => mnuPrincipal,
+            _ => null,
+        };
+
+        /// <summary>O MainMenu que disparou o evento.</summary>
+        public MainMenu? SenderAsMainMenu(AylisClient.AylisEvent ev) => FindMainMenu(ev.SenderName);
+
+        /// <summary>O MenuItem deste form com o nome (como o FindComponent).</summary>
+        public MenuItem? FindMenuItem(string name) => name switch
+        {
+            "mnuArquivo" => mnuArquivo,
+            "mnuNovo" => mnuNovo,
+            "mnuAbrir" => mnuAbrir,
+            "mnuSalvar" => mnuSalvar,
+            "mnuSalvarComo" => mnuSalvarComo,
+            "mnuSep1" => mnuSep1,
+            "mnuSair" => mnuSair,
+            "mnuEditar" => mnuEditar,
+            "mnuDesfazer" => mnuDesfazer,
+            "mnuRefazer" => mnuRefazer,
+            "mnuSep2" => mnuSep2,
+            "mnuRecortar" => mnuRecortar,
+            "mnuCopiar" => mnuCopiar,
+            "mnuColar" => mnuColar,
+            "mnuExcluir" => mnuExcluir,
+            "mnuSelecionarTudo" => mnuSelecionarTudo,
+            "mnuSep3" => mnuSep3,
+            "mnuLimpar" => mnuLimpar,
+            "mnuExibir" => mnuExibir,
+            "mnuAmpliar" => mnuAmpliar,
+            "mnuReduzir" => mnuReduzir,
+            "mnuTamanhoReal" => mnuTamanhoReal,
+            _ => null,
+        };
+
+        /// <summary>O MenuItem que disparou o evento.</summary>
+        public MenuItem? SenderAsMenuItem(AylisClient.AylisEvent ev) => FindMenuItem(ev.SenderName);
+
+        /// <summary>O OpenDialog deste form com o nome (como o FindComponent).</summary>
+        public OpenDialog? FindOpenDialog(string name) => name switch
+        {
+            "dlgAbrir" => dlgAbrir,
+            _ => null,
+        };
+
+        /// <summary>O OpenDialog que disparou o evento.</summary>
+        public OpenDialog? SenderAsOpenDialog(AylisClient.AylisEvent ev) => FindOpenDialog(ev.SenderName);
+
+        /// <summary>O PaintCanvas deste form com o nome (como o FindComponent).</summary>
+        public PaintCanvas? FindPaintCanvas(string name) => name switch
+        {
+            "pcDesenho" => pcDesenho,
+            _ => null,
+        };
+
+        /// <summary>O PaintCanvas que disparou o evento.</summary>
+        public PaintCanvas? SenderAsPaintCanvas(AylisClient.AylisEvent ev) => FindPaintCanvas(ev.SenderName);
+
+        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        public Panel? FindPanel(string name) => name switch
+        {
+            "pnlFaixa" => pnlFaixa,
+            _ => null,
+        };
+
+        /// <summary>O Panel que disparou o evento.</summary>
+        public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
+
+        /// <summary>O SaveDialog deste form com o nome (como o FindComponent).</summary>
+        public SaveDialog? FindSaveDialog(string name) => name switch
+        {
+            "dlgSalvar" => dlgSalvar,
+            _ => null,
+        };
+
+        /// <summary>O SaveDialog que disparou o evento.</summary>
+        public SaveDialog? SenderAsSaveDialog(AylisClient.AylisEvent ev) => FindSaveDialog(ev.SenderName);
+
+        /// <summary>O ScrollBox deste form com o nome (como o FindComponent).</summary>
+        public ScrollBox? FindScrollBox(string name) => name switch
+        {
+            "sbxArea" => sbxArea,
+            _ => null,
+        };
+
+        /// <summary>O ScrollBox que disparou o evento.</summary>
+        public ScrollBox? SenderAsScrollBox(AylisClient.AylisEvent ev) => FindScrollBox(ev.SenderName);
+
+        /// <summary>O StatusBar deste form com o nome (como o FindComponent).</summary>
+        public StatusBar? FindStatusBar(string name) => name switch
+        {
+            "stbStatus" => stbStatus,
+            _ => null,
+        };
+
+        /// <summary>O StatusBar que disparou o evento.</summary>
+        public StatusBar? SenderAsStatusBar(AylisClient.AylisEvent ev) => FindStatusBar(ev.SenderName);
+    }

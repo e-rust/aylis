@@ -1,0 +1,39 @@
+# TitleBar
+
+![TitleBar](img/TitleBar.png)
+
+Barra de título própria da janela, desenhada pelo Aylis: o título, os botões de minimizar, maximizar e fechar e espaço para os seus controles.
+
+**Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `caption` | Título | texto |
+| `show_minimize` | Mostra o minimizar | lógico |
+| `show_maximize` | Mostra o maximizar | lógico |
+| `show_close` | Mostra o fechar | lógico |
+
+## Em código
+
+No form, o `TitleBar1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "TitleBar", "name": "TitleBar1" }
+```
+
+E o handler, um método do form (`self.TitleBar1` já é um `TitleBar`):
+
+```rust
+impl FrmPrincipal {
+    pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.TitleBar1.caption(ui);
+        self.TitleBar1.set_caption(ui, format!("{atual}!"));
+    }
+}
+```
+
+(Sem eventos próprios: o exemplo usa o `on_show` do form.)

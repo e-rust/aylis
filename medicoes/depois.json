@@ -1,0 +1,62 @@
+{
+  "componentes/d2d": {
+    "media_ms": 0.586,
+    "p50_ms": 0.578,
+    "p95_ms": 0.638,
+    "memoria_privada_mb": 46.3
+  },
+  "componentes/gpu": {
+    "media_ms": 0.918,
+    "p50_ms": 0.901,
+    "p95_ms": 0.997,
+    "memoria_privada_mb": 322.1
+  },
+  "grade/d2d": {
+    "media_ms": 0.478,
+    "p50_ms": 0.467,
+    "p95_ms": 0.53,
+    "memoria_privada_mb": 42.6
+  },
+  "grade/gpu": {
+    "media_ms": 1.031,
+    "p50_ms": 1.012,
+    "p95_ms": 1.113,
+    "memoria_privada_mb": 297.7
+  },
+  "moderno/d2d": {
+    "media_ms": 2.914,
+    "p50_ms": 2.897,
+    "p95_ms": 3.05,
+    "memoria_privada_mb": 57.8
+  },
+  "moderno/gpu": {
+    "media_ms": 2.189,
+    "p50_ms": 2.166,
+    "p95_ms": 2.295,
+    "memoria_privada_mb": 348.4
+  },
+  "catalogo/d2d": {
+    "media_ms": 2.738,
+    "p50_ms": 2.683,
+    "p95_ms": 3.167,
+    "memoria_privada_mb": 62.6
+  },
+  "catalogo/gpu": {
+    "media_ms": 1.813,
+    "p50_ms": 1.796,
+    "p95_ms": 1.916,
+    "memoria_privada_mb": 335.2
+  },
+  "galeria/d2d": {
+    "media_ms": 3.222,
+    "p50_ms": 3.21,
+    "p95_ms": 3.366,
+    "memoria_privada_mb": 52.4
+  },
+  "galeria/gpu": {
+    "media_ms": 7.79,
+    "p50_ms": 7.737,
+    "p95_ms": 8.116,
+    "memoria_privada_mb": 344.4
+  }
+}

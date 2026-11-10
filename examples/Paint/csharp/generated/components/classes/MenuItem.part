@@ -1,0 +1,13 @@
+
+    /// <summary>Um MenuItem de um form.</summary>
+    public class MenuItem(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public string Text { get => Text(GetProp("text")); set => SetProp("text", value); }
+        public string Shortcut { get => Text(GetProp("shortcut")); set => SetProp("shortcut", value); }
+        public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
+        public bool Checked { get => Bool(GetProp("checked")); set => SetProp("checked", value); }
+        public bool AutoCheck { get => Bool(GetProp("auto_check")); set => SetProp("auto_check", value); }
+        public string Icon { get => Text(GetProp("icon")); set => SetProp("icon", value); }
+        public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
+        public bool Danger { get => Bool(GetProp("danger")); set => SetProp("danger", value); }
+    }

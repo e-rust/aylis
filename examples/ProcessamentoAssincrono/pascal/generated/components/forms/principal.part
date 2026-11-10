@@ -1,0 +1,70 @@
+  { O form frmPrincipal: a classe base com os componentes. A do form (TFrmPrincipal), com os
+    handlers (métodos published) e o estado, fica na unit dele. }
+  TFrmPrincipalBase = class(TForm)
+  published
+    lblTitulo: TLabel;
+    btnFecharMes: TButton;
+    lblStatus: TLabel;
+  protected
+    procedure BindComponents(List: TJSONArray); override;
+  public
+    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    function FindButton(const Nome: string): TButton;
+    { O Button que disparou o evento (nil se não é um Button deste form). }
+    function SenderAsButton(Sender: TAylisComponent): TButton; overload;
+    function SenderAsButton(Event: TJSONObject): TButton; overload;
+    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLabel(const Nome: string): TLabel;
+    { O Label que disparou o evento (nil se não é um Label deste form). }
+    function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
+    function SenderAsLabel(Event: TJSONObject): TLabel; overload;
+  end;
+
+
+procedure TFrmPrincipalBase.BindComponents(List: TJSONArray);
+begin
+  lblTitulo := TLabel(Resolve(List, 'lblTitulo', 'Label', TLabel));
+  btnFecharMes := TButton(Resolve(List, 'btnFecharMes', 'Button', TButton));
+  lblStatus := TLabel(Resolve(List, 'lblStatus', 'Label', TLabel));
+end;
+
+function TFrmPrincipalBase.FindButton(const Nome: string): TButton;
+begin
+  Result := nil;
+  if Nome = 'btnFecharMes' then
+    Result := btnFecharMes;
+end;
+
+function TFrmPrincipalBase.SenderAsButton(Sender: TAylisComponent): TButton;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindButton(Sender.Name);
+end;
+
+function TFrmPrincipalBase.SenderAsButton(Event: TJSONObject): TButton;
+begin
+  Result := FindButton(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmPrincipalBase.FindLabel(const Nome: string): TLabel;
+begin
+  Result := nil;
+  if Nome = 'lblTitulo' then
+    Result := lblTitulo;
+  if Nome = 'lblStatus' then
+    Result := lblStatus;
+end;
+
+function TFrmPrincipalBase.SenderAsLabel(Sender: TAylisComponent): TLabel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLabel(Sender.Name);
+end;
+
+function TFrmPrincipalBase.SenderAsLabel(Event: TJSONObject): TLabel;
+begin
+  Result := FindLabel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+

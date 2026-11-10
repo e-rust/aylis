@@ -1,0 +1,47 @@
+
+
+class SaveDialog(AylisComponent):
+    """Um SaveDialog de um form."""
+
+    @property
+    def title(self):
+        return self._get("title")
+
+    @title.setter
+    def title(self, value):
+        self._set("title", value)
+
+    @property
+    def filter(self):
+        return self._get("filter")
+
+    @filter.setter
+    def filter(self, value):
+        self._set("filter", value)
+
+    @property
+    def initial_dir(self):
+        return self._get("initial_dir")
+
+    @initial_dir.setter
+    def initial_dir(self, value):
+        self._set("initial_dir", value)
+
+    @property
+    def file_name(self):
+        return self._get("file_name")
+
+    @file_name.setter
+    def file_name(self, value):
+        self._set("file_name", value)
+
+    @property
+    def multiple(self):
+        return self._get("multiple")
+
+    @multiple.setter
+    def multiple(self, value):
+        self._set("multiple", value)
+
+    def execute(self):
+        self.aylis.send("execute", target=self.id)

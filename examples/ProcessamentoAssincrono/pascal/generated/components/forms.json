@@ -1,0 +1,1 @@
+{"principal":{"form":"frmPrincipal","handlers":["fechar_mes_click"],"questions":[],"classes":["Form","Label","Button"],"cited":[]},"progresso":{"form":"frmProgresso","handlers":["form_close_query","cancelar_click"],"questions":[["form_close_query","on_close_query"]],"classes":["Form","Label","ProgressBar","Button"],"cited":[]}}

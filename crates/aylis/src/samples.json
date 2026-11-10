@@ -1,0 +1,80 @@
+{
+  "ListView": { "size": [320, 280], "props": { "items": "Ana Souza|Vendas;Bruno Lima|Financeiro;Carla Dias|Suporte;Diego Alves|Compras;Elisa Rocha|Marketing" } },
+  "ListBox": { "size": [220, 180], "props": { "items": "Maçã;Banana;Laranja;Uva;Pera;Manga", "item_index": 1 } },
+  "TreeView": { "size": [260, 260] },
+  "TabStrip": { "size": [420, 40], "props": { "tabs": "principal.rs|description;dados.rs|description;Cargo.toml|settings", "closable": true, "show_add": true } },
+  "TabControl": { "size": [420, 220], "children": [
+    { "class": "TabItem", "name": "tabGeral", "caption": "Geral", "children": [
+      { "class": "Label", "name": "lblGeral", "text": "Nome, documento e contato do cliente.", "align": "top", "height": 28, "margins": [12, 12, 12, 0] },
+      { "class": "Edit", "name": "edtGeral", "placeholder": "Nome do cliente", "align": "top", "height": 36, "margins": [12, 8, 12, 0] } ] },
+    { "class": "TabItem", "name": "tabEndereco", "caption": "Endereço" },
+    { "class": "TabItem", "name": "tabNotas", "caption": "Notas" } ] },
+  "Carousel": { "size": [480, 240], "props": { "show_arrows": true }, "children": [
+    { "class": "Panel", "name": "slide1", "align": "client", "fill": "#2563EB", "children": [ { "class": "Label", "name": "lblSlide1", "text": "Um slide por vez", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] },
+    { "class": "Panel", "name": "slide2", "align": "client", "fill": "#7C3AED", "children": [ { "class": "Label", "name": "lblSlide2", "text": "Arraste para o lado", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] },
+    { "class": "Panel", "name": "slide3", "align": "client", "fill": "#DB2777", "children": [ { "class": "Label", "name": "lblSlide3", "text": "Ou use as setas", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] } ] },
+  "SkeletonLoader": { "size": [320, 200], "props": { "layout": "list-item, list-item, text@2" } },
+  "Snackbar": { "size": [392, 64], "props": { "text": "Item apagado", "action": "DESFAZER", "timeout": 0, "active": true } },
+  "AjaxBar": { "size": [392, 40], "props": { "active": true } },
+  "BottomSheet": { "size": [392, 300], "props": { "open": true, "sheet_height": 240 }, "children": [
+    { "class": "Label", "name": "lblFolhaTitulo", "text": "Compartilhar", "align": "top", "height": 32, "bold": true, "font_size": 18, "margins": [16, 24, 16, 0] },
+    { "class": "Label", "name": "lblFolhaTexto", "text": "Escolha para onde enviar o arquivo.", "align": "top", "height": 28, "margins": [16, 4, 16, 0] },
+    { "class": "Button", "name": "btnFolha", "text": "Copiar link", "align": "top", "height": 40, "margins": [16, 12, 16, 0] } ] },
+  "SideSheet": { "size": [352, 260], "props": { "title": "Filtros", "open": true }, "children": [
+    { "class": "CheckBox", "name": "chkFolha1", "text": "Só os ativos", "checked": true, "align": "top", "height": 32, "margins": [16, 8, 16, 0] },
+    { "class": "CheckBox", "name": "chkFolha2", "text": "Com pedidos este mês", "align": "top", "height": 32, "margins": [16, 4, 16, 0] } ] },
+  "SeekBar": { "size": [352, 60], "props": { "duration": 240, "position": 75, "buffered": 150, "show_time": true } },
+  "FlowLayout": { "size": [352, 152], "children": [
+    { "class": "Chip", "name": "chpFluxo1", "text": "Rust" },
+    { "class": "Chip", "name": "chpFluxo2", "text": "Python" },
+    { "class": "Chip", "name": "chpFluxo3", "text": "TypeScript" },
+    { "class": "Chip", "name": "chpFluxo4", "text": "C#" },
+    { "class": "Chip", "name": "chpFluxo5", "text": "Java" },
+    { "class": "Chip", "name": "chpFluxo6", "text": "Go" },
+    { "class": "Chip", "name": "chpFluxo7", "text": "C++" } ] },
+  "GridLayout": { "size": [352, 200], "props": { "columns": 3, "gap": 8 }, "children": [
+    { "class": "Button", "name": "btnGrade1", "text": "1" }, { "class": "Button", "name": "btnGrade2", "text": "2" }, { "class": "Button", "name": "btnGrade3", "text": "3" },
+    { "class": "Button", "name": "btnGrade4", "text": "4" }, { "class": "Button", "name": "btnGrade5", "text": "5" }, { "class": "Button", "name": "btnGrade6", "text": "6" } ] },
+  "Layout": { "size": [280, 132], "children": [
+    { "class": "Label", "name": "lblLayout", "text": "Um contêiner sem desenho próprio:", "align": "top", "height": 28 },
+    { "class": "Edit", "name": "edtLayout", "placeholder": "Os filhos se arrumam pelo align", "align": "top", "height": 36, "margins": [0, 6, 0, 0] },
+    { "class": "Button", "name": "btnLayout", "text": "Salvar", "align": "top", "height": 36, "margins": [0, 8, 0, 0] } ] },
+  "ScrollBox": { "size": [232, 232], "children": [
+    { "class": "Label", "name": "lblRolar1", "text": "Role para ver mais", "align": "top", "height": 32, "bold": true },
+    { "class": "Button", "name": "btnRolar1", "text": "Primeiro", "align": "top", "height": 40, "margins": [0, 6, 0, 0] },
+    { "class": "Button", "name": "btnRolar2", "text": "Segundo", "align": "top", "height": 40, "margins": [0, 6, 0, 0] },
+    { "class": "Button", "name": "btnRolar3", "text": "Terceiro", "align": "top", "height": 40, "margins": [0, 6, 0, 0] },
+    { "class": "Button", "name": "btnRolar4", "text": "Quarto", "align": "top", "height": 40, "margins": [0, 6, 0, 0] },
+    { "class": "Button", "name": "btnRolar5", "text": "Quinto", "align": "top", "height": 40, "margins": [0, 6, 0, 0] } ] },
+  "Frame": { "size": [352, 160], "children": [
+    { "class": "Label", "name": "lblQuadro", "text": "Um pedaço de tela reaproveitável, com os seus componentes.", "align": "top", "wrap": true, "auto_size": true, "margins": [12, 12, 12, 0] },
+    { "class": "Button", "name": "btnQuadro", "text": "Abrir", "align": "top", "height": 36, "margins": [12, 8, 12, 0] } ] },
+  "Card": { "size": [332, 172], "children": [
+    { "class": "Label", "name": "lblCartao", "text": "Pedido #1024", "align": "top", "height": 28, "bold": true, "font_size": 18 },
+    { "class": "Label", "name": "lblCartaoTexto", "text": "3 itens · R$ 249,90 · entrega amanhã", "align": "top", "height": 28 },
+    { "class": "Button", "name": "btnCartao", "text": "Acompanhar", "align": "bottom", "height": 36 } ] },
+  "ToolBar": { "size": [392, 48], "children": [
+    { "class": "Button", "name": "btnBarra1", "text": "Novo", "icon": "material:add", "style": "flat", "align": "left", "width": 90 },
+    { "class": "Button", "name": "btnBarra2", "text": "Abrir", "icon": "material:folder_open", "style": "flat", "align": "left", "width": 96 },
+    { "class": "Button", "name": "btnBarra3", "text": "Salvar", "icon": "material:save", "style": "flat", "align": "left", "width": 100 } ] },
+  "MainMenu": { "size": [392, 40], "children": [
+    { "class": "MenuItem", "name": "mnuDemoArquivo", "text": "Arquivo", "children": [ { "class": "MenuItem", "name": "mnuDemoNovo", "text": "Novo" }, { "class": "MenuItem", "name": "mnuDemoAbrir", "text": "Abrir…" } ] },
+    { "class": "MenuItem", "name": "mnuDemoEditar", "text": "Editar", "children": [ { "class": "MenuItem", "name": "mnuDemoCopiar", "text": "Copiar" } ] },
+    { "class": "MenuItem", "name": "mnuDemoExibir", "text": "Exibir" },
+    { "class": "MenuItem", "name": "mnuDemoAjuda", "text": "Ajuda" } ] },
+  "DataGrid": { "size": [512, 260], "refs": { "data_source": "dsDemo" } },
+  "DataNavigator": { "size": [320, 44], "refs": { "data_source": "dsDemo" } },
+  "DataRepeater": { "size": [352, 300], "refs": { "data_source": "dsDemo" } },
+  "MediaCard": { "size": [212, 220], "props": { "title": "Noite de verão", "subtitle": "Gravação ao vivo", "duration": "3:42", "badges": "HD;Novo", "icon": "material:music_note", "progress": 0.4 } },
+  "Rectangle": { "size": [160, 120], "props": { "fill": "#3B82F6", "fill2": "#9333EA", "gradient_angle": 45, "radius": 16, "stroke": "#FFFFFF", "stroke_width": 0 } },
+  "InnerLoading": { "size": [240, 140], "props": { "showing": true, "label": "Carregando…" } },
+  "AnimatedText": { "size": [352, 112], "props": { "text": "Texto que se anima", "autoplay": true, "looping": true } },
+  "Svg": { "size": [120, 120], "props": { "source": "samples/rust.svg" } },
+  "Lottie": { "size": [160, 160], "props": { "source": "samples/coracao.json", "playing": true, "repeat": true } },
+  "Image": { "size": [240, 140] },
+  "ChatView": { "size": [452, 360] },
+  "TimeAndSales": { "size": [312, 352] },
+  "NodeGraph": { "size": [672, 360] },
+  "ScreenLayout": { "size": [512, 282] },
+  "Model3D": { "size": [352, 272] }
+}

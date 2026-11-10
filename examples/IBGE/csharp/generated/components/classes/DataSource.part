@@ -1,0 +1,8 @@
+
+    /// <summary>Um DataSource de um form.</summary>
+    public class DataSource(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
+    {
+        public string DataSet { get => Text(GetProp("data_set")); set => SetProp("data_set", value); }
+        public bool AutoEdit { get => Bool(GetProp("auto_edit")); set => SetProp("auto_edit", value); }
+        public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
+    }

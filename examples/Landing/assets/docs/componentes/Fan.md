@@ -1,0 +1,49 @@
+# Fan
+
+![Fan](img/Fan.png)
+
+Ventilador de supervisório: gira quando ligado e muda de cor no alarme.
+
+**Paleta:** Industrial · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `label` | Rótulo | texto |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `speed` | Velocidade | número |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `running` | Ligado | lógico |
+| `alarm` | Alarme | lógico |
+
+## Em código
+
+No form, o `Fan1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "Fan", "name": "Fan1" }
+```
+
+E o handler, um método do form (`self.Fan1` já é um `Fan`):
+
+```rust
+impl FrmPrincipal {
+    pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.Fan1.running(ui);
+        self.Fan1.set_running(ui, !atual);
+    }
+}
+```
+
+(Sem eventos próprios: o exemplo usa o `on_show` do form.)

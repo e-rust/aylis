@@ -1,0 +1,899 @@
+
+// frmPaintComponents: o form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+type frmPaintComponents struct {
+	aylisForm
+	lytTopo aylisLayout
+	mnuPrincipal aylisMainMenu
+	mnuArquivo aylisMenuItem
+	mnuNovo aylisMenuItem
+	mnuAbrir aylisMenuItem
+	mnuSalvar aylisMenuItem
+	mnuSalvarComo aylisMenuItem
+	mnuSep1 aylisMenuItem
+	mnuSair aylisMenuItem
+	mnuEditar aylisMenuItem
+	mnuDesfazer aylisMenuItem
+	mnuRefazer aylisMenuItem
+	mnuSep2 aylisMenuItem
+	mnuRecortar aylisMenuItem
+	mnuCopiar aylisMenuItem
+	mnuColar aylisMenuItem
+	mnuExcluir aylisMenuItem
+	mnuSelecionarTudo aylisMenuItem
+	mnuSep3 aylisMenuItem
+	mnuLimpar aylisMenuItem
+	mnuExibir aylisMenuItem
+	mnuAmpliar aylisMenuItem
+	mnuReduzir aylisMenuItem
+	mnuTamanhoReal aylisMenuItem
+	divTopo aylisDivider
+	btnSalvar aylisButton
+	btnDesfazer aylisButton
+	btnRefazer aylisButton
+	pnlFaixa aylisPanel
+	lytSelecao aylisLayout
+	lblSelecaoGrupo aylisLabel
+	btnSelecionar aylisButton
+	divSelecao aylisDivider
+	lytFerramentas aylisLayout
+	lblFerramentasGrupo aylisLabel
+	grdFerramentas aylisGridLayout
+	btnLapis aylisButton
+	btnBalde aylisButton
+	btnBorracha aylisButton
+	btnContaGotas aylisButton
+	divFerramentas aylisDivider
+	lytPinceis aylisLayout
+	lblPinceis aylisLabel
+	btnPincel aylisButton
+	divPinceis aylisDivider
+	lytFormas aylisLayout
+	lblFormas aylisLabel
+	chkPreencher aylisCheckBox
+	grdFormas aylisGridLayout
+	btnLinha aylisButton
+	btnRetangulo aylisButton
+	btnElipse aylisButton
+	divFormas aylisDivider
+	lytTamanho aylisLayout
+	lblTamanhoGrupo aylisLabel
+	cbEspessura aylisComboBox
+	divTamanho aylisDivider
+	lytCores aylisLayout
+	lblCores aylisLabel
+	btnCor1 aylisCircle
+	btnCor2 aylisCircle
+	grdPaleta aylisGridLayout
+	btnPaleta01 aylisCircle
+	btnPaleta02 aylisCircle
+	btnPaleta03 aylisCircle
+	btnPaleta04 aylisCircle
+	btnPaleta05 aylisCircle
+	btnPaleta06 aylisCircle
+	btnPaleta07 aylisCircle
+	btnPaleta08 aylisCircle
+	btnPaleta09 aylisCircle
+	btnPaleta10 aylisCircle
+	btnPaleta11 aylisCircle
+	btnPaleta12 aylisCircle
+	btnPaleta13 aylisCircle
+	btnPaleta14 aylisCircle
+	btnPaleta15 aylisCircle
+	btnPaleta16 aylisCircle
+	btnPaleta17 aylisCircle
+	btnPaleta18 aylisCircle
+	btnPaleta19 aylisCircle
+	btnPaleta20 aylisCircle
+	stbStatus aylisStatusBar
+	lblPosicao aylisLabel
+	lblTamanho aylisLabel
+	lblZoom aylisLabel
+	sbxArea aylisScrollBox
+	pcDesenho aylisPaintCanvas
+	dlgAbrir aylisOpenDialog
+	dlgSalvar aylisSaveDialog
+}
+
+// Bind monta os componentes da janela (o form que não bate com o código é erro).
+func (f *frmPaintComponents) Bind(list []any) error {
+	if c, err := f.Resolve(list, "lytTopo", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytTopo = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "mnuPrincipal", "MainMenu"); err != nil {
+		return err
+	} else {
+		f.mnuPrincipal = aylisMainMenu{c}
+	}
+	if c, err := f.Resolve(list, "mnuArquivo", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuArquivo = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuNovo", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuNovo = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuAbrir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuAbrir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSalvar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSalvar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSalvarComo", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSalvarComo = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSep1", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSep1 = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSair", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSair = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuEditar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuEditar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuDesfazer", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuDesfazer = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuRefazer", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuRefazer = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSep2", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSep2 = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuRecortar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuRecortar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuCopiar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuCopiar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuColar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuColar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuExcluir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuExcluir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSelecionarTudo", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSelecionarTudo = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuSep3", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuSep3 = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuLimpar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuLimpar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuExibir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuExibir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuAmpliar", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuAmpliar = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuReduzir", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuReduzir = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "mnuTamanhoReal", "MenuItem"); err != nil {
+		return err
+	} else {
+		f.mnuTamanhoReal = aylisMenuItem{c}
+	}
+	if c, err := f.Resolve(list, "divTopo", "Divider"); err != nil {
+		return err
+	} else {
+		f.divTopo = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "btnSalvar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnSalvar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnDesfazer", "Button"); err != nil {
+		return err
+	} else {
+		f.btnDesfazer = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnRefazer", "Button"); err != nil {
+		return err
+	} else {
+		f.btnRefazer = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "pnlFaixa", "Panel"); err != nil {
+		return err
+	} else {
+		f.pnlFaixa = aylisPanel{c}
+	}
+	if c, err := f.Resolve(list, "lytSelecao", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytSelecao = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblSelecaoGrupo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblSelecaoGrupo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "btnSelecionar", "Button"); err != nil {
+		return err
+	} else {
+		f.btnSelecionar = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "divSelecao", "Divider"); err != nil {
+		return err
+	} else {
+		f.divSelecao = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "lytFerramentas", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytFerramentas = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblFerramentasGrupo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblFerramentasGrupo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "grdFerramentas", "GridLayout"); err != nil {
+		return err
+	} else {
+		f.grdFerramentas = aylisGridLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnLapis", "Button"); err != nil {
+		return err
+	} else {
+		f.btnLapis = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnBalde", "Button"); err != nil {
+		return err
+	} else {
+		f.btnBalde = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnBorracha", "Button"); err != nil {
+		return err
+	} else {
+		f.btnBorracha = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnContaGotas", "Button"); err != nil {
+		return err
+	} else {
+		f.btnContaGotas = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "divFerramentas", "Divider"); err != nil {
+		return err
+	} else {
+		f.divFerramentas = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "lytPinceis", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytPinceis = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblPinceis", "Label"); err != nil {
+		return err
+	} else {
+		f.lblPinceis = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "btnPincel", "Button"); err != nil {
+		return err
+	} else {
+		f.btnPincel = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "divPinceis", "Divider"); err != nil {
+		return err
+	} else {
+		f.divPinceis = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "lytFormas", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytFormas = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblFormas", "Label"); err != nil {
+		return err
+	} else {
+		f.lblFormas = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "chkPreencher", "CheckBox"); err != nil {
+		return err
+	} else {
+		f.chkPreencher = aylisCheckBox{c}
+	}
+	if c, err := f.Resolve(list, "grdFormas", "GridLayout"); err != nil {
+		return err
+	} else {
+		f.grdFormas = aylisGridLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnLinha", "Button"); err != nil {
+		return err
+	} else {
+		f.btnLinha = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnRetangulo", "Button"); err != nil {
+		return err
+	} else {
+		f.btnRetangulo = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "btnElipse", "Button"); err != nil {
+		return err
+	} else {
+		f.btnElipse = aylisButton{c}
+	}
+	if c, err := f.Resolve(list, "divFormas", "Divider"); err != nil {
+		return err
+	} else {
+		f.divFormas = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "lytTamanho", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytTamanho = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblTamanhoGrupo", "Label"); err != nil {
+		return err
+	} else {
+		f.lblTamanhoGrupo = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "cbEspessura", "ComboBox"); err != nil {
+		return err
+	} else {
+		f.cbEspessura = aylisComboBox{c}
+	}
+	if c, err := f.Resolve(list, "divTamanho", "Divider"); err != nil {
+		return err
+	} else {
+		f.divTamanho = aylisDivider{c}
+	}
+	if c, err := f.Resolve(list, "lytCores", "Layout"); err != nil {
+		return err
+	} else {
+		f.lytCores = aylisLayout{c}
+	}
+	if c, err := f.Resolve(list, "lblCores", "Label"); err != nil {
+		return err
+	} else {
+		f.lblCores = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "btnCor1", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnCor1 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnCor2", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnCor2 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "grdPaleta", "GridLayout"); err != nil {
+		return err
+	} else {
+		f.grdPaleta = aylisGridLayout{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta01", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta01 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta02", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta02 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta03", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta03 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta04", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta04 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta05", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta05 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta06", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta06 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta07", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta07 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta08", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta08 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta09", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta09 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta10", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta10 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta11", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta11 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta12", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta12 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta13", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta13 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta14", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta14 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta15", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta15 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta16", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta16 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta17", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta17 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta18", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta18 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta19", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta19 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "btnPaleta20", "Circle"); err != nil {
+		return err
+	} else {
+		f.btnPaleta20 = aylisCircle{c}
+	}
+	if c, err := f.Resolve(list, "stbStatus", "StatusBar"); err != nil {
+		return err
+	} else {
+		f.stbStatus = aylisStatusBar{c}
+	}
+	if c, err := f.Resolve(list, "lblPosicao", "Label"); err != nil {
+		return err
+	} else {
+		f.lblPosicao = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblTamanho", "Label"); err != nil {
+		return err
+	} else {
+		f.lblTamanho = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "lblZoom", "Label"); err != nil {
+		return err
+	} else {
+		f.lblZoom = aylisLabel{c}
+	}
+	if c, err := f.Resolve(list, "sbxArea", "ScrollBox"); err != nil {
+		return err
+	} else {
+		f.sbxArea = aylisScrollBox{c}
+	}
+	if c, err := f.Resolve(list, "pcDesenho", "PaintCanvas"); err != nil {
+		return err
+	} else {
+		f.pcDesenho = aylisPaintCanvas{c}
+	}
+	if c, err := f.Resolve(list, "dlgAbrir", "OpenDialog"); err != nil {
+		return err
+	} else {
+		f.dlgAbrir = aylisOpenDialog{c}
+	}
+	if c, err := f.Resolve(list, "dlgSalvar", "SaveDialog"); err != nil {
+		return err
+	} else {
+		f.dlgSalvar = aylisSaveDialog{c}
+	}
+	return nil
+}
+
+// frmPaint é a janela de frmPaint cujo evento está rodando (a primeira, fora dos handlers).
+var frmPaint *frmPaintComponents
+
+func init() {
+	aylis.RegisterFormClass("frmPaint", func(app *aylis.Aylis, id int64, name string) aylis.FormInstance {
+		return &frmPaintComponents{aylisForm: aylisForm{aylis.Form{Component: aylis.Component{App: app, ID: id, Name: name}}}}
+	}, func(form aylis.FormInstance) { frmPaint = form.(*frmPaintComponents) })
+}
+
+// FindButton é o Button deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindButton(name string) aylisButton {
+	switch name {
+	case "btnSalvar":
+		return f.btnSalvar
+	case "btnDesfazer":
+		return f.btnDesfazer
+	case "btnRefazer":
+		return f.btnRefazer
+	case "btnSelecionar":
+		return f.btnSelecionar
+	case "btnLapis":
+		return f.btnLapis
+	case "btnBalde":
+		return f.btnBalde
+	case "btnBorracha":
+		return f.btnBorracha
+	case "btnContaGotas":
+		return f.btnContaGotas
+	case "btnPincel":
+		return f.btnPincel
+	case "btnLinha":
+		return f.btnLinha
+	case "btnRetangulo":
+		return f.btnRetangulo
+	case "btnElipse":
+		return f.btnElipse
+	}
+	return aylisButton{}
+}
+
+// SenderAsButton é o Button que disparou o evento.
+func (f *frmPaintComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
+
+// FindCheckBox é o CheckBox deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindCheckBox(name string) aylisCheckBox {
+	switch name {
+	case "chkPreencher":
+		return f.chkPreencher
+	}
+	return aylisCheckBox{}
+}
+
+// SenderAsCheckBox é o CheckBox que disparou o evento.
+func (f *frmPaintComponents) SenderAsCheckBox(ev aylis.Event) aylisCheckBox { return f.FindCheckBox(ev.Sender.Name) }
+
+// FindCircle é o Circle deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindCircle(name string) aylisCircle {
+	switch name {
+	case "btnCor1":
+		return f.btnCor1
+	case "btnCor2":
+		return f.btnCor2
+	case "btnPaleta01":
+		return f.btnPaleta01
+	case "btnPaleta02":
+		return f.btnPaleta02
+	case "btnPaleta03":
+		return f.btnPaleta03
+	case "btnPaleta04":
+		return f.btnPaleta04
+	case "btnPaleta05":
+		return f.btnPaleta05
+	case "btnPaleta06":
+		return f.btnPaleta06
+	case "btnPaleta07":
+		return f.btnPaleta07
+	case "btnPaleta08":
+		return f.btnPaleta08
+	case "btnPaleta09":
+		return f.btnPaleta09
+	case "btnPaleta10":
+		return f.btnPaleta10
+	case "btnPaleta11":
+		return f.btnPaleta11
+	case "btnPaleta12":
+		return f.btnPaleta12
+	case "btnPaleta13":
+		return f.btnPaleta13
+	case "btnPaleta14":
+		return f.btnPaleta14
+	case "btnPaleta15":
+		return f.btnPaleta15
+	case "btnPaleta16":
+		return f.btnPaleta16
+	case "btnPaleta17":
+		return f.btnPaleta17
+	case "btnPaleta18":
+		return f.btnPaleta18
+	case "btnPaleta19":
+		return f.btnPaleta19
+	case "btnPaleta20":
+		return f.btnPaleta20
+	}
+	return aylisCircle{}
+}
+
+// SenderAsCircle é o Circle que disparou o evento.
+func (f *frmPaintComponents) SenderAsCircle(ev aylis.Event) aylisCircle { return f.FindCircle(ev.Sender.Name) }
+
+// FindComboBox é o ComboBox deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindComboBox(name string) aylisComboBox {
+	switch name {
+	case "cbEspessura":
+		return f.cbEspessura
+	}
+	return aylisComboBox{}
+}
+
+// SenderAsComboBox é o ComboBox que disparou o evento.
+func (f *frmPaintComponents) SenderAsComboBox(ev aylis.Event) aylisComboBox { return f.FindComboBox(ev.Sender.Name) }
+
+// FindDivider é o Divider deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindDivider(name string) aylisDivider {
+	switch name {
+	case "divTopo":
+		return f.divTopo
+	case "divSelecao":
+		return f.divSelecao
+	case "divFerramentas":
+		return f.divFerramentas
+	case "divPinceis":
+		return f.divPinceis
+	case "divFormas":
+		return f.divFormas
+	case "divTamanho":
+		return f.divTamanho
+	}
+	return aylisDivider{}
+}
+
+// SenderAsDivider é o Divider que disparou o evento.
+func (f *frmPaintComponents) SenderAsDivider(ev aylis.Event) aylisDivider { return f.FindDivider(ev.Sender.Name) }
+
+// FindGridLayout é o GridLayout deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindGridLayout(name string) aylisGridLayout {
+	switch name {
+	case "grdFerramentas":
+		return f.grdFerramentas
+	case "grdFormas":
+		return f.grdFormas
+	case "grdPaleta":
+		return f.grdPaleta
+	}
+	return aylisGridLayout{}
+}
+
+// SenderAsGridLayout é o GridLayout que disparou o evento.
+func (f *frmPaintComponents) SenderAsGridLayout(ev aylis.Event) aylisGridLayout { return f.FindGridLayout(ev.Sender.Name) }
+
+// FindLabel é o Label deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindLabel(name string) aylisLabel {
+	switch name {
+	case "lblSelecaoGrupo":
+		return f.lblSelecaoGrupo
+	case "lblFerramentasGrupo":
+		return f.lblFerramentasGrupo
+	case "lblPinceis":
+		return f.lblPinceis
+	case "lblFormas":
+		return f.lblFormas
+	case "lblTamanhoGrupo":
+		return f.lblTamanhoGrupo
+	case "lblCores":
+		return f.lblCores
+	case "lblPosicao":
+		return f.lblPosicao
+	case "lblTamanho":
+		return f.lblTamanho
+	case "lblZoom":
+		return f.lblZoom
+	}
+	return aylisLabel{}
+}
+
+// SenderAsLabel é o Label que disparou o evento.
+func (f *frmPaintComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
+
+// FindLayout é o Layout deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindLayout(name string) aylisLayout {
+	switch name {
+	case "lytTopo":
+		return f.lytTopo
+	case "lytSelecao":
+		return f.lytSelecao
+	case "lytFerramentas":
+		return f.lytFerramentas
+	case "lytPinceis":
+		return f.lytPinceis
+	case "lytFormas":
+		return f.lytFormas
+	case "lytTamanho":
+		return f.lytTamanho
+	case "lytCores":
+		return f.lytCores
+	}
+	return aylisLayout{}
+}
+
+// SenderAsLayout é o Layout que disparou o evento.
+func (f *frmPaintComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
+
+// FindMainMenu é o MainMenu deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindMainMenu(name string) aylisMainMenu {
+	switch name {
+	case "mnuPrincipal":
+		return f.mnuPrincipal
+	}
+	return aylisMainMenu{}
+}
+
+// SenderAsMainMenu é o MainMenu que disparou o evento.
+func (f *frmPaintComponents) SenderAsMainMenu(ev aylis.Event) aylisMainMenu { return f.FindMainMenu(ev.Sender.Name) }
+
+// FindMenuItem é o MenuItem deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindMenuItem(name string) aylisMenuItem {
+	switch name {
+	case "mnuArquivo":
+		return f.mnuArquivo
+	case "mnuNovo":
+		return f.mnuNovo
+	case "mnuAbrir":
+		return f.mnuAbrir
+	case "mnuSalvar":
+		return f.mnuSalvar
+	case "mnuSalvarComo":
+		return f.mnuSalvarComo
+	case "mnuSep1":
+		return f.mnuSep1
+	case "mnuSair":
+		return f.mnuSair
+	case "mnuEditar":
+		return f.mnuEditar
+	case "mnuDesfazer":
+		return f.mnuDesfazer
+	case "mnuRefazer":
+		return f.mnuRefazer
+	case "mnuSep2":
+		return f.mnuSep2
+	case "mnuRecortar":
+		return f.mnuRecortar
+	case "mnuCopiar":
+		return f.mnuCopiar
+	case "mnuColar":
+		return f.mnuColar
+	case "mnuExcluir":
+		return f.mnuExcluir
+	case "mnuSelecionarTudo":
+		return f.mnuSelecionarTudo
+	case "mnuSep3":
+		return f.mnuSep3
+	case "mnuLimpar":
+		return f.mnuLimpar
+	case "mnuExibir":
+		return f.mnuExibir
+	case "mnuAmpliar":
+		return f.mnuAmpliar
+	case "mnuReduzir":
+		return f.mnuReduzir
+	case "mnuTamanhoReal":
+		return f.mnuTamanhoReal
+	}
+	return aylisMenuItem{}
+}
+
+// SenderAsMenuItem é o MenuItem que disparou o evento.
+func (f *frmPaintComponents) SenderAsMenuItem(ev aylis.Event) aylisMenuItem { return f.FindMenuItem(ev.Sender.Name) }
+
+// FindOpenDialog é o OpenDialog deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindOpenDialog(name string) aylisOpenDialog {
+	switch name {
+	case "dlgAbrir":
+		return f.dlgAbrir
+	}
+	return aylisOpenDialog{}
+}
+
+// SenderAsOpenDialog é o OpenDialog que disparou o evento.
+func (f *frmPaintComponents) SenderAsOpenDialog(ev aylis.Event) aylisOpenDialog { return f.FindOpenDialog(ev.Sender.Name) }
+
+// FindPaintCanvas é o PaintCanvas deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindPaintCanvas(name string) aylisPaintCanvas {
+	switch name {
+	case "pcDesenho":
+		return f.pcDesenho
+	}
+	return aylisPaintCanvas{}
+}
+
+// SenderAsPaintCanvas é o PaintCanvas que disparou o evento.
+func (f *frmPaintComponents) SenderAsPaintCanvas(ev aylis.Event) aylisPaintCanvas { return f.FindPaintCanvas(ev.Sender.Name) }
+
+// FindPanel é o Panel deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindPanel(name string) aylisPanel {
+	switch name {
+	case "pnlFaixa":
+		return f.pnlFaixa
+	}
+	return aylisPanel{}
+}
+
+// SenderAsPanel é o Panel que disparou o evento.
+func (f *frmPaintComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
+
+// FindSaveDialog é o SaveDialog deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindSaveDialog(name string) aylisSaveDialog {
+	switch name {
+	case "dlgSalvar":
+		return f.dlgSalvar
+	}
+	return aylisSaveDialog{}
+}
+
+// SenderAsSaveDialog é o SaveDialog que disparou o evento.
+func (f *frmPaintComponents) SenderAsSaveDialog(ev aylis.Event) aylisSaveDialog { return f.FindSaveDialog(ev.Sender.Name) }
+
+// FindScrollBox é o ScrollBox deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindScrollBox(name string) aylisScrollBox {
+	switch name {
+	case "sbxArea":
+		return f.sbxArea
+	}
+	return aylisScrollBox{}
+}
+
+// SenderAsScrollBox é o ScrollBox que disparou o evento.
+func (f *frmPaintComponents) SenderAsScrollBox(ev aylis.Event) aylisScrollBox { return f.FindScrollBox(ev.Sender.Name) }
+
+// FindStatusBar é o StatusBar deste form com o nome (como o FindComponent).
+func (f *frmPaintComponents) FindStatusBar(name string) aylisStatusBar {
+	switch name {
+	case "stbStatus":
+		return f.stbStatus
+	}
+	return aylisStatusBar{}
+}
+
+// SenderAsStatusBar é o StatusBar que disparou o evento.
+func (f *frmPaintComponents) SenderAsStatusBar(ev aylis.Event) aylisStatusBar { return f.FindStatusBar(ev.Sender.Name) }

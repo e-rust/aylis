@@ -1,0 +1,385 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmRhEpisCad",
+    "caption": "EPIs — cadastro (RH)",
+    "on_show": "form_show",
+    "width": 1100,
+    "height": 700,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMestre",
+        "key_fields": "id",
+        "index_field_names": "nome",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMestreId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreCodigo",
+            "field_name": "codigo",
+            "size": 10,
+            "display_label": "Código",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreNome",
+            "field_name": "nome",
+            "size": 80,
+            "display_label": "Nome",
+            "display_width": 220,
+            "required": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreAtivo",
+            "field_name": "ativo",
+            "type": "boolean",
+            "display_label": "Ativo",
+            "display_width": 50
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreCriadoEm",
+            "field_name": "criado_em",
+            "type": "date",
+            "display_label": "Cadastrado em",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreObservacao",
+            "field_name": "observacao",
+            "size": 200,
+            "display_label": "Observação",
+            "display_width": 220
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMestre",
+        "data_set": "cdsMestre"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsItens",
+        "key_fields": "id",
+        "master_source": "dsMestre",
+        "master_fields": "mestre_id=id",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsItensId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensMestreId",
+            "field_name": "mestre_id",
+            "type": "integer",
+            "display_label": "Cadastro",
+            "display_width": 70,
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensData",
+            "field_name": "data",
+            "type": "date",
+            "display_label": "Data",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensDescricao",
+            "field_name": "descricao",
+            "size": 120,
+            "display_label": "Ocorrência",
+            "display_width": 260
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensResponsavel",
+            "field_name": "responsavel",
+            "size": 60,
+            "display_label": "Responsável",
+            "display_width": 140
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsItens",
+        "data_set": "cdsItens"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlBarra",
+        "height": 44,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnNovo",
+            "text": "Novo",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_novo_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnSalvar",
+            "text": "Salvar",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_salvar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnExcluir",
+            "text": "Excluir",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_excluir_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnCancelar",
+            "text": "Cancelar",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_cancelar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnNovoItem",
+            "text": "Nova ocorrência",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_novo_item_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnFechar",
+            "text": "Fechar",
+            "align": "right",
+            "on_click": "btn_fechar_click"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar epis…",
+            "on_change": "edt_busca_change",
+            "width": 260,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdLista",
+        "data_source": "dsMestre",
+        "read_only": true,
+        "filter_row": true,
+        "width": 380,
+        "align": "left"
+      },
+      {
+        "class": "Splitter",
+        "name": "splLista"
+      },
+      {
+        "class": "Layout",
+        "name": "layDireita",
+        "align": "client",
+        "children": [
+          {
+            "class": "GroupBox",
+            "name": "gbDados",
+            "caption": "Dados",
+            "height": 222,
+            "align": "top",
+            "padding": [8, 24, 8, 8],
+            "children": [
+              {
+                "class": "Layout",
+                "name": "layCodigo",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblCodigo",
+                    "text": "Código",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtCodigo",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "codigo"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layNome",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblNome",
+                    "text": "Nome",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtNome",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "nome"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layAtivo",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblAtivo",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "CheckBox",
+                    "name": "chkAtivo",
+                    "text": "Ativo",
+                    "align": "client",
+                    "bindings": {
+                      "checked": {
+                        "source": "dsMestre",
+                        "field": "ativo"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layCriadoEm",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblCriadoEm",
+                    "text": "Cadastrado em",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtCriadoEm",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "criado_em"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layObservacao",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblObservacao",
+                    "text": "Observação",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtObservacao",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "observacao"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "GroupBox",
+            "name": "gbItens",
+            "caption": "Histórico",
+            "align": "client",
+            "margins": [0, 6, 0, 0],
+            "padding": [8, 24, 8, 8],
+            "children": [
+              {
+                "class": "DataGrid",
+                "name": "grdItens",
+                "data_source": "dsItens",
+                "align": "client"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

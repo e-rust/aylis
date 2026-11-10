@@ -1,0 +1,34 @@
+{
+  "cpp/frmIBGE": {
+    "nanos": 1794070228547441500,
+    "len": 5817
+  },
+  "csharp/frmIBGE": {
+    "nanos": 1794070228393848400,
+    "len": 5705
+  },
+  "go/frmIBGE": {
+    "nanos": 1794070240075913400,
+    "len": 5892
+  },
+  "java/frmIBGE": {
+    "nanos": 1794070228450129900,
+    "len": 6754
+  },
+  "pascal/frmIBGE": {
+    "nanos": 1794070228591970300,
+    "len": 7800
+  },
+  "python/frmIBGE": {
+    "nanos": 1794179666577170300,
+    "len": 4090
+  },
+  "rust/frmIBGE": {
+    "nanos": 1794069103405215300,
+    "len": 6513
+  },
+  "typescript/frmIBGE": {
+    "nanos": 1794070228297215100,
+    "len": 4972
+  }
+}

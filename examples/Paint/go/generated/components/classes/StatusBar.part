@@ -1,0 +1,159 @@
+
+// aylisStatusBar é um StatusBar de um form.
+type aylisStatusBar struct{ aylis.Component }
+
+func (c aylisStatusBar) Text() string { return asText(c.Get("text")) }
+func (c aylisStatusBar) SetText(v string) { c.Set("text", v) }
+
+func (c aylisStatusBar) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisStatusBar) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisStatusBar) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisStatusBar) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisStatusBar) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisStatusBar) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisStatusBar) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisStatusBar) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisStatusBar) Align() string { return asText(c.Get("align")) }
+func (c aylisStatusBar) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisStatusBar) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisStatusBar) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisStatusBar) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisStatusBar) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisStatusBar) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisStatusBar) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisStatusBar) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisStatusBar) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisStatusBar) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisStatusBar) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisStatusBar) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisStatusBar) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisStatusBar) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisStatusBar) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisStatusBar) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisStatusBar) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisStatusBar) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisStatusBar) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisStatusBar) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisStatusBar) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisStatusBar) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisStatusBar) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisStatusBar) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisStatusBar) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisStatusBar) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisStatusBar) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisStatusBar) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisStatusBar) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisStatusBar) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisStatusBar) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisStatusBar) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisStatusBar) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisStatusBar) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisStatusBar) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisStatusBar) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisStatusBar) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisStatusBar) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisStatusBar) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisStatusBar) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisStatusBar) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisStatusBar) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisStatusBar) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisStatusBar) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisStatusBar) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisStatusBar) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisStatusBar) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisStatusBar) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisStatusBar) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisStatusBar) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisStatusBar) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisStatusBar) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisStatusBar) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisStatusBar) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisStatusBar) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisStatusBar) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisStatusBar) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisStatusBar) Style() string { return asText(c.Get("style")) }
+func (c aylisStatusBar) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisStatusBar) Theme() string { return asText(c.Get("theme")) }
+func (c aylisStatusBar) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisStatusBar) Fill() string { return asText(c.Get("fill")) }
+func (c aylisStatusBar) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisStatusBar) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisStatusBar) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisStatusBar) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisStatusBar) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisStatusBar) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisStatusBar) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisStatusBar) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisStatusBar) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisStatusBar) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisStatusBar) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisStatusBar) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisStatusBar) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisStatusBar) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisStatusBar) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisStatusBar) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisStatusBar) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisStatusBar) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisStatusBar) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisStatusBar) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisStatusBar) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisStatusBar) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisStatusBar) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisStatusBar) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisStatusBar) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisStatusBar) Hint() string { return asText(c.Get("hint")) }
+func (c aylisStatusBar) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisStatusBar) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisStatusBar) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisStatusBar) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisStatusBar) SetPopupMenu(v string) { c.Set("popup_menu", v) }

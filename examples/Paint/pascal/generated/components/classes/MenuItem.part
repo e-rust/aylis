@@ -1,0 +1,111 @@
+  { Um MenuItem de um form. }
+  TMenuItem = class(TAylisComponent)
+  private
+    function GetText: string;
+    procedure SetText(Value: string);
+    function GetShortcut: string;
+    procedure SetShortcut(Value: string);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetChecked: Boolean;
+    procedure SetChecked(Value: Boolean);
+    function GetAutoCheck: Boolean;
+    procedure SetAutoCheck(Value: Boolean);
+    function GetIcon: string;
+    procedure SetIcon(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetDanger: Boolean;
+    procedure SetDanger(Value: Boolean);
+  public
+    property Text: string read GetText write SetText;
+    property Shortcut: string read GetShortcut write SetShortcut;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property Checked: Boolean read GetChecked write SetChecked;
+    property AutoCheck: Boolean read GetAutoCheck write SetAutoCheck;
+    property Icon: string read GetIcon write SetIcon;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Danger: Boolean read GetDanger write SetDanger;
+  end;
+
+
+function TMenuItem.GetText: string;
+begin
+  Result := AsText(GetProp('text'));
+end;
+
+procedure TMenuItem.SetText(Value: string);
+begin
+  SetProp('text', TJSONString.Create(Value));
+end;
+
+function TMenuItem.GetShortcut: string;
+begin
+  Result := AsText(GetProp('shortcut'));
+end;
+
+procedure TMenuItem.SetShortcut(Value: string);
+begin
+  SetProp('shortcut', TJSONString.Create(Value));
+end;
+
+function TMenuItem.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TMenuItem.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetChecked: Boolean;
+begin
+  Result := GetProp('checked').AsBoolean;
+end;
+
+procedure TMenuItem.SetChecked(Value: Boolean);
+begin
+  SetProp('checked', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetAutoCheck: Boolean;
+begin
+  Result := GetProp('auto_check').AsBoolean;
+end;
+
+procedure TMenuItem.SetAutoCheck(Value: Boolean);
+begin
+  SetProp('auto_check', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetIcon: string;
+begin
+  Result := AsText(GetProp('icon'));
+end;
+
+procedure TMenuItem.SetIcon(Value: string);
+begin
+  SetProp('icon', TJSONString.Create(Value));
+end;
+
+function TMenuItem.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TMenuItem.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetDanger: Boolean;
+begin
+  Result := GetProp('danger').AsBoolean;
+end;
+
+procedure TMenuItem.SetDanger(Value: Boolean);
+begin
+  SetProp('danger', TJSONBoolean.Create(Value));
+end;
+

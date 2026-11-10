@@ -1,0 +1,197 @@
+
+// O form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+struct FrmCalculadoraComponents : Form {
+    Panel pnlLateral;
+    TabControl tabLateral;
+    TabItem tabHistorico;
+    Button btnLimparHistorico;
+    ListView lvHistorico;
+    TabItem tabMemoria;
+    ListView lvMemoria;
+    Layout lytCorpo;
+    Layout lytTopo;
+    Button btnHistorico;
+    Label lblTitulo;
+    Label lblExpressao;
+    Label lblVisor;
+    GridLayout grdMemoria;
+    Button btnMC;
+    Button btnMR;
+    Button btnMMais;
+    Button btnMMenos;
+    Button btnMS;
+    GridLayout grdTeclado;
+    Button btnPorcento;
+    Button btnCE;
+    Button btnC;
+    Button btnApagar;
+    Button btnInverso;
+    Button btnQuadrado;
+    Button btnRaiz;
+    Button btnDividir;
+    Button btn7;
+    Button btn8;
+    Button btn9;
+    Button btnMultiplicar;
+    Button btn4;
+    Button btn5;
+    Button btn6;
+    Button btnSubtrair;
+    Button btn1;
+    Button btn2;
+    Button btn3;
+    Button btnSomar;
+    Button btnSinal;
+    Button btn0;
+    Button btnVirgula;
+    Button btnIgual;
+
+    FrmCalculadoraComponents() = default;
+    using Form::Form;
+
+    // Monta os componentes da janela (o form que não bate com o código é erro).
+    void bind(const aylis::Json& list) override {
+        pnlLateral = Panel(resolve_(list, "pnlLateral", "Panel"));
+        tabLateral = TabControl(resolve_(list, "tabLateral", "TabControl"));
+        tabHistorico = TabItem(resolve_(list, "tabHistorico", "TabItem"));
+        btnLimparHistorico = Button(resolve_(list, "btnLimparHistorico", "Button"));
+        lvHistorico = ListView(resolve_(list, "lvHistorico", "ListView"));
+        tabMemoria = TabItem(resolve_(list, "tabMemoria", "TabItem"));
+        lvMemoria = ListView(resolve_(list, "lvMemoria", "ListView"));
+        lytCorpo = Layout(resolve_(list, "lytCorpo", "Layout"));
+        lytTopo = Layout(resolve_(list, "lytTopo", "Layout"));
+        btnHistorico = Button(resolve_(list, "btnHistorico", "Button"));
+        lblTitulo = Label(resolve_(list, "lblTitulo", "Label"));
+        lblExpressao = Label(resolve_(list, "lblExpressao", "Label"));
+        lblVisor = Label(resolve_(list, "lblVisor", "Label"));
+        grdMemoria = GridLayout(resolve_(list, "grdMemoria", "GridLayout"));
+        btnMC = Button(resolve_(list, "btnMC", "Button"));
+        btnMR = Button(resolve_(list, "btnMR", "Button"));
+        btnMMais = Button(resolve_(list, "btnMMais", "Button"));
+        btnMMenos = Button(resolve_(list, "btnMMenos", "Button"));
+        btnMS = Button(resolve_(list, "btnMS", "Button"));
+        grdTeclado = GridLayout(resolve_(list, "grdTeclado", "GridLayout"));
+        btnPorcento = Button(resolve_(list, "btnPorcento", "Button"));
+        btnCE = Button(resolve_(list, "btnCE", "Button"));
+        btnC = Button(resolve_(list, "btnC", "Button"));
+        btnApagar = Button(resolve_(list, "btnApagar", "Button"));
+        btnInverso = Button(resolve_(list, "btnInverso", "Button"));
+        btnQuadrado = Button(resolve_(list, "btnQuadrado", "Button"));
+        btnRaiz = Button(resolve_(list, "btnRaiz", "Button"));
+        btnDividir = Button(resolve_(list, "btnDividir", "Button"));
+        btn7 = Button(resolve_(list, "btn7", "Button"));
+        btn8 = Button(resolve_(list, "btn8", "Button"));
+        btn9 = Button(resolve_(list, "btn9", "Button"));
+        btnMultiplicar = Button(resolve_(list, "btnMultiplicar", "Button"));
+        btn4 = Button(resolve_(list, "btn4", "Button"));
+        btn5 = Button(resolve_(list, "btn5", "Button"));
+        btn6 = Button(resolve_(list, "btn6", "Button"));
+        btnSubtrair = Button(resolve_(list, "btnSubtrair", "Button"));
+        btn1 = Button(resolve_(list, "btn1", "Button"));
+        btn2 = Button(resolve_(list, "btn2", "Button"));
+        btn3 = Button(resolve_(list, "btn3", "Button"));
+        btnSomar = Button(resolve_(list, "btnSomar", "Button"));
+        btnSinal = Button(resolve_(list, "btnSinal", "Button"));
+        btn0 = Button(resolve_(list, "btn0", "Button"));
+        btnVirgula = Button(resolve_(list, "btnVirgula", "Button"));
+        btnIgual = Button(resolve_(list, "btnIgual", "Button"));
+    }
+    // O Button deste form com o nome (como o FindComponent; vazio se não há).
+    Button find_button(const std::string& name) const {
+        if (name == "btnLimparHistorico") return btnLimparHistorico;
+        if (name == "btnHistorico") return btnHistorico;
+        if (name == "btnMC") return btnMC;
+        if (name == "btnMR") return btnMR;
+        if (name == "btnMMais") return btnMMais;
+        if (name == "btnMMenos") return btnMMenos;
+        if (name == "btnMS") return btnMS;
+        if (name == "btnPorcento") return btnPorcento;
+        if (name == "btnCE") return btnCE;
+        if (name == "btnC") return btnC;
+        if (name == "btnApagar") return btnApagar;
+        if (name == "btnInverso") return btnInverso;
+        if (name == "btnQuadrado") return btnQuadrado;
+        if (name == "btnRaiz") return btnRaiz;
+        if (name == "btnDividir") return btnDividir;
+        if (name == "btn7") return btn7;
+        if (name == "btn8") return btn8;
+        if (name == "btn9") return btn9;
+        if (name == "btnMultiplicar") return btnMultiplicar;
+        if (name == "btn4") return btn4;
+        if (name == "btn5") return btn5;
+        if (name == "btn6") return btn6;
+        if (name == "btnSubtrair") return btnSubtrair;
+        if (name == "btn1") return btn1;
+        if (name == "btn2") return btn2;
+        if (name == "btn3") return btn3;
+        if (name == "btnSomar") return btnSomar;
+        if (name == "btnSinal") return btnSinal;
+        if (name == "btn0") return btn0;
+        if (name == "btnVirgula") return btnVirgula;
+        if (name == "btnIgual") return btnIgual;
+        return Button();
+    }
+    // O Button que disparou o evento.
+    Button sender_as_button(const aylis::Event& ev) const { return find_button(ev.sender_name); }
+    // O GridLayout deste form com o nome (como o FindComponent; vazio se não há).
+    GridLayout find_grid_layout(const std::string& name) const {
+        if (name == "grdMemoria") return grdMemoria;
+        if (name == "grdTeclado") return grdTeclado;
+        return GridLayout();
+    }
+    // O GridLayout que disparou o evento.
+    GridLayout sender_as_grid_layout(const aylis::Event& ev) const { return find_grid_layout(ev.sender_name); }
+    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    Label find_label(const std::string& name) const {
+        if (name == "lblTitulo") return lblTitulo;
+        if (name == "lblExpressao") return lblExpressao;
+        if (name == "lblVisor") return lblVisor;
+        return Label();
+    }
+    // O Label que disparou o evento.
+    Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
+    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    Layout find_layout(const std::string& name) const {
+        if (name == "lytCorpo") return lytCorpo;
+        if (name == "lytTopo") return lytTopo;
+        return Layout();
+    }
+    // O Layout que disparou o evento.
+    Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
+    // O ListView deste form com o nome (como o FindComponent; vazio se não há).
+    ListView find_list_view(const std::string& name) const {
+        if (name == "lvHistorico") return lvHistorico;
+        if (name == "lvMemoria") return lvMemoria;
+        return ListView();
+    }
+    // O ListView que disparou o evento.
+    ListView sender_as_list_view(const aylis::Event& ev) const { return find_list_view(ev.sender_name); }
+    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    Panel find_panel(const std::string& name) const {
+        if (name == "pnlLateral") return pnlLateral;
+        return Panel();
+    }
+    // O Panel que disparou o evento.
+    Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
+    // O TabControl deste form com o nome (como o FindComponent; vazio se não há).
+    TabControl find_tab_control(const std::string& name) const {
+        if (name == "tabLateral") return tabLateral;
+        return TabControl();
+    }
+    // O TabControl que disparou o evento.
+    TabControl sender_as_tab_control(const aylis::Event& ev) const { return find_tab_control(ev.sender_name); }
+    // O TabItem deste form com o nome (como o FindComponent; vazio se não há).
+    TabItem find_tab_item(const std::string& name) const {
+        if (name == "tabHistorico") return tabHistorico;
+        if (name == "tabMemoria") return tabMemoria;
+        return TabItem();
+    }
+    // O TabItem que disparou o evento.
+    TabItem sender_as_tab_item(const aylis::Event& ev) const { return find_tab_item(ev.sender_name); }
+};
+
+inline aylis_components::FrmCalculadoraComponents frmCalculadora;
+
+    aylis::Aylis::register_form_class(
+        "frmCalculadora", [](aylis::Aylis* app, long long id, const std::string& name) -> std::unique_ptr<aylis::FormBase> { return std::make_unique<FrmCalculadoraComponents>(app, id, name); },
+        [](aylis::FormBase& form) { ::frmCalculadora = static_cast<FrmCalculadoraComponents&>(form); });

@@ -1,0 +1,399 @@
+
+
+class FrmIBGEComponents(Form):
+    """O form frmIBGE e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância)."""
+
+    def bind(self, components):
+        self.cdsEstados = self._resolve(components, "cdsEstados", "ClientDataSet", ClientDataSet)
+        self.cdsEstadosId = self._resolve(components, "cdsEstadosId", "Field", Field)
+        self.cdsEstadosSigla = self._resolve(components, "cdsEstadosSigla", "Field", Field)
+        self.cdsEstadosNome = self._resolve(components, "cdsEstadosNome", "Field", Field)
+        self.cdsEstadosRegiao = self._resolve(components, "cdsEstadosRegiao", "Field", Field)
+        self.cdsEstadosPopulacao = self._resolve(components, "cdsEstadosPopulacao", "Field", Field)
+        self.cdsEstadosArea = self._resolve(components, "cdsEstadosArea", "Field", Field)
+        self.cdsEstadosDensidade = self._resolve(components, "cdsEstadosDensidade", "Field", Field)
+        self.cdsEstadosPib = self._resolve(components, "cdsEstadosPib", "Field", Field)
+        self.cdsEstadosPibPerCapita = self._resolve(components, "cdsEstadosPibPerCapita", "Field", Field)
+        self.cdsEstadosEstimativa = self._resolve(components, "cdsEstadosEstimativa", "Field", Field)
+        self.cdsEstadosEstimativaAno = self._resolve(components, "cdsEstadosEstimativaAno", "Field", Field)
+        self.cdsEstadosMunicipios = self._resolve(components, "cdsEstadosMunicipios", "Field", Field)
+        self.cdsEstadosBandeira = self._resolve(components, "cdsEstadosBandeira", "Field", Field)
+        self.dsEstados = self._resolve(components, "dsEstados", "DataSource", DataSource)
+        self.cdsMunicipios = self._resolve(components, "cdsMunicipios", "ClientDataSet", ClientDataSet)
+        self.cdsMunicipiosId = self._resolve(components, "cdsMunicipiosId", "Field", Field)
+        self.cdsMunicipiosUfId = self._resolve(components, "cdsMunicipiosUfId", "Field", Field)
+        self.cdsMunicipiosUf = self._resolve(components, "cdsMunicipiosUf", "Field", Field)
+        self.cdsMunicipiosNome = self._resolve(components, "cdsMunicipiosNome", "Field", Field)
+        self.cdsMunicipiosMesorregiao = self._resolve(components, "cdsMunicipiosMesorregiao", "Field", Field)
+        self.cdsMunicipiosMicrorregiao = self._resolve(components, "cdsMunicipiosMicrorregiao", "Field", Field)
+        self.cdsMunicipiosRegiaoIntermediaria = self._resolve(components, "cdsMunicipiosRegiaoIntermediaria", "Field", Field)
+        self.cdsMunicipiosRegiaoImediata = self._resolve(components, "cdsMunicipiosRegiaoImediata", "Field", Field)
+        self.cdsMunicipiosPopulacao = self._resolve(components, "cdsMunicipiosPopulacao", "Field", Field)
+        self.cdsMunicipiosArea = self._resolve(components, "cdsMunicipiosArea", "Field", Field)
+        self.cdsMunicipiosDensidade = self._resolve(components, "cdsMunicipiosDensidade", "Field", Field)
+        self.cdsMunicipiosPib = self._resolve(components, "cdsMunicipiosPib", "Field", Field)
+        self.cdsMunicipiosPibParticipacao = self._resolve(components, "cdsMunicipiosPibParticipacao", "Field", Field)
+        self.cdsMunicipiosPibPerCapita = self._resolve(components, "cdsMunicipiosPibPerCapita", "Field", Field)
+        self.cdsMunicipiosEstimativa = self._resolve(components, "cdsMunicipiosEstimativa", "Field", Field)
+        self.cdsMunicipiosEstimativaAno = self._resolve(components, "cdsMunicipiosEstimativaAno", "Field", Field)
+        self.cdsMunicipiosDistritos = self._resolve(components, "cdsMunicipiosDistritos", "Field", Field)
+        self.cdsMunicipiosBandeira = self._resolve(components, "cdsMunicipiosBandeira", "Field", Field)
+        self.dsMunicipios = self._resolve(components, "dsMunicipios", "DataSource", DataSource)
+        self.cdsDistritos = self._resolve(components, "cdsDistritos", "ClientDataSet", ClientDataSet)
+        self.cdsDistritosId = self._resolve(components, "cdsDistritosId", "Field", Field)
+        self.cdsDistritosMunicipioId = self._resolve(components, "cdsDistritosMunicipioId", "Field", Field)
+        self.cdsDistritosNome = self._resolve(components, "cdsDistritosNome", "Field", Field)
+        self.dsDistritos = self._resolve(components, "dsDistritos", "DataSource", DataSource)
+        self.cdsPopulacao = self._resolve(components, "cdsPopulacao", "ClientDataSet", ClientDataSet)
+        self.cdsPopulacaoAno = self._resolve(components, "cdsPopulacaoAno", "Field", Field)
+        self.cdsPopulacaoHabitantes = self._resolve(components, "cdsPopulacaoHabitantes", "Field", Field)
+        self.dsPopulacao = self._resolve(components, "dsPopulacao", "DataSource", DataSource)
+        self.cdsMaiores = self._resolve(components, "cdsMaiores", "ClientDataSet", ClientDataSet)
+        self.cdsMaioresNome = self._resolve(components, "cdsMaioresNome", "Field", Field)
+        self.cdsMaioresHabitantes = self._resolve(components, "cdsMaioresHabitantes", "Field", Field)
+        self.dsMaiores = self._resolve(components, "dsMaiores", "DataSource", DataSource)
+        self.lblFonte = self._resolve(components, "lblFonte", "Label", Label)
+        self.lytListas = self._resolve(components, "lytListas", "Layout", Layout)
+        self.gbEstados = self._resolve(components, "gbEstados", "GroupBox", GroupBox)
+        self.grdEstados = self._resolve(components, "grdEstados", "DataGrid", DataGrid)
+        self.gbDistritos = self._resolve(components, "gbDistritos", "GroupBox", GroupBox)
+        self.grdDistritos = self._resolve(components, "grdDistritos", "DataGrid", DataGrid)
+        self.gbMunicipios = self._resolve(components, "gbMunicipios", "GroupBox", GroupBox)
+        self.grdMunicipios = self._resolve(components, "grdMunicipios", "DataGrid", DataGrid)
+        self.splListas = self._resolve(components, "splListas", "Splitter", Splitter)
+        self.lytPainel = self._resolve(components, "lytPainel", "Layout", Layout)
+        self.pnlEstado = self._resolve(components, "pnlEstado", "Panel", Panel)
+        self.svgBrasil = self._resolve(components, "svgBrasil", "Svg", Svg)
+        self.lytBandeiraEstado = self._resolve(components, "lytBandeiraEstado", "Layout", Layout)
+        self.lblEstado = self._resolve(components, "lblEstado", "Label", Label)
+        self.lblRegiao = self._resolve(components, "lblRegiao", "Label", Label)
+        self.imgBandeiraEstado = self._resolve(components, "imgBandeiraEstado", "Image", Image)
+        self.lytNumerosEstado = self._resolve(components, "lytNumerosEstado", "Layout", Layout)
+        self.dbtEstadoPopulacao = self._resolve(components, "dbtEstadoPopulacao", "Label", Label)
+        self.lblEstadoEstimativa = self._resolve(components, "lblEstadoEstimativa", "Label", Label)
+        self.dbtEstadoEstimativa = self._resolve(components, "dbtEstadoEstimativa", "Label", Label)
+        self.dbtEstadoArea = self._resolve(components, "dbtEstadoArea", "Label", Label)
+        self.dbtEstadoDensidade = self._resolve(components, "dbtEstadoDensidade", "Label", Label)
+        self.dbtEstadoPib = self._resolve(components, "dbtEstadoPib", "Label", Label)
+        self.dbtEstadoPibPerCapita = self._resolve(components, "dbtEstadoPibPerCapita", "Label", Label)
+        self.dbtEstadoMunicipios = self._resolve(components, "dbtEstadoMunicipios", "Label", Label)
+        self.pnlMunicipio = self._resolve(components, "pnlMunicipio", "Panel", Panel)
+        self.svgMunicipio = self._resolve(components, "svgMunicipio", "Svg", Svg)
+        self.svgEstado = self._resolve(components, "svgEstado", "Svg", Svg)
+        self.lytBandeiraMunicipio = self._resolve(components, "lytBandeiraMunicipio", "Layout", Layout)
+        self.lblMunicipio = self._resolve(components, "lblMunicipio", "Label", Label)
+        self.lblCodigo = self._resolve(components, "lblCodigo", "Label", Label)
+        self.imgBandeiraMunicipio = self._resolve(components, "imgBandeiraMunicipio", "Image", Image)
+        self.lblSemBandeira = self._resolve(components, "lblSemBandeira", "Label", Label)
+        self.lytNumerosMunicipio = self._resolve(components, "lytNumerosMunicipio", "Layout", Layout)
+        self.dbtMesorregiao = self._resolve(components, "dbtMesorregiao", "Label", Label)
+        self.dbtMicrorregiao = self._resolve(components, "dbtMicrorregiao", "Label", Label)
+        self.dbtRegiaoImediata = self._resolve(components, "dbtRegiaoImediata", "Label", Label)
+        self.dbtPopulacao = self._resolve(components, "dbtPopulacao", "Label", Label)
+        self.lblEstimativa = self._resolve(components, "lblEstimativa", "Label", Label)
+        self.dbtEstimativa = self._resolve(components, "dbtEstimativa", "Label", Label)
+        self.dbtArea = self._resolve(components, "dbtArea", "Label", Label)
+        self.dbtDensidade = self._resolve(components, "dbtDensidade", "Label", Label)
+        self.dbtPib = self._resolve(components, "dbtPib", "Label", Label)
+        self.dbtPibPerCapita = self._resolve(components, "dbtPibPerCapita", "Label", Label)
+        self.dbtPibParticipacao = self._resolve(components, "dbtPibParticipacao", "Label", Label)
+        self.lytGraficos = self._resolve(components, "lytGraficos", "Layout", Layout)
+        self.dbcPopulacao = self._resolve(components, "dbcPopulacao", "DBChart", DBChart)
+        self.dbcMaiores = self._resolve(components, "dbcMaiores", "DBChart", DBChart)
+        self.dbcEstados = self._resolve(components, "dbcEstados", "DBChart", DBChart)
+
+    def find_client_data_set(self, name):
+        """O ClientDataSet deste form com o nome (como o FindComponent)."""
+        if name == "cdsEstados":
+            return self.cdsEstados
+        if name == "cdsMunicipios":
+            return self.cdsMunicipios
+        if name == "cdsDistritos":
+            return self.cdsDistritos
+        if name == "cdsPopulacao":
+            return self.cdsPopulacao
+        if name == "cdsMaiores":
+            return self.cdsMaiores
+        return None
+
+    def sender_as_client_data_set(self, event):
+        """O ClientDataSet que disparou o evento."""
+        return self.find_client_data_set(event["sender"]["name"])
+
+    def find_d_b_chart(self, name):
+        """O DBChart deste form com o nome (como o FindComponent)."""
+        if name == "dbcPopulacao":
+            return self.dbcPopulacao
+        if name == "dbcMaiores":
+            return self.dbcMaiores
+        if name == "dbcEstados":
+            return self.dbcEstados
+        return None
+
+    def sender_as_d_b_chart(self, event):
+        """O DBChart que disparou o evento."""
+        return self.find_d_b_chart(event["sender"]["name"])
+
+    def find_data_grid(self, name):
+        """O DataGrid deste form com o nome (como o FindComponent)."""
+        if name == "grdEstados":
+            return self.grdEstados
+        if name == "grdDistritos":
+            return self.grdDistritos
+        if name == "grdMunicipios":
+            return self.grdMunicipios
+        return None
+
+    def sender_as_data_grid(self, event):
+        """O DataGrid que disparou o evento."""
+        return self.find_data_grid(event["sender"]["name"])
+
+    def find_data_source(self, name):
+        """O DataSource deste form com o nome (como o FindComponent)."""
+        if name == "dsEstados":
+            return self.dsEstados
+        if name == "dsMunicipios":
+            return self.dsMunicipios
+        if name == "dsDistritos":
+            return self.dsDistritos
+        if name == "dsPopulacao":
+            return self.dsPopulacao
+        if name == "dsMaiores":
+            return self.dsMaiores
+        return None
+
+    def sender_as_data_source(self, event):
+        """O DataSource que disparou o evento."""
+        return self.find_data_source(event["sender"]["name"])
+
+    def find_field(self, name):
+        """O Field deste form com o nome (como o FindComponent)."""
+        if name == "cdsEstadosId":
+            return self.cdsEstadosId
+        if name == "cdsEstadosSigla":
+            return self.cdsEstadosSigla
+        if name == "cdsEstadosNome":
+            return self.cdsEstadosNome
+        if name == "cdsEstadosRegiao":
+            return self.cdsEstadosRegiao
+        if name == "cdsEstadosPopulacao":
+            return self.cdsEstadosPopulacao
+        if name == "cdsEstadosArea":
+            return self.cdsEstadosArea
+        if name == "cdsEstadosDensidade":
+            return self.cdsEstadosDensidade
+        if name == "cdsEstadosPib":
+            return self.cdsEstadosPib
+        if name == "cdsEstadosPibPerCapita":
+            return self.cdsEstadosPibPerCapita
+        if name == "cdsEstadosEstimativa":
+            return self.cdsEstadosEstimativa
+        if name == "cdsEstadosEstimativaAno":
+            return self.cdsEstadosEstimativaAno
+        if name == "cdsEstadosMunicipios":
+            return self.cdsEstadosMunicipios
+        if name == "cdsEstadosBandeira":
+            return self.cdsEstadosBandeira
+        if name == "cdsMunicipiosId":
+            return self.cdsMunicipiosId
+        if name == "cdsMunicipiosUfId":
+            return self.cdsMunicipiosUfId
+        if name == "cdsMunicipiosUf":
+            return self.cdsMunicipiosUf
+        if name == "cdsMunicipiosNome":
+            return self.cdsMunicipiosNome
+        if name == "cdsMunicipiosMesorregiao":
+            return self.cdsMunicipiosMesorregiao
+        if name == "cdsMunicipiosMicrorregiao":
+            return self.cdsMunicipiosMicrorregiao
+        if name == "cdsMunicipiosRegiaoIntermediaria":
+            return self.cdsMunicipiosRegiaoIntermediaria
+        if name == "cdsMunicipiosRegiaoImediata":
+            return self.cdsMunicipiosRegiaoImediata
+        if name == "cdsMunicipiosPopulacao":
+            return self.cdsMunicipiosPopulacao
+        if name == "cdsMunicipiosArea":
+            return self.cdsMunicipiosArea
+        if name == "cdsMunicipiosDensidade":
+            return self.cdsMunicipiosDensidade
+        if name == "cdsMunicipiosPib":
+            return self.cdsMunicipiosPib
+        if name == "cdsMunicipiosPibParticipacao":
+            return self.cdsMunicipiosPibParticipacao
+        if name == "cdsMunicipiosPibPerCapita":
+            return self.cdsMunicipiosPibPerCapita
+        if name == "cdsMunicipiosEstimativa":
+            return self.cdsMunicipiosEstimativa
+        if name == "cdsMunicipiosEstimativaAno":
+            return self.cdsMunicipiosEstimativaAno
+        if name == "cdsMunicipiosDistritos":
+            return self.cdsMunicipiosDistritos
+        if name == "cdsMunicipiosBandeira":
+            return self.cdsMunicipiosBandeira
+        if name == "cdsDistritosId":
+            return self.cdsDistritosId
+        if name == "cdsDistritosMunicipioId":
+            return self.cdsDistritosMunicipioId
+        if name == "cdsDistritosNome":
+            return self.cdsDistritosNome
+        if name == "cdsPopulacaoAno":
+            return self.cdsPopulacaoAno
+        if name == "cdsPopulacaoHabitantes":
+            return self.cdsPopulacaoHabitantes
+        if name == "cdsMaioresNome":
+            return self.cdsMaioresNome
+        if name == "cdsMaioresHabitantes":
+            return self.cdsMaioresHabitantes
+        return None
+
+    def sender_as_field(self, event):
+        """O Field que disparou o evento."""
+        return self.find_field(event["sender"]["name"])
+
+    def find_group_box(self, name):
+        """O GroupBox deste form com o nome (como o FindComponent)."""
+        if name == "gbEstados":
+            return self.gbEstados
+        if name == "gbDistritos":
+            return self.gbDistritos
+        if name == "gbMunicipios":
+            return self.gbMunicipios
+        return None
+
+    def sender_as_group_box(self, event):
+        """O GroupBox que disparou o evento."""
+        return self.find_group_box(event["sender"]["name"])
+
+    def find_image(self, name):
+        """O Image deste form com o nome (como o FindComponent)."""
+        if name == "imgBandeiraEstado":
+            return self.imgBandeiraEstado
+        if name == "imgBandeiraMunicipio":
+            return self.imgBandeiraMunicipio
+        return None
+
+    def sender_as_image(self, event):
+        """O Image que disparou o evento."""
+        return self.find_image(event["sender"]["name"])
+
+    def find_label(self, name):
+        """O Label deste form com o nome (como o FindComponent)."""
+        if name == "lblFonte":
+            return self.lblFonte
+        if name == "lblEstado":
+            return self.lblEstado
+        if name == "lblRegiao":
+            return self.lblRegiao
+        if name == "dbtEstadoPopulacao":
+            return self.dbtEstadoPopulacao
+        if name == "lblEstadoEstimativa":
+            return self.lblEstadoEstimativa
+        if name == "dbtEstadoEstimativa":
+            return self.dbtEstadoEstimativa
+        if name == "dbtEstadoArea":
+            return self.dbtEstadoArea
+        if name == "dbtEstadoDensidade":
+            return self.dbtEstadoDensidade
+        if name == "dbtEstadoPib":
+            return self.dbtEstadoPib
+        if name == "dbtEstadoPibPerCapita":
+            return self.dbtEstadoPibPerCapita
+        if name == "dbtEstadoMunicipios":
+            return self.dbtEstadoMunicipios
+        if name == "lblMunicipio":
+            return self.lblMunicipio
+        if name == "lblCodigo":
+            return self.lblCodigo
+        if name == "lblSemBandeira":
+            return self.lblSemBandeira
+        if name == "dbtMesorregiao":
+            return self.dbtMesorregiao
+        if name == "dbtMicrorregiao":
+            return self.dbtMicrorregiao
+        if name == "dbtRegiaoImediata":
+            return self.dbtRegiaoImediata
+        if name == "dbtPopulacao":
+            return self.dbtPopulacao
+        if name == "lblEstimativa":
+            return self.lblEstimativa
+        if name == "dbtEstimativa":
+            return self.dbtEstimativa
+        if name == "dbtArea":
+            return self.dbtArea
+        if name == "dbtDensidade":
+            return self.dbtDensidade
+        if name == "dbtPib":
+            return self.dbtPib
+        if name == "dbtPibPerCapita":
+            return self.dbtPibPerCapita
+        if name == "dbtPibParticipacao":
+            return self.dbtPibParticipacao
+        return None
+
+    def sender_as_label(self, event):
+        """O Label que disparou o evento."""
+        return self.find_label(event["sender"]["name"])
+
+    def find_layout(self, name):
+        """O Layout deste form com o nome (como o FindComponent)."""
+        if name == "lytListas":
+            return self.lytListas
+        if name == "lytPainel":
+            return self.lytPainel
+        if name == "lytBandeiraEstado":
+            return self.lytBandeiraEstado
+        if name == "lytNumerosEstado":
+            return self.lytNumerosEstado
+        if name == "lytBandeiraMunicipio":
+            return self.lytBandeiraMunicipio
+        if name == "lytNumerosMunicipio":
+            return self.lytNumerosMunicipio
+        if name == "lytGraficos":
+            return self.lytGraficos
+        return None
+
+    def sender_as_layout(self, event):
+        """O Layout que disparou o evento."""
+        return self.find_layout(event["sender"]["name"])
+
+    def find_panel(self, name):
+        """O Panel deste form com o nome (como o FindComponent)."""
+        if name == "pnlEstado":
+            return self.pnlEstado
+        if name == "pnlMunicipio":
+            return self.pnlMunicipio
+        return None
+
+    def sender_as_panel(self, event):
+        """O Panel que disparou o evento."""
+        return self.find_panel(event["sender"]["name"])
+
+    def find_splitter(self, name):
+        """O Splitter deste form com o nome (como o FindComponent)."""
+        if name == "splListas":
+            return self.splListas
+        return None
+
+    def sender_as_splitter(self, event):
+        """O Splitter que disparou o evento."""
+        return self.find_splitter(event["sender"]["name"])
+
+    def find_svg(self, name):
+        """O Svg deste form com o nome (como o FindComponent)."""
+        if name == "svgBrasil":
+            return self.svgBrasil
+        if name == "svgMunicipio":
+            return self.svgMunicipio
+        if name == "svgEstado":
+            return self.svgEstado
+        return None
+
+    def sender_as_svg(self, event):
+        """O Svg que disparou o evento."""
+        return self.find_svg(event["sender"]["name"])
+
+
+
+# A janela de frmIBGE cujo evento está rodando (a primeira, fora dos handlers).
+frmIBGE = CurrentForm("frmIBGE")
+register_form_class("frmIBGE", FrmIBGEComponents, frmIBGE._activate)

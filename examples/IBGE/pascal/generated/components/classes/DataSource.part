@@ -1,0 +1,46 @@
+  { Um DataSource de um form. }
+  TDataSource = class(TAylisComponent)
+  private
+    function GetDataSet: string;
+    procedure SetDataSet(Value: string);
+    function GetAutoEdit: Boolean;
+    procedure SetAutoEdit(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+  public
+    property DataSet: string read GetDataSet write SetDataSet;
+    property AutoEdit: Boolean read GetAutoEdit write SetAutoEdit;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+  end;
+
+
+function TDataSource.GetDataSet: string;
+begin
+  Result := AsText(GetProp('data_set'));
+end;
+
+procedure TDataSource.SetDataSet(Value: string);
+begin
+  SetProp('data_set', TJSONString.Create(Value));
+end;
+
+function TDataSource.GetAutoEdit: Boolean;
+begin
+  Result := GetProp('auto_edit').AsBoolean;
+end;
+
+procedure TDataSource.SetAutoEdit(Value: Boolean);
+begin
+  SetProp('auto_edit', TJSONBoolean.Create(Value));
+end;
+
+function TDataSource.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TDataSource.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+

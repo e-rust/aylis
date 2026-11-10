@@ -1,0 +1,208 @@
+
+
+class FrmCalculadoraComponents(Form):
+    """O form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância)."""
+
+    def bind(self, components):
+        self.pnlLateral = self._resolve(components, "pnlLateral", "Panel", Panel)
+        self.tabLateral = self._resolve(components, "tabLateral", "TabControl", TabControl)
+        self.tabHistorico = self._resolve(components, "tabHistorico", "TabItem", TabItem)
+        self.btnLimparHistorico = self._resolve(components, "btnLimparHistorico", "Button", Button)
+        self.lvHistorico = self._resolve(components, "lvHistorico", "ListView", ListView)
+        self.tabMemoria = self._resolve(components, "tabMemoria", "TabItem", TabItem)
+        self.lvMemoria = self._resolve(components, "lvMemoria", "ListView", ListView)
+        self.lytCorpo = self._resolve(components, "lytCorpo", "Layout", Layout)
+        self.lytTopo = self._resolve(components, "lytTopo", "Layout", Layout)
+        self.btnHistorico = self._resolve(components, "btnHistorico", "Button", Button)
+        self.lblTitulo = self._resolve(components, "lblTitulo", "Label", Label)
+        self.lblExpressao = self._resolve(components, "lblExpressao", "Label", Label)
+        self.lblVisor = self._resolve(components, "lblVisor", "Label", Label)
+        self.grdMemoria = self._resolve(components, "grdMemoria", "GridLayout", GridLayout)
+        self.btnMC = self._resolve(components, "btnMC", "Button", Button)
+        self.btnMR = self._resolve(components, "btnMR", "Button", Button)
+        self.btnMMais = self._resolve(components, "btnMMais", "Button", Button)
+        self.btnMMenos = self._resolve(components, "btnMMenos", "Button", Button)
+        self.btnMS = self._resolve(components, "btnMS", "Button", Button)
+        self.grdTeclado = self._resolve(components, "grdTeclado", "GridLayout", GridLayout)
+        self.btnPorcento = self._resolve(components, "btnPorcento", "Button", Button)
+        self.btnCE = self._resolve(components, "btnCE", "Button", Button)
+        self.btnC = self._resolve(components, "btnC", "Button", Button)
+        self.btnApagar = self._resolve(components, "btnApagar", "Button", Button)
+        self.btnInverso = self._resolve(components, "btnInverso", "Button", Button)
+        self.btnQuadrado = self._resolve(components, "btnQuadrado", "Button", Button)
+        self.btnRaiz = self._resolve(components, "btnRaiz", "Button", Button)
+        self.btnDividir = self._resolve(components, "btnDividir", "Button", Button)
+        self.btn7 = self._resolve(components, "btn7", "Button", Button)
+        self.btn8 = self._resolve(components, "btn8", "Button", Button)
+        self.btn9 = self._resolve(components, "btn9", "Button", Button)
+        self.btnMultiplicar = self._resolve(components, "btnMultiplicar", "Button", Button)
+        self.btn4 = self._resolve(components, "btn4", "Button", Button)
+        self.btn5 = self._resolve(components, "btn5", "Button", Button)
+        self.btn6 = self._resolve(components, "btn6", "Button", Button)
+        self.btnSubtrair = self._resolve(components, "btnSubtrair", "Button", Button)
+        self.btn1 = self._resolve(components, "btn1", "Button", Button)
+        self.btn2 = self._resolve(components, "btn2", "Button", Button)
+        self.btn3 = self._resolve(components, "btn3", "Button", Button)
+        self.btnSomar = self._resolve(components, "btnSomar", "Button", Button)
+        self.btnSinal = self._resolve(components, "btnSinal", "Button", Button)
+        self.btn0 = self._resolve(components, "btn0", "Button", Button)
+        self.btnVirgula = self._resolve(components, "btnVirgula", "Button", Button)
+        self.btnIgual = self._resolve(components, "btnIgual", "Button", Button)
+
+    def find_button(self, name):
+        """O Button deste form com o nome (como o FindComponent)."""
+        if name == "btnLimparHistorico":
+            return self.btnLimparHistorico
+        if name == "btnHistorico":
+            return self.btnHistorico
+        if name == "btnMC":
+            return self.btnMC
+        if name == "btnMR":
+            return self.btnMR
+        if name == "btnMMais":
+            return self.btnMMais
+        if name == "btnMMenos":
+            return self.btnMMenos
+        if name == "btnMS":
+            return self.btnMS
+        if name == "btnPorcento":
+            return self.btnPorcento
+        if name == "btnCE":
+            return self.btnCE
+        if name == "btnC":
+            return self.btnC
+        if name == "btnApagar":
+            return self.btnApagar
+        if name == "btnInverso":
+            return self.btnInverso
+        if name == "btnQuadrado":
+            return self.btnQuadrado
+        if name == "btnRaiz":
+            return self.btnRaiz
+        if name == "btnDividir":
+            return self.btnDividir
+        if name == "btn7":
+            return self.btn7
+        if name == "btn8":
+            return self.btn8
+        if name == "btn9":
+            return self.btn9
+        if name == "btnMultiplicar":
+            return self.btnMultiplicar
+        if name == "btn4":
+            return self.btn4
+        if name == "btn5":
+            return self.btn5
+        if name == "btn6":
+            return self.btn6
+        if name == "btnSubtrair":
+            return self.btnSubtrair
+        if name == "btn1":
+            return self.btn1
+        if name == "btn2":
+            return self.btn2
+        if name == "btn3":
+            return self.btn3
+        if name == "btnSomar":
+            return self.btnSomar
+        if name == "btnSinal":
+            return self.btnSinal
+        if name == "btn0":
+            return self.btn0
+        if name == "btnVirgula":
+            return self.btnVirgula
+        if name == "btnIgual":
+            return self.btnIgual
+        return None
+
+    def sender_as_button(self, event):
+        """O Button que disparou o evento."""
+        return self.find_button(event["sender"]["name"])
+
+    def find_grid_layout(self, name):
+        """O GridLayout deste form com o nome (como o FindComponent)."""
+        if name == "grdMemoria":
+            return self.grdMemoria
+        if name == "grdTeclado":
+            return self.grdTeclado
+        return None
+
+    def sender_as_grid_layout(self, event):
+        """O GridLayout que disparou o evento."""
+        return self.find_grid_layout(event["sender"]["name"])
+
+    def find_label(self, name):
+        """O Label deste form com o nome (como o FindComponent)."""
+        if name == "lblTitulo":
+            return self.lblTitulo
+        if name == "lblExpressao":
+            return self.lblExpressao
+        if name == "lblVisor":
+            return self.lblVisor
+        return None
+
+    def sender_as_label(self, event):
+        """O Label que disparou o evento."""
+        return self.find_label(event["sender"]["name"])
+
+    def find_layout(self, name):
+        """O Layout deste form com o nome (como o FindComponent)."""
+        if name == "lytCorpo":
+            return self.lytCorpo
+        if name == "lytTopo":
+            return self.lytTopo
+        return None
+
+    def sender_as_layout(self, event):
+        """O Layout que disparou o evento."""
+        return self.find_layout(event["sender"]["name"])
+
+    def find_list_view(self, name):
+        """O ListView deste form com o nome (como o FindComponent)."""
+        if name == "lvHistorico":
+            return self.lvHistorico
+        if name == "lvMemoria":
+            return self.lvMemoria
+        return None
+
+    def sender_as_list_view(self, event):
+        """O ListView que disparou o evento."""
+        return self.find_list_view(event["sender"]["name"])
+
+    def find_panel(self, name):
+        """O Panel deste form com o nome (como o FindComponent)."""
+        if name == "pnlLateral":
+            return self.pnlLateral
+        return None
+
+    def sender_as_panel(self, event):
+        """O Panel que disparou o evento."""
+        return self.find_panel(event["sender"]["name"])
+
+    def find_tab_control(self, name):
+        """O TabControl deste form com o nome (como o FindComponent)."""
+        if name == "tabLateral":
+            return self.tabLateral
+        return None
+
+    def sender_as_tab_control(self, event):
+        """O TabControl que disparou o evento."""
+        return self.find_tab_control(event["sender"]["name"])
+
+    def find_tab_item(self, name):
+        """O TabItem deste form com o nome (como o FindComponent)."""
+        if name == "tabHistorico":
+            return self.tabHistorico
+        if name == "tabMemoria":
+            return self.tabMemoria
+        return None
+
+    def sender_as_tab_item(self, event):
+        """O TabItem que disparou o evento."""
+        return self.find_tab_item(event["sender"]["name"])
+
+
+
+# A janela de frmCalculadora cujo evento está rodando (a primeira, fora dos handlers).
+frmCalculadora = CurrentForm("frmCalculadora")
+register_form_class("frmCalculadora", FrmCalculadoraComponents, frmCalculadora._activate)

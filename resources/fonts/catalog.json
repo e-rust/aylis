@@ -1,0 +1,383 @@
+[
+ {
+  "family": "Inter",
+  "folder": "inter",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Inter-Italic[opsz,wght].ttf",
+   "Inter[opsz,wght].ttf"
+  ]
+ },
+ {
+  "family": "Roboto",
+  "folder": "roboto",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Roboto-Italic[wdth,wght].ttf",
+   "Roboto[wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Roboto Mono",
+  "folder": "robotomono",
+  "license": "SIL OFL 1.1",
+  "category": "MONOSPACE",
+  "files": [
+   "RobotoMono-Italic[wght].ttf",
+   "RobotoMono[wght].ttf"
+  ]
+ },
+ {
+  "family": "Roboto Flex",
+  "folder": "robotoflex",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Open Sans",
+  "folder": "opensans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "OpenSans-Italic[wdth,wght].ttf",
+   "OpenSans[wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Lato",
+  "folder": "lato",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Lato-Black.ttf",
+   "Lato-BlackItalic.ttf",
+   "Lato-Bold.ttf",
+   "Lato-BoldItalic.ttf",
+   "Lato-ExtraBold.ttf",
+   "Lato-ExtraBoldItalic.ttf",
+   "Lato-ExtraLight.ttf",
+   "Lato-ExtraLightItalic.ttf",
+   "Lato-Italic.ttf",
+   "Lato-Light.ttf",
+   "Lato-LightItalic.ttf",
+   "Lato-Medium.ttf",
+   "Lato-MediumItalic.ttf",
+   "Lato-Regular.ttf",
+   "Lato-SemiBold.ttf",
+   "Lato-SemiBoldItalic.ttf",
+   "Lato-Thin.ttf",
+   "Lato-ThinItalic.ttf"
+  ]
+ },
+ {
+  "family": "Montserrat",
+  "folder": "montserrat",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Montserrat-Italic[wght].ttf",
+   "Montserrat[wght].ttf"
+  ]
+ },
+ {
+  "family": "Poppins",
+  "folder": "poppins",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Poppins-Black.ttf",
+   "Poppins-BlackItalic.ttf",
+   "Poppins-Bold.ttf",
+   "Poppins-BoldItalic.ttf",
+   "Poppins-ExtraBold.ttf",
+   "Poppins-ExtraBoldItalic.ttf",
+   "Poppins-ExtraLight.ttf",
+   "Poppins-ExtraLightItalic.ttf",
+   "Poppins-Italic.ttf",
+   "Poppins-Light.ttf",
+   "Poppins-LightItalic.ttf",
+   "Poppins-Medium.ttf",
+   "Poppins-MediumItalic.ttf",
+   "Poppins-Regular.ttf",
+   "Poppins-SemiBold.ttf",
+   "Poppins-SemiBoldItalic.ttf",
+   "Poppins-Thin.ttf",
+   "Poppins-ThinItalic.ttf"
+  ]
+ },
+ {
+  "family": "Nunito",
+  "folder": "nunito",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Nunito-Italic[wght].ttf",
+   "Nunito[wght].ttf"
+  ]
+ },
+ {
+  "family": "Noto Sans",
+  "folder": "notosans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "NotoSans-Italic[wdth,wght].ttf",
+   "NotoSans[wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Noto Serif",
+  "folder": "notoserif",
+  "license": "SIL OFL 1.1",
+  "category": "SERIF",
+  "files": [
+   "NotoSerif-Italic[wdth,wght].ttf",
+   "NotoSerif[wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Source Sans 3",
+  "folder": "sourcesans3",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "SourceSans3-Italic[wght].ttf",
+   "SourceSans3[wght].ttf"
+  ]
+ },
+ {
+  "family": "Raleway",
+  "folder": "raleway",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Raleway-Italic[wght].ttf",
+   "Raleway[wght].ttf"
+  ]
+ },
+ {
+  "family": "Work Sans",
+  "folder": "worksans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "WorkSans-Italic[wght].ttf",
+   "WorkSans[wght].ttf"
+  ]
+ },
+ {
+  "family": "Rubik",
+  "folder": "rubik",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Rubik-Italic[wght].ttf",
+   "Rubik[wght].ttf"
+  ]
+ },
+ {
+  "family": "Manrope",
+  "folder": "manrope",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Manrope[wght].ttf"
+  ]
+ },
+ {
+  "family": "DM Sans",
+  "folder": "dmsans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "DMSans-Italic[opsz,wght].ttf",
+   "DMSans[opsz,wght].ttf"
+  ]
+ },
+ {
+  "family": "IBM Plex Sans",
+  "folder": "ibmplexsans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "IBMPlexSans-Italic[wdth,wght].ttf",
+   "IBMPlexSans[wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "IBM Plex Mono",
+  "folder": "ibmplexmono",
+  "license": "SIL OFL 1.1",
+  "category": "MONOSPACE",
+  "files": [
+   "IBMPlexMono-Bold.ttf",
+   "IBMPlexMono-BoldItalic.ttf",
+   "IBMPlexMono-ExtraLight.ttf",
+   "IBMPlexMono-ExtraLightItalic.ttf",
+   "IBMPlexMono-Italic.ttf",
+   "IBMPlexMono-Light.ttf",
+   "IBMPlexMono-LightItalic.ttf",
+   "IBMPlexMono-Medium.ttf",
+   "IBMPlexMono-MediumItalic.ttf",
+   "IBMPlexMono-Regular.ttf",
+   "IBMPlexMono-SemiBold.ttf",
+   "IBMPlexMono-SemiBoldItalic.ttf",
+   "IBMPlexMono-Thin.ttf",
+   "IBMPlexMono-ThinItalic.ttf"
+  ]
+ },
+ {
+  "family": "Ubuntu",
+  "folder": "ubuntu",
+  "license": "Ubuntu Font Licence 1.0",
+  "category": "SANS_SERIF",
+  "files": [
+   "Ubuntu-Bold.ttf",
+   "Ubuntu-BoldItalic.ttf",
+   "Ubuntu-Italic.ttf",
+   "Ubuntu-Light.ttf",
+   "Ubuntu-LightItalic.ttf",
+   "Ubuntu-Medium.ttf",
+   "Ubuntu-MediumItalic.ttf",
+   "Ubuntu-Regular.ttf"
+  ]
+ },
+ {
+  "family": "Merriweather",
+  "folder": "merriweather",
+  "license": "SIL OFL 1.1",
+  "category": "SERIF",
+  "files": [
+   "Merriweather-Italic[opsz,wdth,wght].ttf",
+   "Merriweather[opsz,wdth,wght].ttf"
+  ]
+ },
+ {
+  "family": "Playfair Display",
+  "folder": "playfairdisplay",
+  "license": "SIL OFL 1.1",
+  "category": "SERIF",
+  "files": [
+   "PlayfairDisplay-Italic[wght].ttf",
+   "PlayfairDisplay[wght].ttf"
+  ]
+ },
+ {
+  "family": "JetBrains Mono",
+  "folder": "jetbrainsmono",
+  "license": "SIL OFL 1.1",
+  "category": "MONOSPACE",
+  "files": [
+   "JetBrainsMono-Italic[wght].ttf",
+   "JetBrainsMono[wght].ttf"
+  ]
+ },
+ {
+  "family": "Fira Code",
+  "folder": "firacode",
+  "license": "SIL OFL 1.1",
+  "category": "MONOSPACE",
+  "files": [
+   "FiraCode[wght].ttf"
+  ]
+ },
+ {
+  "family": "Fira Sans",
+  "folder": "firasans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "FiraSans-Black.ttf",
+   "FiraSans-BlackItalic.ttf",
+   "FiraSans-Bold.ttf",
+   "FiraSans-BoldItalic.ttf",
+   "FiraSans-ExtraBold.ttf",
+   "FiraSans-ExtraBoldItalic.ttf",
+   "FiraSans-ExtraLight.ttf",
+   "FiraSans-ExtraLightItalic.ttf",
+   "FiraSans-Italic.ttf",
+   "FiraSans-Light.ttf",
+   "FiraSans-LightItalic.ttf",
+   "FiraSans-Medium.ttf",
+   "FiraSans-MediumItalic.ttf",
+   "FiraSans-Regular.ttf",
+   "FiraSans-SemiBold.ttf",
+   "FiraSans-SemiBoldItalic.ttf",
+   "FiraSans-Thin.ttf",
+   "FiraSans-ThinItalic.ttf"
+  ]
+ },
+ {
+  "family": "Lora",
+  "folder": "lora",
+  "license": "SIL OFL 1.1",
+  "category": "SERIF",
+  "files": [
+   "Lora-Italic[wght].ttf",
+   "Lora[wght].ttf"
+  ]
+ },
+ {
+  "family": "Outfit",
+  "folder": "outfit",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Outfit[wght].ttf"
+  ]
+ },
+ {
+  "family": "Quicksand",
+  "folder": "quicksand",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Quicksand[wght].ttf"
+  ]
+ },
+ {
+  "family": "Oswald",
+  "folder": "oswald",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Oswald[wght].ttf"
+  ]
+ },
+ {
+  "family": "PT Sans",
+  "folder": "ptsans",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "PT_Sans-Web-Bold.ttf",
+   "PT_Sans-Web-BoldItalic.ttf",
+   "PT_Sans-Web-Italic.ttf",
+   "PT_Sans-Web-Regular.ttf"
+  ]
+ },
+ {
+  "family": "Mulish",
+  "folder": "mulish",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "Mulish-Italic[wght].ttf",
+   "Mulish[wght].ttf"
+  ]
+ },
+ {
+  "family": "Noto Color Emoji",
+  "folder": "notocoloremoji",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "NotoColorEmoji-Regular.ttf"
+  ]
+ }
+]

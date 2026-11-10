@@ -1,0 +1,30 @@
+{
+  "revisions": {
+    "frmPrincipal.btn_saudar_click": 1,
+    "frmPrincipal.saudar_click": 1
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/btnSaudar.on_click": "btn_saudar_click"
+      },
+      "handlers": {
+        "frmPrincipal.btn_saudar_click": {
+          "hash": "93154c7e1a47ab40",
+          "seen": 1
+        },
+        "frmPrincipal.saudar_click": {
+          "hash": "93154c7e1a47ab40",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "btnSaudar",
+    "edtNome",
+    "frmPrincipal",
+    "lblPergunta",
+    "lblResposta"
+  ]
+}

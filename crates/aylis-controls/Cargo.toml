@@ -1,0 +1,25 @@
+[package]
+name = "aylis-controls"
+description = "Controles padrão do aylis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# Os controles moram em crates por família (compilam em paralelo); este junta todos e
+# registra as classes.
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-controls-base = { path = "../aylis-controls-base" }
+aylis-controls-charts = { path = "../aylis-controls-charts" }
+aylis-controls-device = { path = "../aylis-controls-device" }
+aylis-controls-editors = { path = "../aylis-controls-editors" }
+aylis-controls-industrial = { path = "../aylis-controls-industrial" }
+
+[dev-dependencies]
+serde_json = "1"
+# O teste de pintar por parte x por inteiro compara pixels de verdade.
+aylis-skia = { path = "../aylis-skia" }
+
+[target.'cfg(windows)'.dev-dependencies]
+aylis-d2d = { path = "../aylis-d2d" }

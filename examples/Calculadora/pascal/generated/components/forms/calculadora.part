@@ -1,0 +1,366 @@
+  { O form frmCalculadora: a classe base com os componentes. A do form (TFrmCalculadora), com os
+    handlers (métodos published) e o estado, fica na unit dele. }
+  TFrmCalculadoraBase = class(TForm)
+  published
+    pnlLateral: TPanel;
+    tabLateral: TTabControl;
+    tabHistorico: TTabItem;
+    btnLimparHistorico: TButton;
+    lvHistorico: TListView;
+    tabMemoria: TTabItem;
+    lvMemoria: TListView;
+    lytCorpo: TLayout;
+    lytTopo: TLayout;
+    btnHistorico: TButton;
+    lblTitulo: TLabel;
+    lblExpressao: TLabel;
+    lblVisor: TLabel;
+    grdMemoria: TGridLayout;
+    btnMC: TButton;
+    btnMR: TButton;
+    btnMMais: TButton;
+    btnMMenos: TButton;
+    btnMS: TButton;
+    grdTeclado: TGridLayout;
+    btnPorcento: TButton;
+    btnCE: TButton;
+    btnC: TButton;
+    btnApagar: TButton;
+    btnInverso: TButton;
+    btnQuadrado: TButton;
+    btnRaiz: TButton;
+    btnDividir: TButton;
+    btn7: TButton;
+    btn8: TButton;
+    btn9: TButton;
+    btnMultiplicar: TButton;
+    btn4: TButton;
+    btn5: TButton;
+    btn6: TButton;
+    btnSubtrair: TButton;
+    btn1: TButton;
+    btn2: TButton;
+    btn3: TButton;
+    btnSomar: TButton;
+    btnSinal: TButton;
+    btn0: TButton;
+    btnVirgula: TButton;
+    btnIgual: TButton;
+  protected
+    procedure BindComponents(List: TJSONArray); override;
+  public
+    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    function FindButton(const Nome: string): TButton;
+    { O Button que disparou o evento (nil se não é um Button deste form). }
+    function SenderAsButton(Sender: TAylisComponent): TButton; overload;
+    function SenderAsButton(Event: TJSONObject): TButton; overload;
+    { O GridLayout deste form com o nome, como o FindComponent (nil se não há). }
+    function FindGridLayout(const Nome: string): TGridLayout;
+    { O GridLayout que disparou o evento (nil se não é um GridLayout deste form). }
+    function SenderAsGridLayout(Sender: TAylisComponent): TGridLayout; overload;
+    function SenderAsGridLayout(Event: TJSONObject): TGridLayout; overload;
+    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLabel(const Nome: string): TLabel;
+    { O Label que disparou o evento (nil se não é um Label deste form). }
+    function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
+    function SenderAsLabel(Event: TJSONObject): TLabel; overload;
+    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    function FindLayout(const Nome: string): TLayout;
+    { O Layout que disparou o evento (nil se não é um Layout deste form). }
+    function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
+    function SenderAsLayout(Event: TJSONObject): TLayout; overload;
+    { O ListView deste form com o nome, como o FindComponent (nil se não há). }
+    function FindListView(const Nome: string): TListView;
+    { O ListView que disparou o evento (nil se não é um ListView deste form). }
+    function SenderAsListView(Sender: TAylisComponent): TListView; overload;
+    function SenderAsListView(Event: TJSONObject): TListView; overload;
+    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    function FindPanel(const Nome: string): TPanel;
+    { O Panel que disparou o evento (nil se não é um Panel deste form). }
+    function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
+    function SenderAsPanel(Event: TJSONObject): TPanel; overload;
+    { O TabControl deste form com o nome, como o FindComponent (nil se não há). }
+    function FindTabControl(const Nome: string): TTabControl;
+    { O TabControl que disparou o evento (nil se não é um TabControl deste form). }
+    function SenderAsTabControl(Sender: TAylisComponent): TTabControl; overload;
+    function SenderAsTabControl(Event: TJSONObject): TTabControl; overload;
+    { O TabItem deste form com o nome, como o FindComponent (nil se não há). }
+    function FindTabItem(const Nome: string): TTabItem;
+    { O TabItem que disparou o evento (nil se não é um TabItem deste form). }
+    function SenderAsTabItem(Sender: TAylisComponent): TTabItem; overload;
+    function SenderAsTabItem(Event: TJSONObject): TTabItem; overload;
+  end;
+
+
+procedure TFrmCalculadoraBase.BindComponents(List: TJSONArray);
+begin
+  pnlLateral := TPanel(Resolve(List, 'pnlLateral', 'Panel', TPanel));
+  tabLateral := TTabControl(Resolve(List, 'tabLateral', 'TabControl', TTabControl));
+  tabHistorico := TTabItem(Resolve(List, 'tabHistorico', 'TabItem', TTabItem));
+  btnLimparHistorico := TButton(Resolve(List, 'btnLimparHistorico', 'Button', TButton));
+  lvHistorico := TListView(Resolve(List, 'lvHistorico', 'ListView', TListView));
+  tabMemoria := TTabItem(Resolve(List, 'tabMemoria', 'TabItem', TTabItem));
+  lvMemoria := TListView(Resolve(List, 'lvMemoria', 'ListView', TListView));
+  lytCorpo := TLayout(Resolve(List, 'lytCorpo', 'Layout', TLayout));
+  lytTopo := TLayout(Resolve(List, 'lytTopo', 'Layout', TLayout));
+  btnHistorico := TButton(Resolve(List, 'btnHistorico', 'Button', TButton));
+  lblTitulo := TLabel(Resolve(List, 'lblTitulo', 'Label', TLabel));
+  lblExpressao := TLabel(Resolve(List, 'lblExpressao', 'Label', TLabel));
+  lblVisor := TLabel(Resolve(List, 'lblVisor', 'Label', TLabel));
+  grdMemoria := TGridLayout(Resolve(List, 'grdMemoria', 'GridLayout', TGridLayout));
+  btnMC := TButton(Resolve(List, 'btnMC', 'Button', TButton));
+  btnMR := TButton(Resolve(List, 'btnMR', 'Button', TButton));
+  btnMMais := TButton(Resolve(List, 'btnMMais', 'Button', TButton));
+  btnMMenos := TButton(Resolve(List, 'btnMMenos', 'Button', TButton));
+  btnMS := TButton(Resolve(List, 'btnMS', 'Button', TButton));
+  grdTeclado := TGridLayout(Resolve(List, 'grdTeclado', 'GridLayout', TGridLayout));
+  btnPorcento := TButton(Resolve(List, 'btnPorcento', 'Button', TButton));
+  btnCE := TButton(Resolve(List, 'btnCE', 'Button', TButton));
+  btnC := TButton(Resolve(List, 'btnC', 'Button', TButton));
+  btnApagar := TButton(Resolve(List, 'btnApagar', 'Button', TButton));
+  btnInverso := TButton(Resolve(List, 'btnInverso', 'Button', TButton));
+  btnQuadrado := TButton(Resolve(List, 'btnQuadrado', 'Button', TButton));
+  btnRaiz := TButton(Resolve(List, 'btnRaiz', 'Button', TButton));
+  btnDividir := TButton(Resolve(List, 'btnDividir', 'Button', TButton));
+  btn7 := TButton(Resolve(List, 'btn7', 'Button', TButton));
+  btn8 := TButton(Resolve(List, 'btn8', 'Button', TButton));
+  btn9 := TButton(Resolve(List, 'btn9', 'Button', TButton));
+  btnMultiplicar := TButton(Resolve(List, 'btnMultiplicar', 'Button', TButton));
+  btn4 := TButton(Resolve(List, 'btn4', 'Button', TButton));
+  btn5 := TButton(Resolve(List, 'btn5', 'Button', TButton));
+  btn6 := TButton(Resolve(List, 'btn6', 'Button', TButton));
+  btnSubtrair := TButton(Resolve(List, 'btnSubtrair', 'Button', TButton));
+  btn1 := TButton(Resolve(List, 'btn1', 'Button', TButton));
+  btn2 := TButton(Resolve(List, 'btn2', 'Button', TButton));
+  btn3 := TButton(Resolve(List, 'btn3', 'Button', TButton));
+  btnSomar := TButton(Resolve(List, 'btnSomar', 'Button', TButton));
+  btnSinal := TButton(Resolve(List, 'btnSinal', 'Button', TButton));
+  btn0 := TButton(Resolve(List, 'btn0', 'Button', TButton));
+  btnVirgula := TButton(Resolve(List, 'btnVirgula', 'Button', TButton));
+  btnIgual := TButton(Resolve(List, 'btnIgual', 'Button', TButton));
+end;
+
+function TFrmCalculadoraBase.FindButton(const Nome: string): TButton;
+begin
+  Result := nil;
+  if Nome = 'btnLimparHistorico' then
+    Result := btnLimparHistorico;
+  if Nome = 'btnHistorico' then
+    Result := btnHistorico;
+  if Nome = 'btnMC' then
+    Result := btnMC;
+  if Nome = 'btnMR' then
+    Result := btnMR;
+  if Nome = 'btnMMais' then
+    Result := btnMMais;
+  if Nome = 'btnMMenos' then
+    Result := btnMMenos;
+  if Nome = 'btnMS' then
+    Result := btnMS;
+  if Nome = 'btnPorcento' then
+    Result := btnPorcento;
+  if Nome = 'btnCE' then
+    Result := btnCE;
+  if Nome = 'btnC' then
+    Result := btnC;
+  if Nome = 'btnApagar' then
+    Result := btnApagar;
+  if Nome = 'btnInverso' then
+    Result := btnInverso;
+  if Nome = 'btnQuadrado' then
+    Result := btnQuadrado;
+  if Nome = 'btnRaiz' then
+    Result := btnRaiz;
+  if Nome = 'btnDividir' then
+    Result := btnDividir;
+  if Nome = 'btn7' then
+    Result := btn7;
+  if Nome = 'btn8' then
+    Result := btn8;
+  if Nome = 'btn9' then
+    Result := btn9;
+  if Nome = 'btnMultiplicar' then
+    Result := btnMultiplicar;
+  if Nome = 'btn4' then
+    Result := btn4;
+  if Nome = 'btn5' then
+    Result := btn5;
+  if Nome = 'btn6' then
+    Result := btn6;
+  if Nome = 'btnSubtrair' then
+    Result := btnSubtrair;
+  if Nome = 'btn1' then
+    Result := btn1;
+  if Nome = 'btn2' then
+    Result := btn2;
+  if Nome = 'btn3' then
+    Result := btn3;
+  if Nome = 'btnSomar' then
+    Result := btnSomar;
+  if Nome = 'btnSinal' then
+    Result := btnSinal;
+  if Nome = 'btn0' then
+    Result := btn0;
+  if Nome = 'btnVirgula' then
+    Result := btnVirgula;
+  if Nome = 'btnIgual' then
+    Result := btnIgual;
+end;
+
+function TFrmCalculadoraBase.SenderAsButton(Sender: TAylisComponent): TButton;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindButton(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsButton(Event: TJSONObject): TButton;
+begin
+  Result := FindButton(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindGridLayout(const Nome: string): TGridLayout;
+begin
+  Result := nil;
+  if Nome = 'grdMemoria' then
+    Result := grdMemoria;
+  if Nome = 'grdTeclado' then
+    Result := grdTeclado;
+end;
+
+function TFrmCalculadoraBase.SenderAsGridLayout(Sender: TAylisComponent): TGridLayout;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindGridLayout(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsGridLayout(Event: TJSONObject): TGridLayout;
+begin
+  Result := FindGridLayout(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindLabel(const Nome: string): TLabel;
+begin
+  Result := nil;
+  if Nome = 'lblTitulo' then
+    Result := lblTitulo;
+  if Nome = 'lblExpressao' then
+    Result := lblExpressao;
+  if Nome = 'lblVisor' then
+    Result := lblVisor;
+end;
+
+function TFrmCalculadoraBase.SenderAsLabel(Sender: TAylisComponent): TLabel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLabel(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsLabel(Event: TJSONObject): TLabel;
+begin
+  Result := FindLabel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindLayout(const Nome: string): TLayout;
+begin
+  Result := nil;
+  if Nome = 'lytCorpo' then
+    Result := lytCorpo;
+  if Nome = 'lytTopo' then
+    Result := lytTopo;
+end;
+
+function TFrmCalculadoraBase.SenderAsLayout(Sender: TAylisComponent): TLayout;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindLayout(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsLayout(Event: TJSONObject): TLayout;
+begin
+  Result := FindLayout(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindListView(const Nome: string): TListView;
+begin
+  Result := nil;
+  if Nome = 'lvHistorico' then
+    Result := lvHistorico;
+  if Nome = 'lvMemoria' then
+    Result := lvMemoria;
+end;
+
+function TFrmCalculadoraBase.SenderAsListView(Sender: TAylisComponent): TListView;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindListView(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsListView(Event: TJSONObject): TListView;
+begin
+  Result := FindListView(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindPanel(const Nome: string): TPanel;
+begin
+  Result := nil;
+  if Nome = 'pnlLateral' then
+    Result := pnlLateral;
+end;
+
+function TFrmCalculadoraBase.SenderAsPanel(Sender: TAylisComponent): TPanel;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindPanel(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsPanel(Event: TJSONObject): TPanel;
+begin
+  Result := FindPanel(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindTabControl(const Nome: string): TTabControl;
+begin
+  Result := nil;
+  if Nome = 'tabLateral' then
+    Result := tabLateral;
+end;
+
+function TFrmCalculadoraBase.SenderAsTabControl(Sender: TAylisComponent): TTabControl;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindTabControl(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsTabControl(Event: TJSONObject): TTabControl;
+begin
+  Result := FindTabControl(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+
+function TFrmCalculadoraBase.FindTabItem(const Nome: string): TTabItem;
+begin
+  Result := nil;
+  if Nome = 'tabHistorico' then
+    Result := tabHistorico;
+  if Nome = 'tabMemoria' then
+    Result := tabMemoria;
+end;
+
+function TFrmCalculadoraBase.SenderAsTabItem(Sender: TAylisComponent): TTabItem;
+begin
+  Result := nil;
+  if Sender <> nil then
+    Result := FindTabItem(Sender.Name);
+end;
+
+function TFrmCalculadoraBase.SenderAsTabItem(Event: TJSONObject): TTabItem;
+begin
+  Result := FindTabItem(TJSONObject(Event.Find('sender')).Get('name', ''));
+end;
+

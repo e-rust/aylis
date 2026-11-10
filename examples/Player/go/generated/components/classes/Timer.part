@@ -1,0 +1,18 @@
+
+// aylisTimer é um Timer de um form.
+type aylisTimer struct{ aylis.Component }
+
+func (c aylisTimer) Interval() float64 { return asNumber(c.Get("interval")) }
+func (c aylisTimer) SetInterval(v float64) { c.Set("interval", v) }
+
+func (c aylisTimer) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisTimer) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisTimer) Precision() string { return asText(c.Get("precision")) }
+func (c aylisTimer) SetPrecision(v string) { c.Set("precision", v) }
+
+func (c aylisTimer) Background() bool { return asBool(c.Get("background")) }
+func (c aylisTimer) SetBackground(v bool) { c.Set("background", v) }
+
+func (c aylisTimer) Drift() float64 { return asNumber(c.Get("drift")) }
+func (c aylisTimer) SetDrift(v float64) { c.Set("drift", v) }

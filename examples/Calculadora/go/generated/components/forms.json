@@ -1,0 +1,1 @@
+{"calculadora":{"form":"frmCalculadora","handlers":["form_key_down","limpar_historico_click","historico_item_click","memoria_item_click","historico_click","tecla_click"],"questions":[["form_key_down","on_key_down"]],"classes":["Form","Panel","TabControl","TabItem","Button","ListView","Layout","Label","GridLayout"],"cited":[]}}

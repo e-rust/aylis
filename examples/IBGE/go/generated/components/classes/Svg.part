@@ -1,0 +1,174 @@
+
+// aylisSvg é um Svg de um form.
+type aylisSvg struct{ aylis.Component }
+
+func (c aylisSvg) Source() string { return asText(c.Get("source")) }
+func (c aylisSvg) SetSource(v string) { c.Set("source", v) }
+
+func (c aylisSvg) Color() string { return asText(c.Get("color")) }
+func (c aylisSvg) SetColor(v string) { c.Set("color", v) }
+
+func (c aylisSvg) Fit() string { return asText(c.Get("fit")) }
+func (c aylisSvg) SetFit(v string) { c.Set("fit", v) }
+
+func (c aylisSvg) Highlight() string { return asText(c.Get("highlight")) }
+func (c aylisSvg) SetHighlight(v string) { c.Set("highlight", v) }
+
+func (c aylisSvg) HighlightColor() string { return asText(c.Get("highlight_color")) }
+func (c aylisSvg) SetHighlightColor(v string) { c.Set("highlight_color", v) }
+
+func (c aylisSvg) ZoomTo() string { return asText(c.Get("zoom_to")) }
+func (c aylisSvg) SetZoomTo(v string) { c.Set("zoom_to", v) }
+
+func (c aylisSvg) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisSvg) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisSvg) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisSvg) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisSvg) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisSvg) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisSvg) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisSvg) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisSvg) Align() string { return asText(c.Get("align")) }
+func (c aylisSvg) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisSvg) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisSvg) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisSvg) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisSvg) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisSvg) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisSvg) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisSvg) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisSvg) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisSvg) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisSvg) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisSvg) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisSvg) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisSvg) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisSvg) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisSvg) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisSvg) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisSvg) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisSvg) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisSvg) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisSvg) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisSvg) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisSvg) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisSvg) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisSvg) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisSvg) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisSvg) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisSvg) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisSvg) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisSvg) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisSvg) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisSvg) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisSvg) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisSvg) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisSvg) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisSvg) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisSvg) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisSvg) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisSvg) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisSvg) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisSvg) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisSvg) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisSvg) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisSvg) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisSvg) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisSvg) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisSvg) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisSvg) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisSvg) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisSvg) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisSvg) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisSvg) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisSvg) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisSvg) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisSvg) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisSvg) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisSvg) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisSvg) Style() string { return asText(c.Get("style")) }
+func (c aylisSvg) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisSvg) Theme() string { return asText(c.Get("theme")) }
+func (c aylisSvg) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisSvg) Fill() string { return asText(c.Get("fill")) }
+func (c aylisSvg) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisSvg) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisSvg) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisSvg) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisSvg) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisSvg) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisSvg) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisSvg) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisSvg) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisSvg) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisSvg) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisSvg) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisSvg) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisSvg) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisSvg) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisSvg) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisSvg) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisSvg) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisSvg) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisSvg) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisSvg) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisSvg) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisSvg) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisSvg) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisSvg) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisSvg) Hint() string { return asText(c.Get("hint")) }
+func (c aylisSvg) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisSvg) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisSvg) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisSvg) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisSvg) SetPopupMenu(v string) { c.Set("popup_menu", v) }

@@ -1,0 +1,20 @@
+[package]
+name = "aylis-dbcontrols"
+description = "Controles ligados a dados do aylis (DBEdit, DBText, DBCheckBox, DBNavigator)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-controls = { path = "../aylis-controls" }
+aylis-data = { path = "../aylis-data" }
+# As imagens dos relatórios (PNG, JPEG) viram pixels para o PDF e a impressora.
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+
+[dev-dependencies]
+aylis-json = { path = "../aylis-json" }
+serde_json = "1"
+# Abrir o PDF dos relatórios nos testes.
+aylis-docview = { path = "../aylis-docview" }

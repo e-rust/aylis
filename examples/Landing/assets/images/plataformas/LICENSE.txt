@@ -1,0 +1,3 @@
+Ícones das plataformas:
+- windows.svg, apple.svg, android.svg, web.svg, linux.svg: Devicon (https://devicon.dev), licença MIT
+  (o texto está em ../linguagens/LICENSE.txt); no apple.svg a cor foi posta aqui.

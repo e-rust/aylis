@@ -1,0 +1,165 @@
+
+// aylisDivider é um Divider de um form.
+type aylisDivider struct{ aylis.Component }
+
+func (c aylisDivider) Vertical() bool { return asBool(c.Get("vertical")) }
+func (c aylisDivider) SetVertical(v bool) { c.Set("vertical", v) }
+
+func (c aylisDivider) Text() string { return asText(c.Get("text")) }
+func (c aylisDivider) SetText(v string) { c.Set("text", v) }
+
+func (c aylisDivider) Thickness() float64 { return asNumber(c.Get("thickness")) }
+func (c aylisDivider) SetThickness(v float64) { c.Set("thickness", v) }
+
+func (c aylisDivider) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisDivider) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisDivider) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisDivider) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisDivider) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisDivider) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisDivider) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisDivider) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisDivider) Align() string { return asText(c.Get("align")) }
+func (c aylisDivider) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisDivider) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisDivider) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisDivider) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisDivider) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisDivider) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisDivider) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisDivider) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisDivider) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisDivider) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisDivider) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisDivider) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisDivider) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisDivider) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisDivider) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisDivider) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisDivider) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisDivider) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisDivider) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisDivider) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisDivider) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisDivider) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisDivider) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisDivider) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisDivider) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisDivider) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisDivider) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisDivider) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisDivider) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisDivider) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisDivider) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisDivider) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisDivider) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisDivider) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisDivider) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisDivider) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisDivider) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisDivider) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisDivider) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisDivider) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisDivider) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisDivider) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisDivider) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisDivider) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisDivider) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisDivider) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisDivider) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisDivider) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisDivider) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisDivider) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisDivider) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisDivider) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisDivider) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisDivider) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisDivider) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisDivider) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisDivider) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisDivider) Style() string { return asText(c.Get("style")) }
+func (c aylisDivider) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisDivider) Theme() string { return asText(c.Get("theme")) }
+func (c aylisDivider) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisDivider) Fill() string { return asText(c.Get("fill")) }
+func (c aylisDivider) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisDivider) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisDivider) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisDivider) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisDivider) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisDivider) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisDivider) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisDivider) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisDivider) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisDivider) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisDivider) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisDivider) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisDivider) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisDivider) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisDivider) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisDivider) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisDivider) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisDivider) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisDivider) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisDivider) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisDivider) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisDivider) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisDivider) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisDivider) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisDivider) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisDivider) Hint() string { return asText(c.Get("hint")) }
+func (c aylisDivider) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisDivider) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisDivider) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisDivider) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisDivider) SetPopupMenu(v string) { c.Set("popup_menu", v) }

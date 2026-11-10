@@ -1,0 +1,13 @@
+[package]
+name = "aylis-webview"
+description = "Componente WebView do aylis (o TWebBrowser): a página fica numa vista nativa que a plataforma põe sobre o controle"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+
+[dev-dependencies]
+aylis-controls = { path = "../aylis-controls" }

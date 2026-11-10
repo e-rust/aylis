@@ -1,0 +1,54 @@
+# ButtonGroup
+
+![ButtonGroup](img/ButtonGroup.png)
+
+Grupo de botões do Material 3 Expressive: lado a lado (`connected` = colados, com os cantos de dentro pequenos). O escolhido muda de forma (pílula → retângulo arredondado, ou o contrário quando colados). Um (`multiple` desligado) ou vários; `selected` são os itens separados por `;`; `on_change`.
+
+**Paleta:** Standard · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `icons` | Ícones | texto |
+| `connected` | Juntos | lógico |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `multiple` | Vários | lógico |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `items` | Itens | texto |
+| `selected` | Escolhidos | texto |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+
+## Em código
+
+No form, o `ButtonGroup1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "ButtonGroup", "name": "ButtonGroup1", "on_change": "button_group1_change" }
+```
+
+E o handler, um método do form (`self.ButtonGroup1` já é um `ButtonGroup`):
+
+```rust
+impl FrmPrincipal {
+    pub fn button_group1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.ButtonGroup1.items(ui);
+        self.ButtonGroup1.set_items(ui, format!("{atual}!"));
+    }
+}
+```

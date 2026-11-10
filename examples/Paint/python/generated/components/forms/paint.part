@@ -1,0 +1,410 @@
+
+
+class FrmPaintComponents(Form):
+    """O form frmPaint e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância)."""
+
+    def bind(self, components):
+        self.lytTopo = self._resolve(components, "lytTopo", "Layout", Layout)
+        self.mnuPrincipal = self._resolve(components, "mnuPrincipal", "MainMenu", MainMenu)
+        self.mnuArquivo = self._resolve(components, "mnuArquivo", "MenuItem", MenuItem)
+        self.mnuNovo = self._resolve(components, "mnuNovo", "MenuItem", MenuItem)
+        self.mnuAbrir = self._resolve(components, "mnuAbrir", "MenuItem", MenuItem)
+        self.mnuSalvar = self._resolve(components, "mnuSalvar", "MenuItem", MenuItem)
+        self.mnuSalvarComo = self._resolve(components, "mnuSalvarComo", "MenuItem", MenuItem)
+        self.mnuSep1 = self._resolve(components, "mnuSep1", "MenuItem", MenuItem)
+        self.mnuSair = self._resolve(components, "mnuSair", "MenuItem", MenuItem)
+        self.mnuEditar = self._resolve(components, "mnuEditar", "MenuItem", MenuItem)
+        self.mnuDesfazer = self._resolve(components, "mnuDesfazer", "MenuItem", MenuItem)
+        self.mnuRefazer = self._resolve(components, "mnuRefazer", "MenuItem", MenuItem)
+        self.mnuSep2 = self._resolve(components, "mnuSep2", "MenuItem", MenuItem)
+        self.mnuRecortar = self._resolve(components, "mnuRecortar", "MenuItem", MenuItem)
+        self.mnuCopiar = self._resolve(components, "mnuCopiar", "MenuItem", MenuItem)
+        self.mnuColar = self._resolve(components, "mnuColar", "MenuItem", MenuItem)
+        self.mnuExcluir = self._resolve(components, "mnuExcluir", "MenuItem", MenuItem)
+        self.mnuSelecionarTudo = self._resolve(components, "mnuSelecionarTudo", "MenuItem", MenuItem)
+        self.mnuSep3 = self._resolve(components, "mnuSep3", "MenuItem", MenuItem)
+        self.mnuLimpar = self._resolve(components, "mnuLimpar", "MenuItem", MenuItem)
+        self.mnuExibir = self._resolve(components, "mnuExibir", "MenuItem", MenuItem)
+        self.mnuAmpliar = self._resolve(components, "mnuAmpliar", "MenuItem", MenuItem)
+        self.mnuReduzir = self._resolve(components, "mnuReduzir", "MenuItem", MenuItem)
+        self.mnuTamanhoReal = self._resolve(components, "mnuTamanhoReal", "MenuItem", MenuItem)
+        self.divTopo = self._resolve(components, "divTopo", "Divider", Divider)
+        self.btnSalvar = self._resolve(components, "btnSalvar", "Button", Button)
+        self.btnDesfazer = self._resolve(components, "btnDesfazer", "Button", Button)
+        self.btnRefazer = self._resolve(components, "btnRefazer", "Button", Button)
+        self.pnlFaixa = self._resolve(components, "pnlFaixa", "Panel", Panel)
+        self.lytSelecao = self._resolve(components, "lytSelecao", "Layout", Layout)
+        self.lblSelecaoGrupo = self._resolve(components, "lblSelecaoGrupo", "Label", Label)
+        self.btnSelecionar = self._resolve(components, "btnSelecionar", "Button", Button)
+        self.divSelecao = self._resolve(components, "divSelecao", "Divider", Divider)
+        self.lytFerramentas = self._resolve(components, "lytFerramentas", "Layout", Layout)
+        self.lblFerramentasGrupo = self._resolve(components, "lblFerramentasGrupo", "Label", Label)
+        self.grdFerramentas = self._resolve(components, "grdFerramentas", "GridLayout", GridLayout)
+        self.btnLapis = self._resolve(components, "btnLapis", "Button", Button)
+        self.btnBalde = self._resolve(components, "btnBalde", "Button", Button)
+        self.btnBorracha = self._resolve(components, "btnBorracha", "Button", Button)
+        self.btnContaGotas = self._resolve(components, "btnContaGotas", "Button", Button)
+        self.divFerramentas = self._resolve(components, "divFerramentas", "Divider", Divider)
+        self.lytPinceis = self._resolve(components, "lytPinceis", "Layout", Layout)
+        self.lblPinceis = self._resolve(components, "lblPinceis", "Label", Label)
+        self.btnPincel = self._resolve(components, "btnPincel", "Button", Button)
+        self.divPinceis = self._resolve(components, "divPinceis", "Divider", Divider)
+        self.lytFormas = self._resolve(components, "lytFormas", "Layout", Layout)
+        self.lblFormas = self._resolve(components, "lblFormas", "Label", Label)
+        self.chkPreencher = self._resolve(components, "chkPreencher", "CheckBox", CheckBox)
+        self.grdFormas = self._resolve(components, "grdFormas", "GridLayout", GridLayout)
+        self.btnLinha = self._resolve(components, "btnLinha", "Button", Button)
+        self.btnRetangulo = self._resolve(components, "btnRetangulo", "Button", Button)
+        self.btnElipse = self._resolve(components, "btnElipse", "Button", Button)
+        self.divFormas = self._resolve(components, "divFormas", "Divider", Divider)
+        self.lytTamanho = self._resolve(components, "lytTamanho", "Layout", Layout)
+        self.lblTamanhoGrupo = self._resolve(components, "lblTamanhoGrupo", "Label", Label)
+        self.cbEspessura = self._resolve(components, "cbEspessura", "ComboBox", ComboBox)
+        self.divTamanho = self._resolve(components, "divTamanho", "Divider", Divider)
+        self.lytCores = self._resolve(components, "lytCores", "Layout", Layout)
+        self.lblCores = self._resolve(components, "lblCores", "Label", Label)
+        self.btnCor1 = self._resolve(components, "btnCor1", "Circle", Circle)
+        self.btnCor2 = self._resolve(components, "btnCor2", "Circle", Circle)
+        self.grdPaleta = self._resolve(components, "grdPaleta", "GridLayout", GridLayout)
+        self.btnPaleta01 = self._resolve(components, "btnPaleta01", "Circle", Circle)
+        self.btnPaleta02 = self._resolve(components, "btnPaleta02", "Circle", Circle)
+        self.btnPaleta03 = self._resolve(components, "btnPaleta03", "Circle", Circle)
+        self.btnPaleta04 = self._resolve(components, "btnPaleta04", "Circle", Circle)
+        self.btnPaleta05 = self._resolve(components, "btnPaleta05", "Circle", Circle)
+        self.btnPaleta06 = self._resolve(components, "btnPaleta06", "Circle", Circle)
+        self.btnPaleta07 = self._resolve(components, "btnPaleta07", "Circle", Circle)
+        self.btnPaleta08 = self._resolve(components, "btnPaleta08", "Circle", Circle)
+        self.btnPaleta09 = self._resolve(components, "btnPaleta09", "Circle", Circle)
+        self.btnPaleta10 = self._resolve(components, "btnPaleta10", "Circle", Circle)
+        self.btnPaleta11 = self._resolve(components, "btnPaleta11", "Circle", Circle)
+        self.btnPaleta12 = self._resolve(components, "btnPaleta12", "Circle", Circle)
+        self.btnPaleta13 = self._resolve(components, "btnPaleta13", "Circle", Circle)
+        self.btnPaleta14 = self._resolve(components, "btnPaleta14", "Circle", Circle)
+        self.btnPaleta15 = self._resolve(components, "btnPaleta15", "Circle", Circle)
+        self.btnPaleta16 = self._resolve(components, "btnPaleta16", "Circle", Circle)
+        self.btnPaleta17 = self._resolve(components, "btnPaleta17", "Circle", Circle)
+        self.btnPaleta18 = self._resolve(components, "btnPaleta18", "Circle", Circle)
+        self.btnPaleta19 = self._resolve(components, "btnPaleta19", "Circle", Circle)
+        self.btnPaleta20 = self._resolve(components, "btnPaleta20", "Circle", Circle)
+        self.stbStatus = self._resolve(components, "stbStatus", "StatusBar", StatusBar)
+        self.lblPosicao = self._resolve(components, "lblPosicao", "Label", Label)
+        self.lblTamanho = self._resolve(components, "lblTamanho", "Label", Label)
+        self.lblZoom = self._resolve(components, "lblZoom", "Label", Label)
+        self.sbxArea = self._resolve(components, "sbxArea", "ScrollBox", ScrollBox)
+        self.pcDesenho = self._resolve(components, "pcDesenho", "PaintCanvas", PaintCanvas)
+        self.dlgAbrir = self._resolve(components, "dlgAbrir", "OpenDialog", OpenDialog)
+        self.dlgSalvar = self._resolve(components, "dlgSalvar", "SaveDialog", SaveDialog)
+
+    def find_button(self, name):
+        """O Button deste form com o nome (como o FindComponent)."""
+        if name == "btnSalvar":
+            return self.btnSalvar
+        if name == "btnDesfazer":
+            return self.btnDesfazer
+        if name == "btnRefazer":
+            return self.btnRefazer
+        if name == "btnSelecionar":
+            return self.btnSelecionar
+        if name == "btnLapis":
+            return self.btnLapis
+        if name == "btnBalde":
+            return self.btnBalde
+        if name == "btnBorracha":
+            return self.btnBorracha
+        if name == "btnContaGotas":
+            return self.btnContaGotas
+        if name == "btnPincel":
+            return self.btnPincel
+        if name == "btnLinha":
+            return self.btnLinha
+        if name == "btnRetangulo":
+            return self.btnRetangulo
+        if name == "btnElipse":
+            return self.btnElipse
+        return None
+
+    def sender_as_button(self, event):
+        """O Button que disparou o evento."""
+        return self.find_button(event["sender"]["name"])
+
+    def find_check_box(self, name):
+        """O CheckBox deste form com o nome (como o FindComponent)."""
+        if name == "chkPreencher":
+            return self.chkPreencher
+        return None
+
+    def sender_as_check_box(self, event):
+        """O CheckBox que disparou o evento."""
+        return self.find_check_box(event["sender"]["name"])
+
+    def find_circle(self, name):
+        """O Circle deste form com o nome (como o FindComponent)."""
+        if name == "btnCor1":
+            return self.btnCor1
+        if name == "btnCor2":
+            return self.btnCor2
+        if name == "btnPaleta01":
+            return self.btnPaleta01
+        if name == "btnPaleta02":
+            return self.btnPaleta02
+        if name == "btnPaleta03":
+            return self.btnPaleta03
+        if name == "btnPaleta04":
+            return self.btnPaleta04
+        if name == "btnPaleta05":
+            return self.btnPaleta05
+        if name == "btnPaleta06":
+            return self.btnPaleta06
+        if name == "btnPaleta07":
+            return self.btnPaleta07
+        if name == "btnPaleta08":
+            return self.btnPaleta08
+        if name == "btnPaleta09":
+            return self.btnPaleta09
+        if name == "btnPaleta10":
+            return self.btnPaleta10
+        if name == "btnPaleta11":
+            return self.btnPaleta11
+        if name == "btnPaleta12":
+            return self.btnPaleta12
+        if name == "btnPaleta13":
+            return self.btnPaleta13
+        if name == "btnPaleta14":
+            return self.btnPaleta14
+        if name == "btnPaleta15":
+            return self.btnPaleta15
+        if name == "btnPaleta16":
+            return self.btnPaleta16
+        if name == "btnPaleta17":
+            return self.btnPaleta17
+        if name == "btnPaleta18":
+            return self.btnPaleta18
+        if name == "btnPaleta19":
+            return self.btnPaleta19
+        if name == "btnPaleta20":
+            return self.btnPaleta20
+        return None
+
+    def sender_as_circle(self, event):
+        """O Circle que disparou o evento."""
+        return self.find_circle(event["sender"]["name"])
+
+    def find_combo_box(self, name):
+        """O ComboBox deste form com o nome (como o FindComponent)."""
+        if name == "cbEspessura":
+            return self.cbEspessura
+        return None
+
+    def sender_as_combo_box(self, event):
+        """O ComboBox que disparou o evento."""
+        return self.find_combo_box(event["sender"]["name"])
+
+    def find_divider(self, name):
+        """O Divider deste form com o nome (como o FindComponent)."""
+        if name == "divTopo":
+            return self.divTopo
+        if name == "divSelecao":
+            return self.divSelecao
+        if name == "divFerramentas":
+            return self.divFerramentas
+        if name == "divPinceis":
+            return self.divPinceis
+        if name == "divFormas":
+            return self.divFormas
+        if name == "divTamanho":
+            return self.divTamanho
+        return None
+
+    def sender_as_divider(self, event):
+        """O Divider que disparou o evento."""
+        return self.find_divider(event["sender"]["name"])
+
+    def find_grid_layout(self, name):
+        """O GridLayout deste form com o nome (como o FindComponent)."""
+        if name == "grdFerramentas":
+            return self.grdFerramentas
+        if name == "grdFormas":
+            return self.grdFormas
+        if name == "grdPaleta":
+            return self.grdPaleta
+        return None
+
+    def sender_as_grid_layout(self, event):
+        """O GridLayout que disparou o evento."""
+        return self.find_grid_layout(event["sender"]["name"])
+
+    def find_label(self, name):
+        """O Label deste form com o nome (como o FindComponent)."""
+        if name == "lblSelecaoGrupo":
+            return self.lblSelecaoGrupo
+        if name == "lblFerramentasGrupo":
+            return self.lblFerramentasGrupo
+        if name == "lblPinceis":
+            return self.lblPinceis
+        if name == "lblFormas":
+            return self.lblFormas
+        if name == "lblTamanhoGrupo":
+            return self.lblTamanhoGrupo
+        if name == "lblCores":
+            return self.lblCores
+        if name == "lblPosicao":
+            return self.lblPosicao
+        if name == "lblTamanho":
+            return self.lblTamanho
+        if name == "lblZoom":
+            return self.lblZoom
+        return None
+
+    def sender_as_label(self, event):
+        """O Label que disparou o evento."""
+        return self.find_label(event["sender"]["name"])
+
+    def find_layout(self, name):
+        """O Layout deste form com o nome (como o FindComponent)."""
+        if name == "lytTopo":
+            return self.lytTopo
+        if name == "lytSelecao":
+            return self.lytSelecao
+        if name == "lytFerramentas":
+            return self.lytFerramentas
+        if name == "lytPinceis":
+            return self.lytPinceis
+        if name == "lytFormas":
+            return self.lytFormas
+        if name == "lytTamanho":
+            return self.lytTamanho
+        if name == "lytCores":
+            return self.lytCores
+        return None
+
+    def sender_as_layout(self, event):
+        """O Layout que disparou o evento."""
+        return self.find_layout(event["sender"]["name"])
+
+    def find_main_menu(self, name):
+        """O MainMenu deste form com o nome (como o FindComponent)."""
+        if name == "mnuPrincipal":
+            return self.mnuPrincipal
+        return None
+
+    def sender_as_main_menu(self, event):
+        """O MainMenu que disparou o evento."""
+        return self.find_main_menu(event["sender"]["name"])
+
+    def find_menu_item(self, name):
+        """O MenuItem deste form com o nome (como o FindComponent)."""
+        if name == "mnuArquivo":
+            return self.mnuArquivo
+        if name == "mnuNovo":
+            return self.mnuNovo
+        if name == "mnuAbrir":
+            return self.mnuAbrir
+        if name == "mnuSalvar":
+            return self.mnuSalvar
+        if name == "mnuSalvarComo":
+            return self.mnuSalvarComo
+        if name == "mnuSep1":
+            return self.mnuSep1
+        if name == "mnuSair":
+            return self.mnuSair
+        if name == "mnuEditar":
+            return self.mnuEditar
+        if name == "mnuDesfazer":
+            return self.mnuDesfazer
+        if name == "mnuRefazer":
+            return self.mnuRefazer
+        if name == "mnuSep2":
+            return self.mnuSep2
+        if name == "mnuRecortar":
+            return self.mnuRecortar
+        if name == "mnuCopiar":
+            return self.mnuCopiar
+        if name == "mnuColar":
+            return self.mnuColar
+        if name == "mnuExcluir":
+            return self.mnuExcluir
+        if name == "mnuSelecionarTudo":
+            return self.mnuSelecionarTudo
+        if name == "mnuSep3":
+            return self.mnuSep3
+        if name == "mnuLimpar":
+            return self.mnuLimpar
+        if name == "mnuExibir":
+            return self.mnuExibir
+        if name == "mnuAmpliar":
+            return self.mnuAmpliar
+        if name == "mnuReduzir":
+            return self.mnuReduzir
+        if name == "mnuTamanhoReal":
+            return self.mnuTamanhoReal
+        return None
+
+    def sender_as_menu_item(self, event):
+        """O MenuItem que disparou o evento."""
+        return self.find_menu_item(event["sender"]["name"])
+
+    def find_open_dialog(self, name):
+        """O OpenDialog deste form com o nome (como o FindComponent)."""
+        if name == "dlgAbrir":
+            return self.dlgAbrir
+        return None
+
+    def sender_as_open_dialog(self, event):
+        """O OpenDialog que disparou o evento."""
+        return self.find_open_dialog(event["sender"]["name"])
+
+    def find_paint_canvas(self, name):
+        """O PaintCanvas deste form com o nome (como o FindComponent)."""
+        if name == "pcDesenho":
+            return self.pcDesenho
+        return None
+
+    def sender_as_paint_canvas(self, event):
+        """O PaintCanvas que disparou o evento."""
+        return self.find_paint_canvas(event["sender"]["name"])
+
+    def find_panel(self, name):
+        """O Panel deste form com o nome (como o FindComponent)."""
+        if name == "pnlFaixa":
+            return self.pnlFaixa
+        return None
+
+    def sender_as_panel(self, event):
+        """O Panel que disparou o evento."""
+        return self.find_panel(event["sender"]["name"])
+
+    def find_save_dialog(self, name):
+        """O SaveDialog deste form com o nome (como o FindComponent)."""
+        if name == "dlgSalvar":
+            return self.dlgSalvar
+        return None
+
+    def sender_as_save_dialog(self, event):
+        """O SaveDialog que disparou o evento."""
+        return self.find_save_dialog(event["sender"]["name"])
+
+    def find_scroll_box(self, name):
+        """O ScrollBox deste form com o nome (como o FindComponent)."""
+        if name == "sbxArea":
+            return self.sbxArea
+        return None
+
+    def sender_as_scroll_box(self, event):
+        """O ScrollBox que disparou o evento."""
+        return self.find_scroll_box(event["sender"]["name"])
+
+    def find_status_bar(self, name):
+        """O StatusBar deste form com o nome (como o FindComponent)."""
+        if name == "stbStatus":
+            return self.stbStatus
+        return None
+
+    def sender_as_status_bar(self, event):
+        """O StatusBar que disparou o evento."""
+        return self.find_status_bar(event["sender"]["name"])
+
+
+
+# A janela de frmPaint cujo evento está rodando (a primeira, fora dos handlers).
+frmPaint = CurrentForm("frmPaint")
+register_form_class("frmPaint", FrmPaintComponents, frmPaint._activate)

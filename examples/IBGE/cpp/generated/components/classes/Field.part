@@ -1,0 +1,58 @@
+
+// Um Field de um form.
+struct Field : aylis::Component {
+    Field() = default;
+    explicit Field(const aylis::Component& c) : aylis::Component(c) {}
+    std::string field_name() const { return get_prop_("field_name").str(); }
+    void set_field_name(const std::string& v) const { set_prop_("field_name", v); }
+    std::string type() const { return get_prop_("type").str(); }
+    void set_type(const std::string& v) const { set_prop_("type", v); }
+    long long size() const { return static_cast<long long>(get_prop_("size").number()); }
+    void set_size(long long v) const { set_prop_("size", v); }
+    long long scale() const { return static_cast<long long>(get_prop_("scale").number()); }
+    void set_scale(long long v) const { set_prop_("scale", v); }
+    std::string rounding() const { return get_prop_("rounding").str(); }
+    void set_rounding(const std::string& v) const { set_prop_("rounding", v); }
+    std::string display_label() const { return get_prop_("display_label").str(); }
+    void set_display_label(const std::string& v) const { set_prop_("display_label", v); }
+    double display_width() const { return get_prop_("display_width").number(); }
+    void set_display_width(double v) const { set_prop_("display_width", v); }
+    std::string display_format() const { return get_prop_("display_format").str(); }
+    void set_display_format(const std::string& v) const { set_prop_("display_format", v); }
+    std::string edit_format() const { return get_prop_("edit_format").str(); }
+    void set_edit_format(const std::string& v) const { set_prop_("edit_format", v); }
+    std::string alignment() const { return get_prop_("alignment").str(); }
+    void set_alignment(const std::string& v) const { set_prop_("alignment", v); }
+    bool required() const { return get_prop_("required").boolean(); }
+    void set_required(bool v) const { set_prop_("required", v); }
+    bool read_only() const { return get_prop_("read_only").boolean(); }
+    void set_read_only(bool v) const { set_prop_("read_only", v); }
+    bool visible() const { return get_prop_("visible").boolean(); }
+    void set_visible(bool v) const { set_prop_("visible", v); }
+    double min() const { return get_prop_("min").number(); }
+    void set_min(double v) const { set_prop_("min", v); }
+    double max() const { return get_prop_("max").number(); }
+    void set_max(double v) const { set_prop_("max", v); }
+    std::string default_value() const { return get_prop_("default_value").str(); }
+    void set_default_value(const std::string& v) const { set_prop_("default_value", v); }
+    std::string display_values() const { return get_prop_("display_values").str(); }
+    void set_display_values(const std::string& v) const { set_prop_("display_values", v); }
+    std::string char_case() const { return get_prop_("char_case").str(); }
+    void set_char_case(const std::string& v) const { set_prop_("char_case", v); }
+    std::string edit_mask() const { return get_prop_("edit_mask").str(); }
+    void set_edit_mask(const std::string& v) const { set_prop_("edit_mask", v); }
+    bool sensitive() const { return get_prop_("sensitive").boolean(); }
+    void set_sensitive(bool v) const { set_prop_("sensitive", v); }
+    std::string kind() const { return get_prop_("kind").str(); }
+    void set_kind(const std::string& v) const { set_prop_("kind", v); }
+    std::string expression() const { return get_prop_("expression").str(); }
+    void set_expression(const std::string& v) const { set_prop_("expression", v); }
+    std::string lookup_data_set() const { return get_prop_("lookup_data_set").str(); }
+    void set_lookup_data_set(const std::string& v) const { set_prop_("lookup_data_set", v); }
+    std::string key_fields() const { return get_prop_("key_fields").str(); }
+    void set_key_fields(const std::string& v) const { set_prop_("key_fields", v); }
+    std::string lookup_key_fields() const { return get_prop_("lookup_key_fields").str(); }
+    void set_lookup_key_fields(const std::string& v) const { set_prop_("lookup_key_fields", v); }
+    std::string lookup_result_field() const { return get_prop_("lookup_result_field").str(); }
+    void set_lookup_result_field(const std::string& v) const { set_prop_("lookup_result_field", v); }
+};

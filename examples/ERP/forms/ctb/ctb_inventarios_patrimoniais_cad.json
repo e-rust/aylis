@@ -1,0 +1,430 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmCtbInventariosPatrimoniaisCad",
+    "caption": "Inventários patrimoniais — cadastro (Contábil)",
+    "on_show": "form_show",
+    "width": 1100,
+    "height": 700,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMestre",
+        "key_fields": "id",
+        "index_field_names": "parceiro",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMestreId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreNumero",
+            "field_name": "numero",
+            "type": "integer",
+            "display_label": "Número",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreData",
+            "field_name": "data",
+            "type": "date",
+            "display_label": "Data",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreParceiro",
+            "field_name": "parceiro",
+            "size": 80,
+            "display_label": "Conta",
+            "display_width": 200,
+            "required": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreValorTotal",
+            "field_name": "valor_total",
+            "type": "currency",
+            "display_label": "Valor total",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreSituacao",
+            "field_name": "situacao",
+            "size": 20,
+            "display_label": "Situação",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreObservacao",
+            "field_name": "observacao",
+            "size": 200,
+            "display_label": "Observação",
+            "display_width": 200
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMestre",
+        "data_set": "cdsMestre"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsItens",
+        "key_fields": "id",
+        "master_source": "dsMestre",
+        "master_fields": "mestre_id=id",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsItensId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensMestreId",
+            "field_name": "mestre_id",
+            "type": "integer",
+            "display_label": "Documento",
+            "display_width": 80,
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensItem",
+            "field_name": "item",
+            "size": 80,
+            "display_label": "Item",
+            "display_width": 240
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensQuantidade",
+            "field_name": "quantidade",
+            "type": "integer",
+            "display_label": "Qtd.",
+            "display_width": 60
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensValorUnitario",
+            "field_name": "valor_unitario",
+            "type": "currency",
+            "display_label": "Valor unitário",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensValorTotal",
+            "field_name": "valor_total",
+            "type": "currency",
+            "display_label": "Total",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsItens",
+        "data_set": "cdsItens"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlBarra",
+        "height": 44,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnNovo",
+            "text": "Novo",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_novo_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnSalvar",
+            "text": "Salvar",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_salvar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnExcluir",
+            "text": "Excluir",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_excluir_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnCancelar",
+            "text": "Cancelar",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_cancelar_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnNovoItem",
+            "text": "Novo item",
+            "width": 104,
+            "align": "left",
+            "margins": [0, 0, 6, 0],
+            "on_click": "btn_novo_item_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnFechar",
+            "text": "Fechar",
+            "align": "right",
+            "on_click": "btn_fechar_click"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar inventários patrimoniais…",
+            "on_change": "edt_busca_change",
+            "width": 260,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdLista",
+        "data_source": "dsMestre",
+        "read_only": true,
+        "filter_row": true,
+        "width": 380,
+        "align": "left"
+      },
+      {
+        "class": "Splitter",
+        "name": "splLista"
+      },
+      {
+        "class": "Layout",
+        "name": "layDireita",
+        "align": "client",
+        "children": [
+          {
+            "class": "GroupBox",
+            "name": "gbDados",
+            "caption": "Dados",
+            "height": 256,
+            "align": "top",
+            "padding": [8, 24, 8, 8],
+            "children": [
+              {
+                "class": "Layout",
+                "name": "layNumero",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblNumero",
+                    "text": "Número",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtNumero",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "numero"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layData",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblData",
+                    "text": "Data",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtData",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "data"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layParceiro",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblParceiro",
+                    "text": "Conta",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtParceiro",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "parceiro"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layValorTotal",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblValorTotal",
+                    "text": "Valor total",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtValorTotal",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "valor_total"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "laySituacao",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblSituacao",
+                    "text": "Situação",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtSituacao",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "situacao"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "class": "Layout",
+                "name": "layObservacao",
+                "height": 34,
+                "align": "top",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblObservacao",
+                    "text": "Observação",
+                    "width": 130,
+                    "align": "left"
+                  },
+                  {
+                    "class": "Edit",
+                    "name": "edtObservacao",
+                    "align": "client",
+                    "bindings": {
+                      "text": {
+                        "source": "dsMestre",
+                        "field": "observacao"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "GroupBox",
+            "name": "gbItens",
+            "caption": "Itens",
+            "align": "client",
+            "margins": [0, 6, 0, 0],
+            "padding": [8, 24, 8, 8],
+            "children": [
+              {
+                "class": "DataGrid",
+                "name": "grdItens",
+                "data_source": "dsItens",
+                "align": "client"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

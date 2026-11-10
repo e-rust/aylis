@@ -1,0 +1,12 @@
+
+// Um DataSource de um form.
+struct DataSource : aylis::Component {
+    DataSource() = default;
+    explicit DataSource(const aylis::Component& c) : aylis::Component(c) {}
+    std::string data_set() const { return get_prop_("data_set").str(); }
+    void set_data_set(const std::string& v) const { set_prop_("data_set", v); }
+    bool auto_edit() const { return get_prop_("auto_edit").boolean(); }
+    void set_auto_edit(bool v) const { set_prop_("auto_edit", v); }
+    bool enabled() const { return get_prop_("enabled").boolean(); }
+    void set_enabled(bool v) const { set_prop_("enabled", v); }
+};

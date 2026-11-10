@@ -1,0 +1,1087 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Relatórios mestre-detalhe — pedidos, itens e parcelas",
+    "on_show": "form_show",
+    "width": 1180,
+    "height": 820,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsPedidos",
+        "key_fields": "numero",
+        "read_only": true,
+        "index_field_names": "vendedor;numero",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsPedidosNumero",
+            "field_name": "numero",
+            "type": "integer",
+            "display_label": "Pedido",
+            "display_width": 64
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosEmissao",
+            "field_name": "emissao",
+            "type": "date",
+            "display_label": "Emissão",
+            "display_width": 90
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosCliente",
+            "field_name": "cliente",
+            "display_label": "Cliente",
+            "display_width": 210
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosCidade",
+            "field_name": "cidade",
+            "display_label": "Cidade",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosUf",
+            "field_name": "uf",
+            "size": 2,
+            "display_label": "UF",
+            "display_width": 40
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosVendedor",
+            "field_name": "vendedor",
+            "display_label": "Vendedor",
+            "display_width": 130
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosSituacao",
+            "field_name": "situacao",
+            "display_label": "Situação",
+            "display_width": 90
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosItens",
+            "field_name": "itens",
+            "type": "integer",
+            "display_label": "Itens",
+            "display_width": 50
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosPeso",
+            "field_name": "peso",
+            "type": "float",
+            "display_label": "Peso (kg)",
+            "display_width": 90,
+            "display_format": "#,##0.000"
+          },
+          {
+            "class": "Field",
+            "name": "cdsPedidosTotal",
+            "field_name": "total",
+            "type": "currency",
+            "display_label": "Total",
+            "display_width": 110,
+            "display_format": "R$ #,##0.00"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsPedidos",
+        "data_set": "cdsPedidos"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsItens",
+        "key_fields": "pedido;item",
+        "read_only": true,
+        "index_field_names": "item",
+        "master_source": "dsPedidos",
+        "master_fields": "pedido=numero",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsItensPedido",
+            "field_name": "pedido",
+            "type": "integer",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensItem",
+            "field_name": "item",
+            "type": "integer",
+            "display_label": "Item",
+            "display_width": 44
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensCodigo",
+            "field_name": "codigo",
+            "display_label": "Código",
+            "display_width": 70
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensProduto",
+            "field_name": "produto",
+            "display_label": "Produto",
+            "display_width": 230
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensUnidade",
+            "field_name": "unidade",
+            "display_label": "Un.",
+            "display_width": 40
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensQuantidade",
+            "field_name": "quantidade",
+            "type": "float",
+            "display_label": "Qtd.",
+            "display_width": 70,
+            "display_format": "#,##0.###"
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensPreco",
+            "field_name": "preco",
+            "type": "currency",
+            "display_label": "Preço",
+            "display_width": 100,
+            "display_format": "R$ #,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensDesconto",
+            "field_name": "desconto",
+            "type": "float",
+            "display_label": "Desc. %",
+            "display_width": 60,
+            "display_format": "#,##0.0"
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensTotal",
+            "field_name": "total",
+            "type": "currency",
+            "display_label": "Total",
+            "display_width": 110,
+            "display_format": "R$ #,##0.00"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsItens",
+        "data_set": "cdsItens"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsParcelas",
+        "key_fields": "pedido;parcela",
+        "read_only": true,
+        "index_field_names": "parcela",
+        "master_source": "dsPedidos",
+        "master_fields": "pedido=numero",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsParcelasPedido",
+            "field_name": "pedido",
+            "type": "integer",
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsParcelasParcela",
+            "field_name": "parcela",
+            "type": "integer",
+            "display_label": "Parcela",
+            "display_width": 56
+          },
+          {
+            "class": "Field",
+            "name": "cdsParcelasVencimento",
+            "field_name": "vencimento",
+            "type": "date",
+            "display_label": "Vencimento",
+            "display_width": 90
+          },
+          {
+            "class": "Field",
+            "name": "cdsParcelasForma",
+            "field_name": "forma",
+            "display_label": "Forma",
+            "display_width": 110
+          },
+          {
+            "class": "Field",
+            "name": "cdsParcelasValor",
+            "field_name": "valor",
+            "type": "currency",
+            "display_label": "Valor",
+            "display_width": 100,
+            "display_format": "R$ #,##0.00"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsParcelas",
+        "data_set": "cdsParcelas"
+      },
+      {
+        "class": "TabControl",
+        "name": "tabPrincipal",
+        "align": "client",
+        "children": [
+          {
+            "class": "TabItem",
+            "name": "tabDados",
+            "caption": "Dados",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblDica",
+                "text": "Os pedidos (o mestre) e, do pedido escolhido, os itens e as parcelas (os detalhes, ligados pelo master_source). As outras abas são os relatórios desses dados.",
+                "wrap": true,
+                "color": "text_muted",
+                "height": 28,
+                "align": "top",
+                "margins": 4
+              },
+              {
+                "class": "GroupBox",
+                "name": "gbDetalhes",
+                "caption": "Do pedido escolhido",
+                "height": 300,
+                "align": "bottom",
+                "children": [
+                  {
+                    "class": "DataGrid",
+                    "name": "grdParcelas",
+                    "data_source": "dsParcelas",
+                    "columns": "parcela;vencimento;forma;valor",
+                    "read_only": true,
+                    "width": 380,
+                    "align": "right"
+                  },
+                  {
+                    "class": "Splitter",
+                    "name": "splDetalhes",
+                    "align": "right"
+                  },
+                  {
+                    "class": "DataGrid",
+                    "name": "grdItens",
+                    "data_source": "dsItens",
+                    "columns": "item;codigo;produto;unidade;quantidade;preco;desconto;total",
+                    "read_only": true,
+                    "align": "client"
+                  }
+                ]
+              },
+              {
+                "class": "Splitter",
+                "name": "splDados",
+                "align": "bottom"
+              },
+              {
+                "class": "DataGrid",
+                "name": "grdPedidos",
+                "data_source": "dsPedidos",
+                "columns": "numero;emissao;cliente;cidade;uf;vendedor;situacao;itens;peso;total",
+                "read_only": true,
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabPedidos",
+            "caption": "Pedidos com itens",
+            "children": [
+              {
+                "class": "ReportPreview",
+                "name": "prvPedidos",
+                "report": "repPedidos",
+                "align": "client"
+              },
+              {
+                "class": "Report",
+                "name": "repPedidos",
+                "data_source": "dsPedidos",
+                "title": "Pedidos com itens",
+                "left": 16,
+                "top": 16,
+                "height": 360,
+                "children": [
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedTitulo",
+                    "kind": "title",
+                    "height": 54,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedTitulo",
+                        "text": "Pedidos de venda",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "width": 523,
+                        "height": 30,
+                        "font_size": 20
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedSubtitulo",
+                        "text": "Cada pedido com os itens dele (mestre-detalhe) · [COUNT()] pedidos",
+                        "color": "#6B7280",
+                        "top": 30,
+                        "width": 523,
+                        "height": 18,
+                        "font_size": 10
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedCabecalho",
+                    "kind": "page_header",
+                    "height": 24,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedEmitido",
+                        "text": "Emitido em [DATE] às [TIME]",
+                        "color": "#6B7280",
+                        "width": 300,
+                        "height": 24,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedPagina",
+                        "text": "Página [PAGE] de [PAGES]",
+                        "h_align": "trailing",
+                        "color": "#6B7280",
+                        "left": 300,
+                        "width": 223,
+                        "height": 24,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedMestre",
+                    "fill": "#E8EEFB",
+                    "height": 46,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedNumero",
+                        "text": "Pedido nº [numero]",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 8,
+                        "top": 4,
+                        "width": 160,
+                        "font_size": 12
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedEmissao",
+                        "text": "Emissão: [emissao]",
+                        "color": "#1F2937",
+                        "left": 170,
+                        "top": 4,
+                        "width": 140,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedSituacao",
+                        "text": "[situacao]",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 310,
+                        "top": 4,
+                        "width": 90,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedTotal",
+                        "text": "[total]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 400,
+                        "top": 4,
+                        "width": 115,
+                        "font_size": 12
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedCliente",
+                        "text": "Cliente: [cliente] — [cidade]/[uf] · Vendedor: [vendedor]",
+                        "color": "#1F2937",
+                        "left": 8,
+                        "top": 24,
+                        "width": 400,
+                        "height": 18,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedPeso",
+                        "text": "Peso: [peso] kg",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 400,
+                        "top": 24,
+                        "width": 115,
+                        "height": 18,
+                        "font_size": 9
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedItensCab",
+                    "kind": "sub_header",
+                    "data_source": "dsItens",
+                    "height": 20,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedHItem",
+                        "text": "Item",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 8,
+                        "width": 30,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHProduto",
+                        "text": "Produto",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 40,
+                        "width": 190,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHUn",
+                        "text": "Un.",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 232,
+                        "width": 30,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHQtd",
+                        "text": "Qtd.",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 262,
+                        "width": 55,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHPreco",
+                        "text": "Preço",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 320,
+                        "width": 72,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHDesc",
+                        "text": "Desc. %",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 394,
+                        "width": 44,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedHTotal",
+                        "text": "Total",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 440,
+                        "width": 75,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedItens",
+                    "kind": "sub_detail",
+                    "data_source": "dsItens",
+                    "height": 16,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedItem",
+                        "text": "[item]",
+                        "color": "#1F2937",
+                        "left": 8,
+                        "width": 30,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedProduto",
+                        "text": "[codigo] · [produto]",
+                        "color": "#1F2937",
+                        "left": 40,
+                        "width": 190,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedUn",
+                        "text": "[unidade]",
+                        "color": "#1F2937",
+                        "left": 232,
+                        "width": 30,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedQtd",
+                        "text": "[quantidade]",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 262,
+                        "width": 55,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedPreco",
+                        "text": "[preco]",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 320,
+                        "width": 72,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedDesc",
+                        "text": "[desconto]",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 394,
+                        "width": 44,
+                        "height": 16,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedItemTotal",
+                        "text": "[total]",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 440,
+                        "width": 75,
+                        "height": 16,
+                        "font_size": 9
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedItensRod",
+                    "kind": "sub_footer",
+                    "data_source": "dsItens",
+                    "height": 30,
+                    "children": [
+                      {
+                        "class": "Line",
+                        "name": "linPedItens",
+                        "stroke_width": 1,
+                        "direction": "horizontal",
+                        "left": 262,
+                        "width": 253,
+                        "height": 4
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedResumo",
+                        "text": "[COUNT()] itens do pedido [numero] · maior item [MAX(total)]",
+                        "color": "#6B7280",
+                        "left": 40,
+                        "top": 2,
+                        "width": 222,
+                        "height": 18,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedSomaQtd",
+                        "text": "[SUM(quantidade)]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 262,
+                        "top": 2,
+                        "width": 55,
+                        "height": 18,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedSomaTotal",
+                        "text": "[SUM(total)]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 420,
+                        "top": 2,
+                        "width": 95,
+                        "height": 18,
+                        "font_size": 9
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedSumario",
+                    "kind": "summary",
+                    "height": 46,
+                    "children": [
+                      {
+                        "class": "Line",
+                        "name": "linPedSumario",
+                        "direction": "horizontal",
+                        "top": 4,
+                        "width": 523,
+                        "height": 4
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedGeral",
+                        "text": "Total geral · [COUNT()] pedidos · ticket médio [AVG(total)]",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 8,
+                        "top": 12,
+                        "width": 330,
+                        "height": 24,
+                        "font_size": 11
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblPedGeralTotal",
+                        "text": "[SUM(total)]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 340,
+                        "top": 12,
+                        "width": 175,
+                        "height": 24,
+                        "font_size": 14
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndPedRodape",
+                    "kind": "page_footer",
+                    "height": 22,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblPedRodape",
+                        "text": "aylis · relatório mestre-detalhe",
+                        "h_align": "center",
+                        "color": "#9CA3AF",
+                        "width": 523,
+                        "height": 22,
+                        "font_size": 8
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "TabItem",
+            "name": "tabVendedores",
+            "caption": "Vendas por vendedor",
+            "children": [
+              {
+                "class": "ReportPreview",
+                "name": "prvVendedores",
+                "report": "repVendedores",
+                "align": "client"
+              },
+              {
+                "class": "Report",
+                "name": "repVendedores",
+                "data_source": "dsPedidos",
+                "title": "Vendas por vendedor",
+                "left": 16,
+                "top": 16,
+                "height": 420,
+                "children": [
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenTitulo",
+                    "kind": "title",
+                    "height": 40,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenTitulo",
+                        "text": "Vendas por vendedor",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "width": 523,
+                        "height": 30,
+                        "font_size": 20
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenCabecalho",
+                    "kind": "page_header",
+                    "height": 24,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenEmitido",
+                        "text": "Emitido em [DATE] às [TIME]",
+                        "color": "#6B7280",
+                        "width": 300,
+                        "height": 24,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenPagina",
+                        "text": "Página [PAGE] de [PAGES]",
+                        "h_align": "trailing",
+                        "color": "#6B7280",
+                        "left": 300,
+                        "width": 223,
+                        "height": 24,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenGrupo",
+                    "kind": "group_header",
+                    "group_field": "vendedor",
+                    "fill": "#1E3A8A",
+                    "height": 30,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenVendedor",
+                        "text": "Vendedor: [vendedor]",
+                        "bold": true,
+                        "color": "#FFFFFF",
+                        "left": 8,
+                        "width": 400,
+                        "height": 30,
+                        "font_size": 13
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenPedido",
+                    "fill": "#E8EEFB",
+                    "height": 24,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenNumero",
+                        "text": "Pedido [numero] · [emissao]",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 8,
+                        "width": 150,
+                        "height": 24,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenCliente",
+                        "text": "[cliente] ([uf])",
+                        "color": "#1F2937",
+                        "left": 160,
+                        "width": 220,
+                        "height": 24,
+                        "font_size": 9
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenSituacao",
+                        "text": "[situacao]",
+                        "color": "#374151",
+                        "left": 380,
+                        "width": 60,
+                        "height": 24,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenTotal",
+                        "text": "[total]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 440,
+                        "width": 75,
+                        "height": 24,
+                        "font_size": 9
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenItens",
+                    "kind": "sub_detail",
+                    "data_source": "dsItens",
+                    "height": 15,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenProduto",
+                        "text": "[item]. [produto]",
+                        "color": "#1F2937",
+                        "left": 24,
+                        "width": 240,
+                        "height": 15,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenConta",
+                        "text": "[quantidade] [unidade] × [preco]",
+                        "h_align": "trailing",
+                        "color": "#374151",
+                        "left": 264,
+                        "width": 150,
+                        "height": 15,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenItemTotal",
+                        "text": "[total]",
+                        "h_align": "trailing",
+                        "color": "#1F2937",
+                        "left": 440,
+                        "width": 75,
+                        "height": 15,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenParcelasCab",
+                    "kind": "sub_header",
+                    "data_source": "dsParcelas",
+                    "height": 16,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenParcelasCab",
+                        "text": "Pagamento em [COUNT()] parcela(s):",
+                        "bold": true,
+                        "color": "#374151",
+                        "left": 24,
+                        "width": 300,
+                        "height": 16,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenParcelas",
+                    "kind": "sub_detail",
+                    "data_source": "dsParcelas",
+                    "height": 14,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenParcela",
+                        "text": "[parcela]ª · vence em [vencimento] · [forma]",
+                        "color": "#374151",
+                        "left": 40,
+                        "width": 300,
+                        "height": 14,
+                        "font_size": 8
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenParcelaValor",
+                        "text": "[valor]",
+                        "h_align": "trailing",
+                        "color": "#374151",
+                        "left": 340,
+                        "width": 74,
+                        "height": 14,
+                        "font_size": 8
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenParcelasRod",
+                    "kind": "sub_footer",
+                    "data_source": "dsParcelas",
+                    "height": 10
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenGrupoRod",
+                    "kind": "group_footer",
+                    "group_field": "vendedor",
+                    "height": 34,
+                    "children": [
+                      {
+                        "class": "Line",
+                        "name": "linVenGrupo",
+                        "stroke_width": 1,
+                        "direction": "horizontal",
+                        "left": 300,
+                        "top": 2,
+                        "width": 223,
+                        "height": 4
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenGrupoTotal",
+                        "text": "Total de [vendedor]: [COUNT()] pedidos · média [AVG(total)]",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 8,
+                        "top": 6,
+                        "width": 380,
+                        "height": 22,
+                        "font_size": 10
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenGrupoSoma",
+                        "text": "[SUM(total)]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 390,
+                        "top": 6,
+                        "width": 125,
+                        "height": 22,
+                        "font_size": 11
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenSumario",
+                    "kind": "summary",
+                    "height": 40,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenGeral",
+                        "text": "Total geral · maior pedido [MAX(total)] · menor [MIN(total)]",
+                        "bold": true,
+                        "color": "#1F2937",
+                        "left": 8,
+                        "top": 8,
+                        "width": 360,
+                        "height": 24,
+                        "font_size": 10
+                      },
+                      {
+                        "class": "Label",
+                        "name": "lblVenGeralSoma",
+                        "text": "[SUM(total)]",
+                        "h_align": "trailing",
+                        "bold": true,
+                        "color": "#1E3A8A",
+                        "left": 370,
+                        "top": 8,
+                        "width": 145,
+                        "height": 24,
+                        "font_size": 14
+                      }
+                    ]
+                  },
+                  {
+                    "class": "ReportBand",
+                    "name": "bndVenRodape",
+                    "kind": "page_footer",
+                    "height": 22,
+                    "children": [
+                      {
+                        "class": "Label",
+                        "name": "lblVenRodape",
+                        "text": "aylis · vendas por vendedor (grupo + dois sub-detalhes: itens e parcelas)",
+                        "h_align": "center",
+                        "color": "#9CA3AF",
+                        "width": 523,
+                        "height": 22,
+                        "font_size": 8
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,343 @@
+
+/** Um SeekBar de um form. */
+export class SeekBar extends AylisComponent {
+    get position(): Promise<number> {
+        return this.getProp("position");
+    }
+    set position(value: number) {
+        this.setProp("position", value);
+    }
+    get duration(): Promise<number> {
+        return this.getProp("duration");
+    }
+    set duration(value: number) {
+        this.setProp("duration", value);
+    }
+    get buffered(): Promise<number> {
+        return this.getProp("buffered");
+    }
+    set buffered(value: number) {
+        this.setProp("buffered", value);
+    }
+    get markers(): Promise<string> {
+        return this.getProp("markers");
+    }
+    set markers(value: string) {
+        this.setProp("markers", value);
+    }
+    get showTime(): Promise<boolean> {
+        return this.getProp("show_time");
+    }
+    set showTime(value: boolean) {
+        this.setProp("show_time", value);
+    }
+    get left(): Promise<number> {
+        return this.getProp("left");
+    }
+    set left(value: number) {
+        this.setProp("left", value);
+    }
+    get top(): Promise<number> {
+        return this.getProp("top");
+    }
+    set top(value: number) {
+        this.setProp("top", value);
+    }
+    get width(): Promise<number> {
+        return this.getProp("width");
+    }
+    set width(value: number) {
+        this.setProp("width", value);
+    }
+    get height(): Promise<number> {
+        return this.getProp("height");
+    }
+    set height(value: number) {
+        this.setProp("height", value);
+    }
+    get align(): Promise<string> {
+        return this.getProp("align");
+    }
+    set align(value: string) {
+        this.setProp("align", value);
+    }
+    get visible(): Promise<boolean> {
+        return this.getProp("visible");
+    }
+    set visible(value: boolean) {
+        this.setProp("visible", value);
+    }
+    get enabled(): Promise<boolean> {
+        return this.getProp("enabled");
+    }
+    set enabled(value: boolean) {
+        this.setProp("enabled", value);
+    }
+    get hitTest(): Promise<boolean> {
+        return this.getProp("hit_test");
+    }
+    set hitTest(value: boolean) {
+        this.setProp("hit_test", value);
+    }
+    get clipChildren(): Promise<boolean> {
+        return this.getProp("clip_children");
+    }
+    set clipChildren(value: boolean) {
+        this.setProp("clip_children", value);
+    }
+    get capturesWheel(): Promise<boolean> {
+        return this.getProp("captures_wheel");
+    }
+    set capturesWheel(value: boolean) {
+        this.setProp("captures_wheel", value);
+    }
+    get canFocus(): Promise<boolean> {
+        return this.getProp("can_focus");
+    }
+    set canFocus(value: boolean) {
+        this.setProp("can_focus", value);
+    }
+    get draggable(): Promise<boolean> {
+        return this.getProp("draggable");
+    }
+    set draggable(value: boolean) {
+        this.setProp("draggable", value);
+    }
+    get acceptsDrops(): Promise<boolean> {
+        return this.getProp("accepts_drops");
+    }
+    set acceptsDrops(value: boolean) {
+        this.setProp("accepts_drops", value);
+    }
+    get dragData(): Promise<string> {
+        return this.getProp("drag_data");
+    }
+    set dragData(value: string) {
+        this.setProp("drag_data", value);
+    }
+    get dragLabel(): Promise<string> {
+        return this.getProp("drag_label");
+    }
+    set dragLabel(value: string) {
+        this.setProp("drag_label", value);
+    }
+    get dragImage(): Promise<string> {
+        return this.getProp("drag_image");
+    }
+    set dragImage(value: string) {
+        this.setProp("drag_image", value);
+    }
+    get dropTypes(): Promise<string> {
+        return this.getProp("drop_types");
+    }
+    set dropTypes(value: string) {
+        this.setProp("drop_types", value);
+    }
+    get tabStop(): Promise<boolean> {
+        return this.getProp("tab_stop");
+    }
+    set tabStop(value: boolean) {
+        this.setProp("tab_stop", value);
+    }
+    get cursor(): Promise<string> {
+        return this.getProp("cursor");
+    }
+    set cursor(value: string) {
+        this.setProp("cursor", value);
+    }
+    get opacity(): Promise<number> {
+        return this.getProp("opacity");
+    }
+    set opacity(value: number) {
+        this.setProp("opacity", value);
+    }
+    get cacheLayer(): Promise<boolean> {
+        return this.getProp("cache_layer");
+    }
+    set cacheLayer(value: boolean) {
+        this.setProp("cache_layer", value);
+    }
+    get rotation(): Promise<number> {
+        return this.getProp("rotation");
+    }
+    set rotation(value: number) {
+        this.setProp("rotation", value);
+    }
+    get translateX(): Promise<number> {
+        return this.getProp("translate_x");
+    }
+    set translateX(value: number) {
+        this.setProp("translate_x", value);
+    }
+    get translateY(): Promise<number> {
+        return this.getProp("translate_y");
+    }
+    set translateY(value: number) {
+        this.setProp("translate_y", value);
+    }
+    get aspectRatio(): Promise<number> {
+        return this.getProp("aspect_ratio");
+    }
+    set aspectRatio(value: number) {
+        this.setProp("aspect_ratio", value);
+    }
+    get maxWidth(): Promise<number> {
+        return this.getProp("max_width");
+    }
+    set maxWidth(value: number) {
+        this.setProp("max_width", value);
+    }
+    get minWidth(): Promise<number> {
+        return this.getProp("min_width");
+    }
+    set minWidth(value: number) {
+        this.setProp("min_width", value);
+    }
+    get minHeight(): Promise<number> {
+        return this.getProp("min_height");
+    }
+    set minHeight(value: number) {
+        this.setProp("min_height", value);
+    }
+    get maxHeight(): Promise<number> {
+        return this.getProp("max_height");
+    }
+    set maxHeight(value: number) {
+        this.setProp("max_height", value);
+    }
+    get selfAlign(): Promise<string> {
+        return this.getProp("self_align");
+    }
+    set selfAlign(value: string) {
+        this.setProp("self_align", value);
+    }
+    get autoSize(): Promise<boolean> {
+        return this.getProp("auto_size");
+    }
+    set autoSize(value: boolean) {
+        this.setProp("auto_size", value);
+    }
+    get columnSpan(): Promise<number> {
+        return this.getProp("column_span");
+    }
+    set columnSpan(value: number) {
+        this.setProp("column_span", value);
+    }
+    get shadow(): Promise<string> {
+        return this.getProp("shadow");
+    }
+    set shadow(value: string) {
+        this.setProp("shadow", value);
+    }
+    get style(): Promise<string> {
+        return this.getProp("style");
+    }
+    set style(value: string) {
+        this.setProp("style", value);
+    }
+    get theme(): Promise<string> {
+        return this.getProp("theme");
+    }
+    set theme(value: string) {
+        this.setProp("theme", value);
+    }
+    get fill(): Promise<string> {
+        return this.getProp("fill");
+    }
+    set fill(value: string) {
+        this.setProp("fill", value);
+    }
+    get borderColor(): Promise<string> {
+        return this.getProp("border_color");
+    }
+    set borderColor(value: string) {
+        this.setProp("border_color", value);
+    }
+    get textColor(): Promise<string> {
+        return this.getProp("text_color");
+    }
+    set textColor(value: string) {
+        this.setProp("text_color", value);
+    }
+    get accentColor(): Promise<string> {
+        return this.getProp("accent_color");
+    }
+    set accentColor(value: string) {
+        this.setProp("accent_color", value);
+    }
+    get successColor(): Promise<string> {
+        return this.getProp("success_color");
+    }
+    set successColor(value: string) {
+        this.setProp("success_color", value);
+    }
+    get warningColor(): Promise<string> {
+        return this.getProp("warning_color");
+    }
+    set warningColor(value: string) {
+        this.setProp("warning_color", value);
+    }
+    get dangerColor(): Promise<string> {
+        return this.getProp("danger_color");
+    }
+    set dangerColor(value: string) {
+        this.setProp("danger_color", value);
+    }
+    get fontFamily(): Promise<string> {
+        return this.getProp("font_family");
+    }
+    set fontFamily(value: string) {
+        this.setProp("font_family", value);
+    }
+    get fontSize(): Promise<number> {
+        return this.getProp("font_size");
+    }
+    set fontSize(value: number) {
+        this.setProp("font_size", value);
+    }
+    get fontWeight(): Promise<string> {
+        return this.getProp("font_weight");
+    }
+    set fontWeight(value: string) {
+        this.setProp("font_weight", value);
+    }
+    get fontItalic(): Promise<boolean> {
+        return this.getProp("font_italic");
+    }
+    set fontItalic(value: boolean) {
+        this.setProp("font_italic", value);
+    }
+    get fontUnderline(): Promise<boolean> {
+        return this.getProp("font_underline");
+    }
+    set fontUnderline(value: boolean) {
+        this.setProp("font_underline", value);
+    }
+    get fontStrikeout(): Promise<boolean> {
+        return this.getProp("font_strikeout");
+    }
+    set fontStrikeout(value: boolean) {
+        this.setProp("font_strikeout", value);
+    }
+    get hint(): Promise<string> {
+        return this.getProp("hint");
+    }
+    set hint(value: string) {
+        this.setProp("hint", value);
+    }
+    get tag(): Promise<number> {
+        return this.getProp("tag");
+    }
+    set tag(value: number) {
+        this.setProp("tag", value);
+    }
+    get popupMenu(): Promise<string> {
+        return this.getProp("popup_menu");
+    }
+    set popupMenu(value: string) {
+        this.setProp("popup_menu", value);
+    }
+    setFocus() {
+        this.aylis.send("focus", { target: this.id });
+    }
+}

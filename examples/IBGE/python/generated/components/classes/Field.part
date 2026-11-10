@@ -1,0 +1,212 @@
+
+
+class Field(AylisComponent):
+    """Um Field de um form."""
+
+    @property
+    def field_name(self):
+        return self._get("field_name")
+
+    @field_name.setter
+    def field_name(self, value):
+        self._set("field_name", value)
+
+    @property
+    def type(self):
+        return self._get("type")
+
+    @type.setter
+    def type(self, value):
+        self._set("type", value)
+
+    @property
+    def size(self):
+        return self._get("size")
+
+    @size.setter
+    def size(self, value):
+        self._set("size", value)
+
+    @property
+    def scale(self):
+        return self._get("scale")
+
+    @scale.setter
+    def scale(self, value):
+        self._set("scale", value)
+
+    @property
+    def rounding(self):
+        return self._get("rounding")
+
+    @rounding.setter
+    def rounding(self, value):
+        self._set("rounding", value)
+
+    @property
+    def display_label(self):
+        return self._get("display_label")
+
+    @display_label.setter
+    def display_label(self, value):
+        self._set("display_label", value)
+
+    @property
+    def display_width(self):
+        return self._get("display_width")
+
+    @display_width.setter
+    def display_width(self, value):
+        self._set("display_width", value)
+
+    @property
+    def display_format(self):
+        return self._get("display_format")
+
+    @display_format.setter
+    def display_format(self, value):
+        self._set("display_format", value)
+
+    @property
+    def edit_format(self):
+        return self._get("edit_format")
+
+    @edit_format.setter
+    def edit_format(self, value):
+        self._set("edit_format", value)
+
+    @property
+    def alignment(self):
+        return self._get("alignment")
+
+    @alignment.setter
+    def alignment(self, value):
+        self._set("alignment", value)
+
+    @property
+    def required(self):
+        return self._get("required")
+
+    @required.setter
+    def required(self, value):
+        self._set("required", value)
+
+    @property
+    def read_only(self):
+        return self._get("read_only")
+
+    @read_only.setter
+    def read_only(self, value):
+        self._set("read_only", value)
+
+    @property
+    def visible(self):
+        return self._get("visible")
+
+    @visible.setter
+    def visible(self, value):
+        self._set("visible", value)
+
+    @property
+    def min(self):
+        return self._get("min")
+
+    @min.setter
+    def min(self, value):
+        self._set("min", value)
+
+    @property
+    def max(self):
+        return self._get("max")
+
+    @max.setter
+    def max(self, value):
+        self._set("max", value)
+
+    @property
+    def default_value(self):
+        return self._get("default_value")
+
+    @default_value.setter
+    def default_value(self, value):
+        self._set("default_value", value)
+
+    @property
+    def display_values(self):
+        return self._get("display_values")
+
+    @display_values.setter
+    def display_values(self, value):
+        self._set("display_values", value)
+
+    @property
+    def char_case(self):
+        return self._get("char_case")
+
+    @char_case.setter
+    def char_case(self, value):
+        self._set("char_case", value)
+
+    @property
+    def edit_mask(self):
+        return self._get("edit_mask")
+
+    @edit_mask.setter
+    def edit_mask(self, value):
+        self._set("edit_mask", value)
+
+    @property
+    def sensitive(self):
+        return self._get("sensitive")
+
+    @sensitive.setter
+    def sensitive(self, value):
+        self._set("sensitive", value)
+
+    @property
+    def kind(self):
+        return self._get("kind")
+
+    @kind.setter
+    def kind(self, value):
+        self._set("kind", value)
+
+    @property
+    def expression(self):
+        return self._get("expression")
+
+    @expression.setter
+    def expression(self, value):
+        self._set("expression", value)
+
+    @property
+    def lookup_data_set(self):
+        return self._get("lookup_data_set")
+
+    @lookup_data_set.setter
+    def lookup_data_set(self, value):
+        self._set("lookup_data_set", value)
+
+    @property
+    def key_fields(self):
+        return self._get("key_fields")
+
+    @key_fields.setter
+    def key_fields(self, value):
+        self._set("key_fields", value)
+
+    @property
+    def lookup_key_fields(self):
+        return self._get("lookup_key_fields")
+
+    @lookup_key_fields.setter
+    def lookup_key_fields(self, value):
+        self._set("lookup_key_fields", value)
+
+    @property
+    def lookup_result_field(self):
+        return self._get("lookup_result_field")
+
+    @lookup_result_field.setter
+    def lookup_result_field(self, value):
+        self._set("lookup_result_field", value)

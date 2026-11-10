@@ -1,0 +1,222 @@
+  { Um ClientDataSet de um form. }
+  TClientDataSet = class(TAylisComponent)
+  private
+    function GetKeyFields: string;
+    procedure SetKeyFields(Value: string);
+    function GetApplyMode: string;
+    procedure SetApplyMode(Value: string);
+    function GetReadOnly: Boolean;
+    procedure SetReadOnly(Value: Boolean);
+    function GetActive: Boolean;
+    procedure SetActive(Value: Boolean);
+    function GetFilter: string;
+    procedure SetFilter(Value: string);
+    function GetFiltered: Boolean;
+    procedure SetFiltered(Value: Boolean);
+    function GetIndexFieldNames: string;
+    procedure SetIndexFieldNames(Value: string);
+    function GetIndexes: string;
+    procedure SetIndexes(Value: string);
+    function GetIndexName: string;
+    procedure SetIndexName(Value: string);
+    function GetParams: string;
+    procedure SetParams(Value: string);
+    function GetStatusFilter: string;
+    procedure SetStatusFilter(Value: string);
+    function GetMasterSource: string;
+    procedure SetMasterSource(Value: string);
+    function GetMasterFields: string;
+    procedure SetMasterFields(Value: string);
+    function GetApplySeparately: Boolean;
+    procedure SetApplySeparately(Value: Boolean);
+    function GetRecordTotal: Int64;
+    procedure SetRecordTotal(Value: Int64);
+    function GetMaxRecords: Int64;
+    procedure SetMaxRecords(Value: Int64);
+    function GetPartialNotice: string;
+  public
+    property KeyFields: string read GetKeyFields write SetKeyFields;
+    property ApplyMode: string read GetApplyMode write SetApplyMode;
+    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
+    property Active: Boolean read GetActive write SetActive;
+    property Filter: string read GetFilter write SetFilter;
+    property Filtered: Boolean read GetFiltered write SetFiltered;
+    property IndexFieldNames: string read GetIndexFieldNames write SetIndexFieldNames;
+    property Indexes: string read GetIndexes write SetIndexes;
+    property IndexName: string read GetIndexName write SetIndexName;
+    property Params: string read GetParams write SetParams;
+    property StatusFilter: string read GetStatusFilter write SetStatusFilter;
+    property MasterSource: string read GetMasterSource write SetMasterSource;
+    property MasterFields: string read GetMasterFields write SetMasterFields;
+    property ApplySeparately: Boolean read GetApplySeparately write SetApplySeparately;
+    property RecordTotal: Int64 read GetRecordTotal write SetRecordTotal;
+    property MaxRecords: Int64 read GetMaxRecords write SetMaxRecords;
+    property PartialNotice: string read GetPartialNotice;
+  end;
+
+
+function TClientDataSet.GetKeyFields: string;
+begin
+  Result := AsText(GetProp('key_fields'));
+end;
+
+procedure TClientDataSet.SetKeyFields(Value: string);
+begin
+  SetProp('key_fields', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetApplyMode: string;
+begin
+  Result := AsText(GetProp('apply_mode'));
+end;
+
+procedure TClientDataSet.SetApplyMode(Value: string);
+begin
+  SetProp('apply_mode', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetReadOnly: Boolean;
+begin
+  Result := GetProp('read_only').AsBoolean;
+end;
+
+procedure TClientDataSet.SetReadOnly(Value: Boolean);
+begin
+  SetProp('read_only', TJSONBoolean.Create(Value));
+end;
+
+function TClientDataSet.GetActive: Boolean;
+begin
+  Result := GetProp('active').AsBoolean;
+end;
+
+procedure TClientDataSet.SetActive(Value: Boolean);
+begin
+  SetProp('active', TJSONBoolean.Create(Value));
+end;
+
+function TClientDataSet.GetFilter: string;
+begin
+  Result := AsText(GetProp('filter'));
+end;
+
+procedure TClientDataSet.SetFilter(Value: string);
+begin
+  SetProp('filter', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetFiltered: Boolean;
+begin
+  Result := GetProp('filtered').AsBoolean;
+end;
+
+procedure TClientDataSet.SetFiltered(Value: Boolean);
+begin
+  SetProp('filtered', TJSONBoolean.Create(Value));
+end;
+
+function TClientDataSet.GetIndexFieldNames: string;
+begin
+  Result := AsText(GetProp('index_field_names'));
+end;
+
+procedure TClientDataSet.SetIndexFieldNames(Value: string);
+begin
+  SetProp('index_field_names', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetIndexes: string;
+begin
+  Result := AsText(GetProp('indexes'));
+end;
+
+procedure TClientDataSet.SetIndexes(Value: string);
+begin
+  SetProp('indexes', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetIndexName: string;
+begin
+  Result := AsText(GetProp('index_name'));
+end;
+
+procedure TClientDataSet.SetIndexName(Value: string);
+begin
+  SetProp('index_name', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetParams: string;
+begin
+  Result := AsText(GetProp('params'));
+end;
+
+procedure TClientDataSet.SetParams(Value: string);
+begin
+  SetProp('params', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetStatusFilter: string;
+begin
+  Result := AsText(GetProp('status_filter'));
+end;
+
+procedure TClientDataSet.SetStatusFilter(Value: string);
+begin
+  SetProp('status_filter', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetMasterSource: string;
+begin
+  Result := AsText(GetProp('master_source'));
+end;
+
+procedure TClientDataSet.SetMasterSource(Value: string);
+begin
+  SetProp('master_source', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetMasterFields: string;
+begin
+  Result := AsText(GetProp('master_fields'));
+end;
+
+procedure TClientDataSet.SetMasterFields(Value: string);
+begin
+  SetProp('master_fields', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetApplySeparately: Boolean;
+begin
+  Result := GetProp('apply_separately').AsBoolean;
+end;
+
+procedure TClientDataSet.SetApplySeparately(Value: Boolean);
+begin
+  SetProp('apply_separately', TJSONBoolean.Create(Value));
+end;
+
+function TClientDataSet.GetRecordTotal: Int64;
+begin
+  Result := GetProp('record_total').AsInt64;
+end;
+
+procedure TClientDataSet.SetRecordTotal(Value: Int64);
+begin
+  SetProp('record_total', TJSONInt64Number.Create(Value));
+end;
+
+function TClientDataSet.GetMaxRecords: Int64;
+begin
+  Result := GetProp('max_records').AsInt64;
+end;
+
+procedure TClientDataSet.SetMaxRecords(Value: Int64);
+begin
+  SetProp('max_records', TJSONInt64Number.Create(Value));
+end;
+
+function TClientDataSet.GetPartialNotice: string;
+begin
+  Result := AsText(GetProp('partial_notice'));
+end;
+

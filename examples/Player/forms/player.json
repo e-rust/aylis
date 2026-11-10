@@ -1,0 +1,481 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPlayer",
+    "caption": "Reprodutor Multimídia",
+    "width": 1100,
+    "height": 720,
+    "children": [
+      {
+        "class": "MainMenu",
+        "name": "mnuPrincipal",
+        "children": [
+          {
+            "class": "MenuItem",
+            "name": "mnuArquivo",
+            "text": "Arquivo",
+            "children": [
+              {
+                "class": "MenuItem",
+                "name": "mnuAbrir",
+                "text": "Abrir arquivos",
+                "shortcut": "Ctrl+O",
+                "icon": "folder",
+                "on_click": "abrir_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuLimparFila",
+                "text": "Limpar a fila",
+                "icon": "trash",
+                "on_click": "limpar_fila_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuSep1",
+                "text": "-"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuSair",
+                "text": "Sair",
+                "on_click": "sair_click"
+              }
+            ]
+          },
+          {
+            "class": "MenuItem",
+            "name": "mnuReproduzir",
+            "text": "Reproduzir",
+            "children": [
+              {
+                "class": "MenuItem",
+                "name": "mnuReproduzirPausar",
+                "text": "Reproduzir/pausar",
+                "shortcut": "Ctrl+P",
+                "icon": "play",
+                "on_click": "reproduzir_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuParar",
+                "text": "Parar",
+                "shortcut": "Ctrl+S",
+                "icon": "stop",
+                "on_click": "parar_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuAnterior",
+                "text": "Anterior",
+                "shortcut": "Ctrl+B",
+                "icon": "previous",
+                "on_click": "anterior_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuProxima",
+                "text": "Próxima",
+                "shortcut": "Ctrl+F",
+                "icon": "next",
+                "on_click": "proxima_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuSep2",
+                "text": "-"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuEmbaralhar",
+                "text": "Embaralhar",
+                "shortcut": "Ctrl+H",
+                "icon": "shuffle",
+                "on_click": "embaralhar_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuRepetir",
+                "text": "Repetir",
+                "shortcut": "Ctrl+T",
+                "icon": "repeat",
+                "on_click": "repetir_click"
+              }
+            ]
+          },
+          {
+            "class": "MenuItem",
+            "name": "mnuExibir",
+            "text": "Exibir",
+            "children": [
+              {
+                "class": "MenuItem",
+                "name": "mnuAgora",
+                "text": "Reproduzindo agora",
+                "on_click": "agora_click"
+              },
+              {
+                "class": "MenuItem",
+                "name": "mnuFila",
+                "text": "Fila de reprodução",
+                "on_click": "fila_click"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlControles",
+        "height": 112,
+        "align": "bottom",
+        "margins": [6, 0, 6, 6],
+        "padding": [16, 6, 16, 10],
+        "children": [
+          {
+            "class": "Layout",
+            "name": "lytBarra",
+            "height": 30,
+            "align": "top",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblTempo",
+                "text": "0:00",
+                "width": 52,
+                "align": "left",
+                "font_size": 12
+              },
+              {
+                "class": "Label",
+                "name": "lblDuracao",
+                "text": "0:00",
+                "h_align": "trailing",
+                "width": 52,
+                "align": "right",
+                "font_size": 12
+              },
+              {
+                "class": "SeekBar",
+                "name": "sbPosicao",
+                "on_seek": "posicao_seek",
+                "align": "client",
+                "margins": [6, 0]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "lytInfo",
+            "width": 320,
+            "align": "left",
+            "children": [
+              {
+                "class": "Icon",
+                "name": "icoCapa",
+                "icon": "music",
+                "color": "#8A8A8A",
+                "width": 56,
+                "align": "left",
+                "margins": [0, 6, 12, 6]
+              },
+              {
+                "class": "Layout",
+                "name": "lytTextos",
+                "align": "client",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblTitulo",
+                    "text": "Nenhuma mídia",
+                    "bold": true,
+                    "height": 26,
+                    "align": "top",
+                    "margins": [0, 12, 0, 0],
+                    "font_size": 15
+                  },
+                  {
+                    "class": "Label",
+                    "name": "lblDetalhe",
+                    "color": "text_muted",
+                    "align": "top",
+                    "font_size": 12
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "lytVolume",
+            "width": 200,
+            "align": "right",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnMudo",
+                "icon": "volume",
+                "icon_size": 18,
+                "width": 40,
+                "align": "left",
+                "margins": [0, 16, 4, 16],
+                "can_focus": false,
+                "style": "flat",
+                "border_color": "#00000000",
+                "hint": "Sem som",
+                "on_click": "mudo_click"
+              },
+              {
+                "class": "TrackBar",
+                "name": "tbVolume",
+                "value": 80,
+                "on_change": "volume_change",
+                "align": "client",
+                "margins": [0, 18]
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "lytBotoes",
+            "align": "client",
+            "children": [
+              {
+                "class": "Layout",
+                "name": "lytBotoesCentro",
+                "width": 268,
+                "height": 56,
+                "align": "center",
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnEmbaralhar",
+                    "icon": "shuffle",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "width": 40,
+                    "align": "left",
+                    "margins": [0, 8, 8, 8],
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Embaralhar: desativado",
+                    "on_click": "embaralhar_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnAnterior",
+                    "icon": "previous",
+                    "icon_size": 18,
+                    "width": 40,
+                    "align": "left",
+                    "margins": [0, 8, 8, 8],
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Anterior (Ctrl+B)",
+                    "on_click": "anterior_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnReproduzir",
+                    "icon": "play",
+                    "icon_size": 22,
+                    "width": 56,
+                    "align": "left",
+                    "margins": [0, 0, 8, 0],
+                    "can_focus": false,
+                    "style": "round",
+                    "hint": "Reproduzir (Ctrl+P)",
+                    "on_click": "reproduzir_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnProxima",
+                    "icon": "next",
+                    "icon_size": 18,
+                    "width": 40,
+                    "align": "left",
+                    "margins": [0, 8, 8, 8],
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Próxima (Ctrl+F)",
+                    "on_click": "proxima_click"
+                  },
+                  {
+                    "class": "Button",
+                    "name": "btnRepetir",
+                    "icon": "repeat",
+                    "icon_size": 18,
+                    "checkable": true,
+                    "width": 40,
+                    "align": "left",
+                    "margins": [0, 8],
+                    "can_focus": false,
+                    "style": "flat",
+                    "border_color": "#00000000",
+                    "hint": "Repetir: desativado",
+                    "on_click": "repetir_click"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "Layout",
+        "name": "lytNavegacao",
+        "width": 240,
+        "align": "left",
+        "padding": 8,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnAgora",
+            "text": "Reproduzindo agora",
+            "icon": "play",
+            "icon_size": 16,
+            "checkable": true,
+            "checked": true,
+            "height": 40,
+            "align": "top",
+            "margins": [0, 0, 0, 4],
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "on_click": "agora_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnFila",
+            "text": "Fila de reprodução",
+            "icon": "list",
+            "icon_size": 16,
+            "checkable": true,
+            "height": 40,
+            "align": "top",
+            "margins": [0, 0, 0, 4],
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "on_click": "fila_click"
+          },
+          {
+            "class": "Divider",
+            "name": "divNavegacao",
+            "height": 1,
+            "align": "top",
+            "margins": 8
+          },
+          {
+            "class": "Button",
+            "name": "btnAbrirArquivos",
+            "text": "Abrir arquivos",
+            "icon": "folder",
+            "icon_size": 16,
+            "height": 40,
+            "align": "top",
+            "can_focus": false,
+            "style": "flat",
+            "border_color": "#00000000",
+            "on_click": "abrir_click"
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlAgora",
+        "align": "client",
+        "margins": [0, 6, 6, 6],
+        "padding": 12,
+        "children": [
+          {
+            "class": "VideoPlayer",
+            "name": "vpVideo",
+            "volume": 0.8,
+            "radius": 8,
+            "on_end": "video_fim",
+            "on_error": "video_erro",
+            "align": "client"
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlFila",
+        "align": "client",
+        "margins": [0, 6, 6, 6],
+        "padding": 16,
+        "visible": false,
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblFila",
+            "text": "Fila de reprodução",
+            "bold": true,
+            "height": 44,
+            "align": "top",
+            "font_size": 26
+          },
+          {
+            "class": "Layout",
+            "name": "lytFilaBotoes",
+            "height": 40,
+            "align": "top",
+            "margins": [0, 0, 0, 8],
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnAdicionar",
+                "text": "Adicionar arquivos",
+                "icon": "plus",
+                "icon_size": 16,
+                "width": 180,
+                "align": "left",
+                "margins": [0, 2, 8, 2],
+                "can_focus": false,
+                "on_click": "abrir_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnLimparFila",
+                "text": "Limpar",
+                "icon": "trash",
+                "icon_size": 16,
+                "width": 110,
+                "align": "left",
+                "margins": [0, 2],
+                "can_focus": false,
+                "style": "flat",
+                "on_click": "limpar_fila_click"
+              }
+            ]
+          },
+          {
+            "class": "ListView",
+            "name": "lvFila",
+            "on_item_click": "fila_item_click",
+            "align": "client"
+          }
+        ]
+      },
+      {
+        "class": "OpenDialog",
+        "name": "dlgAbrir",
+        "title": "Abrir arquivos de mídia",
+        "filter": "Mídia|*.mp3;*.wav;*.m4a;*.flac;*.ogg;*.wma;*.aac;*.mp4;*.mkv;*.avi;*.wmv;*.mov|Todos os arquivos|*.*",
+        "multiple": true,
+        "on_select": "abrir_select"
+      },
+      {
+        "class": "Timer",
+        "name": "tmrPosicao",
+        "interval": 250,
+        "on_timer": "posicao_timer"
+      }
+    ]
+  }
+}

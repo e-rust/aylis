@@ -1,0 +1,943 @@
+  { Um DBChart de um form. }
+  TDBChart = class(TAylisComponent)
+  private
+    function GetDataSource: string;
+    procedure SetDataSource(Value: string);
+    function GetLabelField: string;
+    procedure SetLabelField(Value: string);
+    function GetValueFields: string;
+    procedure SetValueFields(Value: string);
+    function GetKind: string;
+    procedure SetKind(Value: string);
+    function GetTitle: string;
+    procedure SetTitle(Value: string);
+    function GetLabels: string;
+    procedure SetLabels(Value: string);
+    function GetSeries: string;
+    procedure SetSeries(Value: string);
+    function GetJson: string;
+    procedure SetJson(Value: string);
+    function GetLegend: Boolean;
+    procedure SetLegend(Value: Boolean);
+    function GetStepped: Boolean;
+    procedure SetStepped(Value: Boolean);
+    function GetTension: Double;
+    procedure SetTension(Value: Double);
+    function GetAnimate: Boolean;
+    procedure SetAnimate(Value: Boolean);
+    function GetZoom: Boolean;
+    procedure SetZoom(Value: Boolean);
+    function GetAutoScale: Boolean;
+    procedure SetAutoScale(Value: Boolean);
+    function GetYMin: Double;
+    procedure SetYMin(Value: Double);
+    function GetYMax: Double;
+    procedure SetYMax(Value: Double);
+    function GetLogScale: Boolean;
+    procedure SetLogScale(Value: Boolean);
+    function GetReverse: Boolean;
+    procedure SetReverse(Value: Boolean);
+    function GetTimeAxis: Boolean;
+    procedure SetTimeAxis(Value: Boolean);
+    function GetClickedSeries: Int64;
+    procedure SetClickedSeries(Value: Int64);
+    function GetClickedIndex: Int64;
+    procedure SetClickedIndex(Value: Int64);
+    function GetLeft: Double;
+    procedure SetLeft(Value: Double);
+    function GetTop: Double;
+    procedure SetTop(Value: Double);
+    function GetWidth: Double;
+    procedure SetWidth(Value: Double);
+    function GetHeight: Double;
+    procedure SetHeight(Value: Double);
+    function GetAlign: string;
+    procedure SetAlign(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetHitTest: Boolean;
+    procedure SetHitTest(Value: Boolean);
+    function GetClipChildren: Boolean;
+    procedure SetClipChildren(Value: Boolean);
+    function GetCapturesWheel: Boolean;
+    procedure SetCapturesWheel(Value: Boolean);
+    function GetCanFocus: Boolean;
+    procedure SetCanFocus(Value: Boolean);
+    function GetDraggable: Boolean;
+    procedure SetDraggable(Value: Boolean);
+    function GetAcceptsDrops: Boolean;
+    procedure SetAcceptsDrops(Value: Boolean);
+    function GetDragData: string;
+    procedure SetDragData(Value: string);
+    function GetDragLabel: string;
+    procedure SetDragLabel(Value: string);
+    function GetDragImage: string;
+    procedure SetDragImage(Value: string);
+    function GetDropTypes: string;
+    procedure SetDropTypes(Value: string);
+    function GetTabStop: Boolean;
+    procedure SetTabStop(Value: Boolean);
+    function GetCursor: string;
+    procedure SetCursor(Value: string);
+    function GetOpacity: Double;
+    procedure SetOpacity(Value: Double);
+    function GetCacheLayer: Boolean;
+    procedure SetCacheLayer(Value: Boolean);
+    function GetRotation: Double;
+    procedure SetRotation(Value: Double);
+    function GetTranslateX: Double;
+    procedure SetTranslateX(Value: Double);
+    function GetTranslateY: Double;
+    procedure SetTranslateY(Value: Double);
+    function GetAspectRatio: Double;
+    procedure SetAspectRatio(Value: Double);
+    function GetMaxWidth: Double;
+    procedure SetMaxWidth(Value: Double);
+    function GetMinWidth: Double;
+    procedure SetMinWidth(Value: Double);
+    function GetMinHeight: Double;
+    procedure SetMinHeight(Value: Double);
+    function GetMaxHeight: Double;
+    procedure SetMaxHeight(Value: Double);
+    function GetSelfAlign: string;
+    procedure SetSelfAlign(Value: string);
+    function GetAutoSize: Boolean;
+    procedure SetAutoSize(Value: Boolean);
+    function GetColumnSpan: Int64;
+    procedure SetColumnSpan(Value: Int64);
+    function GetShadow: string;
+    procedure SetShadow(Value: string);
+    function GetStyle: string;
+    procedure SetStyle(Value: string);
+    function GetTheme: string;
+    procedure SetTheme(Value: string);
+    function GetFill: string;
+    procedure SetFill(Value: string);
+    function GetBorderColor: string;
+    procedure SetBorderColor(Value: string);
+    function GetTextColor: string;
+    procedure SetTextColor(Value: string);
+    function GetAccentColor: string;
+    procedure SetAccentColor(Value: string);
+    function GetSuccessColor: string;
+    procedure SetSuccessColor(Value: string);
+    function GetWarningColor: string;
+    procedure SetWarningColor(Value: string);
+    function GetDangerColor: string;
+    procedure SetDangerColor(Value: string);
+    function GetFontFamily: string;
+    procedure SetFontFamily(Value: string);
+    function GetFontSize: Double;
+    procedure SetFontSize(Value: Double);
+    function GetFontWeight: string;
+    procedure SetFontWeight(Value: string);
+    function GetFontItalic: Boolean;
+    procedure SetFontItalic(Value: Boolean);
+    function GetFontUnderline: Boolean;
+    procedure SetFontUnderline(Value: Boolean);
+    function GetFontStrikeout: Boolean;
+    procedure SetFontStrikeout(Value: Boolean);
+    function GetHint: string;
+    procedure SetHint(Value: string);
+    function GetTag: Int64;
+    procedure SetTag(Value: Int64);
+    function GetPopupMenu: string;
+    procedure SetPopupMenu(Value: string);
+  public
+    property DataSource: string read GetDataSource write SetDataSource;
+    property LabelField: string read GetLabelField write SetLabelField;
+    property ValueFields: string read GetValueFields write SetValueFields;
+    property Kind: string read GetKind write SetKind;
+    property Title: string read GetTitle write SetTitle;
+    property Labels: string read GetLabels write SetLabels;
+    property Series: string read GetSeries write SetSeries;
+    property Json: string read GetJson write SetJson;
+    property Legend: Boolean read GetLegend write SetLegend;
+    property Stepped: Boolean read GetStepped write SetStepped;
+    property Tension: Double read GetTension write SetTension;
+    property Animate: Boolean read GetAnimate write SetAnimate;
+    property Zoom: Boolean read GetZoom write SetZoom;
+    property AutoScale: Boolean read GetAutoScale write SetAutoScale;
+    property YMin: Double read GetYMin write SetYMin;
+    property YMax: Double read GetYMax write SetYMax;
+    property LogScale: Boolean read GetLogScale write SetLogScale;
+    property Reverse: Boolean read GetReverse write SetReverse;
+    property TimeAxis: Boolean read GetTimeAxis write SetTimeAxis;
+    property ClickedSeries: Int64 read GetClickedSeries write SetClickedSeries;
+    property ClickedIndex: Int64 read GetClickedIndex write SetClickedIndex;
+    property Left: Double read GetLeft write SetLeft;
+    property Top: Double read GetTop write SetTop;
+    property Width: Double read GetWidth write SetWidth;
+    property Height: Double read GetHeight write SetHeight;
+    property Align: string read GetAlign write SetAlign;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property HitTest: Boolean read GetHitTest write SetHitTest;
+    property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CanFocus: Boolean read GetCanFocus write SetCanFocus;
+    property Draggable: Boolean read GetDraggable write SetDraggable;
+    property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
+    property DragData: string read GetDragData write SetDragData;
+    property DragLabel: string read GetDragLabel write SetDragLabel;
+    property DragImage: string read GetDragImage write SetDragImage;
+    property DropTypes: string read GetDropTypes write SetDropTypes;
+    property TabStop: Boolean read GetTabStop write SetTabStop;
+    property Cursor: string read GetCursor write SetCursor;
+    property Opacity: Double read GetOpacity write SetOpacity;
+    property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
+    property Rotation: Double read GetRotation write SetRotation;
+    property TranslateX: Double read GetTranslateX write SetTranslateX;
+    property TranslateY: Double read GetTranslateY write SetTranslateY;
+    property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
+    property MaxWidth: Double read GetMaxWidth write SetMaxWidth;
+    property MinWidth: Double read GetMinWidth write SetMinWidth;
+    property MinHeight: Double read GetMinHeight write SetMinHeight;
+    property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
+    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property AutoSize: Boolean read GetAutoSize write SetAutoSize;
+    property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property Shadow: string read GetShadow write SetShadow;
+    property Style: string read GetStyle write SetStyle;
+    property Theme: string read GetTheme write SetTheme;
+    property Fill: string read GetFill write SetFill;
+    property BorderColor: string read GetBorderColor write SetBorderColor;
+    property TextColor: string read GetTextColor write SetTextColor;
+    property AccentColor: string read GetAccentColor write SetAccentColor;
+    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
+    property WarningColor: string read GetWarningColor write SetWarningColor;
+    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property FontFamily: string read GetFontFamily write SetFontFamily;
+    property FontSize: Double read GetFontSize write SetFontSize;
+    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontItalic: Boolean read GetFontItalic write SetFontItalic;
+    property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
+    property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
+    property Hint: string read GetHint write SetHint;
+    property Tag: Int64 read GetTag write SetTag;
+    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+  end;
+
+
+function TDBChart.GetDataSource: string;
+begin
+  Result := AsText(GetProp('data_source'));
+end;
+
+procedure TDBChart.SetDataSource(Value: string);
+begin
+  SetProp('data_source', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetLabelField: string;
+begin
+  Result := AsText(GetProp('label_field'));
+end;
+
+procedure TDBChart.SetLabelField(Value: string);
+begin
+  SetProp('label_field', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetValueFields: string;
+begin
+  Result := AsText(GetProp('value_fields'));
+end;
+
+procedure TDBChart.SetValueFields(Value: string);
+begin
+  SetProp('value_fields', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetKind: string;
+begin
+  Result := AsText(GetProp('kind'));
+end;
+
+procedure TDBChart.SetKind(Value: string);
+begin
+  SetProp('kind', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTitle: string;
+begin
+  Result := AsText(GetProp('title'));
+end;
+
+procedure TDBChart.SetTitle(Value: string);
+begin
+  SetProp('title', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetLabels: string;
+begin
+  Result := AsText(GetProp('labels'));
+end;
+
+procedure TDBChart.SetLabels(Value: string);
+begin
+  SetProp('labels', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetSeries: string;
+begin
+  Result := AsText(GetProp('series'));
+end;
+
+procedure TDBChart.SetSeries(Value: string);
+begin
+  SetProp('series', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetJson: string;
+begin
+  Result := AsText(GetProp('json'));
+end;
+
+procedure TDBChart.SetJson(Value: string);
+begin
+  SetProp('json', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetLegend: Boolean;
+begin
+  Result := GetProp('legend').AsBoolean;
+end;
+
+procedure TDBChart.SetLegend(Value: Boolean);
+begin
+  SetProp('legend', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetStepped: Boolean;
+begin
+  Result := GetProp('stepped').AsBoolean;
+end;
+
+procedure TDBChart.SetStepped(Value: Boolean);
+begin
+  SetProp('stepped', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetTension: Double;
+begin
+  Result := GetProp('tension').AsFloat;
+end;
+
+procedure TDBChart.SetTension(Value: Double);
+begin
+  SetProp('tension', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetAnimate: Boolean;
+begin
+  Result := GetProp('animate').AsBoolean;
+end;
+
+procedure TDBChart.SetAnimate(Value: Boolean);
+begin
+  SetProp('animate', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetZoom: Boolean;
+begin
+  Result := GetProp('zoom').AsBoolean;
+end;
+
+procedure TDBChart.SetZoom(Value: Boolean);
+begin
+  SetProp('zoom', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetAutoScale: Boolean;
+begin
+  Result := GetProp('auto_scale').AsBoolean;
+end;
+
+procedure TDBChart.SetAutoScale(Value: Boolean);
+begin
+  SetProp('auto_scale', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetYMin: Double;
+begin
+  Result := GetProp('y_min').AsFloat;
+end;
+
+procedure TDBChart.SetYMin(Value: Double);
+begin
+  SetProp('y_min', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetYMax: Double;
+begin
+  Result := GetProp('y_max').AsFloat;
+end;
+
+procedure TDBChart.SetYMax(Value: Double);
+begin
+  SetProp('y_max', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetLogScale: Boolean;
+begin
+  Result := GetProp('log_scale').AsBoolean;
+end;
+
+procedure TDBChart.SetLogScale(Value: Boolean);
+begin
+  SetProp('log_scale', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetReverse: Boolean;
+begin
+  Result := GetProp('reverse').AsBoolean;
+end;
+
+procedure TDBChart.SetReverse(Value: Boolean);
+begin
+  SetProp('reverse', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetTimeAxis: Boolean;
+begin
+  Result := GetProp('time_axis').AsBoolean;
+end;
+
+procedure TDBChart.SetTimeAxis(Value: Boolean);
+begin
+  SetProp('time_axis', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetClickedSeries: Int64;
+begin
+  Result := GetProp('clicked_series').AsInt64;
+end;
+
+procedure TDBChart.SetClickedSeries(Value: Int64);
+begin
+  SetProp('clicked_series', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetClickedIndex: Int64;
+begin
+  Result := GetProp('clicked_index').AsInt64;
+end;
+
+procedure TDBChart.SetClickedIndex(Value: Int64);
+begin
+  SetProp('clicked_index', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetLeft: Double;
+begin
+  Result := GetProp('left').AsFloat;
+end;
+
+procedure TDBChart.SetLeft(Value: Double);
+begin
+  SetProp('left', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetTop: Double;
+begin
+  Result := GetProp('top').AsFloat;
+end;
+
+procedure TDBChart.SetTop(Value: Double);
+begin
+  SetProp('top', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetWidth: Double;
+begin
+  Result := GetProp('width').AsFloat;
+end;
+
+procedure TDBChart.SetWidth(Value: Double);
+begin
+  SetProp('width', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetHeight: Double;
+begin
+  Result := GetProp('height').AsFloat;
+end;
+
+procedure TDBChart.SetHeight(Value: Double);
+begin
+  SetProp('height', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetAlign: string;
+begin
+  Result := AsText(GetProp('align'));
+end;
+
+procedure TDBChart.SetAlign(Value: string);
+begin
+  SetProp('align', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TDBChart.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TDBChart.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetHitTest: Boolean;
+begin
+  Result := GetProp('hit_test').AsBoolean;
+end;
+
+procedure TDBChart.SetHitTest(Value: Boolean);
+begin
+  SetProp('hit_test', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetClipChildren: Boolean;
+begin
+  Result := GetProp('clip_children').AsBoolean;
+end;
+
+procedure TDBChart.SetClipChildren(Value: Boolean);
+begin
+  SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetCapturesWheel: Boolean;
+begin
+  Result := GetProp('captures_wheel').AsBoolean;
+end;
+
+procedure TDBChart.SetCapturesWheel(Value: Boolean);
+begin
+  SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetCanFocus: Boolean;
+begin
+  Result := GetProp('can_focus').AsBoolean;
+end;
+
+procedure TDBChart.SetCanFocus(Value: Boolean);
+begin
+  SetProp('can_focus', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetDraggable: Boolean;
+begin
+  Result := GetProp('draggable').AsBoolean;
+end;
+
+procedure TDBChart.SetDraggable(Value: Boolean);
+begin
+  SetProp('draggable', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetAcceptsDrops: Boolean;
+begin
+  Result := GetProp('accepts_drops').AsBoolean;
+end;
+
+procedure TDBChart.SetAcceptsDrops(Value: Boolean);
+begin
+  SetProp('accepts_drops', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetDragData: string;
+begin
+  Result := AsText(GetProp('drag_data'));
+end;
+
+procedure TDBChart.SetDragData(Value: string);
+begin
+  SetProp('drag_data', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetDragLabel: string;
+begin
+  Result := AsText(GetProp('drag_label'));
+end;
+
+procedure TDBChart.SetDragLabel(Value: string);
+begin
+  SetProp('drag_label', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetDragImage: string;
+begin
+  Result := AsText(GetProp('drag_image'));
+end;
+
+procedure TDBChart.SetDragImage(Value: string);
+begin
+  SetProp('drag_image', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetDropTypes: string;
+begin
+  Result := AsText(GetProp('drop_types'));
+end;
+
+procedure TDBChart.SetDropTypes(Value: string);
+begin
+  SetProp('drop_types', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTabStop: Boolean;
+begin
+  Result := GetProp('tab_stop').AsBoolean;
+end;
+
+procedure TDBChart.SetTabStop(Value: Boolean);
+begin
+  SetProp('tab_stop', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetCursor: string;
+begin
+  Result := AsText(GetProp('cursor'));
+end;
+
+procedure TDBChart.SetCursor(Value: string);
+begin
+  SetProp('cursor', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOpacity: Double;
+begin
+  Result := GetProp('opacity').AsFloat;
+end;
+
+procedure TDBChart.SetOpacity(Value: Double);
+begin
+  SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetCacheLayer: Boolean;
+begin
+  Result := GetProp('cache_layer').AsBoolean;
+end;
+
+procedure TDBChart.SetCacheLayer(Value: Boolean);
+begin
+  SetProp('cache_layer', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetRotation: Double;
+begin
+  Result := GetProp('rotation').AsFloat;
+end;
+
+procedure TDBChart.SetRotation(Value: Double);
+begin
+  SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetTranslateX: Double;
+begin
+  Result := GetProp('translate_x').AsFloat;
+end;
+
+procedure TDBChart.SetTranslateX(Value: Double);
+begin
+  SetProp('translate_x', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetTranslateY: Double;
+begin
+  Result := GetProp('translate_y').AsFloat;
+end;
+
+procedure TDBChart.SetTranslateY(Value: Double);
+begin
+  SetProp('translate_y', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetAspectRatio: Double;
+begin
+  Result := GetProp('aspect_ratio').AsFloat;
+end;
+
+procedure TDBChart.SetAspectRatio(Value: Double);
+begin
+  SetProp('aspect_ratio', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetMaxWidth: Double;
+begin
+  Result := GetProp('max_width').AsFloat;
+end;
+
+procedure TDBChart.SetMaxWidth(Value: Double);
+begin
+  SetProp('max_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetMinWidth: Double;
+begin
+  Result := GetProp('min_width').AsFloat;
+end;
+
+procedure TDBChart.SetMinWidth(Value: Double);
+begin
+  SetProp('min_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetMinHeight: Double;
+begin
+  Result := GetProp('min_height').AsFloat;
+end;
+
+procedure TDBChart.SetMinHeight(Value: Double);
+begin
+  SetProp('min_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetMaxHeight: Double;
+begin
+  Result := GetProp('max_height').AsFloat;
+end;
+
+procedure TDBChart.SetMaxHeight(Value: Double);
+begin
+  SetProp('max_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetSelfAlign: string;
+begin
+  Result := AsText(GetProp('self_align'));
+end;
+
+procedure TDBChart.SetSelfAlign(Value: string);
+begin
+  SetProp('self_align', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetAutoSize: Boolean;
+begin
+  Result := GetProp('auto_size').AsBoolean;
+end;
+
+procedure TDBChart.SetAutoSize(Value: Boolean);
+begin
+  SetProp('auto_size', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetColumnSpan: Int64;
+begin
+  Result := GetProp('column_span').AsInt64;
+end;
+
+procedure TDBChart.SetColumnSpan(Value: Int64);
+begin
+  SetProp('column_span', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetShadow: string;
+begin
+  Result := AsText(GetProp('shadow'));
+end;
+
+procedure TDBChart.SetShadow(Value: string);
+begin
+  SetProp('shadow', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetStyle: string;
+begin
+  Result := AsText(GetProp('style'));
+end;
+
+procedure TDBChart.SetStyle(Value: string);
+begin
+  SetProp('style', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTheme: string;
+begin
+  Result := AsText(GetProp('theme'));
+end;
+
+procedure TDBChart.SetTheme(Value: string);
+begin
+  SetProp('theme', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetFill: string;
+begin
+  Result := AsText(GetProp('fill'));
+end;
+
+procedure TDBChart.SetFill(Value: string);
+begin
+  SetProp('fill', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetBorderColor: string;
+begin
+  Result := AsText(GetProp('border_color'));
+end;
+
+procedure TDBChart.SetBorderColor(Value: string);
+begin
+  SetProp('border_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTextColor: string;
+begin
+  Result := AsText(GetProp('text_color'));
+end;
+
+procedure TDBChart.SetTextColor(Value: string);
+begin
+  SetProp('text_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetAccentColor: string;
+begin
+  Result := AsText(GetProp('accent_color'));
+end;
+
+procedure TDBChart.SetAccentColor(Value: string);
+begin
+  SetProp('accent_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetSuccessColor: string;
+begin
+  Result := AsText(GetProp('success_color'));
+end;
+
+procedure TDBChart.SetSuccessColor(Value: string);
+begin
+  SetProp('success_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetWarningColor: string;
+begin
+  Result := AsText(GetProp('warning_color'));
+end;
+
+procedure TDBChart.SetWarningColor(Value: string);
+begin
+  SetProp('warning_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetDangerColor: string;
+begin
+  Result := AsText(GetProp('danger_color'));
+end;
+
+procedure TDBChart.SetDangerColor(Value: string);
+begin
+  SetProp('danger_color', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetFontFamily: string;
+begin
+  Result := AsText(GetProp('font_family'));
+end;
+
+procedure TDBChart.SetFontFamily(Value: string);
+begin
+  SetProp('font_family', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetFontSize: Double;
+begin
+  Result := GetProp('font_size').AsFloat;
+end;
+
+procedure TDBChart.SetFontSize(Value: Double);
+begin
+  SetProp('font_size', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetFontWeight: string;
+begin
+  Result := AsText(GetProp('font_weight'));
+end;
+
+procedure TDBChart.SetFontWeight(Value: string);
+begin
+  SetProp('font_weight', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetFontItalic: Boolean;
+begin
+  Result := GetProp('font_italic').AsBoolean;
+end;
+
+procedure TDBChart.SetFontItalic(Value: Boolean);
+begin
+  SetProp('font_italic', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetFontUnderline: Boolean;
+begin
+  Result := GetProp('font_underline').AsBoolean;
+end;
+
+procedure TDBChart.SetFontUnderline(Value: Boolean);
+begin
+  SetProp('font_underline', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetFontStrikeout: Boolean;
+begin
+  Result := GetProp('font_strikeout').AsBoolean;
+end;
+
+procedure TDBChart.SetFontStrikeout(Value: Boolean);
+begin
+  SetProp('font_strikeout', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetHint: string;
+begin
+  Result := AsText(GetProp('hint'));
+end;
+
+procedure TDBChart.SetHint(Value: string);
+begin
+  SetProp('hint', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTag: Int64;
+begin
+  Result := GetProp('tag').AsInt64;
+end;
+
+procedure TDBChart.SetTag(Value: Int64);
+begin
+  SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetPopupMenu: string;
+begin
+  Result := AsText(GetProp('popup_menu'));
+end;
+
+procedure TDBChart.SetPopupMenu(Value: string);
+begin
+  SetProp('popup_menu', TJSONString.Create(Value));
+end;
+

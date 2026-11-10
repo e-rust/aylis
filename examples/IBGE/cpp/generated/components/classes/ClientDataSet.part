@@ -1,0 +1,39 @@
+
+// Um ClientDataSet de um form.
+struct ClientDataSet : aylis::Component {
+    ClientDataSet() = default;
+    explicit ClientDataSet(const aylis::Component& c) : aylis::Component(c) {}
+    std::string key_fields() const { return get_prop_("key_fields").str(); }
+    void set_key_fields(const std::string& v) const { set_prop_("key_fields", v); }
+    std::string apply_mode() const { return get_prop_("apply_mode").str(); }
+    void set_apply_mode(const std::string& v) const { set_prop_("apply_mode", v); }
+    bool read_only() const { return get_prop_("read_only").boolean(); }
+    void set_read_only(bool v) const { set_prop_("read_only", v); }
+    bool active() const { return get_prop_("active").boolean(); }
+    void set_active(bool v) const { set_prop_("active", v); }
+    std::string filter() const { return get_prop_("filter").str(); }
+    void set_filter(const std::string& v) const { set_prop_("filter", v); }
+    bool filtered() const { return get_prop_("filtered").boolean(); }
+    void set_filtered(bool v) const { set_prop_("filtered", v); }
+    std::string index_field_names() const { return get_prop_("index_field_names").str(); }
+    void set_index_field_names(const std::string& v) const { set_prop_("index_field_names", v); }
+    std::string indexes() const { return get_prop_("indexes").str(); }
+    void set_indexes(const std::string& v) const { set_prop_("indexes", v); }
+    std::string index_name() const { return get_prop_("index_name").str(); }
+    void set_index_name(const std::string& v) const { set_prop_("index_name", v); }
+    std::string params() const { return get_prop_("params").str(); }
+    void set_params(const std::string& v) const { set_prop_("params", v); }
+    std::string status_filter() const { return get_prop_("status_filter").str(); }
+    void set_status_filter(const std::string& v) const { set_prop_("status_filter", v); }
+    std::string master_source() const { return get_prop_("master_source").str(); }
+    void set_master_source(const std::string& v) const { set_prop_("master_source", v); }
+    std::string master_fields() const { return get_prop_("master_fields").str(); }
+    void set_master_fields(const std::string& v) const { set_prop_("master_fields", v); }
+    bool apply_separately() const { return get_prop_("apply_separately").boolean(); }
+    void set_apply_separately(bool v) const { set_prop_("apply_separately", v); }
+    long long record_total() const { return static_cast<long long>(get_prop_("record_total").number()); }
+    void set_record_total(long long v) const { set_prop_("record_total", v); }
+    long long max_records() const { return static_cast<long long>(get_prop_("max_records").number()); }
+    void set_max_records(long long v) const { set_prop_("max_records", v); }
+    std::string partial_notice() const { return get_prop_("partial_notice").str(); }
+};

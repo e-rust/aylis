@@ -1,0 +1,13 @@
+{
+  "description": "ProcessamentoAssincrono: o Cancelar do modal roda enquanto a thread trabalha, e a thread para.",
+  "steps": [
+    {"click": "btnFecharMes"},
+    {"wait": 800},
+    {"click": "btnCancelar"},
+    {"wait": 1500},
+    {"wait": 500}
+  ],
+  "state": [
+    {"component": "lblStatus", "prop": "text"}
+  ]
+}

@@ -1,0 +1,33 @@
+[package]
+name = "aylis-remote"
+description = "Protocolo do aylis: comandos e eventos em JSON para backends em qualquer linguagem"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+aylis-json = { path = "../aylis-json" }
+aylis-data = { path = "../aylis-data" }
+aylis-controls = { path = "../aylis-controls" }
+aylis-dbcontrols = { path = "../aylis-dbcontrols" }
+aylis-providers = { path = "../aylis-providers" }
+aylis-media = { path = "../aylis-media" }
+aylis-vector = { path = "../aylis-vector" }
+aylis-markdown = { path = "../aylis-markdown" }
+aylis-webview = { path = "../aylis-webview" }
+aylis-project = { path = "../aylis-project" }
+serde_json = { version = "1", features = ["preserve_order"] }
+# A compactação entre a ponte e a tela (Rust puro: vale no navegador também).
+miniz_oxide = "0.8"
+
+# O token do servidor MCP (o componente McpServer).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = "0.3"
+
+[dev-dependencies]
+# O catálogo das classes (o acesso tipado nas linguagens) tem também as das features que o
+# protocolo não registra: o 3D e o visualizador de documentos.
+aylis-3d = { path = "../aylis-3d" }
+aylis-docview = { path = "../aylis-docview" }

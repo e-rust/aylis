@@ -1,0 +1,81 @@
+
+// aylisField é um Field de um form.
+type aylisField struct{ aylis.Component }
+
+func (c aylisField) FieldName() string { return asText(c.Get("field_name")) }
+func (c aylisField) SetFieldName(v string) { c.Set("field_name", v) }
+
+func (c aylisField) Type() string { return asText(c.Get("type")) }
+func (c aylisField) SetType(v string) { c.Set("type", v) }
+
+func (c aylisField) Size() int64 { return int64(asNumber(c.Get("size"))) }
+func (c aylisField) SetSize(v int64) { c.Set("size", v) }
+
+func (c aylisField) Scale() int64 { return int64(asNumber(c.Get("scale"))) }
+func (c aylisField) SetScale(v int64) { c.Set("scale", v) }
+
+func (c aylisField) Rounding() string { return asText(c.Get("rounding")) }
+func (c aylisField) SetRounding(v string) { c.Set("rounding", v) }
+
+func (c aylisField) DisplayLabel() string { return asText(c.Get("display_label")) }
+func (c aylisField) SetDisplayLabel(v string) { c.Set("display_label", v) }
+
+func (c aylisField) DisplayWidth() float64 { return asNumber(c.Get("display_width")) }
+func (c aylisField) SetDisplayWidth(v float64) { c.Set("display_width", v) }
+
+func (c aylisField) DisplayFormat() string { return asText(c.Get("display_format")) }
+func (c aylisField) SetDisplayFormat(v string) { c.Set("display_format", v) }
+
+func (c aylisField) EditFormat() string { return asText(c.Get("edit_format")) }
+func (c aylisField) SetEditFormat(v string) { c.Set("edit_format", v) }
+
+func (c aylisField) Alignment() string { return asText(c.Get("alignment")) }
+func (c aylisField) SetAlignment(v string) { c.Set("alignment", v) }
+
+func (c aylisField) Required() bool { return asBool(c.Get("required")) }
+func (c aylisField) SetRequired(v bool) { c.Set("required", v) }
+
+func (c aylisField) ReadOnly() bool { return asBool(c.Get("read_only")) }
+func (c aylisField) SetReadOnly(v bool) { c.Set("read_only", v) }
+
+func (c aylisField) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisField) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisField) Min() float64 { return asNumber(c.Get("min")) }
+func (c aylisField) SetMin(v float64) { c.Set("min", v) }
+
+func (c aylisField) Max() float64 { return asNumber(c.Get("max")) }
+func (c aylisField) SetMax(v float64) { c.Set("max", v) }
+
+func (c aylisField) DefaultValue() string { return asText(c.Get("default_value")) }
+func (c aylisField) SetDefaultValue(v string) { c.Set("default_value", v) }
+
+func (c aylisField) DisplayValues() string { return asText(c.Get("display_values")) }
+func (c aylisField) SetDisplayValues(v string) { c.Set("display_values", v) }
+
+func (c aylisField) CharCase() string { return asText(c.Get("char_case")) }
+func (c aylisField) SetCharCase(v string) { c.Set("char_case", v) }
+
+func (c aylisField) EditMask() string { return asText(c.Get("edit_mask")) }
+func (c aylisField) SetEditMask(v string) { c.Set("edit_mask", v) }
+
+func (c aylisField) Sensitive() bool { return asBool(c.Get("sensitive")) }
+func (c aylisField) SetSensitive(v bool) { c.Set("sensitive", v) }
+
+func (c aylisField) Kind() string { return asText(c.Get("kind")) }
+func (c aylisField) SetKind(v string) { c.Set("kind", v) }
+
+func (c aylisField) Expression() string { return asText(c.Get("expression")) }
+func (c aylisField) SetExpression(v string) { c.Set("expression", v) }
+
+func (c aylisField) LookupDataSet() string { return asText(c.Get("lookup_data_set")) }
+func (c aylisField) SetLookupDataSet(v string) { c.Set("lookup_data_set", v) }
+
+func (c aylisField) KeyFields() string { return asText(c.Get("key_fields")) }
+func (c aylisField) SetKeyFields(v string) { c.Set("key_fields", v) }
+
+func (c aylisField) LookupKeyFields() string { return asText(c.Get("lookup_key_fields")) }
+func (c aylisField) SetLookupKeyFields(v string) { c.Set("lookup_key_fields", v) }
+
+func (c aylisField) LookupResultField() string { return asText(c.Get("lookup_result_field")) }
+func (c aylisField) SetLookupResultField(v string) { c.Set("lookup_result_field", v) }

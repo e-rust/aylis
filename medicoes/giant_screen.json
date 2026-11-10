@@ -1,0 +1,52 @@
+{
+  "altura": 6480,
+  "cenarios": [
+    {
+      "area": 0.00007360789609053493,
+      "controles": 159,
+      "evento_ms": 0.12,
+      "nome": "digitar",
+      "quadro_ms": 1.31
+    },
+    {
+      "area": 0.00003394257973251032,
+      "controles": 152,
+      "evento_ms": 0.0,
+      "nome": "relogio",
+      "quadro_ms": 4.57
+    },
+    {
+      "area": 0.0005989583333333333,
+      "controles": 300,
+      "evento_ms": 0.0,
+      "nome": "60 barras",
+      "quadro_ms": 3.09
+    },
+    {
+      "area": 0.00013502935715663586,
+      "controles": 162,
+      "evento_ms": 0.44,
+      "nome": "mouse",
+      "quadro_ms": 1.19
+    },
+    {
+      "area": 0.0034908943584426437,
+      "controles": 273,
+      "evento_ms": 0.0,
+      "nome": "deslizar",
+      "quadro_ms": 2.99
+    },
+    {
+      "area": 0.027027323656121382,
+      "controles": 401,
+      "evento_ms": 0.01,
+      "nome": "rolar",
+      "quadro_ms": 19.55
+    }
+  ],
+  "componentes": 17822,
+  "descricao": "A tela gigante do item 5 (exemplo e teste giant_screen): 19.200 × 6.480 pixels, Skia na CPU, sem janela. Tempos em ms (mediana), medidos em release na máquina do autor; área = fração da tela repintada; controles = pintados por quadro. O teste não aceita passar disto (com folga nos tempos).",
+  "largura": 19200,
+  "pintura_inteira_controles": 17822,
+  "pintura_inteira_ms": 695.98
+}

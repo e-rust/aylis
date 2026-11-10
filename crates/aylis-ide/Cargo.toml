@@ -1,0 +1,88 @@
+[package]
+name = "aylis-ide"
+description = "IDE do aylis: paleta, form designer, Object Inspector e estrutura — feita com o próprio aylis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "aylis-ide"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[features]
+# A IDE de desktop (o padrão). Sem ela, a IDE lite do navegador: paleta, designer,
+# inspector, estrutura, temas, vistas e prévia, sem compilar, executar, depurar, servidor de
+# linguagem, publicar nem pacotes de código (veja `lite.rs`).
+default = ["desktop"]
+desktop = [
+    "dep:tungstenite",
+    "dep:aylis-skia",
+    "dep:rfd",
+    "aylis-3d/gl",
+    "aylis-3d/fbx",
+    "aylis-platform-winit/cpu",
+    "aylis-platform-winit/gpu",
+    # No Windows a IDE desenha com o Direct2D (o padrão dos apps): com o OpenGL ela caiu no
+    # driver da AMD (atio6axx.dll, conferência de 08/11).
+    "aylis-platform-winit/d2d",
+    "aylis-platform-winit/diagnostics",
+]
+
+[dependencies]
+# O canal de desenvolvimento (o app em execução conecta na IDE).
+tungstenite = { version = "0.26", optional = true }
+aylis-core = { path = "../aylis-core" }
+aylis-controls = { path = "../aylis-controls" }
+aylis-json = { path = "../aylis-json" }
+aylis-data = { path = "../aylis-data" }
+aylis-project = { path = "../aylis-project" }
+aylis-build = { path = "../aylis-build" }
+# O idioma do sistema (o padrão da IDE).
+sys-locale = "0.3"
+aylis-tools = { path = "../aylis-tools" }
+aylis-devlink = { path = "../aylis-devlink" }
+aylis-remote = { path = "../aylis-remote" }
+aylis-vector = { path = "../aylis-vector" }
+# A dica do código (o hover do servidor de linguagem) em Markdown, com o código como no editor.
+aylis-markdown = { path = "../aylis-markdown" }
+# No desktop ("gl", pela feature `desktop`) a IDE desenha com o Skia no OpenGL e o Model3D
+# do designer entra na textura dele, sem cópia pela CPU.
+aylis-3d = { path = "../aylis-3d", features = ["diagnostics"] }
+# O conteúdo de exemplo dos componentes na galeria (o mesmo das demonstrações da documentação).
+aylis = { path = "../aylis", default-features = false, features = ["data", "3d"] }
+# Os vetores do lingote da abertura (o modelo do aylis-3d usa os tipos do glam).
+glam = "0.34"
+# A face do logo das paredes do lingote (PNG).
+image = { version = "0.25", default-features = false, features = ["png"] }
+aylis-platform-winit = { path = "../aylis-platform-winit", default-features = false, features = ["clipboard"] }
+aylis-skia = { path = "../aylis-skia", optional = true }
+serde_json = { version = "1", features = ["preserve_order"] }
+rfd = { version = "0.17", optional = true }
+# O `.vsix` das linguagens e temas do VS Code (um ZIP).
+zip = { version = "9", default-features = false, features = ["deflate"] }
+
+# A IDE lite no navegador (a entrada fica no `aylis-ide-web`): o projeto guardado no
+# navegador e o ZIP baixado.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlElement", "HtmlAnchorElement", "Blob", "BlobPropertyBag", "Url", "Storage", "console"] }
+
+[dev-dependencies]
+aylis = { path = "../aylis", default-features = false, features = ["dev", "skia-cpu"] }
+
+# A medição da rolagem com o renderizador de verdade do Windows (tests/scroll_profile.rs).
+[target.'cfg(windows)'.dev-dependencies]
+aylis-d2d = { path = "../aylis-d2d" }
+
+# A medição da rolagem na GPU: o winit só cria o laço de janelas na thread principal.
+[[test]]
+name = "scroll_gpu"
+harness = false
+
+[build-dependencies]
+# O ícone no executável (o .res do .ico).
+aylis-build = { path = "../aylis-build" }

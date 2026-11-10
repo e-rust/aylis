@@ -1,0 +1,22 @@
+
+// Um MenuItem de um form.
+struct MenuItem : aylis::Component {
+    MenuItem() = default;
+    explicit MenuItem(const aylis::Component& c) : aylis::Component(c) {}
+    std::string text() const { return get_prop_("text").str(); }
+    void set_text(const std::string& v) const { set_prop_("text", v); }
+    std::string shortcut() const { return get_prop_("shortcut").str(); }
+    void set_shortcut(const std::string& v) const { set_prop_("shortcut", v); }
+    bool enabled() const { return get_prop_("enabled").boolean(); }
+    void set_enabled(bool v) const { set_prop_("enabled", v); }
+    bool checked() const { return get_prop_("checked").boolean(); }
+    void set_checked(bool v) const { set_prop_("checked", v); }
+    bool auto_check() const { return get_prop_("auto_check").boolean(); }
+    void set_auto_check(bool v) const { set_prop_("auto_check", v); }
+    std::string icon() const { return get_prop_("icon").str(); }
+    void set_icon(const std::string& v) const { set_prop_("icon", v); }
+    bool visible() const { return get_prop_("visible").boolean(); }
+    void set_visible(bool v) const { set_prop_("visible", v); }
+    bool danger() const { return get_prop_("danger").boolean(); }
+    void set_danger(bool v) const { set_prop_("danger", v); }
+};

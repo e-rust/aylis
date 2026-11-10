@@ -1,0 +1,64 @@
+# DataGrid
+
+![DataGrid](img/DataGrid.png)
+
+Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, edição na célula, ordenação, filtro e milhões de linhas sem travar.
+
+**Paleta:** Data Controls · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `row_height` | Altura da linha | número |
+| `fixed_columns` | Colunas fixas | inteiro |
+| `cursor_color` | Cor da linha atual | cor |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `read_only` | Somente leitura | lógico |
+| `sortable` | Ordenável | lógico |
+| `column_move` | Arrastar colunas | lógico |
+| `filter_row` | Linha de filtro | lógico |
+| `multi_select` | Seleção múltipla | lógico |
+| `incremental_search` | Busca ao digitar | lógico |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `data_source` | Fonte de dados | componente |
+| `columns` | Colunas | texto |
+| `footer` | Rodapé | texto |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_error` | — | — |  |
+| `on_title_click` | — | — |  |
+| `on_selection_change` | — | — |  |
+| `on_column_moved` | — | — |  |
+
+## Em código
+
+No form, o `DataGrid1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "DataGrid", "name": "DataGrid1", "on_error": "data_grid1_error" }
+```
+
+E o handler, um método do form (`self.DataGrid1` já é um `DataGrid`):
+
+```rust
+impl FrmPrincipal {
+    pub fn data_grid1_error(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.DataGrid1.columns(ui);
+        self.DataGrid1.set_columns(ui, format!("{atual}!"));
+    }
+}
+```

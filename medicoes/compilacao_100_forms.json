@@ -1,0 +1,7 @@
+{
+  "descricao": "Projeto em Rust com 100 forms (99 com 14 componentes e 2 handlers cada), gerado pelo aylis-tool new + generate, em 02/11/2026. Compilação na máquina do autor (Windows), com as dependências do aylis já compiladas; tempos em milissegundos.",
+  "codigo_gerado": { "components_rs_linhas": 13523, "mod_rs_linhas": 612, "units_do_usuario": 100 },
+  "gerar_codigo_ms": 412,
+  "debug": { "crate_inteiro_ms": 4407, "um_form_mudado_ms": 2106, "componente_novo_num_form_ms": 3504 },
+  "release": { "crate_inteiro_ms": 16212, "um_form_mudado_ms": 16199, "executavel_bytes": 28467712 }
+}

@@ -1,0 +1,45 @@
+{
+  "revisions": {
+    "frmPrincipal.fechar_mes_click": 3,
+    "frmProgresso.cancelar_click": 4,
+    "frmProgresso.form_close": 1,
+    "frmProgresso.form_close_query": 1
+  },
+  "languages": {
+    "pascal": {
+      "bindings": {
+        "frmPrincipal/btnFecharMes.on_click": "fechar_mes_click",
+        "frmProgresso/btnCancelar.on_click": "cancelar_click",
+        "frmProgresso/frmProgresso.on_close_query": "form_close_query"
+      },
+      "handlers": {
+        "frmPrincipal.fechar_mes_click": {
+          "hash": "d689191375b55bb6",
+          "seen": 3
+        },
+        "frmProgresso.cancelar_click": {
+          "hash": "ea1e6d7aa073b32c",
+          "seen": 4
+        },
+        "frmProgresso.form_close": {
+          "hash": "7c23dd50a2a3f310",
+          "seen": 1
+        },
+        "frmProgresso.form_close_query": {
+          "hash": "24edae225544977d",
+          "seen": 1
+        }
+      }
+    }
+  },
+  "components": [
+    "btnCancelar",
+    "btnFecharMes",
+    "frmPrincipal",
+    "frmProgresso",
+    "lblEtapa",
+    "lblStatus",
+    "lblTitulo",
+    "pbProgresso"
+  ]
+}

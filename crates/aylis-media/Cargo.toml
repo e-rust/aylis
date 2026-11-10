@@ -1,0 +1,59 @@
+[package]
+name = "aylis-media"
+description = "Áudio e vídeo do aylis: MediaPlayer, VideoPlayer, decodificadores plugáveis (Media Foundation no Windows)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "aac", "isomp4", "flac", "vorbis", "ogg", "wav", "pcm", "adpcm"] }
+cpal = "0.18"
+# Foto da câmera em PNG.
+png = "0.18"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Media_MediaFoundation",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_Foundation",
+    "Win32_System_Variant",
+] }
+
+# Linux: o GStreamer, carregado na hora (dlopen).
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
+# macOS e iOS: o AVFoundation (as mesmas versões do objc2 que o winit usa).
+[target.'cfg(target_vendor = "apple")'.dependencies]
+objc2 = "0.5"
+objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
+
+# Android: o MediaCodec do NDK (a mesma versão que o winit usa).
+[target.'cfg(target_os = "android")'.dependencies]
+ndk-sys = { version = "0.6", features = ["media"] }
+# A permissão da câmera e do microfone (pedida pela AylisActivity).
+jni = "0.21"
+ndk-context = "0.1"
+
+# Navegador: o `<video>` do próprio navegador.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "MediaDevices", "MediaStream", "MediaStreamConstraints", "MediaStreamTrack", "Navigator",
+    "Blob", "BlobPropertyBag", "CanvasRenderingContext2d", "Document", "Element", "HtmlCanvasElement", "HtmlMediaElement",
+    "HtmlVideoElement", "ImageData", "MediaError", "Url", "Window",
+] }
+
+[dev-dependencies]
+aylis-controls = { path = "../aylis-controls" }
+aylis-platform-winit = { path = "../aylis-platform-winit" }

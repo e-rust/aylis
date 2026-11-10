@@ -1,0 +1,41 @@
+[package]
+name = "aylis-demos"
+description = "Os componentes de verdade na documentação: um wasm por família, carregado só na página que mostra um componente dela"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Uma família (categoria da paleta) por wasm: `AYLIS_DEMO_FAMILY` diz qual (veja o `build.rs`), e
+# estas features ligam no `aylis` o que as classes dela pedem (`aylis-tool demos` escolhe).
+[features]
+data = ["aylis/data", "aylis/dbcontrols", "aylis/providers"]
+media = ["aylis/media"]
+vector = ["aylis/vector"]
+markdown = ["aylis/markdown"]
+docview = ["aylis/docview"]
+"3d" = ["aylis/3d"]
+
+[dependencies]
+aylis = { path = "../aylis", default-features = false }
+
+# Fora do navegador (os testes): um renderizador qualquer, para o `aylis` compilar.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+aylis = { path = "../aylis", default-features = false, features = ["skia-cpu"] }
+
+[build-dependencies]
+aylis-build = { path = "../aylis-build" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["console", "Location", "Window"] }
+
+[dev-dependencies]
+aylis-build = { path = "../aylis-build" }
+aylis-tools = { path = "../aylis-tools" }
+aylis-skia = { path = "../aylis-skia" }
+# Os testes desenham todas as famílias num só `Ui`.
+aylis = { path = "../aylis", default-features = false, features = ["skia-cpu", "data", "dbcontrols", "media", "vector", "markdown", "docview", "3d"] }

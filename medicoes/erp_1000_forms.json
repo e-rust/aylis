@@ -1,0 +1,41 @@
+{
+  "descricao": "O ERP de exemplo (examples/ERP, item 21): 1009 forms em Rust (252 entidades de RH, Financeiro, Contábil, Compras, Vendas e Fiscal, cada uma com cadastro mestre-detalhe, lista, consulta e itens; e o menu), 504 tabelas num SQLite. Medido em 04/11/2026 na máquina do autor (Windows), com as dependências do aylis já compiladas, exceto onde diz; aylis-tool e aylis-ide em debug; tempos em milissegundos.",
+  "projeto": { "forms": 1009, "forms_json_bytes": 6156094, "tabelas": 504, "handlers": 4036 },
+  "codigo_gerado": { "components_rs_bytes": 10454277, "components_rs_linhas": 226667, "mod_rs_linhas": 8086, "linhas_por_form": 220 },
+  "gerar_codigo_ms": 4734,
+  "verificar_projeto_ms": 5629,
+  "ide_abrir_o_projeto_e_desenhar_ms": 2668,
+  "ide_todos_os_forms_em_abas_07_11": {
+    "como": "cargo test -p aylis-ide --release --test perf -- --ignored --nocapture --exact erp_all_forms_in_tabs (os 1009 forms abertos em abas; trocar pela faixa de abas; Design/Código pelos botões; cada passo com o quadro da janela 1600x1000)",
+    "abrir_os_1009_forms_s": 4.0,
+    "trocar_de_aba_ms": { "antes": 218, "depois": 42 },
+    "design_para_codigo_ms": { "antes": 510, "depois": 88 },
+    "codigo_para_design_ms": { "antes": 359, "depois": 36 },
+    "memoria_privada_mb": { "antes": 1137, "depois": 368, "por_aba_antes": 1.07, "por_aba_depois": 0.30 },
+    "corrigido": [
+      "o refresh das abas normalizava o caminho do código de cada aba pelo disco (canonicalize, 1009 por troca no OneDrive): o resultado fica guardado (debugger::norm)",
+      "a ordem das abas procurava cada aba numa lista (1 milhão de comparações): agora por mapa",
+      "cada Ui guardava três temas inteiros (~0,2 MB cada) e o documento mais uma cópia: os temas viraram Arc, compartilhados (Aylis Light e Aylis Dark de fábrica e o tema do projeto, um para todas as abas)"
+    ]
+  },
+  "ide_release_07_11": {
+    "como": "cargo test -p aylis-ide --release --test perf -- --ignored --nocapture erp_ide_cost (a IDE inteira sem janela, Skia na CPU, 1600x1000; 20 forms do ERP abertos um depois do outro, cada um com o refresh e a pintura da IDE)",
+    "abrir_o_projeto_e_desenhar_ms": 250,
+    "abrir_um_form_antes_ms": 356,
+    "abrir_um_form_ms": 89,
+    "abrir_um_form_so_o_documento_antes_ms": 324,
+    "abrir_um_form_so_o_documento_ms": 8.4,
+    "refresh_da_ide_por_form_ms": 45,
+    "memoria_privada_mb": { "ide_vazia": 19, "erp_aberto": 62, "com_20_forms": 83, "por_form": 1.1 },
+    "busca_de_texto_no_projeto_ms": { "minimo": 2700, "maximo": 7400, "fontes": 2054, "forms": 1009, "achados": 9080, "obs": "numa thread (não trava a IDE); varia com o OneDrive" },
+    "onde_e_usado_ms": { "minimo": 1770, "maximo": 2690, "obs": "numa thread" },
+    "corrigido": "abrir um form registrava os ícones citados no projeto inteiro (lia os 1009 forms e o código a cada form: 320 ms); agora só os do form e dos forms que ele cita (frames e DataModules)"
+  },
+  "debug": { "do_zero_com_rusqlite_ms": 95099, "um_form_mudado_ms": 9583, "codigo_comum_mudado_ms": 9079, "abrir_e_fechar_cada_tela_ms": 7.7 },
+  "release": { "do_zero_ms": 241596, "um_form_mudado_ms": 170177, "executavel_bytes": 34107392 },
+  "conclusoes": [
+    "O código gerado cresce linear (220 linhas por form): 10 MB num arquivo só. Tudo num crate só faz o release recompilar o app inteiro a cada form mudado (2 min 50 s); o debug fica em 9 s.",
+    "Abrir as 1008 telas uma a uma, carregando do SQLite (20 registros e 60 itens cada), leva 7,7 ms por tela em debug: a tela não é o gargalo.",
+    "A verificação do projeto (1009 forms carregados num Ui sem janela) leva 5,6 s com o aylis-tool em debug."
+  ]
+}

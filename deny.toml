@@ -1,0 +1,62 @@
+# Auditoria das dependências (cargo-deny): `aylis-tool audit`. O `aylis-tool installer-ide`
+# roda antes de gerar o instalador e para se falhar.
+#
+# - advisories: falhas de segurança conhecidas (RustSec) e crates sem manutenção.
+# - licenses: só licenças permissivas (o aylis é MIT OR Apache-2.0).
+# - bans: versões duplicadas aparecem como aviso (algumas vêm de dependências de terceiros).
+# - sources: só o crates.io.
+
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "deny"
+# Crate sem manutenção: falha só se for dependência direta do aylis. Os de terceiros (o GTK do
+# wry, o zbus da acessibilidade e o ab_glyph do winit no Linux) aparecem quando eles trocarem.
+unmaintained = "workspace"
+# Exceções, cada uma com o motivo.
+ignore = [
+    # quick-xml 0.38 só pelo zbus_xml (acessibilidade no Linux), lendo a introspecção do
+    # D-Bus do próprio sistema, não documentos de fora. O aylis usa o 0.42 (corrigido); sai
+    # quando o accesskit passar para o zbus 6.
+    { id = "RUSTSEC-2026-0194", reason = "quick-xml 0.38 via zbus_xml: XML do D-Bus do sistema" },
+    { id = "RUSTSEC-2026-0195", reason = "quick-xml 0.38 via zbus_xml: XML do D-Bus do sistema" },
+]
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "0BSD",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+    "OFL-1.1",
+    "Ubuntu-font-1.0",
+    "NCSA",
+]
+
+[licenses.private]
+# Os crates do workspace (publish = false ou sem publicar) não precisam de licença aceita.
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

@@ -1,0 +1,4 @@
+# O ERP fica fora do workspace (compila à parte), mas usa o mesmo `target` do repositório:
+# sem isto, cargo e a IDE compilavam o aylis inteiro de novo em examples/ERP/rust/target.
+[build]
+target-dir = "../../../target"

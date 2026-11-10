@@ -1,0 +1,44 @@
+[package]
+name = "aylis-tools"
+description = "Ferramentas do aylis: verificar o ambiente, compilar e executar projetos, publicar (desktop, Android, web, iOS)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "aylis-tool"
+path = "src/main.rs"
+
+[dependencies]
+aylis-project = { path = "../aylis-project" }
+# As permissões do componente Permissions (para o manifesto e o Info.plist).
+aylis-core = { path = "../aylis-core" }
+aylis-build = { path = "../aylis-build" }
+aylis-devlink = { path = "../aylis-devlink" }
+serde_json = "1"
+# As ferramentas baixadas (downloads.rs): SHA-256 e a extração (o HTTPS fica no desktop).
+sha2 = "0.10"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+flate2 = "1"
+tar = "0.4"
+# A assinatura dos pacotes de componente (`.aylispkg`).
+ed25519-dalek = { version = "2", default-features = false, features = ["std", "zeroize"] }
+# O ícone do app gerado para cada plataforma (de um PNG ou de um SVG).
+resvg = { version = "0.49", default-features = false }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+# O XML a mais do manifesto do Android (conferido e mesclado).
+roxmltree = "0.20"
+
+# Só no desktop: a IDE no navegador (a lite) não baixa, não mexe na Lixeira nem lê a
+# máquina. O gerador aleatório do sistema, o HTTPS das ferramentas, a Lixeira e os dados
+# do relato.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = "0.3"
+ureq = "3"
+trash = "5"
+sysinfo = { version = "0.38", default-features = false, features = ["system"] }
+# O agente remoto (debug-agent): o WebSocket do canal cifrado.
+tungstenite = "0.26"
+# O `aylis-tool check <projeto>` carrega os forms com todas as classes registradas.
+aylis-remote = { path = "../aylis-remote" }

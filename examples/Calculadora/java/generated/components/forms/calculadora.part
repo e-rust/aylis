@@ -1,0 +1,245 @@
+
+    public static FrmCalculadoraComponents frmCalculadora;
+
+        Aylis.registerFormClass("frmCalculadora", FrmCalculadoraComponents::new, form -> frmCalculadora = (FrmCalculadoraComponents) form);
+
+
+    /** O form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+    public static final class FrmCalculadoraComponents extends Form {
+        public Panel pnlLateral;
+        public TabControl tabLateral;
+        public TabItem tabHistorico;
+        public Button btnLimparHistorico;
+        public ListView lvHistorico;
+        public TabItem tabMemoria;
+        public ListView lvMemoria;
+        public Layout lytCorpo;
+        public Layout lytTopo;
+        public Button btnHistorico;
+        public Label lblTitulo;
+        public Label lblExpressao;
+        public Label lblVisor;
+        public GridLayout grdMemoria;
+        public Button btnMC;
+        public Button btnMR;
+        public Button btnMMais;
+        public Button btnMMenos;
+        public Button btnMS;
+        public GridLayout grdTeclado;
+        public Button btnPorcento;
+        public Button btnCE;
+        public Button btnC;
+        public Button btnApagar;
+        public Button btnInverso;
+        public Button btnQuadrado;
+        public Button btnRaiz;
+        public Button btnDividir;
+        public Button btn7;
+        public Button btn8;
+        public Button btn9;
+        public Button btnMultiplicar;
+        public Button btn4;
+        public Button btn5;
+        public Button btn6;
+        public Button btnSubtrair;
+        public Button btn1;
+        public Button btn2;
+        public Button btn3;
+        public Button btnSomar;
+        public Button btnSinal;
+        public Button btn0;
+        public Button btnVirgula;
+        public Button btnIgual;
+
+        public FrmCalculadoraComponents(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        @Override
+        public void bind(java.util.List<java.util.Map<String, Object>> list) {
+            pnlLateral = resolve(list, "pnlLateral", "Panel", Panel::new);
+            tabLateral = resolve(list, "tabLateral", "TabControl", TabControl::new);
+            tabHistorico = resolve(list, "tabHistorico", "TabItem", TabItem::new);
+            btnLimparHistorico = resolve(list, "btnLimparHistorico", "Button", Button::new);
+            lvHistorico = resolve(list, "lvHistorico", "ListView", ListView::new);
+            tabMemoria = resolve(list, "tabMemoria", "TabItem", TabItem::new);
+            lvMemoria = resolve(list, "lvMemoria", "ListView", ListView::new);
+            lytCorpo = resolve(list, "lytCorpo", "Layout", Layout::new);
+            lytTopo = resolve(list, "lytTopo", "Layout", Layout::new);
+            btnHistorico = resolve(list, "btnHistorico", "Button", Button::new);
+            lblTitulo = resolve(list, "lblTitulo", "Label", Label::new);
+            lblExpressao = resolve(list, "lblExpressao", "Label", Label::new);
+            lblVisor = resolve(list, "lblVisor", "Label", Label::new);
+            grdMemoria = resolve(list, "grdMemoria", "GridLayout", GridLayout::new);
+            btnMC = resolve(list, "btnMC", "Button", Button::new);
+            btnMR = resolve(list, "btnMR", "Button", Button::new);
+            btnMMais = resolve(list, "btnMMais", "Button", Button::new);
+            btnMMenos = resolve(list, "btnMMenos", "Button", Button::new);
+            btnMS = resolve(list, "btnMS", "Button", Button::new);
+            grdTeclado = resolve(list, "grdTeclado", "GridLayout", GridLayout::new);
+            btnPorcento = resolve(list, "btnPorcento", "Button", Button::new);
+            btnCE = resolve(list, "btnCE", "Button", Button::new);
+            btnC = resolve(list, "btnC", "Button", Button::new);
+            btnApagar = resolve(list, "btnApagar", "Button", Button::new);
+            btnInverso = resolve(list, "btnInverso", "Button", Button::new);
+            btnQuadrado = resolve(list, "btnQuadrado", "Button", Button::new);
+            btnRaiz = resolve(list, "btnRaiz", "Button", Button::new);
+            btnDividir = resolve(list, "btnDividir", "Button", Button::new);
+            btn7 = resolve(list, "btn7", "Button", Button::new);
+            btn8 = resolve(list, "btn8", "Button", Button::new);
+            btn9 = resolve(list, "btn9", "Button", Button::new);
+            btnMultiplicar = resolve(list, "btnMultiplicar", "Button", Button::new);
+            btn4 = resolve(list, "btn4", "Button", Button::new);
+            btn5 = resolve(list, "btn5", "Button", Button::new);
+            btn6 = resolve(list, "btn6", "Button", Button::new);
+            btnSubtrair = resolve(list, "btnSubtrair", "Button", Button::new);
+            btn1 = resolve(list, "btn1", "Button", Button::new);
+            btn2 = resolve(list, "btn2", "Button", Button::new);
+            btn3 = resolve(list, "btn3", "Button", Button::new);
+            btnSomar = resolve(list, "btnSomar", "Button", Button::new);
+            btnSinal = resolve(list, "btnSinal", "Button", Button::new);
+            btn0 = resolve(list, "btn0", "Button", Button::new);
+            btnVirgula = resolve(list, "btnVirgula", "Button", Button::new);
+            btnIgual = resolve(list, "btnIgual", "Button", Button::new);
+        }
+
+        /** O Button deste form com o nome (como o FindComponent). */
+        public Button findButton(String name) {
+            return switch (name) {
+                case "btnLimparHistorico" -> btnLimparHistorico;
+                case "btnHistorico" -> btnHistorico;
+                case "btnMC" -> btnMC;
+                case "btnMR" -> btnMR;
+                case "btnMMais" -> btnMMais;
+                case "btnMMenos" -> btnMMenos;
+                case "btnMS" -> btnMS;
+                case "btnPorcento" -> btnPorcento;
+                case "btnCE" -> btnCE;
+                case "btnC" -> btnC;
+                case "btnApagar" -> btnApagar;
+                case "btnInverso" -> btnInverso;
+                case "btnQuadrado" -> btnQuadrado;
+                case "btnRaiz" -> btnRaiz;
+                case "btnDividir" -> btnDividir;
+                case "btn7" -> btn7;
+                case "btn8" -> btn8;
+                case "btn9" -> btn9;
+                case "btnMultiplicar" -> btnMultiplicar;
+                case "btn4" -> btn4;
+                case "btn5" -> btn5;
+                case "btn6" -> btn6;
+                case "btnSubtrair" -> btnSubtrair;
+                case "btn1" -> btn1;
+                case "btn2" -> btn2;
+                case "btn3" -> btn3;
+                case "btnSomar" -> btnSomar;
+                case "btnSinal" -> btnSinal;
+                case "btn0" -> btn0;
+                case "btnVirgula" -> btnVirgula;
+                case "btnIgual" -> btnIgual;
+                default -> null;
+            };
+        }
+
+        /** O Button que disparou o evento. */
+        public Button senderAsButton(Aylis.Event ev) {
+            return findButton(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O GridLayout deste form com o nome (como o FindComponent). */
+        public GridLayout findGridLayout(String name) {
+            return switch (name) {
+                case "grdMemoria" -> grdMemoria;
+                case "grdTeclado" -> grdTeclado;
+                default -> null;
+            };
+        }
+
+        /** O GridLayout que disparou o evento. */
+        public GridLayout senderAsGridLayout(Aylis.Event ev) {
+            return findGridLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Label deste form com o nome (como o FindComponent). */
+        public Label findLabel(String name) {
+            return switch (name) {
+                case "lblTitulo" -> lblTitulo;
+                case "lblExpressao" -> lblExpressao;
+                case "lblVisor" -> lblVisor;
+                default -> null;
+            };
+        }
+
+        /** O Label que disparou o evento. */
+        public Label senderAsLabel(Aylis.Event ev) {
+            return findLabel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Layout deste form com o nome (como o FindComponent). */
+        public Layout findLayout(String name) {
+            return switch (name) {
+                case "lytCorpo" -> lytCorpo;
+                case "lytTopo" -> lytTopo;
+                default -> null;
+            };
+        }
+
+        /** O Layout que disparou o evento. */
+        public Layout senderAsLayout(Aylis.Event ev) {
+            return findLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O ListView deste form com o nome (como o FindComponent). */
+        public ListView findListView(String name) {
+            return switch (name) {
+                case "lvHistorico" -> lvHistorico;
+                case "lvMemoria" -> lvMemoria;
+                default -> null;
+            };
+        }
+
+        /** O ListView que disparou o evento. */
+        public ListView senderAsListView(Aylis.Event ev) {
+            return findListView(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Panel deste form com o nome (como o FindComponent). */
+        public Panel findPanel(String name) {
+            return switch (name) {
+                case "pnlLateral" -> pnlLateral;
+                default -> null;
+            };
+        }
+
+        /** O Panel que disparou o evento. */
+        public Panel senderAsPanel(Aylis.Event ev) {
+            return findPanel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O TabControl deste form com o nome (como o FindComponent). */
+        public TabControl findTabControl(String name) {
+            return switch (name) {
+                case "tabLateral" -> tabLateral;
+                default -> null;
+            };
+        }
+
+        /** O TabControl que disparou o evento. */
+        public TabControl senderAsTabControl(Aylis.Event ev) {
+            return findTabControl(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O TabItem deste form com o nome (como o FindComponent). */
+        public TabItem findTabItem(String name) {
+            return switch (name) {
+                case "tabHistorico" -> tabHistorico;
+                case "tabMemoria" -> tabMemoria;
+                default -> null;
+            };
+        }
+
+        /** O TabItem que disparou o evento. */
+        public TabItem senderAsTabItem(Aylis.Event ev) {
+            return findTabItem(String.valueOf(ev.sender().get("name")));
+        }
+    }

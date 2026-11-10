@@ -1,0 +1,46 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Olá, nome",
+    "width": 420,
+    "height": 260,
+    "padding": 24,
+    "children": [
+      {
+        "class": "Label",
+        "name": "lblPergunta",
+        "text": "Qual é o seu nome?",
+        "height": 28,
+        "align": "top"
+      },
+      {
+        "class": "Edit",
+        "name": "edtNome",
+        "placeholder": "Digite o seu nome",
+        "height": 36,
+        "align": "top",
+        "margins": [0, 8, 0, 0]
+      },
+      {
+        "class": "Button",
+        "name": "btnSaudar",
+        "text": "Saudar",
+        "height": 40,
+        "align": "top",
+        "margins": [0, 12, 0, 0],
+        "on_click": "btn_saudar_click"
+      },
+      {
+        "class": "Label",
+        "name": "lblResposta",
+        "bold": true,
+        "height": 40,
+        "align": "top",
+        "margins": [0, 16, 0, 0],
+        "font_size": 20
+      }
+    ]
+  }
+}

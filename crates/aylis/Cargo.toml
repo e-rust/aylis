@@ -1,0 +1,86 @@
+[package]
+name = "aylis"
+description = "aylis: interfaces no estilo Delphi/FMX em Rust — a fachada que junta core, controles, dados, plataforma e projeto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# Partes opcionais: um app que não usa dados, controles de dados ou mídia desliga a
+# feature (`default-features = false`) e nem compila esses crates. A IDE escolhe as
+# features pelos componentes que os forms usam.
+[features]
+default = ["data", "dbcontrols", "providers", "media", "markdown", "vector", "webview", "3d", "docview", "tray", "remote", "mcp", "skia"]
+data = ["dep:aylis-data"]
+dbcontrols = ["data", "dep:aylis-dbcontrols"]
+# Provedores (item 25): código de barras e QR Code, exportar para CSV e XLSX, o PDF do
+# relatório e o servidor do mapa por componente. A IDE liga quando um form usa uma das classes.
+providers = ["data", "dep:aylis-providers"]
+media = ["dep:aylis-media"]
+markdown = ["dep:aylis-markdown"]
+# Ícone na bandeja (TrayIcon), no Windows e no macOS.
+tray = ["aylis-platform-winit/tray"]
+# NFC no desktop por leitor USB (PC/SC) e Bluetooth BLE no desktop (btleplug). No Android e
+# no navegador o Nfc e o Bluetooth funcionam sem elas. A IDE liga quando um form usa a classe.
+nfc = ["aylis-platform-winit/nfc"]
+bluetooth = ["aylis-platform-winit/bluetooth"]
+# Visualizador de documentos: PDF, planilhas (XLSX, XLS, ODS, CSV) e textos (DOCX, ODT).
+docview = ["dep:aylis-docview"]
+# Navegador embutido: o componente e, na plataforma, o WebView2/WKWebView (wry).
+webview = ["dep:aylis-webview", "aylis-platform-winit/webview"]
+vector = ["dep:aylis-vector"]
+# Modelos 3D (glTF/GLB) com wgpu, compostos com os controles na GPU.
+3d = ["dep:aylis-3d"]
+# O app (casca) comandado por um backend remoto: o celular e o navegador ligados à ponte.
+remote = ["dep:aylis-remote", "dep:tungstenite"]
+# O app como servidor MCP (McpServer, McpTool): agentes de IA usam o app pelos componentes.
+mcp = ["dep:aylis-remote"]
+# Desenvolvimento (a IDE liga ao executar; a publicação nunca): o canal cifrado com a IDE
+# (inspetor, hot reload, rastro de eventos), a leitura dos forms da pasta do projeto e os
+# diagnósticos da plataforma. Sem ela, o app não leva endereço, chave nem servidor nenhum.
+dev = ["remote", "dep:aylis-devlink", "aylis-platform-winit/diagnostics", "aylis-3d?/diagnostics"]
+# Renderizadores (veja docs/renderizadores.md). O projeto escolhe por plataforma; a IDE
+# põe as features certas em cada `[target.'cfg(...)'.dependencies]`.
+skia = ["skia-gpu", "skia-cpu"]
+# Com o 3D, o Skia na GPU recebe o 3D no próprio contexto OpenGL (sem cópia).
+skia-gpu = ["aylis-platform-winit/gpu", "aylis-3d?/gl"]
+skia-cpu = ["aylis-platform-winit/cpu"]
+# Windows: Direct2D + DirectWrite, sem Skia no executável.
+d2d = ["aylis-platform-winit/d2d"]
+# O fuso do projeto pelo nome (`time_zone` no `.aylisproj`): a tabela de fusos (IANA) vai
+# junto. A IDE liga quando o projeto tem `time_zone`.
+time-zones = ["dep:chrono", "dep:chrono-tz"]
+
+[dependencies]
+# Os exemplos dos componentes (`samples`) e os forms em JSON.
+serde_json = "1"
+aylis-core = { path = "../aylis-core" }
+aylis-controls = { path = "../aylis-controls" }
+aylis-data = { path = "../aylis-data", optional = true }
+aylis-dbcontrols = { path = "../aylis-dbcontrols", optional = true }
+aylis-providers = { path = "../aylis-providers", optional = true }
+aylis-json = { path = "../aylis-json" }
+aylis-project = { path = "../aylis-project" }
+aylis-media = { path = "../aylis-media", optional = true }
+aylis-markdown = { path = "../aylis-markdown", optional = true }
+aylis-docview = { path = "../aylis-docview", optional = true }
+aylis-webview = { path = "../aylis-webview", optional = true }
+aylis-vector = { path = "../aylis-vector", optional = true }
+aylis-3d = { path = "../aylis-3d", optional = true }
+aylis-platform-winit = { path = "../aylis-platform-winit", default-features = false, features = ["clipboard"] }
+aylis-build = { path = "../aylis-build" }
+aylis-remote = { path = "../aylis-remote", optional = true }
+aylis-devlink = { path = "../aylis-devlink", optional = true }
+chrono = { version = "0.4", optional = true, default-features = false }
+chrono-tz = { version = "0.10", optional = true }
+
+# O canal de desenvolvimento (app → IDE) fora do navegador.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# wss:// com as raízes do Mozilla embutidas (vale no celular também).
+tungstenite = { version = "0.26", optional = true, features = ["rustls-tls-webpki-roots"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["console", "WebSocket", "MessageEvent", "Window", "Location", "BinaryType", "Document", "Element", "HtmlElement", "Node"] }
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+serde_json = "1"

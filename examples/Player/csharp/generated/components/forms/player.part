@@ -1,0 +1,296 @@
+
+        public static AylisUi.FrmPlayerComponents frmPlayer = null!;
+
+            Aylis.RegisterFormClass("frmPlayer", (aylis, id, name) => new AylisUi.FrmPlayerComponents(aylis, id, name), form => frmPlayer = (AylisUi.FrmPlayerComponents)form);
+
+
+    /// <summary>O form frmPlayer e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).</summary>
+    public sealed class FrmPlayerComponents(Aylis aylis, long id, string name) : Form(aylis, id, name)
+    {
+        public MainMenu mnuPrincipal = null!;
+        public MenuItem mnuArquivo = null!;
+        public MenuItem mnuAbrir = null!;
+        public MenuItem mnuLimparFila = null!;
+        public MenuItem mnuSep1 = null!;
+        public MenuItem mnuSair = null!;
+        public MenuItem mnuReproduzir = null!;
+        public MenuItem mnuReproduzirPausar = null!;
+        public MenuItem mnuParar = null!;
+        public MenuItem mnuAnterior = null!;
+        public MenuItem mnuProxima = null!;
+        public MenuItem mnuSep2 = null!;
+        public MenuItem mnuEmbaralhar = null!;
+        public MenuItem mnuRepetir = null!;
+        public MenuItem mnuExibir = null!;
+        public MenuItem mnuAgora = null!;
+        public MenuItem mnuFila = null!;
+        public Panel pnlControles = null!;
+        public Layout lytBarra = null!;
+        public Label lblTempo = null!;
+        public Label lblDuracao = null!;
+        public SeekBar sbPosicao = null!;
+        public Layout lytInfo = null!;
+        public Icon icoCapa = null!;
+        public Layout lytTextos = null!;
+        public Label lblTitulo = null!;
+        public Label lblDetalhe = null!;
+        public Layout lytVolume = null!;
+        public Button btnMudo = null!;
+        public TrackBar tbVolume = null!;
+        public Layout lytBotoes = null!;
+        public Layout lytBotoesCentro = null!;
+        public Button btnEmbaralhar = null!;
+        public Button btnAnterior = null!;
+        public Button btnReproduzir = null!;
+        public Button btnProxima = null!;
+        public Button btnRepetir = null!;
+        public Layout lytNavegacao = null!;
+        public Button btnAgora = null!;
+        public Button btnFila = null!;
+        public Divider divNavegacao = null!;
+        public Button btnAbrirArquivos = null!;
+        public Panel pnlAgora = null!;
+        public VideoPlayer vpVideo = null!;
+        public Panel pnlFila = null!;
+        public Label lblFila = null!;
+        public Layout lytFilaBotoes = null!;
+        public Button btnAdicionar = null!;
+        public Button btnLimparFila = null!;
+        public ListView lvFila = null!;
+        public OpenDialog dlgAbrir = null!;
+        public Timer tmrPosicao = null!;
+
+        public override void Bind(JsonArray list)
+        {
+            mnuPrincipal = Resolve(list, "mnuPrincipal", "MainMenu", (i, d, n) => new MainMenu(i, d, n));
+            mnuArquivo = Resolve(list, "mnuArquivo", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuAbrir = Resolve(list, "mnuAbrir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuLimparFila = Resolve(list, "mnuLimparFila", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSep1 = Resolve(list, "mnuSep1", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSair = Resolve(list, "mnuSair", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuReproduzir = Resolve(list, "mnuReproduzir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuReproduzirPausar = Resolve(list, "mnuReproduzirPausar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuParar = Resolve(list, "mnuParar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuAnterior = Resolve(list, "mnuAnterior", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuProxima = Resolve(list, "mnuProxima", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuSep2 = Resolve(list, "mnuSep2", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuEmbaralhar = Resolve(list, "mnuEmbaralhar", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuRepetir = Resolve(list, "mnuRepetir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuExibir = Resolve(list, "mnuExibir", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuAgora = Resolve(list, "mnuAgora", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            mnuFila = Resolve(list, "mnuFila", "MenuItem", (i, d, n) => new MenuItem(i, d, n));
+            pnlControles = Resolve(list, "pnlControles", "Panel", (i, d, n) => new Panel(i, d, n));
+            lytBarra = Resolve(list, "lytBarra", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblTempo = Resolve(list, "lblTempo", "Label", (i, d, n) => new Label(i, d, n));
+            lblDuracao = Resolve(list, "lblDuracao", "Label", (i, d, n) => new Label(i, d, n));
+            sbPosicao = Resolve(list, "sbPosicao", "SeekBar", (i, d, n) => new SeekBar(i, d, n));
+            lytInfo = Resolve(list, "lytInfo", "Layout", (i, d, n) => new Layout(i, d, n));
+            icoCapa = Resolve(list, "icoCapa", "Icon", (i, d, n) => new Icon(i, d, n));
+            lytTextos = Resolve(list, "lytTextos", "Layout", (i, d, n) => new Layout(i, d, n));
+            lblTitulo = Resolve(list, "lblTitulo", "Label", (i, d, n) => new Label(i, d, n));
+            lblDetalhe = Resolve(list, "lblDetalhe", "Label", (i, d, n) => new Label(i, d, n));
+            lytVolume = Resolve(list, "lytVolume", "Layout", (i, d, n) => new Layout(i, d, n));
+            btnMudo = Resolve(list, "btnMudo", "Button", (i, d, n) => new Button(i, d, n));
+            tbVolume = Resolve(list, "tbVolume", "TrackBar", (i, d, n) => new TrackBar(i, d, n));
+            lytBotoes = Resolve(list, "lytBotoes", "Layout", (i, d, n) => new Layout(i, d, n));
+            lytBotoesCentro = Resolve(list, "lytBotoesCentro", "Layout", (i, d, n) => new Layout(i, d, n));
+            btnEmbaralhar = Resolve(list, "btnEmbaralhar", "Button", (i, d, n) => new Button(i, d, n));
+            btnAnterior = Resolve(list, "btnAnterior", "Button", (i, d, n) => new Button(i, d, n));
+            btnReproduzir = Resolve(list, "btnReproduzir", "Button", (i, d, n) => new Button(i, d, n));
+            btnProxima = Resolve(list, "btnProxima", "Button", (i, d, n) => new Button(i, d, n));
+            btnRepetir = Resolve(list, "btnRepetir", "Button", (i, d, n) => new Button(i, d, n));
+            lytNavegacao = Resolve(list, "lytNavegacao", "Layout", (i, d, n) => new Layout(i, d, n));
+            btnAgora = Resolve(list, "btnAgora", "Button", (i, d, n) => new Button(i, d, n));
+            btnFila = Resolve(list, "btnFila", "Button", (i, d, n) => new Button(i, d, n));
+            divNavegacao = Resolve(list, "divNavegacao", "Divider", (i, d, n) => new Divider(i, d, n));
+            btnAbrirArquivos = Resolve(list, "btnAbrirArquivos", "Button", (i, d, n) => new Button(i, d, n));
+            pnlAgora = Resolve(list, "pnlAgora", "Panel", (i, d, n) => new Panel(i, d, n));
+            vpVideo = Resolve(list, "vpVideo", "VideoPlayer", (i, d, n) => new VideoPlayer(i, d, n));
+            pnlFila = Resolve(list, "pnlFila", "Panel", (i, d, n) => new Panel(i, d, n));
+            lblFila = Resolve(list, "lblFila", "Label", (i, d, n) => new Label(i, d, n));
+            lytFilaBotoes = Resolve(list, "lytFilaBotoes", "Layout", (i, d, n) => new Layout(i, d, n));
+            btnAdicionar = Resolve(list, "btnAdicionar", "Button", (i, d, n) => new Button(i, d, n));
+            btnLimparFila = Resolve(list, "btnLimparFila", "Button", (i, d, n) => new Button(i, d, n));
+            lvFila = Resolve(list, "lvFila", "ListView", (i, d, n) => new ListView(i, d, n));
+            dlgAbrir = Resolve(list, "dlgAbrir", "OpenDialog", (i, d, n) => new OpenDialog(i, d, n));
+            tmrPosicao = Resolve(list, "tmrPosicao", "Timer", (i, d, n) => new Timer(i, d, n));
+        }
+
+        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        public Button? FindButton(string name) => name switch
+        {
+            "btnMudo" => btnMudo,
+            "btnEmbaralhar" => btnEmbaralhar,
+            "btnAnterior" => btnAnterior,
+            "btnReproduzir" => btnReproduzir,
+            "btnProxima" => btnProxima,
+            "btnRepetir" => btnRepetir,
+            "btnAgora" => btnAgora,
+            "btnFila" => btnFila,
+            "btnAbrirArquivos" => btnAbrirArquivos,
+            "btnAdicionar" => btnAdicionar,
+            "btnLimparFila" => btnLimparFila,
+            _ => null,
+        };
+
+        /// <summary>O Button que disparou o evento.</summary>
+        public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
+
+        /// <summary>O Divider deste form com o nome (como o FindComponent).</summary>
+        public Divider? FindDivider(string name) => name switch
+        {
+            "divNavegacao" => divNavegacao,
+            _ => null,
+        };
+
+        /// <summary>O Divider que disparou o evento.</summary>
+        public Divider? SenderAsDivider(AylisClient.AylisEvent ev) => FindDivider(ev.SenderName);
+
+        /// <summary>O Icon deste form com o nome (como o FindComponent).</summary>
+        public Icon? FindIcon(string name) => name switch
+        {
+            "icoCapa" => icoCapa,
+            _ => null,
+        };
+
+        /// <summary>O Icon que disparou o evento.</summary>
+        public Icon? SenderAsIcon(AylisClient.AylisEvent ev) => FindIcon(ev.SenderName);
+
+        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        public Label? FindLabel(string name) => name switch
+        {
+            "lblTempo" => lblTempo,
+            "lblDuracao" => lblDuracao,
+            "lblTitulo" => lblTitulo,
+            "lblDetalhe" => lblDetalhe,
+            "lblFila" => lblFila,
+            _ => null,
+        };
+
+        /// <summary>O Label que disparou o evento.</summary>
+        public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
+
+        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        public Layout? FindLayout(string name) => name switch
+        {
+            "lytBarra" => lytBarra,
+            "lytInfo" => lytInfo,
+            "lytTextos" => lytTextos,
+            "lytVolume" => lytVolume,
+            "lytBotoes" => lytBotoes,
+            "lytBotoesCentro" => lytBotoesCentro,
+            "lytNavegacao" => lytNavegacao,
+            "lytFilaBotoes" => lytFilaBotoes,
+            _ => null,
+        };
+
+        /// <summary>O Layout que disparou o evento.</summary>
+        public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
+
+        /// <summary>O ListView deste form com o nome (como o FindComponent).</summary>
+        public ListView? FindListView(string name) => name switch
+        {
+            "lvFila" => lvFila,
+            _ => null,
+        };
+
+        /// <summary>O ListView que disparou o evento.</summary>
+        public ListView? SenderAsListView(AylisClient.AylisEvent ev) => FindListView(ev.SenderName);
+
+        /// <summary>O MainMenu deste form com o nome (como o FindComponent).</summary>
+        public MainMenu? FindMainMenu(string name) => name switch
+        {
+            "mnuPrincipal" => mnuPrincipal,
+            _ => null,
+        };
+
+        /// <summary>O MainMenu que disparou o evento.</summary>
+        public MainMenu? SenderAsMainMenu(AylisClient.AylisEvent ev) => FindMainMenu(ev.SenderName);
+
+        /// <summary>O MenuItem deste form com o nome (como o FindComponent).</summary>
+        public MenuItem? FindMenuItem(string name) => name switch
+        {
+            "mnuArquivo" => mnuArquivo,
+            "mnuAbrir" => mnuAbrir,
+            "mnuLimparFila" => mnuLimparFila,
+            "mnuSep1" => mnuSep1,
+            "mnuSair" => mnuSair,
+            "mnuReproduzir" => mnuReproduzir,
+            "mnuReproduzirPausar" => mnuReproduzirPausar,
+            "mnuParar" => mnuParar,
+            "mnuAnterior" => mnuAnterior,
+            "mnuProxima" => mnuProxima,
+            "mnuSep2" => mnuSep2,
+            "mnuEmbaralhar" => mnuEmbaralhar,
+            "mnuRepetir" => mnuRepetir,
+            "mnuExibir" => mnuExibir,
+            "mnuAgora" => mnuAgora,
+            "mnuFila" => mnuFila,
+            _ => null,
+        };
+
+        /// <summary>O MenuItem que disparou o evento.</summary>
+        public MenuItem? SenderAsMenuItem(AylisClient.AylisEvent ev) => FindMenuItem(ev.SenderName);
+
+        /// <summary>O OpenDialog deste form com o nome (como o FindComponent).</summary>
+        public OpenDialog? FindOpenDialog(string name) => name switch
+        {
+            "dlgAbrir" => dlgAbrir,
+            _ => null,
+        };
+
+        /// <summary>O OpenDialog que disparou o evento.</summary>
+        public OpenDialog? SenderAsOpenDialog(AylisClient.AylisEvent ev) => FindOpenDialog(ev.SenderName);
+
+        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        public Panel? FindPanel(string name) => name switch
+        {
+            "pnlControles" => pnlControles,
+            "pnlAgora" => pnlAgora,
+            "pnlFila" => pnlFila,
+            _ => null,
+        };
+
+        /// <summary>O Panel que disparou o evento.</summary>
+        public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
+
+        /// <summary>O SeekBar deste form com o nome (como o FindComponent).</summary>
+        public SeekBar? FindSeekBar(string name) => name switch
+        {
+            "sbPosicao" => sbPosicao,
+            _ => null,
+        };
+
+        /// <summary>O SeekBar que disparou o evento.</summary>
+        public SeekBar? SenderAsSeekBar(AylisClient.AylisEvent ev) => FindSeekBar(ev.SenderName);
+
+        /// <summary>O Timer deste form com o nome (como o FindComponent).</summary>
+        public Timer? FindTimer(string name) => name switch
+        {
+            "tmrPosicao" => tmrPosicao,
+            _ => null,
+        };
+
+        /// <summary>O Timer que disparou o evento.</summary>
+        public Timer? SenderAsTimer(AylisClient.AylisEvent ev) => FindTimer(ev.SenderName);
+
+        /// <summary>O TrackBar deste form com o nome (como o FindComponent).</summary>
+        public TrackBar? FindTrackBar(string name) => name switch
+        {
+            "tbVolume" => tbVolume,
+            _ => null,
+        };
+
+        /// <summary>O TrackBar que disparou o evento.</summary>
+        public TrackBar? SenderAsTrackBar(AylisClient.AylisEvent ev) => FindTrackBar(ev.SenderName);
+
+        /// <summary>O VideoPlayer deste form com o nome (como o FindComponent).</summary>
+        public VideoPlayer? FindVideoPlayer(string name) => name switch
+        {
+            "vpVideo" => vpVideo,
+            _ => null,
+        };
+
+        /// <summary>O VideoPlayer que disparou o evento.</summary>
+        public VideoPlayer? SenderAsVideoPlayer(AylisClient.AylisEvent ev) => FindVideoPlayer(ev.SenderName);
+    }

@@ -1,0 +1,423 @@
+
+/** O form frmIBGE e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+export class FrmIBGEComponents extends Form {
+    cdsEstados!: ClientDataSet;
+    cdsEstadosId!: Field;
+    cdsEstadosSigla!: Field;
+    cdsEstadosNome!: Field;
+    cdsEstadosRegiao!: Field;
+    cdsEstadosPopulacao!: Field;
+    cdsEstadosArea!: Field;
+    cdsEstadosDensidade!: Field;
+    cdsEstadosPib!: Field;
+    cdsEstadosPibPerCapita!: Field;
+    cdsEstadosEstimativa!: Field;
+    cdsEstadosEstimativaAno!: Field;
+    cdsEstadosMunicipios!: Field;
+    cdsEstadosBandeira!: Field;
+    dsEstados!: DataSource;
+    cdsMunicipios!: ClientDataSet;
+    cdsMunicipiosId!: Field;
+    cdsMunicipiosUfId!: Field;
+    cdsMunicipiosUf!: Field;
+    cdsMunicipiosNome!: Field;
+    cdsMunicipiosMesorregiao!: Field;
+    cdsMunicipiosMicrorregiao!: Field;
+    cdsMunicipiosRegiaoIntermediaria!: Field;
+    cdsMunicipiosRegiaoImediata!: Field;
+    cdsMunicipiosPopulacao!: Field;
+    cdsMunicipiosArea!: Field;
+    cdsMunicipiosDensidade!: Field;
+    cdsMunicipiosPib!: Field;
+    cdsMunicipiosPibParticipacao!: Field;
+    cdsMunicipiosPibPerCapita!: Field;
+    cdsMunicipiosEstimativa!: Field;
+    cdsMunicipiosEstimativaAno!: Field;
+    cdsMunicipiosDistritos!: Field;
+    cdsMunicipiosBandeira!: Field;
+    dsMunicipios!: DataSource;
+    cdsDistritos!: ClientDataSet;
+    cdsDistritosId!: Field;
+    cdsDistritosMunicipioId!: Field;
+    cdsDistritosNome!: Field;
+    dsDistritos!: DataSource;
+    cdsPopulacao!: ClientDataSet;
+    cdsPopulacaoAno!: Field;
+    cdsPopulacaoHabitantes!: Field;
+    dsPopulacao!: DataSource;
+    cdsMaiores!: ClientDataSet;
+    cdsMaioresNome!: Field;
+    cdsMaioresHabitantes!: Field;
+    dsMaiores!: DataSource;
+    lblFonte!: Label;
+    lytListas!: Layout;
+    gbEstados!: GroupBox;
+    grdEstados!: DataGrid;
+    gbDistritos!: GroupBox;
+    grdDistritos!: DataGrid;
+    gbMunicipios!: GroupBox;
+    grdMunicipios!: DataGrid;
+    splListas!: Splitter;
+    lytPainel!: Layout;
+    pnlEstado!: Panel;
+    svgBrasil!: Svg;
+    lytBandeiraEstado!: Layout;
+    lblEstado!: Label;
+    lblRegiao!: Label;
+    imgBandeiraEstado!: Image;
+    lytNumerosEstado!: Layout;
+    dbtEstadoPopulacao!: Label;
+    lblEstadoEstimativa!: Label;
+    dbtEstadoEstimativa!: Label;
+    dbtEstadoArea!: Label;
+    dbtEstadoDensidade!: Label;
+    dbtEstadoPib!: Label;
+    dbtEstadoPibPerCapita!: Label;
+    dbtEstadoMunicipios!: Label;
+    pnlMunicipio!: Panel;
+    svgMunicipio!: Svg;
+    svgEstado!: Svg;
+    lytBandeiraMunicipio!: Layout;
+    lblMunicipio!: Label;
+    lblCodigo!: Label;
+    imgBandeiraMunicipio!: Image;
+    lblSemBandeira!: Label;
+    lytNumerosMunicipio!: Layout;
+    dbtMesorregiao!: Label;
+    dbtMicrorregiao!: Label;
+    dbtRegiaoImediata!: Label;
+    dbtPopulacao!: Label;
+    lblEstimativa!: Label;
+    dbtEstimativa!: Label;
+    dbtArea!: Label;
+    dbtDensidade!: Label;
+    dbtPib!: Label;
+    dbtPibPerCapita!: Label;
+    dbtPibParticipacao!: Label;
+    lytGraficos!: Layout;
+    dbcPopulacao!: DBChart;
+    dbcMaiores!: DBChart;
+    dbcEstados!: DBChart;
+    bind(list: ComponentInfo[]) {
+        this.cdsEstados = this.resolve(list, "cdsEstados", "ClientDataSet", ClientDataSet);
+        this.cdsEstadosId = this.resolve(list, "cdsEstadosId", "Field", Field);
+        this.cdsEstadosSigla = this.resolve(list, "cdsEstadosSigla", "Field", Field);
+        this.cdsEstadosNome = this.resolve(list, "cdsEstadosNome", "Field", Field);
+        this.cdsEstadosRegiao = this.resolve(list, "cdsEstadosRegiao", "Field", Field);
+        this.cdsEstadosPopulacao = this.resolve(list, "cdsEstadosPopulacao", "Field", Field);
+        this.cdsEstadosArea = this.resolve(list, "cdsEstadosArea", "Field", Field);
+        this.cdsEstadosDensidade = this.resolve(list, "cdsEstadosDensidade", "Field", Field);
+        this.cdsEstadosPib = this.resolve(list, "cdsEstadosPib", "Field", Field);
+        this.cdsEstadosPibPerCapita = this.resolve(list, "cdsEstadosPibPerCapita", "Field", Field);
+        this.cdsEstadosEstimativa = this.resolve(list, "cdsEstadosEstimativa", "Field", Field);
+        this.cdsEstadosEstimativaAno = this.resolve(list, "cdsEstadosEstimativaAno", "Field", Field);
+        this.cdsEstadosMunicipios = this.resolve(list, "cdsEstadosMunicipios", "Field", Field);
+        this.cdsEstadosBandeira = this.resolve(list, "cdsEstadosBandeira", "Field", Field);
+        this.dsEstados = this.resolve(list, "dsEstados", "DataSource", DataSource);
+        this.cdsMunicipios = this.resolve(list, "cdsMunicipios", "ClientDataSet", ClientDataSet);
+        this.cdsMunicipiosId = this.resolve(list, "cdsMunicipiosId", "Field", Field);
+        this.cdsMunicipiosUfId = this.resolve(list, "cdsMunicipiosUfId", "Field", Field);
+        this.cdsMunicipiosUf = this.resolve(list, "cdsMunicipiosUf", "Field", Field);
+        this.cdsMunicipiosNome = this.resolve(list, "cdsMunicipiosNome", "Field", Field);
+        this.cdsMunicipiosMesorregiao = this.resolve(list, "cdsMunicipiosMesorregiao", "Field", Field);
+        this.cdsMunicipiosMicrorregiao = this.resolve(list, "cdsMunicipiosMicrorregiao", "Field", Field);
+        this.cdsMunicipiosRegiaoIntermediaria = this.resolve(list, "cdsMunicipiosRegiaoIntermediaria", "Field", Field);
+        this.cdsMunicipiosRegiaoImediata = this.resolve(list, "cdsMunicipiosRegiaoImediata", "Field", Field);
+        this.cdsMunicipiosPopulacao = this.resolve(list, "cdsMunicipiosPopulacao", "Field", Field);
+        this.cdsMunicipiosArea = this.resolve(list, "cdsMunicipiosArea", "Field", Field);
+        this.cdsMunicipiosDensidade = this.resolve(list, "cdsMunicipiosDensidade", "Field", Field);
+        this.cdsMunicipiosPib = this.resolve(list, "cdsMunicipiosPib", "Field", Field);
+        this.cdsMunicipiosPibParticipacao = this.resolve(list, "cdsMunicipiosPibParticipacao", "Field", Field);
+        this.cdsMunicipiosPibPerCapita = this.resolve(list, "cdsMunicipiosPibPerCapita", "Field", Field);
+        this.cdsMunicipiosEstimativa = this.resolve(list, "cdsMunicipiosEstimativa", "Field", Field);
+        this.cdsMunicipiosEstimativaAno = this.resolve(list, "cdsMunicipiosEstimativaAno", "Field", Field);
+        this.cdsMunicipiosDistritos = this.resolve(list, "cdsMunicipiosDistritos", "Field", Field);
+        this.cdsMunicipiosBandeira = this.resolve(list, "cdsMunicipiosBandeira", "Field", Field);
+        this.dsMunicipios = this.resolve(list, "dsMunicipios", "DataSource", DataSource);
+        this.cdsDistritos = this.resolve(list, "cdsDistritos", "ClientDataSet", ClientDataSet);
+        this.cdsDistritosId = this.resolve(list, "cdsDistritosId", "Field", Field);
+        this.cdsDistritosMunicipioId = this.resolve(list, "cdsDistritosMunicipioId", "Field", Field);
+        this.cdsDistritosNome = this.resolve(list, "cdsDistritosNome", "Field", Field);
+        this.dsDistritos = this.resolve(list, "dsDistritos", "DataSource", DataSource);
+        this.cdsPopulacao = this.resolve(list, "cdsPopulacao", "ClientDataSet", ClientDataSet);
+        this.cdsPopulacaoAno = this.resolve(list, "cdsPopulacaoAno", "Field", Field);
+        this.cdsPopulacaoHabitantes = this.resolve(list, "cdsPopulacaoHabitantes", "Field", Field);
+        this.dsPopulacao = this.resolve(list, "dsPopulacao", "DataSource", DataSource);
+        this.cdsMaiores = this.resolve(list, "cdsMaiores", "ClientDataSet", ClientDataSet);
+        this.cdsMaioresNome = this.resolve(list, "cdsMaioresNome", "Field", Field);
+        this.cdsMaioresHabitantes = this.resolve(list, "cdsMaioresHabitantes", "Field", Field);
+        this.dsMaiores = this.resolve(list, "dsMaiores", "DataSource", DataSource);
+        this.lblFonte = this.resolve(list, "lblFonte", "Label", Label);
+        this.lytListas = this.resolve(list, "lytListas", "Layout", Layout);
+        this.gbEstados = this.resolve(list, "gbEstados", "GroupBox", GroupBox);
+        this.grdEstados = this.resolve(list, "grdEstados", "DataGrid", DataGrid);
+        this.gbDistritos = this.resolve(list, "gbDistritos", "GroupBox", GroupBox);
+        this.grdDistritos = this.resolve(list, "grdDistritos", "DataGrid", DataGrid);
+        this.gbMunicipios = this.resolve(list, "gbMunicipios", "GroupBox", GroupBox);
+        this.grdMunicipios = this.resolve(list, "grdMunicipios", "DataGrid", DataGrid);
+        this.splListas = this.resolve(list, "splListas", "Splitter", Splitter);
+        this.lytPainel = this.resolve(list, "lytPainel", "Layout", Layout);
+        this.pnlEstado = this.resolve(list, "pnlEstado", "Panel", Panel);
+        this.svgBrasil = this.resolve(list, "svgBrasil", "Svg", Svg);
+        this.lytBandeiraEstado = this.resolve(list, "lytBandeiraEstado", "Layout", Layout);
+        this.lblEstado = this.resolve(list, "lblEstado", "Label", Label);
+        this.lblRegiao = this.resolve(list, "lblRegiao", "Label", Label);
+        this.imgBandeiraEstado = this.resolve(list, "imgBandeiraEstado", "Image", Image);
+        this.lytNumerosEstado = this.resolve(list, "lytNumerosEstado", "Layout", Layout);
+        this.dbtEstadoPopulacao = this.resolve(list, "dbtEstadoPopulacao", "Label", Label);
+        this.lblEstadoEstimativa = this.resolve(list, "lblEstadoEstimativa", "Label", Label);
+        this.dbtEstadoEstimativa = this.resolve(list, "dbtEstadoEstimativa", "Label", Label);
+        this.dbtEstadoArea = this.resolve(list, "dbtEstadoArea", "Label", Label);
+        this.dbtEstadoDensidade = this.resolve(list, "dbtEstadoDensidade", "Label", Label);
+        this.dbtEstadoPib = this.resolve(list, "dbtEstadoPib", "Label", Label);
+        this.dbtEstadoPibPerCapita = this.resolve(list, "dbtEstadoPibPerCapita", "Label", Label);
+        this.dbtEstadoMunicipios = this.resolve(list, "dbtEstadoMunicipios", "Label", Label);
+        this.pnlMunicipio = this.resolve(list, "pnlMunicipio", "Panel", Panel);
+        this.svgMunicipio = this.resolve(list, "svgMunicipio", "Svg", Svg);
+        this.svgEstado = this.resolve(list, "svgEstado", "Svg", Svg);
+        this.lytBandeiraMunicipio = this.resolve(list, "lytBandeiraMunicipio", "Layout", Layout);
+        this.lblMunicipio = this.resolve(list, "lblMunicipio", "Label", Label);
+        this.lblCodigo = this.resolve(list, "lblCodigo", "Label", Label);
+        this.imgBandeiraMunicipio = this.resolve(list, "imgBandeiraMunicipio", "Image", Image);
+        this.lblSemBandeira = this.resolve(list, "lblSemBandeira", "Label", Label);
+        this.lytNumerosMunicipio = this.resolve(list, "lytNumerosMunicipio", "Layout", Layout);
+        this.dbtMesorregiao = this.resolve(list, "dbtMesorregiao", "Label", Label);
+        this.dbtMicrorregiao = this.resolve(list, "dbtMicrorregiao", "Label", Label);
+        this.dbtRegiaoImediata = this.resolve(list, "dbtRegiaoImediata", "Label", Label);
+        this.dbtPopulacao = this.resolve(list, "dbtPopulacao", "Label", Label);
+        this.lblEstimativa = this.resolve(list, "lblEstimativa", "Label", Label);
+        this.dbtEstimativa = this.resolve(list, "dbtEstimativa", "Label", Label);
+        this.dbtArea = this.resolve(list, "dbtArea", "Label", Label);
+        this.dbtDensidade = this.resolve(list, "dbtDensidade", "Label", Label);
+        this.dbtPib = this.resolve(list, "dbtPib", "Label", Label);
+        this.dbtPibPerCapita = this.resolve(list, "dbtPibPerCapita", "Label", Label);
+        this.dbtPibParticipacao = this.resolve(list, "dbtPibParticipacao", "Label", Label);
+        this.lytGraficos = this.resolve(list, "lytGraficos", "Layout", Layout);
+        this.dbcPopulacao = this.resolve(list, "dbcPopulacao", "DBChart", DBChart);
+        this.dbcMaiores = this.resolve(list, "dbcMaiores", "DBChart", DBChart);
+        this.dbcEstados = this.resolve(list, "dbcEstados", "DBChart", DBChart);
+    }
+    /** O ClientDataSet deste form com o nome (como o FindComponent). */
+    findClientDataSet(name: string): ClientDataSet | undefined {
+        switch (name) {
+            case "cdsEstados": return this.cdsEstados;
+            case "cdsMunicipios": return this.cdsMunicipios;
+            case "cdsDistritos": return this.cdsDistritos;
+            case "cdsPopulacao": return this.cdsPopulacao;
+            case "cdsMaiores": return this.cdsMaiores;
+        }
+        return undefined;
+    }
+    /** O ClientDataSet que disparou o evento. */
+    senderAsClientDataSet(ev: AylisEvent): ClientDataSet | undefined {
+        return this.findClientDataSet(ev.sender.name);
+    }
+    /** O DBChart deste form com o nome (como o FindComponent). */
+    findDBChart(name: string): DBChart | undefined {
+        switch (name) {
+            case "dbcPopulacao": return this.dbcPopulacao;
+            case "dbcMaiores": return this.dbcMaiores;
+            case "dbcEstados": return this.dbcEstados;
+        }
+        return undefined;
+    }
+    /** O DBChart que disparou o evento. */
+    senderAsDBChart(ev: AylisEvent): DBChart | undefined {
+        return this.findDBChart(ev.sender.name);
+    }
+    /** O DataGrid deste form com o nome (como o FindComponent). */
+    findDataGrid(name: string): DataGrid | undefined {
+        switch (name) {
+            case "grdEstados": return this.grdEstados;
+            case "grdDistritos": return this.grdDistritos;
+            case "grdMunicipios": return this.grdMunicipios;
+        }
+        return undefined;
+    }
+    /** O DataGrid que disparou o evento. */
+    senderAsDataGrid(ev: AylisEvent): DataGrid | undefined {
+        return this.findDataGrid(ev.sender.name);
+    }
+    /** O DataSource deste form com o nome (como o FindComponent). */
+    findDataSource(name: string): DataSource | undefined {
+        switch (name) {
+            case "dsEstados": return this.dsEstados;
+            case "dsMunicipios": return this.dsMunicipios;
+            case "dsDistritos": return this.dsDistritos;
+            case "dsPopulacao": return this.dsPopulacao;
+            case "dsMaiores": return this.dsMaiores;
+        }
+        return undefined;
+    }
+    /** O DataSource que disparou o evento. */
+    senderAsDataSource(ev: AylisEvent): DataSource | undefined {
+        return this.findDataSource(ev.sender.name);
+    }
+    /** O Field deste form com o nome (como o FindComponent). */
+    findField(name: string): Field | undefined {
+        switch (name) {
+            case "cdsEstadosId": return this.cdsEstadosId;
+            case "cdsEstadosSigla": return this.cdsEstadosSigla;
+            case "cdsEstadosNome": return this.cdsEstadosNome;
+            case "cdsEstadosRegiao": return this.cdsEstadosRegiao;
+            case "cdsEstadosPopulacao": return this.cdsEstadosPopulacao;
+            case "cdsEstadosArea": return this.cdsEstadosArea;
+            case "cdsEstadosDensidade": return this.cdsEstadosDensidade;
+            case "cdsEstadosPib": return this.cdsEstadosPib;
+            case "cdsEstadosPibPerCapita": return this.cdsEstadosPibPerCapita;
+            case "cdsEstadosEstimativa": return this.cdsEstadosEstimativa;
+            case "cdsEstadosEstimativaAno": return this.cdsEstadosEstimativaAno;
+            case "cdsEstadosMunicipios": return this.cdsEstadosMunicipios;
+            case "cdsEstadosBandeira": return this.cdsEstadosBandeira;
+            case "cdsMunicipiosId": return this.cdsMunicipiosId;
+            case "cdsMunicipiosUfId": return this.cdsMunicipiosUfId;
+            case "cdsMunicipiosUf": return this.cdsMunicipiosUf;
+            case "cdsMunicipiosNome": return this.cdsMunicipiosNome;
+            case "cdsMunicipiosMesorregiao": return this.cdsMunicipiosMesorregiao;
+            case "cdsMunicipiosMicrorregiao": return this.cdsMunicipiosMicrorregiao;
+            case "cdsMunicipiosRegiaoIntermediaria": return this.cdsMunicipiosRegiaoIntermediaria;
+            case "cdsMunicipiosRegiaoImediata": return this.cdsMunicipiosRegiaoImediata;
+            case "cdsMunicipiosPopulacao": return this.cdsMunicipiosPopulacao;
+            case "cdsMunicipiosArea": return this.cdsMunicipiosArea;
+            case "cdsMunicipiosDensidade": return this.cdsMunicipiosDensidade;
+            case "cdsMunicipiosPib": return this.cdsMunicipiosPib;
+            case "cdsMunicipiosPibParticipacao": return this.cdsMunicipiosPibParticipacao;
+            case "cdsMunicipiosPibPerCapita": return this.cdsMunicipiosPibPerCapita;
+            case "cdsMunicipiosEstimativa": return this.cdsMunicipiosEstimativa;
+            case "cdsMunicipiosEstimativaAno": return this.cdsMunicipiosEstimativaAno;
+            case "cdsMunicipiosDistritos": return this.cdsMunicipiosDistritos;
+            case "cdsMunicipiosBandeira": return this.cdsMunicipiosBandeira;
+            case "cdsDistritosId": return this.cdsDistritosId;
+            case "cdsDistritosMunicipioId": return this.cdsDistritosMunicipioId;
+            case "cdsDistritosNome": return this.cdsDistritosNome;
+            case "cdsPopulacaoAno": return this.cdsPopulacaoAno;
+            case "cdsPopulacaoHabitantes": return this.cdsPopulacaoHabitantes;
+            case "cdsMaioresNome": return this.cdsMaioresNome;
+            case "cdsMaioresHabitantes": return this.cdsMaioresHabitantes;
+        }
+        return undefined;
+    }
+    /** O Field que disparou o evento. */
+    senderAsField(ev: AylisEvent): Field | undefined {
+        return this.findField(ev.sender.name);
+    }
+    /** O GroupBox deste form com o nome (como o FindComponent). */
+    findGroupBox(name: string): GroupBox | undefined {
+        switch (name) {
+            case "gbEstados": return this.gbEstados;
+            case "gbDistritos": return this.gbDistritos;
+            case "gbMunicipios": return this.gbMunicipios;
+        }
+        return undefined;
+    }
+    /** O GroupBox que disparou o evento. */
+    senderAsGroupBox(ev: AylisEvent): GroupBox | undefined {
+        return this.findGroupBox(ev.sender.name);
+    }
+    /** O Image deste form com o nome (como o FindComponent). */
+    findImage(name: string): Image | undefined {
+        switch (name) {
+            case "imgBandeiraEstado": return this.imgBandeiraEstado;
+            case "imgBandeiraMunicipio": return this.imgBandeiraMunicipio;
+        }
+        return undefined;
+    }
+    /** O Image que disparou o evento. */
+    senderAsImage(ev: AylisEvent): Image | undefined {
+        return this.findImage(ev.sender.name);
+    }
+    /** O Label deste form com o nome (como o FindComponent). */
+    findLabel(name: string): Label | undefined {
+        switch (name) {
+            case "lblFonte": return this.lblFonte;
+            case "lblEstado": return this.lblEstado;
+            case "lblRegiao": return this.lblRegiao;
+            case "dbtEstadoPopulacao": return this.dbtEstadoPopulacao;
+            case "lblEstadoEstimativa": return this.lblEstadoEstimativa;
+            case "dbtEstadoEstimativa": return this.dbtEstadoEstimativa;
+            case "dbtEstadoArea": return this.dbtEstadoArea;
+            case "dbtEstadoDensidade": return this.dbtEstadoDensidade;
+            case "dbtEstadoPib": return this.dbtEstadoPib;
+            case "dbtEstadoPibPerCapita": return this.dbtEstadoPibPerCapita;
+            case "dbtEstadoMunicipios": return this.dbtEstadoMunicipios;
+            case "lblMunicipio": return this.lblMunicipio;
+            case "lblCodigo": return this.lblCodigo;
+            case "lblSemBandeira": return this.lblSemBandeira;
+            case "dbtMesorregiao": return this.dbtMesorregiao;
+            case "dbtMicrorregiao": return this.dbtMicrorregiao;
+            case "dbtRegiaoImediata": return this.dbtRegiaoImediata;
+            case "dbtPopulacao": return this.dbtPopulacao;
+            case "lblEstimativa": return this.lblEstimativa;
+            case "dbtEstimativa": return this.dbtEstimativa;
+            case "dbtArea": return this.dbtArea;
+            case "dbtDensidade": return this.dbtDensidade;
+            case "dbtPib": return this.dbtPib;
+            case "dbtPibPerCapita": return this.dbtPibPerCapita;
+            case "dbtPibParticipacao": return this.dbtPibParticipacao;
+        }
+        return undefined;
+    }
+    /** O Label que disparou o evento. */
+    senderAsLabel(ev: AylisEvent): Label | undefined {
+        return this.findLabel(ev.sender.name);
+    }
+    /** O Layout deste form com o nome (como o FindComponent). */
+    findLayout(name: string): Layout | undefined {
+        switch (name) {
+            case "lytListas": return this.lytListas;
+            case "lytPainel": return this.lytPainel;
+            case "lytBandeiraEstado": return this.lytBandeiraEstado;
+            case "lytNumerosEstado": return this.lytNumerosEstado;
+            case "lytBandeiraMunicipio": return this.lytBandeiraMunicipio;
+            case "lytNumerosMunicipio": return this.lytNumerosMunicipio;
+            case "lytGraficos": return this.lytGraficos;
+        }
+        return undefined;
+    }
+    /** O Layout que disparou o evento. */
+    senderAsLayout(ev: AylisEvent): Layout | undefined {
+        return this.findLayout(ev.sender.name);
+    }
+    /** O Panel deste form com o nome (como o FindComponent). */
+    findPanel(name: string): Panel | undefined {
+        switch (name) {
+            case "pnlEstado": return this.pnlEstado;
+            case "pnlMunicipio": return this.pnlMunicipio;
+        }
+        return undefined;
+    }
+    /** O Panel que disparou o evento. */
+    senderAsPanel(ev: AylisEvent): Panel | undefined {
+        return this.findPanel(ev.sender.name);
+    }
+    /** O Splitter deste form com o nome (como o FindComponent). */
+    findSplitter(name: string): Splitter | undefined {
+        switch (name) {
+            case "splListas": return this.splListas;
+        }
+        return undefined;
+    }
+    /** O Splitter que disparou o evento. */
+    senderAsSplitter(ev: AylisEvent): Splitter | undefined {
+        return this.findSplitter(ev.sender.name);
+    }
+    /** O Svg deste form com o nome (como o FindComponent). */
+    findSvg(name: string): Svg | undefined {
+        switch (name) {
+            case "svgBrasil": return this.svgBrasil;
+            case "svgMunicipio": return this.svgMunicipio;
+            case "svgEstado": return this.svgEstado;
+        }
+        return undefined;
+    }
+    /** O Svg que disparou o evento. */
+    senderAsSvg(ev: AylisEvent): Svg | undefined {
+        return this.findSvg(ev.sender.name);
+    }
+}
+
+/** A janela de frmIBGE cujo evento está rodando (a primeira, fora dos handlers). */
+export let frmIBGE: FrmIBGEComponents;
+registerFormClass("frmIBGE", FrmIBGEComponents, (form) => {
+    frmIBGE = form as FrmIBGEComponents;
+});

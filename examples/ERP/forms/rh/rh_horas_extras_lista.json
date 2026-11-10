@@ -1,0 +1,127 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmRhHorasExtrasLista",
+    "caption": "Horas extras — lista (RH)",
+    "on_show": "form_show",
+    "width": 1100,
+    "height": 700,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMestre",
+        "key_fields": "id",
+        "index_field_names": "parceiro",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMestreId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreNumero",
+            "field_name": "numero",
+            "type": "integer",
+            "display_label": "Número",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreData",
+            "field_name": "data",
+            "type": "date",
+            "display_label": "Data",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreParceiro",
+            "field_name": "parceiro",
+            "size": 80,
+            "display_label": "Funcionário",
+            "display_width": 200,
+            "required": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreValorTotal",
+            "field_name": "valor_total",
+            "type": "currency",
+            "display_label": "Valor total",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreSituacao",
+            "field_name": "situacao",
+            "size": 20,
+            "display_label": "Situação",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreObservacao",
+            "field_name": "observacao",
+            "size": 200,
+            "display_label": "Observação",
+            "display_width": 200
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMestre",
+        "data_set": "cdsMestre"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlBarra",
+        "height": 44,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnAbrir",
+            "text": "Abrir cadastro",
+            "width": 140,
+            "align": "left",
+            "on_click": "btn_abrir_click"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar horas extras…",
+            "on_change": "edt_busca_change",
+            "width": 260,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdLista",
+        "data_source": "dsMestre",
+        "read_only": true,
+        "filter_row": true,
+        "align": "client",
+        "on_dbl_click": "grd_lista_dbl_click"
+      }
+    ]
+  }
+}

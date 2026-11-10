@@ -1,0 +1,13 @@
+# O pacote de código do tutorial "Seu primeiro componente" (docs/tutorial-componente.md): um
+# botão que conta os cliques, feito a partir do `Button`. Vai num .aylispkg com
+# `aylis-tool pack-code` (veja o tutorial).
+[package]
+name = "counter-button-aylis"
+version = "1.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+aylis-core = { path = "../../../crates/aylis-core" }
+aylis-controls = { path = "../../../crates/aylis-controls" }

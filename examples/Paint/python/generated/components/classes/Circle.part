@@ -1,0 +1,428 @@
+
+
+class Circle(AylisComponent):
+    """Um Circle de um form."""
+
+    @property
+    def fill(self):
+        return self._get("fill")
+
+    @fill.setter
+    def fill(self, value):
+        self._set("fill", value)
+
+    @property
+    def stroke(self):
+        return self._get("stroke")
+
+    @stroke.setter
+    def stroke(self, value):
+        self._set("stroke", value)
+
+    @property
+    def stroke_width(self):
+        return self._get("stroke_width")
+
+    @stroke_width.setter
+    def stroke_width(self, value):
+        self._set("stroke_width", value)
+
+    @property
+    def left(self):
+        return self._get("left")
+
+    @left.setter
+    def left(self, value):
+        self._set("left", value)
+
+    @property
+    def top(self):
+        return self._get("top")
+
+    @top.setter
+    def top(self, value):
+        self._set("top", value)
+
+    @property
+    def width(self):
+        return self._get("width")
+
+    @width.setter
+    def width(self, value):
+        self._set("width", value)
+
+    @property
+    def height(self):
+        return self._get("height")
+
+    @height.setter
+    def height(self, value):
+        self._set("height", value)
+
+    @property
+    def align(self):
+        return self._get("align")
+
+    @align.setter
+    def align(self, value):
+        self._set("align", value)
+
+    @property
+    def visible(self):
+        return self._get("visible")
+
+    @visible.setter
+    def visible(self, value):
+        self._set("visible", value)
+
+    @property
+    def enabled(self):
+        return self._get("enabled")
+
+    @enabled.setter
+    def enabled(self, value):
+        self._set("enabled", value)
+
+    @property
+    def hit_test(self):
+        return self._get("hit_test")
+
+    @hit_test.setter
+    def hit_test(self, value):
+        self._set("hit_test", value)
+
+    @property
+    def clip_children(self):
+        return self._get("clip_children")
+
+    @clip_children.setter
+    def clip_children(self, value):
+        self._set("clip_children", value)
+
+    @property
+    def captures_wheel(self):
+        return self._get("captures_wheel")
+
+    @captures_wheel.setter
+    def captures_wheel(self, value):
+        self._set("captures_wheel", value)
+
+    @property
+    def can_focus(self):
+        return self._get("can_focus")
+
+    @can_focus.setter
+    def can_focus(self, value):
+        self._set("can_focus", value)
+
+    @property
+    def draggable(self):
+        return self._get("draggable")
+
+    @draggable.setter
+    def draggable(self, value):
+        self._set("draggable", value)
+
+    @property
+    def accepts_drops(self):
+        return self._get("accepts_drops")
+
+    @accepts_drops.setter
+    def accepts_drops(self, value):
+        self._set("accepts_drops", value)
+
+    @property
+    def drag_data(self):
+        return self._get("drag_data")
+
+    @drag_data.setter
+    def drag_data(self, value):
+        self._set("drag_data", value)
+
+    @property
+    def drag_label(self):
+        return self._get("drag_label")
+
+    @drag_label.setter
+    def drag_label(self, value):
+        self._set("drag_label", value)
+
+    @property
+    def drag_image(self):
+        return self._get("drag_image")
+
+    @drag_image.setter
+    def drag_image(self, value):
+        self._set("drag_image", value)
+
+    @property
+    def drop_types(self):
+        return self._get("drop_types")
+
+    @drop_types.setter
+    def drop_types(self, value):
+        self._set("drop_types", value)
+
+    @property
+    def tab_stop(self):
+        return self._get("tab_stop")
+
+    @tab_stop.setter
+    def tab_stop(self, value):
+        self._set("tab_stop", value)
+
+    @property
+    def cursor(self):
+        return self._get("cursor")
+
+    @cursor.setter
+    def cursor(self, value):
+        self._set("cursor", value)
+
+    @property
+    def opacity(self):
+        return self._get("opacity")
+
+    @opacity.setter
+    def opacity(self, value):
+        self._set("opacity", value)
+
+    @property
+    def cache_layer(self):
+        return self._get("cache_layer")
+
+    @cache_layer.setter
+    def cache_layer(self, value):
+        self._set("cache_layer", value)
+
+    @property
+    def rotation(self):
+        return self._get("rotation")
+
+    @rotation.setter
+    def rotation(self, value):
+        self._set("rotation", value)
+
+    @property
+    def translate_x(self):
+        return self._get("translate_x")
+
+    @translate_x.setter
+    def translate_x(self, value):
+        self._set("translate_x", value)
+
+    @property
+    def translate_y(self):
+        return self._get("translate_y")
+
+    @translate_y.setter
+    def translate_y(self, value):
+        self._set("translate_y", value)
+
+    @property
+    def aspect_ratio(self):
+        return self._get("aspect_ratio")
+
+    @aspect_ratio.setter
+    def aspect_ratio(self, value):
+        self._set("aspect_ratio", value)
+
+    @property
+    def max_width(self):
+        return self._get("max_width")
+
+    @max_width.setter
+    def max_width(self, value):
+        self._set("max_width", value)
+
+    @property
+    def min_width(self):
+        return self._get("min_width")
+
+    @min_width.setter
+    def min_width(self, value):
+        self._set("min_width", value)
+
+    @property
+    def min_height(self):
+        return self._get("min_height")
+
+    @min_height.setter
+    def min_height(self, value):
+        self._set("min_height", value)
+
+    @property
+    def max_height(self):
+        return self._get("max_height")
+
+    @max_height.setter
+    def max_height(self, value):
+        self._set("max_height", value)
+
+    @property
+    def self_align(self):
+        return self._get("self_align")
+
+    @self_align.setter
+    def self_align(self, value):
+        self._set("self_align", value)
+
+    @property
+    def auto_size(self):
+        return self._get("auto_size")
+
+    @auto_size.setter
+    def auto_size(self, value):
+        self._set("auto_size", value)
+
+    @property
+    def column_span(self):
+        return self._get("column_span")
+
+    @column_span.setter
+    def column_span(self, value):
+        self._set("column_span", value)
+
+    @property
+    def shadow(self):
+        return self._get("shadow")
+
+    @shadow.setter
+    def shadow(self, value):
+        self._set("shadow", value)
+
+    @property
+    def style(self):
+        return self._get("style")
+
+    @style.setter
+    def style(self, value):
+        self._set("style", value)
+
+    @property
+    def theme(self):
+        return self._get("theme")
+
+    @theme.setter
+    def theme(self, value):
+        self._set("theme", value)
+
+    @property
+    def border_color(self):
+        return self._get("border_color")
+
+    @border_color.setter
+    def border_color(self, value):
+        self._set("border_color", value)
+
+    @property
+    def text_color(self):
+        return self._get("text_color")
+
+    @text_color.setter
+    def text_color(self, value):
+        self._set("text_color", value)
+
+    @property
+    def accent_color(self):
+        return self._get("accent_color")
+
+    @accent_color.setter
+    def accent_color(self, value):
+        self._set("accent_color", value)
+
+    @property
+    def success_color(self):
+        return self._get("success_color")
+
+    @success_color.setter
+    def success_color(self, value):
+        self._set("success_color", value)
+
+    @property
+    def warning_color(self):
+        return self._get("warning_color")
+
+    @warning_color.setter
+    def warning_color(self, value):
+        self._set("warning_color", value)
+
+    @property
+    def danger_color(self):
+        return self._get("danger_color")
+
+    @danger_color.setter
+    def danger_color(self, value):
+        self._set("danger_color", value)
+
+    @property
+    def font_family(self):
+        return self._get("font_family")
+
+    @font_family.setter
+    def font_family(self, value):
+        self._set("font_family", value)
+
+    @property
+    def font_size(self):
+        return self._get("font_size")
+
+    @font_size.setter
+    def font_size(self, value):
+        self._set("font_size", value)
+
+    @property
+    def font_weight(self):
+        return self._get("font_weight")
+
+    @font_weight.setter
+    def font_weight(self, value):
+        self._set("font_weight", value)
+
+    @property
+    def font_italic(self):
+        return self._get("font_italic")
+
+    @font_italic.setter
+    def font_italic(self, value):
+        self._set("font_italic", value)
+
+    @property
+    def font_underline(self):
+        return self._get("font_underline")
+
+    @font_underline.setter
+    def font_underline(self, value):
+        self._set("font_underline", value)
+
+    @property
+    def font_strikeout(self):
+        return self._get("font_strikeout")
+
+    @font_strikeout.setter
+    def font_strikeout(self, value):
+        self._set("font_strikeout", value)
+
+    @property
+    def hint(self):
+        return self._get("hint")
+
+    @hint.setter
+    def hint(self, value):
+        self._set("hint", value)
+
+    @property
+    def tag(self):
+        return self._get("tag")
+
+    @tag.setter
+    def tag(self, value):
+        self._set("tag", value)
+
+    @property
+    def popup_menu(self):
+        return self._get("popup_menu")
+
+    @popup_menu.setter
+    def popup_menu(self, value):
+        self._set("popup_menu", value)

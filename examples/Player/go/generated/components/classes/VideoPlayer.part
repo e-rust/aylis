@@ -1,0 +1,189 @@
+
+// aylisVideoPlayer é um VideoPlayer de um form.
+type aylisVideoPlayer struct{ aylis.Component }
+
+func (c aylisVideoPlayer) File() string { return asText(c.Get("file")) }
+func (c aylisVideoPlayer) SetFile(v string) { c.Set("file", v) }
+
+func (c aylisVideoPlayer) Autoplay() bool { return asBool(c.Get("autoplay")) }
+func (c aylisVideoPlayer) SetAutoplay(v bool) { c.Set("autoplay", v) }
+
+func (c aylisVideoPlayer) Looping() bool { return asBool(c.Get("looping")) }
+func (c aylisVideoPlayer) SetLooping(v bool) { c.Set("looping", v) }
+
+func (c aylisVideoPlayer) Volume() float64 { return asNumber(c.Get("volume")) }
+func (c aylisVideoPlayer) SetVolume(v float64) { c.Set("volume", v) }
+
+func (c aylisVideoPlayer) Muted() bool { return asBool(c.Get("muted")) }
+func (c aylisVideoPlayer) SetMuted(v bool) { c.Set("muted", v) }
+
+func (c aylisVideoPlayer) Fit() string { return asText(c.Get("fit")) }
+func (c aylisVideoPlayer) SetFit(v string) { c.Set("fit", v) }
+
+func (c aylisVideoPlayer) Radius() float64 { return asNumber(c.Get("radius")) }
+func (c aylisVideoPlayer) SetRadius(v float64) { c.Set("radius", v) }
+
+func (c aylisVideoPlayer) Rate() float64 { return asNumber(c.Get("rate")) }
+func (c aylisVideoPlayer) SetRate(v float64) { c.Set("rate", v) }
+
+func (c aylisVideoPlayer) Output() string { return asText(c.Get("output")) }
+func (c aylisVideoPlayer) SetOutput(v string) { c.Set("output", v) }
+
+func (c aylisVideoPlayer) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisVideoPlayer) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisVideoPlayer) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisVideoPlayer) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisVideoPlayer) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisVideoPlayer) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisVideoPlayer) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisVideoPlayer) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisVideoPlayer) Align() string { return asText(c.Get("align")) }
+func (c aylisVideoPlayer) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisVideoPlayer) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisVideoPlayer) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisVideoPlayer) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisVideoPlayer) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisVideoPlayer) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisVideoPlayer) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisVideoPlayer) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisVideoPlayer) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisVideoPlayer) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisVideoPlayer) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisVideoPlayer) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisVideoPlayer) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisVideoPlayer) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisVideoPlayer) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisVideoPlayer) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisVideoPlayer) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisVideoPlayer) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisVideoPlayer) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisVideoPlayer) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisVideoPlayer) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisVideoPlayer) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisVideoPlayer) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisVideoPlayer) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisVideoPlayer) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisVideoPlayer) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisVideoPlayer) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisVideoPlayer) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisVideoPlayer) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisVideoPlayer) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisVideoPlayer) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisVideoPlayer) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisVideoPlayer) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisVideoPlayer) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisVideoPlayer) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisVideoPlayer) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisVideoPlayer) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisVideoPlayer) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisVideoPlayer) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisVideoPlayer) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisVideoPlayer) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisVideoPlayer) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisVideoPlayer) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisVideoPlayer) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisVideoPlayer) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisVideoPlayer) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisVideoPlayer) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisVideoPlayer) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisVideoPlayer) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisVideoPlayer) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisVideoPlayer) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisVideoPlayer) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisVideoPlayer) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisVideoPlayer) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisVideoPlayer) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisVideoPlayer) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisVideoPlayer) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisVideoPlayer) Style() string { return asText(c.Get("style")) }
+func (c aylisVideoPlayer) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisVideoPlayer) Theme() string { return asText(c.Get("theme")) }
+func (c aylisVideoPlayer) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisVideoPlayer) Fill() string { return asText(c.Get("fill")) }
+func (c aylisVideoPlayer) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisVideoPlayer) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisVideoPlayer) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisVideoPlayer) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisVideoPlayer) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisVideoPlayer) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisVideoPlayer) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisVideoPlayer) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisVideoPlayer) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisVideoPlayer) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisVideoPlayer) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisVideoPlayer) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisVideoPlayer) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisVideoPlayer) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisVideoPlayer) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisVideoPlayer) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisVideoPlayer) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisVideoPlayer) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisVideoPlayer) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisVideoPlayer) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisVideoPlayer) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisVideoPlayer) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisVideoPlayer) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisVideoPlayer) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisVideoPlayer) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisVideoPlayer) Hint() string { return asText(c.Get("hint")) }
+func (c aylisVideoPlayer) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisVideoPlayer) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisVideoPlayer) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisVideoPlayer) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisVideoPlayer) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisVideoPlayer) Play() { c.App.Send("media", aylis.M{"target": c.ID, "op": "play"}) }
+func (c aylisVideoPlayer) Pause() { c.App.Send("media", aylis.M{"target": c.ID, "op": "pause"}) }
+func (c aylisVideoPlayer) Stop() { c.App.Send("media", aylis.M{"target": c.ID, "op": "stop"}) }
+func (c aylisVideoPlayer) Seek(seconds float64) { c.App.Send("media", aylis.M{"target": c.ID, "op": "seek", "seconds": seconds}) }
+func (c aylisVideoPlayer) Position() float64 { return asNumber(askCmd(c.App, "media", aylis.M{"target": c.ID, "op": "position"})) }
+func (c aylisVideoPlayer) Duration() float64 { return asNumber(askCmd(c.App, "media", aylis.M{"target": c.ID, "op": "duration"})) }

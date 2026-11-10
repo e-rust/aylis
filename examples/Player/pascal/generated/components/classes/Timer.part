@@ -1,0 +1,72 @@
+  { Um Timer de um form. }
+  TTimer = class(TAylisComponent)
+  private
+    function GetInterval: Double;
+    procedure SetInterval(Value: Double);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetPrecision: string;
+    procedure SetPrecision(Value: string);
+    function GetBackground: Boolean;
+    procedure SetBackground(Value: Boolean);
+    function GetDrift: Double;
+    procedure SetDrift(Value: Double);
+  public
+    property Interval: Double read GetInterval write SetInterval;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property Precision: string read GetPrecision write SetPrecision;
+    property Background: Boolean read GetBackground write SetBackground;
+    property Drift: Double read GetDrift write SetDrift;
+  end;
+
+
+function TTimer.GetInterval: Double;
+begin
+  Result := GetProp('interval').AsFloat;
+end;
+
+procedure TTimer.SetInterval(Value: Double);
+begin
+  SetProp('interval', TJSONFloatNumber.Create(Value));
+end;
+
+function TTimer.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TTimer.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TTimer.GetPrecision: string;
+begin
+  Result := AsText(GetProp('precision'));
+end;
+
+procedure TTimer.SetPrecision(Value: string);
+begin
+  SetProp('precision', TJSONString.Create(Value));
+end;
+
+function TTimer.GetBackground: Boolean;
+begin
+  Result := GetProp('background').AsBoolean;
+end;
+
+procedure TTimer.SetBackground(Value: Boolean);
+begin
+  SetProp('background', TJSONBoolean.Create(Value));
+end;
+
+function TTimer.GetDrift: Double;
+begin
+  Result := GetProp('drift').AsFloat;
+end;
+
+procedure TTimer.SetDrift(Value: Double);
+begin
+  SetProp('drift', TJSONFloatNumber.Create(Value));
+end;
+

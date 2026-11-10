@@ -1,0 +1,224 @@
+
+/** O form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+export class FrmCalculadoraComponents extends Form {
+    pnlLateral!: Panel;
+    tabLateral!: TabControl;
+    tabHistorico!: TabItem;
+    btnLimparHistorico!: Button;
+    lvHistorico!: ListView;
+    tabMemoria!: TabItem;
+    lvMemoria!: ListView;
+    lytCorpo!: Layout;
+    lytTopo!: Layout;
+    btnHistorico!: Button;
+    lblTitulo!: Label;
+    lblExpressao!: Label;
+    lblVisor!: Label;
+    grdMemoria!: GridLayout;
+    btnMC!: Button;
+    btnMR!: Button;
+    btnMMais!: Button;
+    btnMMenos!: Button;
+    btnMS!: Button;
+    grdTeclado!: GridLayout;
+    btnPorcento!: Button;
+    btnCE!: Button;
+    btnC!: Button;
+    btnApagar!: Button;
+    btnInverso!: Button;
+    btnQuadrado!: Button;
+    btnRaiz!: Button;
+    btnDividir!: Button;
+    btn7!: Button;
+    btn8!: Button;
+    btn9!: Button;
+    btnMultiplicar!: Button;
+    btn4!: Button;
+    btn5!: Button;
+    btn6!: Button;
+    btnSubtrair!: Button;
+    btn1!: Button;
+    btn2!: Button;
+    btn3!: Button;
+    btnSomar!: Button;
+    btnSinal!: Button;
+    btn0!: Button;
+    btnVirgula!: Button;
+    btnIgual!: Button;
+    bind(list: ComponentInfo[]) {
+        this.pnlLateral = this.resolve(list, "pnlLateral", "Panel", Panel);
+        this.tabLateral = this.resolve(list, "tabLateral", "TabControl", TabControl);
+        this.tabHistorico = this.resolve(list, "tabHistorico", "TabItem", TabItem);
+        this.btnLimparHistorico = this.resolve(list, "btnLimparHistorico", "Button", Button);
+        this.lvHistorico = this.resolve(list, "lvHistorico", "ListView", ListView);
+        this.tabMemoria = this.resolve(list, "tabMemoria", "TabItem", TabItem);
+        this.lvMemoria = this.resolve(list, "lvMemoria", "ListView", ListView);
+        this.lytCorpo = this.resolve(list, "lytCorpo", "Layout", Layout);
+        this.lytTopo = this.resolve(list, "lytTopo", "Layout", Layout);
+        this.btnHistorico = this.resolve(list, "btnHistorico", "Button", Button);
+        this.lblTitulo = this.resolve(list, "lblTitulo", "Label", Label);
+        this.lblExpressao = this.resolve(list, "lblExpressao", "Label", Label);
+        this.lblVisor = this.resolve(list, "lblVisor", "Label", Label);
+        this.grdMemoria = this.resolve(list, "grdMemoria", "GridLayout", GridLayout);
+        this.btnMC = this.resolve(list, "btnMC", "Button", Button);
+        this.btnMR = this.resolve(list, "btnMR", "Button", Button);
+        this.btnMMais = this.resolve(list, "btnMMais", "Button", Button);
+        this.btnMMenos = this.resolve(list, "btnMMenos", "Button", Button);
+        this.btnMS = this.resolve(list, "btnMS", "Button", Button);
+        this.grdTeclado = this.resolve(list, "grdTeclado", "GridLayout", GridLayout);
+        this.btnPorcento = this.resolve(list, "btnPorcento", "Button", Button);
+        this.btnCE = this.resolve(list, "btnCE", "Button", Button);
+        this.btnC = this.resolve(list, "btnC", "Button", Button);
+        this.btnApagar = this.resolve(list, "btnApagar", "Button", Button);
+        this.btnInverso = this.resolve(list, "btnInverso", "Button", Button);
+        this.btnQuadrado = this.resolve(list, "btnQuadrado", "Button", Button);
+        this.btnRaiz = this.resolve(list, "btnRaiz", "Button", Button);
+        this.btnDividir = this.resolve(list, "btnDividir", "Button", Button);
+        this.btn7 = this.resolve(list, "btn7", "Button", Button);
+        this.btn8 = this.resolve(list, "btn8", "Button", Button);
+        this.btn9 = this.resolve(list, "btn9", "Button", Button);
+        this.btnMultiplicar = this.resolve(list, "btnMultiplicar", "Button", Button);
+        this.btn4 = this.resolve(list, "btn4", "Button", Button);
+        this.btn5 = this.resolve(list, "btn5", "Button", Button);
+        this.btn6 = this.resolve(list, "btn6", "Button", Button);
+        this.btnSubtrair = this.resolve(list, "btnSubtrair", "Button", Button);
+        this.btn1 = this.resolve(list, "btn1", "Button", Button);
+        this.btn2 = this.resolve(list, "btn2", "Button", Button);
+        this.btn3 = this.resolve(list, "btn3", "Button", Button);
+        this.btnSomar = this.resolve(list, "btnSomar", "Button", Button);
+        this.btnSinal = this.resolve(list, "btnSinal", "Button", Button);
+        this.btn0 = this.resolve(list, "btn0", "Button", Button);
+        this.btnVirgula = this.resolve(list, "btnVirgula", "Button", Button);
+        this.btnIgual = this.resolve(list, "btnIgual", "Button", Button);
+    }
+    /** O Button deste form com o nome (como o FindComponent). */
+    findButton(name: string): Button | undefined {
+        switch (name) {
+            case "btnLimparHistorico": return this.btnLimparHistorico;
+            case "btnHistorico": return this.btnHistorico;
+            case "btnMC": return this.btnMC;
+            case "btnMR": return this.btnMR;
+            case "btnMMais": return this.btnMMais;
+            case "btnMMenos": return this.btnMMenos;
+            case "btnMS": return this.btnMS;
+            case "btnPorcento": return this.btnPorcento;
+            case "btnCE": return this.btnCE;
+            case "btnC": return this.btnC;
+            case "btnApagar": return this.btnApagar;
+            case "btnInverso": return this.btnInverso;
+            case "btnQuadrado": return this.btnQuadrado;
+            case "btnRaiz": return this.btnRaiz;
+            case "btnDividir": return this.btnDividir;
+            case "btn7": return this.btn7;
+            case "btn8": return this.btn8;
+            case "btn9": return this.btn9;
+            case "btnMultiplicar": return this.btnMultiplicar;
+            case "btn4": return this.btn4;
+            case "btn5": return this.btn5;
+            case "btn6": return this.btn6;
+            case "btnSubtrair": return this.btnSubtrair;
+            case "btn1": return this.btn1;
+            case "btn2": return this.btn2;
+            case "btn3": return this.btn3;
+            case "btnSomar": return this.btnSomar;
+            case "btnSinal": return this.btnSinal;
+            case "btn0": return this.btn0;
+            case "btnVirgula": return this.btnVirgula;
+            case "btnIgual": return this.btnIgual;
+        }
+        return undefined;
+    }
+    /** O Button que disparou o evento. */
+    senderAsButton(ev: AylisEvent): Button | undefined {
+        return this.findButton(ev.sender.name);
+    }
+    /** O GridLayout deste form com o nome (como o FindComponent). */
+    findGridLayout(name: string): GridLayout | undefined {
+        switch (name) {
+            case "grdMemoria": return this.grdMemoria;
+            case "grdTeclado": return this.grdTeclado;
+        }
+        return undefined;
+    }
+    /** O GridLayout que disparou o evento. */
+    senderAsGridLayout(ev: AylisEvent): GridLayout | undefined {
+        return this.findGridLayout(ev.sender.name);
+    }
+    /** O Label deste form com o nome (como o FindComponent). */
+    findLabel(name: string): Label | undefined {
+        switch (name) {
+            case "lblTitulo": return this.lblTitulo;
+            case "lblExpressao": return this.lblExpressao;
+            case "lblVisor": return this.lblVisor;
+        }
+        return undefined;
+    }
+    /** O Label que disparou o evento. */
+    senderAsLabel(ev: AylisEvent): Label | undefined {
+        return this.findLabel(ev.sender.name);
+    }
+    /** O Layout deste form com o nome (como o FindComponent). */
+    findLayout(name: string): Layout | undefined {
+        switch (name) {
+            case "lytCorpo": return this.lytCorpo;
+            case "lytTopo": return this.lytTopo;
+        }
+        return undefined;
+    }
+    /** O Layout que disparou o evento. */
+    senderAsLayout(ev: AylisEvent): Layout | undefined {
+        return this.findLayout(ev.sender.name);
+    }
+    /** O ListView deste form com o nome (como o FindComponent). */
+    findListView(name: string): ListView | undefined {
+        switch (name) {
+            case "lvHistorico": return this.lvHistorico;
+            case "lvMemoria": return this.lvMemoria;
+        }
+        return undefined;
+    }
+    /** O ListView que disparou o evento. */
+    senderAsListView(ev: AylisEvent): ListView | undefined {
+        return this.findListView(ev.sender.name);
+    }
+    /** O Panel deste form com o nome (como o FindComponent). */
+    findPanel(name: string): Panel | undefined {
+        switch (name) {
+            case "pnlLateral": return this.pnlLateral;
+        }
+        return undefined;
+    }
+    /** O Panel que disparou o evento. */
+    senderAsPanel(ev: AylisEvent): Panel | undefined {
+        return this.findPanel(ev.sender.name);
+    }
+    /** O TabControl deste form com o nome (como o FindComponent). */
+    findTabControl(name: string): TabControl | undefined {
+        switch (name) {
+            case "tabLateral": return this.tabLateral;
+        }
+        return undefined;
+    }
+    /** O TabControl que disparou o evento. */
+    senderAsTabControl(ev: AylisEvent): TabControl | undefined {
+        return this.findTabControl(ev.sender.name);
+    }
+    /** O TabItem deste form com o nome (como o FindComponent). */
+    findTabItem(name: string): TabItem | undefined {
+        switch (name) {
+            case "tabHistorico": return this.tabHistorico;
+            case "tabMemoria": return this.tabMemoria;
+        }
+        return undefined;
+    }
+    /** O TabItem que disparou o evento. */
+    senderAsTabItem(ev: AylisEvent): TabItem | undefined {
+        return this.findTabItem(ev.sender.name);
+    }
+}
+
+/** A janela de frmCalculadora cujo evento está rodando (a primeira, fora dos handlers). */
+export let frmCalculadora: FrmCalculadoraComponents;
+registerFormClass("frmCalculadora", FrmCalculadoraComponents, (form) => {
+    frmCalculadora = form as FrmCalculadoraComponents;
+});

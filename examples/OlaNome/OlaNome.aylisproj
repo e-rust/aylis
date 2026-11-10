@@ -1,0 +1,31 @@
+{
+  "aylis_project": 1,
+  "name": "OlaNome",
+  "language": "rust",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true,
+      "modified": 1793930871585
+    }
+  ],
+  "font": "Inter",
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  },
+  "text": {
+    "windows": "core",
+    "linux": "core",
+    "macos": "core",
+    "android": "core",
+    "ios": "core",
+    "web": "layout"
+  }
+}

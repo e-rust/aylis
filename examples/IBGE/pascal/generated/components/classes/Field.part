@@ -1,0 +1,345 @@
+  { Um Field de um form. }
+  TField = class(TAylisComponent)
+  private
+    function GetFieldName: string;
+    procedure SetFieldName(Value: string);
+    function GetType: string;
+    procedure SetType(Value: string);
+    function GetSize: Int64;
+    procedure SetSize(Value: Int64);
+    function GetScale: Int64;
+    procedure SetScale(Value: Int64);
+    function GetRounding: string;
+    procedure SetRounding(Value: string);
+    function GetDisplayLabel: string;
+    procedure SetDisplayLabel(Value: string);
+    function GetDisplayWidth: Double;
+    procedure SetDisplayWidth(Value: Double);
+    function GetDisplayFormat: string;
+    procedure SetDisplayFormat(Value: string);
+    function GetEditFormat: string;
+    procedure SetEditFormat(Value: string);
+    function GetAlignment: string;
+    procedure SetAlignment(Value: string);
+    function GetRequired: Boolean;
+    procedure SetRequired(Value: Boolean);
+    function GetReadOnly: Boolean;
+    procedure SetReadOnly(Value: Boolean);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetMin: Double;
+    procedure SetMin(Value: Double);
+    function GetMax: Double;
+    procedure SetMax(Value: Double);
+    function GetDefaultValue: string;
+    procedure SetDefaultValue(Value: string);
+    function GetDisplayValues: string;
+    procedure SetDisplayValues(Value: string);
+    function GetCharCase: string;
+    procedure SetCharCase(Value: string);
+    function GetEditMask: string;
+    procedure SetEditMask(Value: string);
+    function GetSensitive: Boolean;
+    procedure SetSensitive(Value: Boolean);
+    function GetKind: string;
+    procedure SetKind(Value: string);
+    function GetExpression: string;
+    procedure SetExpression(Value: string);
+    function GetLookupDataSet: string;
+    procedure SetLookupDataSet(Value: string);
+    function GetKeyFields: string;
+    procedure SetKeyFields(Value: string);
+    function GetLookupKeyFields: string;
+    procedure SetLookupKeyFields(Value: string);
+    function GetLookupResultField: string;
+    procedure SetLookupResultField(Value: string);
+  public
+    property FieldName: string read GetFieldName write SetFieldName;
+    property &Type: string read GetType write SetType;
+    property Size: Int64 read GetSize write SetSize;
+    property Scale: Int64 read GetScale write SetScale;
+    property Rounding: string read GetRounding write SetRounding;
+    property DisplayLabel: string read GetDisplayLabel write SetDisplayLabel;
+    property DisplayWidth: Double read GetDisplayWidth write SetDisplayWidth;
+    property DisplayFormat: string read GetDisplayFormat write SetDisplayFormat;
+    property EditFormat: string read GetEditFormat write SetEditFormat;
+    property Alignment: string read GetAlignment write SetAlignment;
+    property Required: Boolean read GetRequired write SetRequired;
+    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Min: Double read GetMin write SetMin;
+    property Max: Double read GetMax write SetMax;
+    property DefaultValue: string read GetDefaultValue write SetDefaultValue;
+    property DisplayValues: string read GetDisplayValues write SetDisplayValues;
+    property CharCase: string read GetCharCase write SetCharCase;
+    property EditMask: string read GetEditMask write SetEditMask;
+    property Sensitive: Boolean read GetSensitive write SetSensitive;
+    property Kind: string read GetKind write SetKind;
+    property Expression: string read GetExpression write SetExpression;
+    property LookupDataSet: string read GetLookupDataSet write SetLookupDataSet;
+    property KeyFields: string read GetKeyFields write SetKeyFields;
+    property LookupKeyFields: string read GetLookupKeyFields write SetLookupKeyFields;
+    property LookupResultField: string read GetLookupResultField write SetLookupResultField;
+  end;
+
+
+function TField.GetFieldName: string;
+begin
+  Result := AsText(GetProp('field_name'));
+end;
+
+procedure TField.SetFieldName(Value: string);
+begin
+  SetProp('field_name', TJSONString.Create(Value));
+end;
+
+function TField.GetType: string;
+begin
+  Result := AsText(GetProp('type'));
+end;
+
+procedure TField.SetType(Value: string);
+begin
+  SetProp('type', TJSONString.Create(Value));
+end;
+
+function TField.GetSize: Int64;
+begin
+  Result := GetProp('size').AsInt64;
+end;
+
+procedure TField.SetSize(Value: Int64);
+begin
+  SetProp('size', TJSONInt64Number.Create(Value));
+end;
+
+function TField.GetScale: Int64;
+begin
+  Result := GetProp('scale').AsInt64;
+end;
+
+procedure TField.SetScale(Value: Int64);
+begin
+  SetProp('scale', TJSONInt64Number.Create(Value));
+end;
+
+function TField.GetRounding: string;
+begin
+  Result := AsText(GetProp('rounding'));
+end;
+
+procedure TField.SetRounding(Value: string);
+begin
+  SetProp('rounding', TJSONString.Create(Value));
+end;
+
+function TField.GetDisplayLabel: string;
+begin
+  Result := AsText(GetProp('display_label'));
+end;
+
+procedure TField.SetDisplayLabel(Value: string);
+begin
+  SetProp('display_label', TJSONString.Create(Value));
+end;
+
+function TField.GetDisplayWidth: Double;
+begin
+  Result := GetProp('display_width').AsFloat;
+end;
+
+procedure TField.SetDisplayWidth(Value: Double);
+begin
+  SetProp('display_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TField.GetDisplayFormat: string;
+begin
+  Result := AsText(GetProp('display_format'));
+end;
+
+procedure TField.SetDisplayFormat(Value: string);
+begin
+  SetProp('display_format', TJSONString.Create(Value));
+end;
+
+function TField.GetEditFormat: string;
+begin
+  Result := AsText(GetProp('edit_format'));
+end;
+
+procedure TField.SetEditFormat(Value: string);
+begin
+  SetProp('edit_format', TJSONString.Create(Value));
+end;
+
+function TField.GetAlignment: string;
+begin
+  Result := AsText(GetProp('alignment'));
+end;
+
+procedure TField.SetAlignment(Value: string);
+begin
+  SetProp('alignment', TJSONString.Create(Value));
+end;
+
+function TField.GetRequired: Boolean;
+begin
+  Result := GetProp('required').AsBoolean;
+end;
+
+procedure TField.SetRequired(Value: Boolean);
+begin
+  SetProp('required', TJSONBoolean.Create(Value));
+end;
+
+function TField.GetReadOnly: Boolean;
+begin
+  Result := GetProp('read_only').AsBoolean;
+end;
+
+procedure TField.SetReadOnly(Value: Boolean);
+begin
+  SetProp('read_only', TJSONBoolean.Create(Value));
+end;
+
+function TField.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TField.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TField.GetMin: Double;
+begin
+  Result := GetProp('min').AsFloat;
+end;
+
+procedure TField.SetMin(Value: Double);
+begin
+  SetProp('min', TJSONFloatNumber.Create(Value));
+end;
+
+function TField.GetMax: Double;
+begin
+  Result := GetProp('max').AsFloat;
+end;
+
+procedure TField.SetMax(Value: Double);
+begin
+  SetProp('max', TJSONFloatNumber.Create(Value));
+end;
+
+function TField.GetDefaultValue: string;
+begin
+  Result := AsText(GetProp('default_value'));
+end;
+
+procedure TField.SetDefaultValue(Value: string);
+begin
+  SetProp('default_value', TJSONString.Create(Value));
+end;
+
+function TField.GetDisplayValues: string;
+begin
+  Result := AsText(GetProp('display_values'));
+end;
+
+procedure TField.SetDisplayValues(Value: string);
+begin
+  SetProp('display_values', TJSONString.Create(Value));
+end;
+
+function TField.GetCharCase: string;
+begin
+  Result := AsText(GetProp('char_case'));
+end;
+
+procedure TField.SetCharCase(Value: string);
+begin
+  SetProp('char_case', TJSONString.Create(Value));
+end;
+
+function TField.GetEditMask: string;
+begin
+  Result := AsText(GetProp('edit_mask'));
+end;
+
+procedure TField.SetEditMask(Value: string);
+begin
+  SetProp('edit_mask', TJSONString.Create(Value));
+end;
+
+function TField.GetSensitive: Boolean;
+begin
+  Result := GetProp('sensitive').AsBoolean;
+end;
+
+procedure TField.SetSensitive(Value: Boolean);
+begin
+  SetProp('sensitive', TJSONBoolean.Create(Value));
+end;
+
+function TField.GetKind: string;
+begin
+  Result := AsText(GetProp('kind'));
+end;
+
+procedure TField.SetKind(Value: string);
+begin
+  SetProp('kind', TJSONString.Create(Value));
+end;
+
+function TField.GetExpression: string;
+begin
+  Result := AsText(GetProp('expression'));
+end;
+
+procedure TField.SetExpression(Value: string);
+begin
+  SetProp('expression', TJSONString.Create(Value));
+end;
+
+function TField.GetLookupDataSet: string;
+begin
+  Result := AsText(GetProp('lookup_data_set'));
+end;
+
+procedure TField.SetLookupDataSet(Value: string);
+begin
+  SetProp('lookup_data_set', TJSONString.Create(Value));
+end;
+
+function TField.GetKeyFields: string;
+begin
+  Result := AsText(GetProp('key_fields'));
+end;
+
+procedure TField.SetKeyFields(Value: string);
+begin
+  SetProp('key_fields', TJSONString.Create(Value));
+end;
+
+function TField.GetLookupKeyFields: string;
+begin
+  Result := AsText(GetProp('lookup_key_fields'));
+end;
+
+procedure TField.SetLookupKeyFields(Value: string);
+begin
+  SetProp('lookup_key_fields', TJSONString.Create(Value));
+end;
+
+function TField.GetLookupResultField: string;
+begin
+  Result := AsText(GetProp('lookup_result_field'));
+end;
+
+procedure TField.SetLookupResultField(Value: string);
+begin
+  SetProp('lookup_result_field', TJSONString.Create(Value));
+end;
+

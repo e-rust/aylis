@@ -1,0 +1,33 @@
+{
+  "aylis_project": 1,
+  "name": "Landing",
+  "language": "rust",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true,
+      "modified": 1794064671606
+    },
+    {
+      "name": "frmDocumentacao",
+      "file": "forms/documentacao.json",
+      "auto_create": false,
+      "modified": 1794062786836
+    }
+  ],
+  "theme": "Aylis Dark",
+  "locale": "pt-BR",
+  "publish": {
+    "app_name": "Aylis",
+    "icon": "icon.png"
+  },
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "revisions": {
+    "frmPrincipal.filtrar": 2,
+    "frmPrincipal.montar": 2
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/edtBusca.on_change": "filtrar",
+        "frmPrincipal/frmPrincipal.on_show": "montar"
+      },
+      "handlers": {
+        "frmPrincipal.filtrar": {
+          "hash": "96e3ed7468904d15",
+          "seen": 2
+        },
+        "frmPrincipal.montar": {
+          "hash": "ab9dd4421bd9e7f8",
+          "seen": 2
+        }
+      }
+    }
+  },
+  "components": [
+    "edtBusca",
+    "fluCartoes",
+    "frmPrincipal",
+    "lblConta",
+    "lblTitulo",
+    "pnlTopo",
+    "scrCartoes"
+  ]
+}

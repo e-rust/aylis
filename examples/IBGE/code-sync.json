@@ -1,0 +1,277 @@
+{
+  "revisions": {
+    "frmIBGE.estado_mudou": 2,
+    "frmIBGE.form_show": 2,
+    "frmIBGE.municipio_mudou": 2
+  },
+  "languages": {
+    "cpp": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "47408eb4b749bbb2",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "e2f31ab80566670a",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "f1b316757465560c",
+          "seen": 2
+        }
+      }
+    },
+    "csharp": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "cdbe7bc0bb5e4ed8",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "2acd400e4f39ac67",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "0fec15fa156f1614",
+          "seen": 2
+        }
+      }
+    },
+    "go": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "6377d3bad7746f5a",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "f73a68535291f81b",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "93dbfd016996c2ab",
+          "seen": 2
+        }
+      }
+    },
+    "java": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "86d2bf3f9e2a1387",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "9622a75a2a045adb",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "a0b08792b7beaa08",
+          "seen": 2
+        }
+      }
+    },
+    "pascal": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "578892a6a1a45877",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "92206186066c023b",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "671ee1cd355853a5",
+          "seen": 2
+        }
+      }
+    },
+    "python": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "2a6b77fc59084ae7",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "8641d4602d8a2d39",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "601e0f320a73245d",
+          "seen": 2
+        }
+      }
+    },
+    "rust": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "84c9610ff556fc9a",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "876ed9db69fb8595",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "6cb69363f602fe76",
+          "seen": 2
+        }
+      }
+    },
+    "typescript": {
+      "bindings": {
+        "frmIBGE/cdsEstados.after_scroll": "estado_mudou",
+        "frmIBGE/cdsMunicipios.after_scroll": "municipio_mudou",
+        "frmIBGE/frmIBGE.on_show": "form_show"
+      },
+      "handlers": {
+        "frmIBGE.estado_mudou": {
+          "hash": "7df1b5c83d3dcda3",
+          "seen": 2
+        },
+        "frmIBGE.form_show": {
+          "hash": "9507f9fec0b4a63a",
+          "seen": 2
+        },
+        "frmIBGE.municipio_mudou": {
+          "hash": "2264560c55f15f78",
+          "seen": 2
+        }
+      }
+    }
+  },
+  "components": [
+    "cdsDistritos",
+    "cdsDistritosId",
+    "cdsDistritosMunicipioId",
+    "cdsDistritosNome",
+    "cdsEstados",
+    "cdsEstadosArea",
+    "cdsEstadosBandeira",
+    "cdsEstadosDensidade",
+    "cdsEstadosEstimativa",
+    "cdsEstadosEstimativaAno",
+    "cdsEstadosId",
+    "cdsEstadosMunicipios",
+    "cdsEstadosNome",
+    "cdsEstadosPib",
+    "cdsEstadosPibPerCapita",
+    "cdsEstadosPopulacao",
+    "cdsEstadosRegiao",
+    "cdsEstadosSigla",
+    "cdsMaiores",
+    "cdsMaioresHabitantes",
+    "cdsMaioresNome",
+    "cdsMunicipios",
+    "cdsMunicipiosArea",
+    "cdsMunicipiosBandeira",
+    "cdsMunicipiosDensidade",
+    "cdsMunicipiosDistritos",
+    "cdsMunicipiosEstimativa",
+    "cdsMunicipiosEstimativaAno",
+    "cdsMunicipiosId",
+    "cdsMunicipiosMesorregiao",
+    "cdsMunicipiosMicrorregiao",
+    "cdsMunicipiosNome",
+    "cdsMunicipiosPib",
+    "cdsMunicipiosPibParticipacao",
+    "cdsMunicipiosPibPerCapita",
+    "cdsMunicipiosPopulacao",
+    "cdsMunicipiosRegiaoImediata",
+    "cdsMunicipiosRegiaoIntermediaria",
+    "cdsMunicipiosUf",
+    "cdsMunicipiosUfId",
+    "cdsPopulacao",
+    "cdsPopulacaoAno",
+    "cdsPopulacaoHabitantes",
+    "dbcEstados",
+    "dbcMaiores",
+    "dbcPopulacao",
+    "dbtArea",
+    "dbtDensidade",
+    "dbtEstadoArea",
+    "dbtEstadoDensidade",
+    "dbtEstadoEstimativa",
+    "dbtEstadoMunicipios",
+    "dbtEstadoPib",
+    "dbtEstadoPibPerCapita",
+    "dbtEstadoPopulacao",
+    "dbtEstimativa",
+    "dbtMesorregiao",
+    "dbtMicrorregiao",
+    "dbtPib",
+    "dbtPibParticipacao",
+    "dbtPibPerCapita",
+    "dbtPopulacao",
+    "dbtRegiaoImediata",
+    "dsDistritos",
+    "dsEstados",
+    "dsMaiores",
+    "dsMunicipios",
+    "dsPopulacao",
+    "frmIBGE",
+    "gbDistritos",
+    "gbEstados",
+    "gbMunicipios",
+    "grdDistritos",
+    "grdEstados",
+    "grdMunicipios",
+    "imgBandeiraEstado",
+    "imgBandeiraMunicipio",
+    "lblCodigo",
+    "lblEstado",
+    "lblEstadoEstimativa",
+    "lblEstimativa",
+    "lblFonte",
+    "lblMunicipio",
+    "lblRegiao",
+    "lblSemBandeira",
+    "lytBandeiraEstado",
+    "lytBandeiraMunicipio",
+    "lytGraficos",
+    "lytListas",
+    "lytNumerosEstado",
+    "lytNumerosMunicipio",
+    "lytPainel",
+    "pnlEstado",
+    "pnlMunicipio",
+    "splListas",
+    "svgBrasil",
+    "svgEstado",
+    "svgMunicipio"
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "ERP de exemplo — 1009 telas",
+    "on_show": "form_show",
+    "width": 1200,
+    "height": 760,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsTelas",
+        "read_only": true,
+        "index_field_names": "modulo;entidade",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsTelasModulo",
+            "field_name": "modulo",
+            "display_label": "Módulo",
+            "display_width": 110
+          },
+          {
+            "class": "Field",
+            "name": "cdsTelasEntidade",
+            "field_name": "entidade",
+            "display_label": "Entidade",
+            "display_width": 260
+          },
+          {
+            "class": "Field",
+            "name": "cdsTelasTela",
+            "field_name": "tela",
+            "display_label": "Tela",
+            "display_width": 140
+          },
+          {
+            "class": "Field",
+            "name": "cdsTelasForm",
+            "field_name": "form",
+            "display_label": "Form",
+            "display_width": 260
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsTelas",
+        "data_set": "cdsTelas"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlTopo",
+        "height": 48,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblTitulo",
+            "text": "RH, Financeiro, Contábil, Compras, Vendas e Fiscal sobre um banco SQLite. Duplo clique abre a tela.",
+            "align": "client"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar tela (ex.: pedidos de venda)…",
+            "on_change": "edt_busca_change",
+            "width": 300,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlRodape",
+        "height": 44,
+        "align": "bottom",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnAbrir",
+            "text": "Abrir",
+            "width": 110,
+            "align": "right",
+            "on_click": "btn_abrir_click"
+          },
+          {
+            "class": "Label",
+            "name": "lblStatus",
+            "align": "client"
+          }
+        ]
+      },
+      {
+        "class": "DataGrid",
+        "name": "grdTelas",
+        "data_source": "dsTelas",
+        "read_only": true,
+        "filter_row": true,
+        "align": "client",
+        "on_dbl_click": "grd_telas_dbl_click"
+      }
+    ]
+  }
+}

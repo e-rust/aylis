@@ -1,0 +1,1131 @@
+{
+  "secoes": [
+    {
+      "secao": "Comece aqui",
+      "paginas": [
+        {
+          "titulo": "Visão geral",
+          "arquivo": "guias/README.md"
+        },
+        {
+          "titulo": "Seu primeiro projeto",
+          "arquivo": "guias/tutorial-primeiro-projeto.md"
+        },
+        {
+          "titulo": "Seu primeiro componente",
+          "arquivo": "guias/tutorial-componente.md"
+        }
+      ]
+    },
+    {
+      "secao": "Guias",
+      "paginas": [
+        {
+          "titulo": "3D: modelos glTF/GLB com controles por cima",
+          "arquivo": "guias/3d.md"
+        },
+        {
+          "titulo": "Carregamento e app enxuto",
+          "arquivo": "guias/carregamento.md"
+        },
+        {
+          "titulo": "Manual: criar um componente",
+          "arquivo": "guias/criar-componente.md"
+        },
+        {
+          "titulo": "Depurar na IDE",
+          "arquivo": "guias/depuracao.md"
+        },
+        {
+          "titulo": "Editores visuais de propriedades",
+          "arquivo": "guias/editores-visuais.md"
+        },
+        {
+          "titulo": "Fontes e ícones offline",
+          "arquivo": "guias/fontes-e-icones.md"
+        },
+        {
+          "titulo": "Forms em equipe: diferenças e conflitos",
+          "arquivo": "guias/forms-em-equipe.md"
+        },
+        {
+          "titulo": "Como o Aylis funciona",
+          "arquivo": "guias/funcionamento.md"
+        },
+        {
+          "titulo": "Gravar as alterações no banco",
+          "arquivo": "guias/gravar-alteracoes.md"
+        },
+        {
+          "titulo": "Interceptar eventos num lugar só",
+          "arquivo": "guias/interceptador.md"
+        },
+        {
+          "titulo": "Lottie, SVG, Markdown e WebView",
+          "arquivo": "guias/lottie-svg-markdown-webview.md"
+        },
+        {
+          "titulo": "Material 3 e iOS 26 (Liquid Glass)",
+          "arquivo": "guias/material3-ios.md"
+        },
+        {
+          "titulo": "O app como servidor MCP",
+          "arquivo": "guias/mcp.md"
+        },
+        {
+          "titulo": "Quanto cada componente custa: disco e memória",
+          "arquivo": "guias/medidas.md"
+        },
+        {
+          "titulo": "Notificações push (`PushNotifications`)",
+          "arquivo": "guias/push.md"
+        },
+        {
+          "titulo": "Renderizadores no Windows: Skia x Direct2D",
+          "arquivo": "guias/renderizadores.md"
+        },
+        {
+          "titulo": "Segundo plano: o `BackgroundService`",
+          "arquivo": "guias/segundo-plano.md"
+        },
+        {
+          "titulo": "Temas de plataforma e aparência do projeto",
+          "arquivo": "guias/temas.md"
+        },
+        {
+          "titulo": "Em tempo de execução: componentes, propriedades, eventos e dados",
+          "arquivo": "guias/tempo-de-execucao.md"
+        },
+        {
+          "titulo": "Threads e a interface",
+          "arquivo": "guias/threads.md"
+        },
+        {
+          "titulo": "Componentes do Vuetify no Aylis",
+          "arquivo": "guias/vuetify.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes",
+      "paginas": [
+        {
+          "titulo": "Comuns a todo controle",
+          "arquivo": "componentes/controles.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Standard",
+      "paginas": [
+        {
+          "titulo": "AnimatedText",
+          "arquivo": "componentes/AnimatedText.md"
+        },
+        {
+          "titulo": "AutoComplete",
+          "arquivo": "componentes/AutoComplete.md"
+        },
+        {
+          "titulo": "Button",
+          "arquivo": "componentes/Button.md"
+        },
+        {
+          "titulo": "ButtonGroup",
+          "arquivo": "componentes/ButtonGroup.md"
+        },
+        {
+          "titulo": "CheckBox",
+          "arquivo": "componentes/CheckBox.md"
+        },
+        {
+          "titulo": "Chip",
+          "arquivo": "componentes/Chip.md"
+        },
+        {
+          "titulo": "ChipGroup",
+          "arquivo": "componentes/ChipGroup.md"
+        },
+        {
+          "titulo": "CodeEditor",
+          "arquivo": "componentes/CodeEditor.md"
+        },
+        {
+          "titulo": "ComboBox",
+          "arquivo": "componentes/ComboBox.md"
+        },
+        {
+          "titulo": "Edit",
+          "arquivo": "componentes/Edit.md"
+        },
+        {
+          "titulo": "GroupBox",
+          "arquivo": "componentes/GroupBox.md"
+        },
+        {
+          "titulo": "Icon",
+          "arquivo": "componentes/Icon.md"
+        },
+        {
+          "titulo": "Image",
+          "arquivo": "componentes/Image.md"
+        },
+        {
+          "titulo": "Label",
+          "arquivo": "componentes/Label.md"
+        },
+        {
+          "titulo": "ListBox",
+          "arquivo": "componentes/ListBox.md"
+        },
+        {
+          "titulo": "Memo",
+          "arquivo": "componentes/Memo.md"
+        },
+        {
+          "titulo": "NumberBox",
+          "arquivo": "componentes/NumberBox.md"
+        },
+        {
+          "titulo": "Panel",
+          "arquivo": "componentes/Panel.md"
+        },
+        {
+          "titulo": "ProgressBar",
+          "arquivo": "componentes/ProgressBar.md"
+        },
+        {
+          "titulo": "ProgressCircle",
+          "arquivo": "componentes/ProgressCircle.md"
+        },
+        {
+          "titulo": "RadioButton",
+          "arquivo": "componentes/RadioButton.md"
+        },
+        {
+          "titulo": "RadioGroup",
+          "arquivo": "componentes/RadioGroup.md"
+        },
+        {
+          "titulo": "RangeSlider",
+          "arquivo": "componentes/RangeSlider.md"
+        },
+        {
+          "titulo": "Rating",
+          "arquivo": "componentes/Rating.md"
+        },
+        {
+          "titulo": "SegmentedControl",
+          "arquivo": "componentes/SegmentedControl.md"
+        },
+        {
+          "titulo": "SplitButton",
+          "arquivo": "componentes/SplitButton.md"
+        },
+        {
+          "titulo": "Switch",
+          "arquivo": "componentes/Switch.md"
+        },
+        {
+          "titulo": "TrackBar",
+          "arquivo": "componentes/TrackBar.md"
+        },
+        {
+          "titulo": "UpDown",
+          "arquivo": "componentes/UpDown.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Additional",
+      "paginas": [
+        {
+          "titulo": "ActivityIndicator",
+          "arquivo": "componentes/ActivityIndicator.md"
+        },
+        {
+          "titulo": "ActivityRings",
+          "arquivo": "componentes/ActivityRings.md"
+        },
+        {
+          "titulo": "AngleDial",
+          "arquivo": "componentes/AngleDial.md"
+        },
+        {
+          "titulo": "Avatar",
+          "arquivo": "componentes/Avatar.md"
+        },
+        {
+          "titulo": "AvatarGroup",
+          "arquivo": "componentes/AvatarGroup.md"
+        },
+        {
+          "titulo": "Badge",
+          "arquivo": "componentes/Badge.md"
+        },
+        {
+          "titulo": "Banner",
+          "arquivo": "componentes/Banner.md"
+        },
+        {
+          "titulo": "Breadcrumb",
+          "arquivo": "componentes/Breadcrumb.md"
+        },
+        {
+          "titulo": "Calendar",
+          "arquivo": "componentes/Calendar.md"
+        },
+        {
+          "titulo": "Chart",
+          "arquivo": "componentes/Chart.md"
+        },
+        {
+          "titulo": "ChatView",
+          "arquivo": "componentes/ChatView.md"
+        },
+        {
+          "titulo": "ColorEdit",
+          "arquivo": "componentes/ColorEdit.md"
+        },
+        {
+          "titulo": "ColorPicker",
+          "arquivo": "componentes/ColorPicker.md"
+        },
+        {
+          "titulo": "CommandPalette",
+          "arquivo": "componentes/CommandPalette.md"
+        },
+        {
+          "titulo": "DateEdit",
+          "arquivo": "componentes/DateEdit.md"
+        },
+        {
+          "titulo": "DirectionPad",
+          "arquivo": "componentes/DirectionPad.md"
+        },
+        {
+          "titulo": "EasingEditor",
+          "arquivo": "componentes/EasingEditor.md"
+        },
+        {
+          "titulo": "EmojiPicker",
+          "arquivo": "componentes/EmojiPicker.md"
+        },
+        {
+          "titulo": "EmptyState",
+          "arquivo": "componentes/EmptyState.md"
+        },
+        {
+          "titulo": "EventCalendar",
+          "arquivo": "componentes/EventCalendar.md"
+        },
+        {
+          "titulo": "FileDropZone",
+          "arquivo": "componentes/FileDropZone.md"
+        },
+        {
+          "titulo": "FileInput",
+          "arquivo": "componentes/FileInput.md"
+        },
+        {
+          "titulo": "FpsMeter",
+          "arquivo": "componentes/FpsMeter.md"
+        },
+        {
+          "titulo": "Gauge",
+          "arquivo": "componentes/Gauge.md"
+        },
+        {
+          "titulo": "HotkeyEdit",
+          "arquivo": "componentes/HotkeyEdit.md"
+        },
+        {
+          "titulo": "Joystick",
+          "arquivo": "componentes/Joystick.md"
+        },
+        {
+          "titulo": "ListView",
+          "arquivo": "componentes/ListView.md"
+        },
+        {
+          "titulo": "LoadingIndicator",
+          "arquivo": "componentes/LoadingIndicator.md"
+        },
+        {
+          "titulo": "MapView",
+          "arquivo": "componentes/MapView.md"
+        },
+        {
+          "titulo": "Markdown",
+          "arquivo": "componentes/Markdown.md"
+        },
+        {
+          "titulo": "NodeGraph",
+          "arquivo": "componentes/NodeGraph.md"
+        },
+        {
+          "titulo": "OtpInput",
+          "arquivo": "componentes/OtpInput.md"
+        },
+        {
+          "titulo": "PageControl",
+          "arquivo": "componentes/PageControl.md"
+        },
+        {
+          "titulo": "Pagination",
+          "arquivo": "componentes/Pagination.md"
+        },
+        {
+          "titulo": "PaintCanvas",
+          "arquivo": "componentes/PaintCanvas.md"
+        },
+        {
+          "titulo": "ShadowEditor",
+          "arquivo": "componentes/ShadowEditor.md"
+        },
+        {
+          "titulo": "SkeletonLoader",
+          "arquivo": "componentes/SkeletonLoader.md"
+        },
+        {
+          "titulo": "Snackbar",
+          "arquivo": "componentes/Snackbar.md"
+        },
+        {
+          "titulo": "SpeedDial",
+          "arquivo": "componentes/SpeedDial.md"
+        },
+        {
+          "titulo": "Stepper",
+          "arquivo": "componentes/Stepper.md"
+        },
+        {
+          "titulo": "Svg",
+          "arquivo": "componentes/Svg.md"
+        },
+        {
+          "titulo": "TimeEdit",
+          "arquivo": "componentes/TimeEdit.md"
+        },
+        {
+          "titulo": "TimePicker",
+          "arquivo": "componentes/TimePicker.md"
+        },
+        {
+          "titulo": "Timeline",
+          "arquivo": "componentes/Timeline.md"
+        },
+        {
+          "titulo": "TimingEditor",
+          "arquivo": "componentes/TimingEditor.md"
+        },
+        {
+          "titulo": "TitleBar",
+          "arquivo": "componentes/TitleBar.md"
+        },
+        {
+          "titulo": "TreeView",
+          "arquivo": "componentes/TreeView.md"
+        },
+        {
+          "titulo": "VirtualList",
+          "arquivo": "componentes/VirtualList.md"
+        },
+        {
+          "titulo": "WebView",
+          "arquivo": "componentes/WebView.md"
+        },
+        {
+          "titulo": "WheelPicker",
+          "arquivo": "componentes/WheelPicker.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Menus",
+      "paginas": [
+        {
+          "titulo": "MainMenu",
+          "arquivo": "componentes/MainMenu.md"
+        },
+        {
+          "titulo": "PopupMenu",
+          "arquivo": "componentes/PopupMenu.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Layouts",
+      "paginas": [
+        {
+          "titulo": "AppBar",
+          "arquivo": "componentes/AppBar.md"
+        },
+        {
+          "titulo": "BottomNavigation",
+          "arquivo": "componentes/BottomNavigation.md"
+        },
+        {
+          "titulo": "BottomSheet",
+          "arquivo": "componentes/BottomSheet.md"
+        },
+        {
+          "titulo": "Carousel",
+          "arquivo": "componentes/Carousel.md"
+        },
+        {
+          "titulo": "Divider",
+          "arquivo": "componentes/Divider.md"
+        },
+        {
+          "titulo": "Expander",
+          "arquivo": "componentes/Expander.md"
+        },
+        {
+          "titulo": "FlowLayout",
+          "arquivo": "componentes/FlowLayout.md"
+        },
+        {
+          "titulo": "Frame",
+          "arquivo": "componentes/Frame.md"
+        },
+        {
+          "titulo": "GridLayout",
+          "arquivo": "componentes/GridLayout.md"
+        },
+        {
+          "titulo": "Layout",
+          "arquivo": "componentes/Layout.md"
+        },
+        {
+          "titulo": "NavigationDrawer",
+          "arquivo": "componentes/NavigationDrawer.md"
+        },
+        {
+          "titulo": "NavigationRail",
+          "arquivo": "componentes/NavigationRail.md"
+        },
+        {
+          "titulo": "ScrollBox",
+          "arquivo": "componentes/ScrollBox.md"
+        },
+        {
+          "titulo": "SideSheet",
+          "arquivo": "componentes/SideSheet.md"
+        },
+        {
+          "titulo": "Splitter",
+          "arquivo": "componentes/Splitter.md"
+        },
+        {
+          "titulo": "StatusBar",
+          "arquivo": "componentes/StatusBar.md"
+        },
+        {
+          "titulo": "TabControl",
+          "arquivo": "componentes/TabControl.md"
+        },
+        {
+          "titulo": "TabStrip",
+          "arquivo": "componentes/TabStrip.md"
+        },
+        {
+          "titulo": "ToolBar",
+          "arquivo": "componentes/ToolBar.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: System",
+      "paginas": [
+        {
+          "titulo": "Analytics",
+          "arquivo": "componentes/Analytics.md"
+        },
+        {
+          "titulo": "AppLink",
+          "arquivo": "componentes/AppLink.md"
+        },
+        {
+          "titulo": "ApplicationEvents",
+          "arquivo": "componentes/ApplicationEvents.md"
+        },
+        {
+          "titulo": "Biometrics",
+          "arquivo": "componentes/Biometrics.md"
+        },
+        {
+          "titulo": "BusyWatcher",
+          "arquivo": "componentes/BusyWatcher.md"
+        },
+        {
+          "titulo": "DragImage",
+          "arquivo": "componentes/DragImage.md"
+        },
+        {
+          "titulo": "EventInterceptor",
+          "arquivo": "componentes/EventInterceptor.md"
+        },
+        {
+          "titulo": "EventRecorder",
+          "arquivo": "componentes/EventRecorder.md"
+        },
+        {
+          "titulo": "McpServer",
+          "arquivo": "componentes/McpServer.md"
+        },
+        {
+          "titulo": "McpTool",
+          "arquivo": "componentes/McpTool.md"
+        },
+        {
+          "titulo": "MessageDialog",
+          "arquivo": "componentes/MessageDialog.md"
+        },
+        {
+          "titulo": "Notification",
+          "arquivo": "componentes/Notification.md"
+        },
+        {
+          "titulo": "OpenDialog",
+          "arquivo": "componentes/OpenDialog.md"
+        },
+        {
+          "titulo": "Permissions",
+          "arquivo": "componentes/Permissions.md"
+        },
+        {
+          "titulo": "SaveDialog",
+          "arquivo": "componentes/SaveDialog.md"
+        },
+        {
+          "titulo": "Taskbar",
+          "arquivo": "componentes/Taskbar.md"
+        },
+        {
+          "titulo": "Timer",
+          "arquivo": "componentes/Timer.md"
+        },
+        {
+          "titulo": "TrayIcon",
+          "arquivo": "componentes/TrayIcon.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Shapes",
+      "paginas": [
+        {
+          "titulo": "Arc",
+          "arquivo": "componentes/Arc.md"
+        },
+        {
+          "titulo": "Circle",
+          "arquivo": "componentes/Circle.md"
+        },
+        {
+          "titulo": "Ellipse",
+          "arquivo": "componentes/Ellipse.md"
+        },
+        {
+          "titulo": "Line",
+          "arquivo": "componentes/Line.md"
+        },
+        {
+          "titulo": "Path",
+          "arquivo": "componentes/Path.md"
+        },
+        {
+          "titulo": "Pie",
+          "arquivo": "componentes/Pie.md"
+        },
+        {
+          "titulo": "Polygon",
+          "arquivo": "componentes/Polygon.md"
+        },
+        {
+          "titulo": "Rectangle",
+          "arquivo": "componentes/Rectangle.md"
+        },
+        {
+          "titulo": "Star",
+          "arquivo": "componentes/Star.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Data",
+      "paginas": [
+        {
+          "titulo": "ClientDataSet",
+          "arquivo": "componentes/ClientDataSet.md"
+        },
+        {
+          "titulo": "DataSource",
+          "arquivo": "componentes/DataSource.md"
+        },
+        {
+          "titulo": "Export",
+          "arquivo": "componentes/Export.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Data Controls",
+      "paginas": [
+        {
+          "titulo": "DBChart",
+          "arquivo": "componentes/DBChart.md"
+        },
+        {
+          "titulo": "DBImage",
+          "arquivo": "componentes/DBImage.md"
+        },
+        {
+          "titulo": "DataGrid",
+          "arquivo": "componentes/DataGrid.md"
+        },
+        {
+          "titulo": "DataNavigator",
+          "arquivo": "componentes/DataNavigator.md"
+        },
+        {
+          "titulo": "DataRepeater",
+          "arquivo": "componentes/DataRepeater.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Reports",
+      "paginas": [
+        {
+          "titulo": "Barcode",
+          "arquivo": "componentes/Barcode.md"
+        },
+        {
+          "titulo": "Report",
+          "arquivo": "componentes/Report.md"
+        },
+        {
+          "titulo": "ReportPreview",
+          "arquivo": "componentes/ReportPreview.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: BI",
+      "paginas": [
+        {
+          "titulo": "ChoroplethMap",
+          "arquivo": "componentes/ChoroplethMap.md"
+        },
+        {
+          "titulo": "KpiCard",
+          "arquivo": "componentes/KpiCard.md"
+        },
+        {
+          "titulo": "PivotTable",
+          "arquivo": "componentes/PivotTable.md"
+        },
+        {
+          "titulo": "Slicer",
+          "arquivo": "componentes/Slicer.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Trader",
+      "paginas": [
+        {
+          "titulo": "CandleChart",
+          "arquivo": "componentes/CandleChart.md"
+        },
+        {
+          "titulo": "DepthChart",
+          "arquivo": "componentes/DepthChart.md"
+        },
+        {
+          "titulo": "OrderBook",
+          "arquivo": "componentes/OrderBook.md"
+        },
+        {
+          "titulo": "TickerTape",
+          "arquivo": "componentes/TickerTape.md"
+        },
+        {
+          "titulo": "TimeAndSales",
+          "arquivo": "componentes/TimeAndSales.md"
+        },
+        {
+          "titulo": "Watchlist",
+          "arquivo": "componentes/Watchlist.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Industrial",
+      "paginas": [
+        {
+          "titulo": "Conveyor",
+          "arquivo": "componentes/Conveyor.md"
+        },
+        {
+          "titulo": "EmergencyStop",
+          "arquivo": "componentes/EmergencyStop.md"
+        },
+        {
+          "titulo": "Fan",
+          "arquivo": "componentes/Fan.md"
+        },
+        {
+          "titulo": "FlowMeter",
+          "arquivo": "componentes/FlowMeter.md"
+        },
+        {
+          "titulo": "Manometer",
+          "arquivo": "componentes/Manometer.md"
+        },
+        {
+          "titulo": "Motor",
+          "arquivo": "componentes/Motor.md"
+        },
+        {
+          "titulo": "Pipe",
+          "arquivo": "componentes/Pipe.md"
+        },
+        {
+          "titulo": "Pump",
+          "arquivo": "componentes/Pump.md"
+        },
+        {
+          "titulo": "PushButtons",
+          "arquivo": "componentes/PushButtons.md"
+        },
+        {
+          "titulo": "SelectorSwitch",
+          "arquivo": "componentes/SelectorSwitch.md"
+        },
+        {
+          "titulo": "SevenSegment",
+          "arquivo": "componentes/SevenSegment.md"
+        },
+        {
+          "titulo": "SignalLight",
+          "arquivo": "componentes/SignalLight.md"
+        },
+        {
+          "titulo": "Silo",
+          "arquivo": "componentes/Silo.md"
+        },
+        {
+          "titulo": "TankLevel",
+          "arquivo": "componentes/TankLevel.md"
+        },
+        {
+          "titulo": "Thermometer",
+          "arquivo": "componentes/Thermometer.md"
+        },
+        {
+          "titulo": "Valve",
+          "arquivo": "componentes/Valve.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Electrical",
+      "paginas": [
+        {
+          "titulo": "ElectricalSymbol",
+          "arquivo": "componentes/ElectricalSymbol.md"
+        },
+        {
+          "titulo": "Wire",
+          "arquivo": "componentes/Wire.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Media",
+      "paginas": [
+        {
+          "titulo": "AudioMixer",
+          "arquivo": "componentes/AudioMixer.md"
+        },
+        {
+          "titulo": "AudioOutput",
+          "arquivo": "componentes/AudioOutput.md"
+        },
+        {
+          "titulo": "CameraView",
+          "arquivo": "componentes/CameraView.md"
+        },
+        {
+          "titulo": "CropBox",
+          "arquivo": "componentes/CropBox.md"
+        },
+        {
+          "titulo": "FrameView",
+          "arquivo": "componentes/FrameView.md"
+        },
+        {
+          "titulo": "LevelMeter",
+          "arquivo": "componentes/LevelMeter.md"
+        },
+        {
+          "titulo": "Lottie",
+          "arquivo": "componentes/Lottie.md"
+        },
+        {
+          "titulo": "MediaCard",
+          "arquivo": "componentes/MediaCard.md"
+        },
+        {
+          "titulo": "MediaPlayer",
+          "arquivo": "componentes/MediaPlayer.md"
+        },
+        {
+          "titulo": "Microphone",
+          "arquivo": "componentes/Microphone.md"
+        },
+        {
+          "titulo": "RecordButton",
+          "arquivo": "componentes/RecordButton.md"
+        },
+        {
+          "titulo": "ScreenLayout",
+          "arquivo": "componentes/ScreenLayout.md"
+        },
+        {
+          "titulo": "SeekBar",
+          "arquivo": "componentes/SeekBar.md"
+        },
+        {
+          "titulo": "Sound",
+          "arquivo": "componentes/Sound.md"
+        },
+        {
+          "titulo": "VideoPlayer",
+          "arquivo": "componentes/VideoPlayer.md"
+        },
+        {
+          "titulo": "Waveform",
+          "arquivo": "componentes/Waveform.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Quasar",
+      "paginas": [
+        {
+          "titulo": "AjaxBar",
+          "arquivo": "componentes/AjaxBar.md"
+        },
+        {
+          "titulo": "Card",
+          "arquivo": "componentes/Card.md"
+        },
+        {
+          "titulo": "ChatBubble",
+          "arquivo": "componentes/ChatBubble.md"
+        },
+        {
+          "titulo": "InnerLoading",
+          "arquivo": "componentes/InnerLoading.md"
+        },
+        {
+          "titulo": "Knob",
+          "arquivo": "componentes/Knob.md"
+        },
+        {
+          "titulo": "MarkupTable",
+          "arquivo": "componentes/MarkupTable.md"
+        },
+        {
+          "titulo": "OptionGroup",
+          "arquivo": "componentes/OptionGroup.md"
+        },
+        {
+          "titulo": "Parallax",
+          "arquivo": "componentes/Parallax.md"
+        },
+        {
+          "titulo": "PopupEdit",
+          "arquivo": "componentes/PopupEdit.md"
+        },
+        {
+          "titulo": "RichEditor",
+          "arquivo": "componentes/RichEditor.md"
+        },
+        {
+          "titulo": "SlideItem",
+          "arquivo": "componentes/SlideItem.md"
+        },
+        {
+          "titulo": "Uploader",
+          "arquivo": "componentes/Uploader.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Animations",
+      "paginas": [
+        {
+          "titulo": "ColorAnimation",
+          "arquivo": "componentes/ColorAnimation.md"
+        },
+        {
+          "titulo": "FloatAnimation",
+          "arquivo": "componentes/FloatAnimation.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Providers",
+      "paginas": [
+        {
+          "titulo": "AylisBarcodeProvider",
+          "arquivo": "componentes/AylisBarcodeProvider.md"
+        },
+        {
+          "titulo": "AylisPdfProvider",
+          "arquivo": "componentes/AylisPdfProvider.md"
+        },
+        {
+          "titulo": "CsvProvider",
+          "arquivo": "componentes/CsvProvider.md"
+        },
+        {
+          "titulo": "TileServerProvider",
+          "arquivo": "componentes/TileServerProvider.md"
+        },
+        {
+          "titulo": "XlsxProvider",
+          "arquivo": "componentes/XlsxProvider.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: 3D",
+      "paginas": [
+        {
+          "titulo": "Model3D",
+          "arquivo": "componentes/Model3D.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: Device",
+      "paginas": [
+        {
+          "titulo": "BackgroundService",
+          "arquivo": "componentes/BackgroundService.md"
+        },
+        {
+          "titulo": "Battery",
+          "arquivo": "componentes/Battery.md"
+        },
+        {
+          "titulo": "Bluetooth",
+          "arquivo": "componentes/Bluetooth.md"
+        },
+        {
+          "titulo": "Compass",
+          "arquivo": "componentes/Compass.md"
+        },
+        {
+          "titulo": "Gamepad",
+          "arquivo": "componentes/Gamepad.md"
+        },
+        {
+          "titulo": "LightSensor",
+          "arquivo": "componentes/LightSensor.md"
+        },
+        {
+          "titulo": "Location",
+          "arquivo": "componentes/Location.md"
+        },
+        {
+          "titulo": "LockScreen",
+          "arquivo": "componentes/LockScreen.md"
+        },
+        {
+          "titulo": "MotionSensor",
+          "arquivo": "componentes/MotionSensor.md"
+        },
+        {
+          "titulo": "Network",
+          "arquivo": "componentes/Network.md"
+        },
+        {
+          "titulo": "Nfc",
+          "arquivo": "componentes/Nfc.md"
+        },
+        {
+          "titulo": "NotifyAction",
+          "arquivo": "componentes/NotifyAction.md"
+        },
+        {
+          "titulo": "Phone",
+          "arquivo": "componentes/Phone.md"
+        },
+        {
+          "titulo": "ProximitySensor",
+          "arquivo": "componentes/ProximitySensor.md"
+        },
+        {
+          "titulo": "PushNotifications",
+          "arquivo": "componentes/PushNotifications.md"
+        },
+        {
+          "titulo": "PushTrigger",
+          "arquivo": "componentes/PushTrigger.md"
+        },
+        {
+          "titulo": "Screen",
+          "arquivo": "componentes/Screen.md"
+        },
+        {
+          "titulo": "Vibration",
+          "arquivo": "componentes/Vibration.md"
+        },
+        {
+          "titulo": "WakeAppAction",
+          "arquivo": "componentes/WakeAppAction.md"
+        }
+      ]
+    },
+    {
+      "secao": "Componentes: formulários e subcomponentes",
+      "paginas": [
+        {
+          "titulo": "Form",
+          "arquivo": "componentes/Form.md"
+        },
+        {
+          "titulo": "DataModule",
+          "arquivo": "componentes/DataModule.md"
+        },
+        {
+          "titulo": "MenuItem",
+          "arquivo": "componentes/MenuItem.md"
+        },
+        {
+          "titulo": "TabItem",
+          "arquivo": "componentes/TabItem.md"
+        },
+        {
+          "titulo": "Field",
+          "arquivo": "componentes/Field.md"
+        },
+        {
+          "titulo": "Column",
+          "arquivo": "componentes/Column.md"
+        },
+        {
+          "titulo": "ReportBand",
+          "arquivo": "componentes/ReportBand.md"
+        }
+      ]
+    }
+  ]
+}

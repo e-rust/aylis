@@ -1,0 +1,23 @@
+[package]
+name = "aylis-controls-base"
+description = "Os controles básicos do aylis (forms, botões, edição, listas, menus, sistema...)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-core = { path = "../aylis-core" }
+web-time = "1"
+serde_json = "1"
+# Localizar e substituir com expressão regular (o editor e a pesquisa no projeto).
+regex = { version = "1", default-features = false, features = ["std", "unicode"] }
+
+# As gramáticas TextMate do VS Code: o Oniguruma, o motor do próprio VS Code (as expressões
+# enormes do C++ ficam milhares de vezes mais rápidas que no fancy-regex)...
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+onig = { version = "6", default-features = false }
+
+# ...e no wasm, onde não há como compilar o C dele, o fancy-regex no modo Oniguruma.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+fancy-regex = "0.20"

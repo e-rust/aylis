@@ -1,0 +1,341 @@
+
+    public static FrmPlayerComponents frmPlayer;
+
+        Aylis.registerFormClass("frmPlayer", FrmPlayerComponents::new, form -> frmPlayer = (FrmPlayerComponents) form);
+
+
+    /** O form frmPlayer e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância). */
+    public static final class FrmPlayerComponents extends Form {
+        public MainMenu mnuPrincipal;
+        public MenuItem mnuArquivo;
+        public MenuItem mnuAbrir;
+        public MenuItem mnuLimparFila;
+        public MenuItem mnuSep1;
+        public MenuItem mnuSair;
+        public MenuItem mnuReproduzir;
+        public MenuItem mnuReproduzirPausar;
+        public MenuItem mnuParar;
+        public MenuItem mnuAnterior;
+        public MenuItem mnuProxima;
+        public MenuItem mnuSep2;
+        public MenuItem mnuEmbaralhar;
+        public MenuItem mnuRepetir;
+        public MenuItem mnuExibir;
+        public MenuItem mnuAgora;
+        public MenuItem mnuFila;
+        public Panel pnlControles;
+        public Layout lytBarra;
+        public Label lblTempo;
+        public Label lblDuracao;
+        public SeekBar sbPosicao;
+        public Layout lytInfo;
+        public Icon icoCapa;
+        public Layout lytTextos;
+        public Label lblTitulo;
+        public Label lblDetalhe;
+        public Layout lytVolume;
+        public Button btnMudo;
+        public TrackBar tbVolume;
+        public Layout lytBotoes;
+        public Layout lytBotoesCentro;
+        public Button btnEmbaralhar;
+        public Button btnAnterior;
+        public Button btnReproduzir;
+        public Button btnProxima;
+        public Button btnRepetir;
+        public Layout lytNavegacao;
+        public Button btnAgora;
+        public Button btnFila;
+        public Divider divNavegacao;
+        public Button btnAbrirArquivos;
+        public Panel pnlAgora;
+        public VideoPlayer vpVideo;
+        public Panel pnlFila;
+        public Label lblFila;
+        public Layout lytFilaBotoes;
+        public Button btnAdicionar;
+        public Button btnLimparFila;
+        public ListView lvFila;
+        public OpenDialog dlgAbrir;
+        public Timer tmrPosicao;
+
+        public FrmPlayerComponents(Aylis aylis, long id, String name) {
+            super(aylis, id, name);
+        }
+
+        @Override
+        public void bind(java.util.List<java.util.Map<String, Object>> list) {
+            mnuPrincipal = resolve(list, "mnuPrincipal", "MainMenu", MainMenu::new);
+            mnuArquivo = resolve(list, "mnuArquivo", "MenuItem", MenuItem::new);
+            mnuAbrir = resolve(list, "mnuAbrir", "MenuItem", MenuItem::new);
+            mnuLimparFila = resolve(list, "mnuLimparFila", "MenuItem", MenuItem::new);
+            mnuSep1 = resolve(list, "mnuSep1", "MenuItem", MenuItem::new);
+            mnuSair = resolve(list, "mnuSair", "MenuItem", MenuItem::new);
+            mnuReproduzir = resolve(list, "mnuReproduzir", "MenuItem", MenuItem::new);
+            mnuReproduzirPausar = resolve(list, "mnuReproduzirPausar", "MenuItem", MenuItem::new);
+            mnuParar = resolve(list, "mnuParar", "MenuItem", MenuItem::new);
+            mnuAnterior = resolve(list, "mnuAnterior", "MenuItem", MenuItem::new);
+            mnuProxima = resolve(list, "mnuProxima", "MenuItem", MenuItem::new);
+            mnuSep2 = resolve(list, "mnuSep2", "MenuItem", MenuItem::new);
+            mnuEmbaralhar = resolve(list, "mnuEmbaralhar", "MenuItem", MenuItem::new);
+            mnuRepetir = resolve(list, "mnuRepetir", "MenuItem", MenuItem::new);
+            mnuExibir = resolve(list, "mnuExibir", "MenuItem", MenuItem::new);
+            mnuAgora = resolve(list, "mnuAgora", "MenuItem", MenuItem::new);
+            mnuFila = resolve(list, "mnuFila", "MenuItem", MenuItem::new);
+            pnlControles = resolve(list, "pnlControles", "Panel", Panel::new);
+            lytBarra = resolve(list, "lytBarra", "Layout", Layout::new);
+            lblTempo = resolve(list, "lblTempo", "Label", Label::new);
+            lblDuracao = resolve(list, "lblDuracao", "Label", Label::new);
+            sbPosicao = resolve(list, "sbPosicao", "SeekBar", SeekBar::new);
+            lytInfo = resolve(list, "lytInfo", "Layout", Layout::new);
+            icoCapa = resolve(list, "icoCapa", "Icon", Icon::new);
+            lytTextos = resolve(list, "lytTextos", "Layout", Layout::new);
+            lblTitulo = resolve(list, "lblTitulo", "Label", Label::new);
+            lblDetalhe = resolve(list, "lblDetalhe", "Label", Label::new);
+            lytVolume = resolve(list, "lytVolume", "Layout", Layout::new);
+            btnMudo = resolve(list, "btnMudo", "Button", Button::new);
+            tbVolume = resolve(list, "tbVolume", "TrackBar", TrackBar::new);
+            lytBotoes = resolve(list, "lytBotoes", "Layout", Layout::new);
+            lytBotoesCentro = resolve(list, "lytBotoesCentro", "Layout", Layout::new);
+            btnEmbaralhar = resolve(list, "btnEmbaralhar", "Button", Button::new);
+            btnAnterior = resolve(list, "btnAnterior", "Button", Button::new);
+            btnReproduzir = resolve(list, "btnReproduzir", "Button", Button::new);
+            btnProxima = resolve(list, "btnProxima", "Button", Button::new);
+            btnRepetir = resolve(list, "btnRepetir", "Button", Button::new);
+            lytNavegacao = resolve(list, "lytNavegacao", "Layout", Layout::new);
+            btnAgora = resolve(list, "btnAgora", "Button", Button::new);
+            btnFila = resolve(list, "btnFila", "Button", Button::new);
+            divNavegacao = resolve(list, "divNavegacao", "Divider", Divider::new);
+            btnAbrirArquivos = resolve(list, "btnAbrirArquivos", "Button", Button::new);
+            pnlAgora = resolve(list, "pnlAgora", "Panel", Panel::new);
+            vpVideo = resolve(list, "vpVideo", "VideoPlayer", VideoPlayer::new);
+            pnlFila = resolve(list, "pnlFila", "Panel", Panel::new);
+            lblFila = resolve(list, "lblFila", "Label", Label::new);
+            lytFilaBotoes = resolve(list, "lytFilaBotoes", "Layout", Layout::new);
+            btnAdicionar = resolve(list, "btnAdicionar", "Button", Button::new);
+            btnLimparFila = resolve(list, "btnLimparFila", "Button", Button::new);
+            lvFila = resolve(list, "lvFila", "ListView", ListView::new);
+            dlgAbrir = resolve(list, "dlgAbrir", "OpenDialog", OpenDialog::new);
+            tmrPosicao = resolve(list, "tmrPosicao", "Timer", Timer::new);
+        }
+
+        /** O Button deste form com o nome (como o FindComponent). */
+        public Button findButton(String name) {
+            return switch (name) {
+                case "btnMudo" -> btnMudo;
+                case "btnEmbaralhar" -> btnEmbaralhar;
+                case "btnAnterior" -> btnAnterior;
+                case "btnReproduzir" -> btnReproduzir;
+                case "btnProxima" -> btnProxima;
+                case "btnRepetir" -> btnRepetir;
+                case "btnAgora" -> btnAgora;
+                case "btnFila" -> btnFila;
+                case "btnAbrirArquivos" -> btnAbrirArquivos;
+                case "btnAdicionar" -> btnAdicionar;
+                case "btnLimparFila" -> btnLimparFila;
+                default -> null;
+            };
+        }
+
+        /** O Button que disparou o evento. */
+        public Button senderAsButton(Aylis.Event ev) {
+            return findButton(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Divider deste form com o nome (como o FindComponent). */
+        public Divider findDivider(String name) {
+            return switch (name) {
+                case "divNavegacao" -> divNavegacao;
+                default -> null;
+            };
+        }
+
+        /** O Divider que disparou o evento. */
+        public Divider senderAsDivider(Aylis.Event ev) {
+            return findDivider(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Icon deste form com o nome (como o FindComponent). */
+        public Icon findIcon(String name) {
+            return switch (name) {
+                case "icoCapa" -> icoCapa;
+                default -> null;
+            };
+        }
+
+        /** O Icon que disparou o evento. */
+        public Icon senderAsIcon(Aylis.Event ev) {
+            return findIcon(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Label deste form com o nome (como o FindComponent). */
+        public Label findLabel(String name) {
+            return switch (name) {
+                case "lblTempo" -> lblTempo;
+                case "lblDuracao" -> lblDuracao;
+                case "lblTitulo" -> lblTitulo;
+                case "lblDetalhe" -> lblDetalhe;
+                case "lblFila" -> lblFila;
+                default -> null;
+            };
+        }
+
+        /** O Label que disparou o evento. */
+        public Label senderAsLabel(Aylis.Event ev) {
+            return findLabel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Layout deste form com o nome (como o FindComponent). */
+        public Layout findLayout(String name) {
+            return switch (name) {
+                case "lytBarra" -> lytBarra;
+                case "lytInfo" -> lytInfo;
+                case "lytTextos" -> lytTextos;
+                case "lytVolume" -> lytVolume;
+                case "lytBotoes" -> lytBotoes;
+                case "lytBotoesCentro" -> lytBotoesCentro;
+                case "lytNavegacao" -> lytNavegacao;
+                case "lytFilaBotoes" -> lytFilaBotoes;
+                default -> null;
+            };
+        }
+
+        /** O Layout que disparou o evento. */
+        public Layout senderAsLayout(Aylis.Event ev) {
+            return findLayout(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O ListView deste form com o nome (como o FindComponent). */
+        public ListView findListView(String name) {
+            return switch (name) {
+                case "lvFila" -> lvFila;
+                default -> null;
+            };
+        }
+
+        /** O ListView que disparou o evento. */
+        public ListView senderAsListView(Aylis.Event ev) {
+            return findListView(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O MainMenu deste form com o nome (como o FindComponent). */
+        public MainMenu findMainMenu(String name) {
+            return switch (name) {
+                case "mnuPrincipal" -> mnuPrincipal;
+                default -> null;
+            };
+        }
+
+        /** O MainMenu que disparou o evento. */
+        public MainMenu senderAsMainMenu(Aylis.Event ev) {
+            return findMainMenu(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O MenuItem deste form com o nome (como o FindComponent). */
+        public MenuItem findMenuItem(String name) {
+            return switch (name) {
+                case "mnuArquivo" -> mnuArquivo;
+                case "mnuAbrir" -> mnuAbrir;
+                case "mnuLimparFila" -> mnuLimparFila;
+                case "mnuSep1" -> mnuSep1;
+                case "mnuSair" -> mnuSair;
+                case "mnuReproduzir" -> mnuReproduzir;
+                case "mnuReproduzirPausar" -> mnuReproduzirPausar;
+                case "mnuParar" -> mnuParar;
+                case "mnuAnterior" -> mnuAnterior;
+                case "mnuProxima" -> mnuProxima;
+                case "mnuSep2" -> mnuSep2;
+                case "mnuEmbaralhar" -> mnuEmbaralhar;
+                case "mnuRepetir" -> mnuRepetir;
+                case "mnuExibir" -> mnuExibir;
+                case "mnuAgora" -> mnuAgora;
+                case "mnuFila" -> mnuFila;
+                default -> null;
+            };
+        }
+
+        /** O MenuItem que disparou o evento. */
+        public MenuItem senderAsMenuItem(Aylis.Event ev) {
+            return findMenuItem(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O OpenDialog deste form com o nome (como o FindComponent). */
+        public OpenDialog findOpenDialog(String name) {
+            return switch (name) {
+                case "dlgAbrir" -> dlgAbrir;
+                default -> null;
+            };
+        }
+
+        /** O OpenDialog que disparou o evento. */
+        public OpenDialog senderAsOpenDialog(Aylis.Event ev) {
+            return findOpenDialog(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Panel deste form com o nome (como o FindComponent). */
+        public Panel findPanel(String name) {
+            return switch (name) {
+                case "pnlControles" -> pnlControles;
+                case "pnlAgora" -> pnlAgora;
+                case "pnlFila" -> pnlFila;
+                default -> null;
+            };
+        }
+
+        /** O Panel que disparou o evento. */
+        public Panel senderAsPanel(Aylis.Event ev) {
+            return findPanel(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O SeekBar deste form com o nome (como o FindComponent). */
+        public SeekBar findSeekBar(String name) {
+            return switch (name) {
+                case "sbPosicao" -> sbPosicao;
+                default -> null;
+            };
+        }
+
+        /** O SeekBar que disparou o evento. */
+        public SeekBar senderAsSeekBar(Aylis.Event ev) {
+            return findSeekBar(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O Timer deste form com o nome (como o FindComponent). */
+        public Timer findTimer(String name) {
+            return switch (name) {
+                case "tmrPosicao" -> tmrPosicao;
+                default -> null;
+            };
+        }
+
+        /** O Timer que disparou o evento. */
+        public Timer senderAsTimer(Aylis.Event ev) {
+            return findTimer(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O TrackBar deste form com o nome (como o FindComponent). */
+        public TrackBar findTrackBar(String name) {
+            return switch (name) {
+                case "tbVolume" -> tbVolume;
+                default -> null;
+            };
+        }
+
+        /** O TrackBar que disparou o evento. */
+        public TrackBar senderAsTrackBar(Aylis.Event ev) {
+            return findTrackBar(String.valueOf(ev.sender().get("name")));
+        }
+
+        /** O VideoPlayer deste form com o nome (como o FindComponent). */
+        public VideoPlayer findVideoPlayer(String name) {
+            return switch (name) {
+                case "vpVideo" -> vpVideo;
+                default -> null;
+            };
+        }
+
+        /** O VideoPlayer que disparou o evento. */
+        public VideoPlayer senderAsVideoPlayer(Aylis.Event ev) {
+            return findVideoPlayer(String.valueOf(ev.sender().get("name")));
+        }
+    }

@@ -1,0 +1,227 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmDocumentacao",
+    "caption": "Documentação do Aylis",
+    "window_state": "maximized",
+    "on_show": "form_show",
+    "on_navigate": "navegar",
+    "width": 1440,
+    "height": 900,
+    "fill": "#0F1117",
+    "text_color": "#E6E8EF",
+    "views": [
+      {
+        "name": "phone",
+        "max_width": 760,
+        "changes": {
+          "layNestaPagina": {
+            "visible": false
+          },
+          "pnlLateral": {
+            "width": 220
+          },
+          "edtBusca": {
+            "width": 180
+          },
+          "lblDocs": {
+            "visible": false
+          }
+        }
+      },
+      {
+        "name": "tablet",
+        "max_width": 1100,
+        "changes": {
+          "layNestaPagina": {
+            "visible": false
+          }
+        }
+      }
+    ],
+    "children": [
+      {
+        "class": "Panel",
+        "name": "pnlTopo",
+        "fill": "#151821",
+        "height": 60,
+        "align": "top",
+        "padding": [24, 10],
+        "border_color": "#262A36",
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblMarca",
+            "text": "Aylis",
+            "bold": true,
+            "color": "#FF8A3D",
+            "width": 64,
+            "align": "left",
+            "font_size": 22
+          },
+          {
+            "class": "Label",
+            "name": "lblDocs",
+            "text": "Documentação",
+            "color": "#C9CDD8",
+            "width": 160,
+            "align": "left",
+            "font_size": 15
+          },
+          {
+            "class": "Button",
+            "name": "btnVoltar",
+            "text": "Voltar ao site",
+            "width": 140,
+            "align": "right",
+            "style": "flat",
+            "on_click": "voltar"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar na documentação",
+            "on_change": "buscar",
+            "width": 340,
+            "align": "right",
+            "margins": [0, 2, 12, 2]
+          }
+        ]
+      },
+      {
+        "class": "Panel",
+        "name": "pnlLateral",
+        "fill": "#12141C",
+        "width": 300,
+        "align": "left",
+        "padding": [12, 16, 8, 12],
+        "border_color": "#262A36",
+        "children": [
+          {
+            "class": "TreeView",
+            "name": "tvIndice",
+            "item_height": 32,
+            "on_change": "abrir_no",
+            "align": "client"
+          },
+          {
+            "class": "ListBox",
+            "name": "lbBusca",
+            "on_change": "abrir_achado",
+            "align": "client",
+            "visible": false
+          }
+        ]
+      },
+      {
+        "class": "Layout",
+        "name": "layNestaPagina",
+        "width": 260,
+        "align": "right",
+        "padding": [16, 28, 20, 16],
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblNestaPagina",
+            "text": "Nesta página",
+            "bold": true,
+            "color": "#9AA0AE",
+            "height": 28,
+            "align": "top",
+            "font_size": 12
+          },
+          {
+            "class": "ListBox",
+            "name": "lbTitulos",
+            "on_change": "ir_para_titulo",
+            "align": "client"
+          }
+        ]
+      },
+      {
+        "class": "Layout",
+        "name": "layConteudo",
+        "align": "client",
+        "padding": [40, 20, 32, 16],
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblTrilha",
+            "text": "Documentação",
+            "color": "#9AA0AE",
+            "height": 24,
+            "align": "top",
+            "font_size": 13
+          },
+          {
+            "class": "Panel",
+            "name": "pnlDemo",
+            "fill": "#1E1F24",
+            "radius": 10,
+            "height": 260,
+            "align": "top",
+            "margins": [0, 8, 12, 4],
+            "padding": 1,
+            "visible": false,
+            "border_color": "#262A36",
+            "children": [
+              {
+                "class": "Label",
+                "name": "lblDemo",
+                "text": "Ao vivo: é o componente de verdade, pode usar",
+                "color": "#9AA0AE",
+                "height": 28,
+                "align": "top",
+                "margins": [12, 4, 12, 0],
+                "font_size": 12
+              },
+              {
+                "class": "WebView",
+                "name": "wbDemo",
+                "skeleton": true,
+                "on_message": "demo_mensagem",
+                "align": "client"
+              }
+            ]
+          },
+          {
+            "class": "Layout",
+            "name": "layNavegacao",
+            "height": 64,
+            "align": "bottom",
+            "padding": [0, 12, 0, 0],
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnAnterior",
+                "text": "Anterior",
+                "width": 320,
+                "align": "left",
+                "style": "outline",
+                "on_click": "anterior"
+              },
+              {
+                "class": "Button",
+                "name": "btnProxima",
+                "text": "Próxima",
+                "width": 320,
+                "align": "right",
+                "style": "outline",
+                "on_click": "proxima"
+              }
+            ]
+          },
+          {
+            "class": "Markdown",
+            "name": "mdPagina",
+            "source": "assets/docs/guias/README.md",
+            "on_link": "seguir_link",
+            "align": "client",
+            "padding": [0, 12, 8, 12]
+          }
+        ]
+      }
+    ]
+  }
+}

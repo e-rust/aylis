@@ -1,0 +1,193 @@
+
+// aylisPaintCanvas é um PaintCanvas de um form.
+type aylisPaintCanvas struct{ aylis.Component }
+
+func (c aylisPaintCanvas) Tool() string { return asText(c.Get("tool")) }
+func (c aylisPaintCanvas) SetTool(v string) { c.Set("tool", v) }
+
+func (c aylisPaintCanvas) Color() string { return asText(c.Get("color")) }
+func (c aylisPaintCanvas) SetColor(v string) { c.Set("color", v) }
+
+func (c aylisPaintCanvas) BackColor() string { return asText(c.Get("back_color")) }
+func (c aylisPaintCanvas) SetBackColor(v string) { c.Set("back_color", v) }
+
+func (c aylisPaintCanvas) BrushSize() int64 { return int64(asNumber(c.Get("brush_size"))) }
+func (c aylisPaintCanvas) SetBrushSize(v int64) { c.Set("brush_size", v) }
+
+func (c aylisPaintCanvas) Filled() bool { return asBool(c.Get("filled")) }
+func (c aylisPaintCanvas) SetFilled(v bool) { c.Set("filled", v) }
+
+func (c aylisPaintCanvas) Zoom() float64 { return asNumber(c.Get("zoom")) }
+func (c aylisPaintCanvas) SetZoom(v float64) { c.Set("zoom", v) }
+
+func (c aylisPaintCanvas) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisPaintCanvas) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisPaintCanvas) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisPaintCanvas) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisPaintCanvas) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisPaintCanvas) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisPaintCanvas) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisPaintCanvas) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisPaintCanvas) Align() string { return asText(c.Get("align")) }
+func (c aylisPaintCanvas) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisPaintCanvas) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisPaintCanvas) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisPaintCanvas) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisPaintCanvas) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisPaintCanvas) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisPaintCanvas) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisPaintCanvas) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisPaintCanvas) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisPaintCanvas) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisPaintCanvas) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisPaintCanvas) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisPaintCanvas) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisPaintCanvas) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisPaintCanvas) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisPaintCanvas) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisPaintCanvas) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisPaintCanvas) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisPaintCanvas) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisPaintCanvas) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisPaintCanvas) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisPaintCanvas) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisPaintCanvas) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisPaintCanvas) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisPaintCanvas) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisPaintCanvas) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisPaintCanvas) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisPaintCanvas) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisPaintCanvas) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisPaintCanvas) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisPaintCanvas) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisPaintCanvas) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisPaintCanvas) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisPaintCanvas) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisPaintCanvas) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisPaintCanvas) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisPaintCanvas) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisPaintCanvas) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisPaintCanvas) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisPaintCanvas) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisPaintCanvas) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisPaintCanvas) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisPaintCanvas) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisPaintCanvas) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisPaintCanvas) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisPaintCanvas) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisPaintCanvas) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisPaintCanvas) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisPaintCanvas) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisPaintCanvas) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisPaintCanvas) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisPaintCanvas) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisPaintCanvas) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisPaintCanvas) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisPaintCanvas) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisPaintCanvas) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisPaintCanvas) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisPaintCanvas) Style() string { return asText(c.Get("style")) }
+func (c aylisPaintCanvas) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisPaintCanvas) Theme() string { return asText(c.Get("theme")) }
+func (c aylisPaintCanvas) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisPaintCanvas) Fill() string { return asText(c.Get("fill")) }
+func (c aylisPaintCanvas) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisPaintCanvas) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisPaintCanvas) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisPaintCanvas) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisPaintCanvas) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisPaintCanvas) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisPaintCanvas) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisPaintCanvas) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisPaintCanvas) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisPaintCanvas) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisPaintCanvas) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisPaintCanvas) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisPaintCanvas) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisPaintCanvas) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisPaintCanvas) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisPaintCanvas) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisPaintCanvas) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisPaintCanvas) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisPaintCanvas) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisPaintCanvas) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisPaintCanvas) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisPaintCanvas) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisPaintCanvas) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisPaintCanvas) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisPaintCanvas) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisPaintCanvas) Hint() string { return asText(c.Get("hint")) }
+func (c aylisPaintCanvas) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisPaintCanvas) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisPaintCanvas) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisPaintCanvas) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisPaintCanvas) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisPaintCanvas) Undo() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "undo", "args": []any{}})) }
+func (c aylisPaintCanvas) Redo() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "redo", "args": []any{}})) }
+func (c aylisPaintCanvas) CanUndo() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "can_undo", "args": []any{}})) }
+func (c aylisPaintCanvas) CanRedo() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "can_redo", "args": []any{}})) }
+func (c aylisPaintCanvas) Size() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "size", "args": []any{}})) }
+func (c aylisPaintCanvas) Checksum() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "checksum", "args": []any{}})) }
+func (c aylisPaintCanvas) Clear() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "clear", "args": []any{}})) }
+func (c aylisPaintCanvas) Resize(width int64, height int64) bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "resize", "args": []any{width, height}})) }
+func (c aylisPaintCanvas) New(width int64, height int64) bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "new", "args": []any{width, height}})) }
+func (c aylisPaintCanvas) Open(path string) bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "open", "args": []any{path}})) }
+func (c aylisPaintCanvas) Save(path string) bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "save", "args": []any{path}})) }
+func (c aylisPaintCanvas) SelectAll() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "select_all", "args": []any{}})) }
+func (c aylisPaintCanvas) HasSelection() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "has_selection", "args": []any{}})) }
+func (c aylisPaintCanvas) Copy() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "copy", "args": []any{}})) }
+func (c aylisPaintCanvas) Cut() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "cut", "args": []any{}})) }
+func (c aylisPaintCanvas) Paste() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "paste", "args": []any{}})) }
+func (c aylisPaintCanvas) Delete() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "delete", "args": []any{}})) }
+func (c aylisPaintCanvas) Deselect() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "deselect", "args": []any{}})) }
+func (c aylisPaintCanvas) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

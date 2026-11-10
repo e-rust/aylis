@@ -1,0 +1,47 @@
+# WheelPicker
+
+![WheelPicker](img/WheelPicker.png)
+
+A roda de opções do iOS (o `UIPickerView`): arrastar ou rolar gira a roda; ao parar, a opção do meio fica escolhida (`item_index`, `on_change` com o texto). As de longe ficam menores e mais apagadas, como num cilindro.
+
+**Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `row_height` | Altura da linha | número |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `items` | Itens | texto |
+| `item_index` | Item escolhido | inteiro |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+
+## Em código
+
+No form, o `WheelPicker1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "WheelPicker", "name": "WheelPicker1", "on_change": "wheel_picker1_change" }
+```
+
+E o handler, um método do form (`self.WheelPicker1` já é um `WheelPicker`):
+
+```rust
+impl FrmPrincipal {
+    pub fn wheel_picker1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.WheelPicker1.items(ui);
+        self.WheelPicker1.set_items(ui, format!("{atual}!"));
+    }
+}
+```

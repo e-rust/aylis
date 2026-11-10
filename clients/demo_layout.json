@@ -1,0 +1,11 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form", "name": "frmDemo", "on_close_query": "pode_fechar", "caption": "aylis — backend em outra linguagem", "width": 380, "height": 210, "padding": 16,
+    "children": [
+      { "class": "Edit", "name": "edtName", "align": "top", "height": 34, "placeholder": "Seu nome" },
+      { "class": "Button", "name": "btnHello", "text": "Dizer olá", "align": "top", "height": 38, "margins": [0, 10, 0, 0], "on_click": "hello" },
+      { "class": "Label", "name": "lblMsg", "text": "", "align": "top", "height": 32, "margins": [0, 10, 0, 0] }
+    ]
+  }
+}

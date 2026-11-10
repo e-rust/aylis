@@ -1,0 +1,13 @@
+[package]
+name = "aylis-migrate"
+description = "Converte projetos do aylis de um formato para o seguinte (a lógica antiga fica fora do aylis e da IDE)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aylis-project = { path = "../aylis-project" }
+aylis-json = { path = "../aylis-json" }
+serde_json = { version = "1", features = ["preserve_order"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }

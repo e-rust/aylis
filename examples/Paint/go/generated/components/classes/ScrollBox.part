@@ -1,0 +1,191 @@
+
+// aylisScrollBox é um ScrollBox de um form.
+type aylisScrollBox struct{ aylis.Component }
+
+func (c aylisScrollBox) Horizontal() bool { return asBool(c.Get("horizontal")) }
+func (c aylisScrollBox) SetHorizontal(v bool) { c.Set("horizontal", v) }
+
+func (c aylisScrollBox) PullToRefresh() bool { return asBool(c.Get("pull_to_refresh")) }
+func (c aylisScrollBox) SetPullToRefresh(v bool) { c.Set("pull_to_refresh", v) }
+
+func (c aylisScrollBox) Refreshing() bool { return asBool(c.Get("refreshing")) }
+func (c aylisScrollBox) SetRefreshing(v bool) { c.Set("refreshing", v) }
+
+func (c aylisScrollBox) WheelStep() float64 { return asNumber(c.Get("wheel_step")) }
+func (c aylisScrollBox) SetWheelStep(v float64) { c.Set("wheel_step", v) }
+
+func (c aylisScrollBox) Smooth() string { return asText(c.Get("smooth")) }
+func (c aylisScrollBox) SetSmooth(v string) { c.Set("smooth", v) }
+
+func (c aylisScrollBox) AllowedChars() string { return asText(c.Get("allowed_chars")) }
+func (c aylisScrollBox) SetAllowedChars(v string) { c.Set("allowed_chars", v) }
+
+func (c aylisScrollBox) BlockedChars() string { return asText(c.Get("blocked_chars")) }
+func (c aylisScrollBox) SetBlockedChars(v string) { c.Set("blocked_chars", v) }
+
+func (c aylisScrollBox) OnlyAllowed() bool { return asBool(c.Get("only_allowed")) }
+func (c aylisScrollBox) SetOnlyAllowed(v bool) { c.Set("only_allowed", v) }
+
+func (c aylisScrollBox) CharsOverride() bool { return asBool(c.Get("chars_override")) }
+func (c aylisScrollBox) SetCharsOverride(v bool) { c.Set("chars_override", v) }
+
+func (c aylisScrollBox) CharMap() string { return asText(c.Get("char_map")) }
+func (c aylisScrollBox) SetCharMap(v string) { c.Set("char_map", v) }
+
+func (c aylisScrollBox) ScrollPosition() float64 { return asNumber(c.Get("scroll_position")) }
+func (c aylisScrollBox) SetScrollPosition(v float64) { c.Set("scroll_position", v) }
+
+func (c aylisScrollBox) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisScrollBox) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisScrollBox) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisScrollBox) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisScrollBox) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisScrollBox) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisScrollBox) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisScrollBox) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisScrollBox) Align() string { return asText(c.Get("align")) }
+func (c aylisScrollBox) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisScrollBox) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisScrollBox) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisScrollBox) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisScrollBox) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisScrollBox) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisScrollBox) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisScrollBox) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisScrollBox) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisScrollBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisScrollBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisScrollBox) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisScrollBox) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisScrollBox) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisScrollBox) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisScrollBox) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisScrollBox) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisScrollBox) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisScrollBox) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisScrollBox) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisScrollBox) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisScrollBox) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisScrollBox) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisScrollBox) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisScrollBox) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisScrollBox) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisScrollBox) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisScrollBox) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisScrollBox) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisScrollBox) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisScrollBox) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisScrollBox) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisScrollBox) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisScrollBox) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisScrollBox) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisScrollBox) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisScrollBox) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisScrollBox) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisScrollBox) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisScrollBox) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisScrollBox) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisScrollBox) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisScrollBox) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisScrollBox) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisScrollBox) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisScrollBox) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisScrollBox) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisScrollBox) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisScrollBox) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisScrollBox) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisScrollBox) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisScrollBox) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisScrollBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisScrollBox) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisScrollBox) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisScrollBox) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisScrollBox) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisScrollBox) Style() string { return asText(c.Get("style")) }
+func (c aylisScrollBox) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisScrollBox) Theme() string { return asText(c.Get("theme")) }
+func (c aylisScrollBox) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisScrollBox) Fill() string { return asText(c.Get("fill")) }
+func (c aylisScrollBox) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisScrollBox) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisScrollBox) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisScrollBox) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisScrollBox) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisScrollBox) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisScrollBox) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisScrollBox) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisScrollBox) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisScrollBox) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisScrollBox) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisScrollBox) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisScrollBox) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisScrollBox) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisScrollBox) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisScrollBox) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisScrollBox) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisScrollBox) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisScrollBox) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisScrollBox) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisScrollBox) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisScrollBox) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisScrollBox) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisScrollBox) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisScrollBox) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisScrollBox) Hint() string { return asText(c.Get("hint")) }
+func (c aylisScrollBox) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisScrollBox) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisScrollBox) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisScrollBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisScrollBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisScrollBox) ScrollTo(a1 aylis.Ref) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "scroll_to", "args": []any{a1.ComponentID()}}) }
+func (c aylisScrollBox) VisibleComponents(a1 aylis.Ref, a2 bool) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "visible_components", "args": []any{a1.ComponentID(), a2}})) }

@@ -1,0 +1,22 @@
+{
+  "aylis_project": 1,
+  "name": "Calculadora",
+  "language": "pascal",
+  "main_form": "frmCalculadora",
+  "forms": [
+    {
+      "name": "frmCalculadora",
+      "file": "forms/calculadora.json",
+      "auto_create": true
+    }
+  ],
+  "theme": "Windows 11 Light",
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

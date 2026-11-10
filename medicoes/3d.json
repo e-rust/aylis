@@ -1,0 +1,22 @@
+{
+  "3D puro (wgpu na janela)": {
+    "media_ms": 0.269,
+    "p95_ms": 0.328,
+    "memoria_privada_mb": 355.8
+  },
+  "aylis + 3D (GPU, sem cópia)": {
+    "media_ms": 0.654,
+    "p95_ms": 0.717,
+    "memoria_privada_mb": 365.9
+  },
+  "aylis + 3D (cópia pela CPU)": {
+    "media_ms": 9.92,
+    "p95_ms": 10.499,
+    "memoria_privada_mb": 452.4
+  },
+  "só os controles aylis": {
+    "media_ms": 0.476,
+    "p95_ms": 0.616,
+    "memoria_privada_mb": 58.9
+  }
+}

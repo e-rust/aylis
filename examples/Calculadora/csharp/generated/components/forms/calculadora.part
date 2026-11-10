@@ -1,0 +1,218 @@
+
+        public static AylisUi.FrmCalculadoraComponents frmCalculadora = null!;
+
+            Aylis.RegisterFormClass("frmCalculadora", (aylis, id, name) => new AylisUi.FrmCalculadoraComponents(aylis, id, name), form => frmCalculadora = (AylisUi.FrmCalculadoraComponents)form);
+
+
+    /// <summary>O form frmCalculadora e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).</summary>
+    public sealed class FrmCalculadoraComponents(Aylis aylis, long id, string name) : Form(aylis, id, name)
+    {
+        public Panel pnlLateral = null!;
+        public TabControl tabLateral = null!;
+        public TabItem tabHistorico = null!;
+        public Button btnLimparHistorico = null!;
+        public ListView lvHistorico = null!;
+        public TabItem tabMemoria = null!;
+        public ListView lvMemoria = null!;
+        public Layout lytCorpo = null!;
+        public Layout lytTopo = null!;
+        public Button btnHistorico = null!;
+        public Label lblTitulo = null!;
+        public Label lblExpressao = null!;
+        public Label lblVisor = null!;
+        public GridLayout grdMemoria = null!;
+        public Button btnMC = null!;
+        public Button btnMR = null!;
+        public Button btnMMais = null!;
+        public Button btnMMenos = null!;
+        public Button btnMS = null!;
+        public GridLayout grdTeclado = null!;
+        public Button btnPorcento = null!;
+        public Button btnCE = null!;
+        public Button btnC = null!;
+        public Button btnApagar = null!;
+        public Button btnInverso = null!;
+        public Button btnQuadrado = null!;
+        public Button btnRaiz = null!;
+        public Button btnDividir = null!;
+        public Button btn7 = null!;
+        public Button btn8 = null!;
+        public Button btn9 = null!;
+        public Button btnMultiplicar = null!;
+        public Button btn4 = null!;
+        public Button btn5 = null!;
+        public Button btn6 = null!;
+        public Button btnSubtrair = null!;
+        public Button btn1 = null!;
+        public Button btn2 = null!;
+        public Button btn3 = null!;
+        public Button btnSomar = null!;
+        public Button btnSinal = null!;
+        public Button btn0 = null!;
+        public Button btnVirgula = null!;
+        public Button btnIgual = null!;
+
+        public override void Bind(JsonArray list)
+        {
+            pnlLateral = Resolve(list, "pnlLateral", "Panel", (i, d, n) => new Panel(i, d, n));
+            tabLateral = Resolve(list, "tabLateral", "TabControl", (i, d, n) => new TabControl(i, d, n));
+            tabHistorico = Resolve(list, "tabHistorico", "TabItem", (i, d, n) => new TabItem(i, d, n));
+            btnLimparHistorico = Resolve(list, "btnLimparHistorico", "Button", (i, d, n) => new Button(i, d, n));
+            lvHistorico = Resolve(list, "lvHistorico", "ListView", (i, d, n) => new ListView(i, d, n));
+            tabMemoria = Resolve(list, "tabMemoria", "TabItem", (i, d, n) => new TabItem(i, d, n));
+            lvMemoria = Resolve(list, "lvMemoria", "ListView", (i, d, n) => new ListView(i, d, n));
+            lytCorpo = Resolve(list, "lytCorpo", "Layout", (i, d, n) => new Layout(i, d, n));
+            lytTopo = Resolve(list, "lytTopo", "Layout", (i, d, n) => new Layout(i, d, n));
+            btnHistorico = Resolve(list, "btnHistorico", "Button", (i, d, n) => new Button(i, d, n));
+            lblTitulo = Resolve(list, "lblTitulo", "Label", (i, d, n) => new Label(i, d, n));
+            lblExpressao = Resolve(list, "lblExpressao", "Label", (i, d, n) => new Label(i, d, n));
+            lblVisor = Resolve(list, "lblVisor", "Label", (i, d, n) => new Label(i, d, n));
+            grdMemoria = Resolve(list, "grdMemoria", "GridLayout", (i, d, n) => new GridLayout(i, d, n));
+            btnMC = Resolve(list, "btnMC", "Button", (i, d, n) => new Button(i, d, n));
+            btnMR = Resolve(list, "btnMR", "Button", (i, d, n) => new Button(i, d, n));
+            btnMMais = Resolve(list, "btnMMais", "Button", (i, d, n) => new Button(i, d, n));
+            btnMMenos = Resolve(list, "btnMMenos", "Button", (i, d, n) => new Button(i, d, n));
+            btnMS = Resolve(list, "btnMS", "Button", (i, d, n) => new Button(i, d, n));
+            grdTeclado = Resolve(list, "grdTeclado", "GridLayout", (i, d, n) => new GridLayout(i, d, n));
+            btnPorcento = Resolve(list, "btnPorcento", "Button", (i, d, n) => new Button(i, d, n));
+            btnCE = Resolve(list, "btnCE", "Button", (i, d, n) => new Button(i, d, n));
+            btnC = Resolve(list, "btnC", "Button", (i, d, n) => new Button(i, d, n));
+            btnApagar = Resolve(list, "btnApagar", "Button", (i, d, n) => new Button(i, d, n));
+            btnInverso = Resolve(list, "btnInverso", "Button", (i, d, n) => new Button(i, d, n));
+            btnQuadrado = Resolve(list, "btnQuadrado", "Button", (i, d, n) => new Button(i, d, n));
+            btnRaiz = Resolve(list, "btnRaiz", "Button", (i, d, n) => new Button(i, d, n));
+            btnDividir = Resolve(list, "btnDividir", "Button", (i, d, n) => new Button(i, d, n));
+            btn7 = Resolve(list, "btn7", "Button", (i, d, n) => new Button(i, d, n));
+            btn8 = Resolve(list, "btn8", "Button", (i, d, n) => new Button(i, d, n));
+            btn9 = Resolve(list, "btn9", "Button", (i, d, n) => new Button(i, d, n));
+            btnMultiplicar = Resolve(list, "btnMultiplicar", "Button", (i, d, n) => new Button(i, d, n));
+            btn4 = Resolve(list, "btn4", "Button", (i, d, n) => new Button(i, d, n));
+            btn5 = Resolve(list, "btn5", "Button", (i, d, n) => new Button(i, d, n));
+            btn6 = Resolve(list, "btn6", "Button", (i, d, n) => new Button(i, d, n));
+            btnSubtrair = Resolve(list, "btnSubtrair", "Button", (i, d, n) => new Button(i, d, n));
+            btn1 = Resolve(list, "btn1", "Button", (i, d, n) => new Button(i, d, n));
+            btn2 = Resolve(list, "btn2", "Button", (i, d, n) => new Button(i, d, n));
+            btn3 = Resolve(list, "btn3", "Button", (i, d, n) => new Button(i, d, n));
+            btnSomar = Resolve(list, "btnSomar", "Button", (i, d, n) => new Button(i, d, n));
+            btnSinal = Resolve(list, "btnSinal", "Button", (i, d, n) => new Button(i, d, n));
+            btn0 = Resolve(list, "btn0", "Button", (i, d, n) => new Button(i, d, n));
+            btnVirgula = Resolve(list, "btnVirgula", "Button", (i, d, n) => new Button(i, d, n));
+            btnIgual = Resolve(list, "btnIgual", "Button", (i, d, n) => new Button(i, d, n));
+        }
+
+        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        public Button? FindButton(string name) => name switch
+        {
+            "btnLimparHistorico" => btnLimparHistorico,
+            "btnHistorico" => btnHistorico,
+            "btnMC" => btnMC,
+            "btnMR" => btnMR,
+            "btnMMais" => btnMMais,
+            "btnMMenos" => btnMMenos,
+            "btnMS" => btnMS,
+            "btnPorcento" => btnPorcento,
+            "btnCE" => btnCE,
+            "btnC" => btnC,
+            "btnApagar" => btnApagar,
+            "btnInverso" => btnInverso,
+            "btnQuadrado" => btnQuadrado,
+            "btnRaiz" => btnRaiz,
+            "btnDividir" => btnDividir,
+            "btn7" => btn7,
+            "btn8" => btn8,
+            "btn9" => btn9,
+            "btnMultiplicar" => btnMultiplicar,
+            "btn4" => btn4,
+            "btn5" => btn5,
+            "btn6" => btn6,
+            "btnSubtrair" => btnSubtrair,
+            "btn1" => btn1,
+            "btn2" => btn2,
+            "btn3" => btn3,
+            "btnSomar" => btnSomar,
+            "btnSinal" => btnSinal,
+            "btn0" => btn0,
+            "btnVirgula" => btnVirgula,
+            "btnIgual" => btnIgual,
+            _ => null,
+        };
+
+        /// <summary>O Button que disparou o evento.</summary>
+        public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
+
+        /// <summary>O GridLayout deste form com o nome (como o FindComponent).</summary>
+        public GridLayout? FindGridLayout(string name) => name switch
+        {
+            "grdMemoria" => grdMemoria,
+            "grdTeclado" => grdTeclado,
+            _ => null,
+        };
+
+        /// <summary>O GridLayout que disparou o evento.</summary>
+        public GridLayout? SenderAsGridLayout(AylisClient.AylisEvent ev) => FindGridLayout(ev.SenderName);
+
+        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        public Label? FindLabel(string name) => name switch
+        {
+            "lblTitulo" => lblTitulo,
+            "lblExpressao" => lblExpressao,
+            "lblVisor" => lblVisor,
+            _ => null,
+        };
+
+        /// <summary>O Label que disparou o evento.</summary>
+        public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
+
+        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        public Layout? FindLayout(string name) => name switch
+        {
+            "lytCorpo" => lytCorpo,
+            "lytTopo" => lytTopo,
+            _ => null,
+        };
+
+        /// <summary>O Layout que disparou o evento.</summary>
+        public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
+
+        /// <summary>O ListView deste form com o nome (como o FindComponent).</summary>
+        public ListView? FindListView(string name) => name switch
+        {
+            "lvHistorico" => lvHistorico,
+            "lvMemoria" => lvMemoria,
+            _ => null,
+        };
+
+        /// <summary>O ListView que disparou o evento.</summary>
+        public ListView? SenderAsListView(AylisClient.AylisEvent ev) => FindListView(ev.SenderName);
+
+        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        public Panel? FindPanel(string name) => name switch
+        {
+            "pnlLateral" => pnlLateral,
+            _ => null,
+        };
+
+        /// <summary>O Panel que disparou o evento.</summary>
+        public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
+
+        /// <summary>O TabControl deste form com o nome (como o FindComponent).</summary>
+        public TabControl? FindTabControl(string name) => name switch
+        {
+            "tabLateral" => tabLateral,
+            _ => null,
+        };
+
+        /// <summary>O TabControl que disparou o evento.</summary>
+        public TabControl? SenderAsTabControl(AylisClient.AylisEvent ev) => FindTabControl(ev.SenderName);
+
+        /// <summary>O TabItem deste form com o nome (como o FindComponent).</summary>
+        public TabItem? FindTabItem(string name) => name switch
+        {
+            "tabHistorico" => tabHistorico,
+            "tabMemoria" => tabMemoria,
+            _ => null,
+        };
+
+        /// <summary>O TabItem que disparou o evento.</summary>
+        public TabItem? SenderAsTabItem(AylisClient.AylisEvent ev) => FindTabItem(ev.SenderName);
+    }

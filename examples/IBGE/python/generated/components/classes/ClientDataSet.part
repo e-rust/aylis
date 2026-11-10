@@ -1,0 +1,136 @@
+
+
+class ClientDataSet(AylisComponent):
+    """Um ClientDataSet de um form."""
+
+    @property
+    def key_fields(self):
+        return self._get("key_fields")
+
+    @key_fields.setter
+    def key_fields(self, value):
+        self._set("key_fields", value)
+
+    @property
+    def apply_mode(self):
+        return self._get("apply_mode")
+
+    @apply_mode.setter
+    def apply_mode(self, value):
+        self._set("apply_mode", value)
+
+    @property
+    def read_only(self):
+        return self._get("read_only")
+
+    @read_only.setter
+    def read_only(self, value):
+        self._set("read_only", value)
+
+    @property
+    def active(self):
+        return self._get("active")
+
+    @active.setter
+    def active(self, value):
+        self._set("active", value)
+
+    @property
+    def filter(self):
+        return self._get("filter")
+
+    @filter.setter
+    def filter(self, value):
+        self._set("filter", value)
+
+    @property
+    def filtered(self):
+        return self._get("filtered")
+
+    @filtered.setter
+    def filtered(self, value):
+        self._set("filtered", value)
+
+    @property
+    def index_field_names(self):
+        return self._get("index_field_names")
+
+    @index_field_names.setter
+    def index_field_names(self, value):
+        self._set("index_field_names", value)
+
+    @property
+    def indexes(self):
+        return self._get("indexes")
+
+    @indexes.setter
+    def indexes(self, value):
+        self._set("indexes", value)
+
+    @property
+    def index_name(self):
+        return self._get("index_name")
+
+    @index_name.setter
+    def index_name(self, value):
+        self._set("index_name", value)
+
+    @property
+    def params(self):
+        return self._get("params")
+
+    @params.setter
+    def params(self, value):
+        self._set("params", value)
+
+    @property
+    def status_filter(self):
+        return self._get("status_filter")
+
+    @status_filter.setter
+    def status_filter(self, value):
+        self._set("status_filter", value)
+
+    @property
+    def master_source(self):
+        return self._get("master_source")
+
+    @master_source.setter
+    def master_source(self, value):
+        self._set("master_source", value)
+
+    @property
+    def master_fields(self):
+        return self._get("master_fields")
+
+    @master_fields.setter
+    def master_fields(self, value):
+        self._set("master_fields", value)
+
+    @property
+    def apply_separately(self):
+        return self._get("apply_separately")
+
+    @apply_separately.setter
+    def apply_separately(self, value):
+        self._set("apply_separately", value)
+
+    @property
+    def record_total(self):
+        return self._get("record_total")
+
+    @record_total.setter
+    def record_total(self, value):
+        self._set("record_total", value)
+
+    @property
+    def max_records(self):
+        return self._get("max_records")
+
+    @max_records.setter
+    def max_records(self, value):
+        self._set("max_records", value)
+
+    @property
+    def partial_notice(self):
+        return self._get("partial_notice")

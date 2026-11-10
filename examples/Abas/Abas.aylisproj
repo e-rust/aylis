@@ -1,0 +1,23 @@
+{
+  "aylis_project": 1,
+  "name": "Abas",
+  "language": "rust",
+  "main_form": "frmPrincipal",
+  "forms": [
+    {
+      "name": "frmPrincipal",
+      "file": "forms/principal.json",
+      "auto_create": true,
+      "modified": 1794014452321
+    }
+  ],
+  "theme": "Aylis Light",
+  "locale": "pt-BR",
+  "render": {
+    "windows": "d2d",
+    "linux": "auto",
+    "macos": "auto",
+    "android": "auto",
+    "ios": "cpu"
+  }
+}

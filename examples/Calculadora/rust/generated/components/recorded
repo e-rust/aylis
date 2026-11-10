@@ -1,0 +1,34 @@
+{
+  "cpp/frmCalculadora": {
+    "nanos": 1793669733781465900,
+    "len": 4027
+  },
+  "csharp/frmCalculadora": {
+    "nanos": 1793669212348876700,
+    "len": 3899
+  },
+  "go/frmCalculadora": {
+    "nanos": 1793676938019074000,
+    "len": 3600
+  },
+  "java/frmCalculadora": {
+    "nanos": 1793669295057817800,
+    "len": 4209
+  },
+  "pascal/frmCalculadora": {
+    "nanos": 1794070443274638300,
+    "len": 5359
+  },
+  "python/frmCalculadora": {
+    "nanos": 1794163014313742900,
+    "len": 3087
+  },
+  "rust/frmCalculadora": {
+    "nanos": 1793663929557529700,
+    "len": 4985
+  },
+  "typescript/frmCalculadora": {
+    "nanos": 1793668967800220700,
+    "len": 3471
+  }
+}

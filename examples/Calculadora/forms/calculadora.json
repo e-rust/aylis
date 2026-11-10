@@ -1,0 +1,410 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmCalculadora",
+    "caption": "Calculadora",
+    "height": 600,
+    "padding": 4,
+    "on_key_down": "form_key_down",
+    "children": [
+      {
+        "class": "Panel",
+        "name": "pnlLateral",
+        "width": 280,
+        "align": "right",
+        "margins": [4, 0, 0, 0],
+        "children": [
+          {
+            "class": "TabControl",
+            "name": "tabLateral",
+            "align": "client",
+            "children": [
+              {
+                "class": "TabItem",
+                "name": "tabHistorico",
+                "caption": "Histórico",
+                "children": [
+                  {
+                    "class": "Button",
+                    "name": "btnLimparHistorico",
+                    "text": "Limpar o histórico",
+                    "icon": "trash",
+                    "height": 34,
+                    "align": "bottom",
+                    "margins": [8, 4, 8, 8],
+                    "can_focus": false,
+                    "style": "flat",
+                    "on_click": "limpar_historico_click"
+                  },
+                  {
+                    "class": "ListView",
+                    "name": "lvHistorico",
+                    "items": "Ainda não há histórico|",
+                    "on_item_click": "historico_item_click",
+                    "align": "client"
+                  }
+                ]
+              },
+              {
+                "class": "TabItem",
+                "name": "tabMemoria",
+                "caption": "Memória",
+                "children": [
+                  {
+                    "class": "ListView",
+                    "name": "lvMemoria",
+                    "items": "Não há nada salvo na memória|",
+                    "on_item_click": "memoria_item_click",
+                    "align": "client"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "Layout",
+        "name": "lytCorpo",
+        "align": "client",
+        "children": [
+          {
+            "class": "Layout",
+            "name": "lytTopo",
+            "height": 40,
+            "align": "top",
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnHistorico",
+                "icon": "clock",
+                "width": 40,
+                "align": "right",
+                "can_focus": false,
+                "style": "flat",
+                "hint": "Histórico (Ctrl+H)",
+                "on_click": "historico_click"
+              },
+              {
+                "class": "Label",
+                "name": "lblTitulo",
+                "text": "Padrão",
+                "bold": true,
+                "align": "client",
+                "margins": [12, 0, 0, 0],
+                "font_size": 20
+              }
+            ]
+          },
+          {
+            "class": "Label",
+            "name": "lblExpressao",
+            "h_align": "trailing",
+            "height": 28,
+            "align": "top",
+            "margins": [12, 8, 12, 0],
+            "font_size": 15
+          },
+          {
+            "class": "Label",
+            "name": "lblVisor",
+            "text": "0",
+            "h_align": "trailing",
+            "height": 72,
+            "align": "top",
+            "margins": [12, 0, 12, 4],
+            "font_size": 46,
+            "font_weight": "semibold"
+          },
+          {
+            "class": "GridLayout",
+            "name": "grdMemoria",
+            "columns": 5,
+            "gap": 2,
+            "row_height": 34,
+            "height": 36,
+            "align": "top",
+            "margins": [2, 0, 2, 4],
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnMC",
+                "text": "MC",
+                "enabled": false,
+                "can_focus": false,
+                "style": "flat",
+                "font_size": 12,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMR",
+                "text": "MR",
+                "enabled": false,
+                "can_focus": false,
+                "style": "flat",
+                "font_size": 12,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMMais",
+                "text": "M+",
+                "can_focus": false,
+                "style": "flat",
+                "font_size": 12,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMMenos",
+                "text": "M-",
+                "can_focus": false,
+                "style": "flat",
+                "font_size": 12,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMS",
+                "text": "MS",
+                "can_focus": false,
+                "style": "flat",
+                "font_size": 12,
+                "on_click": "tecla_click"
+              }
+            ]
+          },
+          {
+            "class": "GridLayout",
+            "name": "grdTeclado",
+            "columns": 4,
+            "gap": 3,
+            "row_height": 62,
+            "align": "client",
+            "margins": [2, 0, 2, 2],
+            "children": [
+              {
+                "class": "Button",
+                "name": "btnPorcento",
+                "text": "%",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnCE",
+                "text": "CE",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnC",
+                "text": "C",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnApagar",
+                "text": "⌫",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnInverso",
+                "text": "¹⁄ₓ",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnQuadrado",
+                "text": "x²",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnRaiz",
+                "text": "²√x",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnDividir",
+                "text": "÷",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn7",
+                "text": "7",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn8",
+                "text": "8",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn9",
+                "text": "9",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnMultiplicar",
+                "text": "×",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn4",
+                "text": "4",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn5",
+                "text": "5",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn6",
+                "text": "6",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnSubtrair",
+                "text": "−",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn1",
+                "text": "1",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn2",
+                "text": "2",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn3",
+                "text": "3",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnSomar",
+                "text": "+",
+                "can_focus": false,
+                "style": "secondary",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnSinal",
+                "text": "±",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btn0",
+                "text": "0",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnVirgula",
+                "text": ",",
+                "can_focus": false,
+                "font_size": 20,
+                "font_weight": "semibold",
+                "on_click": "tecla_click"
+              },
+              {
+                "class": "Button",
+                "name": "btnIgual",
+                "text": "=",
+                "can_focus": false,
+                "style": "accent",
+                "font_size": 17,
+                "on_click": "tecla_click"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

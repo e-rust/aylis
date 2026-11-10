@@ -1,0 +1,28 @@
+
+
+class DataSource(AylisComponent):
+    """Um DataSource de um form."""
+
+    @property
+    def data_set(self):
+        return self._get("data_set")
+
+    @data_set.setter
+    def data_set(self, value):
+        self._set("data_set", value)
+
+    @property
+    def auto_edit(self):
+        return self._get("auto_edit")
+
+    @auto_edit.setter
+    def auto_edit(self, value):
+        self._set("auto_edit", value)
+
+    @property
+    def enabled(self):
+        return self._get("enabled")
+
+    @enabled.setter
+    def enabled(self, value):
+        self._set("enabled", value)

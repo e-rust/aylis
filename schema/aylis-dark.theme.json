@@ -1,0 +1,229 @@
+{
+  "name": "Aylis Dark",
+  "colors": {
+    "accent": "#A855F7",
+    "background": "#1E1E1E",
+    "border": "#3C3C3C",
+    "danger": "#EF4444",
+    "danger_hover": "#F87171",
+    "danger_pressed": "#DC2626",
+    "focus_ring": "#60A5FA",
+    "hover_overlay": "#FFFFFF14",
+    "on_primary": "#FFFFFF",
+    "primary": "#3B82F6",
+    "primary_hover": "#60A5FA",
+    "primary_pressed": "#2563EB",
+    "selection": "#3B82F660",
+    "surface": "#252526",
+    "text": "#E6E6E6",
+    "text_muted": "#9A9A9A",
+    "track": "#4A4A4F"
+  },
+  "fonts": {
+    "default": {
+      "family": "",
+      "size": 14,
+      "weight": "normal"
+    },
+    "mono": {
+      "family": "monospace",
+      "size": 13,
+      "weight": "normal"
+    },
+    "title": {
+      "family": "",
+      "size": 20,
+      "weight": "bold"
+    }
+  },
+  "radius": {
+    "lg": 10,
+    "md": 6,
+    "sm": 4
+  },
+  "spacing": {
+    "lg": 16,
+    "md": 12,
+    "sm": 8,
+    "xs": 4
+  },
+  "durations": {
+    "fast": 120,
+    "normal": 200,
+    "slow": 350
+  },
+  "styles": {
+    "Button": {
+      "fill": "primary",
+      "text": "on_primary",
+      "radius": "md",
+      "padding": [
+        12,
+        6
+      ],
+      "transition": "fast",
+      "hover": {
+        "fill": "primary_hover"
+      },
+      "pressed": {
+        "fill": "primary_pressed"
+      },
+      "focused": {
+        "border": [
+          "focus_ring",
+          2
+        ]
+      },
+      "disabled": {
+        "opacity": 0.5
+      }
+    },
+    "Button.danger": {
+      "fill": "danger",
+      "hover": {
+        "fill": "danger_hover"
+      },
+      "pressed": {
+        "fill": "danger_pressed"
+      }
+    },
+    "Button.flat": {
+      "fill": "#00000000",
+      "text": "primary",
+      "hover": {
+        "fill": "hover_overlay"
+      },
+      "pressed": {
+        "fill": "hover_overlay"
+      }
+    },
+    "CheckBox": {
+      "fill": "surface",
+      "text": "text",
+      "border": [
+        "text_muted",
+        1.5
+      ],
+      "radius": "sm",
+      "transition": "fast",
+      "hover": {
+        "border": [
+          "primary",
+          1.5
+        ]
+      },
+      "focused": {
+        "border": [
+          "focus_ring",
+          2
+        ]
+      },
+      "checked": {
+        "fill": "primary",
+        "border": [
+          "primary",
+          1.5
+        ]
+      },
+      "disabled": {
+        "opacity": 0.5
+      }
+    },
+    "Edit": {
+      "fill": "surface",
+      "text": "text",
+      "border": [
+        "border",
+        1
+      ],
+      "radius": "sm",
+      "padding": [
+        8,
+        4
+      ],
+      "hover": {
+        "border": [
+          "text_muted",
+          1
+        ]
+      },
+      "focused": {
+        "border": [
+          "focus_ring",
+          2
+        ]
+      },
+      "disabled": {
+        "opacity": 0.5
+      }
+    },
+    "Form": {
+      "fill": "background",
+      "text": "text"
+    },
+    "Label": {
+      "text": "text"
+    },
+    "Panel": {
+      "fill": "surface",
+      "border": [
+        "border",
+        1
+      ],
+      "radius": "sm"
+    },
+    "ProgressBar": {
+      "fill": "track",
+      "radius": 4
+    },
+    "RadioButton": {
+      "fill": "surface",
+      "text": "text",
+      "border": [
+        "text_muted",
+        1.5
+      ],
+      "radius": "sm",
+      "transition": "fast",
+      "hover": {
+        "border": [
+          "primary",
+          1.5
+        ]
+      },
+      "focused": {
+        "border": [
+          "focus_ring",
+          2
+        ]
+      },
+      "checked": {
+        "fill": "primary",
+        "border": [
+          "primary",
+          1.5
+        ]
+      },
+      "disabled": {
+        "opacity": 0.5
+      }
+    },
+    "Switch": {
+      "fill": "track",
+      "text": "text",
+      "transition": "normal",
+      "focused": {
+        "border": [
+          "focus_ring",
+          2
+        ]
+      },
+      "checked": {
+        "fill": "primary"
+      },
+      "disabled": {
+        "opacity": 0.5
+      }
+    }
+  }
+}

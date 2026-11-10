@@ -1,0 +1,3 @@
+Arquivos dos exemplos (samples.rs):
+- coracao.json: Animated Noto Emoji © Google, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+- rust.svg: Devicon (https://devicon.dev), licença MIT

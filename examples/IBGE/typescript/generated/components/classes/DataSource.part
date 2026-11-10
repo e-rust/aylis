@@ -1,0 +1,22 @@
+
+/** Um DataSource de um form. */
+export class DataSource extends AylisComponent {
+    get dataSet(): Promise<string> {
+        return this.getProp("data_set");
+    }
+    set dataSet(value: string) {
+        this.setProp("data_set", value);
+    }
+    get autoEdit(): Promise<boolean> {
+        return this.getProp("auto_edit");
+    }
+    set autoEdit(value: boolean) {
+        this.setProp("auto_edit", value);
+    }
+    get enabled(): Promise<boolean> {
+        return this.getProp("enabled");
+    }
+    set enabled(value: boolean) {
+        this.setProp("enabled", value);
+    }
+}

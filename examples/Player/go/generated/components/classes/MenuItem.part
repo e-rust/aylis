@@ -1,0 +1,27 @@
+
+// aylisMenuItem é um MenuItem de um form.
+type aylisMenuItem struct{ aylis.Component }
+
+func (c aylisMenuItem) Text() string { return asText(c.Get("text")) }
+func (c aylisMenuItem) SetText(v string) { c.Set("text", v) }
+
+func (c aylisMenuItem) Shortcut() string { return asText(c.Get("shortcut")) }
+func (c aylisMenuItem) SetShortcut(v string) { c.Set("shortcut", v) }
+
+func (c aylisMenuItem) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisMenuItem) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisMenuItem) Checked() bool { return asBool(c.Get("checked")) }
+func (c aylisMenuItem) SetChecked(v bool) { c.Set("checked", v) }
+
+func (c aylisMenuItem) AutoCheck() bool { return asBool(c.Get("auto_check")) }
+func (c aylisMenuItem) SetAutoCheck(v bool) { c.Set("auto_check", v) }
+
+func (c aylisMenuItem) Icon() string { return asText(c.Get("icon")) }
+func (c aylisMenuItem) SetIcon(v string) { c.Set("icon", v) }
+
+func (c aylisMenuItem) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisMenuItem) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisMenuItem) Danger() bool { return asBool(c.Get("danger")) }
+func (c aylisMenuItem) SetDanger(v bool) { c.Set("danger", v) }

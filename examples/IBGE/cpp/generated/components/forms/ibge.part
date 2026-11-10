@@ -1,0 +1,380 @@
+
+// O form frmIBGE e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância).
+struct FrmIBGEComponents : Form {
+    ClientDataSet cdsEstados;
+    Field cdsEstadosId;
+    Field cdsEstadosSigla;
+    Field cdsEstadosNome;
+    Field cdsEstadosRegiao;
+    Field cdsEstadosPopulacao;
+    Field cdsEstadosArea;
+    Field cdsEstadosDensidade;
+    Field cdsEstadosPib;
+    Field cdsEstadosPibPerCapita;
+    Field cdsEstadosEstimativa;
+    Field cdsEstadosEstimativaAno;
+    Field cdsEstadosMunicipios;
+    Field cdsEstadosBandeira;
+    DataSource dsEstados;
+    ClientDataSet cdsMunicipios;
+    Field cdsMunicipiosId;
+    Field cdsMunicipiosUfId;
+    Field cdsMunicipiosUf;
+    Field cdsMunicipiosNome;
+    Field cdsMunicipiosMesorregiao;
+    Field cdsMunicipiosMicrorregiao;
+    Field cdsMunicipiosRegiaoIntermediaria;
+    Field cdsMunicipiosRegiaoImediata;
+    Field cdsMunicipiosPopulacao;
+    Field cdsMunicipiosArea;
+    Field cdsMunicipiosDensidade;
+    Field cdsMunicipiosPib;
+    Field cdsMunicipiosPibParticipacao;
+    Field cdsMunicipiosPibPerCapita;
+    Field cdsMunicipiosEstimativa;
+    Field cdsMunicipiosEstimativaAno;
+    Field cdsMunicipiosDistritos;
+    Field cdsMunicipiosBandeira;
+    DataSource dsMunicipios;
+    ClientDataSet cdsDistritos;
+    Field cdsDistritosId;
+    Field cdsDistritosMunicipioId;
+    Field cdsDistritosNome;
+    DataSource dsDistritos;
+    ClientDataSet cdsPopulacao;
+    Field cdsPopulacaoAno;
+    Field cdsPopulacaoHabitantes;
+    DataSource dsPopulacao;
+    ClientDataSet cdsMaiores;
+    Field cdsMaioresNome;
+    Field cdsMaioresHabitantes;
+    DataSource dsMaiores;
+    Label lblFonte;
+    Layout lytListas;
+    GroupBox gbEstados;
+    DataGrid grdEstados;
+    GroupBox gbDistritos;
+    DataGrid grdDistritos;
+    GroupBox gbMunicipios;
+    DataGrid grdMunicipios;
+    Splitter splListas;
+    Layout lytPainel;
+    Panel pnlEstado;
+    Svg svgBrasil;
+    Layout lytBandeiraEstado;
+    Label lblEstado;
+    Label lblRegiao;
+    Image imgBandeiraEstado;
+    Layout lytNumerosEstado;
+    Label dbtEstadoPopulacao;
+    Label lblEstadoEstimativa;
+    Label dbtEstadoEstimativa;
+    Label dbtEstadoArea;
+    Label dbtEstadoDensidade;
+    Label dbtEstadoPib;
+    Label dbtEstadoPibPerCapita;
+    Label dbtEstadoMunicipios;
+    Panel pnlMunicipio;
+    Svg svgMunicipio;
+    Svg svgEstado;
+    Layout lytBandeiraMunicipio;
+    Label lblMunicipio;
+    Label lblCodigo;
+    Image imgBandeiraMunicipio;
+    Label lblSemBandeira;
+    Layout lytNumerosMunicipio;
+    Label dbtMesorregiao;
+    Label dbtMicrorregiao;
+    Label dbtRegiaoImediata;
+    Label dbtPopulacao;
+    Label lblEstimativa;
+    Label dbtEstimativa;
+    Label dbtArea;
+    Label dbtDensidade;
+    Label dbtPib;
+    Label dbtPibPerCapita;
+    Label dbtPibParticipacao;
+    Layout lytGraficos;
+    DBChart dbcPopulacao;
+    DBChart dbcMaiores;
+    DBChart dbcEstados;
+
+    FrmIBGEComponents() = default;
+    using Form::Form;
+
+    // Monta os componentes da janela (o form que não bate com o código é erro).
+    void bind(const aylis::Json& list) override {
+        cdsEstados = ClientDataSet(resolve_(list, "cdsEstados", "ClientDataSet"));
+        cdsEstadosId = Field(resolve_(list, "cdsEstadosId", "Field"));
+        cdsEstadosSigla = Field(resolve_(list, "cdsEstadosSigla", "Field"));
+        cdsEstadosNome = Field(resolve_(list, "cdsEstadosNome", "Field"));
+        cdsEstadosRegiao = Field(resolve_(list, "cdsEstadosRegiao", "Field"));
+        cdsEstadosPopulacao = Field(resolve_(list, "cdsEstadosPopulacao", "Field"));
+        cdsEstadosArea = Field(resolve_(list, "cdsEstadosArea", "Field"));
+        cdsEstadosDensidade = Field(resolve_(list, "cdsEstadosDensidade", "Field"));
+        cdsEstadosPib = Field(resolve_(list, "cdsEstadosPib", "Field"));
+        cdsEstadosPibPerCapita = Field(resolve_(list, "cdsEstadosPibPerCapita", "Field"));
+        cdsEstadosEstimativa = Field(resolve_(list, "cdsEstadosEstimativa", "Field"));
+        cdsEstadosEstimativaAno = Field(resolve_(list, "cdsEstadosEstimativaAno", "Field"));
+        cdsEstadosMunicipios = Field(resolve_(list, "cdsEstadosMunicipios", "Field"));
+        cdsEstadosBandeira = Field(resolve_(list, "cdsEstadosBandeira", "Field"));
+        dsEstados = DataSource(resolve_(list, "dsEstados", "DataSource"));
+        cdsMunicipios = ClientDataSet(resolve_(list, "cdsMunicipios", "ClientDataSet"));
+        cdsMunicipiosId = Field(resolve_(list, "cdsMunicipiosId", "Field"));
+        cdsMunicipiosUfId = Field(resolve_(list, "cdsMunicipiosUfId", "Field"));
+        cdsMunicipiosUf = Field(resolve_(list, "cdsMunicipiosUf", "Field"));
+        cdsMunicipiosNome = Field(resolve_(list, "cdsMunicipiosNome", "Field"));
+        cdsMunicipiosMesorregiao = Field(resolve_(list, "cdsMunicipiosMesorregiao", "Field"));
+        cdsMunicipiosMicrorregiao = Field(resolve_(list, "cdsMunicipiosMicrorregiao", "Field"));
+        cdsMunicipiosRegiaoIntermediaria = Field(resolve_(list, "cdsMunicipiosRegiaoIntermediaria", "Field"));
+        cdsMunicipiosRegiaoImediata = Field(resolve_(list, "cdsMunicipiosRegiaoImediata", "Field"));
+        cdsMunicipiosPopulacao = Field(resolve_(list, "cdsMunicipiosPopulacao", "Field"));
+        cdsMunicipiosArea = Field(resolve_(list, "cdsMunicipiosArea", "Field"));
+        cdsMunicipiosDensidade = Field(resolve_(list, "cdsMunicipiosDensidade", "Field"));
+        cdsMunicipiosPib = Field(resolve_(list, "cdsMunicipiosPib", "Field"));
+        cdsMunicipiosPibParticipacao = Field(resolve_(list, "cdsMunicipiosPibParticipacao", "Field"));
+        cdsMunicipiosPibPerCapita = Field(resolve_(list, "cdsMunicipiosPibPerCapita", "Field"));
+        cdsMunicipiosEstimativa = Field(resolve_(list, "cdsMunicipiosEstimativa", "Field"));
+        cdsMunicipiosEstimativaAno = Field(resolve_(list, "cdsMunicipiosEstimativaAno", "Field"));
+        cdsMunicipiosDistritos = Field(resolve_(list, "cdsMunicipiosDistritos", "Field"));
+        cdsMunicipiosBandeira = Field(resolve_(list, "cdsMunicipiosBandeira", "Field"));
+        dsMunicipios = DataSource(resolve_(list, "dsMunicipios", "DataSource"));
+        cdsDistritos = ClientDataSet(resolve_(list, "cdsDistritos", "ClientDataSet"));
+        cdsDistritosId = Field(resolve_(list, "cdsDistritosId", "Field"));
+        cdsDistritosMunicipioId = Field(resolve_(list, "cdsDistritosMunicipioId", "Field"));
+        cdsDistritosNome = Field(resolve_(list, "cdsDistritosNome", "Field"));
+        dsDistritos = DataSource(resolve_(list, "dsDistritos", "DataSource"));
+        cdsPopulacao = ClientDataSet(resolve_(list, "cdsPopulacao", "ClientDataSet"));
+        cdsPopulacaoAno = Field(resolve_(list, "cdsPopulacaoAno", "Field"));
+        cdsPopulacaoHabitantes = Field(resolve_(list, "cdsPopulacaoHabitantes", "Field"));
+        dsPopulacao = DataSource(resolve_(list, "dsPopulacao", "DataSource"));
+        cdsMaiores = ClientDataSet(resolve_(list, "cdsMaiores", "ClientDataSet"));
+        cdsMaioresNome = Field(resolve_(list, "cdsMaioresNome", "Field"));
+        cdsMaioresHabitantes = Field(resolve_(list, "cdsMaioresHabitantes", "Field"));
+        dsMaiores = DataSource(resolve_(list, "dsMaiores", "DataSource"));
+        lblFonte = Label(resolve_(list, "lblFonte", "Label"));
+        lytListas = Layout(resolve_(list, "lytListas", "Layout"));
+        gbEstados = GroupBox(resolve_(list, "gbEstados", "GroupBox"));
+        grdEstados = DataGrid(resolve_(list, "grdEstados", "DataGrid"));
+        gbDistritos = GroupBox(resolve_(list, "gbDistritos", "GroupBox"));
+        grdDistritos = DataGrid(resolve_(list, "grdDistritos", "DataGrid"));
+        gbMunicipios = GroupBox(resolve_(list, "gbMunicipios", "GroupBox"));
+        grdMunicipios = DataGrid(resolve_(list, "grdMunicipios", "DataGrid"));
+        splListas = Splitter(resolve_(list, "splListas", "Splitter"));
+        lytPainel = Layout(resolve_(list, "lytPainel", "Layout"));
+        pnlEstado = Panel(resolve_(list, "pnlEstado", "Panel"));
+        svgBrasil = Svg(resolve_(list, "svgBrasil", "Svg"));
+        lytBandeiraEstado = Layout(resolve_(list, "lytBandeiraEstado", "Layout"));
+        lblEstado = Label(resolve_(list, "lblEstado", "Label"));
+        lblRegiao = Label(resolve_(list, "lblRegiao", "Label"));
+        imgBandeiraEstado = Image(resolve_(list, "imgBandeiraEstado", "Image"));
+        lytNumerosEstado = Layout(resolve_(list, "lytNumerosEstado", "Layout"));
+        dbtEstadoPopulacao = Label(resolve_(list, "dbtEstadoPopulacao", "Label"));
+        lblEstadoEstimativa = Label(resolve_(list, "lblEstadoEstimativa", "Label"));
+        dbtEstadoEstimativa = Label(resolve_(list, "dbtEstadoEstimativa", "Label"));
+        dbtEstadoArea = Label(resolve_(list, "dbtEstadoArea", "Label"));
+        dbtEstadoDensidade = Label(resolve_(list, "dbtEstadoDensidade", "Label"));
+        dbtEstadoPib = Label(resolve_(list, "dbtEstadoPib", "Label"));
+        dbtEstadoPibPerCapita = Label(resolve_(list, "dbtEstadoPibPerCapita", "Label"));
+        dbtEstadoMunicipios = Label(resolve_(list, "dbtEstadoMunicipios", "Label"));
+        pnlMunicipio = Panel(resolve_(list, "pnlMunicipio", "Panel"));
+        svgMunicipio = Svg(resolve_(list, "svgMunicipio", "Svg"));
+        svgEstado = Svg(resolve_(list, "svgEstado", "Svg"));
+        lytBandeiraMunicipio = Layout(resolve_(list, "lytBandeiraMunicipio", "Layout"));
+        lblMunicipio = Label(resolve_(list, "lblMunicipio", "Label"));
+        lblCodigo = Label(resolve_(list, "lblCodigo", "Label"));
+        imgBandeiraMunicipio = Image(resolve_(list, "imgBandeiraMunicipio", "Image"));
+        lblSemBandeira = Label(resolve_(list, "lblSemBandeira", "Label"));
+        lytNumerosMunicipio = Layout(resolve_(list, "lytNumerosMunicipio", "Layout"));
+        dbtMesorregiao = Label(resolve_(list, "dbtMesorregiao", "Label"));
+        dbtMicrorregiao = Label(resolve_(list, "dbtMicrorregiao", "Label"));
+        dbtRegiaoImediata = Label(resolve_(list, "dbtRegiaoImediata", "Label"));
+        dbtPopulacao = Label(resolve_(list, "dbtPopulacao", "Label"));
+        lblEstimativa = Label(resolve_(list, "lblEstimativa", "Label"));
+        dbtEstimativa = Label(resolve_(list, "dbtEstimativa", "Label"));
+        dbtArea = Label(resolve_(list, "dbtArea", "Label"));
+        dbtDensidade = Label(resolve_(list, "dbtDensidade", "Label"));
+        dbtPib = Label(resolve_(list, "dbtPib", "Label"));
+        dbtPibPerCapita = Label(resolve_(list, "dbtPibPerCapita", "Label"));
+        dbtPibParticipacao = Label(resolve_(list, "dbtPibParticipacao", "Label"));
+        lytGraficos = Layout(resolve_(list, "lytGraficos", "Layout"));
+        dbcPopulacao = DBChart(resolve_(list, "dbcPopulacao", "DBChart"));
+        dbcMaiores = DBChart(resolve_(list, "dbcMaiores", "DBChart"));
+        dbcEstados = DBChart(resolve_(list, "dbcEstados", "DBChart"));
+    }
+    // O ClientDataSet deste form com o nome (como o FindComponent; vazio se não há).
+    ClientDataSet find_client_data_set(const std::string& name) const {
+        if (name == "cdsEstados") return cdsEstados;
+        if (name == "cdsMunicipios") return cdsMunicipios;
+        if (name == "cdsDistritos") return cdsDistritos;
+        if (name == "cdsPopulacao") return cdsPopulacao;
+        if (name == "cdsMaiores") return cdsMaiores;
+        return ClientDataSet();
+    }
+    // O ClientDataSet que disparou o evento.
+    ClientDataSet sender_as_client_data_set(const aylis::Event& ev) const { return find_client_data_set(ev.sender_name); }
+    // O DBChart deste form com o nome (como o FindComponent; vazio se não há).
+    DBChart find_d_b_chart(const std::string& name) const {
+        if (name == "dbcPopulacao") return dbcPopulacao;
+        if (name == "dbcMaiores") return dbcMaiores;
+        if (name == "dbcEstados") return dbcEstados;
+        return DBChart();
+    }
+    // O DBChart que disparou o evento.
+    DBChart sender_as_d_b_chart(const aylis::Event& ev) const { return find_d_b_chart(ev.sender_name); }
+    // O DataGrid deste form com o nome (como o FindComponent; vazio se não há).
+    DataGrid find_data_grid(const std::string& name) const {
+        if (name == "grdEstados") return grdEstados;
+        if (name == "grdDistritos") return grdDistritos;
+        if (name == "grdMunicipios") return grdMunicipios;
+        return DataGrid();
+    }
+    // O DataGrid que disparou o evento.
+    DataGrid sender_as_data_grid(const aylis::Event& ev) const { return find_data_grid(ev.sender_name); }
+    // O DataSource deste form com o nome (como o FindComponent; vazio se não há).
+    DataSource find_data_source(const std::string& name) const {
+        if (name == "dsEstados") return dsEstados;
+        if (name == "dsMunicipios") return dsMunicipios;
+        if (name == "dsDistritos") return dsDistritos;
+        if (name == "dsPopulacao") return dsPopulacao;
+        if (name == "dsMaiores") return dsMaiores;
+        return DataSource();
+    }
+    // O DataSource que disparou o evento.
+    DataSource sender_as_data_source(const aylis::Event& ev) const { return find_data_source(ev.sender_name); }
+    // O Field deste form com o nome (como o FindComponent; vazio se não há).
+    Field find_field(const std::string& name) const {
+        if (name == "cdsEstadosId") return cdsEstadosId;
+        if (name == "cdsEstadosSigla") return cdsEstadosSigla;
+        if (name == "cdsEstadosNome") return cdsEstadosNome;
+        if (name == "cdsEstadosRegiao") return cdsEstadosRegiao;
+        if (name == "cdsEstadosPopulacao") return cdsEstadosPopulacao;
+        if (name == "cdsEstadosArea") return cdsEstadosArea;
+        if (name == "cdsEstadosDensidade") return cdsEstadosDensidade;
+        if (name == "cdsEstadosPib") return cdsEstadosPib;
+        if (name == "cdsEstadosPibPerCapita") return cdsEstadosPibPerCapita;
+        if (name == "cdsEstadosEstimativa") return cdsEstadosEstimativa;
+        if (name == "cdsEstadosEstimativaAno") return cdsEstadosEstimativaAno;
+        if (name == "cdsEstadosMunicipios") return cdsEstadosMunicipios;
+        if (name == "cdsEstadosBandeira") return cdsEstadosBandeira;
+        if (name == "cdsMunicipiosId") return cdsMunicipiosId;
+        if (name == "cdsMunicipiosUfId") return cdsMunicipiosUfId;
+        if (name == "cdsMunicipiosUf") return cdsMunicipiosUf;
+        if (name == "cdsMunicipiosNome") return cdsMunicipiosNome;
+        if (name == "cdsMunicipiosMesorregiao") return cdsMunicipiosMesorregiao;
+        if (name == "cdsMunicipiosMicrorregiao") return cdsMunicipiosMicrorregiao;
+        if (name == "cdsMunicipiosRegiaoIntermediaria") return cdsMunicipiosRegiaoIntermediaria;
+        if (name == "cdsMunicipiosRegiaoImediata") return cdsMunicipiosRegiaoImediata;
+        if (name == "cdsMunicipiosPopulacao") return cdsMunicipiosPopulacao;
+        if (name == "cdsMunicipiosArea") return cdsMunicipiosArea;
+        if (name == "cdsMunicipiosDensidade") return cdsMunicipiosDensidade;
+        if (name == "cdsMunicipiosPib") return cdsMunicipiosPib;
+        if (name == "cdsMunicipiosPibParticipacao") return cdsMunicipiosPibParticipacao;
+        if (name == "cdsMunicipiosPibPerCapita") return cdsMunicipiosPibPerCapita;
+        if (name == "cdsMunicipiosEstimativa") return cdsMunicipiosEstimativa;
+        if (name == "cdsMunicipiosEstimativaAno") return cdsMunicipiosEstimativaAno;
+        if (name == "cdsMunicipiosDistritos") return cdsMunicipiosDistritos;
+        if (name == "cdsMunicipiosBandeira") return cdsMunicipiosBandeira;
+        if (name == "cdsDistritosId") return cdsDistritosId;
+        if (name == "cdsDistritosMunicipioId") return cdsDistritosMunicipioId;
+        if (name == "cdsDistritosNome") return cdsDistritosNome;
+        if (name == "cdsPopulacaoAno") return cdsPopulacaoAno;
+        if (name == "cdsPopulacaoHabitantes") return cdsPopulacaoHabitantes;
+        if (name == "cdsMaioresNome") return cdsMaioresNome;
+        if (name == "cdsMaioresHabitantes") return cdsMaioresHabitantes;
+        return Field();
+    }
+    // O Field que disparou o evento.
+    Field sender_as_field(const aylis::Event& ev) const { return find_field(ev.sender_name); }
+    // O GroupBox deste form com o nome (como o FindComponent; vazio se não há).
+    GroupBox find_group_box(const std::string& name) const {
+        if (name == "gbEstados") return gbEstados;
+        if (name == "gbDistritos") return gbDistritos;
+        if (name == "gbMunicipios") return gbMunicipios;
+        return GroupBox();
+    }
+    // O GroupBox que disparou o evento.
+    GroupBox sender_as_group_box(const aylis::Event& ev) const { return find_group_box(ev.sender_name); }
+    // O Image deste form com o nome (como o FindComponent; vazio se não há).
+    Image find_image(const std::string& name) const {
+        if (name == "imgBandeiraEstado") return imgBandeiraEstado;
+        if (name == "imgBandeiraMunicipio") return imgBandeiraMunicipio;
+        return Image();
+    }
+    // O Image que disparou o evento.
+    Image sender_as_image(const aylis::Event& ev) const { return find_image(ev.sender_name); }
+    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    Label find_label(const std::string& name) const {
+        if (name == "lblFonte") return lblFonte;
+        if (name == "lblEstado") return lblEstado;
+        if (name == "lblRegiao") return lblRegiao;
+        if (name == "dbtEstadoPopulacao") return dbtEstadoPopulacao;
+        if (name == "lblEstadoEstimativa") return lblEstadoEstimativa;
+        if (name == "dbtEstadoEstimativa") return dbtEstadoEstimativa;
+        if (name == "dbtEstadoArea") return dbtEstadoArea;
+        if (name == "dbtEstadoDensidade") return dbtEstadoDensidade;
+        if (name == "dbtEstadoPib") return dbtEstadoPib;
+        if (name == "dbtEstadoPibPerCapita") return dbtEstadoPibPerCapita;
+        if (name == "dbtEstadoMunicipios") return dbtEstadoMunicipios;
+        if (name == "lblMunicipio") return lblMunicipio;
+        if (name == "lblCodigo") return lblCodigo;
+        if (name == "lblSemBandeira") return lblSemBandeira;
+        if (name == "dbtMesorregiao") return dbtMesorregiao;
+        if (name == "dbtMicrorregiao") return dbtMicrorregiao;
+        if (name == "dbtRegiaoImediata") return dbtRegiaoImediata;
+        if (name == "dbtPopulacao") return dbtPopulacao;
+        if (name == "lblEstimativa") return lblEstimativa;
+        if (name == "dbtEstimativa") return dbtEstimativa;
+        if (name == "dbtArea") return dbtArea;
+        if (name == "dbtDensidade") return dbtDensidade;
+        if (name == "dbtPib") return dbtPib;
+        if (name == "dbtPibPerCapita") return dbtPibPerCapita;
+        if (name == "dbtPibParticipacao") return dbtPibParticipacao;
+        return Label();
+    }
+    // O Label que disparou o evento.
+    Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
+    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    Layout find_layout(const std::string& name) const {
+        if (name == "lytListas") return lytListas;
+        if (name == "lytPainel") return lytPainel;
+        if (name == "lytBandeiraEstado") return lytBandeiraEstado;
+        if (name == "lytNumerosEstado") return lytNumerosEstado;
+        if (name == "lytBandeiraMunicipio") return lytBandeiraMunicipio;
+        if (name == "lytNumerosMunicipio") return lytNumerosMunicipio;
+        if (name == "lytGraficos") return lytGraficos;
+        return Layout();
+    }
+    // O Layout que disparou o evento.
+    Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
+    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    Panel find_panel(const std::string& name) const {
+        if (name == "pnlEstado") return pnlEstado;
+        if (name == "pnlMunicipio") return pnlMunicipio;
+        return Panel();
+    }
+    // O Panel que disparou o evento.
+    Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
+    // O Splitter deste form com o nome (como o FindComponent; vazio se não há).
+    Splitter find_splitter(const std::string& name) const {
+        if (name == "splListas") return splListas;
+        return Splitter();
+    }
+    // O Splitter que disparou o evento.
+    Splitter sender_as_splitter(const aylis::Event& ev) const { return find_splitter(ev.sender_name); }
+    // O Svg deste form com o nome (como o FindComponent; vazio se não há).
+    Svg find_svg(const std::string& name) const {
+        if (name == "svgBrasil") return svgBrasil;
+        if (name == "svgMunicipio") return svgMunicipio;
+        if (name == "svgEstado") return svgEstado;
+        return Svg();
+    }
+    // O Svg que disparou o evento.
+    Svg sender_as_svg(const aylis::Event& ev) const { return find_svg(ev.sender_name); }
+};
+
+inline aylis_components::FrmIBGEComponents frmIBGE;
+
+    aylis::Aylis::register_form_class(
+        "frmIBGE", [](aylis::Aylis* app, long long id, const std::string& name) -> std::unique_ptr<aylis::FormBase> { return std::make_unique<FrmIBGEComponents>(app, id, name); },
+        [](aylis::FormBase& form) { ::frmIBGE = static_cast<FrmIBGEComponents&>(form); });

@@ -1,0 +1,823 @@
+  { Um VideoPlayer de um form. }
+  TVideoPlayer = class(TAylisComponent)
+  private
+    function GetFile: string;
+    procedure SetFile(Value: string);
+    function GetAutoplay: Boolean;
+    procedure SetAutoplay(Value: Boolean);
+    function GetLooping: Boolean;
+    procedure SetLooping(Value: Boolean);
+    function GetVolume: Double;
+    procedure SetVolume(Value: Double);
+    function GetMuted: Boolean;
+    procedure SetMuted(Value: Boolean);
+    function GetFit: string;
+    procedure SetFit(Value: string);
+    function GetRadius: Double;
+    procedure SetRadius(Value: Double);
+    function GetRate: Double;
+    procedure SetRate(Value: Double);
+    function GetOutput: string;
+    procedure SetOutput(Value: string);
+    function GetLeft: Double;
+    procedure SetLeft(Value: Double);
+    function GetTop: Double;
+    procedure SetTop(Value: Double);
+    function GetWidth: Double;
+    procedure SetWidth(Value: Double);
+    function GetHeight: Double;
+    procedure SetHeight(Value: Double);
+    function GetAlign: string;
+    procedure SetAlign(Value: string);
+    function GetVisible: Boolean;
+    procedure SetVisible(Value: Boolean);
+    function GetEnabled: Boolean;
+    procedure SetEnabled(Value: Boolean);
+    function GetHitTest: Boolean;
+    procedure SetHitTest(Value: Boolean);
+    function GetClipChildren: Boolean;
+    procedure SetClipChildren(Value: Boolean);
+    function GetCapturesWheel: Boolean;
+    procedure SetCapturesWheel(Value: Boolean);
+    function GetCanFocus: Boolean;
+    procedure SetCanFocus(Value: Boolean);
+    function GetDraggable: Boolean;
+    procedure SetDraggable(Value: Boolean);
+    function GetAcceptsDrops: Boolean;
+    procedure SetAcceptsDrops(Value: Boolean);
+    function GetDragData: string;
+    procedure SetDragData(Value: string);
+    function GetDragLabel: string;
+    procedure SetDragLabel(Value: string);
+    function GetDragImage: string;
+    procedure SetDragImage(Value: string);
+    function GetDropTypes: string;
+    procedure SetDropTypes(Value: string);
+    function GetTabStop: Boolean;
+    procedure SetTabStop(Value: Boolean);
+    function GetCursor: string;
+    procedure SetCursor(Value: string);
+    function GetOpacity: Double;
+    procedure SetOpacity(Value: Double);
+    function GetCacheLayer: Boolean;
+    procedure SetCacheLayer(Value: Boolean);
+    function GetRotation: Double;
+    procedure SetRotation(Value: Double);
+    function GetTranslateX: Double;
+    procedure SetTranslateX(Value: Double);
+    function GetTranslateY: Double;
+    procedure SetTranslateY(Value: Double);
+    function GetAspectRatio: Double;
+    procedure SetAspectRatio(Value: Double);
+    function GetMaxWidth: Double;
+    procedure SetMaxWidth(Value: Double);
+    function GetMinWidth: Double;
+    procedure SetMinWidth(Value: Double);
+    function GetMinHeight: Double;
+    procedure SetMinHeight(Value: Double);
+    function GetMaxHeight: Double;
+    procedure SetMaxHeight(Value: Double);
+    function GetSelfAlign: string;
+    procedure SetSelfAlign(Value: string);
+    function GetAutoSize: Boolean;
+    procedure SetAutoSize(Value: Boolean);
+    function GetColumnSpan: Int64;
+    procedure SetColumnSpan(Value: Int64);
+    function GetShadow: string;
+    procedure SetShadow(Value: string);
+    function GetStyle: string;
+    procedure SetStyle(Value: string);
+    function GetTheme: string;
+    procedure SetTheme(Value: string);
+    function GetFill: string;
+    procedure SetFill(Value: string);
+    function GetBorderColor: string;
+    procedure SetBorderColor(Value: string);
+    function GetTextColor: string;
+    procedure SetTextColor(Value: string);
+    function GetAccentColor: string;
+    procedure SetAccentColor(Value: string);
+    function GetSuccessColor: string;
+    procedure SetSuccessColor(Value: string);
+    function GetWarningColor: string;
+    procedure SetWarningColor(Value: string);
+    function GetDangerColor: string;
+    procedure SetDangerColor(Value: string);
+    function GetFontFamily: string;
+    procedure SetFontFamily(Value: string);
+    function GetFontSize: Double;
+    procedure SetFontSize(Value: Double);
+    function GetFontWeight: string;
+    procedure SetFontWeight(Value: string);
+    function GetFontItalic: Boolean;
+    procedure SetFontItalic(Value: Boolean);
+    function GetFontUnderline: Boolean;
+    procedure SetFontUnderline(Value: Boolean);
+    function GetFontStrikeout: Boolean;
+    procedure SetFontStrikeout(Value: Boolean);
+    function GetHint: string;
+    procedure SetHint(Value: string);
+    function GetTag: Int64;
+    procedure SetTag(Value: Int64);
+    function GetPopupMenu: string;
+    procedure SetPopupMenu(Value: string);
+  public
+    procedure Play;
+    procedure Pause;
+    procedure Stop;
+    procedure Seek(ASeconds: Double);
+    function Position: Double;
+    function Duration: Double;
+    property &File: string read GetFile write SetFile;
+    property Autoplay: Boolean read GetAutoplay write SetAutoplay;
+    property Looping: Boolean read GetLooping write SetLooping;
+    property Volume: Double read GetVolume write SetVolume;
+    property Muted: Boolean read GetMuted write SetMuted;
+    property Fit: string read GetFit write SetFit;
+    property Radius: Double read GetRadius write SetRadius;
+    property Rate: Double read GetRate write SetRate;
+    property Output: string read GetOutput write SetOutput;
+    property Left: Double read GetLeft write SetLeft;
+    property Top: Double read GetTop write SetTop;
+    property Width: Double read GetWidth write SetWidth;
+    property Height: Double read GetHeight write SetHeight;
+    property Align: string read GetAlign write SetAlign;
+    property Visible: Boolean read GetVisible write SetVisible;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property HitTest: Boolean read GetHitTest write SetHitTest;
+    property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CanFocus: Boolean read GetCanFocus write SetCanFocus;
+    property Draggable: Boolean read GetDraggable write SetDraggable;
+    property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
+    property DragData: string read GetDragData write SetDragData;
+    property DragLabel: string read GetDragLabel write SetDragLabel;
+    property DragImage: string read GetDragImage write SetDragImage;
+    property DropTypes: string read GetDropTypes write SetDropTypes;
+    property TabStop: Boolean read GetTabStop write SetTabStop;
+    property Cursor: string read GetCursor write SetCursor;
+    property Opacity: Double read GetOpacity write SetOpacity;
+    property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
+    property Rotation: Double read GetRotation write SetRotation;
+    property TranslateX: Double read GetTranslateX write SetTranslateX;
+    property TranslateY: Double read GetTranslateY write SetTranslateY;
+    property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
+    property MaxWidth: Double read GetMaxWidth write SetMaxWidth;
+    property MinWidth: Double read GetMinWidth write SetMinWidth;
+    property MinHeight: Double read GetMinHeight write SetMinHeight;
+    property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
+    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property AutoSize: Boolean read GetAutoSize write SetAutoSize;
+    property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property Shadow: string read GetShadow write SetShadow;
+    property Style: string read GetStyle write SetStyle;
+    property Theme: string read GetTheme write SetTheme;
+    property Fill: string read GetFill write SetFill;
+    property BorderColor: string read GetBorderColor write SetBorderColor;
+    property TextColor: string read GetTextColor write SetTextColor;
+    property AccentColor: string read GetAccentColor write SetAccentColor;
+    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
+    property WarningColor: string read GetWarningColor write SetWarningColor;
+    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property FontFamily: string read GetFontFamily write SetFontFamily;
+    property FontSize: Double read GetFontSize write SetFontSize;
+    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontItalic: Boolean read GetFontItalic write SetFontItalic;
+    property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
+    property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
+    property Hint: string read GetHint write SetHint;
+    property Tag: Int64 read GetTag write SetTag;
+    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+  end;
+
+
+function TVideoPlayer.GetFile: string;
+begin
+  Result := AsText(GetProp('file'));
+end;
+
+procedure TVideoPlayer.SetFile(Value: string);
+begin
+  SetProp('file', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetAutoplay: Boolean;
+begin
+  Result := GetProp('autoplay').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetAutoplay(Value: Boolean);
+begin
+  SetProp('autoplay', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetLooping: Boolean;
+begin
+  Result := GetProp('looping').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetLooping(Value: Boolean);
+begin
+  SetProp('looping', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetVolume: Double;
+begin
+  Result := GetProp('volume').AsFloat;
+end;
+
+procedure TVideoPlayer.SetVolume(Value: Double);
+begin
+  SetProp('volume', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetMuted: Boolean;
+begin
+  Result := GetProp('muted').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetMuted(Value: Boolean);
+begin
+  SetProp('muted', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetFit: string;
+begin
+  Result := AsText(GetProp('fit'));
+end;
+
+procedure TVideoPlayer.SetFit(Value: string);
+begin
+  SetProp('fit', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetRadius: Double;
+begin
+  Result := GetProp('radius').AsFloat;
+end;
+
+procedure TVideoPlayer.SetRadius(Value: Double);
+begin
+  SetProp('radius', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetRate: Double;
+begin
+  Result := GetProp('rate').AsFloat;
+end;
+
+procedure TVideoPlayer.SetRate(Value: Double);
+begin
+  SetProp('rate', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetOutput: string;
+begin
+  Result := AsText(GetProp('output'));
+end;
+
+procedure TVideoPlayer.SetOutput(Value: string);
+begin
+  SetProp('output', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetLeft: Double;
+begin
+  Result := GetProp('left').AsFloat;
+end;
+
+procedure TVideoPlayer.SetLeft(Value: Double);
+begin
+  SetProp('left', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetTop: Double;
+begin
+  Result := GetProp('top').AsFloat;
+end;
+
+procedure TVideoPlayer.SetTop(Value: Double);
+begin
+  SetProp('top', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetWidth: Double;
+begin
+  Result := GetProp('width').AsFloat;
+end;
+
+procedure TVideoPlayer.SetWidth(Value: Double);
+begin
+  SetProp('width', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetHeight: Double;
+begin
+  Result := GetProp('height').AsFloat;
+end;
+
+procedure TVideoPlayer.SetHeight(Value: Double);
+begin
+  SetProp('height', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetAlign: string;
+begin
+  Result := AsText(GetProp('align'));
+end;
+
+procedure TVideoPlayer.SetAlign(Value: string);
+begin
+  SetProp('align', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetVisible: Boolean;
+begin
+  Result := GetProp('visible').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetVisible(Value: Boolean);
+begin
+  SetProp('visible', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetEnabled: Boolean;
+begin
+  Result := GetProp('enabled').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetEnabled(Value: Boolean);
+begin
+  SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetHitTest: Boolean;
+begin
+  Result := GetProp('hit_test').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetHitTest(Value: Boolean);
+begin
+  SetProp('hit_test', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetClipChildren: Boolean;
+begin
+  Result := GetProp('clip_children').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetClipChildren(Value: Boolean);
+begin
+  SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetCapturesWheel: Boolean;
+begin
+  Result := GetProp('captures_wheel').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetCapturesWheel(Value: Boolean);
+begin
+  SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetCanFocus: Boolean;
+begin
+  Result := GetProp('can_focus').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetCanFocus(Value: Boolean);
+begin
+  SetProp('can_focus', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetDraggable: Boolean;
+begin
+  Result := GetProp('draggable').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetDraggable(Value: Boolean);
+begin
+  SetProp('draggable', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetAcceptsDrops: Boolean;
+begin
+  Result := GetProp('accepts_drops').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetAcceptsDrops(Value: Boolean);
+begin
+  SetProp('accepts_drops', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetDragData: string;
+begin
+  Result := AsText(GetProp('drag_data'));
+end;
+
+procedure TVideoPlayer.SetDragData(Value: string);
+begin
+  SetProp('drag_data', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetDragLabel: string;
+begin
+  Result := AsText(GetProp('drag_label'));
+end;
+
+procedure TVideoPlayer.SetDragLabel(Value: string);
+begin
+  SetProp('drag_label', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetDragImage: string;
+begin
+  Result := AsText(GetProp('drag_image'));
+end;
+
+procedure TVideoPlayer.SetDragImage(Value: string);
+begin
+  SetProp('drag_image', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetDropTypes: string;
+begin
+  Result := AsText(GetProp('drop_types'));
+end;
+
+procedure TVideoPlayer.SetDropTypes(Value: string);
+begin
+  SetProp('drop_types', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetTabStop: Boolean;
+begin
+  Result := GetProp('tab_stop').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetTabStop(Value: Boolean);
+begin
+  SetProp('tab_stop', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetCursor: string;
+begin
+  Result := AsText(GetProp('cursor'));
+end;
+
+procedure TVideoPlayer.SetCursor(Value: string);
+begin
+  SetProp('cursor', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetOpacity: Double;
+begin
+  Result := GetProp('opacity').AsFloat;
+end;
+
+procedure TVideoPlayer.SetOpacity(Value: Double);
+begin
+  SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetCacheLayer: Boolean;
+begin
+  Result := GetProp('cache_layer').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetCacheLayer(Value: Boolean);
+begin
+  SetProp('cache_layer', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetRotation: Double;
+begin
+  Result := GetProp('rotation').AsFloat;
+end;
+
+procedure TVideoPlayer.SetRotation(Value: Double);
+begin
+  SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetTranslateX: Double;
+begin
+  Result := GetProp('translate_x').AsFloat;
+end;
+
+procedure TVideoPlayer.SetTranslateX(Value: Double);
+begin
+  SetProp('translate_x', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetTranslateY: Double;
+begin
+  Result := GetProp('translate_y').AsFloat;
+end;
+
+procedure TVideoPlayer.SetTranslateY(Value: Double);
+begin
+  SetProp('translate_y', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetAspectRatio: Double;
+begin
+  Result := GetProp('aspect_ratio').AsFloat;
+end;
+
+procedure TVideoPlayer.SetAspectRatio(Value: Double);
+begin
+  SetProp('aspect_ratio', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetMaxWidth: Double;
+begin
+  Result := GetProp('max_width').AsFloat;
+end;
+
+procedure TVideoPlayer.SetMaxWidth(Value: Double);
+begin
+  SetProp('max_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetMinWidth: Double;
+begin
+  Result := GetProp('min_width').AsFloat;
+end;
+
+procedure TVideoPlayer.SetMinWidth(Value: Double);
+begin
+  SetProp('min_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetMinHeight: Double;
+begin
+  Result := GetProp('min_height').AsFloat;
+end;
+
+procedure TVideoPlayer.SetMinHeight(Value: Double);
+begin
+  SetProp('min_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetMaxHeight: Double;
+begin
+  Result := GetProp('max_height').AsFloat;
+end;
+
+procedure TVideoPlayer.SetMaxHeight(Value: Double);
+begin
+  SetProp('max_height', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetSelfAlign: string;
+begin
+  Result := AsText(GetProp('self_align'));
+end;
+
+procedure TVideoPlayer.SetSelfAlign(Value: string);
+begin
+  SetProp('self_align', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetAutoSize: Boolean;
+begin
+  Result := GetProp('auto_size').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetAutoSize(Value: Boolean);
+begin
+  SetProp('auto_size', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetColumnSpan: Int64;
+begin
+  Result := GetProp('column_span').AsInt64;
+end;
+
+procedure TVideoPlayer.SetColumnSpan(Value: Int64);
+begin
+  SetProp('column_span', TJSONInt64Number.Create(Value));
+end;
+
+function TVideoPlayer.GetShadow: string;
+begin
+  Result := AsText(GetProp('shadow'));
+end;
+
+procedure TVideoPlayer.SetShadow(Value: string);
+begin
+  SetProp('shadow', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetStyle: string;
+begin
+  Result := AsText(GetProp('style'));
+end;
+
+procedure TVideoPlayer.SetStyle(Value: string);
+begin
+  SetProp('style', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetTheme: string;
+begin
+  Result := AsText(GetProp('theme'));
+end;
+
+procedure TVideoPlayer.SetTheme(Value: string);
+begin
+  SetProp('theme', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetFill: string;
+begin
+  Result := AsText(GetProp('fill'));
+end;
+
+procedure TVideoPlayer.SetFill(Value: string);
+begin
+  SetProp('fill', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetBorderColor: string;
+begin
+  Result := AsText(GetProp('border_color'));
+end;
+
+procedure TVideoPlayer.SetBorderColor(Value: string);
+begin
+  SetProp('border_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetTextColor: string;
+begin
+  Result := AsText(GetProp('text_color'));
+end;
+
+procedure TVideoPlayer.SetTextColor(Value: string);
+begin
+  SetProp('text_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetAccentColor: string;
+begin
+  Result := AsText(GetProp('accent_color'));
+end;
+
+procedure TVideoPlayer.SetAccentColor(Value: string);
+begin
+  SetProp('accent_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetSuccessColor: string;
+begin
+  Result := AsText(GetProp('success_color'));
+end;
+
+procedure TVideoPlayer.SetSuccessColor(Value: string);
+begin
+  SetProp('success_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetWarningColor: string;
+begin
+  Result := AsText(GetProp('warning_color'));
+end;
+
+procedure TVideoPlayer.SetWarningColor(Value: string);
+begin
+  SetProp('warning_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetDangerColor: string;
+begin
+  Result := AsText(GetProp('danger_color'));
+end;
+
+procedure TVideoPlayer.SetDangerColor(Value: string);
+begin
+  SetProp('danger_color', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetFontFamily: string;
+begin
+  Result := AsText(GetProp('font_family'));
+end;
+
+procedure TVideoPlayer.SetFontFamily(Value: string);
+begin
+  SetProp('font_family', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetFontSize: Double;
+begin
+  Result := GetProp('font_size').AsFloat;
+end;
+
+procedure TVideoPlayer.SetFontSize(Value: Double);
+begin
+  SetProp('font_size', TJSONFloatNumber.Create(Value));
+end;
+
+function TVideoPlayer.GetFontWeight: string;
+begin
+  Result := AsText(GetProp('font_weight'));
+end;
+
+procedure TVideoPlayer.SetFontWeight(Value: string);
+begin
+  SetProp('font_weight', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetFontItalic: Boolean;
+begin
+  Result := GetProp('font_italic').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetFontItalic(Value: Boolean);
+begin
+  SetProp('font_italic', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetFontUnderline: Boolean;
+begin
+  Result := GetProp('font_underline').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetFontUnderline(Value: Boolean);
+begin
+  SetProp('font_underline', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetFontStrikeout: Boolean;
+begin
+  Result := GetProp('font_strikeout').AsBoolean;
+end;
+
+procedure TVideoPlayer.SetFontStrikeout(Value: Boolean);
+begin
+  SetProp('font_strikeout', TJSONBoolean.Create(Value));
+end;
+
+function TVideoPlayer.GetHint: string;
+begin
+  Result := AsText(GetProp('hint'));
+end;
+
+procedure TVideoPlayer.SetHint(Value: string);
+begin
+  SetProp('hint', TJSONString.Create(Value));
+end;
+
+function TVideoPlayer.GetTag: Int64;
+begin
+  Result := GetProp('tag').AsInt64;
+end;
+
+procedure TVideoPlayer.SetTag(Value: Int64);
+begin
+  SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TVideoPlayer.GetPopupMenu: string;
+begin
+  Result := AsText(GetProp('popup_menu'));
+end;
+
+procedure TVideoPlayer.SetPopupMenu(Value: string);
+begin
+  SetProp('popup_menu', TJSONString.Create(Value));
+end;
+
+procedure TVideoPlayer.Play;
+begin
+  Aylis.Send('media', TJSONObject.Create(['target', Id, 'op', 'play']));
+end;
+
+procedure TVideoPlayer.Pause;
+begin
+  Aylis.Send('media', TJSONObject.Create(['target', Id, 'op', 'pause']));
+end;
+
+procedure TVideoPlayer.Stop;
+begin
+  Aylis.Send('media', TJSONObject.Create(['target', Id, 'op', 'stop']));
+end;
+
+procedure TVideoPlayer.Seek(ASeconds: Double);
+begin
+  Aylis.Send('media', TJSONObject.Create(['target', Id, 'op', 'seek', 'seconds', ASeconds]));
+end;
+
+function TVideoPlayer.Position: Double;
+begin
+  Result := Aylis.Call('media', TJSONObject.Create(['target', Id, 'op', 'position'])).AsFloat;
+end;
+
+function TVideoPlayer.Duration: Double;
+begin
+  Result := Aylis.Call('media', TJSONObject.Create(['target', Id, 'op', 'duration'])).AsFloat;
+end;
+

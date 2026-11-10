@@ -1,0 +1,1494 @@
+{
+  "revisions": {
+    "frmPaint.abrir_click": 1,
+    "frmPaint.abrir_select": 3,
+    "frmPaint.ampliar_click": 2,
+    "frmPaint.colar_click": 3,
+    "frmPaint.copiar_click": 3,
+    "frmPaint.cor1_click": 2,
+    "frmPaint.cor2_click": 2,
+    "frmPaint.desenho_change": 1,
+    "frmPaint.desenho_cursor": 1,
+    "frmPaint.desenho_pick": 1,
+    "frmPaint.desfazer_click": 2,
+    "frmPaint.espessura_change": 1,
+    "frmPaint.excluir_click": 3,
+    "frmPaint.ferramenta_click": 2,
+    "frmPaint.limpar_click": 2,
+    "frmPaint.novo_click": 2,
+    "frmPaint.paleta_click": 2,
+    "frmPaint.preencher_change": 1,
+    "frmPaint.recortar_click": 3,
+    "frmPaint.reduzir_click": 2,
+    "frmPaint.refazer_click": 2,
+    "frmPaint.sair_click": 1,
+    "frmPaint.salvar_click": 1,
+    "frmPaint.salvar_como_click": 1,
+    "frmPaint.salvar_select": 2,
+    "frmPaint.selecionar_tudo_click": 3,
+    "frmPaint.tamanho_real_click": 2
+  },
+  "languages": {
+    "cpp": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "154b0cfacf196b9d",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "eb20d5d12103c0ce",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "a10019cc4075b7ca",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "ff12d3bb8eb59454",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "80dd29e0b8652abf",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "da7a554322b1e7d1",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "c0bada43142d88f0",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "9df47a5f3e465b7b",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "87b7727604e0e2a2",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "be7dd5a39aff2042",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "03d8ea3a2696ca65",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "f40003d996058543",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "f5e5e642fa285cc8",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "7c48adc2e313b281",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "5212a95be1ae79ba",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "465c8ba88764241b",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "52137d8367c9d740",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "9809e9746bb4fc64",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "3c0cb38a94d6c93c",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "2544c4538bc7c0d4",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "240d526801e3b5f7",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "5f98b9491c1a10ed",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "22b96577ed2125c7",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "dad01b756c6a2632",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "52f4d5bf1d0d5a3e",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "3a9571aed31fe79f",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "f8401c80d6d4bc8e",
+          "seen": 2
+        }
+      }
+    },
+    "csharp": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "6aebb90b19d1e1c3",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "992028dc5e00950d",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "d9c6791e01a12234",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "82091cdf8acdb247",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "82091cdf8acdb247",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "186bbe1bd860d547",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "186bbe1bd860d547",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "2b7e52d96ca8788c",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "9f821a0edbc9693f",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "2b7e52d96ca8788c",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "a35f7ab746800880",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "1aa4f8b88ed93ebe",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "32ff525caea72c97",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "d9c6791e01a12234",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "98e223c5e433da39",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "f0a2fc2dd2d6b0f1",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "186bbe1bd860d547",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "c01a341bd0380945",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "82091cdf8acdb247",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "d9c6791e01a12234",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "1e642362a082374a",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "a35f7ab746800880",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "6aebb90b19d1e1c3",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "a35f7ab746800880",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "82091cdf8acdb247",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "32ff525caea72c97",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "d9c6791e01a12234",
+          "seen": 2
+        }
+      }
+    },
+    "go": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "d19b2de811c8e73f",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "927c9357bdc45f8b",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "c860d01165b6752e",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "3305c337bb1f571c",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "a6125dbf0325a729",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "9b4d5ab72abb5ee8",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "9b42dab72ab230e3",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "22944cfa8d3d10ba",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "be57088d9e087184",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "063928370150c445",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "590dacbc1616ecdf",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "60d88f340a69445d",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "f7d36801522cac47",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "557fbfbb9ba6e903",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "fee4d108092cd038",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "66a05e58aed69ab6",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "f427fc218c7400a4",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "2b628d1ed6c43578",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "f5a843b6cb216432",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "de4fc959f61e912a",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "f1d2bb3591a230c9",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "7a4ce1adfd457651",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "6531c518a4429ed8",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "b9187b7c6d7e6340",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "f575af7d102eaf6a",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "a561fdbf099029be",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "401c73dbd420f523",
+          "seen": 2
+        }
+      }
+    },
+    "java": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "cf5568155b41742c",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "610486d908477503",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "780b18dbd9f48884",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "615db2e173ab0807",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "315812d6860d34b6",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "0e5ea823a2ddca0e",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "0577ff239dc1cf1b",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "d238ac6f2bd34436",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "2cf9c04e90e1fc30",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "b3253df5325655de",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "d18fa8197cc59680",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "0ae29fc58594be15",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "dff3c83c27d0d6d4",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "3c46ccf037fe3935",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "474b9769ccaa80b9",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "d0dde57ea3666bec",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "21a14a9aa3067cff",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "922c38ef959cdb0c",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "fc574589c4f358eb",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "b862d9b9fc1d644a",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "54c3bdf8e5fa424a",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "66ecc77df1b60e3e",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "3d5b03e498df8922",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "81b7e25aa48185a1",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "fb6da0f3999a3e66",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "5edef9642f6c7757",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "f5c2a2b64b0ab1f1",
+          "seen": 2
+        }
+      }
+    },
+    "pascal": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "b31f60cabbb153e7",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "9c903ab2dde9118e",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "07155702ed9fe97e",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "1f44a14cc3afe4be",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "478832ac95dea631",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "de2dd1739ce8a03b",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "17ccee7f669f599e",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "ad8ce5387a59d225",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "28ca1e21a2937b3c",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "3a0d0bfd7e688acf",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "148f9be678020441",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "54f43fb40fb0ca4b",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "4804cd23fa337c67",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "1f9bf10f5f68a33c",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "4d616bbb824fbbc8",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "bb183156cef09543",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "41877fface2f9a85",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "b94f432454dd6b3f",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "7eb84b46f3ef73f0",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "e1e272fa34aaa092",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "24483f6a42bf47fb",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "7ed79c9d21e90a31",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "956039fdcde3ebc8",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "a55d8174cd84c7a6",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "5ecc6c5392a50252",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "a51c12837f70f9f8",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "1309d9907599af00",
+          "seen": 2
+        }
+      }
+    },
+    "python": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "e2d91aa3a7586d1f",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "854bebf9552190ba",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "a2a5b16f3bf569e2",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "efe3d3e6bb982b49",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "bda98aab28ea4149",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "a0ad5657e4a81a18",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "a0a35657e49fc593",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "b2c1598dd8c4744a",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "48360334030b6613",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "0e58ba65e6b80a6e",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "f852083278ec7fe7",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "8740d9611e0374c1",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "4a057fa90a189be7",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "ea5a5a1b689aa71c",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "fe21e4214a5dd148",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "e3aa475d5b4f016f",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "11ccb35f3ed8dafa",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "fe844c1eb011b3a4",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "379bdc505a7e7fd2",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "4ed6ad7e9ad1b46d",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "9e8cd6428b9e3419",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "54c816f22a56edf1",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "140943eff4b07a8a",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "0fc3dbd2e4b7e960",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "24fcdb65081a1ed9",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "3e5e091001d2d497",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "07434e10013966d7",
+          "seen": 2
+        }
+      }
+    },
+    "rust": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "4367d7fc7d34a421",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "df457ae22ac0a006",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "49a58604ed3390ee",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "f77f49a0ef368282",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "ace614517ea9cec4",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "c6b5c87d1840b307",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "d03f717d1de70f4a",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "48d8f210ee178275",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "1a08a962181a32ea",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "62508538141d560c",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "807be7e487ef7539",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "3e1b1b28d8477456",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "7811425c0ff90072",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "451a822f0f6cc11e",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "8aadc8b911eea390",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "a41ce11055568496",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "4e00f5831a355581",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "2881a66462ab47d9",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "7648fabc527d1985",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "73854ccf7a392f26",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "d0055b279d89b8c7",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "d117222643288be1",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "d680bb74de57aed1",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "f207c1d1ce72a89e",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "0978b03f91631431",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "bf01612b4b4b46b0",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "f3651f2ed04c09ba",
+          "seen": 2
+        }
+      }
+    },
+    "typescript": {
+      "bindings": {
+        "frmPaint/btnBalde.on_click": "ferramenta_click",
+        "frmPaint/btnBorracha.on_click": "ferramenta_click",
+        "frmPaint/btnContaGotas.on_click": "ferramenta_click",
+        "frmPaint/btnCor1.on_click": "cor1_click",
+        "frmPaint/btnCor2.on_click": "cor2_click",
+        "frmPaint/btnDesfazer.on_click": "desfazer_click",
+        "frmPaint/btnElipse.on_click": "ferramenta_click",
+        "frmPaint/btnLapis.on_click": "ferramenta_click",
+        "frmPaint/btnLinha.on_click": "ferramenta_click",
+        "frmPaint/btnPaleta01.on_click": "paleta_click",
+        "frmPaint/btnPaleta02.on_click": "paleta_click",
+        "frmPaint/btnPaleta03.on_click": "paleta_click",
+        "frmPaint/btnPaleta04.on_click": "paleta_click",
+        "frmPaint/btnPaleta05.on_click": "paleta_click",
+        "frmPaint/btnPaleta06.on_click": "paleta_click",
+        "frmPaint/btnPaleta07.on_click": "paleta_click",
+        "frmPaint/btnPaleta08.on_click": "paleta_click",
+        "frmPaint/btnPaleta09.on_click": "paleta_click",
+        "frmPaint/btnPaleta10.on_click": "paleta_click",
+        "frmPaint/btnPaleta11.on_click": "paleta_click",
+        "frmPaint/btnPaleta12.on_click": "paleta_click",
+        "frmPaint/btnPaleta13.on_click": "paleta_click",
+        "frmPaint/btnPaleta14.on_click": "paleta_click",
+        "frmPaint/btnPaleta15.on_click": "paleta_click",
+        "frmPaint/btnPaleta16.on_click": "paleta_click",
+        "frmPaint/btnPaleta17.on_click": "paleta_click",
+        "frmPaint/btnPaleta18.on_click": "paleta_click",
+        "frmPaint/btnPaleta19.on_click": "paleta_click",
+        "frmPaint/btnPaleta20.on_click": "paleta_click",
+        "frmPaint/btnPincel.on_click": "ferramenta_click",
+        "frmPaint/btnRefazer.on_click": "refazer_click",
+        "frmPaint/btnRetangulo.on_click": "ferramenta_click",
+        "frmPaint/btnSalvar.on_click": "salvar_click",
+        "frmPaint/btnSelecionar.on_click": "ferramenta_click",
+        "frmPaint/cbEspessura.on_change": "espessura_change",
+        "frmPaint/chkPreencher.on_change": "preencher_change",
+        "frmPaint/dlgAbrir.on_select": "abrir_select",
+        "frmPaint/dlgSalvar.on_select": "salvar_select",
+        "frmPaint/mnuAbrir.on_click": "abrir_click",
+        "frmPaint/mnuAmpliar.on_click": "ampliar_click",
+        "frmPaint/mnuColar.on_click": "colar_click",
+        "frmPaint/mnuCopiar.on_click": "copiar_click",
+        "frmPaint/mnuDesfazer.on_click": "desfazer_click",
+        "frmPaint/mnuExcluir.on_click": "excluir_click",
+        "frmPaint/mnuLimpar.on_click": "limpar_click",
+        "frmPaint/mnuNovo.on_click": "novo_click",
+        "frmPaint/mnuRecortar.on_click": "recortar_click",
+        "frmPaint/mnuReduzir.on_click": "reduzir_click",
+        "frmPaint/mnuRefazer.on_click": "refazer_click",
+        "frmPaint/mnuSair.on_click": "sair_click",
+        "frmPaint/mnuSalvar.on_click": "salvar_click",
+        "frmPaint/mnuSalvarComo.on_click": "salvar_como_click",
+        "frmPaint/mnuSelecionarTudo.on_click": "selecionar_tudo_click",
+        "frmPaint/mnuTamanhoReal.on_click": "tamanho_real_click",
+        "frmPaint/pcDesenho.on_change": "desenho_change",
+        "frmPaint/pcDesenho.on_cursor": "desenho_cursor",
+        "frmPaint/pcDesenho.on_pick": "desenho_pick"
+      },
+      "handlers": {
+        "frmPaint.abrir_click": {
+          "hash": "6f29cba84fd10a60",
+          "seen": 1
+        },
+        "frmPaint.abrir_select": {
+          "hash": "553232e5f190c0bb",
+          "seen": 3
+        },
+        "frmPaint.ampliar_click": {
+          "hash": "f10cd422cf072130",
+          "seen": 2
+        },
+        "frmPaint.colar_click": {
+          "hash": "d8f4d4db79b72665",
+          "seen": 3
+        },
+        "frmPaint.copiar_click": {
+          "hash": "8cf3b5a95d8f842a",
+          "seen": 3
+        },
+        "frmPaint.cor1_click": {
+          "hash": "9cf396a51974efaa",
+          "seen": 2
+        },
+        "frmPaint.cor2_click": {
+          "hash": "951ceda5154027e7",
+          "seen": 2
+        },
+        "frmPaint.desenho_change": {
+          "hash": "d4f7f904f1ebc53a",
+          "seen": 1
+        },
+        "frmPaint.desenho_cursor": {
+          "hash": "cc6b152d904e54a9",
+          "seen": 1
+        },
+        "frmPaint.desenho_pick": {
+          "hash": "e1c1e563d2b69616",
+          "seen": 1
+        },
+        "frmPaint.desfazer_click": {
+          "hash": "6a467d2345c107d4",
+          "seen": 2
+        },
+        "frmPaint.espessura_change": {
+          "hash": "1fef7af64a3b8cee",
+          "seen": 1
+        },
+        "frmPaint.excluir_click": {
+          "hash": "c4de2701ee0f2610",
+          "seen": 3
+        },
+        "frmPaint.ferramenta_click": {
+          "hash": "559b9ccf9d0ee9be",
+          "seen": 2
+        },
+        "frmPaint.limpar_click": {
+          "hash": "2f9f969c882a0147",
+          "seen": 2
+        },
+        "frmPaint.novo_click": {
+          "hash": "507bafb272016a17",
+          "seen": 2
+        },
+        "frmPaint.paleta_click": {
+          "hash": "d4b28d2834d174c1",
+          "seen": 2
+        },
+        "frmPaint.preencher_change": {
+          "hash": "c02ced3344151b47",
+          "seen": 1
+        },
+        "frmPaint.recortar_click": {
+          "hash": "096cf3f81c0d3bef",
+          "seen": 3
+        },
+        "frmPaint.reduzir_click": {
+          "hash": "4449ec2c6a8518c7",
+          "seen": 2
+        },
+        "frmPaint.refazer_click": {
+          "hash": "6f4893bbded72616",
+          "seen": 2
+        },
+        "frmPaint.sair_click": {
+          "hash": "59877938e5b5aeba",
+          "seen": 1
+        },
+        "frmPaint.salvar_click": {
+          "hash": "7b1c260743e3e3c5",
+          "seen": 1
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "365501684fbc8cfd",
+          "seen": 1
+        },
+        "frmPaint.salvar_select": {
+          "hash": "e758ee428c1002ce",
+          "seen": 2
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "2f6532db9550fbbb",
+          "seen": 3
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "bccf46ec3dc7bdcd",
+          "seen": 2
+        }
+      }
+    }
+  },
+  "components": [
+    "btnBalde",
+    "btnBorracha",
+    "btnContaGotas",
+    "btnCor1",
+    "btnCor2",
+    "btnDesfazer",
+    "btnElipse",
+    "btnLapis",
+    "btnLinha",
+    "btnPaleta01",
+    "btnPaleta02",
+    "btnPaleta03",
+    "btnPaleta04",
+    "btnPaleta05",
+    "btnPaleta06",
+    "btnPaleta07",
+    "btnPaleta08",
+    "btnPaleta09",
+    "btnPaleta10",
+    "btnPaleta11",
+    "btnPaleta12",
+    "btnPaleta13",
+    "btnPaleta14",
+    "btnPaleta15",
+    "btnPaleta16",
+    "btnPaleta17",
+    "btnPaleta18",
+    "btnPaleta19",
+    "btnPaleta20",
+    "btnPincel",
+    "btnRefazer",
+    "btnRetangulo",
+    "btnSalvar",
+    "btnSelecionar",
+    "cbEspessura",
+    "chkPreencher",
+    "divFerramentas",
+    "divFormas",
+    "divPinceis",
+    "divSelecao",
+    "divTamanho",
+    "divTopo",
+    "dlgAbrir",
+    "dlgSalvar",
+    "frmPaint",
+    "grdFerramentas",
+    "grdFormas",
+    "grdPaleta",
+    "lblCores",
+    "lblFerramentasGrupo",
+    "lblFormas",
+    "lblPinceis",
+    "lblPosicao",
+    "lblSelecaoGrupo",
+    "lblTamanho",
+    "lblTamanhoGrupo",
+    "lblZoom",
+    "lytCores",
+    "lytFerramentas",
+    "lytFormas",
+    "lytPinceis",
+    "lytSelecao",
+    "lytTamanho",
+    "lytTopo",
+    "mnuAbrir",
+    "mnuAmpliar",
+    "mnuArquivo",
+    "mnuColar",
+    "mnuCopiar",
+    "mnuDesfazer",
+    "mnuEditar",
+    "mnuExcluir",
+    "mnuExibir",
+    "mnuLimpar",
+    "mnuNovo",
+    "mnuPrincipal",
+    "mnuRecortar",
+    "mnuReduzir",
+    "mnuRefazer",
+    "mnuSair",
+    "mnuSalvar",
+    "mnuSalvarComo",
+    "mnuSelecionarTudo",
+    "mnuSep1",
+    "mnuSep2",
+    "mnuSep3",
+    "mnuTamanhoReal",
+    "pcDesenho",
+    "pnlFaixa",
+    "sbxArea",
+    "stbStatus"
+  ]
+}

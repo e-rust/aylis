@@ -1,0 +1,52 @@
+
+/** Um MenuItem de um form. */
+export class MenuItem extends AylisComponent {
+    get text(): Promise<string> {
+        return this.getProp("text");
+    }
+    set text(value: string) {
+        this.setProp("text", value);
+    }
+    get shortcut(): Promise<string> {
+        return this.getProp("shortcut");
+    }
+    set shortcut(value: string) {
+        this.setProp("shortcut", value);
+    }
+    get enabled(): Promise<boolean> {
+        return this.getProp("enabled");
+    }
+    set enabled(value: boolean) {
+        this.setProp("enabled", value);
+    }
+    get checked(): Promise<boolean> {
+        return this.getProp("checked");
+    }
+    set checked(value: boolean) {
+        this.setProp("checked", value);
+    }
+    get autoCheck(): Promise<boolean> {
+        return this.getProp("auto_check");
+    }
+    set autoCheck(value: boolean) {
+        this.setProp("auto_check", value);
+    }
+    get icon(): Promise<string> {
+        return this.getProp("icon");
+    }
+    set icon(value: string) {
+        this.setProp("icon", value);
+    }
+    get visible(): Promise<boolean> {
+        return this.getProp("visible");
+    }
+    set visible(value: boolean) {
+        this.setProp("visible", value);
+    }
+    get danger(): Promise<boolean> {
+        return this.getProp("danger");
+    }
+    set danger(value: boolean) {
+        this.setProp("danger", value);
+    }
+}

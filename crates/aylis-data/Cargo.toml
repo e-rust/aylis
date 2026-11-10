@@ -1,0 +1,12 @@
+[package]
+name = "aylis-data"
+description = "Camada de dados do aylis no estilo VCL: ClientDataSet, Field, DataSource e delta para o backend"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+web-time = "1"
+aylis-core = { path = "../aylis-core" }
+serde_json = { version = "1", features = ["preserve_order"] }

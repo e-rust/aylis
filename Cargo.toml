@@ -1,0 +1,48 @@
+[workspace]
+resolver = "3"
+members = ["crates/aylis-core", "crates/aylis-controls", "crates/aylis-controls-base", "crates/aylis-controls-charts", "crates/aylis-controls-device", "crates/aylis-controls-editors", "crates/aylis-controls-industrial", "crates/aylis-skia", "crates/aylis-d2d", "crates/aylis-web", "crates/aylis-json", "crates/aylis-data", "crates/aylis-dbcontrols", "crates/aylis-providers", "crates/aylis-platform-winit", "crates/aylis-remote", "crates/aylis-host", "crates/aylis-capi", "crates/aylis-ide", "crates/aylis-ide-web", "crates/aylis-demos", "crates/aylis-project", "crates/aylis-media", "crates/aylis-markdown", "crates/aylis-webview", "crates/aylis-vector", "crates/aylis-3d", "crates/aylis-docview", "crates/aylis", "crates/aylis-build", "crates/aylis-tools", "crates/aylis-devlink", "crates/aylis-migrate", "examples/Calculadora/rust", "examples/OlaNome/rust", "examples/Paint/rust", "examples/Player/rust", "examples/IBGE/rust", "examples/GradeGigante/rust", "examples/Relatorios/rust", "examples/TesteAparelho/rust", "examples/Estresse3D/rust", "examples/Abas/rust", "examples/pacotes/Medidor", "examples/pacotes/BotaoContador", "examples/Landing/rust", "examples/Galeria/rust"]
+# O ERP de exemplo (1009 forms, item 21) compila à parte: no workspace, cada `cargo test
+# --workspace` compilaria as 1009 telas.
+exclude = ["examples/ERP/rust"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.88"
+
+# O código do aylis só com as linhas (backtrace com arquivo e linha, passo a passo por linha):
+# a depuração completa deixava cada executável de teste com um .pdb de ~165 MB.
+[profile.dev]
+debug = "line-tables-only"
+
+# Dependências sem informação de depuração no modo de desenvolvimento: os .pdb delas são
+# a maior parte do target (gigabytes). O código do aylis continua depurável.
+# Otimizadas: no modo de desenvolvimento a tela tem de acompanhar o monitor (a rolagem, as
+# animações), e sem otimização o Rust fica de 10 a 50 vezes mais lento.
+[profile.dev.package."*"]
+debug = false
+opt-level = 2
+
+# O que pinta cada quadro (núcleo, controles, renderizadores, plataforma): otimização leve,
+# que ainda deixa o passo a passo por linha.
+[profile.dev.package.aylis-core]
+opt-level = 1
+[profile.dev.package.aylis-controls]
+opt-level = 1
+[profile.dev.package.aylis-controls-base]
+opt-level = 1
+[profile.dev.package.aylis-controls-charts]
+opt-level = 1
+[profile.dev.package.aylis-controls-device]
+opt-level = 1
+[profile.dev.package.aylis-controls-editors]
+opt-level = 1
+[profile.dev.package.aylis-controls-industrial]
+opt-level = 1
+[profile.dev.package.aylis-skia]
+opt-level = 1
+[profile.dev.package.aylis-d2d]
+opt-level = 1
+[profile.dev.package.aylis-platform-winit]
+opt-level = 1

@@ -1,0 +1,280 @@
+
+
+class FrmPlayerComponents(Form):
+    """O form frmPlayer e os componentes dele (resolvidos ao abrir; cada janela tem a sua instância)."""
+
+    def bind(self, components):
+        self.mnuPrincipal = self._resolve(components, "mnuPrincipal", "MainMenu", MainMenu)
+        self.mnuArquivo = self._resolve(components, "mnuArquivo", "MenuItem", MenuItem)
+        self.mnuAbrir = self._resolve(components, "mnuAbrir", "MenuItem", MenuItem)
+        self.mnuLimparFila = self._resolve(components, "mnuLimparFila", "MenuItem", MenuItem)
+        self.mnuSep1 = self._resolve(components, "mnuSep1", "MenuItem", MenuItem)
+        self.mnuSair = self._resolve(components, "mnuSair", "MenuItem", MenuItem)
+        self.mnuReproduzir = self._resolve(components, "mnuReproduzir", "MenuItem", MenuItem)
+        self.mnuReproduzirPausar = self._resolve(components, "mnuReproduzirPausar", "MenuItem", MenuItem)
+        self.mnuParar = self._resolve(components, "mnuParar", "MenuItem", MenuItem)
+        self.mnuAnterior = self._resolve(components, "mnuAnterior", "MenuItem", MenuItem)
+        self.mnuProxima = self._resolve(components, "mnuProxima", "MenuItem", MenuItem)
+        self.mnuSep2 = self._resolve(components, "mnuSep2", "MenuItem", MenuItem)
+        self.mnuEmbaralhar = self._resolve(components, "mnuEmbaralhar", "MenuItem", MenuItem)
+        self.mnuRepetir = self._resolve(components, "mnuRepetir", "MenuItem", MenuItem)
+        self.mnuExibir = self._resolve(components, "mnuExibir", "MenuItem", MenuItem)
+        self.mnuAgora = self._resolve(components, "mnuAgora", "MenuItem", MenuItem)
+        self.mnuFila = self._resolve(components, "mnuFila", "MenuItem", MenuItem)
+        self.pnlControles = self._resolve(components, "pnlControles", "Panel", Panel)
+        self.lytBarra = self._resolve(components, "lytBarra", "Layout", Layout)
+        self.lblTempo = self._resolve(components, "lblTempo", "Label", Label)
+        self.lblDuracao = self._resolve(components, "lblDuracao", "Label", Label)
+        self.sbPosicao = self._resolve(components, "sbPosicao", "SeekBar", SeekBar)
+        self.lytInfo = self._resolve(components, "lytInfo", "Layout", Layout)
+        self.icoCapa = self._resolve(components, "icoCapa", "Icon", Icon)
+        self.lytTextos = self._resolve(components, "lytTextos", "Layout", Layout)
+        self.lblTitulo = self._resolve(components, "lblTitulo", "Label", Label)
+        self.lblDetalhe = self._resolve(components, "lblDetalhe", "Label", Label)
+        self.lytVolume = self._resolve(components, "lytVolume", "Layout", Layout)
+        self.btnMudo = self._resolve(components, "btnMudo", "Button", Button)
+        self.tbVolume = self._resolve(components, "tbVolume", "TrackBar", TrackBar)
+        self.lytBotoes = self._resolve(components, "lytBotoes", "Layout", Layout)
+        self.lytBotoesCentro = self._resolve(components, "lytBotoesCentro", "Layout", Layout)
+        self.btnEmbaralhar = self._resolve(components, "btnEmbaralhar", "Button", Button)
+        self.btnAnterior = self._resolve(components, "btnAnterior", "Button", Button)
+        self.btnReproduzir = self._resolve(components, "btnReproduzir", "Button", Button)
+        self.btnProxima = self._resolve(components, "btnProxima", "Button", Button)
+        self.btnRepetir = self._resolve(components, "btnRepetir", "Button", Button)
+        self.lytNavegacao = self._resolve(components, "lytNavegacao", "Layout", Layout)
+        self.btnAgora = self._resolve(components, "btnAgora", "Button", Button)
+        self.btnFila = self._resolve(components, "btnFila", "Button", Button)
+        self.divNavegacao = self._resolve(components, "divNavegacao", "Divider", Divider)
+        self.btnAbrirArquivos = self._resolve(components, "btnAbrirArquivos", "Button", Button)
+        self.pnlAgora = self._resolve(components, "pnlAgora", "Panel", Panel)
+        self.vpVideo = self._resolve(components, "vpVideo", "VideoPlayer", VideoPlayer)
+        self.pnlFila = self._resolve(components, "pnlFila", "Panel", Panel)
+        self.lblFila = self._resolve(components, "lblFila", "Label", Label)
+        self.lytFilaBotoes = self._resolve(components, "lytFilaBotoes", "Layout", Layout)
+        self.btnAdicionar = self._resolve(components, "btnAdicionar", "Button", Button)
+        self.btnLimparFila = self._resolve(components, "btnLimparFila", "Button", Button)
+        self.lvFila = self._resolve(components, "lvFila", "ListView", ListView)
+        self.dlgAbrir = self._resolve(components, "dlgAbrir", "OpenDialog", OpenDialog)
+        self.tmrPosicao = self._resolve(components, "tmrPosicao", "Timer", Timer)
+
+    def find_button(self, name):
+        """O Button deste form com o nome (como o FindComponent)."""
+        if name == "btnMudo":
+            return self.btnMudo
+        if name == "btnEmbaralhar":
+            return self.btnEmbaralhar
+        if name == "btnAnterior":
+            return self.btnAnterior
+        if name == "btnReproduzir":
+            return self.btnReproduzir
+        if name == "btnProxima":
+            return self.btnProxima
+        if name == "btnRepetir":
+            return self.btnRepetir
+        if name == "btnAgora":
+            return self.btnAgora
+        if name == "btnFila":
+            return self.btnFila
+        if name == "btnAbrirArquivos":
+            return self.btnAbrirArquivos
+        if name == "btnAdicionar":
+            return self.btnAdicionar
+        if name == "btnLimparFila":
+            return self.btnLimparFila
+        return None
+
+    def sender_as_button(self, event):
+        """O Button que disparou o evento."""
+        return self.find_button(event["sender"]["name"])
+
+    def find_divider(self, name):
+        """O Divider deste form com o nome (como o FindComponent)."""
+        if name == "divNavegacao":
+            return self.divNavegacao
+        return None
+
+    def sender_as_divider(self, event):
+        """O Divider que disparou o evento."""
+        return self.find_divider(event["sender"]["name"])
+
+    def find_icon(self, name):
+        """O Icon deste form com o nome (como o FindComponent)."""
+        if name == "icoCapa":
+            return self.icoCapa
+        return None
+
+    def sender_as_icon(self, event):
+        """O Icon que disparou o evento."""
+        return self.find_icon(event["sender"]["name"])
+
+    def find_label(self, name):
+        """O Label deste form com o nome (como o FindComponent)."""
+        if name == "lblTempo":
+            return self.lblTempo
+        if name == "lblDuracao":
+            return self.lblDuracao
+        if name == "lblTitulo":
+            return self.lblTitulo
+        if name == "lblDetalhe":
+            return self.lblDetalhe
+        if name == "lblFila":
+            return self.lblFila
+        return None
+
+    def sender_as_label(self, event):
+        """O Label que disparou o evento."""
+        return self.find_label(event["sender"]["name"])
+
+    def find_layout(self, name):
+        """O Layout deste form com o nome (como o FindComponent)."""
+        if name == "lytBarra":
+            return self.lytBarra
+        if name == "lytInfo":
+            return self.lytInfo
+        if name == "lytTextos":
+            return self.lytTextos
+        if name == "lytVolume":
+            return self.lytVolume
+        if name == "lytBotoes":
+            return self.lytBotoes
+        if name == "lytBotoesCentro":
+            return self.lytBotoesCentro
+        if name == "lytNavegacao":
+            return self.lytNavegacao
+        if name == "lytFilaBotoes":
+            return self.lytFilaBotoes
+        return None
+
+    def sender_as_layout(self, event):
+        """O Layout que disparou o evento."""
+        return self.find_layout(event["sender"]["name"])
+
+    def find_list_view(self, name):
+        """O ListView deste form com o nome (como o FindComponent)."""
+        if name == "lvFila":
+            return self.lvFila
+        return None
+
+    def sender_as_list_view(self, event):
+        """O ListView que disparou o evento."""
+        return self.find_list_view(event["sender"]["name"])
+
+    def find_main_menu(self, name):
+        """O MainMenu deste form com o nome (como o FindComponent)."""
+        if name == "mnuPrincipal":
+            return self.mnuPrincipal
+        return None
+
+    def sender_as_main_menu(self, event):
+        """O MainMenu que disparou o evento."""
+        return self.find_main_menu(event["sender"]["name"])
+
+    def find_menu_item(self, name):
+        """O MenuItem deste form com o nome (como o FindComponent)."""
+        if name == "mnuArquivo":
+            return self.mnuArquivo
+        if name == "mnuAbrir":
+            return self.mnuAbrir
+        if name == "mnuLimparFila":
+            return self.mnuLimparFila
+        if name == "mnuSep1":
+            return self.mnuSep1
+        if name == "mnuSair":
+            return self.mnuSair
+        if name == "mnuReproduzir":
+            return self.mnuReproduzir
+        if name == "mnuReproduzirPausar":
+            return self.mnuReproduzirPausar
+        if name == "mnuParar":
+            return self.mnuParar
+        if name == "mnuAnterior":
+            return self.mnuAnterior
+        if name == "mnuProxima":
+            return self.mnuProxima
+        if name == "mnuSep2":
+            return self.mnuSep2
+        if name == "mnuEmbaralhar":
+            return self.mnuEmbaralhar
+        if name == "mnuRepetir":
+            return self.mnuRepetir
+        if name == "mnuExibir":
+            return self.mnuExibir
+        if name == "mnuAgora":
+            return self.mnuAgora
+        if name == "mnuFila":
+            return self.mnuFila
+        return None
+
+    def sender_as_menu_item(self, event):
+        """O MenuItem que disparou o evento."""
+        return self.find_menu_item(event["sender"]["name"])
+
+    def find_open_dialog(self, name):
+        """O OpenDialog deste form com o nome (como o FindComponent)."""
+        if name == "dlgAbrir":
+            return self.dlgAbrir
+        return None
+
+    def sender_as_open_dialog(self, event):
+        """O OpenDialog que disparou o evento."""
+        return self.find_open_dialog(event["sender"]["name"])
+
+    def find_panel(self, name):
+        """O Panel deste form com o nome (como o FindComponent)."""
+        if name == "pnlControles":
+            return self.pnlControles
+        if name == "pnlAgora":
+            return self.pnlAgora
+        if name == "pnlFila":
+            return self.pnlFila
+        return None
+
+    def sender_as_panel(self, event):
+        """O Panel que disparou o evento."""
+        return self.find_panel(event["sender"]["name"])
+
+    def find_seek_bar(self, name):
+        """O SeekBar deste form com o nome (como o FindComponent)."""
+        if name == "sbPosicao":
+            return self.sbPosicao
+        return None
+
+    def sender_as_seek_bar(self, event):
+        """O SeekBar que disparou o evento."""
+        return self.find_seek_bar(event["sender"]["name"])
+
+    def find_timer(self, name):
+        """O Timer deste form com o nome (como o FindComponent)."""
+        if name == "tmrPosicao":
+            return self.tmrPosicao
+        return None
+
+    def sender_as_timer(self, event):
+        """O Timer que disparou o evento."""
+        return self.find_timer(event["sender"]["name"])
+
+    def find_track_bar(self, name):
+        """O TrackBar deste form com o nome (como o FindComponent)."""
+        if name == "tbVolume":
+            return self.tbVolume
+        return None
+
+    def sender_as_track_bar(self, event):
+        """O TrackBar que disparou o evento."""
+        return self.find_track_bar(event["sender"]["name"])
+
+    def find_video_player(self, name):
+        """O VideoPlayer deste form com o nome (como o FindComponent)."""
+        if name == "vpVideo":
+            return self.vpVideo
+        return None
+
+    def sender_as_video_player(self, event):
+        """O VideoPlayer que disparou o evento."""
+        return self.find_video_player(event["sender"]["name"])
+
+
+
+# A janela de frmPlayer cujo evento está rodando (a primeira, fora dos handlers).
+frmPlayer = CurrentForm("frmPlayer")
+register_form_class("frmPlayer", FrmPlayerComponents, frmPlayer._activate)

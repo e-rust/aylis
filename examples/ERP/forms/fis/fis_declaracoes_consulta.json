@@ -1,0 +1,216 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmFisDeclaracoesConsulta",
+    "caption": "Declarações — consulta (Fiscal)",
+    "on_show": "form_show",
+    "width": 1100,
+    "height": 700,
+    "padding": 8,
+    "children": [
+      {
+        "class": "ClientDataSet",
+        "name": "cdsMestre",
+        "key_fields": "id",
+        "index_field_names": "parceiro",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsMestreId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreNumero",
+            "field_name": "numero",
+            "type": "integer",
+            "display_label": "Número",
+            "display_width": 80
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreData",
+            "field_name": "data",
+            "type": "date",
+            "display_label": "Data",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreParceiro",
+            "field_name": "parceiro",
+            "size": 80,
+            "display_label": "Participante",
+            "display_width": 200,
+            "required": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreValorTotal",
+            "field_name": "valor_total",
+            "type": "currency",
+            "display_label": "Valor total",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreSituacao",
+            "field_name": "situacao",
+            "size": 20,
+            "display_label": "Situação",
+            "display_width": 100
+          },
+          {
+            "class": "Field",
+            "name": "cdsMestreObservacao",
+            "field_name": "observacao",
+            "size": 200,
+            "display_label": "Observação",
+            "display_width": 200
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsMestre",
+        "data_set": "cdsMestre"
+      },
+      {
+        "class": "ClientDataSet",
+        "name": "cdsItens",
+        "key_fields": "id",
+        "master_source": "dsMestre",
+        "master_fields": "mestre_id=id",
+        "children": [
+          {
+            "class": "Field",
+            "name": "cdsItensId",
+            "field_name": "id",
+            "type": "auto_inc",
+            "display_label": "Id",
+            "display_width": 50,
+            "read_only": true
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensMestreId",
+            "field_name": "mestre_id",
+            "type": "integer",
+            "display_label": "Documento",
+            "display_width": 80,
+            "visible": false
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensItem",
+            "field_name": "item",
+            "size": 80,
+            "display_label": "Item",
+            "display_width": 240
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensQuantidade",
+            "field_name": "quantidade",
+            "type": "integer",
+            "display_label": "Qtd.",
+            "display_width": 60
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensValorUnitario",
+            "field_name": "valor_unitario",
+            "type": "currency",
+            "display_label": "Valor unitário",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          },
+          {
+            "class": "Field",
+            "name": "cdsItensValorTotal",
+            "field_name": "valor_total",
+            "type": "currency",
+            "display_label": "Total",
+            "display_width": 110,
+            "display_format": "#,##0.00"
+          }
+        ]
+      },
+      {
+        "class": "DataSource",
+        "name": "dsItens",
+        "data_set": "cdsItens"
+      },
+      {
+        "class": "Panel",
+        "name": "pnlBarra",
+        "height": 44,
+        "align": "top",
+        "padding": 6,
+        "children": [
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar declarações…",
+            "on_change": "edt_busca_change",
+            "width": 260,
+            "align": "right"
+          }
+        ]
+      },
+      {
+        "class": "Label",
+        "name": "lblStatus",
+        "height": 24,
+        "align": "bottom",
+        "margins": [4, 4, 4, 0]
+      },
+      {
+        "class": "GroupBox",
+        "name": "gbMestre",
+        "caption": "Declarações",
+        "height": 320,
+        "align": "top",
+        "padding": [8, 24, 8, 8],
+        "children": [
+          {
+            "class": "DataGrid",
+            "name": "grdMestre",
+            "data_source": "dsMestre",
+            "read_only": true,
+            "filter_row": true,
+            "align": "client"
+          }
+        ]
+      },
+      {
+        "class": "Splitter",
+        "name": "splConsulta",
+        "align": "top"
+      },
+      {
+        "class": "GroupBox",
+        "name": "gbItens",
+        "caption": "Itens",
+        "align": "client",
+        "padding": [8, 24, 8, 8],
+        "children": [
+          {
+            "class": "DataGrid",
+            "name": "grdItens",
+            "data_source": "dsItens",
+            "read_only": true,
+            "filter_row": true,
+            "align": "client"
+          }
+        ]
+      }
+    ]
+  }
+}

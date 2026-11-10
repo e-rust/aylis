@@ -1,0 +1,166 @@
+
+// aylisCheckBox é um CheckBox de um form.
+type aylisCheckBox struct{ aylis.Component }
+
+func (c aylisCheckBox) Text() string { return asText(c.Get("text")) }
+func (c aylisCheckBox) SetText(v string) { c.Set("text", v) }
+
+func (c aylisCheckBox) Checked() bool { return asBool(c.Get("checked")) }
+func (c aylisCheckBox) SetChecked(v bool) { c.Set("checked", v) }
+
+func (c aylisCheckBox) BoxSize() float64 { return asNumber(c.Get("box_size")) }
+func (c aylisCheckBox) SetBoxSize(v float64) { c.Set("box_size", v) }
+
+func (c aylisCheckBox) Left() float64 { return asNumber(c.Get("left")) }
+func (c aylisCheckBox) SetLeft(v float64) { c.Set("left", v) }
+
+func (c aylisCheckBox) Top() float64 { return asNumber(c.Get("top")) }
+func (c aylisCheckBox) SetTop(v float64) { c.Set("top", v) }
+
+func (c aylisCheckBox) Width() float64 { return asNumber(c.Get("width")) }
+func (c aylisCheckBox) SetWidth(v float64) { c.Set("width", v) }
+
+func (c aylisCheckBox) Height() float64 { return asNumber(c.Get("height")) }
+func (c aylisCheckBox) SetHeight(v float64) { c.Set("height", v) }
+
+func (c aylisCheckBox) Align() string { return asText(c.Get("align")) }
+func (c aylisCheckBox) SetAlign(v string) { c.Set("align", v) }
+
+func (c aylisCheckBox) Visible() bool { return asBool(c.Get("visible")) }
+func (c aylisCheckBox) SetVisible(v bool) { c.Set("visible", v) }
+
+func (c aylisCheckBox) Enabled() bool { return asBool(c.Get("enabled")) }
+func (c aylisCheckBox) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisCheckBox) HitTest() bool { return asBool(c.Get("hit_test")) }
+func (c aylisCheckBox) SetHitTest(v bool) { c.Set("hit_test", v) }
+
+func (c aylisCheckBox) ClipChildren() bool { return asBool(c.Get("clip_children")) }
+func (c aylisCheckBox) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisCheckBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
+func (c aylisCheckBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
+
+func (c aylisCheckBox) CanFocus() bool { return asBool(c.Get("can_focus")) }
+func (c aylisCheckBox) SetCanFocus(v bool) { c.Set("can_focus", v) }
+
+func (c aylisCheckBox) Draggable() bool { return asBool(c.Get("draggable")) }
+func (c aylisCheckBox) SetDraggable(v bool) { c.Set("draggable", v) }
+
+func (c aylisCheckBox) AcceptsDrops() bool { return asBool(c.Get("accepts_drops")) }
+func (c aylisCheckBox) SetAcceptsDrops(v bool) { c.Set("accepts_drops", v) }
+
+func (c aylisCheckBox) DragData() string { return asText(c.Get("drag_data")) }
+func (c aylisCheckBox) SetDragData(v string) { c.Set("drag_data", v) }
+
+func (c aylisCheckBox) DragLabel() string { return asText(c.Get("drag_label")) }
+func (c aylisCheckBox) SetDragLabel(v string) { c.Set("drag_label", v) }
+
+func (c aylisCheckBox) DragImage() string { return asText(c.Get("drag_image")) }
+func (c aylisCheckBox) SetDragImage(v string) { c.Set("drag_image", v) }
+
+func (c aylisCheckBox) DropTypes() string { return asText(c.Get("drop_types")) }
+func (c aylisCheckBox) SetDropTypes(v string) { c.Set("drop_types", v) }
+
+func (c aylisCheckBox) TabStop() bool { return asBool(c.Get("tab_stop")) }
+func (c aylisCheckBox) SetTabStop(v bool) { c.Set("tab_stop", v) }
+
+func (c aylisCheckBox) Cursor() string { return asText(c.Get("cursor")) }
+func (c aylisCheckBox) SetCursor(v string) { c.Set("cursor", v) }
+
+func (c aylisCheckBox) Opacity() float64 { return asNumber(c.Get("opacity")) }
+func (c aylisCheckBox) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisCheckBox) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
+func (c aylisCheckBox) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
+
+func (c aylisCheckBox) Rotation() float64 { return asNumber(c.Get("rotation")) }
+func (c aylisCheckBox) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisCheckBox) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
+func (c aylisCheckBox) SetTranslateX(v float64) { c.Set("translate_x", v) }
+
+func (c aylisCheckBox) TranslateY() float64 { return asNumber(c.Get("translate_y")) }
+func (c aylisCheckBox) SetTranslateY(v float64) { c.Set("translate_y", v) }
+
+func (c aylisCheckBox) AspectRatio() float64 { return asNumber(c.Get("aspect_ratio")) }
+func (c aylisCheckBox) SetAspectRatio(v float64) { c.Set("aspect_ratio", v) }
+
+func (c aylisCheckBox) MaxWidth() float64 { return asNumber(c.Get("max_width")) }
+func (c aylisCheckBox) SetMaxWidth(v float64) { c.Set("max_width", v) }
+
+func (c aylisCheckBox) MinWidth() float64 { return asNumber(c.Get("min_width")) }
+func (c aylisCheckBox) SetMinWidth(v float64) { c.Set("min_width", v) }
+
+func (c aylisCheckBox) MinHeight() float64 { return asNumber(c.Get("min_height")) }
+func (c aylisCheckBox) SetMinHeight(v float64) { c.Set("min_height", v) }
+
+func (c aylisCheckBox) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
+func (c aylisCheckBox) SetMaxHeight(v float64) { c.Set("max_height", v) }
+
+func (c aylisCheckBox) SelfAlign() string { return asText(c.Get("self_align")) }
+func (c aylisCheckBox) SetSelfAlign(v string) { c.Set("self_align", v) }
+
+func (c aylisCheckBox) AutoSize() bool { return asBool(c.Get("auto_size")) }
+func (c aylisCheckBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
+
+func (c aylisCheckBox) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
+func (c aylisCheckBox) SetColumnSpan(v int64) { c.Set("column_span", v) }
+
+func (c aylisCheckBox) Shadow() string { return asText(c.Get("shadow")) }
+func (c aylisCheckBox) SetShadow(v string) { c.Set("shadow", v) }
+
+func (c aylisCheckBox) Style() string { return asText(c.Get("style")) }
+func (c aylisCheckBox) SetStyle(v string) { c.Set("style", v) }
+
+func (c aylisCheckBox) Theme() string { return asText(c.Get("theme")) }
+func (c aylisCheckBox) SetTheme(v string) { c.Set("theme", v) }
+
+func (c aylisCheckBox) Fill() string { return asText(c.Get("fill")) }
+func (c aylisCheckBox) SetFill(v string) { c.Set("fill", v) }
+
+func (c aylisCheckBox) BorderColor() string { return asText(c.Get("border_color")) }
+func (c aylisCheckBox) SetBorderColor(v string) { c.Set("border_color", v) }
+
+func (c aylisCheckBox) TextColor() string { return asText(c.Get("text_color")) }
+func (c aylisCheckBox) SetTextColor(v string) { c.Set("text_color", v) }
+
+func (c aylisCheckBox) AccentColor() string { return asText(c.Get("accent_color")) }
+func (c aylisCheckBox) SetAccentColor(v string) { c.Set("accent_color", v) }
+
+func (c aylisCheckBox) SuccessColor() string { return asText(c.Get("success_color")) }
+func (c aylisCheckBox) SetSuccessColor(v string) { c.Set("success_color", v) }
+
+func (c aylisCheckBox) WarningColor() string { return asText(c.Get("warning_color")) }
+func (c aylisCheckBox) SetWarningColor(v string) { c.Set("warning_color", v) }
+
+func (c aylisCheckBox) DangerColor() string { return asText(c.Get("danger_color")) }
+func (c aylisCheckBox) SetDangerColor(v string) { c.Set("danger_color", v) }
+
+func (c aylisCheckBox) FontFamily() string { return asText(c.Get("font_family")) }
+func (c aylisCheckBox) SetFontFamily(v string) { c.Set("font_family", v) }
+
+func (c aylisCheckBox) FontSize() float64 { return asNumber(c.Get("font_size")) }
+func (c aylisCheckBox) SetFontSize(v float64) { c.Set("font_size", v) }
+
+func (c aylisCheckBox) FontWeight() string { return asText(c.Get("font_weight")) }
+func (c aylisCheckBox) SetFontWeight(v string) { c.Set("font_weight", v) }
+
+func (c aylisCheckBox) FontItalic() bool { return asBool(c.Get("font_italic")) }
+func (c aylisCheckBox) SetFontItalic(v bool) { c.Set("font_italic", v) }
+
+func (c aylisCheckBox) FontUnderline() bool { return asBool(c.Get("font_underline")) }
+func (c aylisCheckBox) SetFontUnderline(v bool) { c.Set("font_underline", v) }
+
+func (c aylisCheckBox) FontStrikeout() bool { return asBool(c.Get("font_strikeout")) }
+func (c aylisCheckBox) SetFontStrikeout(v bool) { c.Set("font_strikeout", v) }
+
+func (c aylisCheckBox) Hint() string { return asText(c.Get("hint")) }
+func (c aylisCheckBox) SetHint(v string) { c.Set("hint", v) }
+
+func (c aylisCheckBox) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
+func (c aylisCheckBox) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisCheckBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
+func (c aylisCheckBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisCheckBox) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

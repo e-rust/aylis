@@ -1,0 +1,53 @@
+# Slicer
+
+![Slicer](img/Slicer.png)
+
+Segmentador de filtro (o "slicer" dos painéis): os valores como botões; marcar filtra. `selected` = `"Sul;Sudeste"` (vazio: todos). `on_change` traz a seleção.
+
+**Paleta:** BI · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `title` | Título | texto |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `multi` | Várias escolhas | lógico |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo |
+|---|---|---|
+| `items` | Itens | texto |
+| `selected` | Escolhidos | texto |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+
+## Em código
+
+No form, o `Slicer1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "Slicer", "name": "Slicer1", "on_change": "slicer1_change" }
+```
+
+E o handler, um método do form (`self.Slicer1` já é um `Slicer`):
+
+```rust
+impl FrmPrincipal {
+    pub fn slicer1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.Slicer1.title(ui);
+        self.Slicer1.set_title(ui, format!("{atual}!"));
+    }
+}
+```

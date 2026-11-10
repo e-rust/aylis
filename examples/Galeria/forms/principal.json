@@ -1,0 +1,64 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Galeria de componentes do aylis",
+    "on_show": "montar",
+    "width": 1200,
+    "height": 820,
+    "children": [
+      {
+        "class": "Layout",
+        "name": "pnlTopo",
+        "height": 72,
+        "align": "top",
+        "padding": [24, 14],
+        "children": [
+          {
+            "class": "Label",
+            "name": "lblTitulo",
+            "text": "Galeria de componentes",
+            "bold": true,
+            "width": 300,
+            "align": "left",
+            "font_size": 22
+          },
+          {
+            "class": "Label",
+            "name": "lblConta",
+            "h_align": "trailing",
+            "color": "#8A90A2",
+            "width": 200,
+            "align": "right"
+          },
+          {
+            "class": "Edit",
+            "name": "edtBusca",
+            "placeholder": "Buscar (Button, Chart, Calendar...)",
+            "on_change": "filtrar",
+            "align": "client",
+            "margins": [16, 4]
+          }
+        ]
+      },
+      {
+        "class": "ScrollBox",
+        "name": "scrCartoes",
+        "align": "client",
+        "children": [
+          {
+            "class": "FlowLayout",
+            "name": "fluCartoes",
+            "gap": 14,
+            "line_gap": 14,
+            "height": 0,
+            "align": "top",
+            "margins": [24, 8, 24, 24],
+            "auto_size": true
+          }
+        ]
+      }
+    ]
+  }
+}

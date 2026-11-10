@@ -1,0 +1,115 @@
+
+// Um TabControl de um form.
+struct TabControl : aylis::Component {
+    TabControl() = default;
+    explicit TabControl(const aylis::Component& c) : aylis::Component(c) {}
+    long long tab_index() const { return static_cast<long long>(get_prop_("tab_index").number()); }
+    void set_tab_index(long long v) const { set_prop_("tab_index", v); }
+    bool show_tabs() const { return get_prop_("show_tabs").boolean(); }
+    void set_show_tabs(bool v) const { set_prop_("show_tabs", v); }
+    std::string transition() const { return get_prop_("transition").str(); }
+    void set_transition(const std::string& v) const { set_prop_("transition", v); }
+    double left() const { return get_prop_("left").number(); }
+    void set_left(double v) const { set_prop_("left", v); }
+    double top() const { return get_prop_("top").number(); }
+    void set_top(double v) const { set_prop_("top", v); }
+    double width() const { return get_prop_("width").number(); }
+    void set_width(double v) const { set_prop_("width", v); }
+    double height() const { return get_prop_("height").number(); }
+    void set_height(double v) const { set_prop_("height", v); }
+    std::string align() const { return get_prop_("align").str(); }
+    void set_align(const std::string& v) const { set_prop_("align", v); }
+    bool visible() const { return get_prop_("visible").boolean(); }
+    void set_visible(bool v) const { set_prop_("visible", v); }
+    bool enabled() const { return get_prop_("enabled").boolean(); }
+    void set_enabled(bool v) const { set_prop_("enabled", v); }
+    bool hit_test() const { return get_prop_("hit_test").boolean(); }
+    void set_hit_test(bool v) const { set_prop_("hit_test", v); }
+    bool clip_children() const { return get_prop_("clip_children").boolean(); }
+    void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
+    void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
+    bool can_focus() const { return get_prop_("can_focus").boolean(); }
+    void set_can_focus(bool v) const { set_prop_("can_focus", v); }
+    bool draggable() const { return get_prop_("draggable").boolean(); }
+    void set_draggable(bool v) const { set_prop_("draggable", v); }
+    bool accepts_drops() const { return get_prop_("accepts_drops").boolean(); }
+    void set_accepts_drops(bool v) const { set_prop_("accepts_drops", v); }
+    std::string drag_data() const { return get_prop_("drag_data").str(); }
+    void set_drag_data(const std::string& v) const { set_prop_("drag_data", v); }
+    std::string drag_label() const { return get_prop_("drag_label").str(); }
+    void set_drag_label(const std::string& v) const { set_prop_("drag_label", v); }
+    std::string drag_image() const { return get_prop_("drag_image").str(); }
+    void set_drag_image(const std::string& v) const { set_prop_("drag_image", v); }
+    std::string drop_types() const { return get_prop_("drop_types").str(); }
+    void set_drop_types(const std::string& v) const { set_prop_("drop_types", v); }
+    bool tab_stop() const { return get_prop_("tab_stop").boolean(); }
+    void set_tab_stop(bool v) const { set_prop_("tab_stop", v); }
+    std::string cursor() const { return get_prop_("cursor").str(); }
+    void set_cursor(const std::string& v) const { set_prop_("cursor", v); }
+    double opacity() const { return get_prop_("opacity").number(); }
+    void set_opacity(double v) const { set_prop_("opacity", v); }
+    bool cache_layer() const { return get_prop_("cache_layer").boolean(); }
+    void set_cache_layer(bool v) const { set_prop_("cache_layer", v); }
+    double rotation() const { return get_prop_("rotation").number(); }
+    void set_rotation(double v) const { set_prop_("rotation", v); }
+    double translate_x() const { return get_prop_("translate_x").number(); }
+    void set_translate_x(double v) const { set_prop_("translate_x", v); }
+    double translate_y() const { return get_prop_("translate_y").number(); }
+    void set_translate_y(double v) const { set_prop_("translate_y", v); }
+    double aspect_ratio() const { return get_prop_("aspect_ratio").number(); }
+    void set_aspect_ratio(double v) const { set_prop_("aspect_ratio", v); }
+    double max_width() const { return get_prop_("max_width").number(); }
+    void set_max_width(double v) const { set_prop_("max_width", v); }
+    double min_width() const { return get_prop_("min_width").number(); }
+    void set_min_width(double v) const { set_prop_("min_width", v); }
+    double min_height() const { return get_prop_("min_height").number(); }
+    void set_min_height(double v) const { set_prop_("min_height", v); }
+    double max_height() const { return get_prop_("max_height").number(); }
+    void set_max_height(double v) const { set_prop_("max_height", v); }
+    std::string self_align() const { return get_prop_("self_align").str(); }
+    void set_self_align(const std::string& v) const { set_prop_("self_align", v); }
+    bool auto_size() const { return get_prop_("auto_size").boolean(); }
+    void set_auto_size(bool v) const { set_prop_("auto_size", v); }
+    long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
+    void set_column_span(long long v) const { set_prop_("column_span", v); }
+    std::string shadow() const { return get_prop_("shadow").str(); }
+    void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
+    std::string style() const { return get_prop_("style").str(); }
+    void set_style(const std::string& v) const { set_prop_("style", v); }
+    std::string theme() const { return get_prop_("theme").str(); }
+    void set_theme(const std::string& v) const { set_prop_("theme", v); }
+    std::string fill() const { return get_prop_("fill").str(); }
+    void set_fill(const std::string& v) const { set_prop_("fill", v); }
+    std::string border_color() const { return get_prop_("border_color").str(); }
+    void set_border_color(const std::string& v) const { set_prop_("border_color", v); }
+    std::string text_color() const { return get_prop_("text_color").str(); }
+    void set_text_color(const std::string& v) const { set_prop_("text_color", v); }
+    std::string accent_color() const { return get_prop_("accent_color").str(); }
+    void set_accent_color(const std::string& v) const { set_prop_("accent_color", v); }
+    std::string success_color() const { return get_prop_("success_color").str(); }
+    void set_success_color(const std::string& v) const { set_prop_("success_color", v); }
+    std::string warning_color() const { return get_prop_("warning_color").str(); }
+    void set_warning_color(const std::string& v) const { set_prop_("warning_color", v); }
+    std::string danger_color() const { return get_prop_("danger_color").str(); }
+    void set_danger_color(const std::string& v) const { set_prop_("danger_color", v); }
+    std::string font_family() const { return get_prop_("font_family").str(); }
+    void set_font_family(const std::string& v) const { set_prop_("font_family", v); }
+    double font_size() const { return get_prop_("font_size").number(); }
+    void set_font_size(double v) const { set_prop_("font_size", v); }
+    std::string font_weight() const { return get_prop_("font_weight").str(); }
+    void set_font_weight(const std::string& v) const { set_prop_("font_weight", v); }
+    bool font_italic() const { return get_prop_("font_italic").boolean(); }
+    void set_font_italic(bool v) const { set_prop_("font_italic", v); }
+    bool font_underline() const { return get_prop_("font_underline").boolean(); }
+    void set_font_underline(bool v) const { set_prop_("font_underline", v); }
+    bool font_strikeout() const { return get_prop_("font_strikeout").boolean(); }
+    void set_font_strikeout(bool v) const { set_prop_("font_strikeout", v); }
+    std::string hint() const { return get_prop_("hint").str(); }
+    void set_hint(const std::string& v) const { set_prop_("hint", v); }
+    long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
+    void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string popup_menu() const { return get_prop_("popup_menu").str(); }
+    void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
+    void set_focus() const { tell_("focus", {{"target", aylis::Json(id_)}}); }
+};
