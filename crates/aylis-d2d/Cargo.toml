@@ -1,6 +1,6 @@
 [package]
 name = "aylis-d2d"
-description = "Renderizador do aylis no Windows sem Skia: Direct2D (GPU) e DirectWrite, que já vêm no sistema"
+description = "Renderizador do Aylis no Windows sem Skia: Direct2D (GPU) e DirectWrite, que já vêm no sistema"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,7 +11,7 @@ rust-version.workspace = true
 diagnostics = []
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows-numerics = { version = "0.3", default-features = false }

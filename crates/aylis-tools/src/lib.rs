@@ -37,6 +37,7 @@ pub mod jdb_dap;
 pub mod lsp;
 pub mod mcp;
 pub mod packages;
+pub mod build;
 pub mod build_index;
 pub mod cleanup;
 pub mod process;

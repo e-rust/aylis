@@ -357,6 +357,15 @@ pub fn kill_with_parent(child: &Child) {
     let _ = child;
 }
 
+/// Faz os processos que este inicia (o cargo de uma compilação) morrerem junto com ele: o
+/// `aylis-tool build` que a IDE interrompe não deixa o cargo compilando sozinho. No Windows,
+/// este processo entra num Job Object com "matar ao fechar" (os filhos herdam o Job); nos outros
+/// sistemas não faz nada.
+pub fn children_die_with_me() {
+    #[cfg(windows)]
+    win_job::assign_current();
+}
+
 #[cfg(windows)]
 mod win_job {
     use std::os::windows::io::AsRawHandle;
@@ -398,6 +407,7 @@ mod win_job {
         fn CreateJobObjectW(attributes: *mut core::ffi::c_void, name: *const u16) -> Handle;
         fn SetInformationJobObject(job: Handle, class: i32, info: *const core::ffi::c_void, length: u32) -> i32;
         fn AssignProcessToJobObject(job: Handle, process: Handle) -> i32;
+        fn GetCurrentProcess() -> isize;
     }
 
     /// O Job do processo (criado na primeira vez; nunca fechado: o sistema fecha ao sair).
@@ -413,6 +423,18 @@ mod win_job {
             let ok = SetInformationJobObject(job, JOB_OBJECT_EXTENDED_LIMIT_INFORMATION, &limits as *const _ as *const _, std::mem::size_of::<ExtendedLimits>() as u32);
             (ok != 0).then_some(job as usize)
         })
+    }
+
+    /// Este processo no Job: quando ele termina (ou é morto), o sistema fecha o Job e mata os
+    /// filhos que ficaram.
+    pub fn assign_current() {
+        if let Some(job) = job() {
+            // SAFETY: `job` é um handle válido (criado acima e nunca fechado) e
+            // `GetCurrentProcess` devolve o pseudo-handle deste processo, sempre válido.
+            unsafe {
+                AssignProcessToJobObject(job as Handle, GetCurrentProcess() as Handle);
+            }
+        }
     }
 
     pub fn assign(child: &Child) {

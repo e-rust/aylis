@@ -8,9 +8,8 @@ Onde está cada coisa:
 
 | Arquivo | O que tem |
 |---|---|
-| [PLANO.md](PLANO.md) | O plano inicial |
-| [AJUSTES-PENDENTES.md](AJUSTES-PENDENTES.md) | O que falta e o que espera o autor confirmar. Pedido novo entra aqui |
-| [AJUSTES-CONCLUIDOS.md](AJUSTES-CONCLUIDOS.md) | O que o autor confirmou, com o commit |
+| [docs/plano.md](docs/plano.md) | O plano inicial |
+| [docs/ajustes-pendentes.md](docs/ajustes-pendentes.md) | O que falta e o que espera o autor confirmar. Pedido novo entra aqui; o confirmado sai (o commit e o histórico guardam o resto) |
 | [docs/historico-decisoes.md](docs/historico-decisoes.md) | Os pedidos e as decisões, com o porquê |
 | [docs/roteiro-de-conferencia.md](docs/roteiro-de-conferencia.md) | O que o autor confere, item por item |
 | [docs/testes-em-dispositivos.md](docs/testes-em-dispositivos.md) | O que só dá para conferir num Mac, num celular ou noutro hardware |

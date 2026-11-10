@@ -1,15 +1,15 @@
 # Roteiro de conferência
 
-Os itens do [AJUSTES-PENDENTES.md](../AJUSTES-PENDENTES.md) que estão feitos e só esperam a
+Os itens dos [ajustes pendentes](ajustes-pendentes.md) que estão feitos e só esperam a
 confirmação do autor (os que precisam de hardware ou de outra máquina ficaram para depois,
 decidido em 05/11). Cada item diz onde ir, o que fazer e o que deve acontecer. Responda pelo
-número (ok, ou o que deu diferente); o que for confirmado sai dos pendentes para os concluídos, e sai também deste roteiro.
+número (ok, ou o que deu diferente); o que for confirmado sai dos pendentes e deste roteiro.
 
 Antes de começar, a IDE do repositório recompilada: `cargo run --release -p aylis-ide`.
 
 As Sessões 1 (a IDE com o NoOBS) e 2 (a IDE com o ERP) foram conferidas e confirmadas pelo autor
-em 07/11, e as Sessões 3 a 7 em 08/11 (com o Claude pelo MCP da IDE): o que passou está nos
-[ajustes concluídos](../AJUSTES-CONCLUIDOS.md). Na noite de 08/11, depois dos ajustes, voltaram e
+em 07/11, e as Sessões 3 a 7 em 08/11 (com o Claude pelo MCP da IDE): o que passou saiu dos pendentes
+(está no commit). Na noite de 08/11, depois dos ajustes, voltaram e
 foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os mesmos.
 
 ## Para conferir de novo
@@ -27,6 +27,15 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     sozinha, a resposta diz "Abri a IDE do Aylis para esta conversa", com o título da conversa na
     barra da janela; as chamadas vão para ela, com todas as ferramentas da IDE desde a primeira;
     outra conversa abre outra IDE. (No Claude Code, a abertura e o aviso passaram em 08/11 à noite.)
+
+97. **O compilador separado da IDE** (pedido de 09/11). Antes, recompile também o `aylis-tools`
+    (`cargo build -p aylis-tools`, com as conversas do Claude fechadas: a ponte do MCP prende o
+    `aylis-tool.exe`). Abra o Paint (Rust) e dê Ctrl+F9; depois F9; depois Parar (Ctrl+F2)
+    no meio de um "Compilar (release)". *Esperado:* nas MENSAGENS, "Gerando o código", "Verificando
+    o projeto" e a compilação, com os erros clicáveis como antes; o Gerenciador de Tarefas mostra um
+    `aylis-tool.exe` enquanto compila; o Parar encerra o `aylis-tool` e o `cargo` juntos. Num
+    terminal, `aylis-tool build examples/Paint/Paint.aylisproj` faz o mesmo, e a Calculadora (Free Pascal)
+    só gera e verifica.
 
 ## Os ajustes de 08/11 que faltam conferir
 

@@ -12,7 +12,9 @@
 [package]
 edition = "2024"
 rust-version = "1.87"
-name = "accesskit_android"
+# O nome no crates.io: a cópia do Aylis, publicada à parte do original (AYLIS.md). A biblioteca
+# continua `accesskit_android`.
+name = "aylis-accesskit-android"
 version = "0.9.1"
 authors = ["The AccessKit contributors"]
 build = false
@@ -22,7 +24,7 @@ autobins = false
 autoexamples = false
 autotests = false
 autobenches = false
-description = "AccessKit UI accessibility infrastructure: Android adapter"
+description = "Cópia do accesskit_android 0.9.1 (AccessKit, adaptador do Android) com a correção para o Android 9 e anteriores, usada pelo Aylis até a correção sair no original"
 readme = "README.md"
 keywords = [
     "gui",

@@ -1,13 +1,13 @@
 [package]
 name = "aylis-vector"
-description = "Desenhos vetoriais do aylis: animações Lottie e imagens SVG, desenhadas pelo Canvas (Skia, Direct2D e navegador)"
+description = "Desenhos vetoriais do Aylis: animações Lottie e imagens SVG, desenhadas pelo Canvas (Skia, Direct2D e navegador)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 serde_json = "1"
 roxmltree = "0.20"
 

@@ -90,10 +90,10 @@ fn main() -> ExitCode {
             let dir = aylis_tools::aylis_root().join("crates").join("aylis-docview").join("tests").join("data");
             aylis_tools::testdocs::generate(&dir).map(|_| println!("ok: {}", dir.display()))
         }
-        // A lista do seletor de emoji (resources/emoji/emoji.tsv) a partir das listas do Unicode e do CLDR.
+        // A lista do seletor de emoji (crates/aylis-controls-base/data/emoji.tsv) a partir das listas do Unicode e do CLDR.
         Some("emoji") => match args.get(1) {
             Some(folder) => {
-                let dest = aylis_tools::aylis_root().join("resources").join("emoji").join("emoji.tsv");
+                let dest = aylis_tools::aylis_root().join("crates").join("aylis-controls-base").join("data").join("emoji.tsv");
                 aylis_tools::emoji::generate(std::path::Path::new(folder), &dest).map(|n| println!("{n} emojis em {}", dest.display()))
             }
             None => Err("uso: aylis-tool emoji <pasta com emoji-test.txt, pt.json e pt-derived.json>".into()),
@@ -154,6 +154,10 @@ fn main() -> ExitCode {
                 .map(|files| files.iter().for_each(|f| println!("{}", f.display()))),
             None => Err("uso: aylis-tool generate <projeto.aylisproj> [--language python]".into()),
         },
+        // O compilador: gera, verifica e compila (a IDE chama com --json e mostra os eventos).
+        // aylis-tool build <projeto.aylisproj> [--target t] [--release] [--no-generate]
+        // [--no-compile] [--language l] [--json]
+        Some("build") => build(&args[1..]),
         // Toca um roteiro de teste sem janela: aylis-tool script <projeto.aylisproj> <roteiro.json> [--output estado.json]
         Some("script") => match (args.get(1), args.get(2)) {
             (Some(path), Some(script)) => std::path::absolute(path).map_err(|e| format!("{path}: {e}")).and_then(Project::open).and_then(|project| with_language(project, &args)).and_then(|project| {
@@ -362,12 +366,15 @@ fn main() -> ExitCode {
             println!("pronto: {}", published.main.display());
             Ok(())
         }),
-        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | docs".into()),
+        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | docs".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("erro: {e}");
+            // Vazio: o erro já foi dito (o `build --json` diz no próprio JSON).
+            if !e.is_empty() {
+                eprintln!("erro: {e}");
+            }
             ExitCode::FAILURE
         }
     }
@@ -446,8 +453,7 @@ fn check(args: &[String]) -> Result<(), String> {
 /// código 1 (a CI e um script de build param ali).
 fn check_project(file: &std::path::Path, web: bool) -> Result<(), String> {
     let project = aylis_project::Project::open(file)?;
-    let mut ui = aylis_core::Ui::new();
-    aylis_remote::register_all(&mut ui);
+    let mut ui = check_ui();
     let issues = aylis_project::check::project(&project, Some(&mut ui), web);
     for issue in &issues {
         let place = match (issue.form.as_str(), issue.component.as_str()) {
@@ -460,6 +466,74 @@ fn check_project(file: &std::path::Path, web: bool) -> Result<(), String> {
     let errors = issues.iter().filter(|i| i.error).count();
     println!("{}: {errors} erro(s), {} aviso(s)", project.name, issues.len() - errors);
     if errors > 0 { Err(format!("{errors} erro(s) no projeto")) } else { Ok(()) }
+}
+
+/// O `Ui` em que a verificação carrega os forms: todas as classes, as mesmas do designer da
+/// IDE (o 3D fica fora do registro remoto, que também roda no navegador).
+fn check_ui() -> aylis_core::Ui {
+    let mut ui = aylis_core::Ui::new();
+    aylis_remote::register_all(&mut ui);
+    aylis_3d::register(&mut ui);
+    ui.set_design_mode(false);
+    ui
+}
+
+/// `aylis-tool build <projeto.aylisproj>`: gera, verifica e compila, parando no primeiro erro
+/// (sai com código 1). Com `--json`, uma linha de JSON por evento (`aylis_tools::build`), o
+/// que a IDE lê.
+fn build(args: &[String]) -> Result<(), String> {
+    use aylis_tools::build::{self, BuildEvent};
+    let json = args.iter().any(|a| a == "--json");
+    let flag = |f: &str| args.iter().any(|a| a == f);
+    let emit = |value: serde_json::Value| {
+        use std::io::Write;
+        let mut out = std::io::stdout().lock();
+        let _ = writeln!(out, "{value}");
+        let _ = out.flush();
+    };
+    if json {
+        emit(build::start_json());
+    }
+    // Interrompido pela IDE, o cargo que este iniciou não fica compilando sozinho.
+    aylis_tools::process::children_die_with_me();
+    let result = (|| -> Result<String, String> {
+        let path = args.first().filter(|a| !a.starts_with("--")).ok_or("informe o .aylisproj")?;
+        let project = with_language(Project::open(std::path::absolute(path).map_err(|e| format!("{path}: {e}"))?)?, args)?;
+        let target = targets(args)?.first().copied().unwrap_or(Target::Desktop);
+        let mut options = build::Options::new(target);
+        options.release = flag("--release");
+        options.generate = !flag("--no-generate");
+        options.compile = !flag("--no-compile");
+        let mut ui = check_ui();
+        let message = build::build(&project, &options, Some(&mut ui), &Control::new(), &mut |e| {
+            if json {
+                emit(build::to_json(&e));
+                return;
+            }
+            match e {
+                BuildEvent::Event(e) => print(e),
+                BuildEvent::Generated => {}
+                BuildEvent::Issues(issues) => {
+                    for issue in &issues {
+                        let place = match (issue.form.as_str(), issue.component.as_str()) {
+                            ("", _) => String::new(),
+                            (form, "") => format!("{form}: "),
+                            (form, component) => format!("{form}.{component}: "),
+                        };
+                        println!("{} {place}{}", if issue.error { "✗" } else { "!" }, issue.message);
+                    }
+                }
+                BuildEvent::Built(_) => {}
+            }
+        });
+        message
+    })();
+    if json {
+        emit(build::end_json(&result));
+        // O fim já foi dito no JSON; o código de saída ainda diz se deu certo.
+        return result.map(|_| ()).map_err(|_| String::new());
+    }
+    result.map(|message| println!("{message}"))
 }
 
 fn print_checks(checks: &[aylis_tools::env::Check]) {

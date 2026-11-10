@@ -1,10 +1,10 @@
 [package]
 name = "aylis-controls-industrial"
-description = "Controles industriais e elétricos do aylis (telas de supervisão)"
+description = "Controles industriais e elétricos do Aylis (telas de supervisão)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }

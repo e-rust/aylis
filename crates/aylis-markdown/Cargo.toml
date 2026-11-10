@@ -1,15 +1,15 @@
 [package]
 name = "aylis-markdown"
-description = "Componente Markdown do aylis: texto rico (títulos, listas, tabelas, código, links) desenhado pelo Canvas"
+description = "Componente Markdown do Aylis: texto rico (títulos, listas, tabelas, código, links) desenhado pelo Canvas"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 # O realce dos blocos de código (o mesmo do `Memo`).
-aylis-controls-base = { path = "../aylis-controls-base" }
+aylis-controls-base = { version = "0.1.0", path = "../aylis-controls-base" }
 pulldown-cmark = { version = "0.13", default-features = false }
 
 [dev-dependencies]

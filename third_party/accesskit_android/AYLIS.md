@@ -10,5 +10,9 @@ https://github.com/AccessKit/accesskit) com uma correção:
 
 Voltar para a versão do crates.io quando a correção estiver numa versão publicada.
 
+No crates.io, esta cópia vai como `aylis-accesskit-android` (decidido em 09/11, para publicar o
+Aylis): o nome do original é do AccessKit. A biblioteca continua `accesskit_android`, e o
+`aylis-platform-winit` a usa com `package = "aylis-accesskit-android"`.
+
 As licenças do original (MIT ou Apache-2.0, à escolha) estão em `LICENSE-MIT` e `LICENSE-APACHE`,
 copiadas do repositório do AccessKit.

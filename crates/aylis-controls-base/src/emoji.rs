@@ -11,7 +11,8 @@ use aylis_core::{
 
 use crate::leaf_control;
 
-/// Um emoji da lista (resources/emoji/emoji.tsv, gerada por `aylis-tool emoji`).
+/// Um emoji da lista (`data/emoji.tsv` deste crate, gerada por `aylis-tool emoji`; dentro do
+/// crate para ir junto no pacote do crates.io).
 pub struct EmojiInfo {
     pub group: usize,
     pub emoji: &'static str,
@@ -21,7 +22,7 @@ pub struct EmojiInfo {
     words: String,
 }
 
-const DATA: &str = include_str!("../../../resources/emoji/emoji.tsv");
+const DATA: &str = include_str!("../data/emoji.tsv");
 
 /// Os grupos (categorias), na ordem.
 pub fn emoji_groups() -> &'static [&'static str] {

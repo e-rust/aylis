@@ -1,13 +1,13 @@
 [package]
 name = "aylis-controls-base"
-description = "Os controles básicos do aylis (forms, botões, edição, listas, menus, sistema...)"
+description = "Os controles básicos do Aylis (forms, botões, edição, listas, menus, sistema...)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 web-time = "1"
 serde_json = "1"
 # Localizar e substituir com expressão regular (o editor e a pesquisa no projeto).

@@ -36,16 +36,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "accesskit_android"
-version = "0.9.1"
-dependencies = [
- "accesskit",
- "accesskit_consumer",
- "jni 0.21.1",
- "log",
-]
-
-[[package]]
 name = "accesskit_atspi_common"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -631,6 +621,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "aylis-accesskit-android"
+version = "0.9.1"
+dependencies = [
+ "accesskit",
+ "accesskit_consumer",
+ "jni 0.21.1",
+ "log",
+]
+
+[[package]]
 name = "aylis-build"
 version = "0.1.0"
 dependencies = [
@@ -896,10 +896,10 @@ name = "aylis-platform-winit"
 version = "0.1.0"
 dependencies = [
  "accesskit",
- "accesskit_android",
  "accesskit_winit",
  "arboard",
  "aylis-3d",
+ "aylis-accesskit-android",
  "aylis-controls",
  "aylis-core",
  "aylis-d2d",
@@ -1008,6 +1008,7 @@ dependencies = [
 name = "aylis-tools"
 version = "0.1.0"
 dependencies = [
+ "aylis-3d",
  "aylis-build",
  "aylis-core",
  "aylis-devlink",

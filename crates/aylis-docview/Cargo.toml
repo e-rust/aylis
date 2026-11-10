@@ -1,13 +1,13 @@
 [package]
 name = "aylis-docview"
-description = "Visualizador de documentos do aylis: PDF (hayro), planilhas (XLSX, XLS, ODS, CSV) e textos (DOCX, ODT)"
+description = "Visualizador de documentos do Aylis: PDF (hayro), planilhas (XLSX, XLS, ODS, CSV) e textos (DOCX, ODT)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 hayro = "0.8"
 calamine = "0.38"
 zip = { version = "9", default-features = false, features = ["deflate"] }

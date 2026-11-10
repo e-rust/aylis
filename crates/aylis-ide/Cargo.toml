@@ -5,6 +5,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+# Não vai para o crates.io: só a fachada `aylis` e as bibliotecas dela (decidido em 09/11).
+publish = false
 
 [[bin]]
 name = "aylis-ide"

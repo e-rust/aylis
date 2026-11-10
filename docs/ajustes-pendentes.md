@@ -1,18 +1,17 @@
 # aylis — Ajustes pendentes
 
-O que apareceu depois do [plano inicial](PLANO.md) e ainda falta fazer. Quando um item
-ficar pronto (e o autor confirmar no teste), ele sai daqui e vai para os
-[ajustes concluídos](AJUSTES-CONCLUIDOS.md), com o commit. O que só dá para conferir num Mac,
-num celular ou num PC com outro hardware fica em
-[docs/testes-em-dispositivos.md](docs/testes-em-dispositivos.md).
+O que apareceu depois do [plano inicial](plano.md) e ainda falta fazer. Quando um item
+ficar pronto e o autor confirmar no teste, ele sai daqui: o que foi feito fica no commit, e o
+porquê, no [histórico de decisões](historico-decisoes.md) (até 09/11 havia também a lista dos
+concluídos, que saiu a pedido do autor). O que só dá para conferir num Mac, num celular ou num
+PC com outro hardware fica em [testes-em-dispositivos.md](testes-em-dispositivos.md).
 
-O plano de 01/11/2026 (9 fases) foi feito em `c475abd` e `48081bc` e está nos ajustes
-concluídos. Abaixo, o que sobrou dele e o que ainda não começou.
+O plano de 01/11/2026 (9 fases) foi feito em `c475abd` e `48081bc`. Abaixo, o que sobrou dele e o que ainda não começou.
 
 Decidido pelo autor em 05/11: o que precisa de hardware ou de outra máquina (o ZenFone, um
 leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro PC) fica para
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
-[roteiro de conferência](docs/roteiro-de-conferencia.md), e saem daqui para os concluídos.
+[roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
 **Pedidos de 09/11/2026**
 - [x] O instalador não leva os exemplos IBGE e ERP (grandes, só de demonstração); o `Cargo.toml`
@@ -22,16 +21,46 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   deixa de gerar e verificar dentro do próprio processo e passa a chamar esse executável e mostrar
   o progresso e as mensagens dele. Hoje a geração e a verificação rodam numa thread da IDE
   (`jobs.rs`, `aylis_project::check`) e só o `cargo`/as ferramentas das linguagens rodam fora.
-- [ ] **Publicar no crates.io** (pedido do autor; os nomes `aylis`, `aylis-core`... estavam livres em
-  09/11). Antes: (1) os recursos (fontes, ícones, emoji: 103 MB em `resources/`) saem de fora dos
-  crates, porque o crate empacotado só leva a própria pasta e tem limite de 10 MB (o
-  `aylis-controls-base` inclui `../../../resources/emoji/emoji.tsv`, e o empacotar do app lê as
-  fontes da raiz do Aylis): um crate de recursos dividido, ou o download na compilação com versão e
-  SHA-256; (2) a cópia do `accesskit_android` (`third_party`) publicada com outro nome, ou voltar ao
-  original quando a correção sair; (3) cada dependência por caminho ganha `version`; (4) publicar
-  só as bibliotecas que o app usa (a fachada `aylis` e as dependências), em ordem, sem a IDE, as
-  ferramentas e os demos; (5) o token do crates.io é do autor (`cargo login`). Publicar é
-  permanente (só dá para "yank"): vale quando a API estiver mais estável.
+  Decidido pelo autor em 09/11: um subcomando do `aylis-tool`. Feito em 09/11 (falta o autor
+  confirmar; sem commit; roteiro 97): `aylis-tool build <projeto> [--target t] [--release]
+  [--no-generate] [--no-compile] [--language l] [--json]` gera, verifica e compila, parando no
+  primeiro erro (`aylis_tools::build`; compila o desktop em Rust, as outras plataformas e linguagens
+  só geram e verificam, e compilam ao executar ou publicar). Com `--json`, uma linha por evento
+  (`start` com o protocolo, `step`, `line`, `diagnostic`, `generated`, `issues`, `built`, `done`). A
+  IDE chama o subcomando em outro processo no Compilar (Ctrl+F9, que agora também verifica), no
+  preparo do Executar e do Publicar e no Depurar, e mostra os eventos nas MENSAGENS; o editor
+  acompanha a geração pelo evento `generated` (o Ctrl+F9 e o Depurar geravam por trás do editor).
+  Interromper encerra o `aylis-tool` e, com ele, o cargo (`process::children_die_with_me`, um Job
+  Object no Windows). Um `aylis-tool` de protocolo diferente é recusado; sem o `aylis-tool` ao lado
+  da IDE (os testes) ou com um de antes do `build`, a IDE faz dentro dela, com um aviso. O
+  `aylis-tool check` e o `build` registram o 3D (`aylis-3d` no `aylis-tools`), como o designer: o
+  `check` acusava os forms com `Model3D`. Ficaram na IDE o "Gerar código" do menu e a geração do
+  F12 (rápidas, e o F12 precisa do resultado na hora). Testes: o protocolo
+  (`the_events_go_and_come_back_through_the_json`); à mão, um projeto novo compilado pelo
+  subcomando e pelo `build_external`, e interrompido no meio de uma compilação release (nenhum
+  cargo ou rustc sobrou).
+- [ ] **Publicar no crates.io** (pedido do autor; os nomes `aylis`, `aylis-core`... e
+  `aylis-accesskit-android` estavam livres em 09/11). Preparado em 09/11 (sem commit; falta o autor
+  publicar): `cargo publish --dry-run` passou nos 27 crates, cada um empacotado e compilado a partir
+  do pacote. O que mudou: (1) o `emoji.tsv` foi para dentro do `aylis-controls-base`
+  (`data/emoji.tsv`; o `aylis-tool emoji` grava lá); fontes, ícones e animações não vão nos crates
+  (são copiados para o projeto), e cada crate tem menos de 1,5 MB; (2) a cópia do
+  `accesskit_android` vai como `aylis-accesskit-android` 0.9.1 (a biblioteca continua
+  `accesskit_android`; `third_party/accesskit_android/AYLIS.md`); (3) as 64 dependências por caminho
+  ganharam `version = "0.1.0"` (subir a versão do workspace pede subir essas também); (4)
+  `publish = false` na IDE, no `aylis-tools`, no `aylis-host`, no `aylis-capi` e no `aylis-migrate`
+  (os demos, a IDE web e os exemplos já tinham); (5) as descrições com "Aylis" maiúsculo e sem
+  Delphi/FMX/VCL (como no site, item 28). Atenção: o repositório `e-rust/aylis` é privado, e
+  publicar deixa o código desses 27 crates público; sem `repository` no manifesto (o crates.io
+  avisa). Para publicar (o token é do autor, e publicar é permanente: só dá para "yank"):
+  `cargo login`, depois `cargo publish --allow-dirty` (ou sem ele, depois do commit) com os 27
+  `-p`: `aylis-accesskit-android aylis-core aylis-3d aylis-build aylis-controls-base
+  aylis-controls-charts aylis-controls-device aylis-controls-editors aylis-controls-industrial
+  aylis-controls aylis-data aylis-dbcontrols aylis-devlink aylis-docview aylis-json aylis-markdown
+  aylis-media aylis-skia aylis-web aylis-d2d aylis-platform-winit aylis-vector aylis-project
+  aylis-providers aylis-webview aylis-remote aylis` (o cargo publica na ordem das dependências).
+  Fica para depois: o gerador continuar apontando os projetos para `.aylis/sdk` (decisão do autor
+  ao trocar para a versão publicada) e um README por crate (a página do crates.io sai vazia).
 
 **Arrastar**
 - [ ] Abas que saem e entram em janelas, como as do navegador (pedido em 06/11): arrastar a
@@ -73,6 +102,12 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   é a prévia; juntar todas as abas de uma janela arrastando a faixa vazia.
 
 **IDE**
+- [ ] Recuo do Object Inspector (pedido em 09/11: "as propriedades deveriam estar identadas à
+  frente do agrupador, e o agrupador parece um espaço à frente do alinhamento lateral"). Feito em
+  09/11 (falta o autor confirmar; sem commit): o nome do grupo na borda do painel, alinhado com a
+  busca e com o título do componente, e as propriedades 16 px à frente (`GROUP_INDENT` em
+  `inspector.rs`; os lados de `margins`, mais 14). A aba Eventos, sem grupos, ficou como estava.
+  Referência `designer-windows.png` regravada (a de Linux, no Docker).
 - [ ] Aparelhos do seletor de vistas por categoria (pedido em 06/11): o item "Vistas…" vira
   "Telas…" e os aparelhos saem da lista plana para um menu com submenus — PC (HD, Full HD,
   2,5K, 4K, 8K), Tablet (iPad, iPad mini/Air/Pro, Galaxy Tab, Pixel Tablet, Xiaomi Pad) e
@@ -131,7 +166,7 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   fixa, tipo certo no Android 14+), com `keep_alive` (`START_STICKY`, o receptor do boot e o
   pedido de isenção da bateria). Conferido no emulador: a contagem seguiu com a tela fechada,
   voltou depois de `kill -9` e depois de reiniciar o emulador. Guia em
-  [docs/segundo-plano.md](docs/segundo-plano.md) (listas dos fabricantes, push como reserva).
+  [docs/segundo-plano.md](segundo-plano.md) (listas dos fabricantes, push como reserva).
   Falta o iOS (os modos permitidos) e conferir no ZenFone (a lista da ASUS).
 - [ ] Ligações e tela de bloqueio (feito; falta o autor confirmar): componentes `Phone`
   (`dial`, `call`, `state` e `on_state` pelo `TelephonyCallback`; com `dialer`, o
@@ -241,7 +276,7 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   `cargo test -p relatorios`.
 - [ ] Notificações push para todas as plataformas (pedido em 06/11, feito; falta o autor
   confirmar): o componente `PushNotifications` (categoria "Device"; guia em
-  [docs/push.md](docs/push.md)) registra sozinho com `active`, dá o `token` e o `provider` no
+  [docs/push.md](push.md)) registra sozinho com `active`, dá o `token` e o `provider` no
   `on_token` e as mensagens no `on_message` e no `on_opened` (toque na notificação, também
   com o app fechado), com `title`, `body`, `data` e `data_value`. O serviço é um trait no
   núcleo (`PushService`, com a fila `push_event` para o que chega antes do form):
@@ -258,7 +293,7 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   Conferido por teste (`crates/aylis-controls/tests/push.rs`, o manifesto no `publish.rs`, o
   `sw.js` no Node) e compilando para Windows, web, Android e iOS (o Linux num crate à parte;
   o macOS não foi compilado aqui). Pronto quando receber de verdade em cada plataforma (o
-  que depende de aparelho está em [docs/testes-em-dispositivos.md](docs/testes-em-dispositivos.md)).
+  que depende de aparelho está em [docs/testes-em-dispositivos.md](testes-em-dispositivos.md)).
 - [ ] Peças para montar fluxos com o push, como um app de chamadas (pedido em 06/11, feito;
   falta o autor confirmar; sem áudio nem vídeo, e quem liga as peças é o app): o
   `PushTrigger` (filtro sobre os dados → executa uma ação), o `WakeAppAction` (abre o app por
@@ -266,7 +301,7 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   montada com modelos `{chave}`). No Android as regras ficam gravadas no aparelho e o Java
   executa a ação com o app fechado (o `ActionService` do núcleo); os eventos (`on_trigger`,
   `on_open`, `on_button`, `on_timeout`, `on_click`) chegam quando o app roda. Nas outras
-  plataformas, com o app aberto. Guia em [docs/push.md](docs/push.md); testes em
+  plataformas, com o app aberto. Guia em [docs/push.md](push.md); testes em
   `crates/aylis-controls/tests/push.rs`. Falta: o iOS por cima do bloqueio (CallKit e push de
   VoIP pelo PushKit) e o toque no desktop.
 - [ ] Assistente de novo projeto (pedido em 01/11; não começou): no lugar do diálogo único
@@ -1334,7 +1369,7 @@ mudar a solução.
 - [ ] 38. CI com LLM, automação da IDE, rastro com métricas e cobertura (pedido do autor em
   07/11: "verificar integração contínua do futuro com LLM, pensar em algo que automatize a IDE
   e os projetos usando ela, code tracing com analytics, code coverage"). Estudo feito em 07/11:
-  [docs/proposta-llm-ci.md](docs/proposta-llm-ci.md), com o que já existe (CI com cobertura,
+  [docs/proposta-llm-ci.md](proposta-llm-ci.md), com o que já existe (CI com cobertura,
   54 ferramentas no MCP da IDE, Profiler, gravações, `Analytics`), as propostas (`aylis-tool
   lint` com as diretrizes checáveis, revisão e triagem por agente, a IDE sem janela na CI, o
   guia do agente e o `.mcp.json` nos projetos novos, ferramentas novas no MCP, rastro salvo e

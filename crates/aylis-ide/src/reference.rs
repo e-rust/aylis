@@ -16,7 +16,7 @@ use crate::lang::property_label;
 use crate::nonvisual;
 
 /// Os guias de `docs/` que não vão para a página (histórico interno e roteiros de teste).
-const PRIVATE_GUIDES: &[&str] = &["historico-decisoes.md", "testes-em-dispositivos.md", "roteiro-de-conferencia.md", "proposta-llm-ci.md"];
+const PRIVATE_GUIDES: &[&str] = &["historico-decisoes.md", "testes-em-dispositivos.md", "roteiro-de-conferencia.md", "proposta-llm-ci.md", "plano.md", "ajustes-pendentes.md"];
 
 /// "Comece aqui": a visão geral e os tutoriais, nesta ordem (o resto de `docs/` vai para os
 /// guias).

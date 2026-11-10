@@ -152,6 +152,13 @@ fn timing_of(state: &Shared, target: ComponentId, name: &str, value: &Value) -> 
     (timing, true)
 }
 
+/// O recuo das propriedades dentro de um grupo: o nome do grupo fica na borda do painel (como
+/// a busca e o título do componente) e as propriedades dele, à frente (pedido do autor em 09/11).
+const GROUP_INDENT: f32 = 16.0;
+
+/// O recuo de uma parte de propriedade (os lados de `margins`), à frente da propriedade.
+const PART_INDENT: f32 = GROUP_INDENT + 14.0;
+
 /// Uma linha: rótulo + área do editor.
 fn line(ui: &mut Ui, parent: ComponentId, text: &str, indent: f32) -> ComponentId {
     let line = ui.add(Layout::default(), parent);
@@ -383,7 +390,8 @@ fn group_header(ui: &mut Ui, state: &Shared, ids: &Ids, text: &str, key: &str, o
     if let Some(&l) = ui.children(r).iter().find(|&&c| ui.class_name(c) == Some("Label")) {
         let _ = ui.set_prop(l, "font_size", 13);
         let _ = ui.set_prop(l, "bold", true);
-        ui.control_mut(l).unwrap().set_margins([10.0, 0.0, 6.0, 0.0]);
+        // Na borda do painel, alinhado com a busca e com o título do componente (o `row` põe 10).
+        ui.control_mut(l).unwrap().set_margins([0.0, 0.0, 6.0, 0.0]);
     }
     let arrow = ui.add(aylis_controls::Label::new(if open { "▾" } else { "▸" }), r);
     ui.control_mut(arrow).unwrap().set_align(aylis_core::Align::Right).set_width(26.0).set_hit_test(false);
@@ -593,7 +601,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
         }
         let Row { name, kind, value, .. } = row;
         // O nome legível (traduzido com a tela); na dica, o nome usado no código.
-        let l = if events_tab { line(ui, ids.inspector, &name, 4.0) } else { line(ui, ids.inspector, &crate::lang::property_label(&name), 4.0) };
+        let l = if events_tab { line(ui, ids.inspector, &name, 4.0) } else { line(ui, ids.inspector, &crate::lang::property_label(&name), GROUP_INDENT) };
         if !events_tab {
             if let Some(&label) = ui.children(l).first() {
                 let _ = ui.set_prop(label, "hint", name.clone());
@@ -872,7 +880,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                     // Os quatro lados, um por linha ("margins.left": 4).
                     let sides = bounds_sides(&value);
                     for (i, side) in ["left", "top", "right", "bottom"].into_iter().enumerate() {
-                        let sl = line(ui, ids.inspector, side, 18.0);
+                        let sl = line(ui, ids.inspector, side, PART_INDENT);
                         let (commit_to, key, err_to) = (commit_to.clone(), format!("{name}.{side}"), err_to.clone());
                         text_editor(ui, sl, format_number(sides[i]), move |ui, text| match parse(PropKind::Float, &text) {
                             Ok(v) => commit_to(ui, &key, v),

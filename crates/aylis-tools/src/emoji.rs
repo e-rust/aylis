@@ -1,4 +1,4 @@
-//! Gera `resources/emoji/emoji.tsv` (o seletor de emoji do aylis) a partir das listas
+//! Gera `crates/aylis-controls-base/data/emoji.tsv` (o seletor de emoji do aylis) a partir das listas
 //! oficiais, numa pasta com:
 //!
 //! - `emoji-test.txt`: <https://unicode.org/Public/emoji/latest/emoji-test.txt>;

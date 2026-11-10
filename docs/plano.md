@@ -3,8 +3,8 @@
 > A facilidade de montar telas num designer visual, desenho próprio igual em todas as plataformas e compatibilidade com um backend em qualquer linguagem.
 
 Este é o plano inicial: princípios, arquitetura e fases. O que apareceu depois fica em dois
-documentos: os [ajustes pendentes](AJUSTES-PENDENTES.md) e os
-[ajustes concluídos](AJUSTES-CONCLUIDOS.md).
+documentos: os [ajustes pendentes](ajustes-pendentes.md) e o
+[histórico de decisões](historico-decisoes.md).
 
 ## 1. Princípios
 

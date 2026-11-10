@@ -5,6 +5,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+# Não vai para o crates.io: só a fachada `aylis` e as bibliotecas dela (decidido em 09/11).
+publish = false
 
 [[bin]]
 name = "aylis-tool"
@@ -42,3 +44,6 @@ sysinfo = { version = "0.38", default-features = false, features = ["system"] }
 tungstenite = "0.26"
 # O `aylis-tool check <projeto>` carrega os forms com todas as classes registradas.
 aylis-remote = { path = "../aylis-remote" }
+# O `aylis-tool build` e o `check` carregam os forms com as mesmas classes do designer da IDE,
+# o Model3D inclusive (fora do registro remoto, que também roda no navegador).
+aylis-3d = { path = "../aylis-3d" }

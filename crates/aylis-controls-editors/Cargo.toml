@@ -1,12 +1,12 @@
 [package]
 name = "aylis-controls-editors"
-description = "Editores visuais do aylis (ângulo, sombra, curva), a pintura e o texto animado"
+description = "Editores visuais do Aylis (ângulo, sombra, curva), a pintura e o texto animado"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 # O PaintCanvas abre e grava PNG, JPEG e BMP.
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }

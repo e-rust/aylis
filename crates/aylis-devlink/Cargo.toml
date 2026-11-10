@@ -1,6 +1,6 @@
 [package]
 name = "aylis-devlink"
-description = "O canal de desenvolvimento do aylis (app <-> IDE): Noise NKpsk0 sobre WebSocket"
+description = "O canal de desenvolvimento do Aylis (app <-> IDE): Noise NKpsk0 sobre WebSocket"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

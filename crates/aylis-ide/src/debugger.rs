@@ -18,7 +18,7 @@ use aylis_controls::{Button, Edit, Label, Layout, Splitter, TreeNode, TreeView};
 use aylis_core::{Align, ComponentId, EventArgs, Key, Ui};
 use aylis_project::Language;
 use aylis_tools::dap::{Event, Frame, Go, Job, Reply, Session, Variable, Worker};
-use aylis_tools::{Target, run};
+use aylis_tools::Target;
 
 use crate::jobs::{Msg, OutKind, OutputLine, Slot};
 use crate::state::Shared;
@@ -392,9 +392,10 @@ pub fn start(ui: &mut Ui, state: &Shared) {
             }
             let env = vec![("RUST_BACKTRACE".to_string(), "1".to_string())];
             let key = crate::jobs::build_key(&project, Target::Desktop, "dev");
+            // Os arquivos abertos no editor: a geração pode acrescentar handlers neles.
+            let open_files = crate::codewindow::open_paths();
             crate::jobs::start(state, Slot::Main, title, move |control, sender| {
-                let mut sink = |e| sender.send(Msg::Event(e));
-                let exe = run::build_desktop(&project, false, control, &mut sink)?;
+                let exe = crate::jobs::compile_desktop(&project, false, &open_files, control, sender)?;
                 sender.send(Msg::Event(aylis_tools::Event::Step("Depurando (pontos de parada: F5 na janela de código)…".into())));
                 let session = Session::launch_rust(&adapter, &exe, &project.dir(), &env, &breakpoints)?;
                 sender.send(Msg::Debug(Box::new(session)));

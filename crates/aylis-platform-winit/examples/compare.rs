@@ -4,7 +4,8 @@
 //! cargo run -p aylis-platform-winit --example compare -- [pasta-de-saída]
 //! ```
 //!
-//! Grava `cpu.png`, `gpu.png` e `diff.png` (diferenças ampliadas 8x) na pasta indicada.
+//! Grava `cpu.png`, `gpu.png` e `diff.png` (diferenças ampliadas 8x) na pasta indicada (sem ela,
+//! em `target/compare`).
 
 #[path = "shared/registration_form.rs"]
 mod registration_form;
@@ -15,7 +16,10 @@ const W: u32 = 900;
 const H: u32 = 600;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let out = std::path::PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| ".".into()));
+    // Sem pasta: `target/compare` (gravava na pasta atual, e as imagens foram parar na raiz do
+    // repositório).
+    let out = std::path::PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| "target/compare".into()));
+    std::fs::create_dir_all(&out)?;
 
     let render = |gpu: Option<&mut aylis_skia::gl::GlBackend>| -> Option<Vec<u8>> {
         let (mut ui, form) = registration_form::build(false).ok()?;

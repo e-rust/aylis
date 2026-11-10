@@ -135,10 +135,16 @@ fn watch_with(command: &mut Command, input: Option<&str>, control: &Control, sin
 /// se o projeto tiver) e, com `release`, otimizado. Usado pelo Executar, pelo Compilar e pela
 /// depuração na IDE; a publicação compila sem `dev`.
 pub fn build_desktop(project: &Project, release: bool, control: &Control, sink: Sink) -> Result<PathBuf, String> {
-    close_or_refuse_running(project, sink)?;
     if project.language == Language::Rust {
         aylis_project::codegen::generate(project)?;
     }
+    compile_desktop(project, release, control, sink)
+}
+
+/// O [`build_desktop`] sem gerar o código: para quem já gerou e verificou antes (o
+/// `aylis-tool build`, que não gera duas vezes).
+pub fn compile_desktop(project: &Project, release: bool, control: &Control, sink: Sink) -> Result<PathBuf, String> {
+    close_or_refuse_running(project, sink)?;
     build_commands(project, &project.output.before_build, None, control, sink)?;
     let exe = build_desktop_exe(project, release, control, sink)?;
     build_commands(project, &project.output.after_build, Some(&exe), control, sink)?;

@@ -2,8 +2,8 @@
 
 Registro do que foi pedido e decidido na sessão de criação do aylis (24 a 26/10/2026), na
 ordem em que aconteceu. As citações são do autor do projeto; "Decisão" é o que ficou
-combinado e "Resultado" é o que foi feito. O plano inicial está no [PLANO.md](../PLANO.md); os ajustes, em
-[AJUSTES-PENDENTES.md](../AJUSTES-PENDENTES.md) e [AJUSTES-CONCLUIDOS.md](../AJUSTES-CONCLUIDOS.md).
+combinado e "Resultado" é o que foi feito. O plano inicial está no [plano.md](plano.md); os ajustes que faltam, em
+[ajustes-pendentes.md](ajustes-pendentes.md).
 
 ## 1. A ideia e as regras de base (24/10)
 
@@ -274,3 +274,11 @@ traduzir as mensagens montadas com valores.
 | "poderia ter uma propriedade no projeto que permite encerrar o processo se ele já estiver aberto.. e validar antes de começar a compilar se a saída vai conseguir sobescrever o .exe.. juntamente com comandos personalizados de cmd ou powershell para permitir executar antes ou depois da compilação" — "permitir cmd e powershell só em projetos confiáveis, e na janela que define o projeto confiável deve mostrar esses comandos" | A propriedade e a checagem do `.exe` entram. Os comandos antes e depois da compilação (cmd e PowerShell) só rodam em projeto confiado, e o "Confiar neste projeto?" mostra os comandos. Exceção à diretriz "Texto não vira código nem comando". |
 | "o modal ... deve ser corrigido para abrir onde está a janela do Aylis" | Todo diálogo da IDE abre sobre a janela do Aylis que o chamou, no mesmo monitor, na frente e com o foco (com a dona minimizada, pela posição restaurada dela). |
 | "não estou gostando de cada vez que eu renomear um componente ou handler eu ter que confirmar.. queria que fosse automático" (conferência do item 59, 08/11) | O renomear troca direto quando o servidor de linguagem achou os usos (só o que é de fato aquele símbolo), como o Delphi; a situação diz quantas trocas e o Ctrl+Z desfaz nos abertos. Só por texto (sem o servidor pronto), a prévia continua, porque a mesma palavra num comentário ou noutro escopo também casaria. Muda a decisão de 04/11 ("nada é trocado sem a prévia"). Completado pelo autor em seguida ("pode dar um erro e avisar que o LSP ainda está carregando"; "só deve abrir o diálogo de renomear caso não tenha LSP"): com o servidor ainda carregando e o nome usado no código, o renomear é recusado com a caixa de erro e o nome não muda; com servidor que não acha usos, trocam só os outros forms, sem a prévia; a prévia (por texto) só abre sem servidor de linguagem. |
+
+## 14. Pedidos de 09/11
+
+| Pedido | Decisão |
+|---|---|
+| Compilador separado da IDE: "um executável que gera o app passando pelas validações", usado pela linha de comando e pela IDE — "subcomando" | É o `aylis-tool build` (a regra de que ferramenta nova vira subcomando do `aylis-tool`), não um executável à parte. A IDE chama em outro processo e lê os eventos do `--json`; a geração e a verificação saem do processo da IDE no Compilar, no Executar, no Publicar e no Depurar. O "Gerar código" do menu e o F12 continuam na IDE (rápidos, e o F12 precisa do resultado na hora). |
+| "o crates.io serviria pra que?" — "se tudo funcionar aí subimos para o crates" | Publicam só a fachada `aylis` e as 25 bibliotecas dela, mais a cópia do `accesskit_android` com o nome `aylis-accesskit-android` (o nome do original é do AccessKit); a IDE, as ferramentas, o host, a API C, o migrate, os demos e os exemplos ficam com `publish = false`. Os arquivos de que um crate precisa ficam dentro dele (o `emoji.tsv`). As descrições seguem o site: "Aylis" com maiúscula e sem Delphi/FMX/VCL. A publicação é do autor (o token é dele, e publicar é permanente). |
+| "gpu.png, diff.png e cpu.png eu acho que não deveriam estar na raiz do git.. nem sei pra que esses arquivos. AJUSTES-CONCLUIDOS.md também não faz muito sentido." (antes de deixar o repositório público) | As imagens (a saída do exemplo `compare`) saem do git, e o `compare` passa a gravar em `target/compare`. O AJUSTES-CONCLUIDOS.md é apagado: um item confirmado só sai dos pendentes (o que foi feito fica no commit; o porquê, aqui). O PLANO.md e o AJUSTES-PENDENTES.md vão para `docs/plano.md` e `docs/ajustes-pendentes.md`, fora do site (`PRIVATE_GUIDES`). |

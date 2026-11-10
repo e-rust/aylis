@@ -529,9 +529,12 @@ pub fn build(state: &Shared, release: bool) {
     // Um valor só no modelo (dois `{}` colados não casam com a tradução).
     let title = format!("Compilando {}", format!("{}{}", project.name, if release { " (release)" } else { "" }));
     let key = build_key(&project, Target::Desktop, if release { "release" } else { "dev" });
+    // Os arquivos abertos no editor: a geração pode acrescentar handlers neles.
+    let open_files = crate::codewindow::open_paths();
     let started = start(state, Slot::Main, title, move |control, sender| {
-        let exe = run::build_desktop(&project, release, control, &mut |e| sender.send(Msg::Event(e)))?;
-        Ok(format!("Compilado: {}", exe.display()))
+        let mut options = aylis_tools::build::Options::new(Target::Desktop);
+        options.release = release;
+        compile(&project, &options, Some(&open_files), control, sender).map(|(message, _)| message)
     });
     if started {
         track_build(state, key);
@@ -572,7 +575,7 @@ fn run_with(state: &Shared, debug: bool, ide_debug: bool, release: bool) {
     // Os arquivos abertos no editor: a geração pode acrescentar handlers neles.
     let open_files = crate::codewindow::open_paths();
     let started = start(state, Slot::Main, title, move |control, sender| {
-        prepare(&project, target == aylis_tools::Target::Web, Some(&open_files), control, sender)?;
+        prepare(&project, target, Some(&open_files), control, sender)?;
         require(project.language, target, sender)?;
         let mut options = run::Options::new(target);
         options.aylis_host = aylis_host();
@@ -660,7 +663,7 @@ pub fn publish_with(state: &Shared, target: Target, out_dir: Option<PathBuf>, ex
     let title = format!("Publicando {} — {}", project.app_name(), target.name());
     let key = build_key(&project, target, "publicar");
     let started = start(state, Slot::Main, title, move |control, sender| {
-        prepare(&project, target == Target::Web, None, control, sender)?;
+        prepare(&project, target, None, control, sender)?;
         require(project.language, target, sender)?;
         let mut options = publish::Options::new(target);
         options.out_dir = out_dir;
@@ -806,37 +809,60 @@ fn issue_line(project: &aylis_project::Project, issue: &aylis_project::check::Is
     line
 }
 
-/// O que o Executar e o Publicar fazem antes de compilar, na thread do trabalho (num projeto
-/// grande leva segundos: o ERP de 1009 forms travava a IDE uns 5 s em release): gerar o código
-/// (`generate`) e verificar o projeto, com os problemas indo para as mensagens. Com algum
-/// erro, não compila. `web`: o que só vale no navegador (as threads). `generate`: gerar, com os
-/// arquivos abertos no editor (que acompanha o que a geração puser neles).
-fn prepare(project: &aylis_project::Project, web: bool, generate: Option<&[PathBuf]>, control: &Control, sender: &Sender) -> Result<(), String> {
-    // O que mudou, antes de gerar (a geração põe tudo em dia): a verificação confere só isso.
-    let changed = crate::codegen::changed_forms(project);
-    if let Some(open_files) = generate {
-        sender.send(Msg::Event(Event::Step("Gerando o código".into())));
-        let before = crate::codewindow::snapshot(open_files);
-        crate::codegen::generate(project)?;
-        sender.send(Msg::Generated(before));
-    } else {
-        // O app leva só os ícones e as animações que os forms citam (o Gerar faz isso; o Salvar só
-        // acrescenta os do form salvo).
-        crate::codegen::sync_icons(project).and_then(|_| crate::codegen::sync_animations(project))?;
-    }
-    if control.is_cancelled() {
-        return Err(CANCELLED.into());
-    }
-    sender.send(Msg::Event(Event::Step("Verificando o projeto".into())));
+/// O que o Executar e o Publicar fazem antes de compilar: gerar o código (`generate`, com os
+/// arquivos abertos no editor, que acompanha o que a geração puser neles) e verificar o projeto
+/// para a plataforma `target`, com os problemas indo para as mensagens. Com algum erro, não
+/// compila.
+fn prepare(project: &aylis_project::Project, target: Target, generate: Option<&[PathBuf]>, control: &Control, sender: &Sender) -> Result<(), String> {
+    let mut options = aylis_tools::build::Options::new(target);
+    options.generate = generate.is_some();
+    options.compile = false;
+    compile(project, &options, generate, control, sender).map(|_| ())
+}
+
+/// Compila o desktop pelo compilador (gerar, verificar, compilar) e devolve o executável: o
+/// Depurar, que roda o programa no depurador da IDE.
+pub fn compile_desktop(project: &aylis_project::Project, release: bool, open_files: &[PathBuf], control: &Control, sender: &Sender) -> Result<PathBuf, String> {
+    let mut options = aylis_tools::build::Options::new(Target::Desktop);
+    options.release = release;
+    let (_, exe) = compile(project, &options, Some(open_files), control, sender)?;
+    exe.ok_or_else(|| "o compilador não informou o executável".to_string())
+}
+
+/// O compilador: o `aylis-tool build` em outro processo (gerar, verificar e compilar), com os
+/// eventos dele nas mensagens. A geração e a verificação de um projeto grande (o ERP de 1009
+/// forms levava uns 5 s) não pesam mais na IDE, e a linha de comando faz o mesmo que ela.
+/// `open_files`: os arquivos abertos no editor antes da geração.
+/// Devolve a mensagem final e o executável compilado (quando compilou).
+fn compile(project: &aylis_project::Project, options: &aylis_tools::build::Options, open_files: Option<&[PathBuf]>, control: &Control, sender: &Sender) -> Result<(String, Option<PathBuf>), String> {
+    use aylis_tools::build::{self, BuildEvent};
+    let mut before = open_files.map(crate::codewindow::snapshot);
+    let mut built = None;
+    let mut sink = |e: BuildEvent| match e {
+        BuildEvent::Event(e) => sender.send(Msg::Event(e)),
+        BuildEvent::Generated => sender.send(Msg::Generated(before.take().unwrap_or_default())),
+        BuildEvent::Issues(issues) => sender.send(Msg::Issues(issues)),
+        BuildEvent::Built(exe) => built = Some(exe),
+    };
+    let message = match aylis_tool() {
+        Some(tool) => match build::build_external(&tool, project, options, control, &mut sink) {
+            // Um aylis-tool de antes do `build` (o do repositório ainda não recompilado): faz aqui.
+            Err(e) if e.starts_with(build::NOT_A_COMPILER) => {
+                sender.send(Msg::Event(Event::Line(format!("⚠ {e}: gerando e verificando dentro da IDE (recompile o aylis-tools)"), LineKind::Tool)));
+                compile_here(project, options, control, &mut sink)
+            }
+            other => other,
+        },
+        None => compile_here(project, options, control, &mut sink),
+    }?;
+    Ok((message, built))
+}
+
+/// O [`compile`] dentro da IDE, sem o `aylis-tool` ao lado dela (os testes, que rodam sem ele).
+fn compile_here(project: &aylis_project::Project, options: &aylis_tools::build::Options, control: &Control, sink: &mut dyn FnMut(aylis_tools::build::BuildEvent)) -> Result<String, String> {
     let mut ui = crate::document::new_document_ui(false);
     ui.set_design_mode(false);
-    let issues = aylis_project::check::project_changed(project, Some(&mut ui), web, changed.as_deref());
-    let errors = issues.iter().filter(|i| i.error).count();
-    sender.send(Msg::Issues(issues));
-    if errors > 0 {
-        return Err(format!("{errors} erro(s) no projeto: veja as mensagens (o clique leva ao lugar)"));
-    }
-    Ok(())
+    aylis_tools::build::build(project, options, Some(&mut ui), control, sink)
 }
 
 /// Abre a pasta no gerenciador de arquivos.

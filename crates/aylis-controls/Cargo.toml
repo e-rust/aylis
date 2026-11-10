@@ -1,6 +1,6 @@
 [package]
 name = "aylis-controls"
-description = "Controles padrão do aylis"
+description = "Controles padrão do Aylis"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,12 +9,12 @@ rust-version.workspace = true
 # Os controles moram em crates por família (compilam em paralelo); este junta todos e
 # registra as classes.
 [dependencies]
-aylis-core = { path = "../aylis-core" }
-aylis-controls-base = { path = "../aylis-controls-base" }
-aylis-controls-charts = { path = "../aylis-controls-charts" }
-aylis-controls-device = { path = "../aylis-controls-device" }
-aylis-controls-editors = { path = "../aylis-controls-editors" }
-aylis-controls-industrial = { path = "../aylis-controls-industrial" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
+aylis-controls-base = { version = "0.1.0", path = "../aylis-controls-base" }
+aylis-controls-charts = { version = "0.1.0", path = "../aylis-controls-charts" }
+aylis-controls-device = { version = "0.1.0", path = "../aylis-controls-device" }
+aylis-controls-editors = { version = "0.1.0", path = "../aylis-controls-editors" }
+aylis-controls-industrial = { version = "0.1.0", path = "../aylis-controls-industrial" }
 
 [dev-dependencies]
 serde_json = "1"

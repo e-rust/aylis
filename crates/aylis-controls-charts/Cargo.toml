@@ -1,12 +1,12 @@
 [package]
 name = "aylis-controls-charts"
-description = "Gráficos, BI, trader, grafo de nós e mapa do aylis"
+description = "Gráficos, BI, trader, grafo de nós e mapa do Aylis"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { version = "0.1.0", path = "../aylis-core" }
 # GeoJSON do mapa coroplético e as séries em JSON.
 serde_json = "1"

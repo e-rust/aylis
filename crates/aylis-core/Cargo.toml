@@ -1,6 +1,6 @@
 [package]
 name = "aylis-core"
-description = "Núcleo do aylis: componentes, layout no estilo FMX, propriedades, temas e interfaces de plataforma"
+description = "Núcleo do Aylis: componentes, layout, propriedades, temas e interfaces de plataforma"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
