@@ -10,6 +10,7 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 rust-version = "1.88"
+repository = "https://github.com/e-rust/aylis"
 
 # O código do aylis só com as linhas (backtrace com arquivo e linha, passo a passo por linha):
 # a depuração completa deixava cada executável de teste com um .pdb de ~165 MB.

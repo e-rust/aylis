@@ -4,6 +4,7 @@ description = "Núcleo do Aylis: componentes, layout, propriedades, temas e inte
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 # O core não depende de nada do sistema operacional.

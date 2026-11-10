@@ -4,6 +4,7 @@ description = "Visualizador de documentos do Aylis: PDF (hayro), planilhas (XLSX
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

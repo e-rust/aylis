@@ -4,6 +4,7 @@ description = "Desenhos vetoriais do Aylis: animações Lottie e imagens SVG, de
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

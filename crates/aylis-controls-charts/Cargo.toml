@@ -4,6 +4,7 @@ description = "Gráficos, BI, trader, grafo de nós e mapa do Aylis"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

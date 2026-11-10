@@ -33,7 +33,9 @@ keywords = [
 ]
 categories = ["gui"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/AccessKit/accesskit"
+# O código desta cópia fica no repositório do Aylis (third_party/accesskit_android); o original é
+# https://github.com/AccessKit/accesskit.
+repository = "https://github.com/e-rust/aylis"
 
 [features]
 embedded-dex = []

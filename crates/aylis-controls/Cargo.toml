@@ -4,6 +4,7 @@ description = "Controles padrão do Aylis"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 # Os controles moram em crates por família (compilam em paralelo); este junta todos e

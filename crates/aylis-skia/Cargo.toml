@@ -4,6 +4,7 @@ description = "Renderizador Skia do Aylis: implementa Canvas e TextService (CPU 
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [features]

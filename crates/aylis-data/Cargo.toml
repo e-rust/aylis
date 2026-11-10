@@ -4,6 +4,7 @@ description = "Camada de dados do Aylis: ClientDataSet, Field, DataSource e delt
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

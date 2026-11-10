@@ -50,10 +50,10 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   ganharam `version = "0.1.0"` (subir a versão do workspace pede subir essas também); (4)
   `publish = false` na IDE, no `aylis-tools`, no `aylis-host`, no `aylis-capi` e no `aylis-migrate`
   (os demos, a IDE web e os exemplos já tinham); (5) as descrições com "Aylis" maiúsculo e sem
-  Delphi/FMX/VCL (como no site, item 28). Atenção: o repositório `e-rust/aylis` é privado, e
-  publicar deixa o código desses 27 crates público; sem `repository` no manifesto (o crates.io
-  avisa). Para publicar (o token é do autor, e publicar é permanente: só dá para "yank"):
-  `cargo login`, depois `cargo publish --allow-dirty` (ou sem ele, depois do commit) com os 27
+  Delphi/FMX/VCL (como no site, item 28). O repositório ficou público em 09/11 (com a release
+  v0.1.0), e o `repository` está nos manifestos (`repository.workspace`; a cópia do AccessKit
+  também aponta para o Aylis, onde o código dela fica); o dry-run passou de novo sem avisos. Para publicar (o token é do autor, e publicar é permanente: só dá para "yank"):
+  `cargo login`, depois `cargo publish` (depois do commit) com os 27
   `-p`: `aylis-accesskit-android aylis-core aylis-3d aylis-build aylis-controls-base
   aylis-controls-charts aylis-controls-device aylis-controls-editors aylis-controls-industrial
   aylis-controls aylis-data aylis-dbcontrols aylis-devlink aylis-docview aylis-json aylis-markdown

@@ -4,6 +4,7 @@ description = "Componente WebView do Aylis: a página fica numa vista nativa que
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

@@ -4,6 +4,7 @@ description = "Projetos do Aylis: o .aylisproj, a pasta do projeto, a fábrica d
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]

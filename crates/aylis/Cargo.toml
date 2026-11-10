@@ -4,6 +4,7 @@ description = "Aylis: framework de interface em Rust com designer visual, forms 
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 
 # Partes opcionais: um app que não usa dados, controles de dados ou mídia desliga a
