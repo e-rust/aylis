@@ -159,6 +159,8 @@ pub fn build(state: Shared) -> Ide {
     let doc_title = label(&mut ui, toolbar, "", Align::Client, 0.0);
     let _ = ui.set_prop(doc_title, "h_align", "trailing");
     muted(&mut ui, doc_title);
+    // O aviso de versão nova (escondido), logo abaixo da barra.
+    crate::updates::build_banner(&mut ui, form);
 
     // ----- status (à direita, o progresso estimado da compilação) -----
     let status_bar = ui.add(Layout::default(), form);
@@ -616,6 +618,10 @@ pub fn build(state: Shared) -> Ide {
     }), &ids);
     separator(&mut ui, help_menu);
     add_item(&mut ui, help_menu, "Relatar problema…", "", Some(crate::reportview::open), &ids);
+    // Versão nova: a consulta pelo menu e a diária (como no NoOBS).
+    add_item(&mut ui, help_menu, "Verificar atualizações", "", Some(|ui, _, _| crate::updates::check(ui, true)), &ids);
+    let mi_updates = add_item(&mut ui, help_menu, "Avisar de novas versões", "", Some(|ui, _, _| crate::updates::toggle(ui)), &ids);
+    crate::updates::set_menu_item(&mut ui, mi_updates);
     add_item(&mut ui, help_menu, "Sobre o Aylis", "", Some(|ui, _, _| crate::dialogs::about(ui)), &ids);
 
     // Menu de contexto do designer.
@@ -938,9 +944,9 @@ pub fn build(state: Shared) -> Ide {
                     state.borrow_mut().code_view = true;
                 }
             } else {
-                let form = actions::form_of_active_code(ui, &state);
+                let form = if state.borrow().code_view { actions::form_of_active_code(ui, &state) } else { None };
                 let mut st = state.borrow_mut();
-                if let Some(i) = form.filter(|_| st.code_view) {
+                if let Some(i) = form {
                     st.switch_to(i);
                 }
                 st.code_view = false;

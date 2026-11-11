@@ -10,13 +10,13 @@
     "frmDocumentacao.ir_para_titulo": 1,
     "frmDocumentacao.navegar": 1,
     "frmDocumentacao.proxima": 1,
-    "frmDocumentacao.seguir_link": 2,
+    "frmDocumentacao.seguir_link": 3,
     "frmDocumentacao.trocar_secao": 1,
     "frmDocumentacao.voltar": 1,
-    "frmPrincipal.abrir": 2,
+    "frmPrincipal.abrir": 3,
     "frmPrincipal.abrir_documentacao": 2,
-    "frmPrincipal.baixar": 1,
-    "frmPrincipal.experimentar": 1,
+    "frmPrincipal.baixar": 2,
+    "frmPrincipal.experimentar": 2,
     "frmPrincipal.ir_faq": 1,
     "frmPrincipal.ir_linguagens": 1,
     "frmPrincipal.ir_recursos": 1
@@ -83,8 +83,8 @@
           "seen": 1
         },
         "frmDocumentacao.seguir_link": {
-          "hash": "789992b3436ddb39",
-          "seen": 2
+          "hash": "008fd6c4a66e9e8b",
+          "seen": 3
         },
         "frmDocumentacao.trocar_secao": {
           "hash": "cedf7931c3db9507",
@@ -95,20 +95,20 @@
           "seen": 1
         },
         "frmPrincipal.abrir": {
-          "hash": "de1a752d1f767532",
-          "seen": 2
+          "hash": "dcc9b2c84cec69f6",
+          "seen": 3
         },
         "frmPrincipal.abrir_documentacao": {
           "hash": "923c211bfbab32dc",
           "seen": 2
         },
         "frmPrincipal.baixar": {
-          "hash": "b24499a77b0204f1",
-          "seen": 1
+          "hash": "7deca4113ddd6845",
+          "seen": 2
         },
         "frmPrincipal.experimentar": {
-          "hash": "94dbb06e1b97f016",
-          "seen": 1
+          "hash": "e59ed58bb70f834e",
+          "seen": 2
         },
         "frmPrincipal.ir_faq": {
           "hash": "fe457e11f15d3b40",

@@ -1266,6 +1266,59 @@ fn forms_and_code_share_one_tab_strip_like_delphi() {
     let _ = std::fs::remove_dir_all(base);
 }
 
+/// A faixa de versão nova aparece com uma release mais nova e some no ✕ (a consulta em si,
+/// pela rede, fica fora do teste: o resultado é montado à mão).
+#[test]
+fn a_newer_release_shows_the_update_banner() {
+    use aylis_tools::updates::{Fetched, Release};
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    let release = |tag: &str| Release { tag: tag.into(), prerelease: false, url: format!("https://github.com/e-rust/aylis/releases/tag/{tag}") };
+    let current = format!("v{}", aylis_ide::updates::current());
+    aylis_ide::updates::finish(&mut ide.ui, Fetched { status: 200, releases: vec![release(&current)], error: String::new() }, false);
+    assert!(!aylis_ide::updates::banner_visible(&ide.ui), "a mesma versão não avisa");
+    aylis_ide::updates::finish(&mut ide.ui, Fetched { status: 0, releases: Vec::new(), error: "sem rede".into() }, false);
+    assert!(!aylis_ide::updates::banner_visible(&ide.ui), "sem resposta não avisa");
+    aylis_ide::updates::finish(&mut ide.ui, Fetched { status: 200, releases: vec![release("v99.0.0"), release(&current)], error: String::new() }, false);
+    assert!(aylis_ide::updates::banner_visible(&ide.ui), "versão nova avisa");
+    aylis_ide::updates::hide(&mut ide.ui);
+    // Dispensada, a mesma versão não volta sozinha na sessão.
+    aylis_ide::updates::finish(&mut ide.ui, Fetched { status: 200, releases: vec![release("v99.0.0")], error: String::new() }, false);
+    assert!(!aylis_ide::updates::banner_visible(&ide.ui));
+}
+
+/// O Design no código de um form sem aba aberta mostra esse form (antes voltava ao último
+/// design mostrado; relatado pelo autor em 10/11).
+#[test]
+fn design_from_the_code_of_a_form_without_a_tab_opens_that_form() {
+    let base = temp("design_sem_aba");
+    let mut project = aylis_project::create(&base, "Agenda", aylis_project::Language::Rust).unwrap();
+    project.add_form("frmClientes", "Clientes").unwrap();
+    project.save().unwrap();
+    aylis_project::codegen::generate(&project).unwrap();
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    actions::open_recent(&mut ide.ui, &state, &ide.ids, &project.path);
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    assert_ne!(state.borrow().doc.form_name(), "frmClientes", "só o form principal aberto");
+
+    // O fonte do frmClientes aberto direto (como pelo Pesquisar no projeto), sem a aba do form.
+    actions::open_code(&mut ide.ui, &state, None);
+    let source = aylis_project::codegen::form_source(&project, "frmClientes").unwrap();
+    aylis_ide::codewindow::open(&mut ide.ui, &source, 1).unwrap();
+    state.borrow_mut().code_view = true;
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    assert_eq!(aylis_ide::codewindow::embedded_active(&ide.ui), Some(aylis_ide::debugger::norm(&source)));
+
+    ide.ui.click(ide.ids.view_design);
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    let st = state.borrow();
+    assert!(!st.code_view);
+    assert_eq!(st.doc.form_name(), "frmClientes", "o Design abriu o form deste fonte");
+    drop(st);
+    let _ = std::fs::remove_dir_all(base);
+}
+
 #[test]
 fn every_inspector_property_has_a_readable_translated_name() {
     let doc = Document::new();

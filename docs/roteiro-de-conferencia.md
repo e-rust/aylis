@@ -36,6 +36,16 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     `aylis-tool.exe` enquanto compila; o Parar encerra o `aylis-tool` e o `cargo` juntos. Num
     terminal, `aylis-tool build examples/Paint/Paint.aylisproj` faz o mesmo, e a Calculadora (Free Pascal)
     só gera e verifica.
+98. **O Design no código de um form sem aba** (relatado em 10/11). Abra um projeto com dois
+    forms, só com o principal aberto; abra o fonte do outro (pelo Pesquisar no projeto ou pela
+    lista de arquivos) e clique em Design (ou F12). *Esperado:* abre o form desse fonte numa aba
+    nova, e não o último design mostrado. (O mínimo do Rust no "Verificar ambiente" também passou
+    a 1.88, o `rust-version` dos crates: um Rust 1.86 ou 1.87 agora aparece como desatualizado.)
+99. **O aviso de versão nova** (pedido de 10/11, como no NoOBS). Na IDE, Ajuda → Verificar
+    atualizações. *Esperado:* "O Aylis está atualizado (versão 0.2.0-beta.1)." Ajuda → "Avisar de novas
+    versões" vem marcado e desmarca/marca. Com uma release mais nova no GitHub, a IDE instalada
+    (não a do `target/`, que só consulta pelo menu) mostra, uma vez por dia depois das 6 h, a faixa
+    "Nova versão do Aylis disponível" abaixo da barra, com "Abrir página" e o ✕.
 
 ## Os ajustes de 08/11 que faltam conferir
 

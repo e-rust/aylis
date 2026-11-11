@@ -151,6 +151,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
     // No registro das IDEs abertas (o duplo clique e o MCP acham esta).
     aylis_ide::instance::start(&mut ide.ui, &ide.state, &ide.ids);
+    // Versão nova do Aylis: a consulta do dia (fora das medições e das capturas).
+    if !diagnostics {
+        aylis_ide::updates::start(&mut ide.ui);
+    }
     aylis_platform_winit::run_with_pump(ide.ui, first, options, move |waker| actions::pump(pump_state, ids, waker))?;
     aylis_ide::recovery::finish();
     aylis_ide::instance::stop();

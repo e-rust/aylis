@@ -67,6 +67,7 @@ pub mod surface;
 pub mod taborder;
 pub mod tooldialogs;
 pub mod trust;
+pub mod updates;
 pub mod viewsdialog;
 pub mod widgets;
 pub mod wizard;

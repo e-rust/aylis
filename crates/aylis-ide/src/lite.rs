@@ -39,7 +39,8 @@ pub fn needs(item: &str) -> Option<Capability> {
     Some(match item {
         "Novo projeto…" | "Abrir projeto…" | "Abrir form…" | "Nova janela" | "Abrir gravação…" | "Recentes" | "Salvar como…" | "Salvar tudo"
         | "Fechar projeto" | "Sair" | "Abrir pasta do projeto" | "Confiar neste projeto" | "Adicionar form existente…" | "Ícone do app…" | "Android…"
-        | "Gravar o uso da IDE" | "Abrir pasta das gravações" | "Relatar problema…" | "Opções da IDE…" => Disk,
+        | "Gravar o uso da IDE" | "Abrir pasta das gravações" | "Relatar problema…" | "Opções da IDE…" | "Verificar atualizações"
+        | "Avisar de novas versões" => Disk,
         "Gerar código" | "Abrir código do form" | "Abrir fonte…" | "Pendências entre linguagens…" | "Pesquisar no projeto…" | "Depurar no aparelho" => Code,
         "Pacotes de componentes" | "Pacotes…" | "Instalar pacote…" | "Criar pacote deste form…" => Packages,
         "Executar" | "Executar sem depurar" | "Compilar e executar em release" | "Compilar" | "Compilar em release" | "Parar" | "Inspetor do app em execução…"

@@ -8,4 +8,4 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.1.0", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.1", path = "../aylis-core" }

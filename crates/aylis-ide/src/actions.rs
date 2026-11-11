@@ -1815,14 +1815,24 @@ pub fn code_file_of(st: &crate::state::State, doc: &Document) -> Option<PathBuf>
     }
 }
 
-/// A aba do form cujo código está ativo no editor embutido (para voltar ao Design nele).
+/// A aba do form cujo código está ativo no editor embutido (para voltar ao Design nele). O
+/// form do projeto ainda sem aba é aberto: antes, o Design voltava ao último form mostrado,
+/// que não era o deste código, e o F12 dizia que o fonte não tinha form.
 pub fn form_of_active_code(ui: &Ui, state: &Shared) -> Option<usize> {
     let file = crate::codewindow::embedded_active(ui)?;
+    let unopened = {
+        let st = state.try_borrow().ok()?;
+        let tab = (0..st.tab_count()).find(|&i| st.tab(i).and_then(|d| code_file_of(&st, d)).is_some_and(|f| crate::debugger::norm(&f) == file));
+        if tab.is_some() && !st.no_form {
+            return tab;
+        }
+        let project = st.project.as_ref()?;
+        project.forms.iter().find(|e| crate::debugger::norm(&codegen::entry_source(project, e)) == file)?.name.clone()
+    };
+    open_project_form(state, &unopened);
     let st = state.try_borrow().ok()?;
-    if st.no_form {
-        return None;
-    }
-    (0..st.tab_count()).find(|&i| st.tab(i).and_then(|d| code_file_of(&st, d)).is_some_and(|f| crate::debugger::norm(&f) == file))
+    // Só a aba do form deste fonte (o form que não abriu deixa o aviso no rodapé).
+    (!st.no_form && code_file_of(&st, &st.doc).is_some_and(|f| crate::debugger::norm(&f) == file)).then_some(st.active)
 }
 
 pub fn open_code(ui: &mut Ui, state: &Shared, handler: Option<&str>) {

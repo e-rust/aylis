@@ -52,6 +52,7 @@ pub mod serve;
 pub mod settings;
 pub mod shell;
 pub mod trust;
+pub mod updates;
 pub mod wsl;
 
 use std::path::{Path, PathBuf};

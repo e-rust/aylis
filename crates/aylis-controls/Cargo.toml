@@ -10,12 +10,12 @@ rust-version.workspace = true
 # Os controles moram em crates por família (compilam em paralelo); este junta todos e
 # registra as classes.
 [dependencies]
-aylis-core = { version = "0.1.0", path = "../aylis-core" }
-aylis-controls-base = { version = "0.1.0", path = "../aylis-controls-base" }
-aylis-controls-charts = { version = "0.1.0", path = "../aylis-controls-charts" }
-aylis-controls-device = { version = "0.1.0", path = "../aylis-controls-device" }
-aylis-controls-editors = { version = "0.1.0", path = "../aylis-controls-editors" }
-aylis-controls-industrial = { version = "0.1.0", path = "../aylis-controls-industrial" }
+aylis-core = { version = "0.2.0-beta.1", path = "../aylis-core" }
+aylis-controls-base = { version = "0.2.0-beta.1", path = "../aylis-controls-base" }
+aylis-controls-charts = { version = "0.2.0-beta.1", path = "../aylis-controls-charts" }
+aylis-controls-device = { version = "0.2.0-beta.1", path = "../aylis-controls-device" }
+aylis-controls-editors = { version = "0.2.0-beta.1", path = "../aylis-controls-editors" }
+aylis-controls-industrial = { version = "0.2.0-beta.1", path = "../aylis-controls-industrial" }
 
 [dev-dependencies]
 serde_json = "1"

@@ -9,8 +9,21 @@ use aylis_project::Language;
 use crate::process::quiet;
 use crate::{Target, which};
 
-/// Versão mínima do Rust (a do workspace do aylis).
-pub const MIN_RUST: (u32, u32) = (1, 86);
+/// Versão mínima do Rust: o `rust-version` do workspace do Aylis (estava 1.86 com o
+/// workspace em 1.88, e o 1.87 passava na conferência e falhava no cargo). O teste
+/// `the_minimum_rust_is_the_workspace_one` confere.
+pub const MIN_RUST: (u32, u32) = (1, 88);
+
+#[cfg(test)]
+mod min_rust_tests {
+    #[test]
+    fn the_minimum_rust_is_the_workspace_one() {
+        let manifest = include_str!("../../../Cargo.toml");
+        let line = manifest.lines().find(|l| l.trim_start().starts_with("rust-version")).expect("rust-version no workspace");
+        let version = line.split('"').nth(1).unwrap();
+        assert_eq!(version, format!("{}.{}", super::MIN_RUST.0, super::MIN_RUST.1));
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Status {
