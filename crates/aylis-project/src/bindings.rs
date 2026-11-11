@@ -508,7 +508,8 @@ fn generator(language: Language, m: &Model) -> Out {
 }
 
 /// A versão do gerador: mudar o que ele escreve (ou o catálogo) faz regerar todos os pedaços.
-const GENERATOR_VERSION: u32 = 7;
+/// 8: as classes de cada form (`classes.json`), para tirar as que nenhum usa mais.
+const GENERATOR_VERSION: u32 = 8;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -623,6 +624,13 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
     let sources_before = sources.clone();
     let mut changed = full;
     let mut regenerated: Vec<String> = Vec::new();
+    // As classes que cada form usa (o módulo dele → as classes): a classe que nenhum form usa
+    // mais sai, sem reler os forms que não mudaram. Ficava o acesso de uma classe cuja feature
+    // saiu do Cargo.toml, e o build quebrava no gerado (relatório do RTSPlayer, 10/11).
+    let uses_file = dir.join("classes.json");
+    let mut uses: std::collections::BTreeMap<String, BTreeSet<String>> =
+        if full { Default::default() } else { std::fs::read_to_string(&uses_file).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default() };
+    let uses_before = uses.clone();
     for entry in project.forms.iter().filter(|e| full || only.is_none_or(|o| e.name.eq_ignore_ascii_case(o))) {
         let module = crate::codegen::module_name(&entry.file);
         let piece = forms_dir.join(format!("{module}.{ext}"));
@@ -630,8 +638,9 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
             continue;
         }
         // As marcas de antes de ler: um form salvo enquanto o pedaço é feito fica para trás.
-        sources.insert(module, form_stamps(project, entry, &mut files));
+        sources.insert(module.clone(), form_stamps(project, entry, &mut files));
         let model = model_of(&catalog, vec![form_model(project, entry, &mut files)?]);
+        uses.insert(module, model.classes.iter().map(|(c, _)| c.clone()).collect());
         // As classes que ainda não têm pedaço (as que este form passou a usar).
         for (class, _) in &model.classes {
             let path = classes_dir.join(format!("{class}.{ext}"));
@@ -650,6 +659,22 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
     // Os forms que saíram do projeto saem das marcas.
     let modules: BTreeSet<String> = project.forms.iter().map(|e| crate::codegen::module_name(&e.file)).collect();
     sources.retain(|m, _| modules.contains(m));
+    uses.retain(|m, _| modules.contains(m));
+    // Com as classes de todos os forms conhecidas (um projeto gerado antes desta lista ainda não
+    // tem as de todos), a classe que nenhum usa sai.
+    if modules.iter().all(|m| uses.contains_key(m)) {
+        let used: BTreeSet<&String> = uses.values().flatten().collect();
+        for e in std::fs::read_dir(&classes_dir).into_iter().flatten().flatten() {
+            let stem = e.path().file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+            if !used.contains(&stem) && std::fs::remove_file(e.path()).is_ok() {
+                changed = true;
+            }
+        }
+    }
+    if uses != uses_before {
+        let text = serde_json::to_string(&uses).map_err(|e| e.to_string())?;
+        std::fs::write(&uses_file, text).map_err(|e| format!("não consegui gravar {}: {e}", uses_file.display()))?;
+    }
     if sources != sources_before {
         let text = serde_json::to_string(&sources).map_err(|e| e.to_string())?;
         std::fs::write(sources_file(project), text).map_err(|e| format!("não consegui gravar {}: {e}", sources_file(project).display()))?;

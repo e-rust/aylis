@@ -127,17 +127,40 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
     if name == "app_command" {
         let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
         let command = args.get("command").cloned().unwrap_or(Value::Null);
+        let snapshot = command["cmd"] == "snapshot";
         let result = match link {
             Ok(Some(dev)) => dev.call(command),
             _ => return text_result("nenhum app em execução conectado (use run e espere abrir)", true),
         };
         return match result {
+            // A captura vai como imagem do MCP: o agente vê a tela do app (relatório do
+            // RTSPlayer, 10/11: só havia a árvore, que num app médio passa de 130 mil caracteres).
+            Ok(Value::String(png)) if snapshot => json!({ "content": [{ "type": "image", "data": png, "mimeType": "image/png" }], "isError": false }),
             Ok(v) => text_result(serde_json::to_string_pretty(&v).unwrap_or_default(), false),
             Err(e) => text_result(e, true),
         };
     }
     if name == "build" && args.get("wait").and_then(Value::as_bool).unwrap_or(true) {
         return build_and_wait(args, poster);
+    }
+    if name == "build_wait" {
+        return build_wait(&args, poster);
+    }
+    // Executar: espera a compilação e devolve os erros dela (a resposta saía na hora com
+    // "Executando…", e a compilação que falhava depois não era avisada; relatório do
+    // RTSPlayer, 10/11).
+    if matches!(name, "run" | "run_without_debug" | "debug") {
+        let tool = name.to_string();
+        let wait = args_wait(&args);
+        let first = on_ui(poster, move |ui, state, ids| {
+            let result = run_tool(ui, state, ids, &tool, &args);
+            (state.borrow().job.is_some(), result)
+        });
+        return match first {
+            Ok((true, Ok(_))) => after_run(&wait, poster),
+            Ok((_, Ok(v))) => text_result(if let Value::String(s) = &v { s.clone() } else { v.to_string() }, false),
+            Ok((_, Err(e))) | Err(e) => text_result(e, true),
+        };
     }
     let name = name.to_string();
     match on_ui(poster, move |ui, state, ids| run_tool(ui, state, ids, &name, &args)) {
@@ -161,8 +184,10 @@ fn peek<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&Shared) -> R + Send 
 /// `build`: começa a compilação e espera ela terminar, nesta thread (a da conexão, não a da
 /// interface: a IDE segue respondendo). A resposta diz se compilou, com os erros e as últimas
 /// linhas (pedido do autor em 08/11: "a sessão tem que ficar aguardando o Aylis compilar e o Aylis
-/// deve avisar quando terminar"). Até 30 minutos; `wait: false` só começa, como antes.
+/// deve avisar quando terminar"). Até `max_wait` (45 s por padrão; depois, `build_wait`);
+/// `wait: false` só começa, como antes.
 fn build_and_wait(args: Value, poster: &Poster) -> Value {
+    let wait = args_wait(&args);
     let started = on_ui(poster, move |ui, state, ids| {
         // Um trabalho já em andamento (o app executando, outra compilação): recusa, em vez de
         // esperar por ele como se fosse esta compilação (conferência de 08/11).
@@ -184,16 +209,91 @@ fn build_and_wait(args: Value, poster: &Poster) -> Value {
         // Não começou (sem projeto, outra linguagem, um trabalho em andamento...): a situação diz.
         return text_result(status, true);
     }
-    let deadline = std::time::Instant::now() + Duration::from_secs(30 * 60);
-    loop {
-        std::thread::sleep(Duration::from_millis(500));
-        match peek(poster, |state| state.borrow().job.is_none()) {
-            Ok(true) => break,
-            Ok(false) if std::time::Instant::now() < deadline => {}
-            Ok(false) => return text_result("a compilação passou de 30 minutos; acompanhe com status e output", true),
-            Err(e) => return text_result(e, true),
-        }
+    match wait_job(poster, wait, false) {
+        Ok(Phase::Done) => job_summary(poster),
+        Ok(_) => still_compiling(wait),
+        Err(e) => text_result(e, true),
     }
+}
+
+/// Quanto uma chamada espera (`max_wait`, em segundos): 45 por padrão, dentro do prazo de um
+/// cliente MCP (a primeira compilação de um projeto passa disso, e o cliente desistia da chamada
+/// sem resposta; relatório do RTSPlayer, 10/11). O resto se espera com `build_wait`.
+fn args_wait(args: &Value) -> u64 {
+    args.get("max_wait").and_then(Value::as_u64).unwrap_or(45).clamp(1, 30 * 60)
+}
+
+/// Onde o trabalho estava quando a espera acabou.
+enum Phase {
+    /// Terminou (compilou, falhou, ou o app fechou).
+    Done,
+    /// A compilação acabou e o app está rodando.
+    Running,
+    /// Ainda compilando.
+    Busy,
+}
+
+/// Espera o trabalho da IDE terminar (ou, com `until_program`, o app começar), até `seconds`.
+fn wait_job(poster: &Poster, seconds: u64, until_program: bool) -> Result<Phase, String> {
+    let deadline = std::time::Instant::now() + Duration::from_secs(seconds);
+    loop {
+        let phase = peek(poster, move |state| match state.borrow().job.as_ref() {
+            None => Some(Phase::Done),
+            Some(job) if until_program && job.program_started() => Some(Phase::Running),
+            Some(_) => None,
+        })?;
+        if let Some(phase) = phase {
+            return Ok(phase);
+        }
+        if std::time::Instant::now() >= deadline {
+            return Ok(Phase::Busy);
+        }
+        std::thread::sleep(Duration::from_millis(500));
+    }
+}
+
+fn still_compiling(waited: u64) -> Value {
+    text_result(format!("{{\"compiling\": true, \"note\": \"ainda compilando depois de {waited} s: chame build_wait para esperar mais (o resultado vem quando terminar)\"}}"), false)
+}
+
+/// `build_wait`: espera a compilação em andamento (do `build` ou do `run`) e devolve o
+/// resultado; sem nada em andamento, o da última.
+fn build_wait(args: &Value, poster: &Poster) -> Value {
+    match wait_job(poster, args_wait(args), true) {
+        Ok(Phase::Done) => job_summary(poster),
+        Ok(Phase::Running) => text_result("{\"compiled\": true, \"running\": true, \"note\": \"compilou; o app está rodando (app_command fala com ele)\"}", false),
+        Ok(Phase::Busy) => still_compiling(args_wait(args)),
+        Err(e) => text_result(e, true),
+    }
+}
+
+/// Depois de mandar executar: espera a compilação. Compilou e abriu: espera um pouco para ver se
+/// o app não cai logo (um pânico na inicialização). Falhou: os erros, como no `build`.
+fn after_run(wait: &u64, poster: &Poster) -> Value {
+    match wait_job(poster, *wait, true) {
+        Ok(Phase::Running) => {
+            std::thread::sleep(Duration::from_secs(2));
+            match peek(poster, |state| state.borrow().job.is_none()) {
+                Ok(true) => {
+                    let mut v = job_summary(poster);
+                    if let Some(text) = v["content"][0]["text"].as_str() {
+                        v["content"][0]["text"] = Value::String(format!("o app abriu e fechou logo em seguida (veja as últimas linhas):\n{text}"));
+                    }
+                    v["isError"] = Value::Bool(true);
+                    v
+                }
+                _ => text_result("{\"compiled\": true, \"running\": true, \"note\": \"o app está rodando (app_command fala com ele)\"}", false),
+            }
+        }
+        Ok(Phase::Done) => job_summary(poster),
+        Ok(Phase::Busy) => still_compiling(*wait),
+        Err(e) => text_result(e, true),
+    }
+}
+
+/// O resultado da última compilação (o que as MENSAGENS mostram): se compilou, os erros e as
+/// últimas linhas.
+fn job_summary(poster: &Poster) -> Value {
     let summary = peek(poster, |state| {
         use crate::jobs::OutKind;
         let st = state.borrow();
@@ -489,6 +589,44 @@ fn source_file(state: &Shared, path: &str) -> Result<std::path::PathBuf, String>
     if inside.is_file() { Ok(inside) } else { Err(format!("não achei o fonte {path}")) }
 }
 
+/// Confere o layout inteiro e devolve **todos** os erros de uma vez; sem erro, troca o form
+/// aberto (com `dry_run`, só confere). Antes parava no primeiro erro, e um layout de 24 KB com
+/// cinco erros ia e voltava cinco vezes (relatório do RTSPlayer, 10/11).
+fn apply_layout(state: &Shared, layout: &str, dry_run: bool) -> Result<Value, String> {
+    let errors = {
+        let mut st = state.borrow_mut();
+        aylis_json::validate(&mut st.doc.ui, layout)
+    };
+    if !errors.is_empty() {
+        let list: Vec<String> = errors.iter().map(ToString::to_string).collect();
+        return Err(format!("{} erro(s) no layout (nada foi trocado):\n- {}", list.len(), list.join("\n- ")));
+    }
+    if dry_run {
+        return Ok(Value::String("o layout carrega sem erros (dry_run: nada foi trocado)".into()));
+    }
+    state.borrow_mut().doc.replace_json(layout)?;
+    Ok(Value::String("layout trocado".into()))
+}
+
+/// Troca o nó com o nome `name` (na árvore do JSON do layout) por `node`.
+fn replace_node(at: &mut Value, name: &str, node: Value) -> bool {
+    if at.get("name").and_then(Value::as_str) == Some(name) {
+        *at = node;
+        return true;
+    }
+    let Some(children) = at.get_mut("children").and_then(Value::as_array_mut) else { return false };
+    let mut node = Some(node);
+    for child in children {
+        if let Some(n) = node.take() {
+            if replace_node(child, name, n.clone()) {
+                return true;
+            }
+            node = Some(n);
+        }
+    }
+    false
+}
+
 /// O fonte de `read_code`/`edit_code`: `file` (caminho, ou relativo à pasta do código) ou o
 /// código do form `form` (vazio: o aberto).
 fn code_target(state: &Shared, args: &Value) -> Result<std::path::PathBuf, String> {
@@ -615,13 +753,35 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             Ok(serde_json::from_str(&json).map_err(|e| e.to_string())?)
         }
         "set_layout" => {
-            let layout = match args.get("layout") {
-                Some(Value::String(s)) => s.clone(),
-                Some(v) => v.to_string(),
-                None => return Err("falta \"layout\"".into()),
+            // O layout pelo texto, ou por um arquivo (`layout_file`: um layout grande não precisa
+            // ir e voltar inteiro na conversa).
+            let layout = match (args.get("layout"), arg(args, "layout_file")) {
+                (Some(Value::String(s)), _) => s.clone(),
+                (Some(v), _) if !v.is_null() => v.to_string(),
+                (_, file) if !file.is_empty() => std::fs::read_to_string(file).map_err(|e| format!("não consegui ler {file}: {e}"))?,
+                _ => return Err("falta \"layout\" (ou \"layout_file\")".into()),
             };
-            state.borrow_mut().doc.replace_json(&layout)?;
-            Ok(Value::String("layout trocado".into()))
+            apply_layout(state, &layout, args.get("dry_run").and_then(Value::as_bool).unwrap_or(false))
+        }
+        "patch_layout" => {
+            // Troca só o componente `component` (e os filhos dele) pelo JSON dado, sem mandar o
+            // form inteiro.
+            let name = arg(args, "component");
+            let node: Value = match args.get("layout") {
+                Some(Value::String(s)) => serde_json::from_str(s).map_err(|e| format!("JSON inválido: {e}"))?,
+                Some(v) if v.is_object() => v.clone(),
+                _ => return Err("falta \"layout\" (o objeto do componente, com class, name, propriedades e children)".into()),
+            };
+            let mut doc: Value = serde_json::from_str(&state.borrow().doc.to_json()?).map_err(|e| e.to_string())?;
+            if !replace_node(&mut doc["root"], name, node) {
+                return Err(format!("o form aberto não tem o componente '{name}'"));
+            }
+            apply_layout(state, &doc.to_string(), args.get("dry_run").and_then(Value::as_bool).unwrap_or(false))
+        }
+        "class_info" => {
+            let class = arg(args, "class");
+            let st = state.borrow();
+            aylis_json::class_info(&st.doc.ui, class).ok_or_else(|| format!("não há a classe '{class}' (list_classes mostra as da paleta)"))
         }
         "list_classes" => {
             let st = state.borrow();
@@ -700,6 +860,15 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             Ok(json!({ "file": file.display().to_string(), "lines": total, "start_line": from, "end_line": to, "unsaved": unsaved, "read_only": generated, "text": part }))
         }
         "edit_code" => {
+            // Um fonte que ainda não existe, com `old` vazio: é criado com `new` (o arquivo por
+            // assunto; relatório do RTSPlayer, 10/11).
+            let wanted = arg(args, "file");
+            if arg(args, "old").is_empty() && !wanted.is_empty() && source_file(state, wanted).is_err() {
+                let project = state.borrow().project.clone().ok_or("abra um projeto antes (open_project)")?;
+                let file = crate::actions::new_source(&project, wanted, arg(args, "new"))?;
+                let note = if project.language == aylis_project::Language::Rust { "criado; declare o mod dele (no lib.rs ou no módulo pai) com edit_code" } else { "criado" };
+                return Ok(json!({ "file": file.display().to_string(), "created": true, "note": note }));
+            }
             let file = code_target(state, args)?;
             if file.extension().is_some_and(|e| e == "json") && file.components().any(|c| c.as_os_str() == "forms") {
                 return Err("os forms mudam pelo designer: set_property, add_component, set_layout (o arquivo é regravado ao salvar)".into());
@@ -892,11 +1061,19 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 l => aylis_project::Language::from_name(l).ok_or_else(|| format!("linguagem desconhecida: {l}"))?,
             };
             std::fs::create_dir_all(&dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
-            let project = aylis_project::create(&dir, arg(args, "name"), language)?;
+            // `here`: o projeto direto em `dir`, que pode já ter outras coisas (o app dentro de um
+            // repositório); sem ele, numa pasta nova `dir/<nome>`.
+            let here = args.get("here").and_then(Value::as_bool).unwrap_or(false);
+            let project = if here { aylis_project::create_at(&dir, arg(args, "name"), language)? } else { aylis_project::create(&dir, arg(args, "name"), language)? };
             // Criado aqui: confiável (um projeto que já existia não passa por este caminho).
             aylis_tools::trust::trust(&project.dir())?;
             crate::actions::open_recent(ui, state, ids, &project.path);
-            Ok(json!({ "project": project.name, "path": project.path.display().to_string(), "status": state.borrow().status }))
+            let mut notes = vec!["Confiável nesta pasta: mover o projeto para outra pasta conta como projeto de fora (modo restrito até o usuário confiar). Para criar onde ele vai ficar, use `here`.".to_string()];
+            // O gancho que impede gravar direto nos arquivos que a IDE guarda (com o MCP ligado).
+            if project.dir().join(".claude").join("settings.local.json").is_file() {
+                notes.push("Criado .claude/settings.local.json: o gancho que impede o agente de gravar direto nos arquivos que a IDE guarda (fora do git, pelo .claude/.gitignore).".into());
+            }
+            Ok(json!({ "project": project.name, "path": project.path.display().to_string(), "status": state.borrow().status, "notes": notes }))
         }
         "close_project" => {
             crate::actions::close_project(ui, state);
@@ -1058,7 +1235,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
 /// usuário (a confiança é só dele, pelo diálogo da IDE; o MCP não confirma).
 fn restricted(state: &Shared) -> Result<(), String> {
     if state.borrow().restricted {
-        return Err("o projeto está em modo restrito (não foi criado nesta máquina): compilar, executar e publicar ficam desligados até o usuário confiar nele na IDE (o diálogo \"Confiar neste projeto?\" ou Projeto → Opções do projeto → Confiar neste projeto). Peça isso ao usuário; o MCP não confirma.".into());
+        return Err("o projeto está em modo restrito (não foi criado nem confiado nesta pasta; um projeto movido de pasta também conta como de fora): compilar, executar e publicar ficam desligados até o usuário confiar nele na IDE (o diálogo \"Confiar neste projeto?\" ou Projeto → Opções do projeto → Confiar neste projeto). Peça isso ao usuário; o MCP não confirma.".into());
     }
     Ok(())
 }

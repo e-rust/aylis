@@ -191,6 +191,16 @@ pub fn install(project_dir: &Path, command: &str) -> Result<bool, String> {
     std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
     let text = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
     std::fs::write(&path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+    // O gancho tem o caminho desta IDE (desta máquina): fora do git, como o
+    // `.cargo/config.toml`. O `.gitignore` ao lado vale em qualquer repositório (relatório do
+    // RTSPlayer, 10/11: o arquivo aparecia sem aviso e entraria no git).
+    let ignore = path.with_file_name(".gitignore");
+    let line = "settings.local.json";
+    let current = std::fs::read_to_string(&ignore).unwrap_or_default();
+    if !current.lines().any(|l| l.trim() == line) {
+        let text = if current.is_empty() { format!("# O gancho da IDE do Aylis (o caminho desta máquina).\n{line}\n") } else { format!("{}\n{line}\n", current.trim_end()) };
+        let _ = std::fs::write(&ignore, text);
+    }
     Ok(true)
 }
 

@@ -587,10 +587,17 @@ fn features_for(project: &Project, mut classes: Vec<String>) -> Vec<&'static str
     if !project.time_zone.is_empty() {
         features.push("time-zones");
     }
+    // As que o código usa por conta própria (`features` no `.aylisproj`), entre as do `aylis`
+    // que um app escolhe (os renderizadores e o `dev` a IDE põe sozinha).
+    features.extend(project.features.iter().filter_map(|f| APP_FEATURES.iter().find(|k| k.eq_ignore_ascii_case(f.trim())).copied()));
     features.sort_unstable();
     features.dedup();
     features
 }
+
+/// As features do crate `aylis` que o `.aylisproj` pode pedir (`features`).
+pub const APP_FEATURES: &[&str] =
+    &["data", "dbcontrols", "providers", "media", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones"];
 
 /// A linha `features = [...]` da dependência do aylis.
 fn features_list(features: &[&str]) -> String {
@@ -1040,8 +1047,10 @@ pub fn upgrade_cargo(cargo: &str, root: &str, crate_dir: &Path) -> Option<(Strin
 }
 
 /// O `Cargo.toml` (`cargo`) do projeto em `dir` precisa de um `[workspace]` próprio: não
-/// tem, e uma pasta acima é um workspace que não o lista como membro nem o exclui (o cargo
-/// usa o primeiro workspace que acha subindo as pastas).
+/// tem, e uma pasta acima é um workspace que não o lista como membro (o cargo usa o primeiro
+/// workspace que acha subindo as pastas). Excluído de lá também precisa: o `aylis`, pelo
+/// atalho `.aylis/sdk` dentro da mesma árvore, herdava o `rust-version` do workspace de cima
+/// e o build falhava (relatório do RTSPlayer, 10/11).
 pub fn needs_own_workspace(cargo: &str, dir: &Path) -> bool {
     use toml_edit::{DocumentMut, Item};
     if cargo.parse::<DocumentMut>().is_ok_and(|d| d.get("workspace").is_some()) {
@@ -1056,9 +1065,8 @@ pub fn needs_own_workspace(cargo: &str, dir: &Path) -> bool {
         let list = |key: &str| -> Vec<String> {
             ws.get(key).and_then(Item::as_array).map(|a| a.iter().filter_map(|v| v.as_str()).map(|s| s.trim_end_matches('/').to_string()).collect()).unwrap_or_default()
         };
-        let excluded = list("exclude").iter().any(|e| relative == *e || relative.starts_with(&format!("{e}/")));
         let member = list("members").iter().any(|m| glob_path(m, &relative));
-        return !excluded && !member;
+        return !member;
     }
     false
 }

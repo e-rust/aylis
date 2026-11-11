@@ -174,10 +174,22 @@ impl PropValue {
     }
 
     /// Aceita `Bounds` ou um número (o mesmo valor nos quatro lados).
+    /// Aceita também o texto, como no JSON: `"8"` (todos), `"16, 12"` (horizontal, vertical)
+    /// ou `"12, 4, 12, 0"` (esquerda, cima, direita, baixo); vírgula ou espaço separam. É como
+    /// o acesso tipado das linguagens manda `margins` e `padding`.
     pub fn to_bounds(&self) -> Result<Bounds> {
         match self {
             PropValue::Bounds(b) => Ok(*b),
             PropValue::Int(_) | PropValue::Float(_) => Ok(Bounds::all(self.to_f32()?)),
+            PropValue::String(s) => {
+                let numbers: Option<Vec<f32>> = s.split([',', ' ', ';']).filter(|p| !p.trim().is_empty()).map(|p| p.trim().parse::<f32>().ok()).collect();
+                match numbers.as_deref() {
+                    Some([all]) => Ok(Bounds::all(*all)),
+                    Some([h, v]) => Ok(Bounds::symmetric(*h, *v)),
+                    Some([l, t, r, b]) => Ok(Bounds::new(*l, *t, *r, *b)),
+                    _ => Err(Error::invalid(format!("margens inválidas '{s}'; use 1, 2 (h, v) ou 4 (esquerda, cima, direita, baixo) números"))),
+                }
+            }
             _ => Err(Error::type_mismatch("bounds", self)),
         }
     }

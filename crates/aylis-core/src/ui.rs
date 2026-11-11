@@ -2129,7 +2129,23 @@ impl Ui {
         // dois forms podem ter handlers com o mesmo nome.
         // O nome com que o form foi criado: um frame repetido (`fraLinha2`) usa os handlers
         // do `fraLinha`.
-        let form = self.form_of(id);
+        // Um escopo de nomes que não é o form dos handlers (a linha de um DataRepeater, uma cópia
+        // do modelo) não os tem: sobe de escopo em escopo até o form que tem este handler (o
+        // clique num botão da linha não chegava ao form; relatório do RTSPlayer, 10/11).
+        let mut form = self.form_of(id);
+        loop {
+            let name = self.form_class(form).or_else(|| self.name(form)).unwrap_or_default();
+            if self.handlers.get(name).is_some_and(|m| m.contains_key(handler_name)) {
+                break;
+            }
+            match self.parent(form).map(|p| self.form_of(p)) {
+                Some(up) if up != form => form = up,
+                _ => {
+                    form = self.form_of(id);
+                    break;
+                }
+            }
+        }
         let form_name = self.form_class(form).or_else(|| self.name(form)).unwrap_or_default();
         // O form e o método (o que a tabela do profiler mostra e leva ao código); o texto só
         // é montado com o profiler ligado.

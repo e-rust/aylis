@@ -51,6 +51,12 @@
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -173,6 +179,9 @@
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -470,6 +479,36 @@ end;
 procedure TForm.SetAlign(Value: string);
 begin
   SetProp('align', TJSONString.Create(Value));
+end;
+
+function TForm.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TForm.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TForm.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TForm.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TForm.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TForm.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
 end;
 
 function TForm.GetVisible: Boolean;

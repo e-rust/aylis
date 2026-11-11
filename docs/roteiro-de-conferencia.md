@@ -46,6 +46,24 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     versões" vem marcado e desmarca/marca. Com uma release mais nova no GitHub, a IDE instalada
     (não a do `target/`, que só consulta pelo menu) mostra, uma vez por dia depois das 6 h, a faixa
     "Nova versão do Aylis disponível" abaixo da barra, com "Abrir página" e o ✕.
+100. **Duas conversas, dois projetos** (relatado em 10/11). Antes, feche o Claude Desktop e
+    recompile o `aylis-tools` (as pontes antigas prendem o `aylis-tool.exe`). Numa conversa do
+    Claude Desktop, peça para trabalhar no NoOBS; noutra, no RTSPlayer, com as duas IDEs abertas.
+    *Esperado:* cada conversa passa o `project` nas chamadas e mexe só na IDE do seu projeto; o
+    título de cada uma aparece só na janela da IDE dela; uma chamada sem `project` volta recusada,
+    com a lista das IDEs abertas; pedir para abrir outro projeto abre noutra IDE, sem trocar o
+    projeto da IDE da outra conversa.
+101. **O relatório do MCP do RTSPlayer** (10/11, os 16 itens; detalhes nos pendentes). Com a IDE
+    e o `aylis-tools` recompilados e o RTSPlayer aberto:
+    - os bindings e os cliques nas linhas: `bindings` no `DataRepeater` (o texto aparece nas linhas);
+      um botão de linha chama o handler do form;
+    - pelo Claude: `class_info` de um Label (os valores de `trimming`); um `set_layout` com dois
+      erros devolve os dois; `patch_layout` de um painel; `app_command` `snapshot` mostra a tela;
+    - `run_without_debug` com um erro no código responde com o erro; a primeira compilação
+      responde "ainda compilando" e o `build_wait` traz o fim;
+    - Projeto → Novo fonte… cria e abre o arquivo;
+    - o RTSPlayer sem o `[workspace]` à mão no `Cargo.toml` compila depois do "Gerar código", e com
+      `"features": ["media"]` no `.aylisproj` mantém a feature sem componente de mídia.
 
 ## Os ajustes de 08/11 que faltam conferir
 

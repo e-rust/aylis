@@ -120,6 +120,50 @@ impl VirtualList {
         ui.get::<VirtualList>(list)?.pool.borrow().iter().find(|(_, i)| *i == Some(index)).map(|(id, _)| *id)
     }
 
+    /// O item da linha onde está `component` (um botão dentro do cartão): num clique dentro
+    /// da linha, de qual registro ela é (`None`: fora das linhas).
+    pub fn index_of(ui: &Ui, list: ComponentId, component: ComponentId) -> Option<usize> {
+        let l = ui.get::<VirtualList>(list)?;
+        l.row_index(ui, list, component)
+    }
+
+    /// Na linha do item `index`, a cópia de `part`, um componente do modelo dado pelo acesso
+    /// tipado (`self.lblNome`): no `on_bind`, mexer na peça da linha sem procurar pelo nome em
+    /// texto.
+    pub fn part(ui: &Ui, list: ComponentId, index: usize, part: ComponentId) -> Option<ComponentId> {
+        ui.get::<VirtualList>(list)?.row_part(ui, index, part)
+    }
+
+    fn row_index(&self, ui: &Ui, list: ComponentId, component: ComponentId) -> Option<usize> {
+        let pool = self.pool.borrow();
+        let mut current = Some(component);
+        while let Some(id) = current {
+            if let Some((_, index)) = pool.iter().find(|(row, _)| *row == id) {
+                return *index;
+            }
+            if id == list {
+                return None;
+            }
+            current = ui.parent(id);
+        }
+        None
+    }
+
+    /// O caminho (os índices dos filhos) do modelo até `part`, refeito na linha: a cópia
+    /// guarda a ordem dos filhos.
+    fn row_part(&self, ui: &Ui, index: usize, part: ComponentId) -> Option<ComponentId> {
+        let row = self.pool.borrow().iter().find(|(_, i)| *i == Some(index)).map(|(id, _)| *id)?;
+        let template = self.template?;
+        let mut path = Vec::new();
+        let mut current = part;
+        while current != template {
+            let parent = ui.parent(current)?;
+            path.push(ui.children(parent).iter().position(|&c| c == current)?);
+            current = parent;
+        }
+        path.iter().rev().try_fold(row, |at, &i| ui.children(at).get(i).copied())
+    }
+
     /// Os itens à vista agora, em ordem.
     pub fn visible(ui: &Ui, list: ComponentId) -> Vec<usize> {
         let Some(l) = ui.get::<VirtualList>(list) else { return Vec::new() };
@@ -352,20 +396,33 @@ impl VirtualList {
         ctx.ui.invalidate();
     }
 
-    /// Preenche os componentes de `bindings` da linha com os valores do item.
+    /// Preenche os componentes de `bindings` da linha com os valores do item. Cada par é
+    /// `componente=campo` (o texto, a imagem, o valor ou a marca: a primeira que o componente
+    /// tiver) ou `componente.propriedade=campo` (`pinEstado.fill=cor`, `secTitulo.visible=secao`):
+    /// o valor do campo, como texto, convertido para o tipo da propriedade.
     fn bind(&self, ctx: &mut EventCtx<'_>, row: ComponentId, index: usize) {
         let Some(source) = &self.source else { return };
         for pair in self.bindings.split(';') {
-            let Some((component, field)) = pair.split_once('=') else { continue };
-            let Some(target) = ctx.ui.find_in(row, component.trim()) else { continue };
+            let Some((target, field)) = pair.split_once('=') else { continue };
+            let (component, property) = match target.trim().split_once('.') {
+                Some((c, p)) => (c.trim(), Some(p.trim())),
+                None => (target.trim(), None),
+            };
+            let Some(target) = ctx.ui.find_in(row, component) else { continue };
             let value = source.value(ctx.ui, index, field.trim()).unwrap_or_default();
-            // O texto, ou a imagem, ou o valor: a primeira que o componente tiver.
-            for prop in ["text", "source", "value", "checked"] {
-                if ctx.ui.prop_info(target, prop).is_some() {
-                    let _ = ctx.ui.set_prop(target, prop, value.as_str());
-                    break;
-                }
-            }
+            let property = property.or_else(|| ["text", "source", "value", "checked"].into_iter().find(|p| ctx.ui.prop_info(target, p).is_some()));
+            let Some(property) = property else { continue };
+            let typed = match ctx.ui.prop_info(target, property).map(|i| i.kind) {
+                Some(aylis_core::PropKind::Bool) => PropValue::Bool(matches!(value.trim().to_ascii_lowercase().as_str(), "true" | "1" | "sim" | "yes")),
+                Some(aylis_core::PropKind::Int) => PropValue::Int(value.trim().parse::<f64>().unwrap_or(0.0) as i64),
+                Some(aylis_core::PropKind::Float | aylis_core::PropKind::Angle | aylis_core::PropKind::Duration) => PropValue::Float(value.trim().parse().unwrap_or(0.0)),
+                Some(aylis_core::PropKind::Color) => match aylis_core::Color::from_hex(&value) {
+                    Some(c) => PropValue::Color(c),
+                    None => PropValue::String(value),
+                },
+                _ => PropValue::String(value),
+            };
+            let _ = ctx.ui.set_prop(target, property, typed);
         }
     }
 }
@@ -388,6 +445,36 @@ impl Component for VirtualList {
         item_form: String => "Behavior",
         bindings: String => "Behavior";
         events: on_bind, on_load_more
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropKind};
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("index_of", &[PropKind::Component], Some(PropKind::Int)).params(&["component"]),
+            MethodInfo::new("part", &[PropKind::Int, PropKind::Component], Some(PropKind::Component)).params(&["index", "component"]),
+        ];
+        METHODS
+    }
+
+    /// `index_of(componente)`: o item da linha onde ele está (-1: fora das linhas);
+    /// `part(índice, componente do modelo)`: a cópia dele na linha do item (veja
+    /// [`VirtualList::index_of`] e [`VirtualList::part`]).
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[PropValue]) -> Result<PropValue, String> {
+        let component = |i: usize| match args.get(i) {
+            Some(PropValue::Component(Some(id))) => Ok(*id),
+            _ => Err(aylis_core::messages::t("informe o componente")),
+        };
+        match method {
+            "index_of" => Ok(PropValue::Int(self.row_index(ctx.ui, ctx.id, component(0)?).map_or(-1, |i| i as i64))),
+            "part" => {
+                let index = match args.first() {
+                    Some(PropValue::Int(i)) if *i >= 0 => *i as usize,
+                    _ => return Err(aylis_core::messages::t("informe o índice do item")),
+                };
+                Ok(PropValue::Component(self.row_part(ctx.ui, index, component(1)?)))
+            }
+            _ => Err(format!("VirtualList não tem o método '{method}'")),
+        }
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

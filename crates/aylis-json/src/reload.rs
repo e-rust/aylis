@@ -50,7 +50,7 @@ fn reload_document(ui: &mut Ui, root: ComponentId, json: &str, previous: Option<
         });
     }
     let mut report = ReloadReport::default();
-    let mut loader = Loader { ui, created: None, deferred: Vec::new(), bindings: Vec::new(), views: Vec::new() };
+    let mut loader = Loader { ui, created: None, deferred: Vec::new(), bindings: Vec::new(), views: Vec::new(), errors: None };
     apply(&mut loader, root, node, old_root, &mut vec![class.to_string()], &mut report)?;
     loader.fixup()?;
     // Saíram do layout: só os que tinham nome e estavam no layout anterior.
@@ -104,7 +104,10 @@ fn apply(loader: &mut Loader<'_>, id: ComponentId, node: &Value, old: Option<&Va
     // Valores padrão da classe: propriedade que saiu do JSON volta ao padrão.
     let defaults = ui.registry().get(class).map(|c| (c.create)());
     for info in ui.prop_infos(id) {
-        if info.read_only || RESERVED.contains(&info.name) {
+        // A propriedade `bindings` da lista (texto) vale; o objeto `bindings` são as ligações a
+        // campo, aplicadas à parte.
+        let list_bindings = info.name == "bindings" && obj.get("bindings").is_none_or(Value::is_string);
+        if info.read_only || (RESERVED.contains(&info.name) && !list_bindings) {
             continue;
         }
         let fail = |message: String| Error::Property { path: here.clone(), property: info.name.to_string(), message };

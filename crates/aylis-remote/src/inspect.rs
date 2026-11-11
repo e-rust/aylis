@@ -8,21 +8,36 @@ use serde_json::{Map, Value, json};
 
 /// Árvore de componentes a partir de `root` (ou de todos os forms).
 pub fn tree(ui: &Ui, root: Option<ComponentId>) -> Value {
-    fn node(ui: &Ui, id: ComponentId) -> Value {
+    tree_with(ui, root, usize::MAX, false)
+}
+
+/// O [`tree`] até `depth` níveis abaixo da raiz (os de baixo viram só a contagem, em
+/// `more`) e, com `visible_only`, sem os escondidos: a árvore inteira de um app médio passava
+/// de 130 mil caracteres (relatório do RTSPlayer, 10/11).
+pub fn tree_with(ui: &Ui, root: Option<ComponentId>, depth: usize, visible_only: bool) -> Value {
+    fn node(ui: &Ui, id: ComponentId, depth: usize, visible_only: bool) -> Value {
         let class = ui.component(id).map(|c| c.class_name()).unwrap_or_default();
         let visible = ui.control(id).map(|c| c.visible());
-        json!({
+        let kids: Vec<ComponentId> = ui.children(id).iter().copied().filter(|&c| !visible_only || ui.control(c).is_none_or(|cb| cb.visible())).collect();
+        let mut v = json!({
             "id": id.to_u64(),
             "name": ui.name(id).unwrap_or_default(),
             "class": class,
             "path": ui.path_of(id),
             "visible": visible,
-            "children": ui.children(id).iter().map(|&c| node(ui, c)).collect::<Vec<_>>(),
-        })
+        });
+        if depth == 0 {
+            if !kids.is_empty() {
+                v["more"] = json!(kids.len());
+            }
+        } else {
+            v["children"] = Value::Array(kids.iter().map(|&c| node(ui, c, depth - 1, visible_only)).collect());
+        }
+        v
     }
     match root {
-        Some(r) => node(ui, r),
-        None => Value::Array(ui.roots().iter().map(|&r| node(ui, r)).collect()),
+        Some(r) => node(ui, r, depth, visible_only),
+        None => Value::Array(ui.roots().iter().map(|&r| node(ui, r, depth, visible_only)).collect()),
     }
 }
 

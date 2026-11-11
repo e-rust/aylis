@@ -134,7 +134,7 @@ cd "$S/$C"
 /// O script do Executar: compila e roda o programa (a janela aparece pelo WSLg). Sem o canal
 /// da IDE: o `build.rs` roda no Linux, longe do alvo que a IDE grava no Windows.
 pub fn run_script(project: &Project) -> String {
-    let package = project.package_name();
+    let package = project.bin_name();
     let mut s = prepare(project);
     s.push_str(&format!("echo '▶ Compilando {} (Linux, WSL)…'\n", project.name));
     s.push_str(&format!("cargo build --bin {package}\n"));
@@ -160,8 +160,9 @@ pub fn publish_script(project: &Project, out: &Path, app_file: &str, deb: bool) 
     let out_l = quote(&to_linux(out));
     let mut s = prepare(project);
     s.push_str(&format!("echo '▶ Compilando {} (Linux, otimizado)…'\n", project.name));
-    s.push_str(&format!("cargo build --release --bin {package}\n"));
-    s.push_str(&format!("mkdir -p {out_l}\ncp \"$CARGO_TARGET_DIR/release/{package}\" {out_l}/{}\n", quote(app_file)));
+    let bin = project.bin_name();
+    s.push_str(&format!("cargo build --release --bin {bin}\n"));
+    s.push_str(&format!("mkdir -p {out_l}\ncp \"$CARGO_TARGET_DIR/release/{bin}\" {out_l}/{}\n", quote(app_file)));
     if deb {
         let id = package.replace('_', "-");
         let version = project_version(project);

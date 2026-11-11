@@ -513,7 +513,10 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         "media" => media(ui, obj),
         "tree" => {
             let root = optional_target(ui, obj.get("target"))?;
-            Ok(inspect::tree(ui, root))
+            // `depth` (níveis abaixo da raiz) e `visible_only` para não trazer a árvore inteira.
+            let depth = obj.get("depth").and_then(Value::as_u64).map_or(usize::MAX, |d| d as usize);
+            let visible_only = obj.get("visible_only").and_then(Value::as_bool).unwrap_or(false);
+            Ok(inspect::tree_with(ui, root, depth, visible_only))
         }
         "props" => {
             let id = target(ui, obj)?;

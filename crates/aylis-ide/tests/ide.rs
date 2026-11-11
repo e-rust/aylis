@@ -1266,6 +1266,62 @@ fn forms_and_code_share_one_tab_strip_like_delphi() {
     let _ = std::fs::remove_dir_all(base);
 }
 
+/// O layout conferido devolve todos os erros de uma vez, e o `class_info` diz o que cada
+/// propriedade aceita (relatório do RTSPlayer, 10/11: os erros vinham um por tentativa, e as
+/// propriedades e os valores eram adivinhados).
+#[test]
+fn the_layout_check_lists_every_error_and_class_info_lists_the_values() {
+    let mut ui = aylis_ide::document::new_document_ui(false);
+    let json = r#"{"aylis": 1, "root": {"class": "Form", "name": "frmX", "children": [
+        {"class": "Label", "name": "lblA", "trimming": "ellipsis"},
+        {"class": "Layout", "name": "layB", "radius": 8},
+        {"class": "Button", "name": "btnC", "on_double_click": "btnC_dbl"},
+        {"class": "NaoExiste", "name": "x"},
+        {"class": "Panel", "name": "pnlD", "shadow": "md"}
+    ]}}"#;
+    let errors: Vec<String> = aylis_json::validate(&mut ui, json).iter().map(ToString::to_string).collect();
+    assert_eq!(errors.len(), 4, "{errors:#?}");
+    assert!(errors.iter().any(|e| e.contains("trimming")) && errors.iter().any(|e| e.contains("radius")) && errors.iter().any(|e| e.contains("on_double_click")) && errors.iter().any(|e| e.contains("NaoExiste")), "{errors:#?}");
+    assert!(ui.roots().is_empty(), "a raiz de passagem foi liberada");
+    // O nome de sombra do tema vale no form.
+    assert!(aylis_json::validate(&mut ui, r#"{"aylis": 1, "root": {"class": "Panel", "shadow": "md"}}"#).is_empty());
+
+    let label = aylis_json::class_info(&ui, "Label").unwrap();
+    let trimming = label["properties"].as_array().unwrap().iter().find(|p| p["name"] == "trimming").expect("trimming");
+    assert!(trimming["values"].as_array().unwrap().iter().any(|v| v == "word"), "{trimming}");
+    let button = aylis_json::class_info(&ui, "Button").unwrap();
+    assert!(button["events"].as_array().unwrap().iter().any(|e| e == "on_dbl_click"));
+    assert!(aylis_json::class_info(&ui, "NaoExiste").is_none());
+}
+
+/// Um fonte novo na pasta do código (o arquivo por assunto; relatório do RTSPlayer, 10/11): só
+/// dentro dela, fora do `generated/`, e sem sobrescrever.
+#[test]
+fn a_new_source_is_created_inside_the_code_folder() {
+    let base = temp("fonte_novo");
+    let project = aylis_project::create(&base, "Agenda", aylis_project::Language::Rust).unwrap();
+    let file = actions::new_source(&project, "src/nucleo.rs", "pub fn soma() {}\n").unwrap();
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), "pub fn soma() {}\n");
+    assert!(file.starts_with(project.code_dir()));
+    for bad in ["src/nucleo.rs", "../fora.rs", "C:/fora.rs", "generated/x.rs", ""] {
+        assert!(actions::new_source(&project, bad, "").is_err(), "{bad}");
+    }
+    let _ = std::fs::remove_dir_all(base);
+}
+
+/// O `new_project` cria direto numa pasta que já tem outras coisas (o app dentro de um
+/// repositório), mas não por cima de outro projeto.
+#[test]
+fn a_project_can_be_created_in_an_existing_folder() {
+    let base = temp("projeto_na_pasta");
+    std::fs::create_dir_all(base.join("client/core")).unwrap();
+    let project = aylis_project::create_at(&base.join("client"), "RTSPlayer", aylis_project::Language::Rust).unwrap();
+    assert_eq!(project.dir(), base.join("client"));
+    assert!(base.join("client/core").is_dir(), "o que já estava fica");
+    assert!(aylis_project::create_at(&base.join("client"), "Outro", aylis_project::Language::Rust).is_err(), "já tem um projeto");
+    let _ = std::fs::remove_dir_all(base);
+}
+
 /// A faixa de versão nova aparece com uma release mais nova e some no ✕ (a consulta em si,
 /// pela rede, fica fora do teste: o resultado é montado à mão).
 #[test]

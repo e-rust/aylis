@@ -120,8 +120,16 @@ fn profile_take() -> Value {
 }
 
 /// `{"cmd": "snapshot", "form": "frmX"}`: a tela em PNG (base64), para os testes que a IDE
-/// (ou o roteiro de teste) conduz pelo canal.
+/// (ou o roteiro de teste) conduz pelo canal. Com `"target"`, só aquele componente (um
+/// cartão, uma lista), como está na tela.
 fn snapshot(ui: &mut Ui, command: &Value) -> Result<Value, String> {
+    if let Some(target) = command.get("target").filter(|t| !t.is_null()) {
+        let id = aylis_remote::resolve(ui, target)?;
+        ui.layout();
+        let image = ui.snapshot(id, 1.0).ok_or("sem desenho fora da tela nesta plataforma")?;
+        let aylis_core::ImageSource::Encoded(png) = image.source() else { return Err("falha ao gerar o PNG".into()) };
+        return Ok(Value::String(base64(png)));
+    }
     let form = match command.get("form").filter(|f| !f.is_null()) {
         Some(f) => aylis_remote::resolve(ui, f)?,
         None => *ui.open_forms().first().ok_or("nenhum form aberto")?,

@@ -43,6 +43,12 @@ type
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -151,6 +157,9 @@ type
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -252,6 +261,12 @@ type
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -374,6 +389,9 @@ type
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -463,6 +481,12 @@ type
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -575,6 +599,9 @@ type
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -644,6 +671,12 @@ type
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -746,6 +779,9 @@ type
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -991,6 +1027,36 @@ end;
 procedure TButton.SetAlign(Value: string);
 begin
   SetProp('align', TJSONString.Create(Value));
+end;
+
+function TButton.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TButton.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TButton.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TButton.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TButton.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TButton.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
 end;
 
 function TButton.GetVisible: Boolean;
@@ -1708,6 +1774,36 @@ begin
   SetProp('align', TJSONString.Create(Value));
 end;
 
+function TForm.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TForm.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TForm.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TForm.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TForm.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TForm.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
+end;
+
 function TForm.GetVisible: Boolean;
 begin
   Result := GetProp('visible').AsBoolean;
@@ -2378,6 +2474,36 @@ begin
   SetProp('align', TJSONString.Create(Value));
 end;
 
+function TLabel.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TLabel.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TLabel.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TLabel.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TLabel.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TLabel.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
+end;
+
 function TLabel.GetVisible: Boolean;
 begin
   Result := GetProp('visible').AsBoolean;
@@ -2926,6 +3052,36 @@ end;
 procedure TProgressBar.SetAlign(Value: string);
 begin
   SetProp('align', TJSONString.Create(Value));
+end;
+
+function TProgressBar.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TProgressBar.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TProgressBar.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TProgressBar.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TProgressBar.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TProgressBar.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
 end;
 
 function TProgressBar.GetVisible: Boolean;

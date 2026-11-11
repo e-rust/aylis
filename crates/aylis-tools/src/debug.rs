@@ -26,7 +26,7 @@ pub fn write_vscode(project: &Project) -> Result<PathBuf, String> {
     let target = crate::shared_target_dir();
     let (launch, task) = match project.language {
         Language::Rust => {
-            let exe = target.join("debug").join(crate::env::exe(&project.package_name()));
+            let exe = target.join("debug").join(crate::env::exe(&project.bin_name()));
             let kind = if cfg!(windows) { "cppvsdbg" } else { "lldb" };
             let launch = json!({
                 "name": "aylis: depurar",
@@ -41,7 +41,7 @@ pub fn write_vscode(project: &Project) -> Result<PathBuf, String> {
                 "label": "aylis: compilar",
                 "type": "shell",
                 "command": "cargo",
-                "args": ["build", "--bin", project.package_name()],
+                "args": ["build", "--bin", project.bin_name()],
                 "options": { "cwd": format!("${{workspaceFolder}}/{}", project.language.folder()), "env": { "CARGO_TARGET_DIR": target.display().to_string() } },
                 "problemMatcher": ["$rustc"],
                 "group": "build",

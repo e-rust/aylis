@@ -62,6 +62,11 @@ impl Component for DataRepeater {
         data_source: Option<ComponentId> => "Data"
     }
 
+    /// Os da lista (`index_of`, `part`): o `invoke` já passa para ela.
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        self.base.methods()
+    }
+
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
         if name == "data_source" {
             self.base.set_row_source(self.data_source.map(|ds| Box::new(DataRows(ds)) as Box<dyn RowSource>));

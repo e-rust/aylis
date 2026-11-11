@@ -70,6 +70,57 @@ pub fn schema(ui: &Ui) -> Value {
     })
 }
 
+/// Tudo o que uma classe aceita no layout e no código: cada propriedade com o tipo, a categoria,
+/// os valores (de um enum ou conjunto) e como escrever no JSON; os eventos; e os métodos do
+/// `invoke`. `None` se a classe não existe. É o `class_info` do MCP: sem ele, o agente tentava
+/// às cegas (`trimming: "ellipsis"`, `radius` num `Label`, `on_double_click`; relatório do
+/// RTSPlayer, 10/11).
+pub fn class_info(ui: &Ui, class: &str) -> Option<Value> {
+    let entry = ui.registry().iter().find(|c| c.name.eq_ignore_ascii_case(class))?;
+    let instance = (entry.create)();
+    let mut properties = Vec::new();
+    let mut events = Vec::new();
+    for info in prop_infos_of(instance.as_ref()) {
+        if info.kind == PropKind::Event {
+            events.push(json!(info.name));
+            continue;
+        }
+        let mut p = Map::new();
+        p.insert("name".into(), json!(info.name));
+        p.insert("type".into(), json!(kind_label(info.kind)));
+        p.insert("category".into(), json!(info.category));
+        if let PropKind::Enum(names) | PropKind::Set(names) = info.kind {
+            p.insert("values".into(), json!(names));
+        }
+        if let Some(example) = kind_schema(info.kind).get("examples") {
+            p.insert("examples".into(), example.clone());
+        }
+        if info.read_only {
+            p.insert("read_only".into(), json!(true));
+        }
+        if info.runtime {
+            p.insert("runtime_only".into(), json!(true));
+        }
+        properties.push(Value::Object(p));
+    }
+    let methods: Vec<Value> = instance
+        .methods()
+        .iter()
+        .map(|m| {
+            let args: Vec<Value> = m.args.iter().enumerate().map(|(i, k)| json!({ "name": m.params.get(i).copied().unwrap_or(""), "type": kind_label(*k) })).collect();
+            json!({ "name": m.name, "args": args, "returns": m.returns.map(kind_label) })
+        })
+        .collect();
+    Some(json!({
+        "class": entry.name,
+        "category": entry.category,
+        "properties": properties,
+        "events": events,
+        "methods": methods,
+        "note": "no JSON: margins/padding como número, [h, v] ou [l, t, r, b]; \"margins.left\": 4 muda um lado; cores como \"#RRGGBB\" ou token do tema",
+    }))
+}
+
 fn kind_schema(kind: PropKind) -> Value {
     match kind {
         PropKind::Bool => json!({ "type": "boolean" }),
@@ -132,8 +183,9 @@ fn kind_label(kind: PropKind) -> &'static str {
 
 /// O catálogo das classes para o acesso tipado nas linguagens (`resources/components.json`,
 /// lido pela geração de código): cada classe com as propriedades e o tipo delas (`bool`,
-/// `int`, `float`, `string`, `color`, `enum`, `component`; `:ro` quando é só leitura).
-/// Eventos, conjuntos e retângulos ficam de fora. Uma classe por linha.
+/// `int`, `float`, `string`, `color`, `enum`, `component`, `bounds` e `set` (`anchors`), estes
+/// dois como texto no código; `:ro` quando é só leitura). Os eventos e os outros conjuntos
+/// ficam de fora. Uma classe por linha.
 ///
 /// Os métodos entram com os parênteses e os argumentos na chave (`nome:tipo`, ou só o tipo
 /// quando o método não dá o nome) e, no valor, o
@@ -169,7 +221,12 @@ pub fn catalog(ui: &Ui) -> String {
                     }
                     None => continue,
                 },
-                PropKind::Set(_) | PropKind::Bounds => continue,
+                // Margens e âncoras no acesso tipado como texto ("12, 4, 12, 0", "left,top"):
+                // o `set_prop` aceita (relatório do RTSPlayer, 10/11: faltavam `margins`,
+                // `padding` e `anchors`). Os outros conjuntos ficam de fora.
+                PropKind::Bounds => "bounds",
+                PropKind::Set(_) if info.name == "anchors" => "set",
+                PropKind::Set(_) => continue,
             };
             let kind = if info.read_only { format!("{kind}:ro") } else { kind.to_string() };
             props.insert(info.name.to_string(), Value::String(kind));

@@ -41,10 +41,10 @@ mod value;
 use std::fmt;
 
 pub use format::to_form_text;
-pub use layout::{load, load_value, save, save_value};
+pub use layout::{load, load_value, save, save_value, validate};
 pub use props::{prop_from_json, prop_to_json, set_props};
 pub use reload::{ReloadReport, reload};
-pub use schema::{catalog, schema};
+pub use schema::{catalog, class_info, schema};
 pub use theme::{load_theme, save_theme, theme_from_value, theme_to_value};
 
 /// Versão do formato gravada em `"aylis"`.

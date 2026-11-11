@@ -653,6 +653,71 @@ fn module_layouts(project: &Project, uses: &[String]) -> Vec<Value> {
 }
 
 /// Projeto → Novo DataModule: um contêiner de componentes não visuais, criado no início.
+/// O caminho de um fonte novo dentro da pasta do código (`src/nucleo.rs`): relativo, sem `..`,
+/// fora do `generated/`, e que ainda não existe.
+pub fn new_source_path(project: &aylis_project::Project, relative: &str) -> Result<PathBuf, String> {
+    let relative = relative.trim().replace('\\', "/");
+    let path = Path::new(&relative);
+    if relative.is_empty() || path.is_absolute() || path.components().any(|c| !matches!(c, std::path::Component::Normal(_))) {
+        return Err("use um caminho dentro da pasta do código, sem .. (ex.: src/nucleo.rs)".into());
+    }
+    if relative.split('/').next() == Some("generated") {
+        return Err("generated/ é do gerador (somente leitura)".into());
+    }
+    let full = project.code_dir().join(path);
+    if full.exists() {
+        return Err(format!("{relative} já existe"));
+    }
+    Ok(full)
+}
+
+/// Cria um fonte novo na pasta do código, com `text` (relatório do RTSPlayer, 10/11: não havia
+/// como criar um arquivo por assunto). Em Rust, o `mod` dele no `lib.rs` fica com o usuário: o
+/// código dele não é mexido pela IDE.
+pub fn new_source(project: &aylis_project::Project, relative: &str, text: &str) -> Result<PathBuf, String> {
+    let full = new_source_path(project, relative)?;
+    if let Some(dir) = full.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
+    }
+    std::fs::write(&full, text).map_err(|e| format!("não consegui gravar {}: {e}", full.display()))?;
+    Ok(full)
+}
+
+/// Projeto → Novo fonte…: pede o caminho e abre o arquivo criado no editor.
+pub fn new_source_dialog(ui: &mut Ui, state: &Shared, _ids: &Ids) {
+    let Some(project) = state.borrow().project.clone() else {
+        state.borrow_mut().status = "Abra um projeto primeiro".into();
+        return;
+    };
+    let suggestion = match project.language {
+        Language::Rust => "src/novo.rs",
+        Language::Python => "src/novo.py",
+        _ => "novo",
+    };
+    let (check, state2) = (project.clone(), state.clone());
+    dialogs::input_text(
+        ui,
+        "Novo fonte",
+        "Caminho (na pasta do código)",
+        suggestion,
+        move |name| new_source_path(&check, name).map(|_| ()),
+        move |ui, name| match new_source(&project, &name, "") {
+            Ok(file) => {
+                if let Err(e) = crate::codewindow::open(ui, &file, 1) {
+                    state2.borrow_mut().status = format!("⚠ {e}");
+                } else {
+                    state2.borrow_mut().status = if project.language == Language::Rust {
+                        format!("Fonte criado: {} (declare o mod dele no lib.rs)", name)
+                    } else {
+                        format!("Fonte criado: {}", name)
+                    };
+                }
+            }
+            Err(e) => state2.borrow_mut().status = format!("⚠ {e}"),
+        },
+    );
+}
+
 pub fn new_data_module(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else {
         state.borrow_mut().status = "Abra um projeto primeiro".into();

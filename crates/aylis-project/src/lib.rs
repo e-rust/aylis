@@ -194,6 +194,11 @@ pub struct Project {
     /// tabela de fusos vai junto no app).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub time_zone: String,
+    /// Features do crate `aylis` que o código do app usa por conta própria (`["media"]`: o
+    /// áudio por `aylis::media` sem componente de mídia no form). Somam-se às que os forms
+    /// pedem; sem isso, tirar o último componente de mídia tirava a feature do código.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub features: Vec<String>,
     /// Os limites de segurança: `{ "tree_depth": 256, "event_nesting": 64 }` (a profundidade
     /// da árvore de componentes e os eventos aninhados); passar deles é um erro. Sem ele,
     /// esses padrões.
@@ -667,15 +672,30 @@ impl Project {
             .and_then(|text| cargo_package_name(&text))
             .unwrap_or_else(|| codegen::package_name(&self.name))
     }
+
+    /// O executável do desktop: o primeiro `[[bin]]` do `Cargo.toml` (o pacote pode ter outro
+    /// nome, como o `rtsplayer-app` com o executável `rtsplayer`); sem `[[bin]]` com nome, o do
+    /// pacote.
+    pub fn bin_name(&self) -> String {
+        std::fs::read_to_string(self.code_dir_of(Language::Rust).join("Cargo.toml"))
+            .ok()
+            .and_then(|text| cargo_section_name(&text, "[[bin]]"))
+            .unwrap_or_else(|| self.package_name())
+    }
 }
 
 /// O `name` da seção `[package]` de um `Cargo.toml`.
 fn cargo_package_name(text: &str) -> Option<String> {
+    cargo_section_name(text, "[package]")
+}
+
+/// O `name` da primeira seção `section` (`[package]`, `[[bin]]`) de um `Cargo.toml`.
+fn cargo_section_name(text: &str, section: &str) -> Option<String> {
     let mut in_package = false;
     for line in text.lines() {
         let line = line.trim();
         if line.starts_with('[') {
-            in_package = line == "[package]";
+            in_package = line == section;
             continue;
         }
         if !in_package {
@@ -1033,13 +1053,26 @@ pub fn is_identifier(name: &str) -> bool {
 /// principal (`forms/principal.json`, `frmPrincipal`) e o código inicial na linguagem
 /// escolhida (na pasta dela, como `rust/`). A pasta não pode existir com arquivos dentro.
 pub fn create(location: &Path, name: &str, language: Language) -> Result<Project, Error> {
+    let dir = location.join(name);
+    if dir.read_dir().is_ok_and(|mut entries| entries.next().is_some()) {
+        return Err(format!("a pasta {} já existe e não está vazia", dir.display()));
+    }
+    create_at(&dir, name, language)
+}
+
+/// O [`create`] direto na pasta `dir`, que pode já existir com outras coisas (o app dentro de
+/// um repositório: `RTSPlayer/client`, ao lado do `core/`). Recusa se já há ali um projeto,
+/// forms ou a pasta do código na linguagem. Sem isso, criava-se noutra pasta e movia-se depois,
+/// e o projeto movido abria em modo restrito (relatório do RTSPlayer, 10/11).
+pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, Error> {
     let valid = !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == ' ');
     if !valid || name.trim() != name {
         return Err(format!("'{name}' não serve como nome de projeto (use letras, números, espaço, - e _)"));
     }
-    let dir = location.join(name);
-    if dir.read_dir().is_ok_and(|mut entries| entries.next().is_some()) {
-        return Err(format!("a pasta {} já existe e não está vazia", dir.display()));
+    let has_project = dir.read_dir().is_ok_and(|entries| entries.flatten().any(|e| e.path().extension().is_some_and(|x| x == EXTENSION)));
+    let has_forms = dir.join("forms").read_dir().is_ok_and(|mut entries| entries.next().is_some());
+    if has_project || has_forms || dir.join(language.folder()).exists() {
+        return Err(format!("{} já tem um projeto do Aylis (o .aylisproj, forms/ ou {}/)", dir.display(), language.folder()));
     }
     for sub in ["forms", "assets/images", "assets/audio", "assets/video", "assets/fonts", "themes", "locales"] {
         std::fs::create_dir_all(dir.join(sub)).map_err(|e| format!("não consegui criar {}: {e}", dir.join(sub).display()))?;
@@ -1055,6 +1088,7 @@ pub fn create(location: &Path, name: &str, language: Language) -> Result<Project
         scroll: None,
         zoom: None,
         time_zone: String::new(),
+        features: Vec::new(),
         limits: None,
         image_cache: None,
         output: OutputSettings::default(),

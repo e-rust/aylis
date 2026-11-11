@@ -45,7 +45,7 @@ fn load_document(ui: &mut Ui, document: &Value, parent: Option<ComponentId>) -> 
     }
     let root = doc.get("root").ok_or_else(|| structure("")("falta \"root\"".into()))?;
 
-    let mut loader = Loader { ui, created: None, deferred: Vec::new(), bindings: Vec::new(), views: Vec::new() };
+    let mut loader = Loader { ui, created: None, deferred: Vec::new(), bindings: Vec::new(), views: Vec::new(), errors: None };
     let result = loader.node(root, parent, &mut Vec::new()).and_then(|id| loader.fixup().map(|_| id));
     if result.is_err() {
         if let Some(created) = loader.created {
@@ -65,9 +65,44 @@ pub(crate) struct Loader<'a> {
     pub(crate) bindings: Vec<(ComponentId, String, String, String)>,
     /// As vistas por largura de um form (veja `aylis_core::views`), resolvidas no fim.
     pub(crate) views: Vec<(ComponentId, Value)>,
+    /// Com `Some`, os erros de propriedade e de classe são juntados aqui e o carregamento
+    /// segue ([`validate`]): todos de uma vez, em vez de um por tentativa.
+    pub(crate) errors: Option<Vec<Error>>,
+}
+
+/// Confere um layout inteiro e devolve **todos** os erros (vazio: carrega). Monta numa raiz
+/// de passagem no `ui` e a libera no fim. Um layout de 24 KB com cinco erros ia e voltava
+/// cinco vezes, um erro por vez (relatório do RTSPlayer, 10/11).
+pub fn validate(ui: &mut Ui, json: &str) -> Vec<Error> {
+    let doc: Value = match serde_json::from_str(json.trim_start_matches('\u{feff}')) {
+        Ok(v) => v,
+        Err(e) => return vec![Error::Structure { path: String::new(), message: format!("JSON inválido: {e}") }],
+    };
+    let Some(root) = doc.get("root") else { return vec![structure("")("falta \"root\"".into())] };
+    let mut loader = Loader { ui, created: None, deferred: Vec::new(), bindings: Vec::new(), views: Vec::new(), errors: Some(Vec::new()) };
+    let result = loader.node(root, None, &mut Vec::new()).and_then(|_| loader.fixup());
+    let mut errors = loader.errors.take().unwrap_or_default();
+    if let Err(e) = result {
+        errors.push(e);
+    }
+    if let Some(created) = loader.created {
+        loader.ui.free(created);
+    }
+    errors
 }
 
 impl Loader<'_> {
+    /// Um erro que não impede o resto: no [`validate`], anotado (e segue); senão, devolvido.
+    fn soft(&mut self, error: Error) -> Result<()> {
+        match self.errors.as_mut() {
+            Some(list) => {
+                list.push(error);
+                Ok(())
+            }
+            None => Err(error),
+        }
+    }
+
     pub(crate) fn node(&mut self, value: &Value, parent: Option<ComponentId>, path: &mut Vec<String>) -> Result<ComponentId> {
         let here = path.join(" > ");
         let obj = object(value, "cada componente").map_err(structure(&here))?;
@@ -83,7 +118,21 @@ impl Loader<'_> {
         path.push(name.unwrap_or(class).to_string());
         let here = path.join(" > ");
 
-        let id = self.ui.create(class, parent).map_err(|source| Error::Component { path: here.clone(), source })?;
+        let id = match self.ui.create(class, parent) {
+            Ok(id) => id,
+            // Classe que não existe: no `validate`, anota e pula o componente (e os filhos).
+            Err(source) => {
+                let error = Error::Component { path: here.clone(), source };
+                match parent {
+                    Some(p) if self.errors.is_some() => {
+                        self.soft(error)?;
+                        path.pop();
+                        return Ok(p);
+                    }
+                    _ => return Err(error),
+                }
+            }
+        };
         if self.created.is_none() && parent.is_some() && class == "Form" {
             // Um form carregado dentro de outro tem os próprios nomes (pode repetir os do
             // form de fora). Um pedaço de tela que não é form entra nos nomes do de fora.
@@ -91,7 +140,9 @@ impl Loader<'_> {
         }
         self.created.get_or_insert(id);
         if let Some(name) = name {
-            self.ui.set_name(id, name).map_err(|source| Error::Component { path: here.clone(), source })?;
+            if let Err(source) = self.ui.set_name(id, name) {
+                self.soft(Error::Component { path: here.clone(), source })?;
+            }
         }
 
         // Os limites antes do resto (como o `Loaded` do Delphi): o `value` de um NumberBox ou de
@@ -100,31 +151,15 @@ impl Loader<'_> {
         let mut entries: Vec<(&String, &Value)> = obj.iter().collect();
         entries.sort_by_key(|(key, _)| !LIMITS.contains(&key.as_str()));
         for (key, value) in entries {
-            if RESERVED.contains(&key.as_str()) {
+            // `bindings` como texto é a propriedade da lista (`DataRepeater`, `VirtualList`:
+            // "lblNome=nome"); como objeto, as ligações de propriedade a campo (abaixo). Pulada
+            // sempre, a da lista sumia ao carregar o form (relatório do RTSPlayer, 10/11).
+            if RESERVED.contains(&key.as_str()) && !(key == "bindings" && value.is_string()) {
                 continue;
             }
-            let fail = |message: String| Error::Property { path: here.clone(), property: key.clone(), message };
-            // "margins.left": 4
-            if key.contains('.') {
-                let v = value.as_f64().ok_or_else(|| fail(format!("esperado número, recebido {}", describe(value))))?;
-                self.ui.set_prop(id, key, v).map_err(|e| fail(e.to_string()))?;
-                continue;
+            if let Err(e) = self.property(id, class, key, value, &here) {
+                self.soft(e)?;
             }
-            let info = self.ui.prop_info(id, key).ok_or_else(|| fail(format!("a classe {class} não tem esta propriedade")))?;
-            let prop = to_prop(value, info.kind, self.ui.theme()).map_err(fail)?;
-            if info.kind == PropKind::Component {
-                if let PropValue::String(target) = prop {
-                    self.deferred.push((id, key.clone(), target, here.clone()));
-                }
-                continue;
-            }
-            // Textos da tela: traduzidos para o idioma atual (o original fica lembrado).
-            if let (PropValue::String(text), true) = (&prop, aylis_core::i18n::TRANSLATABLE.contains(&key.as_str())) {
-                let text = text.clone();
-                self.ui.set_translated(id, key, &text).map_err(|e| fail(strip_property(e)))?;
-                continue;
-            }
-            self.ui.set_prop(id, key, prop).map_err(|e| fail(strip_property(e)))?;
         }
 
         // "bindings": { "text": { "source": "dsClientes", "field": "nome" } }
@@ -155,13 +190,37 @@ impl Loader<'_> {
         Ok(id)
     }
 
+    /// Uma propriedade do componente `id` (da classe `class`) pelo JSON.
+    fn property(&mut self, id: ComponentId, class: &str, key: &str, value: &Value, here: &str) -> Result<()> {
+        let fail = |message: String| Error::Property { path: here.to_string(), property: key.to_string(), message };
+        // "margins.left": 4
+        if key.contains('.') {
+            let v = value.as_f64().ok_or_else(|| fail(format!("esperado número, recebido {}", describe(value))))?;
+            return self.ui.set_prop(id, key, v).map_err(|e| fail(e.to_string()));
+        }
+        let info = self.ui.prop_info(id, key).ok_or_else(|| fail(format!("a classe {class} não tem esta propriedade")))?;
+        let prop = to_prop(value, info.kind, self.ui.theme()).map_err(fail)?;
+        if info.kind == PropKind::Component {
+            if let PropValue::String(target) = prop {
+                self.deferred.push((id, key.to_string(), target, here.to_string()));
+            }
+            return Ok(());
+        }
+        // Textos da tela: traduzidos para o idioma atual (o original fica lembrado).
+        if let (PropValue::String(text), true) = (&prop, aylis_core::i18n::TRANSLATABLE.contains(&key)) {
+            let text = text.clone();
+            return self.ui.set_translated(id, key, &text).map_err(|e| fail(strip_property(e)));
+        }
+        self.ui.set_prop(id, key, prop).map_err(|e| fail(strip_property(e)))
+    }
+
     /// Resolve as referências por nome depois que tudo existe (como o
     /// `GlobalFixupReferences` do Delphi).
     pub(crate) fn fixup(&mut self) -> Result<()> {
         for (id, property, target, path) in std::mem::take(&mut self.deferred) {
-            self.ui
-                .set_prop(id, &property, target.as_str())
-                .map_err(|e| Error::Property { path, property, message: strip_property(e) })?;
+            if let Err(e) = self.ui.set_prop(id, &property, target.as_str()) {
+                self.soft(Error::Property { path, property, message: strip_property(e) })?;
+            }
         }
         for (id, property, source, field) in std::mem::take(&mut self.bindings) {
             let source = self.ui.resolve_reference(id, &source);

@@ -91,6 +91,13 @@ pub struct Job {
     compiled: bool,
 }
 
+impl Job {
+    /// A compilação terminou e o programa começou a rodar (o MCP espera até aqui no `run`).
+    pub fn program_started(&self) -> bool {
+        self.built.is_some()
+    }
+}
+
 /// Os tempos de compilação guardados na configuração da IDE, por modo.
 const BUILD_TIMES: &str = "build_times";
 

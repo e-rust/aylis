@@ -27,20 +27,28 @@ barra da janela da IDE, para o usuário saber quem está nela). A primeira chama
 abre a IDE, se ela não estiver aberta, e essa IDE fica ligada a esta conversa. Depois, \
 project_info; sem projeto, open_project (caminho do .aylisproj) ou new_project.
 
+Projeto em toda chamada: passe `project` (o caminho do .aylisproj desta conversa) em todas as \
+ferramentas, session_title inclusive. É ele que leva a chamada à IDE certa: o cliente pode dividir \
+esta conexão entre conversas, cada uma no seu projeto e na sua IDE. Com mais de uma IDE aberta, a \
+chamada sem `project` é recusada; ide_list mostra as abertas.
+
 Regra principal: com o projeto aberto na IDE, NÃO grave nem edite os arquivos dele com as suas \
 ferramentas de arquivo (forms/*.json, temas, .aylisproj, código). A IDE guarda o que está aberto \
 na memória, não vê a mudança no disco e a perde ao salvar. Mude tudo por aqui:
 - código: read_code (o texto do editor, com o que não foi salvo) e edit_code (troca um trecho \
 exato; o usuário desfaz com Ctrl+Z); open_code abre um fonte;
 - forms: open_form, list_components, get_component, set_property, add_component, \
-delete_component, get_layout e set_layout;
+delete_component, get_layout, set_layout e patch_layout (uma parte do form); class_info diz as \
+propriedades, os valores e os eventos de uma classe (consulte antes de montar um layout), e o \
+set_layout devolve todos os erros de uma vez (dry_run só confere);
 - salvar: save (com all, tudo o que mudou);
 - generated/ é somente leitura: generate_code refaz.
 
-Compilar e executar: build compila e espera terminar (pode levar minutos); a resposta diz se \
-compilou, com os erros e as últimas linhas. Corrija com edit_code e chame build de novo. \
-run_without_debug executa, run executa no depurador; output mostra as mensagens e status a \
-situação. Com o app aberto, app_command lê e mexe na tela dele ({\"cmd\": \"tree\"}, \
+Compilar e executar: build compila e espera até 45 s; a resposta diz se compilou, com os erros \
+e as últimas linhas, ou \"ainda compilando\" (a primeira compilação leva minutos): chame build_wait \
+até vir o resultado. Corrija com edit_code e chame build de novo. run_without_debug executa, run \
+executa no depurador; os dois esperam a compilação do mesmo jeito e dizem se o app abriu (ou caiu \
+logo). output mostra as mensagens e status a situação. Com o app aberto, app_command lê e mexe na tela dele ({\"cmd\": \"tree\"}, \
 {\"cmd\": \"click\", \"target\": \"btnSalvar\"}).
 
 Como o código do Aylis é escrito: componentes pelo acesso tipado (self.btnSalvar, \
@@ -129,14 +137,17 @@ pub fn bridge() -> Result<(), String> {
     // Quem está nesta sessão (o cliente, do aperto de mão, e o título que o agente deu) e a IDE
     // que já sabe disso: a IDE mostra na barra da janela.
     let mut client = String::from("Agente");
-    let mut title = String::new();
-    let mut told: Option<u32> = None;
+    // O título de cada IDE (pid) e as IDEs que já sabem desta ponte. O cliente pode dividir uma
+    // ponte entre conversas (o Claude Desktop sobe um processo só para todas; visto em 10/11), e
+    // cada conversa trabalha numa IDE: nada aqui é "a IDE da sessão", e sim o de cada IDE.
+    let mut titles: std::collections::HashMap<u32, String> = std::collections::HashMap::new();
+    let mut told: Vec<u32> = Vec::new();
     for line in stdin.lock().lines() {
-        let line = line.map_err(|e| e.to_string())?;
+        let mut line = line.map_err(|e| e.to_string())?;
         if line.trim().is_empty() {
             continue;
         }
-        let request = serde_json::from_str::<Value>(&line).unwrap_or(Value::Null);
+        let mut request = serde_json::from_str::<Value>(&line).unwrap_or(Value::Null);
         if request["method"] == "initialize" {
             client = client_name(request["params"]["clientInfo"]["name"].as_str().unwrap_or_default());
         }
@@ -145,12 +156,35 @@ pub fn bridge() -> Result<(), String> {
             writeln!(stdout, "{reply}").and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
             continue;
         }
+        // O `project` da chamada escolhe a IDE (e sai dos argumentos: a IDE não o conhece). Sem
+        // ele e com mais de uma IDE aberta, a chamada é recusada: numa ponte dividida, a IDE
+        // fixada pode ser a de outra conversa.
+        if request["method"] == "tools/call" {
+            let name = request["params"]["name"].as_str().unwrap_or_default().to_string();
+            let project = request["params"]["arguments"].as_object_mut().and_then(|a| a.remove(PROJECT_ARG)).and_then(|v| v.as_str().map(|s| s.trim().to_string())).filter(|s| !s.is_empty());
+            if project.is_some() {
+                line = request.to_string();
+            }
+            let ides: Vec<crate::instances::Instance> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_some()).collect();
+            match route_call(&name, project.as_deref(), &ides) {
+                Route::Ide(pid) => pinned = Some(pid),
+                Route::Default => {}
+                Route::Refuse(text) => {
+                    let reply = json!({ "jsonrpc": "2.0", "id": request["id"].clone(), "result": { "content": [{ "type": "text", "text": text }], "isError": true } });
+                    writeln!(stdout, "{reply}").and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
+                    continue;
+                }
+            }
+        }
         // `session_title`: guarda o título, abre a IDE se preciso e mostra nela.
         if request["method"] == "tools/call" && request["params"]["name"] == "session_title" {
-            title = request["params"]["arguments"]["title"].as_str().unwrap_or_default().trim().to_string();
+            let title = request["params"]["arguments"]["title"].as_str().unwrap_or_default().trim().to_string();
             let (text, opened) = match target_port(&mut pinned, &session, true) {
                 Ok(_) => {
-                    announce(&mut told, pinned, &session, &client, &title);
+                    if let Some(pid) = pinned {
+                        titles.insert(pid, title.clone());
+                    }
+                    announce(&mut told, pinned, &session, &client, &titles);
                     (format!("Título desta sessão na IDE do Aylis: {title}"), true)
                 }
                 Err(e) => (e, false),
@@ -170,7 +204,8 @@ pub fn bridge() -> Result<(), String> {
         // decidido com o autor em 08/11), e as sessões dele trabalham juntas, uma chamada de cada
         // vez. Um projeto que não está aberto, pedido numa IDE que outra sessão também usa: abre
         // numa IDE só desta sessão, sem tirar o projeto da outra.
-        if request["method"] == "tools/call" && request["params"]["name"] == "open_project" {
+        if request["method"] == "tools/call" && (request["params"]["name"] == "open_project" || request["params"]["name"] == "new_project") {
+            // O projeto novo ainda não existe: nenhuma IDE o tem, e vale a regra da IDE ocupada.
             let path = PathBuf::from(request["params"]["arguments"]["path"].as_str().unwrap_or_default());
             if let Err(e) = route_project(&mut pinned, &session, &path) {
                 let reply = json!({ "jsonrpc": "2.0", "id": request["id"].clone(), "result": { "content": [{ "type": "text", "text": e }], "isError": true } });
@@ -192,8 +227,8 @@ pub fn bridge() -> Result<(), String> {
         // Uma IDE nova para esta sessão: ela fica sabendo quem está nela (e a de antes, que saiu).
         // A sessão que sumiu do registro da IDE (tirada por engano, ou a IDE reiniciou o registro)
         // também se anuncia de novo, senão a IDE parece livre para outra conversa.
-        if target.is_ok() && pinned.is_some() && (pinned != told || !registered(pinned, &session)) {
-            announce(&mut told, pinned, &session, &client, &title);
+        if target.is_ok() && pinned.is_some() && (!pinned.is_some_and(|p| told.contains(&p)) || !registered(pinned, &session)) {
+            announce(&mut told, pinned, &session, &client, &titles);
         }
         // Esta chamada abriu a IDE: a resposta diz isso (no Claude Desktop, a conversa concluiu "não
         // achei a IDE" porque a chamada respondeu sem avisar que tinha aberto uma).
@@ -221,23 +256,73 @@ pub fn bridge() -> Result<(), String> {
             writeln!(stdout, "{}", json!({ "jsonrpc": "2.0", "method": "notifications/tools/list_changed" })).and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
         }
     }
-    // A sessão acabou (o cliente fechou a ponte): a IDE tira o nome dela da janela.
-    if let Some(pid) = told {
-        let _ = tell_pid(pid, &session, &client, &title, false);
+    // A ponte acabou (o cliente a fechou): as IDEs tiram o nome dela da janela.
+    for pid in told {
+        let _ = tell_pid(pid, &session, &client, titles.get(&pid).map_or("", String::as_str), false);
     }
     Ok(())
 }
 
-/// Diz à IDE `pinned` que esta sessão está nela (com o título atual) e, se a sessão estava
-/// noutra (`told`), que saiu de lá: aquela fica livre para outra sessão.
-fn announce(told: &mut Option<u32>, pinned: Option<u32>, session: &str, client: &str, title: &str) {
-    if let Some(old) = told.filter(|t| Some(*t) != pinned) {
-        let _ = tell_pid(old, session, client, title, false);
+/// O argumento que toda ferramenta da IDE aceita: o projeto da conversa, que escolhe a IDE.
+const PROJECT_ARG: &str = "project";
+
+/// Para onde vai uma chamada de ferramenta.
+#[derive(Debug, PartialEq)]
+enum Route {
+    /// A IDE (pid) do projeto informado.
+    Ide(u32),
+    /// A de sempre: a fixada, ou a que a ponte abre ou escolhe (`target_port`, `route_project`).
+    Default,
+    /// Recusada, com o motivo para o agente.
+    Refuse(String),
+}
+
+/// A IDE de uma chamada (`name`) pelo `project` dela. Abrir e criar projeto escolhem a IDE pelo
+/// caminho (`route_project`); sem `project`, só uma IDE aberta serve: com mais de uma, a fixada
+/// pode ser a de outra conversa na mesma ponte, e a chamada é recusada dizendo o que passar.
+fn route_call(name: &str, project: Option<&str>, ides: &[crate::instances::Instance]) -> Route {
+    if matches!(name, "open_project" | "new_project") {
+        return Route::Default;
     }
+    let describe = |i: &crate::instances::Instance| i.project.as_ref().map_or_else(|| "(sem projeto)".to_string(), |p| p.display().to_string());
+    match project {
+        Some(wanted) => {
+            let found: Vec<&crate::instances::Instance> = ides.iter().filter(|i| project_matches(i, wanted)).collect();
+            match found.as_slice() {
+                [one] => Route::Ide(one.pid),
+                [] => Route::Refuse(format!("o projeto \"{wanted}\" não está aberto em nenhuma IDE do Aylis: abra com open_project (ide_list mostra as abertas)")),
+                _ => Route::Refuse(format!("mais de uma IDE aberta tem \"{wanted}\" no projeto: passe o caminho inteiro do .aylisproj")),
+            }
+        }
+        None if ides.len() > 1 => Route::Refuse(format!(
+            "há {} IDEs do Aylis abertas: passe `project` (o caminho do .aylisproj desta conversa) em toda chamada. Abertas:\n{}",
+            ides.len(),
+            ides.iter().map(|i| format!("  {}", describe(i))).collect::<Vec<_>>().join("\n")
+        )),
+        None => Route::Default,
+    }
+}
+
+/// A IDE tem o projeto `wanted`: um caminho (o mesmo arquivo) ou parte do nome.
+fn project_matches(ide: &crate::instances::Instance, wanted: &str) -> bool {
+    let Some(project) = &ide.project else { return false };
+    if wanted.ends_with(".aylisproj") || wanted.contains(['/', '\\']) {
+        crate::instances::same_path(project, Path::new(wanted))
+    } else {
+        project.display().to_string().to_lowercase().contains(&wanted.to_lowercase())
+    }
+}
+
+/// Diz à IDE `pinned` que esta ponte está nela, com o título que a conversa deu a ela. A ponte
+/// não sai das outras (pode estar dividida entre conversas, cada uma na sua IDE): sai de todas
+/// quando acaba.
+fn announce(told: &mut Vec<u32>, pinned: Option<u32>, session: &str, client: &str, titles: &std::collections::HashMap<u32, String>) {
     if let Some(pid) = pinned {
-        let _ = tell_pid(pid, session, client, title, true);
+        let _ = tell_pid(pid, session, client, titles.get(&pid).map_or("", String::as_str), true);
+        if !told.contains(&pid) {
+            told.push(pid);
+        }
     }
-    *told = pinned;
 }
 
 fn tell_pid(pid: u32, session: &str, client: &str, title: &str, connected: bool) -> Result<(), String> {
@@ -255,14 +340,18 @@ fn route_project(pinned: &mut Option<u32>, session: &str, path: &Path) -> Result
         *pinned = Some(i.pid);
         return Ok(());
     }
-    let shared = pinned.and_then(|pid| ides.iter().find(|i| i.pid == pid)).is_some_and(|i| i.sessions.iter().any(|s| s != session));
-    if shared {
-        // Uma IDE livre na tela inicial serve; senão, uma nova.
-        *pinned = Some(match ides.iter().find(|i| i.sessions.is_empty() && i.project.is_none()) {
-            Some(i) => i.pid,
-            None => open_ide(session)?.pid,
-        });
+    // Só uma IDE sem projeto e sem outra sessão recebe o projeto: numa ponte que o cliente divide
+    // entre conversas, a IDE fixada (ou a "desta sessão") pode ser a da outra conversa, e trocar o
+    // projeto dela tiraria o trabalho de lá (visto em 10/11). Um projeto, uma IDE: a fixada, se
+    // serve; senão, uma livre na tela inicial; senão, uma nova.
+    let usable = |i: &crate::instances::Instance| i.project.is_none() && i.sessions.iter().all(|s| s == session);
+    if pinned.and_then(|pid| ides.iter().find(|i| i.pid == pid)).is_some_and(usable) {
+        return Ok(());
     }
+    *pinned = Some(match ides.iter().find(|i| usable(i)) {
+        Some(i) => i.pid,
+        None => open_ide(session)?.pid,
+    });
     Ok(())
 }
 
@@ -489,7 +578,7 @@ fn forget_dead_sessions(ides: &mut [crate::instances::Instance]) {
 /// As ferramentas da própria ponte.
 fn own_tools() -> Value {
     json!([
-        { "name": "session_title", "description": "Dá um título a esta sessão (um resumo curto do que ela vai fazer), que aparece na barra da janela da IDE do Aylis ligada a ela. Chame no começo da conversa; abre a IDE se ela não estiver aberta.", "inputSchema": { "type": "object", "properties": { "title": { "type": "string", "description": "o título, curto (ex.: Tela de cadastro de clientes)" } }, "required": ["title"] } },
+        { "name": "session_title", "description": "Dá um título a esta sessão (um resumo curto do que ela vai fazer), que aparece na barra da janela da IDE do Aylis ligada a ela. Chame no começo da conversa; abre a IDE se ela não estiver aberta.", "inputSchema": { "type": "object", "properties": { "title": { "type": "string", "description": "o título, curto (ex.: Tela de cadastro de clientes)" }, "project": project_property() }, "required": ["title"] } },
         { "name": "ide_list", "description": "Lista as IDEs do Aylis abertas (cada uma com o projeto dela) e qual está fixada nesta conversa.", "inputSchema": { "type": "object", "properties": {} } },
         { "name": "ide_select", "description": "Fixa nesta conversa a IDE do projeto informado (o caminho do .aylisproj ou parte do nome, como ide_list mostra). As chamadas seguintes vão para ela.", "inputSchema": { "type": "object", "properties": { "project": { "type": "string", "description": "caminho ou parte do nome do projeto; vazio: a IDE sem projeto" } }, "required": ["project"] } }
     ])
@@ -516,10 +605,13 @@ fn own_tool(request: &Value, pinned: &mut Option<u32>) -> Option<String> {
     let ides: Vec<crate::instances::Instance> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_some()).collect();
     let describe = |i: &crate::instances::Instance| i.project.as_ref().map_or_else(|| "(sem projeto)".to_string(), |p| p.display().to_string());
     let text = if name == "ide_list" {
-        if ides.is_empty() {
+        // As abertas com o MCP desligado também aparecem (sem elas, uma IDE que perdeu o
+        // vínculo parecia ter sumido; relatório do RTSPlayer, 10/11).
+        let off: Vec<String> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_none()).map(|i| format!("  {} (MCP desligado: ligue em Ferramentas → Servidor MCP)", describe(&i))).collect();
+        if ides.is_empty() && off.is_empty() {
             "Nenhuma IDE do Aylis aberta com o MCP ligado: a próxima chamada de ferramenta (project_info, por exemplo) abre uma para esta conversa.".to_string()
         } else {
-            ides.iter().map(|i| format!("{}{}", if *pinned == Some(i.pid) { "* " } else { "  " }, describe(i))).collect::<Vec<_>>().join("
+            ides.iter().map(|i| format!("{}{}", if *pinned == Some(i.pid) { "* " } else { "  " }, describe(i))).chain(off).collect::<Vec<_>>().join("
 ")
         }
     } else {
@@ -658,8 +750,20 @@ pub fn claude_code_args(aylis_tool: &Path) -> Vec<String> {
 }
 
 /// Uma ferramenta da IDE: nome, descrição e o esquema dos argumentos.
-fn tool(name: &str, description: &str, properties: Value, required: &[&str]) -> Value {
+fn tool(name: &str, description: &str, mut properties: Value, required: &[&str]) -> Value {
+    // Toda ferramenta que trabalha num projeto aceita o `project` da conversa (abrir e criar
+    // projeto dizem o caminho nos argumentos delas).
+    if !matches!(name, "open_project" | "new_project") {
+        if let Some(map) = properties.as_object_mut() {
+            map.insert(PROJECT_ARG.into(), project_property());
+        }
+    }
     json!({ "name": name, "description": description, "inputSchema": { "type": "object", "properties": properties, "required": required } })
+}
+
+/// O esquema do argumento `project`.
+fn project_property() -> Value {
+    json!({ "type": "string", "description": "o projeto desta conversa: o caminho do .aylisproj (ou parte do nome, como ide_list mostra). Passe sempre: escolhe a IDE do projeto, e com mais de uma IDE aberta a chamada sem ele é recusada" })
 }
 
 /// As ferramentas que a IDE oferece. Ficam aqui, e não na IDE, para a ponte responder a lista
@@ -676,14 +780,31 @@ pub fn ide_tools() -> Vec<Value> {
         tool("add_component", "Cria um componente da paleta no form aberto (`class`, pode ser um subtipo como Button.icon), dentro de `parent` (opcional) e com `name` (opcional). Devolve o nome.", json!({ "class": s("classe"), "parent": s("contêiner, opcional"), "name": s("nome, opcional") }), &["class"]),
         tool("delete_component", "Exclui um componente do form aberto.", json!({ "component": s("nome") }), &["component"]),
         tool("get_layout", "O layout JSON inteiro do form aberto.", json!({}), &[]),
-        tool("set_layout", "Troca o layout inteiro do form aberto pelo JSON dado (desfazível).", json!({ "layout": s("o documento JSON ({\"aylis\":1,\"root\":{...}})") }), &["layout"]),
+        tool(
+            "set_layout",
+            "Troca o layout inteiro do form aberto pelo JSON dado (desfazível). Confere tudo antes e devolve todos os erros de uma vez (nada é trocado se houver erro); `dry_run` só confere. Um layout grande pode vir de um arquivo (`layout_file`) em vez do texto. Para mudar uma parte, `patch_layout`.",
+            json!({ "layout": s("o documento JSON ({\"aylis\":1,\"root\":{...}})"), "layout_file": s("caminho de um arquivo com o documento, no lugar de `layout`"), "dry_run": { "type": "boolean", "description": "só conferir, sem trocar" } }),
+            &[],
+        ),
+        tool(
+            "patch_layout",
+            "Troca só um componente do form aberto (e os filhos dele) pelo JSON dado, sem mandar o form inteiro: `component` é o nome dele, `layout` o objeto novo (class, name, propriedades, children). Confere tudo antes, como o set_layout; `dry_run` só confere.",
+            json!({ "component": s("nome do componente a trocar"), "layout": { "type": "object", "description": "o componente novo" }, "dry_run": { "type": "boolean" } }),
+            &["component", "layout"],
+        ),
         tool("list_classes", "As classes da paleta, por categoria, com os subtipos.", json!({}), &[]),
+        tool(
+            "class_info",
+            "Tudo o que uma classe aceita: cada propriedade com o tipo, a categoria e os valores (de um enum: `trimming` → none, character, word), os eventos (`on_dbl_click`...) e os métodos. Consulte antes de montar um layout.",
+            json!({ "class": s("nome da classe (Button, Label, DataRepeater...)") }),
+            &["class"],
+        ),
         tool("save", "Salva o form aberto (ou, com `all`, todos os forms e os fontes alterados nos editores).", json!({ "all": { "type": "boolean" } }), &[]),
         tool("generate_code", "Gera (ou atualiza) o código do projeto: handlers dos forms e Cargo.toml.", json!({}), &[]),
         tool("open_project", "Abre um projeto (.aylisproj), como Arquivo → Abrir projeto.", json!({ "path": s("caminho do .aylisproj") }), &["path"]),
         tool("open_code", "Abre na janela de código (uma aba por arquivo) o código de um form (F12) ou um fonte qualquer (`file`), na linha dada.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "line": { "type": "integer" } }), &[]),
         tool("read_code", "O texto de um fonte como está no editor da IDE (com o que ainda não foi salvo), ou do disco se não estiver aberto: o código de um form (`form`) ou um fonte (`file`, caminho ou relativo à pasta do código). `start_line`/`end_line` (a partir de 1) leem só um trecho. Leia por aqui, não pelo disco: o editor pode ter mudanças não salvas.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "start_line": { "type": "integer" }, "end_line": { "type": "integer" } }), &[]),
-        tool("edit_code", "Edita um fonte pelo editor da IDE (abre se preciso): troca `old` (o texto exato, com linhas em volta para ser único) por `new`, como uma edição do usuário: o Ctrl+Z desfaz, o servidor de linguagem fica sabendo e a aba fica alterada. `all` troca todas as vezes; `save` salva em seguida. Use sempre esta ferramenta para mudar código do projeto, nunca gravando o arquivo direto: a IDE com ele aberto não veria a mudança e a perderia ao salvar. O código gerado (`generated/`) é somente leitura, e os forms (.json) mudam por set_property/set_layout.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "old": s("o trecho exato a trocar"), "new": s("o texto novo"), "all": { "type": "boolean" }, "save": { "type": "boolean" } }), &["old", "new"]),
+        tool("edit_code", "Edita um fonte pelo editor da IDE (abre se preciso): troca `old` (o texto exato, com linhas em volta para ser único) por `new`, como uma edição do usuário: o Ctrl+Z desfaz, o servidor de linguagem fica sabendo e a aba fica alterada. `all` troca todas as vezes; `save` salva em seguida. Com `old` vazio e um `file` que ainda não existe (relativo à pasta do código, como `src/nucleo.rs`), cria o fonte com `new` (em Rust, declare depois o `mod` dele). Use sempre esta ferramenta para mudar código do projeto, nunca gravando o arquivo direto: a IDE com ele aberto não veria a mudança e a perderia ao salvar. O código gerado (`generated/`) é somente leitura, e os forms (.json) mudam por set_property/set_layout.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "old": s("o trecho exato a trocar"), "new": s("o texto novo"), "all": { "type": "boolean" }, "save": { "type": "boolean" } }), &["old", "new"]),
         tool("editor_type","Digita no editor de código ativo (como o teclado: pares que fecham, sugestões do servidor...).", json!({ "text": s("o texto") }), &["text"]),
         tool("editor_key", "Aperta uma tecla no editor de código (\"Ctrl+Space\", \"F12\", \"Alt+Down\", \"Ctrl+/\", \"Enter\", \"Escape\"...); os atalhos dos menus da janela também valem.", json!({ "key": s("a tecla") }), &["key"]),
         tool("editor_hover", "O mouse parado numa linha e coluna (a partir de 1) do editor ativo: pede a dica (o tipo, a documentação, o erro).", json!({ "line": { "type": "integer" }, "column": { "type": "integer" } }), &["line", "column"]),
@@ -708,15 +829,21 @@ pub fn ide_tools() -> Vec<Value> {
             &[],
         ),
         tool("breakpoint", "Liga (`on` true, o padrão) ou desliga o ponto de parada de uma linha (a partir de 1), como o clique na calha ou F5. `file`: caminho do código ou nome do form.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "on": { "type": "boolean" } }), &["file", "line"]),
-        tool("run", "Executar (F9): com ponto de parada, executa no depurador; depurando, continua. A saída aparece em `output`; a depuração, em `debug_state`.", json!({}), &[]),
-        tool("debug", "Depurar na IDE (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada.", json!({}), &[]),
+        tool("run", "Executar (F9): com ponto de parada, executa no depurador; depurando, continua. Espera a compilação (até `max_wait` s, 45 por padrão) e responde com os erros dela, ou que o app está rodando (ou que abriu e caiu); compilando ainda, `build_wait` espera o resto. A saída aparece em `output`; a depuração, em `debug_state`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }), &[]),
+        tool("debug", "Depurar na IDE (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada. Espera a compilação como o `run`.", json!({ "max_wait": { "type": "integer" } }), &[]),
+        tool(
+            "build_wait",
+            "Espera a compilação em andamento (do `build` ou do `run` que respondeu \"ainda compilando\") até `max_wait` s (padrão 45) e devolve o resultado: se compilou, os erros e as últimas linhas, ou que o app está rodando. Sem nada em andamento, o resultado da última.",
+            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }),
+            &[],
+        ),
         tool("debug_command", "Comando de depuração: continue (F9), step_over (F8), step_in (F7), step_out (Shift+F8), pause, stop (Ctrl+F2), ou run_to (F4) com `file` e `line`.", json!({ "command": s("continue | step_over | step_in | step_out | pause | stop | run_to"), "file": s("para run_to"), "line": { "type": "integer" } }), &["command"]),
         tool("debug_state", "A depuração agora: situação, se parou e onde (`exec`), a pilha, as variáveis do quadro e os pontos de parada; `evaluate` avalia uma expressão (o \"Avaliar\").", json!({ "evaluate": s("expressão, opcional") }), &[]),
         tool("status", "A linha de situação da IDE.", json!({}), &[]),
         tool("stop", "Para o programa em execução.", json!({}), &[]),
         tool("output", "As últimas linhas da saída (compilação e programa).", json!({ "lines": { "type": "integer", "description": "quantas (padrão 50)" } }), &[]),
         tool("ide_menus", "Todos os itens dos menus da IDE (e da janela de código): o caminho para `menu`, o atalho, se está habilitado e marcado. Os menus de contexto (clique direito) vêm uma vez só, com o lugar na frente (\"Object Inspector › (propriedade) › Ligar a campo…\") e `context` true. O que o usuário faz pelos menus, o agente faz com `menu` e os `dialog_*`.", json!({}), &[]),
-        tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java).", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)") }), &["dir", "name"]),
+        tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro; com `here`, o projeto fica direto em `dir`, mesmo que ela já tenha outras coisas, como o app dentro de um repositório), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java). Crie onde o projeto vai ficar: a confiança é pela pasta, e um projeto movido abre em modo restrito.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" } }), &["dir", "name"]),
         tool("close_project", "Fecha o projeto (volta à tela inicial).", json!({}), &[]),
         tool("new_form", "Cria um form no projeto aberto e abre no designer (`data_module` true: um DataModule).", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" } }), &["name"]),
         tool("remove_form", "Tira um form do projeto (o arquivo continua no disco).", json!({ "name": s("nome do form") }), &["name"]),
@@ -725,8 +852,8 @@ pub fn ide_tools() -> Vec<Value> {
         tool("set_project_setting", "Muda uma chave da configuração do projeto (como Projeto → Opções) e salva. `key` com pontos para dentro (`output.dir`, `publish.version`); `value` é o JSON.", json!({ "key": s("a chave (output.dir, publish.app_name...)"), "value": { "description": "o valor JSON" } }), &["key", "value"]),
         tool("targets", "Os alvos (desktop, linux, android, web, ios) e o escolhido para Executar e Compilar.", json!({}), &[]),
         tool("set_target", "Escolhe o alvo do Executar (desktop, linux, android, web, ios).", json!({ "target": s("o alvo") }), &["target"]),
-        tool("build", "Compilar (Ctrl+F9): compila sem executar (`release` true: otimizado) e espera terminar: a resposta diz se compilou, com os erros e as últimas linhas (pode levar minutos; a primeira compilação de um projeto, mais). `wait` false só começa (acompanhe com `status` e `output`).", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" } }), &[]),
-        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9); `release` true compila otimizado.", json!({ "release": { "type": "boolean" } }), &[]),
+        tool("build", "Compilar (Ctrl+F9): compila sem executar (`release` true: otimizado) e espera até `max_wait` s (padrão 45, dentro do prazo de um cliente MCP): a resposta diz se compilou, com os erros e as últimas linhas, ou \"ainda compilando\" (a primeira compilação de um projeto leva minutos): aí chame `build_wait`. `wait` false só começa.", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }), &[]),
+        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9); `release` true compila otimizado. Espera a compilação como o `run` e devolve os erros dela, ou que o app está rodando (ou que abriu e caiu).", json!({ "release": { "type": "boolean" }, "max_wait": { "type": "integer" } }), &[]),
         tool("publish", "Publica para um alvo (desktop, linux, android, web, ios), como Executar → Publicar; `out_dir` opcional.", json!({ "target": s("o alvo (padrão: o escolhido)"), "out_dir": s("pasta de saída, opcional") }), &[]),
         tool("undo", "Desfaz a última mudança no form aberto (Ctrl+Z).", json!({}), &[]),
         tool("redo", "Refaz (Ctrl+Y).", json!({}), &[]),
@@ -734,7 +861,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool("debug_variables", "Os campos de uma variável na depuração: `reference` é o número que `debug_state` dá em cada variável (0: sem campos).", json!({ "reference": { "type": "integer" } }), &["reference"]),
         tool("debug_frame", "Escolhe um quadro da pilha (`index`, de `debug_state`): a linha no código e as variáveis passam a ser as dele.", json!({ "index": { "type": "integer" } }), &["index"]),
         tool("breakpoint_condition", "Ponto de parada com condição (`condition`, uma expressão da linguagem) e/ou contagem de passagens (`hits`); vazias: um ponto comum.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "condition": s("expressão, opcional"), "hits": s("passagens, opcional") }), &["file", "line"]),
-        tool("app_command","Um comando para o app em execução (o protocolo remoto do Aylis): {\"cmd\":\"tree\"}, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{\"text\":\"Ana\"}), {\"cmd\":\"click\",\"target\":\"btnSalvar\"}...", json!({ "command": { "type": "object", "description": "o comando" } }), &["command"]),
+        tool("app_command","Um comando para o app em execução (o protocolo remoto do Aylis): {\"cmd\":\"snapshot\"} devolve a imagem da janela (com \"target\": só aquele componente; \"form\": outro form); {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true} (sem eles, a árvore inteira, que pode ser enorme; \"target\" começa num componente), {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{\"text\":\"Ana\"}), {\"cmd\":\"click\",\"target\":\"btnSalvar\"}...", json!({ "command": { "type": "object", "description": "o comando" } }), &["command"]),
     ]
 }
 
@@ -858,6 +985,47 @@ mod bridge_tests {
 
     /// Sem a IDE aberta, a lista já traz as ferramentas dela (o Claude Code não pede a lista de
     /// novo quando a IDE abre).
+    #[test]
+    fn the_project_of_each_call_picks_the_ide() {
+        let ide = |pid: u32, project: Option<&str>| crate::instances::Instance {
+            pid,
+            project: project.map(PathBuf::from),
+            mcp_port: Some(7000 + pid as u16),
+            control_port: 1,
+            secret: "s".into(),
+            focused_at: 0.0,
+            sessions: vec!["1-a".into()],
+        };
+        let ides = [ide(1, Some("C:/git/noobs/NoOBS.aylisproj")), ide(2, Some("C:/git/RTSPlayer/client/RTSPlayer.aylisproj"))];
+        // Pelo nome ou pelo caminho, cada chamada vai para a IDE do projeto dela.
+        assert_eq!(route_call("open_form", Some("NoOBS"), &ides), Route::Ide(1));
+        assert_eq!(route_call("build", Some("C:/git/RTSPlayer/client/RTSPlayer.aylisproj"), &ides), Route::Ide(2));
+        assert_eq!(route_call("session_title", Some("rtsplayer"), &ides), Route::Ide(2));
+        // Sem projeto, com duas abertas: recusada, dizendo quais são.
+        let Route::Refuse(text) = route_call("project_info", None, &ides) else { panic!("devia recusar") };
+        assert!(text.contains("NoOBS.aylisproj") && text.contains("RTSPlayer.aylisproj"), "{text}");
+        // Um projeto que nenhuma tem; um nome que duas têm.
+        assert!(matches!(route_call("open_form", Some("Calculadora"), &ides), Route::Refuse(_)));
+        assert!(matches!(route_call("open_form", Some(".aylisproj"), &ides), Route::Refuse(_)));
+        // Uma só aberta: como antes, sem precisar do projeto.
+        assert_eq!(route_call("project_info", None, &ides[..1]), Route::Default);
+        // Abrir e criar projeto escolhem a IDE pelo caminho deles.
+        assert_eq!(route_call("open_project", None, &ides), Route::Default);
+        assert_eq!(route_call("new_project", None, &ides), Route::Default);
+    }
+
+    /// Toda ferramenta da IDE (menos abrir e criar projeto) e o `session_title` aceitam o
+    /// `project`; as instruções dizem para passar sempre.
+    #[test]
+    fn every_tool_takes_the_project() {
+        for t in ide_tools().iter().chain(own_tools().as_array().unwrap().iter().filter(|t| t["name"] == "session_title")) {
+            let name = t["name"].as_str().unwrap();
+            let has = t["inputSchema"]["properties"].get(PROJECT_ARG).is_some();
+            assert_eq!(has, !matches!(name, "open_project" | "new_project"), "{name}");
+        }
+        assert!(INSTRUCTIONS.contains("`project`"));
+    }
+
     #[test]
     fn the_list_without_the_ide_has_the_ide_tools() {
         let request = json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/list" });

@@ -13,6 +13,89 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Relatório do MCP na migração do RTSPlayer (10/11/2026)**
+
+O agente que migrou o cliente do RTSPlayer só pelo MCP anotou o que travou
+(`RTSPlayer/relatorio-mcp-aylis.md`). Os números são os do relatório.
+
+Feitos todos em 10/11 (pedido do autor: "faça todos"; falta o autor confirmar; sem commit;
+roteiro 101):
+- **14:** o `call_named` sobe de escopo em escopo até o form que tem o handler (a linha clonada
+  é um escopo sem os handlers). **16:** a causa era o carregador do JSON: `bindings` é chave
+  reservada (as ligações a campo, um objeto) e a propriedade de texto da lista era pulada; agora
+  o texto vale como propriedade (no `load` e no hot reload). **11:** `bindings` aceita
+  `componente.propriedade=campo` (convertido pelo tipo: booleano, número, cor); a lista ganhou
+  `index_of(componente)` (o registro da linha de um clique) e `part(índice, componente do
+  modelo)` (a peça da linha pelo acesso tipado), no `invoke` (valem em todas as linguagens).
+  Testes em `aylis-dbcontrols/tests/virtual_list.rs`.
+- **12:** a geração guarda as classes de cada form (`generated/components/classes.json`) e tira o
+  acesso das que nenhum usa mais (`GENERATOR_VERSION` 8); o `.aylisproj` aceita `"features":
+  ["media"]` para o que o código usa sem componente. **4:** o app excluído do workspace de cima
+  também ganha o `[workspace]` próprio. **5:** `Project::bin_name` (o primeiro `[[bin]]`) no
+  `--bin` do Executar, do depurar e do WSL.
+- **13:** `margins`/`padding` (texto `"12, 4, 12, 0"`) e `anchors` (`"left,top"`) no catálogo e
+  no acesso tipado; o `set_prop` aceita o texto. **8:** o gancho grava `.claude/.gitignore` e a
+  resposta do `new_project` avisa. **10:** Projeto → Novo fonte… e o `edit_code` com `old` vazio
+  num arquivo que não existe criam o fonte (dentro da pasta do código, fora do `generated/`).
+  **1:** `new_project` com `here` cria direto numa pasta que já tem outras coisas
+  (`aylis_project::create_at`), e as mensagens dizem que mover o projeto conta como de fora.
+- **2:** `set_layout` confere tudo antes (`aylis_json::validate`) e devolve todos os erros de
+  uma vez; `dry_run`, `layout_file` e `patch_layout` (troca um componente pelo nome). **3:**
+  `class_info` (propriedades com tipo, valores dos enums e exemplos, eventos e métodos); a sombra
+  pelo nome do tema (`"md"`) vale no form. **15:** o `snapshot` do app (com `target`, só um
+  componente) volta como imagem do MCP; `tree` com `depth` e `visible_only`.
+- **6 e 17:** `build`, `run`, `run_without_debug` e `debug` esperam até 45 s (`max_wait`) e
+  respondem "ainda compilando"; `build_wait` espera o resto. O `run` devolve os erros da
+  compilação, ou que o app está rodando, ou que abriu e caiu. **7:** sem a chamada passar do
+  prazo do cliente, a ponte não é reiniciada no meio (a causa provável); `ide_list` mostra também
+  as IDEs com o MCP desligado. **9:** resolvido pelo `project` em cada chamada (roteiro 100).
+
+- MCP — o vínculo da conversa com a IDE:
+  - [ ] **7.** Depois do `Request timed out` de um `build`, a IDE com o projeto sumiu da conversa e
+    a seguinte abriu outra, vazia. Suspeita a conferir: a IDE nasceu presa ao job do cliente
+    (`in_kill_on_close_job`), e o cliente reiniciou a ponte depois do prazo.
+  - [ ] **9.** Numa conversa retomada, a IDE do projeto aparecia sem a marca de fixada. Em 10/11 a
+    ponte passou a escolher a IDE pelo `project` de cada chamada (o Claude Desktop divide uma ponte
+    entre conversas); falta conferir se isso resolve (roteiro 100).
+  - [ ] **6.** A primeira compilação estoura o prazo do cliente MCP: o `build` responder "ainda
+    compilando" antes do prazo, e uma ferramenta para esperar o resultado (`build_wait`).
+  - [ ] **17.** `run`/`run_without_debug` respondem "Executando…" na hora, e a compilação que falha
+    depois não é avisada: esperar a compilação e devolver os erros como o `build`; avisar também o
+    app que abre e cai.
+- MCP — forms e classes:
+  - [ ] **2.** `set_layout` para no primeiro erro (um layout de 24 KB reenviado cinco vezes):
+    devolver todos os erros, um `dry_run`, o layout por arquivo e um `patch_layout` por componente.
+  - [ ] **3.** Não há como saber pelo MCP as propriedades, os valores de enum e os eventos de uma
+    classe: um `class_info` (`trimming: "ellipsis"`, `radius` no `Label`, `on_double_click` e a
+    sombra `"md"` só no tema foram tentativas às cegas).
+  - [ ] **15.** O `app_command` não tira captura da janela, e o `tree` de um app médio passa de
+    130 mil caracteres: um `screenshot` e o `tree` com filtro.
+- Projeto e geração:
+  - [ ] **1.** `new_project` não cria numa pasta que já existe; mover o projeto criado conta como
+    "outra máquina" (modo restrito). Criar em pasta existente, ou a mensagem explicar.
+  - [ ] **4.** O app dentro de outro workspace do Cargo não compila (o `aylis` herda o
+    `rust-version` do workspace errado): o gerador escrever um `[workspace]` vazio no
+    `Cargo.toml` do app.
+  - [ ] **5.** O `build` supõe que o executável tem o nome do pacote: ler o `[[bin]]`.
+  - [ ] **8.** O `new_project` grava `.claude/settings.local.json` (o gancho do guarda, com caminho
+    absoluto) sem dizer: avisar na resposta e pôr no `.gitignore` do projeto.
+  - [ ] **10.** Não há como criar um fonte novo (nem pelo MCP nem pelo menu): `new_source`, ou o
+    `edit_code` criar com `old` vazio, e o item de menu.
+  - [ ] **12.** Gerar o código tira a feature `media` quando nenhum form usa classe de mídia, mas
+    deixa o acesso gerado do `VideoPlayer` (o build quebra no gerado); o código do usuário que usa
+    `aylis::media` também perde a feature. Apagar as classes sem uso e o projeto poder declarar
+    features (`"features"` no `.aylisproj`).
+  - [ ] **13.** O acesso tipado não tem `margins`, `padding` nem `anchors`.
+- Framework (`DataRepeater`):
+  - [ ] **14.** Os eventos de dentro de uma linha não chegam ao handler do form: a linha é um
+    escopo de nomes, e o `call_named` procura no "form" vazio (`form_of` para na linha). Subir até
+    o form de verdade, como o `instance_of`.
+  - [ ] **16.** Os `bindings` não preenchem as linhas (o `count` e o `on_bind` vêm certos, o texto
+    fica o do modelo).
+  - [ ] **11.** Os `bindings` só preenchem `text`/`source`/`value`/`checked`; a linha só é achada
+    pelo nome em texto no `on_bind`; o clique dentro da linha não diz o registro. Propriedade nos
+    `bindings`, acesso tipado à linha e o índice do registro nos eventos.
+
 **Pedidos de 09/11/2026**
 - [x] O instalador não leva os exemplos IBGE e ERP (grandes, só de demonstração); o `Cargo.toml`
   instalado sai sem eles entre os membros.

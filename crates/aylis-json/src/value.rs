@@ -23,7 +23,15 @@ pub(crate) fn to_prop(value: &Value, kind: PropKind, theme: &Theme) -> Result<Pr
             },
         },
         PropKind::Float | PropKind::Angle | PropKind::Duration => PropValue::Float(value.as_f64().ok_or_else(|| wrong("número"))?),
-        PropKind::Shadow => PropValue::String(value.as_str().ok_or_else(|| wrong("sombra em texto (\"0 4 12 #00000040\")"))?.to_string()),
+        // Um nome de sombra do tema (`"md"`) também vale no form, como no tema: vira a sombra
+        // dele (relatório do RTSPlayer, 10/11: "md" valia no tema e era recusado no form).
+        PropKind::Shadow => {
+            let text = value.as_str().ok_or_else(|| wrong("sombra em texto (\"0 4 12 #00000040\") ou um nome do tema (\"md\")"))?;
+            match theme.shadows.get(text.trim()) {
+                Some(shadow) => PropValue::String(shadow.to_spec()),
+                None => PropValue::String(text.to_string()),
+            }
+        }
         PropKind::Easing => PropValue::String(value.as_str().ok_or_else(|| wrong("curva (\"out_quad\", \"ease-in\" ou \"cubic-bezier(...)\")"))?.to_string()),
         PropKind::String => PropValue::String(value.as_str().ok_or_else(|| wrong("texto"))?.to_string()),
         PropKind::Color => {

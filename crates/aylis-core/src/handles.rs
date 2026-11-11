@@ -82,6 +82,9 @@ pub fn text(ui: &Ui, value: Option<PropValue>) -> String {
     match value {
         Some(PropValue::Color(c)) => c.to_hex(),
         Some(PropValue::Component(Some(id))) => ui.path_of(id),
+        // `margins`/`padding` e `anchors` como o `set_` aceita: "12, 4, 12, 0" e "left,top".
+        Some(PropValue::Bounds(b)) => format!("{}, {}, {}, {}", b.left, b.top, b.right, b.bottom),
+        Some(PropValue::Set(names)) => names.join(","),
         Some(v) => v.to_str().map(str::to_string).unwrap_or_default(),
         None => String::new(),
     }

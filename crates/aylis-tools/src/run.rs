@@ -153,7 +153,7 @@ pub fn compile_desktop(project: &Project, release: bool, control: &Control, sink
 
 /// O nome do executável do app (o da pasta de saída ou o do pacote), com a extensão.
 fn exe_file_name(project: &Project) -> String {
-    let name = if project.output.name.is_empty() { project.package_name() } else { project.output.name.clone() };
+    let name = if project.output.name.is_empty() { project.bin_name() } else { project.output.name.clone() };
     if cfg!(windows) { format!("{name}.exe") } else { name }
 }
 
@@ -262,10 +262,12 @@ fn build_commands(project: &Project, commands: &[aylis_project::BuildCommand], e
 
 fn build_desktop_exe(project: &Project, release: bool, control: &Control, sink: Sink) -> Result<PathBuf, String> {
     sink(Event::Step(format!("Compilando {}{}…", project.name, if release { " (release)" } else { "" })));
-    let package = project.package_name();
+    // O executável pelo `[[bin]]` do Cargo.toml, que pode não ter o nome do pacote (relatório do
+    // RTSPlayer, 10/11: "no bin target named 'rtsplayer-app'").
+    let bin = project.bin_name();
     // O canal com a IDE (inspetor, hot reload, rastro): só no que a IDE compila para rodar.
     let dev = prepare_dev(project, sink);
-    let mut args = vec!["build", "--bin", package.as_str()];
+    let mut args = vec!["build", "--bin", bin.as_str()];
     if release {
         args.push("--release");
     }

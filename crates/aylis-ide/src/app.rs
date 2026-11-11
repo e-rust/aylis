@@ -507,6 +507,7 @@ pub fn build(state: Shared) -> Ide {
     add_item(&mut ui, project_menu, "Abrir código do form", "F12", Some(|ui, s, _| actions::open_code(ui, s, None)), &ids);
     // Os fontes do projeto pelo nome (o "View Unit" do Delphi).
     add_item(&mut ui, project_menu, "Abrir fonte…", "Ctrl+F12", Some(|ui, _, _| crate::codewindow::open_source_dialog(ui)), &ids);
+    needs_project.push(add_item(&mut ui, project_menu, "Novo fonte…", "", Some(actions::new_source_dialog), &ids));
     needs_project.push(add_item(&mut ui, project_menu, "Pendências entre linguagens…", "", Some(|ui, s, _| {
         crate::code_sync::open(ui, s, false);
     }), &ids));

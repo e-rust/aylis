@@ -349,7 +349,9 @@ fn a_project_inside_another_workspace_gets_its_own() {
     assert!(codegen::needs_own_workspace(cargo, &dir("apps/pascal/Paint")), "fora dos membros: precisa");
     assert!(!codegen::needs_own_workspace(cargo, &dir("apps/rust/Loja")), "membro");
     assert!(!codegen::needs_own_workspace(cargo, &dir("crates/abc")), "membro pelo *");
-    assert!(!codegen::needs_own_workspace(cargo, &dir("fora/Loja")), "excluído");
+    // Excluído também precisa: o `aylis` pelo atalho `.aylis/sdk` dentro da árvore herdaria
+    // os campos do workspace de cima (o RTSPlayer, 10/11).
+    assert!(codegen::needs_own_workspace(cargo, &dir("fora/Loja")), "excluído");
     assert!(!codegen::needs_own_workspace("[package]\nname = \"x\"\n[workspace]\n", &dir("apps/pascal/Paint")), "já tem");
 
     // No "Gerar código": o Cargo.toml ganha o [workspace] uma vez só.
@@ -435,6 +437,40 @@ fn the_package_name_comes_from_the_cargo_toml() {
     let text = std::fs::read_to_string(&cargo).unwrap().replacen("name = \"no_obs\"", "name = \"noobs\"", 1);
     std::fs::write(&cargo, text).unwrap();
     assert_eq!(project.package_name(), "noobs");
+    // O executável é o do `[[bin]]`, que pode ter outro nome (o RTSPlayer, 10/11: pacote
+    // `rtsplayer-app`, executável `rtsplayer`).
+    assert_eq!(project.bin_name(), "no_obs");
+    let text = std::fs::read_to_string(&cargo).unwrap().replace("[[bin]]\nname = \"no_obs\"", "[[bin]]\nname = \"obs\"");
+    std::fs::write(&cargo, text).unwrap();
+    assert_eq!(project.bin_name(), "obs");
+    assert_eq!(project.package_name(), "noobs");
+}
+
+/// A geração tira o acesso de uma classe que nenhum form usa mais, e o `.aylisproj` pode pedir
+/// features que o código usa sem componente no form (o RTSPlayer, 10/11: o `VideoPlayer` saiu
+/// do form, a feature `media` saiu, e o acesso gerado dele ficou e quebrou o build).
+#[test]
+fn unused_classes_leave_and_the_project_can_ask_for_features() {
+    let base = temp("classes_sem_uso");
+    let mut project = create(&base, "Agenda", Language::Rust).unwrap();
+    let form = project.file(&project.forms[0].file.clone());
+    let original = std::fs::read_to_string(&form).unwrap();
+    let with_video = original.replacen("\"padding\": 8", "\"padding\": 8,\n    \"children\": [{\"class\": \"VideoPlayer\", \"name\": \"vidAoVivo\"}]", 1);
+    assert_ne!(with_video, original, "o form do modelo mudou");
+    std::fs::write(&form, &with_video).unwrap();
+    codegen::generate(&project).unwrap();
+    let class_file = project.code_dir_of(Language::Rust).join("generated/components/classes/VideoPlayer.rs");
+    assert!(class_file.is_file());
+    assert!(codegen::aylis_features(&project).contains(&"media"));
+    // Sai o VideoPlayer: sai o acesso dele e a feature.
+    std::fs::write(&form, &original).unwrap();
+    codegen::generate(&project).unwrap();
+    assert!(!class_file.exists(), "o acesso do VideoPlayer saiu");
+    assert!(!codegen::aylis_features(&project).contains(&"media"));
+    // O código usa aylis::media por conta própria: o projeto pede.
+    project.features = vec!["media".into(), "nao-existe".into()];
+    assert_eq!(codegen::aylis_features(&project).iter().filter(|f| **f == "media").count(), 1);
+    assert!(!codegen::aylis_features(&project).contains(&"nao-existe"));
 }
 
 #[test]
