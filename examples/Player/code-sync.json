@@ -1,24 +1,24 @@
 {
   "revisions": {
-    "frmPlayer.abrir_click": 2,
-    "frmPlayer.abrir_select": 2,
-    "frmPlayer.agora_click": 2,
-    "frmPlayer.anterior_click": 2,
+    "frmPlayer.abrir_click": 1,
+    "frmPlayer.abrir_select": 1,
+    "frmPlayer.agora_click": 1,
+    "frmPlayer.anterior_click": 1,
     "frmPlayer.embaralhar_click": 1,
-    "frmPlayer.fila_click": 2,
-    "frmPlayer.fila_item_click": 2,
-    "frmPlayer.limpar_fila_click": 2,
+    "frmPlayer.fila_click": 1,
+    "frmPlayer.fila_item_click": 1,
+    "frmPlayer.limpar_fila_click": 1,
     "frmPlayer.mudo_click": 1,
-    "frmPlayer.parar_click": 2,
-    "frmPlayer.posicao_seek": 2,
+    "frmPlayer.parar_click": 1,
+    "frmPlayer.posicao_seek": 1,
     "frmPlayer.posicao_timer": 1,
-    "frmPlayer.proxima_click": 2,
+    "frmPlayer.proxima_click": 1,
     "frmPlayer.repetir_click": 1,
-    "frmPlayer.reproduzir_click": 2,
-    "frmPlayer.sair_click": 2,
-    "frmPlayer.video_erro": 2,
-    "frmPlayer.video_fim": 2,
-    "frmPlayer.volume_change": 2
+    "frmPlayer.reproduzir_click": 1,
+    "frmPlayer.sair_click": 1,
+    "frmPlayer.video_erro": 1,
+    "frmPlayer.video_fim": 1,
+    "frmPlayer.volume_change": 1
   },
   "languages": {
     "cpp": {
@@ -55,80 +55,80 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "560b01e0bb4ac6aa",
+          "hash": "v2:560b01e0bb4ac6aa",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "f55640aa5ef8fccf",
-          "seen": 2
+          "hash": "v2:5d9d2ca881097020",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "4e4a48e1918a93ff",
+          "hash": "v2:4e4a48e1918a93ff",
           "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "8e8cc442aab724f7",
+          "hash": "v2:8e8cc442aab724f7",
           "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "39cee5e062a407a2",
+          "hash": "v2:df00b325494a67e0",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "9e7a79e908da9f3a",
+          "hash": "v2:9e7a79e908da9f3a",
           "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "eef1bf1ef88d9636",
-          "seen": 2
+          "hash": "v2:eef1bf1ef88d9636",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "495cc4d6b4cd1b19",
+          "hash": "v2:495cc4d6b4cd1b19",
           "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "ef1a03e89f7899ac",
+          "hash": "v2:36ab1604474662dc",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "517492921fb6cf70",
+          "hash": "v2:517492921fb6cf70",
           "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "7b9d79e60eed90a8",
-          "seen": 2
+          "hash": "v2:7b9d79e60eed90a8",
+          "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "05e2e3b919fcf6d5",
+          "hash": "v2:05e2e3b919fcf6d5",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "b7bdceea4e68156d",
+          "hash": "v2:b7bdceea4e68156d",
           "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "671aee9a09358436",
+          "hash": "v2:92beac9723aed976",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "08d7b26585c65858",
+          "hash": "v2:08d7b26585c65858",
           "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "8d1016366da7f07c",
+          "hash": "v2:8d1016366da7f07c",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "69c9fa36cb61c73e",
+          "hash": "v2:2ccf951046280d48",
           "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "5f307d2034d6e987",
+          "hash": "v2:5f307d2034d6e987",
           "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "e40e56ac903be413",
-          "seen": 2
+          "hash": "v2:e40e56ac903be413",
+          "seen": 1
         }
       }
     },
@@ -166,79 +166,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "635b36967aea58de",
-          "seen": 2
+          "hash": "v2:88870a751f40535d",
+          "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "635b36967aea58de",
-          "seen": 2
+          "hash": "v2:88870a751f40535d",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "633371286c685bec",
+          "hash": "v2:633371286c685bec",
           "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "5dc7fed14329fead",
-          "seen": 2
+          "hash": "v2:5dc7fed14329fead",
+          "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "fa42c5e5d243aa12",
+          "hash": "v2:26b31512abff6750",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "633371286c685bec",
+          "hash": "v2:633371286c685bec",
           "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "60b04d27db0b5be8",
-          "seen": 2
+          "hash": "v2:60b04d27db0b5be8",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "35ff29697a38d50b",
-          "seen": 2
+          "hash": "v2:35ff29697a38d50b",
+          "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "54dd02d7f363a472",
+          "hash": "v2:50aee42e543fe462",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "d3d3b593bf63a8d4",
-          "seen": 2
+          "hash": "v2:d3d3b593bf63a8d4",
+          "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "633371286c685bec",
+          "hash": "v2:633371286c685bec",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "a6a0e8e87c1a4ff6",
+          "hash": "v2:a6a0e8e87c1a4ff6",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "8b6723fe67bc987e",
-          "seen": 2
+          "hash": "v2:8b6723fe67bc987e",
+          "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "5d24bf19f682a4f4",
+          "hash": "v2:d8fd0ff83283212a",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "51a096679197823e",
-          "seen": 2
+          "hash": "v2:51a096679197823e",
+          "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "51a096679197823e",
-          "seen": 2
+          "hash": "v2:51a096679197823e",
+          "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "825725ee570976a0",
-          "seen": 2
+          "hash": "v2:b5ae611a1dc4b4e8",
+          "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "3346e50402a21b0b",
-          "seen": 2
+          "hash": "v2:3346e50402a21b0b",
+          "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "7a9b550dc2d57d0e",
+          "hash": "v2:7a9b550dc2d57d0e",
           "seen": 1
         }
       }
@@ -277,79 +277,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "c326ea81bbcba7d0",
+          "hash": "v2:c326ea81bbcba7d0",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "032565f80b22898a",
+          "hash": "v2:d157f7521746267d",
           "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "8f601f4be30374eb",
+          "hash": "v2:8f601f4be30374eb",
           "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "6643672d0a851b37",
+          "hash": "v2:6643672d0a851b37",
           "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "c1c4cc8f09f85768",
+          "hash": "v2:597d47006374f346",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "7bfaa8797c6dde36",
+          "hash": "v2:7bfaa8797c6dde36",
           "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "77cbab7c301c9a52",
+          "hash": "v2:77cbab7c301c9a52",
           "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "a6472e29af57ca58",
+          "hash": "v2:a6472e29af57ca58",
           "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "cdbf82d26cf4049f",
+          "hash": "v2:f4fa12b025c8518b",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "4e5c7d7bc5969f9d",
+          "hash": "v2:4e5c7d7bc5969f9d",
           "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "d31c5f9cceab1913",
+          "hash": "v2:d31c5f9cceab1913",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "e99abf29661e0b4c",
+          "hash": "v2:e99abf29661e0b4c",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "a599c153fcb565aa",
+          "hash": "v2:a599c153fcb565aa",
           "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "2a06aa0b2b0e7375",
+          "hash": "v2:e19faed4206ea9b3",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "68e580ec424af3af",
+          "hash": "v2:68e580ec424af3af",
           "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "6ddcd79188d7ae88",
+          "hash": "v2:6ddcd79188d7ae88",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "4f0de8530034b73c",
+          "hash": "v2:3ca9c64dc84ee308",
           "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "b2c2eb627597c384",
+          "hash": "v2:b2c2eb627597c384",
           "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "556362e6c885d937",
+          "hash": "v2:556362e6c885d937",
           "seen": 1
         }
       }
@@ -388,79 +388,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "7dd2f5a5a2e67c31",
+          "hash": "v2:7dd2f5a5a2e67c31",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "b02759148815dcf9",
-          "seen": 2
+          "hash": "v2:375dbbcdcebd41a0",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "641a2ef707f98e77",
-          "seen": 2
+          "hash": "v2:641a2ef707f98e77",
+          "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "f3818cef344a2846",
-          "seen": 2
+          "hash": "v2:f3818cef344a2846",
+          "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "92007b369a67e19e",
+          "hash": "v2:f87eb352b82c463c",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "9f9d17ea50bdd992",
-          "seen": 2
+          "hash": "v2:9f9d17ea50bdd992",
+          "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "65eee5e353c39573",
-          "seen": 2
+          "hash": "v2:65eee5e353c39573",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "6e253f84ae5743ff",
-          "seen": 2
+          "hash": "v2:6e253f84ae5743ff",
+          "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "17b4eb59ef039674",
+          "hash": "v2:b6a54b209b680624",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "414d6f9c1c631c54",
-          "seen": 2
+          "hash": "v2:414d6f9c1c631c54",
+          "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "104490abb5fd1475",
+          "hash": "v2:104490abb5fd1475",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "116fac638762be24",
+          "hash": "v2:116fac638762be24",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "60798d27273047fe",
-          "seen": 2
+          "hash": "v2:60798d27273047fe",
+          "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "ddac375138e19899",
+          "hash": "v2:e4d7a76e6d576a1f",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "d8cf88c194372712",
-          "seen": 2
+          "hash": "v2:d8cf88c194372712",
+          "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "27e06a7cc6592d49",
+          "hash": "v2:27e06a7cc6592d49",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "926b2805e5f5d516",
-          "seen": 2
+          "hash": "v2:816adea770863bf0",
+          "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "977fc95ea18d50cb",
-          "seen": 2
+          "hash": "v2:977fc95ea18d50cb",
+          "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "f58a22d835f79f59",
+          "hash": "v2:f58a22d835f79f59",
           "seen": 1
         }
       }
@@ -499,79 +499,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "b31f60cabbb153e7",
+          "hash": "v2:b31f60cabbb153e7",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "2da846a448c6e588",
-          "seen": 2
+          "hash": "v2:60972bf28a8f89a3",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "c54cf15b97e97f38",
-          "seen": 2
+          "hash": "v2:c54cf15b97e97f38",
+          "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "ab915a41e4bfba94",
-          "seen": 2
+          "hash": "v2:ab915a41e4bfba94",
+          "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "bf07ebcf5cb2e3c8",
+          "hash": "v2:ae850edcbb56f09e",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "765f0c367db03fd3",
-          "seen": 2
+          "hash": "v2:765f0c367db03fd3",
+          "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "998509d202210ae2",
-          "seen": 2
+          "hash": "v2:998509d202210ae2",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "894d256647b58b4c",
-          "seen": 2
+          "hash": "v2:894d256647b58b4c",
+          "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "89337df686e73ae6",
+          "hash": "v2:f3ad488478c4d2f4",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "9ad8433db4f92a4c",
-          "seen": 2
+          "hash": "v2:9ad8433db4f92a4c",
+          "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "4a20f52888b5cc26",
+          "hash": "v2:4a20f52888b5cc26",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "be2f94be60a957cd",
+          "hash": "v2:be2f94be60a957cd",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "97101325fec3fa62",
-          "seen": 2
+          "hash": "v2:97101325fec3fa62",
+          "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "4a7868c1ca96bd93",
+          "hash": "v2:1c4bd78d6fccd83a",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "4ea68ab7e204a034",
-          "seen": 2
+          "hash": "v2:4ea68ab7e204a034",
+          "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "7ed79c9d21e90a31",
+          "hash": "v2:7ed79c9d21e90a31",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "7c554fc2de645a7f",
-          "seen": 2
+          "hash": "v2:992953488c89696f",
+          "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "d73b0964bff03e9a",
-          "seen": 2
+          "hash": "v2:d73b0964bff03e9a",
+          "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "34cfca3360bc2550",
+          "hash": "v2:34cfca3360bc2550",
           "seen": 1
         }
       }
@@ -610,79 +610,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "1ab50b6d411c30b0",
+          "hash": "v2:1ab50b6d411c30b0",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "e3b78cacf445ae43",
-          "seen": 2
+          "hash": "v2:a6fc214d3c57489f",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "840ecd91e2183d36",
-          "seen": 2
+          "hash": "v2:840ecd91e2183d36",
+          "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "7299746f1ab59586",
-          "seen": 2
+          "hash": "v2:7299746f1ab59586",
+          "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "d76422a19cd68136",
+          "hash": "v2:74a0ab311dad7de4",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "c4e1fa4c38e8c83d",
-          "seen": 2
+          "hash": "v2:c4e1fa4c38e8c83d",
+          "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "c91144e7443b7f82",
-          "seen": 2
+          "hash": "v2:c91144e7443b7f82",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "b1b7607991d8c305",
-          "seen": 2
+          "hash": "v2:b1b7607991d8c305",
+          "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "c950be5806d0d121",
+          "hash": "v2:ba2e14b264f0a0c3",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "0b51becdb0f8a74b",
-          "seen": 2
+          "hash": "v2:0b51becdb0f8a74b",
+          "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "d9e5aed692cbfe08",
+          "hash": "v2:d9e5aed692cbfe08",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "0939f810626174aa",
+          "hash": "v2:0939f810626174aa",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "f13d159a046ed039",
-          "seen": 2
+          "hash": "v2:f13d159a046ed039",
+          "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "8f9ebfcbda1dce01",
+          "hash": "v2:67f9ad4e6a21a2f5",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "8833aa406a3a67d5",
-          "seen": 2
+          "hash": "v2:8833aa406a3a67d5",
+          "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "f3868cda9f5a3f28",
+          "hash": "v2:f3868cda9f5a3f28",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "f075b7ffdc329784",
-          "seen": 2
+          "hash": "v2:deff053631937886",
+          "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "17be19e0c6efe1cd",
-          "seen": 2
+          "hash": "v2:17be19e0c6efe1cd",
+          "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "f87a637030720b26",
+          "hash": "v2:f87a637030720b26",
           "seen": 1
         }
       }
@@ -721,79 +721,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "4367d7fc7d34a421",
+          "hash": "v2:4367d7fc7d34a421",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "a68dacf8ed28444c",
+          "hash": "v2:47865262387951bf",
           "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "fcaabdeda5513513",
+          "hash": "v2:fcaabdeda5513513",
           "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "f04ac4b3504a85b1",
+          "hash": "v2:f04ac4b3504a85b1",
           "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "c4feec6b6e9aea42",
+          "hash": "v2:401c3b0f29081c9e",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "cce2bfe3b6853256",
+          "hash": "v2:cce2bfe3b6853256",
           "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "d2de4ca2770d193f",
+          "hash": "v2:f4f03de287a82365",
           "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "060d1c249b86d7eb",
+          "hash": "v2:060d1c249b86d7eb",
           "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "0c7b07371272ce71",
+          "hash": "v2:31f88a070619c19b",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "39760ba66a06f8b6",
+          "hash": "v2:39760ba66a06f8b6",
           "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "29740bb2cc852123",
+          "hash": "v2:29740bb2cc852123",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "b87ffba7641c5e36",
+          "hash": "v2:b87ffba7641c5e36",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "4ecea01bb11d8842",
+          "hash": "v2:4ecea01bb11d8842",
           "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "4b76ee27d660927f",
+          "hash": "v2:d3f6882f8d46fc4f",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "0b2bc7ef7e7d1a1f",
+          "hash": "v2:0b2bc7ef7e7d1a1f",
           "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "d117222643288be1",
+          "hash": "v2:d117222643288be1",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "35acfb47e9a888b6",
+          "hash": "v2:abb15a0f4fbc1c90",
           "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "57fe80aaa7cb49bc",
+          "hash": "v2:57fe80aaa7cb49bc",
           "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "7173e8c06828f30f",
+          "hash": "v2:7173e8c06828f30f",
           "seen": 1
         }
       }
@@ -832,79 +832,79 @@
       },
       "handlers": {
         "frmPlayer.abrir_click": {
-          "hash": "5eb412d52036388d",
+          "hash": "v2:5eb412d52036388d",
           "seen": 1
         },
         "frmPlayer.abrir_select": {
-          "hash": "f8d70f3daa8eee37",
-          "seen": 2
+          "hash": "v2:9e410d519db12c84",
+          "seen": 1
         },
         "frmPlayer.agora_click": {
-          "hash": "9b017fa8b54edffb",
-          "seen": 2
+          "hash": "v2:9b017fa8b54edffb",
+          "seen": 1
         },
         "frmPlayer.anterior_click": {
-          "hash": "069e553ef5993c84",
-          "seen": 2
+          "hash": "v2:069e553ef5993c84",
+          "seen": 1
         },
         "frmPlayer.embaralhar_click": {
-          "hash": "51202712d0ea02a7",
+          "hash": "v2:7b5dd2510e63f251",
           "seen": 1
         },
         "frmPlayer.fila_click": {
-          "hash": "4f423b59ba2d0e1e",
-          "seen": 2
+          "hash": "v2:4f423b59ba2d0e1e",
+          "seen": 1
         },
         "frmPlayer.fila_item_click": {
-          "hash": "8366e8d323a6916e",
-          "seen": 2
+          "hash": "v2:8366e8d323a6916e",
+          "seen": 1
         },
         "frmPlayer.limpar_fila_click": {
-          "hash": "17a0219e6b4d7ba2",
-          "seen": 2
+          "hash": "v2:17a0219e6b4d7ba2",
+          "seen": 1
         },
         "frmPlayer.mudo_click": {
-          "hash": "669fe7129da171c9",
+          "hash": "v2:6d5292dd40c89fb9",
           "seen": 1
         },
         "frmPlayer.parar_click": {
-          "hash": "f4dd1d867e702d1a",
-          "seen": 2
+          "hash": "v2:f4dd1d867e702d1a",
+          "seen": 1
         },
         "frmPlayer.posicao_seek": {
-          "hash": "b09536b2129fd519",
+          "hash": "v2:b09536b2129fd519",
           "seen": 1
         },
         "frmPlayer.posicao_timer": {
-          "hash": "f61d8c5191a50074",
+          "hash": "v2:f61d8c5191a50074",
           "seen": 1
         },
         "frmPlayer.proxima_click": {
-          "hash": "4977f4e5231c9a40",
-          "seen": 2
+          "hash": "v2:4977f4e5231c9a40",
+          "seen": 1
         },
         "frmPlayer.repetir_click": {
-          "hash": "7004521197fab0b4",
+          "hash": "v2:a854217130f33902",
           "seen": 1
         },
         "frmPlayer.reproduzir_click": {
-          "hash": "999f4c4ea146c4d3",
-          "seen": 2
+          "hash": "v2:999f4c4ea146c4d3",
+          "seen": 1
         },
         "frmPlayer.sair_click": {
-          "hash": "72ab605a6d948c3d",
+          "hash": "v2:72ab605a6d948c3d",
           "seen": 1
         },
         "frmPlayer.video_erro": {
-          "hash": "a8e1cce4688b5ede",
-          "seen": 2
+          "hash": "v2:abe9126f565a6b42",
+          "seen": 1
         },
         "frmPlayer.video_fim": {
-          "hash": "1ce2a88a4ea1babe",
-          "seen": 2
+          "hash": "v2:1ce2a88a4ea1babe",
+          "seen": 1
         },
         "frmPlayer.volume_change": {
-          "hash": "1a49d85d96b3819b",
+          "hash": "v2:1a49d85d96b3819b",
           "seen": 1
         }
       }

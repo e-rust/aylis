@@ -167,8 +167,10 @@ fn legacy_fingerprint(body: &str) -> String {
 }
 
 /// O `code-sync.json` de uma versão anterior (a impressão antiga): o código que não mudou
-/// continua em dia, sem revisão nova, e a impressão é refeita pelo fonte. Uma impressão que
-/// não bate com nenhuma é lógica nova.
+/// continua em dia, sem revisão nova, e a impressão é refeita pelo fonte. Uma impressão sem
+/// versão que não bate com nenhuma regra conhecida (a de 09/11, por exemplo) também só é
+/// refeita: tomá-la por lógica nova deixava a Calculadora, o Paint, o Player e o IBGE com
+/// handlers "a portar" sem nada mudado.
 #[test]
 fn hashes_from_before_still_match() {
     let (base, project, _, _) = two_languages("legacy");
@@ -184,7 +186,15 @@ fn hashes_from_before_still_match() {
     let after: sync::SyncState = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(after.revisions["frmPrincipal.limpar_click"], state.revisions["frmPrincipal.limpar_click"], "o mesmo corpo");
     assert_ne!(after.languages["rust"].handlers["frmPrincipal.limpar_click"].hash, legacy_fingerprint(old[0].1), "refeita pelo fonte");
-    assert!(after.revisions["frmPrincipal.salvar_click"] > state.revisions["frmPrincipal.salvar_click"], "impressão desconhecida: lógica nova");
+    assert_eq!(after.revisions["frmPrincipal.salvar_click"], state.revisions["frmPrincipal.salvar_click"], "impressão de uma regra desconhecida: sem revisão nova");
+    assert!(after.languages["python"].handlers["frmPrincipal.salvar_click"].hash.starts_with("v2:"), "refeita pelo fonte");
+    assert_eq!(sync::pending(&project, Language::Rust).unwrap(), vec![], "nada a portar");
+    assert_eq!(sync::pending(&project, Language::Python).unwrap(), vec![], "nada a portar");
+    // Já na impressão nova, a edição de verdade volta a contar como lógica nova.
+    let python = source(&project, Language::Python);
+    edit(&python, "total = soma(1, 2)", "total = soma(1, 3)");
+    sync::record(&project).unwrap();
+    assert_eq!(changed(&project, Language::Rust), vec!["salvar_click".to_string()], "editado em Python");
     std::fs::remove_dir_all(&base).unwrap();
 }
 

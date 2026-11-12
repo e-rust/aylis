@@ -148,8 +148,16 @@ fn a_component_page_shows_the_live_component_inside_the_page() {
     assert_eq!(text(ui, "frmDocumentacao.pnlDemo", "visible"), "Bool(false)");
     assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Timer.md");
 
-    // Uma classe que este executável não registra (o Gauge, fora do navegador): a imagem.
+    // O Gauge: fora do navegador, a Landing sozinha não o registra e mostra a imagem. Na suíte
+    // do workspace o cargo une as features do `aylis` de todos os crates, ele vem registrado e
+    // a página o monta ao vivo, como no navegador.
     ui.fire(md, "on_link", &EventArgs::Text("Gauge.md".into()));
-    assert!(ui.find_path("frmDocumentacao.demo").is_none());
-    assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Gauge.md");
+    if ui.registry().get("Gauge").is_some() {
+        let demo = ui.find_path("frmDocumentacao.demo").expect("o Gauge registrado: ao vivo na página");
+        assert_eq!(ui.class_name(demo), Some("Gauge"));
+        assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "");
+    } else {
+        assert!(ui.find_path("frmDocumentacao.demo").is_none());
+        assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Gauge.md");
+    }
 }

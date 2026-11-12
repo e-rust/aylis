@@ -230,6 +230,18 @@ Controles, layout e projeto (feito em 12/11, sem commit; testes
   renderizadores; sem `ui.damage` a tela não repinta) e J03 (o núcleo exige o mesmo id; o
   controle liberado ou escondido não passa a contagem; o teste fica como guarda).
 
+As duas falhas da suíte que vinham desde o 0.2.0-beta.3 (corrigidas em 12/11):
+- `apps` (`every_app_has_all_languages_and_nothing_to_port`): a Calculadora, o Paint, o Player
+  e o IBGE tinham handlers "a portar" sem nenhum fonte mudado desde 09/11. A impressão gravada
+  em 09/11 em Python, TypeScript, C#, Java e Pascal era de uma regra mais velha que a "antiga"
+  do G22; o `record` a tomava por edição e subia a revisão, e as outras linguagens ficavam
+  atrasadas. Agora a impressão sem versão que nenhuma regra reconhece só é refeita pelo fonte,
+  sem revisão nem porte (`hashes_from_before_still_match`); os `code-sync.json` dos cinco apps
+  voltaram ao estado de 09/11 e foram regravados com a regra nova, sem nada pendente.
+- `documentacao` da Landing: não era instabilidade. Na suíte do workspace o cargo une as
+  features do `aylis`, o Gauge fica registrado e a página o monta ao vivo; sozinha, a Landing
+  não o registra e mostra a imagem. O teste confere o registro e espera o caso certo.
+
 Ficam para depois:
 - T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
 - A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).

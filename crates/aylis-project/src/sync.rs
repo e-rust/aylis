@@ -570,6 +570,12 @@ pub fn record_in(project: &Project, only: Option<&[String]>) -> Result<(), Strin
                     // O mesmo corpo (a impressão de antes do G22 conferida pela regra dela): a
                     // impressão é refeita pelo fonte, sem revisão nova.
                     Some(old) if same_body(language, &old.hash, &hash, &text, &marker) => old.seen,
+                    // Uma impressão sem versão que nem a regra de antes reconhece é de uma regra
+                    // ainda mais velha (a de 09/11 em Python, TypeScript, C#, Java e Pascal):
+                    // não dá para saber se o corpo mudou, então ela só é refeita pelo fonte, sem
+                    // revisão nova nem porte. Tomá-la por edição subia a revisão e deixava as
+                    // outras linguagens pendentes sem nada para portar.
+                    Some(old) if !old.hash.starts_with(FINGERPRINT_V2) => old.seen,
                     // Mudou numa linguagem atrasada: é o porte.
                     Some(old) if old.seen < revision => revision,
                     // Mudou numa linguagem em dia: lógica nova, as outras ficam pendentes.
