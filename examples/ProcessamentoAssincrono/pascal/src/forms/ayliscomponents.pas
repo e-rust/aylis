@@ -256,6 +256,8 @@ type
     procedure SetPosition(Value: string);
     function GetBorderStyle: string;
     procedure SetBorderStyle(Value: string);
+    function GetWindowCorners: string;
+    procedure SetWindowCorners(Value: string);
     function GetWindowState: string;
     procedure SetWindowState(Value: string);
     function GetTransition: string;
@@ -436,6 +438,7 @@ type
     property Caption: string read GetCaption write SetCaption;
     property Position: string read GetPosition write SetPosition;
     property BorderStyle: string read GetBorderStyle write SetBorderStyle;
+    property WindowCorners: string read GetWindowCorners write SetWindowCorners;
     property WindowState: string read GetWindowState write SetWindowState;
     property Transition: string read GetTransition write SetTransition;
     property Topmost: Boolean read GetTopmost write SetTopmost;
@@ -1821,6 +1824,16 @@ end;
 procedure TForm.SetBorderStyle(Value: string);
 begin
   SetProp('border_style', TJSONString.Create(Value));
+end;
+
+function TForm.GetWindowCorners: string;
+begin
+  Result := AsText(GetProp('window_corners'));
+end;
+
+procedure TForm.SetWindowCorners(Value: string);
+begin
+  SetProp('window_corners', TJSONString.Create(Value));
 end;
 
 function TForm.GetWindowState: string;

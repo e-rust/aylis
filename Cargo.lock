@@ -572,7 +572,7 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
 name = "aylis"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-3d",
  "aylis-build",
@@ -602,7 +602,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-3d"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "bytemuck",
@@ -632,14 +632,14 @@ dependencies = [
 
 [[package]]
 name = "aylis-build"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
 name = "aylis-capi"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "aylis-platform-winit",
@@ -650,7 +650,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-controls"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls-base",
  "aylis-controls-charts",
@@ -665,7 +665,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-controls-base"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "fancy-regex",
@@ -677,7 +677,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-controls-charts"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "serde_json",
@@ -685,14 +685,14 @@ dependencies = [
 
 [[package]]
 name = "aylis-controls-device"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
 ]
 
 [[package]]
 name = "aylis-controls-editors"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "image",
@@ -700,21 +700,21 @@ dependencies = [
 
 [[package]]
 name = "aylis-controls-industrial"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
 ]
 
 [[package]]
 name = "aylis-core"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "harfrust",
 ]
 
 [[package]]
 name = "aylis-d2d"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "windows",
@@ -724,7 +724,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-data"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "serde_json",
@@ -733,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-dbcontrols"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-demos"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis",
  "aylis-build",
@@ -757,7 +757,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-devlink"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "getrandom 0.2.17",
  "serde_json",
@@ -767,7 +767,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-docview"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "calamine",
@@ -778,7 +778,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-host"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis",
  "aylis-core",
@@ -798,7 +798,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-ide"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis",
  "aylis-3d",
@@ -831,7 +831,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-ide-web"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-ide",
  "wasm-bindgen",
@@ -840,7 +840,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-json"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
@@ -849,7 +849,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-markdown"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-controls-base",
@@ -860,7 +860,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-media"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
@@ -884,7 +884,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-migrate"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-json",
  "aylis-project",
@@ -894,7 +894,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-platform-winit"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -953,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-project"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-build",
  "aylis-controls",
@@ -968,7 +968,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-providers"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
@@ -981,7 +981,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-remote"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-3d",
  "aylis-controls",
@@ -1003,7 +1003,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-skia"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "skia-safe",
@@ -1011,7 +1011,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-tools"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-3d",
  "aylis-build",
@@ -1038,7 +1038,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-vector"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-web"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-core",
  "js-sys",
@@ -1060,7 +1060,7 @@ dependencies = [
 
 [[package]]
 name = "aylis-webview"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 dependencies = [
  "aylis-controls",
  "aylis-core",
