@@ -36,7 +36,7 @@ const DESCRIPTIONS: &[(&str, &str)] = &[
     ("DataGrid", "Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, edição na célula, ordenação, filtro e milhões de linhas sem travar."),
     ("MapView", "Mapa interativo de blocos (como os mapas da web): arrastar, aproximar com a roda e marcadores nas coordenadas."),
     ("NodeGraph", "Editor de nós ligados por cabos: fluxos, roteamento de áudio, automações. Arrastar os nós, ligar as portas e aproximar."),
-    ("TitleBar", "Barra de título própria da janela, desenhada pelo Aylis: o título, os botões de minimizar, maximizar e fechar e espaço para os seus controles."),
+    ("TitleBar", "Barra de título própria da janela, desenhada pelo Aylis: o título, os botões de minimizar, maximizar e fechar e espaço para os seus controles. Com `border_style = custom` no form; no Windows 11, o mouse parado no maximizar abre o menu de layouts do sistema (Snap), e os cantos da janela vêm do sistema (`window_corners` do form)."),
     ("Markdown", "Mostra texto em Markdown com as cores e fontes do tema: títulos, listas, tabelas, código realçado, imagens e links, com seleção e cópia."),
     ("CodeEditor", "Editor de código com realce de sintaxe, números de linha, minimapa e dobra de blocos, para mostrar ou editar código dentro do app."),
     ("TabStrip", "Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reordenar e mostrar a página da aba escolhida."),

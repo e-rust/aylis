@@ -174,6 +174,13 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     No Tabernáculo, os 66 livros e as 150 teclas por `create_in` na máquina da igreja (antes, ~6,8
     ms). Editar à mão um handler e rodar `cargo fmt`: o "Sincronizar código" não mostra pendência.
 
+118. **Cantos da janela com a barra própria** (12/11). `cargo run -p aylis-platform-winit --example
+    titlebar --features d2d`: no Windows 11 a janela sai com os cantos arredondados, a borda fina
+    e a sombra do sistema; maximizada, os cantos ficam retos. Num form com `border_style` custom,
+    `window_corners` `small` (raio pequeno) e `square` (retos), também mudando com o app rodando.
+    Pare o mouse no botão maximizar da barra própria: o Windows 11 mostra o menu de layouts, e
+    escolher um posiciona a janela; o clique no botão maximiza e restaura, com o realce da barra.
+
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
     rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela

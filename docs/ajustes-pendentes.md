@@ -242,6 +242,26 @@ As duas falhas da suíte que vinham desde o 0.2.0-beta.3 (corrigidas em 12/11):
   features do `aylis`, o Gauge fica registrado e a página o monta ao vivo; sozinha, a Landing
   não o registra e mostra a imagem. O teste confere o registro e espera o caso certo.
 
+Cantos da janela (pedido de 12/11, sem commit; roteiro 118): a propriedade `window_corners` do Form
+(`default`, `round`, `small`, `square`). No Windows 11 o DWM desenha os cantos
+(`DWMWA_WINDOW_CORNER_PREFERENCE`), com a borda suave e a sombra dele; o `default` com
+`border_style = custom` arredonda como uma janela comum, e com `none` fica como o sistema deixa
+(reto). Muda com o app rodando (`WindowCommand::UpdateCorners`). No Windows 10 o atributo não
+existe e os cantos ficam retos. No macOS, a barra própria passa a ser a barra do sistema
+transparente com o conteúdo por baixo (mantém os cantos e a sombra); escrito, não compilado nem
+conferido num Mac (testes-em-dispositivos). No Linux, no celular e no navegador, sem efeito.
+Conferido na tela com o Direct2D e o Skia na CPU (a captura por GDI não mostra o Skia em OpenGL).
+
+O menu de layouts do Windows 11 na barra própria (pedido de 12/11, sem commit; roteiro 118): a
+TitleBar diz ao `Ui` onde fica o botão maximizar (`Ui::set_maximize_button`,
+`Ui::maximize_button`), e a subclass da janela responde `HTMAXBUTTON` no `WM_NCHITTEST` sobre
+ele: o Windows passa a tratá-lo como o botão da janela e, com o mouse parado, mostra o próprio
+menu de layouts (Snap). O mouse ali chega como mensagens da moldura (`WM_NCMOUSEMOVE`,
+`WM_NCLBUTTONDOWN`/`UP`, `WM_NCMOUSELEAVE`), que voltam ao `Ui` como mouse na barra: o realce e o
+clique (maximizar e restaurar) continuam os da barra. Conferido na tela (Direct2D, 150%): o menu
+aparece e os dois cliques maximizam e restauram. Os ganchos do app (`on_message`) vêm antes e
+podem mudar isso. Fora do Windows, sem efeito.
+
 Ficam para depois:
 - T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
 - A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).

@@ -12,6 +12,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 |---|---|---|---|
 | `caption` | Título | texto |  |
 | `border_style` | Estilo da borda | um de: `sizeable`, `single`, `none`, `custom` |  |
+| `window_corners` | Cantos da janela | um de: `default`, `round`, `small`, `square` | Os cantos da janela (Windows 11 e macOS; nas outras, sem efeito): útil com a barra de título própria (`border_style = custom`), que fica com os cantos de uma janela comum. |
 | `zoom` | Zoom | número | O zoom deste form (1 = normal), vezes o do app (`Ui::set_zoom`): tudo nele fica maior ou menor e o layout se refaz no espaço da janela. |
 
 ### Comportamento

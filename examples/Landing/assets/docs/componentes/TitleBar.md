@@ -2,7 +2,7 @@
 
 ![TitleBar](img/TitleBar.png)
 
-Barra de título própria da janela, desenhada pelo Aylis: o título, os botões de minimizar, maximizar e fechar e espaço para os seus controles.
+Barra de título própria da janela, desenhada pelo Aylis: o título, os botões de minimizar, maximizar e fechar e espaço para os seus controles. Com `border_style = custom` no form; no Windows 11, o mouse parado no maximizar abre o menu de layouts do sistema (Snap), e os cantos da janela vêm do sistema (`window_corners` do form).
 
 **Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 

@@ -93,6 +93,31 @@ pub enum BorderStyle {
     Custom,
 }
 
+/// Os cantos da janela, desenhados pelo sistema (com a borda suave e a sombra dele).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WindowCorners {
+    /// O do sistema: arredondados como as outras janelas, também com `border_style = custom`
+    /// (a barra própria é uma janela comum); com `none`, retos.
+    #[default]
+    Default,
+    /// Arredondados.
+    Round,
+    /// Arredondados, com o raio pequeno (o dos menus do Windows 11).
+    Small,
+    /// Retos.
+    Square,
+}
+
+impl PropEnum for WindowCorners {
+    const NAMES: &'static [&'static str] = &["default", "round", "small", "square"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Default, Self::Round, Self::Small, Self::Square].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 impl PropEnum for BorderStyle {
     const NAMES: &'static [&'static str] = &["sizeable", "single", "none", "custom"];
     fn from_index(index: usize) -> Option<Self> {
@@ -113,6 +138,9 @@ pub struct Form {
     pub caption: String,
     pub position: FormPosition,
     pub border_style: BorderStyle,
+    /// Os cantos da janela (Windows 11 e macOS; nas outras, sem efeito): útil com a barra de
+    /// título própria (`border_style = custom`), que fica com os cantos de uma janela comum.
+    pub window_corners: WindowCorners,
     /// Normal, maximizada, minimizada ou em tela cheia (`full_screen`). No celular e no
     /// navegador o form já ocupa a tela toda.
     pub window_state: WindowState,
@@ -227,6 +255,7 @@ impl Form {
             caption: caption.into(),
             position: FormPosition::default(),
             border_style: BorderStyle::default(),
+            window_corners: WindowCorners::Default,
             window_state: WindowState::Normal,
             transition: Transition::None,
             topmost: false,
@@ -269,6 +298,7 @@ impl Component for Form {
         caption: String => "Appearance",
         position: FormPosition => "Layout",
         border_style: BorderStyle => "Appearance",
+        window_corners: WindowCorners => "Appearance",
         window_state: WindowState => "Layout",
         transition: Transition => "Behavior",
         topmost: bool => "Behavior",
@@ -327,6 +357,9 @@ impl Component for Form {
         // Com o app rodando, a janela segue (no designer não há janela).
         if name == "gpu" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
+        }
+        if matches!(name, "window_corners" | "border_style") && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateCorners);
         }
         // O tamanho mudado pelo código com o app rodando: a janela acompanha, com a área
         // cliente do tamanho pedido (a moldura fica por fora; J11).

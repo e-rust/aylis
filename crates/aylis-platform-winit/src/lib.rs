@@ -58,6 +58,35 @@ pub(crate) mod diag;
 pub fn setting(name: &str) -> Option<String> {
     diag::diagnostic_setting(name)
 }
+
+/// Os cantos da janela pedidos ao DWM do Windows 11 (`DWM_WINDOW_CORNER_PREFERENCE`: 0 o do
+/// sistema, 1 retos, 2 arredondados, 3 o raio pequeno), pelas propriedades `window_corners` e
+/// `border_style` do form. O `default` com a barra própria (`custom`) arredonda como uma janela
+/// comum (sem moldura, o sistema deixaria reto); com as outras bordas, fica com o sistema.
+pub fn corner_preference(corners: &str, border_style: &str) -> i32 {
+    match corners {
+        "square" => 1,
+        "round" => 2,
+        "small" => 3,
+        _ if border_style == "custom" => 2,
+        _ => 0,
+    }
+}
+
+#[cfg(test)]
+mod corner_tests {
+    use super::corner_preference;
+
+    #[test]
+    fn the_custom_title_bar_gets_rounded_corners_by_default() {
+        assert_eq!(corner_preference("default", "custom"), 2);
+        assert_eq!(corner_preference("default", "none"), 0, "a tela sem moldura fica como o sistema deixa");
+        assert_eq!(corner_preference("default", "sizeable"), 0);
+        assert_eq!(corner_preference("square", "custom"), 1);
+        assert_eq!(corner_preference("small", "none"), 3);
+        assert_eq!(corner_preference("round", "single"), 2);
+    }
+}
 #[cfg(native_gpu)]
 mod gpu;
 #[cfg(all(native_gpu, target_os = "linux"))]
@@ -1346,9 +1375,51 @@ impl App {
                         }
                     }
                 }
+                // Os cantos (`window_corners`, ou a `border_style` que muda o padrão deles).
+                #[cfg(windows)]
+                WindowCommand::UpdateCorners => win32::set_window_corners(window, self.corner_preference(form)),
+                #[cfg(not(windows))]
+                WindowCommand::UpdateCorners => {}
                 WindowCommand::Close | WindowCommand::UpdateGpu => {}
             }
         }
+    }
+
+    /// O botão maximizar das barras próprias (Windows): o mouse que chegou pela moldura vai
+    /// para o `Ui` (a barra realça e clica), e a área de cada um, em pixels, vai para a
+    /// subclass, que a diz ao Windows (no 11, o menu de layouts com o mouse parado).
+    #[cfg(windows)]
+    fn caption_buttons(&mut self) {
+        use aylis_core::PointerButton;
+        for (form, kind, x, y) in win32::take_caption_input() {
+            let Some(w) = self.window_of(form) else { continue };
+            let p = winit::dpi::PhysicalPosition::new(f64::from(x), f64::from(y)).to_logical::<f32>(w.window.scale_factor());
+            let at = |button| PointerEvent { position: PointF::new(p.x, p.y), button, kind: PointerKind::Mouse, modifiers: self.modifiers, ..Default::default() };
+            match kind {
+                win32::CaptionInput::Move => self.ui.pointer_move(form, at(Default::default())),
+                win32::CaptionInput::Down => {
+                    self.ui.pointer_move(form, at(Default::default()));
+                    self.ui.pointer_down(form, at(PointerButton::Primary));
+                }
+                win32::CaptionInput::Up => self.ui.pointer_up(form, at(PointerButton::Primary)),
+                win32::CaptionInput::Leave => self.ui.pointer_leave(form),
+            }
+        }
+        for w in &self.windows {
+            let scale = w.window.scale_factor() as f32 * self.ui.form_zoom(w.form);
+            let rect = self.ui.maximize_button(w.form).map(|r| {
+                ((r.x * scale).round() as i32, (r.y * scale).round() as i32, (r.right() * scale).round() as i32, (r.bottom() * scale).round() as i32)
+            });
+            win32::set_maximize_button(w.form, rect);
+        }
+    }
+
+    /// Os cantos que o form pede ao DWM (o valor do `DWM_WINDOW_CORNER_PREFERENCE`): o padrão
+    /// com a barra própria (`custom`) é o de uma janela comum do Windows 11, arredondado; com
+    /// `none` (a tela de abertura, a projeção), o do sistema, que deixa retos.
+    #[cfg(windows)]
+    fn corner_preference(&self, form: ComponentId) -> i32 {
+        crate::corner_preference(&self.enum_prop(form, "window_corners"), &self.enum_prop(form, "border_style"))
     }
 
     /// Trata um evento de entrada da janela `index`. Devolve `false` se não for de entrada.
@@ -1819,8 +1890,23 @@ impl App {
                     .with_enabled_buttons(WindowButtons::CLOSE | WindowButtons::MINIMIZE);
             }
             "none" => attributes = attributes.with_decorations(false),
+            // macOS: a barra do sistema transparente, sem título nem botões, e o conteúdo por
+            // baixo dela. A janela continua com moldura, então com os cantos arredondados e a
+            // sombra do sistema (sem moldura, sairia reta); `window_corners = square` tira a
+            // moldura como nas outras plataformas.
+            #[cfg(target_os = "macos")]
+            "custom" if self.enum_prop(form, "window_corners") != "square" => {
+                use winit::platform::macos::WindowAttributesExtMacOS;
+                attributes = attributes
+                    .with_resizable(true)
+                    .with_titlebar_transparent(true)
+                    .with_title_hidden(true)
+                    .with_titlebar_buttons_hidden(true)
+                    .with_fullsize_content_view(true)
+                    .with_movable_by_window_background(false);
+            }
             // Barra de título própria (TitleBar): sem a do sistema, redimensionável pelas
-            // bordas.
+            // bordas. No Windows 11 os cantos vêm do DWM (`window_corners`).
             "custom" => attributes = attributes.with_decorations(false).with_resizable(true),
             _ => {}
         }
@@ -2021,6 +2107,8 @@ impl App {
         // tarefas.
         #[cfg(windows)]
         win32::attach(&window, form, &self.win_proxy);
+        #[cfg(windows)]
+        win32::set_window_corners(&window, self.corner_preference(form));
         #[cfg(windows)]
         if let Some(fullscreen) = fullscreen_later {
             window.set_fullscreen(Some(fullscreen));
@@ -2953,6 +3041,8 @@ impl ApplicationHandler for App {
         if self.windows.is_empty() {
             return;
         }
+        #[cfg(windows)]
+        self.caption_buttons();
         self.apply_window_commands();
         self.refresh_monitors(event_loop, false);
         #[cfg(not(any(web, mobile)))]

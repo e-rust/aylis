@@ -1,7 +1,8 @@
 //! TitleBar: a barra de título própria (com `border_style = custom` no form). Mostra o
 //! título e os botões minimizar, maximizar/restaurar e fechar; os controles postos dentro
 //! dela (botões, busca, abas) ficam à esquerda dos botões padrão. Arrastar a barra move a
-//! janela e o duplo clique maximiza, como a do sistema.
+//! janela e o duplo clique maximiza, como a do sistema. No Windows 11, o mouse parado no botão
+//! maximizar abre o menu de layouts do próprio sistema (Snap), como na barra do Windows.
 
 use std::cell::Cell;
 
@@ -68,6 +69,15 @@ impl TitleBar {
         self.buttons(r).into_iter().find(|(_, b)| b.contains(p)).map(|(part, _)| part)
     }
 
+    /// Diz ao `Ui` onde fica o botão maximizar (no lugar da barra): a plataforma o entrega ao
+    /// sistema como o botão da janela, e no Windows 11 o mouse parado nele abre o menu de
+    /// layouts (Snap), como na barra do sistema.
+    fn report_maximize(&self, ctx: &mut EventCtx<'_>) {
+        let r = RectF::from_size(self.base.bounds().size());
+        let rect = self.buttons(r).into_iter().find(|(p, _)| *p == Part::Maximize).map(|(_, b)| b);
+        ctx.ui.set_maximize_button(ctx.id, rect);
+    }
+
     /// Os filhos (botões próprios) não invadem os botões padrão.
     fn sync_padding(&mut self) {
         let n = [self.show_minimize, self.show_maximize, self.show_close].iter().filter(|b| **b).count();
@@ -88,7 +98,12 @@ impl Component for TitleBar {
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, _name: &str) {
         self.sync_padding();
+        self.report_maximize(ctx);
         ctx.invalidate();
+    }
+
+    fn resized(&mut self, ctx: &mut EventCtx<'_>) {
+        self.report_maximize(ctx);
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

@@ -78,6 +78,101 @@ thread_local! {
     /// As janelas que conferem a placa de vídeo (soltas depois do arraste; `true`: os monitores
     /// mudaram).
     static GPU_CHECKS: RefCell<Vec<(u64, bool)>> = const { RefCell::new(Vec::new()) };
+    /// O botão maximizar da barra própria de cada janela, em pixels da área cliente
+    /// (esquerda, topo, direita, base): o `WM_NCHITTEST` diz ao Windows que ali é o botão.
+    static MAXIMIZE_BUTTONS: RefCell<HashMap<u64, (i32, i32, i32, i32)>> = RefCell::new(HashMap::new());
+    /// O mouse no botão maximizar (que o Windows passa a mandar como mensagens da moldura),
+    /// para o `Ui` da barra: (form, o que houve, x, y em pixels da área cliente).
+    static CAPTION_INPUT: RefCell<Vec<(u64, CaptionInput, i32, i32)>> = const { RefCell::new(Vec::new()) };
+}
+
+/// O mouse sobre o botão maximizar da barra própria (vem pela moldura, não pela área cliente).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum CaptionInput {
+    Move,
+    Down,
+    Up,
+    Leave,
+}
+
+/// Onde fica o botão maximizar da barra própria do form (pixels da área cliente; `None`:
+/// não há). Com ele, o Windows 11 mostra ali o menu de layouts (Snap) com o mouse parado,
+/// como no botão da barra do sistema.
+pub(crate) fn set_maximize_button(form: ComponentId, rect: Option<(i32, i32, i32, i32)>) {
+    MAXIMIZE_BUTTONS.with(|m| {
+        let mut m = m.borrow_mut();
+        match rect {
+            Some(r) => {
+                m.insert(form.to_u64(), r);
+            }
+            None => {
+                m.remove(&form.to_u64());
+            }
+        }
+    });
+}
+
+/// O que o mouse fez no botão maximizar desde a última vez.
+pub(crate) fn take_caption_input() -> Vec<(ComponentId, CaptionInput, i32, i32)> {
+    CAPTION_INPUT.with(|c| std::mem::take(&mut *c.borrow_mut())).into_iter().map(|(f, k, x, y)| (ComponentId::from_u64(f), k, x, y)).collect()
+}
+
+const WM_NCHITTEST: u32 = 0x0084;
+const WM_NCMOUSEMOVE: u32 = 0x00A0;
+const WM_NCLBUTTONDOWN: u32 = 0x00A1;
+const WM_NCLBUTTONUP: u32 = 0x00A2;
+const WM_NCLBUTTONDBLCLK: u32 = 0x00A3;
+const WM_NCMOUSELEAVE: u32 = 0x02A2;
+const HTMAXBUTTON: usize = 9;
+
+/// O ponto da tela (o `lparam` das mensagens da moldura) na área cliente da janela.
+fn client_point(hwnd: HWND, lparam: isize) -> (i32, i32) {
+    let mut p = windows::Win32::Foundation::POINT { x: (lparam & 0xFFFF) as i16 as i32, y: ((lparam >> 16) & 0xFFFF) as i16 as i32 };
+    // SAFETY: a janela é a da subclass, viva durante a mensagem; `p` é local.
+    let _ = unsafe { windows::Win32::Graphics::Gdi::ScreenToClient(hwnd, &mut p) };
+    (p.x, p.y)
+}
+
+/// O botão maximizar da barra própria, pelas mensagens da moldura. `Some`: o resultado (a
+/// mensagem para aqui); `None`: segue o caminho normal.
+fn caption_button(hwnd: HWND, form: u64, message: u32, wparam: usize, lparam: isize) -> Option<LRESULT> {
+    let push = |kind: CaptionInput, (x, y): (i32, i32)| {
+        CAPTION_INPUT.with(|c| c.borrow_mut().push((form, kind, x, y)));
+        wake();
+    };
+    match message {
+        // Sobre o botão, o Windows o trata como o maximizar da janela: no Windows 11, o mouse
+        // parado abre o menu de layouts.
+        WM_NCHITTEST => {
+            let (x, y) = client_point(hwnd, lparam);
+            let inside = MAXIMIZE_BUTTONS.with(|m| m.borrow().get(&form).is_some_and(|&(l, t, r, b)| x >= l && x < r && y >= t && y < b));
+            inside.then_some(LRESULT(HTMAXBUTTON as isize))
+        }
+        // O mouse sobre o botão chega pela moldura: a barra desenha o realce. O Windows avisa
+        // a saída (`WM_NCMOUSELEAVE`) só pedindo.
+        WM_NCMOUSEMOVE if wparam == HTMAXBUTTON => {
+            push(CaptionInput::Move, client_point(hwnd, lparam));
+            use windows::Win32::UI::Input::KeyboardAndMouse::{TME_LEAVE, TME_NONCLIENT, TRACKMOUSEEVENT, TrackMouseEvent};
+            let mut track = TRACKMOUSEEVENT { cbSize: size_of::<TRACKMOUSEEVENT>() as u32, dwFlags: TME_LEAVE | TME_NONCLIENT, hwndTrack: hwnd, dwHoverTime: 0 };
+            // SAFETY: a estrutura é local e preenchida, e a janela existe.
+            let _ = unsafe { TrackMouseEvent(&mut track) };
+            None
+        }
+        WM_NCMOUSELEAVE => {
+            push(CaptionInput::Leave, (0, 0));
+            None
+        }
+        // O clique é da barra (o Windows desenharia o botão antigo e entraria no laço dele).
+        WM_NCLBUTTONDOWN | WM_NCLBUTTONDBLCLK if wparam == HTMAXBUTTON => {
+            push(CaptionInput::Down, client_point(hwnd, lparam));
+            Some(LRESULT(0))
+        }
+        WM_NCLBUTTONUP if wparam == HTMAXBUTTON => {
+            push(CaptionInput::Up, client_point(hwnd, lparam));
+            Some(LRESULT(0))
+        }
+        _ => None,
+    }
 }
 
 const WM_ENTERSIZEMOVE: u32 = 0x0231;
@@ -192,6 +287,10 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
             MessageReply::Handled(result) => return LRESULT(result),
             MessageReply::Replace { message, wparam, lparam } => m = WindowMessage { message, wparam, lparam, ..m },
         }
+    }
+    // O botão maximizar da barra própria (depois dos ganchos do app, que podem mudar isso).
+    if let Some(result) = caption_button(hwnd, form as u64, m.message, m.wparam, m.lparam) {
+        return result;
     }
     // SAFETY: segue para o processamento normal (o do winit).
     unsafe { DefSubclassProc(hwnd, m.message, WPARAM(m.wparam), LPARAM(m.lparam)) }
@@ -323,6 +422,19 @@ impl MouseTrail {
     pub(crate) fn reset(&mut self) {
         self.last = None;
     }
+}
+
+/// Os cantos da janela no Windows 11 (`window_corners`): `DWMWA_WINDOW_CORNER_PREFERENCE`,
+/// com o valor do DWM (0 o do sistema, 1 retos, 2 arredondados, 3 o raio pequeno). O DWM
+/// desenha a borda suave e a sombra, e tira o arredondamento ao maximizar. No Windows 10 o
+/// atributo não existe e a chamada só falha: os cantos ficam retos, como os das outras janelas.
+pub(crate) fn set_window_corners(window: &winit::window::Window, preference: i32) {
+    use windows::Win32::Graphics::Dwm::{DWM_WINDOW_CORNER_PREFERENCE, DWMWA_WINDOW_CORNER_PREFERENCE, DwmSetWindowAttribute};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let value = DWM_WINDOW_CORNER_PREFERENCE(preference);
+    // SAFETY: `hwnd` é a janela viva do winit, e o ponteiro e o tamanho são os de `value`, que
+    // vive até o fim da chamada (o DWM copia o valor).
+    let _ = unsafe { DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, (&raw const value).cast(), size_of::<DWM_WINDOW_CORNER_PREFERENCE>() as u32) };
 }
 
 pub(crate) fn hwnd_of(window: &winit::window::Window) -> Option<HWND> {

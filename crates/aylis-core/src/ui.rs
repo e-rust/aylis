@@ -258,6 +258,9 @@ pub struct Ui {
     extensions: std::collections::HashMap<std::any::TypeId, Box<dyn std::any::Any>>,
     /// Pedidos às janelas (barra de título própria), para a plataforma.
     pub(crate) window_commands: Vec<(ComponentId, crate::window::WindowCommand)>,
+    /// O botão maximizar de cada form com barra própria: quem o desenha e onde, no lugar dele
+    /// (o sistema mostra ali o seu menu de layouts; [`Ui::maximize_button`]).
+    pub(crate) maximize_buttons: HashMap<ComponentId, (ComponentId, crate::geometry::RectF)>,
     /// Quadros desenhados (para o FPS) e o limite.
     pub(crate) frames: crate::frames::FrameClock,
     /// Transições de página e de form em andamento.
@@ -415,6 +418,7 @@ impl Ui {
             extensions: Default::default(),
             frames: Default::default(),
             window_commands: Vec::new(),
+            maximize_buttons: HashMap::new(),
             transitions: Vec::new(),
             closing_now: None,
             stacked_forms: false,

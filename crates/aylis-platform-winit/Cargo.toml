@@ -73,6 +73,8 @@ windows = { version = "0.62", features = [
     "Win32_System_Diagnostics_Debug", "Win32_System_Kernel",
     # Notificações push (o PushNotifications): o canal do WNS e a identidade de pacote.
     "Networking_PushNotifications", "Win32_Storage_Packaging_Appx",
+    # Os cantos da janela no Windows 11 (`window_corners`).
+    "Win32_Graphics_Dwm",
 ] }
 
 [target.'cfg(any(windows, target_os = "macos", target_os = "linux", target_os = "ios"))'.dependencies]
