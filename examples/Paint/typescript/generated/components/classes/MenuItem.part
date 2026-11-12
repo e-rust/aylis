@@ -49,4 +49,10 @@ export class MenuItem extends AylisComponent {
     set danger(value: boolean) {
         this.setProp("danger", value);
     }
+    get header(): Promise<boolean> {
+        return this.getProp("header");
+    }
+    set header(value: boolean) {
+        this.setProp("header", value);
+    }
 }

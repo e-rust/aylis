@@ -1,8 +1,10 @@
 //! Arquivos: `FileInput` (campo que abre o diálogo do sistema, o `v-file-input`) e
 //! `FileDropZone` (área para soltar arquivos ou clicar, o `v-file-upload`).
 //!
-//! `files` tem os caminhos escolhidos, separados por `;`; `on_change` a cada mudança.
-//! `filter` é o do `OpenDialog` (`Imagens|*.png;*.jpg`).
+//! `files` tem os caminhos escolhidos, separados por `;`. O `on_change` leva só os que
+//! entraram (separados por `;`; vazio quando um sai pelo "×"); a lista inteira fica em `files`.
+//! `filter` é o do `OpenDialog` (`Imagens|*.png;*.jpg|Todos|*.*`); o arquivo solto que não passa
+//! nele dispara `on_reject`, com os caminhos recusados.
 
 use std::cell::{Cell, RefCell};
 
@@ -22,9 +24,26 @@ fn file_name(path: &str) -> &str {
     path.rsplit(['/', '\\']).next().unwrap_or(path)
 }
 
+/// Junta `paths` à lista `current` (ou troca, sem `multiple`): a lista nova e os que entraram.
+fn add_files(current: &str, paths: Vec<String>, multiple: bool) -> (String, String) {
+    let mut all: Vec<String> = if multiple { split(current).into_iter().map(str::to_string).collect() } else { Vec::new() };
+    let mut added = Vec::new();
+    for p in paths {
+        if !all.contains(&p) {
+            all.push(p.clone());
+            added.push(p);
+        }
+    }
+    if !multiple {
+        all.truncate(1);
+        added.truncate(1);
+    }
+    (all.join(";"), added.join(";"))
+}
+
 /// Abre o diálogo do sistema e grava a escolha em `files` do controle `id`.
 pub(crate) fn choose(ui: &mut Ui, id: ComponentId, filter: &str, multiple: bool, append: bool) {
-    let options = FileDialogOptions { filters: crate::parse_filter(filter), multiple, ..Default::default() };
+    let options = FileDialogOptions { filters: crate::parse_filter(filter), multiple, owner: Some(ui.root_of(id)), ..Default::default() };
     let poster = ui.poster();
     let done = Box::new(move |paths: Vec<String>| {
         if paths.is_empty() {
@@ -35,15 +54,12 @@ pub(crate) fn choose(ui: &mut Ui, id: ComponentId, filter: &str, multiple: bool,
                 Ok(aylis_core::PropValue::String(s)) if append => s,
                 _ => String::new(),
             };
-            let mut all: Vec<String> = split(&before).into_iter().map(str::to_string).collect();
-            for p in paths {
-                if !all.contains(&p) {
-                    all.push(p);
-                }
+            let (all, added) = add_files(&before, paths, true);
+            if added.is_empty() && all == before {
+                return;
             }
-            let joined = all.join(";");
-            let _ = ui.set_prop_quiet(id, "files", joined.clone());
-            ui.fire(id, "on_change", &EventArgs::Text(joined));
+            let _ = ui.set_prop_quiet(id, "files", all);
+            ui.fire(id, "on_change", &EventArgs::Text(added));
         });
     });
     if let Some(service) = ui.services_mut().file_dialogs.as_mut() {
@@ -51,14 +67,33 @@ pub(crate) fn choose(ui: &mut Ui, id: ComponentId, filter: &str, multiple: bool,
     }
 }
 
-/// Aceita os caminhos que passam no filtro (extensões); sem filtro, todos.
-fn accepted(filter: &str, paths: &[String]) -> Vec<String> {
+/// Separa os caminhos que passam no filtro (extensões; `*` é todos) dos recusados; sem
+/// filtro, todos passam.
+fn accepted(filter: &str, paths: &[String]) -> (Vec<String>, Vec<String>) {
     let exts: Vec<String> = crate::parse_filter(filter).into_iter().flat_map(|(_, e)| e).map(|e| e.to_lowercase()).collect();
     paths
         .iter()
-        .filter(|p| exts.is_empty() || exts.iter().any(|e| e == "*" || p.to_lowercase().ends_with(&format!(".{e}"))))
         .cloned()
-        .collect()
+        .partition(|p| exts.is_empty() || exts.iter().any(|e| e == "*" || p.to_lowercase().ends_with(&format!(".{e}"))))
+}
+
+/// O arquivo solto num `FileInput` ou num `FileDropZone`: os aceitos entram, os recusados
+/// disparam `on_reject` (o relatório do Tabernáculo, F02). Devolve `true` se algum entrou.
+fn drop_into(ctx: &mut EventCtx<'_>, files: &mut String, filter: &str, multiple: bool, paths: &[String]) -> bool {
+    let (ok, rejected) = accepted(filter, paths);
+    if !rejected.is_empty() {
+        ctx.fire("on_reject", EventArgs::Text(rejected.join(";")));
+    }
+    if ok.is_empty() {
+        return false;
+    }
+    let (all, added) = add_files(files, ok, multiple);
+    if all != *files {
+        *files = all;
+        ctx.fire("on_change", EventArgs::Text(added));
+        ctx.repaint();
+    }
+    true
 }
 
 // ===========================================================================
@@ -97,7 +132,7 @@ impl Component for FileInput {
         filter: String => "Behavior",
         multiple: bool => "Behavior",
         placeholder: String => "Appearance";
-        events: on_change
+        events: on_change, on_reject
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -159,13 +194,42 @@ pub struct FileDropZone {
     pub multiple: bool,
     pub title: String,
     removes: RefCell<Vec<(RectF, String)>>,
+    /// Arquivos do sistema passando por cima (o destaque e o `on_file_enter`).
+    hovering: bool,
+}
+
+impl FileDropZone {
+    /// Com o filtro (`Imagens|*.png;*.jpg|Todos|*.*`): a montagem sem a sintaxe de struct (os
+    /// campos internos não deixam; o relatório do Tabernáculo, F05).
+    pub fn with_filter(mut self, filter: impl Into<String>) -> Self {
+        self.filter = filter.into();
+        self
+    }
+
+    pub fn with_multiple(mut self, multiple: bool) -> Self {
+        self.multiple = multiple;
+        self
+    }
+
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = title.into();
+        self
+    }
 }
 
 impl Default for FileDropZone {
     fn default() -> Self {
         let mut base = ControlBase::new(360.0, 200.0);
         base.set_cursor(CursorShape::Pointer);
-        Self { base, files: String::new(), filter: String::new(), multiple: true, title: "Arraste arquivos para cá ou clique para escolher".into(), removes: RefCell::new(Vec::new()) }
+        Self {
+            base,
+            files: String::new(),
+            filter: String::new(),
+            multiple: true,
+            title: "Arraste arquivos para cá ou clique para escolher".into(),
+            removes: RefCell::new(Vec::new()),
+            hovering: false,
+        }
     }
 }
 
@@ -182,7 +246,7 @@ impl Component for FileDropZone {
         filter: String => "Behavior",
         multiple: bool => "Behavior",
         title: String => "Appearance";
-        events: on_change
+        events: on_change, on_reject, on_file_enter, on_file_leave
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -193,7 +257,7 @@ impl Component for FileDropZone {
         if let Some(path) = remove {
             let rest: Vec<&str> = split(&self.files).into_iter().filter(|p| *p != path).collect();
             self.files = rest.join(";");
-            ctx.fire("on_change", EventArgs::Text(self.files.clone()));
+            ctx.fire("on_change", EventArgs::Text(String::new()));
             ctx.repaint();
             return;
         }
@@ -213,7 +277,7 @@ impl Component for FileDropZone {
         let r = ctx.rect;
         let theme = ctx.theme;
         let color = theme.color("primary");
-        let hover = ctx.state.hover;
+        let hover = ctx.state.hover || self.hovering;
         canvas.fill_rect(r, 12.0, &Brush::Solid(if hover { color.with_opacity(0.06) } else { theme.color("surface") }));
         canvas.stroke_rect(r.inflate(-1.0), 12.0, &Stroke::new(if hover { color } else { theme.color("border") }, 1.5).dashed(vec![6.0, 4.0]));
         let files = split(&self.files);
@@ -253,51 +317,50 @@ mod tests {
         assert_eq!(file_name("C:\\fotos\\a.png"), "a.png");
         assert_eq!(file_name("/home/u/b.jpg"), "b.jpg");
         let paths = vec!["a.PNG".to_string(), "b.txt".to_string()];
-        assert_eq!(accepted("Imagens|*.png;*.jpg", &paths), vec!["a.PNG".to_string()]);
-        assert_eq!(accepted("", &paths).len(), 2);
+        assert_eq!(accepted("Imagens|*.png;*.jpg", &paths), (vec!["a.PNG".to_string()], vec!["b.txt".to_string()]));
+        assert_eq!(accepted("", &paths).0.len(), 2);
+        assert_eq!(accepted("Imagens|*.png|Todos|*.*", &paths).0.len(), 2, "o *.* aceita todos");
+        assert_eq!(add_files("a;b", vec!["b".into(), "c".into()], true), ("a;b;c".to_string(), "c".to_string()));
     }
 }
 
 impl aylis_core::PlatformHooks for FileInput {
     fn files_dropped(&mut self, ctx: &mut EventCtx<'_>, paths: &[String]) -> bool {
-        let ok = accepted(&self.filter, paths);
-        if ok.is_empty() {
-            return false;
-        }
-        let mut all: Vec<String> = if self.multiple { split(&self.files).into_iter().map(str::to_string).collect() } else { Vec::new() };
-        for p in ok {
-            if !all.contains(&p) {
-                all.push(p);
-            }
-        }
-        if !self.multiple {
-            all.truncate(1);
-        }
-        self.files = all.join(";");
-        ctx.fire("on_change", EventArgs::Text(self.files.clone()));
-        ctx.repaint();
-        true
+        let (filter, multiple) = (self.filter.clone(), self.multiple);
+        drop_into(ctx, &mut self.files, &filter, multiple, paths)
     }
 }
 
 impl aylis_core::PlatformHooks for FileDropZone {
     fn files_dropped(&mut self, ctx: &mut EventCtx<'_>, paths: &[String]) -> bool {
-        let ok = accepted(&self.filter, paths);
-        if ok.is_empty() {
-            return false;
-        }
-        let mut all: Vec<String> = if self.multiple { split(&self.files).into_iter().map(str::to_string).collect() } else { Vec::new() };
-        for p in ok {
-            if !all.contains(&p) {
-                all.push(p);
+        let (filter, multiple) = (self.filter.clone(), self.multiple);
+        drop_into(ctx, &mut self.files, &filter, multiple, paths)
+    }
+
+    /// Arquivos passando por cima: destaca e avisa (`on_file_enter` com os que passam no
+    /// filtro; `on_file_leave` ao sair, soltar ou cancelar).
+    fn files_hovering(&mut self, ctx: &mut EventCtx<'_>, paths: Option<&[String]>) -> bool {
+        match paths {
+            Some(paths) => {
+                let (ok, _) = accepted(&self.filter, paths);
+                if ok.is_empty() {
+                    return false;
+                }
+                if !self.hovering {
+                    self.hovering = true;
+                    ctx.fire("on_file_enter", EventArgs::Text(ok.join(";")));
+                    ctx.repaint();
+                }
+                true
+            }
+            None => {
+                if self.hovering {
+                    self.hovering = false;
+                    ctx.fire("on_file_leave", EventArgs::None);
+                    ctx.repaint();
+                }
+                false
             }
         }
-        if !self.multiple {
-            all.truncate(1);
-        }
-        self.files = all.join(";");
-        ctx.fire("on_change", EventArgs::Text(self.files.clone()));
-        ctx.repaint();
-        true
     }
 }

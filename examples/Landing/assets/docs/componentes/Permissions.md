@@ -8,10 +8,10 @@ Consulta e pede as permissões do aparelho (câmera, microfone, localização, n
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `permissions` | Permissões | texto |
-| `reasons` | Motivos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `permissions` | Permissões | texto |  |
+| `reasons` | Motivos | texto |  |
 
 ## Eventos
 

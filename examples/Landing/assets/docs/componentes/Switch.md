@@ -10,15 +10,15 @@ Chave liga/desliga. A bolinha desliza quando muda; o trilho muda de cor pela tra
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `checked` | Marcado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `checked` | Marcado | lógico |  |
 
 ## Eventos
 

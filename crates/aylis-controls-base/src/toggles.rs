@@ -36,6 +36,17 @@ fn paint_caption(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, text: &str, left: 
     crate::mnemonic::draw_text(canvas, &text, at, RectF::new(left, 0.0, (r.width - left).max(0.0), r.height), &style);
 }
 
+/// A largura de uma marca com o texto ao lado: a marca, o vão e o texto (o `auto_size` do
+/// CheckBox e do RadioButton; C21 do Tabernáculo).
+fn caption_width(ui: &aylis_core::Ui, id: aylis_core::ComponentId, text: &str, side: f32) -> f32 {
+    let (plain, _) = crate::mnemonic::caption(text);
+    if plain.is_empty() {
+        return side + 2.0;
+    }
+    let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
+    (1.0 + side + GAP + ui.measure_text(&plain, &style).width + 1.0).ceil()
+}
+
 fn mark_rect(ctx: &PaintCtx<'_>, width: f32, height: f32) -> RectF {
     RectF::new(1.0, ((ctx.rect.height - height) / 2.0).round(), width, height)
 }
@@ -75,6 +86,10 @@ impl Component for CheckBox {
 
     leaf_control!("CheckBox");
 
+    fn checked_state(&self) -> Option<bool> {
+        Some(self.checked)
+    }
+
     fn mnemonic_text(&self) -> Option<&str> {
         Some(&self.text)
     }
@@ -109,6 +124,11 @@ impl Component for CheckBox {
     fn auto_height(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId, _width: f32) -> Option<f32> {
         let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
         Some(ui.measure_text("Ág", &style).height.max(self.box_size))
+    }
+
+    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
+        let side = if self.box_size > 0.0 { self.box_size } else { crate::looks::mark_size(ui.theme().look) };
+        Some(caption_width(ui, id, &self.text, side))
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -154,6 +174,10 @@ impl Component for RadioButton {
 
     leaf_control!("RadioButton");
 
+    fn checked_state(&self) -> Option<bool> {
+        Some(self.checked)
+    }
+
     fn mnemonic_text(&self) -> Option<&str> {
         Some(&self.text)
     }
@@ -195,6 +219,10 @@ impl Component for RadioButton {
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         space_clicks(self, ctx, event);
+    }
+
+    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
+        Some(caption_width(ui, id, &self.text, crate::looks::mark_size(ui.theme().look)))
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -241,6 +269,10 @@ impl Component for Switch {
     }
 
     leaf_control!("Switch");
+
+    fn checked_state(&self) -> Option<bool> {
+        Some(self.checked)
+    }
 
     fn mnemonic_text(&self) -> Option<&str> {
         Some(&self.text)

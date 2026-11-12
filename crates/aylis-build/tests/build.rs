@@ -88,3 +88,18 @@ fn finds_the_classes_the_code_creates_by_name() {
     assert_eq!(aylis_build::code_classes(&dir.join("src")), ["Bluetooth", "CheckBox", "MediaCard"]);
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// As classes da documentação ao vivo da página (11/11): só as das famílias pedidas, que rodam
+/// no navegador e não pedem feature do `aylis` (essas ficam no wasm da família).
+#[test]
+fn the_page_registers_only_the_light_families() {
+    let facade = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../aylis/src/lib.rs")).unwrap();
+    let source = demo_classes_source(&facade, &["Standard", "Industrial"]);
+    assert!(source.contains("::aylis::classes::Button(ui);"), "{source}");
+    assert!(source.contains("::aylis::classes::Valve(ui);"), "{source}");
+    // Outra família (o Gauge, de Additional) e as que pedem feature (o DBGrid, de Data
+    // Controls) ficam fora.
+    assert!(!source.contains("Gauge(") && !source.contains("DBGrid") && !source.contains("Model3D"), "{source}");
+    let classes = source.matches("::aylis::classes::").count();
+    assert!(classes > 20, "{classes} classes");
+}

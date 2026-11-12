@@ -39,6 +39,7 @@ pub mod mcp;
 pub mod packages;
 pub mod build;
 pub mod build_index;
+pub mod cargo_config;
 pub mod cleanup;
 pub mod process;
 pub mod publish;
@@ -162,19 +163,30 @@ pub fn shared_target_dir() -> PathBuf {
     default_target_dir()
 }
 
-/// A pasta de compilação sem a escolha das Opções (o que a tela mostra como automático).
+/// A pasta de compilação sem a escolha das Opções (o que a tela mostra como automático): a
+/// mesma rodando do repositório ou instalada, porque o `config.toml` global do cargo
+/// (`cargo_config`) leva todo o Rust da máquina para ela, o repositório do Aylis inclusive.
 pub fn default_target_dir() -> PathBuf {
     let root = aylis_root();
-    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    if repo.canonicalize().is_ok_and(|repo| root.canonicalize().is_ok_and(|root| root == repo)) {
-        return root.join("target");
-    }
     let base = if cfg!(windows) {
         std::env::var_os("LOCALAPPDATA").map(PathBuf::from)
     } else {
         std::env::var_os("XDG_CACHE_HOME").map(PathBuf::from).or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
     };
     base.map(|b| b.join("aylis").join("target")).unwrap_or_else(|| root.join("target"))
+}
+
+/// Onde o cargo compila o workspace de `dir` (o `CARGO_TARGET_DIR`, o `config.toml` do projeto
+/// ou o global), pelo `cargo metadata`; sem o cargo, `<dir>/target`. Para o que procura os
+/// executáveis compilados do repositório (o instalador, o bench), que não ficam mais
+/// necessariamente no `target/` dele.
+pub fn cargo_target_dir(dir: &Path) -> PathBuf {
+    let out = process::quiet(std::process::Command::new("cargo").args(["metadata", "--no-deps", "--format-version", "1"]).current_dir(dir)).output();
+    out.ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| serde_json::from_slice::<serde_json::Value>(&o.stdout).ok())
+        .and_then(|v| v["target_directory"].as_str().map(PathBuf::from))
+        .unwrap_or_else(|| dir.join("target"))
 }
 
 /// Onde o executável `name` está: no `PATH` (com `.exe`/`.cmd`/`.bat` no Windows).

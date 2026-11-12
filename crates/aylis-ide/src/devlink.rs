@@ -60,7 +60,14 @@ impl DevServer {
         let port: u16 = port.parse().map_err(|_| format!("porta inválida: {address}"))?;
         let local = matches!(host, "127.0.0.1" | "localhost" | "[::1]");
         let bind = if local { "127.0.0.1" } else { "0.0.0.0" };
-        let listener = TcpListener::bind((bind, port)).map_err(|e| format!("canal de desenvolvimento na porta {port}: {e}"))?;
+        // A porta ocupada (outra IDE com outro projeto): a próxima livre, que o Executar avisa
+        // ao app (`AYLIS_DEV_PORT`; no Android, pelo `adb reverse`). Antes a segunda IDE não
+        // executava (o relatório do Tabernáculo, I04). Só no endereço local: o da rede vai
+        // embutido num celular sem cabo, que não teria como saber outra porta.
+        let tries = if local { 50 } else { 1 };
+        let listener = (0..tries)
+            .find_map(|i| TcpListener::bind((bind, port.saturating_add(i))).ok())
+            .ok_or_else(|| format!("canal de desenvolvimento: as portas {port} a {} estão ocupadas", port.saturating_add(tries - 1)))?;
         let port = listener.local_addr().map_err(|e| e.to_string())?.port();
         let server = Arc::new(DevServer {
             address: address.to_string(),

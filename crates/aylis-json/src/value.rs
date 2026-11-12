@@ -84,8 +84,9 @@ pub(crate) fn from_prop(value: &PropValue) -> Value {
 
 /// `"#RRGGBB"`, `"#RRGGBBAA"`, um nome do tema ou do projeto, ou `nome/NN` (opacidade).
 pub(crate) fn color(text: &str, theme: &Theme) -> Result<Color, String> {
+    // `#2563EB` ou, com a opacidade, `#2563EB/15` (o `resolve_color` entende os dois).
     if text.trim_start().starts_with('#') {
-        return Color::from_hex(text).ok_or_else(|| format!("cor inválida: '{text}'"));
+        return theme.resolve_color(text).ok_or_else(|| format!("cor inválida: '{text}' (use #RRGGBB, #RRGGBBAA ou #RRGGBB/NN)"));
     }
     theme.resolve_color(text).ok_or_else(|| format!("'{text}' não é uma cor (#RRGGBB) nem um nome de cor do tema ou do projeto"))
 }

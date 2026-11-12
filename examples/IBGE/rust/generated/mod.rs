@@ -3,7 +3,6 @@
 //! `src/forms/`.
 
 use aylis::prelude::Ui;
-use aylis::prelude::instances::form_handler;
 
 pub mod components;
 pub use components::*;
@@ -15,7 +14,7 @@ pub mod ibge;
 /// as classes dos pacotes de código.
 pub fn register(ui: &mut Ui) {
     ui.register_form_class("frmIBGE", FrmIBGE::bind);
-    ui.register_handler("frmIBGE.form_show", form_handler(FrmIBGE::form_show));
-    ui.register_handler("frmIBGE.estado_mudou", form_handler(FrmIBGE::estado_mudou));
-    ui.register_handler("frmIBGE.municipio_mudou", form_handler(FrmIBGE::municipio_mudou));
+    ui.register_handler("frmIBGE.form_show", aylis::prelude::instances::form_handler(FrmIBGE::form_show));
+    ui.register_handler("frmIBGE.estado_mudou", aylis::prelude::instances::form_handler(FrmIBGE::estado_mudou));
+    ui.register_handler("frmIBGE.municipio_mudou", aylis::prelude::instances::form_handler(FrmIBGE::municipio_mudou));
 }

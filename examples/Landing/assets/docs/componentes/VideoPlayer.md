@@ -10,43 +10,47 @@ Mostra vídeo: **ele mesmo desenha cada quadro**, então dá para ter cantos arr
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
-| `radius` | Raio dos cantos | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `radius` | Raio dos cantos | número |  |
+| `show_video` | Mostrar o vídeo | lógico | Pinta o quadro no próprio lugar (o padrão). Desligado, o player só decodifica e segue o relógio: o app pinta o `current_frame`(VideoPlayer::current_frame) onde quiser, na ordem da cena (a letra por cima do vídeo), avisado por `on_frame`. O relatório do Tabernáculo, W12. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `file` | Arquivo | texto |
-| `autoplay` | Toca sozinho | lógico |
-| `looping` | Repetindo | lógico |
-| `volume` | Volume | número |
-| `muted` | Mudo | lógico |
-| `rate` | Velocidade | número |
-| `output` | Saída | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `file` | Arquivo | texto | Arquivo do aplicativo (`assets/video/abertura.mp4`) ou caminho no disco. |
+| `autoplay` | Toca sozinho | lógico |  |
+| `looping` | Repetindo | lógico |  |
+| `volume` | Volume | número |  |
+| `muted` | Mudo | lógico |  |
+| `rate` | Velocidade | número | A velocidade: 1 é a normal, 2 o dobro, 0.5 a metade. Fora de 1 o som fica mudo (volta no lugar certo em 1). Só áudio e o navegador tocam sempre em 1. |
+| `output` | Saída | texto | As saídas do som (como no `MediaPlayer`). No navegador, o `<video>` toca na saída padrão. |
+| `frames_ahead` | Quadros à frente | inteiro | Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
+| `on_ready` | — | — |  |
 | `on_end` | — | — |  |
 | `on_error` | — | — |  |
+| `on_frame` | — | — |  |
 
 ## Em código
 
 No form, o `VideoPlayer1` com o evento ligado (no Object Inspector, na aba Eventos):
 
 ```json
-{ "class": "VideoPlayer", "name": "VideoPlayer1", "on_end": "video_player1_end" }
+{ "class": "VideoPlayer", "name": "VideoPlayer1", "on_ready": "video_player1_ready" }
 ```
 
 E o handler, um método do form (`self.VideoPlayer1` já é um `VideoPlayer`):
 
 ```rust
 impl FrmPrincipal {
-    pub fn video_player1_end(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn video_player1_ready(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
         let atual = self.VideoPlayer1.file(ui);
         self.VideoPlayer1.set_file(ui, format!("{atual}!"));
     }

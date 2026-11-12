@@ -1,0 +1,12 @@
+{
+  "descricao": "O target/ de um projeto de usuário: o examples/OlaNome copiado para fora do repositório (o aylis vira dependência de caminho, fora do workspace), cargo build em debug, numa pasta target vazia de cada vez. Medido em 11/11/2026 na máquina do autor (Windows, cargo 1.99, Direct2D); tamanhos em MB, tempos em segundos.",
+  "debug_das_dependencias": {
+    "completo": { "target_mb": 2722, "rlib_mb": 1343, "pdb_mb": 238, "tempo_s": 118 },
+    "line_tables_only": { "target_mb": 1599, "rlib_mb": 695, "pdb_mb": 142, "tempo_s": 86 },
+    "desligado": { "target_mb": 1328, "rlib_mb": 569, "pdb_mb": 70, "tempo_s": 60 }
+  },
+  "perfis_misturados": {
+    "descricao": "A pasta do 'desligado' (o perfil das compilações do Aylis) e depois um cargo build sem a opção (o terminal, o rust-analyzer), na mesma pasta: as dependências foram compiladas de novo e as duas cópias ficaram. Por isso o .cargo/config.toml do projeto e o global levam o mesmo perfil.",
+    "antes_mb": 1328, "depois_mb": 4012, "arquivos_em_deps_antes": 449, "arquivos_em_deps_depois": 893
+  }
+}

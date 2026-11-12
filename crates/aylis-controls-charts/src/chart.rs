@@ -480,6 +480,30 @@ pub struct Chart {
     /// O último ponto clicado (série e índice; -1 = nenhum).
     pub clicked_series: i64,
     pub clicked_index: i64,
+    // As escolhas de aparência pedidas no relatório do InsightDB (11/11); os padrões são o
+    // desenho de antes.
+    /// Números dos eixos e das dicas: vazio ou `short` (60k, 1.2M), `full` (60.000, com o
+    /// separador do idioma) ou `percent` (60%).
+    pub value_format: String,
+    /// Ângulo dos rótulos do eixo X, em graus (45: inclinados, para nomes longos).
+    pub label_angle: f32,
+    /// Onde fica o título: `left`, `center` ou `right`.
+    pub title_align: String,
+    pub title_bold: bool,
+    /// Opacidade do preenchimento das áreas (0 a 1).
+    pub area_opacity: f32,
+    /// Onde fica a legenda: `top_right`, `top_left`, `top` ou `bottom`.
+    pub legend_position: String,
+    /// Barras deitadas empilhadas (com o tipo `horizontal_bar`).
+    pub stacked: bool,
+    /// As cores, em ordem (`#2563EB;#16A34A`): das séries e, na pizza e na rosca, das fatias (sem
+    /// elas, as fatias usam a paleta do gráfico, não a cor das séries).
+    pub colors: String,
+    /// O texto no meio da rosca: vazio = o total; `-` = nada; ou um texto (`{total}` vira o total).
+    pub center_text: String,
+    /// Os rótulos das fatias: `percent` (dentro), `outside` (nome e percentual fora, com uma
+    /// linha) ou `none`.
+    pub slice_labels: String,
     data_labels: Vec<String>,
     data: Vec<Series>,
     /// Itens escondidos pela legenda, nos tipos em que ela mostra os rótulos.
@@ -522,6 +546,16 @@ impl Default for Chart {
             time_axis: false,
             clicked_series: -1,
             clicked_index: -1,
+            value_format: String::new(),
+            label_angle: 0.0,
+            title_align: "left".into(),
+            title_bold: true,
+            area_opacity: 0.22,
+            legend_position: "top_right".into(),
+            stacked: false,
+            colors: String::new(),
+            center_text: String::new(),
+            slice_labels: "percent".into(),
             data_labels: Vec::new(),
             data: Vec::new(),
             hidden_labels: Vec::new(),
@@ -619,6 +653,20 @@ impl Chart {
     pub(crate) fn color(&self, ctx: &PaintCtx<'_>, index: usize) -> Color {
         if let Some(c) = self.data.get(index).and_then(|s| s.color) {
             return c;
+        }
+        self.palette_color(ctx, index)
+    }
+
+    /// A cor de uma fatia (ou de um item da legenda pelos rótulos): `colors`, senão a paleta;
+    /// nunca a cor da série de mesmo índice (a fatia 2 pegava a cor da série 2).
+    pub(crate) fn slice_color(&self, ctx: &PaintCtx<'_>, index: usize) -> Color {
+        self.palette_color(ctx, index)
+    }
+
+    fn palette_color(&self, ctx: &PaintCtx<'_>, index: usize) -> Color {
+        let own: Vec<Color> = self.colors.split([';', ',']).filter_map(|c| Color::from_hex(c.trim())).collect();
+        if !own.is_empty() {
+            return own[index % own.len()];
         }
         if index == 0 {
             return ctx.theme.color("primary");
@@ -871,7 +919,46 @@ pub(crate) fn nice_scale(min: f64, max: f64) -> (f64, f64, f64) {
     ((min / step).floor() * step, (max / step).ceil() * step, step)
 }
 
+thread_local! {
+    /// O `value_format` do gráfico sendo pintado (e os separadores do idioma): a pintura é uma
+    /// por vez, na thread da interface, e assim cada desenho de número (eixos, dicas, fatias)
+    /// segue o formato sem levá-lo por todas as funções.
+    static FORMAT: std::cell::RefCell<(String, char, char)> = std::cell::RefCell::new((String::new(), ',', '.'));
+}
+
+/// Usa o formato do gráfico nos números desenhados a partir daqui.
+fn set_format(format: &str, ctx: &PaintCtx<'_>) {
+    // Só no formato `full`/`percent` o idioma importa (o `locale()` monta a informação inteira).
+    let wanted = matches!(format.trim(), "full" | "percent");
+    let (decimal, thousands) = ctx.ui.services().locale.as_ref().filter(|_| wanted).map_or((',', '.'), |l| {
+        let info = l.locale();
+        (info.decimal_separator, info.thousand_separator)
+    });
+    FORMAT.with(|f| *f.borrow_mut() = (format.trim().to_ascii_lowercase(), decimal, thousands));
+}
+
+/// O número inteiro com os milhares separados, e até duas casas.
+fn full(v: f64, decimal: char, thousands: char) -> String {
+    let text = if v.fract().abs() < 1e-9 { format!("{:.0}", v.abs()) } else { format!("{:.2}", v.abs()) };
+    let (int, frac) = text.split_once('.').unwrap_or((&text, ""));
+    let mut grouped = String::new();
+    for (i, c) in int.chars().enumerate() {
+        if i > 0 && (int.len() - i) % 3 == 0 {
+            grouped.push(thousands);
+        }
+        grouped.push(c);
+    }
+    let sign = if v < 0.0 { "-" } else { "" };
+    if frac.is_empty() { format!("{sign}{grouped}") } else { format!("{sign}{grouped}{decimal}{frac}") }
+}
+
 pub(crate) fn short(v: f64) -> String {
+    let (format, decimal, thousands) = FORMAT.with(|f| f.borrow().clone());
+    match format.as_str() {
+        "full" => return full(v, decimal, thousands),
+        "percent" => return format!("{}%", full(v, decimal, thousands)),
+        _ => {}
+    }
     let a = v.abs();
     if a >= 1e6 {
         format!("{:.1}M", v / 1e6)
@@ -915,7 +1002,17 @@ impl Component for Chart {
         reverse: bool => "Layout",
         time_axis: bool => "Layout",
         clicked_series: i64 => "Data",
-        clicked_index: i64 => "Data";
+        clicked_index: i64 => "Data",
+        value_format: String => "Appearance",
+        label_angle: f32 => "Appearance",
+        title_align: String => "Appearance",
+        title_bold: bool => "Appearance",
+        area_opacity: f32 => "Appearance",
+        legend_position: String => "Appearance",
+        stacked: bool => "Appearance",
+        colors: String => "Appearance",
+        center_text: String => "Appearance",
+        slice_labels: String => "Appearance";
         on_set: sync
     }
 
@@ -1030,45 +1127,62 @@ impl Component for Chart {
             canvas.stroke_rect(r, s.radius, &Stroke::new(s.border_color, s.border_width));
         }
         let small = small_text(ctx);
+        set_format(&self.value_format, ctx);
         let mut top = r.y + 12.0;
         if !self.title.is_empty() {
             let mut t = ctx.text_style();
-            t.font.weight = FontWeight::Bold;
-            t.h_align = TextAlign::Leading;
+            if self.title_bold {
+                t.font.weight = FontWeight::Bold;
+            }
+            t.h_align = match self.title_align.as_str() {
+                "center" => TextAlign::Center,
+                "right" => TextAlign::Trailing,
+                _ => TextAlign::Leading,
+            };
             canvas.draw_text(&self.title, RectF::new(r.x + 16.0, top, r.width - 32.0, 22.0), &t);
             top += 26.0;
         }
-        // Legenda (no alto, à direita); clicar esconde ou mostra o item. No Sankey, os nomes
-        // já estão nos nós.
+        // Legenda (`legend_position`: no alto à direita, à esquerda, no meio, ou embaixo);
+        // clicar esconde ou mostra o item. No Sankey, os nomes já estão nos nós.
+        let mut bottom = r.bottom() - 10.0;
         if self.legend && !data.is_empty() && self.kind != ChartKind::Sankey {
-            let mut x = r.right() - 16.0;
             let items: Vec<(usize, String, bool)> = if self.kind.legend_by_label() {
                 self.data_labels.iter().enumerate().map(|(i, l)| (i, l.clone(), self.label_hidden(i))).collect()
             } else {
                 data.iter().enumerate().map(|(i, s)| (i, s.name.clone(), s.hidden)).collect()
             };
+            let widths: Vec<f32> = items.iter().map(|(_, name, _)| canvas.measure_text(name, &small).width).collect();
+            let total: f32 = widths.iter().map(|w| w + 30.0).sum::<f32>() - 14.0;
+            let position = self.legend_position.as_str();
+            let y = if position == "bottom" { r.bottom() - 26.0 } else { top };
+            let mut x = match position {
+                "top_left" => r.x + 16.0,
+                "top" | "bottom" => r.x + (r.width - total) / 2.0,
+                _ => r.right() - 16.0 - total,
+            };
             let mut hits = self.legend_hits.borrow_mut();
-            for (i, name, hidden) in items.iter().rev() {
-                let w = canvas.measure_text(name, &small).width;
-                x -= w;
+            for ((i, name, hidden), w) in items.iter().zip(widths) {
+                let color = if self.kind.legend_by_label() { self.slice_color(ctx, *i) } else { self.color(ctx, *i) };
+                canvas.fill_rect(RectF::new(x, y + 4.0, 10.0, 10.0), 3.0, &Brush::Solid(if *hidden { color.with_opacity(0.3) } else { color }));
+                hits.push((RectF::new(x - 2.0, y, w + 20.0, 18.0), *i));
+                x += 16.0;
                 let mut l = small.clone();
                 l.h_align = TextAlign::Leading;
                 l.color = if *hidden { theme.color("text_muted") } else { theme.color("text") };
-                let text_rect = RectF::new(x, top, w + 2.0, 18.0);
-                canvas.draw_text(name, text_rect, &l);
+                canvas.draw_text(name, RectF::new(x, y, w + 2.0, 18.0), &l);
                 if *hidden {
                     // Riscado, como no Chart.js.
-                    canvas.draw_line(PointF::new(x, top + 9.5), PointF::new(x + w, top + 9.5), &Stroke::new(theme.color("text_muted"), 1.0));
+                    canvas.draw_line(PointF::new(x, y + 9.5), PointF::new(x + w, y + 9.5), &Stroke::new(theme.color("text_muted"), 1.0));
                 }
-                x -= 16.0;
-                let color = self.color(ctx, *i);
-                canvas.fill_rect(RectF::new(x, top + 4.0, 10.0, 10.0), 3.0, &Brush::Solid(if *hidden { color.with_opacity(0.3) } else { color }));
-                hits.push((RectF::new(x - 2.0, top, w + 20.0, 18.0), *i));
-                x -= 14.0;
+                x += w + 14.0;
             }
-            top += 26.0;
+            if position == "bottom" {
+                bottom -= 24.0;
+            } else {
+                top += 26.0;
+            }
         }
-        let area = RectF::new(r.x + 12.0, top, r.width - 24.0, r.bottom() - top - 10.0);
+        let area = RectF::new(r.x + 12.0, top, r.width - 24.0, bottom - top);
         if self.kind.is_cartesian() {
             cartesian::paint(self, canvas, ctx, area, &data);
         } else if self.kind.is_round() {
@@ -1160,7 +1274,10 @@ impl Chart {
         if total <= 0.0 {
             return;
         }
-        let radius = (area.width.min(area.height) / 2.0 - 4.0).max(10.0);
+        // Com os nomes fora, sobra espaço em volta para eles.
+        let outside = self.slice_labels == "outside";
+        let room = if outside { area.width.min(area.height) * 0.18 + 30.0 } else { 0.0 };
+        let radius = ((area.width - room * 2.0).min(area.height - room) / 2.0 - 4.0).max(10.0);
         let c = area.center();
         let polar = self.kind == ChartKind::PolarArea;
         let donut = self.kind == ChartKind::Donut;
@@ -1193,7 +1310,7 @@ impl Chart {
         for (i, v) in &visible {
             let sweep = if polar { std::f32::consts::TAU / visible.len() as f32 } else { (*v / total) as f32 * std::f32::consts::TAU };
             let outer = if polar { radius * (*v / polar_top) as f32 } else { radius } + if hovered == Some(*i) { 4.0 } else { 0.0 };
-            let color = self.color(ctx, *i);
+            let color = self.slice_color(ctx, *i);
             // Fatia: arco de fora, volta pelo de dentro (ou pelo centro, na pizza).
             let (a0, sw) = (angle.to_degrees(), sweep.to_degrees());
             let mut wedge = Path::new();
@@ -1210,19 +1327,39 @@ impl Chart {
             let mid = angle + sweep / 2.0;
             let at = if donut { (outer + hole) / 2.0 } else { outer * 0.62 };
             let p = PointF::new(c.x + at * mid.cos(), c.y + at * mid.sin());
-            if !polar && sweep > if donut { 0.5 } else { 0.35 } {
-                canvas.draw_text(&format!("{:.0}%", v / total * 100.0), RectF::new(p.x - 30.0, p.y - 10.0, 60.0, 20.0), &label);
+            let percent = format!("{:.0}%", v / total * 100.0);
+            if outside && !polar {
+                // O nome e o percentual fora da fatia, ligados a ela por uma linha.
+                let (from, to) = (outer + 2.0, outer + 14.0);
+                let a = PointF::new(c.x + from * mid.cos(), c.y + from * mid.sin());
+                let b = PointF::new(c.x + to * mid.cos(), c.y + to * mid.sin());
+                let right = mid.cos() >= 0.0;
+                let end = PointF::new(b.x + if right { 10.0 } else { -10.0 }, b.y);
+                let line = Stroke::new(color, 1.0);
+                canvas.draw_line(a, b, &line);
+                canvas.draw_line(b, end, &line);
+                let mut text = small_text(ctx);
+                text.color = ctx.theme.color("text");
+                text.h_align = if right { TextAlign::Leading } else { TextAlign::Trailing };
+                let name = self.data_labels.get(*i).cloned().unwrap_or_default();
+                let words = if name.is_empty() { percent.clone() } else { format!("{name} {percent}") };
+                let w = room + 40.0;
+                let rect = if right { RectF::new(end.x + 4.0, end.y - 9.0, w, 18.0) } else { RectF::new(end.x - 4.0 - w, end.y - 9.0, w, 18.0) };
+                canvas.draw_text(&words, rect, &text);
+            } else if !polar && self.slice_labels != "none" && sweep > if donut { 0.5 } else { 0.35 } {
+                canvas.draw_text(&percent, RectF::new(p.x - 30.0, p.y - 10.0, 60.0, 20.0), &label);
             }
             hits.push(Hit { shape: Shape::Wedge(c, hole, outer, angle, sweep), series: 0, index: *i, at: p });
             angle += sweep;
         }
-        if donut {
-            // O total no meio.
+        // O meio da rosca: o total (o padrão), um texto (`center_text`, com `{total}`) ou nada (`-`).
+        if donut && self.center_text.trim() != "-" {
             let mut big = ctx.text_style();
             big.h_align = TextAlign::Center;
             big.font.size = (hole * 0.42).clamp(12.0, 34.0);
             big.font.weight = FontWeight::Bold;
             let total_text = if total.fract() == 0.0 { format!("{total:.0}") } else { format!("{total:.1}") };
+            let total_text = if self.center_text.trim().is_empty() { total_text } else { self.center_text.replace("{total}", &total_text) };
             canvas.draw_text(&total_text, RectF::new(c.x - hole, c.y - big.font.size * 0.8, hole * 2.0, big.font.size * 1.2), &big);
             let mut small = ctx.text_style();
             small.h_align = TextAlign::Center;
@@ -1255,5 +1392,17 @@ impl Chart {
     /// No meio da animação de troca dos dados.
     pub fn animating(&self) -> bool {
         !self.anim_from.borrow().is_empty()
+    }
+}
+
+#[cfg(test)]
+mod format_tests {
+    /// `value_format: "full"`: os milhares separados pelo idioma, em vez de "60k".
+    #[test]
+    fn full_numbers_keep_the_digits() {
+        assert_eq!(super::full(60000.0, ',', '.'), "60.000");
+        assert_eq!(super::full(1234567.5, ',', '.'), "1.234.567,50");
+        assert_eq!(super::full(-950.0, '.', ','), "-950");
+        assert_eq!(super::full(1000.0, '.', ','), "1,000");
     }
 }

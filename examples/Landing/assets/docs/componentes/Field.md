@@ -8,49 +8,49 @@ Um campo do ClientDataSet: nome, tipo, tamanho, rótulo, máscara.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `display_label` | Rótulo de exibição | texto |
-| `display_width` | Largura de exibição | número |
-| `display_format` | Formato de exibição | texto |
-| `edit_format` | Formato de edição | texto |
-| `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` |
-| `display_values` | Valores exibidos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `display_label` | Rótulo de exibição | texto |  |
+| `display_width` | Largura de exibição | número | Largura sugerida para grids, em unidades lógicas. 0 = automática. |
+| `display_format` | Formato de exibição | texto |  |
+| `edit_format` | Formato de edição | texto |  |
+| `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` | `None` = conforme o tipo (números à direita). |
+| `display_values` | Valores exibidos | texto | Textos para verdadeiro;falso (campos lógicos), como `DisplayValues`. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `required` | Obrigatório | lógico |
-| `read_only` | Somente leitura | lógico |
-| `visible` | Visível | lógico |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `char_case` | Maiúsculas e minúsculas | um de: `normal`, `upper`, `lower` |
-| `edit_mask` | Máscara de edição | texto |
-| `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `required` | Obrigatório | lógico |  |
+| `read_only` | Somente leitura | lógico |  |
+| `visible` | Visível | lógico |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `char_case` | Maiúsculas e minúsculas | um de: `normal`, `upper`, `lower` |  |
+| `edit_mask` | Máscara de edição | texto | Máscara de edição (`000.000.000-00;0`, ver `crate::mask`). |
+| `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico | Dado pessoal (LGPD): os controles ligados ao campo contam como `sensitive` (as gravações do `EventRecorder` mascaram o que é digitado neles). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `field_name` | Nome do campo | texto |
-| `type` | Tipo de dado | um de: `string`, `memo`, `integer`, `float`, `currency`, `boolean`, `date`, `time`, `datetime`, `blob`, `auto_inc`, `timestamp` |
-| `size` | Tamanho | inteiro |
-| `scale` | Escala | inteiro |
-| `rounding` | Arredondamento | um de: `half_up`, `half_even`, `truncate`, `up` |
-| `default_value` | Valor padrão | texto |
-| `kind` | Tipo | um de: `data`, `calculated`, `lookup` |
-| `expression` | Expressão | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `field_name` | Nome do campo | texto | Nome da coluna. Vazio = usa o nome do componente. |
+| `type` | Tipo de dado | um de: `string`, `memo`, `integer`, `float`, `currency`, `boolean`, `date`, `time`, `datetime`, `blob`, `auto_inc`, `timestamp` |  |
+| `size` | Tamanho | inteiro | Tamanho máximo (texto). 0 = sem limite. |
+| `scale` | Escala | inteiro | Casas decimais de `currency`. |
+| `rounding` | Arredondamento | um de: `half_up`, `half_even`, `truncate`, `up` | Como um valor com mais casas é arredondado para `scale` (ao gravar, vindo da tela, do backend ou de uma expressão, e ao mostrar): metade para cima (o padrão), bancário, truncar ou para cima. |
+| `default_value` | Valor padrão | texto | Valor inicial de registros novos, em texto (lido com as regras do tipo). |
+| `kind` | Tipo | um de: `data`, `calculated`, `lookup` |  |
+| `expression` | Expressão | texto | Campo calculado: a expressão (`quantidade * preco`, ver `crate::expr`). |
 
 ### Pesquisa (lookup)
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `lookup_data_set` | Dados de pesquisa | componente |
-| `key_fields` | Campos chave | texto |
-| `lookup_key_fields` | Campos chave da pesquisa | texto |
-| `lookup_result_field` | Campo do resultado da pesquisa | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `lookup_data_set` | Dados de pesquisa | componente | Lookup: o dataset onde procurar. |
+| `key_fields` | Campos chave | texto | Lookup: campo(s) deste dataset com a chave (`cliente_id`). |
+| `lookup_key_fields` | Campos chave da pesquisa | texto | Lookup: campo(s) do outro dataset que correspondem (`id`). |
+| `lookup_result_field` | Campo do resultado da pesquisa | texto | Lookup: o campo trazido (`nome`). |
 
 ## Eventos
 

@@ -8,12 +8,12 @@ Som curto (efeito, alerta): toca por cima de si mesmo, na memória.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `file` | Arquivo | texto |
-| `volume` | Volume | número |
-| `output` | Saída | texto |
-| `polyphony` | Toques ao mesmo tempo | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `file` | Arquivo | texto | Arquivo do aplicativo (`assets/audio/clique.wav`) ou caminho no disco. |
+| `volume` | Volume | número |  |
+| `output` | Saída | texto | As saídas (como no `MediaPlayer`(crate::MediaPlayer)). |
+| `polyphony` | Toques ao mesmo tempo | inteiro | Quantos toques ao mesmo tempo (o mais antigo para quando passa). |
 
 ## Eventos
 

@@ -10,16 +10,16 @@ Folha que sobe do rodapé (o `v-bottom-sheet`, a "sheet" do iOS): um contêiner 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `open` | Aberto | lógico |
-| `detents` | Alturas de parada | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `open` | Aberto | lógico |  |
+| `detents` | Alturas de parada | texto |  |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `sheet_height` | Altura da folha | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `sheet_height` | Altura da folha | número |  |
 
 ## Eventos
 

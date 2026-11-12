@@ -68,9 +68,31 @@ pub mod msg {
 type Hook = Rc<dyn Fn(&WindowMessage) -> MessageReply>;
 
 thread_local! {
-    static HOOKS: RefCell<HashMap<ComponentId, Vec<Hook>>> = RefCell::new(HashMap::new());
+    static HOOKS: RefCell<HashMap<ComponentId, Vec<(u64, Hook)>>> = RefCell::new(HashMap::new());
+    static NEXT_HOOK: std::cell::Cell<u64> = const { std::cell::Cell::new(1) };
     /// O `HWND` da janela de cada form aberto.
     static HWNDS: RefCell<HashMap<ComponentId, isize>> = RefCell::new(HashMap::new());
+    /// As janelas sendo arrastadas ou redimensionadas pelo usuário (entre o
+    /// `WM_ENTERSIZEMOVE` e o `WM_EXITSIZEMOVE`).
+    static SIZE_MOVE: RefCell<std::collections::HashSet<u64>> = RefCell::new(std::collections::HashSet::new());
+    /// As janelas que conferem a placa de vídeo (soltas depois do arraste; `true`: os monitores
+    /// mudaram).
+    static GPU_CHECKS: RefCell<Vec<(u64, bool)>> = const { RefCell::new(Vec::new()) };
+}
+
+const WM_ENTERSIZEMOVE: u32 = 0x0231;
+const WM_EXITSIZEMOVE: u32 = 0x0232;
+
+/// A janela do form está sendo arrastada ou redimensionada pelo usuário.
+#[cfg_attr(not(native_d2d), allow(dead_code))]
+pub(crate) fn in_size_move(form: ComponentId) -> bool {
+    SIZE_MOVE.with(|s| s.borrow().contains(&form.to_u64()))
+}
+
+/// As janelas que devem conferir a placa de vídeo (com `true`: os monitores mudaram).
+#[cfg_attr(not(native_d2d), allow(dead_code))]
+pub(crate) fn take_gpu_checks() -> Vec<(ComponentId, bool)> {
+    GPU_CHECKS.with(|g| std::mem::take(&mut *g.borrow_mut())).into_iter().map(|(f, force)| (ComponentId::from_u64(f), force)).collect()
 }
 
 /// O `HWND` da janela do form (na thread da interface), para chamar a API do Windows
@@ -102,8 +124,26 @@ static WAKE: Mutex<Option<winit::event_loop::EventLoopProxy<()>>> = Mutex::new(N
 ///     }
 /// });
 /// ```
-pub fn on_message(form: ComponentId, hook: impl Fn(&WindowMessage) -> MessageReply + 'static) {
-    HOOKS.with(|h| h.borrow_mut().entry(form).or_default().push(Rc::new(hook)));
+///
+/// Devolve o número do gancho, para tirar só ele com [`remove_message_hook`].
+pub fn on_message(form: ComponentId, hook: impl Fn(&WindowMessage) -> MessageReply + 'static) -> u64 {
+    let id = NEXT_HOOK.with(|n| {
+        let id = n.get();
+        n.set(id + 1);
+        id
+    });
+    HOOKS.with(|h| h.borrow_mut().entry(form).or_default().push((id, Rc::new(hook))));
+    id
+}
+
+/// Tira um gancho do form (o número que o [`on_message`] devolveu), deixando os outros (o
+/// relatório do Tabernáculo, J12).
+pub fn remove_message_hook(form: ComponentId, hook: u64) {
+    HOOKS.with(|h| {
+        if let Some(list) = h.borrow_mut().get_mut(&form) {
+            list.retain(|(id, _)| *id != hook);
+        }
+    });
 }
 
 /// Tira os ganchos do form.
@@ -132,13 +172,19 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
             q.push(form as u64);
         }
         wake();
+    } else if message == WM_ENTERSIZEMOVE {
+        SIZE_MOVE.with(|s| s.borrow_mut().insert(form as u64));
+    } else if message == WM_EXITSIZEMOVE || message == msg::WM_DISPLAYCHANGE {
+        SIZE_MOVE.with(|s| s.borrow_mut().remove(&(form as u64)));
+        GPU_CHECKS.with(|g| g.borrow_mut().push((form as u64, message == msg::WM_DISPLAYCHANGE)));
+        wake();
     } else if message == WM_COMMAND && (wparam.0 >> 16) as u32 == THBN_CLICKED {
         if let Ok(mut q) = THUMB_CLICKS.lock() {
             q.push((form as u64, wparam.0 & 0xFFFF));
         }
         wake();
     }
-    let hooks: Vec<Hook> = HOOKS.with(|h| h.borrow().get(&form_id).cloned().unwrap_or_default());
+    let hooks: Vec<Hook> = HOOKS.with(|h| h.borrow().get(&form_id).map(|l| l.iter().map(|(_, hook)| hook.clone()).collect()).unwrap_or_default());
     let mut m = WindowMessage { form: form_id, message, wparam: wparam.0, lparam: lparam.0 };
     for hook in hooks {
         match hook(&m) {
@@ -149,6 +195,37 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
     }
     // SAFETY: segue para o processamento normal (o do winit).
     unsafe { DefSubclassProc(hwnd, m.message, WPARAM(m.wparam), LPARAM(m.lparam)) }
+}
+
+/// Uma janela do Windows pelo HWND, para dar de dona a um diálogo do sistema (o `rfd`).
+pub(crate) struct ParentWindow(pub isize);
+
+impl winit::raw_window_handle::HasWindowHandle for ParentWindow {
+    fn window_handle(&self) -> Result<winit::raw_window_handle::WindowHandle<'_>, winit::raw_window_handle::HandleError> {
+        let hwnd = std::num::NonZeroIsize::new(self.0).ok_or(winit::raw_window_handle::HandleError::Unavailable)?;
+        // SAFETY: o HWND é de uma janela do app, viva enquanto o diálogo está aberto (o diálogo
+        // é modal a ela).
+        Ok(unsafe { winit::raw_window_handle::WindowHandle::borrow_raw(winit::raw_window_handle::RawWindowHandle::Win32(winit::raw_window_handle::Win32WindowHandle::new(hwnd))) })
+    }
+}
+
+impl winit::raw_window_handle::HasDisplayHandle for ParentWindow {
+    fn display_handle(&self) -> Result<winit::raw_window_handle::DisplayHandle<'_>, winit::raw_window_handle::HandleError> {
+        Ok(winit::raw_window_handle::DisplayHandle::windows())
+    }
+}
+
+static DIALOG_CLOSED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Um diálogo do sistema com dona fechou (a thread dele avisa).
+pub(crate) fn dialog_closed() {
+    DIALOG_CLOSED.store(true, std::sync::atomic::Ordering::Relaxed);
+    wake();
+}
+
+/// Algum diálogo com dona fechou desde a última vez.
+pub(crate) fn take_dialog_closed() -> bool {
+    DIALOG_CLOSED.swap(false, std::sync::atomic::Ordering::Relaxed)
 }
 
 /// A janela de um form: põe a subclass (uma vez).
@@ -483,5 +560,69 @@ fn set_tasks(tasks: &[aylis_core::JumpTask]) -> windows::core::Result<()> {
         let array: IObjectArray = collection.cast()?;
         list.AddUserTasks(&array)?;
         list.CommitList()
+    }
+}
+
+/// A captura da janela pelo `PrintWindow` com `PW_RENDERFULLCONTENT`: pega também o que a
+/// composição desenha (o WebView2), que o desenho fora da tela não tem (W10 do Tabernáculo).
+pub struct WindowCapture;
+
+impl aylis_core::platform::WindowCaptureService for WindowCapture {
+    fn capture(&mut self, form: ComponentId) -> Option<(u32, u32, Vec<u8>)> {
+        capture_client(hwnd(form)?)
+    }
+}
+
+fn capture_client(raw: isize) -> Option<(u32, u32, Vec<u8>)> {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::Graphics::Gdi::{
+        BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleBitmap, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, GetDIBits,
+        ReleaseDC, SelectObject,
+    };
+    use windows::Win32::Storage::Xps::{PRINT_WINDOW_FLAGS, PrintWindow};
+    use windows::Win32::UI::WindowsAndMessaging::GetClientRect;
+    let hwnd = HWND(raw as *mut core::ffi::c_void);
+    // SAFETY: chamadas GDI com a janela do próprio app, na thread dela; cada objeto criado é
+    // solto antes de sair, e o buffer tem o tamanho que o `GetDIBits` escreve (w × h × 4).
+    unsafe {
+        let mut rc = RECT::default();
+        GetClientRect(hwnd, &mut rc).ok()?;
+        let (w, h) = (rc.right - rc.left, rc.bottom - rc.top);
+        if w <= 0 || h <= 0 {
+            return None;
+        }
+        let screen = GetDC(Some(hwnd));
+        let memory = CreateCompatibleDC(Some(screen));
+        let bitmap = CreateCompatibleBitmap(screen, w, h);
+        let old = SelectObject(memory, bitmap.into());
+        // PW_CLIENTONLY (1) | PW_RENDERFULLCONTENT (2).
+        let printed = PrintWindow(hwnd, memory, PRINT_WINDOW_FLAGS(3)).as_bool();
+        let mut info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: w,
+                biHeight: -h,
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let mut pixels = vec![0u8; (w * h * 4) as usize];
+        let rows = GetDIBits(memory, bitmap, 0, h as u32, Some(pixels.as_mut_ptr().cast()), &mut info, DIB_RGB_COLORS);
+        SelectObject(memory, old);
+        let _ = DeleteObject(bitmap.into());
+        let _ = DeleteDC(memory);
+        ReleaseDC(Some(hwnd), screen);
+        if !printed || rows == 0 {
+            return None;
+        }
+        // BGRA do GDI para RGBA, opaco.
+        for px in pixels.chunks_exact_mut(4) {
+            px.swap(0, 2);
+            px[3] = 255;
+        }
+        Some((w as u32, h as u32, pixels))
     }
 }

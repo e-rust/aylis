@@ -9,5 +9,5 @@ rust-version.workspace = true
 
 [dependencies]
 web-time = "1"
-aylis-core = { version = "0.2.0-beta.2", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.3", path = "../aylis-core" }
 serde_json = { version = "1", features = ["preserve_order"] }

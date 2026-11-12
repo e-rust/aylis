@@ -47,6 +47,19 @@ fn brew(description: &str, packages: &str) -> Fix {
 
 /// O compilador ou o interpretador da linguagem (o que roda e compila os projetos dela).
 pub fn install_toolchain(language: Language) -> Option<Fix> {
+    // O rustup já existe (só falta o toolchain, ou o PATH não o via): ele baixa o stable, em vez
+    // de instalar outro rustup (o relatório do Tabernáculo, I03).
+    if language == Language::Rust
+        && let Some(rustup) = existing_rustup()
+    {
+        return Some(Fix {
+            description: "Instala o toolchain stable pelo rustup que já existe".into(),
+            command: vec![rustup.display().to_string(), "toolchain".into(), "install".into(), "stable".into()],
+            interactive: false,
+            fetch: None,
+            env: Vec::new(),
+        });
+    }
     if cfg!(windows) {
         Some(match language {
             // O instalador do rustup não traz o toolchain: o `default stable` baixa.
@@ -117,6 +130,17 @@ fn home() -> Option<PathBuf> {
     std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from)
 }
 
+/// A pasta `bin` do cargo: a do `CARGO_HOME`, ou `~/.cargo/bin`.
+fn cargo_bin() -> Option<PathBuf> {
+    std::env::var_os("CARGO_HOME").map(|c| PathBuf::from(c).join("bin")).or_else(|| home().map(|h| h.join(".cargo").join("bin")))
+}
+
+/// O rustup que já está na máquina (no `bin` do cargo).
+pub fn existing_rustup() -> Option<PathBuf> {
+    let name = if cfg!(windows) { "rustup.exe" } else { "rustup" };
+    cargo_bin().map(|b| b.join(name)).filter(|p| p.is_file())
+}
+
 /// Põe no PATH deste processo o que os instaladores acabaram de acrescentar: no Windows, o
 /// PATH do sistema e o do usuário guardados no registro; em todos, as pastas de sempre do
 /// rustup, do Go e do .NET. Sem isso a IDE aberta só veria o que instalou depois de
@@ -135,7 +159,21 @@ pub fn refresh_path() {
             for d in registry_path(key) {
                 add(d);
             }
+            // As pastas do Rust do usuário: a IDE aberta por um cliente MCP nasce com o ambiente
+            // enxuto, sem elas, e o cargo procurava o toolchain no lugar errado (o relatório do
+            // Tabernáculo, I01).
+            for name in ["CARGO_HOME", "RUSTUP_HOME"] {
+                if std::env::var_os(name).is_none()
+                    && let Some(value) = registry_value(key, name)
+                {
+                    // SAFETY: como o PATH abaixo: antes de verificar ou instalar.
+                    unsafe { std::env::set_var(name, value) };
+                }
+            }
         }
+    }
+    if let Some(bin) = cargo_bin() {
+        add(bin);
     }
     if let Some(h) = home() {
         add(h.join(".cargo").join("bin"));
@@ -157,18 +195,24 @@ pub fn refresh_path() {
 
 /// As pastas do `Path` numa chave do registro, com as `%VARIAVEIS%` trocadas.
 fn registry_path(key: &str) -> Vec<PathBuf> {
-    let Ok(out) = crate::process::quiet(&mut Command::new("reg")).args(["query", key, "/v", "Path"]).output() else { return Vec::new() };
+    let Some(value) = registry_value(key, "Path") else { return Vec::new() };
+    value.split(';').filter(|s| !s.trim().is_empty()).map(|s| PathBuf::from(s.trim())).collect()
+}
+
+/// Um valor de uma chave do registro (`reg query`), com as `%VARIAVEIS%` trocadas.
+fn registry_value(key: &str, name: &str) -> Option<String> {
+    let out = crate::process::quiet(&mut Command::new("reg")).args(["query", key, "/v", name]).output().ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
-    let Some(value) = text.lines().find_map(|l| {
+    text.lines().find_map(|l| {
         let l = l.trim();
-        let rest = l.strip_prefix("Path").or_else(|| l.strip_prefix("PATH"))?;
+        let (first, rest) = l.split_once(char::is_whitespace)?;
+        if !first.eq_ignore_ascii_case(name) {
+            return None;
+        }
         let rest = rest.trim_start();
         let rest = rest.strip_prefix("REG_EXPAND_SZ").or_else(|| rest.strip_prefix("REG_SZ"))?;
-        Some(rest.trim().to_string())
-    }) else {
-        return Vec::new();
-    };
-    value.split(';').filter(|s| !s.trim().is_empty()).map(|s| PathBuf::from(expand(s.trim()))).collect()
+        Some(expand(rest.trim()))
+    })
 }
 
 /// `%USERPROFILE%\.cargo\bin` → `C:\Users\...\.cargo\bin`.

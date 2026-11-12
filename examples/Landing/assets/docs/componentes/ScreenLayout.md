@@ -10,9 +10,9 @@ As telas na posição real (como o "Configurações de vídeo" do sistema), esca
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `locked` | Travado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `locked` | Travado | lógico |  |
 
 ## Eventos
 

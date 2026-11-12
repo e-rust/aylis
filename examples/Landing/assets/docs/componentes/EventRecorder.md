@@ -8,22 +8,22 @@ Grava tudo o que o usuário faz num .aylisrec (a IDE abre e mostra).
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `folder` | Pasta | texto |
-| `app_name` | Nome do aplicativo | texto |
-| `pointer_moves` | Movimentos do mouse | lógico |
-| `mask_text` | Esconde o texto digitado | lógico |
-| `record_sensitive` | Grava os dados pessoais (LGPD) | lógico |
-| `timers` | Temporizadores | lógico |
-| `keep` | Quantas guardar | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `folder` | Pasta | texto | Pasta das gravações; vazio: `<pasta do app>/recordings` (`app_data_dir`). |
+| `app_name` | Nome do aplicativo | texto | O nome do app (pasta e cabeçalho); vazio: o título do form principal. |
+| `pointer_moves` | Movimentos do mouse | lógico | Grava o movimento do ponteiro (muitas linhas); os arrastos sempre entram. |
+| `mask_text` | Esconde o texto digitado | lógico | Troca toda digitação por `*`. |
+| `record_sensitive` | Grava os dados pessoais (LGPD) | lógico | Grava também o que se digita nos campos `sensitive` (dado pessoal). Desligado, eles gravam `*`. Liga e desliga em tempo de execução (a mudança fica na gravação). |
+| `timers` | Temporizadores | lógico | Grava também os `on_timer` (um por tique). |
+| `keep` | Quantas guardar | inteiro | Quantas gravações manter na pasta (as mais antigas saem). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `file_name` | Nome do arquivo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `file_name` | Nome do arquivo | texto | O arquivo da gravação em andamento (só leitura). |
 
 ## Em código
 

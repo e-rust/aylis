@@ -13,6 +13,334 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Relatório do Tabernáculo (11/11/2026)**
+
+O console do Tabernáculo (51 forms, projeções em tela cheia) foi feito no Aylis 0.1.0, e o
+relatório dele traz 209 itens (R01 a R04 com reprodução, mais P, J, C, W, L, T, G, I, M, B, O e
+F). Conferido contra a versão atual em 11/11: 21 resolvidos, 57 parciais, 129 abertos e 2 que
+não se aplicam mais. A análise item a item ficou com o autor (`ANALISE-versao-atual.md`, na
+pasta do relatório). Pedido do autor: registrar os defeitos abertos e começar pela R01 e pela
+R02.
+
+Feitos em 11/11 (sem commit; roteiros 105 e 106), conferidos com as reproduções do relatório
+e com testes:
+- R01: o form secundário que nasce em tela cheia, sem dona e por cima, tinha a swap chain
+  recusada (`0x887A0001`) e o `run` voltava com erro (na 0.1.0 caía no `dxgi.dll`). No Windows, a
+  tela cheia agora é aplicada depois de a janela e o alvo de desenho existirem (`open_window`):
+  os 11 casos saem limpos, em tela cheia (o `segunda-outro-monitor` em (-3840, 11) 3840×2160, no
+  segundo monitor).
+- R02: o `request_close()` num `on_timer` não encerrava (o laço dormia até outra mensagem). O
+  `App::quit` põe o `ControlFlow::Poll` antes do `exit()`, e o pedido é conferido de novo depois
+  dos relógios: o `run` volta 70 a 120 ms depois do pedido (antes, até passar de 9 s).
+- G01: um comentário do `Cargo.toml` que citasse o marcador `aylis:render` abria o bloco do
+  renderizador, e a geração apagava as dependências até o fim dele. Agora os marcadores só
+  valem em linha própria, a abertura é a última antes do fim, e o que há entre eles tem de ser
+  do bloco (`render_span`). Teste `a_comment_naming_the_render_marker_keeps_the_dependencies`.
+- G08: depois do `cargo fmt` (`impl FrmX {}` numa linha), o handler novo caía fora do `impl`.
+  Agora entra antes da chave que fecha, que vai para a linha de baixo. Teste
+  `a_new_handler_goes_inside_an_impl_joined_by_rustfmt`.
+
+Lote 1, os defeitos (feito em 11/11, sem commit; testes `aylis-controls/tests/tabernaculo.rs`,
+`aylis-ide/tests/tabernaculo.rs`, `aylis-core/tests/theme_tokens.rs`):
+- R04: o arquivo solto só vai a uma zona à vista e habilitada (F01); o `*.*` fica no filtro (o
+  "Todos os arquivos"; no macOS o painel já mostra todos) e o recusado dispara `on_reject` (F02);
+  o `on_change` do `FileDropZone` e do `FileInput` leva só os que entraram (F04, decisão do autor).
+- G06: o `main.rs` gerado usa o nome do pacote com `_`. G07: o `generated/mod.rs` sem o `use
+  form_handler` (o caminho inteiro em cada registro). `GENERATOR_VERSION` 10.
+- I07: fechar ou trocar de projeto com forms alterados avisa uma vez (a segunda descarta). M05: o
+  `close_project` do MCP diz que não fechou, com o motivo.
+- M07: o `usages` (MCP e IDE) lê os forms abertos da memória. M08: renomear pelo `set_property`
+  faz o mesmo que o Object Inspector (o código e os outros forms).
+- C07: `Theme::unknown_color_tokens`, e a verificação do projeto avisa a cor que o tema não tem.
+- C04: o `letter_spacing` também com `wrap` e `markup`. C05: o Label soma o `padding` do controle.
+- J01: os atalhos de um PopupMenu valem só com ele ligado ao controle com o foco ou a um pai (o
+  `IsMenuKey` do VCL).
+- T08: o BGRA é pré-multiplicado nos três renderizadores (o contrato do tipo).
+- M04: a ponte `aylis-tool mcp` sai quando o processo que a abriu some. M22: o `add_component`
+  com `parent` põe nele, não num filho sob o canto.
+- I01: a IDE pega o `CARGO_HOME` e o `RUSTUP_HOME` do usuário (registro). I02: a verificação
+  mostra o erro do cargo. I03: com o rustup já instalado, o "Corrigir" instala o toolchain por
+  ele. I04: a porta do canal ocupada, a IDE abre na próxima livre e avisa o app
+  (`AYLIS_DEV_PORT`; no Android, o `adb reverse`).
+- W01: o WebView só pega o foco ao nascer se for o primeiro da ordem de tabulação do form.
+- W05 e W06: o VideoPlayer e o MediaPlayer abrem em segundo plano (`on_ready`, `on_error`); o
+  `play` antes de abrir toca quando ficar pronto.
+- B02: o `render_png` refaz o layout até assentar (o que os `on_resize` mudam entra na foto).
+- R03: o evento `on_window_created` do Form, com a janela (e o HWND) já existindo.
+- M13: os forms e fontes abertos guardam a marca do arquivo; ao voltar o foco e antes de cada
+  chamada do MCP, o que mudou por fora recarrega (sem alteração na IDE) ou vira conflito: a IDE
+  pergunta; o MCP recusa com o diff até o `resolve_conflict` (`keep`: disk ou ide).
+- Não se aplicam: L03 (o encaixe é o do Delphi e do FMX: `Left` depois de `Top` fica com o que
+  sobrou; o `MostLeft` pega a altura inteira) e W03 (o wry só cria o WebView2 na hora, na thread
+  da janela; como o W02, é do WebView).
+
+Lote 2, janelas e plataforma (feito em 12/11, sem commit; teste
+`aylis-controls/tests/tabernaculo_janelas.rs`; o resumo em `docs/tempo-de-execucao.md`, "Forms"):
+- Forms: `on_window_created` (R03, do lote 1); `show_owned` (J19); o principal é o `main_form`
+  do projeto (J20); `close_action` hide/free e `ui.free_later` (J21, J22); `activate_on_show`
+  (J05); `position` nos cantos da área útil (J10); a tela cheia no monitor de `monitor` (J07); o
+  modal preso ao form que o abriu (J24); a barra de título clara ou escura pelo tema, também ao
+  trocar (J04); `on_minimize`, `on_restore` e `ui.is_minimized` (P06); `frame_rate` por janela e
+  o laço no ritmo da mais rápida (P13).
+- Teclado e foco: `default_button` e `cancel_button` no Button (J23); `shortcut_text` (J13);
+  `ui.focus_visible` (J08); `ui.open_popups` (J09); o toque longo só pelo dedo (J18).
+- Arrasto: `on_drag_move` e `on_drag_leave`, `ui.drop_point` no `on_drag_drop`, os cursores
+  `grab` e `grabbing` (J15, J16). Os ganchos de mensagem com número (`remove_message_hook`, J12).
+  O diálogo de arquivo com o form como dona, e o bloqueio do modal reaplicado quando ele fecha
+  (J02).
+- Plataforma: `on_terminate` no `ApplicationEvents` (P04); `ui.advance` para testes (P08); a pasta
+  do `placements.json` (`Application::set_placements_dir`, P09); o Timer com `one_shot` e
+  `restart` (P10); o app vive na bandeja sem form aberto (P12); o DPI documentado (P14); a classe
+  `FrameTimer` (P05); o `tag_string` (P07); o `width`/`height` de um controle alinhado é o do layout
+  com o app rodando (L13); o arquivo passando por cima (`on_file_enter`, `on_file_leave`, F03); o
+  `FileDropZone` com `with_filter`/`with_multiple`/`with_title` (F05).
+
+Lote 3, controles e tema (feito em 12/11, sem commit; teste
+`aylis-controls/tests/tabernaculo_controles.rs`):
+- Tema: `text_case`, `letter_spacing`, `border_sides` (a borda por lado, C11) e `border_style`
+  (`dashed`, `dotted`; C12) no estilo; o Label pinta o fundo, a borda e o raio do estilo (C10) e
+  usa a caixa-alta e o espaçamento dele (C09); a sombra `2xl` (C32); o estilo `Edit.empty` muda a
+  borda do campo vazio (C37, o padrão como antes); o estilo `TabControl.tab` desenha as abas
+  (normal e escolhida, C17); a dica com o atraso pelo tema (`durations.hint`) ou pelo
+  `ui.set_hint_delay`, e com a borda do estilo `Hint` (C19).
+- Button: `h_align` (C13), `group_index` (o grupo exclusivo, C03), `auto_size` medindo o texto e o
+  ícone (C14). CheckBox, RadioButton e ComboBox com `auto_size` (C21).
+- O tema vê o `checked` posto direto no campo (`Component::checked_state`, C02); `inherit_state`
+  pinta o filho com o estado do pai (C25).
+- PopupMenu: `on_close` (C16) e o item `header` (C15). Classe nova `Popover` (ancorado, fecha com
+  o clique fora ou o Escape, `on_close`; C15). Classe nova `DateTimeEdit` (C30).
+- `TabItem.on_show` (C18); ComboBox com `groups` e `disabled_items` (C20); `on_paste` no Edit e no
+  Memo (C22); o markup do Label com `<sb>`, `<i>`, `<u>`, `<small>`, `<big>`, `<size=N>` e
+  `<color=...>` (C23); a bandeja com `popup_menu` (os MenuItem, C26) e `show_balloon` (C27);
+  `accessible_name` (C29); `auto_select` no Edit (C36); `translate` (G19).
+- O `tag_string` e o `accessible_name` dividem uma caixa no `ControlBase` (8 bytes por controle).
+
+Lote 4, layout e texto (feito em 12/11, sem commit; teste `aylis-controls/tests/tabernaculo_layout.rs`):
+- `gap` no Layout e no Panel (L05); o FlowLayout com `v_align`, `baseline` (L12) e o `grow` dos
+  filhos (o espaçador, L04); a GridLayout com `grid_row`, `grid_column` e `row_span` (G12); o
+  ScrollBox com `gutter` e a barra só com o que rolar (L01); o form com `auto_size`, desligado por
+  padrão (L07); `ui.preferred_size` (L11).
+- Texto: o serviço de texto do renderizador do projeto já na montagem dos forms
+  (`install_text_service`, T01); `line_height`, `font_weight`, `font_size` e `italic` no estilo
+  (T04, T05); no Label, `line_height`, `text_shadow` e os métodos `min_content_width` e
+  `max_content_width` (T02); o traço por dentro documentado no `Canvas` (T09).
+
+Lote 5, mídia e WebView (feito em 12/11, sem commit; testes em `aylis-media/tests/media.rs` e
+`aylis-webview/tests/environment.rs`):
+- No fim do vídeo a posição fica no fim (W04); vídeo por endereço `http(s)`/`rtsp` no Media
+  Foundation, no GStreamer e no AVFoundation (W11; o macOS e o Linux por conferir); o VideoPlayer
+  como fonte de quadros (`show_video`, `on_frame`, `current_frame`) com o relógio e a fila como API
+  (`clock_state`, `queued_frames`, `frames_ahead`; W12, W13); o WebView com `background_color`,
+  `data_dir` e `browser_args`, sem a depuração remota (W07); a foto do `snapshot` com o WebView
+  pela captura da janela (`WindowCaptureService`, no Windows; W10).
+
+Lote 6, gerador e projeto (feito em 12/11, sem commit; testes em `aylis-project/tests/project.rs`):
+- A chave `sdk` do `.aylisproj`: projetos novos com o Aylis do crates.io, a pasta fixa como opção,
+  e vazio como antes, pela junção (G11, G03; também resolve G15 e G16 nos projetos novos); a
+  opção nas Opções do projeto.
+- O "Gerar código" (IDE e MCP) aponta a classe com nome errado e a parecida (G02; a classe do app
+  continua valendo); o `create_in` transparente como o Frame (G05, `GENERATOR_VERSION` 11); o
+  `output.bin` escolhe o binário do Compilar, do Executar e do Publicar, e o gerador não cria
+  `src/main.rs` num crate de biblioteca (G13, I08); o `mod generated` fora do `cargo fmt` (G14); o
+  `recorded` e a lista do que foi tocado só mudam com mudança (G17); `[package.metadata.aylis]
+  project` diz a pasta do projeto (B06); o perfil das dependências também nos `Cargo.toml` antigos
+  (B09); o texto com contexto (`arquivo|Abrir`) e as traduções seguindo a correção do texto no
+  designer (O02).
+
+Lote 7, IDE e MCP (em parte, 12/11, sem commit):
+- O argumento desconhecido é recusado com os que valem (M06); `ide_list` com o pid e `ide_select`
+  por ele (M03); o `set_property` com `margins.left` em texto (M09); `set_properties` (M15) e
+  `move_component` (M16); o `read_code` pelo caminho relativo ao projeto, com qualquer barra e
+  dizendo onde procurou (M24, M26); a descrição do `generate_code` diz que salva (I09); o aviso da
+  fonte do sistema uma vez por projeto (I11); a árvore do projeto fechada, lembrando o que o
+  usuário abriu (I10); o Design desligado num fonte sem form (I05); a foto sem o cursor de texto e
+  sem o hover (B03).
+
+Ficam para a próxima rodada (decididos, ainda não feitos):
+- Lote 7: I06, M10/M11, M12, M17, M18, M19/B04, M20 e M21.
+- W15 (o quadro por textura D3D11): pede o caminho de reserva na CPU para o Skia e o navegador
+  (senão o desenho não sai igual nos três) e um decodificador que entregue textura para testar.
+- C17: as abas laterais do TabControl (a aparência pelo tema já está feita).
+- W11: o som sozinho por endereço (o Symphonia só lê o disco).
+- Reproduzir os itens "a conferir": J03, J11, C08, C24, C38, C41, L02, L15, G21, G22.
+- T06 (o provedor de PDF que embute as fontes), decidido para depois.
+- Pintura por parte: com o Popover e o DateTimeEdit no começo da grade do `partial_paint`, 1 pixel
+  da borda do TrackBar e do Switch saía diferente (já acontecia; a grade nova só mostrou). As
+  classes novas foram registradas no fim e o teste passa; a diferença fica para investigar.
+
+**A placa de vídeo de cada janela (11/11/2026)**
+
+Pedido do autor: uma janela arrastada de um monitor da placa dedicada para um da integrada
+trava (o Windows copia cada quadro entre as placas). Veio num patch escrito sem compilar;
+analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
+[gpu-por-monitor.md](gpu-por-monitor.md):
+- `GpuChoice::FollowMonitor` (`monitor`), no projeto e na propriedade nova `gpu` do `Form`;
+  o evento `on_gpu_change` e os métodos `gpu_adapter()`/`gpu_adapters()`.
+- No Direct2D, a janela nasce na placa do monitor e troca ao mudar de monitor
+  (`HwndTarget::follow_monitor`, `rebuild` soltando a swap chain antiga antes).
+- Corrigido do patch: arrastando, troca ao soltar (`WM_EXITSIZEMOVE`), não no meio; o
+  `WM_DISPLAYCHANGE` confere de novo; a lista de placas só sai quando pedida; a janela fechada
+  sai do `Ui`; o comentário do `store_placement` voltou ao lugar; "placa" traduzida como placa
+  de vídeo, não "card".
+- Testado numa placa só e dois monitores, com `AYLIS_GPU_SWITCH=warp` (alterna com o WARP):
+  5 trocas em 6 movimentos, na swap chain e no DirectComposition (exemplo `gpu_monitor`).
+- Falta: o arraste com o mouse e a máquina com as duas placas
+  ([testes-em-dispositivos](testes-em-dispositivos.md)); antes, ver se um app na CPU também
+  trava (aí a causa não é a cópia).
+- Linux (pedido do autor: "preciso que funcione no linux também"), feito em 11/11 no Wayland
+  (`gpu_linux.rs`): o feedback do `linux-dmabuf` v4 diz a placa do monitor da janela, e ela
+  passa a desenhar num `EGLDisplay` daquela placa (`EGL_EXT_explicit_device`), com o Skia
+  refeito; a `gpu` do form com o nome de uma placa também vale por janela. No X11 não há o que
+  o app fazer (o servidor desenha a tela toda na placa principal). Testado no WSL (Radeon pelo
+  D3D12 e llvmpipe): a troca de contexto e o quadro depois dela; o WSLg não tem o feedback v4,
+  e o `GALLIUM_DRIVER` força o D3D12 nas duas, então falta um Linux com duas placas.
+- Não começado: um form ocupando vários monitores (uma janela por monitor, todas como um form).
+
+**Pedido de 11/11/2026**
+- [ ] **Uma pasta de compilação para todo o Rust da máquina:** "armazenamento está sendo o
+  maior problema do rust, e o aylis deveria corrigir isso" — "por padrão é pra tudo ir pra um
+  só lugar", e quem quiser desmarca. Feito em 11/11 (sem commit; roteiro 106):
+  - `aylis_tools::cargo_config`: a IDE grava no `config.toml` global do cargo (`CARGO_HOME`
+    ou `~/.cargo`) o `build.target-dir` com a pasta das Opções e o
+    `profile.dev.package."*".debug = false`, ao abrir e no OK das Opções. Cada chave leva o
+    comentário "Gravado pelo Aylis"; só essas são atualizadas ou tiradas, e uma chave que o
+    autor escreveu vence (o arquivo é editado com o `toml_edit`, que já vinha no Cargo.lock).
+  - Opções → Rust e Python: "Usar esta pasta em todo o Rust desta máquina", marcada por
+    padrão (`global_cargo_config = off` no `tools.json` desliga).
+  - Corrigido: o `.cargo/config.toml` do projeto levava só a pasta, e o cargo do terminal (e o
+    rust-analyzer) compilava as dependências com o debug, ao lado das da IDE. Agora leva o
+    mesmo perfil (`process::DEPENDENCY_DEBUG`).
+  - Medido (`medicoes/debug_dependencias.json`, o OlaNome fora do repositório): sem debug nas
+    dependências, o `target/` cai de 2.722 para 1.328 MB e a compilação limpa de 118 para 60 s;
+    com os perfis misturados na mesma pasta, ela ia a 4.012 MB.
+  - O sccache foi descartado pelo autor: acelera, mas não diminui o disco.
+  - Com uma pasta só, dois projetos com executável de mesmo nome gravam o mesmo
+    `target/debug/<nome>.exe`, e um `cargo clean` em qualquer projeto limpa a pasta de todos.
+  - Ativado na máquina do autor em 11/11. "Seguir a pasta única": o repositório do Aylis
+    também compila em `%LOCALAPPDATA%\aylis\target`. O `default_target_dir` não tem mais o
+    caso "rodando do repositório"; o instalador, o `bench` e o teste `apps` acham os
+    executáveis por `aylis_tools::cargo_target_dir` (o `cargo metadata`) ou pelo
+    `CARGO_TARGET_TMPDIR`. Falta: a ponte do MCP do Claude Desktop
+    (`claude_desktop_config.json`) ainda aponta para `aylis\target\debug\aylis-tool.exe`,
+    e o Claude Desktop aberto desfaz a troca.
+- [ ] **Compilar com o app aberto em outro lugar:** "O compilador do Aylis não aceita compilar
+  enquanto qualquer NoOBS.exe estiver aberto, inclusive o instalado." O autor: não é para ser
+  assim. O Aylis deve conferir se o executável que a compilação vai gerar está em uso e não pode
+  ser substituído, e não se há um processo com aquele nome rodando: pode haver mais de um na
+  máquina, e o que roda pode não ser o da pasta de saída. Feito em 11/11 (falta o autor
+  confirmar; sem commit): antes de compilar, `aylis_tools::run` confere os executáveis que a
+  compilação grava (o do `target` e o da pasta de saída) abrindo-os para escrita; um em uso
+  recusa (ou, com "Encerrar o app aberto", encerra só os processos daquele arquivo, pelo
+  caminho). Outra cópia do app, de outra pasta, não atrapalha mais. O Parar sem nada rodando na
+  IDE encerra o app do projeto pelo executável (o L-20 abaixo). Teste:
+  `only_the_written_exe_counts_as_busy` (uma cópia do ping.exe rodando).
+
+**Relatório do MCP na migração do InsightDB (11/11/2026)**
+
+O agente que refez a página inicial do InsightDB (monitoramento de banco, de web para o Aylis) só
+pelo MCP anotou as lacunas (L-01 a L-28). Pedido do autor em 11/11: "pode colocar e já começar a
+fazer". Os números são os do relatório.
+
+Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
+- **L-24:** a causa era o `auto_size`, que regravava a altura a cada arrumação e zerava a
+  referência das âncoras; os setters só zeram quando o valor muda, e a medida do layout
+  (`set_measured_height`/`width`) mantém a referência. Teste `aylis-controls/tests/anchors.rs`
+  (falha com o comportamento antigo).
+- **L-01:** o caminho `new_form` → `set_layout` → `save` grava no form novo (teste); o que levava ao
+  form errado é um layout com a raiz de outro form (copiado do principal), agora recusado com a
+  explicação. **L-03/L-18:** `new_form` com `file` e a ferramenta `move_form`
+  (`Project::move_form`: o JSON, as variantes e o fonte de cada linguagem; a aba aberta acompanha).
+- **L-13/L-27:** o `target` por nome que está em mais de um lugar é recusado com os caminhos (o
+  clique ia para o Panel de outro frame; o clique num Panel funciona, com teste). **L-17:** `rect`
+  em cada nó do `tree` e o comando `rect`. **L-11:** o form de um Frame recebe o `on_show` junto
+  com o de fora. **L-20:** o Parar sem trabalho na IDE encerra o app do projeto pelo executável.
+- **L-05/L-14:** `designer_snapshot` e `compare_image` (a referência em PNG; a diferença em % e
+  em imagem). **L-06:** `search_icons`. **L-04/L-09:** o `class_info` (beta.2) lista os eventos do
+  Form. **L-02:** a beta.2 já responde em 45 s.
+- **L-22/L-26/L-25:** Chart com `value_format` (short, full, percent), `label_angle`,
+  `title_align`, `title_bold`, `area_opacity`, `legend_position` (top_right, top_left, top,
+  bottom), `stacked` (barras deitadas empilhadas), `colors` (as fatias não pegam mais a cor da
+  série), `center_text` e `slice_labels` (percent, outside, none); DataGrid com `indicator` e
+  `highlight_current`. Os padrões são o desenho de antes.
+- **L-07:** Frame com filhos no JSON é recusado (o `set_layout` diz por quê), e o
+  `add_component` num Frame também. **L-10:** tema sem `"dark"` decide pelo fundo. **L-12:**
+  `#hex/NN`. **L-15:** Label com `auto_size` e `align` left/right encolhe ao texto (os soltos
+  ficam com a largura desenhada). **L-23:** os itens aceitam quebra de linha, e o `class_info`
+  diz o formato dos textos com estrutura. **L-16/L-21:** nas notas do `class_info` e nas
+  instruções do MCP.
+- Decididos pelo autor em 11/11 e feitos (falta confirmar; sem commit):
+  - **L-19** ("fazer igual ao Delphi, o design junto do código" → "a subpasta do form se repete no
+    código"): `forms/painel/inicio.json` → `rust/src/forms/painel/inicio.rs` (e
+    `python/src/forms/painel/inicio.py`, com o `__init__.py` da pasta), módulo `painel_inicio`; os
+    forms da raiz ficam como eram, e o fonte que estava direto em `src/forms` vai para a subpasta
+    na geração. Nas outras 6 linguagens o fonte fica na pasta de sempre, com o nome único
+    (`painel_inicio`); a subpasta nelas pede o gerador de cada uma (pacotes, namespaces).
+  - **L-08** ("remover o handler somente se estiver vazio"): a geração tira o handler que nenhum
+    evento liga se ele continua exatamente como a IDE gerou e nada no arquivo o chama
+    (`codegen::drop_unused_stubs`, Rust e Python). E a pergunta "um handler que não é chamado é um
+    método morto: a IDE ou o compilador valida?": o compilador não (os handlers são públicos), e a
+    verificação do projeto passou a avisar o handler com código que nenhum evento chama (o form e
+    as variantes).
+  - **L-28** (`radius: [8, 8, 0, 0]`, e o negativo para o canto invertido, ideia do autor): Panel,
+    Rectangle e Button com o raio por canto (cima-esquerda, cima-direita, baixo-direita,
+    baixo-esquerda); negativo curva o canto para fora (`aylis_core::Path::corners`); `radius: 8`
+    continua valendo para os quatro.
+- Ficou: a cor no markup do Label (L-15, a segunda parte).
+- **A explicação das propriedades** (pedido de 11/11: "o mcp consegue explicar as propriedades
+  como funcionam, o negativo do radius por exemplo"; decidido: a explicação fica na documentação,
+  tirada do comentário `///` do campo no código, mais um `docs/componentes/<Classe>.md` opcional, e o
+  MCP a devolve sob demanda, só o essencial). Feito em 11/11 (sem commit): a página de cada
+  componente ganhou a coluna "O que faz" (`reference::source_field_docs`, pelas camadas da classe e
+  o `ControlBase`), o `.md` escrito à mão entra no fim da página, e a ferramenta `component_docs`
+  (com `property`, só a linha dela e a seção `### propriedade` do texto à mão). Comentários novos e
+  curtos nos campos do `ControlBase` (`align`, `anchors`, `margins`, `padding`, `left`...) e no
+  `radius`. Ainda sem texto: as propriedades óbvias (`text`, `items`, `value`, `min`, `max`...) e
+  as classes cujo tipo no código tem outro nome (o `Image` é o `ImageView`).
+- **Renomear embutido no MediaCard** (pedido de 11/11, do NoOBS: "o card ganha uma propriedade
+  como editable_title e cuida sozinho do campo de edição, dispara um on_rename com o nome novo, e o
+  app só grava"). Feito em 11/11 (sem commit; roteiro 103): `editable_title` (o clique no nome abre
+  o campo; a miniatura continua no `on_click`), `on_rename` com o nome novo (já gravado no `title`;
+  vazio ou igual não dispara), Esc cancela, e o método `rename()` abre pelo código (o F2). O campo
+  é uma camada sobre o form que segue o card (como o calendário do DateEdit). No núcleo: a camada
+  que fecha com o clique fora perde o foco antes de sair, para o campo gravar. Teste
+  `aylis-controls/tests/media_card_rename.rs`; texto em `docs/componentes/MediaCard.md`.
+
+- Altos:
+  - [ ] **L-01.** Depois do `new_form`, o designer ficou fora de sincronia: `set_layout`/`save`
+    gravaram no form errado.
+  - [ ] **L-02.** O `build` com espera estourou o prazo da chamada e a IDE fechou (na 0.2.0-beta.2
+    o `build` responde em até 45 s; falta conferir que a IDE não fecha).
+  - [ ] **L-18.** Não há como mover ou renomear o arquivo de um form; o "Salvar como…" abre a janela
+    do Windows, fora do alcance dos `dialog_*`.
+  - [ ] **L-24.** `anchors` à direita/embaixo não acompanham o pai que muda de tamanho (a célula do
+    GridLayout, a janela em tela cheia).
+- Médios:
+  - [ ] **L-03.** `new_form` não escolhe o nome do arquivo nem a subpasta.
+  - [ ] **L-04.** Consulta das propriedades, enums e eventos (o `class_info` da beta.2; conferir).
+  - [ ] **L-05.** Captura do designer (a do app é o `snapshot` da beta.2).
+  - [ ] **L-11.** O form dentro de um Frame não recebe `on_show`.
+  - [ ] **L-13.** `app_command click` num Panel não dispara o `on_click` dele.
+  - [ ] **L-14.** Comparação visual com uma imagem de referência.
+  - [ ] **L-17.** `app_command` não dá a posição e o tamanho calculados.
+  - [ ] **L-19.** O código Rust dos forms fica sempre em `rust/src/forms/<nome>.rs`, sem subpastas.
+  - [ ] **L-20.** Depois de reabrir a IDE, o `stop` não alcança o app aberto antes, e o build falha
+    com "o app.exe já está aberto".
+  - [ ] **L-22.** Chart: eixo só no formato curto, rótulos sem girar, título fixo à esquerda e em
+    negrito, área com a cor da linha.
+  - [ ] **L-26.** Chart: barra deitada empilhada; pizza/rosca com a cor da fatia pela série, o total
+    sempre no meio e o nome da fatia sem ir para fora.
+- Baixos:
+  - [ ] **L-06.** Busca de ícones. **L-07.** O Frame aceita filhos, e excluir o Frame move os filhos
+    para o form. **L-08.** Tirar um evento não tira o handler do código. **L-09.** Os eventos do
+    Form (`on_show`) fora do catálogo. **L-10.** `ui.theme().dark` começa `false` com o tema escuro.
+    **L-12.** `cor/15` só vale para nome de cor, não para hex. **L-15.** `auto_size` do Label com
+    `align: left` não encolhe; o markup sem cor. **L-16.** A borda padrão do Panel aparece como
+    `stroke_width: null`. **L-21.** Os tipos gerados têm o nome dos controles do `aylis::prelude`.
+    **L-23.** `ComboBox.items` separa por `;` e o catálogo só diz texto. **L-25.** DataGrid sempre
+    com a coluna indicadora e a linha atual; legenda do Chart fixa no alto à direita. **L-27.**
+    `app_command` por nome pega o primeiro do app inteiro. **L-28.** Raio por canto e canto
+    invertido no Button/Panel (o agente resolveu com um Path; o autor aprovou o resultado).
+
 **Relatório do MCP na migração do RTSPlayer (10/11/2026)**
 
 O agente que migrou o cliente do RTSPlayer só pelo MCP anotou o que travou
@@ -1605,6 +1933,55 @@ mudar a solução.
   aparece para a outra (Claude Code) na mesma IDE, mas a conversa do Claude Desktop não aparece no
   título e, pedindo outro projeto, trocou o projeto da IDE da outra conversa (a IDE só conhecia
   uma sessão: a ponte do Claude Desktop não se anunciou; veja os ajustes de 08/11).
+- [ ] 72. A Landing no celular: rolagem lenta, 3D que não aparece e ~2 MB por componente da
+  documentação (relato do autor em 11/11: "no smartphone o 3D não mostra e também a scroll é
+  bem lenta [...] cada componente que vejo na documentação ele baixa o componente
+  aproximadamente 2mb cada"). Feito em 11/11 (sem commit; falta o autor confirmar no celular;
+  roteiro 105):
+  - **Rolagem:** o `ScrollBox` refazia o layout do form inteiro a cada passo (na web, ~300
+    `measureText` por quadro, cada texto umas 4 vezes; 12,6 ms de mediana e 38 ms no p90 por
+    quadro num PC, em tamanho de celular). Agora `Ui::scroll_content` só anda os filhos diretos
+    e repinta a caixa (com layout pendente, faz o layout como antes); no nativo, 0,074 → 0,003
+    ms por passo (`scrolling_on_the_phone_does_not_lay_out_the_page_again`, no teste da
+    Landing; `scrolling_moves_the_children_without_a_new_layout` em `scroll_box.rs`). E o
+    Canvas 2D guarda as larguras medidas por fonte e texto (zeradas quando uma fonte termina
+    de carregar). Falta medir no navegador e no celular de verdade.
+  - **3D:** no celular a vista "phone" esconde o `layLingote` de propósito, mas o `<iframe>`
+    nascia no primeiro ciclo (o layout ainda no tamanho de projeto, 1200) e baixava os ~10 MB
+    do 3D escondido. Agora a vista nativa só nasce com o layout em dia
+    (`NativeViews::sync`); conferido no navegador em 375 × 812: nenhum pedido ao `demos/3d`.
+    Decidido pelo autor em 11/11: o lingote continua escondido no celular.
+  - **3D sem WebGPU** (pedido do autor em 11/11: "resolva"): o fallback WebGL do `aylis-3d`
+    pedia o adaptador sem `compatible_surface`, e o wgpu não dá adaptador GL assim; num navegador
+    sem WebGPU (iPhone antes do iOS 26, muitos Android) o 3D nunca aparecia, e calado. Agora
+    `Engine::new_web` tenta o WebGPU e, sem ele (ou sem adaptador), cria o canvas, a superfície
+    WebGL 2 e pede o adaptador por ela; a primeira vista usa esse canvas (no WebGL, uma vista 3D
+    por página: o dispositivo é do contexto daquele canvas). Corrigido no caminho: o passe usava
+    o formato BGRA fixo, que só coincidia com o WebGPU (o canvas WebGL é RGBA); e a falha ao
+    abrir a GPU vai para o console do navegador. Conferido no Edge sem janela (SwiftShader),
+    com o `navigator.gpu` escondido: o lingote sai igual ao do WebGPU. Falta num iPhone de
+    verdade (testes-em-dispositivos).
+  - **Tamanho dos wasm:** a publicação web (página, IDE lite e demos) compilava em release
+    puro, com 1,4 MB de nomes de funções em cada wasm. Agora `WEB_RELEASE` no `publish.rs`
+    (LTO, uma unidade, `opt-level = "s"`, `strip`), pelas variáveis do cargo: Standard 6,6 →
+    3,7 MB (1,91 → 1,35 MB comprimido), Landing 9,0 → 6,9 MB sem o strip. Números em
+    `medicoes/web_wasm.json`. A compilação de cada wasm fica mais lenta (~3 min a Standard).
+  - **O núcleo uma vez só** (decidido pelo autor em 11/11: "A + os cortes 1 e 3"): as famílias
+    leves da documentação ao vivo (Standard, Layouts, Menus, Shapes, Animations, Electrical,
+    Industrial, Trader, BI, Device, System, Quasar: 136 classes) vêm no wasm da própria página
+    (`aylis_build::demo_classes` no `build.rs` da Landing; a montagem do demo foi para
+    `aylis::samples::demo`, que o `aylis-demos` também usa); a página de um desses componentes
+    não baixa nada a mais (antes, 1,2 a 1,9 MB comprimido). As pesadas (Additional, 3D, mídia,
+    dados, relatórios, provedores) continuam no `<iframe>` da família. A Landing ficou com
+    6,2 MB (2,64 MB comprimido). Teste `a_component_page_shows_the_live_component_inside_the_page`.
+  - **Corte 3:** o `harfrust` (~520 KB de código, 28% do núcleo mínimo) virou a feature
+    `text-shaping` do `aylis-core`: a fachada liga por padrão, a IDE, o host e a API C também;
+    o gerador põe no `Cargo.toml` do projeto só quando há fontes em `assets/fonts`
+    (`GENERATOR_VERSION` 9). Sem fonte do projeto o texto já era do renderizador; nada muda na
+    tela. Additional 13,4 → 7,6 MB (4,48 → 3,14 MB comprimido); 3D 9,9 → 4,3 MB (2,93 → 1,65).
+  - **Corte 1 (`wasm-opt`) descartado depois de medido:** depois do LTO com `opt-level="s"` e
+    `strip`, o `wasm-opt` tira 4 a 6% do wasm cru e o comprimido não cai (fica até 1% maior)
+    em nenhum nível; o passo e o Binaryen saíram (números em `medicoes/web_wasm.json`).
 
 
 **Conferência de 08/11/2026 (Sessões 3 a 7 do roteiro): ajustes achados**

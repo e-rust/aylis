@@ -10,19 +10,19 @@ Moldura com título que agrupa controles.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `caption` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caption` | Título | texto | O título; com `&` antes de uma letra, Alt+letra leva ao primeiro campo do grupo. |
 
 ### Teclado
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `allowed_chars` | Caracteres permitidos | texto |
-| `blocked_chars` | Caracteres bloqueados | texto |
-| `only_allowed` | Só os permitidos | lógico |
-| `chars_override` | Força os caracteres | lógico |
-| `char_map` | Trocas de caracteres | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `allowed_chars` | Caracteres permitidos | texto | Os caracteres dos campos dentro do grupo (veja o `Form`). |
+| `blocked_chars` | Caracteres bloqueados | texto |  |
+| `only_allowed` | Só os permitidos | lógico |  |
+| `chars_override` | Força os caracteres | lógico |  |
+| `char_map` | Trocas de caracteres | texto | Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a mesma herança dos filtros. |
 
 ## Em código
 

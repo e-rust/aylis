@@ -10,19 +10,19 @@ Calendário de eventos (o `v-calendar`): vista de mês, semana ou dia (`view`). 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `view` | Visão | um de: `month`, `week`, `day` |
-| `start_hour` | Hora inicial | inteiro |
-| `end_hour` | Hora final | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `view` | Visão | um de: `month`, `week`, `day` |  |
+| `start_hour` | Hora inicial | inteiro |  |
+| `end_hour` | Hora final | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `date` | Data | texto |
-| `month` | Mês | texto |
-| `events` | Eventos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `date` | Data | texto |  |
+| `month` | Mês | texto | Mês mostrado (`2026-10`): o mesmo que `date` no dia 1 (mantido para compatibilidade). |
+| `events` | Eventos | texto |  |
 
 ## Eventos
 

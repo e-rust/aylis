@@ -9,7 +9,7 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { path = "../aylis-core", features = ["text-shaping"] }
 aylis-remote = { path = "../aylis-remote" }
 aylis-project = { path = "../aylis-project" }
 aylis-platform-winit = { path = "../aylis-platform-winit" }
@@ -30,4 +30,4 @@ rustls = { version = "0.23", default-features = false, features = ["ring", "std"
 rcgen = "0.14"
 serde_json = "1"
 aylis-tools = { path = "../aylis-tools" }
-aylis = { path = "../aylis", default-features = false, features = ["remote", "skia"] }
+aylis = { path = "../aylis", default-features = false, features = ["remote", "skia", "text-shaping"] }

@@ -10,24 +10,24 @@ Gráfico de candles (OHLC) com volume, indicadores e ferramentas de desenho.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `lower` | Indicador de baixo | um de: `none`, `volume`, `rsi`, `macd` |
-| `volume_profile` | Perfil de volume | lógico |
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `lower` | Indicador de baixo | um de: `none`, `volume`, `rsi`, `macd` |  |
+| `volume_profile` | Perfil de volume | lógico |  |
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `indicators` | Indicadores | texto |
-| `draw_mode` | Modo de desenho | um de: `pan`, `trend`, `fibonacci` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `indicators` | Indicadores | texto |  |
+| `draw_mode` | Modo de desenho | um de: `pan`, `trend`, `fibonacci` |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data` | Dados | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data` | Dados | texto |  |
 
 ## Eventos
 

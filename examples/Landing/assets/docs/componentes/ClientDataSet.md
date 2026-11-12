@@ -8,24 +8,24 @@ Tabela de dados em memória (como o TClientDataSet): campos, registros, filtros.
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `key_fields` | Campos chave | texto |
-| `apply_mode` | Modo de aplicar | um de: `cached`, `on_post` |
-| `read_only` | Somente leitura | lógico |
-| `active` | Ativo | lógico |
-| `filter` | Filtro | texto |
-| `filtered` | Filtrado | lógico |
-| `index_field_names` | Campos do índice | texto |
-| `indexes` | Índices | texto |
-| `index_name` | Nome do índice | texto |
-| `params` | Parâmetros | texto |
-| `status_filter` | Filtro de situação | texto |
-| `master_source` | Fonte mestre | componente |
-| `master_fields` | Campos mestre | texto |
-| `apply_separately` | Gravar à parte do mestre | lógico |
-| `record_total` | Total de registros | inteiro |
-| `max_records` | Máximo de registros | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `key_fields` | Campos chave | texto | Campos-chave separados por `;` (identificam o registro no delta). |
+| `apply_mode` | Modo de aplicar | um de: `cached`, `on_post` |  |
+| `read_only` | Somente leitura | lógico |  |
+| `active` | Ativo | lógico |  |
+| `filter` | Filtro | texto | Expressão de filtro (`cidade = 'São Paulo' and limite > 1000`, ver `crate::expr`); vale com `filtered` ligado. |
+| `filtered` | Filtrado | lógico |  |
+| `index_field_names` | Campos do índice | texto | Ordem dos registros: campos separados por `;`, com `desc` opcional (`cidade;limite desc`), como o `IndexFieldNames`. |
+| `indexes` | Índices | texto | Índices com nome (como o `IndexDefs`): `porNome=nome\|porValor=valor desc;nome`. |
+| `index_name` | Nome do índice | texto | O índice de `indexes` em uso (como o `IndexName`); vale no lugar de `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome. |
+| `params` | Parâmetros | texto | Valores dos parâmetros do filtro (`:minimo`): `minimo=100;cidade=São Paulo`. Por código, `DataSet::set_param`(crate::DataSet::set_param) aceita qualquer valor. |
+| `status_filter` | Filtro de situação | texto | Só os registros nestas situações: `unmodified;modified;inserted` (vazio = todos), como o `StatusFilter`. |
+| `master_source` | Fonte mestre | componente | Master-detail: o `DataSource` do dataset mestre. |
+| `master_fields` | Campos mestre | texto | Master-detail: `campo_daqui=campo_do_mestre` separados por `;` (só o nome se forem iguais): `cliente_id=id`. |
+| `apply_separately` | Gravar à parte do mestre | lógico | Master-detail: as alterações deste detalhe vão à parte, no `apply_updates` dele. Desligado (o padrão), vão junto no delta do mestre, na ordem de gravar. |
+| `record_total` | Total de registros | inteiro | Quantos registros a consulta tem no backend (0: não se sabe). Com os dados em partes, a barra de rolagem da grade usa este total. |
+| `max_records` | Máximo de registros | inteiro | Limite de registros na memória (0: sem limite): a busca sob demanda para nele, e a grade avisa que mostra só os primeiros. |
 
 ## Eventos
 

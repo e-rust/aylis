@@ -10,13 +10,19 @@ Contêiner sem desenho próprio: agrupa os controles e os arruma pelo alinhament
 
 ### Teclado
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `allowed_chars` | Caracteres permitidos | texto |
-| `blocked_chars` | Caracteres bloqueados | texto |
-| `only_allowed` | Só os permitidos | lógico |
-| `chars_override` | Força os caracteres | lógico |
-| `char_map` | Trocas de caracteres | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `allowed_chars` | Caracteres permitidos | texto | Os caracteres dos campos dentro do layout (veja o `Form`). |
+| `blocked_chars` | Caracteres bloqueados | texto |  |
+| `only_allowed` | Só os permitidos | lógico |  |
+| `chars_override` | Força os caracteres | lógico |  |
+| `char_map` | Trocas de caracteres | texto | Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a mesma herança dos filtros. |
+
+### Posição e tamanho
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `gap` | Espaço entre itens | número | O vão entre os filhos encaixados (o `gap` do CSS). |
 
 ## Em código
 

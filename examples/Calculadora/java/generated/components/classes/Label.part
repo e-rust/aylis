@@ -109,6 +109,22 @@
             setProp("outline_width", value);
         }
 
+        public double getLineHeight() {
+            return asNumber(getProp("line_height"));
+        }
+
+        public void setLineHeight(double value) {
+            setProp("line_height", value);
+        }
+
+        public String getTextShadow() {
+            return asText(getProp("text_shadow"));
+        }
+
+        public void setTextShadow(String value) {
+            setProp("text_shadow", value);
+        }
+
         public String getFocusControl() {
             return asText(getProp("focus_control"));
         }
@@ -157,6 +173,30 @@
             setProp("align", value);
         }
 
+        public String getAnchors() {
+            return asText(getProp("anchors"));
+        }
+
+        public void setAnchors(String value) {
+            setProp("anchors", value);
+        }
+
+        public String getMargins() {
+            return asText(getProp("margins"));
+        }
+
+        public void setMargins(String value) {
+            setProp("margins", value);
+        }
+
+        public String getPadding() {
+            return asText(getProp("padding"));
+        }
+
+        public void setPadding(String value) {
+            setProp("padding", value);
+        }
+
         public boolean isVisible() {
             return asBool(getProp("visible"));
         }
@@ -187,6 +227,22 @@
 
         public void setClipChildren(boolean value) {
             setProp("clip_children", value);
+        }
+
+        public boolean isInheritState() {
+            return asBool(getProp("inherit_state"));
+        }
+
+        public void setInheritState(boolean value) {
+            setProp("inherit_state", value);
+        }
+
+        public boolean isTranslate() {
+            return asBool(getProp("translate"));
+        }
+
+        public void setTranslate(boolean value) {
+            setProp("translate", value);
         }
 
         public boolean isCapturesWheel() {
@@ -373,6 +429,38 @@
             setProp("column_span", value);
         }
 
+        public long getGridRow() {
+            return (long) asNumber(getProp("grid_row"));
+        }
+
+        public void setGridRow(long value) {
+            setProp("grid_row", value);
+        }
+
+        public long getGridColumn() {
+            return (long) asNumber(getProp("grid_column"));
+        }
+
+        public void setGridColumn(long value) {
+            setProp("grid_column", value);
+        }
+
+        public long getRowSpan() {
+            return (long) asNumber(getProp("row_span"));
+        }
+
+        public void setRowSpan(long value) {
+            setProp("row_span", value);
+        }
+
+        public double getGrow() {
+            return asNumber(getProp("grow"));
+        }
+
+        public void setGrow(double value) {
+            setProp("grow", value);
+        }
+
         public String getShadow() {
             return asText(getProp("shadow"));
         }
@@ -517,11 +605,35 @@
             setProp("tag", value);
         }
 
+        public String getTagString() {
+            return asText(getProp("tag_string"));
+        }
+
+        public void setTagString(String value) {
+            setProp("tag_string", value);
+        }
+
+        public String getAccessibleName() {
+            return asText(getProp("accessible_name"));
+        }
+
+        public void setAccessibleName(String value) {
+            setProp("accessible_name", value);
+        }
+
         public String getPopupMenu() {
             return asText(getProp("popup_menu"));
         }
 
         public void setPopupMenu(String value) {
             setProp("popup_menu", value);
+        }
+
+        public double minContentWidth() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "min_content_width", "args", java.util.List.of())));
+        }
+
+        public double maxContentWidth() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "max_content_width", "args", java.util.List.of())));
         }
     }

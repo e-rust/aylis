@@ -10,15 +10,15 @@ Campo de tecla de atalho: com o foco, a próxima combinação vira o texto ("Ctr
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `placeholder` | Texto de exemplo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `placeholder` | Texto de exemplo | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `hotkey` | Atalho | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `hotkey` | Atalho | texto |  |
 
 ## Eventos
 

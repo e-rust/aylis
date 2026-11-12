@@ -86,7 +86,9 @@ pub fn remove_locale(project: &Project, language: &str) -> Result<(), Error> {
 
 fn collect(node: &Value, out: &mut BTreeSet<String>) {
     if let Some(obj) = node.as_object() {
-        for prop in aylis_core::i18n::TRANSLATABLE {
+        // `"translate": false`: os textos dele ficam fora da lista (G19 do Tabernáculo).
+        let skip = obj.get("translate").and_then(Value::as_bool) == Some(false);
+        for prop in aylis_core::i18n::TRANSLATABLE.into_iter().filter(|_| !skip) {
             if let Some(text) = obj.get(prop).and_then(Value::as_str) {
                 let items: Vec<&str> = if matches!(prop, "items" | "labels" | "display_values") { text.split(';').collect() } else { vec![text] };
                 for item in items {
@@ -206,6 +208,33 @@ pub fn save_locale(project: &Project, language: &str, map: &BTreeMap<String, Str
     let text = serde_json::to_string_pretty(map).map_err(|e| e.to_string())?;
     std::fs::write(&path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
     Ok(path)
+}
+
+/// O texto `old` de um form foi corrigido para `new` no designer: em cada `locales/*.json` do
+/// projeto em `project_dir` com tradução de `old` e sem a de `new`, a tradução vai também para
+/// `new` (a de `old` fica, para um outro componente que ainda a use). Devolve quantos idiomas
+/// mudaram. O relatório do Tabernáculo, O02.
+pub fn follow_text_change(project_dir: &std::path::Path, old: &str, new: &str) -> usize {
+    if old == new || old.trim().is_empty() || new.trim().is_empty() {
+        return 0;
+    }
+    let Ok(entries) = std::fs::read_dir(project_dir.join("locales")) else { return 0 };
+    let mut changed = 0;
+    for path in entries.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "json")) {
+        let Ok(text) = std::fs::read_to_string(&path) else { continue };
+        let Ok(mut map) = serde_json::from_str::<BTreeMap<String, String>>(text.trim_start_matches('\u{feff}')) else { continue };
+        let Some(translated) = map.get(old).filter(|t| !t.is_empty()).cloned() else { continue };
+        if map.get(new).is_some_and(|t| !t.is_empty()) {
+            continue;
+        }
+        map.insert(new.to_string(), translated);
+        if let Ok(json) = serde_json::to_string_pretty(&map) {
+            if std::fs::write(&path, json + "\n").is_ok() {
+                changed += 1;
+            }
+        }
+    }
+    changed
 }
 
 /// Os idiomas com arquivo em `locales/`.

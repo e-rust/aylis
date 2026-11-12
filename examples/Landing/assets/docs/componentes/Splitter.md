@@ -10,9 +10,9 @@ Divisória arrastável: redimensiona o controle encaixado antes dela com o mesmo
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `min_size` | Tamanho mínimo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `min_size` | Tamanho mínimo | número | Tamanho mínimo do controle redimensionado. |
 
 ## Em código
 

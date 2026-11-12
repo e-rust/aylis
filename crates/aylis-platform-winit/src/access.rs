@@ -293,6 +293,10 @@ fn build(ui: &Ui, id: ComponentId, scale: f64, out: &mut Vec<(NodeId, Node)>) {
             }
         }
     }
+    // O nome dado para o leitor de tela vence o texto à vista (C29 do Tabernáculo).
+    if let Some(name) = ui.control(id).map(|cb| cb.accessible_name()).filter(|n| !n.is_empty()) {
+        node.set_label(name.to_string());
+    }
     // Marcado/desmarcado só onde isso é o controle (um botão comum também tem `checked`,
     // para grupos de botões, mas só vira "alternar" quando está marcado).
     if let Ok(PropValue::Bool(checked)) = ui.get_prop(id, "checked") {

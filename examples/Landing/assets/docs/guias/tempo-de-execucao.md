@@ -113,6 +113,29 @@ ui.show_modal(f, |ui, result| {             // modal com retorno (como ShowModal
 ui.close(f);
 ```
 
+- **A janela:** o `on_show` vem antes de a janela existir; o `on_window_created` vem quando ela já
+  existe (no Windows, com o HWND em `aylis::platform::win::hwnd`).
+- **Dona e principal:** `ui.show_owned(f, None)` mostra sem dona (a janela não fica presa nem
+  minimiza junto com outra). O principal é o `main_form` do projeto, mesmo que outro form apareça
+  antes.
+- **Fechar:** `close_action = free` libera o form depois de fechar (o padrão, `hide`, só esconde).
+  De dentro de um handler do próprio componente, use `ui.free_later(id)`.
+- **Aparecer:** `activate_on_show = false` mostra sem tirar o foco de quem tem. A `position` aceita
+  os cantos da área útil (`top_left`, `top_right`, `bottom_left`, `bottom_right`), e a tela cheia
+  (`window_state = full_screen`) vai para o monitor da propriedade `monitor`.
+- **Minimizar:** o `on_minimize` e o `on_restore` avisam; `ui.is_minimized(f)` responde.
+- **Quadros:** `frame_rate` limita a janela (0 = a taxa do monitor dela); cada janela segue o
+  monitor em que está.
+- **Teclas:** o Button com `default_button` recebe o Enter que nenhum controle usou; com
+  `cancel_button`, o Esc. `aylis_core::shortcut_text("ctrl+s")` escreve `Ctrl+S` para mostrar.
+- **DPI:** no Windows, o winit liga o DPI por monitor (`PER_MONITOR_AWARE_V2`, ou o V1 nos
+  Windows 10 antigos) ao criar o laço; o Aylis desenha na escala de cada monitor e refaz o
+  layout quando a janela passa para outro. O app não precisa de manifesto nem de chamada própria;
+  um manifesto com outro modo vale mais que o do winit.
+- **Encerrar:** o `on_terminate` do `ApplicationEvents` vem quando o laço acaba. Com um `TrayIcon`
+  visível, o app continua rodando sem nenhum form aberto (o "Fechar" da bandeja chama
+  `ui.request_close()`).
+
 ## Tema
 
 ```rust

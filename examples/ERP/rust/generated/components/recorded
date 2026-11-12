@@ -1,4038 +1,4038 @@
 {
   "rust/frmComAjustesDeEstoqueCad": {
-    "nanos": 1794069635841551400,
-    "len": 1955
+    "nanos": 1794243142970088600,
+    "len": 1956
   },
   "rust/frmComAjustesDeEstoqueConsulta": {
-    "nanos": 1794069636075228400,
-    "len": 1068
+    "nanos": 1794243142970088600,
+    "len": 1069
   },
   "rust/frmComAjustesDeEstoqueHist": {
-    "nanos": 1794069636358246200,
-    "len": 1037
+    "nanos": 1794243142971110300,
+    "len": 1038
   },
   "rust/frmComAjustesDeEstoqueLista": {
-    "nanos": 1794069636598356200,
-    "len": 1349
+    "nanos": 1794243142971578700,
+    "len": 1350
   },
   "rust/frmComAlcadasDeAprovacaoCad": {
-    "nanos": 1794069636841913800,
-    "len": 1961
+    "nanos": 1794243142972582200,
+    "len": 1962
   },
   "rust/frmComAlcadasDeAprovacaoConsulta": {
-    "nanos": 1794069637070055800,
-    "len": 1074
+    "nanos": 1794243142972582200,
+    "len": 1075
   },
   "rust/frmComAlcadasDeAprovacaoHist": {
-    "nanos": 1794069637291649600,
-    "len": 1043
+    "nanos": 1794243142973278700,
+    "len": 1044
   },
   "rust/frmComAlcadasDeAprovacaoLista": {
-    "nanos": 1794069637527632300,
-    "len": 1355
+    "nanos": 1794243142973996300,
+    "len": 1356
   },
   "rust/frmComAlmoxarifadosCad": {
-    "nanos": 1794069637748793400,
-    "len": 1946
+    "nanos": 1794243142974620600,
+    "len": 1947
   },
   "rust/frmComAlmoxarifadosConsulta": {
-    "nanos": 1794069637972900500,
-    "len": 1059
+    "nanos": 1794243142974620600,
+    "len": 1060
   },
   "rust/frmComAlmoxarifadosHist": {
-    "nanos": 1794069638206759300,
-    "len": 1028
-  },
-  "rust/frmComAlmoxarifadosLista": {
-    "nanos": 1794069638431586800,
-    "len": 1340
-  },
-  "rust/frmComAprovacoesDeCompraCad": {
-    "nanos": 1794069638653518800,
-    "len": 1961
-  },
-  "rust/frmComAprovacoesDeCompraConsulta": {
-    "nanos": 1794069638870890100,
-    "len": 1074
-  },
-  "rust/frmComAprovacoesDeCompraHist": {
-    "nanos": 1794069639091499100,
-    "len": 1043
-  },
-  "rust/frmComAprovacoesDeCompraLista": {
-    "nanos": 1794069639309033400,
-    "len": 1355
-  },
-  "rust/frmComAprovadoresCad": {
-    "nanos": 1794069639531398000,
-    "len": 1940
-  },
-  "rust/frmComAprovadoresConsulta": {
-    "nanos": 1794069639765362700,
-    "len": 1053
-  },
-  "rust/frmComAprovadoresHist": {
-    "nanos": 1794069639985467200,
-    "len": 1022
-  },
-  "rust/frmComAprovadoresLista": {
-    "nanos": 1794069640223707600,
-    "len": 1334
-  },
-  "rust/frmComAvaliacoesDeFornecedorCad": {
-    "nanos": 1794069640448188600,
-    "len": 1973
-  },
-  "rust/frmComAvaliacoesDeFornecedorConsulta": {
-    "nanos": 1794069640690466700,
-    "len": 1086
-  },
-  "rust/frmComAvaliacoesDeFornecedorHist": {
-    "nanos": 1794069640908366100,
-    "len": 1055
-  },
-  "rust/frmComAvaliacoesDeFornecedorLista": {
-    "nanos": 1794069641134782200,
-    "len": 1367
-  },
-  "rust/frmComCatalogosDeFornecedorCad": {
-    "nanos": 1794069641374819000,
-    "len": 1970
-  },
-  "rust/frmComCatalogosDeFornecedorConsulta": {
-    "nanos": 1794069641613502900,
-    "len": 1083
-  },
-  "rust/frmComCatalogosDeFornecedorHist": {
-    "nanos": 1794069641840029800,
-    "len": 1052
-  },
-  "rust/frmComCatalogosDeFornecedorLista": {
-    "nanos": 1794069642056178400,
-    "len": 1364
-  },
-  "rust/frmComCategoriasDeCompraCad": {
-    "nanos": 1794069642303558900,
-    "len": 1961
-  },
-  "rust/frmComCategoriasDeCompraConsulta": {
-    "nanos": 1794069642534870200,
-    "len": 1074
-  },
-  "rust/frmComCategoriasDeCompraHist": {
-    "nanos": 1794069642762001100,
-    "len": 1043
-  },
-  "rust/frmComCategoriasDeCompraLista": {
-    "nanos": 1794069642979576400,
-    "len": 1355
-  },
-  "rust/frmComClassesDeMaterialCad": {
-    "nanos": 1794069643201607100,
-    "len": 1958
-  },
-  "rust/frmComClassesDeMaterialConsulta": {
-    "nanos": 1794069643425319300,
-    "len": 1071
-  },
-  "rust/frmComClassesDeMaterialHist": {
-    "nanos": 1794069643641623600,
-    "len": 1040
-  },
-  "rust/frmComClassesDeMaterialLista": {
-    "nanos": 1794069643863896500,
-    "len": 1352
-  },
-  "rust/frmComCompradoresCad": {
-    "nanos": 1794069644090215400,
-    "len": 1940
-  },
-  "rust/frmComCompradoresConsulta": {
-    "nanos": 1794069644335635400,
-    "len": 1053
-  },
-  "rust/frmComCompradoresHist": {
-    "nanos": 1794069644553379800,
-    "len": 1022
-  },
-  "rust/frmComCompradoresLista": {
-    "nanos": 1794069644779813900,
-    "len": 1334
-  },
-  "rust/frmComCondicoesDeCompraCad": {
-    "nanos": 1794069644995667100,
-    "len": 1958
-  },
-  "rust/frmComCondicoesDeCompraConsulta": {
-    "nanos": 1794069645225955200,
-    "len": 1071
-  },
-  "rust/frmComCondicoesDeCompraHist": {
-    "nanos": 1794069645457275600,
-    "len": 1040
-  },
-  "rust/frmComCondicoesDeCompraLista": {
-    "nanos": 1794069645690737600,
-    "len": 1352
-  },
-  "rust/frmComConferenciasDeRecebimentoCad": {
-    "nanos": 1794069645904864700,
-    "len": 1982
-  },
-  "rust/frmComConferenciasDeRecebimentoConsulta": {
-    "nanos": 1794069646154452900,
-    "len": 1095
-  },
-  "rust/frmComConferenciasDeRecebimentoHist": {
-    "nanos": 1794069646374612100,
-    "len": 1064
-  },
-  "rust/frmComConferenciasDeRecebimentoLista": {
-    "nanos": 1794069646606414000,
-    "len": 1376
-  },
-  "rust/frmComContratosDeCompraCad": {
-    "nanos": 1794069646824771800,
-    "len": 1958
-  },
-  "rust/frmComContratosDeCompraConsulta": {
-    "nanos": 1794069647041471600,
-    "len": 1071
-  },
-  "rust/frmComContratosDeCompraHist": {
-    "nanos": 1794069647261845800,
-    "len": 1040
-  },
-  "rust/frmComContratosDeCompraLista": {
-    "nanos": 1794069647485204400,
-    "len": 1352
-  },
-  "rust/frmComContratosDeFornecimentoCad": {
-    "nanos": 1794069647700427700,
-    "len": 1976
-  },
-  "rust/frmComContratosDeFornecimentoConsulta": {
-    "nanos": 1794069647931032700,
-    "len": 1089
-  },
-  "rust/frmComContratosDeFornecimentoHist": {
-    "nanos": 1794069648188137300,
-    "len": 1058
-  },
-  "rust/frmComContratosDeFornecimentoLista": {
-    "nanos": 1794069648405817000,
-    "len": 1370
-  },
-  "rust/frmComCotacoesCad": {
-    "nanos": 1794069648641558600,
-    "len": 1931
-  },
-  "rust/frmComCotacoesConsulta": {
-    "nanos": 1794069648863429800,
-    "len": 1044
-  },
-  "rust/frmComCotacoesHist": {
-    "nanos": 1794069649087969300,
-    "len": 1013
-  },
-  "rust/frmComCotacoesLista": {
-    "nanos": 1794069649308045000,
-    "len": 1325
-  },
-  "rust/frmComDespesasDeImportacaoCad": {
-    "nanos": 1794069649524946600,
-    "len": 1967
-  },
-  "rust/frmComDespesasDeImportacaoConsulta": {
-    "nanos": 1794069649748551500,
-    "len": 1080
-  },
-  "rust/frmComDespesasDeImportacaoHist": {
-    "nanos": 1794069649964055600,
-    "len": 1049
-  },
-  "rust/frmComDespesasDeImportacaoLista": {
-    "nanos": 1794069650194829400,
-    "len": 1361
-  },
-  "rust/frmComDevolucoesAFornecedorCad": {
-    "nanos": 1794069650415454600,
-    "len": 1970
-  },
-  "rust/frmComDevolucoesAFornecedorConsulta": {
-    "nanos": 1794069650632227200,
-    "len": 1083
-  },
-  "rust/frmComDevolucoesAFornecedorHist": {
-    "nanos": 1794069650852060100,
-    "len": 1052
-  },
-  "rust/frmComDevolucoesAFornecedorLista": {
-    "nanos": 1794069651081233800,
-    "len": 1364
-  },
-  "rust/frmComEmbalagensCad": {
-    "nanos": 1794069651302620400,
-    "len": 1937
-  },
-  "rust/frmComEmbalagensConsulta": {
-    "nanos": 1794069651524208200,
-    "len": 1050
-  },
-  "rust/frmComEmbalagensHist": {
-    "nanos": 1794069651741244400,
-    "len": 1019
-  },
-  "rust/frmComEmbalagensLista": {
-    "nanos": 1794069651975233700,
-    "len": 1331
-  },
-  "rust/frmComEntradasDeEstoqueCad": {
-    "nanos": 1794069652192553900,
-    "len": 1958
-  },
-  "rust/frmComEntradasDeEstoqueConsulta": {
-    "nanos": 1794069652413640500,
-    "len": 1071
-  },
-  "rust/frmComEntradasDeEstoqueHist": {
-    "nanos": 1794069652631600800,
-    "len": 1040
-  },
-  "rust/frmComEntradasDeEstoqueLista": {
-    "nanos": 1794069652849602900,
-    "len": 1352
-  },
-  "rust/frmComFornecedoresCad": {
-    "nanos": 1794069653103827100,
-    "len": 1943
-  },
-  "rust/frmComFornecedoresConsulta": {
-    "nanos": 1794069653328464700,
-    "len": 1056
-  },
-  "rust/frmComFornecedoresHist": {
-    "nanos": 1794069653547969000,
-    "len": 1025
-  },
-  "rust/frmComFornecedoresLista": {
-    "nanos": 1794069653765666500,
-    "len": 1337
-  },
-  "rust/frmComGruposDeProdutosCad": {
-    "nanos": 1794069653985535200,
-    "len": 1955
-  },
-  "rust/frmComGruposDeProdutosConsulta": {
-    "nanos": 1794069654210285800,
-    "len": 1068
-  },
-  "rust/frmComGruposDeProdutosHist": {
-    "nanos": 1794069654426095500,
-    "len": 1037
-  },
-  "rust/frmComGruposDeProdutosLista": {
-    "nanos": 1794069654644797600,
-    "len": 1349
-  },
-  "rust/frmComHomologacoesCad": {
-    "nanos": 1794069654874239400,
-    "len": 1943
-  },
-  "rust/frmComHomologacoesConsulta": {
-    "nanos": 1794069655095663700,
-    "len": 1056
-  },
-  "rust/frmComHomologacoesHist": {
-    "nanos": 1794069655332939200,
-    "len": 1025
-  },
-  "rust/frmComHomologacoesLista": {
-    "nanos": 1794069655554169600,
-    "len": 1337
-  },
-  "rust/frmComImportacoesCad": {
-    "nanos": 1794069655775950500,
-    "len": 1940
-  },
-  "rust/frmComImportacoesConsulta": {
-    "nanos": 1794069655990469300,
-    "len": 1053
-  },
-  "rust/frmComImportacoesHist": {
-    "nanos": 1794069656212442700,
-    "len": 1022
-  },
-  "rust/frmComImportacoesLista": {
-    "nanos": 1794069656441580800,
-    "len": 1334
-  },
-  "rust/frmComInventariosCad": {
-    "nanos": 1794069656663694800,
-    "len": 1940
-  },
-  "rust/frmComInventariosConsulta": {
-    "nanos": 1794069656896756400,
-    "len": 1053
-  },
-  "rust/frmComInventariosHist": {
-    "nanos": 1794069657114624900,
-    "len": 1022
-  },
-  "rust/frmComInventariosLista": {
-    "nanos": 1794069657331869400,
-    "len": 1334
-  },
-  "rust/frmComLocaisDeEntregaCad": {
-    "nanos": 1794069657551337600,
-    "len": 1952
-  },
-  "rust/frmComLocaisDeEntregaConsulta": {
-    "nanos": 1794069657773254300,
-    "len": 1065
-  },
-  "rust/frmComLocaisDeEntregaHist": {
-    "nanos": 1794069657994526500,
-    "len": 1034
-  },
-  "rust/frmComLocaisDeEntregaLista": {
-    "nanos": 1794069658211266200,
-    "len": 1346
-  },
-  "rust/frmComMapasDeCotacaoCad": {
-    "nanos": 1794069658440606200,
-    "len": 1949
-  },
-  "rust/frmComMapasDeCotacaoConsulta": {
-    "nanos": 1794069658663804500,
-    "len": 1062
-  },
-  "rust/frmComMapasDeCotacaoHist": {
-    "nanos": 1794069658905995100,
-    "len": 1031
-  },
-  "rust/frmComMapasDeCotacaoLista": {
-    "nanos": 1794069659142396600,
-    "len": 1343
-  },
-  "rust/frmComMarcasCad": {
-    "nanos": 1794069659367677200,
-    "len": 1925
-  },
-  "rust/frmComMarcasConsulta": {
-    "nanos": 1794069659595705400,
-    "len": 1038
-  },
-  "rust/frmComMarcasHist": {
-    "nanos": 1794069659834052500,
-    "len": 1007
-  },
-  "rust/frmComMarcasLista": {
-    "nanos": 1794069660054144300,
-    "len": 1319
-  },
-  "rust/frmComNotasDeEntradaCad": {
-    "nanos": 1794069660284375000,
-    "len": 1949
-  },
-  "rust/frmComNotasDeEntradaConsulta": {
-    "nanos": 1794069660507181200,
-    "len": 1062
-  },
-  "rust/frmComNotasDeEntradaHist": {
-    "nanos": 1794069660740486000,
-    "len": 1031
-  },
-  "rust/frmComNotasDeEntradaLista": {
-    "nanos": 1794069660967676000,
-    "len": 1343
-  },
-  "rust/frmComOrdensDeServicoExternasCad": {
-    "nanos": 1794069661198772500,
-    "len": 1976
-  },
-  "rust/frmComOrdensDeServicoExternasConsulta": {
-    "nanos": 1794069661428124000,
-    "len": 1089
-  },
-  "rust/frmComOrdensDeServicoExternasHist": {
-    "nanos": 1794069661678010500,
-    "len": 1058
-  },
-  "rust/frmComOrdensDeServicoExternasLista": {
-    "nanos": 1794069661903633000,
-    "len": 1370
-  },
-  "rust/frmComPedidosDeCompraCad": {
-    "nanos": 1794069662137061100,
-    "len": 1952
-  },
-  "rust/frmComPedidosDeCompraConsulta": {
-    "nanos": 1794069662375652600,
-    "len": 1065
-  },
-  "rust/frmComPedidosDeCompraHist": {
-    "nanos": 1794069662613699400,
-    "len": 1034
-  },
-  "rust/frmComPedidosDeCompraLista": {
-    "nanos": 1794069662852900400,
-    "len": 1346
-  },
-  "rust/frmComPrevisoesDeCompraCad": {
-    "nanos": 1794069663074690300,
-    "len": 1958
-  },
-  "rust/frmComPrevisoesDeCompraConsulta": {
-    "nanos": 1794069663298009200,
-    "len": 1071
-  },
-  "rust/frmComPrevisoesDeCompraHist": {
-    "nanos": 1794069663512512700,
-    "len": 1040
-  },
-  "rust/frmComPrevisoesDeCompraLista": {
-    "nanos": 1794069663750057300,
-    "len": 1352
-  },
-  "rust/frmComProdutosCad": {
-    "nanos": 1794069663977945400,
-    "len": 1931
-  },
-  "rust/frmComProdutosConsulta": {
-    "nanos": 1794069664210700100,
-    "len": 1044
-  },
-  "rust/frmComProdutosHist": {
-    "nanos": 1794069664431619700,
-    "len": 1013
-  },
-  "rust/frmComProdutosLista": {
-    "nanos": 1794069664735283100,
-    "len": 1325
-  },
-  "rust/frmComQualificacoesDeFornecedorCad": {
-    "nanos": 1794069664961633800,
-    "len": 1982
-  },
-  "rust/frmComQualificacoesDeFornecedorConsulta": {
-    "nanos": 1794069665179621800,
-    "len": 1095
-  },
-  "rust/frmComQualificacoesDeFornecedorHist": {
-    "nanos": 1794069665415300600,
-    "len": 1064
-  },
-  "rust/frmComQualificacoesDeFornecedorLista": {
-    "nanos": 1794069665659783900,
-    "len": 1376
-  },
-  "rust/frmComRecebimentosCad": {
-    "nanos": 1794069665891608800,
-    "len": 1943
-  },
-  "rust/frmComRecebimentosConsulta": {
-    "nanos": 1794069666112903500,
-    "len": 1056
-  },
-  "rust/frmComRecebimentosHist": {
-    "nanos": 1794069666332336700,
-    "len": 1025
-  },
-  "rust/frmComRecebimentosLista": {
-    "nanos": 1794069666563877000,
-    "len": 1337
-  },
-  "rust/frmComRequisicoesAoAlmoxarifadoCad": {
-    "nanos": 1794069666784206700,
-    "len": 1982
-  },
-  "rust/frmComRequisicoesAoAlmoxarifadoConsulta": {
-    "nanos": 1794069667014947900,
-    "len": 1095
-  },
-  "rust/frmComRequisicoesAoAlmoxarifadoHist": {
-    "nanos": 1794069667246749300,
-    "len": 1064
-  },
-  "rust/frmComRequisicoesAoAlmoxarifadoLista": {
-    "nanos": 1794069667476595100,
-    "len": 1376
-  },
-  "rust/frmComSaidasDeEstoqueCad": {
-    "nanos": 1794069667692801300,
-    "len": 1952
-  },
-  "rust/frmComSaidasDeEstoqueConsulta": {
-    "nanos": 1794069667918851500,
-    "len": 1065
-  },
-  "rust/frmComSaidasDeEstoqueHist": {
-    "nanos": 1794069668141445700,
-    "len": 1034
-  },
-  "rust/frmComSaidasDeEstoqueLista": {
-    "nanos": 1794069668360964200,
-    "len": 1346
-  },
-  "rust/frmComSolicitacoesDeCompraCad": {
-    "nanos": 1794069668590444900,
-    "len": 1967
-  },
-  "rust/frmComSolicitacoesDeCompraConsulta": {
-    "nanos": 1794069668815707800,
-    "len": 1080
-  },
-  "rust/frmComSolicitacoesDeCompraHist": {
-    "nanos": 1794069669054068600,
-    "len": 1049
-  },
-  "rust/frmComSolicitacoesDeCompraLista": {
-    "nanos": 1794069669292945400,
-    "len": 1361
-  },
-  "rust/frmComTabelasDePrecoDeCompraCad": {
-    "nanos": 1794069669515221600,
-    "len": 1973
-  },
-  "rust/frmComTabelasDePrecoDeCompraConsulta": {
-    "nanos": 1794069669742348300,
-    "len": 1086
-  },
-  "rust/frmComTabelasDePrecoDeCompraHist": {
-    "nanos": 1794069669960017200,
-    "len": 1055
-  },
-  "rust/frmComTabelasDePrecoDeCompraLista": {
-    "nanos": 1794069670200089700,
-    "len": 1367
-  },
-  "rust/frmComTiposDeFreteCad": {
-    "nanos": 1794069670422456900,
-    "len": 1943
-  },
-  "rust/frmComTiposDeFreteConsulta": {
-    "nanos": 1794069670643147700,
-    "len": 1056
-  },
-  "rust/frmComTiposDeFreteHist": {
-    "nanos": 1794069670864884100,
-    "len": 1025
-  },
-  "rust/frmComTiposDeFreteLista": {
-    "nanos": 1794069671094985000,
-    "len": 1337
-  },
-  "rust/frmComTransferenciasDeEstoqueCad": {
-    "nanos": 1794069671315980600,
-    "len": 1976
-  },
-  "rust/frmComTransferenciasDeEstoqueConsulta": {
-    "nanos": 1794069671534853900,
-    "len": 1089
-  },
-  "rust/frmComTransferenciasDeEstoqueHist": {
-    "nanos": 1794069671773366800,
-    "len": 1058
-  },
-  "rust/frmComTransferenciasDeEstoqueLista": {
-    "nanos": 1794069671994967600,
-    "len": 1370
-  },
-  "rust/frmComTransportadorasCad": {
-    "nanos": 1794069672218102300,
-    "len": 1952
-  },
-  "rust/frmComTransportadorasConsulta": {
-    "nanos": 1794069672454621800,
-    "len": 1065
-  },
-  "rust/frmComTransportadorasHist": {
-    "nanos": 1794069672675819200,
-    "len": 1034
-  },
-  "rust/frmComTransportadorasLista": {
-    "nanos": 1794069672903423700,
-    "len": 1346
-  },
-  "rust/frmComUnidadesDeMedidaCad": {
-    "nanos": 1794069673137935900,
-    "len": 1955
-  },
-  "rust/frmComUnidadesDeMedidaConsulta": {
-    "nanos": 1794069673358338500,
-    "len": 1068
-  },
-  "rust/frmComUnidadesDeMedidaHist": {
-    "nanos": 1794069673583131200,
-    "len": 1037
-  },
-  "rust/frmComUnidadesDeMedidaLista": {
-    "nanos": 1794069673815797800,
-    "len": 1349
-  },
-  "rust/frmCtbAgrupadoresDeDreCad": {
-    "nanos": 1794069674040043400,
-    "len": 1955
-  },
-  "rust/frmCtbAgrupadoresDeDreConsulta": {
-    "nanos": 1794069674262521700,
-    "len": 1068
-  },
-  "rust/frmCtbAgrupadoresDeDreHist": {
-    "nanos": 1794069674486686300,
-    "len": 1037
-  },
-  "rust/frmCtbAgrupadoresDeDreLista": {
-    "nanos": 1794069674708156100,
-    "len": 1349
-  },
-  "rust/frmCtbAjustesDeSaldoCad": {
-    "nanos": 1794069674930309800,
-    "len": 1949
-  },
-  "rust/frmCtbAjustesDeSaldoConsulta": {
-    "nanos": 1794069675151665900,
-    "len": 1062
-  },
-  "rust/frmCtbAjustesDeSaldoHist": {
-    "nanos": 1794069675372695700,
-    "len": 1031
-  },
-  "rust/frmCtbAjustesDeSaldoLista": {
-    "nanos": 1794069675595246500,
-    "len": 1343
-  },
-  "rust/frmCtbApuracoesDeResultadoCad": {
-    "nanos": 1794069675815829800,
-    "len": 1967
-  },
-  "rust/frmCtbApuracoesDeResultadoConsulta": {
-    "nanos": 1794069676046350200,
-    "len": 1080
-  },
-  "rust/frmCtbApuracoesDeResultadoHist": {
-    "nanos": 1794069676272741800,
-    "len": 1049
-  },
-  "rust/frmCtbApuracoesDeResultadoLista": {
-    "nanos": 1794069676513036200,
-    "len": 1361
-  },
-  "rust/frmCtbBaixasDeBensCad": {
-    "nanos": 1794069676738230600,
-    "len": 1943
-  },
-  "rust/frmCtbBaixasDeBensConsulta": {
-    "nanos": 1794069676968029500,
-    "len": 1056
-  },
-  "rust/frmCtbBaixasDeBensHist": {
-    "nanos": 1794069677193878400,
-    "len": 1025
-  },
-  "rust/frmCtbBaixasDeBensLista": {
-    "nanos": 1794069677453751300,
-    "len": 1337
-  },
-  "rust/frmCtbBalancetesCad": {
-    "nanos": 1794069677690378400,
-    "len": 1937
-  },
-  "rust/frmCtbBalancetesConsulta": {
-    "nanos": 1794069677919052600,
-    "len": 1050
-  },
-  "rust/frmCtbBalancetesHist": {
-    "nanos": 1794069678153788500,
-    "len": 1019
-  },
-  "rust/frmCtbBalancetesLista": {
-    "nanos": 1794069678390494300,
-    "len": 1331
-  },
-  "rust/frmCtbBalancosCad": {
-    "nanos": 1794069678634710900,
-    "len": 1931
-  },
-  "rust/frmCtbBalancosConsulta": {
-    "nanos": 1794069678866056200,
-    "len": 1044
-  },
-  "rust/frmCtbBalancosHist": {
-    "nanos": 1794069679094206200,
-    "len": 1013
-  },
-  "rust/frmCtbBalancosLista": {
-    "nanos": 1794069679325997700,
-    "len": 1325
-  },
-  "rust/frmCtbBensPatrimoniaisCad": {
-    "nanos": 1794069679550611200,
-    "len": 1955
-  },
-  "rust/frmCtbBensPatrimoniaisConsulta": {
-    "nanos": 1794069679777309600,
-    "len": 1068
-  },
-  "rust/frmCtbBensPatrimoniaisHist": {
-    "nanos": 1794069679999190000,
-    "len": 1037
-  },
-  "rust/frmCtbBensPatrimoniaisLista": {
-    "nanos": 1794069680217412100,
-    "len": 1349
-  },
-  "rust/frmCtbCalendariosContabeisCad": {
-    "nanos": 1794069680448140800,
-    "len": 1967
-  },
-  "rust/frmCtbCalendariosContabeisConsulta": {
-    "nanos": 1794069680674140300,
-    "len": 1080
-  },
-  "rust/frmCtbCalendariosContabeisHist": {
-    "nanos": 1794069680907256800,
-    "len": 1049
-  },
-  "rust/frmCtbCalendariosContabeisLista": {
-    "nanos": 1794069681139820200,
-    "len": 1361
-  },
-  "rust/frmCtbCentrosDeCustoContabeisCad": {
-    "nanos": 1794069681361561500,
-    "len": 1976
-  },
-  "rust/frmCtbCentrosDeCustoContabeisConsulta": {
-    "nanos": 1794069681593877200,
-    "len": 1089
-  },
-  "rust/frmCtbCentrosDeCustoContabeisHist": {
-    "nanos": 1794069681818073400,
-    "len": 1058
-  },
-  "rust/frmCtbCentrosDeCustoContabeisLista": {
-    "nanos": 1794069682039888100,
-    "len": 1370
-  },
-  "rust/frmCtbConciliacoesContabeisCad": {
-    "nanos": 1794069682261297300,
-    "len": 1970
-  },
-  "rust/frmCtbConciliacoesContabeisConsulta": {
-    "nanos": 1794069682488153800,
-    "len": 1083
-  },
-  "rust/frmCtbConciliacoesContabeisHist": {
-    "nanos": 1794069682720767500,
-    "len": 1052
-  },
-  "rust/frmCtbConciliacoesContabeisLista": {
-    "nanos": 1794069682948208000,
-    "len": 1364
-  },
-  "rust/frmCtbContasReferenciaisCad": {
-    "nanos": 1794069683171654600,
-    "len": 1961
-  },
-  "rust/frmCtbContasReferenciaisConsulta": {
-    "nanos": 1794069683395524800,
-    "len": 1074
-  },
-  "rust/frmCtbContasReferenciaisHist": {
-    "nanos": 1794069683612111900,
-    "len": 1043
-  },
-  "rust/frmCtbContasReferenciaisLista": {
-    "nanos": 1794069683839863900,
-    "len": 1355
-  },
-  "rust/frmCtbCriteriosDeDepreciacaoCad": {
-    "nanos": 1794069684064508600,
-    "len": 1973
-  },
-  "rust/frmCtbCriteriosDeDepreciacaoConsulta": {
-    "nanos": 1794069684304075000,
-    "len": 1086
-  },
-  "rust/frmCtbCriteriosDeDepreciacaoHist": {
-    "nanos": 1794069684527132700,
-    "len": 1055
-  },
-  "rust/frmCtbCriteriosDeDepreciacaoLista": {
-    "nanos": 1794069684757972300,
-    "len": 1367
-  },
-  "rust/frmCtbDepreciacoesCad": {
-    "nanos": 1794069684979702300,
-    "len": 1943
-  },
-  "rust/frmCtbDepreciacoesConsulta": {
-    "nanos": 1794069685202295100,
-    "len": 1056
-  },
-  "rust/frmCtbDepreciacoesHist": {
-    "nanos": 1794069685425180500,
-    "len": 1025
-  },
-  "rust/frmCtbDepreciacoesLista": {
-    "nanos": 1794069685662002700,
-    "len": 1337
-  },
-  "rust/frmCtbDiariosCad": {
-    "nanos": 1794069685907093400,
-    "len": 1928
-  },
-  "rust/frmCtbDiariosConsulta": {
-    "nanos": 1794069686134405700,
-    "len": 1041
-  },
-  "rust/frmCtbDiariosHist": {
-    "nanos": 1794069686363035900,
-    "len": 1010
-  },
-  "rust/frmCtbDiariosLista": {
-    "nanos": 1794069686602577600,
-    "len": 1322
-  },
-  "rust/frmCtbDresCad": {
-    "nanos": 1794069686833191300,
-    "len": 1919
-  },
-  "rust/frmCtbDresConsulta": {
-    "nanos": 1794069687087135900,
-    "len": 1032
-  },
-  "rust/frmCtbDresHist": {
-    "nanos": 1794069687308097400,
-    "len": 1001
-  },
-  "rust/frmCtbDresLista": {
-    "nanos": 1794069687577928000,
-    "len": 1313
-  },
-  "rust/frmCtbEcdsCad": {
-    "nanos": 1794069687860419100,
-    "len": 1919
-  },
-  "rust/frmCtbEcdsConsulta": {
-    "nanos": 1794069688107952300,
-    "len": 1032
-  },
-  "rust/frmCtbEcdsHist": {
-    "nanos": 1794069688349955200,
-    "len": 1001
-  },
-  "rust/frmCtbEcdsLista": {
-    "nanos": 1794069688578122400,
-    "len": 1313
-  },
-  "rust/frmCtbEmpresasCad": {
-    "nanos": 1794069688820952100,
-    "len": 1931
-  },
-  "rust/frmCtbEmpresasConsulta": {
-    "nanos": 1794069689060130600,
-    "len": 1044
-  },
-  "rust/frmCtbEmpresasHist": {
-    "nanos": 1794069689314713200,
-    "len": 1013
-  },
-  "rust/frmCtbEmpresasLista": {
-    "nanos": 1794069689579986700,
-    "len": 1325
-  },
-  "rust/frmCtbEncerramentosCad": {
-    "nanos": 1794069689816493300,
-    "len": 1946
-  },
-  "rust/frmCtbEncerramentosConsulta": {
-    "nanos": 1794069690059535200,
-    "len": 1059
-  },
-  "rust/frmCtbEncerramentosHist": {
-    "nanos": 1794069690305147800,
-    "len": 1028
-  },
-  "rust/frmCtbEncerramentosLista": {
-    "nanos": 1794069690572397500,
-    "len": 1340
-  },
-  "rust/frmCtbExerciciosCad": {
-    "nanos": 1794069690829459000,
-    "len": 1937
-  },
-  "rust/frmCtbExerciciosConsulta": {
-    "nanos": 1794069691078178400,
-    "len": 1050
-  },
-  "rust/frmCtbExerciciosHist": {
-    "nanos": 1794069691314016600,
-    "len": 1019
-  },
-  "rust/frmCtbExerciciosLista": {
-    "nanos": 1794069691548014200,
-    "len": 1331
-  },
-  "rust/frmCtbFechamentosMensaisCad": {
-    "nanos": 1794069691790516600,
-    "len": 1961
-  },
-  "rust/frmCtbFechamentosMensaisConsulta": {
-    "nanos": 1794069692020513600,
-    "len": 1074
-  },
-  "rust/frmCtbFechamentosMensaisHist": {
-    "nanos": 1794069692267995100,
-    "len": 1043
-  },
-  "rust/frmCtbFechamentosMensaisLista": {
-    "nanos": 1794069692502519800,
-    "len": 1355
-  },
-  "rust/frmCtbFiliaisCad": {
-    "nanos": 1794069692739336800,
-    "len": 1928
-  },
-  "rust/frmCtbFiliaisConsulta": {
-    "nanos": 1794069692977739100,
-    "len": 1041
-  },
-  "rust/frmCtbFiliaisHist": {
-    "nanos": 1794069693211286500,
-    "len": 1010
-  },
-  "rust/frmCtbFiliaisLista": {
-    "nanos": 1794069693450047600,
-    "len": 1322
-  },
-  "rust/frmCtbGruposDeBensCad": {
-    "nanos": 1794069693687925600,
-    "len": 1943
-  },
-  "rust/frmCtbGruposDeBensConsulta": {
-    "nanos": 1794069693940514000,
-    "len": 1056
-  },
-  "rust/frmCtbGruposDeBensHist": {
-    "nanos": 1794069694195554600,
-    "len": 1025
-  },
-  "rust/frmCtbGruposDeBensLista": {
-    "nanos": 1794069694449819500,
-    "len": 1337
-  },
-  "rust/frmCtbGruposDeContasCad": {
-    "nanos": 1794069694694348200,
-    "len": 1949
-  },
-  "rust/frmCtbGruposDeContasConsulta": {
-    "nanos": 1794069694938005200,
-    "len": 1062
-  },
-  "rust/frmCtbGruposDeContasHist": {
-    "nanos": 1794069695184566000,
-    "len": 1031
-  },
-  "rust/frmCtbGruposDeContasLista": {
-    "nanos": 1794069695466843300,
-    "len": 1343
-  },
-  "rust/frmCtbHistoricosPadraoCad": {
-    "nanos": 1794069695760255200,
-    "len": 1955
-  },
-  "rust/frmCtbHistoricosPadraoConsulta": {
-    "nanos": 1794069696070806400,
-    "len": 1068
-  },
-  "rust/frmCtbHistoricosPadraoHist": {
-    "nanos": 1794069696297852400,
-    "len": 1037
-  },
-  "rust/frmCtbHistoricosPadraoLista": {
-    "nanos": 1794069696524702500,
-    "len": 1349
-  },
-  "rust/frmCtbIntegracoesContabeisCad": {
-    "nanos": 1794069696749699000,
-    "len": 1967
-  },
-  "rust/frmCtbIntegracoesContabeisConsulta": {
-    "nanos": 1794069696971581200,
-    "len": 1080
-  },
-  "rust/frmCtbIntegracoesContabeisHist": {
-    "nanos": 1794069697218703800,
-    "len": 1049
-  },
-  "rust/frmCtbIntegracoesContabeisLista": {
-    "nanos": 1794069697458116800,
-    "len": 1361
-  },
-  "rust/frmCtbInventariosPatrimoniaisCad": {
-    "nanos": 1794069697681464500,
-    "len": 1976
-  },
-  "rust/frmCtbInventariosPatrimoniaisConsulta": {
-    "nanos": 1794069697918519400,
-    "len": 1089
-  },
-  "rust/frmCtbInventariosPatrimoniaisHist": {
-    "nanos": 1794069698143037800,
-    "len": 1058
-  },
-  "rust/frmCtbInventariosPatrimoniaisLista": {
-    "nanos": 1794069698379148600,
-    "len": 1370
-  },
-  "rust/frmCtbLancamentosContabeisCad": {
-    "nanos": 1794069698603450500,
-    "len": 1967
-  },
-  "rust/frmCtbLancamentosContabeisConsulta": {
-    "nanos": 1794069698831979600,
-    "len": 1080
-  },
-  "rust/frmCtbLancamentosContabeisHist": {
-    "nanos": 1794069699066573000,
-    "len": 1049
-  },
-  "rust/frmCtbLancamentosContabeisLista": {
-    "nanos": 1794069699308234000,
-    "len": 1361
-  },
-  "rust/frmCtbLivrosContabeisCad": {
-    "nanos": 1794069699534398300,
-    "len": 1952
-  },
-  "rust/frmCtbLivrosContabeisConsulta": {
-    "nanos": 1794069699771367700,
-    "len": 1065
-  },
-  "rust/frmCtbLivrosContabeisHist": {
-    "nanos": 1794069699997732100,
-    "len": 1034
-  },
-  "rust/frmCtbLivrosContabeisLista": {
-    "nanos": 1794069700224126900,
-    "len": 1346
-  },
-  "rust/frmCtbLocaisDeBensCad": {
-    "nanos": 1794069700449804200,
-    "len": 1943
-  },
-  "rust/frmCtbLocaisDeBensConsulta": {
-    "nanos": 1794069700678109400,
-    "len": 1056
-  },
-  "rust/frmCtbLocaisDeBensHist": {
-    "nanos": 1794069700919871700,
-    "len": 1025
-  },
-  "rust/frmCtbLocaisDeBensLista": {
-    "nanos": 1794069701144278700,
-    "len": 1337
-  },
-  "rust/frmCtbLotesDeLancamentoCad": {
-    "nanos": 1794069701382409700,
-    "len": 1958
-  },
-  "rust/frmCtbLotesDeLancamentoConsulta": {
-    "nanos": 1794069701606608100,
-    "len": 1071
-  },
-  "rust/frmCtbLotesDeLancamentoHist": {
-    "nanos": 1794069701842256000,
-    "len": 1040
-  },
-  "rust/frmCtbLotesDeLancamentoLista": {
-    "nanos": 1794069702065563700,
-    "len": 1352
-  },
-  "rust/frmCtbMoedasContabeisCad": {
-    "nanos": 1794069702306249300,
-    "len": 1952
-  },
-  "rust/frmCtbMoedasContabeisConsulta": {
-    "nanos": 1794069702531662700,
-    "len": 1065
-  },
-  "rust/frmCtbMoedasContabeisHist": {
-    "nanos": 1794069702755991600,
-    "len": 1034
-  },
-  "rust/frmCtbMoedasContabeisLista": {
-    "nanos": 1794069702977836400,
-    "len": 1346
-  },
-  "rust/frmCtbNaturezasDeSaldoCad": {
-    "nanos": 1794069703200731800,
-    "len": 1955
-  },
-  "rust/frmCtbNaturezasDeSaldoConsulta": {
-    "nanos": 1794069703428024500,
-    "len": 1068
-  },
-  "rust/frmCtbNaturezasDeSaldoHist": {
-    "nanos": 1794069703658770100,
-    "len": 1037
-  },
-  "rust/frmCtbNaturezasDeSaldoLista": {
-    "nanos": 1794069703931847600,
-    "len": 1349
-  },
-  "rust/frmCtbNotasExplicativasCad": {
-    "nanos": 1794069704163711200,
-    "len": 1958
-  },
-  "rust/frmCtbNotasExplicativasConsulta": {
-    "nanos": 1794069704384184800,
-    "len": 1071
-  },
-  "rust/frmCtbNotasExplicativasHist": {
-    "nanos": 1794069704622005000,
-    "len": 1040
-  },
-  "rust/frmCtbNotasExplicativasLista": {
-    "nanos": 1794069704848116700,
-    "len": 1352
-  },
-  "rust/frmCtbPeriodosContabeisCad": {
-    "nanos": 1794069705097375600,
-    "len": 1958
-  },
-  "rust/frmCtbPeriodosContabeisConsulta": {
-    "nanos": 1794069705318394200,
-    "len": 1071
-  },
-  "rust/frmCtbPeriodosContabeisHist": {
-    "nanos": 1794069705545051100,
-    "len": 1040
-  },
-  "rust/frmCtbPeriodosContabeisLista": {
-    "nanos": 1794069705772619300,
-    "len": 1352
-  },
-  "rust/frmCtbPlanoDeContasCad": {
-    "nanos": 1794069705993514400,
-    "len": 1946
-  },
-  "rust/frmCtbPlanoDeContasConsulta": {
-    "nanos": 1794069706222760000,
-    "len": 1059
-  },
-  "rust/frmCtbPlanoDeContasHist": {
-    "nanos": 1794069706444583900,
-    "len": 1028
-  },
-  "rust/frmCtbPlanoDeContasLista": {
-    "nanos": 1794069706670949400,
-    "len": 1340
-  },
-  "rust/frmCtbProvisoesCad": {
-    "nanos": 1794069706897810500,
-    "len": 1934
-  },
-  "rust/frmCtbProvisoesConsulta": {
-    "nanos": 1794069707118201400,
-    "len": 1047
-  },
-  "rust/frmCtbProvisoesHist": {
-    "nanos": 1794069707353256600,
-    "len": 1016
-  },
-  "rust/frmCtbProvisoesLista": {
-    "nanos": 1794069707580510800,
-    "len": 1328
-  },
-  "rust/frmCtbRateiosCad": {
-    "nanos": 1794069707814549900,
-    "len": 1928
-  },
-  "rust/frmCtbRateiosConsulta": {
-    "nanos": 1794069708057946600,
-    "len": 1041
-  },
-  "rust/frmCtbRateiosHist": {
-    "nanos": 1794069708279573500,
-    "len": 1010
-  },
-  "rust/frmCtbRateiosLista": {
-    "nanos": 1794069708519739700,
-    "len": 1322
-  },
-  "rust/frmCtbRazoesCad": {
-    "nanos": 1794069708749635800,
-    "len": 1925
-  },
-  "rust/frmCtbRazoesConsulta": {
-    "nanos": 1794069708974481200,
-    "len": 1038
-  },
-  "rust/frmCtbRazoesHist": {
-    "nanos": 1794069709201348300,
-    "len": 1007
-  },
-  "rust/frmCtbRazoesLista": {
-    "nanos": 1794069709427745200,
-    "len": 1319
-  },
-  "rust/frmCtbRegrasDeRateioCad": {
-    "nanos": 1794069709653837300,
-    "len": 1949
-  },
-  "rust/frmCtbRegrasDeRateioConsulta": {
-    "nanos": 1794069709876626900,
-    "len": 1062
-  },
-  "rust/frmCtbRegrasDeRateioHist": {
-    "nanos": 1794069710113521000,
-    "len": 1031
-  },
-  "rust/frmCtbRegrasDeRateioLista": {
-    "nanos": 1794069710362141400,
-    "len": 1343
-  },
-  "rust/frmCtbResponsaveisContabeisCad": {
-    "nanos": 1794069710592807300,
-    "len": 1970
-  },
-  "rust/frmCtbResponsaveisContabeisConsulta": {
-    "nanos": 1794069710819296700,
-    "len": 1083
-  },
-  "rust/frmCtbResponsaveisContabeisHist": {
-    "nanos": 1794069711043823800,
-    "len": 1052
-  },
-  "rust/frmCtbResponsaveisContabeisLista": {
-    "nanos": 1794069711288672700,
-    "len": 1364
-  },
-  "rust/frmCtbTiposDeLancamentoCad": {
-    "nanos": 1794069711520847100,
-    "len": 1958
-  },
-  "rust/frmCtbTiposDeLancamentoConsulta": {
-    "nanos": 1794069711762992500,
-    "len": 1071
-  },
-  "rust/frmCtbTiposDeLancamentoHist": {
-    "nanos": 1794069712000722900,
-    "len": 1040
-  },
-  "rust/frmCtbTiposDeLancamentoLista": {
-    "nanos": 1794069712239837100,
-    "len": 1352
-  },
-  "rust/frmCtbTransferenciasDeBensCad": {
-    "nanos": 1794069712465428800,
-    "len": 1967
-  },
-  "rust/frmCtbTransferenciasDeBensConsulta": {
-    "nanos": 1794069712702819800,
-    "len": 1080
-  },
-  "rust/frmCtbTransferenciasDeBensHist": {
-    "nanos": 1794069712930125300,
-    "len": 1049
-  },
-  "rust/frmCtbTransferenciasDeBensLista": {
-    "nanos": 1794069713155665500,
-    "len": 1361
-  },
-  "rust/frmFinAdiantamentosAFornecedoresCad": {
-    "nanos": 1794069713381750400,
-    "len": 1985
-  },
-  "rust/frmFinAdiantamentosAFornecedoresConsulta": {
-    "nanos": 1794069713625412300,
-    "len": 1098
-  },
-  "rust/frmFinAdiantamentosAFornecedoresHist": {
-    "nanos": 1794069713844872500,
-    "len": 1067
-  },
-  "rust/frmFinAdiantamentosAFornecedoresLista": {
-    "nanos": 1794069714078817800,
-    "len": 1379
-  },
-  "rust/frmFinAdiantamentosDeClientesCad": {
-    "nanos": 1794069714301263100,
-    "len": 1976
-  },
-  "rust/frmFinAdiantamentosDeClientesConsulta": {
-    "nanos": 1794069714541916300,
-    "len": 1089
-  },
-  "rust/frmFinAdiantamentosDeClientesHist": {
-    "nanos": 1794069714779226700,
-    "len": 1058
-  },
-  "rust/frmFinAdiantamentosDeClientesLista": {
-    "nanos": 1794069715034003600,
-    "len": 1370
-  },
-  "rust/frmFinAgenciasCad": {
-    "nanos": 1794069715267931300,
-    "len": 1931
-  },
-  "rust/frmFinAgenciasConsulta": {
-    "nanos": 1794069715508121200,
-    "len": 1044
-  },
-  "rust/frmFinAgenciasHist": {
-    "nanos": 1794069715740041200,
-    "len": 1013
-  },
-  "rust/frmFinAgenciasLista": {
-    "nanos": 1794069715962195600,
-    "len": 1325
-  },
-  "rust/frmFinAplicacoesFinanceirasCad": {
-    "nanos": 1794069716192533500,
-    "len": 1970
-  },
-  "rust/frmFinAplicacoesFinanceirasConsulta": {
-    "nanos": 1794069716427397400,
-    "len": 1083
-  },
-  "rust/frmFinAplicacoesFinanceirasHist": {
-    "nanos": 1794069716660261500,
-    "len": 1052
-  },
-  "rust/frmFinAplicacoesFinanceirasLista": {
-    "nanos": 1794069716888874300,
-    "len": 1364
-  },
-  "rust/frmFinAvalistasCad": {
-    "nanos": 1794069717121623500,
-    "len": 1934
-  },
-  "rust/frmFinAvalistasConsulta": {
-    "nanos": 1794069717357766400,
-    "len": 1047
-  },
-  "rust/frmFinAvalistasHist": {
-    "nanos": 1794069717590629500,
-    "len": 1016
-  },
-  "rust/frmFinAvalistasLista": {
-    "nanos": 1794069717832718200,
-    "len": 1328
-  },
-  "rust/frmFinBaixasDePagamentoCad": {
-    "nanos": 1794069718056346800,
-    "len": 1958
-  },
-  "rust/frmFinBaixasDePagamentoConsulta": {
-    "nanos": 1794069718287561700,
-    "len": 1071
-  },
-  "rust/frmFinBaixasDePagamentoHist": {
-    "nanos": 1794069718520352000,
-    "len": 1040
-  },
-  "rust/frmFinBaixasDePagamentoLista": {
-    "nanos": 1794069718752850600,
-    "len": 1352
-  },
-  "rust/frmFinBaixasDeRecebimentoCad": {
-    "nanos": 1794069718992453500,
-    "len": 1964
-  },
-  "rust/frmFinBaixasDeRecebimentoConsulta": {
-    "nanos": 1794069719227943700,
-    "len": 1077
-  },
-  "rust/frmFinBaixasDeRecebimentoHist": {
-    "nanos": 1794069719458502500,
-    "len": 1046
-  },
-  "rust/frmFinBaixasDeRecebimentoLista": {
-    "nanos": 1794069719684971100,
-    "len": 1358
-  },
-  "rust/frmFinBancosCad": {
-    "nanos": 1794069719933513400,
-    "len": 1925
-  },
-  "rust/frmFinBancosConsulta": {
-    "nanos": 1794069720165928400,
-    "len": 1038
-  },
-  "rust/frmFinBancosHist": {
-    "nanos": 1794069720406583000,
-    "len": 1007
-  },
-  "rust/frmFinBancosLista": {
-    "nanos": 1794069720634780600,
-    "len": 1319
-  },
-  "rust/frmFinBorderosDeCobrancaCad": {
-    "nanos": 1794069720869571500,
-    "len": 1961
-  },
-  "rust/frmFinBorderosDeCobrancaConsulta": {
-    "nanos": 1794069721097031200,
-    "len": 1074
-  },
-  "rust/frmFinBorderosDeCobrancaHist": {
-    "nanos": 1794069721322191900,
-    "len": 1043
-  },
-  "rust/frmFinBorderosDeCobrancaLista": {
-    "nanos": 1794069721574145600,
-    "len": 1355
-  },
-  "rust/frmFinBorderosDePagamentoCad": {
-    "nanos": 1794069721800544200,
-    "len": 1964
-  },
-  "rust/frmFinBorderosDePagamentoConsulta": {
-    "nanos": 1794069722028112600,
-    "len": 1077
-  },
-  "rust/frmFinBorderosDePagamentoHist": {
-    "nanos": 1794069722247976100,
-    "len": 1046
-  },
-  "rust/frmFinBorderosDePagamentoLista": {
-    "nanos": 1794069722513264000,
-    "len": 1358
-  },
-  "rust/frmFinCarteirasDeCobrancaCad": {
-    "nanos": 1794069722777995100,
-    "len": 1964
-  },
-  "rust/frmFinCarteirasDeCobrancaConsulta": {
-    "nanos": 1794069723033779400,
-    "len": 1077
-  },
-  "rust/frmFinCarteirasDeCobrancaHist": {
-    "nanos": 1794069723271701700,
-    "len": 1046
-  },
-  "rust/frmFinCarteirasDeCobrancaLista": {
-    "nanos": 1794069723513114800,
-    "len": 1358
-  },
-  "rust/frmFinCartoesCorporativosCad": {
-    "nanos": 1794069723754280100,
-    "len": 1964
-  },
-  "rust/frmFinCartoesCorporativosConsulta": {
-    "nanos": 1794069724003452500,
-    "len": 1077
-  },
-  "rust/frmFinCartoesCorporativosHist": {
-    "nanos": 1794069724229324600,
-    "len": 1046
-  },
-  "rust/frmFinCartoesCorporativosLista": {
-    "nanos": 1794069724462071300,
-    "len": 1358
-  },
-  "rust/frmFinCategoriasDeDespesaCad": {
-    "nanos": 1794069724695965200,
-    "len": 1964
-  },
-  "rust/frmFinCategoriasDeDespesaConsulta": {
-    "nanos": 1794069724927846500,
-    "len": 1077
-  },
-  "rust/frmFinCategoriasDeDespesaHist": {
-    "nanos": 1794069725161486000,
-    "len": 1046
-  },
-  "rust/frmFinCategoriasDeDespesaLista": {
-    "nanos": 1794069725417936700,
-    "len": 1358
-  },
-  "rust/frmFinCategoriasDeReceitaCad": {
-    "nanos": 1794069725670419600,
-    "len": 1964
-  },
-  "rust/frmFinCategoriasDeReceitaConsulta": {
-    "nanos": 1794069726006445500,
-    "len": 1077
-  },
-  "rust/frmFinCategoriasDeReceitaHist": {
-    "nanos": 1794069726275496700,
-    "len": 1046
-  },
-  "rust/frmFinCategoriasDeReceitaLista": {
-    "nanos": 1794069726750195600,
-    "len": 1358
-  },
-  "rust/frmFinCentrosDeResultadoCad": {
-    "nanos": 1794069727039119000,
-    "len": 1961
-  },
-  "rust/frmFinCentrosDeResultadoConsulta": {
-    "nanos": 1794069727298097000,
-    "len": 1074
-  },
-  "rust/frmFinCentrosDeResultadoHist": {
-    "nanos": 1794069727578385000,
-    "len": 1043
-  },
-  "rust/frmFinCentrosDeResultadoLista": {
-    "nanos": 1794069727843287900,
-    "len": 1355
-  },
-  "rust/frmFinChequesEmitidosCad": {
-    "nanos": 1794069728100287600,
-    "len": 1952
-  },
-  "rust/frmFinChequesEmitidosConsulta": {
-    "nanos": 1794069728347470300,
-    "len": 1065
-  },
-  "rust/frmFinChequesEmitidosHist": {
-    "nanos": 1794069728587818900,
-    "len": 1034
-  },
-  "rust/frmFinChequesEmitidosLista": {
-    "nanos": 1794069728852422900,
-    "len": 1346
-  },
-  "rust/frmFinChequesRecebidosCad": {
-    "nanos": 1794069729233811600,
-    "len": 1955
-  },
-  "rust/frmFinChequesRecebidosConsulta": {
-    "nanos": 1794069729606467600,
-    "len": 1068
-  },
-  "rust/frmFinChequesRecebidosHist": {
-    "nanos": 1794069730560066500,
-    "len": 1037
-  },
-  "rust/frmFinChequesRecebidosLista": {
-    "nanos": 1794069731506116200,
-    "len": 1349
-  },
-  "rust/frmFinConciliacoesBancariasCad": {
-    "nanos": 1794069732415475100,
-    "len": 1970
-  },
-  "rust/frmFinConciliacoesBancariasConsulta": {
-    "nanos": 1794069733497561900,
-    "len": 1083
-  },
-  "rust/frmFinConciliacoesBancariasHist": {
-    "nanos": 1794069734358719300,
-    "len": 1052
-  },
-  "rust/frmFinConciliacoesBancariasLista": {
-    "nanos": 1794069735224979900,
-    "len": 1364
-  },
-  "rust/frmFinCondicoesDePagamentoCad": {
-    "nanos": 1794069736211732600,
-    "len": 1967
-  },
-  "rust/frmFinCondicoesDePagamentoConsulta": {
-    "nanos": 1794069737033341100,
-    "len": 1080
-  },
-  "rust/frmFinCondicoesDePagamentoHist": {
-    "nanos": 1794069737789748100,
-    "len": 1049
-  },
-  "rust/frmFinCondicoesDePagamentoLista": {
-    "nanos": 1794069738891500000,
-    "len": 1361
-  },
-  "rust/frmFinContasAPagarCad": {
-    "nanos": 1794069740128491900,
-    "len": 1943
-  },
-  "rust/frmFinContasAPagarConsulta": {
-    "nanos": 1794069741649748100,
-    "len": 1056
-  },
-  "rust/frmFinContasAPagarHist": {
-    "nanos": 1794069742751279200,
-    "len": 1025
-  },
-  "rust/frmFinContasAPagarLista": {
-    "nanos": 1794069743815398000,
-    "len": 1337
-  },
-  "rust/frmFinContasAReceberCad": {
-    "nanos": 1794069744815680300,
-    "len": 1949
-  },
-  "rust/frmFinContasAReceberConsulta": {
-    "nanos": 1794069745644770400,
-    "len": 1062
-  },
-  "rust/frmFinContasAReceberHist": {
-    "nanos": 1794069746656703800,
-    "len": 1031
-  },
-  "rust/frmFinContasAReceberLista": {
-    "nanos": 1794069747812610000,
-    "len": 1343
-  },
-  "rust/frmFinContasBancariasCad": {
-    "nanos": 1794069748679229500,
-    "len": 1952
-  },
-  "rust/frmFinContasBancariasConsulta": {
-    "nanos": 1794069750107163500,
-    "len": 1065
-  },
-  "rust/frmFinContasBancariasHist": {
-    "nanos": 1794069750989756300,
-    "len": 1034
-  },
-  "rust/frmFinContasBancariasLista": {
-    "nanos": 1794069751763616500,
-    "len": 1346
-  },
-  "rust/frmFinContratosFinanceirosCad": {
-    "nanos": 1794069752529470400,
-    "len": 1967
-  },
-  "rust/frmFinContratosFinanceirosConsulta": {
-    "nanos": 1794069753197670100,
-    "len": 1080
-  },
-  "rust/frmFinContratosFinanceirosHist": {
-    "nanos": 1794069754077892400,
-    "len": 1049
-  },
-  "rust/frmFinContratosFinanceirosLista": {
-    "nanos": 1794069754768043900,
-    "len": 1361
-  },
-  "rust/frmFinEmprestimosCad": {
-    "nanos": 1794069755542215800,
-    "len": 1940
-  },
-  "rust/frmFinEmprestimosConsulta": {
-    "nanos": 1794069756329483000,
-    "len": 1053
-  },
-  "rust/frmFinEmprestimosHist": {
-    "nanos": 1794069757679966900,
-    "len": 1022
-  },
-  "rust/frmFinEmprestimosLista": {
-    "nanos": 1794069758851273000,
-    "len": 1334
-  },
-  "rust/frmFinFavorecidosCad": {
-    "nanos": 1794069759787729300,
-    "len": 1940
-  },
-  "rust/frmFinFavorecidosConsulta": {
-    "nanos": 1794069760529965800,
-    "len": 1053
-  },
-  "rust/frmFinFavorecidosHist": {
-    "nanos": 1794069761339503500,
-    "len": 1022
-  },
-  "rust/frmFinFavorecidosLista": {
-    "nanos": 1794069762257579400,
-    "len": 1334
-  },
-  "rust/frmFinFluxosDeCaixaCad": {
-    "nanos": 1794069763576622800,
-    "len": 1946
-  },
-  "rust/frmFinFluxosDeCaixaConsulta": {
-    "nanos": 1794069764529617900,
-    "len": 1059
-  },
-  "rust/frmFinFluxosDeCaixaHist": {
-    "nanos": 1794069765523548800,
-    "len": 1028
-  },
-  "rust/frmFinFluxosDeCaixaLista": {
-    "nanos": 1794069766104873000,
-    "len": 1340
-  },
-  "rust/frmFinFormasDePagamentoCad": {
-    "nanos": 1794069766716439300,
-    "len": 1958
-  },
-  "rust/frmFinFormasDePagamentoConsulta": {
-    "nanos": 1794069767235512200,
-    "len": 1071
-  },
-  "rust/frmFinFormasDePagamentoHist": {
-    "nanos": 1794069767783474700,
-    "len": 1040
-  },
-  "rust/frmFinFormasDePagamentoLista": {
-    "nanos": 1794069768320875000,
-    "len": 1352
-  },
-  "rust/frmFinIndicesDeCorrecaoCad": {
-    "nanos": 1794069768803668400,
-    "len": 1958
-  },
-  "rust/frmFinIndicesDeCorrecaoConsulta": {
-    "nanos": 1794069769181521900,
-    "len": 1071
-  },
-  "rust/frmFinIndicesDeCorrecaoHist": {
-    "nanos": 1794069769410429300,
-    "len": 1040
-  },
-  "rust/frmFinIndicesDeCorrecaoLista": {
-    "nanos": 1794069769650140200,
-    "len": 1352
-  },
-  "rust/frmFinMoedasCad": {
-    "nanos": 1794069769885025700,
-    "len": 1925
-  },
-  "rust/frmFinMoedasConsulta": {
-    "nanos": 1794069770147621700,
-    "len": 1038
-  },
-  "rust/frmFinMoedasHist": {
-    "nanos": 1794069770391400000,
-    "len": 1007
-  },
-  "rust/frmFinMoedasLista": {
-    "nanos": 1794069770627998300,
-    "len": 1319
-  },
-  "rust/frmFinMovimentosBancariosCad": {
-    "nanos": 1794069770871269500,
-    "len": 1964
-  },
-  "rust/frmFinMovimentosBancariosConsulta": {
-    "nanos": 1794069771114180200,
-    "len": 1077
-  },
-  "rust/frmFinMovimentosBancariosHist": {
-    "nanos": 1794069771348482600,
-    "len": 1046
-  },
-  "rust/frmFinMovimentosBancariosLista": {
-    "nanos": 1794069771588496300,
-    "len": 1358
-  },
-  "rust/frmFinOperadorasDeCartaoCad": {
-    "nanos": 1794069771824725200,
-    "len": 1961
-  },
-  "rust/frmFinOperadorasDeCartaoConsulta": {
-    "nanos": 1794069772065367000,
-    "len": 1074
-  },
-  "rust/frmFinOperadorasDeCartaoHist": {
-    "nanos": 1794069772302117000,
-    "len": 1043
-  },
-  "rust/frmFinOperadorasDeCartaoLista": {
-    "nanos": 1794069772548284200,
-    "len": 1355
-  },
-  "rust/frmFinOrcamentosFinanceirosCad": {
-    "nanos": 1794069772801985600,
-    "len": 1970
-  },
-  "rust/frmFinOrcamentosFinanceirosConsulta": {
-    "nanos": 1794069773050972100,
-    "len": 1083
-  },
-  "rust/frmFinOrcamentosFinanceirosHist": {
-    "nanos": 1794069773284863500,
-    "len": 1052
-  },
-  "rust/frmFinOrcamentosFinanceirosLista": {
-    "nanos": 1794069773537714900,
-    "len": 1364
-  },
-  "rust/frmFinPlanoFinanceiroCad": {
-    "nanos": 1794069773775278900,
-    "len": 1952
-  },
-  "rust/frmFinPlanoFinanceiroConsulta": {
-    "nanos": 1794069774030575100,
-    "len": 1065
-  },
-  "rust/frmFinPlanoFinanceiroHist": {
-    "nanos": 1794069774263845800,
-    "len": 1034
-  },
-  "rust/frmFinPlanoFinanceiroLista": {
-    "nanos": 1794069774530720900,
-    "len": 1346
-  },
-  "rust/frmFinPortadoresCad": {
-    "nanos": 1794069774771506000,
-    "len": 1937
-  },
-  "rust/frmFinPortadoresConsulta": {
-    "nanos": 1794069775014724700,
-    "len": 1050
-  },
-  "rust/frmFinPortadoresHist": {
-    "nanos": 1794069775267604200,
-    "len": 1019
-  },
-  "rust/frmFinPortadoresLista": {
-    "nanos": 1794069775506169100,
-    "len": 1331
-  },
-  "rust/frmFinPrestacoesDeContasCad": {
-    "nanos": 1794069775767706900,
-    "len": 1961
-  },
-  "rust/frmFinPrestacoesDeContasConsulta": {
-    "nanos": 1794069776017534200,
-    "len": 1074
-  },
-  "rust/frmFinPrestacoesDeContasHist": {
-    "nanos": 1794069776257840100,
-    "len": 1043
-  },
-  "rust/frmFinPrestacoesDeContasLista": {
-    "nanos": 1794069776492974600,
-    "len": 1355
-  },
-  "rust/frmFinProjetosCad": {
-    "nanos": 1794069776730621600,
-    "len": 1931
-  },
-  "rust/frmFinProjetosConsulta": {
-    "nanos": 1794069776972341900,
-    "len": 1044
-  },
-  "rust/frmFinProjetosHist": {
-    "nanos": 1794069777208111200,
-    "len": 1013
-  },
-  "rust/frmFinProjetosLista": {
-    "nanos": 1794069777467943300,
-    "len": 1325
-  },
-  "rust/frmFinRemessasCnabCad": {
-    "nanos": 1794069777702616800,
-    "len": 1943
-  },
-  "rust/frmFinRemessasCnabConsulta": {
-    "nanos": 1794069777946029100,
-    "len": 1056
-  },
-  "rust/frmFinRemessasCnabHist": {
-    "nanos": 1794069778187522600,
-    "len": 1025
-  },
-  "rust/frmFinRemessasCnabLista": {
-    "nanos": 1794069778420282700,
-    "len": 1337
-  },
-  "rust/frmFinRenegociacoesCad": {
-    "nanos": 1794069778664004200,
-    "len": 1946
-  },
-  "rust/frmFinRenegociacoesConsulta": {
-    "nanos": 1794069778917562400,
-    "len": 1059
-  },
-  "rust/frmFinRenegociacoesHist": {
-    "nanos": 1794069779166852000,
-    "len": 1028
-  },
-  "rust/frmFinRenegociacoesLista": {
-    "nanos": 1794069779399915100,
-    "len": 1340
-  },
-  "rust/frmFinRetornosCnabCad": {
-    "nanos": 1794069779666056400,
-    "len": 1943
-  },
-  "rust/frmFinRetornosCnabConsulta": {
-    "nanos": 1794069779897766500,
-    "len": 1056
-  },
-  "rust/frmFinRetornosCnabHist": {
-    "nanos": 1794069780139571800,
-    "len": 1025
-  },
-  "rust/frmFinRetornosCnabLista": {
-    "nanos": 1794069780378158800,
-    "len": 1337
-  },
-  "rust/frmFinTarifasBancariasCad": {
-    "nanos": 1794069780617610500,
-    "len": 1955
-  },
-  "rust/frmFinTarifasBancariasConsulta": {
-    "nanos": 1794069780879066100,
-    "len": 1068
-  },
-  "rust/frmFinTarifasBancariasHist": {
-    "nanos": 1794069781116659600,
-    "len": 1037
-  },
-  "rust/frmFinTarifasBancariasLista": {
-    "nanos": 1794069781361666500,
-    "len": 1349
-  },
-  "rust/frmFinTiposDeDocumentoCad": {
-    "nanos": 1794069781603822200,
-    "len": 1955
-  },
-  "rust/frmFinTiposDeDocumentoConsulta": {
-    "nanos": 1794069781903144900,
-    "len": 1068
-  },
-  "rust/frmFinTiposDeDocumentoHist": {
-    "nanos": 1794069782173418900,
-    "len": 1037
-  },
-  "rust/frmFinTiposDeDocumentoLista": {
-    "nanos": 1794069782484504900,
-    "len": 1349
-  },
-  "rust/frmFinTransferenciasEntreContasCad": {
-    "nanos": 1794069782802084800,
-    "len": 1982
-  },
-  "rust/frmFinTransferenciasEntreContasConsulta": {
-    "nanos": 1794069783157790500,
-    "len": 1095
-  },
-  "rust/frmFinTransferenciasEntreContasHist": {
-    "nanos": 1794069783549682600,
-    "len": 1064
-  },
-  "rust/frmFinTransferenciasEntreContasLista": {
-    "nanos": 1794069783991687900,
-    "len": 1376
-  },
-  "rust/frmFisAjustesDeApuracaoCad": {
-    "nanos": 1794069784484445000,
-    "len": 1958
-  },
-  "rust/frmFisAjustesDeApuracaoConsulta": {
-    "nanos": 1794069784926437300,
-    "len": 1071
-  },
-  "rust/frmFisAjustesDeApuracaoHist": {
-    "nanos": 1794069785343304100,
-    "len": 1040
-  },
-  "rust/frmFisAjustesDeApuracaoLista": {
-    "nanos": 1794069785671362800,
-    "len": 1352
-  },
-  "rust/frmFisAliquotasInterestaduaisCad": {
-    "nanos": 1794069785993097300,
-    "len": 1976
-  },
-  "rust/frmFisAliquotasInterestaduaisConsulta": {
-    "nanos": 1794069786281453200,
-    "len": 1089
-  },
-  "rust/frmFisAliquotasInterestaduaisHist": {
-    "nanos": 1794069786597518900,
-    "len": 1058
-  },
-  "rust/frmFisAliquotasInterestaduaisLista": {
-    "nanos": 1794069786899972600,
-    "len": 1370
-  },
-  "rust/frmFisApuracoesDeIcmsCad": {
-    "nanos": 1794069787226476200,
-    "len": 1952
-  },
-  "rust/frmFisApuracoesDeIcmsConsulta": {
-    "nanos": 1794069787531890700,
-    "len": 1065
-  },
-  "rust/frmFisApuracoesDeIcmsHist": {
-    "nanos": 1794069787829322100,
-    "len": 1034
-  },
-  "rust/frmFisApuracoesDeIcmsLista": {
-    "nanos": 1794069788184728700,
-    "len": 1346
-  },
-  "rust/frmFisApuracoesDeIpiCad": {
-    "nanos": 1794069788487549200,
-    "len": 1949
-  },
-  "rust/frmFisApuracoesDeIpiConsulta": {
-    "nanos": 1794069788787532200,
-    "len": 1062
-  },
-  "rust/frmFisApuracoesDeIpiHist": {
-    "nanos": 1794069789033202000,
-    "len": 1031
-  },
-  "rust/frmFisApuracoesDeIpiLista": {
-    "nanos": 1794069789318449300,
-    "len": 1343
-  },
-  "rust/frmFisApuracoesDePisECofinsCad": {
-    "nanos": 1794069789757710800,
-    "len": 1970
-  },
-  "rust/frmFisApuracoesDePisECofinsConsulta": {
-    "nanos": 1794069791134644500,
-    "len": 1083
-  },
-  "rust/frmFisApuracoesDePisECofinsHist": {
-    "nanos": 1794069792319744200,
-    "len": 1052
-  },
-  "rust/frmFisApuracoesDePisECofinsLista": {
-    "nanos": 1794069793241083300,
-    "len": 1364
-  },
-  "rust/frmFisBeneficiosFiscaisCad": {
-    "nanos": 1794069793955332100,
-    "len": 1958
-  },
-  "rust/frmFisBeneficiosFiscaisConsulta": {
-    "nanos": 1794069794747017500,
-    "len": 1071
-  },
-  "rust/frmFisBeneficiosFiscaisHist": {
-    "nanos": 1794069795385439300,
-    "len": 1040
-  },
-  "rust/frmFisBeneficiosFiscaisLista": {
-    "nanos": 1794069796232991900,
-    "len": 1352
-  },
-  "rust/frmFisCancelamentosDeNotaCad": {
-    "nanos": 1794069796785135400,
-    "len": 1964
-  },
-  "rust/frmFisCancelamentosDeNotaConsulta": {
-    "nanos": 1794069797259779800,
-    "len": 1077
-  },
-  "rust/frmFisCancelamentosDeNotaHist": {
-    "nanos": 1794069797766216900,
-    "len": 1046
-  },
-  "rust/frmFisCancelamentosDeNotaLista": {
-    "nanos": 1794069798250130800,
-    "len": 1358
-  },
-  "rust/frmFisCartasDeCorrecaoCad": {
-    "nanos": 1794069798682649200,
-    "len": 1955
-  },
-  "rust/frmFisCartasDeCorrecaoConsulta": {
-    "nanos": 1794069799125425100,
-    "len": 1068
-  },
-  "rust/frmFisCartasDeCorrecaoHist": {
-    "nanos": 1794069799620783400,
-    "len": 1037
-  },
-  "rust/frmFisCartasDeCorrecaoLista": {
-    "nanos": 1794069800247542700,
-    "len": 1349
-  },
-  "rust/frmFisCertificadosDigitaisCad": {
-    "nanos": 1794069800875221000,
-    "len": 1967
-  },
-  "rust/frmFisCertificadosDigitaisConsulta": {
-    "nanos": 1794069801396750700,
-    "len": 1080
-  },
-  "rust/frmFisCertificadosDigitaisHist": {
-    "nanos": 1794069801919760900,
-    "len": 1049
-  },
-  "rust/frmFisCertificadosDigitaisLista": {
-    "nanos": 1794069802434383800,
-    "len": 1361
-  },
-  "rust/frmFisCestsCad": {
-    "nanos": 1794069802824929200,
-    "len": 1922
-  },
-  "rust/frmFisCestsConsulta": {
-    "nanos": 1794069803078961400,
-    "len": 1035
-  },
-  "rust/frmFisCestsHist": {
-    "nanos": 1794069803325050300,
-    "len": 1004
-  },
-  "rust/frmFisCestsLista": {
-    "nanos": 1794069803597543100,
-    "len": 1316
-  },
-  "rust/frmFisCfopsCad": {
-    "nanos": 1794069803857387800,
-    "len": 1922
-  },
-  "rust/frmFisCfopsConsulta": {
-    "nanos": 1794069804116909800,
-    "len": 1035
-  },
-  "rust/frmFisCfopsHist": {
-    "nanos": 1794069804357621200,
-    "len": 1004
-  },
-  "rust/frmFisCfopsLista": {
-    "nanos": 1794069804606846500,
-    "len": 1316
-  },
-  "rust/frmFisConhecimentosDeTransporteCad": {
-    "nanos": 1794069804869899200,
-    "len": 1982
-  },
-  "rust/frmFisConhecimentosDeTransporteConsulta": {
-    "nanos": 1794069805103929600,
-    "len": 1095
-  },
-  "rust/frmFisConhecimentosDeTransporteHist": {
-    "nanos": 1794069805366018800,
-    "len": 1064
-  },
-  "rust/frmFisConhecimentosDeTransporteLista": {
-    "nanos": 1794069805617499500,
-    "len": 1376
-  },
-  "rust/frmFisContabilistasCad": {
-    "nanos": 1794069805875011700,
-    "len": 1946
-  },
-  "rust/frmFisContabilistasConsulta": {
-    "nanos": 1794069806170127700,
-    "len": 1059
-  },
-  "rust/frmFisContabilistasHist": {
-    "nanos": 1794069806437775100,
-    "len": 1028
-  },
-  "rust/frmFisContabilistasLista": {
-    "nanos": 1794069806707692500,
-    "len": 1340
-  },
-  "rust/frmFisCreditosTributariosCad": {
-    "nanos": 1794069807024725200,
-    "len": 1964
-  },
-  "rust/frmFisCreditosTributariosConsulta": {
-    "nanos": 1794069807270943200,
-    "len": 1077
-  },
-  "rust/frmFisCreditosTributariosHist": {
-    "nanos": 1794069807529855500,
-    "len": 1046
-  },
-  "rust/frmFisCreditosTributariosLista": {
-    "nanos": 1794069807774637900,
-    "len": 1358
-  },
-  "rust/frmFisDeclaracoesCad": {
-    "nanos": 1794069808075400100,
-    "len": 1940
-  },
-  "rust/frmFisDeclaracoesConsulta": {
-    "nanos": 1794069808334126500,
-    "len": 1053
-  },
-  "rust/frmFisDeclaracoesHist": {
-    "nanos": 1794069808572592400,
-    "len": 1022
-  },
-  "rust/frmFisDeclaracoesLista": {
-    "nanos": 1794069808810962300,
-    "len": 1334
-  },
-  "rust/frmFisEscrituracoesCad": {
-    "nanos": 1794069809043543600,
-    "len": 1946
-  },
-  "rust/frmFisEscrituracoesConsulta": {
-    "nanos": 1794069809277739600,
-    "len": 1059
-  },
-  "rust/frmFisEscrituracoesHist": {
-    "nanos": 1794069809511952800,
-    "len": 1028
-  },
-  "rust/frmFisEscrituracoesLista": {
-    "nanos": 1794069809756283700,
-    "len": 1340
-  },
-  "rust/frmFisEstadosCad": {
-    "nanos": 1794069809990592700,
-    "len": 1928
-  },
-  "rust/frmFisEstadosConsulta": {
-    "nanos": 1794069810225056000,
-    "len": 1041
-  },
-  "rust/frmFisEstadosHist": {
-    "nanos": 1794069810459483300,
-    "len": 1010
-  },
-  "rust/frmFisEstadosLista": {
-    "nanos": 1794069810693337900,
-    "len": 1322
-  },
-  "rust/frmFisGuiasDeRecolhimentoCad": {
-    "nanos": 1794069810928703900,
-    "len": 1964
-  },
-  "rust/frmFisGuiasDeRecolhimentoConsulta": {
-    "nanos": 1794069811160957100,
-    "len": 1077
-  },
-  "rust/frmFisGuiasDeRecolhimentoHist": {
-    "nanos": 1794069811402283500,
-    "len": 1046
-  },
-  "rust/frmFisGuiasDeRecolhimentoLista": {
-    "nanos": 1794069811636425400,
-    "len": 1358
-  },
-  "rust/frmFisInutilizacoesCad": {
-    "nanos": 1794069811869292300,
-    "len": 1946
-  },
-  "rust/frmFisInutilizacoesConsulta": {
-    "nanos": 1794069812189861700,
-    "len": 1059
-  },
-  "rust/frmFisInutilizacoesHist": {
-    "nanos": 1794069812433430400,
-    "len": 1028
-  },
-  "rust/frmFisInutilizacoesLista": {
-    "nanos": 1794069812694099600,
-    "len": 1340
-  },
-  "rust/frmFisLivrosDeEntradaCad": {
-    "nanos": 1794069812937505300,
-    "len": 1952
-  },
-  "rust/frmFisLivrosDeEntradaConsulta": {
-    "nanos": 1794069813177701600,
-    "len": 1065
-  },
-  "rust/frmFisLivrosDeEntradaHist": {
-    "nanos": 1794069813441983900,
-    "len": 1034
-  },
-  "rust/frmFisLivrosDeEntradaLista": {
-    "nanos": 1794069813687599700,
-    "len": 1346
-  },
-  "rust/frmFisLivrosDeSaidaCad": {
-    "nanos": 1794069813911846600,
-    "len": 1946
-  },
-  "rust/frmFisLivrosDeSaidaConsulta": {
-    "nanos": 1794069814158199800,
-    "len": 1059
-  },
-  "rust/frmFisLivrosDeSaidaHist": {
-    "nanos": 1794069814410670000,
-    "len": 1028
-  },
-  "rust/frmFisLivrosDeSaidaLista": {
-    "nanos": 1794069814662031100,
-    "len": 1340
-  },
-  "rust/frmFisLivrosDeServicoCad": {
-    "nanos": 1794069814941809800,
-    "len": 1952
-  },
-  "rust/frmFisLivrosDeServicoConsulta": {
-    "nanos": 1794069815180883600,
-    "len": 1065
-  },
-  "rust/frmFisLivrosDeServicoHist": {
-    "nanos": 1794069815421949500,
-    "len": 1034
-  },
-  "rust/frmFisLivrosDeServicoLista": {
-    "nanos": 1794069815672869500,
-    "len": 1346
-  },
-  "rust/frmFisManifestosDeCargaCad": {
-    "nanos": 1794069815915038700,
-    "len": 1958
-  },
-  "rust/frmFisManifestosDeCargaConsulta": {
-    "nanos": 1794069816167580900,
-    "len": 1071
-  },
-  "rust/frmFisManifestosDeCargaHist": {
-    "nanos": 1794069816417401000,
-    "len": 1040
-  },
-  "rust/frmFisManifestosDeCargaLista": {
-    "nanos": 1794069816666172700,
-    "len": 1352
-  },
-  "rust/frmFisMensagensFiscaisCad": {
-    "nanos": 1794069816901156400,
-    "len": 1955
-  },
-  "rust/frmFisMensagensFiscaisConsulta": {
-    "nanos": 1794069817144217700,
-    "len": 1068
-  },
-  "rust/frmFisMensagensFiscaisHist": {
-    "nanos": 1794069817387406000,
-    "len": 1037
-  },
-  "rust/frmFisMensagensFiscaisLista": {
-    "nanos": 1794069817630138800,
-    "len": 1349
-  },
-  "rust/frmFisMunicipiosCad": {
-    "nanos": 1794069817880370000,
-    "len": 1937
-  },
-  "rust/frmFisMunicipiosConsulta": {
-    "nanos": 1794069818137775300,
-    "len": 1050
-  },
-  "rust/frmFisMunicipiosHist": {
-    "nanos": 1794069818381658400,
-    "len": 1019
-  },
-  "rust/frmFisMunicipiosLista": {
-    "nanos": 1794069819632668300,
-    "len": 1331
-  },
-  "rust/frmFisNaturezasDeOperacaoCad": {
-    "nanos": 1794069821603197900,
-    "len": 1964
-  },
-  "rust/frmFisNaturezasDeOperacaoConsulta": {
-    "nanos": 1794069822377563400,
-    "len": 1077
-  },
-  "rust/frmFisNaturezasDeOperacaoHist": {
-    "nanos": 1794069822933457400,
-    "len": 1046
-  },
-  "rust/frmFisNaturezasDeOperacaoLista": {
-    "nanos": 1794069823520086000,
-    "len": 1358
-  },
-  "rust/frmFisNcmsCad": {
-    "nanos": 1794069824064533200,
-    "len": 1919
-  },
-  "rust/frmFisNcmsConsulta": {
-    "nanos": 1794069824502073200,
-    "len": 1032
-  },
-  "rust/frmFisNcmsHist": {
-    "nanos": 1794069824782624100,
-    "len": 1001
-  },
-  "rust/frmFisNcmsLista": {
-    "nanos": 1794069825053377300,
-    "len": 1313
-  },
-  "rust/frmFisNotasDeServicoCad": {
-    "nanos": 1794069825310102800,
-    "len": 1949
-  },
-  "rust/frmFisNotasDeServicoConsulta": {
-    "nanos": 1794069825551168600,
-    "len": 1062
-  },
-  "rust/frmFisNotasDeServicoHist": {
-    "nanos": 1794069825797752200,
-    "len": 1031
-  },
-  "rust/frmFisNotasDeServicoLista": {
-    "nanos": 1794069826034757700,
-    "len": 1343
-  },
-  "rust/frmFisNotasFiscaisEletronicasCad": {
-    "nanos": 1794069826273267400,
-    "len": 1976
-  },
-  "rust/frmFisNotasFiscaisEletronicasConsulta": {
-    "nanos": 1794069826551389000,
-    "len": 1089
-  },
-  "rust/frmFisNotasFiscaisEletronicasHist": {
-    "nanos": 1794069826866666300,
-    "len": 1058
-  },
-  "rust/frmFisNotasFiscaisEletronicasLista": {
-    "nanos": 1794069827132548500,
-    "len": 1370
-  },
-  "rust/frmFisObrigacoesAcessoriasCad": {
-    "nanos": 1794069827397518300,
-    "len": 1967
-  },
-  "rust/frmFisObrigacoesAcessoriasConsulta": {
-    "nanos": 1794069827663817900,
-    "len": 1080
-  },
-  "rust/frmFisObrigacoesAcessoriasHist": {
-    "nanos": 1794069827951546800,
-    "len": 1049
-  },
-  "rust/frmFisObrigacoesAcessoriasLista": {
-    "nanos": 1794069828209290800,
-    "len": 1361
-  },
-  "rust/frmFisPaisesCad": {
-    "nanos": 1794069828497416700,
-    "len": 1925
-  },
-  "rust/frmFisPaisesConsulta": {
-    "nanos": 1794069828802466900,
-    "len": 1038
-  },
-  "rust/frmFisPaisesHist": {
-    "nanos": 1794069829070323000,
-    "len": 1007
-  },
-  "rust/frmFisPaisesLista": {
-    "nanos": 1794069829330376100,
-    "len": 1319
-  },
-  "rust/frmFisRegimesTributariosCad": {
-    "nanos": 1794069829637577000,
-    "len": 1961
-  },
-  "rust/frmFisRegimesTributariosConsulta": {
-    "nanos": 1794069829897556100,
-    "len": 1074
-  },
-  "rust/frmFisRegimesTributariosHist": {
-    "nanos": 1794069830167559500,
-    "len": 1043
-  },
-  "rust/frmFisRegimesTributariosLista": {
-    "nanos": 1794069830410837000,
-    "len": 1355
-  },
-  "rust/frmFisRegrasDeCofinsCad": {
-    "nanos": 1794069830651679100,
-    "len": 1949
-  },
-  "rust/frmFisRegrasDeCofinsConsulta": {
-    "nanos": 1794069830901257700,
-    "len": 1062
-  },
-  "rust/frmFisRegrasDeCofinsHist": {
-    "nanos": 1794069831142110900,
-    "len": 1031
-  },
-  "rust/frmFisRegrasDeCofinsLista": {
-    "nanos": 1794069831375988200,
-    "len": 1343
-  },
-  "rust/frmFisRegrasDeIcmsCad": {
-    "nanos": 1794069831618721400,
-    "len": 1943
-  },
-  "rust/frmFisRegrasDeIcmsConsulta": {
-    "nanos": 1794069831871911200,
-    "len": 1056
-  },
-  "rust/frmFisRegrasDeIcmsHist": {
-    "nanos": 1794069832126086300,
-    "len": 1025
-  },
-  "rust/frmFisRegrasDeIcmsLista": {
-    "nanos": 1794069832442265900,
-    "len": 1337
-  },
-  "rust/frmFisRegrasDeIpiCad": {
-    "nanos": 1794069832690134400,
-    "len": 1940
-  },
-  "rust/frmFisRegrasDeIpiConsulta": {
-    "nanos": 1794069832930027300,
-    "len": 1053
-  },
-  "rust/frmFisRegrasDeIpiHist": {
-    "nanos": 1794069833174243900,
-    "len": 1022
-  },
-  "rust/frmFisRegrasDeIpiLista": {
-    "nanos": 1794069833436026600,
-    "len": 1334
-  },
-  "rust/frmFisRegrasDeIssCad": {
-    "nanos": 1794069833676921200,
-    "len": 1940
-  },
-  "rust/frmFisRegrasDeIssConsulta": {
-    "nanos": 1794069833942297700,
-    "len": 1053
-  },
-  "rust/frmFisRegrasDeIssHist": {
-    "nanos": 1794069834181168000,
-    "len": 1022
-  },
-  "rust/frmFisRegrasDeIssLista": {
-    "nanos": 1794069834422054400,
-    "len": 1334
-  },
-  "rust/frmFisRegrasDePisCad": {
-    "nanos": 1794069834664055000,
-    "len": 1940
-  },
-  "rust/frmFisRegrasDePisConsulta": {
-    "nanos": 1794069834906372200,
-    "len": 1053
-  },
-  "rust/frmFisRegrasDePisHist": {
-    "nanos": 1794069835142621200,
-    "len": 1022
-  },
-  "rust/frmFisRegrasDePisLista": {
-    "nanos": 1794069835383321400,
-    "len": 1334
-  },
-  "rust/frmFisRetencoesNaFonteCad": {
-    "nanos": 1794069835720333700,
-    "len": 1955
-  },
-  "rust/frmFisRetencoesNaFonteConsulta": {
-    "nanos": 1794069835976491500,
-    "len": 1068
-  },
-  "rust/frmFisRetencoesNaFonteHist": {
-    "nanos": 1794069836216331500,
-    "len": 1037
-  },
-  "rust/frmFisRetencoesNaFonteLista": {
-    "nanos": 1794069836460353600,
-    "len": 1349
-  },
-  "rust/frmFisSeriesDeNotasCad": {
-    "nanos": 1794069836780210200,
-    "len": 1946
-  },
-  "rust/frmFisSeriesDeNotasConsulta": {
-    "nanos": 1794069837024867800,
-    "len": 1059
-  },
-  "rust/frmFisSeriesDeNotasHist": {
-    "nanos": 1794069837279732100,
-    "len": 1028
-  },
-  "rust/frmFisSeriesDeNotasLista": {
-    "nanos": 1794069837531275800,
-    "len": 1340
-  },
-  "rust/frmFisServicosDaLc116Cad": {
-    "nanos": 1794069837791997100,
-    "len": 1952
-  },
-  "rust/frmFisServicosDaLc116Consulta": {
-    "nanos": 1794069838178737900,
-    "len": 1065
-  },
-  "rust/frmFisServicosDaLc116Hist": {
-    "nanos": 1794069838438757200,
-    "len": 1034
-  },
-  "rust/frmFisServicosDaLc116Lista": {
-    "nanos": 1794069838672385100,
-    "len": 1346
-  },
-  "rust/frmFisSpedContribuicoesCad": {
-    "nanos": 1794069838930430100,
-    "len": 1958
-  },
-  "rust/frmFisSpedContribuicoesConsulta": {
-    "nanos": 1794069839173953300,
-    "len": 1071
-  },
-  "rust/frmFisSpedContribuicoesHist": {
-    "nanos": 1794069839431027400,
-    "len": 1040
-  },
-  "rust/frmFisSpedContribuicoesLista": {
-    "nanos": 1794069839678383900,
-    "len": 1352
-  },
-  "rust/frmFisSpedFiscalCad": {
-    "nanos": 1794069839937269200,
-    "len": 1937
-  },
-  "rust/frmFisSpedFiscalConsulta": {
-    "nanos": 1794069840245743800,
-    "len": 1050
-  },
-  "rust/frmFisSpedFiscalHist": {
-    "nanos": 1794069840539346600,
-    "len": 1019
-  },
-  "rust/frmFisSpedFiscalLista": {
-    "nanos": 1794069840812120800,
-    "len": 1331
-  },
-  "rust/frmPrincipal": {
-    "nanos": 1794103520074417800,
-    "len": 1303
-  },
-  "rust/frmRhAdiantamentosSalariaisCad": {
-    "nanos": 1794069841326731000,
-    "len": 1970
-  },
-  "rust/frmRhAdiantamentosSalariaisConsulta": {
-    "nanos": 1794069841603369800,
-    "len": 1083
-  },
-  "rust/frmRhAdiantamentosSalariaisHist": {
-    "nanos": 1794069841979406300,
-    "len": 1052
-  },
-  "rust/frmRhAdiantamentosSalariaisLista": {
-    "nanos": 1794069842231775100,
-    "len": 1364
-  },
-  "rust/frmRhAdmissoesCad": {
-    "nanos": 1794069842482263000,
-    "len": 1931
-  },
-  "rust/frmRhAdmissoesConsulta": {
-    "nanos": 1794069843522630200,
-    "len": 1044
-  },
-  "rust/frmRhAdmissoesHist": {
-    "nanos": 1794069846275400900,
-    "len": 1013
-  },
-  "rust/frmRhAdmissoesLista": {
-    "nanos": 1794069847179109000,
-    "len": 1325
-  },
-  "rust/frmRhAdvertenciasCad": {
-    "nanos": 1794069847973150400,
-    "len": 1940
-  },
-  "rust/frmRhAdvertenciasConsulta": {
-    "nanos": 1794069848732827000,
-    "len": 1053
-  },
-  "rust/frmRhAdvertenciasHist": {
-    "nanos": 1794069849100479800,
-    "len": 1022
-  },
-  "rust/frmRhAdvertenciasLista": {
-    "nanos": 1794069849429552800,
-    "len": 1334
-  },
-  "rust/frmRhAfastamentosCad": {
-    "nanos": 1794069849772316900,
-    "len": 1940
-  },
-  "rust/frmRhAfastamentosConsulta": {
-    "nanos": 1794069850027494700,
-    "len": 1053
-  },
-  "rust/frmRhAfastamentosHist": {
-    "nanos": 1794069850281242900,
-    "len": 1022
-  },
-  "rust/frmRhAfastamentosLista": {
-    "nanos": 1794069850546450000,
-    "len": 1334
-  },
-  "rust/frmRhAvaliacoesDeDesempenhoCad": {
-    "nanos": 1794069850791310300,
-    "len": 1970
-  },
-  "rust/frmRhAvaliacoesDeDesempenhoConsulta": {
-    "nanos": 1794069851067281900,
-    "len": 1083
-  },
-  "rust/frmRhAvaliacoesDeDesempenhoHist": {
-    "nanos": 1794069851354083100,
-    "len": 1052
-  },
-  "rust/frmRhAvaliacoesDeDesempenhoLista": {
-    "nanos": 1794069851716007800,
-    "len": 1364
-  },
-  "rust/frmRhBancosDeHorasCad": {
-    "nanos": 1794069852030814300,
-    "len": 1943
-  },
-  "rust/frmRhBancosDeHorasConsulta": {
-    "nanos": 1794069852321733700,
-    "len": 1056
-  },
-  "rust/frmRhBancosDeHorasHist": {
-    "nanos": 1794069852599026800,
-    "len": 1025
-  },
-  "rust/frmRhBancosDeHorasLista": {
-    "nanos": 1794069852867049000,
-    "len": 1337
-  },
-  "rust/frmRhBeneficiosCad": {
-    "nanos": 1794069853195612100,
-    "len": 1934
-  },
-  "rust/frmRhBeneficiosConsulta": {
-    "nanos": 1794069853497475300,
-    "len": 1047
-  },
-  "rust/frmRhBeneficiosHist": {
-    "nanos": 1794069853760682500,
-    "len": 1016
-  },
-  "rust/frmRhBeneficiosLista": {
-    "nanos": 1794069854028607300,
-    "len": 1328
-  },
-  "rust/frmRhCargosCad": {
-    "nanos": 1794069854374838500,
-    "len": 1922
-  },
-  "rust/frmRhCargosConsulta": {
-    "nanos": 1794069854629171200,
-    "len": 1035
-  },
-  "rust/frmRhCargosHist": {
-    "nanos": 1794069854889212000,
-    "len": 1004
-  },
-  "rust/frmRhCargosLista": {
-    "nanos": 1794069855240314000,
-    "len": 1316
-  },
-  "rust/frmRhCentrosDeCustoCad": {
-    "nanos": 1794069855489703900,
-    "len": 1946
-  },
-  "rust/frmRhCentrosDeCustoConsulta": {
-    "nanos": 1794069855732022200,
-    "len": 1059
-  },
-  "rust/frmRhCentrosDeCustoHist": {
-    "nanos": 1794069856021847100,
-    "len": 1028
-  },
-  "rust/frmRhCentrosDeCustoLista": {
-    "nanos": 1794069856262628400,
-    "len": 1340
-  },
-  "rust/frmRhCompetenciasCad": {
-    "nanos": 1794069856519186500,
-    "len": 1940
-  },
-  "rust/frmRhCompetenciasConsulta": {
-    "nanos": 1794069856863809700,
-    "len": 1053
-  },
-  "rust/frmRhCompetenciasHist": {
-    "nanos": 1794069857108936700,
-    "len": 1022
-  },
-  "rust/frmRhCompetenciasLista": {
-    "nanos": 1794069857347318800,
-    "len": 1334
-  },
-  "rust/frmRhCursosCad": {
-    "nanos": 1794069857595973600,
-    "len": 1922
-  },
-  "rust/frmRhCursosConsulta": {
-    "nanos": 1794069857841293700,
-    "len": 1035
-  },
-  "rust/frmRhCursosHist": {
-    "nanos": 1794069858082382500,
-    "len": 1004
-  },
-  "rust/frmRhCursosLista": {
-    "nanos": 1794069858324487500,
-    "len": 1316
-  },
-  "rust/frmRhDecimoTerceiroCad": {
-    "nanos": 1794069858561066800,
-    "len": 1946
-  },
-  "rust/frmRhDecimoTerceiroConsulta": {
-    "nanos": 1794069858798985900,
-    "len": 1059
-  },
-  "rust/frmRhDecimoTerceiroHist": {
-    "nanos": 1794069859036928000,
-    "len": 1028
-  },
-  "rust/frmRhDecimoTerceiroLista": {
-    "nanos": 1794069859267486400,
-    "len": 1340
-  },
-  "rust/frmRhDepartamentosCad": {
-    "nanos": 1794069859507689400,
-    "len": 1943
-  },
-  "rust/frmRhDepartamentosConsulta": {
-    "nanos": 1794069859760994700,
-    "len": 1056
-  },
-  "rust/frmRhDepartamentosHist": {
-    "nanos": 1794069860016225100,
-    "len": 1025
-  },
-  "rust/frmRhDepartamentosLista": {
-    "nanos": 1794069860251036300,
-    "len": 1337
-  },
-  "rust/frmRhDesligamentosCad": {
-    "nanos": 1794069860492995700,
-    "len": 1943
-  },
-  "rust/frmRhDesligamentosConsulta": {
-    "nanos": 1794069860751525800,
-    "len": 1056
-  },
-  "rust/frmRhDesligamentosHist": {
-    "nanos": 1794069860996556100,
-    "len": 1025
-  },
-  "rust/frmRhDesligamentosLista": {
-    "nanos": 1794069861249502000,
-    "len": 1337
-  },
-  "rust/frmRhEntregasDeEpiCad": {
-    "nanos": 1794069861510421000,
-    "len": 1943
-  },
-  "rust/frmRhEntregasDeEpiConsulta": {
-    "nanos": 1794069861758839100,
-    "len": 1056
-  },
-  "rust/frmRhEntregasDeEpiHist": {
-    "nanos": 1794069862009392100,
-    "len": 1025
-  },
-  "rust/frmRhEntregasDeEpiLista": {
-    "nanos": 1794069862250024800,
-    "len": 1337
-  },
-  "rust/frmRhEntrevistasCad": {
-    "nanos": 1794069862490002700,
-    "len": 1937
-  },
-  "rust/frmRhEntrevistasConsulta": {
-    "nanos": 1794069862732535700,
-    "len": 1050
-  },
-  "rust/frmRhEntrevistasHist": {
-    "nanos": 1794069862969465400,
-    "len": 1019
-  },
-  "rust/frmRhEntrevistasLista": {
-    "nanos": 1794069863211405400,
-    "len": 1331
-  },
-  "rust/frmRhEpisCad": {
-    "nanos": 1794069863462593400,
-    "len": 1916
-  },
-  "rust/frmRhEpisConsulta": {
-    "nanos": 1794069863701027300,
+    "nanos": 1794243142975605000,
     "len": 1029
   },
-  "rust/frmRhEpisHist": {
-    "nanos": 1794069863956140100,
-    "len": 998
+  "rust/frmComAlmoxarifadosLista": {
+    "nanos": 1794243142975605000,
+    "len": 1341
   },
-  "rust/frmRhEpisLista": {
-    "nanos": 1794069864196964100,
-    "len": 1310
+  "rust/frmComAprovacoesDeCompraCad": {
+    "nanos": 1794243142976611600,
+    "len": 1962
   },
-  "rust/frmRhEscalasDeTrabalhoCad": {
-    "nanos": 1794069864460175500,
-    "len": 1955
+  "rust/frmComAprovacoesDeCompraConsulta": {
+    "nanos": 1794243142976611600,
+    "len": 1075
   },
-  "rust/frmRhEscalasDeTrabalhoConsulta": {
-    "nanos": 1794069864694915000,
-    "len": 1068
+  "rust/frmComAprovacoesDeCompraHist": {
+    "nanos": 1794243142977626700,
+    "len": 1044
   },
-  "rust/frmRhEscalasDeTrabalhoHist": {
-    "nanos": 1794069864938944800,
-    "len": 1037
+  "rust/frmComAprovacoesDeCompraLista": {
+    "nanos": 1794243142978130200,
+    "len": 1356
   },
-  "rust/frmRhEscalasDeTrabalhoLista": {
-    "nanos": 1794069865196545000,
-    "len": 1349
+  "rust/frmComAprovadoresCad": {
+    "nanos": 1794243142978588200,
+    "len": 1941
   },
-  "rust/frmRhEventosDaFolhaCad": {
-    "nanos": 1794069865430605300,
-    "len": 1946
+  "rust/frmComAprovadoresConsulta": {
+    "nanos": 1794243142978588200,
+    "len": 1054
   },
-  "rust/frmRhEventosDaFolhaConsulta": {
-    "nanos": 1794069865692036900,
-    "len": 1059
+  "rust/frmComAprovadoresHist": {
+    "nanos": 1794243142979365700,
+    "len": 1023
   },
-  "rust/frmRhEventosDaFolhaHist": {
-    "nanos": 1794069865929549300,
-    "len": 1028
+  "rust/frmComAprovadoresLista": {
+    "nanos": 1794243142979689900,
+    "len": 1335
   },
-  "rust/frmRhEventosDaFolhaLista": {
-    "nanos": 1794069866167570400,
-    "len": 1340
+  "rust/frmComAvaliacoesDeFornecedorCad": {
+    "nanos": 1794243142980608000,
+    "len": 1974
   },
-  "rust/frmRhExamesOcupacionaisCad": {
-    "nanos": 1794069866402013200,
-    "len": 1958
+  "rust/frmComAvaliacoesDeFornecedorConsulta": {
+    "nanos": 1794243142980608000,
+    "len": 1087
   },
-  "rust/frmRhExamesOcupacionaisConsulta": {
-    "nanos": 1794069866647598700,
-    "len": 1071
+  "rust/frmComAvaliacoesDeFornecedorHist": {
+    "nanos": 1794243142981594900,
+    "len": 1056
   },
-  "rust/frmRhExamesOcupacionaisHist": {
-    "nanos": 1794069866885427200,
-    "len": 1040
+  "rust/frmComAvaliacoesDeFornecedorLista": {
+    "nanos": 1794243142982113300,
+    "len": 1368
   },
-  "rust/frmRhExamesOcupacionaisLista": {
-    "nanos": 1794069867136186900,
-    "len": 1352
+  "rust/frmComCatalogosDeFornecedorCad": {
+    "nanos": 1794243142982605500,
+    "len": 1971
   },
-  "rust/frmRhExamesRealizadosCad": {
-    "nanos": 1794069867387200500,
-    "len": 1952
+  "rust/frmComCatalogosDeFornecedorConsulta": {
+    "nanos": 1794243142982605500,
+    "len": 1084
   },
-  "rust/frmRhExamesRealizadosConsulta": {
-    "nanos": 1794069867627316900,
-    "len": 1065
+  "rust/frmComCatalogosDeFornecedorHist": {
+    "nanos": 1794243142983616100,
+    "len": 1053
   },
-  "rust/frmRhExamesRealizadosHist": {
-    "nanos": 1794069867886578500,
-    "len": 1034
+  "rust/frmComCatalogosDeFornecedorLista": {
+    "nanos": 1794243142983616100,
+    "len": 1365
   },
-  "rust/frmRhExamesRealizadosLista": {
-    "nanos": 1794069868117722200,
-    "len": 1346
+  "rust/frmComCategoriasDeCompraCad": {
+    "nanos": 1794243142984604600,
+    "len": 1962
   },
-  "rust/frmRhFeriadosCad": {
-    "nanos": 1794069868382220700,
-    "len": 1928
+  "rust/frmComCategoriasDeCompraConsulta": {
+    "nanos": 1794243142984604600,
+    "len": 1075
   },
-  "rust/frmRhFeriadosConsulta": {
-    "nanos": 1794069868641355800,
+  "rust/frmComCategoriasDeCompraHist": {
+    "nanos": 1794243142985581700,
+    "len": 1044
+  },
+  "rust/frmComCategoriasDeCompraLista": {
+    "nanos": 1794243142985581700,
+    "len": 1356
+  },
+  "rust/frmComClassesDeMaterialCad": {
+    "nanos": 1794243142985581700,
+    "len": 1959
+  },
+  "rust/frmComClassesDeMaterialConsulta": {
+    "nanos": 1794243142986768400,
+    "len": 1072
+  },
+  "rust/frmComClassesDeMaterialHist": {
+    "nanos": 1794243142987610900,
     "len": 1041
   },
-  "rust/frmRhFeriadosHist": {
-    "nanos": 1794069868890932700,
-    "len": 1010
-  },
-  "rust/frmRhFeriadosLista": {
-    "nanos": 1794069869136065900,
-    "len": 1322
-  },
-  "rust/frmRhFeriasCad": {
-    "nanos": 1794069869383276000,
-    "len": 1922
-  },
-  "rust/frmRhFeriasConsulta": {
-    "nanos": 1794069869637017100,
-    "len": 1035
-  },
-  "rust/frmRhFeriasHist": {
-    "nanos": 1794069869888495000,
-    "len": 1004
-  },
-  "rust/frmRhFeriasLista": {
-    "nanos": 1794069870134771900,
-    "len": 1316
-  },
-  "rust/frmRhFolhasDePagamentoCad": {
-    "nanos": 1794069870381584800,
-    "len": 1955
-  },
-  "rust/frmRhFolhasDePagamentoConsulta": {
-    "nanos": 1794069870621577700,
-    "len": 1068
-  },
-  "rust/frmRhFolhasDePagamentoHist": {
-    "nanos": 1794069870858963700,
-    "len": 1037
-  },
-  "rust/frmRhFolhasDePagamentoLista": {
-    "nanos": 1794069871093275100,
-    "len": 1349
-  },
-  "rust/frmRhFuncionariosCad": {
-    "nanos": 1794069871351181400,
-    "len": 1940
-  },
-  "rust/frmRhFuncionariosConsulta": {
-    "nanos": 1794069871588900200,
-    "len": 1053
-  },
-  "rust/frmRhFuncionariosHist": {
-    "nanos": 1794069871842512800,
-    "len": 1022
-  },
-  "rust/frmRhFuncionariosLista": {
-    "nanos": 1794069872079693300,
-    "len": 1334
-  },
-  "rust/frmRhHorasExtrasCad": {
-    "nanos": 1794069872328961900,
-    "len": 1937
-  },
-  "rust/frmRhHorasExtrasConsulta": {
-    "nanos": 1794069872571666100,
-    "len": 1050
-  },
-  "rust/frmRhHorasExtrasHist": {
-    "nanos": 1794069872808816600,
-    "len": 1019
-  },
-  "rust/frmRhHorasExtrasLista": {
-    "nanos": 1794069873061869900,
-    "len": 1331
-  },
-  "rust/frmRhInstrutoresCad": {
-    "nanos": 1794069873298047900,
-    "len": 1937
-  },
-  "rust/frmRhInstrutoresConsulta": {
-    "nanos": 1794069873558194400,
-    "len": 1050
-  },
-  "rust/frmRhInstrutoresHist": {
-    "nanos": 1794069873793084300,
-    "len": 1019
-  },
-  "rust/frmRhInstrutoresLista": {
-    "nanos": 1794069874052796800,
-    "len": 1331
-  },
-  "rust/frmRhLancamentosDePontoCad": {
-    "nanos": 1794069874290153200,
-    "len": 1958
-  },
-  "rust/frmRhLancamentosDePontoConsulta": {
-    "nanos": 1794069874539374300,
-    "len": 1071
-  },
-  "rust/frmRhLancamentosDePontoHist": {
-    "nanos": 1794069874781443300,
-    "len": 1040
-  },
-  "rust/frmRhLancamentosDePontoLista": {
-    "nanos": 1794069875017565800,
-    "len": 1352
-  },
-  "rust/frmRhMotivosDeDesligamentoCad": {
-    "nanos": 1794069875284980100,
-    "len": 1967
-  },
-  "rust/frmRhMotivosDeDesligamentoConsulta": {
-    "nanos": 1794069875524165200,
-    "len": 1080
-  },
-  "rust/frmRhMotivosDeDesligamentoHist": {
-    "nanos": 1794069875779670800,
-    "len": 1049
-  },
-  "rust/frmRhMotivosDeDesligamentoLista": {
-    "nanos": 1794069876019439300,
-    "len": 1361
-  },
-  "rust/frmRhNiveisSalariaisCad": {
-    "nanos": 1794069876261868200,
-    "len": 1949
-  },
-  "rust/frmRhNiveisSalariaisConsulta": {
-    "nanos": 1794069876497646800,
-    "len": 1062
-  },
-  "rust/frmRhNiveisSalariaisHist": {
-    "nanos": 1794069876765466000,
-    "len": 1031
-  },
-  "rust/frmRhNiveisSalariaisLista": {
-    "nanos": 1794069877082933200,
-    "len": 1343
-  },
-  "rust/frmRhPlanosDeSaudeCad": {
-    "nanos": 1794069877337633600,
-    "len": 1943
-  },
-  "rust/frmRhPlanosDeSaudeConsulta": {
-    "nanos": 1794069877624538500,
-    "len": 1056
-  },
-  "rust/frmRhPlanosDeSaudeHist": {
-    "nanos": 1794069877883032300,
-    "len": 1025
-  },
-  "rust/frmRhPlanosDeSaudeLista": {
-    "nanos": 1794069878183406700,
-    "len": 1337
-  },
-  "rust/frmRhPromocoesCad": {
-    "nanos": 1794069878469330400,
-    "len": 1931
-  },
-  "rust/frmRhPromocoesConsulta": {
-    "nanos": 1794069878769569100,
-    "len": 1044
-  },
-  "rust/frmRhPromocoesHist": {
-    "nanos": 1794069879052570500,
-    "len": 1013
-  },
-  "rust/frmRhPromocoesLista": {
-    "nanos": 1794069879392401100,
-    "len": 1325
-  },
-  "rust/frmRhRecrutamentosCad": {
-    "nanos": 1794069879951778600,
-    "len": 1943
-  },
-  "rust/frmRhRecrutamentosConsulta": {
-    "nanos": 1794069880963017300,
-    "len": 1056
-  },
-  "rust/frmRhRecrutamentosHist": {
-    "nanos": 1794069881721990300,
-    "len": 1025
-  },
-  "rust/frmRhRecrutamentosLista": {
-    "nanos": 1794069882357012200,
-    "len": 1337
-  },
-  "rust/frmRhReembolsosCad": {
-    "nanos": 1794069883099501900,
-    "len": 1934
-  },
-  "rust/frmRhReembolsosConsulta": {
-    "nanos": 1794069883794972200,
-    "len": 1047
-  },
-  "rust/frmRhReembolsosHist": {
-    "nanos": 1794069884606258300,
-    "len": 1016
-  },
-  "rust/frmRhReembolsosLista": {
-    "nanos": 1794069885465319600,
-    "len": 1328
-  },
-  "rust/frmRhRequisicoesDePessoalCad": {
-    "nanos": 1794069886278866700,
-    "len": 1964
-  },
-  "rust/frmRhRequisicoesDePessoalConsulta": {
-    "nanos": 1794069887303535300,
-    "len": 1077
-  },
-  "rust/frmRhRequisicoesDePessoalHist": {
-    "nanos": 1794069888010569000,
-    "len": 1046
-  },
-  "rust/frmRhRequisicoesDePessoalLista": {
-    "nanos": 1794069888557117700,
-    "len": 1358
-  },
-  "rust/frmRhRescisoesCad": {
-    "nanos": 1794069888826591200,
-    "len": 1931
-  },
-  "rust/frmRhRescisoesConsulta": {
-    "nanos": 1794069889088278000,
-    "len": 1044
-  },
-  "rust/frmRhRescisoesHist": {
-    "nanos": 1794069889363314600,
-    "len": 1013
-  },
-  "rust/frmRhRescisoesLista": {
-    "nanos": 1794069889634667100,
-    "len": 1325
-  },
-  "rust/frmRhSindicatosCad": {
-    "nanos": 1794069889914973600,
-    "len": 1934
-  },
-  "rust/frmRhSindicatosConsulta": {
-    "nanos": 1794069890221198400,
-    "len": 1047
-  },
-  "rust/frmRhSindicatosHist": {
-    "nanos": 1794069890506836500,
-    "len": 1016
-  },
-  "rust/frmRhSindicatosLista": {
-    "nanos": 1794069890779579500,
-    "len": 1328
-  },
-  "rust/frmRhTiposDeAfastamentoCad": {
-    "nanos": 1794069891032752300,
-    "len": 1958
-  },
-  "rust/frmRhTiposDeAfastamentoConsulta": {
-    "nanos": 1794069891304978700,
-    "len": 1071
-  },
-  "rust/frmRhTiposDeAfastamentoHist": {
-    "nanos": 1794069891552503800,
-    "len": 1040
-  },
-  "rust/frmRhTiposDeAfastamentoLista": {
-    "nanos": 1794069891873377900,
-    "len": 1352
-  },
-  "rust/frmRhTransferenciasCad": {
-    "nanos": 1794069892125486700,
-    "len": 1946
-  },
-  "rust/frmRhTransferenciasConsulta": {
-    "nanos": 1794069892394702100,
-    "len": 1059
-  },
-  "rust/frmRhTransferenciasHist": {
-    "nanos": 1794069892661512400,
-    "len": 1028
-  },
-  "rust/frmRhTransferenciasLista": {
-    "nanos": 1794069892949199300,
-    "len": 1340
-  },
-  "rust/frmRhTreinamentosRealizadosCad": {
-    "nanos": 1794069893227203200,
-    "len": 1970
-  },
-  "rust/frmRhTreinamentosRealizadosConsulta": {
-    "nanos": 1794069893491703000,
-    "len": 1083
-  },
-  "rust/frmRhTreinamentosRealizadosHist": {
-    "nanos": 1794069893763104600,
-    "len": 1052
-  },
-  "rust/frmRhTreinamentosRealizadosLista": {
-    "nanos": 1794069894012183900,
-    "len": 1364
-  },
-  "rust/frmRhTurnosCad": {
-    "nanos": 1794069894265683100,
-    "len": 1922
-  },
-  "rust/frmRhTurnosConsulta": {
-    "nanos": 1794069894514717100,
-    "len": 1035
-  },
-  "rust/frmRhTurnosHist": {
-    "nanos": 1794069894763575500,
-    "len": 1004
-  },
-  "rust/frmRhTurnosLista": {
-    "nanos": 1794069895002236200,
-    "len": 1316
-  },
-  "rust/frmRhVagasCad": {
-    "nanos": 1794069895377174200,
-    "len": 1919
-  },
-  "rust/frmRhVagasConsulta": {
-    "nanos": 1794069895847493700,
-    "len": 1032
-  },
-  "rust/frmRhVagasHist": {
-    "nanos": 1794069896462964900,
-    "len": 1001
-  },
-  "rust/frmRhVagasLista": {
-    "nanos": 1794069897354494900,
-    "len": 1313
-  },
-  "rust/frmVenApuracoesDeComissaoCad": {
-    "nanos": 1794069897982369300,
-    "len": 1964
-  },
-  "rust/frmVenApuracoesDeComissaoConsulta": {
-    "nanos": 1794069899383595400,
-    "len": 1077
-  },
-  "rust/frmVenApuracoesDeComissaoHist": {
-    "nanos": 1794069900950892300,
-    "len": 1046
-  },
-  "rust/frmVenApuracoesDeComissaoLista": {
-    "nanos": 1794069901944459300,
-    "len": 1358
-  },
-  "rust/frmVenAssinaturasCad": {
-    "nanos": 1794069904339219600,
-    "len": 1940
-  },
-  "rust/frmVenAssinaturasConsulta": {
-    "nanos": 1794069905509205700,
-    "len": 1053
-  },
-  "rust/frmVenAssinaturasHist": {
-    "nanos": 1794069906455702400,
-    "len": 1022
-  },
-  "rust/frmVenAssinaturasLista": {
-    "nanos": 1794069907200213300,
-    "len": 1334
-  },
-  "rust/frmVenBonificacoesCad": {
-    "nanos": 1794069908504749500,
-    "len": 1943
-  },
-  "rust/frmVenBonificacoesConsulta": {
-    "nanos": 1794069909825981400,
-    "len": 1056
-  },
-  "rust/frmVenBonificacoesHist": {
-    "nanos": 1794069911051126300,
-    "len": 1025
-  },
-  "rust/frmVenBonificacoesLista": {
-    "nanos": 1794069911751948000,
-    "len": 1337
-  },
-  "rust/frmVenCampanhasCad": {
-    "nanos": 1794069912371904900,
-    "len": 1934
-  },
-  "rust/frmVenCampanhasConsulta": {
-    "nanos": 1794069913354868000,
-    "len": 1047
-  },
-  "rust/frmVenCampanhasHist": {
-    "nanos": 1794069913727452400,
-    "len": 1016
-  },
-  "rust/frmVenCampanhasLista": {
-    "nanos": 1794069914049765200,
-    "len": 1328
-  },
-  "rust/frmVenCanaisDeVendaCad": {
-    "nanos": 1794069914335756600,
-    "len": 1946
-  },
-  "rust/frmVenCanaisDeVendaConsulta": {
-    "nanos": 1794069914596585500,
-    "len": 1059
-  },
-  "rust/frmVenCanaisDeVendaHist": {
-    "nanos": 1794069914857262500,
-    "len": 1028
-  },
-  "rust/frmVenCanaisDeVendaLista": {
-    "nanos": 1794069915104019500,
-    "len": 1340
-  },
-  "rust/frmVenClientesCad": {
-    "nanos": 1794069915362702500,
-    "len": 1931
-  },
-  "rust/frmVenClientesConsulta": {
-    "nanos": 1794069915607172100,
-    "len": 1044
-  },
-  "rust/frmVenClientesHist": {
-    "nanos": 1794069915847500300,
-    "len": 1013
-  },
-  "rust/frmVenClientesLista": {
-    "nanos": 1794069916097491000,
-    "len": 1325
-  },
-  "rust/frmVenComissoesCad": {
-    "nanos": 1794069916343143900,
-    "len": 1934
-  },
-  "rust/frmVenComissoesConsulta": {
-    "nanos": 1794069916592739300,
-    "len": 1047
-  },
-  "rust/frmVenComissoesHist": {
-    "nanos": 1794069916836620100,
-    "len": 1016
-  },
-  "rust/frmVenComissoesLista": {
-    "nanos": 1794069917083735400,
-    "len": 1328
-  },
-  "rust/frmVenConcorrentesCad": {
-    "nanos": 1794069917331350900,
-    "len": 1943
-  },
-  "rust/frmVenConcorrentesConsulta": {
-    "nanos": 1794069917577423600,
-    "len": 1056
-  },
-  "rust/frmVenConcorrentesHist": {
-    "nanos": 1794069917831367700,
-    "len": 1025
-  },
-  "rust/frmVenConcorrentesLista": {
-    "nanos": 1794069918078738700,
-    "len": 1337
-  },
-  "rust/frmVenConsignacoesCad": {
-    "nanos": 1794069918347209300,
-    "len": 1943
-  },
-  "rust/frmVenConsignacoesConsulta": {
-    "nanos": 1794069918617515400,
-    "len": 1056
-  },
-  "rust/frmVenConsignacoesHist": {
-    "nanos": 1794069918897997500,
-    "len": 1025
-  },
-  "rust/frmVenConsignacoesLista": {
-    "nanos": 1794069919167858100,
-    "len": 1337
-  },
-  "rust/frmVenContatosCad": {
-    "nanos": 1794069919430658800,
-    "len": 1931
-  },
-  "rust/frmVenContatosConsulta": {
-    "nanos": 1794069919717801200,
-    "len": 1044
-  },
-  "rust/frmVenContatosHist": {
-    "nanos": 1794069920018366700,
-    "len": 1013
-  },
-  "rust/frmVenContatosLista": {
-    "nanos": 1794069920302086900,
-    "len": 1325
-  },
-  "rust/frmVenContratosDeVendaCad": {
-    "nanos": 1794069920599280800,
-    "len": 1955
-  },
-  "rust/frmVenContratosDeVendaConsulta": {
-    "nanos": 1794069920872003500,
-    "len": 1068
-  },
-  "rust/frmVenContratosDeVendaHist": {
-    "nanos": 1794069921149050900,
-    "len": 1037
-  },
-  "rust/frmVenContratosDeVendaLista": {
-    "nanos": 1794069921412254000,
-    "len": 1349
-  },
-  "rust/frmVenDescontosCad": {
-    "nanos": 1794069921676634400,
-    "len": 1934
-  },
-  "rust/frmVenDescontosConsulta": {
-    "nanos": 1794069921947408500,
-    "len": 1047
-  },
-  "rust/frmVenDescontosHist": {
-    "nanos": 1794069922334138900,
-    "len": 1016
-  },
-  "rust/frmVenDescontosLista": {
-    "nanos": 1794069923971294200,
-    "len": 1328
-  },
-  "rust/frmVenDevolucoesDeVendaCad": {
-    "nanos": 1794069925864610400,
-    "len": 1958
-  },
-  "rust/frmVenDevolucoesDeVendaConsulta": {
-    "nanos": 1794069926635273800,
-    "len": 1071
-  },
-  "rust/frmVenDevolucoesDeVendaHist": {
-    "nanos": 1794069927292481300,
-    "len": 1040
-  },
-  "rust/frmVenDevolucoesDeVendaLista": {
-    "nanos": 1794069927855019900,
-    "len": 1352
-  },
-  "rust/frmVenEntregasCad": {
-    "nanos": 1794069928697443100,
-    "len": 1931
-  },
-  "rust/frmVenEntregasConsulta": {
-    "nanos": 1794069929316357100,
-    "len": 1044
-  },
-  "rust/frmVenEntregasHist": {
-    "nanos": 1794069929903088600,
-    "len": 1013
-  },
-  "rust/frmVenEntregasLista": {
-    "nanos": 1794069930382387500,
-    "len": 1325
-  },
-  "rust/frmVenExpedicoesCad": {
-    "nanos": 1794069930726760200,
-    "len": 1937
-  },
-  "rust/frmVenExpedicoesConsulta": {
-    "nanos": 1794069931174598900,
-    "len": 1050
-  },
-  "rust/frmVenExpedicoesHist": {
-    "nanos": 1794069931739215400,
-    "len": 1019
-  },
-  "rust/frmVenExpedicoesLista": {
-    "nanos": 1794069932355512100,
-    "len": 1331
-  },
-  "rust/frmVenFaturamentosCad": {
-    "nanos": 1794069932886779400,
-    "len": 1943
-  },
-  "rust/frmVenFaturamentosConsulta": {
-    "nanos": 1794069933451965300,
-    "len": 1056
-  },
-  "rust/frmVenFaturamentosHist": {
-    "nanos": 1794069933724047800,
-    "len": 1025
-  },
-  "rust/frmVenFaturamentosLista": {
-    "nanos": 1794069933993883600,
-    "len": 1337
-  },
-  "rust/frmVenGruposDeClientesCad": {
-    "nanos": 1794069934259859900,
-    "len": 1955
-  },
-  "rust/frmVenGruposDeClientesConsulta": {
-    "nanos": 1794069934554004000,
-    "len": 1068
-  },
-  "rust/frmVenGruposDeClientesHist": {
-    "nanos": 1794069934854825900,
-    "len": 1037
-  },
-  "rust/frmVenGruposDeClientesLista": {
-    "nanos": 1794069935122954700,
-    "len": 1349
-  },
-  "rust/frmVenKitsDeProdutosCad": {
-    "nanos": 1794069935387139200,
-    "len": 1949
-  },
-  "rust/frmVenKitsDeProdutosConsulta": {
-    "nanos": 1794069935683005200,
-    "len": 1062
-  },
-  "rust/frmVenKitsDeProdutosHist": {
-    "nanos": 1794069935928338100,
-    "len": 1031
-  },
-  "rust/frmVenKitsDeProdutosLista": {
-    "nanos": 1794069936240187100,
-    "len": 1343
-  },
-  "rust/frmVenMetasDeVendaCad": {
-    "nanos": 1794069936535463200,
-    "len": 1943
-  },
-  "rust/frmVenMetasDeVendaConsulta": {
-    "nanos": 1794069936778658300,
-    "len": 1056
-  },
-  "rust/frmVenMetasDeVendaHist": {
-    "nanos": 1794069937062940800,
-    "len": 1025
-  },
-  "rust/frmVenMetasDeVendaLista": {
-    "nanos": 1794069937382712400,
-    "len": 1337
-  },
-  "rust/frmVenMotivosDePerdaCad": {
-    "nanos": 1794069937635869500,
-    "len": 1949
-  },
-  "rust/frmVenMotivosDePerdaConsulta": {
-    "nanos": 1794069937881123100,
-    "len": 1062
-  },
-  "rust/frmVenMotivosDePerdaHist": {
-    "nanos": 1794069938130376100,
-    "len": 1031
-  },
-  "rust/frmVenMotivosDePerdaLista": {
-    "nanos": 1794069938362406100,
-    "len": 1343
-  },
-  "rust/frmVenNotasDeSaidaCad": {
-    "nanos": 1794069938613854900,
-    "len": 1943
-  },
-  "rust/frmVenNotasDeSaidaConsulta": {
-    "nanos": 1794069938850555700,
-    "len": 1056
-  },
-  "rust/frmVenNotasDeSaidaHist": {
-    "nanos": 1794069939092360000,
-    "len": 1025
-  },
-  "rust/frmVenNotasDeSaidaLista": {
-    "nanos": 1794069939327049100,
-    "len": 1337
-  },
-  "rust/frmVenOportunidadesCad": {
-    "nanos": 1794069939587808100,
-    "len": 1946
-  },
-  "rust/frmVenOportunidadesConsulta": {
-    "nanos": 1794069939829281700,
-    "len": 1059
-  },
-  "rust/frmVenOportunidadesHist": {
-    "nanos": 1794069940067146300,
-    "len": 1028
-  },
-  "rust/frmVenOportunidadesLista": {
-    "nanos": 1794069940319843700,
-    "len": 1340
-  },
-  "rust/frmVenOrcamentosDeVendaCad": {
-    "nanos": 1794069940570498400,
-    "len": 1958
-  },
-  "rust/frmVenOrcamentosDeVendaConsulta": {
-    "nanos": 1794069940813459600,
-    "len": 1071
-  },
-  "rust/frmVenOrcamentosDeVendaHist": {
-    "nanos": 1794069941078554800,
-    "len": 1040
-  },
-  "rust/frmVenOrcamentosDeVendaLista": {
-    "nanos": 1794069941325385900,
-    "len": 1352
-  },
-  "rust/frmVenPedidosDeECommerceCad": {
-    "nanos": 1794069941565643700,
-    "len": 1961
-  },
-  "rust/frmVenPedidosDeECommerceConsulta": {
-    "nanos": 1794069941804346700,
-    "len": 1074
-  },
-  "rust/frmVenPedidosDeECommerceHist": {
-    "nanos": 1794069942052641200,
-    "len": 1043
-  },
-  "rust/frmVenPedidosDeECommerceLista": {
-    "nanos": 1794069942294710700,
-    "len": 1355
-  },
-  "rust/frmVenPedidosDeVendaCad": {
-    "nanos": 1794069942537727800,
-    "len": 1949
-  },
-  "rust/frmVenPedidosDeVendaConsulta": {
-    "nanos": 1794069942773607600,
-    "len": 1062
-  },
-  "rust/frmVenPedidosDeVendaHist": {
-    "nanos": 1794069943022363500,
-    "len": 1031
-  },
-  "rust/frmVenPedidosDeVendaLista": {
-    "nanos": 1794069943295869600,
-    "len": 1343
-  },
-  "rust/frmVenPontosDeVendaCad": {
-    "nanos": 1794069943577368700,
-    "len": 1946
-  },
-  "rust/frmVenPontosDeVendaConsulta": {
-    "nanos": 1794069943825179700,
-    "len": 1059
-  },
-  "rust/frmVenPontosDeVendaHist": {
-    "nanos": 1794069944103442800,
-    "len": 1028
-  },
-  "rust/frmVenPontosDeVendaLista": {
-    "nanos": 1794069944347075700,
-    "len": 1340
-  },
-  "rust/frmVenPosVendasCad": {
-    "nanos": 1794069944641630000,
-    "len": 1934
-  },
-  "rust/frmVenPosVendasConsulta": {
-    "nanos": 1794069944987957700,
-    "len": 1047
-  },
-  "rust/frmVenPosVendasHist": {
-    "nanos": 1794069945261843900,
-    "len": 1016
-  },
-  "rust/frmVenPosVendasLista": {
-    "nanos": 1794069945524289200,
-    "len": 1328
-  },
-  "rust/frmVenPrazosDeEntregaCad": {
-    "nanos": 1794069945795362200,
-    "len": 1952
-  },
-  "rust/frmVenPrazosDeEntregaConsulta": {
-    "nanos": 1794069946129433100,
+  "rust/frmComClassesDeMaterialLista": {
+    "nanos": 1794243142987610900,
+    "len": 1353
+  },
+  "rust/frmComCompradoresCad": {
+    "nanos": 1794243142988641600,
+    "len": 1941
+  },
+  "rust/frmComCompradoresConsulta": {
+    "nanos": 1794243142988641600,
+    "len": 1054
+  },
+  "rust/frmComCompradoresHist": {
+    "nanos": 1794243142988641600,
+    "len": 1023
+  },
+  "rust/frmComCompradoresLista": {
+    "nanos": 1794243142988641600,
+    "len": 1335
+  },
+  "rust/frmComCondicoesDeCompraCad": {
+    "nanos": 1794243142990145700,
+    "len": 1959
+  },
+  "rust/frmComCondicoesDeCompraConsulta": {
+    "nanos": 1794243142990607800,
+    "len": 1072
+  },
+  "rust/frmComCondicoesDeCompraHist": {
+    "nanos": 1794243142990607800,
+    "len": 1041
+  },
+  "rust/frmComCondicoesDeCompraLista": {
+    "nanos": 1794243142991946600,
+    "len": 1353
+  },
+  "rust/frmComConferenciasDeRecebimentoCad": {
+    "nanos": 1794243142991946600,
+    "len": 1983
+  },
+  "rust/frmComConferenciasDeRecebimentoConsulta": {
+    "nanos": 1794243142992612200,
+    "len": 1096
+  },
+  "rust/frmComConferenciasDeRecebimentoHist": {
+    "nanos": 1794243142992612200,
     "len": 1065
   },
-  "rust/frmVenPrazosDeEntregaHist": {
-    "nanos": 1794069946377066600,
-    "len": 1034
+  "rust/frmComConferenciasDeRecebimentoLista": {
+    "nanos": 1794243142993624700,
+    "len": 1377
   },
-  "rust/frmVenPrazosDeEntregaLista": {
-    "nanos": 1794069946634408700,
-    "len": 1346
+  "rust/frmComContratosDeCompraCad": {
+    "nanos": 1794243142994566700,
+    "len": 1959
   },
-  "rust/frmVenPrevisoesDeVendaCad": {
-    "nanos": 1794069946911593200,
-    "len": 1955
+  "rust/frmComContratosDeCompraConsulta": {
+    "nanos": 1794243142994566700,
+    "len": 1072
   },
-  "rust/frmVenPrevisoesDeVendaConsulta": {
-    "nanos": 1794069947186783400,
-    "len": 1068
+  "rust/frmComContratosDeCompraHist": {
+    "nanos": 1794243142995574800,
+    "len": 1041
   },
-  "rust/frmVenPrevisoesDeVendaHist": {
-    "nanos": 1794069947438580700,
-    "len": 1037
+  "rust/frmComContratosDeCompraLista": {
+    "nanos": 1794243142995574800,
+    "len": 1353
   },
-  "rust/frmVenPrevisoesDeVendaLista": {
-    "nanos": 1794069947723758900,
-    "len": 1349
+  "rust/frmComContratosDeFornecimentoCad": {
+    "nanos": 1794243142996596400,
+    "len": 1977
   },
-  "rust/frmVenPromocoesCad": {
-    "nanos": 1794069948000600700,
-    "len": 1934
+  "rust/frmComContratosDeFornecimentoConsulta": {
+    "nanos": 1794243142996596400,
+    "len": 1090
   },
-  "rust/frmVenPromocoesConsulta": {
-    "nanos": 1794069948263532300,
-    "len": 1047
-  },
-  "rust/frmVenPromocoesHist": {
-    "nanos": 1794069948523558700,
-    "len": 1016
-  },
-  "rust/frmVenPromocoesLista": {
-    "nanos": 1794069948799757000,
-    "len": 1328
-  },
-  "rust/frmVenPropostasComerciaisCad": {
-    "nanos": 1794069949050424700,
-    "len": 1964
-  },
-  "rust/frmVenPropostasComerciaisConsulta": {
-    "nanos": 1794069949313294600,
-    "len": 1077
-  },
-  "rust/frmVenPropostasComerciaisHist": {
-    "nanos": 1794069949699367800,
-    "len": 1046
-  },
-  "rust/frmVenPropostasComerciaisLista": {
-    "nanos": 1794069949997558500,
-    "len": 1358
-  },
-  "rust/frmVenReclamacoesCad": {
-    "nanos": 1794069950288972100,
-    "len": 1940
-  },
-  "rust/frmVenReclamacoesConsulta": {
-    "nanos": 1794069950558489600,
-    "len": 1053
-  },
-  "rust/frmVenReclamacoesHist": {
-    "nanos": 1794069950812956100,
-    "len": 1022
-  },
-  "rust/frmVenReclamacoesLista": {
-    "nanos": 1794069951069873700,
-    "len": 1334
-  },
-  "rust/frmVenRegioesDeVendaCad": {
-    "nanos": 1794069951315264000,
-    "len": 1949
-  },
-  "rust/frmVenRegioesDeVendaConsulta": {
-    "nanos": 1794069951563666800,
-    "len": 1062
-  },
-  "rust/frmVenRegioesDeVendaHist": {
-    "nanos": 1794069951817298400,
-    "len": 1031
-  },
-  "rust/frmVenRegioesDeVendaLista": {
-    "nanos": 1794069952076489200,
-    "len": 1343
-  },
-  "rust/frmVenRepresentantesCad": {
-    "nanos": 1794069952331594100,
-    "len": 1949
-  },
-  "rust/frmVenRepresentantesConsulta": {
-    "nanos": 1794069952580776800,
-    "len": 1062
-  },
-  "rust/frmVenRepresentantesHist": {
-    "nanos": 1794069952828775100,
-    "len": 1031
-  },
-  "rust/frmVenRepresentantesLista": {
-    "nanos": 1794069953081252400,
-    "len": 1343
-  },
-  "rust/frmVenRomaneiosCad": {
-    "nanos": 1794069953336300300,
-    "len": 1934
-  },
-  "rust/frmVenRomaneiosConsulta": {
-    "nanos": 1794069953587226100,
-    "len": 1047
-  },
-  "rust/frmVenRomaneiosHist": {
-    "nanos": 1794069953927106900,
-    "len": 1016
-  },
-  "rust/frmVenRomaneiosLista": {
-    "nanos": 1794069954178318200,
-    "len": 1328
-  },
-  "rust/frmVenRotasDeEntregaCad": {
-    "nanos": 1794069954456956000,
-    "len": 1949
-  },
-  "rust/frmVenRotasDeEntregaConsulta": {
-    "nanos": 1794069954715860600,
-    "len": 1062
-  },
-  "rust/frmVenRotasDeEntregaHist": {
-    "nanos": 1794069955016369600,
-    "len": 1031
-  },
-  "rust/frmVenRotasDeEntregaLista": {
-    "nanos": 1794069955291461000,
-    "len": 1343
-  },
-  "rust/frmVenSegmentosDeClienteCad": {
-    "nanos": 1794069955561780700,
-    "len": 1961
-  },
-  "rust/frmVenSegmentosDeClienteConsulta": {
-    "nanos": 1794069955831816700,
-    "len": 1074
-  },
-  "rust/frmVenSegmentosDeClienteHist": {
-    "nanos": 1794069956099363600,
-    "len": 1043
-  },
-  "rust/frmVenSegmentosDeClienteLista": {
-    "nanos": 1794069956422738600,
-    "len": 1355
-  },
-  "rust/frmVenTabelasDePrecoCad": {
-    "nanos": 1794069956689139200,
-    "len": 1949
-  },
-  "rust/frmVenTabelasDePrecoConsulta": {
-    "nanos": 1794069956939720300,
-    "len": 1062
-  },
-  "rust/frmVenTabelasDePrecoHist": {
-    "nanos": 1794069957207351800,
-    "len": 1031
-  },
-  "rust/frmVenTabelasDePrecoLista": {
-    "nanos": 1794069957508884400,
-    "len": 1343
-  },
-  "rust/frmVenTiposDePedidoCad": {
-    "nanos": 1794069957760901900,
-    "len": 1946
-  },
-  "rust/frmVenTiposDePedidoConsulta": {
-    "nanos": 1794069957996407700,
+  "rust/frmComContratosDeFornecimentoHist": {
+    "nanos": 1794243142996596400,
     "len": 1059
   },
-  "rust/frmVenTiposDePedidoHist": {
-    "nanos": 1794069958243244600,
-    "len": 1028
+  "rust/frmComContratosDeFornecimentoLista": {
+    "nanos": 1794243142997590900,
+    "len": 1371
   },
-  "rust/frmVenTiposDePedidoLista": {
-    "nanos": 1794069958471631300,
-    "len": 1340
+  "rust/frmComCotacoesCad": {
+    "nanos": 1794243142998165600,
+    "len": 1932
   },
-  "rust/frmVenTrocasCad": {
-    "nanos": 1794069958737036300,
-    "len": 1925
+  "rust/frmComCotacoesConsulta": {
+    "nanos": 1794243142998165600,
+    "len": 1045
   },
-  "rust/frmVenTrocasConsulta": {
-    "nanos": 1794069958984668200,
+  "rust/frmComCotacoesHist": {
+    "nanos": 1794243142999346700,
+    "len": 1014
+  },
+  "rust/frmComCotacoesLista": {
+    "nanos": 1794243142999655300,
+    "len": 1326
+  },
+  "rust/frmComDespesasDeImportacaoCad": {
+    "nanos": 1794243142999655300,
+    "len": 1968
+  },
+  "rust/frmComDespesasDeImportacaoConsulta": {
+    "nanos": 1794243143000597000,
+    "len": 1081
+  },
+  "rust/frmComDespesasDeImportacaoHist": {
+    "nanos": 1794243143000597000,
+    "len": 1050
+  },
+  "rust/frmComDespesasDeImportacaoLista": {
+    "nanos": 1794243143001602100,
+    "len": 1362
+  },
+  "rust/frmComDevolucoesAFornecedorCad": {
+    "nanos": 1794243143001602100,
+    "len": 1971
+  },
+  "rust/frmComDevolucoesAFornecedorConsulta": {
+    "nanos": 1794243143002627300,
+    "len": 1084
+  },
+  "rust/frmComDevolucoesAFornecedorHist": {
+    "nanos": 1794243143002627300,
+    "len": 1053
+  },
+  "rust/frmComDevolucoesAFornecedorLista": {
+    "nanos": 1794243143003575800,
+    "len": 1365
+  },
+  "rust/frmComEmbalagensCad": {
+    "nanos": 1794243143004416200,
+    "len": 1938
+  },
+  "rust/frmComEmbalagensConsulta": {
+    "nanos": 1794243143004416200,
+    "len": 1051
+  },
+  "rust/frmComEmbalagensHist": {
+    "nanos": 1794243143004416200,
+    "len": 1020
+  },
+  "rust/frmComEmbalagensLista": {
+    "nanos": 1794243143005623300,
+    "len": 1332
+  },
+  "rust/frmComEntradasDeEstoqueCad": {
+    "nanos": 1794243143005623300,
+    "len": 1959
+  },
+  "rust/frmComEntradasDeEstoqueConsulta": {
+    "nanos": 1794243143006604800,
+    "len": 1072
+  },
+  "rust/frmComEntradasDeEstoqueHist": {
+    "nanos": 1794243143006604800,
+    "len": 1041
+  },
+  "rust/frmComEntradasDeEstoqueLista": {
+    "nanos": 1794243143007620300,
+    "len": 1353
+  },
+  "rust/frmComFornecedoresCad": {
+    "nanos": 1794243143007620300,
+    "len": 1944
+  },
+  "rust/frmComFornecedoresConsulta": {
+    "nanos": 1794243143008640500,
+    "len": 1057
+  },
+  "rust/frmComFornecedoresHist": {
+    "nanos": 1794243143008640500,
+    "len": 1026
+  },
+  "rust/frmComFornecedoresLista": {
+    "nanos": 1794243143009564500,
+    "len": 1338
+  },
+  "rust/frmComGruposDeProdutosCad": {
+    "nanos": 1794243143009564500,
+    "len": 1956
+  },
+  "rust/frmComGruposDeProdutosConsulta": {
+    "nanos": 1794243143010576300,
+    "len": 1069
+  },
+  "rust/frmComGruposDeProdutosHist": {
+    "nanos": 1794243143010576300,
     "len": 1038
   },
-  "rust/frmVenTrocasHist": {
-    "nanos": 1794069959249204900,
-    "len": 1007
+  "rust/frmComGruposDeProdutosLista": {
+    "nanos": 1794243143011870600,
+    "len": 1350
   },
-  "rust/frmVenTrocasLista": {
-    "nanos": 1794069959493516200,
-    "len": 1319
+  "rust/frmComHomologacoesCad": {
+    "nanos": 1794243143011870600,
+    "len": 1944
   },
-  "rust/frmVenVendedoresCad": {
-    "nanos": 1794069959730761400,
-    "len": 1937
+  "rust/frmComHomologacoesConsulta": {
+    "nanos": 1794243143012587600,
+    "len": 1057
   },
-  "rust/frmVenVendedoresConsulta": {
-    "nanos": 1794069959981162400,
-    "len": 1050
+  "rust/frmComHomologacoesHist": {
+    "nanos": 1794243143012587600,
+    "len": 1026
   },
-  "rust/frmVenVendedoresHist": {
-    "nanos": 1794069960233728900,
-    "len": 1019
+  "rust/frmComHomologacoesLista": {
+    "nanos": 1794243143013612700,
+    "len": 1338
   },
-  "rust/frmVenVendedoresLista": {
-    "nanos": 1794069960486654100,
-    "len": 1331
+  "rust/frmComImportacoesCad": {
+    "nanos": 1794243143013612700,
+    "len": 1941
   },
-  "rust/frmVenVisitasCad": {
-    "nanos": 1794069960735760800,
-    "len": 1928
+  "rust/frmComImportacoesConsulta": {
+    "nanos": 1794243143014564700,
+    "len": 1054
   },
-  "rust/frmVenVisitasConsulta": {
-    "nanos": 1794069960991107500,
+  "rust/frmComImportacoesHist": {
+    "nanos": 1794243143015104700,
+    "len": 1023
+  },
+  "rust/frmComImportacoesLista": {
+    "nanos": 1794243143015104700,
+    "len": 1335
+  },
+  "rust/frmComInventariosCad": {
+    "nanos": 1794243143016109100,
+    "len": 1941
+  },
+  "rust/frmComInventariosConsulta": {
+    "nanos": 1794243143016583500,
+    "len": 1054
+  },
+  "rust/frmComInventariosHist": {
+    "nanos": 1794243143016980200,
+    "len": 1023
+  },
+  "rust/frmComInventariosLista": {
+    "nanos": 1794243143016980200,
+    "len": 1335
+  },
+  "rust/frmComLocaisDeEntregaCad": {
+    "nanos": 1794243143018165500,
+    "len": 1953
+  },
+  "rust/frmComLocaisDeEntregaConsulta": {
+    "nanos": 1794243143018615700,
+    "len": 1066
+  },
+  "rust/frmComLocaisDeEntregaHist": {
+    "nanos": 1794243143018615700,
+    "len": 1035
+  },
+  "rust/frmComLocaisDeEntregaLista": {
+    "nanos": 1794243143019634700,
+    "len": 1347
+  },
+  "rust/frmComMapasDeCotacaoCad": {
+    "nanos": 1794243143019634700,
+    "len": 1950
+  },
+  "rust/frmComMapasDeCotacaoConsulta": {
+    "nanos": 1794243143020566500,
+    "len": 1063
+  },
+  "rust/frmComMapasDeCotacaoHist": {
+    "nanos": 1794243143020566500,
+    "len": 1032
+  },
+  "rust/frmComMapasDeCotacaoLista": {
+    "nanos": 1794243143021585300,
+    "len": 1344
+  },
+  "rust/frmComMarcasCad": {
+    "nanos": 1794243143021585300,
+    "len": 1926
+  },
+  "rust/frmComMarcasConsulta": {
+    "nanos": 1794243143022611500,
+    "len": 1039
+  },
+  "rust/frmComMarcasHist": {
+    "nanos": 1794243143023171300,
+    "len": 1008
+  },
+  "rust/frmComMarcasLista": {
+    "nanos": 1794243143023171300,
+    "len": 1320
+  },
+  "rust/frmComNotasDeEntradaCad": {
+    "nanos": 1794243143023855400,
+    "len": 1950
+  },
+  "rust/frmComNotasDeEntradaConsulta": {
+    "nanos": 1794243143024634200,
+    "len": 1063
+  },
+  "rust/frmComNotasDeEntradaHist": {
+    "nanos": 1794243143024634200,
+    "len": 1032
+  },
+  "rust/frmComNotasDeEntradaLista": {
+    "nanos": 1794243143025653000,
+    "len": 1344
+  },
+  "rust/frmComOrdensDeServicoExternasCad": {
+    "nanos": 1794243143025653000,
+    "len": 1977
+  },
+  "rust/frmComOrdensDeServicoExternasConsulta": {
+    "nanos": 1794243143026600600,
+    "len": 1090
+  },
+  "rust/frmComOrdensDeServicoExternasHist": {
+    "nanos": 1794243143026600600,
+    "len": 1059
+  },
+  "rust/frmComOrdensDeServicoExternasLista": {
+    "nanos": 1794243143027593000,
+    "len": 1371
+  },
+  "rust/frmComPedidosDeCompraCad": {
+    "nanos": 1794243143027593000,
+    "len": 1953
+  },
+  "rust/frmComPedidosDeCompraConsulta": {
+    "nanos": 1794243143028604400,
+    "len": 1066
+  },
+  "rust/frmComPedidosDeCompraHist": {
+    "nanos": 1794243143028604400,
+    "len": 1035
+  },
+  "rust/frmComPedidosDeCompraLista": {
+    "nanos": 1794243143029411200,
+    "len": 1347
+  },
+  "rust/frmComPrevisoesDeCompraCad": {
+    "nanos": 1794243143029411200,
+    "len": 1959
+  },
+  "rust/frmComPrevisoesDeCompraConsulta": {
+    "nanos": 1794243143030678200,
+    "len": 1072
+  },
+  "rust/frmComPrevisoesDeCompraHist": {
+    "nanos": 1794243143030678200,
     "len": 1041
   },
+  "rust/frmComPrevisoesDeCompraLista": {
+    "nanos": 1794243143031593800,
+    "len": 1353
+  },
+  "rust/frmComProdutosCad": {
+    "nanos": 1794243143031593800,
+    "len": 1932
+  },
+  "rust/frmComProdutosConsulta": {
+    "nanos": 1794243143032621200,
+    "len": 1045
+  },
+  "rust/frmComProdutosHist": {
+    "nanos": 1794243143032621200,
+    "len": 1014
+  },
+  "rust/frmComProdutosLista": {
+    "nanos": 1794243143033586900,
+    "len": 1326
+  },
+  "rust/frmComQualificacoesDeFornecedorCad": {
+    "nanos": 1794243143034113900,
+    "len": 1983
+  },
+  "rust/frmComQualificacoesDeFornecedorConsulta": {
+    "nanos": 1794243143034577800,
+    "len": 1096
+  },
+  "rust/frmComQualificacoesDeFornecedorHist": {
+    "nanos": 1794243143034577800,
+    "len": 1065
+  },
+  "rust/frmComQualificacoesDeFornecedorLista": {
+    "nanos": 1794243143035586300,
+    "len": 1377
+  },
+  "rust/frmComRecebimentosCad": {
+    "nanos": 1794243143035886700,
+    "len": 1944
+  },
+  "rust/frmComRecebimentosConsulta": {
+    "nanos": 1794243143036640700,
+    "len": 1057
+  },
+  "rust/frmComRecebimentosHist": {
+    "nanos": 1794243143036640700,
+    "len": 1026
+  },
+  "rust/frmComRecebimentosLista": {
+    "nanos": 1794243143037657600,
+    "len": 1338
+  },
+  "rust/frmComRequisicoesAoAlmoxarifadoCad": {
+    "nanos": 1794243143037657600,
+    "len": 1983
+  },
+  "rust/frmComRequisicoesAoAlmoxarifadoConsulta": {
+    "nanos": 1794243143038657700,
+    "len": 1096
+  },
+  "rust/frmComRequisicoesAoAlmoxarifadoHist": {
+    "nanos": 1794243143038657700,
+    "len": 1065
+  },
+  "rust/frmComRequisicoesAoAlmoxarifadoLista": {
+    "nanos": 1794243143039608000,
+    "len": 1377
+  },
+  "rust/frmComSaidasDeEstoqueCad": {
+    "nanos": 1794243143040131100,
+    "len": 1953
+  },
+  "rust/frmComSaidasDeEstoqueConsulta": {
+    "nanos": 1794243143040595900,
+    "len": 1066
+  },
+  "rust/frmComSaidasDeEstoqueHist": {
+    "nanos": 1794243143040595900,
+    "len": 1035
+  },
+  "rust/frmComSaidasDeEstoqueLista": {
+    "nanos": 1794243143041605600,
+    "len": 1347
+  },
+  "rust/frmComSolicitacoesDeCompraCad": {
+    "nanos": 1794243143041969200,
+    "len": 1968
+  },
+  "rust/frmComSolicitacoesDeCompraConsulta": {
+    "nanos": 1794243143042637400,
+    "len": 1081
+  },
+  "rust/frmComSolicitacoesDeCompraHist": {
+    "nanos": 1794243143042637400,
+    "len": 1050
+  },
+  "rust/frmComSolicitacoesDeCompraLista": {
+    "nanos": 1794243143043654900,
+    "len": 1362
+  },
+  "rust/frmComTabelasDePrecoDeCompraCad": {
+    "nanos": 1794243143043654900,
+    "len": 1974
+  },
+  "rust/frmComTabelasDePrecoDeCompraConsulta": {
+    "nanos": 1794243143043654900,
+    "len": 1087
+  },
+  "rust/frmComTabelasDePrecoDeCompraHist": {
+    "nanos": 1794243143044654400,
+    "len": 1056
+  },
+  "rust/frmComTabelasDePrecoDeCompraLista": {
+    "nanos": 1794243143045610700,
+    "len": 1368
+  },
+  "rust/frmComTiposDeFreteCad": {
+    "nanos": 1794243143045610700,
+    "len": 1944
+  },
+  "rust/frmComTiposDeFreteConsulta": {
+    "nanos": 1794243143046619500,
+    "len": 1057
+  },
+  "rust/frmComTiposDeFreteHist": {
+    "nanos": 1794243143046619500,
+    "len": 1026
+  },
+  "rust/frmComTiposDeFreteLista": {
+    "nanos": 1794243143046619500,
+    "len": 1338
+  },
+  "rust/frmComTransferenciasDeEstoqueCad": {
+    "nanos": 1794243143047633800,
+    "len": 1977
+  },
+  "rust/frmComTransferenciasDeEstoqueConsulta": {
+    "nanos": 1794243143048191800,
+    "len": 1090
+  },
+  "rust/frmComTransferenciasDeEstoqueHist": {
+    "nanos": 1794243143048191800,
+    "len": 1059
+  },
+  "rust/frmComTransferenciasDeEstoqueLista": {
+    "nanos": 1794243143049409900,
+    "len": 1371
+  },
+  "rust/frmComTransportadorasCad": {
+    "nanos": 1794243143049409900,
+    "len": 1953
+  },
+  "rust/frmComTransportadorasConsulta": {
+    "nanos": 1794243143050408800,
+    "len": 1066
+  },
+  "rust/frmComTransportadorasHist": {
+    "nanos": 1794243143050408800,
+    "len": 1035
+  },
+  "rust/frmComTransportadorasLista": {
+    "nanos": 1794243143051411900,
+    "len": 1347
+  },
+  "rust/frmComUnidadesDeMedidaCad": {
+    "nanos": 1794243143051411900,
+    "len": 1956
+  },
+  "rust/frmComUnidadesDeMedidaConsulta": {
+    "nanos": 1794243143051411900,
+    "len": 1069
+  },
+  "rust/frmComUnidadesDeMedidaHist": {
+    "nanos": 1794243143052609000,
+    "len": 1038
+  },
+  "rust/frmComUnidadesDeMedidaLista": {
+    "nanos": 1794243143052609000,
+    "len": 1350
+  },
+  "rust/frmCtbAgrupadoresDeDreCad": {
+    "nanos": 1794243143053608000,
+    "len": 1956
+  },
+  "rust/frmCtbAgrupadoresDeDreConsulta": {
+    "nanos": 1794243143054428100,
+    "len": 1069
+  },
+  "rust/frmCtbAgrupadoresDeDreHist": {
+    "nanos": 1794243143054428100,
+    "len": 1038
+  },
+  "rust/frmCtbAgrupadoresDeDreLista": {
+    "nanos": 1794243143054428100,
+    "len": 1350
+  },
+  "rust/frmCtbAjustesDeSaldoCad": {
+    "nanos": 1794243143055591800,
+    "len": 1950
+  },
+  "rust/frmCtbAjustesDeSaldoConsulta": {
+    "nanos": 1794243143055591800,
+    "len": 1063
+  },
+  "rust/frmCtbAjustesDeSaldoHist": {
+    "nanos": 1794243143056591300,
+    "len": 1032
+  },
+  "rust/frmCtbAjustesDeSaldoLista": {
+    "nanos": 1794243143056591300,
+    "len": 1344
+  },
+  "rust/frmCtbApuracoesDeResultadoCad": {
+    "nanos": 1794243143057610600,
+    "len": 1968
+  },
+  "rust/frmCtbApuracoesDeResultadoConsulta": {
+    "nanos": 1794243143057610600,
+    "len": 1081
+  },
+  "rust/frmCtbApuracoesDeResultadoHist": {
+    "nanos": 1794243143058629400,
+    "len": 1050
+  },
+  "rust/frmCtbApuracoesDeResultadoLista": {
+    "nanos": 1794243143058629400,
+    "len": 1362
+  },
+  "rust/frmCtbBaixasDeBensCad": {
+    "nanos": 1794243143059627900,
+    "len": 1944
+  },
+  "rust/frmCtbBaixasDeBensConsulta": {
+    "nanos": 1794243143059627900,
+    "len": 1057
+  },
+  "rust/frmCtbBaixasDeBensHist": {
+    "nanos": 1794243143060628100,
+    "len": 1026
+  },
+  "rust/frmCtbBaixasDeBensLista": {
+    "nanos": 1794243143060628100,
+    "len": 1338
+  },
+  "rust/frmCtbBalancetesCad": {
+    "nanos": 1794243143061646500,
+    "len": 1938
+  },
+  "rust/frmCtbBalancetesConsulta": {
+    "nanos": 1794243143061646500,
+    "len": 1051
+  },
+  "rust/frmCtbBalancetesHist": {
+    "nanos": 1794243143062664900,
+    "len": 1020
+  },
+  "rust/frmCtbBalancetesLista": {
+    "nanos": 1794243143062664900,
+    "len": 1332
+  },
+  "rust/frmCtbBalancosCad": {
+    "nanos": 1794243143063665400,
+    "len": 1932
+  },
+  "rust/frmCtbBalancosConsulta": {
+    "nanos": 1794243143063665400,
+    "len": 1045
+  },
+  "rust/frmCtbBalancosHist": {
+    "nanos": 1794243143064665100,
+    "len": 1014
+  },
+  "rust/frmCtbBalancosLista": {
+    "nanos": 1794243143064665100,
+    "len": 1326
+  },
+  "rust/frmCtbBensPatrimoniaisCad": {
+    "nanos": 1794243143064665100,
+    "len": 1956
+  },
+  "rust/frmCtbBensPatrimoniaisConsulta": {
+    "nanos": 1794243143065808800,
+    "len": 1069
+  },
+  "rust/frmCtbBensPatrimoniaisHist": {
+    "nanos": 1794243143066622300,
+    "len": 1038
+  },
+  "rust/frmCtbBensPatrimoniaisLista": {
+    "nanos": 1794243143067026500,
+    "len": 1350
+  },
+  "rust/frmCtbCalendariosContabeisCad": {
+    "nanos": 1794243143067026500,
+    "len": 1968
+  },
+  "rust/frmCtbCalendariosContabeisConsulta": {
+    "nanos": 1794243143067026500,
+    "len": 1081
+  },
+  "rust/frmCtbCalendariosContabeisHist": {
+    "nanos": 1794243143068197900,
+    "len": 1050
+  },
+  "rust/frmCtbCalendariosContabeisLista": {
+    "nanos": 1794243143068669600,
+    "len": 1362
+  },
+  "rust/frmCtbCentrosDeCustoContabeisCad": {
+    "nanos": 1794243143068669600,
+    "len": 1977
+  },
+  "rust/frmCtbCentrosDeCustoContabeisConsulta": {
+    "nanos": 1794243143069689500,
+    "len": 1090
+  },
+  "rust/frmCtbCentrosDeCustoContabeisHist": {
+    "nanos": 1794243143069689500,
+    "len": 1059
+  },
+  "rust/frmCtbCentrosDeCustoContabeisLista": {
+    "nanos": 1794243143070690400,
+    "len": 1371
+  },
+  "rust/frmCtbConciliacoesContabeisCad": {
+    "nanos": 1794243143070690400,
+    "len": 1971
+  },
+  "rust/frmCtbConciliacoesContabeisConsulta": {
+    "nanos": 1794243143071689100,
+    "len": 1084
+  },
+  "rust/frmCtbConciliacoesContabeisHist": {
+    "nanos": 1794243143071689100,
+    "len": 1053
+  },
+  "rust/frmCtbConciliacoesContabeisLista": {
+    "nanos": 1794243143072645600,
+    "len": 1365
+  },
+  "rust/frmCtbContasReferenciaisCad": {
+    "nanos": 1794243143073167500,
+    "len": 1962
+  },
+  "rust/frmCtbContasReferenciaisConsulta": {
+    "nanos": 1794243143073167500,
+    "len": 1075
+  },
+  "rust/frmCtbContasReferenciaisHist": {
+    "nanos": 1794243143074422400,
+    "len": 1044
+  },
+  "rust/frmCtbContasReferenciaisLista": {
+    "nanos": 1794243143074422400,
+    "len": 1356
+  },
+  "rust/frmCtbCriteriosDeDepreciacaoCad": {
+    "nanos": 1794243143075428500,
+    "len": 1974
+  },
+  "rust/frmCtbCriteriosDeDepreciacaoConsulta": {
+    "nanos": 1794243143075428500,
+    "len": 1087
+  },
+  "rust/frmCtbCriteriosDeDepreciacaoHist": {
+    "nanos": 1794243143076428800,
+    "len": 1056
+  },
+  "rust/frmCtbCriteriosDeDepreciacaoLista": {
+    "nanos": 1794243143076428800,
+    "len": 1368
+  },
+  "rust/frmCtbDepreciacoesCad": {
+    "nanos": 1794243143077428500,
+    "len": 1944
+  },
+  "rust/frmCtbDepreciacoesConsulta": {
+    "nanos": 1794243143077428500,
+    "len": 1057
+  },
+  "rust/frmCtbDepreciacoesHist": {
+    "nanos": 1794243143078428200,
+    "len": 1026
+  },
+  "rust/frmCtbDepreciacoesLista": {
+    "nanos": 1794243143078428200,
+    "len": 1338
+  },
+  "rust/frmCtbDiariosCad": {
+    "nanos": 1794243143079388100,
+    "len": 1929
+  },
+  "rust/frmCtbDiariosConsulta": {
+    "nanos": 1794243143079388100,
+    "len": 1042
+  },
+  "rust/frmCtbDiariosHist": {
+    "nanos": 1794243143080403800,
+    "len": 1011
+  },
+  "rust/frmCtbDiariosLista": {
+    "nanos": 1794243143080403800,
+    "len": 1323
+  },
+  "rust/frmCtbDresCad": {
+    "nanos": 1794243143081403000,
+    "len": 1920
+  },
+  "rust/frmCtbDresConsulta": {
+    "nanos": 1794243143081403000,
+    "len": 1033
+  },
+  "rust/frmCtbDresHist": {
+    "nanos": 1794243143081403000,
+    "len": 1002
+  },
+  "rust/frmCtbDresLista": {
+    "nanos": 1794243143082565700,
+    "len": 1314
+  },
+  "rust/frmCtbEcdsCad": {
+    "nanos": 1794243143082565700,
+    "len": 1920
+  },
+  "rust/frmCtbEcdsConsulta": {
+    "nanos": 1794243143083564900,
+    "len": 1033
+  },
+  "rust/frmCtbEcdsHist": {
+    "nanos": 1794243143083564900,
+    "len": 1002
+  },
+  "rust/frmCtbEcdsLista": {
+    "nanos": 1794243143084567400,
+    "len": 1314
+  },
+  "rust/frmCtbEmpresasCad": {
+    "nanos": 1794243143084567400,
+    "len": 1932
+  },
+  "rust/frmCtbEmpresasConsulta": {
+    "nanos": 1794243143085566800,
+    "len": 1045
+  },
+  "rust/frmCtbEmpresasHist": {
+    "nanos": 1794243143085566800,
+    "len": 1014
+  },
+  "rust/frmCtbEmpresasLista": {
+    "nanos": 1794243143085566800,
+    "len": 1326
+  },
+  "rust/frmCtbEncerramentosCad": {
+    "nanos": 1794243143086798800,
+    "len": 1947
+  },
+  "rust/frmCtbEncerramentosConsulta": {
+    "nanos": 1794243143087680200,
+    "len": 1060
+  },
+  "rust/frmCtbEncerramentosHist": {
+    "nanos": 1794243143087680200,
+    "len": 1029
+  },
+  "rust/frmCtbEncerramentosLista": {
+    "nanos": 1794243143088734000,
+    "len": 1341
+  },
+  "rust/frmCtbExerciciosCad": {
+    "nanos": 1794243143088734000,
+    "len": 1938
+  },
+  "rust/frmCtbExerciciosConsulta": {
+    "nanos": 1794243143089732600,
+    "len": 1051
+  },
+  "rust/frmCtbExerciciosHist": {
+    "nanos": 1794243143089732600,
+    "len": 1020
+  },
+  "rust/frmCtbExerciciosLista": {
+    "nanos": 1794243143089732600,
+    "len": 1332
+  },
+  "rust/frmCtbFechamentosMensaisCad": {
+    "nanos": 1794243143090959100,
+    "len": 1962
+  },
+  "rust/frmCtbFechamentosMensaisConsulta": {
+    "nanos": 1794243143090959100,
+    "len": 1075
+  },
+  "rust/frmCtbFechamentosMensaisHist": {
+    "nanos": 1794243143091903900,
+    "len": 1044
+  },
+  "rust/frmCtbFechamentosMensaisLista": {
+    "nanos": 1794243143091903900,
+    "len": 1356
+  },
+  "rust/frmCtbFiliaisCad": {
+    "nanos": 1794243143093075700,
+    "len": 1929
+  },
+  "rust/frmCtbFiliaisConsulta": {
+    "nanos": 1794243143093075700,
+    "len": 1042
+  },
+  "rust/frmCtbFiliaisHist": {
+    "nanos": 1794243143094076400,
+    "len": 1011
+  },
+  "rust/frmCtbFiliaisLista": {
+    "nanos": 1794243143094076400,
+    "len": 1323
+  },
+  "rust/frmCtbGruposDeBensCad": {
+    "nanos": 1794243143094671100,
+    "len": 1944
+  },
+  "rust/frmCtbGruposDeBensConsulta": {
+    "nanos": 1794243143094671100,
+    "len": 1057
+  },
+  "rust/frmCtbGruposDeBensHist": {
+    "nanos": 1794243143095696200,
+    "len": 1026
+  },
+  "rust/frmCtbGruposDeBensLista": {
+    "nanos": 1794243143095696200,
+    "len": 1338
+  },
+  "rust/frmCtbGruposDeContasCad": {
+    "nanos": 1794243143096696100,
+    "len": 1950
+  },
+  "rust/frmCtbGruposDeContasConsulta": {
+    "nanos": 1794243143096696100,
+    "len": 1063
+  },
+  "rust/frmCtbGruposDeContasHist": {
+    "nanos": 1794243143096696100,
+    "len": 1032
+  },
+  "rust/frmCtbGruposDeContasLista": {
+    "nanos": 1794243143098197600,
+    "len": 1344
+  },
+  "rust/frmCtbHistoricosPadraoCad": {
+    "nanos": 1794243143098197600,
+    "len": 1956
+  },
+  "rust/frmCtbHistoricosPadraoConsulta": {
+    "nanos": 1794243143099397200,
+    "len": 1069
+  },
+  "rust/frmCtbHistoricosPadraoHist": {
+    "nanos": 1794243143099397200,
+    "len": 1038
+  },
+  "rust/frmCtbHistoricosPadraoLista": {
+    "nanos": 1794243143100397700,
+    "len": 1350
+  },
+  "rust/frmCtbIntegracoesContabeisCad": {
+    "nanos": 1794243143100397700,
+    "len": 1968
+  },
+  "rust/frmCtbIntegracoesContabeisConsulta": {
+    "nanos": 1794243143101397200,
+    "len": 1081
+  },
+  "rust/frmCtbIntegracoesContabeisHist": {
+    "nanos": 1794243143101397200,
+    "len": 1050
+  },
+  "rust/frmCtbIntegracoesContabeisLista": {
+    "nanos": 1794243143102397800,
+    "len": 1362
+  },
+  "rust/frmCtbInventariosPatrimoniaisCad": {
+    "nanos": 1794243143102397800,
+    "len": 1977
+  },
+  "rust/frmCtbInventariosPatrimoniaisConsulta": {
+    "nanos": 1794243143102397800,
+    "len": 1090
+  },
+  "rust/frmCtbInventariosPatrimoniaisHist": {
+    "nanos": 1794243143103398500,
+    "len": 1059
+  },
+  "rust/frmCtbInventariosPatrimoniaisLista": {
+    "nanos": 1794243143103398500,
+    "len": 1371
+  },
+  "rust/frmCtbLancamentosContabeisCad": {
+    "nanos": 1794243143104397200,
+    "len": 1968
+  },
+  "rust/frmCtbLancamentosContabeisConsulta": {
+    "nanos": 1794243143104397200,
+    "len": 1081
+  },
+  "rust/frmCtbLancamentosContabeisHist": {
+    "nanos": 1794243143105484600,
+    "len": 1050
+  },
+  "rust/frmCtbLancamentosContabeisLista": {
+    "nanos": 1794243143105484600,
+    "len": 1362
+  },
+  "rust/frmCtbLivrosContabeisCad": {
+    "nanos": 1794243143106482600,
+    "len": 1953
+  },
+  "rust/frmCtbLivrosContabeisConsulta": {
+    "nanos": 1794243143106482600,
+    "len": 1066
+  },
+  "rust/frmCtbLivrosContabeisHist": {
+    "nanos": 1794243143106482600,
+    "len": 1035
+  },
+  "rust/frmCtbLivrosContabeisLista": {
+    "nanos": 1794243143107873600,
+    "len": 1347
+  },
+  "rust/frmCtbLocaisDeBensCad": {
+    "nanos": 1794243143107873600,
+    "len": 1944
+  },
+  "rust/frmCtbLocaisDeBensConsulta": {
+    "nanos": 1794243143108873100,
+    "len": 1057
+  },
+  "rust/frmCtbLocaisDeBensHist": {
+    "nanos": 1794243143108873100,
+    "len": 1026
+  },
+  "rust/frmCtbLocaisDeBensLista": {
+    "nanos": 1794243143109873600,
+    "len": 1338
+  },
+  "rust/frmCtbLotesDeLancamentoCad": {
+    "nanos": 1794243143109873600,
+    "len": 1959
+  },
+  "rust/frmCtbLotesDeLancamentoConsulta": {
+    "nanos": 1794243143110740700,
+    "len": 1072
+  },
+  "rust/frmCtbLotesDeLancamentoHist": {
+    "nanos": 1794243143110740700,
+    "len": 1041
+  },
+  "rust/frmCtbLotesDeLancamentoLista": {
+    "nanos": 1794243143110740700,
+    "len": 1353
+  },
+  "rust/frmCtbMoedasContabeisCad": {
+    "nanos": 1794243143110740700,
+    "len": 1953
+  },
+  "rust/frmCtbMoedasContabeisConsulta": {
+    "nanos": 1794243143110740700,
+    "len": 1066
+  },
+  "rust/frmCtbMoedasContabeisHist": {
+    "nanos": 1794243143110740700,
+    "len": 1035
+  },
+  "rust/frmCtbMoedasContabeisLista": {
+    "nanos": 1794243143110740700,
+    "len": 1347
+  },
+  "rust/frmCtbNaturezasDeSaldoCad": {
+    "nanos": 1794243143110740700,
+    "len": 1956
+  },
+  "rust/frmCtbNaturezasDeSaldoConsulta": {
+    "nanos": 1794243143114653800,
+    "len": 1069
+  },
+  "rust/frmCtbNaturezasDeSaldoHist": {
+    "nanos": 1794243143114653800,
+    "len": 1038
+  },
+  "rust/frmCtbNaturezasDeSaldoLista": {
+    "nanos": 1794243143114653800,
+    "len": 1350
+  },
+  "rust/frmCtbNotasExplicativasCad": {
+    "nanos": 1794243143114653800,
+    "len": 1959
+  },
+  "rust/frmCtbNotasExplicativasConsulta": {
+    "nanos": 1794243143114653800,
+    "len": 1072
+  },
+  "rust/frmCtbNotasExplicativasHist": {
+    "nanos": 1794243143114653800,
+    "len": 1041
+  },
+  "rust/frmCtbNotasExplicativasLista": {
+    "nanos": 1794243143114653800,
+    "len": 1353
+  },
+  "rust/frmCtbPeriodosContabeisCad": {
+    "nanos": 1794243143114653800,
+    "len": 1959
+  },
+  "rust/frmCtbPeriodosContabeisConsulta": {
+    "nanos": 1794243143114653800,
+    "len": 1072
+  },
+  "rust/frmCtbPeriodosContabeisHist": {
+    "nanos": 1794243143118965900,
+    "len": 1041
+  },
+  "rust/frmCtbPeriodosContabeisLista": {
+    "nanos": 1794243143118965900,
+    "len": 1353
+  },
+  "rust/frmCtbPlanoDeContasCad": {
+    "nanos": 1794243143120130100,
+    "len": 1947
+  },
+  "rust/frmCtbPlanoDeContasConsulta": {
+    "nanos": 1794243143120130100,
+    "len": 1060
+  },
+  "rust/frmCtbPlanoDeContasHist": {
+    "nanos": 1794243143121131400,
+    "len": 1029
+  },
+  "rust/frmCtbPlanoDeContasLista": {
+    "nanos": 1794243143121131400,
+    "len": 1341
+  },
+  "rust/frmCtbProvisoesCad": {
+    "nanos": 1794243143122130400,
+    "len": 1935
+  },
+  "rust/frmCtbProvisoesConsulta": {
+    "nanos": 1794243143122130400,
+    "len": 1048
+  },
+  "rust/frmCtbProvisoesHist": {
+    "nanos": 1794243143123130300,
+    "len": 1017
+  },
+  "rust/frmCtbProvisoesLista": {
+    "nanos": 1794243143123130300,
+    "len": 1329
+  },
+  "rust/frmCtbRateiosCad": {
+    "nanos": 1794243143123130300,
+    "len": 1929
+  },
+  "rust/frmCtbRateiosConsulta": {
+    "nanos": 1794243143123130300,
+    "len": 1042
+  },
+  "rust/frmCtbRateiosHist": {
+    "nanos": 1794243143124793200,
+    "len": 1011
+  },
+  "rust/frmCtbRateiosLista": {
+    "nanos": 1794243143124793200,
+    "len": 1323
+  },
+  "rust/frmCtbRazoesCad": {
+    "nanos": 1794243143125797700,
+    "len": 1926
+  },
+  "rust/frmCtbRazoesConsulta": {
+    "nanos": 1794243143125797700,
+    "len": 1039
+  },
+  "rust/frmCtbRazoesHist": {
+    "nanos": 1794243143126797200,
+    "len": 1008
+  },
+  "rust/frmCtbRazoesLista": {
+    "nanos": 1794243143126797200,
+    "len": 1320
+  },
+  "rust/frmCtbRegrasDeRateioCad": {
+    "nanos": 1794243143127797300,
+    "len": 1950
+  },
+  "rust/frmCtbRegrasDeRateioConsulta": {
+    "nanos": 1794243143127797300,
+    "len": 1063
+  },
+  "rust/frmCtbRegrasDeRateioHist": {
+    "nanos": 1794243143128797100,
+    "len": 1032
+  },
+  "rust/frmCtbRegrasDeRateioLista": {
+    "nanos": 1794243143128797100,
+    "len": 1344
+  },
+  "rust/frmCtbResponsaveisContabeisCad": {
+    "nanos": 1794243143129481100,
+    "len": 1971
+  },
+  "rust/frmCtbResponsaveisContabeisConsulta": {
+    "nanos": 1794243143129481100,
+    "len": 1084
+  },
+  "rust/frmCtbResponsaveisContabeisHist": {
+    "nanos": 1794243143129481100,
+    "len": 1053
+  },
+  "rust/frmCtbResponsaveisContabeisLista": {
+    "nanos": 1794243143129481100,
+    "len": 1365
+  },
+  "rust/frmCtbTiposDeLancamentoCad": {
+    "nanos": 1794243143131484100,
+    "len": 1959
+  },
+  "rust/frmCtbTiposDeLancamentoConsulta": {
+    "nanos": 1794243143131484100,
+    "len": 1072
+  },
+  "rust/frmCtbTiposDeLancamentoHist": {
+    "nanos": 1794243143131484100,
+    "len": 1041
+  },
+  "rust/frmCtbTiposDeLancamentoLista": {
+    "nanos": 1794243143131484100,
+    "len": 1353
+  },
+  "rust/frmCtbTransferenciasDeBensCad": {
+    "nanos": 1794243143131484100,
+    "len": 1968
+  },
+  "rust/frmCtbTransferenciasDeBensConsulta": {
+    "nanos": 1794243143131484100,
+    "len": 1081
+  },
+  "rust/frmCtbTransferenciasDeBensHist": {
+    "nanos": 1794243143131484100,
+    "len": 1050
+  },
+  "rust/frmCtbTransferenciasDeBensLista": {
+    "nanos": 1794243143131484100,
+    "len": 1362
+  },
+  "rust/frmFinAdiantamentosAFornecedoresCad": {
+    "nanos": 1794243143131484100,
+    "len": 1986
+  },
+  "rust/frmFinAdiantamentosAFornecedoresConsulta": {
+    "nanos": 1794243143131484100,
+    "len": 1099
+  },
+  "rust/frmFinAdiantamentosAFornecedoresHist": {
+    "nanos": 1794243143131484100,
+    "len": 1068
+  },
+  "rust/frmFinAdiantamentosAFornecedoresLista": {
+    "nanos": 1794243143131484100,
+    "len": 1380
+  },
+  "rust/frmFinAdiantamentosDeClientesCad": {
+    "nanos": 1794243143131484100,
+    "len": 1977
+  },
+  "rust/frmFinAdiantamentosDeClientesConsulta": {
+    "nanos": 1794243143131484100,
+    "len": 1090
+  },
+  "rust/frmFinAdiantamentosDeClientesHist": {
+    "nanos": 1794243143131484100,
+    "len": 1059
+  },
+  "rust/frmFinAdiantamentosDeClientesLista": {
+    "nanos": 1794243143131484100,
+    "len": 1371
+  },
+  "rust/frmFinAgenciasCad": {
+    "nanos": 1794243143131484100,
+    "len": 1932
+  },
+  "rust/frmFinAgenciasConsulta": {
+    "nanos": 1794243143139845200,
+    "len": 1045
+  },
+  "rust/frmFinAgenciasHist": {
+    "nanos": 1794243143139845200,
+    "len": 1014
+  },
+  "rust/frmFinAgenciasLista": {
+    "nanos": 1794243143139845200,
+    "len": 1326
+  },
+  "rust/frmFinAplicacoesFinanceirasCad": {
+    "nanos": 1794243143139845200,
+    "len": 1971
+  },
+  "rust/frmFinAplicacoesFinanceirasConsulta": {
+    "nanos": 1794243143139845200,
+    "len": 1084
+  },
+  "rust/frmFinAplicacoesFinanceirasHist": {
+    "nanos": 1794243143139845200,
+    "len": 1053
+  },
+  "rust/frmFinAplicacoesFinanceirasLista": {
+    "nanos": 1794243143139845200,
+    "len": 1365
+  },
+  "rust/frmFinAvalistasCad": {
+    "nanos": 1794243143139845200,
+    "len": 1935
+  },
+  "rust/frmFinAvalistasConsulta": {
+    "nanos": 1794243143139845200,
+    "len": 1048
+  },
+  "rust/frmFinAvalistasHist": {
+    "nanos": 1794243143139845200,
+    "len": 1017
+  },
+  "rust/frmFinAvalistasLista": {
+    "nanos": 1794243143144586200,
+    "len": 1329
+  },
+  "rust/frmFinBaixasDePagamentoCad": {
+    "nanos": 1794243143144586200,
+    "len": 1959
+  },
+  "rust/frmFinBaixasDePagamentoConsulta": {
+    "nanos": 1794243143144586200,
+    "len": 1072
+  },
+  "rust/frmFinBaixasDePagamentoHist": {
+    "nanos": 1794243143144586200,
+    "len": 1041
+  },
+  "rust/frmFinBaixasDePagamentoLista": {
+    "nanos": 1794243143144586200,
+    "len": 1353
+  },
+  "rust/frmFinBaixasDeRecebimentoCad": {
+    "nanos": 1794243143144586200,
+    "len": 1965
+  },
+  "rust/frmFinBaixasDeRecebimentoConsulta": {
+    "nanos": 1794243143144586200,
+    "len": 1078
+  },
+  "rust/frmFinBaixasDeRecebimentoHist": {
+    "nanos": 1794243143148083900,
+    "len": 1047
+  },
+  "rust/frmFinBaixasDeRecebimentoLista": {
+    "nanos": 1794243143148083900,
+    "len": 1359
+  },
+  "rust/frmFinBancosCad": {
+    "nanos": 1794243143148083900,
+    "len": 1926
+  },
+  "rust/frmFinBancosConsulta": {
+    "nanos": 1794243143148083900,
+    "len": 1039
+  },
+  "rust/frmFinBancosHist": {
+    "nanos": 1794243143148083900,
+    "len": 1008
+  },
+  "rust/frmFinBancosLista": {
+    "nanos": 1794243143148083900,
+    "len": 1320
+  },
+  "rust/frmFinBorderosDeCobrancaCad": {
+    "nanos": 1794243143148083900,
+    "len": 1962
+  },
+  "rust/frmFinBorderosDeCobrancaConsulta": {
+    "nanos": 1794243143148083900,
+    "len": 1075
+  },
+  "rust/frmFinBorderosDeCobrancaHist": {
+    "nanos": 1794243143148083900,
+    "len": 1044
+  },
+  "rust/frmFinBorderosDeCobrancaLista": {
+    "nanos": 1794243143148083900,
+    "len": 1356
+  },
+  "rust/frmFinBorderosDePagamentoCad": {
+    "nanos": 1794243143148083900,
+    "len": 1965
+  },
+  "rust/frmFinBorderosDePagamentoConsulta": {
+    "nanos": 1794243143148083900,
+    "len": 1078
+  },
+  "rust/frmFinBorderosDePagamentoHist": {
+    "nanos": 1794243143148083900,
+    "len": 1047
+  },
+  "rust/frmFinBorderosDePagamentoLista": {
+    "nanos": 1794243143148083900,
+    "len": 1359
+  },
+  "rust/frmFinCarteirasDeCobrancaCad": {
+    "nanos": 1794243143148083900,
+    "len": 1965
+  },
+  "rust/frmFinCarteirasDeCobrancaConsulta": {
+    "nanos": 1794243143148083900,
+    "len": 1078
+  },
+  "rust/frmFinCarteirasDeCobrancaHist": {
+    "nanos": 1794243143148083900,
+    "len": 1047
+  },
+  "rust/frmFinCarteirasDeCobrancaLista": {
+    "nanos": 1794243143156153000,
+    "len": 1359
+  },
+  "rust/frmFinCartoesCorporativosCad": {
+    "nanos": 1794243143156153000,
+    "len": 1965
+  },
+  "rust/frmFinCartoesCorporativosConsulta": {
+    "nanos": 1794243143156153000,
+    "len": 1078
+  },
+  "rust/frmFinCartoesCorporativosHist": {
+    "nanos": 1794243143156153000,
+    "len": 1047
+  },
+  "rust/frmFinCartoesCorporativosLista": {
+    "nanos": 1794243143156153000,
+    "len": 1359
+  },
+  "rust/frmFinCategoriasDeDespesaCad": {
+    "nanos": 1794243143156153000,
+    "len": 1965
+  },
+  "rust/frmFinCategoriasDeDespesaConsulta": {
+    "nanos": 1794243143156153000,
+    "len": 1078
+  },
+  "rust/frmFinCategoriasDeDespesaHist": {
+    "nanos": 1794243143156153000,
+    "len": 1047
+  },
+  "rust/frmFinCategoriasDeDespesaLista": {
+    "nanos": 1794243143156153000,
+    "len": 1359
+  },
+  "rust/frmFinCategoriasDeReceitaCad": {
+    "nanos": 1794243143160421100,
+    "len": 1965
+  },
+  "rust/frmFinCategoriasDeReceitaConsulta": {
+    "nanos": 1794243143160421100,
+    "len": 1078
+  },
+  "rust/frmFinCategoriasDeReceitaHist": {
+    "nanos": 1794243143160421100,
+    "len": 1047
+  },
+  "rust/frmFinCategoriasDeReceitaLista": {
+    "nanos": 1794243143161924200,
+    "len": 1359
+  },
+  "rust/frmFinCentrosDeResultadoCad": {
+    "nanos": 1794243143162494400,
+    "len": 1962
+  },
+  "rust/frmFinCentrosDeResultadoConsulta": {
+    "nanos": 1794243143162494400,
+    "len": 1075
+  },
+  "rust/frmFinCentrosDeResultadoHist": {
+    "nanos": 1794243143162494400,
+    "len": 1044
+  },
+  "rust/frmFinCentrosDeResultadoLista": {
+    "nanos": 1794243143162494400,
+    "len": 1356
+  },
+  "rust/frmFinChequesEmitidosCad": {
+    "nanos": 1794243143164504100,
+    "len": 1953
+  },
+  "rust/frmFinChequesEmitidosConsulta": {
+    "nanos": 1794243143164504100,
+    "len": 1066
+  },
+  "rust/frmFinChequesEmitidosHist": {
+    "nanos": 1794243143164504100,
+    "len": 1035
+  },
+  "rust/frmFinChequesEmitidosLista": {
+    "nanos": 1794243143164504100,
+    "len": 1347
+  },
+  "rust/frmFinChequesRecebidosCad": {
+    "nanos": 1794243143164504100,
+    "len": 1956
+  },
+  "rust/frmFinChequesRecebidosConsulta": {
+    "nanos": 1794243143164504100,
+    "len": 1069
+  },
+  "rust/frmFinChequesRecebidosHist": {
+    "nanos": 1794243143164504100,
+    "len": 1038
+  },
+  "rust/frmFinChequesRecebidosLista": {
+    "nanos": 1794243143164504100,
+    "len": 1350
+  },
+  "rust/frmFinConciliacoesBancariasCad": {
+    "nanos": 1794243143164504100,
+    "len": 1971
+  },
+  "rust/frmFinConciliacoesBancariasConsulta": {
+    "nanos": 1794243143164504100,
+    "len": 1084
+  },
+  "rust/frmFinConciliacoesBancariasHist": {
+    "nanos": 1794243143164504100,
+    "len": 1053
+  },
+  "rust/frmFinConciliacoesBancariasLista": {
+    "nanos": 1794243143164504100,
+    "len": 1365
+  },
+  "rust/frmFinCondicoesDePagamentoCad": {
+    "nanos": 1794243143164504100,
+    "len": 1968
+  },
+  "rust/frmFinCondicoesDePagamentoConsulta": {
+    "nanos": 1794243143164504100,
+    "len": 1081
+  },
+  "rust/frmFinCondicoesDePagamentoHist": {
+    "nanos": 1794243143164504100,
+    "len": 1050
+  },
+  "rust/frmFinCondicoesDePagamentoLista": {
+    "nanos": 1794243143164504100,
+    "len": 1362
+  },
+  "rust/frmFinContasAPagarCad": {
+    "nanos": 1794243143164504100,
+    "len": 1944
+  },
+  "rust/frmFinContasAPagarConsulta": {
+    "nanos": 1794243143172583600,
+    "len": 1057
+  },
+  "rust/frmFinContasAPagarHist": {
+    "nanos": 1794243143172583600,
+    "len": 1026
+  },
+  "rust/frmFinContasAPagarLista": {
+    "nanos": 1794243143172583600,
+    "len": 1338
+  },
+  "rust/frmFinContasAReceberCad": {
+    "nanos": 1794243143172583600,
+    "len": 1950
+  },
+  "rust/frmFinContasAReceberConsulta": {
+    "nanos": 1794243143172583600,
+    "len": 1063
+  },
+  "rust/frmFinContasAReceberHist": {
+    "nanos": 1794243143175092700,
+    "len": 1032
+  },
+  "rust/frmFinContasAReceberLista": {
+    "nanos": 1794243143175092700,
+    "len": 1344
+  },
+  "rust/frmFinContasBancariasCad": {
+    "nanos": 1794243143176102100,
+    "len": 1953
+  },
+  "rust/frmFinContasBancariasConsulta": {
+    "nanos": 1794243143176102100,
+    "len": 1066
+  },
+  "rust/frmFinContasBancariasHist": {
+    "nanos": 1794243143176102100,
+    "len": 1035
+  },
+  "rust/frmFinContasBancariasLista": {
+    "nanos": 1794243143176102100,
+    "len": 1347
+  },
+  "rust/frmFinContratosFinanceirosCad": {
+    "nanos": 1794243143176102100,
+    "len": 1968
+  },
+  "rust/frmFinContratosFinanceirosConsulta": {
+    "nanos": 1794243143178830900,
+    "len": 1081
+  },
+  "rust/frmFinContratosFinanceirosHist": {
+    "nanos": 1794243143178830900,
+    "len": 1050
+  },
+  "rust/frmFinContratosFinanceirosLista": {
+    "nanos": 1794243143178830900,
+    "len": 1362
+  },
+  "rust/frmFinEmprestimosCad": {
+    "nanos": 1794243143178830900,
+    "len": 1941
+  },
+  "rust/frmFinEmprestimosConsulta": {
+    "nanos": 1794243143180360700,
+    "len": 1054
+  },
+  "rust/frmFinEmprestimosHist": {
+    "nanos": 1794243143180869800,
+    "len": 1023
+  },
+  "rust/frmFinEmprestimosLista": {
+    "nanos": 1794243143181517100,
+    "len": 1335
+  },
+  "rust/frmFinFavorecidosCad": {
+    "nanos": 1794243143181517100,
+    "len": 1941
+  },
+  "rust/frmFinFavorecidosConsulta": {
+    "nanos": 1794243143182683600,
+    "len": 1054
+  },
+  "rust/frmFinFavorecidosHist": {
+    "nanos": 1794243143182683600,
+    "len": 1023
+  },
+  "rust/frmFinFavorecidosLista": {
+    "nanos": 1794243143183682600,
+    "len": 1335
+  },
+  "rust/frmFinFluxosDeCaixaCad": {
+    "nanos": 1794243143183682600,
+    "len": 1947
+  },
+  "rust/frmFinFluxosDeCaixaConsulta": {
+    "nanos": 1794243143184682900,
+    "len": 1060
+  },
+  "rust/frmFinFluxosDeCaixaHist": {
+    "nanos": 1794243143184682900,
+    "len": 1029
+  },
+  "rust/frmFinFluxosDeCaixaLista": {
+    "nanos": 1794243143184682900,
+    "len": 1341
+  },
+  "rust/frmFinFormasDePagamentoCad": {
+    "nanos": 1794243143185684200,
+    "len": 1959
+  },
+  "rust/frmFinFormasDePagamentoConsulta": {
+    "nanos": 1794243143185684200,
+    "len": 1072
+  },
+  "rust/frmFinFormasDePagamentoHist": {
+    "nanos": 1794243143186733800,
+    "len": 1041
+  },
+  "rust/frmFinFormasDePagamentoLista": {
+    "nanos": 1794243143186733800,
+    "len": 1353
+  },
+  "rust/frmFinIndicesDeCorrecaoCad": {
+    "nanos": 1794243143187730800,
+    "len": 1959
+  },
+  "rust/frmFinIndicesDeCorrecaoConsulta": {
+    "nanos": 1794243143187730800,
+    "len": 1072
+  },
+  "rust/frmFinIndicesDeCorrecaoHist": {
+    "nanos": 1794243143187730800,
+    "len": 1041
+  },
+  "rust/frmFinIndicesDeCorrecaoLista": {
+    "nanos": 1794243143189235600,
+    "len": 1353
+  },
+  "rust/frmFinMoedasCad": {
+    "nanos": 1794243143189235600,
+    "len": 1926
+  },
+  "rust/frmFinMoedasConsulta": {
+    "nanos": 1794243143190241500,
+    "len": 1039
+  },
+  "rust/frmFinMoedasHist": {
+    "nanos": 1794243143190241500,
+    "len": 1008
+  },
+  "rust/frmFinMoedasLista": {
+    "nanos": 1794243143191239700,
+    "len": 1320
+  },
+  "rust/frmFinMovimentosBancariosCad": {
+    "nanos": 1794243143191239700,
+    "len": 1965
+  },
+  "rust/frmFinMovimentosBancariosConsulta": {
+    "nanos": 1794243143191942200,
+    "len": 1078
+  },
+  "rust/frmFinMovimentosBancariosHist": {
+    "nanos": 1794243143191942200,
+    "len": 1047
+  },
+  "rust/frmFinMovimentosBancariosLista": {
+    "nanos": 1794243143191942200,
+    "len": 1359
+  },
+  "rust/frmFinOperadorasDeCartaoCad": {
+    "nanos": 1794243143191942200,
+    "len": 1962
+  },
+  "rust/frmFinOperadorasDeCartaoConsulta": {
+    "nanos": 1794243143191942200,
+    "len": 1075
+  },
+  "rust/frmFinOperadorasDeCartaoHist": {
+    "nanos": 1794243143191942200,
+    "len": 1044
+  },
+  "rust/frmFinOperadorasDeCartaoLista": {
+    "nanos": 1794243143191942200,
+    "len": 1356
+  },
+  "rust/frmFinOrcamentosFinanceirosCad": {
+    "nanos": 1794243143191942200,
+    "len": 1971
+  },
+  "rust/frmFinOrcamentosFinanceirosConsulta": {
+    "nanos": 1794243143191942200,
+    "len": 1084
+  },
+  "rust/frmFinOrcamentosFinanceirosHist": {
+    "nanos": 1794243143191942200,
+    "len": 1053
+  },
+  "rust/frmFinOrcamentosFinanceirosLista": {
+    "nanos": 1794243143191942200,
+    "len": 1365
+  },
+  "rust/frmFinPlanoFinanceiroCad": {
+    "nanos": 1794243143197462700,
+    "len": 1953
+  },
+  "rust/frmFinPlanoFinanceiroConsulta": {
+    "nanos": 1794243143198216900,
+    "len": 1066
+  },
+  "rust/frmFinPlanoFinanceiroHist": {
+    "nanos": 1794243143198216900,
+    "len": 1035
+  },
+  "rust/frmFinPlanoFinanceiroLista": {
+    "nanos": 1794243143198216900,
+    "len": 1347
+  },
+  "rust/frmFinPortadoresCad": {
+    "nanos": 1794243143199387000,
+    "len": 1938
+  },
+  "rust/frmFinPortadoresConsulta": {
+    "nanos": 1794243143199387000,
+    "len": 1051
+  },
+  "rust/frmFinPortadoresHist": {
+    "nanos": 1794243143200385400,
+    "len": 1020
+  },
+  "rust/frmFinPortadoresLista": {
+    "nanos": 1794243143200385400,
+    "len": 1332
+  },
+  "rust/frmFinPrestacoesDeContasCad": {
+    "nanos": 1794243143201386400,
+    "len": 1962
+  },
+  "rust/frmFinPrestacoesDeContasConsulta": {
+    "nanos": 1794243143201386400,
+    "len": 1075
+  },
+  "rust/frmFinPrestacoesDeContasHist": {
+    "nanos": 1794243143202387700,
+    "len": 1044
+  },
+  "rust/frmFinPrestacoesDeContasLista": {
+    "nanos": 1794243143202387700,
+    "len": 1356
+  },
+  "rust/frmFinProjetosCad": {
+    "nanos": 1794243143203385700,
+    "len": 1932
+  },
+  "rust/frmFinProjetosConsulta": {
+    "nanos": 1794243143203385700,
+    "len": 1045
+  },
+  "rust/frmFinProjetosHist": {
+    "nanos": 1794243143204386100,
+    "len": 1014
+  },
+  "rust/frmFinProjetosLista": {
+    "nanos": 1794243143204834800,
+    "len": 1326
+  },
+  "rust/frmFinRemessasCnabCad": {
+    "nanos": 1794243143204834800,
+    "len": 1944
+  },
+  "rust/frmFinRemessasCnabConsulta": {
+    "nanos": 1794243143205984900,
+    "len": 1057
+  },
+  "rust/frmFinRemessasCnabHist": {
+    "nanos": 1794243143205984900,
+    "len": 1026
+  },
+  "rust/frmFinRemessasCnabLista": {
+    "nanos": 1794243143205984900,
+    "len": 1338
+  },
+  "rust/frmFinRenegociacoesCad": {
+    "nanos": 1794243143206988800,
+    "len": 1947
+  },
+  "rust/frmFinRenegociacoesConsulta": {
+    "nanos": 1794243143206988800,
+    "len": 1060
+  },
+  "rust/frmFinRenegociacoesHist": {
+    "nanos": 1794243143207989100,
+    "len": 1029
+  },
+  "rust/frmFinRenegociacoesLista": {
+    "nanos": 1794243143207989100,
+    "len": 1341
+  },
+  "rust/frmFinRetornosCnabCad": {
+    "nanos": 1794243143208989200,
+    "len": 1944
+  },
+  "rust/frmFinRetornosCnabConsulta": {
+    "nanos": 1794243143208989200,
+    "len": 1057
+  },
+  "rust/frmFinRetornosCnabHist": {
+    "nanos": 1794243143209992400,
+    "len": 1026
+  },
+  "rust/frmFinRetornosCnabLista": {
+    "nanos": 1794243143210665900,
+    "len": 1338
+  },
+  "rust/frmFinTarifasBancariasCad": {
+    "nanos": 1794243143210665900,
+    "len": 1956
+  },
+  "rust/frmFinTarifasBancariasConsulta": {
+    "nanos": 1794243143211715300,
+    "len": 1069
+  },
+  "rust/frmFinTarifasBancariasHist": {
+    "nanos": 1794243143211715300,
+    "len": 1038
+  },
+  "rust/frmFinTarifasBancariasLista": {
+    "nanos": 1794243143211715300,
+    "len": 1350
+  },
+  "rust/frmFinTiposDeDocumentoCad": {
+    "nanos": 1794243143212713700,
+    "len": 1956
+  },
+  "rust/frmFinTiposDeDocumentoConsulta": {
+    "nanos": 1794243143212713700,
+    "len": 1069
+  },
+  "rust/frmFinTiposDeDocumentoHist": {
+    "nanos": 1794243143212713700,
+    "len": 1038
+  },
+  "rust/frmFinTiposDeDocumentoLista": {
+    "nanos": 1794243143214216600,
+    "len": 1350
+  },
+  "rust/frmFinTransferenciasEntreContasCad": {
+    "nanos": 1794243143214216600,
+    "len": 1983
+  },
+  "rust/frmFinTransferenciasEntreContasConsulta": {
+    "nanos": 1794243143215221100,
+    "len": 1096
+  },
+  "rust/frmFinTransferenciasEntreContasHist": {
+    "nanos": 1794243143215221100,
+    "len": 1065
+  },
+  "rust/frmFinTransferenciasEntreContasLista": {
+    "nanos": 1794243143216221200,
+    "len": 1377
+  },
+  "rust/frmFisAjustesDeApuracaoCad": {
+    "nanos": 1794243143216923200,
+    "len": 1959
+  },
+  "rust/frmFisAjustesDeApuracaoConsulta": {
+    "nanos": 1794243143216923200,
+    "len": 1072
+  },
+  "rust/frmFisAjustesDeApuracaoHist": {
+    "nanos": 1794243143216923200,
+    "len": 1041
+  },
+  "rust/frmFisAjustesDeApuracaoLista": {
+    "nanos": 1794243143216923200,
+    "len": 1353
+  },
+  "rust/frmFisAliquotasInterestaduaisCad": {
+    "nanos": 1794243143216923200,
+    "len": 1977
+  },
+  "rust/frmFisAliquotasInterestaduaisConsulta": {
+    "nanos": 1794243143216923200,
+    "len": 1090
+  },
+  "rust/frmFisAliquotasInterestaduaisHist": {
+    "nanos": 1794243143216923200,
+    "len": 1059
+  },
+  "rust/frmFisAliquotasInterestaduaisLista": {
+    "nanos": 1794243143216923200,
+    "len": 1371
+  },
+  "rust/frmFisApuracoesDeIcmsCad": {
+    "nanos": 1794243143216923200,
+    "len": 1953
+  },
+  "rust/frmFisApuracoesDeIcmsConsulta": {
+    "nanos": 1794243143216923200,
+    "len": 1066
+  },
+  "rust/frmFisApuracoesDeIcmsHist": {
+    "nanos": 1794243143216923200,
+    "len": 1035
+  },
+  "rust/frmFisApuracoesDeIcmsLista": {
+    "nanos": 1794243143216923200,
+    "len": 1347
+  },
+  "rust/frmFisApuracoesDeIpiCad": {
+    "nanos": 1794243143222620300,
+    "len": 1950
+  },
+  "rust/frmFisApuracoesDeIpiConsulta": {
+    "nanos": 1794243143223252700,
+    "len": 1063
+  },
+  "rust/frmFisApuracoesDeIpiHist": {
+    "nanos": 1794243143223252700,
+    "len": 1032
+  },
+  "rust/frmFisApuracoesDeIpiLista": {
+    "nanos": 1794243143224426100,
+    "len": 1344
+  },
+  "rust/frmFisApuracoesDePisECofinsCad": {
+    "nanos": 1794243143224426100,
+    "len": 1971
+  },
+  "rust/frmFisApuracoesDePisECofinsConsulta": {
+    "nanos": 1794243143224426100,
+    "len": 1084
+  },
+  "rust/frmFisApuracoesDePisECofinsHist": {
+    "nanos": 1794243143225426500,
+    "len": 1053
+  },
+  "rust/frmFisApuracoesDePisECofinsLista": {
+    "nanos": 1794243143225426500,
+    "len": 1365
+  },
+  "rust/frmFisBeneficiosFiscaisCad": {
+    "nanos": 1794243143226692000,
+    "len": 1959
+  },
+  "rust/frmFisBeneficiosFiscaisConsulta": {
+    "nanos": 1794243143226692000,
+    "len": 1072
+  },
+  "rust/frmFisBeneficiosFiscaisHist": {
+    "nanos": 1794243143227693200,
+    "len": 1041
+  },
+  "rust/frmFisBeneficiosFiscaisLista": {
+    "nanos": 1794243143227693200,
+    "len": 1353
+  },
+  "rust/frmFisCancelamentosDeNotaCad": {
+    "nanos": 1794243143228664100,
+    "len": 1965
+  },
+  "rust/frmFisCancelamentosDeNotaConsulta": {
+    "nanos": 1794243143228664100,
+    "len": 1078
+  },
+  "rust/frmFisCancelamentosDeNotaHist": {
+    "nanos": 1794243143229426200,
+    "len": 1047
+  },
+  "rust/frmFisCancelamentosDeNotaLista": {
+    "nanos": 1794243143229426200,
+    "len": 1359
+  },
+  "rust/frmFisCartasDeCorrecaoCad": {
+    "nanos": 1794243143229426200,
+    "len": 1956
+  },
+  "rust/frmFisCartasDeCorrecaoConsulta": {
+    "nanos": 1794243143231102500,
+    "len": 1069
+  },
+  "rust/frmFisCartasDeCorrecaoHist": {
+    "nanos": 1794243143231102500,
+    "len": 1038
+  },
+  "rust/frmFisCartasDeCorrecaoLista": {
+    "nanos": 1794243143232107900,
+    "len": 1350
+  },
+  "rust/frmFisCertificadosDigitaisCad": {
+    "nanos": 1794243143232107900,
+    "len": 1968
+  },
+  "rust/frmFisCertificadosDigitaisConsulta": {
+    "nanos": 1794243143233108500,
+    "len": 1081
+  },
+  "rust/frmFisCertificadosDigitaisHist": {
+    "nanos": 1794243143233108500,
+    "len": 1050
+  },
+  "rust/frmFisCertificadosDigitaisLista": {
+    "nanos": 1794243143234107200,
+    "len": 1362
+  },
+  "rust/frmFisCestsCad": {
+    "nanos": 1794243143234107200,
+    "len": 1923
+  },
+  "rust/frmFisCestsConsulta": {
+    "nanos": 1794243143235107900,
+    "len": 1036
+  },
+  "rust/frmFisCestsHist": {
+    "nanos": 1794243143235107900,
+    "len": 1005
+  },
+  "rust/frmFisCestsLista": {
+    "nanos": 1794243143235755800,
+    "len": 1317
+  },
+  "rust/frmFisCfopsCad": {
+    "nanos": 1794243143235755800,
+    "len": 1923
+  },
+  "rust/frmFisCfopsConsulta": {
+    "nanos": 1794243143236808100,
+    "len": 1036
+  },
+  "rust/frmFisCfopsHist": {
+    "nanos": 1794243143236808100,
+    "len": 1005
+  },
+  "rust/frmFisCfopsLista": {
+    "nanos": 1794243143237686200,
+    "len": 1317
+  },
+  "rust/frmFisConhecimentosDeTransporteCad": {
+    "nanos": 1794243143237686200,
+    "len": 1983
+  },
+  "rust/frmFisConhecimentosDeTransporteConsulta": {
+    "nanos": 1794243143237686200,
+    "len": 1096
+  },
+  "rust/frmFisConhecimentosDeTransporteHist": {
+    "nanos": 1794243143239355100,
+    "len": 1065
+  },
+  "rust/frmFisConhecimentosDeTransporteLista": {
+    "nanos": 1794243143239355100,
+    "len": 1377
+  },
+  "rust/frmFisContabilistasCad": {
+    "nanos": 1794243143240359400,
+    "len": 1947
+  },
+  "rust/frmFisContabilistasConsulta": {
+    "nanos": 1794243143240359400,
+    "len": 1060
+  },
+  "rust/frmFisContabilistasHist": {
+    "nanos": 1794243143241359100,
+    "len": 1029
+  },
+  "rust/frmFisContabilistasLista": {
+    "nanos": 1794243143241359100,
+    "len": 1341
+  },
+  "rust/frmFisCreditosTributariosCad": {
+    "nanos": 1794243143242049600,
+    "len": 1965
+  },
+  "rust/frmFisCreditosTributariosConsulta": {
+    "nanos": 1794243143242654300,
+    "len": 1078
+  },
+  "rust/frmFisCreditosTributariosHist": {
+    "nanos": 1794243143242654300,
+    "len": 1047
+  },
+  "rust/frmFisCreditosTributariosLista": {
+    "nanos": 1794243143243804700,
+    "len": 1359
+  },
+  "rust/frmFisDeclaracoesCad": {
+    "nanos": 1794243143243804700,
+    "len": 1941
+  },
+  "rust/frmFisDeclaracoesConsulta": {
+    "nanos": 1794243143244804600,
+    "len": 1054
+  },
+  "rust/frmFisDeclaracoesHist": {
+    "nanos": 1794243143244804600,
+    "len": 1023
+  },
+  "rust/frmFisDeclaracoesLista": {
+    "nanos": 1794243143245805600,
+    "len": 1335
+  },
+  "rust/frmFisEscrituracoesCad": {
+    "nanos": 1794243143245805600,
+    "len": 1947
+  },
+  "rust/frmFisEscrituracoesConsulta": {
+    "nanos": 1794243143246804700,
+    "len": 1060
+  },
+  "rust/frmFisEscrituracoesHist": {
+    "nanos": 1794243143246804700,
+    "len": 1029
+  },
+  "rust/frmFisEscrituracoesLista": {
+    "nanos": 1794243143246804700,
+    "len": 1341
+  },
+  "rust/frmFisEstadosCad": {
+    "nanos": 1794243143248208300,
+    "len": 1929
+  },
+  "rust/frmFisEstadosConsulta": {
+    "nanos": 1794243143248208300,
+    "len": 1042
+  },
+  "rust/frmFisEstadosHist": {
+    "nanos": 1794243143249221300,
+    "len": 1011
+  },
+  "rust/frmFisEstadosLista": {
+    "nanos": 1794243143249221300,
+    "len": 1323
+  },
+  "rust/frmFisGuiasDeRecolhimentoCad": {
+    "nanos": 1794243143249221300,
+    "len": 1965
+  },
+  "rust/frmFisGuiasDeRecolhimentoConsulta": {
+    "nanos": 1794243143250274000,
+    "len": 1078
+  },
+  "rust/frmFisGuiasDeRecolhimentoHist": {
+    "nanos": 1794243143250274000,
+    "len": 1047
+  },
+  "rust/frmFisGuiasDeRecolhimentoLista": {
+    "nanos": 1794243143251272700,
+    "len": 1359
+  },
+  "rust/frmFisInutilizacoesCad": {
+    "nanos": 1794243143251272700,
+    "len": 1947
+  },
+  "rust/frmFisInutilizacoesConsulta": {
+    "nanos": 1794243143252275200,
+    "len": 1060
+  },
+  "rust/frmFisInutilizacoesHist": {
+    "nanos": 1794243143252667400,
+    "len": 1029
+  },
+  "rust/frmFisInutilizacoesLista": {
+    "nanos": 1794243143252667400,
+    "len": 1341
+  },
+  "rust/frmFisLivrosDeEntradaCad": {
+    "nanos": 1794243143253869000,
+    "len": 1953
+  },
+  "rust/frmFisLivrosDeEntradaConsulta": {
+    "nanos": 1794243143254456100,
+    "len": 1066
+  },
+  "rust/frmFisLivrosDeEntradaHist": {
+    "nanos": 1794243143254456100,
+    "len": 1035
+  },
+  "rust/frmFisLivrosDeEntradaLista": {
+    "nanos": 1794243143254456100,
+    "len": 1347
+  },
+  "rust/frmFisLivrosDeSaidaCad": {
+    "nanos": 1794243143254456100,
+    "len": 1947
+  },
+  "rust/frmFisLivrosDeSaidaConsulta": {
+    "nanos": 1794243143256011900,
+    "len": 1060
+  },
+  "rust/frmFisLivrosDeSaidaHist": {
+    "nanos": 1794243143256011900,
+    "len": 1029
+  },
+  "rust/frmFisLivrosDeSaidaLista": {
+    "nanos": 1794243143257016100,
+    "len": 1341
+  },
+  "rust/frmFisLivrosDeServicoCad": {
+    "nanos": 1794243143257016100,
+    "len": 1953
+  },
+  "rust/frmFisLivrosDeServicoConsulta": {
+    "nanos": 1794243143258017800,
+    "len": 1066
+  },
+  "rust/frmFisLivrosDeServicoHist": {
+    "nanos": 1794243143258709900,
+    "len": 1035
+  },
+  "rust/frmFisLivrosDeServicoLista": {
+    "nanos": 1794243143258709900,
+    "len": 1347
+  },
+  "rust/frmFisManifestosDeCargaCad": {
+    "nanos": 1794243143258709900,
+    "len": 1959
+  },
+  "rust/frmFisManifestosDeCargaConsulta": {
+    "nanos": 1794243143259868700,
+    "len": 1072
+  },
+  "rust/frmFisManifestosDeCargaHist": {
+    "nanos": 1794243143260731900,
+    "len": 1041
+  },
+  "rust/frmFisManifestosDeCargaLista": {
+    "nanos": 1794243143260731900,
+    "len": 1353
+  },
+  "rust/frmFisMensagensFiscaisCad": {
+    "nanos": 1794243143261772300,
+    "len": 1956
+  },
+  "rust/frmFisMensagensFiscaisConsulta": {
+    "nanos": 1794243143261772300,
+    "len": 1069
+  },
+  "rust/frmFisMensagensFiscaisHist": {
+    "nanos": 1794243143261772300,
+    "len": 1038
+  },
+  "rust/frmFisMensagensFiscaisLista": {
+    "nanos": 1794243143262772100,
+    "len": 1350
+  },
+  "rust/frmFisMunicipiosCad": {
+    "nanos": 1794243143263651100,
+    "len": 1938
+  },
+  "rust/frmFisMunicipiosConsulta": {
+    "nanos": 1794243143263651100,
+    "len": 1051
+  },
+  "rust/frmFisMunicipiosHist": {
+    "nanos": 1794243143264293800,
+    "len": 1020
+  },
+  "rust/frmFisMunicipiosLista": {
+    "nanos": 1794243143264293800,
+    "len": 1332
+  },
+  "rust/frmFisNaturezasDeOperacaoCad": {
+    "nanos": 1794243143265298600,
+    "len": 1965
+  },
+  "rust/frmFisNaturezasDeOperacaoConsulta": {
+    "nanos": 1794243143265298600,
+    "len": 1078
+  },
+  "rust/frmFisNaturezasDeOperacaoHist": {
+    "nanos": 1794243143266298600,
+    "len": 1047
+  },
+  "rust/frmFisNaturezasDeOperacaoLista": {
+    "nanos": 1794243143266998200,
+    "len": 1359
+  },
+  "rust/frmFisNcmsCad": {
+    "nanos": 1794243143266998200,
+    "len": 1920
+  },
+  "rust/frmFisNcmsConsulta": {
+    "nanos": 1794243143268036900,
+    "len": 1033
+  },
+  "rust/frmFisNcmsHist": {
+    "nanos": 1794243143268036900,
+    "len": 1002
+  },
+  "rust/frmFisNcmsLista": {
+    "nanos": 1794243143269037100,
+    "len": 1314
+  },
+  "rust/frmFisNotasDeServicoCad": {
+    "nanos": 1794243143269037100,
+    "len": 1950
+  },
+  "rust/frmFisNotasDeServicoConsulta": {
+    "nanos": 1794243143270037000,
+    "len": 1063
+  },
+  "rust/frmFisNotasDeServicoHist": {
+    "nanos": 1794243143270037000,
+    "len": 1032
+  },
+  "rust/frmFisNotasDeServicoLista": {
+    "nanos": 1794243143270683300,
+    "len": 1344
+  },
+  "rust/frmFisNotasFiscaisEletronicasCad": {
+    "nanos": 1794243143270683300,
+    "len": 1977
+  },
+  "rust/frmFisNotasFiscaisEletronicasConsulta": {
+    "nanos": 1794243143271824400,
+    "len": 1090
+  },
+  "rust/frmFisNotasFiscaisEletronicasHist": {
+    "nanos": 1794243143272327400,
+    "len": 1059
+  },
+  "rust/frmFisNotasFiscaisEletronicasLista": {
+    "nanos": 1794243143272327400,
+    "len": 1371
+  },
+  "rust/frmFisObrigacoesAcessoriasCad": {
+    "nanos": 1794243143273214100,
+    "len": 1968
+  },
+  "rust/frmFisObrigacoesAcessoriasConsulta": {
+    "nanos": 1794243143273676400,
+    "len": 1081
+  },
+  "rust/frmFisObrigacoesAcessoriasHist": {
+    "nanos": 1794243143273676400,
+    "len": 1050
+  },
+  "rust/frmFisObrigacoesAcessoriasLista": {
+    "nanos": 1794243143274810700,
+    "len": 1362
+  },
+  "rust/frmFisPaisesCad": {
+    "nanos": 1794243143274810700,
+    "len": 1926
+  },
+  "rust/frmFisPaisesConsulta": {
+    "nanos": 1794243143275811700,
+    "len": 1039
+  },
+  "rust/frmFisPaisesHist": {
+    "nanos": 1794243143275811700,
+    "len": 1008
+  },
+  "rust/frmFisPaisesLista": {
+    "nanos": 1794243143276616400,
+    "len": 1320
+  },
+  "rust/frmFisRegimesTributariosCad": {
+    "nanos": 1794243143276616400,
+    "len": 1962
+  },
+  "rust/frmFisRegimesTributariosConsulta": {
+    "nanos": 1794243143277614300,
+    "len": 1075
+  },
+  "rust/frmFisRegimesTributariosHist": {
+    "nanos": 1794243143277614300,
+    "len": 1044
+  },
+  "rust/frmFisRegimesTributariosLista": {
+    "nanos": 1794243143278636800,
+    "len": 1356
+  },
+  "rust/frmFisRegrasDeCofinsCad": {
+    "nanos": 1794243143279421800,
+    "len": 1950
+  },
+  "rust/frmFisRegrasDeCofinsConsulta": {
+    "nanos": 1794243143279421800,
+    "len": 1063
+  },
+  "rust/frmFisRegrasDeCofinsHist": {
+    "nanos": 1794243143279421800,
+    "len": 1032
+  },
+  "rust/frmFisRegrasDeCofinsLista": {
+    "nanos": 1794243143280684200,
+    "len": 1344
+  },
+  "rust/frmFisRegrasDeIcmsCad": {
+    "nanos": 1794243143280684200,
+    "len": 1944
+  },
+  "rust/frmFisRegrasDeIcmsConsulta": {
+    "nanos": 1794243143281688100,
+    "len": 1057
+  },
+  "rust/frmFisRegrasDeIcmsHist": {
+    "nanos": 1794243143281688100,
+    "len": 1026
+  },
+  "rust/frmFisRegrasDeIcmsLista": {
+    "nanos": 1794243143282689400,
+    "len": 1338
+  },
+  "rust/frmFisRegrasDeIpiCad": {
+    "nanos": 1794243143282689400,
+    "len": 1941
+  },
+  "rust/frmFisRegrasDeIpiConsulta": {
+    "nanos": 1794243143283632600,
+    "len": 1054
+  },
+  "rust/frmFisRegrasDeIpiHist": {
+    "nanos": 1794243143283632600,
+    "len": 1023
+  },
+  "rust/frmFisRegrasDeIpiLista": {
+    "nanos": 1794243143284632300,
+    "len": 1335
+  },
+  "rust/frmFisRegrasDeIssCad": {
+    "nanos": 1794243143284632300,
+    "len": 1941
+  },
+  "rust/frmFisRegrasDeIssConsulta": {
+    "nanos": 1794243143285635900,
+    "len": 1054
+  },
+  "rust/frmFisRegrasDeIssHist": {
+    "nanos": 1794243143285635900,
+    "len": 1023
+  },
+  "rust/frmFisRegrasDeIssLista": {
+    "nanos": 1794243143285635900,
+    "len": 1335
+  },
+  "rust/frmFisRegrasDePisCad": {
+    "nanos": 1794243143286856500,
+    "len": 1941
+  },
+  "rust/frmFisRegrasDePisConsulta": {
+    "nanos": 1794243143287645300,
+    "len": 1054
+  },
+  "rust/frmFisRegrasDePisHist": {
+    "nanos": 1794243143287645300,
+    "len": 1023
+  },
+  "rust/frmFisRegrasDePisLista": {
+    "nanos": 1794243143288625600,
+    "len": 1335
+  },
+  "rust/frmFisRetencoesNaFonteCad": {
+    "nanos": 1794243143289136000,
+    "len": 1956
+  },
+  "rust/frmFisRetencoesNaFonteConsulta": {
+    "nanos": 1794243143289612300,
+    "len": 1069
+  },
+  "rust/frmFisRetencoesNaFonteHist": {
+    "nanos": 1794243143289612300,
+    "len": 1038
+  },
+  "rust/frmFisRetencoesNaFonteLista": {
+    "nanos": 1794243143290579300,
+    "len": 1350
+  },
+  "rust/frmFisSeriesDeNotasCad": {
+    "nanos": 1794243143290579300,
+    "len": 1947
+  },
+  "rust/frmFisSeriesDeNotasConsulta": {
+    "nanos": 1794243143291593400,
+    "len": 1060
+  },
+  "rust/frmFisSeriesDeNotasHist": {
+    "nanos": 1794243143292006000,
+    "len": 1029
+  },
+  "rust/frmFisSeriesDeNotasLista": {
+    "nanos": 1794243143292006000,
+    "len": 1341
+  },
+  "rust/frmFisServicosDaLc116Cad": {
+    "nanos": 1794243143292006000,
+    "len": 1953
+  },
+  "rust/frmFisServicosDaLc116Consulta": {
+    "nanos": 1794243143293612900,
+    "len": 1066
+  },
+  "rust/frmFisServicosDaLc116Hist": {
+    "nanos": 1794243143293612900,
+    "len": 1035
+  },
+  "rust/frmFisServicosDaLc116Lista": {
+    "nanos": 1794243143294596500,
+    "len": 1347
+  },
+  "rust/frmFisSpedContribuicoesCad": {
+    "nanos": 1794243143294596500,
+    "len": 1959
+  },
+  "rust/frmFisSpedContribuicoesConsulta": {
+    "nanos": 1794243143295573200,
+    "len": 1072
+  },
+  "rust/frmFisSpedContribuicoesHist": {
+    "nanos": 1794243143295573200,
+    "len": 1041
+  },
+  "rust/frmFisSpedContribuicoesLista": {
+    "nanos": 1794243143296592300,
+    "len": 1353
+  },
+  "rust/frmFisSpedFiscalCad": {
+    "nanos": 1794243143296592300,
+    "len": 1938
+  },
+  "rust/frmFisSpedFiscalConsulta": {
+    "nanos": 1794243143297569400,
+    "len": 1051
+  },
+  "rust/frmFisSpedFiscalHist": {
+    "nanos": 1794243143297569400,
+    "len": 1020
+  },
+  "rust/frmFisSpedFiscalLista": {
+    "nanos": 1794243143298617600,
+    "len": 1332
+  },
+  "rust/frmPrincipal": {
+    "nanos": 1794243143298617600,
+    "len": 1304
+  },
+  "rust/frmRhAdiantamentosSalariaisCad": {
+    "nanos": 1794243143298617600,
+    "len": 1971
+  },
+  "rust/frmRhAdiantamentosSalariaisConsulta": {
+    "nanos": 1794243143299816300,
+    "len": 1084
+  },
+  "rust/frmRhAdiantamentosSalariaisHist": {
+    "nanos": 1794243143299816300,
+    "len": 1053
+  },
+  "rust/frmRhAdiantamentosSalariaisLista": {
+    "nanos": 1794243143300817500,
+    "len": 1365
+  },
+  "rust/frmRhAdmissoesCad": {
+    "nanos": 1794243143301581700,
+    "len": 1932
+  },
+  "rust/frmRhAdmissoesConsulta": {
+    "nanos": 1794243143301581700,
+    "len": 1045
+  },
+  "rust/frmRhAdmissoesHist": {
+    "nanos": 1794243143301581700,
+    "len": 1014
+  },
+  "rust/frmRhAdmissoesLista": {
+    "nanos": 1794243143302591800,
+    "len": 1326
+  },
+  "rust/frmRhAdvertenciasCad": {
+    "nanos": 1794243143303569100,
+    "len": 1941
+  },
+  "rust/frmRhAdvertenciasConsulta": {
+    "nanos": 1794243143303569100,
+    "len": 1054
+  },
+  "rust/frmRhAdvertenciasHist": {
+    "nanos": 1794243143304436700,
+    "len": 1023
+  },
+  "rust/frmRhAdvertenciasLista": {
+    "nanos": 1794243143304436700,
+    "len": 1335
+  },
+  "rust/frmRhAfastamentosCad": {
+    "nanos": 1794243143304436700,
+    "len": 1941
+  },
+  "rust/frmRhAfastamentosConsulta": {
+    "nanos": 1794243143305604200,
+    "len": 1054
+  },
+  "rust/frmRhAfastamentosHist": {
+    "nanos": 1794243143305604200,
+    "len": 1023
+  },
+  "rust/frmRhAfastamentosLista": {
+    "nanos": 1794243143306589000,
+    "len": 1335
+  },
+  "rust/frmRhAvaliacoesDeDesempenhoCad": {
+    "nanos": 1794243143306589000,
+    "len": 1971
+  },
+  "rust/frmRhAvaliacoesDeDesempenhoConsulta": {
+    "nanos": 1794243143307559400,
+    "len": 1084
+  },
+  "rust/frmRhAvaliacoesDeDesempenhoHist": {
+    "nanos": 1794243143307559400,
+    "len": 1053
+  },
+  "rust/frmRhAvaliacoesDeDesempenhoLista": {
+    "nanos": 1794243143308574700,
+    "len": 1365
+  },
+  "rust/frmRhBancosDeHorasCad": {
+    "nanos": 1794243143308574700,
+    "len": 1944
+  },
+  "rust/frmRhBancosDeHorasConsulta": {
+    "nanos": 1794243143309542100,
+    "len": 1057
+  },
+  "rust/frmRhBancosDeHorasHist": {
+    "nanos": 1794243143309542100,
+    "len": 1026
+  },
+  "rust/frmRhBancosDeHorasLista": {
+    "nanos": 1794243143310880800,
+    "len": 1338
+  },
+  "rust/frmRhBeneficiosCad": {
+    "nanos": 1794243143310880800,
+    "len": 1935
+  },
+  "rust/frmRhBeneficiosConsulta": {
+    "nanos": 1794243143311612700,
+    "len": 1048
+  },
+  "rust/frmRhBeneficiosHist": {
+    "nanos": 1794243143311612700,
+    "len": 1017
+  },
+  "rust/frmRhBeneficiosLista": {
+    "nanos": 1794243143312588200,
+    "len": 1329
+  },
+  "rust/frmRhCargosCad": {
+    "nanos": 1794243143312588200,
+    "len": 1923
+  },
+  "rust/frmRhCargosConsulta": {
+    "nanos": 1794243143312588200,
+    "len": 1036
+  },
+  "rust/frmRhCargosHist": {
+    "nanos": 1794243143314105400,
+    "len": 1005
+  },
+  "rust/frmRhCargosLista": {
+    "nanos": 1794243143314565900,
+    "len": 1317
+  },
+  "rust/frmRhCentrosDeCustoCad": {
+    "nanos": 1794243143314565900,
+    "len": 1947
+  },
+  "rust/frmRhCentrosDeCustoConsulta": {
+    "nanos": 1794243143315594500,
+    "len": 1060
+  },
+  "rust/frmRhCentrosDeCustoHist": {
+    "nanos": 1794243143315594500,
+    "len": 1029
+  },
+  "rust/frmRhCentrosDeCustoLista": {
+    "nanos": 1794243143316602400,
+    "len": 1341
+  },
+  "rust/frmRhCompetenciasCad": {
+    "nanos": 1794243143317005400,
+    "len": 1941
+  },
+  "rust/frmRhCompetenciasConsulta": {
+    "nanos": 1794243143317609900,
+    "len": 1054
+  },
+  "rust/frmRhCompetenciasHist": {
+    "nanos": 1794243143317609900,
+    "len": 1023
+  },
+  "rust/frmRhCompetenciasLista": {
+    "nanos": 1794243143318635600,
+    "len": 1335
+  },
+  "rust/frmRhCursosCad": {
+    "nanos": 1794243143318635600,
+    "len": 1923
+  },
+  "rust/frmRhCursosConsulta": {
+    "nanos": 1794243143319634600,
+    "len": 1036
+  },
+  "rust/frmRhCursosHist": {
+    "nanos": 1794243143319634600,
+    "len": 1005
+  },
+  "rust/frmRhCursosLista": {
+    "nanos": 1794243143320588000,
+    "len": 1317
+  },
+  "rust/frmRhDecimoTerceiroCad": {
+    "nanos": 1794243143320588000,
+    "len": 1947
+  },
+  "rust/frmRhDecimoTerceiroConsulta": {
+    "nanos": 1794243143321593200,
+    "len": 1060
+  },
+  "rust/frmRhDecimoTerceiroHist": {
+    "nanos": 1794243143321593200,
+    "len": 1029
+  },
+  "rust/frmRhDecimoTerceiroLista": {
+    "nanos": 1794243143322585100,
+    "len": 1341
+  },
+  "rust/frmRhDepartamentosCad": {
+    "nanos": 1794243143323186700,
+    "len": 1944
+  },
+  "rust/frmRhDepartamentosConsulta": {
+    "nanos": 1794243143323605000,
+    "len": 1057
+  },
+  "rust/frmRhDepartamentosHist": {
+    "nanos": 1794243143323605000,
+    "len": 1026
+  },
+  "rust/frmRhDepartamentosLista": {
+    "nanos": 1794243143324585200,
+    "len": 1338
+  },
+  "rust/frmRhDesligamentosCad": {
+    "nanos": 1794243143324585200,
+    "len": 1944
+  },
+  "rust/frmRhDesligamentosConsulta": {
+    "nanos": 1794243143325573700,
+    "len": 1057
+  },
+  "rust/frmRhDesligamentosHist": {
+    "nanos": 1794243143325573700,
+    "len": 1026
+  },
+  "rust/frmRhDesligamentosLista": {
+    "nanos": 1794243143326092600,
+    "len": 1338
+  },
+  "rust/frmRhEntregasDeEpiCad": {
+    "nanos": 1794243143326587700,
+    "len": 1944
+  },
+  "rust/frmRhEntregasDeEpiConsulta": {
+    "nanos": 1794243143326587700,
+    "len": 1057
+  },
+  "rust/frmRhEntregasDeEpiHist": {
+    "nanos": 1794243143327588800,
+    "len": 1026
+  },
+  "rust/frmRhEntregasDeEpiLista": {
+    "nanos": 1794243143327588800,
+    "len": 1338
+  },
+  "rust/frmRhEntrevistasCad": {
+    "nanos": 1794243143328568100,
+    "len": 1938
+  },
+  "rust/frmRhEntrevistasConsulta": {
+    "nanos": 1794243143329427900,
+    "len": 1051
+  },
+  "rust/frmRhEntrevistasHist": {
+    "nanos": 1794243143329427900,
+    "len": 1020
+  },
+  "rust/frmRhEntrevistasLista": {
+    "nanos": 1794243143329427900,
+    "len": 1332
+  },
+  "rust/frmRhEpisCad": {
+    "nanos": 1794243143329427900,
+    "len": 1917
+  },
+  "rust/frmRhEpisConsulta": {
+    "nanos": 1794243143331173500,
+    "len": 1030
+  },
+  "rust/frmRhEpisHist": {
+    "nanos": 1794243143331571100,
+    "len": 999
+  },
+  "rust/frmRhEpisLista": {
+    "nanos": 1794243143331571100,
+    "len": 1311
+  },
+  "rust/frmRhEscalasDeTrabalhoCad": {
+    "nanos": 1794243143332569600,
+    "len": 1956
+  },
+  "rust/frmRhEscalasDeTrabalhoConsulta": {
+    "nanos": 1794243143332569600,
+    "len": 1069
+  },
+  "rust/frmRhEscalasDeTrabalhoHist": {
+    "nanos": 1794243143333581600,
+    "len": 1038
+  },
+  "rust/frmRhEscalasDeTrabalhoLista": {
+    "nanos": 1794243143333581600,
+    "len": 1350
+  },
+  "rust/frmRhEventosDaFolhaCad": {
+    "nanos": 1794243143334562800,
+    "len": 1947
+  },
+  "rust/frmRhEventosDaFolhaConsulta": {
+    "nanos": 1794243143334562800,
+    "len": 1060
+  },
+  "rust/frmRhEventosDaFolhaHist": {
+    "nanos": 1794243143335578900,
+    "len": 1029
+  },
+  "rust/frmRhEventosDaFolhaLista": {
+    "nanos": 1794243143335578900,
+    "len": 1341
+  },
+  "rust/frmRhExamesOcupacionaisCad": {
+    "nanos": 1794243143336587200,
+    "len": 1959
+  },
+  "rust/frmRhExamesOcupacionaisConsulta": {
+    "nanos": 1794243143336587200,
+    "len": 1072
+  },
+  "rust/frmRhExamesOcupacionaisHist": {
+    "nanos": 1794243143337577400,
+    "len": 1041
+  },
+  "rust/frmRhExamesOcupacionaisLista": {
+    "nanos": 1794243143337577400,
+    "len": 1353
+  },
+  "rust/frmRhExamesRealizadosCad": {
+    "nanos": 1794243143338566800,
+    "len": 1953
+  },
+  "rust/frmRhExamesRealizadosConsulta": {
+    "nanos": 1794243143338566800,
+    "len": 1066
+  },
+  "rust/frmRhExamesRealizadosHist": {
+    "nanos": 1794243143339601600,
+    "len": 1035
+  },
+  "rust/frmRhExamesRealizadosLista": {
+    "nanos": 1794243143339601600,
+    "len": 1347
+  },
+  "rust/frmRhFeriadosCad": {
+    "nanos": 1794243143340569500,
+    "len": 1929
+  },
+  "rust/frmRhFeriadosConsulta": {
+    "nanos": 1794243143340569500,
+    "len": 1042
+  },
+  "rust/frmRhFeriadosHist": {
+    "nanos": 1794243143341572500,
+    "len": 1011
+  },
+  "rust/frmRhFeriadosLista": {
+    "nanos": 1794243143341888100,
+    "len": 1323
+  },
+  "rust/frmRhFeriasCad": {
+    "nanos": 1794243143342592200,
+    "len": 1923
+  },
+  "rust/frmRhFeriasConsulta": {
+    "nanos": 1794243143342592200,
+    "len": 1036
+  },
+  "rust/frmRhFeriasHist": {
+    "nanos": 1794243143343581200,
+    "len": 1005
+  },
+  "rust/frmRhFeriasLista": {
+    "nanos": 1794243143343581200,
+    "len": 1317
+  },
+  "rust/frmRhFolhasDePagamentoCad": {
+    "nanos": 1794243143344597000,
+    "len": 1956
+  },
+  "rust/frmRhFolhasDePagamentoConsulta": {
+    "nanos": 1794243143344597000,
+    "len": 1069
+  },
+  "rust/frmRhFolhasDePagamentoHist": {
+    "nanos": 1794243143345569300,
+    "len": 1038
+  },
+  "rust/frmRhFolhasDePagamentoLista": {
+    "nanos": 1794243143345569300,
+    "len": 1350
+  },
+  "rust/frmRhFuncionariosCad": {
+    "nanos": 1794243143346583300,
+    "len": 1941
+  },
+  "rust/frmRhFuncionariosConsulta": {
+    "nanos": 1794243143346583300,
+    "len": 1054
+  },
+  "rust/frmRhFuncionariosHist": {
+    "nanos": 1794243143347583000,
+    "len": 1023
+  },
+  "rust/frmRhFuncionariosLista": {
+    "nanos": 1794243143347583000,
+    "len": 1335
+  },
+  "rust/frmRhHorasExtrasCad": {
+    "nanos": 1794243143348601200,
+    "len": 1938
+  },
+  "rust/frmRhHorasExtrasConsulta": {
+    "nanos": 1794243143348601200,
+    "len": 1051
+  },
+  "rust/frmRhHorasExtrasHist": {
+    "nanos": 1794243143348601200,
+    "len": 1020
+  },
+  "rust/frmRhHorasExtrasLista": {
+    "nanos": 1794243143349599600,
+    "len": 1332
+  },
+  "rust/frmRhInstrutoresCad": {
+    "nanos": 1794243143350591600,
+    "len": 1938
+  },
+  "rust/frmRhInstrutoresConsulta": {
+    "nanos": 1794243143350591600,
+    "len": 1051
+  },
+  "rust/frmRhInstrutoresHist": {
+    "nanos": 1794243143350591600,
+    "len": 1020
+  },
+  "rust/frmRhInstrutoresLista": {
+    "nanos": 1794243143351578100,
+    "len": 1332
+  },
+  "rust/frmRhLancamentosDePontoCad": {
+    "nanos": 1794243143351578100,
+    "len": 1959
+  },
+  "rust/frmRhLancamentosDePontoConsulta": {
+    "nanos": 1794243143352575000,
+    "len": 1072
+  },
+  "rust/frmRhLancamentosDePontoHist": {
+    "nanos": 1794243143352575000,
+    "len": 1041
+  },
+  "rust/frmRhLancamentosDePontoLista": {
+    "nanos": 1794243143353580200,
+    "len": 1353
+  },
+  "rust/frmRhMotivosDeDesligamentoCad": {
+    "nanos": 1794243143354385200,
+    "len": 1968
+  },
+  "rust/frmRhMotivosDeDesligamentoConsulta": {
+    "nanos": 1794243143354693100,
+    "len": 1081
+  },
+  "rust/frmRhMotivosDeDesligamentoHist": {
+    "nanos": 1794243143354693100,
+    "len": 1050
+  },
+  "rust/frmRhMotivosDeDesligamentoLista": {
+    "nanos": 1794243143355600400,
+    "len": 1362
+  },
+  "rust/frmRhNiveisSalariaisCad": {
+    "nanos": 1794243143355600400,
+    "len": 1950
+  },
+  "rust/frmRhNiveisSalariaisConsulta": {
+    "nanos": 1794243143356596600,
+    "len": 1063
+  },
+  "rust/frmRhNiveisSalariaisHist": {
+    "nanos": 1794243143356596600,
+    "len": 1032
+  },
+  "rust/frmRhNiveisSalariaisLista": {
+    "nanos": 1794243143357575500,
+    "len": 1344
+  },
+  "rust/frmRhPlanosDeSaudeCad": {
+    "nanos": 1794243143357575500,
+    "len": 1944
+  },
+  "rust/frmRhPlanosDeSaudeConsulta": {
+    "nanos": 1794243143358568100,
+    "len": 1057
+  },
+  "rust/frmRhPlanosDeSaudeHist": {
+    "nanos": 1794243143358568100,
+    "len": 1026
+  },
+  "rust/frmRhPlanosDeSaudeLista": {
+    "nanos": 1794243143359557200,
+    "len": 1338
+  },
+  "rust/frmRhPromocoesCad": {
+    "nanos": 1794243143359557200,
+    "len": 1932
+  },
+  "rust/frmRhPromocoesConsulta": {
+    "nanos": 1794243143360888100,
+    "len": 1045
+  },
+  "rust/frmRhPromocoesHist": {
+    "nanos": 1794243143360888100,
+    "len": 1014
+  },
+  "rust/frmRhPromocoesLista": {
+    "nanos": 1794243143361617500,
+    "len": 1326
+  },
+  "rust/frmRhRecrutamentosCad": {
+    "nanos": 1794243143361617500,
+    "len": 1944
+  },
+  "rust/frmRhRecrutamentosConsulta": {
+    "nanos": 1794243143362563200,
+    "len": 1057
+  },
+  "rust/frmRhRecrutamentosHist": {
+    "nanos": 1794243143362563200,
+    "len": 1026
+  },
+  "rust/frmRhRecrutamentosLista": {
+    "nanos": 1794243143363562000,
+    "len": 1338
+  },
+  "rust/frmRhReembolsosCad": {
+    "nanos": 1794243143363562000,
+    "len": 1935
+  },
+  "rust/frmRhReembolsosConsulta": {
+    "nanos": 1794243143364577100,
+    "len": 1048
+  },
+  "rust/frmRhReembolsosHist": {
+    "nanos": 1794243143365098300,
+    "len": 1017
+  },
+  "rust/frmRhReembolsosLista": {
+    "nanos": 1794243143365590500,
+    "len": 1329
+  },
+  "rust/frmRhRequisicoesDePessoalCad": {
+    "nanos": 1794243143365590500,
+    "len": 1965
+  },
+  "rust/frmRhRequisicoesDePessoalConsulta": {
+    "nanos": 1794243143366587900,
+    "len": 1078
+  },
+  "rust/frmRhRequisicoesDePessoalHist": {
+    "nanos": 1794243143366980300,
+    "len": 1047
+  },
+  "rust/frmRhRequisicoesDePessoalLista": {
+    "nanos": 1794243143367623700,
+    "len": 1359
+  },
+  "rust/frmRhRescisoesCad": {
+    "nanos": 1794243143367623700,
+    "len": 1932
+  },
+  "rust/frmRhRescisoesConsulta": {
+    "nanos": 1794243143368585500,
+    "len": 1045
+  },
+  "rust/frmRhRescisoesHist": {
+    "nanos": 1794243143368585500,
+    "len": 1014
+  },
+  "rust/frmRhRescisoesLista": {
+    "nanos": 1794243143369584900,
+    "len": 1326
+  },
+  "rust/frmRhSindicatosCad": {
+    "nanos": 1794243143369584900,
+    "len": 1935
+  },
+  "rust/frmRhSindicatosConsulta": {
+    "nanos": 1794243143370560000,
+    "len": 1048
+  },
+  "rust/frmRhSindicatosHist": {
+    "nanos": 1794243143370560000,
+    "len": 1017
+  },
+  "rust/frmRhSindicatosLista": {
+    "nanos": 1794243143371575200,
+    "len": 1329
+  },
+  "rust/frmRhTiposDeAfastamentoCad": {
+    "nanos": 1794243143371575200,
+    "len": 1959
+  },
+  "rust/frmRhTiposDeAfastamentoConsulta": {
+    "nanos": 1794243143372598800,
+    "len": 1072
+  },
+  "rust/frmRhTiposDeAfastamentoHist": {
+    "nanos": 1794243143372598800,
+    "len": 1041
+  },
+  "rust/frmRhTiposDeAfastamentoLista": {
+    "nanos": 1794243143373187200,
+    "len": 1353
+  },
+  "rust/frmRhTransferenciasCad": {
+    "nanos": 1794243143373651800,
+    "len": 1947
+  },
+  "rust/frmRhTransferenciasConsulta": {
+    "nanos": 1794243143374604900,
+    "len": 1060
+  },
+  "rust/frmRhTransferenciasHist": {
+    "nanos": 1794243143374604900,
+    "len": 1029
+  },
+  "rust/frmRhTransferenciasLista": {
+    "nanos": 1794243143375596100,
+    "len": 1341
+  },
+  "rust/frmRhTreinamentosRealizadosCad": {
+    "nanos": 1794243143375596100,
+    "len": 1971
+  },
+  "rust/frmRhTreinamentosRealizadosConsulta": {
+    "nanos": 1794243143376577100,
+    "len": 1084
+  },
+  "rust/frmRhTreinamentosRealizadosHist": {
+    "nanos": 1794243143376577100,
+    "len": 1053
+  },
+  "rust/frmRhTreinamentosRealizadosLista": {
+    "nanos": 1794243143377566400,
+    "len": 1365
+  },
+  "rust/frmRhTurnosCad": {
+    "nanos": 1794243143377566400,
+    "len": 1923
+  },
+  "rust/frmRhTurnosConsulta": {
+    "nanos": 1794243143378588400,
+    "len": 1036
+  },
+  "rust/frmRhTurnosHist": {
+    "nanos": 1794243143378588400,
+    "len": 1005
+  },
+  "rust/frmRhTurnosLista": {
+    "nanos": 1794243143379385000,
+    "len": 1317
+  },
+  "rust/frmRhVagasCad": {
+    "nanos": 1794243143379690000,
+    "len": 1920
+  },
+  "rust/frmRhVagasConsulta": {
+    "nanos": 1794243143380588300,
+    "len": 1033
+  },
+  "rust/frmRhVagasHist": {
+    "nanos": 1794243143380588300,
+    "len": 1002
+  },
+  "rust/frmRhVagasLista": {
+    "nanos": 1794243143380588300,
+    "len": 1314
+  },
+  "rust/frmVenApuracoesDeComissaoCad": {
+    "nanos": 1794243143381566600,
+    "len": 1965
+  },
+  "rust/frmVenApuracoesDeComissaoConsulta": {
+    "nanos": 1794243143381566600,
+    "len": 1078
+  },
+  "rust/frmVenApuracoesDeComissaoHist": {
+    "nanos": 1794243143382586100,
+    "len": 1047
+  },
+  "rust/frmVenApuracoesDeComissaoLista": {
+    "nanos": 1794243143382586100,
+    "len": 1359
+  },
+  "rust/frmVenAssinaturasCad": {
+    "nanos": 1794243143383577200,
+    "len": 1941
+  },
+  "rust/frmVenAssinaturasConsulta": {
+    "nanos": 1794243143383577200,
+    "len": 1054
+  },
+  "rust/frmVenAssinaturasHist": {
+    "nanos": 1794243143384591100,
+    "len": 1023
+  },
+  "rust/frmVenAssinaturasLista": {
+    "nanos": 1794243143384591100,
+    "len": 1335
+  },
+  "rust/frmVenBonificacoesCad": {
+    "nanos": 1794243143385549800,
+    "len": 1944
+  },
+  "rust/frmVenBonificacoesConsulta": {
+    "nanos": 1794243143385549800,
+    "len": 1057
+  },
+  "rust/frmVenBonificacoesHist": {
+    "nanos": 1794243143386562200,
+    "len": 1026
+  },
+  "rust/frmVenBonificacoesLista": {
+    "nanos": 1794243143386562200,
+    "len": 1338
+  },
+  "rust/frmVenCampanhasCad": {
+    "nanos": 1794243143387577800,
+    "len": 1935
+  },
+  "rust/frmVenCampanhasConsulta": {
+    "nanos": 1794243143387577800,
+    "len": 1048
+  },
+  "rust/frmVenCampanhasHist": {
+    "nanos": 1794243143388585200,
+    "len": 1017
+  },
+  "rust/frmVenCampanhasLista": {
+    "nanos": 1794243143388585200,
+    "len": 1329
+  },
+  "rust/frmVenCanaisDeVendaCad": {
+    "nanos": 1794243143389569400,
+    "len": 1947
+  },
+  "rust/frmVenCanaisDeVendaConsulta": {
+    "nanos": 1794243143390092200,
+    "len": 1060
+  },
+  "rust/frmVenCanaisDeVendaHist": {
+    "nanos": 1794243143390574600,
+    "len": 1029
+  },
+  "rust/frmVenCanaisDeVendaLista": {
+    "nanos": 1794243143390574600,
+    "len": 1341
+  },
+  "rust/frmVenClientesCad": {
+    "nanos": 1794243143391585700,
+    "len": 1932
+  },
+  "rust/frmVenClientesConsulta": {
+    "nanos": 1794243143391903000,
+    "len": 1045
+  },
+  "rust/frmVenClientesHist": {
+    "nanos": 1794243143392597800,
+    "len": 1014
+  },
+  "rust/frmVenClientesLista": {
+    "nanos": 1794243143392597800,
+    "len": 1326
+  },
+  "rust/frmVenComissoesCad": {
+    "nanos": 1794243143393587400,
+    "len": 1935
+  },
+  "rust/frmVenComissoesConsulta": {
+    "nanos": 1794243143393587400,
+    "len": 1048
+  },
+  "rust/frmVenComissoesHist": {
+    "nanos": 1794243143394573100,
+    "len": 1017
+  },
+  "rust/frmVenComissoesLista": {
+    "nanos": 1794243143394573100,
+    "len": 1329
+  },
+  "rust/frmVenConcorrentesCad": {
+    "nanos": 1794243143395585200,
+    "len": 1944
+  },
+  "rust/frmVenConcorrentesConsulta": {
+    "nanos": 1794243143395585200,
+    "len": 1057
+  },
+  "rust/frmVenConcorrentesHist": {
+    "nanos": 1794243143396583500,
+    "len": 1026
+  },
+  "rust/frmVenConcorrentesLista": {
+    "nanos": 1794243143396583500,
+    "len": 1338
+  },
+  "rust/frmVenConsignacoesCad": {
+    "nanos": 1794243143397561700,
+    "len": 1944
+  },
+  "rust/frmVenConsignacoesConsulta": {
+    "nanos": 1794243143398136900,
+    "len": 1057
+  },
+  "rust/frmVenConsignacoesHist": {
+    "nanos": 1794243143398596700,
+    "len": 1026
+  },
+  "rust/frmVenConsignacoesLista": {
+    "nanos": 1794243143398596700,
+    "len": 1338
+  },
+  "rust/frmVenContatosCad": {
+    "nanos": 1794243143399591600,
+    "len": 1932
+  },
+  "rust/frmVenContatosConsulta": {
+    "nanos": 1794243143399591600,
+    "len": 1045
+  },
+  "rust/frmVenContatosHist": {
+    "nanos": 1794243143399591600,
+    "len": 1014
+  },
+  "rust/frmVenContatosLista": {
+    "nanos": 1794243143400570500,
+    "len": 1326
+  },
+  "rust/frmVenContratosDeVendaCad": {
+    "nanos": 1794243143400570500,
+    "len": 1956
+  },
+  "rust/frmVenContratosDeVendaConsulta": {
+    "nanos": 1794243143401590400,
+    "len": 1069
+  },
+  "rust/frmVenContratosDeVendaHist": {
+    "nanos": 1794243143401590400,
+    "len": 1038
+  },
+  "rust/frmVenContratosDeVendaLista": {
+    "nanos": 1794243143402576300,
+    "len": 1350
+  },
+  "rust/frmVenDescontosCad": {
+    "nanos": 1794243143402576300,
+    "len": 1935
+  },
+  "rust/frmVenDescontosConsulta": {
+    "nanos": 1794243143403589800,
+    "len": 1048
+  },
+  "rust/frmVenDescontosHist": {
+    "nanos": 1794243143404397100,
+    "len": 1017
+  },
+  "rust/frmVenDescontosLista": {
+    "nanos": 1794243143404697700,
+    "len": 1329
+  },
+  "rust/frmVenDevolucoesDeVendaCad": {
+    "nanos": 1794243143404697700,
+    "len": 1959
+  },
+  "rust/frmVenDevolucoesDeVendaConsulta": {
+    "nanos": 1794243143405602400,
+    "len": 1072
+  },
+  "rust/frmVenDevolucoesDeVendaHist": {
+    "nanos": 1794243143405602400,
+    "len": 1041
+  },
+  "rust/frmVenDevolucoesDeVendaLista": {
+    "nanos": 1794243143406575300,
+    "len": 1353
+  },
+  "rust/frmVenEntregasCad": {
+    "nanos": 1794243143406575300,
+    "len": 1932
+  },
+  "rust/frmVenEntregasConsulta": {
+    "nanos": 1794243143407561400,
+    "len": 1045
+  },
+  "rust/frmVenEntregasHist": {
+    "nanos": 1794243143407561400,
+    "len": 1014
+  },
+  "rust/frmVenEntregasLista": {
+    "nanos": 1794243143408582100,
+    "len": 1326
+  },
+  "rust/frmVenExpedicoesCad": {
+    "nanos": 1794243143408582100,
+    "len": 1938
+  },
+  "rust/frmVenExpedicoesConsulta": {
+    "nanos": 1794243143409563000,
+    "len": 1051
+  },
+  "rust/frmVenExpedicoesHist": {
+    "nanos": 1794243143409563000,
+    "len": 1020
+  },
+  "rust/frmVenExpedicoesLista": {
+    "nanos": 1794243143410556700,
+    "len": 1332
+  },
+  "rust/frmVenFaturamentosCad": {
+    "nanos": 1794243143410866100,
+    "len": 1944
+  },
+  "rust/frmVenFaturamentosConsulta": {
+    "nanos": 1794243143411607200,
+    "len": 1057
+  },
+  "rust/frmVenFaturamentosHist": {
+    "nanos": 1794243143411607200,
+    "len": 1026
+  },
+  "rust/frmVenFaturamentosLista": {
+    "nanos": 1794243143412565500,
+    "len": 1338
+  },
+  "rust/frmVenGruposDeClientesCad": {
+    "nanos": 1794243143412565500,
+    "len": 1956
+  },
+  "rust/frmVenGruposDeClientesConsulta": {
+    "nanos": 1794243143413580200,
+    "len": 1069
+  },
+  "rust/frmVenGruposDeClientesHist": {
+    "nanos": 1794243143413580200,
+    "len": 1038
+  },
+  "rust/frmVenGruposDeClientesLista": {
+    "nanos": 1794243143414584500,
+    "len": 1350
+  },
+  "rust/frmVenKitsDeProdutosCad": {
+    "nanos": 1794243143415097800,
+    "len": 1950
+  },
+  "rust/frmVenKitsDeProdutosConsulta": {
+    "nanos": 1794243143415598700,
+    "len": 1063
+  },
+  "rust/frmVenKitsDeProdutosHist": {
+    "nanos": 1794243143415598700,
+    "len": 1032
+  },
+  "rust/frmVenKitsDeProdutosLista": {
+    "nanos": 1794243143416578600,
+    "len": 1344
+  },
+  "rust/frmVenMetasDeVendaCad": {
+    "nanos": 1794243143416997800,
+    "len": 1944
+  },
+  "rust/frmVenMetasDeVendaConsulta": {
+    "nanos": 1794243143417375600,
+    "len": 1057
+  },
+  "rust/frmVenMetasDeVendaHist": {
+    "nanos": 1794243143417375600,
+    "len": 1026
+  },
+  "rust/frmVenMetasDeVendaLista": {
+    "nanos": 1794243143418386900,
+    "len": 1338
+  },
+  "rust/frmVenMotivosDePerdaCad": {
+    "nanos": 1794243143418793800,
+    "len": 1950
+  },
+  "rust/frmVenMotivosDePerdaConsulta": {
+    "nanos": 1794243143419567100,
+    "len": 1063
+  },
+  "rust/frmVenMotivosDePerdaHist": {
+    "nanos": 1794243143419567100,
+    "len": 1032
+  },
+  "rust/frmVenMotivosDePerdaLista": {
+    "nanos": 1794243143420560900,
+    "len": 1344
+  },
+  "rust/frmVenNotasDeSaidaCad": {
+    "nanos": 1794243143420560900,
+    "len": 1944
+  },
+  "rust/frmVenNotasDeSaidaConsulta": {
+    "nanos": 1794243143421580600,
+    "len": 1057
+  },
+  "rust/frmVenNotasDeSaidaHist": {
+    "nanos": 1794243143421580600,
+    "len": 1026
+  },
+  "rust/frmVenNotasDeSaidaLista": {
+    "nanos": 1794243143422591800,
+    "len": 1338
+  },
+  "rust/frmVenOportunidadesCad": {
+    "nanos": 1794243143423246400,
+    "len": 1947
+  },
+  "rust/frmVenOportunidadesConsulta": {
+    "nanos": 1794243143423246400,
+    "len": 1060
+  },
+  "rust/frmVenOportunidadesHist": {
+    "nanos": 1794243143423758800,
+    "len": 1029
+  },
+  "rust/frmVenOportunidadesLista": {
+    "nanos": 1794243143424647000,
+    "len": 1341
+  },
+  "rust/frmVenOrcamentosDeVendaCad": {
+    "nanos": 1794243143424647000,
+    "len": 1959
+  },
+  "rust/frmVenOrcamentosDeVendaConsulta": {
+    "nanos": 1794243143425595300,
+    "len": 1072
+  },
+  "rust/frmVenOrcamentosDeVendaHist": {
+    "nanos": 1794243143425595300,
+    "len": 1041
+  },
+  "rust/frmVenOrcamentosDeVendaLista": {
+    "nanos": 1794243143426572200,
+    "len": 1353
+  },
+  "rust/frmVenPedidosDeECommerceCad": {
+    "nanos": 1794243143427086900,
+    "len": 1962
+  },
+  "rust/frmVenPedidosDeECommerceConsulta": {
+    "nanos": 1794243143427581800,
+    "len": 1075
+  },
+  "rust/frmVenPedidosDeECommerceHist": {
+    "nanos": 1794243143427581800,
+    "len": 1044
+  },
+  "rust/frmVenPedidosDeECommerceLista": {
+    "nanos": 1794243143428567900,
+    "len": 1356
+  },
+  "rust/frmVenPedidosDeVendaCad": {
+    "nanos": 1794243143428567900,
+    "len": 1950
+  },
+  "rust/frmVenPedidosDeVendaConsulta": {
+    "nanos": 1794243143429429000,
+    "len": 1063
+  },
+  "rust/frmVenPedidosDeVendaHist": {
+    "nanos": 1794243143429766200,
+    "len": 1032
+  },
+  "rust/frmVenPedidosDeVendaLista": {
+    "nanos": 1794243143430601100,
+    "len": 1344
+  },
+  "rust/frmVenPontosDeVendaCad": {
+    "nanos": 1794243143430601100,
+    "len": 1947
+  },
+  "rust/frmVenPontosDeVendaConsulta": {
+    "nanos": 1794243143431594700,
+    "len": 1060
+  },
+  "rust/frmVenPontosDeVendaHist": {
+    "nanos": 1794243143431594700,
+    "len": 1029
+  },
+  "rust/frmVenPontosDeVendaLista": {
+    "nanos": 1794243143432577500,
+    "len": 1341
+  },
+  "rust/frmVenPosVendasCad": {
+    "nanos": 1794243143432577500,
+    "len": 1935
+  },
+  "rust/frmVenPosVendasConsulta": {
+    "nanos": 1794243143433584000,
+    "len": 1048
+  },
+  "rust/frmVenPosVendasHist": {
+    "nanos": 1794243143433584000,
+    "len": 1017
+  },
+  "rust/frmVenPosVendasLista": {
+    "nanos": 1794243143434593800,
+    "len": 1329
+  },
+  "rust/frmVenPrazosDeEntregaCad": {
+    "nanos": 1794243143434593800,
+    "len": 1953
+  },
+  "rust/frmVenPrazosDeEntregaConsulta": {
+    "nanos": 1794243143435599600,
+    "len": 1066
+  },
+  "rust/frmVenPrazosDeEntregaHist": {
+    "nanos": 1794243143435599600,
+    "len": 1035
+  },
+  "rust/frmVenPrazosDeEntregaLista": {
+    "nanos": 1794243143436591300,
+    "len": 1347
+  },
+  "rust/frmVenPrevisoesDeVendaCad": {
+    "nanos": 1794243143436591300,
+    "len": 1956
+  },
+  "rust/frmVenPrevisoesDeVendaConsulta": {
+    "nanos": 1794243143437592200,
+    "len": 1069
+  },
+  "rust/frmVenPrevisoesDeVendaHist": {
+    "nanos": 1794243143437592200,
+    "len": 1038
+  },
+  "rust/frmVenPrevisoesDeVendaLista": {
+    "nanos": 1794243143438566000,
+    "len": 1350
+  },
+  "rust/frmVenPromocoesCad": {
+    "nanos": 1794243143438566000,
+    "len": 1935
+  },
+  "rust/frmVenPromocoesConsulta": {
+    "nanos": 1794243143439593600,
+    "len": 1048
+  },
+  "rust/frmVenPromocoesHist": {
+    "nanos": 1794243143439593600,
+    "len": 1017
+  },
+  "rust/frmVenPromocoesLista": {
+    "nanos": 1794243143440587700,
+    "len": 1329
+  },
+  "rust/frmVenPropostasComerciaisCad": {
+    "nanos": 1794243143440587700,
+    "len": 1965
+  },
+  "rust/frmVenPropostasComerciaisConsulta": {
+    "nanos": 1794243143441596600,
+    "len": 1078
+  },
+  "rust/frmVenPropostasComerciaisHist": {
+    "nanos": 1794243143441916100,
+    "len": 1047
+  },
+  "rust/frmVenPropostasComerciaisLista": {
+    "nanos": 1794243143442583100,
+    "len": 1359
+  },
+  "rust/frmVenReclamacoesCad": {
+    "nanos": 1794243143442583100,
+    "len": 1941
+  },
+  "rust/frmVenReclamacoesConsulta": {
+    "nanos": 1794243143442583100,
+    "len": 1054
+  },
+  "rust/frmVenReclamacoesHist": {
+    "nanos": 1794243143443600200,
+    "len": 1023
+  },
+  "rust/frmVenReclamacoesLista": {
+    "nanos": 1794243143443600200,
+    "len": 1335
+  },
+  "rust/frmVenRegioesDeVendaCad": {
+    "nanos": 1794243143444579300,
+    "len": 1950
+  },
+  "rust/frmVenRegioesDeVendaConsulta": {
+    "nanos": 1794243143444579300,
+    "len": 1063
+  },
+  "rust/frmVenRegioesDeVendaHist": {
+    "nanos": 1794243143445593700,
+    "len": 1032
+  },
+  "rust/frmVenRegioesDeVendaLista": {
+    "nanos": 1794243143445593700,
+    "len": 1344
+  },
+  "rust/frmVenRepresentantesCad": {
+    "nanos": 1794243143446574200,
+    "len": 1950
+  },
+  "rust/frmVenRepresentantesConsulta": {
+    "nanos": 1794243143446574200,
+    "len": 1063
+  },
+  "rust/frmVenRepresentantesHist": {
+    "nanos": 1794243143447586300,
+    "len": 1032
+  },
+  "rust/frmVenRepresentantesLista": {
+    "nanos": 1794243143448175000,
+    "len": 1344
+  },
+  "rust/frmVenRomaneiosCad": {
+    "nanos": 1794243143448815000,
+    "len": 1935
+  },
+  "rust/frmVenRomaneiosConsulta": {
+    "nanos": 1794243143448815000,
+    "len": 1048
+  },
+  "rust/frmVenRomaneiosHist": {
+    "nanos": 1794243143448815000,
+    "len": 1017
+  },
+  "rust/frmVenRomaneiosLista": {
+    "nanos": 1794243143448815000,
+    "len": 1329
+  },
+  "rust/frmVenRotasDeEntregaCad": {
+    "nanos": 1794243143448815000,
+    "len": 1950
+  },
+  "rust/frmVenRotasDeEntregaConsulta": {
+    "nanos": 1794243143448815000,
+    "len": 1063
+  },
+  "rust/frmVenRotasDeEntregaHist": {
+    "nanos": 1794243143448815000,
+    "len": 1032
+  },
+  "rust/frmVenRotasDeEntregaLista": {
+    "nanos": 1794243143448815000,
+    "len": 1344
+  },
+  "rust/frmVenSegmentosDeClienteCad": {
+    "nanos": 1794243143448815000,
+    "len": 1962
+  },
+  "rust/frmVenSegmentosDeClienteConsulta": {
+    "nanos": 1794243143448815000,
+    "len": 1075
+  },
+  "rust/frmVenSegmentosDeClienteHist": {
+    "nanos": 1794243143448815000,
+    "len": 1044
+  },
+  "rust/frmVenSegmentosDeClienteLista": {
+    "nanos": 1794243143448815000,
+    "len": 1356
+  },
+  "rust/frmVenTabelasDePrecoCad": {
+    "nanos": 1794243143454499500,
+    "len": 1950
+  },
+  "rust/frmVenTabelasDePrecoConsulta": {
+    "nanos": 1794243143455236800,
+    "len": 1063
+  },
+  "rust/frmVenTabelasDePrecoHist": {
+    "nanos": 1794243143455236800,
+    "len": 1032
+  },
+  "rust/frmVenTabelasDePrecoLista": {
+    "nanos": 1794243143455236800,
+    "len": 1344
+  },
+  "rust/frmVenTiposDePedidoCad": {
+    "nanos": 1794243143456505300,
+    "len": 1947
+  },
+  "rust/frmVenTiposDePedidoConsulta": {
+    "nanos": 1794243143456505300,
+    "len": 1060
+  },
+  "rust/frmVenTiposDePedidoHist": {
+    "nanos": 1794243143456505300,
+    "len": 1029
+  },
+  "rust/frmVenTiposDePedidoLista": {
+    "nanos": 1794243143456505300,
+    "len": 1341
+  },
+  "rust/frmVenTrocasCad": {
+    "nanos": 1794243143456505300,
+    "len": 1926
+  },
+  "rust/frmVenTrocasConsulta": {
+    "nanos": 1794243143456505300,
+    "len": 1039
+  },
+  "rust/frmVenTrocasHist": {
+    "nanos": 1794243143456505300,
+    "len": 1008
+  },
+  "rust/frmVenTrocasLista": {
+    "nanos": 1794243143456505300,
+    "len": 1320
+  },
+  "rust/frmVenVendedoresCad": {
+    "nanos": 1794243143460750100,
+    "len": 1938
+  },
+  "rust/frmVenVendedoresConsulta": {
+    "nanos": 1794243143460750100,
+    "len": 1051
+  },
+  "rust/frmVenVendedoresHist": {
+    "nanos": 1794243143461755800,
+    "len": 1020
+  },
+  "rust/frmVenVendedoresLista": {
+    "nanos": 1794243143461755800,
+    "len": 1332
+  },
+  "rust/frmVenVisitasCad": {
+    "nanos": 1794243143462755100,
+    "len": 1929
+  },
+  "rust/frmVenVisitasConsulta": {
+    "nanos": 1794243143462755100,
+    "len": 1042
+  },
   "rust/frmVenVisitasHist": {
-    "nanos": 1794069961241917500,
-    "len": 1010
+    "nanos": 1794243143463754100,
+    "len": 1011
   },
   "rust/frmVenVisitasLista": {
-    "nanos": 1794069961488554400,
-    "len": 1322
+    "nanos": 1794243143463754100,
+    "len": 1323
   }
 }

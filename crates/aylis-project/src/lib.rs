@@ -241,6 +241,12 @@ pub struct Project {
     /// navegadores: sempre pelo compositor do Windows).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub present: String,
+    /// De onde vem o Aylis no `Cargo.toml` (o relatório do Tabernáculo, G11/G03):
+    /// `crates.io` (a versão publicada que a IDE usa; o padrão dos projetos novos), uma pasta
+    /// (relativa ao projeto ou absoluta: um Aylis fixo, que o gerador não troca) ou vazio (a
+    /// junção `.aylis/sdk` até o Aylis instalado nesta máquina, como os projetos antigos).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub sdk: String,
     /// Onde a IDE espera o app em desenvolvimento (`host:porta`), embutido no app compilado
     /// com a feature `dev`. Vazio = `127.0.0.1:7342` (desktop, navegador local e o celular
     /// pelo `adb reverse`); o IP da máquina para um celular sem cabo.
@@ -355,6 +361,11 @@ pub struct OutputSettings {
     /// O nome do executável lá, sem a extensão (`NoOBS`). Vazio = o do cargo.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub name: String,
+    /// O binário (`[[bin]]`) que o Compilar, o Executar e o Publicar usam, num crate com
+    /// vários ou com outro nome. Vazio = o primeiro `[[bin]]` do `Cargo.toml`, ou o pacote. O
+    /// relatório do Tabernáculo, I08 e G13.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub bin: String,
     /// Projetos em Rust: quantos dias o que é só deste projeto (o código dele, os testes e os
     /// exemplos compilados) fica na pasta de compilação depois da última compilação. Sem ele,
     /// o padrão das Opções da IDE (`aylis_tools::cleanup`).
@@ -677,6 +688,9 @@ impl Project {
     /// nome, como o `rtsplayer-app` com o executável `rtsplayer`); sem `[[bin]]` com nome, o do
     /// pacote.
     pub fn bin_name(&self) -> String {
+        if !self.output.bin.trim().is_empty() {
+            return self.output.bin.trim().to_string();
+        }
         std::fs::read_to_string(self.code_dir_of(Language::Rust).join("Cargo.toml"))
             .ok()
             .and_then(|text| cargo_section_name(&text, "[[bin]]"))
@@ -838,6 +852,55 @@ impl Project {
         let entry = self.form(name).ok_or_else(|| format!("o projeto não tem o form '{name}'"))?;
         let path = self.file(&entry.file);
         std::fs::read_to_string(&path).map_err(|e| format!("não consegui ler {}: {e}", path.display()))
+    }
+
+    /// Move ou renomeia o arquivo do form `name` para `new_file` (`forms/painel/inicio.json`):
+    /// o JSON e as variantes dele, e o fonte do form em cada linguagem do projeto (o módulo sai
+    /// do nome do arquivo: renomear muda o módulo; mudar só de pasta, não). Grava o `.aylisproj`.
+    /// Antes, só o "Salvar como…" com a janela do sistema fazia isso, fora do alcance do MCP
+    /// (relatório do InsightDB, 11/11).
+    pub fn move_form(&mut self, name: &str, new_file: &str) -> Result<(), Error> {
+        let index = self.forms.iter().position(|f| f.name.eq_ignore_ascii_case(name)).ok_or_else(|| format!("o projeto não tem o form '{name}'"))?;
+        let new_file = new_file.trim().replace('\\', "/");
+        let path = Path::new(&new_file);
+        let normal = path.components().all(|c| matches!(c, std::path::Component::Normal(_)));
+        if !normal || !new_file.starts_with("forms/") || !new_file.ends_with(".json") {
+            return Err(format!("'{new_file}': use um caminho dentro de forms/, terminado em .json (ex.: forms/painel/inicio.json)"));
+        }
+        let old = self.forms[index].clone();
+        if old.file == new_file {
+            return Ok(());
+        }
+        if self.file(&new_file).exists() || self.forms.iter().any(|f| f.file.eq_ignore_ascii_case(&new_file)) {
+            return Err(format!("{new_file} já existe"));
+        }
+        let new_module = codegen::module_name(&new_file);
+        if self.forms.iter().enumerate().any(|(i, f)| i != index && codegen::module_name(&f.file) == new_module) {
+            return Err(format!("outro form já usa o módulo de código '{new_module}' (o nome do arquivo): escolha outro nome"));
+        }
+        let moved = FormEntry { file: new_file.clone(), ..old.clone() };
+        // O fonte do form em cada linguagem (antes de mexer no JSON: se algum já existe, nada muda).
+        let mut sources = Vec::new();
+        for language in self.code_languages() {
+            let project = self.with_language(language);
+            let (from, to) = (codegen::entry_source(&project, &old), codegen::entry_source(&project, &moved));
+            if from != to && from.is_file() {
+                if to.exists() {
+                    return Err(format!("{} já existe", to.display()));
+                }
+                sources.push((from, to));
+            }
+        }
+        let mut files = vec![(old.file.clone(), new_file.clone())];
+        files.extend(VARIANTS.iter().map(|v| (variant_file(&old.file, v), variant_file(&new_file, v))).filter(|(from, _)| self.file(from).is_file()));
+        for (from, to) in files.iter().map(|(a, b)| (self.file(a), self.file(b))).chain(sources) {
+            if let Some(dir) = to.parent() {
+                std::fs::create_dir_all(dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
+            }
+            std::fs::rename(&from, &to).map_err(|e| format!("não consegui mover {} para {}: {e}", from.display(), to.display()))?;
+        }
+        self.forms[index] = moved;
+        self.save()
     }
 
     /// Acrescenta um form novo e vazio (grava o `.json` em `forms/`). Devolve a entrada.
@@ -1052,6 +1115,9 @@ pub fn is_identifier(name: &str) -> bool {
 /// Cria um projeto novo: a pasta `<local>/<nome>`, as subpastas, o `.aylisproj`, o form
 /// principal (`forms/principal.json`, `frmPrincipal`) e o código inicial na linguagem
 /// escolhida (na pasta dela, como `rust/`). A pasta não pode existir com arquivos dentro.
+/// O valor da chave `sdk` que usa o Aylis publicado no crates.io.
+pub const SDK_CRATES_IO: &str = "crates.io";
+
 pub fn create(location: &Path, name: &str, language: Language) -> Result<Project, Error> {
     let dir = location.join(name);
     if dir.read_dir().is_ok_and(|mut entries| entries.next().is_some()) {
@@ -1102,6 +1168,8 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         text: Some(TextOptions::default()),
         gpu: String::new(),
         present: String::new(),
+        // Projetos novos: o Aylis do crates.io, que compila em qualquer máquina (G11).
+        sdk: SDK_CRATES_IO.into(),
         dev_address: String::new(),
         platforms: Vec::new(),
         device: String::new(),

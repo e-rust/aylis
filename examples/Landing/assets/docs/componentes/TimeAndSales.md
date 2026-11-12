@@ -10,16 +10,16 @@ Times & trades: os negócios do mais novo para o mais velho, verde na compra e v
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `big_size` | Volume grande | número |
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `big_size` | Volume grande | número |  |
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `max_rows` | Máximo de linhas | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `max_rows` | Máximo de linhas | inteiro |  |
 
 ## Em código
 

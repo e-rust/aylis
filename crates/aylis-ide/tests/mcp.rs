@@ -143,6 +143,9 @@ fn an_agent_drives_the_project_over_mcp() {
 
     let (err, _) = call(ui, port, "debug_variables", json!({ "reference": 5 }));
     assert!(err, "sem depuração: erro");
+    // Com o form alterado, a primeira vez avisa (não fecha); a segunda descarta (I07).
+    assert!(call(ui, port, "close_project", json!({})).0);
+    assert!(state.borrow().project.is_some());
     assert!(!call(ui, port, "close_project", json!({})).0);
     assert!(state.borrow().project.is_none());
     assert!(aylis_ide::home::visible(&state), "fechou: a tela inicial volta");

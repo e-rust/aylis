@@ -1,13 +1,14 @@
 //! [`MediaCard`]: o cartão de um vídeo, foto ou pasta numa biblioteca de mídia.
 
+use std::any::Any;
 use std::cell::Cell;
 
 use aylis_core::{
-    Brush, Canvas, Color, Component, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, Image, ImageFit, PaintCtx, PointF,
-    PointerButton, PointerEvent, RectF, Stroke, TextAlign, Trimming, properties,
+    Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, Image, ImageFit, Key,
+    KeyEvent, MethodInfo, PaintCtx, PointF, PointerButton, PointerEvent, PropValue, RectF, Stroke, TextAlign, Trimming, properties,
 };
 
-use crate::leaf_control;
+use crate::{Edit, leaf_control};
 
 /// O cartão de um item de uma biblioteca de mídia (vídeos, fotos, gravações).
 ///
@@ -21,6 +22,10 @@ use crate::leaf_control;
 /// ordem na caixa. `dimmed` apaga (recortado, esperando colar); `progress` ≥ 0 desenha a
 /// barra sobre a miniatura com o `progress_text`. O clique no resto dispara `on_click`; o
 /// botão direito, `on_context` (com a posição).
+///
+/// Renomear: com `editable_title`, o clique no nome abre um campo sobre ele (o método
+/// `rename` também abre, para o F2). Enter ou sair do campo grava no `title` e dispara
+/// `on_rename` com o nome novo; Esc cancela.
 pub struct MediaCard {
     pub base: ControlBase,
     pub title: String,
@@ -37,7 +42,14 @@ pub struct MediaCard {
     pub progress_text: String,
     /// Um alvo de soltar marcado (a pasta sob o item arrastado).
     pub highlighted: bool,
+    /// O clique no nome abre o campo de renomear (em vez do `on_click`); o nome novo vem
+    /// no `on_rename`.
+    pub editable_title: bool,
     image: Option<Image>,
+    /// O campo de renomear aberto.
+    editor: Option<ComponentId>,
+    /// O clique que fechou o campo não abre o item.
+    swallow_click: bool,
     hover: Cell<bool>,
     /// Onde o último botão foi apertado (o `click` não traz a posição).
     pressed_at: Cell<PointF>,
@@ -62,7 +74,10 @@ impl Default for MediaCard {
             progress: -1.0,
             progress_text: String::new(),
             highlighted: false,
+            editable_title: false,
             image: None,
+            editor: None,
+            swallow_click: false,
             hover: Cell::new(false),
             pressed_at: Cell::new(PointF::ZERO),
         }
@@ -89,6 +104,124 @@ impl MediaCard {
     fn shows_check(&self) -> bool {
         !self.compact && (self.selected || self.selection_mode || self.hover.get())
     }
+
+    /// Onde o nome é desenhado, nas coordenadas do card (a pintura usa o mesmo).
+    fn title_rect(&self, width: f32, height: f32) -> RectF {
+        if self.compact {
+            let x = 49.0;
+            RectF::new(x, (height - 16.8 - 15.4) / 2.0, (width - 13.0 - x).max(0.0), 16.8)
+        } else {
+            let thumb_h = ((width - 2.0) * 9.0 / 16.0).min(height - 50.0);
+            RectF::new(10.0, 1.0 + thumb_h + 1.0 + 8.0, width - 20.0, 16.8)
+        }
+    }
+
+    pub fn is_renaming(&self) -> bool {
+        self.editor.is_some()
+    }
+
+    /// Abre o campo de renomear sobre o nome, com o nome atual selecionado.
+    pub fn start_rename(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.editor.is_some() {
+            return;
+        }
+        let b = self.base.bounds();
+        let t = self.title_rect(b.width, b.height);
+        // O campo é mais alto que o texto: centrado na linha e um pouco mais largo.
+        let local = RectF::new(b.x + t.x - 4.0, b.y + t.y + t.height / 2.0 - 13.0, t.width + 8.0, 26.0);
+        let rect = ctx.ui.to_form(ctx.id, local);
+        let mut edit = Edit::new(self.title.clone());
+        edit.select_all();
+        let editor = TitleEditor { edit, owner: ctx.id, done: false };
+        let root = ctx.ui.root_of(ctx.id);
+        let id = ctx.ui.add(editor, root);
+        if let Some(cb) = ctx.ui.control_mut(id) {
+            cb.set_rect(rect.x, rect.y, rect.width, rect.height);
+        }
+        ctx.ui.follow(id, ctx.id);
+        ctx.request_focus(id);
+        self.editor = Some(id);
+        ctx.repaint();
+    }
+
+    fn finish_rename(&mut self, ctx: &mut EventCtx<'_>, name: Option<String>) {
+        if let Some(id) = self.editor.take() {
+            ctx.ui.free(id);
+        }
+        if let Some(name) = name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty() && *n != self.title) {
+            self.title = name.clone();
+            ctx.fire("on_rename", EventArgs::Text(name));
+        }
+        ctx.repaint();
+    }
+}
+
+/// O que o campo de renomear manda ao card: o nome digitado, ou `None` (Esc).
+struct RenameDone(Option<String>);
+
+/// O campo de renomear de um [`MediaCard`]: um [`Edit`] numa camada sobre o form, que
+/// avisa o card ao confirmar ou cancelar e some junto com ele.
+struct TitleEditor {
+    edit: Edit,
+    owner: ComponentId,
+    done: bool,
+}
+
+impl TitleEditor {
+    fn finish(&mut self, ctx: &mut EventCtx<'_>, name: Option<String>) {
+        if !self.done {
+            self.done = true;
+            ctx.ui.send_message(self.owner, &RenameDone(name));
+        }
+    }
+}
+
+impl Component for TitleEditor {
+    fn class_name(&self) -> &'static str {
+        "MediaCardEditor"
+    }
+
+    fn inner(&self) -> Option<&dyn Component> {
+        Some(&self.edit)
+    }
+
+    fn inner_mut(&mut self) -> Option<&mut dyn Component> {
+        Some(&mut self.edit)
+    }
+
+    fn dies_with(&self) -> Option<ComponentId> {
+        Some(self.owner)
+    }
+
+    // O clique fora (mesmo onde não há foco) fecha e grava, pelo `focus_exit`.
+    fn closes_on_outside_press(&self) -> bool {
+        true
+    }
+
+    fn captures_key(&self, event: &KeyEvent) -> bool {
+        matches!(event.key, Key::Enter | Key::Escape) || self.edit.captures_key(event)
+    }
+
+    fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
+        match event.key {
+            Key::Enter => {
+                let name = self.edit.text.clone();
+                self.finish(ctx, Some(name));
+                ctx.set_handled();
+            }
+            Key::Escape => {
+                self.finish(ctx, None);
+                ctx.set_handled();
+            }
+            _ => self.edit.key_down(ctx, event),
+        }
+    }
+
+    fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
+        self.edit.focus_exit(ctx);
+        let name = self.edit.text.clone();
+        self.finish(ctx, Some(name));
+    }
 }
 
 impl Component for MediaCard {
@@ -107,8 +240,37 @@ impl Component for MediaCard {
         dimmed: bool => "Appearance",
         progress: f32 => "Data",
         progress_text: String => "Data",
-        highlighted: bool => "Appearance";
-        events: on_click, on_select, on_context
+        highlighted: bool => "Appearance",
+        editable_title: bool => "Behavior";
+        events: on_click, on_select, on_context, on_rename
+    }
+
+    fn methods(&self) -> &'static [MethodInfo] {
+        const METHODS: &[MethodInfo] = &[MethodInfo::new("rename", &[], None)];
+        METHODS
+    }
+
+    /// `rename()`: abre o campo de renomear (o F2 do app), mesmo sem `editable_title`.
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _args: &[PropValue]) -> Result<PropValue, String> {
+        match method {
+            "rename" => {
+                self.start_rename(ctx);
+                Ok(PropValue::Null)
+            }
+            _ => Err(format!("MediaCard não tem o método '{method}'")),
+        }
+    }
+
+    fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
+        if let Some(RenameDone(name)) = message.downcast_ref::<RenameDone>() {
+            self.finish_rename(ctx, name.clone());
+        }
+    }
+
+    fn notification(&mut self, freed: ComponentId) {
+        if self.editor == Some(freed) {
+            self.editor = None;
+        }
     }
 
     fn pointer_enter(&mut self, ctx: &mut EventCtx<'_>) {
@@ -123,14 +285,33 @@ impl Component for MediaCard {
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         self.pressed_at.set(event.position);
+        // O clique em outra parte do card grava o nome que estava sendo editado.
+        if let Some(id) = self.editor {
+            let name = match ctx.ui.get_prop(id, "text") {
+                Ok(PropValue::String(name)) => Some(name),
+                _ => None,
+            };
+            self.finish_rename(ctx, name);
+            self.swallow_click = true;
+            ctx.set_handled();
+            return;
+        }
+        self.swallow_click = false;
         if event.button == PointerButton::Secondary {
             ctx.fire("on_context", EventArgs::Pointer(*event));
         }
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
-        if self.shows_check() && self.check_rect().inflate(4.0).contains(self.pressed_at.get()) {
+        if std::mem::take(&mut self.swallow_click) {
+            return;
+        }
+        let at = self.pressed_at.get();
+        let b = self.base.bounds();
+        if self.shows_check() && self.check_rect().inflate(4.0).contains(at) {
             ctx.fire("on_select", EventArgs::None);
+        } else if self.editable_title && self.title_rect(b.width, b.height).inflate(2.0).contains(at) {
+            self.start_rename(ctx);
         } else {
             ctx.fire("on_click", EventArgs::None);
         }

@@ -65,7 +65,12 @@ fn photo(width: u32, height: u32) -> aylis_core::Image {
 /// Cria `class` em `form` com o nome `demo` e o conteúdo de exemplo (e os componentes de
 /// apoio, como o dataset de uma grade). `None` se a classe não existe no registro.
 pub fn create(ui: &mut Ui, class: &str, form: ComponentId) -> Option<ComponentId> {
-    let id = ui.create(class, Some(form)).ok()?;
+    create_in(ui, class, form, form)
+}
+
+/// [`create`] dentro de `parent` (os de apoio continuam em `form`).
+fn create_in(ui: &mut Ui, class: &str, parent: ComponentId, form: ComponentId) -> Option<ComponentId> {
+    let id = ui.create(class, Some(parent)).ok()?;
     let _ = ui.set_prop(id, "name", "demo");
     // O texto vazio vira o nome da classe (um botão sem texto não diz nada).
     for prop in ["text", "caption"] {
@@ -140,6 +145,42 @@ fn sample_report(ui: &mut Ui, form: ComponentId) -> Option<ComponentId> {
 pub fn sample_size(class: &str) -> Option<(f32, f32)> {
     let s = samples()[class]["size"].as_array()?;
     Some((s.first()?.as_f64()? as f32, s.get(1)?.as_f64()? as f32))
+}
+
+/// A folga em volta do componente na demonstração ao vivo (a mesma das imagens da
+/// documentação).
+pub const DEMO_MARGIN: f32 = 16.0;
+
+/// As classes visuais sem demonstração ao vivo (a documentação mostra a imagem): o form (não
+/// cabe dentro de outro), as peças que só existem dentro de outro componente (a aba, a barra
+/// divisória, a faixa do relatório) e as que dependem do que a página não tem (a câmera, um
+/// documento, um relatório ligado a dados, o modelo de item de uma lista, uma imagem do banco).
+pub const WITHOUT_DEMO: &[&str] = &["Form", "TabItem", "Splitter", "ReportBand", "Report", "ReportPreview", "CameraView", "DocViewer", "VirtualList", "DataRepeater", "DBImage"];
+
+/// A demonstração ao vivo de `class` dentro de `host` (um contêiner; os componentes de apoio,
+/// como o dataset de uma grade, ficam em `form`): o componente com o conteúdo de exemplo, com
+/// o nome `demo`, ocupando o host até o tamanho natural e encolhendo quando ele é menor (a
+/// documentação no celular), sem passar da borda. Devolve o componente e o tamanho natural
+/// com a folga. `None` se a classe não tem demonstração ([`WITHOUT_DEMO`]), não está no
+/// registro ou não é visual (um `Timer`).
+///
+/// A página de um componente da documentação usa no próprio wasm dela; o `aylis-demos`, para
+/// as famílias que ficam num wasm à parte.
+pub fn demo(ui: &mut Ui, class: &str, host: ComponentId, form: ComponentId) -> Option<(ComponentId, (f32, f32))> {
+    if WITHOUT_DEMO.contains(&class) {
+        return None;
+    }
+    let id = create_in(ui, class, host, form)?;
+    if ui.control(id).is_none() {
+        ui.free(id);
+        return None;
+    }
+    let (w, h) = size(ui, id);
+    if let Some(cb) = ui.control_mut(id) {
+        cb.set_align(Align::Client).set_margins(DEMO_MARGIN);
+        cb.set_max_width(w).set_max_height(h);
+    }
+    Some((id, (w + 2.0 * DEMO_MARGIN, h + 2.0 * DEMO_MARGIN)))
 }
 
 /// O tamanho natural do exemplo: o de `samples.json`, o próprio do componente ou um padrão

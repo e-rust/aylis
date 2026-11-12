@@ -1,6 +1,11 @@
 {
   "ListView": { "size": [320, 280], "props": { "items": "Ana Souza|Vendas;Bruno Lima|Financeiro;Carla Dias|Suporte;Diego Alves|Compras;Elisa Rocha|Marketing" } },
   "ListBox": { "size": [220, 180], "props": { "items": "Maçã;Banana;Laranja;Uva;Pera;Manga", "item_index": 1 } },
+  "DateTimeEdit": { "size": [200, 36], "props": { "date_time": "2026-11-12T14:30" } },
+  "Popover": { "size": [280, 140], "props": { "visible": true }, "children": [
+    { "class": "Label", "name": "lblTitulo", "text": "<b>Câmera 2</b>", "markup": true, "align": "top", "height": 24 },
+    { "class": "Label", "name": "lblDetalhe", "text": "1920 × 1080 · 30 qps · ligada há 2 h", "align": "top", "height": 24 },
+    { "class": "Button", "name": "btnAbrir", "text": "Abrir", "align": "bottom", "height": 32 } ] },
   "TreeView": { "size": [260, 260] },
   "TabStrip": { "size": [420, 40], "props": { "tabs": "principal.rs|description;dados.rs|description;Cargo.toml|settings", "closable": true, "show_add": true } },
   "TabControl": { "size": [420, 220], "children": [

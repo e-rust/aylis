@@ -64,6 +64,100 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     - Projeto → Novo fonte… cria e abre o arquivo;
     - o RTSPlayer sem o `[workspace]` à mão no `Cargo.toml` compila depois do "Gerar código", e com
       `"features": ["media"]` no `.aylisproj` mantém a feature sem componente de mídia.
+102. **O relatório do InsightDB e o compilador com o app aberto** (11/11; detalhes nos pendentes).
+    - Com o NoOBS instalado aberto, compile o NoOBS do repositório: compila. Com o NoOBS do
+      repositório aberto: recusa dizendo o caminho (ou encerra só ele, com "Encerrar o app aberto").
+    - Feche e reabra a IDE com o app aberto e clique em Parar: o app fecha.
+    - Rótulos ancorados à direita e embaixo acompanham a janela em tela cheia e a célula do
+      GridLayout.
+    - Pelo Claude: `move_form`, `new_form` com `file`, `designer_snapshot`, `compare_image` com a
+      tela antiga, `search_icons`, um `app_command` por um nome repetido (recusa com os caminhos).
+    - Chart: `value_format: full`, `label_angle: 45`, `legend_position: bottom`, rosca com
+      `slice_labels: outside` e `colors`; barra deitada com `stacked`; DataGrid com `indicator` e
+      `highlight_current` desligados.
+    - Um botão de aba com `radius: [8, 8, -8, -8]`: cantos de cima redondos e os de baixo abrindo
+      para fora.
+    - Um form numa subpasta (`move_form` para `forms/painel/x.json`): o código vai para
+      `rust/src/forms/painel/x.rs` e o projeto compila.
+    - Tirar o evento de um botão cujo handler ninguém mexeu: na geração, o handler sai; com
+      código, fica, e o Compilar avisa "não é chamado por nenhum evento".
+
+103. **Renomear no MediaCard** (pedido de 11/11). Num MediaCard com `editable_title` e o
+    `on_rename` ligado: o clique no nome abre o campo com o nome selecionado; Enter grava e o
+    handler recebe o nome novo; Esc volta o nome; o clique fora (no fundo ou na miniatura) grava,
+    e esse clique na miniatura não abre o item. A miniatura, depois, abre normalmente.
+
+104. **A placa de vídeo de cada janela** (11/11; detalhes em `docs/gpu-por-monitor.md`). Com
+    `set AYLIS_GPU_SWITCH=warp`, rode `cargo run -p aylis-platform-winit --example gpu_monitor
+    --features d2d` e arraste a janela com o mouse de um monitor para o outro: a janela troca de
+    placa (o texto mostra "Microsoft Basic Render Driver" ou a Radeon) só ao soltar, e o desenho
+    continua igual. Sem a variável, não troca. Nas Opções do projeto, Placa de vídeo tem
+    "Seguir o monitor".
+    No Windows também: `cargo run -p aylis-platform-winit --example gpu_monitor --features d2d
+    -- --toggle 4` troca a `gpu` do form entre a Radeon e o WARP (4 trocas impressas).
+
+105. **R01 e R02 do relatório do Tabernáculo** (11/11). Copie `reproducoes/` do relatório para a
+    raiz do Aylis e rode o `rodar.ps1` (as variáveis agora são `AYLIS_*`): nenhum caso cai nem
+    fecha com erro, o form secundário fica em tela cheia no monitor dele (com o segundo monitor
+    ligado, o `segunda-outro-monitor` vai para ele), e nenhum caso fica `PARADO` depois do
+    `request_close`. Num app de verdade: uma projeção sem borda, por cima e sem dona, em tela
+    cheia ao nascer, abre direto, sem o Timer que esperava o HWND.
+
+106. **G01 e G08 do relatório do Tabernáculo** (11/11). Num projeto em Rust: ponha no
+    `Cargo.toml`, acima do bloco do renderizador, um comentário `# aylis:render: lembrete` e
+    uma dependência sua, e mude o renderizador nas Opções do projeto: a dependência fica. Rode
+    `cargo fmt` no projeto (o `impl FrmX {}` vazio fica numa linha), ligue um evento novo no
+    designer e salve: o handler aparece dentro do `impl` e o projeto compila.
+
+107. **Relatório do Tabernáculo, lotes 1 e 2** (11 e 12/11; detalhes nos pendentes). Arraste um
+    arquivo do Explorer sobre uma `FileDropZone` com filtro: o recusado chama `on_reject` e o
+    `on_change` traz só os novos. Feche a IDE com um form alterado: avisa uma vez. Num form, um
+    Button com `default_button` e outro com `cancel_button`: Enter e Esc clicam neles. Um Timer
+    com `one_shot` dispara uma vez. Um form com `close_action` free some ao fechar.
+
+108. **Relatório do Tabernáculo, lote 3: controles e tema** (12/11). Na galeria: o Popover abre
+    ao lado do botão e fecha com o clique fora e com Esc; o DateTimeEdit troca o dia com ↑/↓ na
+    data e os minutos na hora; o ComboBox com `groups` mostra as cabeças e pula a opção de
+    `disabled_items`; o markup do Label com `<i>`, `<small>` e `<color=text_muted>`; três Buttons
+    `checkable` com o mesmo `group_index` se comportam como abas. Num tema, `"border_sides":
+    [0, 0, 0, 3]` num estilo de Label sublinha; `"border_style": "dashed"` traceja.
+
+109. **Relatório do Tabernáculo, lote 4: layout e texto** (12/11). Um Layout com `gap` 8 e três
+    filhos em cima; um FlowLayout com `v_align` center e um Layout com `grow` 1 no meio (empurra o
+    resto para a direita); uma GridLayout com um filho em `grid_row` 1, `grid_column` 2; um
+    ScrollBox com `gutter` desligado (o conteúdo usa a largura toda). Um Label com `line_height`
+    1.6 e `wrap`, e outro com `text_shadow`.
+
+110. **Relatório do Tabernáculo, lotes 5 e 6: mídia, WebView e projeto** (12/11). Um VideoPlayer
+    com `file` `https://...mp4` toca no Windows; no fim, a barra fica no fim. Um WebView com
+    `background_color` escuro não pisca branco. Crie um projeto novo: o `Cargo.toml` usa o Aylis
+    do crates.io (`version = "..."`), e trocar "Aylis do projeto" nas Opções para uma pasta troca
+    as dependências. Num form, `"class": "ImageView"`: o Gerar código avisa e sugere `Image`.
+
+111. **Relatório do Tabernáculo, lote 7: IDE e MCP** (12/11). Pelo MCP: `set_property` com um
+    argumento errado (`propery`) é recusado com a lista; `set_properties` e `move_component`
+    funcionam e o Ctrl+Z desfaz. Na IDE, a árvore do projeto abre fechada, e as pastas que você
+    abrir continuam abertas ao reabrir o projeto. Um fonte sem form no editor deixa o Design
+    desligado.
+
+105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
+    os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
+    rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela
+    vista) e as ferramentas do navegador não mostram o `demos/3d` baixado; no PC o lingote aparece.
+    Na documentação, a página do `Model3D` num navegador sem WebGPU (no Chrome, `chrome://flags`
+    → WebGPU desligado, ou um iPhone antes do iOS 26) mostra o modelo girando.
+    Na documentação, a página de um componente leve (Button, Valve, KpiCard...) mostra o
+    componente ao vivo sem baixar nada além da página (aba Rede do navegador); a de um
+    componente pesado (Gauge, DataGrid, Model3D) baixa o wasm da família dele (o Additional
+    ~3,1 MB comprimido, antes ~4,5 MB). A página inicial baixa ~2,6 MB comprimido (antes ~3,2 MB).
+106. **Uma pasta de compilação para todo o Rust** (11/11; detalhes nos pendentes). Abra a IDE
+    recompilada e veja `%USERPROFILE%\.cargo\config.toml`: `[build] target-dir` com a pasta das
+    Opções e `[profile.dev.package."*"] debug = false`, cada um com o comentário "Gravado pelo
+    Aylis". Num projeto Rust qualquer, fora do Aylis, `cargo build` no terminal compila nessa
+    pasta, e não num `target/` do projeto. Num projeto do Aylis já compilado pela IDE, `cargo
+    build` no terminal termina em segundos, sem recompilar as dependências. Em Ferramentas →
+    Opções → Rust e Python, desmarque "Usar esta pasta em todo o Rust desta máquina" e dê OK: as
+    duas chaves saem (o arquivo some, se só tinha elas); marque de novo e elas voltam.
 
 ## Os ajustes de 08/11 que faltam conferir
 

@@ -19,6 +19,16 @@
     procedure SetModalResult(Value: string);
     function GetRepeatEnter: Boolean;
     procedure SetRepeatEnter(Value: Boolean);
+    function GetDefaultButton: Boolean;
+    procedure SetDefaultButton(Value: Boolean);
+    function GetCancelButton: Boolean;
+    procedure SetCancelButton(Value: Boolean);
+    function GetHAlign: string;
+    procedure SetHAlign(Value: string);
+    function GetGroupIndex: Int64;
+    procedure SetGroupIndex(Value: Int64);
+    function GetRadius: string;
+    procedure SetRadius(Value: string);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -43,6 +53,10 @@
     procedure SetHitTest(Value: Boolean);
     function GetClipChildren: Boolean;
     procedure SetClipChildren(Value: Boolean);
+    function GetInheritState: Boolean;
+    procedure SetInheritState(Value: Boolean);
+    function GetTranslate: Boolean;
+    procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
     function GetCanFocus: Boolean;
@@ -89,6 +103,14 @@
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
     procedure SetColumnSpan(Value: Int64);
+    function GetGridRow: Int64;
+    procedure SetGridRow(Value: Int64);
+    function GetGridColumn: Int64;
+    procedure SetGridColumn(Value: Int64);
+    function GetRowSpan: Int64;
+    procedure SetRowSpan(Value: Int64);
+    function GetGrow: Double;
+    procedure SetGrow(Value: Double);
     function GetShadow: string;
     procedure SetShadow(Value: string);
     function GetStyle: string;
@@ -125,6 +147,10 @@
     procedure SetHint(Value: string);
     function GetTag: Int64;
     procedure SetTag(Value: Int64);
+    function GetTagString: string;
+    procedure SetTagString(Value: string);
+    function GetAccessibleName: string;
+    procedure SetAccessibleName(Value: string);
     function GetPopupMenu: string;
     procedure SetPopupMenu(Value: string);
   public
@@ -138,6 +164,11 @@
     property Checked: Boolean read GetChecked write SetChecked;
     property ModalResult: string read GetModalResult write SetModalResult;
     property RepeatEnter: Boolean read GetRepeatEnter write SetRepeatEnter;
+    property DefaultButton: Boolean read GetDefaultButton write SetDefaultButton;
+    property CancelButton: Boolean read GetCancelButton write SetCancelButton;
+    property HAlign: string read GetHAlign write SetHAlign;
+    property GroupIndex: Int64 read GetGroupIndex write SetGroupIndex;
+    property Radius: string read GetRadius write SetRadius;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
@@ -150,6 +181,8 @@
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
     property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property InheritState: Boolean read GetInheritState write SetInheritState;
+    property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
@@ -173,6 +206,10 @@
     property SelfAlign: string read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property GridRow: Int64 read GetGridRow write SetGridRow;
+    property GridColumn: Int64 read GetGridColumn write SetGridColumn;
+    property RowSpan: Int64 read GetRowSpan write SetRowSpan;
+    property Grow: Double read GetGrow write SetGrow;
     property Shadow: string read GetShadow write SetShadow;
     property Style: string read GetStyle write SetStyle;
     property Theme: string read GetTheme write SetTheme;
@@ -191,6 +228,8 @@
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
     property Hint: string read GetHint write SetHint;
     property Tag: Int64 read GetTag write SetTag;
+    property TagString: string read GetTagString write SetTagString;
+    property AccessibleName: string read GetAccessibleName write SetAccessibleName;
     property PopupMenu: string read GetPopupMenu write SetPopupMenu;
   end;
 
@@ -283,6 +322,56 @@ end;
 procedure TButton.SetRepeatEnter(Value: Boolean);
 begin
   SetProp('repeat_enter', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetDefaultButton: Boolean;
+begin
+  Result := GetProp('default_button').AsBoolean;
+end;
+
+procedure TButton.SetDefaultButton(Value: Boolean);
+begin
+  SetProp('default_button', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetCancelButton: Boolean;
+begin
+  Result := GetProp('cancel_button').AsBoolean;
+end;
+
+procedure TButton.SetCancelButton(Value: Boolean);
+begin
+  SetProp('cancel_button', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetHAlign: string;
+begin
+  Result := AsText(GetProp('h_align'));
+end;
+
+procedure TButton.SetHAlign(Value: string);
+begin
+  SetProp('h_align', TJSONString.Create(Value));
+end;
+
+function TButton.GetGroupIndex: Int64;
+begin
+  Result := GetProp('group_index').AsInt64;
+end;
+
+procedure TButton.SetGroupIndex(Value: Int64);
+begin
+  SetProp('group_index', TJSONInt64Number.Create(Value));
+end;
+
+function TButton.GetRadius: string;
+begin
+  Result := AsText(GetProp('radius'));
+end;
+
+procedure TButton.SetRadius(Value: string);
+begin
+  SetProp('radius', TJSONString.Create(Value));
 end;
 
 function TButton.GetLeft: Double;
@@ -403,6 +492,26 @@ end;
 procedure TButton.SetClipChildren(Value: Boolean);
 begin
   SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetInheritState: Boolean;
+begin
+  Result := GetProp('inherit_state').AsBoolean;
+end;
+
+procedure TButton.SetInheritState(Value: Boolean);
+begin
+  SetProp('inherit_state', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetTranslate: Boolean;
+begin
+  Result := GetProp('translate').AsBoolean;
+end;
+
+procedure TButton.SetTranslate(Value: Boolean);
+begin
+  SetProp('translate', TJSONBoolean.Create(Value));
 end;
 
 function TButton.GetCapturesWheel: Boolean;
@@ -635,6 +744,46 @@ begin
   SetProp('column_span', TJSONInt64Number.Create(Value));
 end;
 
+function TButton.GetGridRow: Int64;
+begin
+  Result := GetProp('grid_row').AsInt64;
+end;
+
+procedure TButton.SetGridRow(Value: Int64);
+begin
+  SetProp('grid_row', TJSONInt64Number.Create(Value));
+end;
+
+function TButton.GetGridColumn: Int64;
+begin
+  Result := GetProp('grid_column').AsInt64;
+end;
+
+procedure TButton.SetGridColumn(Value: Int64);
+begin
+  SetProp('grid_column', TJSONInt64Number.Create(Value));
+end;
+
+function TButton.GetRowSpan: Int64;
+begin
+  Result := GetProp('row_span').AsInt64;
+end;
+
+procedure TButton.SetRowSpan(Value: Int64);
+begin
+  SetProp('row_span', TJSONInt64Number.Create(Value));
+end;
+
+function TButton.GetGrow: Double;
+begin
+  Result := GetProp('grow').AsFloat;
+end;
+
+procedure TButton.SetGrow(Value: Double);
+begin
+  SetProp('grow', TJSONFloatNumber.Create(Value));
+end;
+
 function TButton.GetShadow: string;
 begin
   Result := AsText(GetProp('shadow'));
@@ -813,6 +962,26 @@ end;
 procedure TButton.SetTag(Value: Int64);
 begin
   SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TButton.GetTagString: string;
+begin
+  Result := AsText(GetProp('tag_string'));
+end;
+
+procedure TButton.SetTagString(Value: string);
+begin
+  SetProp('tag_string', TJSONString.Create(Value));
+end;
+
+function TButton.GetAccessibleName: string;
+begin
+  Result := AsText(GetProp('accessible_name'));
+end;
+
+procedure TButton.SetAccessibleName(Value: string);
+begin
+  SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
 function TButton.GetPopupMenu: string;

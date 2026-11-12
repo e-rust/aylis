@@ -52,6 +52,8 @@ pub struct Data {
     posicao: usize,
     /// `abrir` chamado por `navegar`: não mexe no histórico.
     navegando: bool,
+    /// A demonstração ao vivo montada na própria página (sai ao abrir outra).
+    demo: Option<ComponentId>,
 }
 
 impl FrmDocumentacao {
@@ -90,25 +92,39 @@ impl FrmDocumentacao {
             d.posicao = d.historico.len() - 1;
         }
         self.data.atual = arquivo.to_string();
-        // A página de um componente visual, no navegador: o componente de verdade no lugar da
-        // imagem (o wasm da família dele, carregado só agora; veja `demo_de`).
-        let demo = if cfg!(target_arch = "wasm32") { ler(ui, arquivo).and_then(|texto| demo_de(arquivo, &texto).map(|url| (url, texto))) } else { None };
-        let _ = ui.set_prop(self.pnlDemo.id, "visible", demo.is_some());
-        match demo {
-            Some((url, texto)) => {
-                // A altura do quadro: a da imagem do componente (o tamanho dele) até a página
-                // da demonstração mandar a dela (`demo_mensagem`).
-                let classe = arquivo.trim_start_matches("componentes/").trim_end_matches(".md");
-                if let Some((_, altura)) = ui.services().resources.as_ref().and_then(|r| r.read(&format!("{DOCS}componentes/img/{classe}.png"))).as_deref().and_then(tamanho_png) {
-                    let _ = ui.set_prop(self.pnlDemo.id, "height", (altura as f32 + RODAPE_DEMO).min(ALTURA_DEMO_MAX));
-                }
-                let _ = ui.set_prop(self.wbDemo.id, "url", url);
+        // A página de um componente visual: o componente de verdade no lugar da imagem. Das
+        // famílias leves, montado aqui mesmo (as classes vêm no wasm da página: veja o
+        // `build.rs`); das outras, no navegador, o wasm da família num `<iframe>` (carregado
+        // só agora; veja `demo_de`). Sem nenhum dos dois, a imagem.
+        if let Some(id) = self.data.demo.take() {
+            ui.free(id);
+        }
+        let texto = ler(ui, arquivo);
+        let classe = texto.as_deref().and_then(|t| classe_visual(arquivo, t));
+        let na_pagina = classe.and_then(|c| aylis::samples::demo(ui, c, self.pnlDemo.id, self.form.id));
+        let no_quadro = if na_pagina.is_none() && cfg!(target_arch = "wasm32") { texto.as_deref().and_then(|t| demo_de(arquivo, t)) } else { None };
+        let _ = ui.set_prop(self.pnlDemo.id, "visible", na_pagina.is_some() || no_quadro.is_some());
+        let _ = ui.set_prop(self.wbDemo.id, "visible", no_quadro.is_some());
+        let _ = ui.set_prop(self.wbDemo.id, "url", no_quadro.clone().unwrap_or_default());
+        if let Some((id, (_, altura))) = na_pagina {
+            self.data.demo = Some(id);
+            let _ = ui.set_prop(self.pnlDemo.id, "height", (altura + RODAPE_DEMO).min(ALTURA_DEMO_MAX));
+        } else if no_quadro.is_some() {
+            // A altura do quadro: a da imagem do componente (o tamanho dele) até a página da
+            // demonstração mandar a dela (`demo_mensagem`).
+            let classe = arquivo.trim_start_matches("componentes/").trim_end_matches(".md");
+            if let Some((_, altura)) = ui.services().resources.as_ref().and_then(|r| r.read(&format!("{DOCS}componentes/img/{classe}.png"))).as_deref().and_then(tamanho_png) {
+                let _ = ui.set_prop(self.pnlDemo.id, "height", (altura as f32 + RODAPE_DEMO).min(ALTURA_DEMO_MAX));
+            }
+        }
+        match texto.filter(|_| na_pagina.is_some() || no_quadro.is_some()) {
+            // Com o componente ao vivo, a página sem a imagem dele.
+            Some(texto) => {
                 let sem_imagem: Vec<&str> = texto.lines().filter(|l| !(l.starts_with("![") && l.contains("](img/"))).collect();
                 let _ = ui.set_prop(self.mdPagina.id, "source", String::new());
                 let _ = ui.set_prop(self.mdPagina.id, "text", sem_imagem.join("\n"));
             }
             None => {
-                let _ = ui.set_prop(self.wbDemo.id, "url", String::new());
                 let _ = ui.set_prop(self.mdPagina.id, "source", format!("{DOCS}{arquivo}"));
             }
         }
@@ -332,13 +348,17 @@ fn tamanho_demo(mensagem: &str) -> Option<(f32, f32)> {
 /// categoria da paleta, que a página diz na linha `**Paleta:** Standard · **controle visual**`,
 /// com `-` no lugar dos espaços (a mesma pasta que o `aylis-tool demos` grava).
 fn demo_de(arquivo: &str, texto: &str) -> Option<String> {
-    let classe = arquivo.strip_prefix("componentes/")?.strip_suffix(".md")?;
+    let classe = classe_visual(arquivo, texto)?;
     let linha = texto.lines().find(|l| l.starts_with("**Paleta:**"))?;
-    if !linha.contains("**controle visual**") {
-        return None;
-    }
     let categoria = linha.trim_start_matches("**Paleta:**").split('·').next()?.trim();
     Some(format!("demos/{}/index.html?class={classe}&theme=dark", categoria.to_lowercase().replace(' ', "-")))
+}
+
+/// A classe de uma página de componente (`componentes/Button.md` → `Button`), se ele é visual
+/// (a linha `**Paleta:** Standard · **controle visual**`).
+fn classe_visual<'a>(arquivo: &'a str, texto: &str) -> Option<&'a str> {
+    let classe = arquivo.strip_prefix("componentes/")?.strip_suffix(".md")?;
+    texto.lines().find(|l| l.starts_with("**Paleta:**"))?.contains("**controle visual**").then_some(classe)
 }
 
 /// Um título do índice sem as marcas do Markdown (`` `ClientDataSet` ``, `**negrito**`): a

@@ -19,4 +19,6 @@ struct MenuItem : aylis::Component {
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool danger() const { return get_prop_("danger").boolean(); }
     void set_danger(bool v) const { set_prop_("danger", v); }
+    bool header() const { return get_prop_("header").boolean(); }
+    void set_header(bool v) const { set_prop_("header", v); }
 };

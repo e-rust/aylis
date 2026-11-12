@@ -10,16 +10,16 @@ Caixa de marcação para uma opção de sim ou não ("Lembrar de mim"), com o te
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `box_size` | Tamanho da caixa | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `box_size` | Tamanho da caixa | número | Lado da caixinha (0 = o do visual do tema). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `checked` | Marcado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `checked` | Marcado | lógico |  |
 
 ## Eventos
 

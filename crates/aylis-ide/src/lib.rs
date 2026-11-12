@@ -28,6 +28,7 @@ pub mod devlink;
 #[path = "devlink_lite.rs"]
 pub mod devlink;
 pub mod dialogs;
+pub mod disk;
 pub mod document;
 /// O guarda que recusa o agente gravando direto num projeto aberto na IDE.
 #[cfg(feature = "desktop")]

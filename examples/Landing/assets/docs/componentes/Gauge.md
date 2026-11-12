@@ -10,18 +10,18 @@ Medidor (o `Gauge` do iOS e do watchOS): arco de 270° com o valor entre `min` e
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `label` | Rótulo | texto |
-| `gradient` | Degradê | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `label` | Rótulo | texto |  |
+| `gradient` | Degradê | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
 
 ## Em código
 

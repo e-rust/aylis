@@ -60,6 +60,47 @@ pub fn shortcut_matches((modifiers, key): (Modifiers, Key), event: &KeyEvent) ->
     same_key && modifiers.ctrl == (m.ctrl || m.meta) && modifiers.shift == m.shift && modifiers.alt == m.alt
 }
 
+/// O atalho escrito para mostrar (o `ShortCutToText` do Delphi): `"ctrl+shift+s"` vira
+/// `"Ctrl+Shift+S"`, `"del"` vira `"Del"`, no idioma do Aylis (o espaço). Texto que não é atalho
+/// volta como veio (o relatório do Tabernáculo, J13: o nome era escrito à mão).
+pub fn shortcut_text(text: &str) -> String {
+    let Some((m, key)) = parse_shortcut(text) else { return text.to_string() };
+    let mut parts: Vec<String> = Vec::new();
+    if m.ctrl {
+        parts.push("Ctrl".into());
+    }
+    if m.meta {
+        parts.push(if cfg!(target_os = "macos") { "Cmd".into() } else { "Win".into() });
+    }
+    if m.alt {
+        parts.push("Alt".into());
+    }
+    if m.shift {
+        parts.push("Shift".into());
+    }
+    parts.push(match key {
+        Key::Enter => "Enter".into(),
+        Key::Tab => "Tab".into(),
+        Key::Escape => "Esc".into(),
+        Key::Backspace => "Backspace".into(),
+        Key::Delete => "Del".into(),
+        Key::Insert => "Ins".into(),
+        Key::Home => "Home".into(),
+        Key::End => "End".into(),
+        Key::PageUp => "PgUp".into(),
+        Key::PageDown => "PgDn".into(),
+        Key::Left => "←".into(),
+        Key::Right => "→".into(),
+        Key::Up => "↑".into(),
+        Key::Down => "↓".into(),
+        Key::Space => crate::messages::t("Espaço"),
+        Key::F(n) => format!("F{n}"),
+        Key::Char(c) => c.to_uppercase().collect(),
+        _ => String::new(),
+    });
+    parts.join("+")
+}
+
 /// Uma lista de atalhos separados por `;` (`"Enter;Down"`).
 pub fn parse_shortcut_list(text: &str) -> Vec<(Modifiers, Key)> {
     text.split(';').filter_map(parse_shortcut).collect()

@@ -10,10 +10,10 @@ Elipse que ocupa o controle.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
 
 ## Em código
 

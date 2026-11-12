@@ -223,6 +223,14 @@ impl Ui {
             cb.set_position(0.0, 0.0).set_size(width, height);
         }
         self.layout();
+        // Como na tela: o que os `on_resize` mudaram entra num layout novo antes de pintar (a
+        // foto saía da primeira passada, diferente da tela; o relatório do Tabernáculo, B02).
+        for _ in 0..4 {
+            if !self.needs_layout() {
+                break;
+            }
+            self.layout();
+        }
         let background = self.theme().color("background");
         let png = service.render_png(width.ceil() as u32, height.ceil() as u32, scale, background, &mut |canvas| self.paint(id, canvas));
         self.services_mut().offscreen = Some(service);
@@ -458,6 +466,10 @@ impl Ui {
             canvas.draw_shadow(rect, style.radius, shadow);
         }
         canvas.fill_rect(rect, style.radius, &crate::canvas::Brush::Solid(style.fill));
+        // A borda do estilo `Hint` do tema (C19 do Tabernáculo); o padrão continua sem.
+        if style.border_width > 0.0 && !style.border_color.is_transparent() {
+            canvas.stroke_rect(rect, style.radius, &style.border_stroke(style.border_color, style.border_width));
+        }
         let mut ly = y + pad.top;
         for line in &lines {
             canvas.draw_text(line, RectF::new(x + pad.left, ly, width + 1.0, lh), &ts);
@@ -484,6 +496,29 @@ impl Ui {
         let enabled = parent_enabled && cb.enabled();
         let mut state = cb.state();
         state.disabled = !enabled;
+        if let Some(checked) = component.checked_state() {
+            state.checked = checked;
+        }
+        if self.still_picture {
+            state.hover = false;
+            state.pressed = false;
+            state.focused = false;
+        }
+        // O estado do primeiro ancestral que não herda (a linha da lista) vale para ele.
+        if cb.inherit_state() {
+            let mut up = self.parent(id);
+            while let Some(p) = up {
+                let Some(pcb) = self.cb(p) else { break };
+                if !pcb.inherit_state() {
+                    let ps = pcb.state();
+                    state.hover |= ps.hover;
+                    state.pressed |= ps.pressed;
+                    state.checked |= self.component(p).and_then(|c| c.checked_state()).unwrap_or(ps.checked);
+                    break;
+                }
+                up = self.parent(p);
+            }
+        }
         // Focado por clique ou toque: sem o anel de foco, a não ser num campo de texto (como o
         // `:focus-visible` dos navegadores); pelo teclado, o anel aparece.
         if state.focused && !component.accepts_text() && self.focus_from_pointer(self.root_of(id)) {

@@ -209,7 +209,7 @@ pub fn cargo(
     command.args(args).args(["--message-format=json", "--color", "never"]).current_dir(dir);
     // Dependências sem informação de depuração (os .pdb delas passam de gigabytes); o
     // código do projeto continua depurável.
-    command.args(["--config", "profile.dev.package.\"*\".debug=false"]);
+    command.args(["--config", &format!("profile.dev.package.\"*\".{DEPENDENCY_DEBUG}")]);
     command.env("CARGO_TARGET_DIR", &target);
     for (k, v) in envs {
         command.env(k, v);
@@ -271,6 +271,10 @@ pub fn cargo(
 /// autor e fica como está).
 const CARGO_CONFIG_MARK: &str = "# Gravado pelo aylis";
 
+/// A depuração das dependências nas compilações do Aylis, no `--config` e nos `config.toml`
+/// (o do projeto e o global, `crate::cargo_config`): sem ela, o `target/` cai à metade.
+pub const DEPENDENCY_DEBUG: &str = "debug = false";
+
 /// Grava em `<projeto>/.cargo/config.toml` a pasta de compilação compartilhada: o cargo de
 /// fora do aylis (no terminal, o servidor de linguagem do editor) usa a mesma pasta, em vez de
 /// compilar o aylis inteiro de novo num `target/` do projeto. Fica de fora o que está dentro do
@@ -289,8 +293,10 @@ pub fn write_cargo_config(dir: &Path, target: &Path) {
         return;
     }
     // Uma string literal do TOML (entre aspas simples): as barras invertidas valem como estão.
+    // O perfil é o mesmo do `cargo` acima: com outro, o cargo de fora compilaria as
+    // dependências de novo e a pasta guardaria as duas cópias.
     let text = format!(
-        "{CARGO_CONFIG_MARK}: o cargo fora do aylis (terminal, editor) compila na mesma pasta\n# que a IDE (Opções → Rust e Python). Pode apagar: o aylis grava de novo.\n[build]\ntarget-dir = '{}'\n",
+        "{CARGO_CONFIG_MARK}: o cargo fora do aylis (terminal, editor) compila na mesma pasta\n# e do mesmo jeito que a IDE (Opções → Rust e Python). Pode apagar: o aylis grava de novo.\n[build]\ntarget-dir = '{}'\n\n[profile.dev.package.\"*\"]\n{DEPENDENCY_DEBUG}\n",
         target.display()
     );
     if current.as_deref() != Some(text.as_str()) {

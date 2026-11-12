@@ -10,20 +10,20 @@ Mostra texto em Markdown com as cores e fontes do tema: títulos, listas, tabela
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `editor_look` | Código como no editor | lógico |
-| `code_theme` | Tema do código | texto |
-| `code_language` | Linguagem do código | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `editor_look` | Código como no editor | lógico | Os blocos de código com a cara do editor (liga o `EditorCode` com as duas de baixo). |
+| `code_theme` | Tema do código | texto | O tema de cores dos blocos com a cara do editor (vazio: o do app). |
+| `code_language` | Linguagem do código | texto | A linguagem dos blocos sem linguagem na cerca (`rust`, `python`...). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `source` | Origem | texto |
-| `anchor` | Âncora | texto |
-| `highlight` | Destacar | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `source` | Origem | texto |  |
+| `anchor` | Âncora | texto | O título para onde rolar: o identificador (`gravar-no-banco`, com ou sem `#`) ou o texto dele (o "Nesta página" de uma documentação, um link `pagina.md#secao`). |
+| `highlight` | Destacar | texto | O texto a destacar na página (sem diferença de maiúsculas), como o achado de uma busca: cada ocorrência ganha um fundo, e a página rola até a primeira. |
 
 ## Eventos
 

@@ -13,7 +13,7 @@ name = "aylis"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-aylis-core = { path = "../aylis-core" }
+aylis-core = { path = "../aylis-core", features = ["text-shaping"] }
 aylis-remote = { path = "../aylis-remote" }
 aylis-platform-winit = { path = "../aylis-platform-winit" }
 aylis-skia = { path = "../aylis-skia" }

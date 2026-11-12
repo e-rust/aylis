@@ -8,19 +8,19 @@ Progresso, selo e botões no ícone do app na barra de tarefas.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `badge` | Selo | texto |
-| `badge_color` | Cor do selo | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `badge` | Selo | texto | Indicador sobre o ícone: vazio, `•` ou um número. |
+| `badge_color` | Cor do selo | cor |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `progress` | Progresso | um de: `none`, `normal`, `paused`, `error`, `indeterminate` |
-| `value` | Valor | número |
-| `buttons` | Botões | texto |
-| `tasks` | Tarefas | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `progress` | Progresso | um de: `none`, `normal`, `paused`, `error`, `indeterminate` |  |
+| `value` | Valor | número | 0 a 100. |
+| `buttons` | Botões | texto | Botões da miniatura (até 7): `icone.png\|Dica` separados por `;`. |
+| `tasks` | Tarefas | texto | Tarefas do clique direito: `Nome\|argumentos` separados por `;`. Abrem o próprio app com os argumentos (veja `std::env::args`). |
 
 ## Eventos
 

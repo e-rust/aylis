@@ -118,3 +118,38 @@ fn os_botoes_extras_do_mouse_voltam_e_avancam_pelas_paginas() {
     }
     assert!(!ui.open_forms().contains(&form), "voltou ao site");
 }
+
+/// A página de um componente de uma família leve mostra o componente de verdade montado na
+/// própria página (11/11: sem baixar o wasm da família, que traria o núcleo de novo); a
+/// próxima página tira o anterior; sem a classe registrada (fora do navegador, as que os forms
+/// não usam), volta a imagem.
+#[test]
+fn a_component_page_shows_the_live_component_inside_the_page() {
+    let mut app = landing::app().expect("o app abre");
+    let ui = &mut app.ui;
+    let botao = ui.find_path("frmPrincipal.btnDocumentacao").unwrap();
+    ui.fire(botao, "on_click", &EventArgs::None);
+    let md = ui.find_path("frmDocumentacao.mdPagina").unwrap();
+    let painel = ui.find_path("frmDocumentacao.pnlDemo").unwrap();
+
+    ui.fire(md, "on_link", &EventArgs::Text("../componentes/Button.md".into()));
+    let demo = ui.find_path("frmDocumentacao.demo").expect("o Button ao vivo na página");
+    assert_eq!(ui.parent(demo), Some(painel));
+    assert_eq!(ui.class_name(demo), Some("Button"));
+    assert_eq!(text(ui, "frmDocumentacao.pnlDemo", "visible"), "Bool(true)");
+    assert_eq!(text(ui, "frmDocumentacao.wbDemo", "url"), "", "sem o wasm da família");
+    assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "");
+    assert!(!text(ui, "frmDocumentacao.mdPagina", "text").contains("](img/"), "sem a imagem do componente");
+
+    // Uma página sem componente visual: a demonstração sai.
+    ui.fire(md, "on_link", &EventArgs::Text("Timer.md".into()));
+    assert!(ui.find_path("frmDocumentacao.demo").is_none());
+    assert!(!ui.contains(demo));
+    assert_eq!(text(ui, "frmDocumentacao.pnlDemo", "visible"), "Bool(false)");
+    assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Timer.md");
+
+    // Uma classe que este executável não registra (o Gauge, fora do navegador): a imagem.
+    ui.fire(md, "on_link", &EventArgs::Text("Gauge.md".into()));
+    assert!(ui.find_path("frmDocumentacao.demo").is_none());
+    assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Gauge.md");
+}

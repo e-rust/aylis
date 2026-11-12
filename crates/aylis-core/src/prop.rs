@@ -447,6 +447,20 @@ impl PropType for Option<f32> {
     }
 }
 
+/// `None` = o do tema (o raio do estilo). Número, `[h, v]` ou `[a, b, c, d]`.
+impl PropType for Option<Bounds> {
+    const KIND: PropKind = PropKind::Bounds;
+    fn to_value(&self) -> PropValue {
+        self.map_or(PropValue::Null, PropValue::Bounds)
+    }
+    fn from_value(value: PropValue) -> Result<Self> {
+        match value {
+            PropValue::Null => Ok(None),
+            v => v.to_bounds().map(Some),
+        }
+    }
+}
+
 /// `None` = usar a cor do tema. `Null` (ou texto vazio) volta para `None`.
 impl PropType for Option<Color> {
     const KIND: PropKind = PropKind::Color;

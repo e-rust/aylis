@@ -10,9 +10,9 @@ Barra de status no rodapé: `text` à esquerda; aceita controles dentro (labels 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
 
 ## Em código
 

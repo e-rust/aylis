@@ -92,6 +92,8 @@ fn speed(v: PointF) -> f32 {
 /// Estado de entrada de um form.
 #[derive(Clone, Debug, Default)]
 pub(crate) struct InputState {
+    /// O controle com arquivos do sistema passando por cima ([`Ui::files_hover`]).
+    pub(crate) file_hover: Option<ComponentId>,
     hovered: Option<ComponentId>,
     captured: Option<ComponentId>,
     focused: Option<ComponentId>,
@@ -216,7 +218,8 @@ pub(crate) struct HintState {
     pub(crate) shown: bool,
 }
 
-/// Tempo com o mouse parado em cima até a dica aparecer, em segundos.
+/// Tempo com o mouse parado em cima até a dica aparecer, em segundos: o padrão, quando nem o
+/// tema (`durations.hint`, em ms) nem o app (`Ui::set_hint_delay`) dizem outro.
 pub const HINT_DELAY: f64 = 1.0;
 
 /// Quanto o mouse pode tremer (em pixels) e ainda contar como parado para a dica.
@@ -224,19 +227,20 @@ const HINT_STILL: f32 = 3.0;
 
 impl InputState {
     /// Quando a dica pendente deve aparecer.
-    pub(crate) fn hint_due(&self) -> Option<f64> {
-        self.hint.filter(|h| !h.shown).map(|h| h.since + HINT_DELAY)
+    pub(crate) fn hint_due(&self, delay: f64) -> Option<f64> {
+        self.hint.filter(|h| !h.shown).map(|h| h.since + delay)
     }
 
     /// Quando o toque longo em andamento vence (se houver).
+    /// Só com o dedo ou a caneta (J18 do Tabernáculo): o mouse não conta, e nem acorda o laço.
     pub(crate) fn long_press_due(&self) -> Option<f64> {
-        self.press.filter(|p| !p.fired).map(|p| p.time + crate::timers::LONG_PRESS_TIME)
+        self.press.filter(|p| !p.fired && p.touch).map(|p| p.time + crate::timers::LONG_PRESS_TIME)
     }
 
     /// O toque longo venceu: marca como disparado e devolve (alvo, posição, é toque).
     pub(crate) fn take_long_press(&mut self, now: f64) -> Option<(ComponentId, PointF, bool)> {
         let p = self.press.as_mut()?;
-        if p.fired || now < p.time + crate::timers::LONG_PRESS_TIME {
+        if p.fired || !p.touch || now < p.time + crate::timers::LONG_PRESS_TIME {
             return None;
         }
         p.fired = true;
@@ -279,32 +283,87 @@ impl Ui {
         self.input.get(&root).is_some_and(|s| s.pointer_focus)
     }
 
+    /// O foco do form veio do teclado (Tab, atalho): o anel de foco aparece, como o
+    /// `:focus-visible` do CSS (o relatório do Tabernáculo, J08).
+    pub fn focus_visible(&self, form: ComponentId) -> bool {
+        !self.focus_from_pointer(self.root_of(form))
+    }
+
+    /// Os menus, listas e camadas abertos por cima do form (a lista de um ComboBox, um menu de
+    /// contexto, um calendário): os que fecham com o clique fora (o relatório do Tabernáculo,
+    /// J09).
+    pub fn open_popups(&self, form: ComponentId) -> Vec<ComponentId> {
+        let root = self.root_of(form);
+        self.children(root).iter().copied().filter(|&c| self.component(c).is_some_and(|p| p.closes_on_outside_press() || p.dies_with().is_some())).collect()
+    }
+
     // =====================================================================
     // Consultas
     // =====================================================================
 
     /// Arquivos soltos na janela do form `root` no ponto `pos`: vão para o controle sob o
     /// ponto e sobem pelos pais até um aceitar ([`Component::files_dropped`]). Se nenhum
-    /// aceitar (o sistema nem sempre informa a posição), o primeiro controle do form que
-    /// aceita arquivos recebe. Devolve `true` se alguém aceitou.
+    /// aceitar (o sistema nem sempre informa a posição), o primeiro controle à vista do form
+    /// que aceita arquivos recebe (um escondido ou desabilitado, nem ele nem os filhos: o
+    /// relatório do Tabernáculo, F01). Devolve `true` se alguém aceitou.
     pub fn drop_files(&mut self, root: ComponentId, pos: PointF, paths: Vec<String>) -> bool {
         let mut target = self.hit_test(root, pos);
+        // Os que já receberam (e recusaram) não recebem de novo na procura de reserva.
+        let mut tried = Vec::new();
         while let Some(id) = target {
             if self.with_component(id, |c, ctx| c.platform_hooks_mut().is_some_and(|h| h.files_dropped(ctx, &paths))).unwrap_or(false) {
                 self.process_events();
                 return true;
             }
+            tried.push(id);
             target = self.parent(id);
         }
         let mut stack = vec![root];
         while let Some(id) = stack.pop() {
+            if self.cb(id).is_some_and(|cb| !cb.visible() || !cb.enabled()) {
+                continue;
+            }
+            if tried.contains(&id) {
+                stack.extend(self.children(id).iter().rev().copied());
+                continue;
+            }
             if self.with_component(id, |c, ctx| c.platform_hooks_mut().is_some_and(|h| h.files_dropped(ctx, &paths))).unwrap_or(false) {
                 self.process_events();
                 return true;
             }
             stack.extend(self.children(id).iter().rev().copied());
         }
+        // O `on_reject` de quem recusou.
+        self.process_events();
         false
+    }
+
+    /// Arquivos do sistema passando por cima da janela do form (`Some`) ou saindo dela, soltos
+    /// ou cancelados (`None`): o controle à vista que os receberia fica sabendo, para se
+    /// destacar (o relatório do Tabernáculo, F03).
+    pub fn files_hover(&mut self, root: ComponentId, pos: PointF, paths: Option<Vec<String>>) {
+        let previous = self.input_state(root).file_hover.take();
+        let Some(paths) = paths else {
+            if let Some(old) = previous.filter(|&o| self.contains(o)) {
+                self.with_component(old, |c, ctx| c.platform_hooks_mut().map(|h| h.files_hovering(ctx, None)));
+                self.process_events();
+            }
+            return;
+        };
+        let mut found = None;
+        let mut target = self.hit_test(root, pos);
+        while let Some(id) = target {
+            if self.with_component(id, |c, ctx| c.platform_hooks_mut().is_some_and(|h| h.files_hovering(ctx, Some(&paths)))).unwrap_or(false) {
+                found = Some(id);
+                break;
+            }
+            target = self.parent(id);
+        }
+        if let Some(old) = previous.filter(|&o| Some(o) != found && self.contains(o)) {
+            self.with_component(old, |c, ctx| c.platform_hooks_mut().map(|h| h.files_hovering(ctx, None)));
+        }
+        self.input_state(root).file_hover = found;
+        self.process_events();
     }
 
     /// Controle sob o ponto `pos` (coordenadas do form), como o `ObjectAtPoint`.
@@ -425,7 +484,9 @@ impl Ui {
             *flag = value;
             // O desenho dele não depende desse estado (o fundo do form quando o mouse sai de
             // um botão para ele): nada a repintar.
-            if !self.drawing_unchanged(id) {
+            // Um filho que herda o estado muda junto (C25): a área toda dele.
+            let heirs = self.children(id).iter().any(|&c| self.cb(c).is_some_and(|cb| cb.inherit_state()));
+            if heirs || !self.drawing_unchanged(id) {
                 self.damage(id);
             }
             self.run_triggers(id, trigger, value);
@@ -613,7 +674,8 @@ impl Ui {
     /// As camadas do form que fecham com o mouse apertado fora
     /// ([`Component::closes_on_outside_press`]): sai a que não contém o ponto e cujo dono
     /// também não. O dono repinta (a seta do ComboBox volta). O clique segue para quem está
-    /// embaixo (outro ComboBox abre a lista dele).
+    /// embaixo (outro ComboBox abre a lista dele). A camada com o foco o perde antes de sair:
+    /// quem grava ao sair (o campo de renomear do MediaCard) grava.
     fn dismiss_popups(&mut self, root: ComponentId, hit: Option<ComponentId>) {
         // O ponto caiu em `area` ou num descendente dela.
         let inside = |ui: &Ui, area: ComponentId| {
@@ -629,11 +691,22 @@ impl Ui {
         let doomed: Vec<(ComponentId, Option<ComponentId>)> = self
             .children(root)
             .iter()
+            .filter(|&&c| self.cb(c).is_none_or(|cb| cb.visible()))
             .filter_map(|&c| self.component(c).filter(|p| p.closes_on_outside_press()).map(|p| (c, p.dies_with())))
             .filter(|&(popup, owner)| !inside(self, popup) && !owner.is_some_and(|o| inside(self, o)))
             .collect();
         for (popup, owner) in doomed {
-            self.free(popup);
+            let mut focused = self.input_state(root).focused;
+            while let Some(f) = focused.filter(|&f| f != popup) {
+                focused = self.parent(f);
+            }
+            if focused.is_some() {
+                self.clear_focus(root);
+            }
+            let kept = self.with_component(popup, |c, ctx| c.dismissed(ctx)).unwrap_or(false);
+            if !kept {
+                self.free(popup);
+            }
             if let Some(owner) = owner.filter(|&o| self.contains(o)) {
                 self.damage(owner);
             }
@@ -1003,7 +1076,19 @@ impl Ui {
             self.request_repaint();
             return;
         }
+        // Passando por cima do mesmo destino (que aceitou): `on_drag_move`, com o ponto (o
+        // `dragover` do HTML; o relatório do Tabernáculo, J16).
+        if target == drag.target && drag.accepted && drag.starting.is_none()
+            && let Some(t) = target
+        {
+            let local = self.local_point(t, target_position);
+            self.fire(t, "on_drag_move", &EventArgs::Pointer(crate::PointerEvent { position: local, ..Default::default() }));
+        }
         if target != drag.target && drag.starting.is_none() {
+            // Saiu do destino de antes.
+            if let Some(old) = drag.target.filter(|&o| self.contains(o)) {
+                self.fire(old, "on_drag_leave", &EventArgs::Text(drag.data.clone()));
+            }
             accepted = false;
             over = None;
             if let Some(t) = target {
@@ -1063,6 +1148,8 @@ impl Ui {
                 let local = self.local_point(t, drag.target_position);
                 self.deliver(t, |c, ctx| c.drop_receive(ctx, &drag.data, local));
             } else {
+                // O ponto onde soltou, no destino: `drop_point` durante o `on_drag_drop` (J15).
+                self.drop_point = Some(self.local_point(t, drag.target_position));
                 self.fire(t, "on_drag_drop", &EventArgs::Text(drag.data.clone()));
             }
         }
@@ -1075,6 +1162,11 @@ impl Ui {
         }
         self.request_repaint();
         true
+    }
+
+    /// Onde o último arrasto foi solto, nas coordenadas do destino (vale no `on_drag_drop`).
+    pub fn drop_point(&self) -> Option<PointF> {
+        self.drop_point
     }
 
     /// Cancela o arrasto em andamento (Esc). `true` se havia um.
@@ -1555,6 +1647,16 @@ impl Ui {
 
     /// Ninguém tratou a tecla: o Tab, os atalhos e as letras com `&`.
     pub(crate) fn key_down_unhandled(&mut self, root: ComponentId, event: KeyEvent) {
+        // O Enter e o Esc que ninguém usou: o botão padrão e o de cancelar do form (o `Default`
+        // e o `Cancel` do `TButton`; o relatório do Tabernáculo, J23).
+        let plain = !event.modifiers.ctrl && !event.modifiers.alt && !event.modifiers.shift && !event.modifiers.meta;
+        if plain && !event.repeat && matches!(event.key, Key::Enter | Key::Escape) {
+            let prop = if event.key == Key::Enter { "default_button" } else { "cancel_button" };
+            if let Some(button) = self.flagged_button(root, prop) {
+                self.click(button);
+                return;
+            }
+        }
         if event.key == Key::Tab && !event.modifiers.ctrl && !event.modifiers.alt {
             self.focus_next(root, !event.modifiers.shift);
         } else if !event.repeat && !self.dispatch_shortcut(root, event) {
@@ -1565,6 +1667,22 @@ impl Ui {
                 }
             }
         }
+    }
+
+    /// O primeiro controle à vista e habilitado do form com a propriedade `prop` ligada (o
+    /// botão padrão ou o de cancelar).
+    fn flagged_button(&self, root: ComponentId, prop: &str) -> Option<ComponentId> {
+        let mut stack = vec![root];
+        while let Some(id) = stack.pop() {
+            if id != root && self.cb(id).is_some_and(|cb| !cb.visible() || !cb.enabled()) {
+                continue;
+            }
+            if id != root && matches!(self.get_prop(id, prop), Ok(crate::prop::PropValue::Bool(true))) {
+                return Some(id);
+            }
+            stack.extend(self.children(id).iter().rev().copied());
+        }
+        None
     }
 
     /// A tecla é uma das que o form usa como Tab (`Some(true)`) ou Shift+Tab (`Some(false)`)?
@@ -1716,20 +1834,39 @@ impl Ui {
     /// form embutido (outro form dentro deste, como o editor de código dentro da IDE) onde
     /// está o foco tem a vez primeiro: o Ctrl+S dele vale mais que o do form de fora.
     fn dispatch_shortcut(&mut self, root: ComponentId, event: KeyEvent) -> bool {
+        let menus = self.active_popup_menus(root);
         let mut current = self.focused(root).and_then(|f| self.parent(f));
         while let Some(p) = current.filter(|&p| p != root) {
-            if self.class_name(p) == Some("Form") && self.dispatch_in(p, event) {
+            if self.class_name(p) == Some("Form") && self.dispatch_in(p, event, &menus) {
                 return true;
             }
             current = self.parent(p);
         }
-        self.dispatch_in(root, event)
+        self.dispatch_in(root, event, &menus)
     }
 
-    fn dispatch_in(&mut self, root: ComponentId, event: KeyEvent) -> bool {
+    /// Os menus de contexto cujos atalhos valem agora: os do `popup_menu` do controle com o
+    /// foco e dos pais dele, até o form, como o `IsMenuKey` do VCL (antes valiam todos, até
+    /// com o menu de outro controle; o relatório do Tabernáculo, J01).
+    fn active_popup_menus(&self, root: ComponentId) -> Vec<ComponentId> {
+        let mut out = Vec::new();
+        let mut current = self.focused(root).or(Some(root));
+        while let Some(id) = current {
+            if let Ok(crate::PropValue::Component(Some(menu))) = self.get_prop(id, "popup_menu") {
+                out.push(menu);
+            }
+            current = self.parent(id);
+        }
+        out
+    }
+
+    fn dispatch_in(&mut self, root: ComponentId, event: KeyEvent, menus: &[ComponentId]) -> bool {
         let mut stack = vec![root];
         while let Some(id) = stack.pop() {
             if self.cb(id).is_some_and(|cb| !cb.visible() || !cb.enabled()) && id != root {
+                continue;
+            }
+            if self.class_name(id) == Some("PopupMenu") && !menus.contains(&id) {
                 continue;
             }
             if self.deliver(id, |c, ctx| c.shortcut(ctx, &event)) {

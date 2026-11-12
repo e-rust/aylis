@@ -10,17 +10,17 @@ Aviso em faixa (alerta): ícone, título e texto, com a cor da variante (`info` 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `icon` | Ícone | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `icon` | Ícone | texto | Ícone; vazio = o da variante (info, success, warning, error). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `closable` | Pode fechar | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `closable` | Pode fechar | lógico |  |
 
 ## Eventos
 

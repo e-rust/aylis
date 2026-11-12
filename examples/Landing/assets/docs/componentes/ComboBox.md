@@ -10,30 +10,32 @@ Lista suspensa: mostra a opção escolhida e abre a lista para trocar. Os itens 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `arrow` | Seta | um de: `chevron`, `triangle` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `arrow` | Seta | um de: `chevron`, `triangle` | O desenho da seta. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico | Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui, a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `values` | Valores | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `values` | Valores | texto | O código de cada opção (`;`); vazio: o código é o próprio texto. |
+| `item_index` | Item escolhido | inteiro |  |
+| `groups` | Grupos das opções | texto | O grupo de cada opção (`;`, na ordem de `items`): a lista mostra o nome do grupo, sem clique, antes da primeira opção dele (o `<optgroup>`). Vazio: sem grupos. |
+| `disabled_items` | Opções desligadas | texto | As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem. |
 
 ### Texto
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |
-| `trimming` | Reticências | um de: `none`, `character`, `word` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` | Alinhamento do texto escolhido. |
+| `trimming` | Reticências | um de: `none`, `character`, `word` | Reticências quando o texto escolhido não couber. |
 
 ## Eventos
 

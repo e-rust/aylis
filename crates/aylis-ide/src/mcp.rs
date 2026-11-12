@@ -146,6 +146,18 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
     if name == "build_wait" {
         return build_wait(&args, poster);
     }
+    // A imagem do form no designer (e a comparação com uma referência): vão como imagem do MCP,
+    // que o agente vê (relatório do InsightDB, 11/11: não havia captura do designer nem como
+    // comparar com a tela de antes).
+    if name == "designer_snapshot" {
+        return match on_ui(poster, |_, state, _| designer_png(state)) {
+            Ok(Ok(png)) => image_result("o form aberto no designer", &png),
+            Ok(Err(e)) | Err(e) => text_result(e, true),
+        };
+    }
+    if name == "compare_image" {
+        return compare_image(&args, poster);
+    }
     // Executar: espera a compilação e devolve os erros dela (a resposta saía na hora com
     // "Executando…", e a compilação que falhava depois não era avisada; relatório do
     // RTSPlayer, 10/11).
@@ -212,6 +224,113 @@ fn build_and_wait(args: Value, poster: &Poster) -> Value {
     match wait_job(poster, wait, false) {
         Ok(Phase::Done) => job_summary(poster),
         Ok(_) => still_compiling(wait),
+        Err(e) => text_result(e, true),
+    }
+}
+
+/// Uma resposta com texto e uma imagem PNG.
+fn image_result(text: &str, png: &[u8]) -> Value {
+    json!({ "content": [{ "type": "text", "text": text }, { "type": "image", "data": base64(png), "mimeType": "image/png" }], "isError": false })
+}
+
+fn base64(bytes: &[u8]) -> String {
+    const ABC: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let n = chunk.iter().enumerate().fold(0u32, |n, (i, b)| n | (*b as u32) << (16 - 8 * i));
+        for i in 0..4 {
+            out.push(if i <= chunk.len() { ABC[(n >> (18 - 6 * i) & 63) as usize] as char } else { '=' });
+        }
+    }
+    out
+}
+
+fn unbase64(text: &str) -> Option<Vec<u8>> {
+    let value = |c: u8| -> Option<u32> {
+        Some(match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' => 62,
+            b'/' => 63,
+            _ => return None,
+        } as u32)
+    };
+    let clean: Vec<u8> = text.bytes().filter(|c| !c.is_ascii_whitespace() && *c != b'=').collect();
+    let mut out = Vec::with_capacity(clean.len() * 3 / 4);
+    for chunk in clean.chunks(4) {
+        let n = chunk.iter().enumerate().try_fold(0u32, |n, (i, &c)| Some(n | value(c)? << (18 - 6 * i)))?;
+        for i in 0..chunk.len().saturating_sub(1) {
+            out.push((n >> (16 - 8 * i)) as u8);
+        }
+    }
+    Some(out)
+}
+
+/// O form aberto no designer, em PNG, do tamanho dele.
+fn designer_png(state: &Shared) -> Result<Vec<u8>, String> {
+    let mut st = state.borrow_mut();
+    if st.no_form {
+        return Err("nenhum form aberto no designer".into());
+    }
+    let root = st.doc.root;
+    st.doc.ui.layout();
+    let (w, h) = st.doc.ui.control(root).map_or((800.0, 600.0), |c| (c.width(), c.height()));
+    let background = st.doc.ui.theme().color("background");
+    let ui = &mut st.doc.ui;
+    crate::host::render_png(w.ceil() as u32, h.ceil() as u32, background, |c| ui.paint(root, c)).ok_or_else(|| "não consegui desenhar o form (sem o renderizador nesta IDE)".to_string())
+}
+
+/// `compare_image`: compara o designer (ou, com `source: "app"`, a tela do app em execução) com
+/// uma imagem de referência (`reference`, um PNG: a tela antiga, um protótipo). Devolve quanto
+/// difere e a imagem das diferenças (em vermelho sobre a tela atual, apagada).
+fn compare_image(args: &Value, poster: &Poster) -> Value {
+    let reference = arg(args, "reference").to_string();
+    let current = if arg(args, "source") == "app" {
+        let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
+        match link {
+            Ok(Some(dev)) => match dev.call(json!({ "cmd": "snapshot", "form": args.get("form").cloned().unwrap_or(Value::Null) })) {
+                Ok(Value::String(b64)) => unbase64(&b64).ok_or("a captura do app veio inválida".to_string()),
+                Ok(_) => Err("a captura do app veio vazia".into()),
+                Err(e) => Err(e),
+            },
+            _ => Err("nenhum app em execução conectado (use run e espere abrir)".into()),
+        }
+    } else {
+        on_ui(poster, |_, state, _| designer_png(state)).and_then(|r| r)
+    };
+    let result = current.and_then(|png| {
+        let a = image::load_from_memory(&std::fs::read(&reference).map_err(|e| format!("não consegui ler {reference}: {e}"))?).map_err(|e| format!("{reference}: {e}"))?.to_rgba8();
+        let b = image::load_from_memory(&png).map_err(|e| e.to_string())?.to_rgba8();
+        let (w, h) = (a.width().min(b.width()), a.height().min(b.height()));
+        let mut diff = image::RgbaImage::new(b.width(), b.height());
+        let mut different = 0u64;
+        for (x, y, p) in b.enumerate_pixels() {
+            let gray = ((p[0] as u32 + p[1] as u32 + p[2] as u32) / 3 / 2 + 128) as u8;
+            let changed = x >= w || y >= h || {
+                let q = a.get_pixel(x, y);
+                (0..3).any(|i| (p[i] as i32 - q[i] as i32).abs() > 24)
+            };
+            if changed {
+                different += 1;
+                diff.put_pixel(x, y, image::Rgba([230, 30, 30, 255]));
+            } else {
+                diff.put_pixel(x, y, image::Rgba([gray, gray, gray, 255]));
+            }
+        }
+        let total = (b.width() as u64 * b.height() as u64).max(1);
+        let mut out = Vec::new();
+        image::DynamicImage::ImageRgba8(diff).write_to(&mut std::io::Cursor::new(&mut out), image::ImageFormat::Png).map_err(|e| e.to_string())?;
+        let text = json!({
+            "different_percent": (different as f64 * 10000.0 / total as f64).round() / 100.0,
+            "reference_size": [a.width(), a.height()],
+            "current_size": [b.width(), b.height()],
+            "note": "a imagem mostra em vermelho onde a tela atual difere da referência (tamanhos diferentes: o que sobra conta como diferente)"
+        });
+        Ok((text.to_string(), out))
+    });
+    match result {
+        Ok((text, png)) => image_result(&text, &png),
         Err(e) => text_result(e, true),
     }
 }
@@ -579,20 +698,39 @@ fn dialog_select(ui: &mut Ui, form: aylis_core::ComponentId, list: &Value, item:
 
 /// Um fonte: o caminho dado, ou relativo à pasta do código do projeto.
 fn source_file(state: &Shared, path: &str) -> Result<std::path::PathBuf, String> {
-    let direct = std::path::PathBuf::from(path);
+    // As barras de qualquer lado (`rust\\src\\x.rs` e `rust/src/x.rs`; M26 do Tabernáculo).
+    let path = path.replace('\\', "/");
+    let direct = std::path::PathBuf::from(&path);
     if direct.is_file() {
         return Ok(direct);
     }
     let st = state.borrow();
     let p = st.project.as_ref().ok_or("abra um projeto antes (open_project)")?;
-    let inside = p.code_dir().join(path);
-    if inside.is_file() { Ok(inside) } else { Err(format!("não achei o fonte {path}")) }
+    // Relativo à pasta do código (`src/x.rs`) ou à do projeto (`rust/src/x.rs`; M24).
+    let bases = [p.code_dir(), p.dir()];
+    if let Some(found) = bases.iter().map(|b| b.join(&path)).find(|f| f.is_file()) {
+        return Ok(found);
+    }
+    let tried = bases.iter().map(|b| b.display().to_string().replace('\\', "/")).collect::<Vec<_>>().join(" e ");
+    Err(format!("não achei o fonte {path} (procurado em {tried})"))
 }
 
 /// Confere o layout inteiro e devolve **todos** os erros de uma vez; sem erro, troca o form
 /// aberto (com `dry_run`, só confere). Antes parava no primeiro erro, e um layout de 24 KB com
 /// cinco erros ia e voltava cinco vezes (relatório do RTSPlayer, 10/11).
 fn apply_layout(state: &Shared, layout: &str, dry_run: bool) -> Result<Value, String> {
+    // A raiz com o nome de outro form do projeto (um layout copiado do principal): trocar o form
+    // aberto por ele renomearia este para o nome daquele, e o salvar seguinte iria para o form
+    // errado (relatório do InsightDB, 11/11).
+    if let Some(root_name) = serde_json::from_str::<Value>(layout).ok().and_then(|v| v["root"]["name"].as_str().map(str::to_string)) {
+        let st = state.borrow();
+        let open = st.doc.form_name();
+        if !root_name.eq_ignore_ascii_case(&open) && st.project.as_ref().is_some_and(|p| p.form(&root_name).is_some()) {
+            return Err(format!(
+                "a raiz do layout é o form {root_name}, mas o aberto é o {open}: para mudar o {root_name}, abra ele (open_form); para este, use \"name\": \"{open}\" na raiz"
+            ));
+        }
+    }
     let errors = {
         let mut st = state.borrow_mut();
         aylis_json::validate(&mut st.doc.ui, layout)
@@ -647,7 +785,35 @@ fn component(state: &Shared, name: &str) -> Result<aylis_core::ComponentId, Stri
 
 /// Uma ferramenta, na thread da interface.
 pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value) -> Result<Value, String> {
+    // O que mudou no disco por fora entra nos abertos antes de qualquer ferramenta; com
+    // alteração dos dois lados, o agente recebe o diff e decide (`resolve_conflict`), e nada
+    // mais roda até lá (o relatório do Tabernáculo, M13).
+    if !matches!(name, "resolve_conflict" | "status" | "output" | "ide_list" | "session_title") {
+        let (_, conflicts) = crate::disk::check(ui, state);
+        if !conflicts.is_empty() {
+            let list: Vec<String> = conflicts.iter().map(|c| format!("{}:\n{}", c.file.display(), c.diff())).collect();
+            return Err(format!(
+                "arquivo(s) aberto(s) na IDE mudaram no disco e também têm alterações não salvas na IDE (`-` só na IDE, `+` só no disco). \
+                 Resolva cada um com `resolve_conflict` (`file` e `keep`: \"disk\" recarrega do disco, \"ide\" fica com a da IDE), e depois repita a chamada:\n{}",
+                list.join("\n")
+            ));
+        }
+    }
     match name {
+        "resolve_conflict" => {
+            let file = arg(args, "file");
+            if file.is_empty() {
+                return Err("falta `file`".into());
+            }
+            let keep_disk = match arg(args, "keep") {
+                "disk" => true,
+                "ide" => false,
+                other => return Err(format!("`keep` é \"disk\" ou \"ide\" (recebido \"{other}\")")),
+            };
+            let path = state.borrow().project.as_ref().map(|p| p.dir().join(file)).filter(|p| p.exists()).unwrap_or_else(|| std::path::PathBuf::from(file));
+            crate::disk::resolve(ui, state, &path, keep_disk)?;
+            Ok(Value::String(if keep_disk { "recarregado do disco".into() } else { "fica a versão da IDE (salve para gravar por cima do disco)".into() }))
+        }
         "project_info" => {
             let st = state.borrow();
             let open = json!({ "form": st.doc.form_name(), "file": st.doc.path.as_ref().map(|p| p.display().to_string()), "modified": st.doc.modified });
@@ -705,17 +871,41 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             let id = component(state, arg(args, "component"))?;
             let property = arg(args, "property");
             let value = args.get("value").cloned().unwrap_or(Value::Null);
+            // Um lado das bordas (`margins.left`) com o número em texto ("4"; M09 do Tabernáculo).
+            let value = match value.as_str().map(str::trim).and_then(|t| t.parse::<f64>().ok()) {
+                Some(n) if property.contains('.') => json!(n),
+                _ => value,
+            };
             // Um evento vazio (`""` ou `null`, que o agente às vezes manda como texto) desliga o
             // handler, como apagar no Object Inspector: antes dava erro ou ligava a um "null".
             let is_event = property.starts_with("on_") || property.starts_with("before_") || property.starts_with("after_");
             let value = if is_event && matches!(value.as_str(), Some("") | Some("null")) { Value::Null } else { value };
+            if property == "name" {
+                // Como renomear no Object Inspector: o designer, e depois o resto do projeto (o
+                // código e os outros forms; o relatório do Tabernáculo, M08: só mudava o form).
+                let new = value.as_str().unwrap_or_default().to_string();
+                let (kind, old) = {
+                    let st = state.borrow();
+                    let kind = if id == st.doc.root { crate::rename::Renamed::Form } else { crate::rename::Renamed::Component };
+                    (kind, st.doc.ui.name(id).unwrap_or_default().to_string())
+                };
+                if old != new {
+                    if let Some(message) = crate::rename::refused_while_loading(state, kind, &old) {
+                        return Err(message);
+                    }
+                }
+                {
+                    let mut st = state.borrow_mut();
+                    st.doc.begin_change();
+                    st.doc.rename_component(id, &new)?;
+                }
+                let started = crate::rename::after_rename(ui, state, ids, kind, &old, &new);
+                let status = state.borrow().status.clone();
+                return Ok(Value::String(if started && !status.is_empty() { format!("name alterado; {status}") } else { "name alterado".into() }));
+            }
             let mut st = state.borrow_mut();
             st.doc.begin_change();
-            if property == "name" {
-                st.doc.rename_component(id, value.as_str().unwrap_or_default())?;
-            } else {
-                st.doc.set_prop(id, property, &value)?;
-            }
+            st.doc.set_prop(id, property, &value)?;
             Ok(Value::String(format!("{property} alterado")))
         }
         "add_component" => {
@@ -723,6 +913,10 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             let parent = arg(args, "parent");
             let mut st = state.borrow_mut();
             let parent_id = if parent.is_empty() { None } else { Some(st.doc.ui.find_in(st.doc.root, parent).ok_or_else(|| format!("não achei '{parent}'"))?) };
+            // O Frame mostra outro form: o componente vai no form dele, não no Frame.
+            if parent_id.is_some_and(|p| st.doc.ui.class_name(p) == Some("Frame")) {
+                return Err(format!("{parent} é um Frame (mostra o form da propriedade `form`): abra o form dele (open_form) e ponha o componente lá"));
+            }
             // O dono escolhido vira a seleção: `add` põe os não visuais nele e os visuais
             // no contêiner sob o ponto (aqui, o canto dele).
             if let Some(p) = parent_id {
@@ -730,13 +924,36 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             }
             let at = parent_id.and_then(|p| st.doc.rect_of(p)).map(|r| aylis_core::PointF::new(r.x + 8.0, r.y + 8.0));
             st.doc.begin_change();
-            let id = st.doc.add(class, at)?;
+            let id = st.doc.add_in(class, at, parent_id)?;
             let wanted = arg(args, "name");
             if !wanted.is_empty() {
                 st.doc.rename_component(id, wanted)?;
             }
             st.doc.select(Some(id));
             Ok(Value::String(st.doc.ui.name(id).unwrap_or_default().to_string()))
+        }
+        // Várias propriedades em vários componentes numa chamada (M15 do Tabernáculo): cada
+        // propriedade é um passo do desfazer, em todos de uma vez.
+        "set_properties" => {
+            let names: Vec<String> = args.get("components").and_then(Value::as_array).map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            let props = args.get("properties").and_then(Value::as_object).ok_or("informe `properties`: { \"propriedade\": valor, ... }")?;
+            let targets: Vec<aylis_core::ComponentId> = if names.is_empty() { vec![component(state, "")?] } else { names.iter().map(|n| component(state, n)).collect::<Result<_, _>>()? };
+            let mut done = Vec::new();
+            for (property, value) in props {
+                if property == "name" {
+                    return Err("o `name` muda por set_property (um componente por vez, com o resto do projeto)".into());
+                }
+                state.borrow_mut().doc.set_prop_many(&targets, property, value).map_err(|e| format!("{property}: {e}"))?;
+                done.push(property.clone());
+            }
+            Ok(json!({ "components": targets.len(), "properties": done }))
+        }
+        "move_component" => {
+            let id = component(state, arg(args, "component"))?;
+            let parent = component(state, arg(args, "parent"))?;
+            let index = args.get("index").and_then(Value::as_u64).map(|i| i as usize);
+            state.borrow_mut().doc.move_component(id, parent, index)?;
+            Ok(Value::String("movido".into()))
         }
         "delete_component" => {
             let id = component(state, arg(args, "component"))?;
@@ -778,6 +995,57 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             }
             apply_layout(state, &doc.to_string(), args.get("dry_run").and_then(Value::as_bool).unwrap_or(false))
         }
+        "component_docs" => {
+            // A página do componente na documentação (a mesma do site), sob demanda; com
+            // `property`, só o que é dela: a linha da tabela e a seção escrita à mão, se houver
+            // (decidido com o autor em 11/11: a explicação fica na documentação, e só o essencial
+            // vai para o contexto).
+            let class = arg(args, "class");
+            if !aylis_project::is_identifier(class) {
+                return Err("informe a classe (Button, Panel, Chart...)".into());
+            }
+            let dir = std::path::PathBuf::from(aylis_project::codegen::aylis_root()).join("examples/Landing/assets/docs/componentes");
+            let page = std::fs::read_to_string(dir.join(format!("{class}.md"))).map_err(|_| format!("não achei a documentação do {class} (aylis-tool docs refaz)"))?;
+            let property = arg(args, "property");
+            if property.is_empty() {
+                return Ok(Value::String(page));
+            }
+            let row = |text: &str| text.lines().find(|l| l.starts_with(&format!("| `{property}` |"))).map(str::to_string);
+            // As comuns a todo controle estão na página delas.
+            let found = row(&page).or_else(|| std::fs::read_to_string(dir.join("controles.md")).ok().and_then(|t| row(&t)));
+            let Some(line) = found else { return Err(format!("o {class} não tem a propriedade '{property}' (class_info lista as que tem)")) };
+            let cells: Vec<&str> = line.trim_matches('|').split(" | ").map(str::trim).collect();
+            let mut out = format!("{property} ({}; {}): {}", cells.get(1).unwrap_or(&""), cells.get(2).unwrap_or(&""), cells.get(3).filter(|c| !c.is_empty()).unwrap_or(&"(sem explicação ainda)"));
+            // A seção `### propriedade` do texto escrito à mão.
+            let lines: Vec<&str> = page.lines().collect();
+            if let Some(start) = lines.iter().position(|l| l.trim_start_matches('#').trim().trim_matches('`') == property && l.starts_with("###")) {
+                let end = lines[start + 1..].iter().position(|l| l.starts_with("##")).map_or(lines.len(), |e| start + 1 + e);
+                out.push_str("\n\n");
+                out.push_str(lines[start + 1..end].join("\n").trim());
+            }
+            Ok(Value::String(out))
+        }
+        "search_icons" => {
+            // Os nomes dos pacotes de ícones (`pacote:nome`, como vão no `icon`), pela palavra;
+            // lidos uma vez (os arquivos somam ~13 MB). Relatório do InsightDB, 11/11: não havia
+            // como achar um ícone pelo MCP.
+            static NAMES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+            let names = NAMES.get_or_init(|| {
+                let dir = aylis_project::codegen::resources_dir().join("icons");
+                let mut out = Vec::new();
+                for entry in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
+                    let path = entry.path();
+                    let Some(pack) = path.file_stem().and_then(|s| s.to_str()).map(str::to_string) else { continue };
+                    let Ok(text) = std::fs::read_to_string(&path) else { continue };
+                    out.extend(text.lines().filter(|l| !l.starts_with('#')).filter_map(|l| l.split_once('\t')).map(|(name, _)| format!("{pack}:{name}")));
+                }
+                out
+            });
+            let words: Vec<String> = arg(args, "query").to_lowercase().split_whitespace().map(str::to_string).collect();
+            let limit = args.get("limit").and_then(Value::as_u64).unwrap_or(40) as usize;
+            let found: Vec<&String> = names.iter().filter(|n| words.iter().all(|w| n.to_lowercase().contains(w))).take(limit).collect();
+            Ok(json!({ "icons": found, "note": "use no `icon` do componente como está (pacote:nome)" }))
+        }
         "class_info" => {
             let class = arg(args, "class");
             let st = state.borrow();
@@ -818,7 +1086,10 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         }
         "generate_code" => {
             let files = crate::actions::generate_code(ui, state)?;
-            Ok(json!(files.iter().map(|f| f.display().to_string()).collect::<Vec<_>>()))
+            let files: Vec<String> = files.iter().map(|f| f.display().to_string()).collect();
+            // A classe com nome errado (G02 do Tabernáculo): o agente fica sabendo e corrige.
+            let suspicious = state.borrow().project.as_ref().map(aylis_project::bindings::suspicious_classes).unwrap_or_default();
+            Ok(if suspicious.is_empty() { json!(files) } else { json!({"files": files, "warnings": suspicious}) })
         }
         "open_project" => {
             let path = std::path::PathBuf::from(arg(args, "path"));
@@ -992,12 +1263,14 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 (h, _, _) if !h.is_empty() => crate::usages::Target::Handler { name: h.to_string() },
                 (_, form, component) if !form.is_empty() && !component.is_empty() => {
                     let entry = project.form(form).ok_or_else(|| format!("o projeto não tem o form '{form}'"))?;
-                    let layout: Value = std::fs::read_to_string(project.file(&entry.file)).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+                    let file = project.file(&entry.file);
+                    let text = crate::projectsearch::open_forms(state).remove(&file).or_else(|| std::fs::read_to_string(&file).ok());
+                    let layout: Value = text.and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
                     crate::usages::target_of(&layout, form, component)
                 }
                 _ => return Err("informe `form` e `component`, ou `handler`".into()),
             };
-            let results = crate::usages::find(&project, &target)?;
+            let results = crate::usages::find(&project, &target, &crate::projectsearch::open_forms(state))?;
             let dir = project.dir();
             let code: Vec<Value> = results.text.iter().map(|h| json!({ "file": h.file.strip_prefix(&dir).unwrap_or(&h.file).to_string_lossy().replace('\\', "/"), "line": h.line + 1, "text": h.text.trim() })).collect();
             let forms: Vec<Value> = results.forms.iter().map(|h| json!({ "form": h.form, "component": h.component, "property": h.property, "value": h.value })).collect();
@@ -1076,8 +1349,12 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             Ok(json!({ "project": project.name, "path": project.path.display().to_string(), "status": state.borrow().status, "notes": notes }))
         }
         "close_project" => {
-            crate::actions::close_project(ui, state);
-            Ok(Value::String("projeto fechado".into()))
+            if crate::actions::close_project(ui, state) {
+                Ok(Value::String("projeto fechado".into()))
+            } else {
+                // O que não está salvo (o relatório do Tabernáculo, M05: respondia "fechado").
+                Err(format!("não fechou: {}. Salve com `save` (`all: true`) ou chame de novo para descartar.", state.borrow().status))
+            }
         }
         "new_form" => {
             let form = arg(args, "name").to_string();
@@ -1094,8 +1371,18 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 added.and_then(|_| project.save())
             };
             result?;
+            // `file`: o arquivo (e a subpasta) do form, em vez do que sai do nome.
+            let file = arg(args, "file");
+            if !file.is_empty() {
+                crate::actions::move_form(state, &form, file)?;
+            }
             crate::actions::open_project_form(state, &form);
-            Ok(Value::String(format!("form {form} criado e aberto")))
+            let path = state.borrow().project.as_ref().and_then(|p| p.form(&form).map(|f| f.file.clone())).unwrap_or_default();
+            Ok(Value::String(format!("form {form} criado e aberto ({path})")))
+        }
+        "move_form" => {
+            let form = arg(args, "name").to_string();
+            Ok(Value::String(crate::actions::move_form(state, &form, arg(args, "file"))?))
         }
         "remove_form" => {
             let form = arg(args, "name").to_string();
@@ -1238,4 +1525,15 @@ fn restricted(state: &Shared) -> Result<(), String> {
         return Err("o projeto está em modo restrito (não foi criado nem confiado nesta pasta; um projeto movido de pasta também conta como de fora): compilar, executar e publicar ficam desligados até o usuário confiar nele na IDE (o diálogo \"Confiar neste projeto?\" ou Projeto → Opções do projeto → Confiar neste projeto). Peça isso ao usuário; o MCP não confirma.".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod image_tests {
+    /// A captura do app chega em base64 e a comparação a lê de volta.
+    #[test]
+    fn base64_round_trips() {
+        for bytes in [vec![], vec![1u8], vec![1, 2], vec![1, 2, 3], (0..=255u8).collect::<Vec<_>>()] {
+            assert_eq!(super::unbase64(&super::base64(&bytes)).unwrap(), bytes);
+        }
+    }
 }

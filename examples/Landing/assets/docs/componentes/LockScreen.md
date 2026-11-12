@@ -8,10 +8,10 @@ O form sobre a tela de bloqueio (`show_when_locked`), acendendo a tela ao abrir 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_when_locked` | Mostrar no bloqueio | lógico |
-| `turn_screen_on` | Acender a tela | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_when_locked` | Mostrar no bloqueio | lógico |  |
+| `turn_screen_on` | Acender a tela | lógico |  |
 
 ## Eventos
 

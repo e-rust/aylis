@@ -85,6 +85,23 @@ pub struct StyleProps {
     /// Material do fundo: `glass` (Liquid Glass: desfoca o que está atrás, com brilho e
     /// borda de luz), `frosted` (vidro fosco, como o Acrylic) ou `none`.
     pub material: Option<String>,
+    /// Maiúsculas ou minúsculas no texto (`upper`, `lower`, `none`; o `text-transform` do CSS).
+    pub text_case: Option<String>,
+    /// Espaço a mais entre as letras, em pixels (o `letter-spacing` do CSS).
+    pub letter_spacing: Option<f32>,
+    /// A largura da borda de cada lado (esquerda, cima, direita, baixo), no lugar da
+    /// `border_width` (o `border-bottom` do CSS).
+    pub border_sides: Option<Bounds>,
+    /// O traço da borda: `solid` (o padrão), `dashed` ou `dotted`.
+    pub border_style: Option<String>,
+    /// A altura da linha do texto quebrado, em vezes o tamanho da fonte (o `line-height` do
+    /// CSS: 1.5). O relatório do Tabernáculo, T04.
+    pub line_height: Option<f32>,
+    /// Troca só o peso, só o tamanho ou só o itálico da fonte herdada (do `font` do estilo,
+    /// ou da `default`), sem nomear uma fonte nova (T05).
+    pub font_weight: Option<crate::canvas::FontWeight>,
+    pub font_size: Option<f32>,
+    pub italic: Option<bool>,
 }
 
 /// O material do fundo de um controle ([`StyleProps::material`]).
@@ -209,6 +226,30 @@ impl StyleProps {
         if other.material.is_some() {
             self.material.clone_from(&other.material);
         }
+        if other.text_case.is_some() {
+            self.text_case.clone_from(&other.text_case);
+        }
+        if other.letter_spacing.is_some() {
+            self.letter_spacing = other.letter_spacing;
+        }
+        if other.border_sides.is_some() {
+            self.border_sides = other.border_sides;
+        }
+        if other.border_style.is_some() {
+            self.border_style.clone_from(&other.border_style);
+        }
+        if other.line_height.is_some() {
+            self.line_height = other.line_height;
+        }
+        if other.font_weight.is_some() {
+            self.font_weight = other.font_weight;
+        }
+        if other.font_size.is_some() {
+            self.font_size = other.font_size;
+        }
+        if other.italic.is_some() {
+            self.italic = other.italic;
+        }
     }
 }
 
@@ -281,6 +322,24 @@ pub struct ResolvedStyle {
     pub shadow: Option<Shadow>,
     /// Fundo desfocado (vidro), feito pelo `Ui` antes do controle.
     pub material: Material,
+    /// Maiúsculas ou minúsculas no texto (os controles de texto aplicam ao desenhar).
+    pub text_case: crate::text::TextCase,
+    /// Espaço a mais entre as letras.
+    pub letter_spacing: f32,
+    /// A borda de cada lado (`None`: a `border_width` em volta toda).
+    pub border_sides: Option<Bounds>,
+    /// O traço da borda (vazio: contínuo).
+    pub border_dash: Vec<f32>,
+    /// A altura da linha em vezes o tamanho da fonte (0: a da fonte).
+    pub line_height: f32,
+}
+
+impl ResolvedStyle {
+    /// O traço da borda do estilo, na cor `color` e na largura `width`.
+    pub fn border_stroke(&self, color: Color, width: f32) -> crate::canvas::Stroke {
+        let stroke = crate::canvas::Stroke::new(color, width);
+        if self.border_dash.is_empty() { stroke } else { stroke.dashed(self.border_dash.clone()) }
+    }
 }
 
 impl Default for ResolvedStyle {
@@ -297,6 +356,11 @@ impl Default for ResolvedStyle {
             transition_ms: 0.0,
             shadow: None,
             material: Material::None,
+            text_case: crate::text::TextCase::None,
+            letter_spacing: 0.0,
+            border_sides: None,
+            border_dash: Vec::new(),
+            line_height: 0.0,
         }
     }
 }
@@ -326,6 +390,11 @@ impl ResolvedStyle {
                 _ => other.shadow,
             },
             material: other.material,
+            text_case: other.text_case,
+            letter_spacing: mix(self.letter_spacing, other.letter_spacing),
+            border_sides: other.border_sides,
+            border_dash: other.border_dash.clone(),
+            line_height: mix(self.line_height, other.line_height),
         }
     }
 }
@@ -474,6 +543,8 @@ impl Theme {
         t.shadows.insert("sm".into(), Shadow::new(Color::rgba(15, 23, 42, 20), 4.0, 0.0, 1.0));
         t.shadows.insert("md".into(), Shadow::new(Color::rgba(15, 23, 42, 28), 12.0, 0.0, 4.0));
         t.shadows.insert("lg".into(), Shadow::new(Color::rgba(15, 23, 42, 36), 28.0, 0.0, 10.0));
+        // A da gaveta e do diálogo grande (o `shadow-2xl` do Tailwind; C32 do Tabernáculo).
+        t.shadows.insert("2xl".into(), Shadow::new(Color::rgba(15, 23, 42, 64), 50.0, 0.0, 25.0));
         t.add_standard_tokens();
         t.add_standard_styles();
         t
@@ -528,6 +599,7 @@ impl Theme {
         t.shadows.insert("sm".into(), Shadow::new(Color::rgba(0, 0, 0, 70), 4.0, 0.0, 1.0));
         t.shadows.insert("md".into(), Shadow::new(Color::rgba(0, 0, 0, 90), 14.0, 0.0, 4.0));
         t.shadows.insert("lg".into(), Shadow::new(Color::rgba(0, 0, 0, 110), 30.0, 0.0, 10.0));
+        t.shadows.insert("2xl".into(), Shadow::new(Color::rgba(0, 0, 0, 150), 50.0, 0.0, 25.0));
         t.add_standard_tokens();
         t.add_standard_styles();
         t
@@ -829,6 +901,7 @@ impl Theme {
         self.set_style("Panel.card", Style::new(StyleProps::new().fill("surface").border("border", 1.0).radius("lg").shadow("sm")));
         // O Card (do Quasar): o cartão, sem borda e com sombra; `flat` e `bordered` como no QCard.
         self.set_style("Card", Style::new(StyleProps::new().fill("surface").text("text").border("border", 1.0).radius("lg").shadow("sm")));
+        self.set_style("Popover", Style::new(StyleProps::new().fill("surface").text("text").border("border", 1.0).radius("md").shadow("lg").padding(12.0)));
         self.set_style("Card.flat", Style::new(StyleProps::new().shadow("none")));
         self.set_style("Card.bordered", Style::new(StyleProps::new().border("border", 1.0).shadow("none")));
         self.set_style("Panel.flat", Style::new(StyleProps::new().fill("surface").border(Color::TRANSPARENT, 0.0).radius(0.0)));
@@ -1025,15 +1098,36 @@ impl Theme {
             border_width: acc.border_width.unwrap_or(defaults.border_width),
             radius: acc.radius.as_ref().map_or(0.0, |m| Self::metric(&self.radius, m)),
             padding: acc.padding.unwrap_or(defaults.padding),
-            font: self
-                .fonts
-                .get(acc.font.as_deref().unwrap_or("default"))
-                .cloned()
-                .unwrap_or(defaults.font),
+            font: {
+                let mut font = self.fonts.get(acc.font.as_deref().unwrap_or("default")).cloned().unwrap_or(defaults.font);
+                if let Some(w) = acc.font_weight {
+                    font.weight = w;
+                }
+                if let Some(size) = acc.font_size {
+                    font.size = size;
+                }
+                if let Some(italic) = acc.italic {
+                    font.italic = italic;
+                }
+                font
+            },
+            line_height: acc.line_height.unwrap_or(0.0),
             opacity: acc.opacity.unwrap_or(1.0),
             transition_ms: acc.transition.as_ref().map_or(0.0, |m| Self::metric(&self.durations, m)),
             shadow: acc.shadow.as_deref().and_then(|t| self.shadows.get(t)).copied(),
             material: acc.material.as_deref().map_or(Material::None, Material::parse),
+            text_case: match acc.text_case.as_deref() {
+                Some("upper") => crate::text::TextCase::Upper,
+                Some("lower") => crate::text::TextCase::Lower,
+                _ => crate::text::TextCase::None,
+            },
+            letter_spacing: acc.letter_spacing.unwrap_or(0.0),
+            border_sides: acc.border_sides,
+            border_dash: match acc.border_style.as_deref() {
+                Some("dashed") => vec![6.0, 4.0],
+                Some("dotted") => vec![1.5, 3.0],
+                _ => Vec::new(),
+            },
         }
     }
 }

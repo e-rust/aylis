@@ -201,9 +201,16 @@ pub fn stop(state: &Shared) {
     let st = state.borrow();
     match &st.job {
         Some(job) => job.control.cancel(),
+        // Nada desta IDE rodando: o app do projeto aberto por uma sessão anterior (ou por outra
+        // IDE) também para, pelo executável dele (relatório do InsightDB, 11/11: depois de
+        // reabrir a IDE, o Parar não o alcançava e o Compilar recusava).
         None => {
+            #[cfg(not(target_arch = "wasm32"))]
+            let stopped = st.project.as_ref().is_some_and(aylis_tools::run::stop_project_app);
+            #[cfg(target_arch = "wasm32")]
+            let stopped = false;
             drop(st);
-            state.borrow_mut().status = "Nada em execução".into();
+            state.borrow_mut().status = if stopped { "App do projeto encerrado".into() } else { "Nada em execução".into() };
         }
     }
 }
@@ -581,10 +588,13 @@ fn run_with(state: &Shared, debug: bool, ide_debug: bool, release: bool) {
     let frame = state.borrow().doc.device.map(|(d, landscape)| if landscape { format!("{};deitado", d.name) } else { d.name.to_string() });
     // Os arquivos abertos no editor: a geração pode acrescentar handlers neles.
     let open_files = crate::codewindow::open_paths();
+    // A porta que o canal abriu, quando não é a do projeto (a padrão estava ocupada).
+    let dev_port = state.borrow().dev.as_ref().map(|d| d.port()).filter(|&p| aylis_tools::devkeys::address(&project).rsplit(':').next() != Some(&p.to_string()));
     let started = start(state, Slot::Main, title, move |control, sender| {
         prepare(&project, target, Some(&open_files), control, sender)?;
         require(project.language, target, sender)?;
         let mut options = run::Options::new(target);
+        options.dev_port = dev_port;
         options.aylis_host = aylis_host();
         options.device = device;
         options.debug = debug;

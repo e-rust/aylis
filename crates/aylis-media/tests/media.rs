@@ -31,6 +31,17 @@ fn wav(rate: u32, channels: u16, seconds: f32, freq: f32) -> Vec<u8> {
     out
 }
 
+/// Espera a abertura em segundo plano terminar (o `on_ready` vem pela fila da tela).
+fn wait_ready(ui: &mut Ui, player: ComponentId) {
+    for _ in 0..500 {
+        ui.process_posted();
+        if VideoPlayer::is_ready(ui, player) {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+}
+
 #[test]
 fn a_file_on_disk_is_read_while_it_plays() {
     let path = std::env::temp_dir().join(format!("aylis_audio_{}.wav", std::process::id()));
@@ -160,6 +171,7 @@ fn a_registered_decoder_plays_in_the_video_player_on_its_clock() {
 
     ui.set_time(10.0);
     VideoPlayer::play(&mut ui, player).unwrap();
+    wait_ready(&mut ui, player);
     settle();
     assert_eq!(shown(&mut ui, form), Some(0), "o primeiro quadro");
     ui.set_time(10.35);
@@ -172,6 +184,7 @@ fn a_registered_decoder_plays_in_the_video_player_on_its_clock() {
     settle();
     assert_eq!(shown(&mut ui, form), Some(3));
     VideoPlayer::play(&mut ui, player).unwrap();
+    wait_ready(&mut ui, player);
     ui.set_time(20.25);
     settle();
     assert_eq!(shown(&mut ui, form), Some(5));
@@ -190,6 +203,38 @@ fn a_registered_decoder_plays_in_the_video_player_on_its_clock() {
     ui.process_posted();
     assert!(*ended.borrow(), "on_end");
     assert!(!VideoPlayer::is_playing(&ui, player));
+    // No fim, a posição fica no fim, e não volta ao último `play` (W04 do Tabernáculo).
+    let end = VideoPlayer::position(&ui, player);
+    assert!(end >= 0.9, "a posição no fim: {end}");
+}
+
+/// W12 e W13: sem `show_video`, o player não pinta, mas o quadro e o relógio seguem como API, e
+/// cada quadro novo avisa em `on_frame`.
+#[test]
+fn the_player_is_a_frame_source_when_it_does_not_show_video() {
+    register_decoder(RampFactory);
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    register(&mut ui);
+    let form = ui.add_root(Form::new("v", 200.0, 120.0));
+    let player = ui.add(VideoPlayer::new("teste.rampa"), form);
+    ui.control_mut(player).unwrap().set_rect(0.0, 0.0, 200.0, 120.0);
+    ui.set_prop(player, "show_video", false).unwrap();
+    ui.set_prop(player, "frames_ahead", 3).unwrap();
+    let frames = Rc::new(RefCell::new(0));
+    let f = frames.clone();
+    ui.on(player, "on_frame", move |_, _, _| *f.borrow_mut() += 1);
+    ui.set_time(10.0);
+    VideoPlayer::play(&mut ui, player).unwrap();
+    wait_ready(&mut ui, player);
+    settle();
+    assert_eq!(shown(&mut ui, form), None, "não pinta o quadro");
+    ui.process_posted();
+    assert!(*frames.borrow() >= 1, "on_frame");
+    assert!(VideoPlayer::current_frame(&ui, player).is_some());
+    let (_, playing, rate) = VideoPlayer::clock_state(&ui, player).unwrap();
+    assert!(playing && rate == 1.0);
+    assert!(VideoPlayer::queued_frames(&ui, player) <= 3, "a fila respeita o `frames_ahead`");
 }
 
 #[test]
@@ -294,6 +339,12 @@ fn the_video_player_plays_music_files_without_a_picture() {
     ui.on(player, "on_error", move |_, _, args| er.borrow_mut().push(args.text().unwrap_or_default().to_string()));
 
     let played = VideoPlayer::play(&mut ui, player);
+    wait_ready(&mut ui, player);
+    // A falha da abertura vem pelo on_error.
+    let played = played.and_then(|_| match errors.borrow().first() {
+        Some(e) => Err(e.clone()),
+        None => Ok(()),
+    });
     let _ = std::fs::remove_file(&path);
     if let Err(e) = &played {
         // Sem placa de som na máquina não há como tocar.
@@ -332,6 +383,7 @@ fn rate_speeds_up_the_clock() {
     ui.control_mut(player).unwrap().set_rect(0.0, 0.0, 200.0, 120.0);
     ui.set_time(10.0);
     VideoPlayer::play(&mut ui, player).unwrap();
+    wait_ready(&mut ui, player);
     ui.set_prop(player, "rate", 2.0).unwrap();
     settle();
     assert_eq!(shown(&mut ui, form), Some(0));

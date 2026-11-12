@@ -10,10 +10,10 @@ Botoeira: botões de painel lado a lado (`buttons`: `Liga:green;Desliga:red`); o
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `buttons` | Botões | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `buttons` | Botões | texto |  |
+| `item_index` | Item escolhido | inteiro | O botão que está aceso (o último clicado; -1 = nenhum). |
 
 ## Em código
 

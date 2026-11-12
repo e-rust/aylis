@@ -10,18 +10,18 @@ Selo (etiqueta, "chip"): um texto curto numa pílula, com ícone ou bolinha opci
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `icon` | Ícone | texto |
-| `dot` | Ponto | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `icon` | Ícone | texto |  |
+| `dot` | Ponto | lógico | Bolinha colorida antes do texto (estado: no ar, gravando...). |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `target` | Alvo | componente |
-| `anchor` | Âncora | um de: `top_right`, `top_left`, `bottom_right`, `bottom_left` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `target` | Alvo | componente |  |
+| `anchor` | Âncora | um de: `top_right`, `top_left`, `bottom_right`, `bottom_left` |  |
 
 ## Em código
 

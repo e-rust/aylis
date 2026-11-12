@@ -10,14 +10,14 @@ Barra do topo (a "top app bar" do Material 3, a "navigation bar" do iOS): títul
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `subtitle` | Subtítulo | texto |
-| `size` | Tamanho | um de: `small`, `center`, `medium`, `large` |
-| `nav_icon` | Ícone de navegação | texto |
-| `back_text` | Texto do voltar | texto |
-| `actions` | Ações | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `subtitle` | Subtítulo | texto |  |
+| `size` | Tamanho | um de: `small`, `center`, `medium`, `large` |  |
+| `nav_icon` | Ícone de navegação | texto |  |
+| `back_text` | Texto do voltar | texto |  |
+| `actions` | Ações | texto |  |
 
 ## Eventos
 

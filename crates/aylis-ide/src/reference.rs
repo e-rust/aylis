@@ -16,7 +16,7 @@ use crate::lang::property_label;
 use crate::nonvisual;
 
 /// Os guias de `docs/` que não vão para a página (histórico interno e roteiros de teste).
-const PRIVATE_GUIDES: &[&str] = &["historico-decisoes.md", "testes-em-dispositivos.md", "roteiro-de-conferencia.md", "proposta-llm-ci.md", "plano.md", "ajustes-pendentes.md"];
+const PRIVATE_GUIDES: &[&str] = &["historico-decisoes.md", "testes-em-dispositivos.md", "roteiro-de-conferencia.md", "proposta-llm-ci.md", "plano.md", "ajustes-pendentes.md", "gpu-por-monitor.md"];
 
 /// "Comece aqui": a visão geral e os tutoriais, nesta ordem (o resto de `docs/` vai para os
 /// guias).
@@ -68,7 +68,7 @@ fn kind_text(kind: PropKind) -> String {
         PropKind::Color => "cor".into(),
         PropKind::Enum(names) => format!("um de: {}", names.iter().map(|n| format!("`{n}`")).collect::<Vec<_>>().join(", ")),
         PropKind::Set(names) => format!("vários de: {}", names.iter().map(|n| format!("`{n}`")).collect::<Vec<_>>().join(", ")),
-        PropKind::Bounds => "posição e tamanho".into(),
+        PropKind::Bounds => "número ou lista de números".into(),
         PropKind::Component => "componente".into(),
         PropKind::Event => "evento".into(),
         PropKind::Angle => "ângulo (graus)".into(),
@@ -84,20 +84,21 @@ fn category_label(category: &str) -> String {
     if label.starts_with('@') { category.to_string() } else { label }
 }
 
-fn prop_table(props: &[&PropInfo]) -> String {
+fn prop_table(props: &[&PropInfo], docs: &std::collections::HashMap<String, String>) -> String {
     let mut by_category: BTreeMap<&str, Vec<&PropInfo>> = BTreeMap::new();
     for p in props {
         by_category.entry(p.category).or_default().push(p);
     }
     let mut s = String::new();
     for (category, list) in by_category {
-        let _ = writeln!(s, "### {}\n\n| Propriedade | No Object Inspector | Tipo |\n|---|---|---|", category_label(category));
+        let _ = writeln!(s, "### {}\n\n| Propriedade | No Object Inspector | Tipo | O que faz |\n|---|---|---|---|", category_label(category));
         for p in list {
             let mut kind = kind_text(p.kind);
             if p.read_only {
                 kind.push_str(" (somente leitura)");
             }
-            let _ = writeln!(s, "| `{}` | {} | {kind} |", p.name, property_label(p.name));
+            let what = docs.get(p.name).map_or(String::new(), |d| d.replace('|', "\\|"));
+            let _ = writeln!(s, "| `{}` | {} | {kind} | {what} |", p.name, property_label(p.name));
         }
         s.push('\n');
     }
@@ -192,6 +193,22 @@ pub fn write(out: &Path, docs: &Path) -> std::io::Result<usize> {
             (c.name, prop_infos_of(component.as_ref()), component.control().is_some())
         })
         .collect();
+    // As camadas de cada classe (o `Panel` sobre o `Rectangle`): de onde vem o texto de cada
+    // propriedade.
+    let layers: Vec<Vec<&'static str>> = classes
+        .iter()
+        .map(|c| {
+            let component = (c.create)();
+            let mut names = vec![c.name];
+            let mut layer = component.inner();
+            while let Some(l) = layer {
+                names.push(l.class_name());
+                layer = l.inner();
+            }
+            names
+        })
+        .collect();
+    let field_docs = docs.parent().map(source_field_docs).unwrap_or_default();
     // A imagem de cada componente visual, no topo da página dele.
     let visual: Vec<&str> = all.iter().filter(|(name, _, v)| *v && !SUBCOMPONENTS.contains(name)).map(|(name, _, _)| *name).collect();
     let pictured = component_images(&components_dir.join("img"), &visual)?;
@@ -199,7 +216,8 @@ pub fn write(out: &Path, docs: &Path) -> std::io::Result<usize> {
     let common: Vec<&'static str> = ControlBase::PROPS.iter().map(|p| p.name).collect();
     let mut by_category: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let from_sources = docs.parent().map(source_descriptions).unwrap_or_default();
-    for (info, (name, props, is_visual)) in classes.iter().zip(&all) {
+    for ((info, (name, props, is_visual)), layers) in classes.iter().zip(&all).zip(&layers) {
+        let prop_docs = prop_docs_of(&field_docs, layers, false);
         let shown: Vec<&PropInfo> = props.iter().filter(|p| !p.runtime).collect();
         let own_props: Vec<&PropInfo> =
             shown.iter().copied().filter(|p| p.kind != PropKind::Event && !(*is_visual && common.contains(&p.name))).collect();
@@ -229,7 +247,7 @@ pub fn write(out: &Path, docs: &Path) -> std::io::Result<usize> {
         if own_props.is_empty() {
             s.push_str("Só as comuns.\n\n");
         } else {
-            s.push_str(&prop_table(&own_props));
+            s.push_str(&prop_table(&own_props, &prop_docs));
         }
         if !events.is_empty() {
             s.push_str("## Eventos\n\n");
@@ -274,6 +292,12 @@ pub fn write(out: &Path, docs: &Path) -> std::io::Result<usize> {
         if events.is_empty() {
             s.push_str("\n(Sem eventos próprios: o exemplo usa o `on_show` do form.)\n");
         }
+        // O texto escrito à mão para o componente (`docs/componentes/<Classe>.md`: exemplos e
+        // explicações maiores), no fim da página; cada `## propriedade` dele também vai para o
+        // `component_docs` do MCP.
+        if let Ok(extra) = std::fs::read_to_string(docs.join("componentes").join(format!("{name}.md"))) {
+            let _ = write!(s, "\n## Mais sobre o {name}\n\n{}\n", extra.trim());
+        }
         std::fs::write(components_dir.join(format!("{name}.md")), s)?;
         pages += 1;
         let section = if SUBCOMPONENTS.contains(name) { "Formulários e subcomponentes".to_string() } else { info.category.to_string() };
@@ -283,7 +307,7 @@ pub fn write(out: &Path, docs: &Path) -> std::io::Result<usize> {
     let base: Vec<&PropInfo> = ControlBase::PROPS.iter().filter(|p| !p.runtime).collect();
     let (base_events, base_props): (Vec<&PropInfo>, Vec<&PropInfo>) = base.into_iter().partition(|p| p.kind == PropKind::Event);
     let mut s = String::from("# Propriedades e eventos comuns a todo controle\n\nTodo controle visual (o que tem `ControlBase`) tem estas, além das próprias.\n\n## Propriedades\n\n");
-    s.push_str(&prop_table(&base_props));
+    s.push_str(&prop_table(&base_props, &prop_docs_of(&field_docs, &[], true)));
     s.push_str("## Eventos\n\n");
     s.push_str(&event_table(&base_events));
     std::fs::write(components_dir.join("controles.md"), s)?;
@@ -506,6 +530,78 @@ fn source_descriptions(root: &Path) -> std::collections::HashMap<String, String>
             found.map(|d| (class, d))
         })
         .collect()
+}
+
+/// O que cada propriedade faz: o primeiro parágrafo do comentário `///` do campo, no tipo de
+/// cada camada da classe (o `Panel` herda o `radius` do `Rectangle`) e no `ControlBase`. É o texto
+/// da coluna "O que faz" das páginas e do `component_docs` do MCP (decidido com o autor em 11/11:
+/// a explicação fica na documentação, tirada do código, e o MCP a devolve sob demanda; só o
+/// essencial, para não pesar no contexto).
+pub fn source_field_docs(root: &Path) -> std::collections::HashMap<String, std::collections::HashMap<String, String>> {
+    let mut out: std::collections::HashMap<String, std::collections::HashMap<String, String>> = std::collections::HashMap::new();
+    let mut stack = vec![root.join("crates")];
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if !matches!(path.file_name().and_then(|n| n.to_str()), Some("target" | "tests" | "examples" | "benches")) {
+                    stack.push(path);
+                }
+                continue;
+            }
+            if path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else { continue };
+            let lines: Vec<&str> = text.lines().collect();
+            let mut i = 0;
+            while i < lines.len() {
+                let Some(rest) = lines[i].strip_prefix("pub struct ").filter(|r| r.trim_end().ends_with('{')) else {
+                    i += 1;
+                    continue;
+                };
+                let name: String = rest.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect();
+                let fields = out.entry(name).or_default();
+                let mut doc: Vec<&str> = Vec::new();
+                i += 1;
+                while i < lines.len() && lines[i].trim() != "}" {
+                    let line = lines[i].trim();
+                    if let Some(d) = line.strip_prefix("///") {
+                        doc.push(d.trim());
+                    } else if line.starts_with("#[") {
+                        // atributo: o comentário continua valendo para o campo de baixo
+                    } else {
+                        let field = line.strip_prefix("pub ").or_else(|| line.strip_prefix("pub(crate) ")).unwrap_or(line);
+                        if let Some((name, _)) = field.split_once(':').filter(|(n, _)| !n.is_empty() && n.chars().all(|c| c.is_alphanumeric() || c == '_')) {
+                            let paragraph: Vec<&str> = doc.iter().copied().take_while(|l| !l.is_empty()).collect();
+                            if !paragraph.is_empty() && !fields.contains_key(name) {
+                                // Como está no código (a limpeza das descrições de classe tiraria
+                                // os colchetes de `[a, b, c, d]`); só os links de documentação saem.
+                                fields.insert(name.to_string(), paragraph.join(" ").replace("[`", "`").replace("`]", "`"));
+                            }
+                        }
+                        doc.clear();
+                    }
+                    i += 1;
+                }
+            }
+        }
+    }
+    out
+}
+
+/// O texto de cada propriedade da classe `class` (com as camadas de dentro, `layers`, e o
+/// `ControlBase` dos controles visuais).
+fn prop_docs_of(field_docs: &std::collections::HashMap<String, std::collections::HashMap<String, String>>, layers: &[&str], visual: bool) -> std::collections::HashMap<String, String> {
+    let mut out = std::collections::HashMap::new();
+    let chain = layers.iter().copied().chain(visual.then_some("ControlBase"));
+    for layer in chain {
+        for (prop, doc) in field_docs.get(layer).into_iter().flatten() {
+            out.entry(prop.clone()).or_insert_with(|| doc.clone());
+        }
+    }
+    out
 }
 
 /// O comentário do código como texto da página: `[`X`](link)` e `[`X`]` viram `X`, os parênteses

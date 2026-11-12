@@ -3,7 +3,6 @@
 //! `src/forms/`.
 
 use aylis::prelude::Ui;
-use aylis::prelude::instances::form_handler;
 
 pub mod components;
 pub use components::*;
@@ -15,6 +14,6 @@ pub mod principal;
 /// as classes dos pacotes de código.
 pub fn register(ui: &mut Ui) {
     ui.register_form_class("frmPrincipal", FrmPrincipal::bind);
-    ui.register_handler("frmPrincipal.carregar_click", form_handler(FrmPrincipal::carregar_click));
-    ui.register_handler("frmPrincipal.parar_click", form_handler(FrmPrincipal::parar_click));
+    ui.register_handler("frmPrincipal.carregar_click", aylis::prelude::instances::form_handler(FrmPrincipal::carregar_click));
+    ui.register_handler("frmPrincipal.parar_click", aylis::prelude::instances::form_handler(FrmPrincipal::parar_click));
 }

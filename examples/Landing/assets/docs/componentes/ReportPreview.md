@@ -10,22 +10,22 @@ A visualização de um `Report` (como o preview do FastReport): uma página por 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `toolbar` | Barra de ferramentas | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `toolbar` | Barra de ferramentas | lógico | Mostra a barra de botões. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `page` | Página | inteiro |
-| `zoom` | Zoom | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `page` | Página | inteiro |  |
+| `zoom` | Zoom | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `report` | Relatório | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `report` | Relatório | componente |  |
 
 ## Eventos
 

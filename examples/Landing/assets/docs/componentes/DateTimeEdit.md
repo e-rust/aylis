@@ -1,0 +1,103 @@
+# DateTimeEdit
+
+![DateTimeEdit](img/DateTimeEdit.png)
+
+Campo de dia e hora juntos: `date_time` é `2026-11-12T14:30` (ISO, sem fuso), e a tela mostra no formato do idioma (`12/11/2026 14:30`). O botão (ou F4, Alt+↓) abre o calendário, que troca o dia e mantém a hora; ↑/↓ somam um dia com o cursor na data e `increment` minutos com o cursor na hora. `on_change` traz o valor ISO. O relatório do Tabernáculo, C30.
+
+**Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
+
+## Propriedades
+
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `placeholder` | Texto de exemplo | texto |  |
+| `border` | Borda | lógico | A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de um painel ou numa tabela). Ligada por padrão. |
+| `icon` | Ícone | texto |  |
+| `label` | Rótulo | texto |  |
+| `helper` | Texto de ajuda | texto |  |
+| `counter` | Contador | lógico |  |
+| `prefix` | Prefixo | texto |  |
+| `suffix` | Sufixo | texto |  |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `increment` | Incremento | inteiro | Minutos somados pelas setas na parte da hora. |
+| `max_length` | Tamanho máximo | inteiro | Limite de caracteres; 0 = sem limite. |
+| `read_only` | Somente leitura | lógico |  |
+| `password` | Senha (esconde o texto) | lógico | Mostra `•` no lugar dos caracteres e bloqueia copiar/recortar. |
+| `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico | Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui, a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução. |
+| `auto_select` | Selecionar ao entrar | lógico | Ganhar o foco seleciona o texto todo (o `AutoSelect` do Delphi, ligado por padrão). |
+| `clear_button` | Botão de limpar | lógico |  |
+| `mask` | Máscara | texto |  |
+| `rules` | Regras de validação | texto |  |
+| `spellcheck` | Corretor ortográfico | lógico | Sublinha as palavras erradas (o motor de texto da plataforma ou o do app); o clique direito numa delas mostra as correções. |
+| `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita: o resto aparece apagado depois do cursor e o Tab (ou a seta para a direita) aceita. |
+| `language` | Idioma | texto | Idioma da correção e das sugestões (`"pt-BR"`); vazio: o do sistema. |
+| `keyboard_suggestions` | Sugestões do teclado | lógico | Celular: a faixa de sugestões e a correção automática do teclado do sistema (desligue em códigos, logins, identificadores). |
+
+### Cursor
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caret_color` | Cor do cursor | cor | Cor do cursor; vazio: a cor do texto. |
+| `caret_width` | Largura do cursor | número | Largura do cursor (linha) ou altura (sublinhado), em pontos. |
+| `caret_style` | Forma do cursor | um de: `line`, `block`, `underline` |  |
+| `caret_blink` | Piscar do cursor (ms) | duração (ms) | Intervalo de piscar (ms, o ciclo inteiro); 0: não pisca. |
+
+### Dados
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `date_time` | Data e hora | texto |  |
+| `text` | Texto | texto |  |
+| `error` | Erro | texto |  |
+
+### Teclado
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `allowed_chars` | Caracteres permitidos | texto | Os caracteres liberados (vencem um bloqueio do form ou de um painel), os bloqueados e se só os liberados valem (`allowed_chars = "0-9"` com `only_allowed`: só números). Faixas como `a-z`; `-` é o hífen. Vale para o digitado e o colado. |
+| `blocked_chars` | Caracteres bloqueados | texto |  |
+| `only_allowed` | Só os permitidos | lógico |  |
+| `char_map` | Trocas de caracteres | texto | Trocas do que o teclado produz: pares "digitado, entregue" (`",."` troca a vírgula por ponto), ao digitar e ao colar; vale também o de um contêiner (veja o `Form`). |
+| `char_case` | Maiúsculas e minúsculas | um de: `normal`, `upper`, `lower` | Maiúsculas ou minúsculas no valor (o `CharCase` do Delphi): ao digitar, ao colar e quando o código grava o `text`. Ligado a um campo, manda o `char_case` do campo. |
+
+### Texto
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `wrap` | Quebra de linha | lógico | Quebra automática de linha (fora da edição). |
+| `trimming` | Reticências | um de: `none`, `character`, `word` | Reticências quando o texto não cabe (fora da edição). |
+
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_caret_move` | — | — |  |
+| `on_paste` | — | — |  |
+
+## Em código
+
+No form, o `DateTimeEdit1` com o evento ligado (no Object Inspector, na aba Eventos):
+
+```json
+{ "class": "DateTimeEdit", "name": "DateTimeEdit1", "on_change": "date_time_edit1_change" }
+```
+
+E o handler, um método do form (`self.DateTimeEdit1` já é um `DateTimeEdit`):
+
+```rust
+impl FrmPrincipal {
+    pub fn date_time_edit1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let atual = self.DateTimeEdit1.date_time(ui);
+        self.DateTimeEdit1.set_date_time(ui, format!("{atual}!"));
+    }
+}
+```

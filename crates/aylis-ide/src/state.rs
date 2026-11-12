@@ -121,6 +121,8 @@ pub struct State {
     pub expanded: std::collections::HashSet<String>,
     /// Pedido de fechar a IDE já confirmado (não pergunta de novo).
     pub quit_confirmed: bool,
+    /// Já avisou que há forms alterados ao fechar ou trocar de projeto: a segunda vez descarta.
+    pub leave_warned: bool,
     /// Form da linha do gerenciador de projeto em que o menu de contexto foi aberto.
     pub context_form: Option<String>,
     /// As pastas abertas no painel do projeto (o painel é refeito a cada mudança): começam
@@ -190,6 +192,7 @@ impl Default for State {
             show_hidden: false,
             expanded: Default::default(),
             quit_confirmed: false,
+            leave_warned: false,
             context_form: None,
             project_tree_open: Default::default(),
             project_tree_current: String::new(),

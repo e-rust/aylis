@@ -10,13 +10,13 @@ O balão de conversa (`QChatMessage`; aqui `ChatBubble`, porque o `ChatMessage` 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `author` | Autor | texto |
-| `text` | Texto | texto |
-| `stamp` | Hora | texto |
-| `sent` | Enviada | lógico |
-| `avatar` | Avatar | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `author` | Autor | texto |  |
+| `text` | Texto | texto |  |
+| `stamp` | Hora | texto |  |
+| `sent` | Enviada | lógico |  |
+| `avatar` | Avatar | texto |  |
 
 ## Em código
 

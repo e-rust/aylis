@@ -10,9 +10,9 @@ Botão de emergência (cogumelo vermelho sobre fundo amarelo): o clique trava e 
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `pressed` | Pressionado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `pressed` | Pressionado | lógico |  |
 
 ## Eventos
 

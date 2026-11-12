@@ -8,11 +8,11 @@ Métricas de uso somadas entre as sessões (cliques, telas, erros).
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `file` | Arquivo | texto |
-| `app_name` | Nome do aplicativo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `file` | Arquivo | texto | O arquivo; vazio: `<pasta do app>/analytics.json`. |
+| `app_name` | Nome do aplicativo | texto |  |
 
 ## Em código
 

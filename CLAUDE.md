@@ -228,6 +228,13 @@ cargo run -p aylis-platform-winit --example shapes --features cpu   # exemplos (
 cargo run -p aylis-tools --bin aylis-tool -- <subcomando>  # as ferramentas
 ```
 
+**Onde ficam as compilações:** todo o Rust desta máquina, o repositório do Aylis inclusive,
+compila em `%LOCALAPPDATA%\aylis\target` (o `config.toml` global do cargo, gravado pela IDE:
+`aylis_tools::cargo_config`), e não no `target/` do repositório. Os executáveis
+(`aylis-tool.exe`, `aylis-ide.exe`) estão em `%LOCALAPPDATA%\aylis\target\debug`. Código que
+procura o que o repositório compilou usa `aylis_tools::cargo_target_dir` (testes:
+`CARGO_TARGET_TMPDIR`), nunca `<repositório>/target`.
+
 **Ver sem janela**
 - Captura de um exemplo: `AYLIS_SNAPSHOT=pasta AYLIS_BENCH=5 cargo run ... --example x` grava
   `pasta/form.png`.
@@ -278,7 +285,7 @@ cargo run -p aylis-tools --bin aylis-tool -- <subcomando>  # as ferramentas
   mede os exemplos; `test-docs` refaz os documentos de teste do `aylis-docview`.
 - `installer-ide` gera `dist/aylis-ide-<versão>-setup.exe` (NSIS). A pasta do Aylis é achada em
   tempo de execução (`aylis_project::codegen::aylis_root`: `aylis/` ao lado do executável,
-  depois o repositório onde foi compilado); instalada, as compilações vão para
+  depois o repositório onde foi compilado); instalada ou não, as compilações vão para
   `%LOCALAPPDATA%\aylis\target` (`aylis_tools::shared_target_dir`).
 - `clean [--project app.aylisproj]`: o `target` é limpo sozinho, sem mexer durante uma
   compilação. As compilações pelo Aylis anotam em `target/.aylis-index.json` que projeto usou

@@ -10,12 +10,12 @@ Estrela de `points` pontas; `inner` é o raio de dentro em relação ao de fora 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
-| `points` | Pontos | inteiro |
-| `inner` | Raio interno | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
+| `points` | Pontos | inteiro |  |
+| `inner` | Raio interno | número |  |
 
 ## Em código
 

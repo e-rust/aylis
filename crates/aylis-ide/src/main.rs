@@ -56,7 +56,11 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let target = args.iter().find(|a| !a.starts_with("--") && Some(*a) != png.as_ref() && Some(*a) != recording.as_ref() && Some(*a) != device.as_ref()).cloned();
 
     // As compilações substituídas ou esquecidas saem do target enquanto a IDE abre.
-    std::thread::spawn(|| aylis_tools::cleanup::automatic(&aylis_tools::shared_target_dir()));
+    // E todo o Rust da máquina passa a compilar na mesma pasta (o padrão; desliga nas Opções).
+    std::thread::spawn(|| {
+        let _ = aylis_tools::cargo_config::apply();
+        aylis_tools::cleanup::automatic(&aylis_tools::shared_target_dir())
+    });
     // Dois cliques num projeto já aberto em outra IDE (ou com uma na tela inicial): ele vai
     // para lá e esta não abre. `--new-window` (Arquivo → Nova janela) abre sempre.
     if let Some(target) = &target

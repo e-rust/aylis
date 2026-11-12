@@ -300,6 +300,10 @@
           "arquivo": "componentes/DateEdit.md"
         },
         {
+          "titulo": "DateTimeEdit",
+          "arquivo": "componentes/DateTimeEdit.md"
+        },
+        {
           "titulo": "DirectionPad",
           "arquivo": "componentes/DirectionPad.md"
         },
@@ -449,6 +453,10 @@
           "arquivo": "componentes/MainMenu.md"
         },
         {
+          "titulo": "Popover",
+          "arquivo": "componentes/Popover.md"
+        },
+        {
           "titulo": "PopupMenu",
           "arquivo": "componentes/PopupMenu.md"
         }
@@ -569,6 +577,10 @@
         {
           "titulo": "EventRecorder",
           "arquivo": "componentes/EventRecorder.md"
+        },
+        {
+          "titulo": "FrameTimer",
+          "arquivo": "componentes/FrameTimer.md"
         },
         {
           "titulo": "McpServer",

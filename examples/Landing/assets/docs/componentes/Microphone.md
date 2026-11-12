@@ -10,11 +10,11 @@ Microfone com medidor de nível (a barra acende com o som). `active` liga; `Micr
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `device` | Dispositivo | texto |
-| `active` | Ativo | lógico |
-| `monitor` | Retorno | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `device` | Dispositivo | texto | O dispositivo (vazio: o padrão do sistema); `capture::input_devices()` lista. |
+| `active` | Ativo | lógico |  |
+| `monitor` | Retorno | texto | Manda a entrada para uma ou mais saídas (o formato do `output` dos players, com volume e atraso por saída); vazio: não manda. |
 
 ## Eventos
 

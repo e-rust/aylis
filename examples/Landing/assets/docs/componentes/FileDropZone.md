@@ -10,28 +10,31 @@
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `filter` | Filtro | texto |
-| `multiple` | Vários | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `filter` | Filtro | texto |  |
+| `multiple` | Vários | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `files` | Arquivos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `files` | Arquivos | texto |  |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
 | `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_reject` | — | — |  |
+| `on_file_enter` | — | — |  |
+| `on_file_leave` | — | — |  |
 
 ## Em código
 

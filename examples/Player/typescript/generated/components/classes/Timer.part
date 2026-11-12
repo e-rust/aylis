@@ -25,10 +25,19 @@ export class Timer extends AylisComponent {
     set background(value: boolean) {
         this.setProp("background", value);
     }
+    get oneShot(): Promise<boolean> {
+        return this.getProp("one_shot");
+    }
+    set oneShot(value: boolean) {
+        this.setProp("one_shot", value);
+    }
     get drift(): Promise<number> {
         return this.getProp("drift");
     }
     set drift(value: number) {
         this.setProp("drift", value);
+    }
+    restart() {
+        this.aylis.send("invoke", { target: this.id, method: "restart", args: [] });
     }
 }

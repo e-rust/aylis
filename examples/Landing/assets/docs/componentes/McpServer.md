@@ -8,17 +8,17 @@ Liga o app a agentes de IA pelo MCP. `active` liga (fora do designer); `port` 0 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `port` | Porta | inteiro |
-| `token` | Token de acesso | texto |
-| `server_name` | Nome do servidor | texto |
-| `instructions` | Instruções | texto |
-| `expose_ui` | Expor a tela | lógico |
-| `read_only` | Somente leitura | lógico |
-| `forms` | Forms liberados | texto |
-| `call_timeout` | Tempo limite da chamada | duração (ms) |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `port` | Porta | inteiro |  |
+| `token` | Token de acesso | texto |  |
+| `server_name` | Nome do servidor | texto | O nome que o agente vê (vazio: o nome do componente). |
+| `instructions` | Instruções | texto | O que o agente lê ao conectar: para que serve o app e como usar as ferramentas. |
+| `expose_ui` | Expor a tela | lógico |  |
+| `read_only` | Somente leitura | lógico |  |
+| `forms` | Forms liberados | texto |  |
+| `call_timeout` | Tempo limite da chamada | duração (ms) | Quanto uma chamada pode demorar, em milissegundos (vale ao ligar). |
 
 ## Eventos
 

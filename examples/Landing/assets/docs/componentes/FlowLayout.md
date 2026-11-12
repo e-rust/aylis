@@ -10,11 +10,13 @@ Os filhos em fila, no tamanho deles, quebrando a linha quando não cabem (chips,
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `gap` | Espaço entre itens | número |
-| `line_gap` | Espaço entre linhas | número |
-| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `gap` | Espaço entre itens | número |  |
+| `line_gap` | Espaço entre linhas | número |  |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` | Onde cada filho fica na altura da linha (o `align-items`): em cima (o padrão), no meio ou embaixo; o botão mais baixo não sobe mais (L04 do Tabernáculo). Um filho com `grow` toma o espaço que sobra da linha (o espaçador). |
+| `baseline` | Alinhar pela linha de base | lógico | Alinha os textos da linha pela linha de base (o `align-items: baseline`): o selo menor fica na mesma base do título. Os sem texto ficam pelo fundo. Vence o `v_align` (L12). |
 
 ## Em código
 

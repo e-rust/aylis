@@ -10,9 +10,9 @@ O palco de um player ou de uma prévia que decodifica o vídeo por conta própri
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `background` | Fundo | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `background` | Fundo | cor | A cor do fundo (onde o quadro não cobre). |
 
 ## Em código
 

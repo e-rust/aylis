@@ -60,6 +60,36 @@ export class Button extends AylisComponent {
     set repeatEnter(value: boolean) {
         this.setProp("repeat_enter", value);
     }
+    get defaultButton(): Promise<boolean> {
+        return this.getProp("default_button");
+    }
+    set defaultButton(value: boolean) {
+        this.setProp("default_button", value);
+    }
+    get cancelButton(): Promise<boolean> {
+        return this.getProp("cancel_button");
+    }
+    set cancelButton(value: boolean) {
+        this.setProp("cancel_button", value);
+    }
+    get hAlign(): Promise<string> {
+        return this.getProp("h_align");
+    }
+    set hAlign(value: string) {
+        this.setProp("h_align", value);
+    }
+    get groupIndex(): Promise<number> {
+        return this.getProp("group_index");
+    }
+    set groupIndex(value: number) {
+        this.setProp("group_index", value);
+    }
+    get radius(): Promise<string> {
+        return this.getProp("radius");
+    }
+    set radius(value: string) {
+        this.setProp("radius", value);
+    }
     get left(): Promise<number> {
         return this.getProp("left");
     }
@@ -90,6 +120,24 @@ export class Button extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -113,6 +161,18 @@ export class Button extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -252,6 +312,30 @@ export class Button extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -359,6 +443,18 @@ export class Button extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -421,6 +517,24 @@ export class CheckBox extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -444,6 +558,18 @@ export class CheckBox extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -583,6 +709,30 @@ export class CheckBox extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -690,6 +840,18 @@ export class CheckBox extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -752,6 +914,24 @@ export class Circle extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -775,6 +955,18 @@ export class Circle extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -913,6 +1105,30 @@ export class Circle extends AylisComponent {
     }
     set columnSpan(value: number) {
         this.setProp("column_span", value);
+    }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
     }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
@@ -1016,6 +1232,18 @@ export class Circle extends AylisComponent {
     set tag(value: number) {
         this.setProp("tag", value);
     }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
+    }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
     }
@@ -1068,6 +1296,18 @@ export class ComboBox extends AylisComponent {
     set sensitive(value: boolean) {
         this.setProp("sensitive", value);
     }
+    get groups(): Promise<string> {
+        return this.getProp("groups");
+    }
+    set groups(value: string) {
+        this.setProp("groups", value);
+    }
+    get disabledItems(): Promise<string> {
+        return this.getProp("disabled_items");
+    }
+    set disabledItems(value: string) {
+        this.setProp("disabled_items", value);
+    }
     get value(): Promise<string> {
         return this.getProp("value");
     }
@@ -1104,6 +1344,24 @@ export class ComboBox extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -1127,6 +1385,18 @@ export class ComboBox extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -1265,6 +1535,30 @@ export class ComboBox extends AylisComponent {
     }
     set columnSpan(value: number) {
         this.setProp("column_span", value);
+    }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
     }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
@@ -1373,6 +1667,18 @@ export class ComboBox extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -1435,6 +1741,24 @@ export class Divider extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -1458,6 +1782,18 @@ export class Divider extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -1597,6 +1933,30 @@ export class Divider extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -1704,6 +2064,18 @@ export class Divider extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -1835,6 +2207,30 @@ export class Form extends AylisForm {
     set rememberPlacement(value: boolean) {
         this.setProp("remember_placement", value);
     }
+    get gpu(): Promise<string> {
+        return this.getProp("gpu");
+    }
+    set gpu(value: string) {
+        this.setProp("gpu", value);
+    }
+    get activateOnShow(): Promise<boolean> {
+        return this.getProp("activate_on_show");
+    }
+    set activateOnShow(value: boolean) {
+        this.setProp("activate_on_show", value);
+    }
+    get closeAction(): Promise<string> {
+        return this.getProp("close_action");
+    }
+    set closeAction(value: string) {
+        this.setProp("close_action", value);
+    }
+    get frameRate(): Promise<number> {
+        return this.getProp("frame_rate");
+    }
+    set frameRate(value: number) {
+        this.setProp("frame_rate", value);
+    }
     get left(): Promise<number> {
         return this.getProp("left");
     }
@@ -1865,6 +2261,24 @@ export class Form extends AylisForm {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -1888,6 +2302,18 @@ export class Form extends AylisForm {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -2027,6 +2453,30 @@ export class Form extends AylisForm {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -2135,14 +2585,32 @@ export class Form extends AylisForm {
     set tag(value: number) {
         this.setProp("tag", value);
     }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
+    }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
     }
     set popupMenu(value: string) {
         this.setProp("popup_menu", value);
     }
-    moveToMonitor(a1: number) {
-        this.aylis.send("invoke", { target: this.id, method: "move_to_monitor", args: [a1] });
+    moveToMonitor(monitor: number) {
+        this.aylis.send("invoke", { target: this.id, method: "move_to_monitor", args: [monitor] });
+    }
+    gpuAdapter(): Promise<string> {
+        return this.aylis.call("invoke", { target: this.id, method: "gpu_adapter", args: [] }) as Promise<any>;
+    }
+    gpuAdapters(): Promise<string> {
+        return this.aylis.call("invoke", { target: this.id, method: "gpu_adapters", args: [] }) as Promise<any>;
     }
     focused(): Promise<string> {
         return this.aylis.call("focused", { target: this.id }) as Promise<any>;
@@ -2211,6 +2679,24 @@ export class GridLayout extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -2234,6 +2720,18 @@ export class GridLayout extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -2373,6 +2871,30 @@ export class GridLayout extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -2480,6 +3002,18 @@ export class GridLayout extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -2569,6 +3103,18 @@ export class Label extends AylisComponent {
     set outlineWidth(value: number) {
         this.setProp("outline_width", value);
     }
+    get lineHeight(): Promise<number> {
+        return this.getProp("line_height");
+    }
+    set lineHeight(value: number) {
+        this.setProp("line_height", value);
+    }
+    get textShadow(): Promise<string> {
+        return this.getProp("text_shadow");
+    }
+    set textShadow(value: string) {
+        this.setProp("text_shadow", value);
+    }
     get focusControl(): Promise<string> {
         return this.getProp("focus_control");
     }
@@ -2605,6 +3151,24 @@ export class Label extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -2628,6 +3192,18 @@ export class Label extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -2767,6 +3343,30 @@ export class Label extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -2875,11 +3475,29 @@ export class Label extends AylisComponent {
     set tag(value: number) {
         this.setProp("tag", value);
     }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
+    }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
     }
     set popupMenu(value: string) {
         this.setProp("popup_menu", value);
+    }
+    minContentWidth(): Promise<number> {
+        return this.aylis.call("invoke", { target: this.id, method: "min_content_width", args: [] }) as Promise<any>;
+    }
+    maxContentWidth(): Promise<number> {
+        return this.aylis.call("invoke", { target: this.id, method: "max_content_width", args: [] }) as Promise<any>;
     }
 }
 
@@ -2915,6 +3533,12 @@ export class Layout extends AylisComponent {
     set charMap(value: string) {
         this.setProp("char_map", value);
     }
+    get gap(): Promise<number> {
+        return this.getProp("gap");
+    }
+    set gap(value: number) {
+        this.setProp("gap", value);
+    }
     get left(): Promise<number> {
         return this.getProp("left");
     }
@@ -2945,6 +3569,24 @@ export class Layout extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -2968,6 +3610,18 @@ export class Layout extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -3107,6 +3761,30 @@ export class Layout extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -3214,6 +3892,18 @@ export class Layout extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -3255,6 +3945,24 @@ export class MainMenu extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -3278,6 +3986,18 @@ export class MainMenu extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -3417,6 +4137,30 @@ export class MainMenu extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -3524,6 +4268,18 @@ export class MainMenu extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -3582,6 +4338,12 @@ export class MenuItem extends AylisComponent {
     }
     set danger(value: boolean) {
         this.setProp("danger", value);
+    }
+    get header(): Promise<boolean> {
+        return this.getProp("header");
+    }
+    set header(value: boolean) {
+        this.setProp("header", value);
     }
 }
 
@@ -3690,6 +4452,24 @@ export class PaintCanvas extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -3713,6 +4493,18 @@ export class PaintCanvas extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -3852,6 +4644,30 @@ export class PaintCanvas extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -3959,6 +4775,18 @@ export class PaintCanvas extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -4057,6 +4885,12 @@ export class Panel extends AylisComponent {
     set charMap(value: string) {
         this.setProp("char_map", value);
     }
+    get gap(): Promise<number> {
+        return this.getProp("gap");
+    }
+    set gap(value: number) {
+        this.setProp("gap", value);
+    }
     get fill(): Promise<string> {
         return this.getProp("fill");
     }
@@ -4105,10 +4939,10 @@ export class Panel extends AylisComponent {
     set strokeWidth(value: number) {
         this.setProp("stroke_width", value);
     }
-    get radius(): Promise<number> {
+    get radius(): Promise<string> {
         return this.getProp("radius");
     }
-    set radius(value: number) {
+    set radius(value: string) {
         this.setProp("radius", value);
     }
     get left(): Promise<number> {
@@ -4141,6 +4975,24 @@ export class Panel extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -4164,6 +5016,18 @@ export class Panel extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -4303,6 +5167,30 @@ export class Panel extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -4404,6 +5292,18 @@ export class Panel extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
@@ -4482,6 +5382,12 @@ export class ScrollBox extends AylisComponent {
     set smooth(value: string) {
         this.setProp("smooth", value);
     }
+    get gutter(): Promise<boolean> {
+        return this.getProp("gutter");
+    }
+    set gutter(value: boolean) {
+        this.setProp("gutter", value);
+    }
     get allowedChars(): Promise<string> {
         return this.getProp("allowed_chars");
     }
@@ -4548,6 +5454,24 @@ export class ScrollBox extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -4571,6 +5495,18 @@ export class ScrollBox extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -4710,6 +5646,30 @@ export class ScrollBox extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -4818,17 +5778,29 @@ export class ScrollBox extends AylisComponent {
     set tag(value: number) {
         this.setProp("tag", value);
     }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
+    }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
     }
     set popupMenu(value: string) {
         this.setProp("popup_menu", value);
     }
-    scrollTo(a1: AylisComponent) {
-        this.aylis.send("invoke", { target: this.id, method: "scroll_to", args: [a1.id] });
+    scrollTo(component: AylisComponent) {
+        this.aylis.send("invoke", { target: this.id, method: "scroll_to", args: [component.id] });
     }
-    visibleComponents(a1: AylisComponent, a2: boolean): Promise<string> {
-        return this.aylis.call("invoke", { target: this.id, method: "visible_components", args: [a1.id, a2] }) as Promise<any>;
+    visibleComponents(list: AylisComponent, fully: boolean): Promise<string> {
+        return this.aylis.call("invoke", { target: this.id, method: "visible_components", args: [list.id, fully] }) as Promise<any>;
     }
 }
 
@@ -4870,6 +5842,24 @@ export class StatusBar extends AylisComponent {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -4893,6 +5883,18 @@ export class StatusBar extends AylisComponent {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -5032,6 +6034,30 @@ export class StatusBar extends AylisComponent {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -5139,6 +6165,18 @@ export class StatusBar extends AylisComponent {
     }
     set tag(value: number) {
         this.setProp("tag", value);
+    }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
     }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");

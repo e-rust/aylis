@@ -646,16 +646,11 @@ pub fn project(ui: &mut Ui, state: &Shared, ids: &Ids) {
         let open: Vec<String> = (0..st.tab_count()).filter_map(|i| st.tab(i)).map(|d| d.form_name()).collect();
         project_nodes(&project, &scan, &current, &open, &st.project_tree_open)
     };
-    let (mut nodes, mut selected) = build(&state.borrow());
-    // O item atual mudou: abre as pastas até ele (uma vez; fechar depois fica fechado).
+    let (nodes, selected) = build(&state.borrow());
+    // A árvore começa fechada e fica como o usuário deixar (guardada por projeto; I10 do
+    // Tabernáculo): o item atual não abre as pastas sozinho.
     if state.borrow().project_tree_current != current {
-        let mut st = state.borrow_mut();
-        st.project_tree_current = current.clone();
-        if let Some(keys) = ancestors(&nodes, &current) {
-            st.project_tree_open.extend(keys);
-        }
-        drop(st);
-        (nodes, selected) = build(&state.borrow());
+        state.borrow_mut().project_tree_current = current.clone();
     }
     let title_text = format!("{}  ·  {}", project.name, project.language.name());
     // A árvore já está lá com os mesmos nós: só marca o form aberto (refazer perderia a
@@ -711,6 +706,9 @@ pub fn project(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 st.project_tree_open.insert(key);
             } else {
                 st.project_tree_open.remove(&key);
+            }
+            if let Some(project) = st.project.as_ref() {
+                crate::actions::remember_project_tree(&project.path, &st.project_tree_open);
             }
         });
     }
@@ -991,20 +989,6 @@ fn same_item(a: &str, b: &str) -> bool {
         (Some(x), Some(y)) => crate::debugger::norm(std::path::Path::new(x)) == crate::debugger::norm(std::path::Path::new(y)),
         _ => a == b,
     }
-}
-
-/// As pastas (os `data`) acima do item `data`, olhando a árvore inteira (aberta ou não).
-fn ancestors(nodes: &[TreeNode], data: &str) -> Option<Vec<String>> {
-    for n in nodes {
-        if same_item(&n.data, data) {
-            return Some(Vec::new());
-        }
-        if let Some(mut above) = ancestors(&n.children, data) {
-            above.insert(0, n.data.clone());
-            return Some(above);
-        }
-    }
-    None
 }
 
 /// O que uma aba da faixa de cima mostra: um form (o designer e o código dele) ou um

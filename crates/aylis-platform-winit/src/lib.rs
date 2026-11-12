@@ -60,6 +60,8 @@ pub fn setting(name: &str) -> Option<String> {
 }
 #[cfg(native_gpu)]
 mod gpu;
+#[cfg(all(native_gpu, target_os = "linux"))]
+mod gpu_linux;
 mod access;
 mod http;
 #[cfg(not(mobile))]
@@ -138,7 +140,7 @@ mod textassist_linux;
 /// Windows: interceptar as mensagens da janela de um form (impedir ou trocar).
 #[cfg(windows)]
 pub mod win {
-    pub use crate::win32::{MessageReply, WindowMessage, clear_message_hooks, hwnd, msg, on_message};
+    pub use crate::win32::{MessageReply, WindowMessage, clear_message_hooks, hwnd, msg, on_message, remove_message_hook};
 }
 
 use std::fmt;
@@ -332,6 +334,9 @@ pub struct Options {
     pub gpu: aylis_core::gpu::GpuChoice,
     /// Como o quadro chega à janela no Windows (`AYLIS_PRESENT` troca, para testes).
     pub present: aylis_core::gpu::PresentMode,
+    /// A pasta do `placements.json` (onde ficam as janelas com `remember_placement`). `None`: a
+    /// pasta de dados do usuário com o nome do executável (o relatório do Tabernáculo, P09).
+    pub placements_dir: Option<std::path::PathBuf>,
 }
 
 /// Abre o form principal numa janela e roda até ele ser fechado (como `Application.Run`).
@@ -540,6 +545,8 @@ fn run_on(
         .as_deref()
         .and_then(decode_rgba)
         .and_then(|(pixels, w, h)| winit::window::Icon::from_rgba(pixels, w, h).ok());
+    #[cfg(not(any(web, mobile)))]
+    let options_placements = options.placements_dir.clone();
     let app = App {
         ui,
         options,
@@ -582,7 +589,11 @@ fn run_on(
         floating: Default::default(),
         monitors_checked: None,
         #[cfg(not(any(web, mobile)))]
-        placements: placements::Placements::load(),
+        placements: match &options_placements {
+            Some(dir) => placements::Placements::at(Some(dir.join("placements.json"))),
+            None => placements::Placements::load(),
+        },
+        hovered_files: Vec::new(),
     };
     #[cfg(web)]
     {
@@ -677,6 +688,38 @@ fn decode_rgba(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
 
 /// Entrega ao `Ui` os serviços desta plataforma que ele ainda não tiver. A medição de
 /// texto é a do renderizador em uso (as larguras batem com o desenho).
+/// Põe já o serviço de texto do renderizador `renderer` (o que o `run` usaria), para que o
+/// `measure_text` valha na montagem dos forms, antes da janela: sem ele, a largura do texto
+/// era estimada e um rótulo com `auto_size` nascia cortado (o relatório do Tabernáculo, T01).
+/// O `run` mantém o que já estiver posto.
+#[cfg(not(web))]
+pub fn install_text_service(ui: &mut Ui, renderer: Renderer) {
+    if ui.services().text.is_some() {
+        return;
+    }
+    let chosen = Painters::resolve(match setting("AYLIS_RENDERER").as_deref() {
+        Some("cpu") if renderer == Renderer::Auto => Renderer::Cpu,
+        Some("gpu") if renderer == Renderer::Auto => Renderer::Gpu,
+        Some("d2d") if renderer == Renderer::Auto => Renderer::D2d,
+        _ => renderer,
+    });
+    let Ok(painters) = Painters::new() else { return };
+    let services = ui.services_mut();
+    let _ = (&painters, chosen);
+    #[cfg(native_d2d)]
+    if chosen == Renderer::D2d {
+        services.text = Some(Box::new(painters.d2d.text_service()));
+    }
+    #[cfg(native_skia)]
+    if services.text.is_none() {
+        services.text = Some(Box::new(painters.skia.text_service()));
+    }
+}
+
+/// No navegador o serviço de texto nasce com o `run` (precisa do documento).
+#[cfg(web)]
+pub fn install_text_service(_ui: &mut Ui, _renderer: Renderer) {}
+
 #[cfg(not(web))]
 fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
     let poster = ui.poster();
@@ -700,6 +743,11 @@ fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
         if services.text.is_none() {
             services.text = Some(Box::new(renderer.skia.text_service()));
         }
+    }
+    // A foto da janela com as vistas nativas (W10).
+    #[cfg(target_os = "windows")]
+    if services.window_capture.is_none() {
+        services.window_capture = Some(Box::new(win32::WindowCapture));
     }
     // O motor de texto nativo (correção e previsão), se o app não pôs outro.
     #[cfg(target_os = "windows")]
@@ -922,12 +970,23 @@ struct SystemFileDialogs;
 #[cfg(not(any(web, mobile)))]
 impl aylis_core::platform::FileDialogService for SystemFileDialogs {
     fn show(&mut self, options: aylis_core::platform::FileDialogOptions, done: Box<dyn FnOnce(Vec<String>) + Send>) {
+        // A janela do form dono (no Windows, pelo HWND): o diálogo fica por cima dela.
+        #[cfg(windows)]
+        let parent = options.owner.and_then(win32::hwnd);
         std::thread::spawn(move || {
             let mut dialog = rfd::FileDialog::new();
+            #[cfg(windows)]
+            if let Some(hwnd) = parent {
+                dialog = dialog.set_parent(&win32::ParentWindow(hwnd));
+            }
             if !options.title.is_empty() {
                 dialog = dialog.set_title(&options.title);
             }
             for (name, exts) in &options.filters {
+                // No macOS o painel não entende o "*": sem esse filtro, ele já mostra todos.
+                if cfg!(target_os = "macos") && exts.iter().any(|e| e == "*") {
+                    continue;
+                }
                 dialog = dialog.add_filter(name, exts);
             }
             if !options.directory.is_empty() {
@@ -944,6 +1003,10 @@ impl aylis_core::platform::FileDialogService for SystemFileDialogs {
             } else {
                 dialog.pick_file().map(to_string).into_iter().collect()
             };
+            #[cfg(windows)]
+            if parent.is_some() {
+                win32::dialog_closed();
+            }
             done(paths);
         });
     }
@@ -1018,6 +1081,13 @@ struct FormWindow {
     /// Os pontos do mouse entre dois eventos (o Windows junta os movimentos).
     #[cfg(windows)]
     trail: win32::MouseTrail,
+    /// Quando desenhou pela última vez (segundos do app): o `frame_rate` do form pula os quadros
+    /// antes da vez dele.
+    last_draw: f64,
+    /// Estava minimizada (o `on_minimize` e o `on_restore` saem da mudança).
+    minimized: bool,
+    /// A barra de título escura (acompanha o tema).
+    dark_title: bool,
 }
 
 struct App {
@@ -1080,6 +1150,8 @@ struct App {
     /// As posições guardadas dos forms com `remember_placement`.
     #[cfg(not(any(web, mobile)))]
     placements: placements::Placements,
+    /// Os arquivos do sistema passando por cima de uma janela agora.
+    hovered_files: Vec<String>,
     pump: Pump,
     /// `AYLIS_WAKE_TRACE`: por que o laço acordou, contado por segundo (para achar o que
     /// gasta CPU com o app parado).
@@ -1147,6 +1219,12 @@ impl App {
         use aylis_core::{ResizeEdge, WindowCommand};
         use winit::window::ResizeDirection as D;
         for (form, command) in self.ui.take_window_commands() {
+            // A propriedade `gpu` do form mudou: a janela confere a placa (precisa do backend
+            // mutável, então fica fora do `match` abaixo).
+            if command == WindowCommand::UpdateGpu {
+                self.update_gpu(form);
+                continue;
+            }
             let Some(w) = self.window_of(form) else { continue };
             let window = &w.window;
             match command {
@@ -1192,7 +1270,11 @@ impl App {
                 WindowCommand::SetFullscreen(on) => {
                     #[cfg(windows)]
                     win32::sync_shown(window);
-                    window.set_fullscreen(on.then_some(winit::window::Fullscreen::Borderless(None)))
+                    let monitor = match self.ui.get_prop(form, "monitor") {
+                        Ok(PropValue::Int(i)) if i >= 0 => window.available_monitors().nth(i as usize),
+                        _ => None,
+                    };
+                    window.set_fullscreen(on.then_some(winit::window::Fullscreen::Borderless(monitor)))
                 }
                 // No meio da área útil do monitor; maximizada, volta, muda e maximiza de novo.
                 WindowCommand::MoveToMonitor(index) => {
@@ -1217,7 +1299,7 @@ impl App {
                     window.set_outer_position(PhysicalPosition::new(x, y));
                     window.focus_window();
                 }
-                WindowCommand::Close => {}
+                WindowCommand::Close | WindowCommand::UpdateGpu => {}
             }
         }
     }
@@ -1324,7 +1406,21 @@ impl App {
             // Arquivos arrastados do sistema (um evento por arquivo).
             WindowEvent::DroppedFile(path) => {
                 let p = self.windows[index].pointer;
+                self.hovered_files.clear();
+                self.ui.files_hover(form, p, None);
                 self.ui.drop_files(form, p, vec![path.to_string_lossy().to_string()]);
+            }
+            // Arquivos do sistema passando por cima (um evento por arquivo): a zona sob o mouse
+            // se destaca (F03 do Tabernáculo).
+            WindowEvent::HoveredFile(path) => {
+                self.hovered_files.push(path.to_string_lossy().to_string());
+                let p = self.windows[index].pointer;
+                self.ui.files_hover(form, p, Some(self.hovered_files.clone()));
+            }
+            WindowEvent::HoveredFileCancelled => {
+                self.hovered_files.clear();
+                let p = self.windows[index].pointer;
+                self.ui.files_hover(form, p, None);
             }
             WindowEvent::MouseInput { state: ElementState::Pressed, button: winit::event::MouseButton::Left, .. }
                 if self.windows[index].edge.is_some() =>
@@ -1611,20 +1707,26 @@ impl App {
         (at > now + 0.0005).then(|| self.started + Duration::from_secs_f64(at))
     }
 
-    /// A taxa de atualização do monitor da primeira janela (60 se o sistema não diz),
-    /// perguntada ao sistema no máximo uma vez por segundo.
+    /// A taxa de quadros do laço: a da janela mais rápida (cada uma com o `frame_rate` do form
+    /// ou, sem ele, a do monitor em que está; 60 se o sistema não diz), perguntada ao sistema no
+    /// máximo uma vez por segundo. Antes era a do monitor da primeira janela para todas (o
+    /// relatório do Tabernáculo, P13).
     fn display_hz(&self) -> f64 {
         if let Some((_, hz)) = self.display_hz.get().filter(|(at, _)| at.elapsed() < Duration::from_secs(1)) {
             return hz;
         }
-        let hz = self
-            .windows
-            .first()
-            .and_then(|w| w.window.current_monitor())
-            .and_then(|m| m.refresh_rate_millihertz())
-            .map_or(60.0, |mhz| (mhz as f64 / 1000.0).clamp(24.0, 500.0));
+        let hz = self.windows.iter().map(|w| self.window_hz(w)).fold(0.0, f64::max);
+        let hz = if hz > 0.0 { hz } else { 60.0 };
         self.display_hz.set(Some((Instant::now(), hz)));
         hz
+    }
+
+    /// A taxa de uma janela: o `frame_rate` do form ou a do monitor dela.
+    fn window_hz(&self, w: &FormWindow) -> f64 {
+        match self.ui.get_prop(w.form, "frame_rate") {
+            Ok(PropValue::Float(rate)) if rate > 0.0 => rate.clamp(1.0, 500.0),
+            _ => w.window.current_monitor().and_then(|m| m.refresh_rate_millihertz()).map_or(60.0, |mhz| (mhz as f64 / 1000.0).clamp(24.0, 500.0)),
+        }
     }
 
     fn title(&self, form: ComponentId) -> String {
@@ -1655,7 +1757,14 @@ impl App {
         let zoom = self.ui.form_zoom(form) as f64;
         let mut attributes = Window::default_attributes()
             .with_title(self.title(form))
-            .with_inner_size(LogicalSize::new(width as f64 * zoom, height as f64 * zoom));
+            .with_inner_size(LogicalSize::new(width as f64 * zoom, height as f64 * zoom))
+            // A barra de título do sistema clara ou escura como o tema (no Windows, pelo DWM;
+            // o relatório do Tabernáculo, J04).
+            .with_theme(Some(if self.ui.theme().dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
+        // Mostrar sem tomar o foco (`activate_on_show` desligado; J05).
+        if matches!(self.ui.get_prop(form, "activate_on_show"), Ok(PropValue::Bool(false))) {
+            attributes = attributes.with_active(false);
+        }
         match self.enum_prop(form, "border_style").as_str() {
             "single" => {
                 attributes = attributes
@@ -1690,17 +1799,18 @@ impl App {
         if let Some(p) = placement {
             attributes = attributes.with_maximized(p.maximized);
         }
-        // O `window_state` do form (o desenhado vale mais que o guardado).
-        match self.enum_prop(form, "window_state").as_str() {
-            "maximized" => attributes = attributes.with_maximized(true),
-            "full_screen" => attributes = attributes.with_fullscreen(Some(winit::window::Fullscreen::Borderless(None))),
-            _ => {}
-        }
         // O monitor pedido no form (`monitor`, o índice; -1 = o do dono ou o principal).
         let chosen = match self.ui.get_prop(form, "monitor") {
             Ok(PropValue::Int(i)) if i >= 0 => event_loop.available_monitors().nth(i as usize),
             _ => None,
         };
+        // O `window_state` do form (o desenhado vale mais que o guardado). A tela cheia vai para
+        // o monitor pedido (J07 do Tabernáculo); sem ele, o da janela.
+        match self.enum_prop(form, "window_state").as_str() {
+            "maximized" => attributes = attributes.with_maximized(true),
+            "full_screen" => attributes = attributes.with_fullscreen(Some(winit::window::Fullscreen::Borderless(chosen.clone()))),
+            _ => {}
+        }
         let position = match self.enum_prop(form, "position").as_str() {
             _ if saved.is_some() => saved.map(|p| PhysicalPosition::new(p.x, p.y)),
             // `left`/`top` a partir do canto do monitor pedido (sem ele, da área de trabalho).
@@ -1709,6 +1819,18 @@ impl App {
                 PhysicalPosition::new(origin.x + cb.left() as i32, origin.y + cb.top() as i32)
             }),
             "default" if chosen.is_none() => None,
+            // Num canto da área útil (a do monitor pedido ou do principal; J10 do Tabernáculo).
+            corner @ ("top_left" | "top_right" | "bottom_left" | "bottom_right") => {
+                let monitor = chosen.clone().or_else(|| event_loop.primary_monitor());
+                monitor.map(|m| {
+                    let (origin, size) = self.work_rect(&m);
+                    let scale = m.scale_factor();
+                    let (w, h) = ((width as f64 * scale) as i32, (height as f64 * scale) as i32);
+                    let x = if corner.ends_with("left") { origin.x } else { origin.x + size.width as i32 - w };
+                    let y = if corner.starts_with("top") { origin.y } else { origin.y + size.height as i32 - h };
+                    PhysicalPosition::new(x, y)
+                })
+            }
             choice => {
                 // Centro do dono (se houver, a escolha for "center" e nenhum monitor foi
                 // pedido) ou da área útil do monitor (o pedido ou o principal).
@@ -1807,7 +1929,13 @@ impl App {
     fn open_window(&mut self, event_loop: &ActiveEventLoop, form: ComponentId) -> Result<(), Error> {
         #[cfg(not(any(web, mobile)))]
         self.restore_remembered(form);
-        let attributes = self.attributes(event_loop, form);
+        #[cfg_attr(not(windows), allow(unused_mut))]
+        let mut attributes = self.attributes(event_loop, form);
+        // Windows: a tela cheia vem depois de a janela e o alvo de desenho existirem. Nascida em
+        // tela cheia, sem dona e por cima de tudo, a swap chain é recusada (DXGI_ERROR_INVALID_CALL)
+        // e a janela não abre (o relatório do Tabernáculo, R01; na 0.1.0 caía no dxgi.dll).
+        #[cfg(windows)]
+        let fullscreen_later = attributes.fullscreen.take();
         // Com acessibilidade, a janela nasce invisível: o AccessKit se liga antes de ela
         // aparecer (exigência dele). `AYLIS_ACCESSIBILITY=0` desliga.
         #[cfg(not(web))]
@@ -1829,7 +1957,9 @@ impl App {
         #[cfg(windows)]
         use winit::raw_window_handle::HasWindowHandle;
         #[cfg(windows)]
-        let attributes = match self.windows.first().filter(|_| self.ui.is_modal(form)).map(|w| w.window.window_handle().map(|h| h.as_raw())) {
+        let modal_owner = self.ui.form_owner(form).and_then(|o| self.window_of(o)).or_else(|| self.windows.first());
+        #[cfg(windows)]
+        let attributes = match modal_owner.filter(|_| self.ui.is_modal(form)).map(|w| w.window.window_handle().map(|h| h.as_raw())) {
             Some(Ok(winit::raw_window_handle::RawWindowHandle::Win32(owner))) => {
                 use winit::platform::windows::WindowAttributesExtWindows;
                 attributes.with_owner_window(owner.hwnd.get())
@@ -1837,13 +1967,17 @@ impl App {
             _ => attributes,
         };
         #[cfg(not(web))]
-        let (window, backend) = create_backend(event_loop, attributes, self.options.renderer, &self.renderer)?;
+        let (window, backend) = create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.gpu_choice(form))?;
         #[cfg(web)]
         let (window, backend) = create_backend(event_loop, attributes, self.options.renderer)?;
         // Windows: as mensagens da janela passam pelos ganchos do app e pela barra de
         // tarefas.
         #[cfg(windows)]
         win32::attach(&window, form, &self.win_proxy);
+        #[cfg(windows)]
+        if let Some(fullscreen) = fullscreen_later {
+            window.set_fullscreen(Some(fullscreen));
+        }
         if self.enum_prop(form, "window_state") == "minimized" {
             window.set_minimized(true);
         }
@@ -1863,11 +1997,21 @@ impl App {
             && let Some(gpu) = d2d.adapter()
         {
             self.ui.set_platform_info("gpu", &gpu);
+            self.ui.set_form_gpu(form, Some(gpu));
         }
+        #[cfg(native_d2d)]
+        aylis_core::gpu::set_adapter_list(aylis_d2d::adapters);
         #[cfg(native_gpu)]
         if let Some(gpu) = gpu::gl_description() {
             self.ui.set_platform_info("gpu", &gpu);
         }
+        // A placa de cada janela no OpenGL (no Wayland, cada uma pode estar numa).
+        #[cfg(native_gpu)]
+        if let Backend::Gpu(gl) = &backend {
+            self.ui.set_form_gpu(form, gl.adapter());
+        }
+        #[cfg(all(native_gpu, target_os = "linux"))]
+        aylis_core::gpu::set_adapter_list(|| gpu_linux::devices().iter().map(gpu_linux::describe).collect());
         let name = self.ui.name(form).unwrap_or_default().to_string();
         self.ui.report(&aylis_core::activity::Activity::Custom { name: "janela_aberta", value: &format!("{name} ({})", backend.name()) });
         self.windows.push(FormWindow {
@@ -1884,8 +2028,15 @@ impl App {
             limits: [0.0; 4],
             #[cfg(windows)]
             trail: Default::default(),
+            last_draw: f64::NEG_INFINITY,
+            minimized: false,
+            dark_title: self.ui.theme().dark,
         });
         self.sync_form_size(self.windows.len() - 1);
+        // A janela existe (com o alvo de desenho e, no Windows, o HWND em
+        // `aylis::platform::win::hwnd`): o `on_show` vem antes dela, então quem precisa da
+        // janela (a barra de título, a posição) usa este (o relatório do Tabernáculo, R03).
+        self.ui.fire(form, "on_window_created", &aylis_core::EventArgs::None);
         Ok(())
     }
 
@@ -2013,6 +2164,7 @@ impl App {
             }
             self.windows.retain(|w| open.contains(&w.form));
             for form in closing {
+                self.ui.set_form_gpu(form, None);
                 let name = self.ui.name(form).unwrap_or_default().to_string();
                 self.ui.report(&aylis_core::activity::Activity::Custom { name: "janela_fechada", value: &name });
             }
@@ -2050,9 +2202,27 @@ impl App {
                     }
                 }
             }
+            // Form com `auto_size`: a janela fica da altura do conteúdo (L07 do Tabernáculo). Só
+            // quando a diferença passa de meio ponto (cada pedido vira outro Resized).
+            if !SINGLE_SURFACE {
+                for w in &self.windows {
+                    let Some(want) = self.ui.auto_form_height(w.form) else { continue };
+                    let zoom = w.window.scale_factor() * self.ui.form_zoom(w.form) as f64;
+                    let size = w.window.inner_size().to_logical::<f64>(zoom);
+                    if (size.height - want as f64).abs() > 0.5 {
+                        let _ = w.window.request_inner_size(LogicalSize::new(size.width * self.ui.form_zoom(w.form) as f64, want as f64 * self.ui.form_zoom(w.form) as f64));
+                    }
+                }
+            }
+            // Um diálogo do sistema com dona reabilita a dona ao fechar, mesmo debaixo de um modal
+            // do Aylis: a conferência abaixo aplica de novo (o relatório do Tabernáculo, J02).
+            #[cfg(windows)]
+            let resync = win32::take_dialog_closed();
+            #[cfg(not(windows))]
+            let resync = false;
             for w in &mut self.windows {
                 let enabled = !self.ui.input_blocked(w.form);
-                if enabled != w.enabled {
+                if enabled != w.enabled || (resync && !enabled) {
                     w.enabled = enabled;
                     // Windows: a janela debaixo de um modal fica desabilitada (clicar nela
                     // traz o modal para a frente), como no Delphi.
@@ -2068,6 +2238,114 @@ impl App {
             if let Some(w) = self.window_of(form) {
                 w.window.focus_window();
             }
+        }
+    }
+
+    /// Encerra o laço. O `Poll` antes do `exit()`: o winit chama o `about_to_wait` e logo depois
+    /// espera por mensagens sem olhar o `exit()`; com o `Wait` da volta anterior, o processo
+    /// dormiria até a próxima mensagem do sistema (o relatório do Tabernáculo, R02).
+    fn quit(&mut self, event_loop: &ActiveEventLoop) {
+        #[cfg(not(any(web, mobile)))]
+        self.placements.flush();
+        event_loop.set_control_flow(ControlFlow::Poll);
+        event_loop.exit();
+    }
+
+    /// A regra de placa de vídeo do form: a propriedade `gpu` dele ou, vazia, a do projeto.
+    #[cfg_attr(web, allow(dead_code))]
+    fn gpu_choice(&self, form: ComponentId) -> aylis_core::gpu::GpuChoice {
+        match self.ui.get_prop(form, "gpu") {
+            Ok(PropValue::String(text)) => aylis_core::gpu::choice_for(&text),
+            _ => aylis_core::gpu::choice(),
+        }
+    }
+
+    /// Com a placa que segue o monitor (Direct2D): se a janela `index` passou para um monitor
+    /// de outra placa, o alvo é recriado nela e o form recebe o `on_gpu_change`. Sem a cópia de
+    /// cada quadro entre as placas, a janela não trava no monitor da outra.
+    ///
+    /// No OpenGL quem avisa a troca é o compositor do Wayland (`App::follow_feedback`).
+    ///
+    /// Arrastando a janela (o laço de mover do Windows), espera soltar: o `WM_EXITSIZEMOVE`
+    /// confere de novo (`win32::take_gpu_checks`), e a janela não troca de placa no meio do
+    /// arraste nem várias vezes sobre a divisa. `force`: os monitores mudaram (confere mesmo
+    /// no monitor de antes).
+    fn follow_monitor(&mut self, index: usize, force: bool) {
+        #[cfg(native_d2d)]
+        {
+            let Some(w) = self.windows.get_mut(index) else { return };
+            if !force && win32::in_size_move(w.form) {
+                return;
+            }
+            let changed = match &mut w.backend {
+                Backend::D2d(d2d) => d2d.follow_monitor(&self.renderer.d2d, force),
+                #[allow(unreachable_patterns)]
+                _ => return,
+            };
+            self.after_gpu_change(index, changed);
+        }
+        #[cfg(not(native_d2d))]
+        let _ = (index, force);
+    }
+
+    /// Linux (Wayland), `gpu = monitor`: o compositor diz a placa preferida de cada janela
+    /// (o feedback do `linux-dmabuf`); a que mudou de placa troca. Barato quando nada mudou.
+    #[cfg(all(native_gpu, target_os = "linux"))]
+    fn follow_feedback(&mut self) {
+        for index in 0..self.windows.len() {
+            let w = &mut self.windows[index];
+            let Backend::Gpu(gl) = &mut w.backend else { continue };
+            let changed = gl.follow_monitor(&w.window);
+            if !matches!(changed, Ok(false)) {
+                self.after_gpu_change(index, changed);
+            }
+        }
+    }
+
+    /// A propriedade `gpu` do form mudou com o app rodando.
+    fn update_gpu(&mut self, form: ComponentId) {
+        #[cfg(any(native_d2d, native_gpu))]
+        {
+            let choice = self.gpu_choice(form);
+            let Some(index) = self.windows.iter().position(|w| w.form == form) else { return };
+            let w = &mut self.windows[index];
+            let changed = match &mut w.backend {
+                #[cfg(native_d2d)]
+                Backend::D2d(d2d) => d2d.set_choice(&self.renderer.d2d, choice),
+                #[cfg(native_gpu)]
+                Backend::Gpu(gl) => gl.set_choice(&w.window, choice),
+                #[allow(unreachable_patterns)]
+                _ => return,
+            };
+            self.after_gpu_change(index, changed);
+        }
+        #[cfg(not(any(native_d2d, native_gpu)))]
+        let _ = form;
+    }
+
+    /// Depois de conferir a placa da janela `index`: trocou, então o quadro sai inteiro na
+    /// placa nova e o form fica sabendo.
+    #[cfg(any(native_d2d, native_gpu))]
+    fn after_gpu_change(&mut self, index: usize, changed: Result<bool, Error>) {
+        match changed {
+            Ok(true) => {
+                let w = &self.windows[index];
+                let (form, adapter) = (w.form, match &w.backend {
+                    #[cfg(native_d2d)]
+                    Backend::D2d(d2d) => d2d.adapter(),
+                    #[cfg(native_gpu)]
+                    Backend::Gpu(gl) => gl.adapter(),
+                    #[allow(unreachable_patterns)]
+                    _ => None,
+                });
+                w.window.request_redraw();
+                if let Some(gpu) = &adapter {
+                    self.ui.set_platform_info("gpu", gpu);
+                }
+                self.ui.set_form_gpu(form, adapter);
+            }
+            Ok(false) => {}
+            Err(e) => aylis_core::stderr_line!("aylis: não deu para trocar de placa ({e}); a janela fica na de antes"),
         }
     }
 
@@ -2141,6 +2419,19 @@ impl App {
     }
 
     fn redraw(&mut self, index: usize) -> Result<(), Error> {
+        let Some(w) = self.windows.get(index) else { return Ok(()) };
+        // O `frame_rate` do form: antes da vez dele, o quadro fica para depois (o que mudou
+        // continua marcado, e o laço volta a pedir).
+        if let Ok(PropValue::Float(rate)) = self.ui.get_prop(w.form, "frame_rate")
+            && rate > 0.0
+            && self.started.elapsed().as_secs_f64() - w.last_draw < 1.0 / rate as f64 - 0.0005
+        {
+            return Ok(());
+        }
+        let now = self.started.elapsed().as_secs_f64();
+        if let Some(w) = self.windows.get_mut(index) {
+            w.last_draw = now;
+        }
         let Some(w) = self.windows.get(index) else { return Ok(()) };
         let size = surface_size(&w.window);
         let (Some(width), Some(height)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) else {
@@ -2385,20 +2676,21 @@ fn create_backend(
     attributes: WindowAttributes,
     renderer: Renderer,
     painters: &Painters,
+    gpu: aylis_core::gpu::GpuChoice,
 ) -> Result<(Rc<Window>, Backend), Error> {
-    let _ = painters;
+    let _ = (painters, &gpu);
     match renderer {
         #[cfg(native_d2d)]
         Renderer::D2d => {
             let vsync = diag::diagnostic_setting("AYLIS_BENCH").is_none();
-            d2d::create(event_loop, attributes, &painters.d2d, vsync).map(|(w, b)| (w, Backend::D2d(b)))
+            d2d::create(event_loop, attributes, &painters.d2d, vsync, gpu).map(|(w, b)| (w, Backend::D2d(b)))
         }
         #[cfg(native_gpu)]
-        Renderer::Gpu => gpu::create(event_loop, attributes).map(|(w, b)| (w, Backend::Gpu(b))),
+        Renderer::Gpu => gpu::create(event_loop, attributes, gpu).map(|(w, b)| (w, Backend::Gpu(b))),
         #[cfg(native_cpu)]
         Renderer::Cpu => cpu::create(event_loop, attributes).map(|(w, b)| (w, Backend::Cpu(b))),
         #[cfg(all(native_gpu, native_cpu))]
-        Renderer::Auto => match gpu::create(event_loop, attributes.clone()) {
+        Renderer::Auto => match gpu::create(event_loop, attributes.clone(), gpu.clone()) {
             Ok((w, b)) => Ok((w, Backend::Gpu(b))),
             Err(e) => {
                 aylis_core::stderr_line!("aylis: OpenGL indisponível ({e}); desenhando na CPU");
@@ -2408,9 +2700,9 @@ fn create_backend(
         #[cfg(all(native_skia, not(all(native_gpu, native_cpu))))]
         Renderer::Auto => {
             #[cfg(native_gpu)]
-            return create_backend(event_loop, attributes, Renderer::Gpu, painters);
+            return create_backend(event_loop, attributes, Renderer::Gpu, painters, gpu);
             #[cfg(native_cpu)]
-            return create_backend(event_loop, attributes, Renderer::Cpu, painters);
+            return create_backend(event_loop, attributes, Renderer::Cpu, painters, gpu);
         }
         #[allow(unreachable_patterns)]
         other => Err(format!("renderizador {other} não incluído (veja as features do crate)").into()),
@@ -2511,11 +2803,24 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => {
+                // Minimizou ou voltou: o form fica sabendo (o relatório do Tabernáculo, P06).
+                let minimized = self.windows[index].window.is_minimized() == Some(true);
+                if minimized != self.windows[index].minimized {
+                    self.windows[index].minimized = minimized;
+                    let form = self.windows[index].form;
+                    self.ui.set_form_minimized(form, minimized);
+                    self.ui.fire(form, if minimized { "on_minimize" } else { "on_restore" }, &aylis_core::EventArgs::None);
+                }
                 self.sync_form_size(index);
                 self.store_placement(index);
+                // Maximizar ou encaixar (Win+Shift+seta) também leva a outro monitor.
+                self.follow_monitor(index, false);
                 self.windows[index].window.request_redraw();
             }
-            WindowEvent::Moved(_) => self.store_placement(index),
+            WindowEvent::Moved(_) => {
+                self.store_placement(index);
+                self.follow_monitor(index, false);
+            }
             WindowEvent::RedrawRequested => {
                 if let Some(w) = self.wakes.as_mut() {
                     w.count("quadro");
@@ -2579,16 +2884,16 @@ impl ApplicationHandler for App {
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
         #[cfg(not(any(web, mobile)))]
         self.placements.flush();
+        self.ui.fire_terminate();
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         if let Some(w) = self.wakes.as_mut() {
             w.report(&self.ui);
         }
-        if self.ui.close_requested() || (self.started_once && self.ui.open_forms().is_empty()) {
-            #[cfg(not(any(web, mobile)))]
-            self.placements.flush();
-            event_loop.exit();
+        // Sem form aberto, o app acaba, a não ser que viva na bandeja (P12).
+        if self.ui.close_requested() || (self.started_once && self.ui.open_forms().is_empty() && !self.ui.has_tray_icon()) {
+            self.quit(event_loop);
             return;
         }
         if self.started_once && !(cfg!(target_os = "android") && self.windows.is_empty()) {
@@ -2612,6 +2917,22 @@ impl ApplicationHandler for App {
         {
             let windows: Vec<(ComponentId, &Window)> = self.windows.iter().map(|w| (w.form, &*w.window)).collect();
             self.taskbars.sync(&mut self.ui, &windows);
+        }
+        #[cfg(all(native_gpu, target_os = "linux"))]
+        self.follow_feedback();
+        // O tema mudou entre claro e escuro: a barra de título do sistema acompanha (J04).
+        let dark = self.ui.theme().dark;
+        for w in &mut self.windows {
+            if w.dark_title != dark {
+                w.dark_title = dark;
+                w.window.set_theme(Some(if dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
+            }
+        }
+        #[cfg(native_d2d)]
+        for (form, force) in win32::take_gpu_checks() {
+            if let Some(index) = self.windows.iter().position(|w| w.form == form) {
+                self.follow_monitor(index, force);
+            }
         }
         #[cfg(native_tray)]
         {
@@ -2661,6 +2982,12 @@ impl ApplicationHandler for App {
         }
         self.ui.set_time(self.started.elapsed().as_secs_f64());
         self.ui.run_timers();
+        // Um `on_timer` pode ter pedido para fechar: a conferência do começo já passou, e
+        // nada acordaria o laço para a próxima (o relatório do Tabernáculo, R02).
+        if self.ui.close_requested() {
+            self.quit(event_loop);
+            return;
+        }
         if let Some(at) = self.frame_due().filter(|_| self.ui.needs_repaint()) {
             // Limite de FPS: espera a vez do próximo quadro.
             event_loop.set_control_flow(ControlFlow::WaitUntil(at));
@@ -2700,7 +3027,9 @@ fn mesa_gpu(choice: &aylis_core::gpu::GpuChoice) {
         GpuChoice::HighPerformance => ("DRI_PRIME", "1".to_string()),
         GpuChoice::LowPower => ("DRI_PRIME", "0".to_string()),
         GpuChoice::Named(name) => ("MESA_D3D12_DEFAULT_ADAPTER_NAME", name.clone()),
-        GpuChoice::Auto => return,
+        // O processo fica na placa do sistema; no Wayland, cada janela passa para a placa do
+        // seu monitor (`gpu_linux.rs`, veja `docs/gpu-por-monitor.md`).
+        GpuChoice::Auto | GpuChoice::FollowMonitor => return,
     };
     if std::env::var_os(var).is_none() {
         // SAFETY: na abertura do app, antes de o OpenGL e as threads de desenho existirem.

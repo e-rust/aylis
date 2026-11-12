@@ -10,10 +10,10 @@ Alavanca analógica na tela (jogos no celular, controle de câmera): arrastar o 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `dead_zone` | Zona morta | número |
-| `spring` | Volta ao centro | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `dead_zone` | Zona morta | número |  |
+| `spring` | Volta ao centro | lógico |  |
 
 ## Eventos
 

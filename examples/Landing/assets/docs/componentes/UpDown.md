@@ -10,12 +10,12 @@ Os botões − e +: `value` entre `min` e `max`, de `step` em `step`; segurar re
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `step` | Passo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `step` | Passo | número |  |
 
 ## Eventos
 

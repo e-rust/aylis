@@ -147,6 +147,11 @@ pub fn sync(ui: &mut Ui, state: &Shared, ids: &Ids) {
             let _ = ui.set_prop(id, "style", style);
         }
     }
+    // Um fonte sem form (um módulo do app): o Design não tem para onde ir, como o F12 (I05).
+    let design = !code || crate::actions::active_code_has_form(ui, state);
+    if ui.control(ids.view_design).is_some_and(|c| c.enabled() != design) {
+        ui.control_mut(ids.view_design).unwrap().set_enabled(design);
+    }
     if ui.control(ids.home).is_some_and(|c| c.visible()) != show {
         ui.control_mut(ids.home).unwrap().set_visible(show);
         // Sem projeto não há o que editar: somem a barra de ferramentas, os painéis dos lados

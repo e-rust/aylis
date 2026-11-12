@@ -87,10 +87,11 @@ fn tool_row(ui: &mut Ui, state: &Shared, page: ComponentId, key: &'static str) -
     (edit, used)
 }
 
-/// Os campos da pasta de compilação: a pasta e os dias do que é de um projeto e do
-/// compartilhado.
+/// Os campos da pasta de compilação: a pasta, se vale para todo o Rust da máquina e os dias do
+/// que é de um projeto e do compartilhado.
 struct BuildFolder {
     dir: ComponentId,
+    global: ComponentId,
     project_days: ComponentId,
     shared_days: ComponentId,
 }
@@ -118,6 +119,13 @@ fn build_folder(ui: &mut Ui, state: &Shared, page: ComponentId) -> BuildFolder {
             }));
         });
     });
+    // `aylis_tools::cargo_config`: o padrão é ligado.
+    let global = ui.add(CheckBox::new("Usar esta pasta em todo o Rust desta máquina (terminal, editor, outros projetos)"), page);
+    ui.control_mut(global).unwrap().set_align(Align::Top).set_height(30.0).set_margins([0.0, 8.0, 0.0, 0.0]);
+    let _ = ui.set_prop(global, "checked", aylis_tools::cargo_config::enabled());
+    let place = aylis_tools::cargo_config::global_path().map(|p| p.display().to_string()).unwrap_or_default();
+    let about_global = label(ui, page, &format!("{} {place}", ui.tr("Grava a pasta e as dependências sem depuração (o target/ cai à metade) em")), Align::Top, 22.0);
+    muted(ui, about_global);
     let days = |ui: &mut Ui, text: &str, key: &str, default: u64| {
         let line = ui.add(Layout::default(), page);
         ui.control_mut(line).unwrap().set_align(Align::Top).set_height(34.0).set_margins([0.0, 8.0, 0.0, 0.0]);
@@ -151,7 +159,7 @@ fn build_folder(ui: &mut Ui, state: &Shared, page: ComponentId) -> BuildFolder {
             Ok(format!("{}: {} unidades, {} MB", target.display(), r.units, r.bytes / (1024 * 1024)))
         });
     });
-    BuildFolder { dir, project_days, shared_days }
+    BuildFolder { dir, global, project_days, shared_days }
 }
 
 /// Grava os campos da pasta de compilação.
@@ -162,6 +170,11 @@ fn apply_build_folder(ui: &Ui, b: &BuildFolder, errors: &mut Vec<String>) {
         if let Err(e) = aylis_tools::settings::set_tool(key, value.as_deref()) {
             errors.push(e);
         }
+    }
+    // Depois da pasta: o arquivo global leva a pasta nova.
+    let global = ui.get_prop(b.global, "checked").ok().and_then(|v| v.to_bool().ok()).unwrap_or(true);
+    if let Err(e) = aylis_tools::cargo_config::set_enabled(global) {
+        errors.push(e);
     }
 }
 

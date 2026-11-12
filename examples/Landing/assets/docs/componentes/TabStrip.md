@@ -10,22 +10,22 @@ Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reorde
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `max_tab_width` | Largura máxima da aba | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `max_tab_width` | Largura máxima da aba | número | A largura máxima de uma aba (elas encolhem quando não cabem). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tab_index` | Aba escolhida | inteiro |
-| `closable` | Pode fechar | lógico |
-| `show_add` | Mostra o "+" | lógico |
-| `auto_close` | Fecha sozinho | lógico |
-| `tear_off` | Arrancar abas | lógico |
-| `drop_group` | Grupo de arrasto | texto |
-| `page_host` | Lugar das páginas | componente |
-| `close_empty` | Fecha a janela vazia | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tab_index` | Aba escolhida | inteiro |  |
+| `closable` | Pode fechar | lógico | O × em cada aba. |
+| `show_add` | Mostra o "+" | lógico | O "+" depois da última aba. |
+| `auto_close` | Fecha sozinho | lógico | O × fecha a aba sozinho (desligado: só avisa, e o código fecha com `remove`). |
+| `tear_off` | Arrancar abas | lógico | A aba puxada para fora da faixa vira arrasto (para outra faixa ou uma janela nova). |
+| `drop_group` | Grupo de arrasto | texto | As abas só passam entre faixas do mesmo grupo (vazio também é um grupo). |
+| `page_host` | Lugar das páginas | componente | Onde ficam as páginas das abas (vazio: o pai da faixa). |
+| `close_empty` | Fecha a janela vazia | lógico | Com páginas: a janela que fica sem abas (a última foi para outra faixa) fecha. |
 
 ## Eventos
 

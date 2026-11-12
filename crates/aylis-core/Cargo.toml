@@ -7,8 +7,15 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+# O motor de texto do núcleo para as fontes do projeto (os modos `layout` e `core`). Sem ela o
+# texto fica todo com o renderizador, como sem fonte registrada: o app sem fontes em
+# `assets/fonts` não leva o `harfrust` (~520 KB de wasm). A fachada `aylis` liga por padrão; a
+# IDE, no projeto que tem fontes.
+text-shaping = ["dep:harfrust"]
+
 # O core não depende de nada do sistema operacional.
 [dependencies]
 # O motor de texto do núcleo (os modos `layout` e `core` do item 10): ler as fontes e montar as
 # letras (árabe, acentos combinados, kerning), em Rust puro, igual em todas as plataformas.
-harfrust = "0.15"
+harfrust = { version = "0.15", optional = true }

@@ -10,11 +10,11 @@ Foto ou iniciais de uma pessoa, redondo (ou quadrado arredondado com a variante 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `display_name` | Nome exibido | texto |
-| `image` | Imagem | texto |
-| `presence` | Presença | um de: `none`, `online`, `away`, `busy`, `offline` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `display_name` | Nome exibido | texto | Nome da pessoa (as iniciais e a cor saem dele). Não é o `name` do componente. |
+| `image` | Imagem | texto | Foto do aplicativo (`assets/...`); vazio = iniciais. |
+| `presence` | Presença | um de: `none`, `online`, `away`, `busy`, `offline` |  |
 
 ## Em código
 

@@ -10,18 +10,18 @@ Imagem de um campo: campo `blob` com os bytes da imagem (PNG, JPEG...) ou campo 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `image` | Imagem | texto |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
-| `radius` | Raio dos cantos | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `image` | Imagem | texto |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `radius` | Raio dos cantos | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data_source` | Fonte de dados | componente |
-| `data_field` | Campo de dados | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data_source` | Fonte de dados | componente |  |
+| `data_field` | Campo de dados | texto |  |
 
 ## Em código
 

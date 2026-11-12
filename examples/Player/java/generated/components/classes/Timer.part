@@ -37,11 +37,23 @@
             setProp("background", value);
         }
 
+        public boolean isOneShot() {
+            return asBool(getProp("one_shot"));
+        }
+
+        public void setOneShot(boolean value) {
+            setProp("one_shot", value);
+        }
+
         public double getDrift() {
             return asNumber(getProp("drift"));
         }
 
         public void setDrift(double value) {
             setProp("drift", value);
+        }
+
+        public void restart() {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "restart", "args", java.util.List.of()));
         }
     }

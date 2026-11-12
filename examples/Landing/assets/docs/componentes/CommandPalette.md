@@ -10,16 +10,16 @@ Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa (`on_s
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `placeholder` | Texto de exemplo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `placeholder` | Texto de exemplo | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `query` | Busca | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `query` | Busca | texto |  |
 
 ## Eventos
 

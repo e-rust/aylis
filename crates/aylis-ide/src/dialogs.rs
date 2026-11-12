@@ -288,8 +288,9 @@ pub fn input_text(
 /// "Opções do projeto": nome, linguagem, form principal, tema, idioma, renderizador de
 /// cada plataforma e quais forms são criados no início.
 /// `ide_locale`: o idioma da IDE como idioma de app (`pt-BR`), o sugerido.
-/// As escolhas fixas do combo "Placa de vídeo" (depois vêm as placas pelo nome).
-pub const GPU_CHOICES: [&str; 3] = ["Automática (a do sistema)", "Alto desempenho (a dedicada)", "Economia de energia (a integrada)"];
+/// As escolhas fixas do combo "Placa de vídeo" (depois vêm as placas pelo nome). "Seguir o
+/// monitor" troca de placa quando a janela passa para um monitor da outra (Windows).
+pub const GPU_CHOICES: [&str; 4] = ["Automática (a do sistema)", "Alto desempenho (a dedicada)", "Economia de energia (a integrada)", "Seguir o monitor (a placa de cada tela)"];
 
 /// As escolhas do combo "Apresentação (Windows)": a swap chain da janela (o padrão) e o
 /// DirectComposition.
@@ -301,6 +302,7 @@ pub fn gpu_value(text: &str) -> String {
         Some(0) => String::new(),
         Some(1) => GpuChoice::HighPerformance.to_text(),
         Some(2) => GpuChoice::LowPower.to_text(),
+        Some(3) => GpuChoice::FollowMonitor.to_text(),
         _ => text.to_string(),
     }
 }
@@ -355,7 +357,7 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let _ = ui.set_prop(time_zone, "placeholder", "(o do aparelho)   ex.: America/Sao_Paulo");
     let render = render_section(ui, d.body, project.render());
     let text_modes = text_section(ui, d.body, project.text());
-    // A placa de vídeo: as três escolhas fixas e as desta máquina pelo nome.
+    // A placa de vídeo: as quatro escolhas fixas e as desta máquina pelo nome.
     let line = field(ui, d.body, "Placa de vídeo");
     let mut gpus: Vec<String> = GPU_CHOICES.iter().map(|s| s.to_string()).collect();
     gpus.extend(crate::host::gpu_adapters());
@@ -363,6 +365,7 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
         GpuChoice::Auto => gpus[0].clone(),
         GpuChoice::HighPerformance => gpus[1].clone(),
         GpuChoice::LowPower => gpus[2].clone(),
+        GpuChoice::FollowMonitor => gpus[3].clone(),
         GpuChoice::Named(name) => {
             if !gpus.contains(&name) {
                 gpus.push(name.clone());
@@ -389,6 +392,10 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let line = field(ui, d.body, "Nome do executável");
     let out_name = edit(ui, line, &project.output.name);
     let _ = ui.set_prop(out_name, "placeholder", &*format!("(o do cargo: {})", project.package_name()));
+    // O binário que o Compilar, o Executar e o Publicar usam (I08 do Tabernáculo).
+    let line = field(ui, d.body, "Binário (cargo --bin)");
+    let out_bin = edit(ui, line, &project.output.bin);
+    let _ = ui.set_prop(out_bin, "placeholder", "(o [[bin]] do Cargo.toml, ou o pacote)");
     // Rust: quantos dias o que é só deste projeto fica na pasta de compilação.
     let line = field(ui, d.body, "Limpeza (dias)");
     let cleanup_days = edit(ui, line, &project.output.cleanup_days.map(|d| d.to_string()).unwrap_or_default());
@@ -419,6 +426,10 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let line = field(ui, d.body, "Endereço da IDE");
     let dev_address = edit(ui, line, &project.dev_address);
     let _ = ui.set_prop(dev_address, "placeholder", "127.0.0.1:7342   (o IP desta máquina para um celular sem cabo)");
+    // De onde vem o Aylis no Cargo.toml (G11 do Tabernáculo): o crates.io ou uma pasta fixa.
+    let line = field(ui, d.body, "Aylis do projeto");
+    let sdk = edit(ui, line, &project.sdk);
+    let _ = ui.set_prop(sdk, "placeholder", "crates.io, ou a pasta de um Aylis fixo (vazio: o instalado nesta máquina)");
     crate::widgets::section(ui, d.body, "CRIAR NO INÍCIO (os outros, com ui.create_form)");
     let list = ui.add(ScrollBox::default(), d.body);
     ui.control_mut(list).unwrap().set_align(Align::Client);
@@ -474,11 +485,13 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
                 .to_string();
             p.output.dir = text_of(ui, out_dir).trim().to_string();
             p.output.name = text_of(ui, out_name).trim().trim_end_matches(".exe").to_string();
+            p.output.bin = text_of(ui, out_bin).trim().to_string();
             p.output.cleanup_days = text_of(ui, cleanup_days).parse().ok().filter(|d| *d > 0);
             p.output.close_running = ui.get::<CheckBox>(close_running).is_some_and(|c| c.checked);
             p.output.before_build = parse_build_commands(&memo_text(ui, before_build));
             p.output.after_build = parse_build_commands(&memo_text(ui, after_build));
             p.dev_address = text_of(ui, dev_address).trim().to_string();
+            p.sdk = text_of(ui, sdk).trim().to_string();
             let chosen: Vec<String> = platform_checks.iter().filter(|(_, c)| ui.get::<CheckBox>(*c).is_some_and(|c| c.checked)).map(|(k, _)| k.to_string()).collect();
             p.platforms = if chosen.len() == platform_checks.len() { Vec::new() } else { chosen };
             for (f, c) in p.forms.iter_mut().zip(&checks) {

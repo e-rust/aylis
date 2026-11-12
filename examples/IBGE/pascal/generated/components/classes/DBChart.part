@@ -43,6 +43,26 @@
     procedure SetClickedSeries(Value: Int64);
     function GetClickedIndex: Int64;
     procedure SetClickedIndex(Value: Int64);
+    function GetValueFormat: string;
+    procedure SetValueFormat(Value: string);
+    function GetLabelAngle: Double;
+    procedure SetLabelAngle(Value: Double);
+    function GetTitleAlign: string;
+    procedure SetTitleAlign(Value: string);
+    function GetTitleBold: Boolean;
+    procedure SetTitleBold(Value: Boolean);
+    function GetAreaOpacity: Double;
+    procedure SetAreaOpacity(Value: Double);
+    function GetLegendPosition: string;
+    procedure SetLegendPosition(Value: string);
+    function GetStacked: Boolean;
+    procedure SetStacked(Value: Boolean);
+    function GetColors: string;
+    procedure SetColors(Value: string);
+    function GetCenterText: string;
+    procedure SetCenterText(Value: string);
+    function GetSliceLabels: string;
+    procedure SetSliceLabels(Value: string);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -53,6 +73,12 @@
     procedure SetHeight(Value: Double);
     function GetAlign: string;
     procedure SetAlign(Value: string);
+    function GetAnchors: string;
+    procedure SetAnchors(Value: string);
+    function GetMargins: string;
+    procedure SetMargins(Value: string);
+    function GetPadding: string;
+    procedure SetPadding(Value: string);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -61,6 +87,10 @@
     procedure SetHitTest(Value: Boolean);
     function GetClipChildren: Boolean;
     procedure SetClipChildren(Value: Boolean);
+    function GetInheritState: Boolean;
+    procedure SetInheritState(Value: Boolean);
+    function GetTranslate: Boolean;
+    procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
     function GetCanFocus: Boolean;
@@ -107,6 +137,14 @@
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
     procedure SetColumnSpan(Value: Int64);
+    function GetGridRow: Int64;
+    procedure SetGridRow(Value: Int64);
+    function GetGridColumn: Int64;
+    procedure SetGridColumn(Value: Int64);
+    function GetRowSpan: Int64;
+    procedure SetRowSpan(Value: Int64);
+    function GetGrow: Double;
+    procedure SetGrow(Value: Double);
     function GetShadow: string;
     procedure SetShadow(Value: string);
     function GetStyle: string;
@@ -143,6 +181,10 @@
     procedure SetHint(Value: string);
     function GetTag: Int64;
     procedure SetTag(Value: Int64);
+    function GetTagString: string;
+    procedure SetTagString(Value: string);
+    function GetAccessibleName: string;
+    procedure SetAccessibleName(Value: string);
     function GetPopupMenu: string;
     procedure SetPopupMenu(Value: string);
   public
@@ -167,15 +209,30 @@
     property TimeAxis: Boolean read GetTimeAxis write SetTimeAxis;
     property ClickedSeries: Int64 read GetClickedSeries write SetClickedSeries;
     property ClickedIndex: Int64 read GetClickedIndex write SetClickedIndex;
+    property ValueFormat: string read GetValueFormat write SetValueFormat;
+    property LabelAngle: Double read GetLabelAngle write SetLabelAngle;
+    property TitleAlign: string read GetTitleAlign write SetTitleAlign;
+    property TitleBold: Boolean read GetTitleBold write SetTitleBold;
+    property AreaOpacity: Double read GetAreaOpacity write SetAreaOpacity;
+    property LegendPosition: string read GetLegendPosition write SetLegendPosition;
+    property Stacked: Boolean read GetStacked write SetStacked;
+    property Colors: string read GetColors write SetColors;
+    property CenterText: string read GetCenterText write SetCenterText;
+    property SliceLabels: string read GetSliceLabels write SetSliceLabels;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
     property Align: string read GetAlign write SetAlign;
+    property Anchors: string read GetAnchors write SetAnchors;
+    property Margins: string read GetMargins write SetMargins;
+    property Padding: string read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
     property ClipChildren: Boolean read GetClipChildren write SetClipChildren;
+    property InheritState: Boolean read GetInheritState write SetInheritState;
+    property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
@@ -199,6 +256,10 @@
     property SelfAlign: string read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
+    property GridRow: Int64 read GetGridRow write SetGridRow;
+    property GridColumn: Int64 read GetGridColumn write SetGridColumn;
+    property RowSpan: Int64 read GetRowSpan write SetRowSpan;
+    property Grow: Double read GetGrow write SetGrow;
     property Shadow: string read GetShadow write SetShadow;
     property Style: string read GetStyle write SetStyle;
     property Theme: string read GetTheme write SetTheme;
@@ -217,6 +278,8 @@
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
     property Hint: string read GetHint write SetHint;
     property Tag: Int64 read GetTag write SetTag;
+    property TagString: string read GetTagString write SetTagString;
+    property AccessibleName: string read GetAccessibleName write SetAccessibleName;
     property PopupMenu: string read GetPopupMenu write SetPopupMenu;
   end;
 
@@ -431,6 +494,106 @@ begin
   SetProp('clicked_index', TJSONInt64Number.Create(Value));
 end;
 
+function TDBChart.GetValueFormat: string;
+begin
+  Result := AsText(GetProp('value_format'));
+end;
+
+procedure TDBChart.SetValueFormat(Value: string);
+begin
+  SetProp('value_format', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetLabelAngle: Double;
+begin
+  Result := GetProp('label_angle').AsFloat;
+end;
+
+procedure TDBChart.SetLabelAngle(Value: Double);
+begin
+  SetProp('label_angle', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetTitleAlign: string;
+begin
+  Result := AsText(GetProp('title_align'));
+end;
+
+procedure TDBChart.SetTitleAlign(Value: string);
+begin
+  SetProp('title_align', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetTitleBold: Boolean;
+begin
+  Result := GetProp('title_bold').AsBoolean;
+end;
+
+procedure TDBChart.SetTitleBold(Value: Boolean);
+begin
+  SetProp('title_bold', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetAreaOpacity: Double;
+begin
+  Result := GetProp('area_opacity').AsFloat;
+end;
+
+procedure TDBChart.SetAreaOpacity(Value: Double);
+begin
+  SetProp('area_opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetLegendPosition: string;
+begin
+  Result := AsText(GetProp('legend_position'));
+end;
+
+procedure TDBChart.SetLegendPosition(Value: string);
+begin
+  SetProp('legend_position', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetStacked: Boolean;
+begin
+  Result := GetProp('stacked').AsBoolean;
+end;
+
+procedure TDBChart.SetStacked(Value: Boolean);
+begin
+  SetProp('stacked', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetColors: string;
+begin
+  Result := AsText(GetProp('colors'));
+end;
+
+procedure TDBChart.SetColors(Value: string);
+begin
+  SetProp('colors', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetCenterText: string;
+begin
+  Result := AsText(GetProp('center_text'));
+end;
+
+procedure TDBChart.SetCenterText(Value: string);
+begin
+  SetProp('center_text', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetSliceLabels: string;
+begin
+  Result := AsText(GetProp('slice_labels'));
+end;
+
+procedure TDBChart.SetSliceLabels(Value: string);
+begin
+  SetProp('slice_labels', TJSONString.Create(Value));
+end;
+
 function TDBChart.GetLeft: Double;
 begin
   Result := GetProp('left').AsFloat;
@@ -481,6 +644,36 @@ begin
   SetProp('align', TJSONString.Create(Value));
 end;
 
+function TDBChart.GetAnchors: string;
+begin
+  Result := AsText(GetProp('anchors'));
+end;
+
+procedure TDBChart.SetAnchors(Value: string);
+begin
+  SetProp('anchors', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetMargins: string;
+begin
+  Result := AsText(GetProp('margins'));
+end;
+
+procedure TDBChart.SetMargins(Value: string);
+begin
+  SetProp('margins', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetPadding: string;
+begin
+  Result := AsText(GetProp('padding'));
+end;
+
+procedure TDBChart.SetPadding(Value: string);
+begin
+  SetProp('padding', TJSONString.Create(Value));
+end;
+
 function TDBChart.GetVisible: Boolean;
 begin
   Result := GetProp('visible').AsBoolean;
@@ -519,6 +712,26 @@ end;
 procedure TDBChart.SetClipChildren(Value: Boolean);
 begin
   SetProp('clip_children', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetInheritState: Boolean;
+begin
+  Result := GetProp('inherit_state').AsBoolean;
+end;
+
+procedure TDBChart.SetInheritState(Value: Boolean);
+begin
+  SetProp('inherit_state', TJSONBoolean.Create(Value));
+end;
+
+function TDBChart.GetTranslate: Boolean;
+begin
+  Result := GetProp('translate').AsBoolean;
+end;
+
+procedure TDBChart.SetTranslate(Value: Boolean);
+begin
+  SetProp('translate', TJSONBoolean.Create(Value));
 end;
 
 function TDBChart.GetCapturesWheel: Boolean;
@@ -751,6 +964,46 @@ begin
   SetProp('column_span', TJSONInt64Number.Create(Value));
 end;
 
+function TDBChart.GetGridRow: Int64;
+begin
+  Result := GetProp('grid_row').AsInt64;
+end;
+
+procedure TDBChart.SetGridRow(Value: Int64);
+begin
+  SetProp('grid_row', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetGridColumn: Int64;
+begin
+  Result := GetProp('grid_column').AsInt64;
+end;
+
+procedure TDBChart.SetGridColumn(Value: Int64);
+begin
+  SetProp('grid_column', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetRowSpan: Int64;
+begin
+  Result := GetProp('row_span').AsInt64;
+end;
+
+procedure TDBChart.SetRowSpan(Value: Int64);
+begin
+  SetProp('row_span', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetGrow: Double;
+begin
+  Result := GetProp('grow').AsFloat;
+end;
+
+procedure TDBChart.SetGrow(Value: Double);
+begin
+  SetProp('grow', TJSONFloatNumber.Create(Value));
+end;
+
 function TDBChart.GetShadow: string;
 begin
   Result := AsText(GetProp('shadow'));
@@ -929,6 +1182,26 @@ end;
 procedure TDBChart.SetTag(Value: Int64);
 begin
   SetProp('tag', TJSONInt64Number.Create(Value));
+end;
+
+function TDBChart.GetTagString: string;
+begin
+  Result := AsText(GetProp('tag_string'));
+end;
+
+procedure TDBChart.SetTagString(Value: string);
+begin
+  SetProp('tag_string', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetAccessibleName: string;
+begin
+  Result := AsText(GetProp('accessible_name'));
+end;
+
+procedure TDBChart.SetAccessibleName(Value: string);
+begin
+  SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
 function TDBChart.GetPopupMenu: string;

@@ -173,6 +173,86 @@
             setProp("clicked_index", value);
         }
 
+        public String getValueFormat() {
+            return asText(getProp("value_format"));
+        }
+
+        public void setValueFormat(String value) {
+            setProp("value_format", value);
+        }
+
+        public double getLabelAngle() {
+            return asNumber(getProp("label_angle"));
+        }
+
+        public void setLabelAngle(double value) {
+            setProp("label_angle", value);
+        }
+
+        public String getTitleAlign() {
+            return asText(getProp("title_align"));
+        }
+
+        public void setTitleAlign(String value) {
+            setProp("title_align", value);
+        }
+
+        public boolean isTitleBold() {
+            return asBool(getProp("title_bold"));
+        }
+
+        public void setTitleBold(boolean value) {
+            setProp("title_bold", value);
+        }
+
+        public double getAreaOpacity() {
+            return asNumber(getProp("area_opacity"));
+        }
+
+        public void setAreaOpacity(double value) {
+            setProp("area_opacity", value);
+        }
+
+        public String getLegendPosition() {
+            return asText(getProp("legend_position"));
+        }
+
+        public void setLegendPosition(String value) {
+            setProp("legend_position", value);
+        }
+
+        public boolean isStacked() {
+            return asBool(getProp("stacked"));
+        }
+
+        public void setStacked(boolean value) {
+            setProp("stacked", value);
+        }
+
+        public String getColors() {
+            return asText(getProp("colors"));
+        }
+
+        public void setColors(String value) {
+            setProp("colors", value);
+        }
+
+        public String getCenterText() {
+            return asText(getProp("center_text"));
+        }
+
+        public void setCenterText(String value) {
+            setProp("center_text", value);
+        }
+
+        public String getSliceLabels() {
+            return asText(getProp("slice_labels"));
+        }
+
+        public void setSliceLabels(String value) {
+            setProp("slice_labels", value);
+        }
+
         public double getLeft() {
             return asNumber(getProp("left"));
         }
@@ -213,6 +293,30 @@
             setProp("align", value);
         }
 
+        public String getAnchors() {
+            return asText(getProp("anchors"));
+        }
+
+        public void setAnchors(String value) {
+            setProp("anchors", value);
+        }
+
+        public String getMargins() {
+            return asText(getProp("margins"));
+        }
+
+        public void setMargins(String value) {
+            setProp("margins", value);
+        }
+
+        public String getPadding() {
+            return asText(getProp("padding"));
+        }
+
+        public void setPadding(String value) {
+            setProp("padding", value);
+        }
+
         public boolean isVisible() {
             return asBool(getProp("visible"));
         }
@@ -243,6 +347,22 @@
 
         public void setClipChildren(boolean value) {
             setProp("clip_children", value);
+        }
+
+        public boolean isInheritState() {
+            return asBool(getProp("inherit_state"));
+        }
+
+        public void setInheritState(boolean value) {
+            setProp("inherit_state", value);
+        }
+
+        public boolean isTranslate() {
+            return asBool(getProp("translate"));
+        }
+
+        public void setTranslate(boolean value) {
+            setProp("translate", value);
         }
 
         public boolean isCapturesWheel() {
@@ -429,6 +549,38 @@
             setProp("column_span", value);
         }
 
+        public long getGridRow() {
+            return (long) asNumber(getProp("grid_row"));
+        }
+
+        public void setGridRow(long value) {
+            setProp("grid_row", value);
+        }
+
+        public long getGridColumn() {
+            return (long) asNumber(getProp("grid_column"));
+        }
+
+        public void setGridColumn(long value) {
+            setProp("grid_column", value);
+        }
+
+        public long getRowSpan() {
+            return (long) asNumber(getProp("row_span"));
+        }
+
+        public void setRowSpan(long value) {
+            setProp("row_span", value);
+        }
+
+        public double getGrow() {
+            return asNumber(getProp("grow"));
+        }
+
+        public void setGrow(double value) {
+            setProp("grow", value);
+        }
+
         public String getShadow() {
             return asText(getProp("shadow"));
         }
@@ -571,6 +723,22 @@
 
         public void setTag(long value) {
             setProp("tag", value);
+        }
+
+        public String getTagString() {
+            return asText(getProp("tag_string"));
+        }
+
+        public void setTagString(String value) {
+            setProp("tag_string", value);
+        }
+
+        public String getAccessibleName() {
+            return asText(getProp("accessible_name"));
+        }
+
+        public void setAccessibleName(String value) {
+            setProp("accessible_name", value);
         }
 
         public String getPopupMenu() {

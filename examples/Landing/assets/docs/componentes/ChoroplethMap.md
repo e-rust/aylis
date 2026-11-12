@@ -10,19 +10,19 @@ Mapa coroplético: as regiões de um GeoJSON (`geojson`: o texto ou um arquivo/a
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `low_color` | Cor do menor valor | cor |
-| `high_color` | Cor do maior valor | cor |
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `low_color` | Cor do menor valor | cor |  |
+| `high_color` | Cor do maior valor | cor |  |
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `geojson` | Mapa (GeoJSON) | texto |
-| `name_property` | Propriedade do nome | texto |
-| `values` | Valores | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `geojson` | Mapa (GeoJSON) | texto |  |
+| `name_property` | Propriedade do nome | texto |  |
+| `values` | Valores | texto |  |
 
 ## Eventos
 

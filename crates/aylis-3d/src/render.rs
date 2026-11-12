@@ -184,6 +184,12 @@ pub struct Engine {
     web: Option<(wgpu::Instance, wgpu::Adapter)>,
     #[cfg(target_arch = "wasm32")]
     web_format: Option<wgpu::TextureFormat>,
+    /// No WebGL: o canvas de cujo contexto o dispositivo nasceu, até a primeira vista pegar.
+    #[cfg(target_arch = "wasm32")]
+    web_gl: Option<(web_sys::HtmlCanvasElement, wgpu::Surface<'static>)>,
+    /// O dispositivo é do WebGL (um canvas só: uma vista 3D por página).
+    #[cfg(target_arch = "wasm32")]
+    web_is_gl: bool,
     #[cfg_attr(any(not(feature = "gl"), target_arch = "wasm32", target_vendor = "apple"), allow(dead_code))]
     gl_loader: usize,
     /// O estado do OpenGL que o wgpu e o Skia dividem (veja [`GlState`]).
@@ -309,16 +315,36 @@ impl Engine {
         pollster::block_on(Self::from_adapter(adapter))
     }
 
-    /// No navegador: WebGPU (ou WebGL 2). Abrir a GPU lá é assíncrono.
+    /// No navegador: WebGPU, ou WebGL 2 onde não há (iPhone antes do iOS 26, muitos Android, ou
+    /// um `navigator.gpu` que não dá adaptador). Abrir a GPU lá é assíncrono.
+    ///
+    /// No WebGL o adaptador só existe a partir do contexto de um canvas (pedir sem
+    /// `compatible_surface` não acha nenhum): o canvas nasce aqui e vai para a primeira vista.
     #[cfg(target_arch = "wasm32")]
     pub async fn new_web() -> Result<Engine, String> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
-            ..wgpu::InstanceDescriptor::new_without_display_handle()
-        });
-        let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.map_err(|e| format!("sem GPU no navegador: {e}"))?;
+        let webgpu = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::BROWSER_WEBGPU, ..wgpu::InstanceDescriptor::new_without_display_handle() });
+        let webgpu_error = match webgpu.request_adapter(&wgpu::RequestAdapterOptions::default()).await {
+            Ok(adapter) => match Self::from_adapter(adapter.clone()).await {
+                Ok(mut engine) => {
+                    engine.web = Some((webgpu, adapter));
+                    return Ok(engine);
+                }
+                Err(e) => e,
+            },
+            Err(e) => e.to_string(),
+        };
+        trace(&format!("sem WebGPU ({webgpu_error}); tentando o WebGL 2"));
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::GL, ..wgpu::InstanceDescriptor::new_without_display_handle() });
+        let canvas = hidden_canvas().ok_or("sem documento para o canvas do 3D")?;
+        let surface = instance.create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone())).map_err(|e| format!("sem WebGL 2: {e}"))?;
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions { compatible_surface: Some(&surface), ..Default::default() })
+            .await
+            .map_err(|e| format!("sem GPU no navegador (WebGPU: {webgpu_error}; WebGL 2: {e})"))?;
         let mut engine = Self::from_adapter(adapter.clone()).await?;
         engine.web = Some((instance, adapter));
+        engine.web_gl = Some((canvas, surface));
+        engine.web_is_gl = true;
         Ok(engine)
     }
 
@@ -530,6 +556,10 @@ impl Engine {
             web: None,
             #[cfg(target_arch = "wasm32")]
             web_format: None,
+            #[cfg(target_arch = "wasm32")]
+            web_gl: None,
+            #[cfg(target_arch = "wasm32")]
+            web_is_gl: false,
             gl_loader: 0,
             pending: Vec::new(),
             next_id: 1,
@@ -965,7 +995,13 @@ impl Engine {
         self.queue.write_buffer(&view.draws, 0, &bytes);
 
         // O passe: MSAA, resolvido na textura de saída.
-        let format = if self.gl && view.size != (0, 0) && resolve_is_view_target(view, resolve) { self.color_format() } else { COLOR };
+        // No navegador, o do canvas da vista (BGRA no WebGPU, RGBA no WebGL), que é o do alvo
+        // com multiamostragem (`render_web`).
+        #[cfg(target_arch = "wasm32")]
+        let web = self.web.is_some();
+        #[cfg(not(target_arch = "wasm32"))]
+        let web = false;
+        let format = if web || (self.gl && view.size != (0, 0) && resolve_is_view_target(view, resolve)) { self.color_format() } else { COLOR };
         let mut encoder = self.device.create_command_encoder(&Default::default());
 
         // Traçado de raios: a cena do quadro, uma instância por desenho (o índice dele é o da
@@ -1697,29 +1733,38 @@ impl Engine {
         Some(())
     }
 
-    /// No navegador: desenha no `<canvas>` da vista (WebGPU), que o canvas 2D do aylis copia.
+    /// No navegador: desenha no `<canvas>` da vista (WebGPU ou WebGL 2), que o canvas 2D do
+    /// aylis copia.
     #[cfg(target_arch = "wasm32")]
     fn render_web(&mut self, model: &Model, gpu: &mut GpuModel, view: &mut View, world: &[Mat4], weights: &[Vec<f32>], frame: &Frame) -> Option<Output> {
-        use wasm_bindgen::JsCast;
         let (w, h) = (frame.width.max(1), frame.height.max(1));
         if view.web.is_none() {
-            let document = web_sys::window()?.document()?;
-            let canvas: web_sys::HtmlCanvasElement = document.create_element("canvas").ok()?.dyn_into().ok()?;
             let element = self.next_id as u32;
             self.next_id += 1;
+            let (canvas, surface) = match self.web_gl.take() {
+                // WebGL: o dispositivo nasceu do contexto do canvas dele, e só esse canvas serve.
+                Some(gl) => gl,
+                // WebGL com o canvas já de outra vista: ela fica sem desenho.
+                None if self.web_is_gl => return None,
+                None => {
+                    let canvas = hidden_canvas()?;
+                    let (instance, _) = self.web.as_ref()?;
+                    let surface = instance.create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone())).ok()?;
+                    (canvas, surface)
+                }
+            };
             canvas.set_id(&format!("aylis-3d-{element}"));
-            let _ = canvas.style().set_property("display", "none");
-            document.body()?.append_child(&canvas).ok()?;
-            let (instance, adapter) = self.web.as_ref()?;
-            let surface = instance.create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone())).ok()?;
+            let (_, adapter) = self.web.as_ref()?;
             let caps = surface.get_capabilities(adapter);
             if self.web_format.is_none() {
                 let pick = [wgpu::TextureFormat::Bgra8Unorm, wgpu::TextureFormat::Rgba8Unorm].into_iter().find(|f| caps.formats.contains(f));
                 self.web_format = Some(pick.or(caps.formats.first().copied())?);
             }
             // Pré-multiplicado: o fundo transparente do 3D deixa ver o que o aylis desenhou
-            // atrás. O WebGPU sempre aceita, mesmo quando o wgpu não lista.
-            let alpha = wgpu::CompositeAlphaMode::PreMultiplied;
+            // atrás. O WebGPU sempre aceita, mesmo quando o wgpu não lista. O WebGL só lista
+            // `Opaque`, mas o contexto dele já nasce com alfa pré-multiplicado (o padrão do
+            // navegador), e o fundo transparente continua transparente.
+            let alpha = if self.web_is_gl { caps.alpha_modes.first().copied().unwrap_or(wgpu::CompositeAlphaMode::Opaque) } else { wgpu::CompositeAlphaMode::PreMultiplied };
             view.web = Some(WebTarget { canvas, surface, element, alpha, size: (0, 0) });
         }
         let format = self.color_format();
@@ -1984,6 +2029,17 @@ pub struct View {
     /// No navegador: o `<canvas>` (WebGPU) da vista.
     #[cfg(target_arch = "wasm32")]
     web: Option<WebTarget>,
+}
+
+/// Um `<canvas>` escondido no corpo da página, onde o 3D desenha (o canvas 2D do aylis copia).
+#[cfg(target_arch = "wasm32")]
+fn hidden_canvas() -> Option<web_sys::HtmlCanvasElement> {
+    use wasm_bindgen::JsCast;
+    let document = web_sys::window()?.document()?;
+    let canvas: web_sys::HtmlCanvasElement = document.create_element("canvas").ok()?.dyn_into().ok()?;
+    let _ = canvas.style().set_property("display", "none");
+    document.body()?.append_child(&canvas).ok()?;
+    Some(canvas)
 }
 
 #[cfg(target_arch = "wasm32")]

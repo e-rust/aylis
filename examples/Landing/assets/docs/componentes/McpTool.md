@@ -8,13 +8,13 @@ Uma ferramenta do app para o agente (filha de um `McpServer`). `tool_name` é o 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tool_name` | Nome da ferramenta | texto |
-| `description` | Descrição | texto |
-| `params` | Parâmetros | texto |
-| `read_only` | Somente leitura | lógico |
-| `enabled` | Habilitado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tool_name` | Nome da ferramenta | texto |  |
+| `description` | Descrição | texto |  |
+| `params` | Parâmetros | texto |  |
+| `read_only` | Somente leitura | lógico |  |
+| `enabled` | Habilitado | lógico |  |
 
 ## Eventos
 

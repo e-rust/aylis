@@ -8,12 +8,13 @@ Dispara on_timer a cada intervalo (como o TTimer).
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `interval` | Intervalo | duração (ms) |
-| `enabled` | Habilitado | lógico |
-| `precision` | Precisão | um de: `normal`, `high`, `exact` |
-| `background` | Fundo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interval` | Intervalo | duração (ms) |  |
+| `enabled` | Habilitado | lógico |  |
+| `precision` | Precisão | um de: `normal`, `high`, `exact` |  |
+| `background` | Fundo | lógico |  |
+| `one_shot` | Disparo único | lógico | Dispara uma vez e se desliga (`enabled` volta a `false`); ligar de novo conta outra vez. |
 
 ## Eventos
 

@@ -37,7 +37,7 @@ fn median(mut v: Vec<f64>) -> f64 {
 
 /// Mede um exemplo com um renderizador (a mediana das rodadas); `None` se não rodou.
 fn measure(root: &Path, example: &str, renderer: &str) -> Option<BTreeMap<&'static str, f64>> {
-    let exe = root.join("target").join("release").join("examples").join(crate::env::exe(example));
+    let exe = crate::cargo_target_dir(root).join("release").join("examples").join(crate::env::exe(example));
     if !exe.is_file() {
         return None;
     }

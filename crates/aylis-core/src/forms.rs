@@ -243,7 +243,10 @@ impl Ui {
         if let Some(cb) = self.control_mut(form) {
             cb.set_visible(true);
         }
-        self.activate = Some(form);
+        // Mostrar sem ativar (`activate_on_show` desligado; o relatório do Tabernáculo, J05).
+        if !matches!(self.get_prop(form, "activate_on_show"), Ok(PropValue::Bool(false))) {
+            self.activate = Some(form);
+        }
         // Empilhado sobre outro: entra com a transição dele.
         let kind = self.form_transition(form);
         if kind != crate::transition::Transition::None && self.main_form != Some(form) {
@@ -255,8 +258,27 @@ impl Ui {
             self.set_focus(first);
         }
         self.fire(form, "on_show", &EventArgs::None);
+        // Os forms embutidos (o form de um Frame) aparecem junto: recebem o on_show deles depois
+        // do de fora (relatório do InsightDB, 11/11: o form dentro de um Frame não recebia).
+        for inner in self.embedded_forms(form) {
+            self.fire(inner, "on_show", &EventArgs::None);
+        }
         self.invalidate();
         Ok(())
+    }
+
+    /// Os forms embutidos em `form` (escopos de nomes da classe `Form`, como o de um Frame), de
+    /// cima para baixo.
+    fn embedded_forms(&self, form: ComponentId) -> Vec<ComponentId> {
+        let mut out = Vec::new();
+        let mut stack: Vec<ComponentId> = self.children(form).iter().rev().copied().collect();
+        while let Some(id) = stack.pop() {
+            if self.is_name_scope(id) && self.class_name(id) == Some("Form") {
+                out.push(id);
+            }
+            stack.extend(self.children(id).iter().rev().copied());
+        }
+        out
     }
 
     /// Fecha o form (como `Close`). Antes pergunta ao `on_close_query`: um handler que
@@ -333,9 +355,28 @@ impl Ui {
         }
         if self.main_form == Some(form) {
             self.request_close();
+        } else if matches!(self.get_prop(form, "close_action"), Ok(PropValue::Enum(ref a)) if a == "free") {
+            // Liberar depois de fechar, fora do fechamento (o relatório do Tabernáculo, J21/J22).
+            self.free_later(form);
         }
         self.invalidate();
         true
+    }
+
+    /// Libera o componente depois do evento em andamento (na próxima volta dos relógios): de
+    /// dentro de um handler do próprio componente, o `free` direto soltaria quem está rodando.
+    pub fn free_later(&mut self, id: ComponentId) {
+        self.set_timeout(0, move |ui| {
+            ui.free(id);
+        });
+    }
+
+    /// Mostra o form com a dona escolhida (`None`: sem dona, a janela independente), em vez da
+    /// do último form aberto (o relatório do Tabernáculo, J19).
+    pub fn show_owned(&mut self, form: ComponentId, owner: Option<ComponentId>) -> Result<()> {
+        self.show(form)?;
+        self.set_form_owner(form, owner);
+        Ok(())
     }
 
     /// Chamado de dentro de um `on_close_query`: o form continua aberto (como

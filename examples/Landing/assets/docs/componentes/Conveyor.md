@@ -10,16 +10,16 @@ Esteira: a correia com os rolos girando e as marcas andando quando ligada.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `speed` | Velocidade | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `speed` | Velocidade | número | Velocidade do desenho (pixels por segundo); negativa anda para a esquerda. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `running` | Ligado | lógico |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `running` | Ligado | lógico |  |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

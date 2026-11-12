@@ -10,10 +10,10 @@ Um ícone sozinho. `icon` é o nome (os do aylis ou os registrados com `Ui::regi
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `icon` | Ícone | texto |
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `icon` | Ícone | texto |  |
+| `color` | Cor | cor |  |
 
 ## Em código
 

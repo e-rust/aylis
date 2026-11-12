@@ -8,10 +8,10 @@ Um servidor de blocos de mapa (o único caminho para o `MapView` trocar de servi
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `url` | Endereço (URL) | texto |
-| `attribution` | Atribuição | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `url` | Endereço (URL) | texto |  |
+| `attribution` | Atribuição | texto |  |
 
 ## Em código
 

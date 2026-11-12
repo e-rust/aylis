@@ -137,6 +137,7 @@ duration	Duração	Duration	Duración	Durée	Dauer	Длительность	时�
 easing	Curva de aceleração	Easing	Curva de aceleración	Courbe d'accélération	Beschleunigungskurve	Кривая сглаживания	缓动	イージング	منحنى التسارع	গতির বক্ররেখা	ईज़िंग वक्र	Kurva percepatan
 edit_format	Formato de edição	Edit format	Formato de edición	Format de saisie	Bearbeitungsformat	Формат редактирования	编辑格式	編集形式	تنسيق التحرير	সম্পাদনার বিন্যাস	संपादन प्रारूप	Format edit
 edit_mask	Máscara de edição	Edit mask	Máscara de edición	Masque de saisie	Eingabemaske	Маска ввода	输入掩码	入力マスク	قناع الإدخال	ইনপুট মাস্ক	इनपुट मास्क	Masker input
+editable_title	Nome editável	Editable title	Título editable	Titre modifiable	Titel bearbeitbar	Редактируемое название	可编辑标题	名前を編集可能	عنوان قابل للتحرير	সম্পাদনযোগ্য শিরোনাম	संपादन योग्य शीर्षक	Judul dapat diedit
 editor_look	Código como no editor	Code like the editor	Código como en el editor	Code comme dans l'éditeur	Code wie im Editor	Код как в редакторе	代码同编辑器样式	エディターと同じコード表示	الشيفرة كما في المحرر	এডিটরের মতো কোড	एडिटर जैसा कोड	Kode seperti di editor
 effects	Efeitos	Effects	Efectos	Effets	Effekte	Эффекты	效果	エフェクト	المؤثرات	প্রভাবসমূহ	प्रभाव	Efek
 enabled	Habilitado	Enabled	Habilitado	Activé	Aktiviert	Включено	启用	有効	مُفعّل	সক্রিয়	सक्षम	Aktif
@@ -363,6 +364,8 @@ recording	Gravando	Recording	Grabando	Enregistrement	Aufnahme	Запись	正�
 refreshing	Atualizando	Refreshing	Actualizando	Actualisation	Wird aktualisiert	Обновление	正在刷新	更新中	جارٍ التحديث	রিফ্রেশ হচ্ছে	रीफ़्रेश हो रहा है	Menyegarkan
 repeat	Repetir	Repeat	Repetir	Répéter	Wiederholen	Повторять	重复	繰り返す	تكرار	পুনরাবৃত্তি	दोहराएँ	Ulangi
 repeat_enter	Repetir com Enter	Repeat on Enter	Repetir con Enter	Répéter avec Entrée	Mit Eingabe wiederholen	Повтор по Enter	按住回车重复	Enterで繰り返す	التكرار مع Enter	Enter-এ পুনরাবৃত্তি	Enter पर दोहराएँ	Ulangi dengan Enter
+default_button	Botão padrão (Enter)	Default button (Enter)	Botón predeterminado (Enter)	Bouton par défaut (Entrée)	Standardschaltfläche (Enter)	Кнопка по умолчанию (Enter)	默认按钮 (Enter)	既定のボタン (Enter)	الزر الافتراضي (Enter)	ডিফল্ট বোতাম (Enter)	डिफ़ॉल्ट बटन (Enter)	Tombol bawaan (Enter)
+cancel_button	Botão de cancelar (Esc)	Cancel button (Esc)	Botón de cancelar (Esc)	Bouton Annuler (Échap)	Abbrechen-Schaltfläche (Esc)	Кнопка отмены (Esc)	取消按钮 (Esc)	キャンセル ボタン (Esc)	زر الإلغاء (Esc)	বাতিল বোতাম (Esc)	रद्द करें बटन (Esc)	Tombol batal (Esc)
 report	Relatório	Report	Informe	Rapport	Bericht	Отчёт	报表	レポート	التقرير	প্রতিবেদন	रिपोर्ट	Laporan
 required	Obrigatório	Required	Obligatorio	Obligatoire	Pflichtfeld	Обязательное	必填	必須	مطلوب	আবশ্যক	आवश्यक	Wajib
 resolution	Resolução do 3D	3D resolution	Resolución del 3D	Résolution 3D	3D-Auflösung	Разрешение 3D	3D 分辨率	3D の解像度	دقة ثلاثية الأبعاد	৩ডি রেজোলিউশন	3D रिज़ॉल्यूशन	Resolusi 3D
@@ -455,6 +458,11 @@ tab_order	Ordem de tabulação	Tab order	Orden de tabulación	Ordre de tabulatio
 tab_stop	Para no Tab	Tab stop	Parada de tabulación	Arrêt de tabulation	Tabstopp	Остановка по Tab	Tab 停靠	タブで止まる	التوقف عند Tab	Tab-এ থামে	Tab पर रुके	Berhenti di Tab
 tabs	Abas	Tabs	Pestañas	Onglets	Register	Вкладки	标签页	タブ	علامات التبويب	ট্যাবসমূহ	टैब	Tab
 tag	Marca (número)	Tag	Etiqueta (número)	Étiquette (nombre)	Markierung (Zahl)	Метка (число)	标记 (数字)	タグ (数値)	الوسم (رقم)	ট্যাগ (সংখ্যা)	टैग (संख्या)	Tag (angka)
+tag_string	Texto livre (TagString)	Tag string	Texto libre (TagString)	Texte libre (TagString)	Freier Text (TagString)	Свободный текст (TagString)	自由文本 (TagString)	自由テキスト (TagString)	نص حر (TagString)	মুক্ত লেখা (TagString)	मुक्त पाठ (TagString)	Teks bebas (TagString)
+one_shot	Disparo único	One shot	Disparo único	Déclenchement unique	Einmalig	Однократно	单次触发	1 回だけ	مرة واحدة	একবারই	एक बार	Sekali jalan
+activate_on_show	Ativar ao mostrar	Activate on show	Activar al mostrar	Activer à l’affichage	Beim Anzeigen aktivieren	Активировать при показе	显示时激活	表示時にアクティブ化	التنشيط عند العرض	দেখানোর সময় সক্রিয়	दिखाते समय सक्रिय करें	Aktifkan saat tampil
+close_action	Ao fechar	Close action	Al cerrar	Action à la fermeture	Aktion beim Schließen	Действие при закрытии	关闭时操作	閉じるときの動作	إجراء الإغلاق	বন্ধ করার সময়	बंद करने पर	Aksi saat ditutup
+frame_rate	Quadros por segundo	Frame rate	Fotogramas por segundo	Images par seconde	Bildrate	Частота кадров	帧率	フレームレート	معدل الإطارات	ফ্রেম হার	फ़्रेम दर	Laju bingkai
 target	Alvo	Target	Destino	Cible	Ziel	Цель	目标	対象	الهدف	লক্ষ্য	लक्ष्य	Target
 tasks	Tarefas	Tasks	Tareas	Tâches	Aufgaben	Задачи	任务	タスク	المهام	কাজসমূহ	कार्य	Tugas
 tear_off	Arrancar abas	Tear off tabs	Desprender pestañas	Détacher les onglets	Tabs abreißen	Отрывать вкладки	拖出标签页	タブの切り離し	فصل علامات التبويب	ট্যাব আলাদা করা	टैब अलग करना	Lepas tab
@@ -562,6 +570,7 @@ dead_zone	Zona morta	Dead zone	Zona muerta	Zone morte	Totzone	Мёртвая з�
 spring	Volta ao centro	Return to center	Vuelve al centro	Retour au centre	Zurück zur Mitte	Возврат в центр	自动回中	中央に戻る	العودة إلى المركز	কেন্দ্রে ফেরে	केंद्र पर लौटे	Kembali ke tengah
 max_width	Largura máxima	Max width	Ancho máximo	Largeur maximale	Maximale Breite	Максимальная ширина	最大宽度	最大幅	العرض الأقصى	সর্বোচ্চ প্রস্থ	अधिकतम चौड़ाई	Lebar maksimum
 remember_placement	Lembrar a posição	Remember placement	Recordar la posición	Mémoriser la position	Position merken	Запоминать положение	记住位置	位置を記憶	تذكر الموضع	অবস্থান মনে রাখুন	स्थिति याद रखें	Ingat posisi
+gpu	Placa de vídeo	Graphics card	Tarjeta gráfica	Carte graphique	Grafikkarte	Видеокарта	显卡	グラフィックカード	بطاقة الرسومات	গ্রাফিক্স কার্ড	ग्राफ़िक्स कार्ड	Kartu grafis
 wheel_lines	Linhas por rolagem	Lines per scroll	Líneas por desplazamiento	Lignes par défilement	Zeilen pro Bildlauf	Строк за прокрутку	每次滚动行数	スクロール行数	أسطر لكل تمرير	প্রতি স্ক্রলে লাইন	प्रति स्क्रॉल पंक्तियाँ	Baris per gulir
 char_map	Trocas de caracteres	Character map	Cambios de caracteres	Remplacement de caractères	Zeichenersetzung	Замена символов	字符替换	文字の置き換え	استبدال الأحرف	অক্ষর বদল	वर्ण बदलाव	Penggantian karakter
 char_case	Maiúsculas e minúsculas	Character case	Mayúsculas y minúsculas	Casse des caractères	Groß-/Kleinschreibung	Регистр символов	大小写	大文字と小文字	حالة الأحرف	বড় ও ছোট হাতের অক্ষর	बड़े और छोटे अक्षर	Huruf besar dan kecil
@@ -621,3 +630,37 @@ decimal_comma	Vírgula decimal	Decimal comma	Coma decimal	Virgule décimale	Dezi
 bom	Marca BOM (UTF-8)	BOM mark (UTF-8)	Marca BOM (UTF-8)	Marque BOM (UTF-8)	BOM-Markierung (UTF-8)	Метка BOM (UTF-8)	BOM 标记 (UTF-8)	BOM マーク (UTF-8)	علامة BOM (UTF-8)	BOM চিহ্ন (UTF-8)	BOM चिह्न (UTF-8)	Tanda BOM (UTF-8)
 header	Linha de títulos	Header row	Fila de títulos	Ligne d'en-tête	Kopfzeile	Строка заголовков	标题行	見出し行	صف العناوين	শিরোনামের সারি	शीर्षक पंक्ति	Baris judul
 captures_wheel	Segura a roda do mouse	Captures mouse wheel	Retiene la rueda del ratón	Garde la molette	Behält das Mausrad	Удерживает колесо мыши	独占鼠标滚轮	マウスホイールを保持	يحتفظ بعجلة الفأرة	মাউস হুইল ধরে রাখে	माउस व्हील रोकता है	Menahan roda mouse
+value_format	Formato dos números	Number format	Formato de los números	Format des nombres	Zahlenformat	Формат чисел	数字格式	数値の書式	تنسيق الأرقام	সংখ্যার ফরম্যাট	संख्या प्रारूप	Format angka
+label_angle	Ângulo dos rótulos	Label angle	Ángulo de las etiquetas	Angle des étiquettes	Beschriftungswinkel	Угол подписей	标签角度	ラベルの角度	زاوية التسميات	লেবেলের কোণ	लेबल कोण	Sudut label
+title_align	Alinhamento do título	Title alignment	Alineación del título	Alignement du titre	Titelausrichtung	Выравнивание заголовка	标题对齐	タイトルの配置	محاذاة العنوان	শিরোনামের সারিবদ্ধতা	शीर्षक संरेखण	Perataan judul
+title_bold	Título em negrito	Bold title	Título en negrita	Titre en gras	Fetter Titel	Жирный заголовок	标题加粗	太字のタイトル	عنوان عريض	মোটা শিরোনাম	बोल्ड शीर्षक	Judul tebal
+area_opacity	Opacidade da área	Area opacity	Opacidad del área	Opacité de la zone	Flächendeckkraft	Непрозрачность области	区域不透明度	領域の不透明度	شفافية المساحة	এলাকার অস্বচ্ছতা	क्षेत्र अपारदर्शिता	Opasitas area
+legend_position	Posição da legenda	Legend position	Posición de la leyenda	Position de la légende	Legendenposition	Положение легенды	图例位置	凡例の位置	موضع وسيلة الإيضاح	লেজেন্ডের অবস্থান	लीजेंड स्थिति	Posisi legenda
+stacked	Empilhado	Stacked	Apilado	Empilé	Gestapelt	С накоплением	堆叠	積み上げ	مكدس	স্তূপীকৃত	स्टैक्ड	Bertumpuk
+colors	Cores	Colors	Colores	Couleurs	Farben	Цвета	颜色	色	الألوان	রং	रंग	Warna
+center_text	Texto do centro	Center text	Texto del centro	Texte central	Text in der Mitte	Текст в центре	中心文本	中央のテキスト	نص المنتصف	মাঝের লেখা	बीच का टेक्स्ट	Teks tengah
+slice_labels	Rótulos das fatias	Slice labels	Etiquetas de los sectores	Étiquettes des parts	Segmentbeschriftungen	Подписи секторов	扇区标签	スライスのラベル	تسميات الشرائح	স্লাইসের লেবেল	स्लाइस लेबल	Label irisan
+indicator	Coluna indicadora	Indicator column	Columna indicadora	Colonne indicateur	Indikatorspalte	Столбец-индикатор	指示列	インジケーター列	عمود المؤشر	নির্দেশক কলাম	संकेतक कॉलम	Kolom indikator
+highlight_current	Destacar a linha atual	Highlight current row	Resaltar la fila actual	Surligner la ligne courante	Aktuelle Zeile hervorheben	Выделять текущую строку	高亮当前行	現在の行を強調	تمييز الصف الحالي	বর্তমান সারি হাইলাইট	वर्तमान पंक्ति हाइलाइट	Sorot baris saat ini
+accessible_name	Nome acessível	Accessible name	Nombre accesible	Nom accessible	Barrierefreier Name	Доступное имя	无障碍名称	アクセシブル名	الاسم الميسّر	অ্যাক্সেসযোগ্য নাম	सुलभ नाम	Nama aksesibel
+inherit_state	Herdar o estado do pai	Inherit parent state	Heredar estado del padre	Hériter l'état du parent	Zustand des Elternteils erben	Наследовать состояние родителя	继承父级状态	親の状態を継承	وراثة حالة الأصل	প্যারেন্টের অবস্থা নিন	पैरेंट की स्थिति अपनाएं	Warisi status induk
+translate	Traduzir	Translate	Traducir	Traduire	Übersetzen	Переводить	翻译	翻訳する	ترجمة	অনুবাদ করুন	अनुवाद करें	Terjemahkan
+auto_select	Selecionar ao entrar	Select on focus	Seleccionar al entrar	Sélectionner à l'entrée	Beim Fokus markieren	Выделять при фокусе	获得焦点时全选	フォーカスで全選択	التحديد عند التركيز	ফোকাসে নির্বাচন	फ़ोकस पर चुनें	Pilih saat fokus
+group_index	Grupo exclusivo	Group index	Grupo exclusivo	Groupe exclusif	Gruppenindex	Индекс группы	组索引	グループ番号	رقم المجموعة	গ্রুপ সূচক	समूह सूचकांक	Indeks grup
+disabled_items	Opções desligadas	Disabled items	Opciones desactivadas	Options désactivées	Deaktivierte Einträge	Отключённые пункты	禁用的选项	無効な項目	العناصر المعطلة	নিষ্ক্রিয় আইটেম	अक्षम आइटम	Item nonaktif
+groups	Grupos das opções	Item groups	Grupos de opciones	Groupes des options	Gruppen der Einträge	Группы пунктов	选项分组	項目のグループ	مجموعات العناصر	আইটেম গ্রুপ	आइटम समूह	Grup item
+date_time	Data e hora	Date and time	Fecha y hora	Date et heure	Datum und Uhrzeit	Дата и время	日期和时间	日時	التاريخ والوقت	তারিখ ও সময়	दिनांक और समय	Tanggal dan waktu
+placement	Posição	Placement	Posición	Position	Platzierung	Расположение	位置	配置	الموضع	অবস্থান	स्थान	Penempatan
+baseline	Alinhar pela linha de base	Align by baseline	Alinear por la línea base	Aligner sur la ligne de base	An Grundlinie ausrichten	Выравнивать по базовой линии	按基线对齐	ベースラインで揃える	المحاذاة على خط الأساس	বেসলাইনে সারিবদ্ধ	बेसलाइन से संरेखित	Ratakan menurut garis dasar
+grid_column	Coluna na grade	Grid column	Columna en la cuadrícula	Colonne de la grille	Rasterspalte	Столбец сетки	网格列	グリッドの列	عمود الشبكة	গ্রিড কলাম	ग्रिड कॉलम	Kolom kisi
+grid_row	Linha na grade	Grid row	Fila en la cuadrícula	Ligne de la grille	Rasterzeile	Строка сетки	网格行	グリッドの行	صف الشبكة	গ্রিড সারি	ग्रिड पंक्ति	Baris kisi
+grow	Crescer no espaço livre	Grow	Crecer en el espacio libre	Occuper l'espace libre	Wachsen	Растягивание	伸展	伸長	التمدد	বৃদ্ধি	फैलाव	Tumbuh
+gutter	Reservar a calha da barra	Scrollbar gutter	Reservar el canal de la barra	Réserver la gouttière	Bildlaufleiste reservieren	Резервировать полосу прокрутки	保留滚动条槽	スクロールバーの溝	حجز مجرى الشريط	স্ক্রলবারের জায়গা	स्क्रॉलबार की जगह	Ruang bilah gulir
+line_height	Altura da linha	Line height	Altura de línea	Hauteur de ligne	Zeilenhöhe	Высота строки	行高	行の高さ	ارتفاع السطر	লাইনের উচ্চতা	पंक्ति की ऊंचाई	Tinggi baris
+row_span	Linhas ocupadas	Row span	Filas ocupadas	Lignes occupées	Zeilenumfang	Охват строк	跨行数	行の結合数	امتداد الصفوف	সারি বিস্তার	पंक्ति विस्तार	Rentang baris
+text_shadow	Sombra do texto	Text shadow	Sombra del texto	Ombre du texte	Textschatten	Тень текста	文字阴影	文字の影	ظل النص	লেখার ছায়া	टेक्स्ट छाया	Bayangan teks
+background_color	Cor de fundo	Background color	Color de fondo	Couleur d'arrière-plan	Hintergrundfarbe	Цвет фона	背景色	背景色	لون الخلفية	পটভূমির রং	पृष्ठभूमि रंग	Warna latar
+browser_args	Argumentos do navegador	Browser arguments	Argumentos del navegador	Arguments du navigateur	Browser-Argumente	Аргументы браузера	浏览器参数	ブラウザー引数	وسائط المتصفح	ব্রাউজার আর্গুমেন্ট	ब्राउज़र तर्क	Argumen peramban
+data_dir	Pasta de dados	Data folder	Carpeta de datos	Dossier de données	Datenordner	Папка данных	数据文件夹	データフォルダー	مجلد البيانات	ডেটা ফোল্ডার	डेटा फ़ोल्डर	Folder data
+frames_ahead	Quadros à frente	Frames ahead	Fotogramas por delante	Images d'avance	Vorausgepufferte Bilder	Кадров вперёд	预解码帧数	先読みフレーム数	الإطارات المسبقة	অগ্রিম ফ্রেম	आगे के फ़्रेम	Bingkai di depan
+show_video	Mostrar o vídeo	Show video	Mostrar el vídeo	Afficher la vidéo	Video anzeigen	Показывать видео	显示视频	動画を表示	إظهار الفيديو	ভিডিও দেখান	वीडियो दिखाएं	Tampilkan video

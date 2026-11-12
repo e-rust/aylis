@@ -10,10 +10,10 @@ Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho pass
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `layout` | Disposição | texto |
-| `animated` | Animado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `layout` | Disposição | texto |  |
+| `animated` | Animado | lógico |  |
 
 ## Em código
 

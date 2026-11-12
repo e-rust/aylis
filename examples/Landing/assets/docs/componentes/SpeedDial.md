@@ -10,17 +10,17 @@ Botão flutuante que abre ações (o `v-speed-dial`): o botão principal fica em
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `icon` | Ícone | texto |
-| `icons` | Ícones | texto |
-| `labels` | Rótulos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `icon` | Ícone | texto |  |
+| `icons` | Ícones | texto |  |
+| `labels` | Rótulos | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `open` | Aberto | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `open` | Aberto | lógico |  |
 
 ## Eventos
 

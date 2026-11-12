@@ -8,13 +8,13 @@ A espera pelo backend em outro processo (não visual, no form principal): o que 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `delay` | Atraso | inteiro |
-| `action` | Ação | um de: `default`, `form`, `none` |
-| `busy_form` | Form de espera | componente |
-| `block_input` | Bloquear a entrada | lógico |
-| `min_visible` | Tempo mínimo à mostra | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `delay` | Atraso | inteiro | Quanto esperar antes de mostrar, em milissegundos. |
+| `action` | Ação | um de: `default`, `form`, `none` |  |
+| `busy_form` | Form de espera | componente | O form mostrado com `action = form`. |
+| `block_input` | Bloquear a entrada | lógico | Recusa o clique (e guarda as teclas) enquanto o backend está ocupado. |
+| `min_visible` | Tempo mínimo à mostra | inteiro | O `busy_form` fica pelo menos isto à mostra (sem piscar), em milissegundos. |
 
 ## Eventos
 

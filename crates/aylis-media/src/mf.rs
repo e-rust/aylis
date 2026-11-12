@@ -156,7 +156,8 @@ impl VideoDecoderFactory for MediaFoundation {
 
     fn open(&self, source: &MediaSource) -> Result<Box<dyn VideoDecoder>, String> {
         let path = to_path(source)?;
-        if !path.exists() {
+        // Um endereço vai direto ao `MFCreateSourceReaderFromURL` (que lê pela rede, com `Range`).
+        if !crate::video::is_url(&path) && !path.exists() {
             return Err(aylis_core::messages::tf("arquivo não encontrado: {0}", &[&path.display()]));
         }
         Ok(Box::new(MfVideo {

@@ -10,16 +10,16 @@ Mostrador de 7 segmentos (números, `-`, `.` e algumas letras).
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `digits` | Só números | inteiro |
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `digits` | Só números | inteiro | Quantos dígitos (alinha à direita, como num painel). |
+| `color` | Cor | cor |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
 
 ## Em código
 

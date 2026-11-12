@@ -76,7 +76,10 @@ impl ImageCache {
                 sk::images::raster_from_data(&info, sk::Data::new_copy(pixels), *width as usize * 4)
             }
             ImageSource::Bgra { width, height, pixels } => {
-                let info = sk::ImageInfo::new((*width as i32, *height as i32), sk::ColorType::BGRA8888, sk::AlphaType::Unpremul, None);
+                // O contrato do tipo: opaco ou já pré-multiplicado, como o Direct2D usa (antes o
+                // Skia tratava como não pré-multiplicado, e o semitransparente saía diferente; o
+                // relatório do Tabernáculo, T08).
+                let info = sk::ImageInfo::new((*width as i32, *height as i32), sk::ColorType::BGRA8888, sk::AlphaType::Premul, None);
                 sk::images::raster_from_data(&info, sk::Data::new_copy(pixels), *width as usize * 4)
             }
             ImageSource::Encoded(bytes) => {

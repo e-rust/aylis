@@ -39,11 +39,14 @@ pub struct MenuItem {
     /// Ação destrutiva ("Excluir"): texto na cor `danger_text` (ou `danger`) do tema e,
     /// sob o mouse, fundo `danger` com texto branco.
     pub danger: bool,
+    /// Título de uma seção do menu (a cabeça de um menu de contexto: o nome do item clicado):
+    /// texto fraco em negrito, sem clique nem realce. O relatório do Tabernáculo, C15.
+    pub header: bool,
 }
 
 impl Default for MenuItem {
     fn default() -> Self {
-        Self { text: String::new(), shortcut: String::new(), enabled: true, checked: false, auto_check: false, icon: String::new(), visible: true, danger: false }
+        Self { text: String::new(), shortcut: String::new(), enabled: true, checked: false, auto_check: false, icon: String::new(), visible: true, danger: false, header: false }
     }
 }
 
@@ -75,12 +78,13 @@ impl Component for MenuItem {
         auto_check: bool => "Behavior",
         icon: String => "Appearance",
         visible: bool => "Behavior",
-        danger: bool => "Appearance";
+        danger: bool => "Appearance",
+        header: bool => "Appearance";
         events: on_click
     }
 
     fn shortcut(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
-        if self.enabled && self.visible && parse_shortcut(&self.shortcut).is_some_and(|s| shortcut_matches(s, event)) {
+        if self.enabled && self.visible && !self.header && parse_shortcut(&self.shortcut).is_some_and(|s| shortcut_matches(s, event)) {
             if self.auto_check {
                 self.checked = !self.checked;
             }
@@ -265,11 +269,18 @@ impl Component for PopupMenu {
         const PROPS: &[aylis_core::PropInfo] = &[
             aylis_core::PropInfo::new("on_popup", aylis_core::PropKind::Event, "Events"),
             aylis_core::PropInfo::new("on_item_click", aylis_core::PropKind::Event, "Events"),
+            aylis_core::PropInfo::new("on_close", aylis_core::PropKind::Event, "Events"),
         ];
         PROPS
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
+        // Fechou, por item, Escape, clique fora ou foco perdido: `on_close` (o `OnClose` do
+        // `TPopupMenu`; C16 do Tabernáculo).
+        if let Some(MenuClosed(None)) = message.downcast_ref::<MenuClosed>() {
+            ctx.ui.queue_event(ctx.id, "on_close", EventArgs::None);
+            return;
+        }
         if let Some(request) = message.downcast_ref::<PopupRequest>() {
             // on_popup antes de abrir: dá para habilitar/esconder itens conforme o alvo.
             ctx.ui.fire(ctx.id, "on_popup", &EventArgs::Value(aylis_core::PropValue::Component(Some(request.source))));
@@ -426,7 +437,7 @@ impl MenuOverlay {
     }
 
     fn selectable(ui: &Ui, id: ComponentId) -> bool {
-        item(ui, id).is_some_and(|i| i.enabled && !i.is_separator())
+        item(ui, id).is_some_and(|i| i.enabled && !i.header && !i.is_separator())
     }
 
     fn hover(&mut self, ui: &Ui, level: usize, row: Option<usize>) {
@@ -658,8 +669,14 @@ impl Component for MenuOverlay {
                     canvas.draw_line(PointF::new(row.x + 6.0, y), PointF::new(row.right() - 6.0, y), &Stroke::new(theme.color("border"), 1.0));
                     continue;
                 }
-                let hovered = level.hovered == Some(i) && it.enabled;
                 let mut s = style.clone();
+                if it.header {
+                    s.color = theme.color("text_muted");
+                    s.font.weight = aylis_core::FontWeight::SemiBold;
+                    canvas.draw_text(&it.text, RectF::new(row.x + 10.0, row.y, row.width - 20.0, row.height), &s);
+                    continue;
+                }
+                let hovered = level.hovered == Some(i) && it.enabled;
                 if hovered {
                     let bg = if it.danger { theme.color("danger") } else { hover_fill };
                     canvas.fill_rect(row, if look.is_some() { 4.0 } else { 5.0 }, &Brush::Solid(bg));

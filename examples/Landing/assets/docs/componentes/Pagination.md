@@ -10,16 +10,16 @@ Paginação (o `v-pagination`): `page` de 1 a `length`, com no máximo `total_vi
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `total_visible` | Páginas visíveis | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `total_visible` | Páginas visíveis | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `page` | Página | inteiro |
-| `length` | Comprimento | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `page` | Página | inteiro |  |
+| `length` | Comprimento | inteiro |  |
 
 ## Eventos
 

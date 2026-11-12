@@ -36,10 +36,19 @@ impl Timer {
     pub fn set_background(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "background", value)
     }
+    pub fn one_shot(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "one_shot").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_one_shot(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "one_shot", value)
+    }
     pub fn drift(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "drift").and_then(|v| v.to_f64().ok()).unwrap_or_default()
     }
     pub fn set_drift(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "drift", value)
+    }
+    pub fn restart(self, ui: &mut Ui) -> Result<(), String> {
+        handles::try_call(ui, self.id, "restart", &[]).map(|_| ())
     }
 }

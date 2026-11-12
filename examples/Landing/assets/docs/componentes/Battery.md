@@ -8,9 +8,9 @@ A bateria: `level` (0 a 100) e `charging`. Sempre medindo (a cada `interval`, 5 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `interval` | Intervalo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interval` | Intervalo | número |  |
 
 ## Eventos
 

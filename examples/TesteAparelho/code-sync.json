@@ -1,22 +1,22 @@
 {
   "revisions": {
-    "frmPrincipal.abrir_site_click": 1,
+    "frmPrincipal.abrir_site_click": 2,
     "frmPrincipal.cam_ciclo_click": 1,
     "frmPrincipal.cam_flash_click": 2,
-    "frmPrincipal.cam_foto_click": 2,
+    "frmPrincipal.cam_foto_click": 3,
     "frmPrincipal.cam_ligar_click": 1,
     "frmPrincipal.cam_pronta": 2,
     "frmPrincipal.cam_qualidade_change": 2,
     "frmPrincipal.cam_trocar_click": 2,
     "frmPrincipal.chamada_estado": 1,
     "frmPrincipal.compartilhado_recebido": 1,
-    "frmPrincipal.compartilhar_click": 1,
+    "frmPrincipal.compartilhar_click": 2,
     "frmPrincipal.discar_click": 2,
     "frmPrincipal.fps_click": 1,
     "frmPrincipal.link_erro": 1,
     "frmPrincipal.link_recebido": 1,
     "frmPrincipal.mic_apps_click": 1,
-    "frmPrincipal.mic_gravar_click": 2,
+    "frmPrincipal.mic_gravar_click": 3,
     "frmPrincipal.mic_ligar_click": 1,
     "frmPrincipal.not_acao": 1,
     "frmPrincipal.not_botoes_click": 2,
@@ -25,9 +25,9 @@
     "frmPrincipal.not_simples_click": 2,
     "frmPrincipal.servico_click": 1,
     "frmPrincipal.servico_mensagem": 1,
-    "frmPrincipal.tema_click": 1,
-    "frmPrincipal.tick_timer": 9,
-    "frmPrincipal.vibrar_click": 1,
+    "frmPrincipal.tema_click": 2,
+    "frmPrincipal.tick_timer": 10,
+    "frmPrincipal.vibrar_click": 2,
     "frmPrincipal.vid_ciclo_click": 1,
     "frmPrincipal.vid_parar_click": 1,
     "frmPrincipal.vid_tocar_click": 1
@@ -70,8 +70,8 @@
       },
       "handlers": {
         "frmPrincipal.abrir_site_click": {
-          "hash": "6c8f26d397dbaa12",
-          "seen": 1
+          "hash": "5b0bc60278b6830a",
+          "seen": 2
         },
         "frmPrincipal.cam_ciclo_click": {
           "hash": "1c7f33ef166f001a",
@@ -82,8 +82,8 @@
           "seen": 2
         },
         "frmPrincipal.cam_foto_click": {
-          "hash": "c278acd19c105fa1",
-          "seen": 2
+          "hash": "cfe1a05f3be813e9",
+          "seen": 3
         },
         "frmPrincipal.cam_ligar_click": {
           "hash": "5de6abf354228421",
@@ -110,8 +110,8 @@
           "seen": 1
         },
         "frmPrincipal.compartilhar_click": {
-          "hash": "e58acd833a66214b",
-          "seen": 1
+          "hash": "abb89ab711699bb3",
+          "seen": 2
         },
         "frmPrincipal.discar_click": {
           "hash": "a6248eb0444e4c0b",
@@ -134,8 +134,8 @@
           "seen": 1
         },
         "frmPrincipal.mic_gravar_click": {
-          "hash": "919e05cf207ae1be",
-          "seen": 2
+          "hash": "f269bf5314ce4274",
+          "seen": 3
         },
         "frmPrincipal.mic_ligar_click": {
           "hash": "fc429a32ff1901f3",
@@ -170,16 +170,16 @@
           "seen": 1
         },
         "frmPrincipal.tema_click": {
-          "hash": "8286c8694dd9575d",
-          "seen": 1
+          "hash": "1d09a3552eb5d2bf",
+          "seen": 2
         },
         "frmPrincipal.tick_timer": {
-          "hash": "28eebbbb6d4f772d",
-          "seen": 9
+          "hash": "70eae59fc4200e8f",
+          "seen": 10
         },
         "frmPrincipal.vibrar_click": {
-          "hash": "d628a02670f08736",
-          "seen": 1
+          "hash": "b48f748e221a4534",
+          "seen": 2
         },
         "frmPrincipal.vid_ciclo_click": {
           "hash": "25aeac069efe7dc0",

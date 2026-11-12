@@ -10,12 +10,12 @@ Barra de título própria da janela, desenhada pelo Aylis: o título, os botões
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `caption` | Título | texto |
-| `show_minimize` | Mostra o minimizar | lógico |
-| `show_maximize` | Mostra o maximizar | lógico |
-| `show_close` | Mostra o fechar | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caption` | Título | texto | Vazio: o `caption` do form. |
+| `show_minimize` | Mostra o minimizar | lógico |  |
+| `show_maximize` | Mostra o maximizar | lógico |  |
+| `show_close` | Mostra o fechar | lógico |  |
 
 ## Em código
 

@@ -29,6 +29,25 @@ fn extension(file: &str) -> String {
 /// Extensões que são só áudio: o `VideoPlayer` toca sem procurar imagem.
 const AUDIO_ONLY: [&str; 9] = ["mp3", "wav", "flac", "ogg", "oga", "opus", "m4a", "aac", "wma"];
 
+/// O que a abertura em segundo plano do [`VideoPlayer`] entrega.
+struct Opened {
+    decoder: Option<DecodeThread>,
+    audio: Option<AudioPlayer>,
+    audio_only: bool,
+}
+
+/// Roda `work` numa thread de fundo; no navegador (sem threads), na hora.
+fn in_background(name: &str, work: impl FnOnce() + Send + 'static) -> Result<(), String> {
+    #[cfg(not(target_arch = "wasm32"))]
+    return std::thread::Builder::new().name(name.into()).spawn(work).map(|_| ()).map_err(|e| e.to_string());
+    #[cfg(target_arch = "wasm32")]
+    {
+        let _ = name;
+        work();
+        Ok(())
+    }
+}
+
 fn report(ui: &mut Ui, id: ComponentId, error: &str) {
     ui.fire(id, "on_error", &EventArgs::Text(error.to_string()));
 }
@@ -54,11 +73,25 @@ pub struct MediaPlayer {
     pub output: String,
     player: Option<AudioPlayer>,
     loaded: String,
+    /// O arquivo que está abrindo em segundo plano (a saída de áudio pode levar segundos).
+    opening: Option<String>,
+    /// O `play` chegou antes de abrir: toca quando ficar pronto.
+    play_when_ready: bool,
 }
 
 impl Default for MediaPlayer {
     fn default() -> Self {
-        Self { file: String::new(), volume: 1.0, looping: false, autoplay: false, output: String::new(), player: None, loaded: String::new() }
+        Self {
+            file: String::new(),
+            volume: 1.0,
+            looping: false,
+            autoplay: false,
+            output: String::new(),
+            player: None,
+            loaded: String::new(),
+            opening: None,
+            play_when_ready: false,
+        }
     }
 }
 
@@ -78,14 +111,82 @@ impl MediaPlayer {
         }
     }
 
-    fn ensure(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
-        let (file, ready, output) = match ui.get::<MediaPlayer>(id) {
-            Some(m) => (m.file.clone(), m.player.is_some() && m.loaded == m.file, m.output.clone()),
+    /// Abre o arquivo, se preciso, em segundo plano: a saída de áudio pode levar segundos para
+    /// responder, e a tela esperava (o relatório do Tabernáculo, W06). `Ok(true)`: pronto;
+    /// `Ok(false)`: abrindo (o `on_ready` avisa; o `on_error`, se falhar).
+    fn ensure(ui: &mut Ui, id: ComponentId) -> Result<bool, String> {
+        let (file, ready, output, opening) = match ui.get::<MediaPlayer>(id) {
+            Some(m) => (m.file.clone(), m.player.is_some() && m.loaded == m.file, m.output.clone(), m.opening.clone()),
             None => return Err("não é um MediaPlayer".into()),
         };
         if ready {
-            return Ok(());
+            return Ok(true);
         }
+        if file.is_empty() {
+            return Err("informe o arquivo (file)".into());
+        }
+        if opening.as_deref() == Some(file.as_str()) {
+            return Ok(false);
+        }
+        let source = open_audio(ui, &file)?;
+        let poster = ui.poster();
+        if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
+            m.opening = Some(file.clone());
+        }
+        in_background("aylis-audio-open", move || {
+            let ended = poster.clone();
+            let on_end: Box<dyn Fn() + Send> = Box::new(move || ended.post(move |ui| {
+                ui.fire(id, "on_end", &EventArgs::None);
+            }));
+            let opened = AudioPlayer::open_on(Box::new(move || Ok(Box::new(source) as Box<dyn AudioSource>)), Some(on_end), parse_outputs(&output));
+            poster.post(move |ui| Self::opened(ui, id, file, opened));
+        })?;
+        Ok(false)
+    }
+
+    /// O arquivo abriu (ou falhou) em segundo plano.
+    fn opened(ui: &mut Ui, id: ComponentId, file: String, opened: Result<AudioPlayer, String>) {
+        let Some(m) = ui.get_mut::<MediaPlayer>(id) else { return };
+        if m.opening.as_deref() != Some(file.as_str()) {
+            return; // o arquivo mudou enquanto abria
+        }
+        m.opening = None;
+        let play = std::mem::take(&mut m.play_when_ready);
+        match opened {
+            Ok(player) => {
+                player.set_volume(m.volume);
+                player.set_looping(m.looping);
+                m.player = Some(player);
+                m.loaded = file;
+                ui.fire(id, "on_ready", &EventArgs::None);
+                if play {
+                    let _ = Self::play(ui, id);
+                }
+            }
+            Err(e) => report(ui, id, &e),
+        }
+    }
+
+    fn with(ui: &Ui, id: ComponentId) -> Option<&AudioPlayer> {
+        ui.get::<MediaPlayer>(id)?.player.as_ref()
+    }
+
+    /// O que o player toca, para o [`AudioMixer`](crate::AudioMixer) (abre o arquivo, se
+    /// preciso).
+    pub(crate) fn tap(ui: &mut Ui, id: ComponentId) -> Option<Tap> {
+        if !Self::is_ready(ui, id) {
+            Self::open_now(ui, id).ok()?;
+        }
+        Self::with(ui, id).map(AudioPlayer::tap)
+    }
+
+    /// Abre o arquivo esperando (o [`AudioMixer`](crate::AudioMixer) precisa do som já aberto
+    /// para ligar a fonte).
+    fn open_now(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
+        let (file, output) = match ui.get::<MediaPlayer>(id) {
+            Some(m) => (m.file.clone(), m.output.clone()),
+            None => return Err("não é um MediaPlayer".into()),
+        };
         if file.is_empty() {
             return Err("informe o arquivo (file)".into());
         }
@@ -100,26 +201,26 @@ impl MediaPlayer {
             player.set_looping(m.looping);
             m.player = Some(player);
             m.loaded = file;
+            m.opening = None;
         }
         Ok(())
     }
 
-    fn with(ui: &Ui, id: ComponentId) -> Option<&AudioPlayer> {
-        ui.get::<MediaPlayer>(id)?.player.as_ref()
-    }
-
-    /// O que o player toca, para o [`AudioMixer`](crate::AudioMixer) (abre o arquivo, se
-    /// preciso).
-    pub(crate) fn tap(ui: &mut Ui, id: ComponentId) -> Option<Tap> {
-        Self::ensure(ui, id).ok()?;
-        Self::with(ui, id).map(AudioPlayer::tap)
-    }
-
-    /// Toca (ou continua de onde parou). O erro também vai para o `on_error`.
+    /// Toca (ou continua de onde parou). Abrindo o arquivo, toca quando ele ficar pronto (o
+    /// `on_ready` vem antes). O erro também vai para o `on_error`.
     pub fn play(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
-        if let Err(e) = Self::ensure(ui, id) {
-            report(ui, id, &e);
-            return Err(e);
+        match Self::ensure(ui, id) {
+            Ok(true) => {}
+            Ok(false) => {
+                if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
+                    m.play_when_ready = true;
+                }
+                return Ok(());
+            }
+            Err(e) => {
+                report(ui, id, &e);
+                return Err(e);
+            }
         }
         if let Some(p) = Self::with(ui, id) {
             p.play();
@@ -127,7 +228,15 @@ impl MediaPlayer {
         Ok(())
     }
 
+    /// O arquivo está aberto (depois do `on_ready`).
+    pub fn is_ready(ui: &Ui, id: ComponentId) -> bool {
+        Self::with(ui, id).is_some()
+    }
+
     pub fn pause(ui: &mut Ui, id: ComponentId) {
+        if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
+            m.play_when_ready = false;
+        }
         if let Some(p) = Self::with(ui, id) {
             p.pause();
         }
@@ -170,7 +279,7 @@ impl Component for MediaPlayer {
         looping: bool => "Behavior",
         autoplay: bool => "Behavior",
         output: String => "Behavior";
-        events: on_end, on_error;
+        events: on_ready, on_end, on_error;
         on_set: sync
     }
 }
@@ -246,6 +355,13 @@ pub struct VideoPlayer {
     /// As saídas do som (como no [`MediaPlayer`]). No navegador, o `<video>` toca na saída
     /// padrão.
     pub output: String,
+    /// Pinta o quadro no próprio lugar (o padrão). Desligado, o player só decodifica e segue
+    /// o relógio: o app pinta o [`current_frame`](VideoPlayer::current_frame) onde quiser, na
+    /// ordem da cena (a letra por cima do vídeo), avisado por `on_frame`. O relatório do
+    /// Tabernáculo, W12.
+    pub show_video: bool,
+    /// Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13).
+    pub frames_ahead: u32,
     frames: Arc<Mutex<Frames>>,
     decoder: Option<DecodeThread>,
     audio: Option<AudioPlayer>,
@@ -254,8 +370,14 @@ pub struct VideoPlayer {
     loaded: String,
     clock: RefCell<Clock>,
     poster: Option<Poster>,
+    /// O arquivo que está abrindo em segundo plano.
+    opening: Option<String>,
+    /// O `play` chegou antes de abrir: toca quando ficar pronto.
+    play_when_ready: bool,
     /// O id deste componente (guardado na pintura, para os avisos da thread).
     id_hint: std::cell::Cell<Option<ComponentId>>,
+    /// O tempo do último quadro avisado em `on_frame`.
+    last_announced: std::cell::Cell<Option<f64>>,
     /// Navegador: o `<video>` que toca (no lugar do decodificador e do áudio).
     #[cfg(target_arch = "wasm32")]
     web: Option<crate::web::WebVideo>,
@@ -274,6 +396,8 @@ impl Default for VideoPlayer {
             radius: 0.0,
             rate: 1.0,
             output: String::new(),
+            show_video: true,
+            frames_ahead: 0,
             frames: Arc::default(),
             decoder: None,
             audio: None,
@@ -281,7 +405,10 @@ impl Default for VideoPlayer {
             loaded: String::new(),
             clock: RefCell::default(),
             poster: None,
+            opening: None,
+            play_when_ready: false,
             id_hint: std::cell::Cell::new(None),
+            last_announced: std::cell::Cell::new(None),
             #[cfg(target_arch = "wasm32")]
             web: None,
         }
@@ -314,6 +441,11 @@ impl VideoPlayer {
                     a.set_outputs(parse_outputs(&self.output));
                 }
             }
+            "frames_ahead" => {
+                if let Ok(mut f) = self.frames.lock() {
+                    f.ahead = self.frames_ahead.min(120) as usize;
+                }
+            }
             "looping" => {
                 #[cfg(target_arch = "wasm32")]
                 if let Some(w) = &self.web {
@@ -337,16 +469,22 @@ impl VideoPlayer {
         }
     }
 
-    fn ensure(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
-        let (file, ready) = match ui.get::<VideoPlayer>(id) {
-            Some(v) => (v.file.clone(), v.has_source() && v.loaded == v.file),
+    /// Abre o arquivo, se preciso. Fora do navegador, em segundo plano: o decodificador e a
+    /// saída de áudio podem levar segundos, e a tela esperava (o relatório do Tabernáculo,
+    /// W05). `Ok(true)`: pronto; `Ok(false)`: abrindo (o `on_ready` avisa).
+    fn ensure(ui: &mut Ui, id: ComponentId) -> Result<bool, String> {
+        let (file, ready, opening) = match ui.get::<VideoPlayer>(id) {
+            Some(v) => (v.file.clone(), v.has_source() && v.loaded == v.file, v.opening.clone()),
             None => return Err("não é um VideoPlayer".into()),
         };
         if ready {
-            return Ok(());
+            return Ok(true);
         }
         if file.is_empty() {
             return Err("informe o arquivo (file)".into());
+        }
+        if opening.as_deref() == Some(file.as_str()) {
+            return Ok(false);
         }
         // Do projeto (bytes) ou do disco (caminho: o decodificador lê aos poucos).
         let source = match ui.services().resources.as_ref().and_then(|r| r.read(&file)) {
@@ -368,39 +506,42 @@ impl VideoPlayer {
                 v.poster = Some(poster);
                 *v.clock.borrow_mut() = Clock::at_rate(v.rate);
             }
-            return Ok(());
+            ui.fire(id, "on_ready", &EventArgs::None);
+            return Ok(true);
         }
         // Só áudio pela extensão, ou um arquivo em que o decodificador não achou imagem.
-        if AUDIO_ONLY.contains(&extension(&file).as_str()) {
-            return Self::open_audio_only(ui, id, &file);
-        }
-        // O decodificador abre e vive na thread de vídeo.
+        let audio_only = AUDIO_ONLY.contains(&extension(&file).as_str());
         let poster = ui.poster();
-        let frames = ui.get::<VideoPlayer>(id).map(|v| v.frames.clone()).unwrap_or_default();
-        let (thread, audio_source) = match DecodeThread::open(source, frames, poster.clone()) {
-            Ok(opened) => opened,
-            Err(video_error) => return Self::open_audio_only(ui, id, &file).map_err(|_| video_error),
-        };
-        let outputs = ui.get::<VideoPlayer>(id).map(|v| parse_outputs(&v.output)).unwrap_or_default();
-        let audio = audio_source.and_then(|s| AudioPlayer::open_on(s, None, outputs).ok());
+        let (frames, outputs) = ui.get::<VideoPlayer>(id).map(|v| (v.frames.clone(), parse_outputs(&v.output))).unwrap_or_default();
         if let Some(v) = ui.get_mut::<VideoPlayer>(id) {
-            if let Some(a) = &audio {
-                a.set_volume(if v.muted { 0.0 } else { v.volume });
-            }
-            v.decoder = Some(thread);
-            v.audio = audio;
-            v.loaded = file;
-            v.poster = Some(poster);
-            *v.clock.borrow_mut() = Clock::at_rate(v.rate);
+            v.opening = Some(file.clone());
         }
-        Ok(())
+        in_background("aylis-video-open", move || {
+                let opened = if audio_only {
+                    Self::open_audio_only(&source, id, &poster, outputs)
+                } else {
+                    // O decodificador abre e vive na thread de vídeo.
+                    match DecodeThread::open(source.clone(), frames, poster.clone()) {
+                        Ok((thread, audio_source)) => {
+                            let audio = audio_source.and_then(|s| AudioPlayer::open_on(s, None, outputs).ok());
+                            Ok(Opened { decoder: Some(thread), audio, audio_only: false })
+                        }
+                        Err(video_error) => Self::open_audio_only(&source, id, &poster, outputs).map_err(|_| video_error),
+                    }
+                };
+                let back = poster.clone();
+                back.post(move |ui| Self::opened(ui, id, file, poster, opened));
+        })?;
+        Ok(false)
     }
 
-    /// Abre o arquivo só com o som (o mesmo motor do [`MediaPlayer`]). O fim do áudio
-    /// para o relógio e dispara o `on_end`.
-    fn open_audio_only(ui: &mut Ui, id: ComponentId, file: &str) -> Result<(), String> {
-        let source = open_audio(ui, file)?;
-        let poster = ui.poster();
+    /// Abre o arquivo só com o som (o mesmo motor do [`MediaPlayer`]), numa thread de fundo.
+    /// O fim do áudio para o relógio e dispara o `on_end`.
+    fn open_audio_only(source: &MediaSource, id: ComponentId, poster: &Poster, outputs: Vec<crate::output::OutputSpec>) -> Result<Opened, String> {
+        let source = match source {
+            MediaSource::Bytes { data, extension } => SymphoniaSource::open(data.as_ref().clone(), Some(extension)),
+            MediaSource::File(path) => SymphoniaSource::open_file(path),
+        }?;
         let ended = poster.clone();
         let on_end: Box<dyn Fn() + Send> = Box::new(move || {
             ended.post(move |ui| {
@@ -412,26 +553,62 @@ impl VideoPlayer {
                 ui.fire(id, "on_end", &EventArgs::None);
             })
         });
-        let outputs = ui.get::<VideoPlayer>(id).map(|v| parse_outputs(&v.output)).unwrap_or_default();
         let audio = AudioPlayer::open_on(Box::new(move || Ok(Box::new(source) as Box<dyn AudioSource>)), Some(on_end), outputs)?;
-        if let Some(v) = ui.get_mut::<VideoPlayer>(id) {
-            audio.set_volume(if v.muted { 0.0 } else { v.volume });
-            audio.set_looping(v.looping);
-            v.decoder = None;
-            v.audio = Some(audio);
-            v.audio_only = true;
-            v.loaded = file.to_string();
-            v.poster = Some(poster);
-            *v.clock.borrow_mut() = Clock::at_rate(v.rate);
-        }
-        Ok(())
+        Ok(Opened { decoder: None, audio: Some(audio), audio_only: true })
     }
 
-    /// Toca (ou continua de onde parou). O erro também vai para o `on_error`.
+    /// O arquivo abriu (ou falhou) em segundo plano: o player passa a tocar por ele.
+    fn opened(ui: &mut Ui, id: ComponentId, file: String, poster: Poster, opened: Result<Opened, String>) {
+        let Some(v) = ui.get_mut::<VideoPlayer>(id) else { return };
+        if v.opening.as_deref() != Some(file.as_str()) {
+            return; // o arquivo mudou enquanto abria
+        }
+        v.opening = None;
+        let play = std::mem::take(&mut v.play_when_ready);
+        match opened {
+            Ok(o) => {
+                if let Some(a) = &o.audio {
+                    a.set_volume(if v.muted { 0.0 } else { v.volume });
+                    if o.audio_only {
+                        a.set_looping(v.looping);
+                    }
+                }
+                v.decoder = o.decoder;
+                v.audio = o.audio;
+                v.audio_only = o.audio_only;
+                v.loaded = file;
+                v.poster = Some(poster);
+                *v.clock.borrow_mut() = Clock::at_rate(v.rate);
+                ui.fire(id, "on_ready", &EventArgs::None);
+                if play {
+                    let _ = Self::play(ui, id);
+                }
+                ui.request_repaint();
+            }
+            Err(e) => report(ui, id, &e),
+        }
+    }
+
+    /// O arquivo está aberto (depois do `on_ready`).
+    pub fn is_ready(ui: &Ui, id: ComponentId) -> bool {
+        ui.get::<VideoPlayer>(id).is_some_and(|v| v.has_source() && v.loaded == v.file)
+    }
+
+    /// Toca (ou continua de onde parou). Abrindo o arquivo, toca quando ele ficar pronto (o
+    /// `on_ready` vem antes). O erro também vai para o `on_error`.
     pub fn play(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
-        if let Err(e) = Self::ensure(ui, id) {
-            report(ui, id, &e);
-            return Err(e);
+        match Self::ensure(ui, id) {
+            Ok(true) => {}
+            Ok(false) => {
+                if let Some(v) = ui.get_mut::<VideoPlayer>(id) {
+                    v.play_when_ready = true;
+                }
+                return Ok(());
+            }
+            Err(e) => {
+                report(ui, id, &e);
+                return Err(e);
+            }
         }
         let now = ui.time();
         #[cfg(target_arch = "wasm32")]
@@ -463,6 +640,9 @@ impl VideoPlayer {
     }
 
     pub fn pause(ui: &mut Ui, id: ComponentId) {
+        if let Some(v) = ui.get_mut::<VideoPlayer>(id) {
+            v.play_when_ready = false;
+        }
         #[cfg(target_arch = "wasm32")]
         if let Some(w) = ui.get::<VideoPlayer>(id).and_then(|v| v.web.as_ref()) {
             w.pause();
@@ -519,6 +699,24 @@ impl VideoPlayer {
             Some(v) => v.clock.borrow().position(ui.time()),
             None => 0.0,
         }
+    }
+
+    /// O quadro que o relógio mostra agora (para pintar o vídeo na ordem da cena, com
+    /// `show_video` desligado; W12).
+    pub fn current_frame(ui: &Ui, id: ComponentId) -> Option<aylis_core::Image> {
+        ui.get::<VideoPlayer>(id)?.clock.borrow().current.as_ref().map(|f| f.image.clone())
+    }
+
+    /// O relógio do player (W13): a posição, se está tocando e a velocidade.
+    pub fn clock_state(ui: &Ui, id: ComponentId) -> Option<(f64, bool, f64)> {
+        let v = ui.get::<VideoPlayer>(id)?;
+        let clock = v.clock.borrow();
+        Some((Self::position(ui, id), clock.playing, clock.speed()))
+    }
+
+    /// Quantos quadros já decodificados esperam a vez (W13).
+    pub fn queued_frames(ui: &Ui, id: ComponentId) -> usize {
+        ui.get::<VideoPlayer>(id).and_then(|v| v.frames.lock().ok().map(|f| f.queue.len())).unwrap_or(0)
     }
 
     pub fn duration(ui: &Ui, id: ComponentId) -> Option<f64> {
@@ -629,6 +827,10 @@ impl VideoPlayer {
                     a.seek(0.0);
                 }
             } else {
+                // No fim, a posição fica no fim (a duração, ou o último quadro), e não volta ao
+                // último `play` (o relatório do Tabernáculo, W04).
+                let end = f.info.duration.unwrap_or_else(|| clock.current.as_ref().map_or(pos, |c| c.time));
+                clock.base = end.max(clock.current.as_ref().map_or(0.0, |c| c.time));
                 clock.playing = false;
                 clock.ended = true;
                 if let Some(a) = &self.audio {
@@ -664,8 +866,10 @@ impl Component for VideoPlayer {
         fit: ImageFit => "Appearance",
         radius: f32 => "Appearance",
         rate: f32 => "Behavior",
-        output: String => "Behavior";
-        events: on_end, on_error;
+        output: String => "Behavior",
+        show_video: bool => "Appearance",
+        frames_ahead: u32 => "Behavior";
+        events: on_ready, on_end, on_error, on_frame;
         on_set: sync
     }
 
@@ -725,6 +929,18 @@ impl Component for VideoPlayer {
         // As barras em volta do vídeo: pretas, ou a cor própria (`fill`).
         canvas.fill_rect(r, 0.0, &Brush::Solid(ctx.colors.fill.unwrap_or(Color::BLACK)));
         let current = self.clock.borrow().current.clone();
+        // Quadro novo: avisa (`on_frame`, com o tempo dele) quem pinta em outro lugar (W12).
+        let shown = current.as_ref().map(|f| f.time);
+        if shown.is_some() && shown != self.last_announced.get() {
+            self.last_announced.set(shown);
+            if let (Some(p), Some(t)) = (&self.poster, shown) {
+                let id = ctx.id;
+                p.post(move |ui| {
+                    ui.fire(id, "on_frame", &EventArgs::Value(aylis_core::PropValue::Float(t)));
+                });
+            }
+        }
+        let current = current.filter(|_| self.show_video);
         match current {
             Some(frame) => {
                 if let Some(size) = canvas.image_size(&frame.image) {

@@ -10,21 +10,21 @@ Relógio de ângulo (o do DevTools): arraste o ponteiro; com Shift, ele anda de 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_value` | Mostra o valor | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_value` | Mostra o valor | lógico | Mostra o valor no meio (quando o relógio tem espaço). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `snap` | Passo com Shift | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `snap` | Passo com Shift | número | Passo com Shift, em graus. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `angle` | Ângulo | ângulo (graus) |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `angle` | Ângulo | ângulo (graus) |  |
 
 ## Eventos
 

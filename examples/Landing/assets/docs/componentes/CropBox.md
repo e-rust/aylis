@@ -10,29 +10,29 @@ O recorte de uma imagem de `source_width` × `source_height` (pixels da origem; 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `caption` | Título | texto |
-| `framed` | Com moldura | lógico |
-| `shade` | Sombreamento | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caption` | Título | texto |  |
+| `framed` | Com moldura | lógico |  |
+| `shade` | Sombreamento | cor | A cor de fora da seleção. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `min_size` | Tamanho mínimo | número |
-| `snap` | Passo com Shift | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `min_size` | Tamanho mínimo | número |  |
+| `snap` | Passo com Shift | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `source_width` | Largura da origem | número |
-| `source_height` | Altura da origem | número |
-| `sel_x` | X da seleção | número |
-| `sel_y` | Y da seleção | número |
-| `sel_width` | Largura da seleção | número |
-| `sel_height` | Altura da seleção | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `source_width` | Largura da origem | número |  |
+| `source_height` | Altura da origem | número |  |
+| `sel_x` | X da seleção | número |  |
+| `sel_y` | Y da seleção | número |  |
+| `sel_width` | Largura da seleção | número |  |
+| `sel_height` | Altura da seleção | número |  |
 
 ## Eventos
 

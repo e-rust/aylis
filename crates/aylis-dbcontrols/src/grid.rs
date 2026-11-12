@@ -232,6 +232,11 @@ pub struct DataGrid {
     pub incremental_search: bool,
     /// A borda da célula atual; `None` usa a cor de destaque (`primary`) do tema.
     pub cursor_color: Option<Color>,
+    /// A coluna da esquerda com a seta do registro atual (o indicador do `TDBGrid`); sem ela, a
+    /// grade começa nos dados (relatório do InsightDB, 11/11).
+    pub indicator: bool,
+    /// O fundo destacado na linha do registro atual; sem ele, só a seleção e o passar do mouse.
+    pub highlight_current: bool,
     /// A largura da coluna no começo do arraste do separador no designer.
     design_width: f32,
     /// A coluna que avisou a mudança (ocupada no `Ui` enquanto avisa).
@@ -292,6 +297,8 @@ impl Default for DataGrid {
             footer: String::new(),
             incremental_search: false,
             cursor_color: None,
+            indicator: true,
+            highlight_current: true,
             design_width: 0.0,
             changing_column: None,
             selected: BTreeSet::new(),
@@ -324,6 +331,11 @@ impl Default for DataGrid {
 impl DataGrid {
     pub fn new(data_source: ComponentId) -> Self {
         Self { data_source: Some(data_source), ..Default::default() }
+    }
+
+    /// A largura da coluna indicadora (0 sem ela).
+    fn indicator_w(&self) -> f32 {
+        if self.indicator { INDICATOR } else { 0.0 }
     }
 
     /// Colunas atuais (depois que o dataset abriu).
@@ -444,7 +456,7 @@ impl DataGrid {
     fn has_hbar(&self) -> bool {
         let rows = ((self.height() - self.top() - self.footer_height()) / self.row_height).floor().max(1.0) as usize;
         let vbar = self.cache.count > rows || self.cache.has_more;
-        self.content_width() > (self.width() - INDICATOR - if vbar { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0) + 0.5
+        self.content_width() > (self.width() - self.indicator_w() - if vbar { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0) + 0.5
     }
 
     fn hbar_height(&self) -> f32 {
@@ -453,7 +465,7 @@ impl DataGrid {
 
     /// O trilho da barra horizontal (embaixo, da largura das colunas).
     fn htrack(&self) -> RectF {
-        RectF::new(INDICATOR, self.height() - SCROLLBAR - 2.0, self.data_width(), SCROLLBAR)
+        RectF::new(self.indicator_w(), self.height() - SCROLLBAR - 2.0, self.data_width(), SCROLLBAR)
     }
 
     fn hthumb(&self) -> RectF {
@@ -511,16 +523,16 @@ impl DataGrid {
     }
 
     fn data_width(&self) -> f32 {
-        (self.width() - INDICATOR - if self.has_vbar() { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0)
+        (self.width() - self.indicator_w() - if self.has_vbar() { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0)
     }
 
     fn column_x(&self, index: usize) -> f32 {
-        let x = INDICATOR + self.cols[..index].iter().map(|c| c.width).sum::<f32>();
+        let x = self.indicator_w() + self.cols[..index].iter().map(|c| c.width).sum::<f32>();
         if index < self.fixed_columns as usize { x } else { x - self.scroll_x }
     }
 
     fn column_at(&self, x: f32) -> Option<usize> {
-        let fixed_right = INDICATOR + self.fixed_width();
+        let fixed_right = self.indicator_w() + self.fixed_width();
         (0..self.cols.len()).find(|&i| {
             let left = self.column_x(i);
             let fixed = i < self.fixed_columns as usize;
@@ -956,7 +968,7 @@ impl DataGrid {
             return;
         }
         let fixed = self.fixed_width();
-        let left = self.column_x(self.col) + self.scroll_x - INDICATOR - fixed;
+        let left = self.column_x(self.col) + self.scroll_x - self.indicator_w() - fixed;
         let right = left + self.cols[self.col].width;
         let width = self.data_width() - fixed;
         if left < self.scroll_x {
@@ -1025,7 +1037,7 @@ impl DataGrid {
         let mut edit = Edit::new(self.filters.get(column).cloned().unwrap_or_default());
         edit.placeholder = aylis_core::messages::tf("Filtrar {0}", &[&c.title.to_lowercase()]);
         let editor = ctx.ui.add(edit, ctx.id);
-        let x = self.column_x(column).max(INDICATOR);
+        let x = self.column_x(column).max(self.indicator_w());
         if let Some(cb) = ctx.ui.control_mut(editor) {
             cb.set_rect(x + 2.0, HEADER + 2.0, c.width - 4.0, FILTER_ROW - 4.0);
         }
@@ -1243,14 +1255,16 @@ impl Component for DataGrid {
         multi_select: bool => "Behavior",
         footer: String => "Data",
         incremental_search: bool => "Behavior",
-        cursor_color: Option<Color> => "Appearance";
+        cursor_color: Option<Color> => "Appearance",
+        indicator: bool => "Appearance",
+        highlight_current: bool => "Appearance";
         events: on_error, on_title_click, on_selection_change, on_column_moved;
         on_set: on_set
     }
 
     /// Colunas, rodapé e linha de filtro mudam o que é preparado (e quantas linhas cabem).
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source") {
+        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source" | "indicator") {
             if name == "data_source" {
                 self.cols.clear();
             }
@@ -1715,7 +1729,7 @@ impl Component for DataGrid {
 
         canvas.save();
         canvas.clip_rect(r.inflate(-1.0));
-        let data_right = INDICATOR + self.data_width();
+        let data_right = self.indicator_w() + self.data_width();
 
         // ----- cabeçalho -----
         let top = self.top();
@@ -1723,13 +1737,13 @@ impl Component for DataGrid {
         let mut header_style = ctx.text_style();
         header_style.color = muted;
         header_style.font.weight = aylis_core::FontWeight::SemiBold;
-        let fixed_right = INDICATOR + self.fixed_width();
+        let fixed_right = self.indicator_w() + self.fixed_width();
         let fixed = self.fixed_columns as usize;
         // Primeiro as colunas que rolam (recortadas depois das fixas), depois as fixas.
         for pass in [false, true] {
             canvas.save();
             if pass {
-                canvas.clip_rect(RectF::new(INDICATOR, 0.0, (fixed_right - INDICATOR).max(0.0), top));
+                canvas.clip_rect(RectF::new(self.indicator_w(), 0.0, (fixed_right - self.indicator_w()).max(0.0), top));
             } else {
                 canvas.clip_rect(RectF::new(fixed_right, 0.0, (data_right - fixed_right).max(0.0), top));
             }
@@ -1738,7 +1752,7 @@ impl Component for DataGrid {
                     continue;
                 }
                 let x = self.column_x(i);
-                if x > data_right || x + c.width < INDICATOR {
+                if x > data_right || x + c.width < self.indicator_w() {
                     continue;
                 }
                 header_style.h_align = c.align;
@@ -1833,7 +1847,7 @@ impl Component for DataGrid {
             if row.selected {
                 overlays.push(selected_fill);
             }
-            if row.current {
+            if row.current && self.highlight_current {
                 overlays.push(selection);
             } else if self.hovered_row == Some(index) {
                 overlays.push(hover);
@@ -1854,7 +1868,7 @@ impl Component for DataGrid {
                         canvas.restore();
                         continue;
                     }
-                    let area = RectF::new(INDICATOR, y, (fixed_right - INDICATOR).max(0.0), self.row_height);
+                    let area = RectF::new(self.indicator_w(), y, (fixed_right - self.indicator_w()).max(0.0), self.row_height);
                     canvas.clip_rect(area);
                     canvas.fill_rect(area, 0.0, &Brush::Solid(fill));
                     for o in &overlays {
@@ -1868,7 +1882,7 @@ impl Component for DataGrid {
                         continue;
                     }
                     let x = self.column_x(i);
-                    if x > data_right || x + c.width < INDICATOR {
+                    if x > data_right || x + c.width < self.indicator_w() {
                         continue;
                     }
                     let mut style = row_text.clone();
@@ -1922,7 +1936,9 @@ impl Component for DataGrid {
                 canvas.draw_line(PointF::new(edge, y), PointF::new(edge, y + self.row_height), &Stroke::new(border, 1.0));
             }
 
-            draw_indicator(canvas, row, self.cache.editing, PointF::new(INDICATOR / 2.0, y + self.row_height / 2.0), ctx);
+            if self.indicator {
+                draw_indicator(canvas, row, self.cache.editing, PointF::new(self.indicator_w() / 2.0, y + self.row_height / 2.0), ctx);
+            }
             let base = (y + self.row_height).round() - 0.5;
             canvas.draw_line(PointF::new(0.0, base), PointF::new(data_right, base), &Stroke::new(border.with_opacity(0.6), 1.0));
         }
@@ -1939,7 +1955,7 @@ impl Component for DataGrid {
             for pass in [false, true] {
                 canvas.save();
                 if pass {
-                    canvas.clip_rect(RectF::new(INDICATOR, fy, (fixed_right - INDICATOR).max(0.0), footer));
+                    canvas.clip_rect(RectF::new(self.indicator_w(), fy, (fixed_right - self.indicator_w()).max(0.0), footer));
                 } else {
                     canvas.clip_rect(RectF::new(fixed_right, fy, (data_right - fixed_right).max(0.0), footer));
                 }
@@ -1956,7 +1972,7 @@ impl Component for DataGrid {
             let mut sigma = ctx.text_style();
             sigma.color = muted;
             sigma.h_align = TextAlign::Center;
-            canvas.draw_text("Σ", RectF::new(0.0, fy, INDICATOR, footer), &sigma);
+            canvas.draw_text("Σ", RectF::new(0.0, fy, self.indicator_w(), footer), &sigma);
         }
 
         // ----- busca incremental -----
@@ -1981,7 +1997,7 @@ impl Component for DataGrid {
             ts.h_align = TextAlign::Leading;
             ts.font.size = (ts.font.size - 1.0).max(9.0);
             let warning = theme.color("warning");
-            let band = RectF::new(INDICATOR, r.height - hbar - footer - self.row_height, (r.width - INDICATOR - SCROLLBAR - 4.0).max(0.0), self.row_height);
+            let band = RectF::new(self.indicator_w(), r.height - hbar - footer - self.row_height, (r.width - self.indicator_w() - SCROLLBAR - 4.0).max(0.0), self.row_height);
             canvas.fill_rect(band, 0.0, &Brush::Solid(theme.color("surface")));
             canvas.fill_rect(band, 0.0, &Brush::Solid(warning.with_opacity(0.16)));
             canvas.fill_rect(RectF::new(band.x, band.y, 3.0, band.height), 0.0, &Brush::Solid(warning));

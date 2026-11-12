@@ -10,15 +10,15 @@ Indicador de atividade girando. Só anima com `active`. `kind` escolhe o desenho
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
 
 ## Em código
 

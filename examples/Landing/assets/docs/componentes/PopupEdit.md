@@ -10,15 +10,15 @@ A edição no lugar (`QPopupEdit`): mostra o `text` (como um rótulo com um láp
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `placeholder` | Texto de exemplo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `placeholder` | Texto de exemplo | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
 
 ## Eventos
 

@@ -26,6 +26,11 @@ pub fn tree_with(ui: &Ui, root: Option<ComponentId>, depth: usize, visible_only:
             "path": ui.path_of(id),
             "visible": visible,
         });
+        // Onde ficou depois do layout, relativo ao form (`left`/`width` são os pedidos no JSON;
+        // relatório do InsightDB, 11/11).
+        if let Some(r) = ui.absolute_rect(id) {
+            v["rect"] = json!([r.x, r.y, r.width, r.height]);
+        }
         if depth == 0 {
             if !kids.is_empty() {
                 v["more"] = json!(kids.len());

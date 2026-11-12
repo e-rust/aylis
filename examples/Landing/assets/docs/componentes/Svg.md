@@ -10,14 +10,14 @@ Imagem SVG desenhada como vetor. `source` é o arquivo no projeto (`assets/image
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `source` | Origem | texto |
-| `color` | Cor | cor |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
-| `highlight` | Destacar | texto |
-| `highlight_color` | Cor de destaque da área | cor |
-| `zoom_to` | Aproximar até | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `source` | Origem | texto |  |
+| `color` | Cor | cor |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `highlight` | Destacar | texto |  |
+| `highlight_color` | Cor de destaque da área | cor |  |
+| `zoom_to` | Aproximar até | texto |  |
 
 ## Em código
 

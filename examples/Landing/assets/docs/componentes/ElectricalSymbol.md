@@ -10,16 +10,16 @@ Um símbolo elétrico (o diagrama, na horizontal; gire pelo `rotation`). `state`
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `symbol` | Símbolo | um de: `resistor`, `capacitor`, `inductor`, `diode`, `led`, `transistor`, `source`, `ground`, `switch`, `relay`, `lamp`, `motor` |
-| `label` | Rótulo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `symbol` | Símbolo | um de: `resistor`, `capacitor`, `inductor`, `diode`, `led`, `transistor`, `source`, `ground`, `switch`, `relay`, `lamp`, `motor` |  |
+| `label` | Rótulo | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `state` | Estado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `state` | Estado | lógico |  |
 
 ## Em código
 

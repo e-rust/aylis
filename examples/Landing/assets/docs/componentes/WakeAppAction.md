@@ -8,18 +8,18 @@ Abre o app por cima da tela bloqueada e acende a tela, tocando, como uma chamada
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `form` | Form | texto |
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `buttons` | Botões | texto |
-| `open_buttons` | Botões que abrem o app | texto |
-| `ringtone` | Toque | um de: `default`, `notification`, `alarm`, `none` |
-| `vibrate` | Vibrar | lógico |
-| `timeout` | Tempo para sumir | número |
-| `call_style` | Estilo de chamada | lógico |
-| `turn_screen_on` | Acender a tela | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `form` | Form | texto |  |
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `buttons` | Botões | texto |  |
+| `open_buttons` | Botões que abrem o app | texto |  |
+| `ringtone` | Toque | um de: `default`, `notification`, `alarm`, `none` |  |
+| `vibrate` | Vibrar | lógico |  |
+| `timeout` | Tempo para sumir | número | Segundos até desistir (0: sem limite). |
+| `call_style` | Estilo de chamada | lógico |  |
+| `turn_screen_on` | Acender a tela | lógico |  |
 
 ## Eventos
 

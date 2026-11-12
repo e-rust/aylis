@@ -10,12 +10,12 @@ Polígono regular de `sides` lados, ou os pontos de `points` (`"0.5,0 1,1 0,1"`,
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
-| `sides` | Lados | inteiro |
-| `points` | Pontos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
+| `sides` | Lados | inteiro |  |
+| `points` | Pontos | texto |  |
 
 ## Em código
 

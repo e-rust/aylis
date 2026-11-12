@@ -10,17 +10,17 @@ Trilho de navegação (o "navigation rail" do Material 3, para telas largas): í
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `icons` | Ícones | texto |
-| `fab_icon` | Ícone do botão flutuante | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `icons` | Ícones | texto |  |
+| `fab_icon` | Ícone do botão flutuante | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ## Eventos
 

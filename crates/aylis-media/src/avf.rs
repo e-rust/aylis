@@ -96,7 +96,7 @@ impl VideoDecoderFactory for AvFoundation {
                 p
             }
         };
-        if !path.exists() {
+        if !crate::video::is_url(&path) && !path.exists() {
             return Err(aylis_core::messages::tf("arquivo não encontrado: {0}", &[&path.display()]));
         }
         let audio_bytes = match source {
@@ -124,7 +124,12 @@ impl AvVideo {
         // Drop.
         unsafe {
             let ns_path = NSString::from_str(&path.to_string_lossy());
-            let url: *mut AnyObject = msg_send![class!(NSURL), fileURLWithPath: &*ns_path];
+            // Endereço de rede (W11): o `NSURL` do texto; arquivo: o do caminho.
+            let url: *mut AnyObject = if crate::video::is_url(&path) {
+                msg_send![class!(NSURL), URLWithString: &*ns_path]
+            } else {
+                msg_send![class!(NSURL), fileURLWithPath: &*ns_path]
+            };
             let asset: *mut AnyObject = msg_send![class!(AVURLAsset), URLAssetWithURL: url, options: std::ptr::null_mut::<AnyObject>()];
             if asset.is_null() {
                 return Err("AVFoundation: não abriu o arquivo".into());

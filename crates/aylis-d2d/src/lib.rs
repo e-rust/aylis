@@ -29,6 +29,7 @@ use aylis_core::{
 };
 use windows::Win32::Foundation::{D2DERR_RECREATE_TARGET, HANDLE, HMODULE, HWND};
 use windows::Win32::Graphics::Direct2D::Common::*;
+use windows::Win32::Graphics::Gdi::{HMONITOR, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
 use windows::Win32::Graphics::Direct2D::*;
 use windows::Win32::Graphics::Direct3D::*;
 use windows::Win32::Graphics::Direct3D11::*;
@@ -291,20 +292,76 @@ pub struct D2dRenderer {
     decoded: RefCell<ImageCache<Option<Decoded>>>,
 }
 
-/// A placa pedida em [`aylis_core::gpu::choice`] (`None`: a padrão do sistema).
-fn chosen_adapter() -> Option<IDXGIAdapter> {
+/// A placa pedida por `choice` para a janela `hwnd` (`None`: a padrão do sistema). Com
+/// [`GpuChoice::FollowMonitor`](aylis_core::gpu::GpuChoice::FollowMonitor), a que tem o monitor
+/// em que está a maior parte da janela.
+fn adapter_for(choice: &aylis_core::gpu::GpuChoice, hwnd: isize) -> Option<IDXGIAdapter> {
     use aylis_core::gpu::GpuChoice;
-    let choice = aylis_core::gpu::choice();
     // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
     unsafe {
         let factory: IDXGIFactory6 = CreateDXGIFactory1().ok()?;
-        let adapter: IDXGIAdapter1 = match &choice {
+        let adapter: IDXGIAdapter1 = match choice {
             GpuChoice::Auto => return None,
             GpuChoice::HighPerformance => factory.EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE).ok()?,
             GpuChoice::LowPower => factory.EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER).ok()?,
+            GpuChoice::FollowMonitor => adapter_of_monitor(&factory, monitor_of(hwnd))?,
             GpuChoice::Named(_) => (0..).map_while(|i| factory.EnumAdapters1(i).ok()).find(|a| a.GetDesc1().is_ok_and(|d| choice.matches_name(&adapter_name(&d.Description))))?,
         };
         adapter.cast().ok()
+    }
+}
+
+/// O monitor com a maior parte da janela (o mais perto, se ela está fora de todos).
+fn monitor_of(hwnd: isize) -> HMONITOR {
+    // SAFETY: só lê; uma janela que não existe mais dá o monitor principal.
+    unsafe { MonitorFromWindow(HWND(hwnd as *mut _), MONITOR_DEFAULTTONEAREST) }
+}
+
+/// A placa que tem uma saída ligada a `monitor` (`None`: nenhuma, como numa sessão remota).
+fn adapter_of_monitor(factory: &IDXGIFactory6, monitor: HMONITOR) -> Option<IDXGIAdapter1> {
+    // SAFETY: chamadas COM do DXGI; as saídas são só lidas.
+    unsafe {
+        (0..).map_while(|i| factory.EnumAdapters1(i).ok()).find(|adapter| {
+            (0..).map_while(|j| adapter.EnumOutputs(j).ok()).any(|output| output.GetDesc().is_ok_and(|d| d.Monitor == monitor))
+        })
+    }
+}
+
+/// O LUID da placa como o [`GpuLink`] guarda.
+fn luid_of(adapter: &IDXGIAdapter) -> Option<i64> {
+    // SAFETY: só lê a descrição.
+    let luid = unsafe { adapter.GetDesc().ok()?.AdapterLuid };
+    Some(((luid.HighPart as i64) << 32) | luid.LowPart as i64)
+}
+
+/// A placa pelo LUID (ou, com `software`, o WARP, o renderizador por software do Windows).
+fn adapter_where(test: impl Fn(&DXGI_ADAPTER_DESC1) -> bool) -> Option<IDXGIAdapter> {
+    // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
+    unsafe {
+        let factory: IDXGIFactory1 = CreateDXGIFactory1().ok()?;
+        (0..).map_while(|i| factory.EnumAdapters1(i).ok()).find(|a| a.GetDesc1().is_ok_and(|d| test(&d)))?.cast().ok()
+    }
+}
+
+fn desc_luid(d: &DXGI_ADAPTER_DESC1) -> i64 {
+    ((d.AdapterLuid.HighPart as i64) << 32) | d.AdapterLuid.LowPart as i64
+}
+
+fn is_software(d: &DXGI_ADAPTER_DESC1) -> bool {
+    d.Flags & DXGI_ADAPTER_FLAG_SOFTWARE.0 as u32 != 0
+}
+
+/// As placas de vídeo da máquina, pelo nome, sem o renderizador por software do Windows.
+pub fn adapters() -> Vec<String> {
+    // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
+    unsafe {
+        let Ok(factory) = CreateDXGIFactory1::<IDXGIFactory1>() else { return Vec::new() };
+        (0..)
+            .map_while(|i| factory.EnumAdapters1(i).ok())
+            .filter_map(|a| a.GetDesc1().ok())
+            .filter(|d| !is_software(d))
+            .map(|d| adapter_name(&d.Description))
+            .collect()
     }
 }
 
@@ -396,7 +453,9 @@ impl D2dRenderer {
                 decode_with_wic(&self.wic, bytes).map(|(p, w, h)| (w, h, premultiply_rgba_to_bgra(&p)))
             }
             ImageSource::Rgba { width, height, pixels } => Some((*width, *height, premultiply_rgba_to_bgra(pixels))),
-            ImageSource::Bgra { width, height, pixels } => Some((*width, *height, premultiply_bgra(pixels))),
+            // Já pré-multiplicado (o contrato do tipo): multiplicar de novo escurecia o
+            // semitransparente (T08 do Tabernáculo).
+            ImageSource::Bgra { width, height, pixels } => Some((*width, *height, pixels.clone())),
         }
         .map(Rc::new);
         if !raw {
@@ -411,13 +470,27 @@ impl D2dRenderer {
     /// monitor (medições). Tenta o Direct3D 11 com swap chain; se não der (ou com
     /// `AYLIS_D2D_TARGET=hwnd`), usa o `ID2D1HwndRenderTarget`.
     pub fn hwnd_target(&self, hwnd: isize, width: u32, height: u32, vsync: bool) -> Result<HwndTarget, Error> {
+        self.hwnd_target_for(hwnd, width, height, vsync, aylis_core::gpu::choice())
+    }
+
+    /// Como [`D2dRenderer::hwnd_target`], na placa que `choice` pede (a do form; veja
+    /// [`aylis_core::gpu::choice_for`]). Com `FollowMonitor`, [`HwndTarget::follow_monitor`]
+    /// troca de placa quando a janela muda de monitor.
+    pub fn hwnd_target_for(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice) -> Result<HwndTarget, Error> {
+        self.hwnd_target_on(hwnd, width, height, vsync, choice, None)
+    }
+
+    /// O alvo na placa `luid` (a que a janela vai seguir) ou, sem ela, na que `choice` pede.
+    fn hwnd_target_on(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice, luid: Option<i64>) -> Result<HwndTarget, Error> {
+        let monitor = monitor_of(hwnd).0 as isize;
         if diagnostic("AYLIS_D2D_TARGET").is_none_or(|v| v != "hwnd") {
-            let swap = self.swap_chain(hwnd, width, height);
+            let chosen = luid.and_then(|l| adapter_where(|d| desc_luid(d) == l)).or_else(|| adapter_for(&choice, hwnd));
+            let swap = self.swap_chain(hwnd, width, height, chosen);
             if diagnostic("AYLIS_D2D_DEBUG").is_some() {
                 aylis_core::stderr_line!("aylis-d2d: alvo {}", match &swap { Ok(_) => "swap chain".to_string(), Err(e) => format!("da janela ({e})") });
             }
             if let Ok(swap) = swap {
-                return Ok(HwndTarget { kind: Kind::Swap(Box::new(swap)), hwnd, size: (width, height), vsync, cache: DeviceCache::default() });
+                return Ok(HwndTarget { kind: Kind::Swap(Box::new(swap)), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, monitor });
             }
         }
         let props = D2D1_RENDER_TARGET_PROPERTIES {
@@ -434,15 +507,14 @@ impl D2dRenderer {
             presentOptions: if vsync { D2D1_PRESENT_OPTIONS_NONE } else { D2D1_PRESENT_OPTIONS_IMMEDIATELY },
         };
         let target = unsafe { self.factory.CreateHwndRenderTarget(&props, &hwnd_props)? };
-        Ok(HwndTarget { kind: Kind::Hwnd(target), hwnd, size: (width, height), vsync, cache: DeviceCache::default() })
+        Ok(HwndTarget { kind: Kind::Hwnd(target), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, monitor })
     }
 
     /// Direct3D 11 + swap chain "flip" + contexto do Direct2D numa janela.
-    fn swap_chain(&self, hwnd: isize, width: u32, height: u32) -> Result<Swap, Error> {
+    fn swap_chain(&self, hwnd: isize, width: u32, height: u32, chosen: Option<IDXGIAdapter>) -> Result<Swap, Error> {
         unsafe {
             let mut device = None;
             let mut context = None;
-            let chosen = chosen_adapter();
             D3D11CreateDevice(
                 chosen.as_ref(),
                 if chosen.is_some() { D3D_DRIVER_TYPE_UNKNOWN } else { D3D_DRIVER_TYPE_HARDWARE },
@@ -460,7 +532,6 @@ impl D2dRenderer {
             let dc = self.factory1.CreateDevice(&dxgi)?.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
             let adapter = dxgi.GetAdapter()?;
             let adapter_desc = adapter.GetDesc()?;
-            let luid = adapter_desc.AdapterLuid;
             let factory: IDXGIFactory2 = adapter.GetParent()?;
             let compose = aylis_core::gpu::present() == aylis_core::gpu::PresentMode::Composition;
             // Tearing só na swap chain da janela: a composição sempre espera o DWM.
@@ -507,7 +578,7 @@ impl D2dRenderer {
                     device: device.cast()?,
                     device5: device.cast().ok(),
                     context4: context.cast().ok(),
-                    luid: ((luid.HighPart as i64) << 32) | luid.LowPart as i64,
+                    luid: luid_of(&adapter).unwrap_or_default(),
                     adapter: adapter_name(&adapter_desc.Description),
                     surfaces: HashMap::new(),
                     fences: HashMap::new(),
@@ -888,6 +959,9 @@ impl Swap {
 enum Kind {
     Hwnd(ID2D1HwndRenderTarget),
     Swap(Box<Swap>),
+    /// Solto para recriar em outra placa ([`HwndTarget::rebuild`]); se a recriação falhou, o
+    /// próximo quadro tenta de novo, como num dispositivo perdido.
+    Released,
 }
 
 /// Recursos da GPU já criados, que valem enquanto o alvo existir.
@@ -938,9 +1012,91 @@ pub struct HwndTarget {
     vsync: bool,
     /// Bitmaps já enviados à GPU (são do alvo: refeitos se ele for recriado).
     cache: DeviceCache,
+    /// A placa pedida (a do form ou a do projeto), para recriar na mesma regra.
+    choice: aylis_core::gpu::GpuChoice,
+    /// O monitor (`HMONITOR`) em que a janela estava ao conferir a placa pela última vez.
+    monitor: isize,
 }
 
 impl HwndTarget {
+    /// Com a placa que segue o monitor: se a janela passou para um monitor de outra placa,
+    /// recria o alvo nela (o mesmo caminho do dispositivo perdido: os bitmaps voltam do que
+    /// o renderizador guarda na CPU). `Ok(true)` se trocou; o próximo quadro sai inteiro.
+    /// `force`: confere mesmo no monitor de antes (os monitores mudaram).
+    ///
+    /// No mesmo monitor custa só o `MonitorFromWindow`. Com `AYLIS_GPU_SWITCH=warp`
+    /// (diagnóstico), cada troca de monitor alterna entre a placa dele e o WARP: testa a troca
+    /// de placa numa máquina com uma placa só.
+    pub fn follow_monitor(&mut self, renderer: &D2dRenderer, force: bool) -> Result<bool, Error> {
+        if self.choice != aylis_core::gpu::GpuChoice::FollowMonitor {
+            return Ok(false);
+        }
+        let monitor = monitor_of(self.hwnd);
+        if !force && monitor.0 as isize == self.monitor {
+            return Ok(false);
+        }
+        self.monitor = monitor.0 as isize;
+        let current = match &self.kind {
+            Kind::Swap(swap) => Some(swap.link.luid),
+            Kind::Released => None,
+            Kind::Hwnd(_) => return Ok(false),
+        };
+        // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
+        let mut wanted = unsafe { CreateDXGIFactory1::<IDXGIFactory6>().ok().and_then(|f| adapter_of_monitor(&f, monitor)).and_then(|a| a.cast::<IDXGIAdapter>().ok()).and_then(|a| luid_of(&a)) };
+        if diagnostic("AYLIS_GPU_SWITCH").is_some_and(|v| v == "warp") && wanted == current {
+            wanted = adapter_where(is_software).and_then(|a| luid_of(&a));
+        }
+        // Um monitor sem placa conhecida (sessão remota, projetor sem driver): fica onde está.
+        if wanted.is_none() || wanted == current {
+            return Ok(false);
+        }
+        self.rebuild(renderer, wanted)?;
+        Ok(true)
+    }
+
+    /// Recria o alvo na placa da regra, soltando antes a swap chain e o alvo de composição
+    /// atuais: o Windows aceita uma swap chain "flip" e um alvo do DirectComposition por
+    /// janela, e criar os novos com os antigos vivos falha (ou cai para o alvo antigo).
+    fn rebuild(&mut self, renderer: &D2dRenderer, luid: Option<i64>) -> Result<(), Error> {
+        if let Kind::Swap(old) = std::mem::replace(&mut self.kind, Kind::Released) {
+            let context = old.link.context4.clone();
+            // SAFETY: o contexto do Direct2D solta o buffer de trás; o do Direct3D executa as
+            // liberações pendentes (sem o `Flush`, a swap chain antiga continua presa à janela).
+            unsafe { old.dc.SetTarget(None::<&ID2D1Image>) };
+            drop(old);
+            if let Some(c) = context {
+                unsafe {
+                    c.ClearState();
+                    c.Flush();
+                }
+            }
+        }
+        let (width, height) = self.size;
+        *self = renderer.hwnd_target_on(self.hwnd, width, height, self.vsync, self.choice.clone(), luid)?;
+        Ok(())
+    }
+
+    /// Troca a regra da placa (a propriedade `gpu` do form mudou) e recria o alvo se a placa
+    /// pedida não é a de agora.
+    pub fn set_choice(&mut self, renderer: &D2dRenderer, choice: aylis_core::gpu::GpuChoice) -> Result<bool, Error> {
+        if choice == self.choice {
+            return Ok(false);
+        }
+        let current = match &self.kind {
+            Kind::Swap(s) => Some(s.link.luid),
+            Kind::Hwnd(_) | Kind::Released => None,
+        };
+        let wanted = adapter_for(&choice, self.hwnd).and_then(|a| luid_of(&a));
+        self.choice = choice;
+        self.monitor = monitor_of(self.hwnd).0 as isize;
+        // `None` pedido: a padrão do sistema, que não dá para comparar sem abrir; recria.
+        if wanted.is_some() && wanted == current {
+            return Ok(false);
+        }
+        self.rebuild(renderer, wanted)?;
+        Ok(true)
+    }
+
     /// A placa de vídeo em que desenha (no alvo antigo, `ID2D1HwndRenderTarget`, não se sabe).
     pub fn adapter(&self) -> Option<&str> {
         match &self.kind {
@@ -992,6 +1148,8 @@ impl HwndTarget {
                 renderer.draw_on(&target, &mut self.cache, None, scale, background, None, |c| paint(c, None));
                 unsafe { target.EndDraw(None, None) }
             }
+            // A troca de placa não conseguiu recriar: tenta de novo, como num dispositivo perdido.
+            Kind::Released => Err(DXGI_ERROR_DEVICE_REMOVED.into()),
             Kind::Swap(s) => {
                 if resized {
                     s.resize(width, height)?;
@@ -1028,7 +1186,7 @@ impl HwndTarget {
         match result {
             Ok(()) => Ok(true),
             Err(e) if e.code() == D2DERR_RECREATE_TARGET || e.code() == DXGI_ERROR_DEVICE_REMOVED || e.code() == DXGI_ERROR_DEVICE_RESET => {
-                *self = renderer.hwnd_target(self.hwnd, width, height, self.vsync)?;
+                self.rebuild(renderer, None)?;
                 Ok(false)
             }
             Err(e) => Err(e),
@@ -2036,16 +2194,6 @@ fn premultiply_rgba_to_bgra(rgba: &[u8]) -> Vec<u8> {
         let a = p[3] as u32;
         let m = |c: u8| ((c as u32 * a + 127) / 255) as u8;
         out.extend_from_slice(&[m(p[2]), m(p[1]), m(p[0]), p[3]]);
-    }
-    out
-}
-
-fn premultiply_bgra(bgra: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(bgra.len());
-    for p in bgra.chunks_exact(4) {
-        let a = p[3] as u32;
-        let m = |c: u8| ((c as u32 * a + 127) / 255) as u8;
-        out.extend_from_slice(&[m(p[0]), m(p[1]), m(p[2]), p[3]]);
     }
     out
 }

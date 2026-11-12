@@ -10,12 +10,12 @@ Tela vazia (o `v-empty-state`): ícone grande, título, texto e um botão de aç
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `icon` | Ícone | texto |
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `action` | Ação | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `icon` | Ícone | texto |  |
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `action` | Ação | texto |  |
 
 ## Eventos
 

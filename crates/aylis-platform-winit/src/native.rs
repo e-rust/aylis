@@ -19,6 +19,8 @@ type Events = Rc<RefCell<Vec<(ComponentId, &'static str, String, String)>>>;
 #[cfg(native_webview)]
 struct Hosted {
     view: wry::WebView,
+    /// O ambiente com a pasta de dados (vive tanto quanto a vista).
+    _context: Option<Box<wry::WebContext>>,
     generation: u64,
     rect: RectF,
     visible: bool,
@@ -68,16 +70,24 @@ impl NativeViews {
     /// janelas flutuantes ficam no mesmo canvas) e se ele aparece (coberto por um maximizado, não).
     pub(crate) fn sync(&mut self, ui: &mut Ui, windows: &[(ComponentId, Rc<Window>, aylis_core::PointF, bool)]) {
         let mut seen = HashSet::new();
+        // Com o layout pendente, a visibilidade e o lugar são os do último layout: na abertura,
+        // os do tamanho de projeto do form (1200 de largura), antes de a vista do celular
+        // esconder o que não cabe. A vista nativa que nascesse aí carregaria a página à toa (o
+        // lingote 3D da Landing baixava ~10 MB no celular, onde fica escondido).
+        let settled = !ui.needs_layout();
         for (form, window, origin, shown) in windows {
             // O form com zoom: a vista nativa acompanha (posição e tamanho em pontos da janela).
             let zoom = ui.form_zoom(*form);
+            // O primeiro da ordem de tabulação do form: só ele recebe o foco ao nascer (antes
+            // todo WebView tomava o foco do teclado; o relatório do Tabernáculo, W01).
+            let first = ui.tab_order(*form).first().copied();
             for mut slot in ui.native_views(*form) {
                 let to_window = |r: RectF| RectF::new(origin.x + r.x * zoom, origin.y + r.y * zoom, r.width * zoom, r.height * zoom);
                 slot.rect = to_window(slot.rect);
                 slot.clip = slot.clip.map(to_window);
                 slot.visible &= *shown;
                 seen.insert(slot.id);
-                let NativeView::Web { url, html, generation, navigation, sandbox } = &slot.view;
+                let NativeView::Web { url, html, generation, navigation, sandbox, background, data_dir, browser_args } = &slot.view;
                 match self.hosted.get_mut(&slot.id) {
                     Some(h) => {
                         set_navigation(h, navigation);
@@ -106,10 +116,10 @@ impl NativeViews {
                     // custa nada). E a que falhou não tenta de novo a cada quadro: criar um
                     // WebView2 é lento e bloqueia (a tela caía para 1 quadro por segundo e a
                     // mensagem de erro se repetia); tenta de novo quando a página muda.
-                    None if !slot.visible || self.failed.get(&slot.id) == Some(generation) => {}
+                    None if !slot.visible || !settled || self.failed.get(&slot.id) == Some(generation) => {}
                     None => {
-                        let page = Page { url, html, navigation, sandbox };
-                        if let Some(mut h) = create(window, slot.id, &page, slot.rect, slot.visible, &self.events) {
+                        let page = Page { url, html, navigation, sandbox, background: *background, data_dir, browser_args };
+                        if let Some(mut h) = create(window, slot.id, &page, slot.rect, slot.visible, first == Some(slot.id), &self.events) {
                             h.generation = *generation;
                             for c in &slot.commands {
                                 command(&h, c);
@@ -181,16 +191,37 @@ struct Page<'a> {
     navigation: &'a [String],
     #[cfg_attr(not(web_webview), allow(dead_code))]
     sandbox: &'a str,
+    #[cfg_attr(not(native_webview), allow(dead_code))]
+    background: Option<aylis_core::Color>,
+    #[cfg_attr(not(native_webview), allow(dead_code))]
+    data_dir: &'a str,
+    #[cfg_attr(not(native_webview), allow(dead_code))]
+    browser_args: &'a str,
 }
 
 #[cfg(native_webview)]
-fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, events: &Events) -> Option<Hosted> {
+fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, focused: bool, events: &Events) -> Option<Hosted> {
     let (e1, e2, e3) = (events.clone(), events.clone(), events.clone());
     let navigation = Rc::new(RefCell::new(page.navigation.to_vec()));
     let allowed = navigation.clone();
-    let mut builder = wry::WebViewBuilder::new()
+    // A pasta de dados (W07): um ambiente próprio, que vive com a vista.
+    let mut context = (!page.data_dir.is_empty()).then(|| Box::new(wry::WebContext::new(Some(std::path::PathBuf::from(page.data_dir)))));
+    let mut builder = match context.as_deref_mut() {
+        Some(ctx) => wry::WebViewBuilder::new_with_web_context(ctx),
+        None => wry::WebViewBuilder::new(),
+    };
+    if let Some(c) = page.background {
+        builder = builder.with_background_color((c.r, c.g, c.b, c.a));
+    }
+    #[cfg(target_os = "windows")]
+    if !page.browser_args.is_empty() {
+        use wry::WebViewBuilderExtWindows;
+        builder = builder.with_additional_browser_args(page.browser_args);
+    }
+    let mut builder = builder
         .with_bounds(bounds(rect))
         .with_visible(visible)
+        .with_focused(focused)
         // A URL de quem mandou (no Linux, a da página principal mesmo vindo de um iframe).
         .with_ipc_handler(move |req| e1.borrow_mut().push((id, "on_message", req.body().clone(), req.uri().to_string())))
         .with_navigation_handler(move |url| {
@@ -215,7 +246,7 @@ fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, vi
     #[cfg(not(target_os = "ios"))]
     let built = builder.build_as_child(&**window);
     match built {
-        Ok(view) => Some(Hosted { view, generation: 0, rect, visible, navigation }),
+        Ok(view) => Some(Hosted { view, _context: context, generation: 0, rect, visible, navigation }),
         Err(e) => {
             aylis_core::stderr_line!("aylis: WebView: {e}");
             None
@@ -273,7 +304,8 @@ fn pump_gtk() {
 // ----- Android: o WebView do sistema na AylisActivity -----------------------------
 
 #[cfg(android_webview)]
-fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, _events: &Events) -> Option<Hosted> {
+fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, focused: bool, _events: &Events) -> Option<Hosted> {
+    let _ = focused;
     let (url, html) = (page.url, page.html);
     if !crate::android_jni::has_webview() {
         static WARNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -332,7 +364,8 @@ fn destroy(h: &Hosted) {
 // ----- navegador: <iframe> -------------------------------------------------------
 
 #[cfg(web_webview)]
-fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, events: &Events) -> Option<Hosted> {
+fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, focused: bool, events: &Events) -> Option<Hosted> {
+    let _ = focused;
     use wasm_bindgen::JsCast;
     use wasm_bindgen::closure::Closure;
     use winit::platform::web::WindowExtWebSys;

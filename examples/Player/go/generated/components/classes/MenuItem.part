@@ -25,3 +25,6 @@ func (c aylisMenuItem) SetVisible(v bool) { c.Set("visible", v) }
 
 func (c aylisMenuItem) Danger() bool { return asBool(c.Get("danger")) }
 func (c aylisMenuItem) SetDanger(v bool) { c.Set("danger", v) }
+
+func (c aylisMenuItem) Header() bool { return asBool(c.Get("header")) }
+func (c aylisMenuItem) SetHeader(v bool) { c.Set("header", v) }

@@ -95,6 +95,9 @@ pub fn class_info(ui: &Ui, class: &str) -> Option<Value> {
         if let Some(example) = kind_schema(info.kind).get("examples") {
             p.insert("examples".into(), example.clone());
         }
+        if let Some(hint) = TEXT_FORMATS.iter().find(|(name, _)| *name == info.name).map(|(_, h)| h) {
+            p.insert("format".into(), json!(hint));
+        }
         if info.read_only {
             p.insert("read_only".into(), json!(true));
         }
@@ -117,9 +120,24 @@ pub fn class_info(ui: &Ui, class: &str) -> Option<Value> {
         "properties": properties,
         "events": events,
         "methods": methods,
-        "note": "no JSON: margins/padding como número, [h, v] ou [l, t, r, b]; \"margins.left\": 4 muda um lado; cores como \"#RRGGBB\" ou token do tema",
+        "note": "no JSON: margins/padding como número, [h, v] ou [l, t, r, b]; \"margins.left\": 4 muda um lado; cores como \"#RRGGBB\", token do tema ou com opacidade (\"primary/15\", \"#2563EB/15\"); uma propriedade de aparência vazia (null no get_component, como stroke_width) usa o valor do estilo do tema, que pode ter borda (o Panel nos temas shadcn): ponha 0 para tirar",
     }))
 }
+
+/// Como escrever as propriedades de texto com estrutura (o `class_info` mostra): o tipo diz só
+/// "texto" (relatório do InsightDB, 11/11: `items` com quebra de linha sumia sem erro).
+const TEXT_FORMATS: &[(&str, &str)] = &[
+    ("items", "os itens separados por ; (ou um por linha): \"Ativo;Inativo;Pendente\""),
+    ("values", "os códigos dos itens, na mesma ordem, separados por ;"),
+    ("labels", "os rótulos separados por ;: \"Jan;Fev;Mar\""),
+    ("series", "Nome=1,2,3|Outra[line;right;#EF4444]=4,5,6"),
+    ("columns", "campo:largura separados por ;: \"nome:170;cidade\""),
+    ("bindings", "componente=campo ou componente.propriedade=campo, separados por ;"),
+    ("sizes", "os tamanhos em ordem, separados por ;: \"80;120;80\""),
+    ("selected", "os índices separados por ;"),
+    ("footer", "campo=sum|avg|min|max|count, separados por ;"),
+    ("colors", "as cores em ordem, separadas por ;: \"#2563EB;#16A34A\""),
+];
 
 fn kind_schema(kind: PropKind) -> Value {
     match kind {

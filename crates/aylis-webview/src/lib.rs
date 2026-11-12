@@ -47,6 +47,17 @@ pub struct WebView {
     /// fundo): a vista nativa fica por cima dele quando a página aparece. Sem ele, a reserva do
     /// designer (a barra de endereço e o aviso).
     pub skeleton: bool,
+    /// A cor da vista antes da primeira pintura da página (sem ela, branca: o clarão num
+    /// app escuro). O relatório do Tabernáculo, W07.
+    pub background_color: Option<aylis_core::Color>,
+    /// A pasta de dados do navegador (cookies, cache); vazia, a do sistema. Um app instalado em
+    /// `Program Files` precisa de uma pasta gravável (a do usuário).
+    pub data_dir: String,
+    /// Argumentos do navegador do sistema (o WebView2 no Windows), como
+    /// `--autoplay-policy=no-user-gesture-required`. Valem ao criar a vista; o WebView2 recusa
+    /// argumentos diferentes na mesma pasta de dados. A depuração remota não é aceita (abriria
+    /// uma porta).
+    pub browser_args: String,
     /// A URL de quem mandou a última mensagem (vale dentro do `on_message`).
     message_url: String,
     /// Muda a cada `url`/`html` novo ou [`WebView::reload`] (a plataforma recarrega).
@@ -65,6 +76,9 @@ impl Default for WebView {
             allowed_navigation: String::new(),
             sandbox: String::new(),
             skeleton: false,
+            background_color: None,
+            data_dir: String::new(),
+            browser_args: String::new(),
             message_url: String::new(),
             generation: 0,
             commands: RefCell::new(Vec::new()),
@@ -169,6 +183,9 @@ impl Component for WebView {
         allowed_origins: String => "Behavior",
         allowed_navigation: String => "Behavior",
         skeleton: bool => "Appearance",
+        background_color: Option<aylis_core::Color> => "Appearance",
+        data_dir: String => "Behavior",
+        browser_args: String => "Behavior",
         sandbox: String => "Behavior";
         events: on_load, on_navigate, on_blocked, on_message;
         computed: message_url: String => message_url / set_message_url;
@@ -319,6 +336,10 @@ impl aylis_core::PlatformHooks for WebView {
             generation: self.generation,
             navigation: list(&self.allowed_navigation),
             sandbox: self.sandbox.clone(),
+            background: self.background_color,
+            data_dir: self.data_dir.clone(),
+            // Sem porta aberta: a depuração remota fica de fora (as diretrizes de segurança).
+            browser_args: self.browser_args.split_whitespace().filter(|a| !a.contains("remote-debugging")).collect::<Vec<_>>().join(" "),
         })
     }
     fn take_native_commands(&self) -> Vec<NativeCommand> {

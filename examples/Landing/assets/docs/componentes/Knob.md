@@ -10,26 +10,26 @@ O botão giratório (`QKnob`): o valor de `min` a `max` num círculo, que se arr
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `thickness` | Espessura | número |
-| `show_value` | Mostra o valor | lógico |
-| `suffix` | Sufixo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `thickness` | Espessura | número |  |
+| `show_value` | Mostra o valor | lógico |  |
+| `suffix` | Sufixo | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `read_only` | Somente leitura | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `read_only` | Somente leitura | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `step` | Passo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `step` | Passo | número |  |
 
 ## Eventos
 

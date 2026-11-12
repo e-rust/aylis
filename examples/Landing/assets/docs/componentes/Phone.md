@@ -8,11 +8,11 @@ O telefone: `dial` (abre o discador com o número), `call` (liga direto; com `di
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `watch_state` | Acompanhar o estado | lógico |
-| `direct_call` | Ligar direto | lógico |
-| `dialer_app` | App de telefone | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `watch_state` | Acompanhar o estado | lógico |  |
+| `direct_call` | Ligar direto | lógico |  |
+| `dialer_app` | App de telefone | lógico |  |
 
 ## Eventos
 

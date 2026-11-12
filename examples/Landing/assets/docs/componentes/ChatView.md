@@ -10,9 +10,9 @@ Lista de mensagens de uma conversa (como um app de chat): bolhas à direita para
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_authors` | Mostra os autores | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_authors` | Mostra os autores | lógico | Nome e avatar dos outros (conversa em grupo). |
 
 ## Eventos
 

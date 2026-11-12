@@ -63,6 +63,8 @@ pub struct Edit {
     /// Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui,
     /// a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução.
     pub sensitive: bool,
+    /// Ganhar o foco seleciona o texto todo (o `AutoSelect` do Delphi, ligado por padrão).
+    pub auto_select: bool,
     pub h_align: TextAlign,
     pub v_align: TextAlign,
     /// Quebra automática de linha (fora da edição).
@@ -150,6 +152,7 @@ impl Default for Edit {
             read_only: false,
             password: false,
             sensitive: false,
+            auto_select: true,
             h_align: TextAlign::Leading,
             v_align: TextAlign::Center,
             wrap: false,
@@ -713,6 +716,7 @@ impl Component for Edit {
         read_only: bool => "Behavior",
         password: bool => "Behavior",
         sensitive: bool => "Behavior",
+        auto_select: bool => "Behavior",
         h_align: TextAlign => "Text",
         v_align: TextAlign => "Text",
         wrap: bool => "Text",
@@ -735,7 +739,7 @@ impl Component for Edit {
         caret_width: f32 => "Caret",
         caret_style: CaretStyle => "Caret",
         caret_blink: u32 as Duration => "Caret";
-        events: on_change, on_caret_move;
+        events: on_change, on_caret_move, on_paste;
         computed: sel_start: usize => sel_start / set_sel_start,
             sel_length: usize => sel_length / set_sel_length,
             sel_text: String => sel_text / set_sel_text;
@@ -817,6 +821,11 @@ impl Component for Edit {
                     // O colado passa pelos mesmos caracteres do digitado.
                     let text = ctx.ui.filter_text(ctx.id, Some(&self.char_filter()), &text);
                     changed = self.insert(&text);
+                    // O que entrou pelo colar (o app reconhece a colagem sem contar linhas;
+                    // C22 do Tabernáculo).
+                    if changed {
+                        ctx.fire("on_paste", EventArgs::Text(text));
+                    }
                 }
             }
             Key::Backspace | Key::Delete => {}
@@ -892,7 +901,10 @@ impl Component for Edit {
     }
 
     fn focus_enter(&mut self, ctx: &mut EventCtx<'_>) {
-        self.select_all();
+        // Sem `auto_select`, o cursor fica onde estava (o relatório do Tabernáculo, C36).
+        if self.auto_select {
+            self.select_all();
+        }
         self.activity(ctx);
     }
 
@@ -946,7 +958,18 @@ impl Component for Edit {
         canvas.fill_rect(boxr, s.radius, &Brush::Solid(s.fill));
         let border = if self.error.is_empty() { s.border_color } else { danger };
         if self.border && s.border_width > 0.0 && !border.is_transparent() {
-            canvas.stroke_rect(boxr, s.radius, &Stroke::new(border, s.border_width.max(if self.error.is_empty() { 0.0 } else { 1.5 })));
+            // Vazio, o estilo `Edit.empty` do tema (se houver) troca o traço da borda: o
+            // contorno tracejado do campo ainda não preenchido (C37 do Tabernáculo).
+            let empty_dash = self.text.is_empty().then(|| ctx.theme.style("Edit.empty")).flatten().and_then(|st| st.base.border_style.as_deref()).map(|b| match b {
+                "dashed" => vec![6.0, 4.0],
+                "dotted" => vec![1.5, 3.0],
+                _ => Vec::new(),
+            });
+            let mut stroke = s.border_stroke(border, s.border_width.max(if self.error.is_empty() { 0.0 } else { 1.5 }));
+            if let Some(dash) = empty_dash {
+                stroke = if dash.is_empty() { Stroke::new(border, stroke.width) } else { Stroke::new(border, stroke.width).dashed(dash) };
+            }
+            canvas.stroke_rect(boxr, s.radius, &stroke);
         }
         if self.border {
             crate::looks::paint_field_underline_in(canvas, ctx, boxr);

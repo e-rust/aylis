@@ -121,6 +121,30 @@ export class Form extends AylisForm {
     set rememberPlacement(value: boolean) {
         this.setProp("remember_placement", value);
     }
+    get gpu(): Promise<string> {
+        return this.getProp("gpu");
+    }
+    set gpu(value: string) {
+        this.setProp("gpu", value);
+    }
+    get activateOnShow(): Promise<boolean> {
+        return this.getProp("activate_on_show");
+    }
+    set activateOnShow(value: boolean) {
+        this.setProp("activate_on_show", value);
+    }
+    get closeAction(): Promise<string> {
+        return this.getProp("close_action");
+    }
+    set closeAction(value: string) {
+        this.setProp("close_action", value);
+    }
+    get frameRate(): Promise<number> {
+        return this.getProp("frame_rate");
+    }
+    set frameRate(value: number) {
+        this.setProp("frame_rate", value);
+    }
     get left(): Promise<number> {
         return this.getProp("left");
     }
@@ -151,6 +175,24 @@ export class Form extends AylisForm {
     set align(value: string) {
         this.setProp("align", value);
     }
+    get anchors(): Promise<string> {
+        return this.getProp("anchors");
+    }
+    set anchors(value: string) {
+        this.setProp("anchors", value);
+    }
+    get margins(): Promise<string> {
+        return this.getProp("margins");
+    }
+    set margins(value: string) {
+        this.setProp("margins", value);
+    }
+    get padding(): Promise<string> {
+        return this.getProp("padding");
+    }
+    set padding(value: string) {
+        this.setProp("padding", value);
+    }
     get visible(): Promise<boolean> {
         return this.getProp("visible");
     }
@@ -174,6 +216,18 @@ export class Form extends AylisForm {
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
+    }
+    get inheritState(): Promise<boolean> {
+        return this.getProp("inherit_state");
+    }
+    set inheritState(value: boolean) {
+        this.setProp("inherit_state", value);
+    }
+    get translate(): Promise<boolean> {
+        return this.getProp("translate");
+    }
+    set translate(value: boolean) {
+        this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
         return this.getProp("captures_wheel");
@@ -313,6 +367,30 @@ export class Form extends AylisForm {
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
+    get gridRow(): Promise<number> {
+        return this.getProp("grid_row");
+    }
+    set gridRow(value: number) {
+        this.setProp("grid_row", value);
+    }
+    get gridColumn(): Promise<number> {
+        return this.getProp("grid_column");
+    }
+    set gridColumn(value: number) {
+        this.setProp("grid_column", value);
+    }
+    get rowSpan(): Promise<number> {
+        return this.getProp("row_span");
+    }
+    set rowSpan(value: number) {
+        this.setProp("row_span", value);
+    }
+    get grow(): Promise<number> {
+        return this.getProp("grow");
+    }
+    set grow(value: number) {
+        this.setProp("grow", value);
+    }
     get shadow(): Promise<string> {
         return this.getProp("shadow");
     }
@@ -421,14 +499,32 @@ export class Form extends AylisForm {
     set tag(value: number) {
         this.setProp("tag", value);
     }
+    get tagString(): Promise<string> {
+        return this.getProp("tag_string");
+    }
+    set tagString(value: string) {
+        this.setProp("tag_string", value);
+    }
+    get accessibleName(): Promise<string> {
+        return this.getProp("accessible_name");
+    }
+    set accessibleName(value: string) {
+        this.setProp("accessible_name", value);
+    }
     get popupMenu(): Promise<string> {
         return this.getProp("popup_menu");
     }
     set popupMenu(value: string) {
         this.setProp("popup_menu", value);
     }
-    moveToMonitor(a1: number) {
-        this.aylis.send("invoke", { target: this.id, method: "move_to_monitor", args: [a1] });
+    moveToMonitor(monitor: number) {
+        this.aylis.send("invoke", { target: this.id, method: "move_to_monitor", args: [monitor] });
+    }
+    gpuAdapter(): Promise<string> {
+        return this.aylis.call("invoke", { target: this.id, method: "gpu_adapter", args: [] }) as Promise<any>;
+    }
+    gpuAdapters(): Promise<string> {
+        return this.aylis.call("invoke", { target: this.id, method: "gpu_adapters", args: [] }) as Promise<any>;
     }
     focused(): Promise<string> {
         return this.aylis.call("focused", { target: this.id }) as Promise<any>;

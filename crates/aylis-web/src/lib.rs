@@ -99,6 +99,7 @@ fn sync_fonts() {
     if FONT_GENERATION.with(|g| g.replace(generation)) == generation {
         return;
     }
+    forget_widths();
     let add = || -> Result<(), JsValue> {
         let window = web_sys::window().ok_or("sem window")?;
         let document = window.document().ok_or("sem document")?;
@@ -113,6 +114,8 @@ fn sync_fonts() {
             let load: js_sys::Function = js_sys::Reflect::get(&face, &"load".into())?.dyn_into()?;
             let promise: js_sys::Promise = load.call0(&face)?.dyn_into()?;
             let done = Closure::<dyn FnMut(JsValue)>::new(move |_: JsValue| {
+                // A fonte chegou: as larguras medidas com a substituta não valem mais.
+                forget_widths();
                 if let Some(f) = IMAGES.with(|c| c.borrow().on_loaded.clone()) {
                     f();
                 }
@@ -174,8 +177,15 @@ fn load_pixels(width: u32, height: u32, rgba: &[u8], bgra: bool) -> WebImage {
         let ctx: CanvasRenderingContext2d = canvas.get_context("2d")?.ok_or("sem 2d")?.dyn_into()?;
         let mut data = rgba.to_vec();
         if bgra {
+            // O BGRA vem pré-multiplicado (o contrato do tipo); o `ImageData` quer sem.
             for px in data.chunks_exact_mut(4) {
                 px.swap(0, 2);
+                let a = px[3] as u32;
+                if a > 0 && a < 255 {
+                    for c in &mut px[..3] {
+                        *c = ((*c as u32 * 255 + a / 2) / a).min(255) as u8;
+                    }
+                }
             }
         }
         let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&data), width, height)?;
@@ -633,13 +643,14 @@ impl Canvas for Canvas2d<'_> {
         }
         sync_fonts();
         let ctx = &self.ctx.clone();
-        ctx.set_font(&font_css(&style.font));
+        let font = font_css(&style.font);
+        ctx.set_font(&font);
         ctx.set_fill_style_str(&css_color(style.color));
         ctx.set_text_baseline("middle");
         // Quebra e reticências pela regra comum (iguais às do Skia).
         let line_height = line_height(&style.font);
         let max_lines = ((rect.height + 1.0) / line_height).floor().max(1.0) as usize;
-        let mut measure = |s: &str| text_width(ctx, s);
+        let mut measure = |s: &str| text_width(ctx, &font, s);
         let lines = aylis_core::text::layout_lines_marked(text, rect.width, max_lines, style.wrap, style.trimming, &mut measure);
         let total = line_height * lines.len() as f32;
         let top = match style.v_align {
@@ -662,14 +673,14 @@ impl Canvas for Canvas2d<'_> {
                 for (wx, word) in &words {
                     let _ = ctx.fill_text(word, (rect.x + wx) as f64, y as f64);
                 }
-                let right = words.last().map_or(0.0, |(wx, w)| wx + text_width(ctx, w));
+                let right = words.last().map_or(0.0, |(wx, w)| wx + text_width(ctx, &font, w));
                 aylis_core::decorate_line(self, &style.font, style.color, rect.x, right, top + line_height * i as f32, line_height);
                 continue;
             }
             let _ = ctx.fill_text(line, x as f64, y as f64);
             // Sublinhado e tachado: o canvas 2D não faz sozinho.
             if style.font.underline || style.font.strikeout {
-                let w = text_width(ctx, line);
+                let w = text_width(ctx, &font, line);
                 let left = match style.h_align {
                     TextAlign::Leading | TextAlign::Justify => x,
                     TextAlign::Center => x - w / 2.0,
@@ -755,9 +766,9 @@ impl TextService for WebTextService {
         match max_width {
             None => measure_line(&self.ctx, text, style),
             Some(width) => {
-                self.ctx.set_font(&font_css(&style.font));
-                let lines = wrap_lines(&self.ctx, text, width);
-                let widest = lines.iter().map(|l| text_width(&self.ctx, l)).fold(0.0, f32::max);
+                let font = font_css(&style.font);
+                let lines = wrap_lines(&self.ctx, &font, text, width);
+                let widest = lines.iter().map(|l| text_width(&self.ctx, &font, l)).fold(0.0, f32::max);
                 SizeF::new(widest.ceil(), line_height(&style.font) * lines.len() as f32)
             }
         }
@@ -857,23 +868,50 @@ fn line_height(font: &FontSpec) -> f32 {
     (font.size * 1.3).ceil()
 }
 
-fn text_width(ctx: &CanvasRenderingContext2d, text: &str) -> f32 {
-    ctx.measure_text(text).map_or(0.0, |m| m.width() as f32)
+thread_local! {
+    /// As larguras já medidas, por fonte (o CSS dela) e texto. O `measureText` é uma ida ao
+    /// navegador, e o layout e a quebra das linhas medem os mesmos textos a cada quadro (a
+    /// Landing no celular: ~300 medidas por quadro de rolagem, cada texto umas 4 vezes).
+    static WIDTHS: RefCell<HashMap<String, HashMap<String, f32>>> = RefCell::new(HashMap::new());
+    static WIDTH_COUNT: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// Acima disto, as larguras guardadas recomeçam (um editor com um texto enorme não cresce
+/// sem fim).
+const MAX_WIDTHS: usize = 20_000;
+
+fn forget_widths() {
+    WIDTHS.with(|w| w.borrow_mut().clear());
+    WIDTH_COUNT.with(|c| c.set(0));
+}
+
+/// A largura de `text` na fonte `font` (o CSS de [`font_css`]). Só mede (e só troca a fonte
+/// do contexto) na primeira vez.
+fn text_width(ctx: &CanvasRenderingContext2d, font: &str, text: &str) -> f32 {
+    if let Some(w) = WIDTHS.with(|w| w.borrow().get(font).and_then(|m| m.get(text)).copied()) {
+        return w;
+    }
+    ctx.set_font(font);
+    let width = ctx.measure_text(text).map_or(0.0, |m| m.width() as f32);
+    if WIDTH_COUNT.with(|c| c.replace(c.get() + 1)) >= MAX_WIDTHS {
+        forget_widths();
+    }
+    WIDTHS.with(|w| w.borrow_mut().entry(font.to_string()).or_default().insert(text.to_string(), width));
+    width
 }
 
 fn measure_line(ctx: &CanvasRenderingContext2d, text: &str, style: &TextStyle) -> SizeF {
-    ctx.set_font(&font_css(&style.font));
-    SizeF::new(text_width(ctx, text), line_height(&style.font))
+    SizeF::new(text_width(ctx, &font_css(&style.font), text), line_height(&style.font))
 }
 
-/// Quebra por palavras para caber em `width` (a fonte já deve estar no contexto).
-fn wrap_lines(ctx: &CanvasRenderingContext2d, text: &str, width: f32) -> Vec<String> {
+/// Quebra por palavras para caber em `width` na fonte `font`.
+fn wrap_lines(ctx: &CanvasRenderingContext2d, font: &str, text: &str, width: f32) -> Vec<String> {
     let mut lines = Vec::new();
     for paragraph in text.split('\n') {
         let mut line = String::new();
         for word in paragraph.split_whitespace() {
             let candidate = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
-            if !line.is_empty() && text_width(ctx, &candidate) > width {
+            if !line.is_empty() && text_width(ctx, font, &candidate) > width {
                 lines.push(std::mem::take(&mut line));
                 line = word.to_string();
             } else {

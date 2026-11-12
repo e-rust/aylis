@@ -8,22 +8,22 @@ Uma banda do relatório: um contêiner com o tipo dela. `group_field`, nos cabe�
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `kind` | Tipo | um de: `title`, `page_header`, `group_header`, `detail`, `group_footer`, `summary`, `page_footer`, `sub_header`, `sub_detail`, `sub_footer` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `kind` | Tipo | um de: `title`, `page_header`, `group_header`, `detail`, `group_footer`, `summary`, `page_footer`, `sub_header`, `sub_detail`, `sub_footer` |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `new_page` | Nova página | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `new_page` | Nova página | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `group_field` | Campo de grupo | texto |
-| `data_source` | Fonte de dados | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `group_field` | Campo de grupo | texto |  |
+| `data_source` | Fonte de dados | componente |  |
 
 ## Em código
 

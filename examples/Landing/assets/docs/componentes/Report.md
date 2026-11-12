@@ -10,25 +10,25 @@ A página do relatório. Tamanho em pontos (1/72"): A4 = 595 × 842; `landscape`
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto | O nome do documento (no PDF e na fila da impressora). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data_source` | Fonte de dados | componente |
-| `provider` | Provedor | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data_source` | Fonte de dados | componente |  |
+| `provider` | Provedor | componente | Quem gera o PDF (um provedor de PDF, item 25); sem ele, o PDF do próprio Aylis. |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `page_width` | Largura da página | número |
-| `page_height` | Altura da página | número |
-| `landscape` | Paisagem | lógico |
-| `margin` | Margem | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `page_width` | Largura da página | número |  |
+| `page_height` | Altura da página | número |  |
+| `landscape` | Paisagem | lógico |  |
+| `margin` | Margem | número |  |
 
 ## Em código
 

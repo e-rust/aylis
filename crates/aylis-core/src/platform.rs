@@ -58,12 +58,15 @@ pub enum CursorShape {
     ResizeVertical,
     ResizeNeSw,
     ResizeNwSe,
+    /// A mão aberta (o que se pode agarrar e arrastar) e a fechada (arrastando).
+    Grab,
+    Grabbing,
     /// Sem cursor (o vídeo tocando com o mouse parado).
     None,
 }
 
 impl CursorShape {
-    pub const ALL: [CursorShape; 12] = [
+    pub const ALL: [CursorShape; 14] = [
         CursorShape::Default,
         CursorShape::Pointer,
         CursorShape::Text,
@@ -75,6 +78,8 @@ impl CursorShape {
         CursorShape::ResizeVertical,
         CursorShape::ResizeNeSw,
         CursorShape::ResizeNwSe,
+        CursorShape::Grab,
+        CursorShape::Grabbing,
         CursorShape::None,
     ];
 }
@@ -92,6 +97,8 @@ impl crate::prop::PropEnum for CursorShape {
         "resize_vertical",
         "resize_ne_sw",
         "resize_nw_se",
+        "grab",
+        "grabbing",
         "none",
     ];
 
@@ -272,6 +279,8 @@ pub struct FileDialogOptions {
     pub save: bool,
     /// Abrir vários.
     pub multiple: bool,
+    /// O form dono do diálogo (a janela dele fica por baixo, como num modal); `None`: sem dona.
+    pub owner: Option<crate::ComponentId>,
 }
 
 /// Diálogos de arquivo do sistema. Assíncronos: `done` recebe os caminhos escolhidos
@@ -669,9 +678,18 @@ pub trait OffscreenService {
     fn render_png(&self, width: u32, height: u32, scale: f32, background: crate::Color, paint: &mut dyn FnMut(&mut dyn crate::Canvas)) -> Option<Vec<u8>>;
 }
 
+/// O que a janela de um form mostra de verdade, com as vistas nativas por cima (o WebView,
+/// que o desenho fora da tela não tem). O relatório do Tabernáculo, W10.
+pub trait WindowCaptureService {
+    /// A área do form em pixels RGBA (largura, altura, pixels); `None` sem janela aberta.
+    fn capture(&mut self, form: crate::ComponentId) -> Option<(u32, u32, Vec<u8>)>;
+}
+
 /// Conjunto de serviços fornecidos pela plataforma. Todos são opcionais.
 #[derive(Default)]
 pub struct Services {
+    /// A captura da janela (a foto com o WebView).
+    pub window_capture: Option<Box<dyn WindowCaptureService>>,
     pub offscreen: Option<Box<dyn OffscreenService>>,
     pub window: Option<Box<dyn WindowService>>,
     pub timer: Option<Box<dyn TimerService>>,

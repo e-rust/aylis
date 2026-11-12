@@ -10,19 +10,19 @@ Editor da curva de suavização (o de `cubic-bezier` do DevTools): arraste os do
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `preview` | Prévia | lógico |
-| `compact` | Compacto | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `preview` | Prévia | lógico | A bolinha animada embaixo da curva. |
+| `compact` | Compacto | lógico | Só a curva, sem pontos de controle (miniatura). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `x1` | X1 da curva | número |
-| `y1` | Y1 da curva | número |
-| `x2` | X2 da curva | número |
-| `y2` | Y2 da curva | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `x1` | X1 da curva | número |  |
+| `y1` | Y1 da curva | número |  |
+| `x2` | X2 da curva | número |  |
+| `y2` | Y2 da curva | número |  |
 
 ## Eventos
 

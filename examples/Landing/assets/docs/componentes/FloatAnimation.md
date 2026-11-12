@@ -8,19 +8,19 @@ Anima uma propriedade numérica (posição, tamanho, opacidade).
 
 ### Animação
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `property` | Propriedade | texto |
-| `start_value` | Valor inicial | número |
-| `stop_value` | Valor final | número |
-| `duration` | Duração | duração (ms) |
-| `delay` | Atraso | duração (ms) |
-| `easing` | Curva de aceleração | curva de suavização |
-| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` |
-| `auto_reverse` | Volta sozinho | lógico |
-| `looping` | Repetindo | lógico |
-| `enabled` | Habilitado | lógico |
-| `keyframes` | Passos (keyframes) | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `property` | Propriedade | texto |  |
+| `start_value` | Valor inicial | número |  |
+| `stop_value` | Valor final | número |  |
+| `duration` | Duração | duração (ms) |  |
+| `delay` | Atraso | duração (ms) |  |
+| `easing` | Curva de aceleração | curva de suavização |  |
+| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` |  |
+| `auto_reverse` | Volta sozinho | lógico |  |
+| `looping` | Repetindo | lógico |  |
+| `enabled` | Habilitado | lógico |  |
+| `keyframes` | Passos (keyframes) | texto |  |
 
 ## Em código
 

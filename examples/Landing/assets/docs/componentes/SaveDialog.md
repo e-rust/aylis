@@ -8,23 +8,23 @@ Escolher onde salvar um arquivo (diálogo do sistema).
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `filter` | Filtro | texto |
-| `initial_dir` | Pasta inicial | texto |
-| `multiple` | Vários | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `filter` | Filtro | texto | `Imagens\|*.png;*.jpg\|Todos\|*.*` |
+| `initial_dir` | Pasta inicial | texto |  |
+| `multiple` | Vários | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `file_name` | Nome do arquivo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `file_name` | Nome do arquivo | texto |  |
 
 ## Eventos
 

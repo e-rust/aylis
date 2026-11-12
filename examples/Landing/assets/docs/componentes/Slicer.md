@@ -10,22 +10,22 @@ Segmentador de filtro (o "slicer" dos painéis): os valores como botões; marcar
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `multi` | Várias escolhas | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `multi` | Várias escolhas | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `selected` | Escolhidos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `selected` | Escolhidos | texto |  |
 
 ## Eventos
 

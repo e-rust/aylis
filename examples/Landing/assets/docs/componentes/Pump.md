@@ -10,22 +10,22 @@ Bomba de supervisório: o símbolo com o rotor girando quando ligada e o estado 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `label` | Rótulo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `label` | Rótulo | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `speed` | Velocidade | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `speed` | Velocidade | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `running` | Ligado | lógico |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `running` | Ligado | lógico |  |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

@@ -1,34 +1,34 @@
 {
   "cpp/frmCalculadora": {
-    "nanos": 1793669733781465900,
-    "len": 4027
+    "nanos": 1794243140954912500,
+    "len": 4052
   },
   "csharp/frmCalculadora": {
-    "nanos": 1793669212348876700,
-    "len": 3899
+    "nanos": 1794243140974150900,
+    "len": 3931
   },
   "go/frmCalculadora": {
-    "nanos": 1793676938019074000,
-    "len": 3600
+    "nanos": 1794243140991116300,
+    "len": 3628
   },
   "java/frmCalculadora": {
-    "nanos": 1793669295057817800,
-    "len": 4209
+    "nanos": 1794243141015987300,
+    "len": 4241
   },
   "pascal/frmCalculadora": {
-    "nanos": 1794070443274638300,
-    "len": 5359
+    "nanos": 1794243141029824400,
+    "len": 5383
   },
   "python/frmCalculadora": {
-    "nanos": 1794179644445096200,
-    "len": 3087
+    "nanos": 1794455925892030800,
+    "len": 3102
   },
   "rust/frmCalculadora": {
-    "nanos": 1793663929557529700,
-    "len": 4985
+    "nanos": 1794243141074004500,
+    "len": 4987
   },
   "typescript/frmCalculadora": {
-    "nanos": 1793668967800220700,
-    "len": 3471
+    "nanos": 1794243141085673800,
+    "len": 3503
   }
 }

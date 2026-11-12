@@ -218,7 +218,7 @@ impl VideoDecoderFactory for GStreamer {
                 p
             }
         };
-        if !path.exists() {
+        if !crate::video::is_url(&path) && !path.exists() {
             return Err(aylis_core::messages::tf("arquivo não encontrado: {0}", &[&path.display()]));
         }
         let audio_bytes = match source {
@@ -248,10 +248,9 @@ fn quoted(path: &std::path::Path) -> String {
 
 impl GstVideo {
     fn open(gst: &'static Gst, path: PathBuf, audio_bytes: Option<(Arc<Vec<u8>>, String)>) -> Result<Self, String> {
-        let description = format!(
-            "filesrc location={} ! decodebin ! videoconvert ! video/x-raw,format=RGBA ! appsink name=sink sync=false max-buffers=4",
-            quoted(&path)
-        );
+        // Endereço de rede: o `uridecodebin` busca e decodifica (W11).
+        let source = if crate::video::is_url(&path) { format!("uridecodebin uri={}", quoted(&path)) } else { format!("filesrc location={} ! decodebin", quoted(&path)) };
+        let description = format!("{source} ! videoconvert ! video/x-raw,format=RGBA ! appsink name=sink sync=false max-buffers=4");
         Self::open_pipeline(gst, &description, path, audio_bytes)
     }
 

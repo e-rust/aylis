@@ -10,10 +10,10 @@ Botão com ação principal e uma seta para mais opções (o `v-split-btn`): o c
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `icon` | Ícone | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `icon` | Ícone | texto |  |
 
 ## Eventos
 

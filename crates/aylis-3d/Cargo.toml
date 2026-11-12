@@ -17,7 +17,7 @@ fbx = ["dep:ufbx"]
 diagnostics = []
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.2", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.3", path = "../aylis-core" }
 # Cada plataforma leva só o backend dela (o resto entra nas seções abaixo).
 wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "wgsl"] }
 gltf = { version = "1.4", default-features = false, features = ["import", "utils", "names", "KHR_lights_punctual", "KHR_texture_transform", "extensions"] }
@@ -46,4 +46,4 @@ wgpu = { version = "30", default-features = false, features = ["vulkan", "gles"]
 wgpu = { version = "30", default-features = false, features = ["webgpu", "webgl"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["Document", "Element", "HtmlCanvasElement", "HtmlElement", "CssStyleDeclaration", "Node", "Window"] }
+web-sys = { version = "0.3", features = ["console", "Document", "Element", "HtmlCanvasElement", "HtmlElement", "CssStyleDeclaration", "Node", "Window"] }

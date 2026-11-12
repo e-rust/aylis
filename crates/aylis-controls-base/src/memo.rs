@@ -1092,7 +1092,7 @@ impl Component for Memo {
         caret_width: f32 => "Caret",
         caret_style: crate::CaretStyle => "Caret",
         caret_blink: u32 as Duration => "Caret";
-        events: on_change, on_caret_move, on_gutter_click, on_bookmarks_change;
+        events: on_change, on_caret_move, on_gutter_click, on_bookmarks_change, on_paste;
         computed: sel_start: usize => sel_start / set_sel_start,
             sel_length: usize => sel_length / set_sel_length,
             sel_text: String => sel_text / set_sel_text,
@@ -1232,6 +1232,11 @@ impl Component for Memo {
                     // O colado passa pelos mesmos caracteres do digitado.
                     let text = ctx.ui.filter_text(ctx.id, Some(&self.char_filter()), &text);
                     changed = self.insert(&text);
+                    // O que entrou pelo colar (o app reconhece a colagem sem contar linhas;
+                    // C22 do Tabernáculo).
+                    if changed {
+                        ctx.fire("on_paste", EventArgs::Text(text));
+                    }
                 }
             }
             Key::Enter | Key::Backspace | Key::Delete => {}

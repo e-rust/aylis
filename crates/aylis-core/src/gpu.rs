@@ -3,9 +3,16 @@
 //! OpenGL do Linux (pelo Mesa) leem a escolha ao abrir a GPU.
 //!
 //! O projeto guarda a escolha (`"gpu"` no `.aylisproj`); com os diagnósticos ligados (exemplos,
-//! testes e o app com `dev`), `AYLIS_GPU` troca na hora: `alto-desempenho`, `economia` ou parte do nome da placa (`AYLIS_GPU=radeon`).
+//! testes e o app com `dev`), `AYLIS_GPU` troca na hora: `alto-desempenho`, `economia`, `monitor` ou parte do nome da placa (`AYLIS_GPU=radeon`).
+//!
+//! Cada form pode pedir outra (a propriedade `gpu` do `Form`; vazia: a do projeto). Com
+//! `monitor`, a janela desenha na placa ligada ao monitor em que está e troca de placa quando
+//! passa para um monitor da outra: sem isso, o Windows copia cada quadro de uma placa para a
+//! outra, e a janela trava (veja `docs/gpu-por-monitor.md`).
 
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
+
+use crate::ComponentId;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum GpuChoice {
@@ -16,6 +23,9 @@ pub enum GpuChoice {
     HighPerformance,
     /// A que gasta menos energia (a integrada).
     LowPower,
+    /// A placa do monitor em que a janela está, trocando quando ela muda de monitor (no
+    /// Windows e no Linux com Wayland; nas outras plataformas, a do sistema).
+    FollowMonitor,
     /// A primeira cujo nome contém este texto (sem diferenciar maiúsculas).
     Named(String),
 }
@@ -27,6 +37,7 @@ impl GpuChoice {
             "" | "auto" | "automatica" | "automática" => GpuChoice::Auto,
             "alto-desempenho" | "high-performance" | "alto" | "high" => GpuChoice::HighPerformance,
             "economia" | "low-power" | "baixo" | "low" => GpuChoice::LowPower,
+            "monitor" | "seguir-monitor" | "follow-monitor" => GpuChoice::FollowMonitor,
             _ => GpuChoice::Named(text.trim().to_string()),
         }
     }
@@ -37,6 +48,7 @@ impl GpuChoice {
             GpuChoice::Auto => String::new(),
             GpuChoice::HighPerformance => "alto-desempenho".into(),
             GpuChoice::LowPower => "economia".into(),
+            GpuChoice::FollowMonitor => "monitor".into(),
             GpuChoice::Named(name) => name.clone(),
         }
     }
@@ -106,6 +118,48 @@ pub fn set_choice(choice: GpuChoice) {
 /// A escolha em vigor (a do projeto; com os diagnósticos, a plataforma aceita `AYLIS_GPU`).
 pub fn choice() -> GpuChoice {
     CHOICE.lock().map(|c| c.clone()).unwrap_or_default()
+}
+
+/// A escolha de um form: a propriedade `gpu` dele (`form_text`) ou, vazia, a do projeto.
+pub fn choice_for(form_text: &str) -> GpuChoice {
+    if form_text.trim().is_empty() { choice() } else { GpuChoice::parse(form_text) }
+}
+
+/// Quem lista as placas (a plataforma põe ao abrir) e a lista, perguntada só na primeira vez
+/// que alguém pede: as placas não mudam com o app aberto.
+static ADAPTER_LIST: OnceLock<fn() -> Vec<String>> = OnceLock::new();
+static ADAPTERS: OnceLock<Vec<String>> = OnceLock::new();
+
+/// A plataforma diz como listar as placas de vídeo (no Windows, pelo DXGI).
+pub fn set_adapter_list(list: fn() -> Vec<String>) {
+    let _ = ADAPTER_LIST.set(list);
+}
+
+/// As placas de vídeo da máquina, pelo nome (vazio onde não se sabe).
+pub fn adapters() -> &'static [String] {
+    ADAPTERS.get_or_init(|| ADAPTER_LIST.get().map(|list| list()).unwrap_or_default())
+}
+
+impl crate::Ui {
+
+    /// A placa em que a janela do form desenha agora (`None`: não se sabe, como na CPU).
+    pub fn form_gpu(&self, form: ComponentId) -> Option<&str> {
+        self.form_gpus.get(&self.root_of(form)).map(String::as_str)
+    }
+
+    /// A plataforma informa a placa da janela do form. Se mudou (não na primeira vez), dispara
+    /// o `on_gpu_change` do form com o nome da placa nova.
+    pub fn set_form_gpu(&mut self, form: ComponentId, adapter: Option<String>) {
+        let old = match adapter.clone() {
+            Some(a) => self.form_gpus.insert(form, a),
+            None => self.form_gpus.remove(&form),
+        };
+        if let (Some(old), Some(new)) = (old, adapter)
+            && old != new
+        {
+            self.fire(form, "on_gpu_change", &crate::EventArgs::Text(new));
+        }
+    }
 }
 
 thread_local! {

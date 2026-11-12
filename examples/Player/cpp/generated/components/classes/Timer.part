@@ -11,6 +11,9 @@ struct Timer : aylis::Component {
     void set_precision(const std::string& v) const { set_prop_("precision", v); }
     bool background() const { return get_prop_("background").boolean(); }
     void set_background(bool v) const { set_prop_("background", v); }
+    bool one_shot() const { return get_prop_("one_shot").boolean(); }
+    void set_one_shot(bool v) const { set_prop_("one_shot", v); }
     double drift() const { return get_prop_("drift").number(); }
     void set_drift(double v) const { set_prop_("drift", v); }
+    void restart() const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "restart"}, {"args", aylis::Json::array({})}}); }
 };

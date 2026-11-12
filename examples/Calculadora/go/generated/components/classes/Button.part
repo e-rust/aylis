@@ -29,6 +29,21 @@ func (c aylisButton) SetModalResult(v string) { c.Set("modal_result", v) }
 func (c aylisButton) RepeatEnter() bool { return asBool(c.Get("repeat_enter")) }
 func (c aylisButton) SetRepeatEnter(v bool) { c.Set("repeat_enter", v) }
 
+func (c aylisButton) DefaultButton() bool { return asBool(c.Get("default_button")) }
+func (c aylisButton) SetDefaultButton(v bool) { c.Set("default_button", v) }
+
+func (c aylisButton) CancelButton() bool { return asBool(c.Get("cancel_button")) }
+func (c aylisButton) SetCancelButton(v bool) { c.Set("cancel_button", v) }
+
+func (c aylisButton) HAlign() string { return asText(c.Get("h_align")) }
+func (c aylisButton) SetHAlign(v string) { c.Set("h_align", v) }
+
+func (c aylisButton) GroupIndex() int64 { return int64(asNumber(c.Get("group_index"))) }
+func (c aylisButton) SetGroupIndex(v int64) { c.Set("group_index", v) }
+
+func (c aylisButton) Radius() string { return asText(c.Get("radius")) }
+func (c aylisButton) SetRadius(v string) { c.Set("radius", v) }
+
 func (c aylisButton) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisButton) SetLeft(v float64) { c.Set("left", v) }
 
@@ -44,6 +59,15 @@ func (c aylisButton) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisButton) Align() string { return asText(c.Get("align")) }
 func (c aylisButton) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisButton) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisButton) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisButton) Margins() string { return asText(c.Get("margins")) }
+func (c aylisButton) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisButton) Padding() string { return asText(c.Get("padding")) }
+func (c aylisButton) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisButton) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisButton) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -55,6 +79,12 @@ func (c aylisButton) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisButton) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisButton) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisButton) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisButton) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisButton) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisButton) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisButton) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisButton) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -125,6 +155,18 @@ func (c aylisButton) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisButton) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisButton) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisButton) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisButton) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisButton) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisButton) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisButton) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisButton) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisButton) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisButton) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisButton) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisButton) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -178,6 +220,12 @@ func (c aylisButton) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisButton) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisButton) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisButton) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisButton) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisButton) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisButton) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisButton) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisButton) SetPopupMenu(v string) { c.Set("popup_menu", v) }

@@ -394,11 +394,18 @@ pub trait Component: Any {
         }
     }
 
+    /// A marca do controle agora (`checked`), lida pelo núcleo na pintura: o tema reflete a
+    /// marca mesmo quando o campo muda direto, sem o `set_prop` (C02 do Tabernáculo).
+    fn checked_state(&self) -> Option<bool> {
+        self.inner().and_then(|i| i.checked_state())
+    }
+
     /// Os argumentos do `on_change` quando a propriedade de valor `name` muda pelo código
     /// ([`Ui::set_prop`](crate::Ui::set_prop): o acesso tipado, o protocolo), como na VCL;
     /// `value` é o valor novo. O padrão é `EventArgs::Value(value)`: o controle que dispara
     /// outro argumento quando o usuário muda (o texto do item, numa ComboBox) devolve o mesmo
     /// aqui, e `None` não dispara. Quais propriedades contam: [`is_value_property`].
+
     fn change_args(&self, name: &str, value: &PropValue) -> Option<EventArgs> {
         match self.inner() {
             Some(inner) => inner.change_args(name, value),
@@ -462,11 +469,31 @@ pub trait Component: Any {
         self.inner().and_then(|i| i.arrange(area, children))
     }
 
+    /// A linha de base do texto do controle, em pixels do topo dele, na altura `height` (para
+    /// o `FlowLayout` com `baseline` alinhar os textos de uma fileira; L12 do Tabernáculo).
+    /// `None` (o padrão): o controle não tem texto, e fica pelo fundo.
+    fn baseline(&self, ui: &crate::Ui, id: ComponentId, height: f32) -> Option<f32> {
+        self.inner().and_then(|i| i.baseline(ui, id, height))
+    }
+
+    /// O vão entre os filhos encaixados (Top, Left...), em pixels: o `gap` do `Layout` e do
+    /// `Panel` (o `gap` do CSS; L05 do Tabernáculo). Padrão: 0.
+    fn dock_gap(&self) -> f32 {
+        self.inner().map_or(0.0, |i| i.dock_gap())
+    }
+
     /// A altura que o conteúdo pede na largura `width` (o texto de um Label quebrado nela),
     /// para o `auto_size`. `None` (o padrão): o controle não mede o conteúdo (um contêiner
     /// com `auto_size` fica da altura dos filhos encaixados em cima e embaixo).
     fn auto_height(&self, ui: &crate::Ui, id: ComponentId, width: f32) -> Option<f32> {
         self.inner().and_then(|i| i.auto_height(ui, id, width))
+    }
+
+    /// A largura que o conteúdo pede (o texto de um Label sem quebra), para o `auto_size` de
+    /// quem não é esticado na largura (`align` left, right ou none). `None` (o padrão): a
+    /// largura fica a pedida.
+    fn auto_width(&self, ui: &crate::Ui, id: ComponentId) -> Option<f32> {
+        self.inner().and_then(|i| i.auto_width(ui, id))
     }
 
     /// Uma camada aberta por outro (a lista de um ComboBox, as sugestões de um campo), posta
@@ -476,6 +503,16 @@ pub trait Component: Any {
     ///
     /// [`dies_with`]: Component::dies_with
     fn closes_on_outside_press(&self) -> bool {
+        false
+    }
+
+    /// O clique fora fechou a camada ([`closes_on_outside_press`]): `true` se ela mesma se
+    /// escondeu e deve continuar existindo (o `Popover`, desenhado no form com os filhos);
+    /// `false` (o padrão), o núcleo a libera.
+    ///
+    /// [`closes_on_outside_press`]: Component::closes_on_outside_press
+    fn dismissed(&mut self, ctx: &mut EventCtx<'_>) -> bool {
+        let _ = ctx;
         false
     }
 
@@ -578,6 +615,12 @@ pub trait PlatformHooks {
     fn files_dropped(&mut self, _ctx: &mut EventCtx<'_>, _paths: &[String]) -> bool {
         false
     }
+
+    /// Arquivos do sistema passando por cima (`Some`, com os caminhos) ou saindo, soltos ou
+    /// cancelados (`None`). Devolve `true` se o controle os receberia.
+    fn files_hovering(&mut self, _ctx: &mut EventCtx<'_>, _paths: Option<&[String]>) -> bool {
+        false
+    }
 }
 
 /// Os ganchos do designer: pontos que se arrastam dentro do controle (o separador das
@@ -607,6 +650,14 @@ pub struct ArrangeItem {
     pub margins: Bounds,
     /// Quantas colunas o filho pede numa grade ([`ControlBase::column_span`]).
     pub span: u32,
+    /// Quantas linhas ([`ControlBase::row_span`]).
+    pub row_span: u32,
+    /// O lugar fixo na grade ([`ControlBase::grid_cell`]).
+    pub cell: Option<(u32, u32)>,
+    /// A parte do espaço livre da linha que ele toma ([`ControlBase::grow`]).
+    pub grow: f32,
+    /// A linha de base do texto dele, do topo ([`Component::baseline`]); posta pelo layout.
+    pub baseline: Option<f32>,
     /// A escala de espaços da vista ativa do form: o contêiner multiplica os espaços dele
     /// (`gap`) por ela.
     pub spacing: f32,
@@ -615,7 +666,17 @@ pub struct ArrangeItem {
 impl ArrangeItem {
     /// O item de um controle.
     pub fn of(id: ComponentId, cb: &ControlBase) -> Self {
-        ArrangeItem { id, size: SizeF::new(cb.width(), cb.height()), margins: cb.margins(), span: cb.column_span(), spacing: cb.spacing_scale() }
+        ArrangeItem {
+            id,
+            size: SizeF::new(cb.width(), cb.height()),
+            margins: cb.margins(),
+            span: cb.column_span(),
+            row_span: cb.row_span(),
+            cell: cb.grid_cell(),
+            grow: cb.grow(),
+            baseline: None,
+            spacing: cb.spacing_scale(),
+        }
     }
 }
 
@@ -626,7 +687,11 @@ pub enum NativeView {
     /// muda, a plataforma carrega de novo. `navigation`: os endereços (origens ou prefixos)
     /// para onde a página pode navegar (vazia, todos); `sandbox`: o atributo do `<iframe>`
     /// no navegador.
-    Web { url: String, html: String, generation: u64, navigation: Vec<String>, sandbox: String },
+    ///
+    /// O ambiente do navegador (só ao criar a vista; o relatório do Tabernáculo, W07):
+    /// `background` é a cor antes da primeira pintura da página; `data_dir`, a pasta de dados
+    /// (vazia: a do sistema); `browser_args`, os argumentos do navegador do sistema (o WebView2).
+    Web { url: String, html: String, generation: u64, navigation: Vec<String>, sandbox: String, background: Option<crate::Color>, data_dir: String, browser_args: String },
 }
 
 /// Mensagem de uma página do navegador embutido para o app: o texto e a URL de quem mandou.
@@ -791,32 +856,58 @@ pub(crate) struct AnchorRef {
 /// **reais**, calculados pelo layout (Align/Anchors), ficam em [`bounds`](Self::bounds).
 #[derive(Clone, Debug)]
 pub struct ControlBase {
+    /// Posição a partir do canto do pai; só vale com `align: none`.
     left: f32,
+    /// Posição a partir do topo do pai; só vale com `align: none`.
     top: f32,
+    /// Largura pedida; o `align` pode esticar (top, bottom, client).
     width: f32,
+    /// Altura pedida; o `align` pode esticar (left, right, client).
     height: f32,
+    /// Espaço por fora, até os vizinhos e a borda do pai: número, `[h, v]` ou `[esquerda, cima, direita, baixo]`.
     margins: Bounds,
+    /// Espaço por dentro, até os filhos: número, `[h, v]` ou `[esquerda, cima, direita, baixo]`.
     padding: Bounds,
+    /// Encaixe no pai: `top`/`bottom` esticam na largura, `left`/`right` na altura, `client` ocupa o resto; `none` usa `left`/`top`.
     align: Align,
+    /// Com `align: none`, os lados que acompanham o pai quando ele muda de tamanho: `left,right` estica na largura, só `right` anda junto com a borda direita.
     anchors: Anchors,
+    /// Aparece; escondido não ocupa lugar no layout.
     visible: bool,
+    /// Aceita clique e teclado; desligado aparece apagado, e os filhos também.
     enabled: bool,
+    /// Recebe o mouse; desligado, o clique passa para o que está embaixo.
     hit_test: bool,
+    /// Corta o desenho dos filhos na borda dele.
     clip_children: bool,
+    /// Pinta com o estado do pai (`hover`, `pressed`, `checked`): o rótulo da linha marcada
+    /// fica com a cor de marcado do tema sem trocar o estilo filho a filho (C25 do Tabernáculo).
+    inherit_state: bool,
+    /// Os textos dele passam pela tradução do app (o padrão). Desligado, ficam como estão e
+    /// não entram na lista do que traduzir: um nome próprio, um código, um valor de exemplo
+    /// (G19 do Tabernáculo).
+    translatable: bool,
     /// A roda do mouse em cima dele fica com ele (não rola os contêineres de fora), mesmo
     /// sem ele rolar: uma prévia que dá zoom com a roda, um mapa, um gráfico.
     captures_wheel: bool,
+    /// Pode receber o foco do teclado (clique ou Tab).
     can_focus: bool,
+    /// Pode ser arrastado (o `drag` diz o que vai junto).
     draggable: bool,
+    /// Aceita o que é solto em cima dele (`on_drop`).
     accepts_drops: bool,
     /// O arrasto declarado (sem handler): o que vai (`"cliente:123"`, o tipo antes do primeiro
     /// `:`) e o rótulo que acompanha o mouse; os tipos que este destino aceita (`"cliente;produto"`).
     drag: Option<Box<DragDecl>>,
+    /// Entra na ordem do Tab.
     tab_stop: bool,
+    /// No toque, arrastar rola o contêiner de fora em vez de ir para o controle.
     pan_on_touch: bool,
     /// Menu de contexto (como o `PopupMenu` do `TControl`): abre no clique direito.
     pub(crate) popup_menu: Option<ComponentId>,
+    /// O cursor do mouse em cima dele.
     cursor: CursorShape,
+    /// Transparência de 0 (invisível) a 1, com os filhos; continua no layout e clicável.
     opacity: f32,
     /// Giro em graus, em torno do centro (o `RotationAngle` do FMX).
     rotation: f32,
@@ -835,17 +926,30 @@ pub struct ControlBase {
     max_height: f32,
     /// Encaixado: estica na faixa ou fica com o próprio tamanho no começo, meio ou fim.
     self_align: SelfAlign,
-    /// A altura sai do conteúdo (como o `AutoSize` do Delphi): veja [`ControlBase::auto_size`].
+    /// O tamanho sai do conteúdo: a altura; num Label encaixado à esquerda ou à direita, também a largura.
     auto_size: bool,
     /// Quantas colunas ocupa num `GridLayout` (o `colspan`; 1 ou 0: uma).
     column_span: u32,
+    /// O lugar fixo num `GridLayout` (o `TGridPanel`): linha e coluna (-1: segue a ordem) e
+    /// quantas linhas ocupa. O relatório do Tabernáculo, G12.
+    grid_row: i16,
+    grid_column: i16,
+    row_span: u16,
+    /// Quanto do espaço que sobra na linha de um `FlowLayout` ele toma (o `flex-grow`): um
+    /// `Layout` vazio com `grow` 1 é o espaçador que empurra o resto para o fim (L04).
+    grow: f32,
     /// As escalas de fonte e de espaços da vista ativa do form (postas pelo layout; veja
     /// `views.rs`): os getters de `margins`/`padding` e a fonte da pintura já saem escalados.
     pub(crate) text_scale: f32,
     pub(crate) spacing_scale: f32,
     /// Sombra do controle; quando há, vale no lugar da sombra do estilo.
     shadow: Option<crate::canvas::Shadow>,
+    /// Um número livre para o código (não muda nada na tela).
     tag: i64,
+    /// Os textos que quase nenhum controle usa (o `tag_string`, o `accessible_name`), numa
+    /// caixa só, criada quando um deles tem algo: 8 bytes por controle.
+    rare: Option<Box<RareTexts>>,
+    /// A variante do tema (`primary`, `outline`, `flat`, `card`...): o estilo `Classe.variante`.
     style: String,
     /// Tema próprio (pelo nome), que vale também para os filhos. Vazio = o do pai.
     theme: String,
@@ -901,6 +1005,8 @@ impl ControlBase {
         PropInfo::new("enabled", PropKind::Bool, "Behavior"),
         PropInfo::new("hit_test", PropKind::Bool, "Behavior"),
         PropInfo::new("clip_children", PropKind::Bool, "Behavior"),
+        PropInfo::new("inherit_state", PropKind::Bool, "Appearance"),
+        PropInfo::new("translate", PropKind::Bool, "Behavior"),
         PropInfo::new("captures_wheel", PropKind::Bool, "Behavior"),
         PropInfo::new("can_focus", PropKind::Bool, "Behavior"),
         PropInfo::new("draggable", PropKind::Bool, "Behavior"),
@@ -924,6 +1030,10 @@ impl ControlBase {
         PropInfo::new("self_align", PropKind::Enum(<SelfAlign as crate::prop::PropEnum>::NAMES), "Layout"),
         PropInfo::new("auto_size", PropKind::Bool, "Layout"),
         PropInfo::new("column_span", PropKind::Int, "Layout"),
+        PropInfo::new("grid_row", PropKind::Int, "Layout"),
+        PropInfo::new("grid_column", PropKind::Int, "Layout"),
+        PropInfo::new("row_span", PropKind::Int, "Layout"),
+        PropInfo::new("grow", PropKind::Float, "Layout"),
         PropInfo::new("shadow", PropKind::Shadow, "Appearance"),
         PropInfo::new("style", PropKind::String, "Appearance"),
         PropInfo::new("theme", PropKind::String, "Appearance"),
@@ -942,6 +1052,8 @@ impl ControlBase {
         PropInfo::new("font_strikeout", PropKind::Bool, "Font"),
         PropInfo::new("hint", PropKind::String, "Behavior"),
         PropInfo::new("tag", PropKind::Int, "Misc"),
+        PropInfo::new("tag_string", PropKind::String, "Misc"),
+        PropInfo::new("accessible_name", PropKind::String, "Behavior"),
         PropInfo::new("popup_menu", PropKind::Component, "Behavior"),
         PropInfo::new("on_click", PropKind::Event, "Events"),
         PropInfo::new("on_dbl_click", PropKind::Event, "Events"),
@@ -961,6 +1073,8 @@ impl ControlBase {
         PropInfo::new("on_resize", PropKind::Event, "Events"),
         PropInfo::new("on_drag_start", PropKind::Event, "Events"),
         PropInfo::new("on_drag_over", PropKind::Event, "Events"),
+        PropInfo::new("on_drag_move", PropKind::Event, "Events"),
+        PropInfo::new("on_drag_leave", PropKind::Event, "Events"),
         PropInfo::new("on_drag_drop", PropKind::Event, "Events"),
         PropInfo::new("on_drag_end", PropKind::Event, "Events"),
     ];
@@ -979,6 +1093,8 @@ impl ControlBase {
             enabled: true,
             hit_test: true,
             clip_children: false,
+            inherit_state: false,
+            translatable: true,
             captures_wheel: false,
             can_focus: false,
             draggable: false,
@@ -1000,10 +1116,15 @@ impl ControlBase {
             self_align: SelfAlign::Stretch,
             auto_size: false,
             column_span: 1,
+            grid_row: -1,
+            grid_column: -1,
+            row_span: 1,
+            grow: 0.0,
             text_scale: 1.0,
             spacing_scale: 1.0,
             shadow: None,
             tag: 0,
+            rare: None,
             style: String::new(),
             theme: String::new(),
             hint: String::new(),
@@ -1108,6 +1229,24 @@ impl ControlBase {
 
     pub fn hit_test(&self) -> bool {
         self.hit_test
+    }
+
+    pub fn translatable(&self) -> bool {
+        self.translatable
+    }
+
+    pub fn set_translatable(&mut self, v: bool) -> &mut Self {
+        self.translatable = v;
+        self
+    }
+
+    pub fn inherit_state(&self) -> bool {
+        self.inherit_state
+    }
+
+    pub fn set_inherit_state(&mut self, v: bool) -> &mut Self {
+        self.inherit_state = v;
+        self
     }
 
     pub fn clip_children(&self) -> bool {
@@ -1357,6 +1496,37 @@ impl ControlBase {
         self.column_span.max(1)
     }
 
+    /// O lugar fixo na grade: (linha, coluna), ou `None` (segue a ordem dos filhos).
+    pub fn grid_cell(&self) -> Option<(u32, u32)> {
+        (self.grid_row >= 0 && self.grid_column >= 0).then(|| (self.grid_row as u32, self.grid_column as u32))
+    }
+
+    pub fn set_grid_cell(&mut self, cell: Option<(u32, u32)>) -> &mut Self {
+        let (r, c) = cell.map_or((-1, -1), |(r, c)| (r.min(i16::MAX as u32) as i16, c.min(i16::MAX as u32) as i16));
+        self.grid_row = r;
+        self.grid_column = c;
+        self
+    }
+
+    /// Quantas linhas ocupa num `GridLayout` (o `rowspan`).
+    pub fn row_span(&self) -> u32 {
+        u32::from(self.row_span.max(1))
+    }
+
+    pub fn set_row_span(&mut self, span: u32) -> &mut Self {
+        self.row_span = span.clamp(1, 64) as u16;
+        self
+    }
+
+    pub fn grow(&self) -> f32 {
+        self.grow
+    }
+
+    pub fn set_grow(&mut self, grow: f32) -> &mut Self {
+        self.grow = grow.max(0.0);
+        self
+    }
+
     pub fn set_column_span(&mut self, span: u32) -> &mut Self {
         self.column_span = span.max(1);
         self
@@ -1374,6 +1544,29 @@ impl ControlBase {
 
     pub fn tag(&self) -> i64 {
         self.tag
+    }
+
+    /// O nome que o leitor de tela fala (o `aria-label`), no lugar do texto do controle: um
+    /// botão só com ícone, um campo sem rótulo. O relatório do Tabernáculo, C29.
+    pub fn accessible_name(&self) -> &str {
+        self.rare.as_ref().map_or("", |r| &r.accessible_name)
+    }
+
+    pub fn set_accessible_name(&mut self, v: &str) -> &mut Self {
+        self.rare_mut(|r| r.accessible_name = v.into());
+        self
+    }
+
+    fn rare_mut(&mut self, change: impl FnOnce(&mut RareTexts)) {
+        let rare = self.rare.get_or_insert_with(Default::default);
+        change(rare);
+        if rare.tag_string.is_empty() && rare.accessible_name.is_empty() {
+            self.rare = None;
+        }
+    }
+
+    pub fn tag_string(&self) -> &str {
+        self.rare.as_ref().map_or("", |r| &r.tag_string)
     }
 
     /// Variante de estilo do tema ("primary", "danger", "flat"...). Vazio = estilo da classe.
@@ -1436,15 +1629,23 @@ impl ControlBase {
 
     // ----- escrita (encadeável) -----
 
+    // A posição e o tamanho pedidos mudaram: as âncoras medem de novo a partir daqui. Só quando
+    // o valor muda de fato: regravar o mesmo valor a cada arrumação (o `auto_size`) refazia a
+    // referência sempre, e o controle ancorado nunca acompanhava o pai (relatório do InsightDB,
+    // 11/11: nem a célula do GridLayout, nem a janela em tela cheia).
     pub fn set_left(&mut self, v: f32) -> &mut Self {
-        self.left = v;
-        self.anchor_ref = None;
+        if self.left != v {
+            self.left = v;
+            self.anchor_ref = None;
+        }
         self
     }
 
     pub fn set_top(&mut self, v: f32) -> &mut Self {
-        self.top = v;
-        self.anchor_ref = None;
+        if self.top != v {
+            self.top = v;
+            self.anchor_ref = None;
+        }
         self
     }
 
@@ -1453,15 +1654,36 @@ impl ControlBase {
     }
 
     pub fn set_width(&mut self, v: f32) -> &mut Self {
-        self.width = v.max(0.0);
-        self.anchor_ref = None;
+        if self.width != v.max(0.0) {
+            self.width = v.max(0.0);
+            self.anchor_ref = None;
+        }
         self
     }
 
     pub fn set_height(&mut self, v: f32) -> &mut Self {
-        self.height = v.max(0.0);
-        self.anchor_ref = None;
+        if self.height != v.max(0.0) {
+            self.height = v.max(0.0);
+            self.anchor_ref = None;
+        }
         self
+    }
+
+    /// A largura que o próprio layout mede (o `auto_size`), como [`set_measured_height`].
+    pub(crate) fn set_measured_width(&mut self, v: f32) {
+        self.width = v.max(0.0);
+        if let Some(r) = self.anchor_ref.as_mut() {
+            r.rect.width = self.width;
+        }
+    }
+
+    /// A altura que o próprio layout mede (o `auto_size`): muda o tamanho sem perder a
+    /// referência das âncoras (a altura guardada nela acompanha).
+    pub(crate) fn set_measured_height(&mut self, v: f32) {
+        self.height = v.max(0.0);
+        if let Some(r) = self.anchor_ref.as_mut() {
+            r.rect.height = self.height;
+        }
     }
 
     pub fn set_size(&mut self, width: f32, height: f32) -> &mut Self {
@@ -1573,6 +1795,11 @@ impl ControlBase {
         self
     }
 
+    pub fn set_tag_string(&mut self, v: &str) -> &mut Self {
+        self.rare_mut(|r| r.tag_string = v.into());
+        self
+    }
+
     pub fn set_style(&mut self, v: impl Into<String>) -> &mut Self {
         self.style = v.into();
         self
@@ -1600,6 +1827,8 @@ impl ControlBase {
             "enabled" => self.enabled.into(),
             "hit_test" => self.hit_test.into(),
             "clip_children" => self.clip_children.into(),
+            "inherit_state" => self.inherit_state.into(),
+            "translate" => self.translatable.into(),
             "captures_wheel" => self.captures_wheel.into(),
             "can_focus" => self.can_focus.into(),
             "draggable" => self.draggable.into(),
@@ -1623,6 +1852,10 @@ impl ControlBase {
             "self_align" => PropValue::enum_value(self.self_align),
             "auto_size" => self.auto_size.into(),
             "column_span" => (self.column_span() as i64).into(),
+            "grid_row" => i64::from(self.grid_row).into(),
+            "grid_column" => i64::from(self.grid_column).into(),
+            "row_span" => (self.row_span() as i64).into(),
+            "grow" => f64::from(self.grow).into(),
             "shadow" => crate::prop::PropType::to_value(&self.shadow),
             "style" => self.style.clone().into(),
             "fill" => crate::prop::PropType::to_value(&self.colors.fill),
@@ -1641,6 +1874,8 @@ impl ControlBase {
             "theme" => self.theme.clone().into(),
             "hint" => self.hint.clone().into(),
             "tag" => self.tag.into(),
+            "tag_string" => self.tag_string().to_string().into(),
+            "accessible_name" => self.accessible_name().to_string().into(),
             "popup_menu" => PropValue::Component(self.popup_menu),
             _ => return None,
         })
@@ -1660,6 +1895,8 @@ impl ControlBase {
             "enabled" => self.set_enabled(value.to_bool()?),
             "hit_test" => self.set_hit_test(value.to_bool()?),
             "clip_children" => self.set_clip_children(value.to_bool()?),
+            "inherit_state" => self.set_inherit_state(value.to_bool()?),
+            "translate" => self.set_translatable(value.to_bool()?),
             "captures_wheel" => self.set_captures_wheel(value.to_bool()?),
             "can_focus" => self.set_can_focus(value.to_bool()?),
             "draggable" => self.set_draggable(value.to_bool()?),
@@ -1695,6 +1932,16 @@ impl ControlBase {
             "self_align" => self.set_self_align(value.to_enum()?),
             "auto_size" => self.set_auto_size(value.to_bool()?),
             "column_span" => self.set_column_span(value.to_f64()?.clamp(1.0, 64.0) as u32),
+            "grid_row" => {
+                self.grid_row = value.to_f64()?.clamp(-1.0, 4096.0) as i16;
+                self
+            }
+            "grid_column" => {
+                self.grid_column = value.to_f64()?.clamp(-1.0, 4096.0) as i16;
+                self
+            }
+            "row_span" => self.set_row_span(value.to_f64()?.clamp(1.0, 64.0) as u32),
+            "grow" => self.set_grow(value.to_f32()?),
             "shadow" => self.set_shadow(crate::prop::PropType::from_value(value)?),
             "style" => self.set_style(value.to_str()?),
             "fill" => {
@@ -1752,6 +1999,8 @@ impl ControlBase {
             "theme" => self.set_theme_name(value.to_str()?),
             "hint" => self.set_hint(value.to_str()?),
             "tag" => self.set_tag(value.to_i64()?),
+            "tag_string" => self.set_tag_string(value.to_str()?),
+            "accessible_name" => self.set_accessible_name(value.to_str()?),
             "popup_menu" => {
                 self.popup_menu = value.to_component()?;
                 self
@@ -1981,4 +2230,12 @@ pub struct DragDecl {
     pub drop_types: String,
     /// O `DragImage` que acompanha o cursor no arrasto (a imagem e o tamanho).
     pub image: Option<ComponentId>,
+}
+
+/// Os textos raros do [`ControlBase`].
+#[derive(Clone, Debug, Default)]
+struct RareTexts {
+    /// Um texto livre para o código (o `TagString` do FMX: um id, um caminho, um JSON pequeno).
+    tag_string: Box<str>,
+    accessible_name: Box<str>,
 }

@@ -25,6 +25,8 @@ pub struct Timer {
     pub enabled: bool,
     pub precision: TimerPrecision,
     pub background: bool,
+    /// Dispara uma vez e se desliga (`enabled` volta a `false`); ligar de novo conta outra vez.
+    pub one_shot: bool,
     drift: f64,
 }
 
@@ -36,7 +38,14 @@ impl Default for Timer {
 
 impl Timer {
     pub fn new(interval_ms: u32) -> Self {
-        Self { interval: interval_ms, enabled: true, precision: TimerPrecision::Normal, background: false, drift: 0.0 }
+        Self { interval: interval_ms, enabled: true, precision: TimerPrecision::Normal, background: false, one_shot: false, drift: 0.0 }
+    }
+
+    /// Recomeça a contar o intervalo a partir de agora (o próximo disparo fica a um intervalo
+    /// inteiro), ligando o timer se estava desligado.
+    pub fn restart(ui: &mut Ui, id: ComponentId) {
+        let _ = ui.set_prop(id, "enabled", true);
+        ui.restart_timer(id);
     }
 
     /// Liga ou desliga pelo código.
@@ -62,9 +71,36 @@ impl Component for Timer {
         interval: u32 as Duration => "Behavior",
         enabled: bool => "Behavior",
         precision: TimerPrecision => "Behavior",
-        background: bool => "Behavior";
+        background: bool => "Behavior",
+        one_shot: bool => "Behavior";
         events: on_timer;
         computed: drift: f64 => drift / set_drift
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        const METHODS: &[aylis_core::MethodInfo] = &[aylis_core::MethodInfo::new("restart", &[], None)];
+        METHODS
+    }
+
+    /// `restart()`: recomeça a contar o intervalo agora (o relatório do Tabernáculo, P10).
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        match method {
+            "restart" => {
+                self.enabled = true;
+                // O componente está fora do `Ui` durante o método: o agendamento vem depois.
+                let id = ctx.id;
+                ctx.ui.poster().post(move |ui| ui.restart_timer(id));
+                Ok(aylis_core::PropValue::Null)
+            }
+            _ => Err(format!("Timer não tem o método '{method}'")),
+        }
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.one_shot {
+            self.enabled = false;
+        }
+        ctx.fire("on_timer", EventArgs::None);
     }
 
     fn timer_interval(&self) -> Option<f64> {
@@ -81,6 +117,55 @@ impl Component for Timer {
 
     fn timer_late(&mut self, late: f64) {
         self.drift = late * 1000.0;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FrameTimer
+
+/// Um evento a cada quadro do monitor (`on_frame`, com os segundos desde o anterior), para a
+/// animação que o app desenha: como o `Timer`, mas no ritmo da tela, e só enquanto ligado
+/// (desligado, o laço dorme; começa desligado). O relatório do Tabernáculo, P05.
+#[derive(Default)]
+pub struct FrameTimer {
+    pub enabled: bool,
+    last: Option<f64>,
+}
+
+impl FrameTimer {
+    /// Liga pelo código (o primeiro quadro vem a seguir).
+    pub fn set_enabled(ui: &mut Ui, id: ComponentId, enabled: bool) {
+        let _ = ui.set_prop(id, "enabled", enabled);
+    }
+}
+
+impl Component for FrameTimer {
+    fn class_name(&self) -> &'static str {
+        "FrameTimer"
+    }
+
+    properties! {
+        enabled: bool => "Behavior";
+        events: on_frame
+    }
+
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if name == "enabled" && self.enabled {
+            self.last = None;
+            ctx.ui.request_frames(ctx.id);
+        }
+    }
+
+    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
+        if !self.enabled {
+            self.last = None;
+            return false;
+        }
+        let now = ctx.ui.time();
+        let dt = self.last.map_or(0.0, |last| (now - last).max(0.0));
+        self.last = Some(now);
+        ctx.fire("on_frame", EventArgs::Value(aylis_core::PropValue::Float(dt)));
+        true
     }
 }
 
@@ -129,7 +214,7 @@ impl Component for ApplicationEvents {
 
     properties! {
         tag: i64 => "Misc";
-        events: on_key_down, on_key_press, on_exception
+        events: on_key_down, on_key_press, on_exception, on_terminate
     }
 }
 
@@ -258,7 +343,8 @@ impl Component for BusyWatcher {
 // ---------------------------------------------------------------------------
 // OpenDialog / SaveDialog
 
-/// Lê o filtro no formato do Delphi: `Imagens|*.png;*.jpg|Todos|*.*`.
+/// Lê o filtro no formato do Delphi: `Imagens|*.png;*.jpg|Todos|*.*`. O `*.*` (ou `*`) vira a
+/// extensão `"*"`: todos os arquivos.
 pub fn parse_filter(filter: &str) -> Vec<(String, Vec<String>)> {
     let parts: Vec<&str> = filter.split('|').collect();
     parts
@@ -269,7 +355,7 @@ pub fn parse_filter(filter: &str) -> Vec<(String, Vec<String>)> {
                 .get(1)?
                 .split(';')
                 .map(|e| e.trim().trim_start_matches("*.").trim_start_matches('.').to_string())
-                .filter(|e| !e.is_empty() && e != "*")
+                .filter(|e| !e.is_empty())
                 .collect();
             Some((name.to_string(), exts))
         })
@@ -328,6 +414,7 @@ impl OpenDialog {
             file_name: self.file_name.clone(),
             save,
             multiple: self.multiple && !save,
+            owner: None,
         }
     }
 
@@ -341,6 +428,8 @@ impl OpenDialog {
         } else {
             return;
         };
+        // A janela do form do diálogo é a dona (o relatório do Tabernáculo, J02).
+        let options = FileDialogOptions { owner: Some(ui.root_of(id)), ..options };
         run_file_dialog(ui, id, options);
     }
 }

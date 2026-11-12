@@ -139,6 +139,21 @@ impl Ui {
         self.form_monitors.get(&self.root_of(form)).copied()
     }
 
+    /// A janela do form está minimizada (a plataforma informa; o `on_minimize` e o `on_restore`
+    /// avisam a mudança).
+    pub fn is_minimized(&self, form: ComponentId) -> bool {
+        self.minimized_forms.contains(&self.root_of(form))
+    }
+
+    /// A plataforma informa que a janela do form minimizou ou voltou.
+    pub fn set_form_minimized(&mut self, form: ComponentId, minimized: bool) {
+        if minimized {
+            self.minimized_forms.insert(form);
+        } else {
+            self.minimized_forms.remove(&form);
+        }
+    }
+
     /// A plataforma informa em que monitor está a janela do form.
     pub fn set_form_monitor(&mut self, form: ComponentId, monitor: Option<usize>) {
         match monitor {

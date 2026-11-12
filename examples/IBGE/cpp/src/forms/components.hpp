@@ -96,6 +96,26 @@ struct DBChart : aylis::Component {
     void set_clicked_series(long long v) const { set_prop_("clicked_series", v); }
     long long clicked_index() const { return static_cast<long long>(get_prop_("clicked_index").number()); }
     void set_clicked_index(long long v) const { set_prop_("clicked_index", v); }
+    std::string value_format() const { return get_prop_("value_format").str(); }
+    void set_value_format(const std::string& v) const { set_prop_("value_format", v); }
+    double label_angle() const { return get_prop_("label_angle").number(); }
+    void set_label_angle(double v) const { set_prop_("label_angle", v); }
+    std::string title_align() const { return get_prop_("title_align").str(); }
+    void set_title_align(const std::string& v) const { set_prop_("title_align", v); }
+    bool title_bold() const { return get_prop_("title_bold").boolean(); }
+    void set_title_bold(bool v) const { set_prop_("title_bold", v); }
+    double area_opacity() const { return get_prop_("area_opacity").number(); }
+    void set_area_opacity(double v) const { set_prop_("area_opacity", v); }
+    std::string legend_position() const { return get_prop_("legend_position").str(); }
+    void set_legend_position(const std::string& v) const { set_prop_("legend_position", v); }
+    bool stacked() const { return get_prop_("stacked").boolean(); }
+    void set_stacked(bool v) const { set_prop_("stacked", v); }
+    std::string colors() const { return get_prop_("colors").str(); }
+    void set_colors(const std::string& v) const { set_prop_("colors", v); }
+    std::string center_text() const { return get_prop_("center_text").str(); }
+    void set_center_text(const std::string& v) const { set_prop_("center_text", v); }
+    std::string slice_labels() const { return get_prop_("slice_labels").str(); }
+    void set_slice_labels(const std::string& v) const { set_prop_("slice_labels", v); }
     double left() const { return get_prop_("left").number(); }
     void set_left(double v) const { set_prop_("left", v); }
     double top() const { return get_prop_("top").number(); }
@@ -106,6 +126,12 @@ struct DBChart : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -114,6 +140,10 @@ struct DBChart : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -160,6 +190,14 @@ struct DBChart : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -196,6 +234,10 @@ struct DBChart : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -228,6 +270,10 @@ struct DataGrid : aylis::Component {
     void set_incremental_search(bool v) const { set_prop_("incremental_search", v); }
     std::string cursor_color() const { return get_prop_("cursor_color").str(); }
     void set_cursor_color(const std::string& v) const { set_prop_("cursor_color", v); }
+    bool indicator() const { return get_prop_("indicator").boolean(); }
+    void set_indicator(bool v) const { set_prop_("indicator", v); }
+    bool highlight_current() const { return get_prop_("highlight_current").boolean(); }
+    void set_highlight_current(bool v) const { set_prop_("highlight_current", v); }
     double left() const { return get_prop_("left").number(); }
     void set_left(double v) const { set_prop_("left", v); }
     double top() const { return get_prop_("top").number(); }
@@ -238,6 +284,12 @@ struct DataGrid : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -246,6 +298,10 @@ struct DataGrid : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -292,6 +348,14 @@ struct DataGrid : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -328,6 +392,10 @@ struct DataGrid : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
     void set_focus() const { tell_("focus", {{"target", aylis::Json(id_)}}); }
@@ -447,6 +515,14 @@ struct Form : aylis::FormBase {
     void set_monitor(long long v) const { set_prop_("monitor", v); }
     bool remember_placement() const { return get_prop_("remember_placement").boolean(); }
     void set_remember_placement(bool v) const { set_prop_("remember_placement", v); }
+    std::string gpu() const { return get_prop_("gpu").str(); }
+    void set_gpu(const std::string& v) const { set_prop_("gpu", v); }
+    bool activate_on_show() const { return get_prop_("activate_on_show").boolean(); }
+    void set_activate_on_show(bool v) const { set_prop_("activate_on_show", v); }
+    std::string close_action() const { return get_prop_("close_action").str(); }
+    void set_close_action(const std::string& v) const { set_prop_("close_action", v); }
+    double frame_rate() const { return get_prop_("frame_rate").number(); }
+    void set_frame_rate(double v) const { set_prop_("frame_rate", v); }
     double left() const { return get_prop_("left").number(); }
     void set_left(double v) const { set_prop_("left", v); }
     double top() const { return get_prop_("top").number(); }
@@ -457,6 +533,12 @@ struct Form : aylis::FormBase {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -465,6 +547,10 @@ struct Form : aylis::FormBase {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -511,6 +597,14 @@ struct Form : aylis::FormBase {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -547,9 +641,15 @@ struct Form : aylis::FormBase {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
-    void move_to_monitor(long long a1) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "move_to_monitor"}, {"args", aylis::Json::array({a1})}}); }
+    void move_to_monitor(long long monitor) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "move_to_monitor"}, {"args", aylis::Json::array({monitor})}}); }
+    std::string gpu_adapter() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "gpu_adapter"}, {"args", aylis::Json::array({})}}).str(); }
+    std::string gpu_adapters() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "gpu_adapters"}, {"args", aylis::Json::array({})}}).str(); }
     void show() const { tell_("show", {{"target", aylis::Json(id_)}}); }
     bool close() const { return ask_("close", {{"target", aylis::Json(id_)}}).boolean(); }
     std::string focused() const { return ask_("focused", {{"target", aylis::Json(id_)}}).str(); }
@@ -583,6 +683,12 @@ struct GroupBox : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -591,6 +697,10 @@ struct GroupBox : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -637,6 +747,14 @@ struct GroupBox : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -673,6 +791,10 @@ struct GroupBox : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -697,6 +819,12 @@ struct Image : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -705,6 +833,10 @@ struct Image : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -751,6 +883,14 @@ struct Image : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -787,6 +927,10 @@ struct Image : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -821,6 +965,10 @@ struct Label : aylis::Component {
     void set_outline(const std::string& v) const { set_prop_("outline", v); }
     double outline_width() const { return get_prop_("outline_width").number(); }
     void set_outline_width(double v) const { set_prop_("outline_width", v); }
+    double line_height() const { return get_prop_("line_height").number(); }
+    void set_line_height(double v) const { set_prop_("line_height", v); }
+    std::string text_shadow() const { return get_prop_("text_shadow").str(); }
+    void set_text_shadow(const std::string& v) const { set_prop_("text_shadow", v); }
     std::string focus_control() const { return get_prop_("focus_control").str(); }
     void set_focus_control(const std::string& v) const { set_prop_("focus_control", v); }
     double left() const { return get_prop_("left").number(); }
@@ -833,6 +981,12 @@ struct Label : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -841,6 +995,10 @@ struct Label : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -887,6 +1045,14 @@ struct Label : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -923,8 +1089,14 @@ struct Label : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
+    double min_content_width() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "min_content_width"}, {"args", aylis::Json::array({})}}).number(); }
+    double max_content_width() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "max_content_width"}, {"args", aylis::Json::array({})}}).number(); }
 };
 
 // Um Layout de um form.
@@ -941,6 +1113,8 @@ struct Layout : aylis::Component {
     void set_chars_override(bool v) const { set_prop_("chars_override", v); }
     std::string char_map() const { return get_prop_("char_map").str(); }
     void set_char_map(const std::string& v) const { set_prop_("char_map", v); }
+    double gap() const { return get_prop_("gap").number(); }
+    void set_gap(double v) const { set_prop_("gap", v); }
     double left() const { return get_prop_("left").number(); }
     void set_left(double v) const { set_prop_("left", v); }
     double top() const { return get_prop_("top").number(); }
@@ -951,6 +1125,12 @@ struct Layout : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -959,6 +1139,10 @@ struct Layout : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -1005,6 +1189,14 @@ struct Layout : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -1041,6 +1233,10 @@ struct Layout : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -1059,6 +1255,8 @@ struct Panel : aylis::Component {
     void set_chars_override(bool v) const { set_prop_("chars_override", v); }
     std::string char_map() const { return get_prop_("char_map").str(); }
     void set_char_map(const std::string& v) const { set_prop_("char_map", v); }
+    double gap() const { return get_prop_("gap").number(); }
+    void set_gap(double v) const { set_prop_("gap", v); }
     std::string fill() const { return get_prop_("fill").str(); }
     void set_fill(const std::string& v) const { set_prop_("fill", v); }
     std::string fill2() const { return get_prop_("fill2").str(); }
@@ -1075,8 +1273,8 @@ struct Panel : aylis::Component {
     void set_stroke(const std::string& v) const { set_prop_("stroke", v); }
     double stroke_width() const { return get_prop_("stroke_width").number(); }
     void set_stroke_width(double v) const { set_prop_("stroke_width", v); }
-    double radius() const { return get_prop_("radius").number(); }
-    void set_radius(double v) const { set_prop_("radius", v); }
+    std::string radius() const { return get_prop_("radius").str(); }
+    void set_radius(const std::string& v) const { set_prop_("radius", v); }
     double left() const { return get_prop_("left").number(); }
     void set_left(double v) const { set_prop_("left", v); }
     double top() const { return get_prop_("top").number(); }
@@ -1087,6 +1285,12 @@ struct Panel : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -1095,6 +1299,10 @@ struct Panel : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -1141,6 +1349,14 @@ struct Panel : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -1175,6 +1391,10 @@ struct Panel : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -1195,6 +1415,12 @@ struct Splitter : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -1203,6 +1429,10 @@ struct Splitter : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -1249,6 +1479,14 @@ struct Splitter : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -1285,6 +1523,10 @@ struct Splitter : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };
@@ -1315,6 +1557,12 @@ struct Svg : aylis::Component {
     void set_height(double v) const { set_prop_("height", v); }
     std::string align() const { return get_prop_("align").str(); }
     void set_align(const std::string& v) const { set_prop_("align", v); }
+    std::string anchors() const { return get_prop_("anchors").str(); }
+    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
+    std::string margins() const { return get_prop_("margins").str(); }
+    void set_margins(const std::string& v) const { set_prop_("margins", v); }
+    std::string padding() const { return get_prop_("padding").str(); }
+    void set_padding(const std::string& v) const { set_prop_("padding", v); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -1323,6 +1571,10 @@ struct Svg : aylis::Component {
     void set_hit_test(bool v) const { set_prop_("hit_test", v); }
     bool clip_children() const { return get_prop_("clip_children").boolean(); }
     void set_clip_children(bool v) const { set_prop_("clip_children", v); }
+    bool inherit_state() const { return get_prop_("inherit_state").boolean(); }
+    void set_inherit_state(bool v) const { set_prop_("inherit_state", v); }
+    bool translate() const { return get_prop_("translate").boolean(); }
+    void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
@@ -1369,6 +1621,14 @@ struct Svg : aylis::Component {
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
     void set_column_span(long long v) const { set_prop_("column_span", v); }
+    long long grid_row() const { return static_cast<long long>(get_prop_("grid_row").number()); }
+    void set_grid_row(long long v) const { set_prop_("grid_row", v); }
+    long long grid_column() const { return static_cast<long long>(get_prop_("grid_column").number()); }
+    void set_grid_column(long long v) const { set_prop_("grid_column", v); }
+    long long row_span() const { return static_cast<long long>(get_prop_("row_span").number()); }
+    void set_row_span(long long v) const { set_prop_("row_span", v); }
+    double grow() const { return get_prop_("grow").number(); }
+    void set_grow(double v) const { set_prop_("grow", v); }
     std::string shadow() const { return get_prop_("shadow").str(); }
     void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
     std::string style() const { return get_prop_("style").str(); }
@@ -1405,6 +1665,10 @@ struct Svg : aylis::Component {
     void set_hint(const std::string& v) const { set_prop_("hint", v); }
     long long tag() const { return static_cast<long long>(get_prop_("tag").number()); }
     void set_tag(long long v) const { set_prop_("tag", v); }
+    std::string tag_string() const { return get_prop_("tag_string").str(); }
+    void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
+    std::string accessible_name() const { return get_prop_("accessible_name").str(); }
+    void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
     std::string popup_menu() const { return get_prop_("popup_menu").str(); }
     void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
 };

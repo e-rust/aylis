@@ -10,15 +10,15 @@ Campo de cor (o `v-color-input`): amostra e `#rrggbb`; o clique abre um `ColorPi
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `alpha` | Transparência (alfa) | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `alpha` | Transparência (alfa) | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `color` | Cor | cor |  |
 
 ## Eventos
 

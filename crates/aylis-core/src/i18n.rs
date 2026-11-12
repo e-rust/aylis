@@ -92,9 +92,29 @@ static APP: std::sync::RwLock<Option<std::sync::Arc<Dictionary>>> = std::sync::R
 
 /// A busca do [`Ui::tr`] e do [`tr`]: o dicionário do app, um texto já montado pelo modelo
 /// dele e, por fim, as mensagens do próprio aylis.
+/// O contexto de um texto ambíguo (`arquivo|Abrir`: o "Abrir" do menu Arquivo, que noutra
+/// língua não é o "Abrir" de uma porta): uma palavra minúscula, sem espaço, antes da barra. A
+/// chave da tradução é o texto inteiro; sem tradução, aparece só o texto (o relatório do
+/// Tabernáculo, O02). `Ana Souza|Vendas` (as colunas de uma lista) não é contexto.
+pub fn split_context(text: &str) -> Option<(&str, &str)> {
+    let (context, rest) = text.split_once('|')?;
+    let word = !context.is_empty() && context.len() <= 32 && context.chars().all(|c| c.is_lowercase() || c.is_ascii_digit() || c == '_' || c == '-');
+    (word && !rest.is_empty()).then_some((context, rest))
+}
+
 fn lookup(map: &HashMap<String, String>, templates: &[(Vec<String>, String)], text: &str) -> String {
+    lookup_in(map, templates, text, true)
+}
+
+/// O [`lookup`]; `context`: o texto pode ter contexto (`arquivo|Abrir`). Os itens de uma lista
+/// não têm (a barra separa as colunas).
+fn lookup_in(map: &HashMap<String, String>, templates: &[(Vec<String>, String)], text: &str, context: bool) -> String {
     if let Some(t) = map.get(text).filter(|t| !t.is_empty()) {
         return t.clone();
+    }
+    // Com contexto e sem tradução própria: a do texto sem o contexto (ou ele mesmo).
+    if let Some((_, plain)) = split_context(text).filter(|_| context) {
+        return lookup_in(map, templates, plain, false);
     }
     // Uma mensagem já montada (`"Form Cadastro criado"`): pelo modelo dela, com os
     // valores no lugar (e traduzidos, se forem textos do catálogo).
@@ -175,7 +195,8 @@ impl Ui {
     /// Traduz `text` para a propriedade `prop` (listas item a item).
     pub fn translate_prop(&self, prop: &str, text: &str) -> String {
         if is_list(prop) {
-            text.split(';').map(|item| self.tr(item)).collect::<Vec<_>>().join(";")
+            // Item a item, sem contexto (as colunas de uma lista usam a barra).
+            text.split(';').map(|item| lookup_in(&self.translations.map, &self.translations.templates, item, false)).collect::<Vec<_>>().join(";")
         } else {
             self.tr(text)
         }
@@ -184,6 +205,11 @@ impl Ui {
     /// Grava uma propriedade de texto traduzida, lembrando o original (para
     /// [`retranslate`](Self::retranslate)). Usado ao carregar layouts.
     pub fn set_translated(&mut self, id: ComponentId, prop: &str, original: &str) -> crate::Result<()> {
+        // Sem tradução (`translate` desligado), ou no designer (o texto como está escrito, com o
+        // contexto que a O02 permite): o original.
+        if self.design_mode || self.cb(id).is_some_and(|cb| !cb.translatable()) {
+            return self.set_prop_quiet(id, prop, PropValue::String(original.to_string()));
+        }
         let translated = self.translate_prop(prop, original);
         self.set_prop_quiet(id, prop, PropValue::String(translated))?;
         self.translations.sources.insert((id, prop.to_string()), original.to_string());
@@ -218,6 +244,9 @@ impl Ui {
         let ids: Vec<ComponentId> = self.components().collect();
         for id in ids {
             let class = self.class_name(id).unwrap_or_default();
+            if self.cb(id).is_some_and(|cb| !cb.translatable()) {
+                continue;
+            }
             for prop in TRANSLATABLE {
                 if (prop == "text" && skip_text(class)) || self.translations.sources.contains_key(&(id, prop.to_string())) {
                     continue;

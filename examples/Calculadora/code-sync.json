@@ -1,11 +1,11 @@
 {
   "revisions": {
-    "frmCalculadora.form_key_down": 1,
+    "frmCalculadora.form_key_down": 2,
     "frmCalculadora.historico_click": 1,
-    "frmCalculadora.historico_item_click": 1,
-    "frmCalculadora.limpar_historico_click": 1,
-    "frmCalculadora.memoria_item_click": 1,
-    "frmCalculadora.tecla_click": 2
+    "frmCalculadora.historico_item_click": 2,
+    "frmCalculadora.limpar_historico_click": 2,
+    "frmCalculadora.memoria_item_click": 2,
+    "frmCalculadora.tecla_click": 3
   },
   "languages": {
     "cpp": {
@@ -111,28 +111,28 @@
       },
       "handlers": {
         "frmCalculadora.form_key_down": {
-          "hash": "2c13e7a3f31a28da",
-          "seen": 1
+          "hash": "5e6c6254da5650a0",
+          "seen": 2
         },
         "frmCalculadora.historico_click": {
           "hash": "5b1fe3e971e58be2",
           "seen": 1
         },
         "frmCalculadora.historico_item_click": {
-          "hash": "1ccf9f2194f07449",
-          "seen": 1
+          "hash": "8e1bab2cc68c6f4d",
+          "seen": 2
         },
         "frmCalculadora.limpar_historico_click": {
-          "hash": "b0d32b72b84f5fc0",
-          "seen": 1
+          "hash": "91600882240ed848",
+          "seen": 2
         },
         "frmCalculadora.memoria_item_click": {
-          "hash": "de04c0fd895092f0",
-          "seen": 1
+          "hash": "a8bed1b3f2a509c2",
+          "seen": 2
         },
         "frmCalculadora.tecla_click": {
-          "hash": "a021443e7c4d8dfb",
-          "seen": 2
+          "hash": "c1fa8e48939654c3",
+          "seen": 3
         }
       }
     },
@@ -239,28 +239,28 @@
       },
       "handlers": {
         "frmCalculadora.form_key_down": {
-          "hash": "c48afae5c5e7f8dd",
-          "seen": 1
+          "hash": "d60f280cce237f6b",
+          "seen": 2
         },
         "frmCalculadora.historico_click": {
           "hash": "3d03fb25926463c5",
           "seen": 1
         },
         "frmCalculadora.historico_item_click": {
-          "hash": "c458d4558b2befc5",
-          "seen": 1
+          "hash": "e24dad9191edab99",
+          "seen": 2
         },
         "frmCalculadora.limpar_historico_click": {
-          "hash": "59ea0c8d5b0da760",
-          "seen": 1
+          "hash": "0cd78300c2767768",
+          "seen": 2
         },
         "frmCalculadora.memoria_item_click": {
-          "hash": "80258ccc231670bd",
-          "seen": 1
+          "hash": "5f8bd7d8797f1b61",
+          "seen": 2
         },
         "frmCalculadora.tecla_click": {
-          "hash": "a567637ad5de7eed",
-          "seen": 2
+          "hash": "1f7c2a70ccea39d5",
+          "seen": 3
         }
       }
     },
@@ -303,28 +303,28 @@
       },
       "handlers": {
         "frmCalculadora.form_key_down": {
-          "hash": "f69f2727d5fe2e48",
-          "seen": 1
+          "hash": "a53e7af8fd3d5386",
+          "seen": 2
         },
         "frmCalculadora.historico_click": {
           "hash": "f33c4f6d6e610d1d",
           "seen": 1
         },
         "frmCalculadora.historico_item_click": {
-          "hash": "283b1e3fe2fc9725",
-          "seen": 1
+          "hash": "01683a83041f322b",
+          "seen": 2
         },
         "frmCalculadora.limpar_historico_click": {
-          "hash": "d22333fcb80eda34",
-          "seen": 1
+          "hash": "5955259655200480",
+          "seen": 2
         },
         "frmCalculadora.memoria_item_click": {
-          "hash": "41958a1fac766c52",
-          "seen": 1
+          "hash": "fdda5ffb82888f16",
+          "seen": 2
         },
         "frmCalculadora.tecla_click": {
-          "hash": "1ffb2fdc89a6d8ed",
-          "seen": 2
+          "hash": "25ddc40f0939f193",
+          "seen": 3
         }
       }
     },
@@ -367,28 +367,28 @@
       },
       "handlers": {
         "frmCalculadora.form_key_down": {
-          "hash": "a7c3c9d57a8d9238",
-          "seen": 1
+          "hash": "ec0c489501beca88",
+          "seen": 2
         },
         "frmCalculadora.historico_click": {
           "hash": "a5540b42c570ee13",
           "seen": 1
         },
         "frmCalculadora.historico_item_click": {
-          "hash": "2f731cac7169409b",
-          "seen": 1
+          "hash": "74e89cd293260f43",
+          "seen": 2
         },
         "frmCalculadora.limpar_historico_click": {
-          "hash": "9e7bada1e37c3415",
-          "seen": 1
+          "hash": "2dcf0309f5960b41",
+          "seen": 2
         },
         "frmCalculadora.memoria_item_click": {
-          "hash": "3c47319b18f2cbbb",
-          "seen": 1
+          "hash": "77b40e5e2cbedde3",
+          "seen": 2
         },
         "frmCalculadora.tecla_click": {
-          "hash": "4007f0959c16cc8f",
-          "seen": 2
+          "hash": "98d301d8eac8e157",
+          "seen": 3
         }
       }
     },
@@ -495,28 +495,28 @@
       },
       "handlers": {
         "frmCalculadora.form_key_down": {
-          "hash": "7925b2c32061727c",
-          "seen": 1
+          "hash": "936c1047d74737a4",
+          "seen": 2
         },
         "frmCalculadora.historico_click": {
           "hash": "efcfe3c92b81173f",
           "seen": 1
         },
         "frmCalculadora.historico_item_click": {
-          "hash": "2d2d66d4138f3e31",
-          "seen": 1
+          "hash": "d516f983e094bc65",
+          "seen": 2
         },
         "frmCalculadora.limpar_historico_click": {
-          "hash": "a3bf01562be7abc1",
-          "seen": 1
+          "hash": "409a9afa5ebcfe3f",
+          "seen": 2
         },
         "frmCalculadora.memoria_item_click": {
-          "hash": "3d5fdb7d18e88a44",
-          "seen": 1
+          "hash": "0ea1ee417848a3b6",
+          "seen": 2
         },
         "frmCalculadora.tecla_click": {
-          "hash": "ed27c162045c03f6",
-          "seen": 2
+          "hash": "aebf5491e2b0e10e",
+          "seen": 3
         }
       }
     }

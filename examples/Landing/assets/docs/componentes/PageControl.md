@@ -10,10 +10,10 @@ Pontos de página (o "page control" do iOS): `count` pontos, o atual (`index`) d
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `count` | Quantidade | inteiro |
-| `index` | Índice | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `count` | Quantidade | inteiro |  |
+| `index` | Índice | inteiro |  |
 
 ## Eventos
 

@@ -8,18 +8,18 @@ Anima uma propriedade de cor.
 
 ### Animação
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `property` | Propriedade | texto |
-| `start_value` | Valor inicial | cor |
-| `stop_value` | Valor final | cor |
-| `duration` | Duração | duração (ms) |
-| `delay` | Atraso | duração (ms) |
-| `easing` | Curva de aceleração | curva de suavização |
-| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` |
-| `auto_reverse` | Volta sozinho | lógico |
-| `looping` | Repetindo | lógico |
-| `enabled` | Habilitado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `property` | Propriedade | texto |  |
+| `start_value` | Valor inicial | cor |  |
+| `stop_value` | Valor final | cor |  |
+| `duration` | Duração | duração (ms) |  |
+| `delay` | Atraso | duração (ms) |  |
+| `easing` | Curva de aceleração | curva de suavização |  |
+| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` |  |
+| `auto_reverse` | Volta sozinho | lógico |  |
+| `looping` | Repetindo | lógico |  |
+| `enabled` | Habilitado | lógico |  |
 
 ## Em código
 

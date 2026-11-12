@@ -10,19 +10,19 @@ Botão redondo de gravar: um círculo vermelho com o ponto branco no meio que vi
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `glow` | Brilho | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `glow` | Brilho | lógico | O brilho colorido em volta (desligue com uma camada translúcida por cima, onde ele vira pontos soltos em alguns renderizadores). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `recording` | Gravando | lógico |
-| `paused` | Pausado | lógico |
-| `finalizing` | Finalizando | lógico |
-| `countdown` | Contagem regressiva | inteiro |
-| `countdown_fraction` | Fração da contagem | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `recording` | Gravando | lógico |  |
+| `paused` | Pausado | lógico |  |
+| `finalizing` | Finalizando | lógico |  |
+| `countdown` | Contagem regressiva | inteiro |  |
+| `countdown_fraction` | Fração da contagem | número |  |
 
 ## Em código
 

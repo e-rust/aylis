@@ -47,14 +47,14 @@ pub type Palette = Vec<(String, PaletteColor)>;
 /// Interpreta uma cor escrita com [`resolve`] nas cores de `colors`.
 pub fn resolve_in(colors: &HashMap<String, Color>, spec: &str) -> Option<Color> {
     let spec = spec.trim();
-    if spec.starts_with('#') {
-        return Color::from_hex(spec);
-    }
     let (name, alpha) = match spec.rsplit_once('/') {
         Some((name, pct)) => (name.trim(), Some(pct.trim().trim_end_matches('%').parse::<f32>().ok()? / 100.0)),
         None => (spec, None),
     };
+    // O hex também aceita a opacidade (`#2563EB/15`), como os nomes (relatório do InsightDB,
+    // 11/11: só valia para os nomes).
     let base = match name {
+        _ if name.starts_with('#') => Color::from_hex(name),
         "white" => Some(Color::WHITE),
         "black" => Some(Color::rgb(0, 0, 0)),
         "transparent" => Some(Color::TRANSPARENT),
@@ -76,6 +76,28 @@ impl Theme {
     /// Uma cor escrita como `#hex`, `nome` ou `nome/NN` (veja o módulo [`palette`](crate::palette)).
     pub fn resolve_color(&self, spec: &str) -> Option<Color> {
         resolve_in(&self.colors, spec)
+    }
+
+    /// Os nomes de cor que os estilos citam e o tema não tem: `(estilo, nome)`, em ordem. Um
+    /// nome desconhecido pinta transparente, sem erro (o relatório do Tabernáculo, C07); a
+    /// verificação do projeto avisa.
+    pub fn unknown_color_tokens(&self) -> Vec<(String, String)> {
+        let mut out = Vec::new();
+        for (key, style) in &self.styles {
+            for props in [&style.base, &style.hover, &style.pressed, &style.focused, &style.checked, &style.disabled] {
+                for c in [&props.fill, &props.text, &props.border_color].into_iter().flatten() {
+                    if let crate::theme::ColorRef::Token(name) = c
+                        && name != "transparent"
+                        && self.resolve_color(name).is_none()
+                        && !out.iter().any(|(k, n)| k == key && n == name)
+                    {
+                        out.push((key.clone(), name.clone()));
+                    }
+                }
+            }
+        }
+        out.sort();
+        out
     }
 
     /// Põe a paleta do projeto no tema (no modo dele). Uma entrada pode citar outra, em

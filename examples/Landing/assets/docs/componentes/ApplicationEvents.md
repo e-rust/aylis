@@ -8,9 +8,9 @@ Os eventos da aplicação inteira, num componente não visual de qualquer form: 
 
 ### Outros
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tag` | Marca (número) | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tag` | Marca (número) | inteiro |  |
 
 ## Eventos
 
@@ -19,6 +19,7 @@ Os eventos da aplicação inteira, num componente não visual de qualquer form: 
 | `on_key_down` | uma tecla com o foco no componente | — | sim: `key` |
 | `on_key_press` | — | — | sim: `key` |
 | `on_exception` | — | — |  |
+| `on_terminate` | — | — |  |
 
 **Veja também:** [Interceptar eventos num lugar só](../guias/interceptador.md)
 

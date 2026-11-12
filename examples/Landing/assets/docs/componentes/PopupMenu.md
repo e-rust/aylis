@@ -14,6 +14,7 @@ Só as comuns.
 |---|---|---|---|
 | `on_popup` | — | — |  |
 | `on_item_click` | — | — |  |
+| `on_close` | o form fechou | — |  |
 
 ## Em código
 

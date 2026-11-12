@@ -10,15 +10,15 @@ Lista de ativos: ativo, último preço e variação; a célula pisca verde na al
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `symbols` | Símbolos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `symbols` | Símbolos | texto | `"PETR4;VALE3;ITUB4"` (os preços chegam por `update`). |
 
 ## Eventos
 

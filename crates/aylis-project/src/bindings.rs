@@ -53,6 +53,31 @@ impl Catalog {
         self.0.get(class).is_some_and(Value::is_object)
     }
 
+    /// A classe do catálogo mais parecida com `class`: a que está contida no nome
+    /// (`ImageView` → `Image`) ou a de menos letras trocadas (até 3).
+    fn closest(&self, class: &str) -> Option<String> {
+        let names: Vec<&String> = self.0.iter().filter(|(_, v)| v.is_object()).map(|(k, _)| k).collect();
+        let lower = class.to_lowercase();
+        if let Some(inside) = names.iter().filter(|n| lower.contains(&n.to_lowercase()) || n.to_lowercase().contains(&lower)).max_by_key(|n| n.len()) {
+            return Some((*inside).clone());
+        }
+        let distance = |a: &str, b: &str| {
+            let (a, b): (Vec<char>, Vec<char>) = (a.chars().collect(), b.chars().collect());
+            let mut row: Vec<usize> = (0..=b.len()).collect();
+            for i in 1..=a.len() {
+                let mut prev = row[0];
+                row[0] = i;
+                for j in 1..=b.len() {
+                    let cur = row[j];
+                    row[j] = (row[j] + 1).min(row[j - 1] + 1).min(prev + usize::from(a[i - 1] != b[j - 1]));
+                    prev = cur;
+                }
+            }
+            row[b.len()]
+        };
+        names.into_iter().map(|n| (distance(&lower, &n.to_lowercase()), n)).filter(|(d, _)| *d <= 3).min_by_key(|(d, _)| *d).map(|(_, n)| n.clone())
+    }
+
     /// Muda quando o catálogo muda (os pedaços gerados com outro catálogo não valem).
     fn stamp(&self) -> String {
         use std::hash::{Hash, Hasher};
@@ -407,6 +432,26 @@ fn fields<'a>(form: &'a FormModel, form_props: &[Prop], same: impl Fn(&str, &str
 }
 
 /// O modelo com os forms dados e as classes que eles usam (e `Form`).
+/// Os componentes cuja classe não é do Aylis nem de um pacote usado, mas é parecida com uma do
+/// Aylis: quase sempre um nome errado (`"class": "ImageView"` no lugar de `Image`), que o gerador
+/// deixa de fora do acesso tipado. Uma classe do próprio app (registrada por ele) sem nenhuma
+/// parecida não entra. As mensagens vão no "Gerar código" (o relatório do Tabernáculo, G02).
+pub fn suspicious_classes(project: &Project) -> Vec<String> {
+    let catalog = Catalog::load();
+    let packages: BTreeSet<String> = crate::packages::used(&crate::Files::Dir(project.dir())).into_iter().map(|m| m.component).filter(|c| !c.is_empty()).collect();
+    let mut files = crate::FormFiles::default();
+    let mut out = Vec::new();
+    for entry in &project.forms {
+        let Ok(form) = form_model(project, entry, &mut files) else { continue };
+        for (name, class) in form.components.iter().filter(|(_, c)| !catalog.has(c) && !packages.contains(c)) {
+            if let Some(near) = catalog.closest(class) {
+                out.push(format!("{}.{name}: a classe '{class}' não é do Aylis (você quis dizer '{near}'?)", form.name));
+            }
+        }
+    }
+    out
+}
+
 fn model_of(catalog: &Catalog, mut forms: Vec<FormModel>) -> Model {
     for f in &mut forms {
         f.components.retain(|(_, class)| catalog.has(class));
@@ -509,7 +554,10 @@ fn generator(language: Language, m: &Model) -> Out {
 
 /// A versão do gerador: mudar o que ele escreve (ou o catálogo) faz regerar todos os pedaços.
 /// 8: as classes de cada form (`classes.json`), para tirar as que nenhum usa mais.
-const GENERATOR_VERSION: u32 = 8;
+/// 9: a feature `text-shaping` no `Cargo.toml` só com fontes em `assets/fonts`.
+/// 10: o `generated/mod.rs` sem o `use form_handler` (G07) e o `main.rs` com o `_` (G06).
+/// 11: o `create_in` transparente sem `fill` próprio, como o Frame (G05).
+const GENERATOR_VERSION: u32 = 11;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1004,6 +1052,10 @@ fn rust(m: &Model) -> Out {
              \x20       if let Err(e) = ui.set_name(root, &name).and_then(|_| ui.set_parent(root, Some(parent))) {{\n\
              \x20           ui.free(root);\n\
              \x20           return Err(e);\n\
+             \x20       }}\n\
+             \x20       // Como o componente Frame: sem `fill` próprio, transparente (G05).\n\
+             \x20       if matches!(ui.get_prop(root, \"fill\"), Ok(aylis::prelude::PropValue::Null)) {{\n\
+             \x20           let _ = ui.set_prop(root, \"fill\", aylis::prelude::Color::TRANSPARENT);\n\
              \x20       }}\n\
              \x20       ui.form_components(root).ok_or(aylis::prelude::Error::InvalidId)\n    }}\n\n\
              \x20   /// Os componentes de uma instância do {name} (a raiz dela: o `form.id` de um\n\

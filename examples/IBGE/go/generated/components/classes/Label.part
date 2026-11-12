@@ -41,6 +41,12 @@ func (c aylisLabel) SetOutline(v string) { c.Set("outline", v) }
 func (c aylisLabel) OutlineWidth() float64 { return asNumber(c.Get("outline_width")) }
 func (c aylisLabel) SetOutlineWidth(v float64) { c.Set("outline_width", v) }
 
+func (c aylisLabel) LineHeight() float64 { return asNumber(c.Get("line_height")) }
+func (c aylisLabel) SetLineHeight(v float64) { c.Set("line_height", v) }
+
+func (c aylisLabel) TextShadow() string { return asText(c.Get("text_shadow")) }
+func (c aylisLabel) SetTextShadow(v string) { c.Set("text_shadow", v) }
+
 func (c aylisLabel) FocusControl() string { return asText(c.Get("focus_control")) }
 func (c aylisLabel) SetFocusControl(v string) { c.Set("focus_control", v) }
 
@@ -59,6 +65,15 @@ func (c aylisLabel) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisLabel) Align() string { return asText(c.Get("align")) }
 func (c aylisLabel) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisLabel) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisLabel) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisLabel) Margins() string { return asText(c.Get("margins")) }
+func (c aylisLabel) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisLabel) Padding() string { return asText(c.Get("padding")) }
+func (c aylisLabel) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisLabel) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisLabel) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -70,6 +85,12 @@ func (c aylisLabel) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisLabel) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisLabel) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisLabel) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisLabel) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisLabel) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisLabel) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisLabel) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisLabel) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -140,6 +161,18 @@ func (c aylisLabel) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisLabel) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisLabel) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisLabel) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisLabel) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisLabel) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisLabel) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisLabel) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisLabel) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisLabel) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisLabel) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisLabel) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisLabel) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -194,5 +227,13 @@ func (c aylisLabel) SetHint(v string) { c.Set("hint", v) }
 func (c aylisLabel) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisLabel) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisLabel) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisLabel) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisLabel) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisLabel) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisLabel) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisLabel) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisLabel) MinContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "min_content_width", "args": []any{}})) }
+func (c aylisLabel) MaxContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "max_content_width", "args": []any{}})) }

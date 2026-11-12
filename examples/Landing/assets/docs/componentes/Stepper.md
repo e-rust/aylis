@@ -10,16 +10,16 @@ Etapas de um processo (o `v-stepper`): `items` com os nomes, `step` a atual (0 �
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `vertical` | Vertical | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `vertical` | Vertical | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `step` | Passo | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `step` | Passo | inteiro |  |
 
 ## Eventos
 

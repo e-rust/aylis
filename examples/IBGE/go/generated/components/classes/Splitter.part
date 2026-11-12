@@ -20,6 +20,15 @@ func (c aylisSplitter) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisSplitter) Align() string { return asText(c.Get("align")) }
 func (c aylisSplitter) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisSplitter) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisSplitter) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisSplitter) Margins() string { return asText(c.Get("margins")) }
+func (c aylisSplitter) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisSplitter) Padding() string { return asText(c.Get("padding")) }
+func (c aylisSplitter) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisSplitter) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisSplitter) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -31,6 +40,12 @@ func (c aylisSplitter) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisSplitter) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisSplitter) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisSplitter) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisSplitter) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisSplitter) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisSplitter) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisSplitter) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisSplitter) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -101,6 +116,18 @@ func (c aylisSplitter) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisSplitter) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisSplitter) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisSplitter) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisSplitter) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisSplitter) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisSplitter) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisSplitter) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisSplitter) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisSplitter) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisSplitter) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisSplitter) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisSplitter) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -154,6 +181,12 @@ func (c aylisSplitter) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisSplitter) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisSplitter) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisSplitter) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisSplitter) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisSplitter) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisSplitter) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisSplitter) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisSplitter) SetPopupMenu(v string) { c.Set("popup_menu", v) }

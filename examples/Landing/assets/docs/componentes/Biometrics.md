@@ -8,10 +8,10 @@ A biometria do aparelho: a digital ou o rosto no celular, o Windows Hello, o aut
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `reason` | Motivo | texto |
-| `allow_device_credential` | Aceita a senha do aparelho | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `reason` | Motivo | texto |  |
+| `allow_device_credential` | Aceita a senha do aparelho | lógico |  |
 
 ## Eventos
 

@@ -31,6 +31,9 @@ resvg = { version = "0.49", default-features = false }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # O XML a mais do manifesto do Android (conferido e mesclado).
 roxmltree = "0.20"
+# O `config.toml` global do cargo (cargo_config.rs): mexe só nas chaves do Aylis, mantendo o
+# resto do arquivo e os comentários. Já vinha no Cargo.lock por outras dependências.
+toml_edit = "0.25"
 
 # Só no desktop: a IDE no navegador (a lite) não baixa, não mexe na Lixeira nem lê a
 # máquina. O gerador aleatório do sistema, o HTTPS das ferramentas, a Lixeira e os dados

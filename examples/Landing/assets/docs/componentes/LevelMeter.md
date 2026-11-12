@@ -10,30 +10,30 @@ Medidor de nível (VU) para áudio: barra de `value` (0 a 1) com as cores do tem
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stereo` | Estéreo | lógico |
-| `gradient` | Degradê | lógico |
-| `dim` | Escurecer | lógico |
-| `vertical` | Vertical | lógico |
-| `segments` | Segmentos | inteiro |
-| `show_peak` | Mostra o pico | lógico |
-| `mid` | Limite do meio | número |
-| `high` | Limite alto | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stereo` | Estéreo | lógico |  |
+| `gradient` | Degradê | lógico |  |
+| `dim` | Escurecer | lógico |  |
+| `vertical` | Vertical | lógico |  |
+| `segments` | Segmentos | inteiro |  |
+| `show_peak` | Mostra o pico | lógico |  |
+| `mid` | Limite do meio | número | Daqui para cima a cor é `meter_mid`. |
+| `high` | Limite alto | número | Daqui para cima a cor é `meter_high`. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `smoothing` | Suavização | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `smoothing` | Suavização | número | Tempo, em ms, que a barra leva até o valor novo (0 = salta): com níveis que chegam a cada 100 ms, uns 90 ms deixam o movimento contínuo. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `value_right` | Valor da direita | número |
-| `muted` | Mudo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `value_right` | Valor da direita | número |  |
+| `muted` | Mudo | lógico |  |
 
 ## Em código
 

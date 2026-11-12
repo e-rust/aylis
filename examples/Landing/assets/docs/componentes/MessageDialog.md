@@ -8,17 +8,17 @@ Caixa de mensagem com título, texto, tipo e botões; on_close recebe a resposta
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `kind` | Tipo | um de: `information`, `warning`, `error`, `confirmation` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto | Título da janela; vazio: o do tipo ("Confirmação", "Aviso"...). |
+| `text` | Texto | texto |  |
+| `kind` | Tipo | um de: `information`, `warning`, `error`, `confirmation` |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `buttons` | Botões | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `buttons` | Botões | texto | Os botões, na ordem em que aparecem: `"yes,no"`, `"ok,cancel"`, `"yes,no,cancel"`... |
 
 ## Eventos
 

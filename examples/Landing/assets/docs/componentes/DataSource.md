@@ -8,11 +8,11 @@ Liga um ClientDataSet aos controles de dados (DataGrid, "Ligar a campo…"...).
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data_set` | Conjunto de dados | componente |
-| `auto_edit` | Edita sozinho | lógico |
-| `enabled` | Habilitado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data_set` | Conjunto de dados | componente |  |
+| `auto_edit` | Edita sozinho | lógico | Começar a digitar num controle coloca o dataset em edição sozinho. |
+| `enabled` | Habilitado | lógico | Desligado, os controles ficam sem dados. |
 
 ## Eventos
 

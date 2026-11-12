@@ -1,0 +1,47 @@
+{
+  "descricao": "O tamanho dos wasm para o navegador (11/11/2026). A família Standard das demonstrações (aylis-demos com AYLIS_DEMO_FAMILY=Standard), o .wasm depois do wasm-bindgen; gzip -9. O perfil escolhido é o WEB_RELEASE do aylis-tools (publish.rs).",
+  "standard": {
+    "release (antes)": { "wasm_mb": 6.63, "gzip_mb": 1.91, "codigo_mb": 4.44, "nomes_mb": 1.37 },
+    "lto fat + 1 unidade + opt 3": { "wasm_mb": 5.86, "gzip_mb": 1.82, "codigo_mb": 4.43, "nomes_mb": 0.75, "compilacao_s": 280 },
+    "lto fat + 1 unidade + opt s": { "wasm_mb": 4.58, "gzip_mb": 1.48, "codigo_mb": 3.0, "nomes_mb": 0.91, "compilacao_s": 134 },
+    "lto fat + 1 unidade + opt z": { "wasm_mb": 4.38, "gzip_mb": 1.37, "codigo_mb": 2.5, "nomes_mb": 1.19, "compilacao_s": 147 },
+    "lto fat + 1 unidade + opt s + strip (escolhido)": { "wasm_mb": 3.66, "gzip_mb": 1.35, "nomes_mb": 0.0, "compilacao_s": 188 }
+  },
+  "familias_antes": {
+    "observacao": "dist/site de 09/11, perfil release sem nada; cada família repete o núcleo (~4 MB, ~1,16 MB comprimido)",
+    "menor (animations)": { "wasm_mb": 4.07, "gzip_mb": 1.16 },
+    "standard": { "wasm_mb": 6.63, "gzip_mb": 1.91 },
+    "3d": { "wasm_mb": 9.95, "gzip_mb": 2.93 },
+    "maior (additional)": { "wasm_mb": 13.41, "gzip_mb": 4.48 },
+    "pagina (landing)": { "wasm_mb": 9.02, "gzip_mb": 3.18 }
+  },
+  "landing_depois": {
+    "lto fat + 1 unidade + opt s": { "wasm_mb": 6.88, "gzip_mb": 2.74, "codigo_mb": 3.27, "dados_mb": 2.63, "nomes_mb": 0.95 },
+    "lto fat + 1 unidade + opt s + strip (escolhido)": { "wasm_mb": 5.93, "gzip_mb": 2.6 },
+    "celular 375x812": "antes baixava também o demos/3d (9,95 MB, 2,93 MB comprimido) para um iframe escondido; depois, só a página"
+  },
+  "documentacao_ao_vivo_na_pagina (A + text-shaping opcional)": {
+    "observacao": "11/11: as famílias leves (136 classes) no wasm da página; o harfrust (~520 KB de código) fora de quem não tem fontes em assets/fonts; perfil WEB_RELEASE",
+    "landing": { "wasm_mb": 6.19, "gzip_mb": 2.64, "antes_do_perfil_mb": 9.02, "antes_do_perfil_gzip_mb": 3.18 },
+    "pagina de um componente leve (Button, Gauge, Valve...)": { "baixa_a_mais_gzip_mb": 0.0, "antes_gzip_mb": "1,16 a 1,91 (o wasm da família)" },
+    "familia standard (não é mais baixada pela documentação)": { "wasm_mb": 2.84, "gzip_mb": 1.02 },
+    "familia additional (continua à parte)": { "wasm_mb": 7.6, "gzip_mb": 3.14, "antes_wasm_mb": 13.41, "antes_gzip_mb": 4.48 },
+    "familia 3d (continua à parte)": { "wasm_mb": 4.32, "gzip_mb": 1.65, "antes_wasm_mb": 9.95, "antes_gzip_mb": 2.93 },
+    "nucleo minimo (familia animations, código)": { "total_kb": 1830, "harfrust_e_read_fonts_kb": 520, "aylis_core_kb": 434 }
+  },
+  "wasm_opt_descartado": {
+    "observacao": "Binaryen version_133 depois do LTO + opt s + strip: o wasm cru cai 4 a 6%, mas o comprimido (o que vai pela rede) não cai; o passo saiu (baixaria ~110 MB e levaria mais tempo à toa)",
+    "standard -Oz": { "antes_mb": 2.84, "antes_gzip_mb": 1.018, "depois_mb": 2.68, "depois_gzip_mb": 1.027 },
+    "standard -Os": { "depois_mb": 2.7, "depois_gzip_mb": 1.026 },
+    "standard -O1": { "depois_mb": 2.76, "depois_gzip_mb": 1.011 },
+    "additional -Oz": { "antes_mb": 7.6, "antes_gzip_mb": 3.141, "depois_mb": 7.19, "depois_gzip_mb": 3.147 },
+    "3d -Oz": { "antes_mb": 4.32, "antes_gzip_mb": 1.654, "depois_mb": 4.04, "depois_gzip_mb": 1.675 },
+    "landing -Oz": { "antes_mb": 6.19, "antes_gzip_mb": 2.637, "depois_mb": 5.93, "depois_gzip_mb": 2.648 }
+  },
+  "rolagem_landing_celular": {
+    "observacao": "120 passos de roda de 40 pontos no scrPagina, form em 375x812",
+    "navegador_antes (Chrome do painel, PC)": { "mediana_ms": 12.6, "p90_ms": 37.8, "max_ms": 1011.1, "measureText_por_quadro": 297 },
+    "nativo_por_passo (sem pintura, release)": { "antes_ms": 0.074, "depois_ms": 0.003 },
+    "navegador_depois": "não medido: o painel do navegador estava escondido (sem quadros)"
+  }
+}

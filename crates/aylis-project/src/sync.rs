@@ -458,6 +458,10 @@ pub fn record_in(project: &Project, only: Option<&[String]>) -> Result<(), Strin
         }
     };
     let stamps = serde_json::to_string_pretty(&stamps).map_err(|e| e.to_string())?;
+    // Igual ao que está gravado: não regrava (cada geração mudava o arquivo; G17).
+    if std::fs::read_to_string(&marker).is_ok_and(|t| t == stamps) {
+        return Ok(());
+    }
     std::fs::write(&marker, stamps).map_err(|e| format!("não consegui gravar {}: {e}", marker.display()))
 }
 

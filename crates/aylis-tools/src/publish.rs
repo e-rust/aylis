@@ -205,7 +205,8 @@ fn profile(options: &Options) -> &'static str {
 
 fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     sink(Event::Step(format!("Compilando {} ({})…", project.name, if options.debug { "desenvolvimento" } else { "otimizado" })));
-    let package = project.package_name();
+    // O binário do projeto (`output.bin`, ou o `[[bin]]`; I08 do Tabernáculo).
+    let package = project.bin_name();
     let mut args = vec!["build", "--bin", package.as_str()];
     if !options.debug {
         args.push("--release");
@@ -1241,6 +1242,26 @@ fn wasm_bindgen_tool(crate_dir: &Path, control: &Control, sink: Sink) -> Result<
     if tool.is_file() { Ok(tool) } else { Err(format!("o wasm-bindgen {wanted} não ficou em {}", tool.display())) }
 }
 
+/// O perfil de release das compilações para o navegador: o wasm é baixado (no celular, pela
+/// rede móvel) e compilado pelo navegador a cada visita nova, então o tamanho pesa mais que
+/// alguns por cento de velocidade. LTO com uma unidade só tira o código que nenhum form usa,
+/// `opt-level = "s"` otimiza para tamanho e `strip` tira os nomes das funções (a seção `name`,
+/// só para depuração: 1,4 MB em cada wasm; a mensagem de um pânico continua com o arquivo e a
+/// linha). Medido na família Standard das demonstrações: 6,6 → 3,7 MB (1,91 → 1,35 MB
+/// comprimido); veja `medicoes/web_wasm.json`. Pelas variáveis do cargo, valendo também para
+/// os projetos de fora (o `Cargo.toml` deles não muda) e sem mexer no release do desktop.
+const WEB_RELEASE: [(&str, &str); 4] = [
+    ("CARGO_PROFILE_RELEASE_LTO", "fat"),
+    ("CARGO_PROFILE_RELEASE_CODEGEN_UNITS", "1"),
+    ("CARGO_PROFILE_RELEASE_OPT_LEVEL", "s"),
+    ("CARGO_PROFILE_RELEASE_STRIP", "symbols"),
+];
+
+/// [`WEB_RELEASE`] no formato do [`cargo`].
+fn web_release_env<'a>() -> Vec<(&'a str, &'a Path)> {
+    WEB_RELEASE.iter().map(|(k, v)| (*k, Path::new(*v))).collect()
+}
+
 fn web(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     sink(Event::Step("Compilando para WebAssembly…".into()));
     let package = project.package_name();
@@ -1253,7 +1274,8 @@ fn web(project: &Project, options: &Options, out: &Path, control: &Control, sink
         args.extend(["--features", features.as_str()]);
     }
     let crate_dir = options.crate_dir.clone().unwrap_or_else(|| project.code_dir());
-    let built = cargo("cargo", &args, &crate_dir, &[], control, sink)?;
+    let envs = if options.debug { Vec::new() } else { web_release_env() };
+    let built = cargo("cargo", &args, &crate_dir, &envs, control, sink)?;
     let wasm = built
         .artifacts
         .iter()
@@ -1320,7 +1342,7 @@ pub fn ide_web(out: &Path, control: &Control, sink: Sink) -> Result<PathBuf, Str
     let crate_dir = root.join("crates").join("aylis-ide-web");
     sink(Event::Step("Compilando a IDE lite para WebAssembly…".into()));
     let args = ["rustc", "--lib", "--crate-type", "cdylib", "--target", "wasm32-unknown-unknown", "--release"];
-    let built = cargo("cargo", &args, &crate_dir, &[], control, sink)?;
+    let built = cargo("cargo", &args, &crate_dir, &web_release_env(), control, sink)?;
     let wasm = built
         .artifacts
         .iter()
@@ -1428,7 +1450,9 @@ pub fn demos(out: &Path, only: &[String], control: &Control, sink: Sink) -> Resu
         if !features.is_empty() {
             args.extend(["--features", features.as_str()]);
         }
-        let built = cargo("cargo", &args, &crate_dir, &[("AYLIS_DEMO_FAMILY", Path::new(&family.category))], control, sink)?;
+        let mut envs = web_release_env();
+        envs.push(("AYLIS_DEMO_FAMILY", Path::new(&family.category)));
+        let built = cargo("cargo", &args, &crate_dir, &envs, control, sink)?;
         let wasm = built
             .artifacts
             .iter()
@@ -1695,7 +1719,7 @@ fn ios(project: &Project, options: &Options, out: &Path, control: &Control, sink
     }
     let triple = if std::env::consts::ARCH == "aarch64" { "aarch64-apple-ios-sim" } else { "x86_64-apple-ios" };
     sink(Event::Step(format!("Compilando para iOS ({triple})…")));
-    let package = project.package_name();
+    let package = project.bin_name();
     let mut args = vec!["build", "--bin", package.as_str(), "--target", triple];
     if !options.debug {
         args.push("--release");

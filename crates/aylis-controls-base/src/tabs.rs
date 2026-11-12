@@ -92,6 +92,7 @@ impl TabControl {
             self.tab_index = index;
             switch(ctx.ui, &tabs, old, index, self.transition);
             ctx.fire("on_change", EventArgs::Value(index.into()));
+            show_page(ctx.ui, &tabs, index);
         }
         self.reveal.set(true);
         ctx.invalidate();
@@ -157,6 +158,9 @@ impl Component for TabControl {
             // A aba que estava à vista (para a transição sair dela).
             let old = tabs.iter().position(|&t| ctx.ui.control(t).is_some_and(|c| c.visible())).map_or(-1, |i| i as i64);
             switch(ctx.ui, &tabs, old, self.tab_index, self.transition);
+            if old != self.tab_index {
+                show_page(ctx.ui, &tabs, self.tab_index);
+            }
         }
     }
 
@@ -277,12 +281,25 @@ impl Component for TabControl {
         canvas.clip_rect(RectF::new(r.x, r.y, r.width, TAB_BAR));
         let mut headers = Vec::new();
         let mut x = r.x + 4.0 - scroll;
+        // A aba pelo estilo `TabControl.tab` do tema, quando houver: normal, sob o mouse e
+        // escolhida (`checked`), com fundo, texto, fonte, raio e borda (a borda de baixo faz o
+        // sublinhado). Sem ele, o visual de sempre. O relatório do Tabernáculo, C17.
+        let themed = theme.styles.contains_key("TabControl.tab");
         for (i, (&tab, caption)) in tabs.iter().zip(&captions).enumerate() {
             let width = widths[i];
             let rect = RectF::new(x, r.y, width, TAB_BAR - 1.0);
             let active = i as i64 == self.tab_index;
             let mut style = text.clone();
-            if active {
+            if themed {
+                let state = aylis_core::ControlState { checked: active, focused: active && ctx.state.focused, ..Default::default() };
+                let look = theme.resolve(&["TabControl.tab"], "", state);
+                if !look.fill.is_transparent() {
+                    canvas.fill_rect(rect, look.radius, &Brush::Solid(look.fill));
+                }
+                crate::basic::stroke_style_border(canvas, rect, look.radius, look.border_color, look.border_width, &look);
+                style.color = look.text;
+                style.font = look.font.clone();
+            } else if active {
                 style.color = theme.color("primary");
                 style.font.weight = aylis_core::FontWeight::Bold;
                 canvas.fill_rect(RectF::new(rect.x + 6.0, rect.bottom() - 3.0, rect.width - 12.0, 3.0), 1.5, &Brush::Solid(theme.color("primary")));
@@ -340,7 +357,8 @@ impl Component for TabItem {
     leaf_control!("TabItem");
 
     properties! {
-        caption: String => "Appearance"
+        caption: String => "Appearance";
+        events: on_show
     }
 
     fn paint(&self, _canvas: &mut dyn Canvas, _ctx: &PaintCtx<'_>) {}
@@ -582,5 +600,12 @@ impl Component for ToolBar {
         let r = ctx.rect;
         canvas.fill_rect(r, 0.0, &Brush::Solid(s.fill));
         canvas.draw_line(PointF::new(r.x, r.bottom() - 0.5), PointF::new(r.right(), r.bottom() - 0.5), &Stroke::new(s.border_color, 1.0));
+    }
+}
+
+/// A página que ficou à vista avisa: `on_show` (o `OnShow` da `TTabSheet`; C18 do Tabernáculo).
+fn show_page(ui: &mut Ui, tabs: &[ComponentId], index: i64) {
+    if let Some(&page) = usize::try_from(index).ok().and_then(|i| tabs.get(i)) {
+        ui.queue_event(page, "on_show", EventArgs::None);
     }
 }

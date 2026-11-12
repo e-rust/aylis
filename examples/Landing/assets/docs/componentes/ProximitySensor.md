@@ -8,10 +8,10 @@ O sensor de proximidade (o rosto encostado no telefone): `near` e `distance` (cm
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `interval` | Intervalo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `interval` | Intervalo | número |  |
 
 ## Eventos
 

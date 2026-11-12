@@ -10,17 +10,17 @@ Grupo de opções exclusivas com título e moldura. `items` separados por `;`, `
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `caption` | Título | texto |
-| `columns` | Colunas | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caption` | Título | texto |  |
+| `columns` | Colunas | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ## Eventos
 

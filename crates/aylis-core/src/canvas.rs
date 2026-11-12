@@ -251,8 +251,13 @@ pub trait Canvas {
 
     /// Preenche um retângulo (`radius` > 0 arredonda os cantos).
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush);
+    /// Traça a borda de um retângulo **por dentro**: o traço inteiro cabe em `rect` (o
+    /// `box-sizing: border-box` do CSS), nos três renderizadores. Uma moldura de 1 px fica no
+    /// primeiro pixel de dentro, nítida; para traçar pelo meio da linha, aumente o retângulo
+    /// em meia largura do traço (o relatório do Tabernáculo, T09).
     fn stroke_rect(&mut self, rect: RectF, radius: f32, stroke: &Stroke);
     fn fill_ellipse(&mut self, rect: RectF, brush: &Brush);
+    /// Traça a elipse por dentro de `rect`, como o [`stroke_rect`](Self::stroke_rect).
     fn stroke_ellipse(&mut self, rect: RectF, stroke: &Stroke);
     fn draw_line(&mut self, from: PointF, to: PointF, stroke: &Stroke);
     fn draw_text(&mut self, text: &str, rect: RectF, style: &TextStyle);

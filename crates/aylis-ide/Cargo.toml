@@ -35,7 +35,7 @@ desktop = [
 [dependencies]
 # O canal de desenvolvimento (o app em execução conecta na IDE).
 tungstenite = { version = "0.26", optional = true }
-aylis-core = { path = "../aylis-core" }
+aylis-core = { path = "../aylis-core", features = ["text-shaping"] }
 aylis-controls = { path = "../aylis-controls" }
 aylis-json = { path = "../aylis-json" }
 aylis-data = { path = "../aylis-data" }

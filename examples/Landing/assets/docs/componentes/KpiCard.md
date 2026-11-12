@@ -10,27 +10,27 @@ Cartão de indicador: título, o valor grande, a variação contra o período an
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `prefix` | Prefixo | texto |
-| `suffix` | Sufixo | texto |
-| `decimals` | Casas decimais | inteiro |
-| `subtitle` | Subtítulo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `prefix` | Prefixo | texto |  |
+| `suffix` | Sufixo | texto |  |
+| `decimals` | Casas decimais | inteiro |  |
+| `subtitle` | Subtítulo | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `higher_is_better` | Maior é melhor | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `higher_is_better` | Maior é melhor | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `previous` | Valor anterior | número |
-| `trend` | Tendência | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `previous` | Valor anterior | número | O valor do período anterior (para a variação); 0: sem variação. |
+| `trend` | Tendência | texto | A tendência, `"10,12,9,15"` (vírgula ou `;`): uma linha embaixo. |
 
 ## Em código
 

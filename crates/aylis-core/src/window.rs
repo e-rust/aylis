@@ -45,6 +45,9 @@ pub enum WindowCommand {
     /// Põe o canto da janela (com a moldura) neste ponto da tela, em pixels físicos (a janela
     /// arrastada pela aba que vai para outro lugar).
     MoveTo(i32, i32),
+    /// A propriedade `gpu` do form mudou: a janela confere em que placa de vídeo desenha
+    /// (veja [`crate::gpu`]).
+    UpdateGpu,
 }
 
 impl Ui {

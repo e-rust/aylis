@@ -203,13 +203,19 @@ fn code_options(target: &Target) -> SearchOptions {
 }
 
 /// Os usos de `target` no projeto: nos forms (pelo JSON de cada um) e nos fontes do código.
-pub fn find(project: &Project, target: &Target) -> Result<Results, String> {
+/// `open`: o texto dos forms abertos e alterados na IDE, que vale no lugar do disco (o
+/// relatório do Tabernáculo, M07: o MCP lia o form do disco, sem o que não estava salvo).
+pub fn find(project: &Project, target: &Target, open: &std::collections::HashMap<PathBuf, String>) -> Result<Results, String> {
     let forms: Vec<(String, PathBuf, Value)> = project
         .forms
         .iter()
         .filter_map(|f| {
             let file = project.file(&f.file);
-            let layout = serde_json::from_str(&std::fs::read_to_string(&file).ok()?).ok()?;
+            let text = match open.get(&file) {
+                Some(text) => text.clone(),
+                None => std::fs::read_to_string(&file).ok()?,
+            };
+            let layout = serde_json::from_str(&text).ok()?;
             Some((f.name.clone(), file, layout))
         })
         .collect();

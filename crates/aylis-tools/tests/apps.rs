@@ -20,6 +20,12 @@ fn root() -> PathBuf {
     PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../..")).canonicalize().map(|p| PathBuf::from(p.display().to_string().trim_start_matches(r"\\?\"))).unwrap()
 }
 
+/// A pasta onde o cargo compilou estes testes (o `target/tmp` fica dentro dela): o `target/`
+/// do repositório ou a pasta única do `config.toml` global.
+fn target_dir() -> PathBuf {
+    Path::new(env!("CARGO_TARGET_TMPDIR")).parent().unwrap().to_path_buf()
+}
+
 fn project(app: &str) -> Project {
     Project::open(root().join("examples").join(app).join(format!("{app}.aylisproj"))).unwrap()
 }
@@ -43,7 +49,7 @@ fn the_same_script_gives_the_same_state_in_every_language() {
     // O aylis-host do teste tem de ser o desta versão do código.
     let status = Command::new("cargo").current_dir(root()).args(["build", "-q", "-p", "aylis-host"]).status().unwrap();
     assert!(status.success(), "não compilou o aylis-host");
-    let host = root().join("target/debug").join(aylis_tools::env::exe("aylis-host"));
+    let host = target_dir().join("debug").join(aylis_tools::env::exe("aylis-host"));
     let output = std::env::temp_dir().join(format!("aylis_apps_{}", std::process::id()));
     std::fs::create_dir_all(&output).unwrap();
     let mut failures = Vec::new();
@@ -85,7 +91,7 @@ fn processamento_assincrono_runs_the_work_in_a_thread() {
     }
     let status = Command::new("cargo").current_dir(root()).args(["build", "-q", "-p", "aylis-host"]).status().unwrap();
     assert!(status.success(), "não compilou o aylis-host");
-    let host = root().join("target/debug").join(aylis_tools::env::exe("aylis-host"));
+    let host = target_dir().join("debug").join(aylis_tools::env::exe("aylis-host"));
     let output = std::env::temp_dir().join(format!("aylis_processamento_{}", std::process::id()));
     std::fs::create_dir_all(&output).unwrap();
     let project = project("ProcessamentoAssincrono");

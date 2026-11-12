@@ -182,6 +182,16 @@ pub fn files(root: &Path, include: &str, exclude: &str, forms: &[PathBuf]) -> Ve
     out
 }
 
+/// Os forms abertos e alterados, pelo arquivo: o texto da memória (vale no lugar do disco).
+pub fn open_forms(state: &Shared) -> std::collections::HashMap<PathBuf, String> {
+    let st = state.borrow();
+    std::iter::once(&st.doc)
+        .chain(st.tabs.iter().flatten())
+        .filter(|d| d.modified)
+        .filter_map(|d| Some((d.path.clone()?, d.to_json().ok()?)))
+        .collect()
+}
+
 /// Procura nos fontes e nos forms. Erro: a expressão não é válida.
 pub fn search(options: &SearchOptions, files: &[PathBuf], forms: &[(String, PathBuf)]) -> Result<Results, String> {
     search_with(options, files, forms, &std::collections::HashMap::new())
@@ -465,9 +475,10 @@ pub fn show_usages(ui: &mut Ui, state: &Shared, ids: &Ids, target: crate::usages
         s.generation += 1;
         s.generation
     });
+    let open = open_forms(state);
     let poster = ui.poster();
     std::thread::spawn(move || {
-        let result = crate::usages::find(&project, &target);
+        let result = crate::usages::find(&project, &target, &open);
         poster.post(move |ui| {
             if SESSION.with(|s| s.borrow().generation != generation) {
                 return;
@@ -510,15 +521,7 @@ fn run(ui: &mut Ui, state: &Shared, _ids: &Ids) {
     }
     let root = project.dir().to_path_buf();
     let forms: Vec<(String, PathBuf)> = project.forms.iter().map(|f| (f.name.clone(), project.file(&f.file))).collect();
-    // Os forms abertos e alterados: o texto da memória.
-    let open: std::collections::HashMap<PathBuf, String> = {
-        let st = state.borrow();
-        std::iter::once(&st.doc)
-            .chain(st.tabs.iter().flatten())
-            .filter(|d| d.modified)
-            .filter_map(|d| Some((d.path.clone()?, d.to_json().ok()?)))
-            .collect()
-    };
+    let open = open_forms(state);
     let generation = SESSION.with(|s| {
         let mut s = s.borrow_mut();
         s.generation += 1;

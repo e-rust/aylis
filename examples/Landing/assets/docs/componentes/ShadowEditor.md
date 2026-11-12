@@ -10,19 +10,19 @@ Editor de sombra (o do DevTools para `box-shadow`): o quadro arrasta o deslocame
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `range` | Intervalo de datas | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `range` | Intervalo de datas | número | Deslocamento máximo do quadro (o desfoque vai até o dobro). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `offset_x` | Deslocamento X | número |
-| `offset_y` | Deslocamento Y | número |
-| `blur` | Desfoque | número |
-| `spread` | Expansão | número |
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `offset_x` | Deslocamento X | número |  |
+| `offset_y` | Deslocamento Y | número |  |
+| `blur` | Desfoque | número |  |
+| `spread` | Expansão | número |  |
+| `color` | Cor | cor |  |
 
 ## Eventos
 

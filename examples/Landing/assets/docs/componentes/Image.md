@@ -10,11 +10,11 @@ Mostra uma imagem do aplicativo (`image: "assets/images/logo.png"`, lida pelo se
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `image` | Imagem | texto |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
-| `radius` | Raio dos cantos | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `image` | Imagem | texto |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `radius` | Raio dos cantos | número |  |
 
 ## Em código
 

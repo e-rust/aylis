@@ -8,12 +8,12 @@ CSV (o padrão do `Export`): `separator` entre as colunas (`;`, o que o Excel em
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `separator` | Separadores | texto |
-| `decimal_comma` | Vírgula decimal | lógico |
-| `bom` | Marca BOM (UTF-8) | lógico |
-| `header` | Linha de títulos | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `separator` | Separadores | texto |  |
+| `decimal_comma` | Vírgula decimal | lógico |  |
+| `bom` | Marca BOM (UTF-8) | lógico |  |
+| `header` | Linha de títulos | lógico | A primeira linha com os títulos. |
 
 ## Em código
 

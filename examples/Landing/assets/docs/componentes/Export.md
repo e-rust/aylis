@@ -8,12 +8,12 @@ Exporta os registros de um `DataSource` (na ordem e com o filtro que a tela most
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data_source` | Fonte de dados | componente |
-| `provider` | Provedor | componente |
-| `fields` | Campos | texto |
-| `sheet_name` | Nome da aba | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data_source` | Fonte de dados | componente |  |
+| `provider` | Provedor | componente | Quem grava o arquivo (um provedor de exportação); sem ele, CSV. |
+| `fields` | Campos | texto | Os campos, separados por `;` (vazio: os visíveis, na ordem do dataset). |
+| `sheet_name` | Nome da aba | texto | O nome da aba (onde o formato tem abas). |
 
 ## Em código
 

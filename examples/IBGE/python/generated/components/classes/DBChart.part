@@ -172,6 +172,86 @@ class DBChart(AylisComponent):
         self._set("clicked_index", value)
 
     @property
+    def value_format(self):
+        return self._get("value_format")
+
+    @value_format.setter
+    def value_format(self, value):
+        self._set("value_format", value)
+
+    @property
+    def label_angle(self):
+        return self._get("label_angle")
+
+    @label_angle.setter
+    def label_angle(self, value):
+        self._set("label_angle", value)
+
+    @property
+    def title_align(self):
+        return self._get("title_align")
+
+    @title_align.setter
+    def title_align(self, value):
+        self._set("title_align", value)
+
+    @property
+    def title_bold(self):
+        return self._get("title_bold")
+
+    @title_bold.setter
+    def title_bold(self, value):
+        self._set("title_bold", value)
+
+    @property
+    def area_opacity(self):
+        return self._get("area_opacity")
+
+    @area_opacity.setter
+    def area_opacity(self, value):
+        self._set("area_opacity", value)
+
+    @property
+    def legend_position(self):
+        return self._get("legend_position")
+
+    @legend_position.setter
+    def legend_position(self, value):
+        self._set("legend_position", value)
+
+    @property
+    def stacked(self):
+        return self._get("stacked")
+
+    @stacked.setter
+    def stacked(self, value):
+        self._set("stacked", value)
+
+    @property
+    def colors(self):
+        return self._get("colors")
+
+    @colors.setter
+    def colors(self, value):
+        self._set("colors", value)
+
+    @property
+    def center_text(self):
+        return self._get("center_text")
+
+    @center_text.setter
+    def center_text(self, value):
+        self._set("center_text", value)
+
+    @property
+    def slice_labels(self):
+        return self._get("slice_labels")
+
+    @slice_labels.setter
+    def slice_labels(self, value):
+        self._set("slice_labels", value)
+
+    @property
     def left(self):
         return self._get("left")
 
@@ -212,6 +292,30 @@ class DBChart(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -242,6 +346,22 @@ class DBChart(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -428,6 +548,38 @@ class DBChart(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -570,6 +722,22 @@ class DBChart(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):

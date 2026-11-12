@@ -10,17 +10,17 @@ Aviso no rodapé com uma ação opcional (o `v-snackbar`): "Item apagado · DESF
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `action` | Ação | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `action` | Ação | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `timeout` | Tempo para sumir | duração (ms) |
-| `active` | Ativo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `timeout` | Tempo para sumir | duração (ms) |  |
+| `active` | Ativo | lógico |  |
 
 ## Eventos
 

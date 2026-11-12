@@ -10,24 +10,27 @@ Navegador embutido. `url` abre um endereço; sem ele, `html` mostra o texto dado
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `skeleton` | Skeleton ao carregar | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `skeleton` | Skeleton ao carregar | lógico | Com o app rodando, enquanto a página carrega, um skeleton no lugar (blocos no tom do fundo): a vista nativa fica por cima dele quando a página aparece. Sem ele, a reserva do designer (a barra de endereço e o aviso). |
+| `background_color` | Cor de fundo | cor | A cor da vista antes da primeira pintura da página (sem ela, branca: o clarão num app escuro). O relatório do Tabernáculo, W07. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `allowed_origins` | Origens permitidas | texto |
-| `allowed_navigation` | Navegação permitida | texto |
-| `sandbox` | Restrições do iframe (sandbox) | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `allowed_origins` | Origens permitidas | texto | Origens que podem mandar mensagens (`https://pagamento.exemplo.com`), separadas por vírgula ou espaço; vazia, a origem do `url` (com `html`, só o próprio conteúdo). |
+| `allowed_navigation` | Navegação permitida | texto | Para onde a página pode navegar (origens ou prefixos, separados por vírgula ou espaço); vazia, qualquer lugar. Um endereço fora vira `on_blocked`. |
+| `data_dir` | Pasta de dados | texto | A pasta de dados do navegador (cookies, cache); vazia, a do sistema. Um app instalado em `Program Files` precisa de uma pasta gravável (a do usuário). |
+| `browser_args` | Argumentos do navegador | texto | Argumentos do navegador do sistema (o WebView2 no Windows), como `--autoplay-policy=no-user-gesture-required`. Valem ao criar a vista; o WebView2 recusa argumentos diferentes na mesma pasta de dados. A depuração remota não é aceita (abriria uma porta). |
+| `sandbox` | Restrições do iframe (sandbox) | texto | O atributo `sandbox` do `<iframe>` no navegador (`allow-scripts allow-forms`...). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `url` | Endereço (URL) | texto |
-| `html` | Conteúdo (HTML) | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `url` | Endereço (URL) | texto |  |
+| `html` | Conteúdo (HTML) | texto |  |
 
 ## Eventos
 

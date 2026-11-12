@@ -8,25 +8,31 @@
 
 ## Propriedades
 
+### Aparência
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `gutter` | Reservar a calha da barra | lógico | A calha da barra: `true` (o padrão) reserva o lugar dela sempre (o `scrollbar-gutter: stable`); `false`, a barra passa por cima do conteúdo, que usa a largura toda (L01 do Tabernáculo). |
+
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `horizontal` | Horizontal | lógico |
-| `pull_to_refresh` | Puxar para atualizar | lógico |
-| `refreshing` | Atualizando | lógico |
-| `wheel_step` | Passo da roda | número |
-| `smooth` | Rolagem suave | um de: `default`, `on`, `off` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `horizontal` | Horizontal | lógico |  |
+| `pull_to_refresh` | Puxar para atualizar | lógico | Puxar para baixo no topo atualiza (o `v-pull-to-refresh`): dispara `on_refresh` e mostra o indicador enquanto `refreshing` estiver ligado (quem atualiza desliga). |
+| `refreshing` | Atualizando | lógico |  |
+| `wheel_step` | Passo da roda | número | Pontos por dente da roda (0 = o do app, `Ui::scroll_options`(aylis_core::Ui::scroll_options)). |
+| `smooth` | Rolagem suave | um de: `default`, `on`, `off` | Deslizar na roda: `default` (o do app), `on` ou `off`. |
 
 ### Teclado
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `allowed_chars` | Caracteres permitidos | texto |
-| `blocked_chars` | Caracteres bloqueados | texto |
-| `only_allowed` | Só os permitidos | lógico |
-| `chars_override` | Força os caracteres | lógico |
-| `char_map` | Trocas de caracteres | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `allowed_chars` | Caracteres permitidos | texto | Os caracteres dos campos dentro da caixa (veja o `Form`). |
+| `blocked_chars` | Caracteres bloqueados | texto |  |
+| `only_allowed` | Só os permitidos | lógico |  |
+| `chars_override` | Força os caracteres | lógico |  |
+| `char_map` | Trocas de caracteres | texto | Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a mesma herança dos filtros. |
 
 ## Eventos
 

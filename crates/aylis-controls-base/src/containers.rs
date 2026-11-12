@@ -51,6 +51,10 @@ pub struct ScrollBox {
     pub wheel_step: f32,
     /// Deslizar na roda: `default` (o do app), `on` ou `off`.
     pub smooth: SmoothScroll,
+    /// A calha da barra: `true` (o padrão) reserva o lugar dela sempre (o `scrollbar-gutter:
+    /// stable`); `false`, a barra passa por cima do conteúdo, que usa a largura toda (L01 do
+    /// Tabernáculo).
+    pub gutter: bool,
     /// O deslize em andamento: de onde, para onde e quando começou.
     glide: Option<(f32, f32, f64)>,
     dragging: Option<f32>,
@@ -75,7 +79,7 @@ impl Default for ScrollBox {
     fn default() -> Self {
         let mut base = ControlBase::new(200.0, 200.0);
         base.set_clip_children(true).set_padding([0.0, 0.0, BAR + 2.0, 0.0]);
-        Self { base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new() }
+        Self { base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, gutter: true, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new() }
     }
 }
 
@@ -86,10 +90,17 @@ impl ScrollBox {
         if self.horizontal { (c.width, b.width) } else { (c.height, b.height) }
     }
 
-    /// Quanto dá para rolar.
+    /// Quanto dá para rolar. Menos de meio ponto (o arredondamento das medidas) é nada: a
+    /// barra não aparece sem ter o que rolar.
     pub fn max_scroll(&self) -> f32 {
         let (content, view) = self.axis();
-        (content - view).max(0.0)
+        if content - view < 0.5 { 0.0 } else { content - view }
+    }
+
+    /// O padding do lado da barra: a calha, ou nada.
+    fn apply_gutter(&mut self) {
+        let room = if self.gutter { BAR + 2.0 } else { 0.0 };
+        self.base.set_padding(if self.horizontal { [0.0, 0.0, 0.0, room] } else { [0.0, 0.0, room, 0.0] });
     }
 
     /// Posição atual da rolagem.
@@ -110,8 +121,9 @@ impl ScrollBox {
         if y == self.scroll() {
             return false;
         }
-        self.base.set_scroll_offset(if self.horizontal { PointF::new(y, 0.0) } else { PointF::new(0.0, y) });
-        ctx.invalidate();
+        // Só os filhos andam (sem refazer o layout do form a cada passo).
+        let offset = if self.horizontal { PointF::new(y, 0.0) } else { PointF::new(0.0, y) };
+        ctx.ui.scroll_content(ctx.id, &mut self.base, offset);
         // Chegou perto do fim: avisa uma vez por tamanho de conteúdo (rolagem infinita).
         let max = self.max_scroll();
         if max > 0.0 && y >= max - END_MARGIN && self.end_fired_at != Some(max) {
@@ -127,7 +139,7 @@ impl ScrollBox {
     fn thumb(&self) -> Option<RectF> {
         let b = self.base.bounds();
         let (content, view) = self.axis();
-        if content <= view || view <= 0.0 {
+        if content - view < 0.5 || view <= 0.0 {
             return None;
         }
         let len = (view * view / content).max(24.0);
@@ -138,9 +150,12 @@ impl ScrollBox {
     fn sync(&mut self, name: &str) {
         if name == "horizontal" {
             // A barra fica embaixo (horizontal) ou à direita (vertical).
-            self.base.set_padding(if self.horizontal { [0.0, 0.0, 0.0, BAR + 2.0] } else { [0.0, 0.0, BAR + 2.0, 0.0] });
+            self.apply_gutter();
             self.base.set_scroll_offset(PointF::ZERO);
             self.exact = 0.0;
+        }
+        if name == "gutter" {
+            self.apply_gutter();
         }
     }
 
@@ -254,6 +269,7 @@ impl Component for ScrollBox {
         refreshing: bool => "Behavior",
         wheel_step: f32 => "Behavior",
         smooth: SmoothScroll => "Behavior",
+        gutter: bool => "Appearance",
         allowed_chars: String => "Keyboard",
         blocked_chars: String => "Keyboard",
         only_allowed: bool => "Keyboard",

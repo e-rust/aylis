@@ -10,17 +10,17 @@ Avaliação em estrelas (o `v-rating`): `value` de 0 a `max`, com meia estrela (
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `half` | Meia estrela | lógico |
-| `read_only` | Somente leitura | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `half` | Meia estrela | lógico |  |
+| `read_only` | Somente leitura | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `max` | Máximo | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `max` | Máximo | inteiro |  |
 
 ## Eventos
 

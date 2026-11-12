@@ -8,9 +8,9 @@ Lê e grava tags NFC (NDEF): `active` lê enquanto o app está aberto; cada tag 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
 
 ## Eventos
 

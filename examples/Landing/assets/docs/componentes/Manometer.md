@@ -10,20 +10,20 @@ Manômetro: o mostrador redondo com o ponteiro, as marcas e a faixa de alarme.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `unit` | Unidade | texto |
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `unit` | Unidade | texto |  |
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `alarm_above` | Alarme acima de | número |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `alarm_above` | Alarme acima de | número | A partir daqui o arco fica vermelho (0 = sem faixa). |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

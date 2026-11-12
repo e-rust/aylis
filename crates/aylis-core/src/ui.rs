@@ -241,6 +241,12 @@ pub struct Ui {
     pub(crate) monitors: Vec<crate::monitors::Monitor>,
     pub(crate) monitors_version: u64,
     pub(crate) form_monitors: std::collections::HashMap<ComponentId, usize>,
+    /// Onde o último arrasto foi solto, no destino (`Ui::drop_point`).
+    pub(crate) drop_point: Option<crate::geometry::PointF>,
+    /// Os forms com a janela minimizada (`monitors.rs`).
+    pub(crate) minimized_forms: std::collections::HashSet<ComponentId>,
+    /// A placa de vídeo de cada janela (veja `gpu.rs`).
+    pub(crate) form_gpus: std::collections::HashMap<ComponentId, String>,
     pub(crate) main_form: Option<ComponentId>,
     /// Os eventos-pergunta em andamento e os adiados (`question.rs`).
     pub(crate) questions: crate::question::Questions,
@@ -268,6 +274,11 @@ pub struct Ui {
     /// Quantos métodos de componente estão executando (um dentro do outro).
     pub(crate) call_depth: u32,
     pub(crate) design_mode: bool,
+    /// O atraso da dica escolhido pelo app (o `HintPause` do Delphi); `None`: o do tema.
+    hint_delay: Option<f64>,
+    /// Pintando uma foto (o `snapshot`): sem o mouse em cima, o aperto e o foco (o cursor de
+    /// texto piscando e o anel), que são do momento e não da tela (B03 do Tabernáculo).
+    pub(crate) still_picture: bool,
     /// No designer, os componentes escondidos (`visible = false`) que aparecem: os
     /// selecionados e os que contêm um selecionado ([`Ui::set_design_reveal`]).
     design_reveal: Vec<ComponentId>,
@@ -394,6 +405,9 @@ impl Ui {
             monitors: Vec::new(),
             monitors_version: 0,
             form_monitors: std::collections::HashMap::new(),
+            minimized_forms: std::collections::HashSet::new(),
+            drop_point: None,
+            form_gpus: std::collections::HashMap::new(),
             main_form: None,
             questions: Default::default(),
             busy: Default::default(),
@@ -408,6 +422,8 @@ impl Ui {
             pending_closes: Vec::new(),
             call_depth: 0,
             design_mode: false,
+            hint_delay: None,
+            still_picture: false,
             design_reveal: Vec::new(),
             design_show_hidden: false,
             timeouts: Vec::new(),
@@ -1625,6 +1641,13 @@ impl Ui {
         self.time = seconds;
     }
 
+    /// O relógio falso dos testes: anda `seconds` e roda os relógios que venceram (os `Timer`,
+    /// o `set_timeout`), sem plataforma (o relatório do Tabernáculo, P08).
+    pub fn advance(&mut self, seconds: f64) {
+        self.time += seconds.max(0.0);
+        self.run_timers();
+    }
+
     // =====================================================================
     // Propriedades por nome
     // =====================================================================
@@ -1645,6 +1668,15 @@ impl Ui {
     /// Eventos devolvem o nome do handler; um handler definido por closure devolve
     /// `Event(None)`, porque não tem nome.
     pub fn get_prop(&self, id: ComponentId, name: &str) -> Result<PropValue> {
+        self.read_prop(id, name, true)
+    }
+
+    /// O valor declarado, sem o tamanho que o layout deu ao alinhado: o que se grava no form.
+    pub fn get_declared_prop(&self, id: ComponentId, name: &str) -> Result<PropValue> {
+        self.read_prop(id, name, false)
+    }
+
+    fn read_prop(&self, id: ComponentId, name: &str, laid_out: bool) -> Result<PropValue> {
         let entry = self.entry(id).ok_or(Error::InvalidId)?;
         if name == "name" {
             return Ok(PropValue::String(entry.name.clone()));
@@ -1659,6 +1691,22 @@ impl Ui {
         // pareceria não existir.
         if entry.component.is_none() {
             return Err(Error::Busy(self.path_of(id)));
+        }
+        // O tamanho de um controle alinhado é o que o layout deu (o `Width` do Delphi), com o app
+        // rodando; no designer, o declarado (é o que se grava no form). O relatório do
+        // Tabernáculo, L13: a largura de um controle encaixado vinha 100, a declarada.
+        // Só o lado que o alinhamento estica (a largura do `Top`, a altura do `Left`) e só
+        // visível: o escondido não passou pelo layout e guarda um tamanho velho.
+        if laid_out && matches!(name, "width" | "height") && !self.design_mode
+            && let Some(cb) = self.cb(id)
+            && cb.visible()
+            && stretches(cb.align(), name == "width")
+        {
+            let b = cb.bounds();
+            let real = if name == "width" { b.width } else { b.height };
+            if real > 0.0 {
+                return Ok(PropValue::Float(real as f64));
+            }
         }
         let info = self.prop_info(id, name).ok_or_else(|| Error::UnknownProperty(name.to_string()))?;
         if info.kind == PropKind::Color {
@@ -2330,6 +2378,26 @@ impl Ui {
 
     /// Modo de design (a IDE liga no `Ui` do documento): os controles podem se mostrar de
     /// um jeito próprio para o designer (veja [`PaintCtx::design`](crate::PaintCtx::design)).
+    /// Quanto o mouse fica parado até a dica aparecer, em segundos (o `HintPause` do Delphi;
+    /// o relatório do Tabernáculo, C19). `None` volta ao do tema (`durations.hint`, em ms) ou
+    /// ao padrão de 1 s.
+    pub fn set_hint_delay(&mut self, seconds: Option<f64>) {
+        self.hint_delay = seconds.map(|s| s.max(0.0));
+    }
+
+    /// Liga a pintura de foto: os estados do momento (hover, pressed, focused) não aparecem.
+    /// Quem tira a foto liga antes de pintar e desliga depois.
+    pub fn set_still_picture(&mut self, on: bool) {
+        self.still_picture = on;
+    }
+
+    /// O atraso da dica em vigor, em segundos.
+    pub fn hint_delay(&self) -> f64 {
+        self.hint_delay
+            .or_else(|| self.theme.durations.get("hint").map(|ms| *ms as f64 / 1000.0))
+            .unwrap_or(crate::input::HINT_DELAY)
+    }
+
     pub fn set_design_mode(&mut self, on: bool) {
         self.design_mode = on;
         self.request_repaint();
@@ -2578,6 +2646,19 @@ impl Ui {
     /// um painel) com a mesma fonte do desenho.
     /// O espaço interno que o tema dá ao controle (o `padding` do estilo dele): onde o
     /// texto é desenhado.
+    /// A altura de linha do estilo do controle (`line_height`, em vezes a fonte; 0: a da fonte).
+    pub fn style_line_height(&self, id: ComponentId) -> f32 {
+        let theme = self.theme_of(id);
+        match self.component(id).and_then(|c| c.control().map(|cb| (c, cb))) {
+            Some((component, cb)) => {
+                let mut classes = Vec::new();
+                component.class_chain(&mut classes);
+                self.mixed_theme(theme, &classes).resolve(&classes, cb.style(), cb.state()).line_height
+            }
+            None => 0.0,
+        }
+    }
+
     pub fn style_padding(&self, id: ComponentId) -> crate::geometry::Bounds {
         let theme = self.theme_of(id);
         match self.component(id).and_then(|c| c.control().map(|cb| (c, cb))) {
@@ -2633,5 +2714,18 @@ impl Ui {
     /// O estado do tipo `T`, se já foi criado.
     pub fn extension_ref<T: 'static>(&self) -> Option<&T> {
         self.extensions.get(&std::any::TypeId::of::<T>()).and_then(|b| b.downcast_ref::<T>())
+    }
+}
+
+/// O alinhamento `align` decide a largura (`width`) ou a altura do controle.
+fn stretches(align: crate::align::Align, width: bool) -> bool {
+    use crate::align::Align;
+    match align {
+        Align::None | Align::Center => false,
+        Align::VertCenter | Align::Horizontal => width,
+        Align::HorzCenter | Align::Vertical => !width,
+        Align::Top | Align::Bottom | Align::MostTop | Align::MostBottom => width,
+        Align::Left | Align::Right | Align::MostLeft | Align::MostRight => !width,
+        _ => true,
     }
 }

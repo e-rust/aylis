@@ -10,18 +10,18 @@ O carregando por cima (`QInnerLoading`): cobre o contêiner onde está (ocupa a 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |
-| `label` | Rótulo | texto |
-| `size` | Tamanho | número |
-| `dim` | Escurecer | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |  |
+| `label` | Rótulo | texto |  |
+| `size` | Tamanho | número | O tamanho do spinner. |
+| `dim` | Escurecer | número | A opacidade do véu (0 = só o spinner). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `showing` | Mostrando | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `showing` | Mostrando | lógico |  |
 
 ## Em código
 

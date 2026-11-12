@@ -258,6 +258,24 @@ pub(crate) fn config_value(key: &str) -> Value {
 }
 
 /// Troca uma chave do arquivo de configuração, mantendo as outras.
+/// As pastas da árvore do projeto que o usuário abriu (`project_trees` da configuração, por
+/// projeto). Sem nada guardado, tudo fechado.
+pub fn project_tree_of(project: &Path) -> std::collections::HashSet<String> {
+    let Some(path) = config_path() else { return Default::default() };
+    let config = std::fs::read_to_string(path).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).unwrap_or_default();
+    config["project_trees"][project.display().to_string()].as_array().map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default()
+}
+
+/// Guarda as pastas abertas da árvore do projeto `project`.
+pub fn remember_project_tree(project: &Path, open: &std::collections::HashSet<String>) {
+    let Some(path) = config_path() else { return };
+    let mut trees = std::fs::read_to_string(path).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).map(|c| c["project_trees"].clone()).filter(Value::is_object).unwrap_or_else(|| serde_json::json!({}));
+    let mut list: Vec<&String> = open.iter().collect();
+    list.sort();
+    trees[project.display().to_string()] = serde_json::json!(list);
+    update_config("project_trees", trees);
+}
+
 pub(crate) fn update_config(key: &str, value: Value) {
     let Some(path) = config_path() else { return };
     let mut config = std::fs::read_to_string(&path).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).filter(Value::is_object).unwrap_or_else(|| serde_json::json!({}));
@@ -543,6 +561,8 @@ pub fn open_project(ui: &mut Ui, state: &Shared, ids: &Ids, path: &Path) {
     st.status = format!("Projeto {} aberto ({})", project.name, project.language.name());
     st.remember(path.to_path_buf());
     let dir = project.dir();
+    // A árvore do projeto como o usuário deixou (I10 do Tabernáculo).
+    st.project_tree_open = project_tree_of(&project.path);
     st.project = Some(project);
     drop(st);
     save_config(state);
@@ -556,10 +576,21 @@ pub fn open_project(ui: &mut Ui, state: &Shared, ids: &Ids, path: &Path) {
 /// Rust e o rust-analyzer do ERP rodando com o Relatórios aberto; conferência de 08/11).
 /// `false`: há código não salvo (o aviso foi dado), e o projeto fica.
 pub fn leave_project(ui: &mut Ui, state: &Shared) -> bool {
+    // Forms alterados: avisa uma vez, como com o código (antes eram descartados sem perguntar;
+    // o relatório do Tabernáculo, I07).
+    {
+        let mut st = state.borrow_mut();
+        if st.any_modified() && !st.leave_warned {
+            st.leave_warned = true;
+            st.status = "Há forms alterados sem salvar: Ctrl+Shift+S salva todos; repita para descartar".into();
+            return false;
+        }
+    }
     if !crate::codewindow::close_all_tabs(ui) {
         state.borrow_mut().status = "Há código alterado sem salvar: Ctrl+S salva; repita para descartar".into();
         return false;
     }
+    state.borrow_mut().leave_warned = false;
     crate::intel::stop(state);
     let mut st = state.borrow_mut();
     st.output.clear();
@@ -567,9 +598,10 @@ pub fn leave_project(ui: &mut Ui, state: &Shared) -> bool {
     true
 }
 
-pub fn close_project(ui: &mut Ui, state: &Shared) {
+/// Fecha o projeto. `false`: há algo alterado sem salvar (o aviso está na barra de estado).
+pub fn close_project(ui: &mut Ui, state: &Shared) -> bool {
     if !leave_project(ui, state) {
-        return;
+        return false;
     }
     let mut st = state.borrow_mut();
     st.project = None;
@@ -577,6 +609,7 @@ pub fn close_project(ui: &mut Ui, state: &Shared) {
     st.close_all();
     st.home = true;
     st.status = "Projeto fechado".into();
+    true
 }
 
 /// Abre um form do projeto (ou vai para a aba dele).
@@ -653,6 +686,34 @@ fn module_layouts(project: &Project, uses: &[String]) -> Vec<Value> {
 }
 
 /// Projeto → Novo DataModule: um contêiner de componentes não visuais, criado no início.
+/// Move ou renomeia o arquivo de um form do projeto (`aylis_project::Project::move_form`): a aba
+/// aberta dele passa a gravar no lugar novo, e o código é gerado de novo (o módulo pode mudar).
+/// Salva o form antes, se ele tem alterações.
+pub fn move_form(state: &Shared, name: &str, new_file: &str) -> Result<String, String> {
+    let index = state.borrow().find_tab(name);
+    if index.is_some_and(|i| state.borrow().tab(i).is_some_and(|d| d.modified)) {
+        if let Some(i) = index {
+            state.borrow_mut().switch_to(i);
+        }
+        save(state, false);
+    }
+    let mut st = state.borrow_mut();
+    let project = st.project.as_mut().ok_or("abra um projeto antes")?;
+    project.move_form(name, new_file)?;
+    let path = project.file(&project.form(name).map(|f| f.file.clone()).unwrap_or_default());
+    let project = project.clone();
+    if let Some(i) = st.find_tab(name) {
+        if i == st.active {
+            st.doc.path = Some(path.clone());
+        } else if let Some(Some(doc)) = st.tabs.get_mut(i) {
+            doc.path = Some(path.clone());
+        }
+    }
+    drop(st);
+    codegen::generate(&project)?;
+    Ok(format!("{name} agora em {}", path.display()))
+}
+
 /// O caminho de um fonte novo dentro da pasta do código (`src/nucleo.rs`): relativo, sem `..`,
 /// fora do `generated/`, e que ainda não existe.
 pub fn new_source_path(project: &aylis_project::Project, relative: &str) -> Result<PathBuf, String> {
@@ -1854,7 +1915,10 @@ pub fn generate_code_command(state: &Shared) {
             let before = crate::codewindow::snapshot(&open_files);
             let files = codegen::generate(&project)?;
             sender.send(crate::jobs::Msg::Generated(before));
-            Ok(format!("Código gerado: {} arquivo(s)", files.len()))
+            // A classe com nome errado (G02): o componente ficou fora do acesso tipado.
+            let suspicious = aylis_project::bindings::suspicious_classes(&project);
+            let warning = if suspicious.is_empty() { String::new() } else { format!(" · ⚠ {}", suspicious.join("; ")) };
+            Ok(format!("Código gerado: {} arquivo(s){warning}", files.len()))
         });
         return;
     }
@@ -1883,6 +1947,24 @@ pub fn code_file_of(st: &crate::state::State, doc: &Document) -> Option<PathBuf>
 /// A aba do form cujo código está ativo no editor embutido (para voltar ao Design nele). O
 /// form do projeto ainda sem aba é aberto: antes, o Design voltava ao último form mostrado,
 /// que não era o deste código, e o F12 dizia que o fonte não tinha form.
+/// O fonte à vista no editor é o de um form (o Design tem para onde ir; I05 do Tabernáculo). A
+/// resposta fica guardada pelo arquivo: o refresh da IDE pergunta a cada mudança, e procurar
+/// entre todos os forms do projeto a cada vez custaria no ERP de 1009 forms.
+pub fn active_code_has_form(ui: &Ui, state: &Shared) -> bool {
+    thread_local! {
+        static LAST: std::cell::RefCell<Option<(PathBuf, bool)>> = const { std::cell::RefCell::new(None) };
+    }
+    let Some(file) = crate::codewindow::embedded_active(ui) else { return true };
+    if let Some(known) = LAST.with(|l| l.borrow().as_ref().filter(|(f, _)| *f == file).map(|(_, h)| *h)) {
+        return known;
+    }
+    let Ok(st) = state.try_borrow() else { return true };
+    let open = (0..st.tab_count()).any(|i| st.tab(i).and_then(|d| code_file_of(&st, d)).is_some_and(|f| crate::debugger::norm(&f) == file));
+    let has = open || st.project.as_ref().is_some_and(|p| p.forms.iter().any(|e| crate::debugger::norm(&codegen::entry_source(p, e)) == file));
+    LAST.with(|l| *l.borrow_mut() = Some((file, has)));
+    has
+}
+
 pub fn form_of_active_code(ui: &Ui, state: &Shared) -> Option<usize> {
     let file = crate::codewindow::embedded_active(ui)?;
     let unopened = {

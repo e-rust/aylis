@@ -10,20 +10,20 @@ Linha do tempo de uma animação (o painel Animations do DevTools): o atraso (tr
 
 ### Animação
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `delay` | Atraso | duração (ms) |
-| `duration` | Duração | duração (ms) |
-| `easing` | Curva de aceleração | curva de suavização |
-| `auto_reverse` | Volta sozinho | lógico |
-| `looping` | Repetindo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `delay` | Atraso | duração (ms) |  |
+| `duration` | Duração | duração (ms) |  |
+| `easing` | Curva de aceleração | curva de suavização |  |
+| `auto_reverse` | Volta sozinho | lógico |  |
+| `looping` | Repetindo | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `snap` | Passo com Shift | número |
-| `playing` | Tocando | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `snap` | Passo com Shift | número |  |
+| `playing` | Tocando | lógico |  |
 
 ## Eventos
 

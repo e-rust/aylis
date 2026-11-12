@@ -98,6 +98,51 @@ pub fn aylis_path_for(crate_dir: &Path) -> String {
     }
 }
 
+/// De onde vem o Aylis no `Cargo.toml` de um projeto (a chave `sdk`; G11/G03 do Tabernáculo).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AylisSource {
+    /// Uma pasta com o código do Aylis (`<pasta>/crates/aylis`), relativa ao `Cargo.toml`.
+    Path(String),
+    /// A versão publicada no crates.io.
+    Version(String),
+}
+
+impl AylisSource {
+    /// O lugar da dependência `krate` (`aylis`, `aylis-build`) no `Cargo.toml`: o
+    /// `path = ".../crates/aylis"` ou o `version = "..."`.
+    pub fn spec(&self, krate: &str) -> String {
+        match self {
+            AylisSource::Path(root) => format!("path = \"{root}/crates/{krate}\""),
+            AylisSource::Version(v) => format!("version = \"{v}\""),
+        }
+    }
+
+    /// Fora do repositório do Aylis (o perfil de otimização das dependências vale): uma
+    /// versão, ou um caminho que não é só `..`.
+    fn outside(&self) -> bool {
+        match self {
+            AylisSource::Path(root) => !root.split('/').all(|p| p == ".."),
+            AylisSource::Version(_) => true,
+        }
+    }
+}
+
+/// De onde vem o Aylis para o crate em `crate_dir` do projeto: o crates.io (a versão desta
+/// IDE), a pasta fixa do `sdk`, ou a junção até o Aylis desta máquina ([`aylis_path_for`]).
+pub fn aylis_source(project: &Project, crate_dir: &Path) -> AylisSource {
+    match project.sdk.trim() {
+        crate::SDK_CRATES_IO => AylisSource::Version(env!("CARGO_PKG_VERSION").to_string()),
+        "" | "local" => AylisSource::Path(aylis_path_for(crate_dir)),
+        dir => {
+            let path = Path::new(dir);
+            let abs = if path.is_absolute() { path.to_path_buf() } else { project.dir().join(path) };
+            let abs = abs.to_string_lossy().replace('\\', "/").trim_end_matches('/').to_string();
+            let from = crate_dir.to_string_lossy().replace('\\', "/");
+            AylisSource::Path(relative_path(&from, &abs).unwrap_or(abs))
+        }
+    }
+}
+
 /// A pasta do projeto (a que tem o `.aylisproj`) que contém `dir`, subindo até três níveis
 /// (`<projeto>/rust`, `<projeto>/.aylis/shell`).
 fn project_dir_of(dir: &str) -> Option<String> {
@@ -358,7 +403,7 @@ pub fn generate_form(project: &Project, form: &str) -> Result<Vec<PathBuf>, Stri
         }
         write(&index_path, &serde_json::to_string(&index).map_err(|e| e.to_string())?)?;
     }
-    let path = write_unit(project, entry, &forms_dir, &code)?;
+    let (path, _) = write_unit(project, entry, &forms_dir, &code)?;
     let mut written = vec![path];
     written.extend(crate::bindings::generate_in(project, Some(&entry.name))?);
     crate::sync::record_in(project, Some(&only))?;
@@ -438,28 +483,63 @@ fn classes_in(value: &Value, out: &mut Vec<String>) {
     }
 }
 
+/// O fonte de um form numa subpasta que ainda está no lugar de antes (direto em `src/forms/`,
+/// com o nome do arquivo): vai para a subpasta, se lá não há outro e se nenhum form da raiz
+/// usa aquele nome.
+fn move_flat_source(flat: &Path, new: &Path, project: &Project, entry: &crate::FormEntry) {
+    if flat == new || new.exists() || !flat.is_file() {
+        return;
+    }
+    let stem = module_stem(&entry.file);
+    if project.forms.iter().any(|f| f.name != entry.name && module_folders(&f.file).is_empty() && module_stem(&f.file) == stem) {
+        return;
+    }
+    if let Some(dir) = new.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    let _ = std::fs::rename(flat, new);
+}
+
 /// A unit de um form (Rust ou Python), que é do usuário: só ganha os handlers novos (não os
 /// que o usuário apagou: [`crate::sync::removed_handlers`]).
-fn write_unit(project: &Project, entry: &crate::FormEntry, forms_dir: &Path, code: &FormCode) -> Result<PathBuf, String> {
+/// Atualiza o fonte do form; devolve o caminho e se o texto mudou (o "Gerar código" lista só
+/// os que mudaram: antes listava todos os `src/forms/*.rs`, que são do usuário; G17).
+fn write_unit(project: &Project, entry: &crate::FormEntry, forms_dir: &Path, code: &FormCode) -> Result<(PathBuf, bool), String> {
     remember(code);
-    let stem = module_name(&entry.file);
     let removed = crate::sync::removed_handlers(&crate::sync::load(project), project.language, &code.form, &code.bindings);
     let handlers: Vec<String> = code.handlers.iter().filter(|h| !removed.contains(h)).cloned().collect();
     match project.language {
         Language::Rust => {
             // Os componentes de cada plataforma ficam na struct gerada, como `Option`.
-            let path = forms_dir.join(format!("{stem}.rs"));
+            let path = entry_source(project, entry);
+            move_flat_source(&forms_dir.join(format!("{}.rs", module_stem(&entry.file))), &path, project, entry);
             let old = read(&path);
-            let text = update_rust_unit(old.clone(), &handlers, &code.form);
-            if old.as_deref() != Some(text.as_str()) {
+            let mut text = update_rust_unit(old.clone(), &handlers, &code.form);
+            drop_unused_stubs(&mut text, &code.handlers, Language::Rust);
+            let changed = old.as_deref() != Some(text.as_str());
+            if changed {
                 write(&path, &text)?;
             }
-            Ok(path)
+            Ok((path, changed))
         }
         Language::Python => {
-            let path = forms_dir.join(format!("{stem}.py"));
-            write(&path, &update_python(read(&path), &handlers, &code.form))?;
-            Ok(path)
+            let path = entry_source(project, entry);
+            move_flat_source(&forms_dir.join(format!("{}.py", module_stem(&entry.file))), &path, project, entry);
+            // A subpasta é um pacote do Python.
+            if let Some(dir) = path.parent().filter(|d| *d != forms_dir) {
+                let init = dir.join("__init__.py");
+                if !init.exists() {
+                    write(&init, "")?;
+                }
+            }
+            let old = read(&path);
+            let mut text = update_python(old.clone(), &handlers, &code.form);
+            drop_unused_stubs(&mut text, &code.handlers, Language::Python);
+            let changed = old.as_deref() != Some(text.as_str());
+            if changed {
+                write(&path, &text)?;
+            }
+            Ok((path, changed))
         }
         _ => unreachable!("só Rust e Python têm uma unit por form"),
     }
@@ -506,7 +586,9 @@ fn generate_language(project: &Project, changed: Option<&[String]>) -> Result<(V
         }
         remember(&code);
         if reread && units {
-            written.push(write_unit(project, entry, &forms_dir, &code)?);
+            if let (path, true) = write_unit(project, entry, &forms_dir, &code)? {
+                written.push(path);
+            }
         }
         list.push((module.clone(), code.form.clone(), code.handlers.clone()));
         for c in &code.classes {
@@ -538,11 +620,35 @@ fn generate_language(project: &Project, changed: Option<&[String]>) -> Result<(V
     Ok((written, cited))
 }
 
-/// `forms/clientes.json` → `clientes` (nome de módulo válido em Rust e Python).
+/// `forms/clientes.json` → `clientes` (nome de módulo válido em Rust e Python). Numa subpasta,
+/// a pasta entra no nome (`forms/painel/inicio.json` → `painel_inicio`): dois `inicio.json` em
+/// pastas diferentes não colidem.
 pub fn module_name(file: &str) -> String {
+    let name = module_folders(file).iter().map(|f| snake(f)).chain(std::iter::once(module_stem(file))).collect::<Vec<_>>().join("_");
+    if name.starts_with(|c: char| c.is_ascii_digit()) { format!("form_{name}") } else { name }
+}
+
+/// O nome do arquivo do form em minúsculas com `_` (`Inicio.json` → `inicio`).
+fn module_stem(file: &str) -> String {
     let stem = Path::new(file).file_stem().and_then(|s| s.to_str()).unwrap_or("form");
     let name = snake(stem);
     if name.starts_with(|c: char| c.is_ascii_digit()) { format!("form_{name}") } else { name }
+}
+
+/// As subpastas do form dentro de `forms/` (`forms/painel/inicio.json` → `["painel"]`).
+fn module_folders(file: &str) -> Vec<String> {
+    let relative = file.replace('\\', "/");
+    let relative = relative.strip_prefix("forms/").unwrap_or(&relative);
+    let mut parts: Vec<String> = relative.split('/').map(str::to_string).collect();
+    parts.pop();
+    parts.into_iter().filter(|p| !p.is_empty() && p != "." && p != "..").collect()
+}
+
+/// O caminho do fonte do form dentro de `src/forms/`, sem a extensão: a subpasta do form se
+/// repete no código (`forms/painel/inicio.json` → `painel/inicio`), como o Delphi mantém a unit
+/// junto do form (pedido do autor em 11/11). Vale para Rust e Python.
+pub fn module_path(file: &str) -> String {
+    module_folders(file).iter().map(|f| snake(f)).chain(std::iter::once(module_stem(file))).collect::<Vec<_>>().join("/")
 }
 
 /// Nome do pacote do Cargo para um projeto (`Vendas Web` → `vendas_web`).
@@ -587,6 +693,11 @@ fn features_for(project: &Project, mut classes: Vec<String>) -> Vec<&'static str
     if !project.time_zone.is_empty() {
         features.push("time-zones");
     }
+    // Fontes do projeto: o núcleo mede e desenha o texto com elas (o `harfrust`). Sem fontes,
+    // o texto é todo do renderizador e o app não leva o motor (~520 KB de wasm).
+    if has_fonts(project) {
+        features.push("text-shaping");
+    }
     // As que o código usa por conta própria (`features` no `.aylisproj`), entre as do `aylis`
     // que um app escolhe (os renderizadores e o `dev` a IDE põe sozinha).
     features.extend(project.features.iter().filter_map(|f| APP_FEATURES.iter().find(|k| k.eq_ignore_ascii_case(f.trim())).copied()));
@@ -595,9 +706,19 @@ fn features_for(project: &Project, mut classes: Vec<String>) -> Vec<&'static str
     features
 }
 
+/// O projeto tem fontes em `assets/fonts` (as que o app registra: TTF, OTF, TTC).
+fn has_fonts(project: &Project) -> bool {
+    std::fs::read_dir(project.dir().join("assets").join("fonts")).is_ok_and(|entries| {
+        entries.flatten().any(|e| {
+            let name = e.file_name().to_string_lossy().to_lowercase();
+            name.ends_with(".ttf") || name.ends_with(".otf") || name.ends_with(".ttc")
+        })
+    })
+}
+
 /// As features do crate `aylis` que o `.aylisproj` pode pedir (`features`).
 pub const APP_FEATURES: &[&str] =
-    &["data", "dbcontrols", "providers", "media", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones"];
+    &["data", "dbcontrols", "providers", "media", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones", "text-shaping"];
 
 /// A linha `features = [...]` da dependência do aylis.
 fn features_list(features: &[&str]) -> String {
@@ -608,27 +729,29 @@ fn features_list(features: &[&str]) -> String {
 fn cargo_toml(project: &Project) -> String {
     let package = project.package_name();
     let crate_dir = project.code_dir_of(Language::Rust);
-    let root = aylis_path_for(&crate_dir);
+    let source = aylis_source(project, &crate_dir);
     format!(
         "[package]\nname = \"{package}\"\nversion = \"{version}\"\nedition = \"2024\"\npublish = false\n\n\
          # lib: o aplicativo (forms, handlers, entradas do Android e da web).\n\
          # bin: o executável do desktop (e do iOS).\n\
          [lib]\npath = \"src/lib.rs\"\n\n\
          [[bin]]\nname = \"{package}\"\npath = \"src/main.rs\"\n\n\
-         # O aylis fica nesta pasta (a da instalação da IDE). As features (dados, mídia...) são\n\
-         # as que os forms usam; a IDE atualiza a lista a cada \"Gerar código\".\n\
-         [dependencies]\naylis = {{ path = \"{root}/crates/aylis\", default-features = false, features = {features} }}\n\n\
+         # De onde vem o aylis: a chave `sdk` do projeto (o crates.io, ou uma pasta). As features\n\
+         # (dados, mídia...) são as que os forms usam; a IDE atualiza a lista a cada \"Gerar código\".\n\
+         [dependencies]\naylis = {{ {aylis}, default-features = false, features = {features} }}\n\n\
          [features]\n\
          # Ligada pela IDE ao executar: o canal cifrado com a IDE (inspetor, hot reload,\n\
          # rastro). Fica fora do app publicado.\n\
          dev = [\"aylis/dev\"]\n\n\
          # Embute forms, temas e assets no executável (e o ícone no .exe do Windows).\n\
-         [build-dependencies]\naylis-build = {{ path = \"{root}/crates/aylis-build\" }}\n\n{profile}{render}",
+         [build-dependencies]\naylis-build = {{ {build} }}\n\n{profile}{render}",
         version = project.version(),
+        aylis = source.spec("aylis"),
+        build = source.spec("aylis-build"),
         features = features_list(&aylis_features(project)),
         // Dentro do repositório do aylis o caminho é só `..` (`../../..`); de fora, termina no
-        // nome da pasta (`../../../aylis`): o projeto de fora ganha o perfil.
-        profile = if root.split('/').all(|p| p == "..") { "" } else { DEV_PROFILE },
+        // nome da pasta (`../../../aylis`) ou é uma versão: o projeto de fora ganha o perfil.
+        profile = if source.outside() { DEV_PROFILE } else { "" },
         render = render_block(project, &crate_dir),
     )
 }
@@ -648,7 +771,7 @@ const RENDER_END: &str = "# aylis:render-end";
 /// o Skia nem entra no executável. `crate_dir` é a pasta do `Cargo.toml` (veja
 /// [`aylis_path_for`]).
 pub fn render_block(project: &Project, crate_dir: &Path) -> String {
-    let root = aylis_path_for(crate_dir);
+    let source = aylis_source(project, crate_dir);
     let render = project.render();
     let mut out = format!(
         "{RENDER_BEGIN}: o renderizador de cada plataforma (Projeto → Opções; a IDE reescreve este bloco)\n"
@@ -656,10 +779,11 @@ pub fn render_block(project: &Project, crate_dir: &Path) -> String {
     for platform in crate::Platform::ALL {
         let choice = render.get(platform);
         out.push_str(&format!(
-            "# {}: {}\n[target.'{}'.dependencies]\naylis = {{ path = \"{root}/crates/aylis\", default-features = false, features = {} }}\n\n",
+            "# {}: {}\n[target.'{}'.dependencies]\naylis = {{ {}, default-features = false, features = {} }}\n\n",
             platform.title(),
             choice.title(),
             platform.cfg(),
+            source.spec("aylis"),
             features_list(choice.features()),
         ));
     }
@@ -668,17 +792,39 @@ pub fn render_block(project: &Project, crate_dir: &Path) -> String {
     out
 }
 
+/// Onde está o bloco do renderizador: do começo da linha que abre até o fim da que fecha. Os
+/// marcadores valem só em linha própria, e a abertura é a última antes do fim; entre os dois,
+/// só o que o bloco escreve. Um comentário do usuário que cite o marcador não conta: antes, o
+/// primeiro `aylis:render` em qualquer lugar abria o bloco, e a geração apagava as
+/// dependências entre o comentário e o fim (relatório do Tabernáculo, G01).
+fn render_span(cargo: &str) -> Option<(usize, usize)> {
+    let mut lines = Vec::new();
+    let mut at = 0;
+    for line in cargo.split_inclusive('\n') {
+        lines.push((at, line));
+        at += line.len();
+    }
+    let end = lines.iter().position(|(_, l)| l.trim() == RENDER_END)?;
+    let begin = lines[..end].iter().rposition(|(_, l)| {
+        let l = l.trim_end();
+        l == RENDER_BEGIN || l.starts_with(&format!("{RENDER_BEGIN}: "))
+    })?;
+    // Outra coisa entre os dois é do usuário: não mexe.
+    let ours = lines[begin + 1..end].iter().all(|(_, l)| {
+        let l = l.trim();
+        l.is_empty() || l.starts_with('#') || l.starts_with("[target.") || l.starts_with("aylis = ")
+    });
+    ours.then(|| (lines[begin].0, lines[end].0 + lines[end].1.len()))
+}
+
 /// Põe o bloco do renderizador em dia com o projeto: troca o que está entre os marcadores
 /// ou, num projeto gerado antes desse bloco existir (com `default-features = false`),
 /// acrescenta no fim. Projetos com o aylis completo (sem `default-features = false`) já
 /// têm o Skia e ficam como estão. Devolve o texto novo, se mudou.
 pub fn sync_render(cargo: &str, project: &Project) -> Option<String> {
     let block = render_block(project, &project.code_dir_of(Language::Rust));
-    let text = match (cargo.find(RENDER_BEGIN), cargo.find(RENDER_END)) {
-        (Some(a), Some(b)) if b > a => {
-            let end = cargo[b..].find('\n').map_or(cargo.len(), |i| b + i + 1);
-            format!("{}{}{}", &cargo[..a], block, &cargo[end..])
-        }
+    let text = match render_span(cargo) {
+        Some((a, end)) => format!("{}{}{}", &cargo[..a], block, &cargo[end..]),
         _ if cargo.lines().any(|l| l.trim_start().starts_with("aylis =") && l.contains("default-features = false")) => {
             let sep = if cargo.ends_with("\n\n") { "" } else if cargo.ends_with('\n') { "\n" } else { "\n\n" };
             format!("{cargo}{sep}{block}")
@@ -1071,6 +1217,17 @@ pub fn needs_own_workspace(cargo: &str, dir: &Path) -> bool {
     false
 }
 
+/// O crate em `dir` é a raiz do workspace dele: tem `[workspace]`, ou nenhuma pasta de cima é
+/// um workspace (o perfil dele vale).
+fn workspace_root(cargo: &str, dir: &Path) -> bool {
+    use toml_edit::DocumentMut;
+    if cargo.parse::<DocumentMut>().is_ok_and(|d| d.get("workspace").is_some()) {
+        return true;
+    }
+    let dir = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
+    !dir.ancestors().skip(1).any(|root| read(&root.join("Cargo.toml")).and_then(|t| t.parse::<DocumentMut>().ok()).is_some_and(|d| d.get("workspace").is_some()))
+}
+
 /// `examples/*` casa com `examples/web` (o `*` vale um trecho do caminho, como no cargo).
 fn glob_path(pattern: &str, path: &str) -> bool {
     fn segment(p: &str, s: &str) -> bool {
@@ -1107,8 +1264,17 @@ fn sync_cargo_with(project: &Project, features: &[&str]) -> Result<bool, String>
     if let Some(t) = sync_package_crates(&text, &crates) {
         text = t;
     }
-    if let Some(t) = sync_aylis_paths(&text, &aylis_path_for(&project.code_dir())) {
+    let source = aylis_source(project, &project.code_dir());
+    if let Some(t) = sync_aylis_source(&text, &source) {
         text = t;
+    }
+    // O perfil que otimiza as dependências também nos `Cargo.toml` de antes dele (B09 do
+    // Tabernáculo: sem ele, a tela fica de 10 a 50 vezes mais lenta). Só onde vale: no crate que
+    // é a raiz do próprio workspace (num membro de outro, o cargo ignora o perfil).
+    if source.outside() && !text.contains("[profile.dev.package.\"*\"]") && workspace_root(&text, &project.code_dir()) {
+        let sep = if text.ends_with("\n\n") { "" } else if text.ends_with('\n') { "\n" } else { "\n\n" };
+        text = format!("{text}{sep}{}", DEV_PROFILE.trim_end_matches('\n'));
+        text.push('\n');
     }
     if text == original {
         return Ok(false);
@@ -1121,24 +1287,41 @@ fn sync_cargo_with(project: &Project, features: &[&str]) -> Result<bool, String>
 /// à mão (o 3D da Landing só fora do navegador) ficava com o caminho do repositório, e a cópia
 /// do projeto noutro lugar não compilava ("Dependency 'aylis' has different source paths";
 /// conferência de 08/11).
+#[cfg(test)]
 fn sync_aylis_paths(text: &str, root: &str) -> Option<String> {
-    let wanted = format!("path = \"{root}/crates/aylis\"");
+    sync_aylis_source(text, &AylisSource::Path(root.to_string()))
+}
+
+/// Toda dependência do aylis (`aylis` e `aylis-build`) com a origem `source`: o caminho de
+/// pasta ou a versão do crates.io (trocar o `sdk` do projeto troca todas; G11).
+fn sync_aylis_source(text: &str, source: &AylisSource) -> Option<String> {
     let mut changed = false;
     let lines: Vec<String> = text
         .lines()
         .map(|line| {
             let trimmed = line.trim_start();
-            if !trimmed.starts_with("aylis = {") {
+            let krate = if trimmed.starts_with("aylis = {") {
+                "aylis"
+            } else if trimmed.starts_with("aylis-build = {") {
+                "aylis-build"
+            } else {
                 return line.to_string();
-            }
-            let Some(start) = line.find("path = \"") else { return line.to_string() };
-            let Some(len) = line[start + 8..].find('"') else { return line.to_string() };
-            let current = &line[start..start + 8 + len + 1];
-            if !current.ends_with("/crates/aylis\"") || current == wanted {
+            };
+            let wanted = source.spec(krate);
+            // O `path = "..."` (do aylis: termina em `/crates/<krate>`) ou o `version = "..."`.
+            let found = ["path = \"", "version = \""].iter().find_map(|key| {
+                let start = line.find(key)?;
+                let len = line[start + key.len()..].find('"')?;
+                let current = &line[start..start + key.len() + len + 1];
+                let ours = key.starts_with("version") || current.ends_with(&format!("/crates/{krate}\""));
+                ours.then_some((start, current.len(), current.to_string()))
+            });
+            let Some((start, len, current)) = found else { return line.to_string() };
+            if current == wanted {
                 return line.to_string();
             }
             changed = true;
-            format!("{}{wanted}{}", &line[..start], &line[start + current.len()..])
+            format!("{}{wanted}{}", &line[..start], &line[start + len..])
         })
         .collect();
     changed.then(|| lines.join("\n") + if text.ends_with('\n') { "\n" } else { "" })
@@ -1215,6 +1398,7 @@ fn lib_rs(project: &Project) -> String {
          //! em `generated/`).\n\n\
          /// O que a IDE gera: as structs dos forms, o acesso tipado e o registro (e os arquivos\n\
          /// dos forms, em `src/forms/`).\n\
+         #[rustfmt::skip]\n\
          #[path = \"../generated/mod.rs\"]\n\
          pub mod generated;\n\n\
          /// Cria o aplicativo: tema, idioma, assets e os forms marcados como \"criar no início\",\n\
@@ -1295,7 +1479,9 @@ fn main_rs(project: &Project) -> String {
          fn main() -> Result<(), aylis::Error> {{\n    \
          {package}::app()?.run()\n}}\n",
         name = project.name,
-        package = project.package_name()
+        // O crate se chama pelo nome do pacote com `_` no lugar do `-` (o relatório do
+        // Tabernáculo, G06: `meu-app::app()` não compila).
+        package = project.package_name().replace('-', "_")
     )
 }
 
@@ -1315,9 +1501,17 @@ fn rust_project(project: &Project, forms: &[(String, String, Vec<String>)], clas
     }
     // Montados só se faltarem: o `Cargo.toml` lê os fontes e os forms (as features), e isso
     // a cada "Gerar código" (e F12) era tempo jogado fora.
+    // O `src/main.rs` só num crate que o usa: o `Cargo.toml` nasce agora, ou cita o arquivo, ou
+    // não diz os binários (e o cargo pega o `src/main.rs`). Num crate só de biblioteca (com
+    // `autobins = false`, ou com os `[[bin]]` noutros arquivos), não (G13 do Tabernáculo).
+    let wants_main = read(&cargo).is_none_or(|c| c.contains("src/main.rs") || (!c.contains("[[bin]]") && !c.contains("autobins = false")));
+    let main_path = main.clone();
     let files: [(PathBuf, fn(&Project) -> String); 4] =
         [(cargo, cargo_toml), (dir.join("build.rs"), |_| BUILD_RS.to_string()), (lib, lib_rs), (main, main_rs)];
     for (path, make) in files {
+        if path == main_path && !wants_main {
+            continue;
+        }
         if !path.exists() {
             write(&path, &make(project))?;
             written.push(path);
@@ -1325,7 +1519,13 @@ fn rust_project(project: &Project, forms: &[(String, String, Vec<String>)], clas
     }
     // Projeto de uma versão antiga com o Cargo.toml mexido: só o que falta.
     let cargo = dir.join("Cargo.toml");
-    if let Some((text, _)) = read(&cargo).and_then(|c| upgrade_cargo(&c, &aylis_path_for(&dir), &dir)) {
+    let source = aylis_source(project, &dir);
+    let upgraded = match &source {
+        AylisSource::Path(root) => read(&cargo).and_then(|c| upgrade_cargo(&c, root, &dir)),
+        // Pelo crates.io: o que faltar entra com a versão (o `aylis-build`, a feature `dev`).
+        AylisSource::Version(_) => read(&cargo).and_then(|c| upgrade_cargo(&c, "", &dir)).map(|(t, n)| (sync_aylis_source(&t, &source).unwrap_or(t), n)),
+    };
+    if let Some((text, _)) = upgraded {
         write(&cargo, &text)?;
         if !written.contains(&cargo) {
             written.push(cargo.clone());
@@ -1359,13 +1559,14 @@ fn generated_mod(project: &Project, forms: &[(String, String, Vec<String>)]) -> 
         "//! O que a IDE do Aylis refaz a cada \"Gerar código\" (não edite): o acesso tipado aos\n\
          //! componentes, a struct de cada form e o registro. O código dos forms é seu, em\n\
          //! `src/forms/`.\n\n\
-         use aylis::prelude::Ui;\n\
-         use aylis::prelude::instances::form_handler;\n\n\
+         use aylis::prelude::Ui;\n\n\
          pub mod components;\n\
          pub use components::*;\n",
     );
-    for (module, _, _) in forms {
-        text.push_str(&format!("\n#[path = \"../src/forms/{module}.rs\"]\npub mod {module};\n"));
+    for (module, form, _) in forms {
+        // A subpasta do form se repete no código (`src/forms/painel/inicio.rs`).
+        let path = project.form(form).map_or_else(|| module.clone(), |e| module_path(&e.file));
+        text.push_str(&format!("\n#[path = \"../src/forms/{path}.rs\"]\npub mod {module};\n"));
     }
     text.push_str("\n/// Registra as classes dos forms (cada form aberto ganha a instância dele), os handlers e\n/// as classes dos pacotes de código.\npub fn register(ui: &mut Ui) {\n");
     for m in code_packages(project) {
@@ -1375,7 +1576,8 @@ fn generated_mod(project: &Project, forms: &[(String, String, Vec<String>)]) -> 
         let ty = crate::bindings::form_struct(form);
         text.push_str(&format!("    ui.register_form_class(\"{form}\", {ty}::bind);\n"));
         for h in handlers {
-            text.push_str(&format!("    ui.register_handler(\"{form}.{h}\", form_handler({ty}::{h}));\n"));
+            // O caminho inteiro: um `use` sairia sem uso num projeto sem handler (G07).
+            text.push_str(&format!("    ui.register_handler(\"{form}.{h}\", aylis::prelude::instances::form_handler({ty}::{h}));\n"));
         }
     }
     text.push_str("}\n");
@@ -1390,7 +1592,7 @@ pub fn remote_shell(project: &Project, backend_url: &str) -> Result<PathBuf, Str
     let shell = dir.join(".aylis").join("shell");
     std::fs::create_dir_all(shell.join("src")).map_err(|e| e.to_string())?;
     let package = project.package_name();
-    let root = aylis_path_for(&shell);
+    let source = aylis_source(project, &shell);
     let mut features = aylis_features(project);
     if !features.contains(&"remote") {
         features.push("remote");
@@ -1400,9 +1602,11 @@ pub fn remote_shell(project: &Project, backend_url: &str) -> Result<PathBuf, Str
          # Gerado pelo aylis a cada publicação: não edite.\n\
          [package]\nname = \"{package}\"\nversion = \"{version}\"\nedition = \"2024\"\n\n\
          [lib]\npath = \"src/lib.rs\"\n\n\
-         [dependencies]\naylis = {{ path = \"{root}/crates/aylis\", default-features = false, features = {features} }}\n\n\
-         [build-dependencies]\naylis-build = {{ path = \"{root}/crates/aylis-build\" }}\n\n\
+         [dependencies]\naylis = {{ {aylis}, default-features = false, features = {features} }}\n\n\
+         [build-dependencies]\naylis-build = {{ {build} }}\n\n\
          # Fora de qualquer workspace.\n[workspace]\n\n{render}",
+        aylis = source.spec("aylis"),
+        build = source.spec("aylis-build"),
         name = project.name,
         language = project.language.name(),
         version = project.version(),
@@ -1476,8 +1680,13 @@ fn python_project(project: &Project, forms: &[(String, String, Vec<String>)]) ->
     let mut text = String::from("\"\"\"Forms do projeto. Gerado pela IDE do Aylis a cada \"Gerar código\": não edite.\"\"\"\n\n");
     // As classes dos forms se registram ao importar o components; aqui, os handlers.
     text.push_str("from . import components  # noqa: F401\n");
-    for (m, _, _) in forms {
-        text.push_str(&format!("from . import {m}\n"));
+    for (m, form, _) in forms {
+        // Numa subpasta, o pacote dela (`from .painel import inicio as painel_inicio`).
+        let path = project.form(form).map_or_else(|| m.clone(), |e| module_path(&e.file));
+        match path.rsplit_once('/') {
+            Some((package, leaf)) => text.push_str(&format!("from .{} import {leaf} as {m}\n", package.replace('/', "."))),
+            None => text.push_str(&format!("from . import {m}\n")),
+        }
     }
     text.push_str("\n\ndef register(aylis):\n");
     for (m, form, handlers) in forms {
@@ -1513,6 +1722,10 @@ pub(crate) fn read(path: &Path) -> Option<String> {
 }
 
 pub(crate) fn write(path: &Path, text: &str) -> Result<(), String> {
+    // A pasta pode ainda não existir (o fonte de um form numa subpasta).
+    if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty() && !d.exists()) {
+        std::fs::create_dir_all(dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
+    }
     std::fs::write(path, text).map_err(|e| format!("não consegui gravar {}: {e}", path.display()))
 }
 
@@ -1678,7 +1891,16 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
     match impl_end(&text, &ty) {
         Some(at) => {
             let stubs = if text[..at].trim_end().ends_with('{') { stubs.trim_start_matches('\n').to_string() } else { stubs };
-            text.insert_str(at, &stubs);
+            let line_start = text[..at].rfind('\n').map_or(0, |n| n + 1);
+            if text[line_start..at].trim().is_empty() {
+                // A chave sozinha na linha: os handlers entram antes dela.
+                text.insert_str(line_start, &stubs);
+            } else {
+                // A chave junto de outro texto (`impl FrmX {}` depois do `cargo fmt`): os
+                // handlers entram logo antes dela, que vai para a linha de baixo. Antes iam para
+                // o começo da linha, fora do `impl` (relatório do Tabernáculo, G08).
+                text.insert_str(at, &format!("\n{stubs}"));
+            }
         }
         None => text.push_str(&format!("\n#[allow(non_snake_case)]\nimpl {ty} {{{stubs}}}\n")),
     }
@@ -1695,12 +1917,11 @@ fn allow_non_snake_case(text: &mut String, ty: &str) {
     text.insert_str(line_start, "#[allow(non_snake_case)]\n");
 }
 
-/// Onde fica a chave que fecha o `impl Tipo {` (o começo da linha dela).
+/// Onde fica a chave que fecha o `impl Tipo {`.
 fn impl_end(text: &str, ty: &str) -> Option<usize> {
     let start = text.find(&format!("impl {ty} {{"))?;
     let open = start + text[start..].find('{')?;
-    let at = matching_brace(text, open)?;
-    Some(text[..at].rfind('\n').map_or(at, |n| n + 1))
+    matching_brace(text, open)
 }
 
 /// A chave que fecha a que abre em `open`, num texto em Rust: as chaves dentro de strings,
@@ -1768,6 +1989,48 @@ pub(crate) fn rust_stub_body(handler: &str) -> &'static str {
     }
 }
 
+/// Tira do arquivo do form os handlers que nenhum evento usa mais (`bound`: os ligados no form)
+/// e que continuam **exatamente** como a IDE os gerou, vazios, e que nada mais no arquivo chama.
+/// Um handler com qualquer código do usuário fica (decidido pelo autor em 11/11: "remover o
+/// handler somente se estiver vazio", como o Delphi faz ao salvar). Devolve os tirados.
+pub fn drop_unused_stubs(text: &mut String, bound: &[String], language: Language) -> Vec<String> {
+    let declaration = match language {
+        Language::Rust => "pub fn ",
+        Language::Python => "def ",
+        _ => return Vec::new(),
+    };
+    let mut names = Vec::new();
+    let mut from = 0;
+    while let Some(i) = text[from..].find(declaration) {
+        let start = from + i + declaration.len();
+        if let Some(end) = text[start..].find('(').map(|e| start + e) {
+            let name = &text[start..end];
+            if crate::is_identifier(name) {
+                names.push(name.to_string());
+            }
+        }
+        from = start;
+    }
+    let mut removed = Vec::new();
+    for name in names {
+        if bound.iter().any(|b| b == &name) || text.matches(&format!("{name}(")).count() > 1 {
+            continue;
+        }
+        let stubs = match language {
+            Language::Rust => {
+                let body = format!("    pub fn {name}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {{\n        let _ = (ui, sender, args);\n    }}\n");
+                vec![format!("\n{body}"), body]
+            }
+            _ => vec![format!("\n\ndef {name}(aylis, event):\n    pass\n")],
+        };
+        if let Some((at, len)) = stubs.iter().find_map(|s| text.find(s.as_str()).map(|at| (at, s.len()))) {
+            text.replace_range(at..at + len, "");
+            removed.push(name);
+        }
+    }
+    removed
+}
+
 /// Atualiza (ou cria) o arquivo de eventos de um form em Python.
 pub fn update_python(existing: Option<String>, handlers: &[String], form: &str) -> String {
     // O arquivo é do usuário: os handlers (o registro fica no forms/__init__.py gerado);
@@ -1796,9 +2059,10 @@ pub fn form_source(project: &Project, form: &str) -> Option<PathBuf> {
 /// um pelo nome: com 1000 forms, isso era 1 milhão de comparações).
 pub fn entry_source(project: &Project, entry: &crate::FormEntry) -> PathBuf {
     let module = module_name(&entry.file);
+    let path = module_path(&entry.file);
     let file = match project.language {
-        Language::Rust => format!("src/forms/{module}.rs"),
-        Language::Python => format!("src/forms/{module}.py"),
+        Language::Rust => format!("src/forms/{path}.rs"),
+        Language::Python => format!("src/forms/{path}.py"),
         other => crate::hostlang::form_file(other, &module, &entry.name),
     };
     project.code_dir().join(file)
@@ -1825,6 +2089,25 @@ mod rust_unit_tests {
         assert!(updated.contains("#[allow(non_snake_case)]\nimpl FrmPrincipal {"), "{updated}");
         let again = update_rust_unit(Some(updated), &["btnOk_click".to_string(), "btnNovo_click".to_string()], "frmPrincipal");
         assert_eq!(again.matches("#[allow(non_snake_case)]").count(), 1, "{again}");
+    }
+
+    /// O evento tirado do form leva o handler junto só se ele está vazio, como a IDE gerou
+    /// (decidido pelo autor em 11/11); com código do usuário, ou chamado por outro método, fica.
+    #[test]
+    fn only_empty_unused_handlers_leave() {
+        let all = ["btnA_click".to_string(), "btnB_click".to_string(), "btnC_click".to_string(), "btnD_click".to_string()];
+        let mut text = update_rust_unit(None, &all, "frmPrincipal");
+        // O B ganha código; o D é chamado pelo C.
+        text = text.replace("pub fn btnB_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n        let _ = (ui, sender, args);", "pub fn btnB_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n        let _ = (ui, sender, args);\n        println!(\"salvar\");");
+        text = text.replace("pub fn btnC_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n        let _ = (ui, sender, args);", "pub fn btnC_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n        self.btnD_click(ui, sender, args);");
+        // Só o C continua ligado a um evento.
+        let removed = drop_unused_stubs(&mut text, &["btnC_click".to_string()], Language::Rust);
+        assert_eq!(removed, vec!["btnA_click".to_string()], "{text}");
+        assert!(!text.contains("fn btnA_click(") && text.contains("fn btnB_click(") && text.contains("fn btnD_click("), "{text}");
+
+        let mut py = update_python(None, &all, "frmPrincipal");
+        assert_eq!(drop_unused_stubs(&mut py, &all[..1], Language::Python).len(), 3, "{py}");
+        assert!(py.contains("def btnA_click("));
     }
 }
 

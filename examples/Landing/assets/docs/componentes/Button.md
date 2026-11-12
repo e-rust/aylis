@@ -10,27 +10,32 @@ Botão que dispara uma ação: texto, ícone opcional (à esquerda, à direita o
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `icon` | Ícone | texto |
-| `checked_icon` | Ícone marcado | texto |
-| `icon_position` | Posição do ícone | um de: `left`, `right`, `top` |
-| `icon_size` | Tamanho do ícone | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `icon` | Ícone | texto |  |
+| `checked_icon` | Ícone marcado | texto | Ícone quando marcado (vazio = o mesmo `icon`). |
+| `icon_position` | Posição do ícone | um de: `left`, `right`, `top` |  |
+| `icon_size` | Tamanho do ícone | número | Tamanho do ícone; 0 = pelo tamanho da fonte (ou do botão, sem texto). |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` | Onde ficam o texto e o ícone: no centro (o padrão), à esquerda ou à direita (o item de um menu lateral, a linha de uma lista de botões). |
+| `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o desenho do tema. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `checkable` | Marcável | lógico |
-| `modal_result` | Resultado do modal | um de: `none`, `ok`, `cancel`, `abort`, `retry`, `ignore`, `yes`, `no`, `close` |
-| `repeat_enter` | Repetir com Enter | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `checkable` | Marcável | lógico |  |
+| `modal_result` | Resultado do modal | um de: `none`, `ok`, `cancel`, `abort`, `retry`, `ignore`, `yes`, `no`, `close` | Num form modal, clicar fecha o form com este resultado (como o `ModalResult` do `TButton`): `ok` num "Confirmar", `cancel` num "Cancelar". |
+| `repeat_enter` | Repetir com Enter | lógico | O Enter seguro repete o clique (a repetição do teclado), como na VCL. Desligado, só o primeiro Enter clica. |
+| `default_button` | Botão padrão (Enter) | lógico | O botão padrão do form (o `Default` do `TButton`): o Enter que nenhum controle usou o clica. |
+| `cancel_button` | Botão de cancelar (Esc) | lógico | O botão de cancelar do form (o `Cancel` do `TButton`): o Esc que nenhum controle usou o clica. |
+| `group_index` | Grupo exclusivo | inteiro | Grupo exclusivo (o `GroupIndex` do `TSpeedButton`): entre os botões `checkable` do mesmo pai com o mesmo número (> 0), marcar um desmarca os outros, e clicar no marcado não desmarca (a aba de uma barra, o modo de uma ferramenta). 0 = sem grupo. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `checked` | Marcado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `checked` | Marcado | lógico |  |
 
 ## Eventos
 

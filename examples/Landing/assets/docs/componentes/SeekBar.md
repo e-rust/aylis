@@ -10,18 +10,18 @@ Barra de reprodução de mídia: posição, trecho já carregado (`buffered`), m
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_time` | Mostra o tempo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_time` | Mostra o tempo | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `position` | Posição | número |
-| `duration` | Duração | número |
-| `buffered` | Carregado | número |
-| `markers` | Marcadores | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `position` | Posição | número | Em segundos. |
+| `duration` | Duração | número |  |
+| `buffered` | Carregado | número |  |
+| `markers` | Marcadores | texto |  |
 
 ## Eventos
 

@@ -10,11 +10,11 @@ Uma linha reta; o clique acerta perto dela (`stroke_width` mais uma folga).
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
-| `direction` | Direção | um de: `down`, `up`, `horizontal`, `vertical` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
+| `direction` | Direção | um de: `down`, `up`, `horizontal`, `vertical` |  |
 
 ## Em código
 

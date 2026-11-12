@@ -8,18 +8,18 @@ Recebe num lugar só os eventos de todos os componentes do form ou da aplicaçã
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `scope` | Alcance | um de: `form`, `application` |
-| `events` | Eventos | texto |
-| `classes` | Classes | texto |
-| `enabled` | Habilitado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `scope` | Alcance | um de: `form`, `application` |  |
+| `events` | Eventos | texto |  |
+| `classes` | Classes | texto |  |
+| `enabled` | Habilitado | lógico |  |
 
 ### Outros
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tag` | Marca (número) | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tag` | Marca (número) | inteiro |  |
 
 ## Eventos
 

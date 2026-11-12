@@ -8,9 +8,9 @@ Um contêiner só de componentes não visuais e da regra de negócio, fora da te
 
 ### Outros
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tag` | Marca (número) | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tag` | Marca (número) | inteiro | Um número livre para o código (como o `Tag` do Delphi). |
 
 ## Eventos
 

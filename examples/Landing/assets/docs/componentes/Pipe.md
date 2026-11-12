@@ -10,26 +10,26 @@ Cano preso a dois componentes (`from`/`to` e o lado de cada um): segue os dois e
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `flow_color` | Cor do fluxo | cor |
-| `thickness` | Espessura | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `flow_color` | Cor do fluxo | cor |  |
+| `thickness` | Espessura | número |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `from` | De | componente |
-| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |
-| `to` | Para | componente |
-| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `from` | De | componente |  |
+| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |  |
+| `to` | Para | componente |  |
+| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `running` | Ligado | lógico |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `running` | Ligado | lógico |  |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

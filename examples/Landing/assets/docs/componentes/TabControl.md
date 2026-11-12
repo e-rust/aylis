@@ -10,16 +10,16 @@ Abas: os filhos são `TabItem`s, cada um uma página; só a de `tab_index` apare
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_tabs` | Mostra as abas | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_tabs` | Mostra as abas | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tab_index` | Aba escolhida | inteiro |
-| `transition` | Transição | um de: `none`, `fade`, `slide_left`, `slide_right`, `slide_up`, `slide_down` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tab_index` | Aba escolhida | inteiro |  |
+| `transition` | Transição | um de: `none`, `fade`, `slide_left`, `slide_right`, `slide_up`, `slide_down` | Como a aba nova entra (`slide_left`/`slide_right` deslizam na direção da ordem das abas, `fade` esmaece). |
 
 ## Eventos
 

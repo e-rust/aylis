@@ -54,6 +54,21 @@ impl Ui {
         self.components().filter(|&c| self.class_name(c) == Some("ApplicationEvents")).collect()
     }
 
+    /// O app vai acabar (o laço da plataforma terminou): o `on_terminate` de cada
+    /// `ApplicationEvents`, para gravar o que falta (o relatório do Tabernáculo, P04).
+    pub fn fire_terminate(&mut self) {
+        for app in self.application_events() {
+            self.fire(app, "on_terminate", &crate::EventArgs::None);
+        }
+        self.process_events();
+    }
+
+    /// Há um ícone na bandeja visível: o app continua rodando sem form aberto (o relatório do
+    /// Tabernáculo, P12).
+    pub fn has_tray_icon(&self) -> bool {
+        self.components().any(|c| self.class_name(c) == Some("TrayIcon") && !matches!(self.get_prop(c, "visible"), Ok(PropValue::Bool(false))))
+    }
+
     /// O form recebe as teclas antes do controle com foco (`key_preview`).
     fn key_preview(&self, root: ComponentId) -> bool {
         matches!(self.get_prop(root, "key_preview"), Ok(PropValue::Bool(true)))

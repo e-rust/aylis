@@ -10,10 +10,10 @@ Chave seletora (`Man;0;Auto`): a manopla aponta para a posição escolhida; o cl
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `positions` | Posições | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `positions` | Posições | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ## Eventos
 

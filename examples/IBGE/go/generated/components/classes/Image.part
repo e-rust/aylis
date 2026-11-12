@@ -26,6 +26,15 @@ func (c aylisImage) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisImage) Align() string { return asText(c.Get("align")) }
 func (c aylisImage) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisImage) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisImage) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisImage) Margins() string { return asText(c.Get("margins")) }
+func (c aylisImage) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisImage) Padding() string { return asText(c.Get("padding")) }
+func (c aylisImage) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisImage) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisImage) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -37,6 +46,12 @@ func (c aylisImage) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisImage) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisImage) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisImage) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisImage) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisImage) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisImage) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisImage) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisImage) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -107,6 +122,18 @@ func (c aylisImage) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisImage) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisImage) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisImage) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisImage) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisImage) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisImage) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisImage) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisImage) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisImage) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisImage) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisImage) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisImage) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -160,6 +187,12 @@ func (c aylisImage) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisImage) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisImage) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisImage) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisImage) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisImage) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisImage) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisImage) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisImage) SetPopupMenu(v string) { c.Set("popup_menu", v) }

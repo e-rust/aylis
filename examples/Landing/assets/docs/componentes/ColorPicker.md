@@ -10,16 +10,16 @@ Seletor de cor (o `v-color-picker`): quadro de saturação × brilho, faixa de m
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `alpha` | Transparência (alfa) | lógico |
-| `swatches` | Amostras de cor | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `alpha` | Transparência (alfa) | lógico |  |
+| `swatches` | Amostras de cor | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `color` | Cor | cor |  |
 
 ## Eventos
 

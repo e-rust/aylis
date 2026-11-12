@@ -10,15 +10,15 @@ Direcional redondo (controle PTZ de câmera, joystick): oito direções e o cent
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `center_icon` | Ícone do centro | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `center_icon` | Ícone do centro | texto | Ícone do botão do meio (vazio = sem botão). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `diagonals` | Diagonais | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `diagonals` | Diagonais | lógico |  |
 
 ## Eventos
 

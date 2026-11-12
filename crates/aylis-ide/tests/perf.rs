@@ -310,7 +310,7 @@ fn erp_ide_cost() {
     let search = t.elapsed();
     let t = Instant::now();
     let target = aylis_ide::usages::Target::Component { form: project.main_form.clone(), name: "cdsTelas".into() };
-    let usages = aylis_ide::usages::find(&project, &target).unwrap();
+    let usages = aylis_ide::usages::find(&project, &target, &Default::default()).unwrap();
     let usage = t.elapsed();
 
     eprintln!("memória (privada / working set, MB): IDE vazia {:.0} / {:.0}; antes de construir {:.0} / {:.0}", mb(private1), mb(ws1), mb(private0), mb(ws0));

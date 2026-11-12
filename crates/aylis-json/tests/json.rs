@@ -411,3 +411,14 @@ fn saved_forms_are_stable_and_limits_load_before_the_value() {
     let form2 = aylis_json::load(&mut ui2, &saved, None).unwrap();
     assert_eq!(aylis_json::save(&ui2, form2).unwrap(), saved, "abrir e salvar de novo não muda nada");
 }
+
+/// Um tema sem `"dark"`, de fundo escuro, é escuro (relatório do InsightDB, 11/11).
+#[test]
+fn a_dark_background_makes_a_dark_theme() {
+    let dark = aylis_json::load_theme(r##"{"name": "Painel", "colors": {"background": "#0B0F19", "text": "#E5E7EB"}}"##).unwrap();
+    assert!(dark.dark);
+    let light = aylis_json::load_theme(r##"{"name": "Claro", "colors": {"background": "#FFFFFF"}}"##).unwrap();
+    assert!(!light.dark);
+    let forced = aylis_json::load_theme(r##"{"name": "X", "dark": false, "colors": {"background": "#000000"}}"##).unwrap();
+    assert!(!forced.dark, "o \"dark\" do arquivo vale");
+}

@@ -10,17 +10,17 @@ O item que desliza (`QSlideItem`): uma linha de lista (`text`, `detail`, `icon`)
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `detail` | Detalhe | texto |
-| `icon` | Ícone | texto |
-| `left_text` | Texto da esquerda | texto |
-| `left_icon` | Ícone da esquerda | texto |
-| `left_color` | Cor da esquerda | cor |
-| `right_text` | Texto da direita | texto |
-| `right_icon` | Ícone da direita | texto |
-| `right_color` | Cor da direita | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `detail` | Detalhe | texto |  |
+| `icon` | Ícone | texto |  |
+| `left_text` | Texto da esquerda | texto |  |
+| `left_icon` | Ícone da esquerda | texto |  |
+| `left_color` | Cor da esquerda | cor |  |
+| `right_text` | Texto da direita | texto |  |
+| `right_icon` | Ícone da direita | texto |  |
+| `right_color` | Cor da direita | cor |  |
 
 ## Eventos
 

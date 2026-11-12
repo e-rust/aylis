@@ -96,7 +96,8 @@ pub fn installer_ide(options: &Options) -> Result<PathBuf, String> {
     }
     // As dependências passam pela auditoria antes (falha de segurança conhecida, licença).
     audit(&root)?;
-    let release = root.join("target").join("release");
+    let target = crate::cargo_target_dir(&root);
+    let release = target.join("release");
     if !options.skip_build {
         println!("▶ compilando em release: aylis-ide, aylis-host, aylis-tool");
         let mut cmd = Command::new("cargo");
@@ -119,7 +120,7 @@ pub fn installer_ide(options: &Options) -> Result<PathBuf, String> {
     let setup = out_dir.join(format!("aylis-ide-{version}-setup.exe"));
 
     // O script e o LEIA-ME ficam no target (são gerados a cada vez).
-    let work = root.join("target").join("installer-ide");
+    let work = target.join("installer-ide");
     std::fs::create_dir_all(&work).map_err(|e| format!("{}: {e}", work.display()))?;
     let readme = work.join("LEIA-ME.txt");
     std::fs::write(&readme, README).map_err(|e| e.to_string())?;

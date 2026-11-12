@@ -149,7 +149,8 @@ impl Loader<'_> {
         // uma TrackBar, gravado antes do `max` na ordem da classe, não é cortado pelo máximo
         // padrão ao abrir (o 10.000.000 virava 1000).
         let mut entries: Vec<(&String, &Value)> = obj.iter().collect();
-        entries.sort_by_key(|(key, _)| !LIMITS.contains(&key.as_str()));
+        // O `translate` também vem antes: desligado, os textos não são traduzidos ao carregar.
+        entries.sort_by_key(|(key, _)| !(LIMITS.contains(&key.as_str()) || key.as_str() == "translate"));
         for (key, value) in entries {
             // `bindings` como texto é a propriedade da lista (`DataRepeater`, `VirtualList`:
             // "lblNome=nome"); como objeto, as ligações de propriedade a campo (abaixo). Pulada
@@ -175,6 +176,13 @@ impl Loader<'_> {
             self.views.push((id, views.clone()));
         }
 
+        // O Frame mostra o form de `form`: filhos dele no JSON tomavam o lugar desse form, e
+        // excluir o Frame os jogava no form de fora (relatório do InsightDB, 11/11).
+        if class == "Frame" && obj.get("children").and_then(Value::as_array).is_some_and(|c| !c.is_empty()) {
+            self.soft(structure(&here)("o Frame mostra o form da propriedade `form` e não tem filhos: ponha os componentes no form dele".into()))?;
+            path.pop();
+            return Ok(id);
+        }
         match obj.get("children") {
             None | Some(Value::Null) => {}
             Some(Value::Array(children)) => {
@@ -375,7 +383,7 @@ fn save_node(ui: &Ui, id: ComponentId, path: &mut Vec<String>) -> Result<Value> 
         // Com uma vista por largura ativa, grava o valor do form base (o da vista fica nela).
         let value = match ui.view_base(id, info.name) {
             Some(base) => base.clone(),
-            None => ui.get_prop(id, info.name).map_err(|source| Error::Component { path: here.clone(), source })?,
+            None => ui.get_declared_prop(id, info.name).map_err(|source| Error::Component { path: here.clone(), source })?,
         };
         let json = match (&value, info.kind) {
             (PropValue::Event(None), _) => continue,

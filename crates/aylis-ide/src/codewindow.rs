@@ -30,6 +30,8 @@ struct Tab {
     file: PathBuf,
     memo: ComponentId,
     modified: bool,
+    /// A marca do arquivo quando foi lido ou salvo ([`crate::disk`]).
+    disk: Option<aylis_project::FileStamp>,
     /// Já avisou que fechar descarta as alterações.
     warned: bool,
 }
@@ -1009,7 +1011,7 @@ fn add_tab(ui: &mut Ui, file: &Path) -> Result<usize, String> {
             crate::hovertip::hide_later(ui);
             if let Some(index) = event_index(args) {
                 let file = file.clone();
-                let delay = (aylis_core::HINT_DELAY * 1000.0) as u64;
+                let delay = (ui.hint_delay() * 1000.0) as u64;
                 let id = ui.set_timeout(delay, move |ui| {
                     HOVER_PENDING.with(|p| p.set(None));
                     select_of(ui, memo);
@@ -1049,7 +1051,7 @@ fn add_tab(ui: &mut Ui, file: &Path) -> Result<usize, String> {
     }
     lsp_event(ui, LspEvent::Opened { file: file.to_path_buf(), text: opened_text });
     let index = with_editor(ui, |ed| {
-        ed.tabs.push(Tab { file: file.to_path_buf(), memo, modified: false, warned: false });
+        ed.tabs.push(Tab { file: file.to_path_buf(), memo, modified: false, warned: false, disk: aylis_project::FileStamp::read(file) });
         ed.tabs.len() - 1
     })
     .ok_or("janela de código fechada")?;
@@ -1166,9 +1168,11 @@ fn save_memo(ui: &mut Ui, memo: ComponentId) {
     let text = ui.get::<Memo>(memo).map(|m| m.text.clone()).unwrap_or_default();
     match std::fs::write(&file, &text) {
         Ok(()) => {
+            let stamp = aylis_project::FileStamp::read(&file);
             with_editor(ui, |ed| {
                 if let Some(t) = ed.tabs.iter_mut().find(|t| t.memo == memo) {
                     t.modified = false;
+                    t.disk = stamp;
                 }
             });
             show_status(ui);
@@ -2554,6 +2558,61 @@ pub fn apply_to_open_file(ui: &mut Ui, file: &Path, disk: &str, edits: &[(usize,
     true
 }
 
+/// Os fontes abertos que mudaram no disco desde que foram lidos ou salvos: o arquivo, se o
+/// editor tem alteração não salva e o texto do editor ([`crate::disk`]).
+pub fn disk_changes(ui: &Ui) -> Vec<(PathBuf, bool, String)> {
+    let tabs: Vec<(PathBuf, ComponentId, bool, Option<aylis_project::FileStamp>)> =
+        with_editors(ui, |list| list.iter().flat_map(|ed| ed.tabs.iter().map(|t| (t.file.clone(), t.memo, t.modified, t.disk))).collect()).unwrap_or_default();
+    tabs.into_iter()
+        .filter(|(file, _, _, disk)| {
+            let now = aylis_project::FileStamp::read(file);
+            now.is_some() && now != *disk
+        })
+        .filter_map(|(file, memo, modified, _)| Some((file, modified, ui.get::<Memo>(memo)?.text.clone())))
+        .collect()
+}
+
+/// O fonte está aberto num editor.
+pub fn is_open(ui: &Ui, file: &Path) -> bool {
+    find_file(ui, file).is_some()
+}
+
+/// Fica o texto do editor: a marca passa a ser a de agora (não pergunta de novo até o disco
+/// mudar outra vez).
+pub fn keep_editor(ui: &mut Ui, file: &Path) {
+    let stamp = aylis_project::FileStamp::read(file);
+    let Some((form, i)) = find_file(ui, file) else { return };
+    with_editor_at(ui, form, |ed| {
+        if let Some(t) = ed.tabs.get_mut(i) {
+            t.disk = stamp;
+        }
+    });
+}
+
+/// O editor passa a ter o texto do disco (como uma edição: o Ctrl+Z volta) e fica salvo.
+pub fn reload_from_disk(ui: &mut Ui, file: &Path, text: &str) {
+    let stamp = aylis_project::FileStamp::read(file);
+    let Some((form, i)) = find_file(ui, file) else { return };
+    let Some(memo) = with_editor_at(ui, form, |ed| ed.tabs.get(i).map(|t| t.memo)).flatten() else { return };
+    let now = ui.time();
+    if let Some(m) = ui.get_mut::<Memo>(memo) {
+        // O gerado (somente leitura) também acompanha o disco.
+        let read_only = std::mem::replace(&mut m.read_only, false);
+        let all = m.text.chars().count();
+        m.apply_edits(vec![(0, all, text.to_string())], now);
+        m.read_only = read_only;
+    }
+    ui.fire(memo, "on_change", &aylis_core::EventArgs::Value(text.to_string().into()));
+    with_editor_at(ui, form, |ed| {
+        if let Some(t) = ed.tabs.get_mut(i) {
+            t.modified = false;
+            t.disk = stamp;
+        }
+    });
+    CURRENT.with(|c| c.set(Some(form)));
+    show_status(ui);
+}
+
 /// Os arquivos abertos nos editores (sem o `Ui`: quem prepara um trabalho guarda o texto deles
 /// no disco antes de gerar o código, para o [`follow_generation`] depois).
 pub fn open_paths() -> Vec<PathBuf> {
@@ -2590,13 +2649,18 @@ pub fn follow_generation(ui: &mut Ui, before: Vec<(PathBuf, String)>) -> Vec<Pat
         }
         let text = ui.get::<Memo>(memo).map(|m| m.text.clone()).unwrap_or_default();
         ui.fire(memo, "on_change", &aylis_core::EventArgs::Value(text.into()));
-        // Igual ao disco: continua salvo.
-        if !modified {
-            with_editor_at(ui, form, |ed| {
-                if let Some(t) = ed.tabs.get_mut(i) {
+        // O editor já tem o que a geração gravou: a marca do disco é a nova (senão parecia
+        // mudado por fora). Igual ao disco, continua salvo.
+        let stamp = aylis_project::FileStamp::read(&file);
+        with_editor_at(ui, form, |ed| {
+            if let Some(t) = ed.tabs.get_mut(i) {
+                t.disk = stamp;
+                if !modified {
                     t.modified = false;
                 }
-            });
+            }
+        });
+        if !modified {
             CURRENT.with(|c| c.set(Some(form)));
             show_status(ui);
         }

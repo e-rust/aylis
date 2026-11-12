@@ -117,6 +117,15 @@ impl Ui {
         }
     }
 
+    /// Começa a contar de novo o intervalo do timer de `id`, a partir de agora (o próximo
+    /// disparo fica a um intervalo inteiro daqui).
+    pub fn restart_timer(&mut self, id: ComponentId) {
+        if let Some(i) = self.timers.iter().position(|t| t.id == id) {
+            self.timers.remove(i).stop();
+        }
+        self.sync_timer(id);
+    }
+
     /// Dispara o timer de `id` (`late` = quanto atrasou, em segundos).
     fn fire_timer(&mut self, id: ComponentId, late: f64) {
         let _profile = crate::profile::scope(crate::profile::Lane::Timer, || self.path_of(id));
@@ -188,9 +197,10 @@ impl Ui {
     /// Dicas que venceram o tempo de espera: abre (repinta).
     fn check_hints(&mut self) -> bool {
         let now = self.time;
+        let delay = self.hint_delay();
         let mut any = false;
         for state in self.input.values_mut() {
-            if let Some(h) = state.hint.as_mut().filter(|h| !h.shown && now >= h.since + crate::input::HINT_DELAY) {
+            if let Some(h) = state.hint.as_mut().filter(|h| !h.shown && now >= h.since + delay) {
                 h.shown = true;
                 any = true;
             }
@@ -204,10 +214,11 @@ impl Ui {
     /// Próximo horário de um timer ou de um toque longo.
     pub(crate) fn timers_wake(&self) -> Option<f64> {
         let timer = self.timers.iter().map(|t| t.next).filter(|n| n.is_finite()).chain(self.timeouts.iter().map(|t| t.due)).reduce(f64::min);
+        let delay = self.hint_delay();
         let press = self
             .input
             .values()
-            .flat_map(|s| [s.long_press_due(), s.hint_due()])
+            .flat_map(|s| [s.long_press_due(), s.hint_due(delay)])
             .flatten()
             .reduce(f64::min);
         match (timer, press) {
@@ -225,16 +236,16 @@ impl Ui {
             let Some((target, position, touch)) = self.input.get_mut(&root).and_then(|s| s.take_long_press(now)) else {
                 continue;
             };
-            if !self.contains(target) {
+            // Só o dedo (ou a caneta): o mouse parado com o botão apertado não é toque longo
+            // (o relatório do Tabernáculo, J18).
+            if !touch || !self.contains(target) {
                 continue;
             }
             any = true;
             let local = self.local_point(target, position);
-            let event = PointerEvent { position: local, ..Default::default() };
+            let event = PointerEvent { position: local, kind: crate::event::PointerKind::Touch, ..Default::default() };
             self.fire(target, "on_long_press", &EventArgs::Pointer(event));
-            if touch {
-                self.open_popup_menu(target, position);
-            }
+            self.open_popup_menu(target, position);
             self.request_repaint();
         }
         any

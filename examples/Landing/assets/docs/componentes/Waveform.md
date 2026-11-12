@@ -10,17 +10,17 @@ Onda de um áudio (mensagem de voz, gravação): barras com a intensidade de cad
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `seek_bar` | Barra de posição | lógico |
-| `paused` | Pausado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `seek_bar` | Barra de posição | lógico | Barra de busca de player: trilho fino com o polegar e a onda embaixo, discreta (sem ela, a onda inteira é a barra, pintada até a posição). |
+| `paused` | Pausado | lógico | Com `seek_bar`: pausado, o trilho e o polegar saem na cor do texto em vez do destaque. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `position` | Posição | número |
-| `duration` | Duração | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `position` | Posição | número |  |
+| `duration` | Duração | número |  |
 
 ## Eventos
 

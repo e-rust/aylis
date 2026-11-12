@@ -16,7 +16,7 @@ diagnostics = ["aylis-d2d?/diagnostics"]
 # Desktop: desenho na CPU, pixels mostrados com softbuffer.
 cpu = ["dep:softbuffer", "dep:aylis-skia"]
 # Desktop: desenho na GPU com OpenGL (glutin).
-gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl"]
+gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl", "dep:wayland-client", "dep:wayland-backend", "dep:wayland-protocols", "dep:wayland-sys"]
 # Windows sem Skia: Direct2D + DirectWrite (já vêm no sistema). Executável bem menor;
 # use com `default-features = false` para tirar o Skia de vez.
 d2d = ["dep:aylis-d2d"]
@@ -36,20 +36,20 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.2", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.3", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.2.0-beta.2", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.2.0-beta.3", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.2.0-beta.2", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.2.0-beta.3", path = "../aylis-d2d", optional = true }
 # A operação assíncrona do WinRT (a mesma versão que o windows 0.61 usa).
 windows-future = "0.3"
 # Notificações do Windows (toast): WinRT e o registro do AppUserModelID.
@@ -88,6 +88,12 @@ gtk = { version = "0.18", optional = true }
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 # O corretor do sistema (Enchant), aberto em tempo de execução.
 libloading = "0.8"
+# A placa de cada janela no Wayland (`gpu_linux.rs`): o feedback do linux-dmabuf e a janela
+# EGL. As mesmas versões que o winit e o glutin já trazem.
+wayland-client = { version = "0.31", optional = true }
+wayland-backend = { version = "0.3", features = ["client_system"], optional = true }
+wayland-protocols = { version = "0.32", features = ["client"], optional = true }
+wayland-sys = { version = "0.31", features = ["client", "egl", "dlopen"], optional = true }
 
 # OpenGL: desktop e Android (o iOS não tem OpenGL no glutin).
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "ios")))'.dependencies]
@@ -138,7 +144,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.2.0-beta.2", path = "../aylis-web" }
+aylis-web = { version = "0.2.0-beta.3", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"
@@ -191,6 +197,10 @@ required-features = ["cpu"]
 [[example]]
 name = "monitors"
 required-features = ["cpu"]
+
+[[example]]
+name = "gpu_monitor"
+required-features = ["gpu"]
 
 [[example]]
 name = "tray"

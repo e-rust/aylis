@@ -10,22 +10,22 @@ O editor de texto rico (`QEditor`): o texto com formato e, em cima, a barra de f
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `toolbar` | Barra de ferramentas | texto |
-| `placeholder` | Texto de exemplo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `toolbar` | Barra de ferramentas | texto |  |
+| `placeholder` | Texto de exemplo | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `read_only` | Somente leitura | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `read_only` | Somente leitura | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `html` | Conteúdo (HTML) | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `html` | Conteúdo (HTML) | texto |  |
 
 ## Eventos
 

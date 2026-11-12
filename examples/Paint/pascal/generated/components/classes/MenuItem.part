@@ -17,6 +17,8 @@
     procedure SetVisible(Value: Boolean);
     function GetDanger: Boolean;
     procedure SetDanger(Value: Boolean);
+    function GetHeader: Boolean;
+    procedure SetHeader(Value: Boolean);
   public
     property Text: string read GetText write SetText;
     property Shortcut: string read GetShortcut write SetShortcut;
@@ -26,6 +28,7 @@
     property Icon: string read GetIcon write SetIcon;
     property Visible: Boolean read GetVisible write SetVisible;
     property Danger: Boolean read GetDanger write SetDanger;
+    property Header: Boolean read GetHeader write SetHeader;
   end;
 
 
@@ -107,5 +110,15 @@ end;
 procedure TMenuItem.SetDanger(Value: Boolean);
 begin
   SetProp('danger', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetHeader: Boolean;
+begin
+  Result := GetProp('header').AsBoolean;
+end;
+
+procedure TMenuItem.SetHeader(Value: Boolean);
+begin
+  SetProp('header', TJSONBoolean.Create(Value));
 end;
 

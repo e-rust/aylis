@@ -10,24 +10,24 @@ Fio elétrico preso a dois componentes (como o `Pipe`, fino); `energized` o pint
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `color` | Cor | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `color` | Cor | cor |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `from` | De | componente |
-| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |
-| `to` | Para | componente |
-| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `from` | De | componente |  |
+| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |  |
+| `to` | Para | componente |  |
+| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `energized` | Energizado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `energized` | Energizado | lógico |  |
 
 ## Em código
 

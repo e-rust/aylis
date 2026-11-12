@@ -8,26 +8,26 @@ Uma coluna do DataGrid: campo, título, largura, alinhamento, cores.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `width` | Largura | número |
-| `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` |
-| `color` | Cor | cor |
-| `text_color` | Cor do texto | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto | O título do cabeçalho (vazio = o rótulo do campo). |
+| `width` | Largura | número | A largura (0 = a do campo). |
+| `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` | O alinhamento do texto (`None` = o do campo). |
+| `color` | Cor | cor | O fundo das células. |
+| `text_color` | Cor do texto | cor | A cor do texto das células. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `visible` | Visível | lógico |
-| `read_only` | Somente leitura | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `visible` | Visível | lógico |  |
+| `read_only` | Somente leitura | lógico | Não edita nesta coluna, mesmo com a grade editável. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `field_name` | Nome do campo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `field_name` | Nome do campo | texto | O campo do dataset que a coluna mostra. |
 
 ## Em código
 

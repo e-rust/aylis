@@ -398,7 +398,9 @@ pub fn build(state: Shared) -> Ide {
         let active = s.borrow().active;
         actions::close_tab(ui, s, i, active);
     }), &ids);
-    add_item(&mut ui, file_menu, "Fechar projeto", "", Some(|ui, s, _| actions::close_project(ui, s)), &ids);
+    add_item(&mut ui, file_menu, "Fechar projeto", "", Some(|ui, s, _| {
+        actions::close_project(ui, s);
+    }), &ids);
     separator(&mut ui, file_menu);
     add_item(&mut ui, file_menu, "Sair", "Ctrl+Q", Some(|ui, s, i| actions::quit(ui, s, i)), &ids);
 
@@ -826,6 +828,17 @@ pub fn build(state: Shared) -> Ide {
         // Ao fechar, guarda onde estavam a janela e os painéis.
         let ids = ids.clone();
         ui.on(form, "on_close", move |ui, _, _| actions::save_layout(ui, &ids));
+    }
+    {
+        // A IDE volta a ter o foco: o que mudou no disco por fora (outro editor, um agente)
+        // entra nos forms e fontes abertos; com alteração dos dois lados, pergunta.
+        let (state, ids) = (state.clone(), ids.clone());
+        ui.on(form, "on_activate", move |ui, _, _| {
+            let (_, conflicts) = crate::disk::check(ui, &state);
+            if !conflicts.is_empty() {
+                crate::disk::ask(ui, &state, &ids, conflicts);
+            }
+        });
     }
     {
         // Fechar a IDE com alterações não salvas: pergunta antes.

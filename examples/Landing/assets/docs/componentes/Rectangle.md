@@ -10,16 +10,16 @@ Retângulo. Cada propriedade vazia (`Null`) usa o valor do tema.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `fill2` | Segunda cor do degradê | cor |
-| `fill_mid` | Cor do meio do degradê | cor |
-| `fill_mid_at` | Posição da cor do meio | número |
-| `gradient_angle` | Ângulo do degradê | ângulo (graus) |
-| `gradient_radial` | Degradê circular | lógico |
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
-| `radius` | Raio dos cantos | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `fill2` | Segunda cor do degradê | cor | Segunda cor: com ela, o fundo vira um gradiente de `fill` até `fill2`. |
+| `fill_mid` | Cor do meio do degradê | cor | Cor do meio do gradiente (opcional), na posição `fill_mid_at`. |
+| `fill_mid_at` | Posição da cor do meio | número | Onde fica a `fill_mid`, de 0 a 1 (0 = no meio). |
+| `gradient_angle` | Ângulo do degradê | ângulo (graus) | Direção do gradiente em graus, como no CSS: 0 = para cima, 90 = para a direita. |
+| `gradient_radial` | Degradê circular | lógico | Gradiente radial: `fill` no centro até `fill2` na borda (o menor raio do retângulo). |
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
+| `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema. |
 
 ## Em código
 

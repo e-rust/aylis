@@ -10,21 +10,21 @@ A câmera ao vivo. `active` liga; `camera` escolhe (vazio: a primeira; `front` o
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `mirror` | Espelhado | lógico |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
-| `radius` | Raio dos cantos | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `mirror` | Espelhado | lógico |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `radius` | Raio dos cantos | número |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `camera` | Câmera | texto |
-| `active` | Ativo | lógico |
-| `quality` | Qualidade | um de: `low`, `medium`, `high`, `max` |
-| `resolution` | Resolução do 3D | texto |
-| `torch` | Lanterna (flash aceso) | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `camera` | Câmera | texto |  |
+| `active` | Ativo | lógico |  |
+| `quality` | Qualidade | um de: `low`, `medium`, `high`, `max` |  |
+| `resolution` | Resolução do 3D | texto |  |
+| `torch` | Lanterna (flash aceso) | lógico |  |
 
 ## Eventos
 

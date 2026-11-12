@@ -10,16 +10,16 @@ Avatares empilhados (o `v-avatar-group`): as iniciais de `names` (separados por 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `max` | Máximo | inteiro |
-| `size` | Tamanho | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `max` | Máximo | inteiro |  |
+| `size` | Tamanho | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `names` | Nomes | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `names` | Nomes | texto |  |
 
 ## Em código
 

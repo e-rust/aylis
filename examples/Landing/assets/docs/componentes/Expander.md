@@ -10,15 +10,15 @@ Seção que abre e fecha: clique no cabeçalho (ou Espaço/Enter). Fechada, fica
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `caption` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `caption` | Título | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `expanded` | Aberto | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `expanded` | Aberto | lógico |  |
 
 ## Eventos
 

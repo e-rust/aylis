@@ -3,7 +3,6 @@
 //! `src/forms/`.
 
 use aylis::prelude::Ui;
-use aylis::prelude::instances::form_handler;
 
 pub mod components;
 pub use components::*;
@@ -15,6 +14,6 @@ pub mod principal;
 /// as classes dos pacotes de código.
 pub fn register(ui: &mut Ui) {
     ui.register_form_class("frmPrincipal", FrmPrincipal::bind);
-    ui.register_handler("frmPrincipal.nivel_change", form_handler(FrmPrincipal::nivel_change));
-    ui.register_handler("frmPrincipal.ajuste_timer", form_handler(FrmPrincipal::ajuste_timer));
+    ui.register_handler("frmPrincipal.nivel_change", aylis::prelude::instances::form_handler(FrmPrincipal::nivel_change));
+    ui.register_handler("frmPrincipal.ajuste_timer", aylis::prelude::instances::form_handler(FrmPrincipal::ajuste_timer));
 }

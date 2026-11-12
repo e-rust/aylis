@@ -17,6 +17,9 @@ func (c aylisScrollBox) SetWheelStep(v float64) { c.Set("wheel_step", v) }
 func (c aylisScrollBox) Smooth() string { return asText(c.Get("smooth")) }
 func (c aylisScrollBox) SetSmooth(v string) { c.Set("smooth", v) }
 
+func (c aylisScrollBox) Gutter() bool { return asBool(c.Get("gutter")) }
+func (c aylisScrollBox) SetGutter(v bool) { c.Set("gutter", v) }
+
 func (c aylisScrollBox) AllowedChars() string { return asText(c.Get("allowed_chars")) }
 func (c aylisScrollBox) SetAllowedChars(v string) { c.Set("allowed_chars", v) }
 
@@ -50,6 +53,15 @@ func (c aylisScrollBox) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisScrollBox) Align() string { return asText(c.Get("align")) }
 func (c aylisScrollBox) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisScrollBox) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisScrollBox) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisScrollBox) Margins() string { return asText(c.Get("margins")) }
+func (c aylisScrollBox) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisScrollBox) Padding() string { return asText(c.Get("padding")) }
+func (c aylisScrollBox) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisScrollBox) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisScrollBox) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -61,6 +73,12 @@ func (c aylisScrollBox) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisScrollBox) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisScrollBox) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisScrollBox) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisScrollBox) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisScrollBox) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisScrollBox) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisScrollBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisScrollBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -131,6 +149,18 @@ func (c aylisScrollBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisScrollBox) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisScrollBox) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisScrollBox) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisScrollBox) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisScrollBox) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisScrollBox) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisScrollBox) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisScrollBox) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisScrollBox) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisScrollBox) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisScrollBox) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisScrollBox) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -185,7 +215,13 @@ func (c aylisScrollBox) SetHint(v string) { c.Set("hint", v) }
 func (c aylisScrollBox) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisScrollBox) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisScrollBox) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisScrollBox) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisScrollBox) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisScrollBox) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisScrollBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisScrollBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
-func (c aylisScrollBox) ScrollTo(a1 aylis.Ref) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "scroll_to", "args": []any{a1.ComponentID()}}) }
-func (c aylisScrollBox) VisibleComponents(a1 aylis.Ref, a2 bool) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "visible_components", "args": []any{a1.ComponentID(), a2}})) }
+func (c aylisScrollBox) ScrollTo(component aylis.Ref) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "scroll_to", "args": []any{component.ComponentID()}}) }
+func (c aylisScrollBox) VisibleComponents(list aylis.Ref, fully bool) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "visible_components", "args": []any{list.ComponentID(), fully}})) }

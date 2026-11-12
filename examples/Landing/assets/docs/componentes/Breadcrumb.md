@@ -10,9 +10,9 @@ Trilha de navegação ("Início › Vídeos › 2026"): cada parte é clicável 
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
 
 ## Eventos
 

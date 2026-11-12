@@ -8,20 +8,20 @@ A imagem que acompanha o mouse durante um arrastar e soltar.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `image` | Imagem | texto |
-| `control` | Controle desenhado | componente |
-| `opacity` | Opacidade | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `image` | Imagem | texto | Arquivo do projeto (`assets/images/arquivo.png`). |
+| `control` | Controle desenhado | componente | O controle cujo desenho vai junto (vazio: o próprio controle arrastado, quando não há imagem). |
+| `opacity` | Opacidade | número | 0..1. |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `width` | Largura | número |
-| `height` | Altura | número |
-| `hot_x` | Ponto no cursor (X) | número |
-| `hot_y` | Ponto no cursor (Y) | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `width` | Largura | número | Tamanho na tela, em pontos; 0 = automático (160 × 90 numa imagem, o tamanho do controle num desenho). |
+| `height` | Altura | número |  |
+| `hot_x` | Ponto no cursor (X) | número | O ponto da imagem (em pontos) que fica no cursor; negativo = o padrão (no meio, um pouco acima: como o Explorer). |
+| `hot_y` | Ponto no cursor (Y) | número |  |
 
 ## Em código
 

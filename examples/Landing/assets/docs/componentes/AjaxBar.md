@@ -10,9 +10,9 @@ A barra de carregamento do topo (`QAjaxBar`): fina, na borda de cima (ou de baix
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
 
 ## Em código
 

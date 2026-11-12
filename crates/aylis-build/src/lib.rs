@@ -68,6 +68,8 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("GroupBox", ""),
     ("DateEdit", ""),
     ("TimeEdit", ""),
+    ("DateTimeEdit", ""),
+    ("Popover", ""),
     ("Calendar", ""),
     ("ListView", ""),
     ("TreeView", ""),
@@ -78,6 +80,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("StatusBar", ""),
     ("ToolBar", ""),
     ("Timer", ""),
+    ("FrameTimer", ""),
     ("DragImage", ""),
     ("ApplicationEvents", ""),
     ("EventInterceptor", ""),
@@ -332,7 +335,31 @@ const MAGIC: &[u8; 8] = b"AYLISPK1";
 /// mensagem).
 pub fn project() {
     let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("rode pelo cargo (build.rs)"));
-    project_at(&project_root(&manifest).unwrap_or(manifest));
+    // A pasta do projeto dita no `Cargo.toml` (o crate noutro lugar que o `.aylisproj`; B06 do
+    // Tabernáculo), ou a do crate, ou a de cima.
+    let declared = std::fs::read_to_string(manifest.join("Cargo.toml")).ok().and_then(|t| metadata_project(&t)).map(|p| manifest.join(p));
+    println!("cargo:rerun-if-changed=Cargo.toml");
+    project_at(&declared.or_else(|| project_root(&manifest)).unwrap_or(manifest));
+}
+
+/// O `project = "..."` da seção `[package.metadata.aylis]` de um `Cargo.toml`: a pasta do
+/// `.aylisproj`, relativa ao crate.
+pub fn metadata_project(cargo: &str) -> Option<String> {
+    let mut inside = false;
+    for line in cargo.lines() {
+        let t = line.trim();
+        if t.starts_with('[') {
+            inside = t == "[package.metadata.aylis]";
+            continue;
+        }
+        if inside {
+            if let Some(rest) = t.strip_prefix("project") {
+                let value = rest.trim_start().strip_prefix('=')?.trim();
+                return Some(value.trim_matches('"').to_string()).filter(|v| !v.is_empty());
+            }
+        }
+    }
+    None
 }
 
 /// O canal de desenvolvimento embutido, dentro de `OUT_DIR` (vazio fora da feature `dev`).
@@ -853,6 +880,30 @@ pub fn class_categories(facade: &str) -> Vec<(&str, &str)> {
     out
 }
 
+/// Para o `build.rs` de uma página com a documentação ao vivo (a Landing): grava em
+/// `OUT_DIR/demo_classes.rs` a função `register(ui)` com as classes das famílias `categories`
+/// (as categorias da paleta) que rodam no navegador e não pedem feature do `aylis`. A página
+/// as mostra no próprio wasm, sem baixar o wasm da família (o núcleo viria de novo); as outras
+/// famílias continuam no `aylis-demos`. `facade` é o `crates/aylis/src/lib.rs`.
+pub fn demo_classes(facade: &Path, categories: &[&str]) {
+    println!("cargo:rerun-if-changed={}", facade.display());
+    let text = std::fs::read_to_string(facade).unwrap_or_else(|e| panic!("ler {}: {e}", facade.display()));
+    let out = PathBuf::from(std::env::var("OUT_DIR").expect("rode pelo cargo (build.rs)"));
+    std::fs::write(out.join("demo_classes.rs"), demo_classes_source(&text, categories)).expect("gravar demo_classes.rs");
+}
+
+/// O código de [`demo_classes`].
+pub fn demo_classes_source(facade: &str, categories: &[&str]) -> String {
+    let mut out = String::from("// Gerado pelo aylis-build: as classes das famílias da documentação ao vivo.\npub fn register(ui: &mut ::aylis::core::Ui) {\n    let _ = &ui;\n");
+    for (class, category) in class_categories(facade) {
+        if categories.contains(&category) && feature_of(class) == Some("") && demo_on_web(class) {
+            out.push_str(&format!("    ::aylis::classes::{class}(ui);\n"));
+        }
+    }
+    out.push_str("}\n");
+    out
+}
+
 /// A feature do `aylis-demos` que liga o que a classe pede no `aylis` (`None`: nenhuma).
 pub fn demo_feature(class: &str) -> Option<&'static str> {
     match CLASSES.iter().find(|(c, _)| *c == class).map_or("", |(_, f)| *f) {
@@ -872,4 +923,14 @@ pub fn demo_on_web(class: &str) -> bool {
     let feature = CLASSES.iter().find(|(c, _)| *c == class).map_or("", |(_, f)| *f);
     let web = class_platforms(class).is_none_or(|p| p.contains(&Platform::Web));
     web && (feature.is_empty() || demo_feature(class).is_some())
+}
+
+#[cfg(test)]
+mod metadata_tests {
+    #[test]
+    fn the_project_folder_comes_from_the_cargo_metadata() {
+        let cargo = "[package]\nname = \"console\"\n\n[package.metadata.aylis]\nproject = \"../app\"\n\n[dependencies]\nproject = \"x\"\n";
+        assert_eq!(super::metadata_project(cargo).as_deref(), Some("../app"));
+        assert_eq!(super::metadata_project("[package]\nname = \"a\"\n"), None);
+    }
 }

@@ -10,17 +10,17 @@ Progresso redondo (o `v-progress-circular`): `value` de 0 a 100 com o número no
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `indeterminate` | Sem progresso definido | lógico |
-| `thickness` | Espessura | número |
-| `show_value` | Mostra o valor | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `indeterminate` | Sem progresso definido | lógico |  |
+| `thickness` | Espessura | número |  |
+| `show_value` | Mostra o valor | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
 
 ## Em código
 

@@ -8,9 +8,9 @@ A rede: `connected` e `kind` (`wifi`, `cellular`, `ethernet`, `other` ou `none`)
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `interval` | Intervalo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interval` | Intervalo | número |  |
 
 ## Eventos
 

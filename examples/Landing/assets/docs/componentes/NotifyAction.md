@@ -8,16 +8,16 @@ Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` 
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `image` | Imagem | texto |
-| `channel` | Canal | texto |
-| `channel_name` | Nome do canal | texto |
-| `priority` | Prioridade | um de: `low`, `default`, `high` |
-| `buttons` | Botões | texto |
-| `open_buttons` | Botões que abrem o app | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `image` | Imagem | texto |  |
+| `channel` | Canal | texto |  |
+| `channel_name` | Nome do canal | texto |  |
+| `priority` | Prioridade | um de: `low`, `default`, `high` |  |
+| `buttons` | Botões | texto |  |
+| `open_buttons` | Botões que abrem o app | texto |  |
 
 ## Eventos
 

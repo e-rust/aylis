@@ -10,10 +10,10 @@ Um pedaço de tela reaproveitável (um form dentro de outro), com os seus própr
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `form` | Form | texto |
-| `values` | Valores | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `form` | Form | texto |  |
+| `values` | Valores | texto | Num frame de pacote (`form = "pkg:Nome"`): os valores das propriedades expostas pelo pacote, em JSON (`{"valor": 42}`). |
 
 ## Em código
 

@@ -10,20 +10,20 @@ Nível de tanque: o tanque com o líquido ondulando na altura do valor (em %, ou
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `unit` | Unidade | texto |
-| `liquid` | Líquido | cor |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `unit` | Unidade | texto |  |
+| `liquid` | Líquido | cor |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `running` | Ligado | lógico |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `running` | Ligado | lógico | O líquido ondula (pede quadros enquanto ligado). |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

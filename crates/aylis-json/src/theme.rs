@@ -145,6 +145,13 @@ pub fn theme_from_value(value: &Value) -> Result<Theme> {
             }
         }
     }
+    // Sem `"dark"` no arquivo (nem um `base` escuro), o fundo decide: um tema de fundo escuro
+    // é escuro (relatório do InsightDB, 11/11: `ui.theme().dark` vinha false com o tema escuro).
+    if !root.contains_key("dark") && root.get("base").is_none() {
+        let bg = theme.color("background");
+        let luminance = 0.2126 * bg.r as f32 + 0.7152 * bg.g as f32 + 0.0722 * bg.b as f32;
+        theme.dark = bg.a > 0 && luminance < 110.0;
+    }
     Ok(theme)
 }
 
@@ -319,11 +326,29 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
             "opacity" => p.opacity = Some(v.as_f64().ok_or("\"opacity\" deve ser número")? as f32),
             "shadow" => p.shadow = Some(v.as_str().ok_or("\"shadow\" deve ser o nome de uma sombra do tema")?.to_string()),
             "material" => p.material = Some(v.as_str().ok_or("\"material\" deve ser glass, frosted ou none")?.to_string()),
+            "text_case" => p.text_case = Some(v.as_str().ok_or("\"text_case\" deve ser upper, lower ou none")?.to_string()),
+            "letter_spacing" => p.letter_spacing = Some(v.as_f64().ok_or("\"letter_spacing\" deve ser número")? as f32),
+            "border_sides" => p.border_sides = Some(bounds(v)?),
+            "border_style" => p.border_style = Some(v.as_str().ok_or("\"border_style\" deve ser solid, dashed ou dotted")?.to_string()),
+            "line_height" => p.line_height = Some(v.as_f64().ok_or("\"line_height\" deve ser número (1.5 = uma vez e meia a fonte)")? as f32),
+            "font_size" => p.font_size = Some(v.as_f64().ok_or("\"font_size\" deve ser número")? as f32),
+            "italic" => p.italic = Some(v.as_bool().ok_or("\"italic\" deve ser true/false")?),
+            "font_weight" => {
+                let name = v.as_str().ok_or("\"font_weight\" deve ser texto")?;
+                p.font_weight = Some(
+                    WEIGHTS
+                        .iter()
+                        .find(|(n, _)| *n == name)
+                        .map(|(_, w)| *w)
+                        .ok_or_else(|| format!("peso '{name}' inválido; use um de: {}", WEIGHTS.map(|(n, _)| n).join(", ")))?,
+                );
+            }
             state if allow_states && STATES.contains(&state) => {}
             other => {
                 return Err(format!(
-                    "chave desconhecida '{other}' (use fill, text, border, border_color, border_width, radius, \
-                     padding, font, opacity, transition, shadow{})",
+                    "chave desconhecida '{other}' (use fill, text, border, border_color, border_width, border_sides, \
+                     border_style, radius, padding, font, font_weight, font_size, italic, line_height, opacity, transition, shadow, \
+                     material, text_case, letter_spacing{})",
                     if allow_states { " e os estados hover, pressed, focused, checked, disabled" } else { "" }
                 ));
             }
@@ -413,6 +438,32 @@ fn props_value(p: &StyleProps) -> Map<String, Value> {
     }
     if let Some(m) = &p.material {
         map.insert("material".into(), Value::String(m.clone()));
+    }
+    if let Some(t) = &p.text_case {
+        map.insert("text_case".into(), Value::String(t.clone()));
+    }
+    if let Some(l) = p.letter_spacing {
+        map.insert("letter_spacing".into(), number(l as f64));
+    }
+    if let Some(b) = p.border_sides {
+        map.insert("border_sides".into(), bounds_value(b));
+    }
+    if let Some(b) = &p.border_style {
+        map.insert("border_style".into(), Value::String(b.clone()));
+    }
+    if let Some(l) = p.line_height {
+        map.insert("line_height".into(), number(l as f64));
+    }
+    if let Some(w) = p.font_weight {
+        if let Some((name, _)) = WEIGHTS.iter().find(|(_, x)| *x == w) {
+            map.insert("font_weight".into(), Value::String((*name).to_string()));
+        }
+    }
+    if let Some(s) = p.font_size {
+        map.insert("font_size".into(), number(s as f64));
+    }
+    if let Some(i) = p.italic {
+        map.insert("italic".into(), Value::Bool(i));
     }
     map
 }

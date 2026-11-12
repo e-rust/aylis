@@ -237,7 +237,15 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     let width_of = |canvas: &mut dyn Canvas, a: &Axis| a.ticks().iter().map(|v| canvas.measure_text(&label(*v), &small).width).fold(0.0, f32::max) + 10.0;
     let left_w = width_of(canvas, &left);
     let right_w = right.as_ref().map_or(8.0, |a| width_of(canvas, a));
-    let plot = RectF::new(area.x + left_w, area.y + 4.0, (area.width - left_w - right_w).max(10.0), (area.height - 26.0).max(10.0));
+    // Rótulos do X inclinados (`label_angle`): mais espaço embaixo, pelo maior deles.
+    let angle = chart.label_angle.clamp(-90.0, 90.0);
+    let below = if angle.abs() > 0.5 && matches!(x_axis, XAxis::Category(_)) {
+        let longest = chart.data_labels.iter().map(|l| canvas.measure_text(l, &small).width).fold(0.0, f32::max).min(area.height * 0.4);
+        longest * angle.to_radians().sin().abs() + 22.0
+    } else {
+        26.0
+    };
+    let plot = RectF::new(area.x + left_w, area.y + 4.0, (area.width - left_w - right_w).max(10.0), (area.height - below).max(10.0));
     chart.plot.set(plot);
     let y_px = |a: &Axis, v: f64| plot.bottom() - a.frac(v) as f32 * plot.height;
 
@@ -284,11 +292,24 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     xl.h_align = TextAlign::Center;
     match x_axis {
         XAxis::Category(n) => {
-            let every = ((50.0 / slot).ceil() as usize).max(1);
+            // Inclinados, cabem mais (a altura do texto conta, não a largura).
+            let need = if angle.abs() > 0.5 { 20.0 } else { 50.0 };
+            let every = ((need / slot).ceil() as usize).max(1);
             for (i, text) in chart.data_labels.iter().enumerate().take(n) {
                 let x = x_px(i as f64);
                 if i % every == 0 && x >= plot.x - 1.0 && x <= plot.right() + 1.0 {
-                    canvas.draw_text(text, RectF::new(x - slot.max(50.0) / 2.0, plot.bottom() + 4.0, slot.max(50.0), 18.0), &xl);
+                    if angle.abs() > 0.5 {
+                        // Gira em volta do ponto embaixo do rótulo; o texto termina nele.
+                        let mut tl = small.clone();
+                        tl.h_align = TextAlign::Trailing;
+                        canvas.save();
+                        canvas.translate(x, plot.bottom() + 6.0);
+                        canvas.rotate(-angle);
+                        canvas.draw_text(text, RectF::new(-(below * 3.0), -9.0, below * 3.0, 18.0), &tl);
+                        canvas.restore();
+                    } else {
+                        canvas.draw_text(text, RectF::new(x - slot.max(50.0) / 2.0, plot.bottom() + 4.0, slot.max(50.0), 18.0), &xl);
+                    }
                 }
             }
         }
@@ -367,7 +388,7 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
             path.line_to(p.x, p.y);
         }
         path.close();
-        canvas.fill_path(&path, &Brush::Solid(chart.color(ctx, *si).with_opacity(0.22)));
+        canvas.fill_path(&path, &Brush::Solid(chart.color(ctx, *si).with_opacity(chart.area_opacity.clamp(0.0, 1.0))));
     }
 
     // Barras: agrupadas no lugar do rótulo (empilhadas, uma por cima da outra).
@@ -472,6 +493,15 @@ fn paint_horizontal(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
             }
         }
     }
+    // Empilhadas (`stacked`): a escala vai até a soma de cada linha (relatório do InsightDB,
+    // 11/11: não havia barra deitada empilhada).
+    if chart.stacked {
+        for i in 0..n {
+            let (neg, pos) = visible.iter().filter_map(|&si| data[si].values.get(i)).fold((0.0, 0.0), |(a, b), v| if *v < 0.0 { (a + v, b) } else { (a, b + v) });
+            lo = lo.min(neg);
+            hi = hi.max(pos);
+        }
+    }
     let (lo, hi) = if lo > hi { (0.0, 1.0) } else if chart.log_scale { (min_pos, hi) } else { (lo.min(0.0), hi.max(0.0)) };
     let axis = Axis::new(lo, hi, chart.log_scale, chart.reverse, (!chart.auto_scale).then_some((chart.y_min, chart.y_max)));
     let small = small_text(ctx);
@@ -503,12 +533,21 @@ fn paint_horizontal(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
             canvas.fill_rect(RectF::new(plot.x, y, plot.width, row), 0.0, &Brush::Solid(ctx.theme.color("hover_overlay")));
         }
         let mut tip = PointF::new(plot.x, y + row / 2.0);
+        let (mut pos, mut neg) = (axis.base(), axis.base());
         for (k, &si) in visible.iter().enumerate() {
             let Some(v) = data[si].values.get(i) else { continue };
-            let top = y + (row - group) / 2.0 + bar_h * k as f32;
-            let (x0, x1) = (x_px(axis.base()), x_px(*v));
-            let rect = RectF::from_points(PointF::new(x0, top + 1.0), PointF::new(x1, top + bar_h - 1.0));
-            canvas.fill_rect(rect, 3.0_f32.min(bar_h / 3.0), &Brush::Solid(chart.color(ctx, si)));
+            let (top, height, from, to) = if chart.stacked {
+                // Uma barra só por linha, cada série continuando a anterior.
+                let from = if *v < 0.0 { neg } else { pos };
+                let to = from + v;
+                if *v < 0.0 { neg = to } else { pos = to }
+                (y + (row - group) / 2.0, group, from, to)
+            } else {
+                (y + (row - group) / 2.0 + bar_h * k as f32, bar_h, axis.base(), *v)
+            };
+            let (x0, x1) = (x_px(from), x_px(to));
+            let rect = RectF::from_points(PointF::new(x0, top + 1.0), PointF::new(x1, top + height - 1.0));
+            canvas.fill_rect(rect, if chart.stacked { 0.0 } else { 3.0_f32.min(height / 3.0) }, &Brush::Solid(chart.color(ctx, si)));
             tip.x = tip.x.max(x1.max(x0));
         }
         hits.push(Hit { shape: Shape::Column(RectF::new(plot.x, y, plot.width, row)), series: 0, index: i, at: tip });

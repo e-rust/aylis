@@ -42,6 +42,8 @@ fn a_build_records_its_units_and_cleaning_the_project_removes_them() {
     // Fora do repositório do aylis: o cargo de fora usa a mesma pasta.
     let config = std::fs::read_to_string(dir.join(".cargo").join("config.toml")).unwrap();
     assert!(config.contains(&format!("target-dir = '{}'", target.display())), "{config}");
+    // E com o mesmo perfil das dependências: o cargo de fora não compila outra cópia delas.
+    assert!(config.contains("[profile.dev.package.\"*\"]\ndebug = false"), "{config}");
 
     let r = aylis_tools::cleanup::clean_project(&target, &dir);
     assert_eq!(r.units, project.units.len());

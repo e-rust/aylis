@@ -52,7 +52,9 @@ logo). output mostra as mensagens e status a situação. Com o app aberto, app_c
 {\"cmd\": \"click\", \"target\": \"btnSalvar\"}).
 
 Como o código do Aylis é escrito: componentes pelo acesso tipado (self.btnSalvar, \
-frmCliente.edtNome), nunca procurando pelo nome em texto; handlers devolvem Result e a recusa é \
+frmCliente.edtNome), nunca procurando pelo nome em texto (os tipos gerados, como Button e Label, \
+têm o nome dos controles do aylis::prelude: no código do form use os do acesso tipado e, se \
+precisar dos do prelude, pelo caminho, aylis::prelude::Label); handlers devolvem Result e a recusa é \
 um erro; mensagem ao usuário pelo MessageDialog do Aylis, nunca a caixa do sistema; nada de banco \
 na tela (o ClientDataSet guarda os dados e o delta, o backend aplica); thread volta à tela por \
 post/post_to (no navegador, aylis::background).
@@ -123,10 +125,34 @@ pub fn authorized(header: Option<&str>, token: &str) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
+/// A ponte sai quando o processo que a abriu (o cliente MCP) some: o stdin nem sempre fecha
+/// junto, e pontes órfãs ficavam vivas (o relatório do Tabernáculo, M04). Confere a cada 5 s.
+/// No navegador (a IDE lite) não há processo pai nem ponte.
+#[cfg(target_arch = "wasm32")]
+fn exit_with_parent() {}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn exit_with_parent() {
+    use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
+    let me = Pid::from_u32(std::process::id());
+    let mut system = System::new_with_specifics(RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()));
+    let Some(parent) = system.process(me).and_then(|p| p.parent()) else { return };
+    std::thread::spawn(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(5));
+            system.refresh_processes_specifics(ProcessesToUpdate::Some(&[parent]), true, ProcessRefreshKind::nothing());
+            if system.process(parent).is_none() {
+                std::process::exit(0);
+            }
+        }
+    });
+}
+
 /// `aylis-tool mcp`: a ponte entre o cliente MCP (stdio, uma mensagem JSON por linha) e o
 /// servidor HTTP da IDE, com o token. Com a IDE fechada (ou o MCP desligado), cada pedido
 /// recebe um erro que diz o que fazer.
 pub fn bridge() -> Result<(), String> {
+    exit_with_parent();
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
     let mut pinned: Option<u32> = None;
@@ -164,6 +190,13 @@ pub fn bridge() -> Result<(), String> {
             let project = request["params"]["arguments"].as_object_mut().and_then(|a| a.remove(PROJECT_ARG)).and_then(|v| v.as_str().map(|s| s.trim().to_string())).filter(|s| !s.is_empty());
             if project.is_some() {
                 line = request.to_string();
+            }
+            // Um argumento que a ferramenta não tem é recusado com a lista dos que ela tem (antes
+            // era ignorado calado, e o agente achava que tinha valido; M06 do Tabernáculo).
+            if let Some(text) = unknown_arguments(&name, &request["params"]["arguments"]) {
+                let reply = json!({ "jsonrpc": "2.0", "id": request["id"].clone(), "result": { "content": [{ "type": "text", "text": text }], "isError": true } });
+                writeln!(stdout, "{reply}").and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
+                continue;
             }
             let ides: Vec<crate::instances::Instance> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_some()).collect();
             match route_call(&name, project.as_deref(), &ides) {
@@ -575,12 +608,28 @@ fn forget_dead_sessions(ides: &mut [crate::instances::Instance]) {
     }
 }
 
+/// Os argumentos de `arguments` que a ferramenta `name` não declara: a mensagem de recusa, com
+/// os que valem. Ferramenta desconhecida (de uma IDE mais nova): sem conferência.
+fn unknown_arguments(name: &str, arguments: &Value) -> Option<String> {
+    let given = arguments.as_object()?;
+    let own = own_tools();
+    let def = ide_tools().into_iter().chain(own.as_array().into_iter().flatten().cloned()).find(|t| t["name"] == name)?;
+    let known: Vec<String> = def["inputSchema"]["properties"].as_object().map(|p| p.keys().cloned().collect()).unwrap_or_default();
+    let unknown: Vec<&String> = given.keys().filter(|k| *k != PROJECT_ARG && !known.contains(k)).collect();
+    if unknown.is_empty() {
+        return None;
+    }
+    let names = unknown.iter().map(|k| format!("'{k}'")).collect::<Vec<_>>().join(", ");
+    let valid = if known.is_empty() { "nenhum".to_string() } else { known.join(", ") };
+    Some(format!("{name}: argumento desconhecido {names} (os desta ferramenta: {valid})"))
+}
+
 /// As ferramentas da própria ponte.
 fn own_tools() -> Value {
     json!([
         { "name": "session_title", "description": "Dá um título a esta sessão (um resumo curto do que ela vai fazer), que aparece na barra da janela da IDE do Aylis ligada a ela. Chame no começo da conversa; abre a IDE se ela não estiver aberta.", "inputSchema": { "type": "object", "properties": { "title": { "type": "string", "description": "o título, curto (ex.: Tela de cadastro de clientes)" }, "project": project_property() }, "required": ["title"] } },
         { "name": "ide_list", "description": "Lista as IDEs do Aylis abertas (cada uma com o projeto dela) e qual está fixada nesta conversa.", "inputSchema": { "type": "object", "properties": {} } },
-        { "name": "ide_select", "description": "Fixa nesta conversa a IDE do projeto informado (o caminho do .aylisproj ou parte do nome, como ide_list mostra). As chamadas seguintes vão para ela.", "inputSchema": { "type": "object", "properties": { "project": { "type": "string", "description": "caminho ou parte do nome do projeto; vazio: a IDE sem projeto" } }, "required": ["project"] } }
+        { "name": "ide_select", "description": "Fixa nesta conversa a IDE do projeto informado (o caminho do .aylisproj ou parte do nome, como ide_list mostra), ou a do processo `pid` (duas IDEs com o mesmo projeto). As chamadas seguintes vão para ela.", "inputSchema": { "type": "object", "properties": { "project": { "type": "string", "description": "caminho ou parte do nome do projeto; vazio: a IDE sem projeto" }, "pid": { "type": "integer", "description": "o processo da IDE, como ide_list mostra (opcional)" } } } }
     ])
 }
 
@@ -604,6 +653,8 @@ fn own_tool(request: &Value, pinned: &mut Option<u32>) -> Option<String> {
     }
     let ides: Vec<crate::instances::Instance> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_some()).collect();
     let describe = |i: &crate::instances::Instance| i.project.as_ref().map_or_else(|| "(sem projeto)".to_string(), |p| p.display().to_string());
+    // Com o processo de cada uma: duas IDEs com o mesmo projeto se distinguem (M03).
+    let with_pid = |i: &crate::instances::Instance| format!("{}  (pid {})", describe(i), i.pid);
     let text = if name == "ide_list" {
         // As abertas com o MCP desligado também aparecem (sem elas, uma IDE que perdeu o
         // vínculo parecia ter sumido; relatório do RTSPlayer, 10/11).
@@ -611,12 +662,16 @@ fn own_tool(request: &Value, pinned: &mut Option<u32>) -> Option<String> {
         if ides.is_empty() && off.is_empty() {
             "Nenhuma IDE do Aylis aberta com o MCP ligado: a próxima chamada de ferramenta (project_info, por exemplo) abre uma para esta conversa.".to_string()
         } else {
-            ides.iter().map(|i| format!("{}{}", if *pinned == Some(i.pid) { "* " } else { "  " }, describe(i))).chain(off).collect::<Vec<_>>().join("
+            ides.iter().map(|i| format!("{}{}", if *pinned == Some(i.pid) { "* " } else { "  " }, with_pid(i))).chain(off).collect::<Vec<_>>().join("
 ")
         }
     } else {
         let wanted = request["params"]["arguments"]["project"].as_str().unwrap_or_default().to_lowercase();
-        let found = ides.iter().find(|i| if wanted.is_empty() { i.project.is_none() } else { describe(i).to_lowercase().contains(&wanted) });
+        let pid = request["params"]["arguments"]["pid"].as_u64();
+        let found = match pid {
+            Some(pid) => ides.iter().find(|i| u64::from(i.pid) == pid),
+            None => ides.iter().find(|i| if wanted.is_empty() { i.project.is_none() } else { describe(i).to_lowercase().contains(&wanted) }),
+        };
         match found {
             Some(i) => {
                 *pinned = Some(i.pid);
@@ -776,6 +831,8 @@ pub fn ide_tools() -> Vec<Value> {
         tool("open_form", "Abre um form (ou DataModule) do projeto no designer; `variant` abre a variante de uma plataforma (android, desktop...).", json!({ "name": s("nome do form"), "variant": s("variante, opcional") }), &["name"]),
         tool("list_components", "A árvore de componentes do form aberto: nome, classe e pai.", json!({}), &[]),
         tool("get_component", "As propriedades de um componente do form aberto (como no layout JSON). Vazio: o form.", json!({ "component": s("nome do componente") }), &[]),
+        tool("set_properties", "Muda várias propriedades em vários componentes do form aberto numa chamada (cada propriedade, um passo do desfazer). `properties` é {\"propriedade\": valor}, com os valores como no set_property; sem `components`, o form.", json!({ "components": { "type": "array", "items": { "type": "string" }, "description": "nomes dos componentes" }, "properties": { "type": "object", "description": "propriedade → valor" } }), &["properties"]),
+        tool("move_component", "Passa um componente para dentro de outro (o pai novo) no form aberto, opcionalmente na posição `index` entre os filhos (desfazível).", json!({ "component": s("nome do componente"), "parent": s("nome do pai novo (vazio: o form)"), "index": { "type": "integer", "description": "posição entre os filhos, opcional" } }), &["component"]),
         tool("set_property", "Muda uma propriedade de um componente do form aberto (desfazível). `value` é o valor JSON como no layout: número, texto, booleano, cor \"#rrggbb\", nome de outro componente...", json!({ "component": s("nome do componente (vazio: o form)"), "property": s("nome da propriedade"), "value": { "description": "o valor" } }), &["property", "value"]),
         tool("add_component", "Cria um componente da paleta no form aberto (`class`, pode ser um subtipo como Button.icon), dentro de `parent` (opcional) e com `name` (opcional). Devolve o nome.", json!({ "class": s("classe"), "parent": s("contêiner, opcional"), "name": s("nome, opcional") }), &["class"]),
         tool("delete_component", "Exclui um componente do form aberto.", json!({ "component": s("nome") }), &["component"]),
@@ -794,13 +851,27 @@ pub fn ide_tools() -> Vec<Value> {
         ),
         tool("list_classes", "As classes da paleta, por categoria, com os subtipos.", json!({}), &[]),
         tool(
+            "component_docs",
+            "A documentação de um componente (a mesma do site), sob demanda: com `property`, só como aquela propriedade funciona (o que não é óbvio, como o `radius` negativo); sem ela, a página inteira. Consulte quando o tipo do class_info não bastar.",
+            json!({ "class": s("a classe (Panel, Button, Chart...)"), "property": s("a propriedade, opcional (radius, anchors...)") }),
+            &["class"],
+        ),
+        tool("search_icons", "Procura ícones pelos nomes nos pacotes (Material, Fluent...): devolve `pacote:nome`, como vai na propriedade `icon`. Várias palavras: todas precisam aparecer.", json!({ "query": s("palavras (ex.: database, arrow left)"), "limit": { "type": "integer", "description": "quantos (padrão 40)" } }), &["query"]),
+        tool("designer_snapshot", "A imagem do form aberto no designer (como ficou, sem executar).", json!({}), &[]),
+        tool(
+            "compare_image",
+            "Compara a tela com uma imagem de referência (`reference`, um PNG: a tela antiga, um protótipo): o designer, ou o app em execução com `source: \"app\"`. Devolve quanto difere (%) e a imagem das diferenças em vermelho.",
+            json!({ "reference": s("caminho do PNG de referência"), "source": s("designer (padrão) ou app"), "form": s("com source app: outro form aberto, opcional") }),
+            &["reference"],
+        ),
+        tool(
             "class_info",
             "Tudo o que uma classe aceita: cada propriedade com o tipo, a categoria e os valores (de um enum: `trimming` → none, character, word), os eventos (`on_dbl_click`...) e os métodos. Consulte antes de montar um layout.",
             json!({ "class": s("nome da classe (Button, Label, DataRepeater...)") }),
             &["class"],
         ),
         tool("save", "Salva o form aberto (ou, com `all`, todos os forms e os fontes alterados nos editores).", json!({ "all": { "type": "boolean" } }), &[]),
-        tool("generate_code", "Gera (ou atualiza) o código do projeto: handlers dos forms e Cargo.toml.", json!({}), &[]),
+        tool("generate_code", "Gera (ou atualiza) o código do projeto: handlers dos forms e Cargo.toml. Salva antes os forms abertos com alterações (como o Gerar código da IDE); um form novo ainda sem arquivo precisa do save antes.", json!({}), &[]),
         tool("open_project", "Abre um projeto (.aylisproj), como Arquivo → Abrir projeto.", json!({ "path": s("caminho do .aylisproj") }), &["path"]),
         tool("open_code", "Abre na janela de código (uma aba por arquivo) o código de um form (F12) ou um fonte qualquer (`file`), na linha dada.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "line": { "type": "integer" } }), &[]),
         tool("read_code", "O texto de um fonte como está no editor da IDE (com o que ainda não foi salvo), ou do disco se não estiver aberto: o código de um form (`form`) ou um fonte (`file`, caminho ou relativo à pasta do código). `start_line`/`end_line` (a partir de 1) leem só um trecho. Leia por aqui, não pelo disco: o editor pode ter mudanças não salvas.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "start_line": { "type": "integer" }, "end_line": { "type": "integer" } }), &[]),
@@ -845,7 +916,9 @@ pub fn ide_tools() -> Vec<Value> {
         tool("ide_menus", "Todos os itens dos menus da IDE (e da janela de código): o caminho para `menu`, o atalho, se está habilitado e marcado. Os menus de contexto (clique direito) vêm uma vez só, com o lugar na frente (\"Object Inspector › (propriedade) › Ligar a campo…\") e `context` true. O que o usuário faz pelos menus, o agente faz com `menu` e os `dialog_*`.", json!({}), &[]),
         tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro; com `here`, o projeto fica direto em `dir`, mesmo que ela já tenha outras coisas, como o app dentro de um repositório), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java). Crie onde o projeto vai ficar: a confiança é pela pasta, e um projeto movido abre em modo restrito.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" } }), &["dir", "name"]),
         tool("close_project", "Fecha o projeto (volta à tela inicial).", json!({}), &[]),
-        tool("new_form", "Cria um form no projeto aberto e abre no designer (`data_module` true: um DataModule).", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" } }), &["name"]),
+        tool("resolve_conflict", "Resolve um arquivo aberto na IDE que mudou no disco e também tem alterações não salvas (as outras ferramentas recusam com o diff até lá): `keep` \"disk\" recarrega do disco, \"ide\" fica com a da IDE.", json!({ "file": s("o arquivo (como veio no aviso, ou relativo ao projeto)"), "keep": { "type": "string", "enum": ["disk", "ide"] } }), &["file", "keep"]),
+        tool("new_form", "Cria um form no projeto aberto e abre no designer (`data_module` true: um DataModule). `file` escolhe o arquivo e a subpasta (forms/painel/inicio.json); sem ele, sai do nome.", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" }, "file": s("arquivo do form, opcional (forms/painel/inicio.json)") }), &["name"]),
+        tool("move_form", "Move ou renomeia o arquivo de um form (o JSON, as variantes e o fonte dele em cada linguagem; o módulo de código sai do nome do arquivo). A aba aberta passa a gravar no lugar novo, e o código é gerado de novo.", json!({ "name": s("nome do form"), "file": s("o arquivo novo, dentro de forms/ (forms/painel/inicio.json)") }), &["name", "file"]),
         tool("remove_form", "Tira um form do projeto (o arquivo continua no disco).", json!({ "name": s("nome do form") }), &["name"]),
         tool("set_main_form", "Define o form principal do projeto (o que abre primeiro).", json!({ "name": s("nome do form") }), &["name"]),
         tool("project_settings", "A configuração do projeto aberto (o .aylisproj): nome, linguagem, forms, pasta de saída (`output`), publicação (`publish`), renderizador, temas...", json!({}), &[]),
@@ -861,7 +934,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool("debug_variables", "Os campos de uma variável na depuração: `reference` é o número que `debug_state` dá em cada variável (0: sem campos).", json!({ "reference": { "type": "integer" } }), &["reference"]),
         tool("debug_frame", "Escolhe um quadro da pilha (`index`, de `debug_state`): a linha no código e as variáveis passam a ser as dele.", json!({ "index": { "type": "integer" } }), &["index"]),
         tool("breakpoint_condition", "Ponto de parada com condição (`condition`, uma expressão da linguagem) e/ou contagem de passagens (`hits`); vazias: um ponto comum.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "condition": s("expressão, opcional"), "hits": s("passagens, opcional") }), &["file", "line"]),
-        tool("app_command","Um comando para o app em execução (o protocolo remoto do Aylis): {\"cmd\":\"snapshot\"} devolve a imagem da janela (com \"target\": só aquele componente; \"form\": outro form); {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true} (sem eles, a árvore inteira, que pode ser enorme; \"target\" começa num componente), {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{\"text\":\"Ana\"}), {\"cmd\":\"click\",\"target\":\"btnSalvar\"}...", json!({ "command": { "type": "object", "description": "o comando" } }), &["command"]),
+        tool("app_command","Um comando para o app em execução (o protocolo remoto do Aylis): {\"cmd\":\"snapshot\"} devolve a imagem da janela (com \"target\": só aquele componente; \"form\": outro form); {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true} (sem eles, a árvore inteira, que pode ser enorme; \"target\" começa num componente; cada nó traz `rect`, onde ficou depois do layout), {\"cmd\":\"rect\",\"target\":\"pnlX\"} (posição e tamanho calculados); o target é o nome, o caminho (\"frmX.fraY.lblTotal\") ou o id: um nome que está em mais de um lugar é recusado com os caminhos, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{\"text\":\"Ana\"}), {\"cmd\":\"click\",\"target\":\"btnSalvar\"}...", json!({ "command": { "type": "object", "description": "o comando" } }), &["command"]),
     ]
 }
 
@@ -1034,5 +1107,20 @@ mod bridge_tests {
         for name in ["open_project", "set_property", "edit_code", "build", "app_command", "session_title", "ide_list", "dialog_select"] {
             assert!(names.contains(&name), "falta {name}");
         }
+    }
+}
+
+#[cfg(test)]
+mod argument_tests {
+    use serde_json::json;
+
+    /// M06 do Tabernáculo: o argumento que a ferramenta não tem é recusado, com os que valem; o
+    /// `project` vale em todas.
+    #[test]
+    fn an_unknown_argument_is_refused() {
+        let text = super::unknown_arguments("set_property", &json!({ "component": "btn", "propery": "text", "value": 1 })).unwrap();
+        assert!(text.contains("'propery'") && text.contains("property"), "{text}");
+        assert_eq!(super::unknown_arguments("set_property", &json!({ "component": "btn", "property": "text", "value": 1, "project": "x" })), None);
+        assert_eq!(super::unknown_arguments("ferramenta_nova", &json!({ "x": 1 })), None);
     }
 }

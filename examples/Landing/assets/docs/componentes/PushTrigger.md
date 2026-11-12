@@ -8,13 +8,13 @@ Dispara uma ação quando chega uma mensagem do push que casa com o filtro.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `source` | Origem | componente |
-| `filter` | Filtro | texto |
-| `action` | Ação | componente |
-| `replace_default` | Substituir a notificação comum | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `source` | Origem | componente |  |
+| `filter` | Filtro | texto |  |
+| `action` | Ação | componente |  |
+| `replace_default` | Substituir a notificação comum | lógico |  |
 
 ## Eventos
 

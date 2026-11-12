@@ -10,13 +10,13 @@ Mapa interativo de blocos (como os mapas da web): arrastar, aproximar com a roda
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `latitude` | Latitude | número |
-| `longitude` | Longitude | número |
-| `zoom` | Zoom | número |
-| `markers` | Marcadores | texto |
-| `provider` | Provedor | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `latitude` | Latitude | número |  |
+| `longitude` | Longitude | número |  |
+| `zoom` | Zoom | número | 1 (o mundo) a 19 (a rua); pode ser fracionário. |
+| `markers` | Marcadores | texto | Marcadores: `lat,lon,rótulo` separados por `;`. |
+| `provider` | Provedor | componente | Quem fornece os blocos (um provedor de mapa, item 25): o endereço e o crédito são os dele; sem ele, os do OpenStreetMap (`TileServer`). |
 
 ## Eventos
 

@@ -10,28 +10,29 @@ Campo de arquivo: mostra os nomes escolhidos; o clique abre o diálogo do sistem
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `placeholder` | Texto de exemplo | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `placeholder` | Texto de exemplo | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `filter` | Filtro | texto |
-| `multiple` | Vários | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `filter` | Filtro | texto |  |
+| `multiple` | Vários | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `files` | Arquivos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `files` | Arquivos | texto |  |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
 | `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_reject` | — | — |  |
 
 ## Em código
 

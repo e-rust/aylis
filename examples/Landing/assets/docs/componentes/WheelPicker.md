@@ -10,16 +10,16 @@ A roda de opções do iOS (o `UIPickerView`): arrastar ou rolar gira a roda; ao 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `row_height` | Altura da linha | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `row_height` | Altura da linha | número |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ## Eventos
 

@@ -1147,9 +1147,9 @@ fn code_opens_inside_the_ide_and_tabs_move_to_another_window() {
     assert!(form_node.children.iter().any(|c| c.data.starts_with("file:") && c.data.ends_with(&unit)), "a unit dentro do form");
     assert_eq!(data.iter().filter(|d| d.starts_with("file:") && d.ends_with(&unit)).count(), 1, "a unit só uma vez: {data:?}");
     assert!(data.iter().any(|d| d.starts_with("file:") && d.ends_with("main.rs")), "{data:?}");
-    // Recolhida: só o caminho até o form aberto está aberto.
-    assert!(t.nodes()[0].expanded, "Forms aberto (o form atual está nele)");
-    assert!(t.nodes().iter().skip(1).all(|n| !n.expanded), "o resto recolhido");
+    // A árvore nasce fechada (o relatório do Tabernáculo, I10): o que o usuário abre fica
+    // guardado por projeto.
+    assert!(t.nodes().iter().all(|n| !n.expanded), "tudo recolhido");
 
     // F12: o código embutido no centro.
     actions::open_code(&mut ide.ui, &state, None);
@@ -1266,6 +1266,62 @@ fn forms_and_code_share_one_tab_strip_like_delphi() {
     let _ = std::fs::remove_dir_all(base);
 }
 
+/// A explicação de cada propriedade sai do comentário `///` do campo no código (o que a página
+/// do componente e o `component_docs` do MCP mostram; decidido com o autor em 11/11).
+#[test]
+fn property_docs_come_from_the_code_comments() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let docs = aylis_ide::reference::source_field_docs(&root);
+    let radius = docs.get("Rectangle").and_then(|f| f.get("radius")).expect("o radius do Rectangle");
+    assert!(radius.contains("Negativo") && radius.contains("[cima-esquerda"), "{radius}");
+    assert!(docs.get("ControlBase").and_then(|f| f.get("anchors")).is_some_and(|d| d.contains("align: none")));
+}
+
+/// `new_form` pelo MCP e logo `set_layout` e `save`: vão para o form novo, não para o que
+/// estava aberto (relatório do InsightDB, 11/11: gravaram no form errado).
+#[test]
+fn set_layout_after_new_form_goes_to_the_new_form() {
+    use serde_json::json;
+    let base = temp("novo_form_mcp");
+    let project = aylis_project::create(&base, "Agenda", aylis_project::Language::Rust).unwrap();
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    actions::open_recent(&mut ide.ui, &state, &ide.ids, &project.path);
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    let run = |ide: &mut aylis_ide::app::Ide, name: &str, args: serde_json::Value| {
+        let r = aylis_ide::mcp::run_tool(&mut ide.ui, &state, &ide.ids, name, &args);
+        app::refresh(&mut ide.ui, &state, &ide.ids);
+        r
+    };
+    let principal = std::fs::read_to_string(project.file("forms/principal.json")).unwrap();
+    run(&mut ide, "new_form", json!({ "name": "frmDashboard" })).unwrap();
+    assert_eq!(state.borrow().doc.form_name(), "frmDashboard");
+    let layout = json!({ "aylis": 1, "root": { "class": "Form", "name": "frmDashboard", "caption": "Painel", "children": [{ "class": "Label", "name": "lblTitulo", "text": "Olá" }] } });
+    run(&mut ide, "set_layout", json!({ "layout": layout })).unwrap();
+    run(&mut ide, "save", json!({})).unwrap();
+    let saved = aylis_project::Project::open(&project.path).unwrap();
+    let file = saved.file(&saved.form("frmDashboard").unwrap().file);
+    assert!(std::fs::read_to_string(&file).unwrap().contains("lblTitulo"), "o form novo recebeu o layout");
+    assert_eq!(std::fs::read_to_string(project.file("forms/principal.json")).unwrap(), principal, "o principal ficou como estava");
+
+    // Uma raiz com o nome de outro form do projeto é recusada (renomearia o aberto).
+    let other = json!({ "aylis": 1, "root": { "class": "Form", "name": "frmPrincipal" } });
+    assert!(run(&mut ide, "set_layout", json!({ "layout": other })).is_err());
+
+    // O arquivo do form escolhido na criação (L-03) e movido depois (L-18): o JSON, o fonte e a
+    // aba aberta vão junto.
+    run(&mut ide, "new_form", json!({ "name": "frmRelatorio", "file": "forms/painel/relatorio.json" })).unwrap();
+    assert!(project.file("forms/painel/relatorio.json").is_file());
+    run(&mut ide, "move_form", json!({ "name": "frmRelatorio", "file": "forms/painel/resumo.json" })).unwrap();
+    let moved = aylis_project::Project::open(&project.path).unwrap();
+    assert_eq!(moved.form("frmRelatorio").unwrap().file, "forms/painel/resumo.json");
+    assert!(!project.file("forms/painel/relatorio.json").exists());
+    assert!(aylis_project::codegen::form_source(&moved, "frmRelatorio").unwrap().is_file(), "o fonte foi junto");
+    assert_eq!(state.borrow().doc.path.as_deref(), Some(moved.file("forms/painel/resumo.json").as_path()));
+    assert!(run(&mut ide, "move_form", json!({ "name": "frmRelatorio", "file": "../fora.json" })).is_err());
+    let _ = std::fs::remove_dir_all(base);
+}
+
 /// O layout conferido devolve todos os erros de uma vez, e o `class_info` diz o que cada
 /// propriedade aceita (relatório do RTSPlayer, 10/11: os erros vinham um por tentativa, e as
 /// propriedades e os valores eram adivinhados).
@@ -1277,10 +1333,12 @@ fn the_layout_check_lists_every_error_and_class_info_lists_the_values() {
         {"class": "Layout", "name": "layB", "radius": 8},
         {"class": "Button", "name": "btnC", "on_double_click": "btnC_dbl"},
         {"class": "NaoExiste", "name": "x"},
-        {"class": "Panel", "name": "pnlD", "shadow": "md"}
+        {"class": "Panel", "name": "pnlD", "shadow": "md"},
+        {"class": "Frame", "name": "fraE", "form": "fraOutro", "children": [{"class": "Label", "name": "lblF"}]}
     ]}}"#;
     let errors: Vec<String> = aylis_json::validate(&mut ui, json).iter().map(ToString::to_string).collect();
-    assert_eq!(errors.len(), 4, "{errors:#?}");
+    assert_eq!(errors.len(), 5, "{errors:#?}");
+    assert!(errors.iter().any(|e| e.contains("Frame")), "o Frame com filhos (L-07): {errors:#?}");
     assert!(errors.iter().any(|e| e.contains("trimming")) && errors.iter().any(|e| e.contains("radius")) && errors.iter().any(|e| e.contains("on_double_click")) && errors.iter().any(|e| e.contains("NaoExiste")), "{errors:#?}");
     assert!(ui.roots().is_empty(), "a raiz de passagem foi liberada");
     // O nome de sombra do tema vale no form.

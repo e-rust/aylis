@@ -151,6 +151,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<StatusBar>("Layouts");
     ui.register_class::<ToolBar>("Layouts");
     ui.register_class::<Timer>("System");
+    ui.register_class::<FrameTimer>("System");
     ui.register_class::<DragImage>("System");
     ui.register_class::<ApplicationEvents>("System");
     ui.register_class::<EventInterceptor>("System");
@@ -270,6 +271,10 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<AjaxBar>("Quasar");
     ui.register_class::<ChatBubble>("Quasar");
     ui.register_class::<RichEditor>("Quasar");
+    // As classes do relatório do Tabernáculo (11/11), no fim: a ordem do registro é a da
+    // paleta dentro de cada categoria e a da grade do teste `partial_paint`.
+    ui.register_class::<DateTimeEdit>("Additional");
+    ui.register_class::<Popover>("Menus");
     register_variants(ui);
 }
 

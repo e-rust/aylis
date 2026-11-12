@@ -8,9 +8,9 @@ As saídas de áudio do sistema e o aviso quando uma entra ou sai.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `watch` | Acompanhar mudanças | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `watch` | Acompanhar mudanças | lógico |  |
 
 ## Eventos
 

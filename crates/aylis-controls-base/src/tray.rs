@@ -28,6 +28,11 @@ pub struct TrayIcon {
     pub menu_items: String,
     /// `light`, `dark` ou uma cor (`#1E293B`).
     pub menu_theme: String,
+    /// O menu do clique direito por um `PopupMenu` (o `PopupMenu` do `TTrayIcon`): os
+    /// `MenuItem` dele, com `enabled`, `checked`, `header`, divisória e submenu (recuado).
+    /// Escolher um item dispara o `on_click` dele (e o `on_item_click` do menu) e o `on_menu`
+    /// daqui, com o texto. Vence o `menu_items`. O relatório do Tabernáculo, C26.
+    pub popup_menu: Option<ComponentId>,
     loaded: RefCell<(String, Vec<Arc<Vec<u8>>>)>,
     menu: Cell<Option<ComponentId>>,
 }
@@ -43,6 +48,7 @@ impl Default for TrayIcon {
             visible: true,
             menu_items: String::new(),
             menu_theme: "light".into(),
+            popup_menu: None,
             loaded: RefCell::default(),
             menu: Cell::new(None),
         }
@@ -87,7 +93,14 @@ impl TrayIcon {
     /// foco ou ao escolher (`on_menu` com o item).
     fn open_menu(ui: &mut Ui, id: ComponentId, screen: PointF, scale: f32) {
         let Some(tray) = ui.get::<TrayIcon>(id) else { return };
-        let items: Vec<String> = tray.menu_items.split(';').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+        let items: Vec<Entry> = match tray.popup_menu.filter(|&m| ui.contains(m)) {
+            Some(menu) => {
+                let mut out = Vec::new();
+                menu_entries(ui, menu, 0, &mut out);
+                out
+            }
+            None => tray.menu_items.split(';').map(str::trim).filter(|s| !s.is_empty()).map(Entry::text).collect(),
+        };
         if items.is_empty() {
             return;
         }
@@ -96,7 +109,7 @@ impl TrayIcon {
             ui.close(old);
             ui.free(old);
         }
-        let height = items.iter().map(|i| if i == "-" { 9.0 } else { 32.0 }).sum::<f32>() + 8.0;
+        let height = items.iter().map(|i| if i.separator { 9.0 } else { 32.0 }).sum::<f32>() + 8.0;
         let width = 220.0;
         let form = ui.add_root(crate::Form::new("", width, height));
         for (name, value) in [("border_style", "none"), ("topmost", "true"), ("show_in_taskbar", "false")] {
@@ -112,11 +125,21 @@ impl TrayIcon {
         let x = (screen.x as i32 - w).max(0);
         let y = (screen.y as i32 - h).max(0);
         ui.set_window_placement(form, WindowPlacement { x, y, width: w as u32, height: h as u32, maximized: false });
-        ui.on(list, "on_select", move |ui, _, args| {
-            if let EventArgs::Text(item) = args {
-                ui.fire(id, "on_menu", &EventArgs::Text(item.clone()));
-            }
+        ui.on(list, "on_select", move |ui, list, args| {
             ui.close(form);
+            let EventArgs::Text(text) = args else { return };
+            // O item do PopupMenu: o `on_click` dele (e o `auto_check`), como no menu do form.
+            let chosen = ui.get::<MenuList>(list).and_then(|l| l.chosen.get());
+            if let Some(item) = chosen.filter(|&i| ui.contains(i)) {
+                if let Some(it) = ui.get_mut::<crate::MenuItem>(item).filter(|it| it.auto_check) {
+                    it.checked = !it.checked;
+                }
+                ui.click(item);
+                if let Some(menu) = ui.get::<TrayIcon>(id).and_then(|t| t.popup_menu) {
+                    ui.queue_event(menu, "on_item_click", EventArgs::Value(aylis_core::PropValue::Component(Some(item))));
+                }
+            }
+            ui.fire(id, "on_menu", &EventArgs::Text(text.clone()));
         });
         ui.on(form, "on_deactivate", move |ui, _, _| {
             ui.close(form);
@@ -141,8 +164,32 @@ impl Component for TrayIcon {
         badge_color: Color => "Appearance",
         visible: bool => "Behavior",
         menu_items: String => "Behavior",
-        menu_theme: String => "Appearance";
+        menu_theme: String => "Appearance",
+        popup_menu: Option<ComponentId> => "Behavior";
         events: on_click, on_dbl_click, on_menu
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropKind};
+        const METHODS: &[MethodInfo] = &[MethodInfo::new("show_balloon", &[PropKind::String, PropKind::String], None).params(&["title", "text"])];
+        METHODS
+    }
+
+    /// `show_balloon(title, text)`: o balão do ícone (o `ShowBalloonHint` do Delphi), pelo
+    /// serviço de notificações do sistema (C27 do Tabernáculo).
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        match method {
+            "show_balloon" => {
+                let text = |i: usize| match args.get(i) {
+                    Some(aylis_core::PropValue::String(s)) => s.clone(),
+                    _ => String::new(),
+                };
+                let (title, body, id) = (text(0), text(1), ctx.id);
+                TrayIcon::show_balloon(ctx.ui, id, &title, &body)?;
+                Ok(aylis_core::PropValue::Null)
+            }
+            _ => Err(format!("método desconhecido: {method}")),
+        }
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -172,13 +219,87 @@ impl Component for TrayIcon {
     }
 }
 
+/// Uma linha do menu da bandeja.
+#[derive(Default)]
+struct Entry {
+    text: String,
+    /// O `MenuItem` (com o `popup_menu`).
+    item: Option<ComponentId>,
+    enabled: bool,
+    checked: bool,
+    header: bool,
+    separator: bool,
+    /// O nível do submenu (recuado).
+    depth: usize,
+}
+
+impl Entry {
+    fn text(text: &str) -> Self {
+        Self { separator: text == "-", text: text.to_string(), enabled: true, ..Default::default() }
+    }
+}
+
+/// Os itens visíveis do menu `parent`, com os submenus logo abaixo de cada item, recuados.
+fn menu_entries(ui: &Ui, parent: ComponentId, depth: usize, out: &mut Vec<Entry>) {
+    for &child in ui.children(parent) {
+        let Some(it) = ui.get::<crate::MenuItem>(child).filter(|it| it.visible) else { continue };
+        let has_children = ui.children(child).iter().any(|&c| ui.get::<crate::MenuItem>(c).is_some());
+        out.push(Entry {
+            text: it.text.replace('&', ""),
+            item: Some(child),
+            enabled: it.enabled && !has_children,
+            checked: it.checked,
+            header: it.header || has_children,
+            separator: it.is_separator(),
+            depth,
+        });
+        if has_children {
+            menu_entries(ui, child, depth + 1, out);
+        }
+    }
+}
+
+impl TrayIcon {
+    /// O balão do ícone: título e texto pelo serviço de notificações (sem ele, um aviso na
+    /// tela, como a `Notification`).
+    pub fn show_balloon(ui: &mut Ui, id: ComponentId, title: &str, text: &str) -> Result<(), String> {
+        let app_name = ui
+            .main_form()
+            .and_then(|f| match ui.get_prop(f, "caption") {
+                Ok(aylis_core::PropValue::String(c)) if !c.is_empty() => Some(c),
+                _ => None,
+            })
+            .unwrap_or_else(|| "aylis".into());
+        let app_id = format!("aylis.{}", app_name.to_lowercase().chars().filter(|c| c.is_ascii_alphanumeric()).collect::<String>());
+        let message = aylis_core::platform::SystemNotification {
+            app_id,
+            app_name,
+            title: title.to_string(),
+            body: text.to_string(),
+            id: 0x7A1,
+            component: Some(id),
+            ..Default::default()
+        };
+        match ui.services_mut().notifications.as_mut() {
+            Some(service) => service.notify(&message),
+            None => {
+                let shown = if text.is_empty() { title.to_string() } else { format!("{title}: {text}") };
+                crate::system::toast(ui, &shown);
+                Ok(())
+            }
+        }
+    }
+}
+
 /// A lista do menu da bandeja (as cores dela, não as do tema).
 #[derive(Default)]
 struct MenuList {
     base: ControlBase,
-    items: Vec<String>,
+    items: Vec<Entry>,
     colors: (Color, Color, Color),
     hover: Cell<Option<usize>>,
+    /// O item escolhido (o `MenuItem`, com o `popup_menu`).
+    chosen: Cell<Option<ComponentId>>,
 }
 
 impl MenuList {
@@ -189,7 +310,7 @@ impl MenuList {
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                let h = if item == "-" { 9.0 } else { 32.0 };
+                let h = if item.separator { 9.0 } else { 32.0 };
                 let r = RectF::new(4.0, y, w - 8.0, h);
                 y += h;
                 (i, r)
@@ -198,7 +319,7 @@ impl MenuList {
     }
 
     fn at(&self, p: PointF) -> Option<usize> {
-        self.rows().into_iter().find(|(i, r)| r.contains(p) && self.items[*i] != "-").map(|(i, _)| i)
+        self.rows().into_iter().find(|(i, r)| r.contains(p) && self.items[*i].enabled && !self.items[*i].separator && !self.items[*i].header).map(|(i, _)| i)
     }
 }
 
@@ -221,7 +342,8 @@ impl Component for MenuList {
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if event.button == PointerButton::Primary {
             if let Some(i) = self.at(event.position) {
-                ctx.fire("on_select", EventArgs::Text(self.items[i].clone()));
+                self.chosen.set(self.items[i].item);
+                ctx.fire("on_select", EventArgs::Text(self.items[i].text.clone()));
             }
         }
     }
@@ -236,7 +358,8 @@ impl Component for MenuList {
         t.h_align = TextAlign::Leading;
         for (i, row) in self.rows() {
             let row = row.offset(r.x, r.y);
-            if self.items[i] == "-" {
+            let entry = &self.items[i];
+            if entry.separator {
                 let y = row.y + row.height / 2.0;
                 canvas.draw_line(PointF::new(row.x + 8.0, y), PointF::new(row.right() - 8.0, y), &aylis_core::Stroke::new(fg.with_opacity(0.2), 1.0));
                 continue;
@@ -244,7 +367,18 @@ impl Component for MenuList {
             if self.hover.get() == Some(i) {
                 canvas.fill_rect(row, 4.0, &Brush::Solid(hover));
             }
-            canvas.draw_text(&self.items[i], RectF::new(row.x + 12.0, row.y, row.width - 16.0, row.height), &t);
+            let mut s = t.clone();
+            if entry.header || !entry.enabled {
+                s.color = fg.with_opacity(0.55);
+            }
+            if entry.header {
+                s.font.weight = aylis_core::FontWeight::SemiBold;
+            }
+            let left = row.x + 30.0 + entry.depth as f32 * 14.0;
+            if entry.checked {
+                canvas.draw_text("✓", RectF::new(row.x + 10.0, row.y, 18.0, row.height), &s);
+            }
+            canvas.draw_text(&entry.text, RectF::new(left, row.y, row.right() - left - 4.0, row.height), &s);
         }
         let _ = CursorShape::Default;
     }

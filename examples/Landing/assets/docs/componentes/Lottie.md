@@ -10,19 +10,19 @@ Animação Lottie (o JSON do After Effects/Bodymovin). Desenha vetor: nítida em
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `source` | Origem | texto |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `source` | Origem | texto |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `playing` | Tocando | lógico |
-| `repeat` | Repetir | lógico |
-| `speed` | Velocidade | número |
-| `position` | Posição | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `playing` | Tocando | lógico |  |
+| `repeat` | Repetir | lógico |  |
+| `speed` | Velocidade | número |  |
+| `position` | Posição | número |  |
 
 ## Em código
 

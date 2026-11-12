@@ -69,7 +69,8 @@ fn with_engine<R>(device: Option<GpuDevice>, f: impl FnOnce(&mut Engine, u64) ->
                                 });
                                 ENGINES.with(|c| c.borrow_mut().push((Some(GpuDevice::Web), generation, engine)));
                             }
-                            Err(e) => crate::render::trace(&format!("sem dispositivo: {e}")),
+                            // No console do navegador: sem isso, um 3D que não abre some calado.
+                            Err(e) => web_sys::console::warn_1(&format!("aylis-3d: sem GPU para o 3D: {e}").into()),
                         }
                     });
                 }

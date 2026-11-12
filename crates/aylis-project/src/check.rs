@@ -127,14 +127,56 @@ fn handlers_in(project: &Project, layouts: &[(&crate::FormEntry, serde_json::Val
     let mut out = Vec::new();
     for (entry, layout) in layouts {
         let code = std::fs::read_to_string(crate::codegen::entry_source(project, entry)).ok();
+        let mut bound: Vec<String> = Vec::new();
         for node in nodes(layout) {
             let Some(obj) = node.as_object() else { continue };
             for (key, value) in obj {
                 let Some(handler) = value.as_str().filter(|h| !h.is_empty() && crate::codegen::is_event_key(key)) else { continue };
+                bound.push(handler.to_string());
                 if code.as_deref().is_some_and(|text| !crate::sync::handler_in(project.language, entry, handler, text)) {
                     out.push(Issue::error(&entry.name, name_of(node), format!("o {key} chama {handler}, que não existe no código")));
                 }
             }
+        }
+        // Os das variantes por plataforma também contam como ligados.
+        for variant in project.variants_of(&entry.name) {
+            let Some(v) = std::fs::read_to_string(project.file(&crate::variant_file(&entry.file, &variant))).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()) else { continue };
+            for node in nodes(&v) {
+                let Some(obj) = node.as_object() else { continue };
+                bound.extend(obj.iter().filter(|(k, _)| crate::codegen::is_event_key(k)).filter_map(|(_, v)| v.as_str().map(str::to_string)));
+            }
+        }
+        if let Some(text) = code.as_deref() {
+            for handler in dead_handlers(project.language, text, &bound) {
+                out.push(Issue::warning(&entry.name, "", format!("o handler {handler} não é chamado por nenhum evento do form (código morto: ligue a um evento ou apague)")));
+            }
+        }
+    }
+    out
+}
+
+/// Os handlers do arquivo do form (pela assinatura de handler) que nenhum evento liga e que nada
+/// no arquivo chama. O compilador não avisa (são públicos), e o vazio a geração já tira
+/// (`codegen::drop_unused_stubs`): fica o com código, que é o método morto (pergunta do autor em
+/// 11/11).
+fn dead_handlers(language: crate::Language, text: &str, bound: &[String]) -> Vec<String> {
+    let (prefix, signature) = match language {
+        crate::Language::Rust => ("pub fn ", "(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs)"),
+        crate::Language::Python => ("def ", "(aylis, event)"),
+        _ => return Vec::new(),
+    };
+    let mut out = Vec::new();
+    let mut from = 0;
+    while let Some(i) = text[from..].find(prefix) {
+        let start = from + i + prefix.len();
+        from = start;
+        let Some(open) = text[start..].find('(').map(|e| start + e) else { continue };
+        let name = &text[start..open];
+        if !crate::is_identifier(name) || !text[open..].starts_with(signature) {
+            continue;
+        }
+        if !bound.iter().any(|b| b == name) && text.matches(&format!("{name}(")).count() == 1 {
+            out.push(name.to_string());
         }
     }
     out
@@ -179,6 +221,10 @@ fn references_in(project: &Project, ui: &mut aylis_core::Ui, layouts: &[(&crate:
         Err(e) => out.push(Issue::error("", "", e)),
     }
     ui.set_palette(project.palette());
+    // Um nome de cor que o tema não tem pinta transparente: avisa (C07 do Tabernáculo).
+    for (style, name) in ui.theme().unknown_color_tokens() {
+        out.push(Issue::warning("", "", format!("o estilo '{style}' do tema usa a cor '{name}', que o tema não tem (pinta transparente)")));
+    }
     crate::install_font_names(ui, project);
     for (entry, layout) in layouts {
         let root = match aylis_json::load(ui, &layout.to_string(), None) {
@@ -377,7 +423,8 @@ fn data_fields_in(layouts: &[(&crate::FormEntry, serde_json::Value)]) -> Vec<Iss
 // Só o que mudou
 
 /// Muda o que a verificação confere: mudar faz conferir tudo de novo.
-const CHECK_VERSION: u32 = 1;
+/// 2: o aviso do handler que nenhum evento chama.
+const CHECK_VERSION: u32 = 2;
 
 /// O que a última verificação achou em cada form, em `generated/components/checked.json`.
 #[derive(Default, serde::Serialize, serde::Deserialize)]
@@ -576,5 +623,18 @@ fn save_checked(project: &Project, version: &str, layouts: &[(&crate::FormEntry,
     if let (Some(dir), Ok(text)) = (path.parent(), serde_json::to_string(&checked)) {
         let _ = std::fs::create_dir_all(dir);
         let _ = std::fs::write(&path, text);
+    }
+}
+
+#[cfg(test)]
+mod dead_handler_tests {
+    /// O handler com código que nenhum evento liga, e que ninguém no arquivo chama, é avisado;
+    /// o ligado e o chamado por outro método, não.
+    #[test]
+    fn handlers_no_event_calls_are_reported() {
+        let sig = "(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs)";
+        let text = format!("impl F {{\n    pub fn btnA_click{sig} {{ x(); }}\n    pub fn btnB_click{sig} {{ self.ajuda(); }}\n    pub fn btnC_click{sig} {{ y(); }}\n    pub fn ajuda(&self) {{}}\n}}\n");
+        let dead = super::dead_handlers(crate::Language::Rust, &text, &["btnB_click".to_string()]);
+        assert_eq!(dead, vec!["btnA_click".to_string(), "btnC_click".to_string()]);
     }
 }

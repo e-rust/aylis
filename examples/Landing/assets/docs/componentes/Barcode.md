@@ -10,18 +10,18 @@ Código de barras ou QR Code: o dado em `text` (no relatório, um campo entre co
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_text` | Mostrar o texto | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_text` | Mostrar o texto | lógico | O texto legível embaixo das barras (nos códigos de barras; o QR não tem). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `format` | Formato | texto |
-| `error_correction` | Correção de erros | um de: `low`, `medium`, `quartile`, `high` |
-| `provider` | Provedor | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `format` | Formato | texto |  |
+| `error_correction` | Correção de erros | um de: `low`, `medium`, `quartile`, `high` | A correção de erro do QR Code (`low`, `medium`, `quartile`, `high`: L, M, Q e H), que vai para o provedor; os códigos de barras não têm. |
+| `provider` | Provedor | componente |  |
 
 ## Em código
 

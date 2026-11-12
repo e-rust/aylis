@@ -10,21 +10,21 @@ Texto com efeitos animados (entrada, saída, contínuos), por letra, palavra ou 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |
-| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |
-| `wrap` | Quebra de linha | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `wrap` | Quebra de linha | lógico | Quebra as linhas na largura do controle (as quebras do texto sempre valem). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `effects` | Efeitos | texto |
-| `autoplay` | Toca sozinho | lógico |
-| `looping` | Repetindo | lógico |
-| `loop_delay` | Pausa entre repetições | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `effects` | Efeitos | texto |  |
+| `autoplay` | Toca sozinho | lógico | Começa a animar quando aparece. |
+| `looping` | Repetindo | lógico |  |
+| `loop_delay` | Pausa entre repetições | número | Espera entre uma volta e outra (ms). |
 
 ## Eventos
 

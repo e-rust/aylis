@@ -30,7 +30,11 @@ fn a_new_rust_project_has_the_folders_and_the_code() {
         assert!(dir.join(file).is_file(), "{file}");
     }
     let cargo = std::fs::read_to_string(dir.join("rust/Cargo.toml")).unwrap();
-    assert!(cargo.contains("name = \"vendas\"") && cargo.contains("/crates/aylis\"") && cargo.contains("/crates/aylis-build\""), "{cargo}");
+    // Projeto novo: o Aylis do crates.io, na versão desta IDE (G11 do Tabernáculo).
+    let version = format!("version = \"{}\"", env!("CARGO_PKG_VERSION"));
+    assert!(cargo.contains("name = \"vendas\"") && cargo.contains(&format!("aylis = {{ {version}")) && cargo.contains(&format!("aylis-build = {{ {version} }}")), "{cargo}");
+    assert!(!cargo.contains("/crates/aylis"), "sem caminho de pasta: {cargo}");
+    assert_eq!(project.sdk, aylis_project::SDK_CRATES_IO);
     let lib = std::fs::read_to_string(dir.join("rust/src/lib.rs")).unwrap();
     assert!(lib.contains("include_project!()") && lib.contains("fn android_main") && lib.contains("fn aylis_start"), "{lib}");
     assert!(std::fs::read_to_string(dir.join("rust/src/main.rs")).unwrap().contains("vendas::app()"));
@@ -181,6 +185,48 @@ fn renderer_per_platform_goes_to_cargo_toml() {
     let legacy: Project = serde_json::from_str(r#"{"aylis_project":1,"name":"Velho","main_form":"f","forms":[]}"#).unwrap();
     assert_eq!(legacy.render().windows, RenderChoice::Auto);
     assert_eq!(codegen::sync_render("[dependencies]\naylis = { path = \"x\" }\n", &legacy), None);
+}
+
+/// Um comentário do usuário que cite o marcador do bloco do renderizador não abre o bloco: a
+/// geração apagava as dependências entre ele e o fim (relatório do Tabernáculo, G01).
+#[test]
+fn a_comment_naming_the_render_marker_keeps_the_dependencies() {
+    let base = temp("render_comment");
+    let mut project = create(&base, "Comentado", Language::Rust).unwrap();
+    let path = project.code_dir().join("Cargo.toml");
+    let cargo = std::fs::read_to_string(&path).unwrap();
+    let at = cargo.find("# aylis:render:").expect("o bloco existe");
+    let user = "# aylis:render: o bloco de baixo é da IDE\n# veja também # aylis:render-end no fim\n[dependencies]\nserde = \"1\"\n\n";
+    let cargo = format!("{}{user}{}", &cargo[..at], &cargo[at..]);
+    std::fs::write(&path, &cargo).unwrap();
+    let mut render = project.render();
+    render.set(Platform::Windows, RenderChoice::Gpu);
+    project.render = Some(render);
+    assert!(codegen::sync_cargo(&project).unwrap());
+    let after = std::fs::read_to_string(&path).unwrap();
+    assert!(after.contains(user), "o que é do usuário fica:\n{after}");
+    assert!(after.contains("serde = \"1\""));
+    assert_eq!(after.matches("[target.'cfg(windows)'.dependencies]").count(), 1, "{after}");
+    let windows = after.split("[target.'cfg(windows)'.dependencies]").nth(1).unwrap().lines().nth(1).unwrap();
+    assert!(windows.contains("skia-gpu"), "{windows}");
+}
+
+/// Depois do `cargo fmt` (`impl FrmX {}` numa linha), o handler novo entra dentro do `impl`
+/// (relatório do Tabernáculo, G08).
+#[test]
+fn a_new_handler_goes_inside_an_impl_joined_by_rustfmt() {
+    let unit = "use aylis::prelude::*;\n\n#[allow(non_snake_case)]\nimpl FrmPrincipal {}\n";
+    let text = codegen::update_rust_unit(Some(unit.into()), &["btn_ok_click".into()], "frmPrincipal");
+    let open = text.find("impl FrmPrincipal {").unwrap();
+    let handler = text.find("pub fn btn_ok_click").expect(&text);
+    let close = text.rfind('}').unwrap();
+    assert!(open < handler && handler < close, "{text}");
+    // O `impl` fecha depois do handler: a chave final está numa linha só dela.
+    assert_eq!(text.lines().last().map(str::trim), Some("}"), "{text}");
+    // E um segundo handler também entra (a chave agora está sozinha na linha).
+    let text = codegen::update_rust_unit(Some(text), &["btn_ok_click".into(), "btn_sair_click".into()], "frmPrincipal");
+    let sair = text.find("pub fn btn_sair_click").expect(&text);
+    assert!(sair > handler && sair < text.rfind('}').unwrap(), "{text}");
 }
 
 #[test]
@@ -446,6 +492,39 @@ fn the_package_name_comes_from_the_cargo_toml() {
     assert_eq!(project.package_name(), "noobs");
 }
 
+/// A subpasta do form se repete no código (como o Delphi mantém a unit junto do form; pedido
+/// do autor em 11/11): `forms/painel/inicio.json` → `rust/src/forms/painel/inicio.rs`, com o
+/// módulo `painel_inicio` (não colide com um `inicio.json` da raiz), e o fonte que estava no
+/// lugar antigo vai para a subpasta.
+#[test]
+fn the_form_subfolder_repeats_in_the_code() {
+    assert_eq!(codegen::module_name("forms/painel/inicio.json"), "painel_inicio");
+    assert_eq!(codegen::module_path("forms/painel/inicio.json"), "painel/inicio");
+    assert_eq!(codegen::module_name("forms/principal.json"), "principal", "a raiz fica como era");
+
+    let base = temp("subpasta");
+    let mut project = create(&base, "Agenda", Language::Rust).unwrap();
+    project.add_form("frmInicio", "Início").unwrap();
+    // Um fonte de antes, ainda direto em src/forms (o form já estava numa subpasta).
+    let old = project.file(&project.form("frmInicio").unwrap().file);
+    std::fs::create_dir_all(project.dir().join("forms/painel")).unwrap();
+    std::fs::rename(old, project.dir().join("forms/painel/inicio.json")).unwrap();
+    project.forms.iter_mut().find(|f| f.name == "frmInicio").unwrap().file = "forms/painel/inicio.json".into();
+    project.save().unwrap();
+    let flat = project.code_dir_of(Language::Rust).join("src/forms/inicio.rs");
+    std::fs::create_dir_all(flat.parent().unwrap()).unwrap();
+    std::fs::write(&flat, "//! meu código\n").unwrap();
+    codegen::generate(&project).unwrap();
+    let source = project.code_dir_of(Language::Rust).join("src/forms/painel/inicio.rs");
+    assert!(source.is_file(), "o fonte na subpasta");
+    let moved = std::fs::read_to_string(&source).unwrap();
+    assert!(moved.contains("//! meu código"), "o de antes foi movido, com o código: {moved}");
+    assert!(!flat.exists());
+    let generated = std::fs::read_to_string(project.code_dir_of(Language::Rust).join("generated/mod.rs")).unwrap();
+    assert!(generated.contains("#[path = \"../src/forms/painel/inicio.rs\"]\npub mod painel_inicio;"), "{generated}");
+    let _ = std::fs::remove_dir_all(base);
+}
+
 /// A geração tira o acesso de uma classe que nenhum form usa mais, e o `.aylisproj` pode pedir
 /// features que o código usa sem componente no form (o RTSPlayer, 10/11: o `VideoPlayer` saiu
 /// do form, a feature `media` saiu, e o acesso gerado dele ficou e quebrou o build).
@@ -605,4 +684,51 @@ fn the_handler_registry_follows_a_rename_after_f12() {
     codegen::generate(&project).unwrap();
     let r = registry();
     assert!(r.contains("FrmPrincipal::ao_exibir_show") && !r.contains("FrmPrincipal::form_show"), "{r}");
+}
+
+/// G11/G03 do Tabernáculo: trocar o `sdk` para uma pasta troca todas as dependências do Aylis
+/// para ela, e voltar ao crates.io volta a versão.
+#[test]
+fn the_sdk_key_chooses_where_aylis_comes_from() {
+    let base = temp("sdk");
+    let mut project = create(&base, "Loja", Language::Rust).unwrap();
+    project.sdk = "../aylis-fixo".into();
+    assert!(aylis_project::codegen::sync_cargo(&project).unwrap());
+    let cargo = std::fs::read_to_string(base.join("Loja/rust/Cargo.toml")).unwrap();
+    assert!(cargo.contains("aylis = { path = \"../../aylis-fixo/crates/aylis\""), "{cargo}");
+    assert!(cargo.contains("aylis-build = { path = \"../../aylis-fixo/crates/aylis-build\" }"), "{cargo}");
+    assert!(!cargo.contains("version = \"0."), "{cargo}");
+    project.sdk = aylis_project::SDK_CRATES_IO.into();
+    assert!(aylis_project::codegen::sync_cargo(&project).unwrap());
+    let cargo = std::fs::read_to_string(base.join("Loja/rust/Cargo.toml")).unwrap();
+    assert!(!cargo.contains("aylis-fixo"), "{cargo}");
+}
+
+/// G02 do Tabernáculo: a classe com nome errado é apontada, com a do Aylis parecida; a do
+/// próprio app (sem nenhuma parecida) não.
+#[test]
+fn a_misspelled_class_is_pointed_out() {
+    let base = temp("classes");
+    let project = create(&base, "Fotos", Language::Rust).unwrap();
+    let form = r#"{ "class": "Form", "name": "frmPrincipal", "children": [
+        { "class": "ImageView", "name": "imgFoto" },
+        { "class": "MeuGrafico", "name": "g" }
+    ] }"#;
+    std::fs::write(base.join("Fotos/forms/principal.json"), form).unwrap();
+    let found = aylis_project::bindings::suspicious_classes(&project);
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert!(found[0].contains("imgFoto") && found[0].contains("'Image'"), "{found:?}");
+}
+
+/// O02 do Tabernáculo: corrigir o texto leva as traduções dele, sem tirar a do texto antigo.
+#[test]
+fn a_corrected_text_keeps_its_translations() {
+    let base = temp("follow");
+    let dir = base.join("p");
+    std::fs::create_dir_all(dir.join("locales")).unwrap();
+    std::fs::write(dir.join("locales/en.json"), "{\n  \"Salvar\": \"Save\"\n}\n").unwrap();
+    assert_eq!(aylis_project::i18n::follow_text_change(&dir, "Salvar", "Gravar"), 1);
+    let text = std::fs::read_to_string(dir.join("locales/en.json")).unwrap();
+    assert!(text.contains("\"Gravar\": \"Save\"") && text.contains("\"Salvar\": \"Save\""), "{text}");
+    assert_eq!(aylis_project::i18n::follow_text_change(&dir, "Salvar", "Gravar"), 0, "já tem");
 }

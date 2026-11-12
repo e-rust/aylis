@@ -10,15 +10,15 @@ Editor de nós ligados por cabos: fluxos, roteamento de áudio, automações. Ar
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_grid` | Mostra a grade | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_grid` | Mostra a grade | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `snap` | Passo com Shift | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `snap` | Passo com Shift | lógico | Encaixe na grade ao soltar um nó. |
 
 ## Eventos
 

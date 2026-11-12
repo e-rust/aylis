@@ -10,13 +10,13 @@ Controle deslizante de intervalo (o `v-range-slider`): `low` e `high` entre `min
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `low` | Limite baixo | número |
-| `high` | Limite alto | número |
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `step` | Passo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `low` | Limite baixo | número |  |
+| `high` | Limite alto | número |  |
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `step` | Passo | número |  |
 
 ## Eventos
 

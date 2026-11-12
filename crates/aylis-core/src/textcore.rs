@@ -10,17 +10,11 @@
 //! um caractere que nenhuma delas tem (um emoji, sem uma fonte de emoji no projeto) fica com o
 //! renderizador, como no `native`.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-
-use crate::canvas::{Brush, Canvas, FontSpec, Shadow, Stroke, TextStyle};
+use crate::canvas::{Brush, Canvas, Shadow, Stroke, TextStyle};
 use crate::geometry::{PointF, RectF, SizeF};
-use crate::path::{Path, PathCmd};
+use crate::path::Path;
+use engine::{engine_face, line_metrics_of as line_metrics, line_width, outline};
 use crate::{TextAlign, Ui};
-use harfrust::font::attribute::Style;
-use harfrust::font::glyph::outline::{DrawMemory, DrawOptions, PathSink};
-use harfrust::font::{Blob, Font};
-use harfrust::GlyphId;
 
 /// Quem mede e desenha o texto (veja o módulo).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -43,211 +37,11 @@ impl crate::prop::PropEnum for TextMode {
     }
 }
 
-/// Uma fonte registrada, aberta para medir e desenhar (divide os bytes com o registro).
-struct Face {
-    family: String,
-    weight: u16,
-    italic: bool,
-    /// Uma cópia de uma fonte variável em outro peso (não entra na escolha da família).
-    variant: bool,
-    font: Font,
-    units: f32,
-    ascender: f32,
-    descender: f32,
-    gap: f32,
-}
-
-#[derive(Default)]
-struct Faces {
-    generation: u64,
-    list: Vec<Face>,
-    /// O contorno de cada letra, nas unidades da fonte (o desenho só escala e move).
-    outlines: HashMap<(usize, u32), Vec<PathCmd>>,
-    /// As cópias das fontes variáveis em outro peso: (a original, o peso) → a cópia.
-    variants: HashMap<(usize, u16), usize>,
-    /// O plano de formação de cada fonte, direção, escrita e idioma: montá-lo é a parte cara de
-    /// formar um texto (o `harfrust::shape` sem plano monta um a cada chamada).
-    plans: HashMap<PlanKey, harfrust::ShapePlan>,
-    /// As letras já formadas de cada texto, em unidades da fonte (servem em qualquer tamanho).
-    /// Formar a cada medida e a cada desenho custava 1,7 ms por texto em debug: a grade do menu
-    /// do ERP levava 400 ms por quadro (relatado pelo autor em 07/11). Esvazia ao passar de
-    /// `SHAPED_KEEP` textos.
-    shaped: HashMap<(usize, String), std::rc::Rc<Shaped>>,
-}
-
-type PlanKey = (usize, harfrust::Direction, Option<harfrust::Script>, Option<harfrust::Language>);
-
-/// As letras de uma linha: (letra, avanço, deslocamento x, deslocamento y) e a soma dos
-/// avanços, em unidades da fonte.
-struct Shaped {
-    glyphs: Vec<(u32, f32, f32, f32)>,
-    advance: f32,
-}
-
-const SHAPED_KEEP: usize = 4096;
-
-thread_local! {
-    static FACES: RefCell<Faces> = RefCell::new(Faces::default());
-}
-
-/// As fontes abertas, refeitas quando uma fonte nova é registrada.
-fn with_faces<R>(f: impl FnOnce(&mut Faces) -> R) -> R {
-    FACES.with(|faces| {
-        let mut faces = faces.borrow_mut();
-        let generation = crate::fonts::generation();
-        if faces.generation != generation || (faces.list.is_empty() && generation > 0) {
-            faces.generation = generation;
-            faces.outlines.clear();
-            faces.variants.clear();
-            faces.plans.clear();
-            faces.shaped.clear();
-            faces.list = crate::fonts::registered()
-                .into_iter()
-                .flat_map(|file| {
-                    // Os bytes são os do registro (`Arc`): nada é copiado. Uma coleção (`.ttc`)
-                    // abre uma fonte por índice, até o primeiro que não existe.
-                    let data: std::sync::Arc<dyn AsRef<[u8]> + Send + Sync> = file.data.clone();
-                    let blob = Blob::from(data);
-                    let family = file.family.clone();
-                    (0u32..).map_while(move |index| Font::new(blob.clone(), index)).map(move |font| {
-                        let units = font.units_per_em() as f32;
-                        let attributes = font.default_attributes();
-                        // A linha como o `ttf-parser` dava: a tipográfica se o OS/2 pede, senão
-                        // a do `hhea`, a tipográfica ou a do Windows.
-                        let line = font.metrics().h_line().unwrap_or_default();
-                        Face {
-                            family: family.clone(),
-                            weight: attributes.weight.value().round().clamp(1.0, 1000.0) as u16,
-                            italic: attributes.style == Style::Italic,
-                            variant: false,
-                            ascender: line.ascender.to_f32(),
-                            descender: line.descender.to_f32(),
-                            gap: line.line_gap.to_f32(),
-                            units: if units > 0.0 { units } else { 1000.0 },
-                            font,
-                        }
-                    })
-                })
-                .collect();
-        }
-        f(&mut faces)
-    })
-}
-
-/// A família padrão do núcleo (a de um `FontSpec` sem família): a primeira registrada, que é a
-/// do projeto.
-fn default_family(faces: &Faces) -> Option<String> {
-    faces.list.first().map(|f| f.family.clone())
-}
-
-/// A fonte para `spec`: a família pedida (ou a padrão), com o peso e o itálico mais perto.
-fn pick(faces: &mut Faces, spec: &FontSpec) -> Option<usize> {
-    let family = if spec.family.is_empty() { default_family(faces)? } else { spec.family.clone() };
-    let want = weight_number(spec.weight);
-    let best = faces
-        .list
-        .iter()
-        .enumerate()
-        .filter(|(_, f)| f.family.eq_ignore_ascii_case(&family) && !f.variant)
-        .min_by_key(|(_, f)| (f.italic != spec.italic, (f.weight as i32 - want as i32).abs()))
-        .map(|(i, _)| i)?;
-    // Uma fonte variável (a Inter do projeto) no peso pedido: uma cópia com o eixo `wght` posto.
-    let wght = harfrust::Tag::new(b"wght");
-    let variable = faces.list[best].font.axes().iter().any(|a| a.tag() == wght);
-    if !variable || faces.list[best].weight == want {
-        return Some(best);
-    }
-    if let Some(&i) = faces.variants.get(&(best, want)) {
-        return Some(i);
-    }
-    let base = &faces.list[best];
-    let font = base.font.instance_builder().variations([(wght, want as f32)]).build();
-    let face = Face {
-        family: base.family.clone(),
-        weight: want,
-        italic: base.italic,
-        variant: true,
-        font,
-        units: base.units,
-        ascender: base.ascender,
-        descender: base.descender,
-        gap: base.gap,
-    };
-    faces.list.push(face);
-    let i = faces.list.len() - 1;
-    faces.variants.insert((best, want), i);
-    Some(i)
-}
-
-/// A fonte (`spec`) tem todas as letras do texto? Sem isso, o texto fica com o renderizador.
-fn covers(face: &Face, text: &str) -> bool {
-    let charmap = face.font.charmap();
-    text.chars().all(|c| c.is_control() || c == '\u{200d}' || c == '\u{fe0f}' || charmap.map_unicode(c).is_some())
-}
-
-/// As letras montadas de uma linha (da memória, ou formadas e guardadas), em unidades da fonte.
-fn shaped(faces: &mut Faces, face: usize, text: &str) -> std::rc::Rc<Shaped> {
-    if let Some(found) = faces.shaped.get(&(face, text.to_string())) {
-        return found.clone();
-    }
-    let mut buffer = harfrust::Buffer::new();
-    buffer.push_str(text);
-    buffer.guess_segment_properties();
-    let key: PlanKey = (face, buffer.direction(), buffer.script(), buffer.language().cloned());
-    let font = &faces.list[face].font;
-    let plan = faces.plans.entry(key).or_insert_with(|| {
-        harfrust::ShapePlan::new(font, buffer.direction(), buffer.script(), buffer.language(), &[])
-    });
-    let shaper = harfrust::ShaperFont::new(font);
-    // Só falha com um plano de outra direção ou escrita, e a chave do plano é a do texto.
-    let shaped = harfrust::shape(&shaper, &mut buffer, harfrust::ShapeOptions::new().plan(Some(plan)));
-    let glyphs: Vec<(u32, f32, f32, f32)> = match shaped {
-        Ok(()) => buffer
-            .glyph_infos()
-            .iter()
-            .zip(buffer.glyph_positions())
-            .map(|(info, pos)| (info.glyph_id, pos.x_advance as f32, pos.x_offset as f32, pos.y_offset as f32))
-            .collect(),
-        Err(_) => Vec::new(),
-    };
-    let advance = glyphs.iter().map(|g| g.1).sum::<f32>();
-    let result = std::rc::Rc::new(Shaped { glyphs, advance });
-    if faces.shaped.len() >= SHAPED_KEEP {
-        faces.shaped.clear();
-    }
-    faces.shaped.insert((face, text.to_string()), result.clone());
-    result
-}
-
-/// A largura de uma linha formada, no tamanho.
-fn width_of(faces: &mut Faces, face: usize, text: &str, size: f32) -> f32 {
-    let units = faces.list[face].units;
-    shaped(faces, face, text).advance * size / units
-}
-
-/// A altura de uma linha e a distância do topo à linha de base, no tamanho.
-fn line_metrics(face: &Face, size: f32) -> (f32, f32) {
-    let scale = size / face.units;
-    let ascent = face.ascender * scale;
-    let height = (face.ascender - face.descender + face.gap) * scale;
-    (height.max(size), ascent + face.gap * scale / 2.0)
-}
-
-/// O texto todo pode ficar com o núcleo (há fonte registrada e ela tem todas as letras)?
-fn engine_face(text: &str, spec: &FontSpec) -> Option<usize> {
-    with_faces(|faces| pick(faces, spec).filter(|&i| covers(&faces.list[i], text)))
-}
-
-/// A largura de uma linha (sem quebra) pelo núcleo.
-fn line_width(face: usize, text: &str, size: f32) -> f32 {
-    with_faces(|faces| width_of(faces, face, text, size))
-}
-
 /// Mede como o núcleo mede: `None` se o texto não fica com ele (sem fonte, letra que falta).
 pub fn measure(text: &str, style: &TextStyle, max_width: Option<f32>) -> Option<SizeF> {
     let face = engine_face(text, &style.font)?;
     let size = style.font.size;
-    let (line_height, _) = with_faces(|faces| line_metrics(&faces.list[face], size));
+    let (line_height, _) = line_metrics(face, size);
     let mut measure = |s: &str| line_width(face, s, size);
     let lines: Vec<String> = match max_width {
         Some(w) => crate::text::layout_lines(text, w, usize::MAX, true, crate::Trimming::None, &mut measure),
@@ -269,10 +63,10 @@ impl TextCanvas<'_> {
     /// desenha as letras (`core`).
     fn draw_line(&mut self, face: usize, line: &str, x: f32, top: f32, line_height: f32, style: &TextStyle) {
         let size = style.font.size;
-        let (width, baseline) = with_faces(|faces| (width_of(faces, face, line, size), line_metrics(&faces.list[face], size).1));
+        let (width, baseline) = (line_width(face, line, size), line_metrics(face, size).1);
         match self.mode {
             TextMode::Core => {
-                let path = with_faces(|faces| outline_line(faces, face, line, size, x, top + baseline));
+                let path = outline(face, line, size, x, top + baseline);
                 self.inner.fill_path(&path, &Brush::Solid(style.color));
                 crate::canvas::decorate_line(self.inner, &style.font, style.color, x, width, top, line_height);
             }
@@ -287,62 +81,6 @@ impl TextCanvas<'_> {
                 self.inner.draw_text(line, RectF::new(x, top, width + size, line_height), &one);
             }
         }
-    }
-}
-
-/// O contorno de uma linha de letras, já no tamanho e na posição (`x`, linha de base).
-fn outline_line(faces: &mut Faces, face: usize, line: &str, size: f32, x: f32, baseline: f32) -> Path {
-    let glyphs = shaped(faces, face, line);
-    let scale = size / faces.list[face].units;
-    let mut cmds = Vec::new();
-    let mut pen = x;
-    for &(glyph, advance, dx, dy) in glyphs.glyphs.iter() {
-        let outline = faces.outlines.entry((face, glyph)).or_insert_with(|| {
-            let mut builder = Outline(Vec::new());
-            if let Some(outline) = faces.list[face].font.outline_glyphs().get(GlyphId::new(glyph)) {
-                // Sem tamanho: nas unidades da fonte, como o `ttf-parser` dava. Uma letra que não
-                // abre fica sem desenho, como antes.
-                if outline.draw(&DrawOptions::default(), DrawMemory::Scratch, &mut builder).is_err() {
-                    builder.0.clear();
-                }
-            }
-            builder.0
-        });
-        let ox = pen + dx * scale;
-        let oy = baseline - dy * scale;
-        let map = |p: PointF| PointF::new(ox + p.x * scale, oy - p.y * scale);
-        for cmd in outline.iter() {
-            cmds.push(match *cmd {
-                PathCmd::MoveTo(p) => PathCmd::MoveTo(map(p)),
-                PathCmd::LineTo(p) => PathCmd::LineTo(map(p)),
-                PathCmd::QuadTo(a, b) => PathCmd::QuadTo(map(a), map(b)),
-                PathCmd::CubicTo(a, b, c) => PathCmd::CubicTo(map(a), map(b), map(c)),
-                PathCmd::Close => PathCmd::Close,
-            });
-        }
-        pen += advance * scale;
-    }
-    Path { cmds, even_odd: false }
-}
-
-/// Junta o contorno de uma letra (nas unidades da fonte).
-struct Outline(Vec<PathCmd>);
-
-impl PathSink for Outline {
-    fn move_to(&mut self, x: f32, y: f32) {
-        self.0.push(PathCmd::MoveTo(PointF::new(x, y)));
-    }
-    fn line_to(&mut self, x: f32, y: f32) {
-        self.0.push(PathCmd::LineTo(PointF::new(x, y)));
-    }
-    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-        self.0.push(PathCmd::QuadTo(PointF::new(x1, y1), PointF::new(x, y)));
-    }
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-        self.0.push(PathCmd::CubicTo(PointF::new(x1, y1), PointF::new(x2, y2), PointF::new(x, y)));
-    }
-    fn close(&mut self) {
-        self.0.push(PathCmd::Close);
     }
 }
 
@@ -394,7 +132,7 @@ impl Canvas for TextCanvas<'_> {
         // A mesma regra de linhas dos renderizadores (quebra, reticências, alinhamento), com
         // as medidas do núcleo.
         let size = style.font.size;
-        let (line_height, _) = with_faces(|faces| line_metrics(&faces.list[face], size));
+        let (line_height, _) = line_metrics(face, size);
         let mut measure = |s: &str| line_width(face, s, size);
         let lines = if !style.wrap && !text.contains('\n') {
             let width = measure(text);
@@ -507,6 +245,7 @@ impl Ui {
 }
 
 /// O peso no número das fontes (400 o normal, 700 o negrito).
+#[cfg(feature = "text-shaping")]
 fn weight_number(weight: crate::canvas::FontWeight) -> u16 {
     use crate::canvas::FontWeight::*;
     match weight {
@@ -517,5 +256,310 @@ fn weight_number(weight: crate::canvas::FontWeight) -> u16 {
         SemiBold => 600,
         Bold => 700,
         Black => 900,
+    }
+}
+
+/// As fontes do projeto abertas pelo núcleo (o `harfrust`: medir, formar e o contorno das
+/// letras). Só com a feature `text-shaping`: sem ela, nenhuma fonte fica com o núcleo e o texto
+/// é todo do renderizador, como sem fonte registrada (o `harfrust` e o `read-fonts` são ~520 KB
+/// de cada wasm; a IDE liga a feature no projeto que tem fontes em `assets/fonts`).
+#[cfg(feature = "text-shaping")]
+mod engine {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+
+    use super::weight_number;
+    use crate::canvas::FontSpec;
+    use crate::geometry::PointF;
+    use crate::path::{Path, PathCmd};
+    use harfrust::font::attribute::Style;
+    use harfrust::font::glyph::outline::{DrawMemory, DrawOptions, PathSink};
+    use harfrust::font::{Blob, Font};
+    use harfrust::GlyphId;
+
+    /// Uma fonte registrada, aberta para medir e desenhar (divide os bytes com o registro).
+    struct Face {
+        family: String,
+        weight: u16,
+        italic: bool,
+        /// Uma cópia de uma fonte variável em outro peso (não entra na escolha da família).
+        variant: bool,
+        font: Font,
+        units: f32,
+        ascender: f32,
+        descender: f32,
+        gap: f32,
+    }
+
+    #[derive(Default)]
+    struct Faces {
+        generation: u64,
+        list: Vec<Face>,
+        /// O contorno de cada letra, nas unidades da fonte (o desenho só escala e move).
+        outlines: HashMap<(usize, u32), Vec<PathCmd>>,
+        /// As cópias das fontes variáveis em outro peso: (a original, o peso) → a cópia.
+        variants: HashMap<(usize, u16), usize>,
+        /// O plano de formação de cada fonte, direção, escrita e idioma: montá-lo é a parte cara de
+        /// formar um texto (o `harfrust::shape` sem plano monta um a cada chamada).
+        plans: HashMap<PlanKey, harfrust::ShapePlan>,
+        /// As letras já formadas de cada texto, em unidades da fonte (servem em qualquer tamanho).
+        /// Formar a cada medida e a cada desenho custava 1,7 ms por texto em debug: a grade do menu
+        /// do ERP levava 400 ms por quadro (relatado pelo autor em 07/11). Esvazia ao passar de
+        /// `SHAPED_KEEP` textos.
+        shaped: HashMap<(usize, String), std::rc::Rc<Shaped>>,
+    }
+
+    type PlanKey = (usize, harfrust::Direction, Option<harfrust::Script>, Option<harfrust::Language>);
+
+    /// As letras de uma linha: (letra, avanço, deslocamento x, deslocamento y) e a soma dos
+    /// avanços, em unidades da fonte.
+    struct Shaped {
+        glyphs: Vec<(u32, f32, f32, f32)>,
+        advance: f32,
+    }
+
+    const SHAPED_KEEP: usize = 4096;
+
+    thread_local! {
+        static FACES: RefCell<Faces> = RefCell::new(Faces::default());
+    }
+
+    /// As fontes abertas, refeitas quando uma fonte nova é registrada.
+    fn with_faces<R>(f: impl FnOnce(&mut Faces) -> R) -> R {
+        FACES.with(|faces| {
+            let mut faces = faces.borrow_mut();
+            let generation = crate::fonts::generation();
+            if faces.generation != generation || (faces.list.is_empty() && generation > 0) {
+                faces.generation = generation;
+                faces.outlines.clear();
+                faces.variants.clear();
+                faces.plans.clear();
+                faces.shaped.clear();
+                faces.list = crate::fonts::registered()
+                    .into_iter()
+                    .flat_map(|file| {
+                        // Os bytes são os do registro (`Arc`): nada é copiado. Uma coleção (`.ttc`)
+                        // abre uma fonte por índice, até o primeiro que não existe.
+                        let data: std::sync::Arc<dyn AsRef<[u8]> + Send + Sync> = file.data.clone();
+                        let blob = Blob::from(data);
+                        let family = file.family.clone();
+                        (0u32..).map_while(move |index| Font::new(blob.clone(), index)).map(move |font| {
+                            let units = font.units_per_em() as f32;
+                            let attributes = font.default_attributes();
+                            // A linha como o `ttf-parser` dava: a tipográfica se o OS/2 pede, senão
+                            // a do `hhea`, a tipográfica ou a do Windows.
+                            let line = font.metrics().h_line().unwrap_or_default();
+                            Face {
+                                family: family.clone(),
+                                weight: attributes.weight.value().round().clamp(1.0, 1000.0) as u16,
+                                italic: attributes.style == Style::Italic,
+                                variant: false,
+                                ascender: line.ascender.to_f32(),
+                                descender: line.descender.to_f32(),
+                                gap: line.line_gap.to_f32(),
+                                units: if units > 0.0 { units } else { 1000.0 },
+                                font,
+                            }
+                        })
+                    })
+                    .collect();
+            }
+            f(&mut faces)
+        })
+    }
+
+    /// A família padrão do núcleo (a de um `FontSpec` sem família): a primeira registrada, que é a
+    /// do projeto.
+    fn default_family(faces: &Faces) -> Option<String> {
+        faces.list.first().map(|f| f.family.clone())
+    }
+
+    /// A fonte para `spec`: a família pedida (ou a padrão), com o peso e o itálico mais perto.
+    fn pick(faces: &mut Faces, spec: &FontSpec) -> Option<usize> {
+        let family = if spec.family.is_empty() { default_family(faces)? } else { spec.family.clone() };
+        let want = weight_number(spec.weight);
+        let best = faces
+            .list
+            .iter()
+            .enumerate()
+            .filter(|(_, f)| f.family.eq_ignore_ascii_case(&family) && !f.variant)
+            .min_by_key(|(_, f)| (f.italic != spec.italic, (f.weight as i32 - want as i32).abs()))
+            .map(|(i, _)| i)?;
+        // Uma fonte variável (a Inter do projeto) no peso pedido: uma cópia com o eixo `wght` posto.
+        let wght = harfrust::Tag::new(b"wght");
+        let variable = faces.list[best].font.axes().iter().any(|a| a.tag() == wght);
+        if !variable || faces.list[best].weight == want {
+            return Some(best);
+        }
+        if let Some(&i) = faces.variants.get(&(best, want)) {
+            return Some(i);
+        }
+        let base = &faces.list[best];
+        let font = base.font.instance_builder().variations([(wght, want as f32)]).build();
+        let face = Face {
+            family: base.family.clone(),
+            weight: want,
+            italic: base.italic,
+            variant: true,
+            font,
+            units: base.units,
+            ascender: base.ascender,
+            descender: base.descender,
+            gap: base.gap,
+        };
+        faces.list.push(face);
+        let i = faces.list.len() - 1;
+        faces.variants.insert((best, want), i);
+        Some(i)
+    }
+
+    /// A fonte (`spec`) tem todas as letras do texto? Sem isso, o texto fica com o renderizador.
+    fn covers(face: &Face, text: &str) -> bool {
+        let charmap = face.font.charmap();
+        text.chars().all(|c| c.is_control() || c == '\u{200d}' || c == '\u{fe0f}' || charmap.map_unicode(c).is_some())
+    }
+
+    /// As letras montadas de uma linha (da memória, ou formadas e guardadas), em unidades da fonte.
+    fn shaped(faces: &mut Faces, face: usize, text: &str) -> std::rc::Rc<Shaped> {
+        if let Some(found) = faces.shaped.get(&(face, text.to_string())) {
+            return found.clone();
+        }
+        let mut buffer = harfrust::Buffer::new();
+        buffer.push_str(text);
+        buffer.guess_segment_properties();
+        let key: PlanKey = (face, buffer.direction(), buffer.script(), buffer.language().cloned());
+        let font = &faces.list[face].font;
+        let plan = faces.plans.entry(key).or_insert_with(|| {
+            harfrust::ShapePlan::new(font, buffer.direction(), buffer.script(), buffer.language(), &[])
+        });
+        let shaper = harfrust::ShaperFont::new(font);
+        // Só falha com um plano de outra direção ou escrita, e a chave do plano é a do texto.
+        let shaped = harfrust::shape(&shaper, &mut buffer, harfrust::ShapeOptions::new().plan(Some(plan)));
+        let glyphs: Vec<(u32, f32, f32, f32)> = match shaped {
+            Ok(()) => buffer
+                .glyph_infos()
+                .iter()
+                .zip(buffer.glyph_positions())
+                .map(|(info, pos)| (info.glyph_id, pos.x_advance as f32, pos.x_offset as f32, pos.y_offset as f32))
+                .collect(),
+            Err(_) => Vec::new(),
+        };
+        let advance = glyphs.iter().map(|g| g.1).sum::<f32>();
+        let result = std::rc::Rc::new(Shaped { glyphs, advance });
+        if faces.shaped.len() >= SHAPED_KEEP {
+            faces.shaped.clear();
+        }
+        faces.shaped.insert((face, text.to_string()), result.clone());
+        result
+    }
+
+    /// A largura de uma linha formada, no tamanho.
+    fn width_of(faces: &mut Faces, face: usize, text: &str, size: f32) -> f32 {
+        let units = faces.list[face].units;
+        shaped(faces, face, text).advance * size / units
+    }
+
+    /// A altura de uma linha e a distância do topo à linha de base, no tamanho.
+    fn line_metrics(face: &Face, size: f32) -> (f32, f32) {
+        let scale = size / face.units;
+        let ascent = face.ascender * scale;
+        let height = (face.ascender - face.descender + face.gap) * scale;
+        (height.max(size), ascent + face.gap * scale / 2.0)
+    }
+
+    /// O texto todo pode ficar com o núcleo (há fonte registrada e ela tem todas as letras)?
+    pub(super) fn engine_face(text: &str, spec: &FontSpec) -> Option<usize> {
+        with_faces(|faces| pick(faces, spec).filter(|&i| covers(&faces.list[i], text)))
+    }
+
+    /// A largura de uma linha (sem quebra) pelo núcleo.
+    pub(super) fn line_width(face: usize, text: &str, size: f32) -> f32 {
+        with_faces(|faces| width_of(faces, face, text, size))
+    }
+
+    /// O contorno de uma linha de letras, já no tamanho e na posição (`x`, linha de base).
+    fn outline_line(faces: &mut Faces, face: usize, line: &str, size: f32, x: f32, baseline: f32) -> Path {
+        let glyphs = shaped(faces, face, line);
+        let scale = size / faces.list[face].units;
+        let mut cmds = Vec::new();
+        let mut pen = x;
+        for &(glyph, advance, dx, dy) in glyphs.glyphs.iter() {
+            let outline = faces.outlines.entry((face, glyph)).or_insert_with(|| {
+                let mut builder = Outline(Vec::new());
+                if let Some(outline) = faces.list[face].font.outline_glyphs().get(GlyphId::new(glyph)) {
+                    // Sem tamanho: nas unidades da fonte, como o `ttf-parser` dava. Uma letra que não
+                    // abre fica sem desenho, como antes.
+                    if outline.draw(&DrawOptions::default(), DrawMemory::Scratch, &mut builder).is_err() {
+                        builder.0.clear();
+                    }
+                }
+                builder.0
+            });
+            let ox = pen + dx * scale;
+            let oy = baseline - dy * scale;
+            let map = |p: PointF| PointF::new(ox + p.x * scale, oy - p.y * scale);
+            for cmd in outline.iter() {
+                cmds.push(match *cmd {
+                    PathCmd::MoveTo(p) => PathCmd::MoveTo(map(p)),
+                    PathCmd::LineTo(p) => PathCmd::LineTo(map(p)),
+                    PathCmd::QuadTo(a, b) => PathCmd::QuadTo(map(a), map(b)),
+                    PathCmd::CubicTo(a, b, c) => PathCmd::CubicTo(map(a), map(b), map(c)),
+                    PathCmd::Close => PathCmd::Close,
+                });
+            }
+            pen += advance * scale;
+        }
+        Path { cmds, even_odd: false }
+    }
+
+    /// Junta o contorno de uma letra (nas unidades da fonte).
+    struct Outline(Vec<PathCmd>);
+
+    impl PathSink for Outline {
+        fn move_to(&mut self, x: f32, y: f32) {
+            self.0.push(PathCmd::MoveTo(PointF::new(x, y)));
+        }
+        fn line_to(&mut self, x: f32, y: f32) {
+            self.0.push(PathCmd::LineTo(PointF::new(x, y)));
+        }
+        fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+            self.0.push(PathCmd::QuadTo(PointF::new(x1, y1), PointF::new(x, y)));
+        }
+        fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+            self.0.push(PathCmd::CubicTo(PointF::new(x1, y1), PointF::new(x2, y2), PointF::new(x, y)));
+        }
+        fn close(&mut self) {
+            self.0.push(PathCmd::Close);
+        }
+    }
+
+    /// A altura de uma linha e a distância do topo à linha de base, no tamanho.
+    pub(super) fn line_metrics_of(face: usize, size: f32) -> (f32, f32) {
+        with_faces(|faces| line_metrics(&faces.list[face], size))
+    }
+
+    /// O contorno de uma linha de letras, já no tamanho e na posição.
+    pub(super) fn outline(face: usize, line: &str, size: f32, x: f32, baseline: f32) -> Path {
+        with_faces(|faces| outline_line(faces, face, line, size, x, baseline))
+    }
+}
+
+/// Sem a feature `text-shaping`: o núcleo não abre fonte nenhuma (veja o de cima).
+#[cfg(not(feature = "text-shaping"))]
+mod engine {
+    use crate::canvas::FontSpec;
+    use crate::path::Path;
+
+    pub(super) fn engine_face(_text: &str, _spec: &FontSpec) -> Option<usize> {
+        None
+    }
+    pub(super) fn line_width(_face: usize, _text: &str, _size: f32) -> f32 {
+        0.0
+    }
+    pub(super) fn line_metrics_of(_face: usize, size: f32) -> (f32, f32) {
+        (size, size)
+    }
+    pub(super) fn outline(_face: usize, _line: &str, _size: f32, _x: f32, _baseline: f32) -> Path {
+        Path { cmds: Vec::new(), even_odd: false }
     }
 }

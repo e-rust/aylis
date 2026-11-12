@@ -10,15 +10,15 @@ Seletor de hora com relógio. `time` é `14:30`; `on_change` a cada mudança.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `minutes_mode` | Escolhendo os minutos | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `minutes_mode` | Escolhendo os minutos | lógico | Mostrando os minutos (senão, as horas). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `time` | Hora | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `time` | Hora | texto |  |
 
 ## Eventos
 

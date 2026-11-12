@@ -10,10 +10,10 @@ Válvula (gaveta): os dois triângulos e o atuador; verde aberta, cinza fechada,
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `state` | Estado | um de: `open`, `closed`, `transit` |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `state` | Estado | um de: `open`, `closed`, `transit` |  |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

@@ -10,19 +10,19 @@ Uma imagem para desenhar com o mouse (o Paint).
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `color` | Cor | cor |
-| `back_color` | Cor de fundo | cor |
-| `zoom` | Zoom | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `color` | Cor | cor | Cor 1 (botão esquerdo). |
+| `back_color` | Cor de fundo | cor | Cor 2 (botão direito, borracha e preenchimento das formas). |
+| `zoom` | Zoom | número |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select` |
-| `brush_size` | Tamanho do pincel | inteiro |
-| `filled` | Preenchido | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select` |  |
+| `brush_size` | Tamanho do pincel | inteiro |  |
+| `filled` | Preenchido | lógico | Retângulo e elipse preenchidos com `back_color`. |
 
 ## Eventos
 

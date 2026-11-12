@@ -913,3 +913,249 @@ impl Component for TimeEdit {
         self.edit.focus_exit(ctx);
     }
 }
+
+// ---------------------------------------------------------------------------
+// DateTimeEdit
+
+/// Campo de dia e hora juntos (como o `TDateTimePicker` com data e hora): `date_time` é
+/// `2026-11-12T14:30` (ISO, sem fuso), e a tela mostra no formato do idioma
+/// (`12/11/2026 14:30`). O botão (ou F4, Alt+↓) abre o calendário, que troca o dia e mantém a
+/// hora; ↑/↓ somam um dia com o cursor na data e `increment` minutos com o cursor na hora.
+/// `on_change` traz o valor ISO. O relatório do Tabernáculo, C30.
+pub struct DateTimeEdit {
+    pub edit: Edit,
+    pub date_time: String,
+    /// Minutos somados pelas setas na parte da hora.
+    pub increment: u32,
+    pattern: String,
+    popup: Option<ComponentId>,
+}
+
+impl Default for DateTimeEdit {
+    fn default() -> Self {
+        let mut edit = Edit::default();
+        edit.base.set_width(190.0);
+        edit.filter = Some(|c| c.is_ascii_digit() || matches!(c, '/' | '-' | '.' | ':' | ' '));
+        edit.silent = true;
+        edit.right_inset = BUTTON - 6.0;
+        Self { edit, date_time: String::new(), increment: 1, pattern: "dd/mm/yyyy".into(), popup: None }
+    }
+}
+
+impl DateTimeEdit {
+    pub fn new(date_time: &str) -> Self {
+        let mut d = Self::default();
+        d.date_time = Self::normalize(date_time).unwrap_or_default();
+        d.show();
+        d
+    }
+
+    /// O dia e os minutos desde a meia-noite de um valor ISO (`2026-11-12T14:30` ou com espaço).
+    pub fn parse_iso(text: &str) -> Option<(Day, u32)> {
+        let text = text.trim();
+        let (date, time) = text.split_once(['T', ' ']).unwrap_or((text, "00:00"));
+        Some((Day::parse_iso(date)?, TimeEdit::parse(time)? / 60))
+    }
+
+    fn iso(day: Day, minutes: u32) -> String {
+        format!("{}T{:02}:{:02}", day.iso(), minutes / 60, minutes % 60)
+    }
+
+    fn normalize(text: &str) -> Option<String> {
+        Self::parse_iso(text).map(|(d, m)| Self::iso(d, m))
+    }
+
+    /// O dia e a hora escolhidos.
+    pub fn selected(&self) -> Option<(Day, u32)> {
+        Self::parse_iso(&self.date_time)
+    }
+
+    fn show(&mut self) {
+        self.edit.text = self.selected().map(|(d, m)| format!("{} {:02}:{:02}", d.format(&self.pattern), m / 60, m % 60)).unwrap_or_default();
+    }
+
+    fn after_set(&mut self, name: &str) {
+        if name == "date_time" {
+            if let Some(v) = Self::normalize(&self.date_time) {
+                self.date_time = v;
+            }
+            self.show();
+        }
+    }
+
+    fn set(&mut self, ctx: &mut EventCtx<'_>, value: Option<(Day, u32)>) {
+        let iso = value.map(|(d, m)| Self::iso(d, m)).unwrap_or_default();
+        let changed = iso != self.date_time;
+        self.date_time = iso;
+        self.show();
+        if changed {
+            ctx.fire("on_change", EventArgs::Text(self.date_time.clone()));
+        }
+        ctx.repaint();
+    }
+
+    /// O texto digitado: o dia no formato do idioma e a hora depois de um espaço (sem hora,
+    /// fica a que já estava, ou meia-noite).
+    fn commit(&mut self, ctx: &mut EventCtx<'_>) {
+        let text = self.edit.text.trim().to_string();
+        if text.is_empty() {
+            return self.set(ctx, None);
+        }
+        let (date, time) = text.split_once(' ').unwrap_or((&text, ""));
+        let minutes = if time.trim().is_empty() { self.selected().map_or(Some(0), |(_, m)| Some(m)) } else { TimeEdit::parse(time).map(|s| s / 60) };
+        match (Day::parse(date, &self.pattern), minutes) {
+            (Some(d), Some(m)) => self.set(ctx, Some((d, m))),
+            _ => {
+                self.show();
+                ctx.repaint();
+            }
+        }
+    }
+
+    fn open(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.popup.is_some() {
+            return;
+        }
+        let root = ctx.ui.root_of(ctx.id);
+        let rect = ctx.ui.to_form(ctx.id, self.edit.base.bounds());
+        let (w, h) = (280.0, 290.0);
+        let root_size = ctx.ui.bounds(root).map_or((f32::MAX, f32::MAX), |b| (b.width, b.height));
+        let top = if rect.bottom() + h > root_size.1 && rect.y - h > 0.0 { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
+        let left = rect.x.min(root_size.0 - w - 4.0).max(0.0);
+        let day = self.selected().map(|(d, _)| d.iso()).unwrap_or_default();
+        let mut calendar = Calendar::new(&day);
+        calendar.owner = Some(ctx.id);
+        calendar.base.set_can_focus(false);
+        let id = ctx.ui.add(calendar, root);
+        if let Some(cb) = ctx.ui.control_mut(id) {
+            cb.set_rect(left, top, w, h);
+        }
+        ctx.ui.follow(id, ctx.id);
+        self.popup = Some(id);
+        ctx.repaint();
+    }
+
+    fn close(&mut self, ctx: &mut EventCtx<'_>) {
+        if let Some(p) = self.popup.take() {
+            ctx.ui.free(p);
+            ctx.repaint();
+        }
+    }
+
+    fn toggle(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.popup.is_some() {
+            self.close(ctx);
+        } else {
+            self.commit(ctx);
+            self.open(ctx);
+        }
+    }
+}
+
+impl Component for DateTimeEdit {
+    // O `text` (do campo de dentro) só vale ao confirmar: o dia e a hora são o valor.
+    fn change_args(&self, name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
+        (name == "date_time").then(|| EventArgs::Text(self.date_time.clone()))
+    }
+
+    fn class_name(&self) -> &'static str {
+        "DateTimeEdit"
+    }
+
+    fn inner(&self) -> Option<&dyn Component> {
+        Some(&self.edit)
+    }
+
+    fn inner_mut(&mut self) -> Option<&mut dyn Component> {
+        Some(&mut self.edit)
+    }
+
+    properties! {
+        date_time: String => "Data",
+        increment: u32 => "Behavior";
+        events: on_change;
+        on_set: after_set
+    }
+
+    fn resized(&mut self, ctx: &mut EventCtx<'_>) {
+        let pattern = ctx.ui.locale().short_date_format;
+        if pattern != self.pattern {
+            self.pattern = pattern;
+            self.show();
+        }
+    }
+
+    fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        let width = self.edit.base.bounds().width;
+        if event.button == PointerButton::Primary && event.position.x >= width - BUTTON {
+            self.toggle(ctx);
+            ctx.set_handled();
+            return;
+        }
+        self.edit.pointer_down(ctx, event);
+    }
+
+    fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
+        match event.key {
+            Key::F(4) => self.toggle(ctx),
+            Key::Down if event.modifiers.alt => self.toggle(ctx),
+            Key::Escape if self.popup.is_some() => self.close(ctx),
+            Key::Enter => {
+                self.commit(ctx);
+                self.close(ctx);
+                return;
+            }
+            Key::Up | Key::Down => {
+                self.commit(ctx);
+                let (day, minutes) = self.selected().unwrap_or_else(|| (Day::today(), 12 * 60));
+                let sign: i64 = if event.key == Key::Up { 1 } else { -1 };
+                // O cursor depois do espaço: a hora; antes, o dia.
+                let in_time = self.edit.text.find(' ').is_some_and(|space| self.edit.caret() > space);
+                let next = if in_time {
+                    let total = minutes as i64 + sign * self.increment.max(1) as i64;
+                    (day.add_days(total.div_euclid(24 * 60)), total.rem_euclid(24 * 60) as u32)
+                } else {
+                    (day.add_days(sign), minutes)
+                };
+                let caret = self.edit.caret();
+                self.set(ctx, Some(next));
+                self.edit.select(caret, caret);
+            }
+            _ => return self.edit.key_down(ctx, event),
+        }
+        ctx.set_handled();
+    }
+
+    fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
+        self.commit(ctx);
+        self.close(ctx);
+        self.edit.focus_exit(ctx);
+    }
+
+    fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
+        if let Some(PickedDay(day)) = message.downcast_ref::<PickedDay>() {
+            let minutes = self.selected().map_or(0, |(_, m)| m);
+            self.set(ctx, Some((*day, minutes)));
+            self.close(ctx);
+        }
+    }
+
+    fn notification(&mut self, freed: ComponentId) {
+        if self.popup == Some(freed) {
+            self.popup = None;
+        }
+    }
+
+    fn paint_after(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        // O mesmo ícone de calendário do DateEdit.
+        let r = ctx.rect;
+        let icon = RectF::new(r.right() - BUTTON + 6.0, r.center().y - 7.0, 16.0, 14.0);
+        let color = if self.popup.is_some() { ctx.theme.color("primary") } else { ctx.theme.color("text_muted") };
+        let stroke = Stroke::new(color, 1.4);
+        canvas.stroke_rect(icon, 2.5, &stroke);
+        canvas.draw_line(PointF::new(icon.x, icon.y + 4.5), PointF::new(icon.right(), icon.y + 4.5), &stroke);
+        for x in [icon.x + 4.0, icon.right() - 4.0] {
+            canvas.draw_line(PointF::new(x, icon.y - 2.0), PointF::new(x, icon.y + 2.0), &stroke);
+        }
+    }
+}

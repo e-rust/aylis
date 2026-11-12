@@ -7,15 +7,21 @@
         public bool OnlyAllowed { get => Bool(GetProp("only_allowed")); set => SetProp("only_allowed", value); }
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
+        public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -39,6 +45,10 @@
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -57,5 +67,7 @@
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }

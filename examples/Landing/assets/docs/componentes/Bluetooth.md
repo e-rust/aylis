@@ -8,10 +8,10 @@ Bluetooth: BLE e o clássico num componente só.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `service_filter` | Filtro de serviços | texto |
-| `name_filter` | Filtro de nome | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `service_filter` | Filtro de serviços | texto |  |
+| `name_filter` | Filtro de nome | texto |  |
 
 ## Eventos
 

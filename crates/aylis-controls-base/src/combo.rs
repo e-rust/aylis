@@ -31,6 +31,8 @@ use crate::leaf_control;
 
 const ROW: f32 = 28.0;
 const MAX_ROWS: usize = 10;
+/// O lugar da seta, à direita do texto.
+pub const ARROW_ROOM: f32 = 18.0;
 
 /// Lista suspensa (como o `TComboBox` com `Style = csDropDownList`).
 ///
@@ -55,6 +57,11 @@ pub struct ComboBox {
     /// Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui,
     /// a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução.
     pub sensitive: bool,
+    /// O grupo de cada opção (`;`, na ordem de `items`): a lista mostra o nome do grupo, sem
+    /// clique, antes da primeira opção dele (o `<optgroup>`). Vazio: sem grupos.
+    pub groups: String,
+    /// As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem.
+    pub disabled_items: String,
     popup: Option<ComponentId>,
 }
 
@@ -62,7 +69,7 @@ impl Default for ComboBox {
     fn default() -> Self {
         let mut base = ControlBase::new(160.0, 32.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, popup: None }
+        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, groups: String::new(), disabled_items: String::new(), popup: None }
     }
 }
 
@@ -83,7 +90,9 @@ impl ComboBox {
     }
 
     pub fn item_list(&self) -> Vec<&str> {
-        if self.items.is_empty() { Vec::new() } else { self.items.split(';').collect() }
+        // `;` ou quebra de linha (com a quebra, os itens sumiam sem erro; relatório do InsightDB,
+        // 11/11).
+        if self.items.is_empty() { Vec::new() } else { self.items.split([';', '\n']).map(|s| s.trim_end_matches('\r')).collect() }
     }
 
     /// Texto da opção escolhida.
@@ -121,8 +130,52 @@ impl ComboBox {
         self.popup.is_some()
     }
 
+    /// A opção `index` pode ser escolhida (não está em `disabled_items`).
+    pub fn item_enabled(&self, index: usize) -> bool {
+        !self.disabled_items.split(';').any(|s| s.trim().parse::<usize>() == Ok(index))
+    }
+
+    /// Liga ou desliga a opção `index`.
+    pub fn set_item_enabled(&mut self, index: usize, enabled: bool) {
+        let mut off: Vec<usize> = self.disabled_items.split(';').filter_map(|s| s.trim().parse().ok()).filter(|&i| i != index).collect();
+        if !enabled {
+            off.push(index);
+            off.sort_unstable();
+        }
+        self.disabled_items = off.iter().map(usize::to_string).collect::<Vec<_>>().join(";");
+    }
+
+    /// As linhas da lista aberta: a cabeça de cada grupo (sem índice) e as opções.
+    fn rows(&self) -> Vec<PopupRow> {
+        let groups: Vec<&str> = if self.groups.is_empty() { Vec::new() } else { self.groups.split(';').collect() };
+        let mut rows = Vec::new();
+        let mut current: Option<&str> = None;
+        for (i, text) in self.item_list().into_iter().enumerate() {
+            let group = groups.get(i).copied().unwrap_or("");
+            if !group.is_empty() && current != Some(group) {
+                rows.push(PopupRow { item: None, text: group.to_string(), enabled: false });
+            }
+            current = Some(group);
+            rows.push(PopupRow { item: Some(i), text: text.to_string(), enabled: self.item_enabled(i) });
+        }
+        rows
+    }
+
+    /// A próxima opção ligada a partir de `from`, andando `step` (±1); nenhuma: `None`.
+    fn next_enabled(&self, from: i64, step: i64) -> Option<usize> {
+        let count = self.item_list().len() as i64;
+        let mut i = from + step;
+        while (0..count).contains(&i) {
+            if self.item_enabled(i as usize) {
+                return Some(i as usize);
+            }
+            i += step;
+        }
+        None
+    }
+
     fn choose(&mut self, ctx: &mut EventCtx<'_>, index: usize) {
-        if index as i64 != self.item_index && index < self.item_list().len() {
+        if index as i64 != self.item_index && index < self.item_list().len() && self.item_enabled(index) {
             self.item_index = index as i64;
             ctx.fire("on_change", EventArgs::Text(self.text().to_string()));
         }
@@ -130,10 +183,12 @@ impl ComboBox {
     }
 
     fn open(&mut self, ctx: &mut EventCtx<'_>) {
-        let count = self.item_list().len();
+        let rows = self.rows();
+        let count = rows.len();
         if count == 0 || self.popup.is_some() {
             return;
         }
+        let selected = rows.iter().position(|r| r.item.is_some_and(|i| i as i64 == self.item_index));
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.base.bounds());
         let height = ROW * count.min(MAX_ROWS) as f32 + 4.0;
@@ -143,10 +198,10 @@ impl ComboBox {
         let popup = ComboPopup {
             base: ControlBase::new(rect.width, height),
             owner: ctx.id,
-            items: self.item_list().iter().map(|s| s.to_string()).collect(),
-            selected: usize::try_from(self.item_index).ok(),
+            items: rows,
+            selected,
             hovered: None,
-            first: usize::try_from(self.item_index).unwrap_or(0).saturating_sub(MAX_ROWS - 1),
+            first: selected.unwrap_or(0).saturating_sub(MAX_ROWS - 1),
             touch_rest: 0.0,
         };
         let id = ctx.ui.add(popup, root);
@@ -181,9 +236,24 @@ impl Component for ComboBox {
         h_align: TextAlign => "Text",
         trimming: Trimming => "Text",
         arrow: ComboArrow => "Appearance",
-        sensitive: bool => "Behavior";
+        sensitive: bool => "Behavior",
+        groups: String => "Data",
+        disabled_items: String => "Data";
         events: on_change;
         computed: value: String => value / set_value
+    }
+
+    /// `auto_size`: a opção mais larga, o padding do estilo e o lugar da seta (C21 do
+    /// Tabernáculo; antes, a conta à mão no app).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
+        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
+        let widest = self.item_list().iter().map(|t| ui.measure_text(t, &style).width).fold(0.0f32, f32::max);
+        Some((widest + ui.style_padding(id).horizontal() + ARROW_ROOM + 2.0).ceil())
+    }
+
+    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
+        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
+        Some((ui.measure_text("Ág", &style).height + ui.style_padding(id).vertical()).ceil().max(24.0))
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
@@ -194,11 +264,11 @@ impl Component for ComboBox {
     // As opções para leitores de tela e automação: escolher uma não precisa abrir a lista.
     fn access_items(&self, _: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
         use aylis_core::automation::{AccessItem, ItemRole};
-        self.item_list().iter().enumerate().map(|(i, t)| AccessItem::new(ItemRole::ListItem, *t).selected(i as i64 == self.item_index)).collect()
+        self.item_list().iter().enumerate().map(|(i, t)| AccessItem::new(ItemRole::ListItem, *t).selected(i as i64 == self.item_index).disabled(!self.item_enabled(i))).collect()
     }
 
     fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        if index >= self.item_list().len() {
+        if index >= self.item_list().len() || !self.item_enabled(index) {
             return false;
         }
         self.choose(ctx, index);
@@ -207,15 +277,17 @@ impl Component for ComboBox {
     }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
-        let count = self.item_list().len();
+        // As setas pulam as opções desligadas (C20 do Tabernáculo).
         match event.key {
             Key::Up => {
-                let i = (self.item_index - 1).max(0) as usize;
-                self.choose(ctx, i);
+                if let Some(i) = self.next_enabled(self.item_index.max(0), -1).or_else(|| self.next_enabled(-1, 1).filter(|_| self.item_index < 0)) {
+                    self.choose(ctx, i);
+                }
             }
-            Key::Down if count > 0 => {
-                let i = (self.item_index + 1).min(count as i64 - 1) as usize;
-                self.choose(ctx, i);
+            Key::Down => {
+                if let Some(i) = self.next_enabled(self.item_index, 1) {
+                    self.choose(ctx, i);
+                }
             }
             Key::Enter | Key::Space => {
                 if self.popup.is_some() { self.close(ctx) } else { self.open(ctx) }
@@ -255,7 +327,7 @@ impl Component for ComboBox {
         let mut text = ctx.text_style();
         text.h_align = self.h_align;
         text.trimming = self.trimming;
-        canvas.draw_text(self.text(), RectF::new(inner.x, inner.y, inner.width - 18.0, inner.height), &text);
+        canvas.draw_text(self.text(), RectF::new(inner.x, inner.y, inner.width - ARROW_ROOM, inner.height), &text);
         // seta
         if self.arrow == ComboArrow::Triangle {
             // 10 × 5, a 8 px da direita.
@@ -274,11 +346,18 @@ impl Component for ComboBox {
     }
 }
 
+/// Uma linha da lista aberta: uma opção (com o índice dela) ou a cabeça de um grupo.
+struct PopupRow {
+    item: Option<usize>,
+    text: String,
+    enabled: bool,
+}
+
 /// A lista aberta (criada como filha do form, por cima de tudo).
 struct ComboPopup {
     base: ControlBase,
     owner: ComponentId,
-    items: Vec<String>,
+    items: Vec<PopupRow>,
     selected: Option<usize>,
     hovered: Option<usize>,
     first: usize,
@@ -334,7 +413,12 @@ impl Component for ComboPopup {
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
-        let choice = self.hovered;
+        // A cabeça de um grupo e a opção desligada não escolhem nem fecham.
+        let row = self.hovered.and_then(|h| self.items.get(h));
+        if row.is_some_and(|r| !r.enabled) {
+            return;
+        }
+        let choice = row.and_then(|r| r.item);
         let owner = self.owner;
         ctx.ui.send_message(owner, &Picked(choice));
     }
@@ -349,12 +433,26 @@ impl Component for ComboPopup {
         text.color = theme.color("text");
         for (row, i) in (self.first..self.items.len()).take(MAX_ROWS).enumerate() {
             let line = RectF::new(r.x + 2.0, r.y + 2.0 + row as f32 * ROW, r.width - 4.0, ROW);
-            if Some(i) == self.hovered {
+            let item = &self.items[i];
+            if item.item.is_none() {
+                let mut head = text.clone();
+                head.color = theme.color("text_muted");
+                head.font.weight = aylis_core::FontWeight::SemiBold;
+                canvas.draw_text(&item.text, line.deflate(aylis_core::Bounds::symmetric(8.0, 0.0)), &head);
+                continue;
+            }
+            if Some(i) == self.hovered && item.enabled {
                 canvas.fill_rect(line, 4.0, &Brush::Solid(theme.color("primary").with_opacity(0.15)));
             } else if Some(i) == self.selected {
                 canvas.fill_rect(line, 4.0, &Brush::Solid(theme.color("text").with_opacity(0.06)));
             }
-            canvas.draw_text(&self.items[i], line.deflate(aylis_core::Bounds::symmetric(10.0, 0.0)), &text);
+            let mut t = text.clone();
+            if !item.enabled {
+                t.color = theme.color("text_muted");
+            }
+            // Num grupo, as opções ficam recuadas sob a cabeça.
+            let indent = if self.items.iter().any(|r| r.item.is_none()) { 18.0 } else { 10.0 };
+            canvas.draw_text(&item.text, RectF::new(line.x + indent, line.y, line.width - indent - 10.0, line.height), &t);
         }
     }
 }

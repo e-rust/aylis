@@ -10,31 +10,31 @@ Gaveta de navegação: fica à esquerda (`align` Left), aberta ou fechada (`open
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `icons` | Ícones | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `icons` | Ícones | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `open` | Aberto | lógico |
-| `rail` | Só ícones | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `open` | Aberto | lógico |  |
+| `rail` | Só ícones | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `drawer_width` | Largura da gaveta | número |
-| `rail_width` | Largura só com ícones | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `drawer_width` | Largura da gaveta | número |  |
+| `rail_width` | Largura só com ícones | número |  |
 
 ## Eventos
 

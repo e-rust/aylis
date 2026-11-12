@@ -10,17 +10,17 @@ Livro de ofertas: as vendas (`asks`, do menor preço para cima) em cima, as comp
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `levels` | Níveis | inteiro |
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `levels` | Níveis | inteiro |  |
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `bids` | Ofertas de compra | texto |
-| `asks` | Ofertas de venda | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `bids` | Ofertas de compra | texto | `"38.50:1200;38.49:800"` (preço:quantidade). |
+| `asks` | Ofertas de venda | texto |  |
 
 ## Eventos
 

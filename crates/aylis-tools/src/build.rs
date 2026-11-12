@@ -73,7 +73,10 @@ pub fn build(project: &Project, options: &Options, ui: Option<&mut aylis_core::U
         return Err(CANCELLED.into());
     }
     sink(BuildEvent::Event(Event::Step("Verificando o projeto".into())));
-    let issues = aylis_project::check::project_changed(project, ui, options.target == Target::Web, changed.as_deref());
+    let mut issues = aylis_project::check::project_changed(project, ui, options.target == Target::Web, changed.as_deref());
+    // Os avisos do projeto inteiro (a fonte do sistema), uma vez por projeto enquanto a IDE está
+    // aberta, e não a cada compilação (I11 do Tabernáculo). Os de um componente continuam.
+    issues.retain(|i| i.error || !i.form.is_empty() || first_time(&project.path, &i.message));
     let errors = issues.iter().filter(|i| i.error).count();
     sink(BuildEvent::Issues(issues));
     if errors > 0 {
@@ -89,6 +92,18 @@ pub fn build(project: &Project, options: &Options, ui: Option<&mut aylis_core::U
     let message = format!("Compilado: {}", exe.display());
     sink(BuildEvent::Built(exe));
     Ok(message)
+}
+
+/// O aviso `message` do projeto em `path` ainda não foi dado (e conta como dado).
+fn first_time(path: &std::path::Path, message: &str) -> bool {
+    static SHOWN: std::sync::Mutex<Vec<(std::path::PathBuf, String)>> = std::sync::Mutex::new(Vec::new());
+    let Ok(mut shown) = SHOWN.lock() else { return true };
+    let key = (path.to_path_buf(), message.to_string());
+    if shown.contains(&key) {
+        return false;
+    }
+    shown.push(key);
+    true
 }
 
 // ---------------------------------------------------------------------------

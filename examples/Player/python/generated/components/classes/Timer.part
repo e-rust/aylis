@@ -36,9 +36,20 @@ class Timer(AylisComponent):
         self._set("background", value)
 
     @property
+    def one_shot(self):
+        return self._get("one_shot")
+
+    @one_shot.setter
+    def one_shot(self, value):
+        self._set("one_shot", value)
+
+    @property
     def drift(self):
         return self._get("drift")
 
     @drift.setter
     def drift(self, value):
         self._set("drift", value)
+
+    def restart(self):
+        self.aylis.send("invoke", target=self.id, method="restart", args=[])

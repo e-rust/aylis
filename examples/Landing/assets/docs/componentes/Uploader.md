@@ -10,24 +10,24 @@ O envio de arquivos (`QUploader`): o cabeçalho com o título, o "+" (escolher, 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `filter` | Filtro | texto |
-| `multiple` | Vários | lógico |
-| `auto_upload` | Envia sozinho | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `filter` | Filtro | texto |  |
+| `multiple` | Vários | lógico |  |
+| `auto_upload` | Envia sozinho | lógico | Envia assim que os arquivos são escolhidos. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `files` | Arquivos | texto |
-| `progress` | Progresso | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `files` | Arquivos | texto |  |
+| `progress` | Progresso | texto |  |
 
 ## Eventos
 

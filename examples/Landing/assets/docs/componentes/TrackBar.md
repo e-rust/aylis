@@ -10,27 +10,27 @@ Controle deslizante: arraste o polegar, clique no trilho, use as setas, Home/End
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `vertical` | Vertical | lógico |
-| `thumb_size` | Tamanho do botão | número |
-| `track_size` | Espessura do trilho | número |
-| `solid_thumb` | Botão cheio | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `vertical` | Vertical | lógico | Vertical em vez de horizontal. |
+| `thumb_size` | Tamanho do botão | número | Diâmetro do polegar (0 = o do visual do tema). |
+| `track_size` | Espessura do trilho | número | Espessura do trilho (0 = a do visual do tema). |
+| `solid_thumb` | Botão cheio | lógico | Polegar cheio na cor de destaque, sem anel (o `input[type=range]` das páginas web). |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `min` | Mínimo | número |
-| `max` | Máximo | número |
-| `frequency` | Frequência das marcas | número |
-| `limit` | Limite | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `min` | Mínimo | número |  |
+| `max` | Máximo | número |  |
+| `frequency` | Frequência das marcas | número | Passo (0 = contínuo). |
+| `limit` | Limite | número | Daqui para cima o trilho preenchido e o polegar ficam na cor de perigo, com uma marca fina no ponto (o volume acima de 100 %: amplificando). 0 = sem limite. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
 
 ## Eventos
 

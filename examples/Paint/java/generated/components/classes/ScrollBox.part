@@ -45,6 +45,14 @@
             setProp("smooth", value);
         }
 
+        public boolean isGutter() {
+            return asBool(getProp("gutter"));
+        }
+
+        public void setGutter(boolean value) {
+            setProp("gutter", value);
+        }
+
         public String getAllowedChars() {
             return asText(getProp("allowed_chars"));
         }
@@ -133,6 +141,30 @@
             setProp("align", value);
         }
 
+        public String getAnchors() {
+            return asText(getProp("anchors"));
+        }
+
+        public void setAnchors(String value) {
+            setProp("anchors", value);
+        }
+
+        public String getMargins() {
+            return asText(getProp("margins"));
+        }
+
+        public void setMargins(String value) {
+            setProp("margins", value);
+        }
+
+        public String getPadding() {
+            return asText(getProp("padding"));
+        }
+
+        public void setPadding(String value) {
+            setProp("padding", value);
+        }
+
         public boolean isVisible() {
             return asBool(getProp("visible"));
         }
@@ -163,6 +195,22 @@
 
         public void setClipChildren(boolean value) {
             setProp("clip_children", value);
+        }
+
+        public boolean isInheritState() {
+            return asBool(getProp("inherit_state"));
+        }
+
+        public void setInheritState(boolean value) {
+            setProp("inherit_state", value);
+        }
+
+        public boolean isTranslate() {
+            return asBool(getProp("translate"));
+        }
+
+        public void setTranslate(boolean value) {
+            setProp("translate", value);
         }
 
         public boolean isCapturesWheel() {
@@ -349,6 +397,38 @@
             setProp("column_span", value);
         }
 
+        public long getGridRow() {
+            return (long) asNumber(getProp("grid_row"));
+        }
+
+        public void setGridRow(long value) {
+            setProp("grid_row", value);
+        }
+
+        public long getGridColumn() {
+            return (long) asNumber(getProp("grid_column"));
+        }
+
+        public void setGridColumn(long value) {
+            setProp("grid_column", value);
+        }
+
+        public long getRowSpan() {
+            return (long) asNumber(getProp("row_span"));
+        }
+
+        public void setRowSpan(long value) {
+            setProp("row_span", value);
+        }
+
+        public double getGrow() {
+            return asNumber(getProp("grow"));
+        }
+
+        public void setGrow(double value) {
+            setProp("grow", value);
+        }
+
         public String getShadow() {
             return asText(getProp("shadow"));
         }
@@ -493,6 +573,22 @@
             setProp("tag", value);
         }
 
+        public String getTagString() {
+            return asText(getProp("tag_string"));
+        }
+
+        public void setTagString(String value) {
+            setProp("tag_string", value);
+        }
+
+        public String getAccessibleName() {
+            return asText(getProp("accessible_name"));
+        }
+
+        public void setAccessibleName(String value) {
+            setProp("accessible_name", value);
+        }
+
         public String getPopupMenu() {
             return asText(getProp("popup_menu"));
         }
@@ -501,11 +597,11 @@
             setProp("popup_menu", value);
         }
 
-        public void scrollTo(Aylis.AylisComponent a1) {
-            aylis.send("invoke", Aylis.obj("target", id, "method", "scroll_to", "args", java.util.List.of(a1.id)));
+        public void scrollTo(Aylis.AylisComponent component) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "scroll_to", "args", java.util.List.of(component.id)));
         }
 
-        public String visibleComponents(Aylis.AylisComponent a1, boolean a2) {
-            return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "visible_components", "args", java.util.List.of(a1.id, a2))));
+        public String visibleComponents(Aylis.AylisComponent list, boolean fully) {
+            return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "visible_components", "args", java.util.List.of(list.id, fully))));
         }
     }

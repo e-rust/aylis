@@ -10,20 +10,20 @@ Tabela dinâmica (pivot): agrupa os registros de `data` (texto com cabeçalho, c
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `decimals` | Casas decimais | inteiro |
-| `totals` | Totais | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `decimals` | Casas decimais | inteiro |  |
+| `totals` | Totais | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data` | Dados | texto |
-| `rows_field` | Campo das linhas | texto |
-| `columns_field` | Campo das colunas | texto |
-| `values_field` | Campo dos valores | texto |
-| `aggregate` | Agregação | um de: `sum`, `count`, `average`, `min`, `max` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data` | Dados | texto |  |
+| `rows_field` | Campo das linhas | texto |  |
+| `columns_field` | Campo das colunas | texto |  |
+| `values_field` | Campo dos valores | texto |  |
+| `aggregate` | Agregação | um de: `sum`, `count`, `average`, `min`, `max` |  |
 
 ## Eventos
 

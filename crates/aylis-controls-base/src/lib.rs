@@ -44,6 +44,7 @@ pub mod shapes;
 pub mod recorder;
 pub mod recycler;
 mod system;
+mod popover;
 mod tabs;
 mod taskbar;
 mod titlebar;
@@ -58,7 +59,7 @@ mod widgets;
 
 pub use autocomplete::AutoComplete;
 pub use basic::{
-    BorderStyle, Button, Form, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs,
+    BorderStyle, Button, CloseAction, Form, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
     window_state_commands,
 };
 pub use chips::{Chip, ChipGroup, OtpInput, RangeSlider, Rating, SplitButton};
@@ -75,7 +76,8 @@ pub use image::ImageView;
 pub use menus::{MainMenu, MenuItem, PopupMenu, parse_shortcut};
 pub use toggles::{CheckBox, RadioButton, Switch};
 pub use chat::{ChatMessage, ChatView, MessageStatus, Waveform};
-pub use dates::{Calendar, DateEdit, Day, TimeEdit, days_in_month};
+pub use dates::{Calendar, DateEdit, DateTimeEdit, Day, TimeEdit, days_in_month};
+pub use popover::{Popover, PopoverPlacement};
 pub use lists::{ListBox, ListItem, ListView, RadioGroup, TreeNode, TreeView};
 pub use code_editor::CodeEditor;
 pub use tab_strip::{Tab, TabDrop, TabStrip};
@@ -93,7 +95,7 @@ pub use tray::TrayIcon;
 pub use planner::{CalendarEvent, CalendarView, CommandPalette, EventCalendar, parse_events};
 pub use recycler::{ListOrientation, RowSource, Sizer, VirtualList};
 pub use recorder::{Analytics, EventRecorder, Recording, RECORDING_EXTENSION};
-pub use system::{ApplicationEvents, BusyAction, BusyWatcher, DataModule, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
+pub use system::{ApplicationEvents, BusyAction, BusyWatcher, DataModule, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
 pub use tabs::{Expander, GroupBox, StatusBar, TabControl, TabItem, ToolBar};
 pub use feedback::{ToastKind, ToastStack, notify};
 pub use frame_view::FrameView;

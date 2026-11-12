@@ -122,7 +122,7 @@ pub use tray::{TrayEvent, TrayEventKind, TraySpec};
 pub use window::{ResizeEdge, WindowCommand};
 pub use geometry::{Bounds, PointF, RectF, SizeF};
 pub use icons::Icon;
-pub use keys::{CharCase, CharFilter, mnemonic, parse_shortcut, shortcut_matches, strip_mnemonic};
+pub use keys::{CharCase, CharFilter, mnemonic, parse_shortcut, shortcut_matches, shortcut_text, strip_mnemonic};
 pub use image::{Image, ImageFit, ImageSource, WeakImage};
 pub use image_cache::{ImageCache, ImageCacheLimits};
 pub use paint::PaintCtx;

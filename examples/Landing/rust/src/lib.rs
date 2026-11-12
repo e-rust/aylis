@@ -11,7 +11,17 @@ pub mod generated;
 pub fn app() -> Result<aylis::Application, aylis::Error> {
     let mut app = aylis::Application::bundled(aylis::include_project!())?;
     generated::register(&mut app.ui);
+    // No navegador, as classes das famílias leves para a documentação ao vivo (veja o
+    // `build.rs`); fora dele a documentação mostra a imagem.
+    #[cfg(target_arch = "wasm32")]
+    demo_classes::register(&mut app.ui);
     Ok(app)
+}
+
+/// As classes das famílias que a documentação mostra ao vivo no próprio wasm da página.
+#[cfg(target_arch = "wasm32")]
+mod demo_classes {
+    include!(concat!(env!("OUT_DIR"), "/demo_classes.rs"));
 }
 
 /// Android: a NativeActivity carrega a biblioteca e chama esta função.

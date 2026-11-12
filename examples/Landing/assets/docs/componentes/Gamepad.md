@@ -8,11 +8,11 @@ Um controle de jogo (Xbox, PlayStation, genérico): o `index` (0 = o primeiro co
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `index` | Índice | inteiro |
-| `active` | Ativo | lógico |
-| `dead_zone` | Zona morta | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `index` | Índice | inteiro |  |
+| `active` | Ativo | lógico |  |
+| `dead_zone` | Zona morta | número |  |
 
 ## Eventos
 

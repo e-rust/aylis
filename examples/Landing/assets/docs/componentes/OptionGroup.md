@@ -10,23 +10,23 @@ O grupo de opções (`QOptionGroup`): `items` (`Pequeno;Médio;Grande`) como bot
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `inline` | Na mesma linha | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `inline` | Na mesma linha | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `kind` | Tipo | um de: `radio`, `checkbox`, `toggle` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `kind` | Tipo | um de: `radio`, `checkbox`, `toggle` |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
-| `selected` | Escolhidos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
+| `selected` | Escolhidos | texto |  |
 
 ## Eventos
 

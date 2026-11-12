@@ -20,6 +20,17 @@ impl D2dBackend {
     pub(crate) fn adapter(&self) -> Option<String> {
         self.target.adapter().map(str::to_string)
     }
+
+    /// A janela mudou de lugar: com a placa que segue o monitor, troca se for preciso
+    /// (`Ok(true)`: trocou). `force`: confere mesmo sem mudar de monitor (a tela mudou).
+    pub(crate) fn follow_monitor(&mut self, renderer: &D2dRenderer, force: bool) -> Result<bool, Error> {
+        Ok(self.target.follow_monitor(renderer, force)?)
+    }
+
+    /// A regra de placa do form mudou (`Ok(true)`: trocou de placa).
+    pub(crate) fn set_choice(&mut self, renderer: &D2dRenderer, choice: aylis_core::gpu::GpuChoice) -> Result<bool, Error> {
+        Ok(self.target.set_choice(renderer, choice)?)
+    }
 }
 
 /// `vsync = false` apresenta sem esperar o monitor (medições).
@@ -28,13 +39,15 @@ pub(crate) fn create(
     attributes: WindowAttributes,
     renderer: &D2dRenderer,
     vsync: bool,
+    gpu: aylis_core::gpu::GpuChoice,
 ) -> Result<(Rc<Window>, D2dBackend), Error> {
     let window = event_loop.create_window(attributes)?;
     let RawWindowHandle::Win32(handle) = window.window_handle()?.as_raw() else {
         return Err("Direct2D: a janela não é do Windows".into());
     };
     let size = window.inner_size();
-    let target = renderer.hwnd_target(handle.hwnd.get(), size.width, size.height, vsync)?;
+    // Na placa que o form pede (com `monitor`, a do monitor em que a janela nasce).
+    let target = renderer.hwnd_target_for(handle.hwnd.get(), size.width, size.height, vsync, gpu)?;
     Ok((Rc::new(window), D2dBackend { target }))
 }
 

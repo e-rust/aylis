@@ -10,46 +10,46 @@ Modelo 3D (glTF 2.0 / GLB) com esqueleto, morph targets e animação.
 
 ### Animação
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `animation` | Animação | texto |
-| `playing` | Tocando | lógico |
-| `looping` | Repetindo | lógico |
-| `speed` | Velocidade | número |
-| `crossfade` | Transição suave | duração (ms) |
-| `auto_rotate` | Gira sozinho | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `animation` | Animação | texto |  |
+| `playing` | Tocando | lógico |  |
+| `looping` | Repetindo | lógico |  |
+| `speed` | Velocidade | número |  |
+| `crossfade` | Transição suave | duração (ms) |  |
+| `auto_rotate` | Gira sozinho | número | Giro contínuo, em graus por segundo. |
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `file_lights` | Luzes do arquivo | lógico |
-| `shadows` | Sombras | lógico |
-| `ray_traced` | Traçado de raios | lógico |
-| `background` | Fundo | cor |
-| `resolution` | Resolução do 3D | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `file_lights` | Luzes do arquivo | lógico | Usar as luzes do arquivo, quando houver. |
+| `shadows` | Sombras | lógico | Sombra da primeira luz direcional. |
+| `ray_traced` | Traçado de raios | lógico | Traçado de raios (onde a placa traça). |
+| `background` | Fundo | cor |  |
+| `resolution` | Resolução do 3D | número | Em quantos pixels por ponto o 3D é desenhado (a imagem é ampliada para o controle). 0 = automático: a densidade da tela, mas no celular no máximo `AUTO_RESOLUTION` (as telas de 2,5 a 3,5 px/ponto deixam a GPU do celular abaixo de 60 quadros/s, e num 3D de luz suave a diferença quase não se vê). Mais alto: mais nítido e mais pesado. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `orbit` | Girar com o mouse | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `orbit` | Girar com o mouse | lógico | Arrastar e a roda do mouse mexem na câmera. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `source` | Origem | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `source` | Origem | texto |  |
 
 ### Posição e tamanho
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `yaw` | Giro horizontal | ângulo (graus) |
-| `pitch` | Inclinação | ângulo (graus) |
-| `zoom` | Zoom | número |
-| `model_rotation` | Rotação do modelo | ângulo (graus) |
-| `camera` | Câmera | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `yaw` | Giro horizontal | ângulo (graus) |  |
+| `pitch` | Inclinação | ângulo (graus) |  |
+| `zoom` | Zoom | número |  |
+| `model_rotation` | Rotação do modelo | ângulo (graus) | Giro do modelo em graus. |
+| `camera` | Câmera | texto | Câmera do arquivo pelo nome (vazio = a órbita). |
 
 ## Eventos
 

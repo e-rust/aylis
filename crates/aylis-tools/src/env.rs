@@ -167,6 +167,8 @@ fn install_codelldb() -> Option<Fix> {
 #[derive(Default)]
 struct Rust {
     cargo: Option<String>,
+    /// O cargo existe, mas falhou (o toolchain não está instalado, por exemplo): a mensagem.
+    cargo_error: Option<String>,
     rustc: Option<(u32, u32, u32)>,
     targets: Vec<String>,
     has_rustup: bool,
@@ -176,11 +178,15 @@ fn rust_checks(needed: bool) -> Rust {
     if !needed {
         return Rust::default();
     }
-    let cargo = output("cargo", &["--version"]);
+    let (cargo, cargo_error) = match run("cargo", &["--version"]) {
+        Ok(v) => (Some(v), None),
+        Err(e) => (None, e),
+    };
     let rustc = output("rustc", &["--version"]).and_then(|v| parse_version(&v));
     let targets = output("rustup", &["target", "list", "--installed"]);
     Rust {
         cargo,
+        cargo_error,
         rustc,
         has_rustup: targets.is_some(),
         targets: targets.map(|t| t.lines().map(|l| l.trim().to_string()).collect()).unwrap_or_default(),
@@ -191,7 +197,10 @@ fn rust_items(out: &mut Vec<Check>, target: Target, rust: &Rust) {
     match &rust.cargo {
         Some(v) => out.push(Check::ok(target, "Rust (cargo)", v.trim())),
         None => {
-            let check = Check::missing(target, "Rust (cargo)", "não encontrado");
+            // O erro de verdade, quando o cargo existe e falhou (antes era sempre "não
+            // encontrado"; o relatório do Tabernáculo, I02).
+            let detail = rust.cargo_error.as_deref().and_then(|e| e.lines().map(str::trim).find(|l| !l.is_empty())).unwrap_or("não encontrado");
+            let check = Check::missing(target, "Rust (cargo)", detail);
             out.push(match crate::setup::install_toolchain(Language::Rust) {
                 Some(fix) => check.fix(fix),
                 None => check.help("Instale pelo https://rustup.rs (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh)"),
@@ -870,6 +879,20 @@ fn linux_wsl(out: &mut Vec<Check>, language: Language) {
 }
 
 // ---------------------------------------------------------------------------
+
+/// Como [`output`], dizendo por que falhou: `Err(None)` se o programa não existe,
+/// `Err(Some(mensagem))` se rodou e falhou (o stderr).
+pub fn run(program: &str, args: &[&str]) -> Result<String, Option<String>> {
+    let mut command = Command::new(program);
+    command.args(args);
+    let out = quiet(&mut command).output().map_err(|_| None)?;
+    if !out.status.success() {
+        let text = if out.stderr.is_empty() { out.stdout } else { out.stderr };
+        return Err(Some(String::from_utf8_lossy(&text).trim().to_string()).filter(|t| !t.is_empty()));
+    }
+    let text = if out.stdout.is_empty() { out.stderr } else { out.stdout };
+    Ok(String::from_utf8_lossy(&text).to_string())
+}
 
 /// Saída de um comando que terminou bem (stdout, ou stderr se o stdout veio vazio, como o
 /// `java -version`). `None` se não existe ou falhou.

@@ -8,10 +8,10 @@ O sensor de luz ambiente: `lux`.
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `interval` | Intervalo | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `interval` | Intervalo | número |  |
 
 ## Eventos
 

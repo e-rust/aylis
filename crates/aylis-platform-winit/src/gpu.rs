@@ -1,4 +1,8 @@
 //! Desenho na GPU: contexto OpenGL criado com `glutin`, desenho com Skia (Ganesh/GL).
+//!
+//! No Linux com Wayland, a janela pode desenhar noutra placa que não a do processo (a do
+//! monitor, `gpu = monitor`, ou a pedida pelo nome): o contexto passa a ser o de
+//! [`crate::gpu_linux::DeviceGl`], e o Skia é refeito nele.
 
 use std::ffi::CString;
 use std::num::NonZeroU32;
@@ -22,45 +26,33 @@ use winit::window::{Window, WindowAttributes, WindowId};
 use crate::Error;
 
 pub(crate) struct GpuBackend {
-    // A ordem importa no drop: o Skia antes do contexto GL.
-    skia: GlBackend,
-    gl_surface: Surface<WindowSurface>,
-    gl_context: PossiblyCurrentContext,
+    // A ordem importa no drop: o Skia antes do contexto GL. `None` só durante a troca de placa.
+    skia: Option<GlBackend>,
+    gl: Gl,
+    /// O display do glutin (a placa do processo) e a configuração: para voltar a ela.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    display: glutin::display::Display,
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    config: Config,
+    /// A regra de placa da janela e o nome da placa em que desenha agora.
+    choice: aylis_core::gpu::GpuChoice,
+    adapter: String,
+    /// O `GL_RENDERER` da placa do processo (o display do glutin).
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    default_adapter: String,
+    #[cfg(target_os = "linux")]
+    feedback: Option<crate::gpu_linux::Feedback>,
 }
 
-pub(crate) fn create(event_loop: &ActiveEventLoop, attributes: WindowAttributes) -> Result<(Rc<Window>, GpuBackend), Error> {
-    let template = ConfigTemplateBuilder::new().with_alpha_size(8);
-    let (window, config) = DisplayBuilder::new()
-        .with_window_attributes(Some(attributes))
-        .build(event_loop, template, pick_config)?;
-    let window = window.ok_or("OpenGL: não foi possível criar a janela")?;
+/// O contexto e a superfície da janela: os do glutin, ou os de uma placa escolhida.
+enum Gl {
+    Default { surface: Surface<WindowSurface>, context: PossiblyCurrentContext },
+    #[cfg(target_os = "linux")]
+    Device(crate::gpu_linux::DeviceGl),
+}
 
-    let raw_handle = window.window_handle()?.as_raw();
-    let display = config.display();
-    let attributes = ContextAttributesBuilder::new().build(Some(raw_handle));
-    let fallback = ContextAttributesBuilder::new().with_context_api(ContextApi::Gles(None)).build(Some(raw_handle));
-    // SAFETY: a janela (dona do handle) vive mais que o contexto, que fica no mesmo GpuBackend.
-    let not_current = unsafe {
-        display
-            .create_context(&config, &attributes)
-            .or_else(|_| display.create_context(&config, &fallback))?
-    };
-    let surface_attributes = window.build_surface_attributes(SurfaceAttributesBuilder::new())?;
-    // SAFETY: idem.
-    let gl_surface = unsafe { display.create_window_surface(&config, &surface_attributes)? };
-    let gl_context = not_current.make_current(&gl_surface)?;
-    // Medições (AYLIS_BENCH): apresenta sem esperar o monitor.
-    if crate::diag::diagnostic_setting("AYLIS_BENCH").is_some() {
-        let _ = gl_surface.set_swap_interval(&gl_context, glutin::surface::SwapInterval::DontWait);
-    }
-    if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
-        print_gl_info(&display);
-    }
-    if gl_description().is_none() {
-        let text = read_gl_strings(&display).join(" · ");
-        GL_DESCRIPTION.with(|d| *d.borrow_mut() = Some(text));
-    }
-
+/// Cria o Skia no contexto atual.
+fn new_skia(display: &glutin::display::Display, samples: usize, stencil: usize) -> Result<GlBackend, Error> {
     let mut skia = GlBackend::new(
         |name| {
             // Em EGL o Skia tentaria usar esta função; o glutin já cuida do display.
@@ -69,14 +61,67 @@ pub(crate) fn create(event_loop: &ActiveEventLoop, attributes: WindowAttributes)
             }
             CString::new(name).map_or(std::ptr::null(), |n| display.get_proc_address(&n))
         },
-        config.num_samples() as usize,
-        config.stencil_size() as usize,
+        samples,
+        stencil,
     )
     .ok_or("Skia: falha ao criar o contexto OpenGL")?;
-    DISPLAY.with(|d| *d.borrow_mut() = Some(display.clone()));
     skia.set_gl_loader(gl_loader as *const () as usize);
+    Ok(skia)
+}
 
-    Ok((Rc::new(window), GpuBackend { skia, gl_surface, gl_context }))
+/// O contexto e a superfície do glutin na janela (a placa do processo), já atuais.
+fn default_gl(display: &glutin::display::Display, config: &Config, window: &Window) -> Result<Gl, Error> {
+    let raw_handle = window.window_handle()?.as_raw();
+    let attributes = ContextAttributesBuilder::new().build(Some(raw_handle));
+    let fallback = ContextAttributesBuilder::new().with_context_api(ContextApi::Gles(None)).build(Some(raw_handle));
+    // SAFETY: a janela (dona do handle) vive mais que o contexto, que fica no mesmo GpuBackend.
+    let not_current = unsafe { display.create_context(config, &attributes).or_else(|_| display.create_context(config, &fallback))? };
+    let surface_attributes = window.build_surface_attributes(SurfaceAttributesBuilder::new())?;
+    // SAFETY: idem.
+    let surface = unsafe { display.create_window_surface(config, &surface_attributes)? };
+    let context = not_current.make_current(&surface)?;
+    // Medições (AYLIS_BENCH): apresenta sem esperar o monitor.
+    if crate::diag::diagnostic_setting("AYLIS_BENCH").is_some() {
+        let _ = surface.set_swap_interval(&context, glutin::surface::SwapInterval::DontWait);
+    }
+    Ok(Gl::Default { surface, context })
+}
+
+/// A janela e o OpenGL dela, na placa que `choice` pede (no Linux com Wayland; nas outras
+/// plataformas, a do processo).
+pub(crate) fn create(event_loop: &ActiveEventLoop, attributes: WindowAttributes, choice: aylis_core::gpu::GpuChoice) -> Result<(Rc<Window>, GpuBackend), Error> {
+    let template = ConfigTemplateBuilder::new().with_alpha_size(8);
+    let (window, config) = DisplayBuilder::new()
+        .with_window_attributes(Some(attributes))
+        .build(event_loop, template, pick_config)?;
+    let window = window.ok_or("OpenGL: não foi possível criar a janela")?;
+    let display = config.display();
+    let gl = default_gl(&display, &config, &window)?;
+    if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
+        print_gl_info(&display);
+    }
+    let strings = read_gl_strings(&display);
+    if gl_description().is_none() {
+        GL_DESCRIPTION.with(|d| *d.borrow_mut() = Some(strings.join(" · ")));
+    }
+    let skia = new_skia(&display, config.num_samples() as usize, config.stencil_size() as usize)?;
+    DISPLAY.with(|d| *d.borrow_mut() = Some(display.clone()));
+    let mut backend = GpuBackend {
+        skia: Some(skia),
+        gl,
+        display,
+        config,
+        choice: aylis_core::gpu::GpuChoice::Auto,
+        adapter: strings.get(1).cloned().unwrap_or_default(),
+        default_adapter: strings.get(1).cloned().unwrap_or_default(),
+        #[cfg(target_os = "linux")]
+        feedback: None,
+    };
+    // A placa do form, se não é a do processo (o primeiro quadro já sai nela).
+    if let Err(e) = backend.set_choice(&window, choice) {
+        aylis_core::stderr_line!("aylis: a janela fica na placa do processo ({e})");
+    }
+    Ok((Rc::new(window), backend))
 }
 
 thread_local! {
@@ -155,8 +200,23 @@ fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
 /// texturas trocadas ou apagadas: tela vazia ou triângulos de lixo.
 impl Drop for GpuBackend {
     fn drop(&mut self) {
-        let _ = self.gl_context.make_current(&self.gl_surface);
+        let _ = self.make_current();
         // Os campos (o Skia primeiro) caem depois daqui, com o contexto certo.
+    }
+}
+
+impl Gl {
+    fn make_current(&self) -> Result<(), Error> {
+        match self {
+            Gl::Default { surface, context } => {
+                if !context.is_current() {
+                    context.make_current(surface)?;
+                }
+                Ok(())
+            }
+            #[cfg(target_os = "linux")]
+            Gl::Device(d) => d.make_current(),
+        }
     }
 }
 
@@ -164,22 +224,135 @@ impl GpuBackend {
     /// Com várias janelas, cada uma tem o seu contexto OpenGL: antes de mexer numa, o
     /// contexto dela precisa ser o atual.
     fn make_current(&self) -> Result<(), Error> {
-        if !self.gl_context.is_current() {
-            self.gl_context.make_current(&self.gl_surface)?;
-        }
-        Ok(())
+        self.gl.make_current()
+    }
+
+    fn skia(&mut self) -> &mut GlBackend {
+        self.skia.as_mut().expect("o Skia só falta durante a troca de placa")
     }
 
     pub(crate) fn resize(&self, window: &Window) {
         if self.make_current().is_ok() {
-            window.resize_surface(&self.gl_surface, &self.gl_context);
+            match &self.gl {
+                Gl::Default { surface, context } => window.resize_surface(surface, context),
+                #[cfg(target_os = "linux")]
+                Gl::Device(d) => {
+                    let size = window.inner_size();
+                    d.resize(size.width, size.height);
+                }
+            }
         }
+    }
+
+    /// A placa em que a janela desenha (o `GL_RENDERER`).
+    pub(crate) fn adapter(&self) -> Option<String> {
+        (!self.adapter.is_empty()).then(|| self.adapter.clone())
+    }
+
+    /// Troca a regra de placa da janela (a propriedade `gpu` do form) e, no Wayland, passa
+    /// para a placa pedida. `Ok(true)`: trocou de placa.
+    pub(crate) fn set_choice(&mut self, window: &Window, choice: aylis_core::gpu::GpuChoice) -> Result<bool, Error> {
+        if choice == self.choice {
+            return Ok(false);
+        }
+        self.choice = choice;
+        #[cfg(target_os = "linux")]
+        {
+            use aylis_core::gpu::GpuChoice;
+            if !crate::gpu_linux::is_wayland(window) {
+                return Ok(false);
+            }
+            let wanted = match &self.choice {
+                GpuChoice::FollowMonitor => {
+                    if self.feedback.is_none() {
+                        self.feedback = crate::gpu_linux::Feedback::new(window);
+                        if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
+                            let state = if self.feedback.is_some() { "ligado" } else { "o compositor não tem o linux-dmabuf v4" };
+                            aylis_core::stderr_line!("aylis: feedback da placa preferida: {state}");
+                        }
+                    }
+                    // A placa do monitor chega pelo feedback (`follow_monitor`).
+                    return self.follow_monitor(window);
+                }
+                GpuChoice::Named(_) => crate::gpu_linux::device_named(&self.choice),
+                // As outras valem para o processo: a placa padrão.
+                _ => None,
+            };
+            return self.switch_to(window, wanted);
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = window;
+            Ok(false)
+        }
+    }
+
+    /// Com `gpu = monitor` no Wayland: se o compositor passou a preferir outra placa (a
+    /// janela foi para um monitor dela), troca. Barato: só olha os eventos já lidos.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    pub(crate) fn follow_monitor(&mut self, window: &Window) -> Result<bool, Error> {
+        #[cfg(target_os = "linux")]
+        if self.choice == aylis_core::gpu::GpuChoice::FollowMonitor
+            && let Some(dev) = self.feedback.as_mut().and_then(|f| f.poll())
+        {
+            if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
+                aylis_core::stderr_line!("aylis: o compositor prefere a placa {}:{}", dev >> 8 & 0xFFF, dev & 0xFF);
+            }
+            // Placa que o EGL não enxerga: fica onde está.
+            let Some(device) = crate::gpu_linux::device_of(dev) else { return Ok(false) };
+            return self.switch_to(window, Some(device));
+        }
+        let _ = window;
+        Ok(false)
+    }
+
+    /// Passa a janela para a placa `device` (`None`: a do processo). `Ok(false)`: já estava.
+    #[cfg(target_os = "linux")]
+    fn switch_to(&mut self, window: &Window, device: Option<glutin::api::egl::device::Device>) -> Result<bool, Error> {
+        use crate::gpu_linux::{DeviceGl, default_device, same};
+        // A placa padrão também é "a do processo".
+        let default = default_device(&self.display, &self.default_adapter);
+        if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
+            let name = |d: &Option<glutin::api::egl::device::Device>| d.as_ref().map_or("(nenhuma)".to_string(), crate::gpu_linux::describe);
+            aylis_core::stderr_line!("aylis: placa pedida {}, a do processo {}", name(&device), name(&default));
+        }
+        let device = device.filter(|d| default.as_ref().is_none_or(|default| !same(d, default)));
+        match (&self.gl, &device) {
+            (Gl::Default { .. }, None) => return Ok(false),
+            (Gl::Device(current), Some(d)) if current.device == d.raw_device() as *mut std::ffi::c_void => return Ok(false),
+            _ => {}
+        }
+        // O novo primeiro: se não abrir, a janela continua como estava.
+        let gl = match &device {
+            Some(d) => Gl::Device(DeviceGl::new(&self.display, d, window)?),
+            None => default_gl(&self.display, &self.config, window)?,
+        };
+        // O Skia de antes cai com o contexto dele; depois o contexto, e o novo assume.
+        let _ = self.make_current();
+        self.skia = None;
+        self.gl = gl;
+        self.make_current()?;
+        let (samples, stencil) = match &self.gl {
+            Gl::Device(d) => {
+                if crate::diag::diagnostic_setting("AYLIS_BENCH").is_some() {
+                    d.dont_wait();
+                }
+                (d.samples, d.stencil)
+            }
+            Gl::Default { .. } => (self.config.num_samples() as usize, self.config.stencil_size() as usize),
+        };
+        self.skia = Some(new_skia(&self.display, samples, stencil)?);
+        self.adapter = read_gl_strings(&self.display).get(1).cloned().unwrap_or_default();
+        if crate::diag::diagnostic_setting("AYLIS_DEBUG_GL").is_some() {
+            aylis_core::stderr_line!("aylis: a janela passou a desenhar em {}", self.adapter);
+        }
+        Ok(true)
     }
 
     /// A imagem do quadro anterior está guardada neste tamanho: o quadro pode repintar só
     /// uma área.
     pub(crate) fn keeps_image(&self, (width, height): (NonZeroU32, NonZeroU32)) -> bool {
-        self.skia.keeps_image(width.get(), height.get())
+        self.skia.as_ref().is_some_and(|s| s.keeps_image(width.get(), height.get()))
     }
 
     /// Pinta o quadro; com `parts` (as cópias da rolagem e as áreas, unidades lógicas alinhadas
@@ -196,12 +369,16 @@ impl GpuBackend {
         capture: bool,
     ) -> Result<Option<Vec<u8>>, Error> {
         self.make_current()?;
-        if self.skia.render_parts(renderer, width.get(), height.get(), scale, background, parts, paint).is_none() {
+        if self.skia().render_parts(renderer, width.get(), height.get(), scale, background, parts, paint).is_none() {
             return Err("Skia: falha ao criar a superfície OpenGL".into());
         }
         // Depois do swap o buffer de trás fica indefinido: a captura vem antes.
-        let frame = if capture { self.skia.read_frame() } else { None };
-        self.gl_surface.swap_buffers(&self.gl_context)?;
+        let frame = if capture { self.skia().read_frame() } else { None };
+        match &self.gl {
+            Gl::Default { surface, context } => surface.swap_buffers(context)?,
+            #[cfg(target_os = "linux")]
+            Gl::Device(d) => d.swap()?,
+        }
         Ok(frame)
     }
 }
@@ -221,7 +398,7 @@ pub fn with_offscreen_gl<R: 'static>(f: impl FnOnce(&mut GlBackend) -> R + 'stat
         fn resumed(&mut self, event_loop: &ActiveEventLoop) {
             let Some(f) = self.f.take() else { return };
             let attributes = Window::default_attributes().with_visible(false);
-            self.result = Some(create(event_loop, attributes).map(|(_window, mut backend)| f(&mut backend.skia)));
+            self.result = Some(create(event_loop, attributes, aylis_core::gpu::GpuChoice::Auto).map(|(_window, mut backend)| f(backend.skia())));
             event_loop.exit();
         }
 

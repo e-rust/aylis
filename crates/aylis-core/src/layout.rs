@@ -99,6 +99,13 @@ impl Ui {
                 cb.text_scale = text;
                 cb.spacing_scale = spacing;
             }
+            // Form com `auto_size` (desligado por padrão): a altura sai do conteúdo, e a janela
+            // acompanha (`auto_form_height`; L07 do Tabernáculo).
+            if let Some(h) = self.auto_form_height(root) {
+                if let Some(cb) = self.cb_mut(root) {
+                    cb.set_measured_height(h);
+                }
+            }
             if let Some(cb) = self.cb_mut(root) {
                 let old = cb.bounds.size();
                 // O mínimo vale também no form: numa janela (ou tela) menor, o que passar fica
@@ -141,6 +148,21 @@ impl Ui {
         let old_sizes: Vec<Option<SizeF>> =
             children.iter().map(|&c| self.cb(c).map(|b| b.bounds.size())).collect();
 
+        // `auto_size` de quem encaixa à esquerda ou à direita, e dos soltos (`none`) que medem a
+        // largura (o Button): a largura sai do conteúdo, antes da altura, que depende dela. O
+        // Label solto fica com a largura desenhada (muitos forms centram o texto numa largura
+        // fixa): o `auto_width` dele recusa.
+        for &child in &children {
+            if !self.cb(child).is_some_and(|cb| cb.visible() && cb.auto_size() && matches!(cb.align(), Align::Left | Align::Right | Align::MostLeft | Align::MostRight | Align::None)) {
+                continue;
+            }
+            if let Some(w) = self.component(child).and_then(|c| c.auto_width(self, child)) {
+                if let Some(cb) = self.cb_mut(child) {
+                    let w = cb.clamp_width(w);
+                    cb.set_measured_width(w);
+                }
+            }
+        }
         // `auto_size`: a altura sai do conteúdo, na largura que o filho vai ter.
         for &child in &children {
             let Some(cb) = self.cb(child).filter(|cb| cb.visible() && cb.auto_size()) else { continue };
@@ -151,16 +173,33 @@ impl Ui {
             };
             if let Some(h) = self.auto_height_of(child, width) {
                 if let Some(cb) = self.cb_mut(child) {
-                    cb.set_height(h);
+                    cb.set_measured_height(h);
                 }
             }
         }
 
+        let gap = self.component(id).map_or(0.0, |c| c.dock_gap()) * scales.1;
         for pass in DOCK_ORDER {
             for &child in &children {
                 if let Some(cb) = self.cb_mut(child) {
                     if cb.visible() && cb.align() == pass {
                         dock(cb, &mut area);
+                        // O vão depois de cada encaixado, no lado que ele consumiu.
+                        if gap > 0.0 {
+                            match pass {
+                                Align::Top | Align::MostTop => {
+                                    area.y += gap;
+                                    area.height = (area.height - gap).max(0.0);
+                                }
+                                Align::Bottom | Align::MostBottom => area.height = (area.height - gap).max(0.0),
+                                Align::Left | Align::MostLeft => {
+                                    area.x += gap;
+                                    area.width = (area.width - gap).max(0.0);
+                                }
+                                Align::Right | Align::MostRight => area.width = (area.width - gap).max(0.0),
+                                _ => {}
+                            }
+                        }
                     }
                 }
             }
@@ -170,7 +209,9 @@ impl Ui {
             .iter()
             .filter_map(|&c| {
                 let cb = self.cb(c).filter(|cb| cb.visible() && cb.align() == Align::None)?;
-                Some(crate::component::ArrangeItem::of(c, cb))
+                let mut item = crate::component::ArrangeItem::of(c, cb);
+                item.baseline = self.component(c).and_then(|comp| comp.baseline(self, c, item.size.height));
+                Some(item)
             })
             .collect();
         let arranged = if free.is_empty() { None } else { self.component(id).and_then(|c| c.arrange(area, &free)) };
@@ -303,6 +344,25 @@ impl Ui {
 }
 
 impl Ui {
+    /// O tamanho preferido do controle, com o tema (padding, fonte) já contado: a largura e a
+    /// altura que o `auto_size` daria, ou as declaradas onde o controle não mede (L11 do
+    /// Tabernáculo: medir sem somar o tema à mão).
+    pub fn preferred_size(&self, id: ComponentId) -> SizeF {
+        let Some(cb) = self.cb(id) else { return SizeF::new(0.0, 0.0) };
+        let width = self.component(id).and_then(|c| c.auto_width(self, id)).map_or(cb.width(), |w| cb.clamp_width(w));
+        let height = self.auto_height_of(id, width).map_or(cb.height(), |h| cb.clamp_height(h));
+        SizeF::new(width, height)
+    }
+
+    /// A altura que o form pede com o `auto_size` ligado (a soma dos encaixados em cima e
+    /// embaixo, o que a grade ou o fluxo montam, o padding), na largura dele; `None` sem o
+    /// `auto_size`. A plataforma ajusta a janela a ela (o `AutoSize` do form do Delphi).
+    pub fn auto_form_height(&self, form: ComponentId) -> Option<f32> {
+        let cb = self.cb(form).filter(|cb| cb.auto_size() && self.parent(form).is_none())?;
+        let h = self.auto_height_of(form, cb.width())?;
+        Some(cb.clamp_height(h.max(1.0)))
+    }
+
     /// A altura do conteúdo de `id` na largura `width` (o `auto_size`): a que o controle
     /// mede ou, num contêiner, a soma dos filhos encaixados em cima e embaixo (sem nenhum, só
     /// o padding: uma lista vazia não ocupa lugar).
@@ -314,13 +374,18 @@ impl Ui {
         let padding = cb.padding();
         let inner = width - padding.horizontal();
         let mut total = padding.vertical();
+        let gap = self.component(id).map_or(0.0, |c| c.dock_gap()) * cb.spacing_scale();
+        let mut docked = 0usize;
         for &child in self.children(id) {
             let Some(c) = self.cb(child).filter(|c| c.visible() && matches!(c.align(), Align::Top | Align::Bottom)) else { continue };
             let m = c.margins();
             let h = if c.auto_size() { self.auto_height_of(child, c.band_width((inner - m.horizontal()).max(0.0))).unwrap_or(c.height()) } else { c.height() };
             let h = c.clamp_height(h);
             total += h + m.vertical();
+            docked += 1;
         }
+        // Os vãos entre os encaixados (L05).
+        total += gap * docked.saturating_sub(1) as f32;
         // Um contêiner que organiza os soltos (grade, fluxo): mais a altura do que ele monta
         // nesta largura (a grade com `row_height`, o fluxo pelos tamanhos dos filhos).
         let free: Vec<crate::component::ArrangeItem> = self
@@ -328,7 +393,9 @@ impl Ui {
             .iter()
             .filter_map(|&c| {
                 let cb = self.cb(c).filter(|cb| cb.visible() && cb.align() == Align::None)?;
-                Some(crate::component::ArrangeItem::of(c, cb))
+                let mut item = crate::component::ArrangeItem::of(c, cb);
+                item.baseline = self.component(c).and_then(|comp| comp.baseline(self, c, item.size.height));
+                Some(item)
             })
             .collect();
         if !free.is_empty() {
@@ -547,6 +614,35 @@ impl Ui {
                 cb.follow = Some((target, Some(at)));
             }
         }
+    }
+
+    /// Rola o conteúdo de `id` até `offset` (`base` é o `ControlBase` dele, que num método de
+    /// evento está fora do `Ui`). Sem layout pendente, os filhos diretos só andam a diferença
+    /// e a caixa é repintada: refazer o layout do form a cada passo da rolagem media de novo
+    /// todos os textos da página (a Landing no celular: ~300 medidas por quadro). Com layout
+    /// pendente, ele refaz tudo com a rolagem nova.
+    pub fn scroll_content(&mut self, id: ComponentId, base: &mut ControlBase, offset: PointF) {
+        let before = base.laid_out_scroll;
+        base.set_scroll_offset(offset);
+        if self.needs_layout() || self.control(id).is_some() {
+            // Dentro do `Ui` (fora de um evento), o `ControlBase` passado é uma cópia: o
+            // layout lê o de verdade.
+            self.invalidate_form(id);
+            return;
+        }
+        let (dx, dy) = (before.x - offset.x, before.y - offset.y);
+        if dx != 0.0 || dy != 0.0 {
+            for child in self.children(id).to_vec() {
+                if let Some(cb) = self.cb_mut(child) {
+                    cb.bounds = cb.bounds.offset(dx, dy);
+                }
+            }
+        }
+        base.laid_out_scroll = offset;
+        // Uma janela presa a algo dentro da caixa (a lista de um ComboBox) acompanha.
+        let root = self.root_of(id);
+        self.place_followers(root);
+        self.damage(id);
     }
 }
 

@@ -219,6 +219,9 @@ pub struct Document {
     pub ui: Ui,
     pub root: ComponentId,
     pub path: Option<PathBuf>,
+    /// A marca do arquivo quando foi lido ou salvo: diferente da de agora, ele mudou por fora
+    /// ([`crate::disk`]).
+    pub disk: Option<aylis_project::FileStamp>,
     /// O selecionado principal (o que o Object Inspector mostra).
     pub selection: Option<ComponentId>,
     /// Todos os selecionados (inclui o principal).
@@ -298,6 +301,7 @@ impl Document {
             ui,
             root,
             path: None,
+            disk: None,
             selection: Some(root),
             selected: vec![root],
             modified: false,
@@ -375,6 +379,7 @@ impl Document {
         doc.replace(&value)?;
         doc.modified = false;
         doc.path = Some(path.to_path_buf());
+        doc.disk = aylis_project::FileStamp::read(path);
         Ok(doc)
     }
 
@@ -424,6 +429,7 @@ impl Document {
         std::fs::write(path, json).map_err(|e| format!("não consegui gravar {}: {e}", path.display()))?;
         self.path = Some(path.to_path_buf());
         self.modified = false;
+        self.disk = aylis_project::FileStamp::read(path);
         Ok(())
     }
 
@@ -1169,6 +1175,30 @@ impl Document {
         self.ui.layout();
     }
 
+    /// Passa `id` para dentro de `parent`, na posição `index` entre os filhos (`None`: no fim),
+    /// num passo do desfazer (M16 do Tabernáculo: trocar de pai sem refazer o layout inteiro).
+    pub fn move_component(&mut self, id: ComponentId, parent: ComponentId, index: Option<usize>) -> Result<(), String> {
+        if id == self.root {
+            return Err("o form não muda de pai".into());
+        }
+        let mut up = Some(parent);
+        while let Some(p) = up {
+            if p == id {
+                return Err("um componente não vai para dentro dele mesmo".into());
+            }
+            up = self.ui.parent(p);
+        }
+        self.begin_change();
+        if self.ui.parent(id) != Some(parent) {
+            self.ui.set_parent(id, Some(parent)).map_err(|e| e.to_string())?;
+        }
+        if let Some(i) = index {
+            let _ = self.ui.set_child_index(id, i);
+        }
+        self.ui.layout();
+        Ok(())
+    }
+
     /// Tira as mudanças de um componente da vista em edição: ele volta ao base nela.
     pub fn view_back_to_base(&mut self, id: ComponentId) -> bool {
         let Some(mode) = &self.view_mode else { return false };
@@ -1274,10 +1304,18 @@ impl Document {
     }
 
     pub fn add(&mut self, class: &str, at: Option<PointF>) -> Result<ComponentId, String> {
+        self.add_in(class, at, None)
+    }
+
+    /// Como [`Document::add`], com o contêiner escolhido (`parent`) para os visuais, em vez do
+    /// que está sob o ponto: o canto do pai podia cair num filho dele (o relatório do
+    /// Tabernáculo, M22).
+    pub fn add_in(&mut self, class: &str, at: Option<PointF>, parent: Option<ComponentId>) -> Result<ComponentId, String> {
+        let forced = parent;
         // Um pacote (`pkg:Termometro`): um Frame com o form do pacote, nomeado pelo pacote.
         if let Some(package) = aylis_project::packages::package_of(class) {
             let package = package.to_string();
-            let id = self.add("Frame", at)?;
+            let id = self.add_in("Frame", at, forced)?;
             let name = self.unique_name(&package);
             let _ = self.ui.set_name(id, &name);
             let _ = self.ui.set_prop(id, "form", class);
@@ -1296,7 +1334,7 @@ impl Document {
         let full = class;
         let class = aylis_core::split_variant(class).0;
         let parent = if visual {
-            at.map_or(self.root, |p| self.container_at(p))
+            forced.unwrap_or_else(|| at.map_or(self.root, |p| self.container_at(p)))
         } else {
             let selected = self.selection.unwrap_or(self.root);
             let selected_class = self.ui.class_name(selected).unwrap_or_default();
@@ -1433,6 +1471,15 @@ impl Document {
             return Ok(());
         }
         self.begin_change();
+        // Um texto corrigido leva as traduções dele (O02 do Tabernáculo).
+        let texts: Vec<(String, String)> = if aylis_core::i18n::TRANSLATABLE.contains(&name) && !matches!(name, "items" | "labels" | "display_values") {
+            changes.iter().filter_map(|(id, new)| match (self.ui.get_prop(*id, name), new) {
+                (Ok(PropValue::String(old)), PropValue::String(new)) => Some((old, new.clone())),
+                _ => None,
+            }).collect()
+        } else {
+            Vec::new()
+        };
         for (id, new) in changes {
             if let Err(e) = self.ui.set_prop(id, name, new) {
                 // Desfaz: volta ao estado de antes da alteração.
@@ -1447,8 +1494,19 @@ impl Document {
         if name == "form" {
             self.refresh_frames();
         }
+        if let Some(dir) = self.project_dir() {
+            for (old, new) in &texts {
+                aylis_project::i18n::follow_text_change(&dir, old, new);
+            }
+        }
         self.ui.layout();
         Ok(())
+    }
+
+    /// A pasta do projeto do form (a que tem o `.aylisproj`, subindo a partir do arquivo).
+    fn project_dir(&self) -> Option<PathBuf> {
+        let file = self.path.as_ref()?;
+        file.ancestors().skip(1).take(4).find(|d| std::fs::read_dir(d).is_ok_and(|mut e| e.any(|f| f.ok().is_some_and(|f| f.path().extension().is_some_and(|x| x == "aylisproj"))))).map(Path::to_path_buf)
     }
 
     /// Mostra de novo o conteúdo dos frames (o form de um frame mudou ou foi salvo).

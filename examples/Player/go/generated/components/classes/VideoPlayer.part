@@ -29,6 +29,12 @@ func (c aylisVideoPlayer) SetRate(v float64) { c.Set("rate", v) }
 func (c aylisVideoPlayer) Output() string { return asText(c.Get("output")) }
 func (c aylisVideoPlayer) SetOutput(v string) { c.Set("output", v) }
 
+func (c aylisVideoPlayer) ShowVideo() bool { return asBool(c.Get("show_video")) }
+func (c aylisVideoPlayer) SetShowVideo(v bool) { c.Set("show_video", v) }
+
+func (c aylisVideoPlayer) FramesAhead() int64 { return int64(asNumber(c.Get("frames_ahead"))) }
+func (c aylisVideoPlayer) SetFramesAhead(v int64) { c.Set("frames_ahead", v) }
+
 func (c aylisVideoPlayer) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisVideoPlayer) SetLeft(v float64) { c.Set("left", v) }
 
@@ -44,6 +50,15 @@ func (c aylisVideoPlayer) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisVideoPlayer) Align() string { return asText(c.Get("align")) }
 func (c aylisVideoPlayer) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisVideoPlayer) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisVideoPlayer) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisVideoPlayer) Margins() string { return asText(c.Get("margins")) }
+func (c aylisVideoPlayer) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisVideoPlayer) Padding() string { return asText(c.Get("padding")) }
+func (c aylisVideoPlayer) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisVideoPlayer) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisVideoPlayer) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -55,6 +70,12 @@ func (c aylisVideoPlayer) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisVideoPlayer) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisVideoPlayer) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisVideoPlayer) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisVideoPlayer) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisVideoPlayer) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisVideoPlayer) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisVideoPlayer) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisVideoPlayer) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -125,6 +146,18 @@ func (c aylisVideoPlayer) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisVideoPlayer) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisVideoPlayer) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisVideoPlayer) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisVideoPlayer) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisVideoPlayer) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisVideoPlayer) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisVideoPlayer) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisVideoPlayer) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisVideoPlayer) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisVideoPlayer) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisVideoPlayer) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisVideoPlayer) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -178,6 +211,12 @@ func (c aylisVideoPlayer) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisVideoPlayer) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisVideoPlayer) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisVideoPlayer) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisVideoPlayer) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisVideoPlayer) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisVideoPlayer) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisVideoPlayer) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisVideoPlayer) SetPopupMenu(v string) { c.Set("popup_menu", v) }

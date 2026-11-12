@@ -26,7 +26,8 @@ fn tone<'a>(variant: &'a str, default: &'a str) -> &'a str {
 
 /// Divide uma lista "a;b;c" (vazia = nenhum item).
 fn split_items(items: &str) -> Vec<&str> {
-    if items.is_empty() { Vec::new() } else { items.split(';').collect() }
+    // `;` ou quebra de linha.
+    if items.is_empty() { Vec::new() } else { items.split([';', '\n']).map(|s| s.trim_end_matches('\r')).collect() }
 }
 
 // ===========================================================================

@@ -97,6 +97,7 @@ Ainda falta um aparelho para:
 | Canal de desenvolvimento no celular (`adb reverse` num endereço local; IP da máquina sem cabo) | conferido no desktop e por teste | Executar no Android com o Inspetor do app e o hot reload |
 | Publicação: AAB na Play Store (teste interno) e o APK assinado instalado à mão | o AAB foi validado, mas não subiu para a loja | criar o teste interno na Play Console |
 | iOS no iPhone (tudo da seção Mac que vale para o iOS) | precisa de Mac e de um iPhone | o app do `build-ios.sh` instalado pelo Xcode |
+| A Landing publicada no celular (11/11): a rolagem acompanhando o dedo; o 3D da documentação pelo WebGL num navegador sem WebGPU | a rolagem sem layout por passo foi medida só sem janela; o WebGL, no Edge sem janela (SwiftShader) com o `navigator.gpu` escondido | o site republicado, no Safari de um iPhone antes do iOS 26 e no Chrome de um Android; a página do `Model3D` na documentação |
 
 ## PC com outro hardware ou periférico
 
@@ -108,6 +109,8 @@ Feito e testado por código, mas a máquina do autor não tem o hardware para co
 | Imprimir no Linux (PDF aberto pelo `xdg-open`) | só compilado | o mesmo exemplo no WSL ou num Linux |
 | Vídeo pelo GStreamer depois da revisão de 31/10 (aberto na thread de vídeo, trilha lida aos poucos) e o `cpal` 0.18 (ALSA/PipeWire) | só revisado; não compilado para Linux nesta máquina | exemplo `Player` num Linux |
 | Escolher a placa de vídeo com duas GPUs (`gpu` no projeto, `AYLIS_GPU`) | a máquina tem uma GPU só; conferido que a escolha pelo nome acha a placa certa | um notebook com GPU integrada e dedicada; a linha de bench mostra a placa usada |
+| Seguir o monitor (`gpu` = `monitor` no projeto ou no form; [gpu-por-monitor.md](gpu-por-monitor.md)) | testado numa placa só, com o WARP no lugar da segunda (11/11); precisa de monitores ligados em placas diferentes | a máquina dos seis monitores: arrastar a janela da dedicada para a integrada, com e sem `AYLIS_PRESENT=composition`, com um `Model3D` e um `VideoPlayer` |
+| Seguir o monitor no Linux (Wayland, `gpu_linux.rs`) | no WSL: a troca de contexto entre o D3D12 e o llvmpipe e o quadro depois dela; o compositor do WSLg não tem o `linux-dmabuf` v4 | um Linux com duas placas no GNOME ou no KDE (Wayland): `AYLIS_DEBUG_GL=1 cargo run -p aylis-platform-winit --example gpu_monitor` e arrastar a janela para um monitor da outra placa |
 | Traçado de raios no Vulkan e no Metal | testado no DX12 (Windows) | exemplo `model3d` com "Traçado de raios" num Linux ou Mac com GPU que tenha ray query |
 | FBX de verdade (Mixamo, Maya, Blender) | aguardando os arquivos do autor | exemplo `model3d` com o arquivo |
 | Pacote da IDE no Linux (`ide-package --target linux`: `.desktop`, MIME, ícones) | gerado e conferido por teste | `instalar.sh` num Linux com desktop e abrir um `.aylisproj` pelo gerenciador de arquivos |
@@ -133,3 +136,13 @@ campos).
 | Caixas de mensagem e modais | os mesmos | o foco vai para a caixa e volta ao fechar; o texto é lido |
 | Japonês e chinês pelo IME: a palavra em composição aparece no campo, e a escolha do candidato entra | IME do Windows, do macOS e o teclado do celular | digitar num Edit e num Memo; a janela de candidatos fica perto do cursor |
 | Coreano (a sílaba montada letra a letra) e o árabe (da direita para a esquerda) | IME do sistema | o mesmo, com o form espelhado no árabe |
+| Botão com `accessible_name` (o relatório do Tabernáculo, C29) | Narrador e NVDA, TalkBack, VoiceOver | o leitor diz o `accessible_name`, e não o texto ou o ícone do botão |
+
+**Do relatório do Tabernáculo (12/11), fora do Windows**
+
+- O vídeo por endereço (`file` com `https://`), W11: no Linux pelo `uridecodebin` do GStreamer, no
+  macOS pelo `NSURL` do AVFoundation. No Windows foi conferido pelo Media Foundation.
+- A foto do `snapshot` com o WebView (W10) é só do Windows (o `PrintWindow`); no Linux e no macOS a
+  foto continua sem o que o navegador pinta.
+- O `auto_size` do form (L07) pede o tamanho à janela: conferir que no macOS e no Linux a janela
+  acompanha.

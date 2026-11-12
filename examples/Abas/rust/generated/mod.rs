@@ -3,7 +3,6 @@
 //! `src/forms/`.
 
 use aylis::prelude::Ui;
-use aylis::prelude::instances::form_handler;
 
 pub mod components;
 pub use components::*;
@@ -15,7 +14,7 @@ pub mod principal;
 /// as classes dos pacotes de código.
 pub fn register(ui: &mut Ui) {
     ui.register_form_class("frmPrincipal", FrmPrincipal::bind);
-    ui.register_handler("frmPrincipal.principal_show", form_handler(FrmPrincipal::principal_show));
-    ui.register_handler("frmPrincipal.abas_change", form_handler(FrmPrincipal::abas_change));
-    ui.register_handler("frmPrincipal.abas_add", form_handler(FrmPrincipal::abas_add));
+    ui.register_handler("frmPrincipal.principal_show", aylis::prelude::instances::form_handler(FrmPrincipal::principal_show));
+    ui.register_handler("frmPrincipal.abas_change", aylis::prelude::instances::form_handler(FrmPrincipal::abas_change));
+    ui.register_handler("frmPrincipal.abas_add", aylis::prelude::instances::form_handler(FrmPrincipal::abas_add));
 }

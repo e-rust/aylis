@@ -8,29 +8,29 @@ Notificação do sistema (Windows, Android), com ações e imagem.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `image` | Imagem | texto |
-| `form` | Form | texto |
-| `form_width` | Largura do form | número |
-| `form_height` | Altura do form | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `image` | Imagem | texto | Imagem (PNG) ao lado do texto, opcional: arquivo ou asset do projeto. |
+| `form` | Form | texto | Um form inteiro desenhado como a imagem grande da notificação (o nome dele; criado se preciso), no tamanho `form_width` x `form_height`. |
+| `form_width` | Largura do form | número |  |
+| `form_height` | Altura do form | número |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `app_name` | Nome do aplicativo | texto |
-| `app_id` | ID do aplicativo | texto |
-| `notification_id` | ID da notificação | inteiro |
-| `channel` | Canal | texto |
-| `channel_name` | Nome do canal | texto |
-| `priority` | Prioridade | um de: `low`, `default`, `high` |
-| `actions` | Ações | texto |
-| `ongoing` | Em andamento | lógico |
-| `progress` | Progresso | número |
-| `full_screen` | Tela cheia | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `app_name` | Nome do aplicativo | texto | O nome do app na notificação (vazio: o título do form principal). |
+| `app_id` | ID do aplicativo | texto | O identificador do app no sistema (`empresa.app`; vazio: derivado do nome). |
+| `notification_id` | ID da notificação | inteiro | Mostrar de novo com o mesmo número atualiza a notificação em vez de criar outra. |
+| `channel` | Canal | texto | Canal do Android (o usuário configura som e destaque por canal). |
+| `channel_name` | Nome do canal | texto |  |
+| `priority` | Prioridade | um de: `low`, `default`, `high` |  |
+| `actions` | Ações | texto | Botões: `"responder:Responder;arquivar:Arquivar"` (identificador:texto); o toque chega em `on_action` com o identificador. |
+| `ongoing` | Em andamento | lógico | Fixa (o usuário não descarta), como um download em andamento. |
+| `progress` | Progresso | número | Barra de progresso de 0 a 1; negativo: sem barra. |
+| `full_screen` | Tela cheia | lógico | Android: abre o app por cima de tudo, até da tela de bloqueio (ligações, alarmes). |
 
 ## Eventos
 

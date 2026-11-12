@@ -10,18 +10,18 @@ Medidor de vazão: a turbina girando na velocidade da vazão e o valor.
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `unit` | Unidade | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `unit` | Unidade | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `value` | Valor | número |
-| `max` | Máximo | número |
-| `running` | Ligado | lógico |
-| `alarm` | Alarme | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `value` | Valor | número |  |
+| `max` | Máximo | número |  |
+| `running` | Ligado | lógico |  |
+| `alarm` | Alarme | lógico |  |
 
 ## Em código
 

@@ -10,17 +10,17 @@ Lista de itens com título, detalhe e imagem opcional, pensada também para o ce
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `item_height` | Altura do item | número |
-| `accessory` | Seta à direita | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `item_height` | Altura do item | número |  |
+| `accessory` | Seta à direita | lógico | Seta › à direita de cada item (navegação). |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `item_index` | Item escolhido | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `item_index` | Item escolhido | inteiro |  |
 
 ## Eventos
 

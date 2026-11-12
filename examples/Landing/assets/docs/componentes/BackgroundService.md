@@ -8,13 +8,13 @@ O serviço em segundo plano: a lógica sem tela do projeto (`src/background.rs`,
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `title` | Título | texto |
-| `text` | Texto | texto |
-| `kind` | Tipo | texto |
-| `keep_alive` | Manter vivo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico |  |
+| `title` | Título | texto |  |
+| `text` | Texto | texto |  |
+| `kind` | Tipo | texto |  |
+| `keep_alive` | Manter vivo | lógico |  |
 
 ## Eventos
 

@@ -115,7 +115,8 @@ impl Rows {
 }
 
 fn split_items(items: &str) -> Vec<String> {
-    if items.is_empty() { Vec::new() } else { items.split(';').map(str::to_string).collect() }
+    // `;` ou quebra de linha.
+    if items.is_empty() { Vec::new() } else { items.split([';', '\n']).map(|s| s.trim_end_matches('\r').to_string()).collect() }
 }
 
 /// Moldura padrão (fundo e borda do estilo).

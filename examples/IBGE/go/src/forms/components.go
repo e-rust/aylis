@@ -165,6 +165,36 @@ func (c aylisDBChart) SetClickedSeries(v int64) { c.Set("clicked_series", v) }
 func (c aylisDBChart) ClickedIndex() int64 { return int64(asNumber(c.Get("clicked_index"))) }
 func (c aylisDBChart) SetClickedIndex(v int64) { c.Set("clicked_index", v) }
 
+func (c aylisDBChart) ValueFormat() string { return asText(c.Get("value_format")) }
+func (c aylisDBChart) SetValueFormat(v string) { c.Set("value_format", v) }
+
+func (c aylisDBChart) LabelAngle() float64 { return asNumber(c.Get("label_angle")) }
+func (c aylisDBChart) SetLabelAngle(v float64) { c.Set("label_angle", v) }
+
+func (c aylisDBChart) TitleAlign() string { return asText(c.Get("title_align")) }
+func (c aylisDBChart) SetTitleAlign(v string) { c.Set("title_align", v) }
+
+func (c aylisDBChart) TitleBold() bool { return asBool(c.Get("title_bold")) }
+func (c aylisDBChart) SetTitleBold(v bool) { c.Set("title_bold", v) }
+
+func (c aylisDBChart) AreaOpacity() float64 { return asNumber(c.Get("area_opacity")) }
+func (c aylisDBChart) SetAreaOpacity(v float64) { c.Set("area_opacity", v) }
+
+func (c aylisDBChart) LegendPosition() string { return asText(c.Get("legend_position")) }
+func (c aylisDBChart) SetLegendPosition(v string) { c.Set("legend_position", v) }
+
+func (c aylisDBChart) Stacked() bool { return asBool(c.Get("stacked")) }
+func (c aylisDBChart) SetStacked(v bool) { c.Set("stacked", v) }
+
+func (c aylisDBChart) Colors() string { return asText(c.Get("colors")) }
+func (c aylisDBChart) SetColors(v string) { c.Set("colors", v) }
+
+func (c aylisDBChart) CenterText() string { return asText(c.Get("center_text")) }
+func (c aylisDBChart) SetCenterText(v string) { c.Set("center_text", v) }
+
+func (c aylisDBChart) SliceLabels() string { return asText(c.Get("slice_labels")) }
+func (c aylisDBChart) SetSliceLabels(v string) { c.Set("slice_labels", v) }
+
 func (c aylisDBChart) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisDBChart) SetLeft(v float64) { c.Set("left", v) }
 
@@ -180,6 +210,15 @@ func (c aylisDBChart) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisDBChart) Align() string { return asText(c.Get("align")) }
 func (c aylisDBChart) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisDBChart) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisDBChart) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisDBChart) Margins() string { return asText(c.Get("margins")) }
+func (c aylisDBChart) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisDBChart) Padding() string { return asText(c.Get("padding")) }
+func (c aylisDBChart) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisDBChart) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisDBChart) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -191,6 +230,12 @@ func (c aylisDBChart) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisDBChart) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisDBChart) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisDBChart) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisDBChart) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisDBChart) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisDBChart) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisDBChart) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisDBChart) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -261,6 +306,18 @@ func (c aylisDBChart) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisDBChart) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisDBChart) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisDBChart) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisDBChart) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisDBChart) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisDBChart) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisDBChart) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisDBChart) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisDBChart) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisDBChart) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisDBChart) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisDBChart) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -315,6 +372,12 @@ func (c aylisDBChart) SetHint(v string) { c.Set("hint", v) }
 func (c aylisDBChart) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisDBChart) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisDBChart) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisDBChart) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisDBChart) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisDBChart) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisDBChart) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisDBChart) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -357,6 +420,12 @@ func (c aylisDataGrid) SetIncrementalSearch(v bool) { c.Set("incremental_search"
 func (c aylisDataGrid) CursorColor() string { return asText(c.Get("cursor_color")) }
 func (c aylisDataGrid) SetCursorColor(v string) { c.Set("cursor_color", v) }
 
+func (c aylisDataGrid) Indicator() bool { return asBool(c.Get("indicator")) }
+func (c aylisDataGrid) SetIndicator(v bool) { c.Set("indicator", v) }
+
+func (c aylisDataGrid) HighlightCurrent() bool { return asBool(c.Get("highlight_current")) }
+func (c aylisDataGrid) SetHighlightCurrent(v bool) { c.Set("highlight_current", v) }
+
 func (c aylisDataGrid) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisDataGrid) SetLeft(v float64) { c.Set("left", v) }
 
@@ -372,6 +441,15 @@ func (c aylisDataGrid) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisDataGrid) Align() string { return asText(c.Get("align")) }
 func (c aylisDataGrid) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisDataGrid) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisDataGrid) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisDataGrid) Margins() string { return asText(c.Get("margins")) }
+func (c aylisDataGrid) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisDataGrid) Padding() string { return asText(c.Get("padding")) }
+func (c aylisDataGrid) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisDataGrid) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisDataGrid) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -383,6 +461,12 @@ func (c aylisDataGrid) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisDataGrid) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisDataGrid) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisDataGrid) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisDataGrid) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisDataGrid) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisDataGrid) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisDataGrid) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisDataGrid) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -453,6 +537,18 @@ func (c aylisDataGrid) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisDataGrid) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisDataGrid) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisDataGrid) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisDataGrid) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisDataGrid) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisDataGrid) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisDataGrid) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisDataGrid) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisDataGrid) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisDataGrid) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisDataGrid) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisDataGrid) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -506,6 +602,12 @@ func (c aylisDataGrid) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisDataGrid) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisDataGrid) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisDataGrid) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisDataGrid) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisDataGrid) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisDataGrid) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisDataGrid) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisDataGrid) SetPopupMenu(v string) { c.Set("popup_menu", v) }
@@ -667,6 +769,18 @@ func (c aylisForm) SetMonitor(v int64) { c.Set("monitor", v) }
 func (c aylisForm) RememberPlacement() bool { return asBool(c.Get("remember_placement")) }
 func (c aylisForm) SetRememberPlacement(v bool) { c.Set("remember_placement", v) }
 
+func (c aylisForm) Gpu() string { return asText(c.Get("gpu")) }
+func (c aylisForm) SetGpu(v string) { c.Set("gpu", v) }
+
+func (c aylisForm) ActivateOnShow() bool { return asBool(c.Get("activate_on_show")) }
+func (c aylisForm) SetActivateOnShow(v bool) { c.Set("activate_on_show", v) }
+
+func (c aylisForm) CloseAction() string { return asText(c.Get("close_action")) }
+func (c aylisForm) SetCloseAction(v string) { c.Set("close_action", v) }
+
+func (c aylisForm) FrameRate() float64 { return asNumber(c.Get("frame_rate")) }
+func (c aylisForm) SetFrameRate(v float64) { c.Set("frame_rate", v) }
+
 func (c aylisForm) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisForm) SetLeft(v float64) { c.Set("left", v) }
 
@@ -682,6 +796,15 @@ func (c aylisForm) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisForm) Align() string { return asText(c.Get("align")) }
 func (c aylisForm) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisForm) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisForm) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisForm) Margins() string { return asText(c.Get("margins")) }
+func (c aylisForm) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisForm) Padding() string { return asText(c.Get("padding")) }
+func (c aylisForm) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisForm) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisForm) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -693,6 +816,12 @@ func (c aylisForm) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisForm) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisForm) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisForm) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisForm) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisForm) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisForm) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisForm) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisForm) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -763,6 +892,18 @@ func (c aylisForm) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisForm) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisForm) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisForm) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisForm) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisForm) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisForm) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisForm) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisForm) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisForm) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisForm) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisForm) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisForm) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -817,9 +958,17 @@ func (c aylisForm) SetHint(v string) { c.Set("hint", v) }
 func (c aylisForm) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisForm) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisForm) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisForm) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisForm) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisForm) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisForm) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisForm) SetPopupMenu(v string) { c.Set("popup_menu", v) }
-func (c aylisForm) MoveToMonitor(a1 int64) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "move_to_monitor", "args": []any{a1}}) }
+func (c aylisForm) MoveToMonitor(monitor int64) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "move_to_monitor", "args": []any{monitor}}) }
+func (c aylisForm) GpuAdapter() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapter", "args": []any{}})) }
+func (c aylisForm) GpuAdapters() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapters", "args": []any{}})) }
 func (c aylisForm) Focused() string { return asText(askCmd(c.App, "focused", aylis.M{"target": c.ID})) }
 func (c aylisForm) FocusNext() { c.App.Send("focus_next", aylis.M{"target": c.ID}) }
 func (c aylisForm) FocusPrev() { c.App.Send("focus_prev", aylis.M{"target": c.ID}) }
@@ -860,6 +1009,15 @@ func (c aylisGroupBox) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisGroupBox) Align() string { return asText(c.Get("align")) }
 func (c aylisGroupBox) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisGroupBox) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisGroupBox) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisGroupBox) Margins() string { return asText(c.Get("margins")) }
+func (c aylisGroupBox) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisGroupBox) Padding() string { return asText(c.Get("padding")) }
+func (c aylisGroupBox) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisGroupBox) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisGroupBox) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -871,6 +1029,12 @@ func (c aylisGroupBox) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisGroupBox) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisGroupBox) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisGroupBox) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisGroupBox) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisGroupBox) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisGroupBox) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisGroupBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisGroupBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -941,6 +1105,18 @@ func (c aylisGroupBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisGroupBox) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisGroupBox) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisGroupBox) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisGroupBox) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisGroupBox) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisGroupBox) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisGroupBox) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisGroupBox) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisGroupBox) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisGroupBox) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisGroupBox) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisGroupBox) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -995,6 +1171,12 @@ func (c aylisGroupBox) SetHint(v string) { c.Set("hint", v) }
 func (c aylisGroupBox) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisGroupBox) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisGroupBox) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisGroupBox) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisGroupBox) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisGroupBox) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisGroupBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisGroupBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -1025,6 +1207,15 @@ func (c aylisImage) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisImage) Align() string { return asText(c.Get("align")) }
 func (c aylisImage) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisImage) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisImage) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisImage) Margins() string { return asText(c.Get("margins")) }
+func (c aylisImage) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisImage) Padding() string { return asText(c.Get("padding")) }
+func (c aylisImage) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisImage) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisImage) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1036,6 +1227,12 @@ func (c aylisImage) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisImage) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisImage) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisImage) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisImage) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisImage) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisImage) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisImage) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisImage) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -1106,6 +1303,18 @@ func (c aylisImage) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisImage) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisImage) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisImage) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisImage) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisImage) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisImage) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisImage) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisImage) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisImage) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisImage) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisImage) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisImage) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -1160,6 +1369,12 @@ func (c aylisImage) SetHint(v string) { c.Set("hint", v) }
 func (c aylisImage) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisImage) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisImage) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisImage) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisImage) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisImage) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisImage) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisImage) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -1205,6 +1420,12 @@ func (c aylisLabel) SetOutline(v string) { c.Set("outline", v) }
 func (c aylisLabel) OutlineWidth() float64 { return asNumber(c.Get("outline_width")) }
 func (c aylisLabel) SetOutlineWidth(v float64) { c.Set("outline_width", v) }
 
+func (c aylisLabel) LineHeight() float64 { return asNumber(c.Get("line_height")) }
+func (c aylisLabel) SetLineHeight(v float64) { c.Set("line_height", v) }
+
+func (c aylisLabel) TextShadow() string { return asText(c.Get("text_shadow")) }
+func (c aylisLabel) SetTextShadow(v string) { c.Set("text_shadow", v) }
+
 func (c aylisLabel) FocusControl() string { return asText(c.Get("focus_control")) }
 func (c aylisLabel) SetFocusControl(v string) { c.Set("focus_control", v) }
 
@@ -1223,6 +1444,15 @@ func (c aylisLabel) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisLabel) Align() string { return asText(c.Get("align")) }
 func (c aylisLabel) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisLabel) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisLabel) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisLabel) Margins() string { return asText(c.Get("margins")) }
+func (c aylisLabel) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisLabel) Padding() string { return asText(c.Get("padding")) }
+func (c aylisLabel) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisLabel) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisLabel) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1234,6 +1464,12 @@ func (c aylisLabel) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisLabel) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisLabel) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisLabel) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisLabel) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisLabel) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisLabel) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisLabel) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisLabel) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -1304,6 +1540,18 @@ func (c aylisLabel) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisLabel) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisLabel) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisLabel) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisLabel) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisLabel) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisLabel) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisLabel) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisLabel) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisLabel) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisLabel) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisLabel) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisLabel) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -1358,8 +1606,16 @@ func (c aylisLabel) SetHint(v string) { c.Set("hint", v) }
 func (c aylisLabel) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisLabel) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisLabel) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisLabel) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisLabel) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisLabel) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisLabel) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisLabel) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisLabel) MinContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "min_content_width", "args": []any{}})) }
+func (c aylisLabel) MaxContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "max_content_width", "args": []any{}})) }
 
 // aylisLayout é um Layout de um form.
 type aylisLayout struct{ aylis.Component }
@@ -1379,6 +1635,9 @@ func (c aylisLayout) SetCharsOverride(v bool) { c.Set("chars_override", v) }
 func (c aylisLayout) CharMap() string { return asText(c.Get("char_map")) }
 func (c aylisLayout) SetCharMap(v string) { c.Set("char_map", v) }
 
+func (c aylisLayout) Gap() float64 { return asNumber(c.Get("gap")) }
+func (c aylisLayout) SetGap(v float64) { c.Set("gap", v) }
+
 func (c aylisLayout) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisLayout) SetLeft(v float64) { c.Set("left", v) }
 
@@ -1394,6 +1653,15 @@ func (c aylisLayout) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisLayout) Align() string { return asText(c.Get("align")) }
 func (c aylisLayout) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisLayout) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisLayout) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisLayout) Margins() string { return asText(c.Get("margins")) }
+func (c aylisLayout) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisLayout) Padding() string { return asText(c.Get("padding")) }
+func (c aylisLayout) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisLayout) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisLayout) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1405,6 +1673,12 @@ func (c aylisLayout) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisLayout) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisLayout) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisLayout) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisLayout) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisLayout) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisLayout) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisLayout) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisLayout) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -1475,6 +1749,18 @@ func (c aylisLayout) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisLayout) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisLayout) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisLayout) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisLayout) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisLayout) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisLayout) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisLayout) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisLayout) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisLayout) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisLayout) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisLayout) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisLayout) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -1529,6 +1815,12 @@ func (c aylisLayout) SetHint(v string) { c.Set("hint", v) }
 func (c aylisLayout) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisLayout) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisLayout) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisLayout) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisLayout) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisLayout) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisLayout) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisLayout) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -1549,6 +1841,9 @@ func (c aylisPanel) SetCharsOverride(v bool) { c.Set("chars_override", v) }
 
 func (c aylisPanel) CharMap() string { return asText(c.Get("char_map")) }
 func (c aylisPanel) SetCharMap(v string) { c.Set("char_map", v) }
+
+func (c aylisPanel) Gap() float64 { return asNumber(c.Get("gap")) }
+func (c aylisPanel) SetGap(v float64) { c.Set("gap", v) }
 
 func (c aylisPanel) Fill() string { return asText(c.Get("fill")) }
 func (c aylisPanel) SetFill(v string) { c.Set("fill", v) }
@@ -1574,8 +1869,8 @@ func (c aylisPanel) SetStroke(v string) { c.Set("stroke", v) }
 func (c aylisPanel) StrokeWidth() float64 { return asNumber(c.Get("stroke_width")) }
 func (c aylisPanel) SetStrokeWidth(v float64) { c.Set("stroke_width", v) }
 
-func (c aylisPanel) Radius() float64 { return asNumber(c.Get("radius")) }
-func (c aylisPanel) SetRadius(v float64) { c.Set("radius", v) }
+func (c aylisPanel) Radius() string { return asText(c.Get("radius")) }
+func (c aylisPanel) SetRadius(v string) { c.Set("radius", v) }
 
 func (c aylisPanel) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisPanel) SetLeft(v float64) { c.Set("left", v) }
@@ -1592,6 +1887,15 @@ func (c aylisPanel) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisPanel) Align() string { return asText(c.Get("align")) }
 func (c aylisPanel) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisPanel) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisPanel) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisPanel) Margins() string { return asText(c.Get("margins")) }
+func (c aylisPanel) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisPanel) Padding() string { return asText(c.Get("padding")) }
+func (c aylisPanel) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisPanel) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisPanel) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1603,6 +1907,12 @@ func (c aylisPanel) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisPanel) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisPanel) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisPanel) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisPanel) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisPanel) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisPanel) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisPanel) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisPanel) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -1673,6 +1983,18 @@ func (c aylisPanel) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisPanel) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisPanel) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisPanel) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisPanel) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisPanel) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisPanel) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisPanel) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisPanel) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisPanel) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisPanel) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisPanel) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisPanel) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -1724,6 +2046,12 @@ func (c aylisPanel) SetHint(v string) { c.Set("hint", v) }
 func (c aylisPanel) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisPanel) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisPanel) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisPanel) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisPanel) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisPanel) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisPanel) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisPanel) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -1748,6 +2076,15 @@ func (c aylisSplitter) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisSplitter) Align() string { return asText(c.Get("align")) }
 func (c aylisSplitter) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisSplitter) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisSplitter) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisSplitter) Margins() string { return asText(c.Get("margins")) }
+func (c aylisSplitter) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisSplitter) Padding() string { return asText(c.Get("padding")) }
+func (c aylisSplitter) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisSplitter) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisSplitter) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1759,6 +2096,12 @@ func (c aylisSplitter) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisSplitter) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisSplitter) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisSplitter) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisSplitter) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisSplitter) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisSplitter) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisSplitter) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisSplitter) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -1829,6 +2172,18 @@ func (c aylisSplitter) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisSplitter) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisSplitter) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisSplitter) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisSplitter) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisSplitter) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisSplitter) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisSplitter) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisSplitter) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisSplitter) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisSplitter) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisSplitter) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisSplitter) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -1883,6 +2238,12 @@ func (c aylisSplitter) SetHint(v string) { c.Set("hint", v) }
 func (c aylisSplitter) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisSplitter) SetTag(v int64) { c.Set("tag", v) }
 
+func (c aylisSplitter) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisSplitter) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisSplitter) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisSplitter) SetAccessibleName(v string) { c.Set("accessible_name", v) }
+
 func (c aylisSplitter) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisSplitter) SetPopupMenu(v string) { c.Set("popup_menu", v) }
 
@@ -1922,6 +2283,15 @@ func (c aylisSvg) SetHeight(v float64) { c.Set("height", v) }
 func (c aylisSvg) Align() string { return asText(c.Get("align")) }
 func (c aylisSvg) SetAlign(v string) { c.Set("align", v) }
 
+func (c aylisSvg) Anchors() string { return asText(c.Get("anchors")) }
+func (c aylisSvg) SetAnchors(v string) { c.Set("anchors", v) }
+
+func (c aylisSvg) Margins() string { return asText(c.Get("margins")) }
+func (c aylisSvg) SetMargins(v string) { c.Set("margins", v) }
+
+func (c aylisSvg) Padding() string { return asText(c.Get("padding")) }
+func (c aylisSvg) SetPadding(v string) { c.Set("padding", v) }
+
 func (c aylisSvg) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisSvg) SetVisible(v bool) { c.Set("visible", v) }
 
@@ -1933,6 +2303,12 @@ func (c aylisSvg) SetHitTest(v bool) { c.Set("hit_test", v) }
 
 func (c aylisSvg) ClipChildren() bool { return asBool(c.Get("clip_children")) }
 func (c aylisSvg) SetClipChildren(v bool) { c.Set("clip_children", v) }
+
+func (c aylisSvg) InheritState() bool { return asBool(c.Get("inherit_state")) }
+func (c aylisSvg) SetInheritState(v bool) { c.Set("inherit_state", v) }
+
+func (c aylisSvg) Translate() bool { return asBool(c.Get("translate")) }
+func (c aylisSvg) SetTranslate(v bool) { c.Set("translate", v) }
 
 func (c aylisSvg) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisSvg) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
@@ -2003,6 +2379,18 @@ func (c aylisSvg) SetAutoSize(v bool) { c.Set("auto_size", v) }
 func (c aylisSvg) ColumnSpan() int64 { return int64(asNumber(c.Get("column_span"))) }
 func (c aylisSvg) SetColumnSpan(v int64) { c.Set("column_span", v) }
 
+func (c aylisSvg) GridRow() int64 { return int64(asNumber(c.Get("grid_row"))) }
+func (c aylisSvg) SetGridRow(v int64) { c.Set("grid_row", v) }
+
+func (c aylisSvg) GridColumn() int64 { return int64(asNumber(c.Get("grid_column"))) }
+func (c aylisSvg) SetGridColumn(v int64) { c.Set("grid_column", v) }
+
+func (c aylisSvg) RowSpan() int64 { return int64(asNumber(c.Get("row_span"))) }
+func (c aylisSvg) SetRowSpan(v int64) { c.Set("row_span", v) }
+
+func (c aylisSvg) Grow() float64 { return asNumber(c.Get("grow")) }
+func (c aylisSvg) SetGrow(v float64) { c.Set("grow", v) }
+
 func (c aylisSvg) Shadow() string { return asText(c.Get("shadow")) }
 func (c aylisSvg) SetShadow(v string) { c.Set("shadow", v) }
 
@@ -2056,6 +2444,12 @@ func (c aylisSvg) SetHint(v string) { c.Set("hint", v) }
 
 func (c aylisSvg) Tag() int64 { return int64(asNumber(c.Get("tag"))) }
 func (c aylisSvg) SetTag(v int64) { c.Set("tag", v) }
+
+func (c aylisSvg) TagString() string { return asText(c.Get("tag_string")) }
+func (c aylisSvg) SetTagString(v string) { c.Set("tag_string", v) }
+
+func (c aylisSvg) AccessibleName() string { return asText(c.Get("accessible_name")) }
+func (c aylisSvg) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
 func (c aylisSvg) PopupMenu() string { return asText(c.Get("popup_menu")) }
 func (c aylisSvg) SetPopupMenu(v string) { c.Set("popup_menu", v) }

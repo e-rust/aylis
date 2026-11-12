@@ -10,11 +10,11 @@ Linha divisória (o `v-divider`), horizontal ou vertical, com texto no meio opci
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `vertical` | Vertical | lógico |
-| `text` | Texto | texto |
-| `thickness` | Espessura | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `vertical` | Vertical | lógico |  |
+| `text` | Texto | texto |  |
+| `thickness` | Espessura | número |  |
 
 ## Em código
 

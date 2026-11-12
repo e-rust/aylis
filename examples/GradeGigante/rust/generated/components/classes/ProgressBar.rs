@@ -66,6 +66,24 @@ impl ProgressBar {
     pub fn set_align(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "align", Into::<String>::into(value))
     }
+    pub fn anchors(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "anchors"))
+    }
+    pub fn set_anchors(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "anchors", Into::<String>::into(value))
+    }
+    pub fn margins(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "margins"))
+    }
+    pub fn set_margins(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "margins", Into::<String>::into(value))
+    }
+    pub fn padding(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "padding"))
+    }
+    pub fn set_padding(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "padding", Into::<String>::into(value))
+    }
     pub fn visible(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "visible").and_then(|v| v.to_bool().ok()).unwrap_or_default()
     }
@@ -89,6 +107,18 @@ impl ProgressBar {
     }
     pub fn set_clip_children(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "clip_children", value)
+    }
+    pub fn inherit_state(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "inherit_state").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_inherit_state(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "inherit_state", value)
+    }
+    pub fn translate(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "translate").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_translate(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "translate", value)
     }
     pub fn captures_wheel(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "captures_wheel").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -228,6 +258,30 @@ impl ProgressBar {
     pub fn set_column_span(self, ui: &mut Ui, value: i64) {
         handles::write(ui, self.id, "column_span", value)
     }
+    pub fn grid_row(self, ui: &Ui) -> i64 {
+        handles::read(ui, self.id, "grid_row").and_then(|v| v.to_i64().ok()).unwrap_or_default()
+    }
+    pub fn set_grid_row(self, ui: &mut Ui, value: i64) {
+        handles::write(ui, self.id, "grid_row", value)
+    }
+    pub fn grid_column(self, ui: &Ui) -> i64 {
+        handles::read(ui, self.id, "grid_column").and_then(|v| v.to_i64().ok()).unwrap_or_default()
+    }
+    pub fn set_grid_column(self, ui: &mut Ui, value: i64) {
+        handles::write(ui, self.id, "grid_column", value)
+    }
+    pub fn row_span(self, ui: &Ui) -> i64 {
+        handles::read(ui, self.id, "row_span").and_then(|v| v.to_i64().ok()).unwrap_or_default()
+    }
+    pub fn set_row_span(self, ui: &mut Ui, value: i64) {
+        handles::write(ui, self.id, "row_span", value)
+    }
+    pub fn grow(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "grow").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_grow(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "grow", value)
+    }
     pub fn shadow(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "shadow"))
     }
@@ -335,6 +389,18 @@ impl ProgressBar {
     }
     pub fn set_tag(self, ui: &mut Ui, value: i64) {
         handles::write(ui, self.id, "tag", value)
+    }
+    pub fn tag_string(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "tag_string"))
+    }
+    pub fn set_tag_string(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "tag_string", Into::<String>::into(value))
+    }
+    pub fn accessible_name(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "accessible_name"))
+    }
+    pub fn set_accessible_name(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "accessible_name", Into::<String>::into(value))
     }
     pub fn popup_menu(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "popup_menu"))

@@ -8,15 +8,15 @@ Notificações push: com `active`, registra quando o form abre (pede a permissã
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `active` | Ativo | lógico |
-| `show_in_foreground` | Mostrar com o app aberto | lógico |
-| `sender_id` | ID do remetente (FCM) | texto |
-| `project_id` | ID do projeto (FCM) | texto |
-| `app_id` | ID do aplicativo | texto |
-| `api_key` | Chave da API | texto |
-| `vapid_key` | Chave VAPID (Web Push) | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `active` | Ativo | lógico | Registrar quando o form abrir. |
+| `show_in_foreground` | Mostrar com o app aberto | lógico | Com o app aberto, a mensagem com título também vira notificação do sistema. |
+| `sender_id` | ID do remetente (FCM) | texto |  |
+| `project_id` | ID do projeto (FCM) | texto |  |
+| `app_id` | ID do aplicativo | texto |  |
+| `api_key` | Chave da API | texto |  |
+| `vapid_key` | Chave VAPID (Web Push) | texto |  |
 
 ## Eventos
 

@@ -12,7 +12,7 @@ rust-version.workspace = true
 diagnostics = []
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.2", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.3", path = "../aylis-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows-numerics = { version = "0.3", default-features = false }
@@ -28,6 +28,8 @@ windows = { version = "0.62", features = [
     "Win32_Graphics_Direct2D_Common",
     "Win32_Graphics_DirectWrite",
     "Win32_Graphics_Dxgi_Common",
+    # MonitorFromWindow e o monitor de cada saída do DXGI (a placa que segue o monitor).
+    "Win32_Graphics_Gdi",
     "Win32_Graphics_Imaging",
     "Win32_System_Com",
 ] }

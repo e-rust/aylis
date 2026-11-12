@@ -10,16 +10,16 @@ Seletor de emoji. Tocar num emoji dispara `on_select` (o emoji em `EventArgs::Te
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `max_recent` | Máximo de recentes | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `max_recent` | Máximo de recentes | inteiro | Quantos recentes guardar. |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `filter` | Filtro | texto |
-| `recent` | Recentes | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `filter` | Filtro | texto | A busca (o campo de cima; também dá para mudar pelo código). |
+| `recent` | Recentes | texto |  |
 
 ## Eventos
 

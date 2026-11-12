@@ -456,3 +456,19 @@ fn load_columns_fills_the_dataset() {
     assert_eq!(run(&mut ui, json!({ "cmd": "data", "target": "cds", "op": "record" })), json!({ "id": 1, "nome": "Ana", "uf": null }));
     assert!(execute(&mut ui, &json!({ "cmd": "data", "target": "cds", "op": "load_columns", "fields": ["id"], "columns": [[1], [2]] })).is_err(), "colunas a mais");
 }
+
+/// Um nome solto que está em mais de um form (frames com o mesmo `lblTotal`) é recusado com os
+/// caminhos, em vez de mexer no primeiro (relatório do InsightDB, 11/11).
+#[test]
+fn an_ambiguous_name_lists_the_paths() {
+    let mut ui = ui();
+    for form in ["fraVendas", "fraEstoque"] {
+        let root = ui.add_root(aylis_controls::Form::new(form, 200.0, 100.0));
+        ui.set_name(root, form).unwrap();
+        let label = ui.add(aylis_controls::Label::new("0"), root);
+        ui.set_name(label, "lblTotal").unwrap();
+    }
+    let error = execute(&mut ui, &json!({ "cmd": "get", "target": "lblTotal", "prop": "text" })).unwrap_err();
+    assert!(error.contains("fraVendas.lblTotal") && error.contains("fraEstoque.lblTotal"), "{error}");
+    assert_eq!(run(&mut ui, json!({ "cmd": "get", "target": "fraEstoque.lblTotal", "prop": "text" })), json!("0"));
+}

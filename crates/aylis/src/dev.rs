@@ -126,7 +126,11 @@ fn snapshot(ui: &mut Ui, command: &Value) -> Result<Value, String> {
     if let Some(target) = command.get("target").filter(|t| !t.is_null()) {
         let id = aylis_remote::resolve(ui, target)?;
         ui.layout();
-        let image = ui.snapshot(id, 1.0).ok_or("sem desenho fora da tela nesta plataforma")?;
+        // Sem o cursor de texto e o realce do mouse do momento (B03).
+        ui.set_still_picture(true);
+        let image = ui.snapshot(id, 1.0);
+        ui.set_still_picture(false);
+        let image = image.ok_or("sem desenho fora da tela nesta plataforma")?;
         let aylis_core::ImageSource::Encoded(png) = image.source() else { return Err("falha ao gerar o PNG".into()) };
         return Ok(Value::String(base64(png)));
     }
@@ -137,9 +141,25 @@ fn snapshot(ui: &mut Ui, command: &Value) -> Result<Value, String> {
     ui.layout();
     let (w, h) = ui.control(form).map_or((800.0, 600.0), |cb| (cb.width(), cb.height()));
     let background = ui.theme().color("background");
+    // Com vista nativa (o WebView), a foto é a da janela de verdade: o desenho fora da tela
+    // não tem o que o navegador pinta (o relatório do Tabernáculo, W10).
+    if !ui.native_views(form).is_empty() {
+        let captured = ui.services_mut().window_capture.as_mut().and_then(|c| c.capture(form));
+        if let Some((cw, ch, pixels)) = captured {
+            let image = aylis_core::Image::rgba(cw, ch, pixels);
+            let service = ui.services_mut().offscreen.take().ok_or("sem desenho fora da tela nesta plataforma")?;
+            let png = service.render_png(w as u32, h as u32, 1.0, background, &mut |c: &mut dyn aylis_core::Canvas| {
+                c.draw_image(&image, aylis_core::RectF::new(0.0, 0.0, cw as f32, ch as f32), aylis_core::RectF::new(0.0, 0.0, w, h), 1.0);
+            });
+            ui.services_mut().offscreen = Some(service);
+            return Ok(Value::String(base64(&png.ok_or("falha ao gerar o PNG")?)));
+        }
+    }
     // O serviço sai do `Ui` durante o desenho (a pintura precisa do `Ui` inteiro).
     let service = ui.services_mut().offscreen.take().ok_or("sem desenho fora da tela nesta plataforma")?;
+    ui.set_still_picture(true);
     let png = service.render_png(w as u32, h as u32, 1.0, background, &mut |c: &mut dyn aylis_core::Canvas| ui.paint(form, c));
+    ui.set_still_picture(false);
     ui.services_mut().offscreen = Some(service);
     Ok(Value::String(base64(&png.ok_or("falha ao gerar o PNG")?)))
 }
@@ -188,8 +208,14 @@ fn send_trace(line: String) {
 /// Conecta na IDE e passa a atender os comandos dela (numa thread; sem a IDE, tenta de novo
 /// em silêncio).
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) fn connect(ui: &Ui, target: Target, mix: BTreeMap<String, String>) {
+pub(crate) fn connect(ui: &Ui, mut target: Target, mix: BTreeMap<String, String>) {
     use std::sync::mpsc;
+    // A IDE abriu o canal noutra porta (a do projeto estava ocupada): ela avisa aqui.
+    if let Some(port) = std::env::var("AYLIS_DEV_PORT").ok().and_then(|p| p.parse::<u16>().ok())
+        && let Some((host, _)) = target.address.rsplit_once(':')
+    {
+        target.address = format!("{host}:{port}");
+    }
     use std::time::Duration;
     let poster = ui.poster();
     let (trace_tx, trace_rx) = mpsc::channel::<String>();

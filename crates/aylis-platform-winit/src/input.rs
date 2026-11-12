@@ -91,6 +91,8 @@ pub(crate) fn cursor(shape: CursorShape) -> CursorIcon {
         CursorShape::ResizeVertical => CursorIcon::NsResize,
         CursorShape::ResizeNeSw => CursorIcon::NeswResize,
         CursorShape::ResizeNwSe => CursorIcon::NwseResize,
+        CursorShape::Grab => CursorIcon::Grab,
+        CursorShape::Grabbing => CursorIcon::Grabbing,
         // Escondido à parte (`set_cursor_visible`); o ícone fica o normal.
         CursorShape::None => CursorIcon::Default,
     }

@@ -10,18 +10,18 @@ A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `dense` | Compacto | lógico |
-| `striped` | Listrado | lógico |
-| `separator` | Separadores | um de: `horizontal`, `vertical`, `cell`, `none` |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `dense` | Compacto | lógico |  |
+| `striped` | Listrado | lógico |  |
+| `separator` | Separadores | um de: `horizontal`, `vertical`, `cell`, `none` |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `columns` | Colunas | texto |
-| `rows` | Linhas | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `columns` | Colunas | texto |  |
+| `rows` | Linhas | texto |  |
 
 ## Em código
 

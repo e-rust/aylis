@@ -10,15 +10,15 @@ O fundo com paralaxe (`QParallax`): a imagem (`image`, um arquivo do app) anda m
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `image` | Imagem | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `image` | Imagem | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `speed` | Velocidade | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `speed` | Velocidade | número |  |
 
 ## Em código
 

@@ -137,3 +137,21 @@ fn captures_wheel_keeps_the_wheel_from_the_containers_outside() {
     assert_eq!(position(&ui, sb), 0.0, "a roda ficou com o controle");
     assert_eq!(*wheels.borrow(), 2, "o on_wheel dele recebeu");
 }
+
+/// Rolar só anda os filhos: o layout do form não é refeito a cada passo (na Landing, no
+/// celular, cada passo media de novo todos os textos da página), e os filhos ficam onde um
+/// layout completo os poria.
+#[test]
+fn scrolling_moves_the_children_without_a_new_layout() {
+    let (mut ui, f, sb, list, rows) = setup();
+    ui.update_layout();
+    ui.wheel(f, wheel(-40.0));
+    assert!(!ui.needs_layout(), "rolar pediu o layout do form");
+    assert_eq!(position(&ui, sb), 40.0);
+    let moved: Vec<_> = std::iter::once(list).chain(rows.iter().copied()).map(|id| ui.absolute_rect(id)).collect();
+    // O mesmo que o layout completo calcula com a rolagem nova.
+    ui.layout();
+    let laid: Vec<_> = std::iter::once(list).chain(rows.iter().copied()).map(|id| ui.absolute_rect(id)).collect();
+    assert_eq!(moved, laid);
+    assert_eq!(ui.laid_out_bounds(list).unwrap().y, -40.0);
+}

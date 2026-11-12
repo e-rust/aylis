@@ -10,23 +10,23 @@ Etiqueta compacta (o `v-chip`): texto, ícone opcional, marcável (`checkable`) 
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
-| `icon` | Ícone | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
+| `icon` | Ícone | texto |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `closable` | Pode fechar | lógico |
-| `checkable` | Marcável | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `closable` | Pode fechar | lógico |  |
+| `checkable` | Marcável | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `checked` | Marcado | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `checked` | Marcado | lógico |  |
 
 ## Eventos
 

@@ -59,3 +59,13 @@ fn mixing_from_transparent_does_not_go_through_black() {
     assert_eq!(Color::rgba(0, 0, 0, 255).lerp(Color::rgba(200, 100, 50, 255), 0.5), Color::rgba(100, 50, 25, 255));
     assert_eq!(Color::rgba(0, 0, 0, 0).lerp(Color::rgba(0, 0, 0, 0), 0.5), Color::rgba(0, 0, 0, 0));
 }
+
+/// A opacidade `/NN` vale também no hex (relatório do InsightDB, 11/11: só valia nos nomes).
+#[test]
+fn hex_colors_take_the_opacity_too() {
+    let theme = aylis_core::Theme::light();
+    let c = theme.resolve_color("#2563EB/15").unwrap();
+    assert_eq!((c.r, c.g, c.b), (0x25, 0x63, 0xEB));
+    assert_eq!(c.a, (255.0_f32 * 0.15).round() as u8);
+    assert_eq!(theme.resolve_color("#2563EB"), aylis_core::Color::from_hex("#2563EB"));
+}

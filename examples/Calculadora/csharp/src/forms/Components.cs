@@ -40,15 +40,25 @@ namespace App.Forms.AylisUi
         public bool Checked { get => Bool(GetProp("checked")); set => SetProp("checked", value); }
         public string ModalResult { get => Text(GetProp("modal_result")); set => SetProp("modal_result", value); }
         public bool RepeatEnter { get => Bool(GetProp("repeat_enter")); set => SetProp("repeat_enter", value); }
+        public bool DefaultButton { get => Bool(GetProp("default_button")); set => SetProp("default_button", value); }
+        public bool CancelButton { get => Bool(GetProp("cancel_button")); set => SetProp("cancel_button", value); }
+        public string HAlign { get => Text(GetProp("h_align")); set => SetProp("h_align", value); }
+        public long GroupIndex { get => (long)Number(GetProp("group_index")); set => SetProp("group_index", value); }
+        public string Radius { get => Text(GetProp("radius")); set => SetProp("radius", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -72,6 +82,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -90,6 +104,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -116,15 +132,24 @@ namespace App.Forms.AylisUi
         public double Zoom { get => Number(GetProp("zoom")); set => SetProp("zoom", value); }
         public long Monitor { get => (long)Number(GetProp("monitor")); set => SetProp("monitor", value); }
         public bool RememberPlacement { get => Bool(GetProp("remember_placement")); set => SetProp("remember_placement", value); }
+        public string Gpu { get => Text(GetProp("gpu")); set => SetProp("gpu", value); }
+        public bool ActivateOnShow { get => Bool(GetProp("activate_on_show")); set => SetProp("activate_on_show", value); }
+        public string CloseAction { get => Text(GetProp("close_action")); set => SetProp("close_action", value); }
+        public double FrameRate { get => Number(GetProp("frame_rate")); set => SetProp("frame_rate", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -148,6 +173,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -166,8 +195,12 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
-        public void MoveToMonitor(long a1) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "move_to_monitor", ["args"] = new JsonArray(a1) });
+        public void MoveToMonitor(long monitor) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "move_to_monitor", ["args"] = new JsonArray(monitor) });
+        public string GpuAdapter() => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapter", ["args"] = new JsonArray() }));
+        public string GpuAdapters() => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapters", ["args"] = new JsonArray() }));
         public string Focused() => Text(Aylis.Call("focused", new JsonObject { ["target"] = Id }));
         public void FocusNext() => Aylis.Send("focus_next", new JsonObject { ["target"] = Id });
         public void FocusPrev() => Aylis.Send("focus_prev", new JsonObject { ["target"] = Id });
@@ -185,10 +218,15 @@ namespace App.Forms.AylisUi
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -212,6 +250,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -230,6 +272,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -249,16 +293,23 @@ namespace App.Forms.AylisUi
         public bool Markup { get => Bool(GetProp("markup")); set => SetProp("markup", value); }
         public string Outline { get => Text(GetProp("outline")); set => SetProp("outline", value); }
         public double OutlineWidth { get => Number(GetProp("outline_width")); set => SetProp("outline_width", value); }
+        public double LineHeight { get => Number(GetProp("line_height")); set => SetProp("line_height", value); }
+        public string TextShadow { get => Text(GetProp("text_shadow")); set => SetProp("text_shadow", value); }
         public string FocusControl { get => Text(GetProp("focus_control")); set => SetProp("focus_control", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -282,6 +333,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -300,7 +355,11 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
+        public double MinContentWidth() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "min_content_width", ["args"] = new JsonArray() }));
+        public double MaxContentWidth() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "max_content_width", ["args"] = new JsonArray() }));
     }
 
     /// <summary>Um Layout de um form.</summary>
@@ -311,15 +370,21 @@ namespace App.Forms.AylisUi
         public bool OnlyAllowed { get => Bool(GetProp("only_allowed")); set => SetProp("only_allowed", value); }
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
+        public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -343,6 +408,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -361,6 +430,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -376,10 +447,15 @@ namespace App.Forms.AylisUi
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -403,6 +479,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -421,6 +501,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -432,6 +514,7 @@ namespace App.Forms.AylisUi
         public bool OnlyAllowed { get => Bool(GetProp("only_allowed")); set => SetProp("only_allowed", value); }
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
+        public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
         public string Fill { get => Text(GetProp("fill")); set => SetProp("fill", value); }
         public string Fill2 { get => Text(GetProp("fill2")); set => SetProp("fill2", value); }
         public string FillMid { get => Text(GetProp("fill_mid")); set => SetProp("fill_mid", value); }
@@ -440,16 +523,21 @@ namespace App.Forms.AylisUi
         public bool GradientRadial { get => Bool(GetProp("gradient_radial")); set => SetProp("gradient_radial", value); }
         public string Stroke { get => Text(GetProp("stroke")); set => SetProp("stroke", value); }
         public double StrokeWidth { get => Number(GetProp("stroke_width")); set => SetProp("stroke_width", value); }
-        public double Radius { get => Number(GetProp("radius")); set => SetProp("radius", value); }
+        public string Radius { get => Text(GetProp("radius")); set => SetProp("radius", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -473,6 +561,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -490,6 +582,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -504,10 +598,15 @@ namespace App.Forms.AylisUi
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -531,6 +630,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -549,6 +652,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 
@@ -561,10 +666,15 @@ namespace App.Forms.AylisUi
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
         public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
+        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
+        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
+        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
         public bool ClipChildren { get => Bool(GetProp("clip_children")); set => SetProp("clip_children", value); }
+        public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
+        public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
@@ -588,6 +698,10 @@ namespace App.Forms.AylisUi
         public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
+        public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
+        public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
+        public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
+        public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
         public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
         public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
         public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
@@ -606,6 +720,8 @@ namespace App.Forms.AylisUi
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
         public string Hint { get => Text(GetProp("hint")); set => SetProp("hint", value); }
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
+        public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
+        public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
         public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
     }
 

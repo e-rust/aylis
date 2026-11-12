@@ -10,17 +10,17 @@ Código de verificação (o `v-otp-input`): `length` caixas de um caractere. `te
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `length` | Comprimento | inteiro |
-| `digits` | Só números | lógico |
-| `password` | Senha (esconde o texto) | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `length` | Comprimento | inteiro |  |
+| `digits` | Só números | lógico |  |
+| `password` | Senha (esconde o texto) | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `text` | Texto | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `text` | Texto | texto |  |
 
 ## Eventos
 

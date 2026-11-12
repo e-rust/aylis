@@ -10,16 +10,16 @@ Gráfico de profundidade: compras acumuladas (verde, à esquerda do meio) e vend
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `decimals` | Casas decimais | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `decimals` | Casas decimais | inteiro |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `bids` | Ofertas de compra | texto |
-| `asks` | Ofertas de venda | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `bids` | Ofertas de compra | texto |  |
+| `asks` | Ofertas de venda | texto |  |
 
 ## Em código
 

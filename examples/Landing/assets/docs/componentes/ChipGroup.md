@@ -10,23 +10,23 @@ Grupo de chips para escolher (o `v-chip-group`): uma opção ou várias (`multip
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `wrap` | Quebra de linha | lógico |
-| `chip_height` | Altura dos chips | número |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `wrap` | Quebra de linha | lógico |  |
+| `chip_height` | Altura dos chips | número |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `multiple` | Vários | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `multiple` | Vários | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `selected` | Escolhidos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `selected` | Escolhidos | texto |  |
 
 ## Eventos
 

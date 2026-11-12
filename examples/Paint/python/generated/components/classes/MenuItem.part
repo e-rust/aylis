@@ -66,3 +66,11 @@ class MenuItem(AylisComponent):
     @danger.setter
     def danger(self, value):
         self._set("danger", value)
+
+    @property
+    def header(self):
+        return self._get("header")
+
+    @header.setter
+    def header(self, value):
+        self._set("header", value)

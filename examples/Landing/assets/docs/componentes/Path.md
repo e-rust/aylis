@@ -10,12 +10,12 @@ Um caminho SVG qualquer (`data`, o atributo `d`), esticado para o controle (`kee
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `stroke` | Cor do traço | cor |
-| `stroke_width` | Largura do traço | número |
-| `data` | Dados | texto |
-| `keep_aspect` | Mantém a proporção | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `stroke` | Cor do traço | cor |  |
+| `stroke_width` | Largura do traço | número |  |
+| `data` | Dados | texto |  |
+| `keep_aspect` | Mantém a proporção | lógico |  |
 
 ## Em código
 

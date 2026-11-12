@@ -60,6 +60,66 @@ impl Path {
         self
     }
 
+    /// O contorno de `r` com um raio por canto, na ordem do CSS em `c`: `left` = cima-esquerda,
+    /// `top` = cima-direita, `right` = baixo-direita, `bottom` = baixo-esquerda (o `radius: [8,
+    /// 8, 0, 0]` do JSON). Raio negativo curva o canto **para fora** do retângulo, em direção ao
+    /// lado de cima ou de baixo (a aba que se funde no painel, como as do navegador): o desenho
+    /// passa do retângulo nesse tanto.
+    pub fn corners(r: crate::RectF, c: crate::Bounds) -> Path {
+        let (x0, y0, x1, y1) = (r.x, r.y, r.right(), r.bottom());
+        let limit = (r.width.min(r.height) / 2.0).max(0.0);
+        // Para dentro, no máximo metade do lado menor; para fora, até 64.
+        let clamp = |v: f32| if v > 0.0 { v.min(limit) } else { v.max(-64.0) };
+        let (tl, tr, br, bl) = (clamp(c.left), clamp(c.top), clamp(c.right), clamp(c.bottom));
+        let mut p = Path::new();
+        // Cima-esquerda.
+        if tl > 0.0 {
+            p.move_to(x0, y0 + tl);
+            p.arc(pt(x0 + tl, y0 + tl), tl, tl, 180.0, 90.0);
+        } else if tl < 0.0 {
+            let a = -tl;
+            p.move_to(x0, y0 + a);
+            p.arc(pt(x0 - a, y0 + a), a, a, 0.0, -90.0);
+        } else {
+            p.move_to(x0, y0);
+        }
+        // Cima-direita.
+        if tr > 0.0 {
+            p.line_to(x1 - tr, y0);
+            p.arc(pt(x1 - tr, y0 + tr), tr, tr, 270.0, 90.0);
+        } else if tr < 0.0 {
+            let a = -tr;
+            p.line_to(x1 + a, y0);
+            p.arc(pt(x1 + a, y0 + a), a, a, 270.0, -90.0);
+        } else {
+            p.line_to(x1, y0);
+        }
+        // Baixo-direita.
+        if br > 0.0 {
+            p.line_to(x1, y1 - br);
+            p.arc(pt(x1 - br, y1 - br), br, br, 0.0, 90.0);
+        } else if br < 0.0 {
+            let a = -br;
+            p.line_to(x1, y1 - a);
+            p.arc(pt(x1 + a, y1 - a), a, a, 180.0, -90.0);
+        } else {
+            p.line_to(x1, y1);
+        }
+        // Baixo-esquerda.
+        if bl > 0.0 {
+            p.line_to(x0 + bl, y1);
+            p.arc(pt(x0 + bl, y1 - bl), bl, bl, 90.0, 90.0);
+        } else if bl < 0.0 {
+            let a = -bl;
+            p.line_to(x0 - a, y1);
+            p.arc(pt(x0 - a, y1 - a), a, a, 90.0, -90.0);
+        } else {
+            p.line_to(x0, y1);
+        }
+        p.close();
+        p
+    }
+
     /// Arco de elipse em volta de `center`, de `start` a `start + sweep` (graus; 0 aponta
     /// para a direita e o ângulo cresce no sentido horário, como na tela). Liga com uma
     /// reta ao ponto atual (ou começa uma figura, se o caminho estiver vazio).

@@ -10,11 +10,11 @@ Sinaleiro (torre de luz): vermelho, amarelo e verde empilhados; `state` acende u
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `state` | Estado | um de: `off`, `green`, `yellow`, `red`, `blue`, `white` |
-| `lights` | Luzes | texto |
-| `blink` | Piscar | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `state` | Estado | um de: `off`, `green`, `yellow`, `red`, `blue`, `white` |  |
+| `lights` | Luzes | texto |  |
+| `blink` | Piscar | lógico |  |
 
 ## Em código
 

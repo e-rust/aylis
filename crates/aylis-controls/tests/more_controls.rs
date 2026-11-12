@@ -403,18 +403,26 @@ fn long_press_fires_and_suppresses_the_click() {
         let l = log.clone();
         ui.on(b, event, move |_, _, _| l.borrow_mut().push(event));
     }
+    // O toque longo é do dedo (J18 do Tabernáculo).
+    let touch = |x, y| PointerEvent { kind: PointerKind::Touch, ..at(x, y) };
     ui.set_time(1.0);
-    ui.pointer_down(f, at(10.0, 10.0));
+    ui.pointer_down(f, touch(10.0, 10.0));
     ui.set_time(1.6);
     ui.run_timers();
-    ui.pointer_up(f, at(10.0, 10.0));
+    ui.pointer_up(f, touch(10.0, 10.0));
     // um clique normal continua clicando
     ui.set_time(3.0);
     ui.pointer_down(f, at(10.0, 10.0));
     ui.set_time(3.1);
     ui.run_timers();
     ui.pointer_up(f, at(10.0, 10.0));
-    assert_eq!(*log.borrow(), ["on_long_press", "on_click"]);
+    // O mouse segurado não é toque longo: solta e clica.
+    ui.set_time(5.0);
+    ui.pointer_down(f, at(10.0, 10.0));
+    ui.set_time(5.8);
+    ui.run_timers();
+    ui.pointer_up(f, at(10.0, 10.0));
+    assert_eq!(*log.borrow(), ["on_long_press", "on_click", "on_click"]);
 }
 
 #[test]
@@ -430,7 +438,10 @@ fn message_dlg_returns_the_button() {
     ui.set_modal_result(dlg, ModalResult::Yes);
     assert_eq!(*result.borrow(), Some(ModalResult::Yes));
     assert!(!ui.contains(dlg), "liberado ao fechar");
-    assert_eq!(parse_filter("Imagens|*.png;*.jpg|Todos|*.*"), vec![("Imagens".to_string(), vec!["png".to_string(), "jpg".to_string()])]);
+    assert_eq!(
+        parse_filter("Imagens|*.png;*.jpg|Todos|*.*"),
+        vec![("Imagens".to_string(), vec!["png".to_string(), "jpg".to_string()]), ("Todos".to_string(), vec!["*".to_string()])]
+    );
 }
 
 #[test]
@@ -654,6 +665,8 @@ fn menu_reports_the_clicked_item_and_auto_checks() {
     let (mut ui, f) = setup();
     ui.show(f).unwrap();
     let menu = ui.add(PopupMenu::default(), f);
+    // Ligado ao form: os atalhos valem como no Delphi (J01 do Tabernáculo).
+    ui.set_prop(f, "popup_menu", PropValue::Component(Some(menu))).unwrap();
     let bold = ui.add(MenuItem::new("Negrito").with_shortcut("Ctrl+B"), menu);
     ui.set_name(bold, "miNegrito").unwrap();
     ui.set_prop(bold, "auto_check", true).unwrap();

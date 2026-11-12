@@ -33,11 +33,15 @@ pub struct Options {
     /// Desktop: abre no tamanho de um aparelho (`aylis_core::devices`, "Nome" ou "Nome;deitado"),
     /// com a área segura e a barra de status dele (`AYLIS_DEVICE`).
     pub frame: Option<String>,
+    /// A porta em que o canal de desenvolvimento da IDE ouve, quando não é a do projeto (a
+    /// padrão estava ocupada): o app no desktop recebe em `AYLIS_DEV_PORT`, o do Android pelo
+    /// `adb reverse`.
+    pub dev_port: Option<u16>,
 }
 
 impl Options {
     pub fn new(target: Target) -> Self {
-        Self { target, aylis_host: None, device: None, script: None, debug: false, ide_debug: false, release: false, frame: None }
+        Self { target, aylis_host: None, device: None, script: None, debug: false, ide_debug: false, release: false, frame: None, dev_port: None }
     }
 }
 
@@ -144,74 +148,87 @@ pub fn build_desktop(project: &Project, release: bool, control: &Control, sink: 
 /// O [`build_desktop`] sem gerar o código: para quem já gerou e verificou antes (o
 /// `aylis-tool build`, que não gera duas vezes).
 pub fn compile_desktop(project: &Project, release: bool, control: &Control, sink: Sink) -> Result<PathBuf, String> {
-    close_or_refuse_running(project, sink)?;
+    close_or_refuse_running(project, release, sink)?;
     build_commands(project, &project.output.before_build, None, control, sink)?;
     let exe = build_desktop_exe(project, release, control, sink)?;
     build_commands(project, &project.output.after_build, Some(&exe), control, sink)?;
     Ok(exe)
 }
 
-/// O nome do executável do app (o da pasta de saída ou o do pacote), com a extensão.
-fn exe_file_name(project: &Project) -> String {
-    let name = if project.output.name.is_empty() { project.bin_name() } else { project.output.name.clone() };
-    if cfg!(windows) { format!("{name}.exe") } else { name }
+/// Os executáveis que a compilação vai gravar: o do cargo (no `target`) e, com pasta de saída
+/// (Projeto → Opções), a cópia de lá.
+fn written_exes(project: &Project, release: bool) -> Vec<PathBuf> {
+    let built = crate::shared_target_dir().join(if release { "release" } else { "debug" }).join(crate::env::exe(&project.bin_name()));
+    let mut out = vec![built.clone()];
+    out.extend(project.output_exe(&built));
+    out
 }
 
-/// O app já aberto (outra cópia dele, a instalada inclusive): com `close_running` no projeto,
-/// encerra; senão, para logo, antes de compilar (o executável aberto não pode ser sobrescrito, e
-/// um app de instância única fecha na hora ao ver o outro aberto: o NoOBS, em 08/11).
-fn close_or_refuse_running(project: &Project, sink: Sink) -> Result<(), String> {
-    let name = exe_file_name(project);
-    if !process_running(&name) {
+/// O arquivo existe e está em uso (um executável rodando não abre para escrita): a compilação
+/// não conseguiria substituí-lo.
+fn in_use(path: &Path) -> bool {
+    path.is_file() && std::fs::OpenOptions::new().write(true).open(path).is_err()
+}
+
+/// Antes de compilar: algum executável que a compilação vai gravar está em uso? Com
+/// `close_running` no projeto, encerra só os processos daquele arquivo; senão, para logo. Não
+/// olha o nome do processo: outra cópia do app (a instalada, a de outra pasta) não atrapalha a
+/// compilação, e recusar por ela estava errado (pedido do autor em 11/11: "o Aylis deve verificar
+/// se o exe gerado já está em uso e não pode ser substituído").
+fn close_or_refuse_running(project: &Project, release: bool, sink: Sink) -> Result<(), String> {
+    let busy: Vec<PathBuf> = written_exes(project, release).into_iter().filter(|p| in_use(p)).collect();
+    if busy.is_empty() {
         return Ok(());
     }
+    let list = busy.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", ");
     if !project.output.close_running {
         return Err(format!(
-            "o {name} já está aberto: feche-o antes de executar (o executável aberto não pode ser sobrescrito), ou ligue \"Encerrar o app aberto antes de executar\" em Projeto → Opções do projeto (Geral)"
+            "{list} está aberto e não pode ser substituído: feche esse app antes de compilar, ou ligue \"Encerrar o app aberto antes de executar\" em Projeto → Opções do projeto (Geral)"
         ));
     }
-    sink(Event::Line(format!("Encerrando o {name} aberto (Opções do projeto)"), LineKind::Tool));
-    close_processes(&name);
+    sink(Event::Line(format!("Encerrando o app aberto de {list} (Opções do projeto)"), LineKind::Tool));
+    for path in &busy {
+        close_processes_of(path);
+    }
     // O sistema leva um instante para soltar o arquivo.
-    for _ in 0..20 {
-        if !process_running(&name) {
+    for _ in 0..30 {
+        if !busy.iter().any(|p| in_use(p)) {
             return Ok(());
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
-    Err(format!("não consegui encerrar o {name} aberto"))
+    Err(format!("não consegui encerrar o app aberto de {list}"))
 }
 
-/// Há um processo com esse nome de executável (`NoOBS.exe`)?
-fn process_running(file_name: &str) -> bool {
-    #[cfg(windows)]
-    {
-        let mut command = Command::new("tasklist");
-        command.args(["/FI", &format!("IMAGENAME eq {file_name}"), "/NH", "/FO", "CSV"]);
-        crate::process::quiet(&mut command);
-        command.output().is_ok_and(|o| String::from_utf8_lossy(&o.stdout).to_lowercase().contains(&format!("\"{}\"", file_name.to_lowercase())))
+/// Encerra o app do projeto que roda de um executável que a compilação grava (o `target`, em
+/// depuração e em release, e a pasta de saída), mesmo aberto por outra IDE ou por uma sessão
+/// anterior desta: o Parar não o alcançava depois de reabrir a IDE (relatório do InsightDB,
+/// 11/11). Devolve se havia algum.
+pub fn stop_project_app(project: &Project) -> bool {
+    let busy: Vec<PathBuf> = written_exes(project, false).into_iter().chain(written_exes(project, true)).filter(|p| in_use(p)).collect();
+    for path in &busy {
+        close_processes_of(path);
     }
-    #[cfg(not(windows))]
-    {
-        Command::new("pgrep").args(["-x", file_name]).output().is_ok_and(|o| o.status.success())
-    }
+    !busy.is_empty()
 }
 
-fn close_processes(file_name: &str) {
-    #[cfg(windows)]
-    let mut command = {
-        let mut c = Command::new("taskkill");
-        c.args(["/F", "/IM", file_name]);
-        c
-    };
-    #[cfg(not(windows))]
-    let mut command = {
-        let mut c = Command::new("pkill");
-        c.args(["-x", file_name]);
-        c
-    };
-    crate::process::quiet(&mut command);
-    let _ = command.output();
+/// Encerra os processos cujo executável é `path` (só eles: outra cópia do app, de outra pasta,
+/// continua aberta).
+fn close_processes_of(path: &Path) {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind};
+        let system = System::new_with_specifics(RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing().with_exe(UpdateKind::Always)));
+        let target = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+        for process in system.processes().values() {
+            let same = process.exe().is_some_and(|exe| exe.canonicalize().unwrap_or_else(|_| exe.to_path_buf()) == target);
+            if same {
+                process.kill();
+            }
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    let _ = path;
 }
 
 /// Os comandos antes ou depois da compilação, um de cada vez, na pasta do projeto. Só em
@@ -371,9 +388,13 @@ fn desktop_host(project: &Project, options: &Options, control: &Control, sink: S
 }
 
 /// O aparelho do designer: a janela abre do tamanho dele (só com o `dev`, o canal da IDE).
+/// As variáveis do app de desktop: o aparelho do designer e a porta do canal da IDE.
 fn frame_env(command: &mut Command, options: &Options) {
     if let Some(frame) = options.frame.as_deref().filter(|f| !f.is_empty()) {
         command.env("AYLIS_DEVICE", frame);
+    }
+    if let Some(port) = options.dev_port {
+        command.env("AYLIS_DEV_PORT", port.to_string());
     }
 }
 
@@ -406,9 +427,14 @@ fn android(project: &Project, options: &Options, control: &Control, sink: Sink) 
     // O canal com a IDE: o endereço vai embutido no app; num endereço local, a porta do
     // aparelho vem para esta máquina (emulador ou celular pelo cabo).
     let address = crate::devkeys::address(project);
-    let reverse = (dev && address.starts_with("127.0.0.1:")).then(|| format!("tcp:{}", address.rsplit(':').next().unwrap_or_default()));
-    if let Some(spec) = &reverse {
-        run_tool(&mut adb_cmd(&["reverse", spec, spec]), control, sink, LineKind::Tool)?;
+    let reverse = (dev && address.starts_with("127.0.0.1:")).then(|| {
+        let device = address.rsplit(':').next().unwrap_or_default().to_string();
+        // A porta do aparelho é a embutida; a desta máquina, a que a IDE abriu.
+        let host = options.dev_port.map_or_else(|| device.clone(), |p| p.to_string());
+        (format!("tcp:{device}"), format!("tcp:{host}"))
+    });
+    if let Some((device, host)) = &reverse {
+        run_tool(&mut adb_cmd(&["reverse", device, host]), control, sink, LineKind::Tool)?;
     }
     run_tool(&mut adb_cmd(&["shell", "am", "start", "-n", &format!("{id}/dev.aylis.AylisActivity")]), control, sink, LineKind::Tool)?;
     sink(Event::Step("Executando no aparelho (a saída do programa aparece aqui; Parar encerra)…".into()));
@@ -426,8 +452,8 @@ fn android(project: &Project, options: &Options, control: &Control, sink: Sink) 
             control.check()?;
             std::thread::sleep(std::time::Duration::from_secs(1));
         }
-        if let Some(spec) = &reverse {
-            run_tool(&mut adb_cmd(&["reverse", spec, spec]), control, sink, LineKind::Tool)?;
+        if let Some((device, host)) = &reverse {
+            run_tool(&mut adb_cmd(&["reverse", device, host]), control, sink, LineKind::Tool)?;
         }
         sink(Event::Step(format!("O aparelho {serial} voltou: canal refeito, acompanhando o app…")));
         // Daqui em diante, só as linhas novas (sem repetir o que já saiu).
@@ -478,4 +504,30 @@ pub fn script(project: &Project, script: &Path, output: &Path, aylis_host: Optio
     let _ = std::fs::remove_file(output);
     run(project, &options, control, sink)?;
     std::fs::read_to_string(output).map_err(|e| format!("o roteiro não gravou o estado ({}): {e}", output.display()))
+}
+
+#[cfg(all(test, windows))]
+mod busy_exe_tests {
+    use super::*;
+
+    /// Só o executável que a compilação vai gravar conta: uma cópia rodando dele está em uso e é
+    /// encerrada pelo caminho; outro arquivo com o mesmo nome, noutra pasta, não (pedido do autor
+    /// em 11/11: o NoOBS instalado aberto não pode impedir a compilação).
+    #[test]
+    fn only_the_written_exe_counts_as_busy() {
+        let dir = std::env::temp_dir().join(format!("aylis_exe_em_uso_{}", std::process::id()));
+        let other = dir.join("outra");
+        std::fs::create_dir_all(&other).unwrap();
+        let exe = dir.join("app.exe");
+        std::fs::copy(r"C:\Windows\System32\PING.EXE", &exe).unwrap();
+        std::fs::copy(r"C:\Windows\System32\PING.EXE", other.join("app.exe")).unwrap();
+        let mut child = Command::new(&exe).args(["-n", "30", "127.0.0.1"]).stdout(std::process::Stdio::null()).spawn().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        assert!(in_use(&exe), "a cópia rodando está em uso");
+        assert!(!in_use(&other.join("app.exe")), "o de outra pasta, com o mesmo nome, não");
+        close_processes_of(&exe);
+        let _ = child.wait();
+        assert!(!in_use(&exe), "encerrado pelo caminho, o arquivo fica livre");
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

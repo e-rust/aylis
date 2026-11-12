@@ -10,15 +10,15 @@ Mostra os quadros por segundo (o `Ui::fps`), onde o app quiser. O aylis só dese
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `format` | Formato | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `format` | Formato | texto | `{0}` vira o número. |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `live` | Ao vivo | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `live` | Ao vivo | lógico |  |
 
 ## Em código
 

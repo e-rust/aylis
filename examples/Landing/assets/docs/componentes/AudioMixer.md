@@ -8,12 +8,12 @@ Mistura microfones, o som das saídas e players: volume, mudo, panorâmica; grav
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `sources` | Fontes | texto |
-| `output` | Saída | texto |
-| `active` | Ativo | lógico |
-| `keep_samples` | Guardar amostras | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `sources` | Fontes | texto |  |
+| `output` | Saída | texto |  |
+| `active` | Ativo | lógico |  |
+| `keep_samples` | Guardar amostras | lógico |  |
 
 ## Eventos
 

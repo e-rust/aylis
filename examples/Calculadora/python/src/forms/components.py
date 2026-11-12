@@ -80,6 +80,46 @@ class Button(AylisComponent):
         self._set("repeat_enter", value)
 
     @property
+    def default_button(self):
+        return self._get("default_button")
+
+    @default_button.setter
+    def default_button(self, value):
+        self._set("default_button", value)
+
+    @property
+    def cancel_button(self):
+        return self._get("cancel_button")
+
+    @cancel_button.setter
+    def cancel_button(self, value):
+        self._set("cancel_button", value)
+
+    @property
+    def h_align(self):
+        return self._get("h_align")
+
+    @h_align.setter
+    def h_align(self, value):
+        self._set("h_align", value)
+
+    @property
+    def group_index(self):
+        return self._get("group_index")
+
+    @group_index.setter
+    def group_index(self, value):
+        self._set("group_index", value)
+
+    @property
+    def radius(self):
+        return self._get("radius")
+
+    @radius.setter
+    def radius(self, value):
+        self._set("radius", value)
+
+    @property
     def left(self):
         return self._get("left")
 
@@ -120,6 +160,30 @@ class Button(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -150,6 +214,22 @@ class Button(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -336,6 +416,38 @@ class Button(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -478,6 +590,22 @@ class Button(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):
@@ -655,6 +783,38 @@ class Form(AylisForm):
         self._set("remember_placement", value)
 
     @property
+    def gpu(self):
+        return self._get("gpu")
+
+    @gpu.setter
+    def gpu(self, value):
+        self._set("gpu", value)
+
+    @property
+    def activate_on_show(self):
+        return self._get("activate_on_show")
+
+    @activate_on_show.setter
+    def activate_on_show(self, value):
+        self._set("activate_on_show", value)
+
+    @property
+    def close_action(self):
+        return self._get("close_action")
+
+    @close_action.setter
+    def close_action(self, value):
+        self._set("close_action", value)
+
+    @property
+    def frame_rate(self):
+        return self._get("frame_rate")
+
+    @frame_rate.setter
+    def frame_rate(self, value):
+        self._set("frame_rate", value)
+
+    @property
     def left(self):
         return self._get("left")
 
@@ -695,6 +855,30 @@ class Form(AylisForm):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -725,6 +909,22 @@ class Form(AylisForm):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -911,6 +1111,38 @@ class Form(AylisForm):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -1055,6 +1287,22 @@ class Form(AylisForm):
         self._set("tag", value)
 
     @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
+
+    @property
     def popup_menu(self):
         return self._get("popup_menu")
 
@@ -1062,8 +1310,14 @@ class Form(AylisForm):
     def popup_menu(self, value):
         self._set("popup_menu", value)
 
-    def move_to_monitor(self, a1):
-        self.aylis.send("invoke", target=self.id, method="move_to_monitor", args=[a1])
+    def move_to_monitor(self, monitor):
+        self.aylis.send("invoke", target=self.id, method="move_to_monitor", args=[monitor])
+
+    def gpu_adapter(self):
+        return self.aylis.call("invoke", target=self.id, method="gpu_adapter", args=[])
+
+    def gpu_adapters(self):
+        return self.aylis.call("invoke", target=self.id, method="gpu_adapters", args=[])
 
     def focused(self):
         return self.aylis.call("focused", target=self.id)
@@ -1151,6 +1405,30 @@ class GridLayout(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -1181,6 +1459,22 @@ class GridLayout(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -1367,6 +1661,38 @@ class GridLayout(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -1509,6 +1835,22 @@ class GridLayout(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):
@@ -1627,6 +1969,22 @@ class Label(AylisComponent):
         self._set("outline_width", value)
 
     @property
+    def line_height(self):
+        return self._get("line_height")
+
+    @line_height.setter
+    def line_height(self, value):
+        self._set("line_height", value)
+
+    @property
+    def text_shadow(self):
+        return self._get("text_shadow")
+
+    @text_shadow.setter
+    def text_shadow(self, value):
+        self._set("text_shadow", value)
+
+    @property
     def focus_control(self):
         return self._get("focus_control")
 
@@ -1675,6 +2033,30 @@ class Label(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -1705,6 +2087,22 @@ class Label(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -1891,6 +2289,38 @@ class Label(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -2035,12 +2465,34 @@ class Label(AylisComponent):
         self._set("tag", value)
 
     @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
+
+    @property
     def popup_menu(self):
         return self._get("popup_menu")
 
     @popup_menu.setter
     def popup_menu(self, value):
         self._set("popup_menu", value)
+
+    def min_content_width(self):
+        return self.aylis.call("invoke", target=self.id, method="min_content_width", args=[])
+
+    def max_content_width(self):
+        return self.aylis.call("invoke", target=self.id, method="max_content_width", args=[])
 
 
 class Layout(AylisComponent):
@@ -2087,6 +2539,14 @@ class Layout(AylisComponent):
         self._set("char_map", value)
 
     @property
+    def gap(self):
+        return self._get("gap")
+
+    @gap.setter
+    def gap(self, value):
+        self._set("gap", value)
+
+    @property
     def left(self):
         return self._get("left")
 
@@ -2127,6 +2587,30 @@ class Layout(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -2157,6 +2641,22 @@ class Layout(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -2343,6 +2843,38 @@ class Layout(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -2485,6 +3017,22 @@ class Layout(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):
@@ -2571,6 +3119,30 @@ class ListView(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -2601,6 +3173,22 @@ class ListView(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -2787,6 +3375,38 @@ class ListView(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -2931,6 +3551,22 @@ class ListView(AylisComponent):
         self._set("tag", value)
 
     @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
+
+    @property
     def popup_menu(self):
         return self._get("popup_menu")
 
@@ -2984,6 +3620,14 @@ class Panel(AylisComponent):
     @char_map.setter
     def char_map(self, value):
         self._set("char_map", value)
+
+    @property
+    def gap(self):
+        return self._get("gap")
+
+    @gap.setter
+    def gap(self, value):
+        self._set("gap", value)
 
     @property
     def fill(self):
@@ -3098,6 +3742,30 @@ class Panel(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -3128,6 +3796,22 @@ class Panel(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -3314,6 +3998,38 @@ class Panel(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -3448,6 +4164,22 @@ class Panel(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):
@@ -3526,6 +4258,30 @@ class TabControl(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -3556,6 +4312,22 @@ class TabControl(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -3742,6 +4514,38 @@ class TabControl(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -3884,6 +4688,22 @@ class TabControl(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):
@@ -3949,6 +4769,30 @@ class TabItem(AylisComponent):
         self._set("align", value)
 
     @property
+    def anchors(self):
+        return self._get("anchors")
+
+    @anchors.setter
+    def anchors(self, value):
+        self._set("anchors", value)
+
+    @property
+    def margins(self):
+        return self._get("margins")
+
+    @margins.setter
+    def margins(self, value):
+        self._set("margins", value)
+
+    @property
+    def padding(self):
+        return self._get("padding")
+
+    @padding.setter
+    def padding(self, value):
+        self._set("padding", value)
+
+    @property
     def visible(self):
         return self._get("visible")
 
@@ -3979,6 +4823,22 @@ class TabItem(AylisComponent):
     @clip_children.setter
     def clip_children(self, value):
         self._set("clip_children", value)
+
+    @property
+    def inherit_state(self):
+        return self._get("inherit_state")
+
+    @inherit_state.setter
+    def inherit_state(self, value):
+        self._set("inherit_state", value)
+
+    @property
+    def translate(self):
+        return self._get("translate")
+
+    @translate.setter
+    def translate(self, value):
+        self._set("translate", value)
 
     @property
     def captures_wheel(self):
@@ -4165,6 +5025,38 @@ class TabItem(AylisComponent):
         self._set("column_span", value)
 
     @property
+    def grid_row(self):
+        return self._get("grid_row")
+
+    @grid_row.setter
+    def grid_row(self, value):
+        self._set("grid_row", value)
+
+    @property
+    def grid_column(self):
+        return self._get("grid_column")
+
+    @grid_column.setter
+    def grid_column(self, value):
+        self._set("grid_column", value)
+
+    @property
+    def row_span(self):
+        return self._get("row_span")
+
+    @row_span.setter
+    def row_span(self, value):
+        self._set("row_span", value)
+
+    @property
+    def grow(self):
+        return self._get("grow")
+
+    @grow.setter
+    def grow(self, value):
+        self._set("grow", value)
+
+    @property
     def shadow(self):
         return self._get("shadow")
 
@@ -4307,6 +5199,22 @@ class TabItem(AylisComponent):
     @tag.setter
     def tag(self, value):
         self._set("tag", value)
+
+    @property
+    def tag_string(self):
+        return self._get("tag_string")
+
+    @tag_string.setter
+    def tag_string(self, value):
+        self._set("tag_string", value)
+
+    @property
+    def accessible_name(self):
+        return self._get("accessible_name")
+
+    @accessible_name.setter
+    def accessible_name(self, value):
+        self._set("accessible_name", value)
 
     @property
     def popup_menu(self):

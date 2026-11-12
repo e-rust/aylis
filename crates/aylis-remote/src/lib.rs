@@ -522,6 +522,14 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             let id = target(ui, obj)?;
             Ok(inspect::props(ui, id))
         }
+        // Onde o componente ficou depois do layout: relativo ao form e ao pai.
+        "rect" => {
+            let id = target(ui, obj)?;
+            ui.layout();
+            let abs = ui.absolute_rect(id).ok_or("componente sem posição")?;
+            let own = ui.bounds(id).ok_or("componente sem posição")?;
+            Ok(serde_json::json!({ "x": abs.x, "y": abs.y, "width": abs.width, "height": abs.height, "in_parent": [own.x, own.y, own.width, own.height] }))
+        }
         "highlight" => {
             let id = target(ui, obj)?;
             inspect::highlight(ui, id)?;
@@ -684,6 +692,20 @@ fn string<'a>(obj: &'a Map<String, Value>, key: &str) -> Result<&'a str, String>
 /// `"nome"` ou id numérico.
 pub fn resolve(ui: &Ui, value: &Value) -> Result<ComponentId, String> {
     match value {
+        // Um nome solto que está em mais de um lugar (frames diferentes com o mesmo `lblTotal`):
+        // pegar o primeiro mexia no componente errado sem avisar (relatório do InsightDB, 11/11).
+        Value::String(name) if !name.is_empty() && !name.contains('.') => {
+            let found = named_everywhere(ui, name);
+            match found.as_slice() {
+                [one] => Ok(*one),
+                [] => ui.find_path(name).ok_or_else(|| format!("componente '{name}' não encontrado")),
+                many => Err(format!(
+                    "o nome '{name}' está em {} lugares; use o caminho ou o id: {}",
+                    many.len(),
+                    many.iter().map(|&id| format!("{} (id {})", ui.path_of(id), id.to_u64())).collect::<Vec<_>>().join(", ")
+                )),
+            }
+        }
         Value::String(name) => ui.find_path(name).ok_or_else(|| format!("componente '{name}' não encontrado")),
         Value::Number(n) => {
             let id = ComponentId::from_u64(n.as_u64().ok_or("id inválido")?);
@@ -691,6 +713,19 @@ pub fn resolve(ui: &Ui, value: &Value) -> Result<ComponentId, String> {
         }
         other => Err(format!("alvo inválido: {other} (use o nome ou o id)")),
     }
+}
+
+/// Todos os componentes chamados `name` (sem diferenciar maiúsculas), em todos os forms abertos.
+fn named_everywhere(ui: &Ui, name: &str) -> Vec<ComponentId> {
+    let mut found = Vec::new();
+    let mut stack: Vec<ComponentId> = ui.roots().to_vec();
+    while let Some(id) = stack.pop() {
+        if ui.name(id).is_some_and(|n| n.eq_ignore_ascii_case(name)) {
+            found.push(id);
+        }
+        stack.extend(ui.children(id).iter().copied());
+    }
+    found
 }
 
 fn target(ui: &Ui, obj: &Map<String, Value>) -> Result<ComponentId, String> {

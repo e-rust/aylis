@@ -10,15 +10,15 @@ Os anéis de atividade da Apple: até três valores (`values`, frações; passan
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `ring_colors` | Cores dos anéis | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `ring_colors` | Cores dos anéis | texto |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `values` | Valores | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `values` | Valores | texto |  |
 
 ## Em código
 

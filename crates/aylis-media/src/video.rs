@@ -103,6 +103,15 @@ pub trait VideoDecoder {
     }
 }
 
+/// O `file` é um endereço de rede (`http://`, `https://`, `rtsp://`), e não um arquivo: o
+/// decodificador do sistema abre direto, lendo aos poucos (o relatório do Tabernáculo, W11).
+#[cfg_attr(any(target_arch = "wasm32", target_os = "android"), allow(dead_code))]
+pub fn is_url(path: &std::path::Path) -> bool {
+    let s = path.to_string_lossy();
+    let lower = s.get(..8).unwrap_or(&s).to_ascii_lowercase();
+    lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("rtsp://")
+}
+
 /// De onde vem o vídeo.
 #[derive(Clone, Debug)]
 pub enum MediaSource {
@@ -201,6 +210,8 @@ pub(crate) struct Frames {
     pub(crate) target: f64,
     /// O tamanho em que o vídeo aparece, em pixels (0: ainda não pintou).
     pub(crate) want: (u32, u32),
+    /// Quantos quadros o decodificador prepara à frente (0: o padrão, 6).
+    pub(crate) ahead: usize,
 }
 
 /// Entrega quadros prontos ao `VideoPlayer`, de qualquer thread (câmera, rede, um codec
@@ -262,7 +273,8 @@ impl DecodeThread {
                     f.live = false;
                 }
                 let _ = opened_tx.send(Ok(decoder.audio()));
-                const AHEAD: usize = 6;
+                // Quantos quadros à frente: o do player (`frames_ahead`), ou 6.
+                let ahead_of = |f: &Frames| if f.ahead > 0 { f.ahead } else { 6 };
                 // O último quadro decodificado (para saber se está atrás do relógio).
                 let mut last = f64::NEG_INFINITY;
                 // O tamanho já pedido ao decodificador.
@@ -308,7 +320,7 @@ impl DecodeThread {
                         decoder.set_output_size(want.0, want.1);
                         applied = want;
                     }
-                    let (full, eof) = frames.lock().map_or((true, true), |f| (f.queue.len() >= AHEAD, f.eof));
+                    let (full, eof) = frames.lock().map_or((true, true), |f| (f.queue.len() >= ahead_of(&f), f.eof));
                     if full || eof {
                         // Fila cheia: 6 quadros (200 ms a 30 fps) dão folga para esperar um
                         // pouco. No fim do arquivo (ou pausado no fim), quase nada a fazer.

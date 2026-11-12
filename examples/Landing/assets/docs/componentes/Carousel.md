@@ -10,22 +10,22 @@ Slides (o `v-carousel` / `v-window`): os controles de dentro, um de cada vez. `i
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `show_arrows` | Mostra as setas | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `show_arrows` | Mostra as setas | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `interval` | Intervalo | duração (ms) |
-| `cycle` | Circular | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interval` | Intervalo | duração (ms) |  |
+| `cycle` | Circular | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `index` | Índice | inteiro |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `index` | Índice | inteiro |  |
 
 ## Eventos
 

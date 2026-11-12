@@ -10,23 +10,23 @@ Grupo de botões do Material 3 Expressive: lado a lado (`connected` = colados, c
 
 ### Aparência
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `icons` | Ícones | texto |
-| `connected` | Juntos | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `icons` | Ícones | texto |  |
+| `connected` | Juntos | lógico |  |
 
 ### Comportamento
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `multiple` | Vários | lógico |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `multiple` | Vários | lógico |  |
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `items` | Itens | texto |
-| `selected` | Escolhidos | texto |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `items` | Itens | texto |  |
+| `selected` | Escolhidos | texto |  |
 
 ## Eventos
 

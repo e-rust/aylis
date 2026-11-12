@@ -9,13 +9,17 @@
     procedure SetPrecision(Value: string);
     function GetBackground: Boolean;
     procedure SetBackground(Value: Boolean);
+    function GetOneShot: Boolean;
+    procedure SetOneShot(Value: Boolean);
     function GetDrift: Double;
     procedure SetDrift(Value: Double);
   public
+    procedure Restart;
     property Interval: Double read GetInterval write SetInterval;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property Precision: string read GetPrecision write SetPrecision;
     property Background: Boolean read GetBackground write SetBackground;
+    property OneShot: Boolean read GetOneShot write SetOneShot;
     property Drift: Double read GetDrift write SetDrift;
   end;
 
@@ -60,6 +64,16 @@ begin
   SetProp('background', TJSONBoolean.Create(Value));
 end;
 
+function TTimer.GetOneShot: Boolean;
+begin
+  Result := GetProp('one_shot').AsBoolean;
+end;
+
+procedure TTimer.SetOneShot(Value: Boolean);
+begin
+  SetProp('one_shot', TJSONBoolean.Create(Value));
+end;
+
 function TTimer.GetDrift: Double;
 begin
   Result := GetProp('drift').AsFloat;
@@ -68,5 +82,10 @@ end;
 procedure TTimer.SetDrift(Value: Double);
 begin
   SetProp('drift', TJSONFloatNumber.Create(Value));
+end;
+
+procedure TTimer.Restart;
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'restart', 'args', TJSONArray.Create]));
 end;
 

@@ -10,9 +10,9 @@ Navegador: primeiro, anterior, próximo, último, incluir, excluir, editar, grav
 
 ### Dados
 
-| Propriedade | No Object Inspector | Tipo |
-|---|---|---|
-| `data_source` | Fonte de dados | componente |
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `data_source` | Fonte de dados | componente |  |
 
 ## Eventos
 

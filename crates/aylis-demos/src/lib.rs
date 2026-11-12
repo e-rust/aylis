@@ -16,36 +16,23 @@ mod family {
 pub use family::register;
 
 /// A folga em volta do componente (a mesma das imagens da documentação).
-pub const MARGIN: f32 = 16.0;
+pub const MARGIN: f32 = aylis::samples::DEMO_MARGIN;
 
-/// As classes visuais sem demonstração ao vivo (a documentação mostra a imagem): o form (não
-/// cabe dentro de outro), as peças que só existem dentro de outro componente (a aba, a barra
-/// divisória, a faixa do relatório) e as que dependem do que a página não tem (a câmera, um
-/// documento, um relatório ligado a dados, o modelo de item de uma lista, uma imagem do banco).
-pub const WITHOUT_DEMO: &[&str] = &["Form", "TabItem", "Splitter", "ReportBand", "Report", "ReportPreview", "CameraView", "DocViewer", "VirtualList", "DataRepeater", "DBImage"];
+/// As classes visuais sem demonstração ao vivo (veja [`aylis::samples::WITHOUT_DEMO`]).
+pub const WITHOUT_DEMO: &[&str] = aylis::samples::WITHOUT_DEMO;
 
 /// O form da demonstração: o componente `class` (o nome dele é `demo`) com o conteúdo de
-/// exemplo ([`aylis::samples`]), num form do tamanho dele mais [`MARGIN`] de cada lado. O
-/// componente ocupa o quadro até o tamanho dele e encolhe quando o quadro é menor (a
-/// documentação no celular), sem passar da borda. `None` se a classe não é visual (um `Timer`
-/// não tem o que mostrar) ou não é desta família.
+/// exemplo ([`aylis::samples::demo`]), num form do tamanho dele mais [`MARGIN`] de cada lado.
+/// `None` se a classe não é visual (um `Timer` não tem o que mostrar) ou não é desta família.
 pub fn demo_form(ui: &mut Ui, class: &str, dark: bool) -> Option<ComponentId> {
-    if WITHOUT_DEMO.contains(&class) {
-        return None;
-    }
     ui.set_theme(if dark { Theme::dark() } else { Theme::light() });
     let form = ui.add_root(aylis::controls::Form::new(class, 640.0, 240.0));
-    let Some(id) = aylis::samples::create(ui, class, form).filter(|&id| ui.control(id).is_some()) else {
+    let Some((_, (w, h))) = aylis::samples::demo(ui, class, form, form) else {
         ui.free(form);
         return None;
     };
-    let (w, h) = aylis::samples::size(ui, id);
-    if let Some(cb) = ui.control_mut(id) {
-        cb.set_align(Align::Client).set_margins(MARGIN);
-        cb.set_max_width(w).set_max_height(h);
-    }
     if let Some(cb) = ui.control_mut(form) {
-        cb.set_width(w + 2.0 * MARGIN).set_height(h + 2.0 * MARGIN);
+        cb.set_width(w).set_height(h);
     }
     ui.layout();
     Some(form)

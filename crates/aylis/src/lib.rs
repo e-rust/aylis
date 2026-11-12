@@ -202,6 +202,8 @@ pub mod classes {
         GroupBox: aylis_controls::GroupBox => "Standard",
         DateEdit: aylis_controls::DateEdit => "Additional",
         TimeEdit: aylis_controls::TimeEdit => "Additional",
+        DateTimeEdit: aylis_controls::DateTimeEdit => "Additional",
+        Popover: aylis_controls::Popover => "Menus",
         Calendar: aylis_controls::Calendar => "Additional",
         ListView: aylis_controls::ListView => "Additional",
         TreeView: aylis_controls::TreeView => "Additional",
@@ -212,6 +214,7 @@ pub mod classes {
         StatusBar: aylis_controls::StatusBar => "Layouts",
         ToolBar: aylis_controls::ToolBar => "Layouts",
         Timer: aylis_controls::Timer => "System",
+        FrameTimer: aylis_controls::FrameTimer => "System",
         DragImage: aylis_controls::DragImage => "System",
         ApplicationEvents: aylis_controls::ApplicationEvents => "System",
         EventInterceptor: aylis_controls::EventInterceptor => "System",
@@ -477,6 +480,8 @@ pub struct Application {
     pub main_form: ComponentId,
     /// Os arquivos vêm da pasta do projeto (desenvolvimento), não do pacote embutido.
     from_disk: bool,
+    /// A pasta do `placements.json` ([`Application::set_placements_dir`]).
+    placements_dir: Option<std::path::PathBuf>,
 }
 
 impl Application {
@@ -528,12 +533,17 @@ impl Application {
             aylis_project::TextChoice::Layout => aylis_core::TextMode::Layout,
             aylis_project::TextChoice::Core => aylis_core::TextMode::Core,
         });
+        // O texto medido pelo renderizador do projeto já na montagem dos forms (T01).
+        aylis_platform_winit::install_text_service(&mut ui, project.render().current().map_or(aylis_platform_winit::Renderer::Auto, renderer_for));
         let main_form = aylis_project::install_with(&mut ui, &project, files)?;
+        // O principal é o do projeto, mesmo que outro form (uma abertura) apareça antes dele (o
+        // relatório do Tabernáculo, J20).
+        ui.set_main_form(main_form);
         #[cfg(feature = "data")]
         aylis_data::open_active(&mut ui);
         #[cfg(feature = "media")]
         aylis_media::autoplay(&mut ui);
-        Ok(Self { ui, project, main_form, from_disk: false })
+        Ok(Self { ui, project, main_form, from_disk: false, placements_dir: None })
     }
 
     /// Recursos de desenvolvimento, só no app compilado pela IDE com a feature `dev` (a
@@ -592,7 +602,14 @@ impl Application {
             renderer,
             gpu: aylis_core::gpu::GpuChoice::parse(&self.project.gpu),
             present: aylis_core::gpu::PresentMode::parse(&self.project.present),
+            placements_dir: self.placements_dir.clone(),
         }
+    }
+
+    /// A pasta onde o app guarda o lugar das janelas (`remember_placement`); sem ela, a pasta de
+    /// dados do usuário com o nome do executável (o relatório do Tabernáculo, P09).
+    pub fn set_placements_dir(&mut self, dir: impl Into<std::path::PathBuf>) {
+        self.placements_dir = Some(dir.into());
     }
 
     /// Abre o form principal e roda até ele fechar (como `Application.Run`).
