@@ -6,7 +6,7 @@
 //! Sem a referência (tela nova, outro sistema), o teste grava a imagem e passa: confira a
 //! imagem e faça o commit dela. Uma mudança visual de propósito: rode com
 //! `AYLIS_UPDATE_VISUAL=1` para regravar, e confira as imagens no diff. Uma falha grava a
-//! imagem nova em `target/visual/` para comparar.
+//! imagem nova em `visual/` dentro do `CARGO_TARGET_TMPDIR` (a pasta de compilação) para comparar.
 
 #![cfg(feature = "desktop")]
 
@@ -48,20 +48,22 @@ fn check(name: &str, (rgba, w, h): (Vec<u8>, u32, u32)) {
         return;
     }
     let (expected, ew, eh) = aylis_skia::decode_rgba(&std::fs::read(&path).unwrap()).expect("referência");
-    let failed = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/visual");
+    // Na pasta de compilação (a única da máquina, `%LOCALAPPDATA%ylis	arget`), nunca no
+    // `target/` do repositório.
+    let failed = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("visual");
     let save = || {
         std::fs::create_dir_all(&failed).unwrap();
         std::fs::write(failed.join(format!("{name}.png")), &png).unwrap();
     };
     if (ew, eh) != (w, h) {
         save();
-        panic!("{name}: tamanho {w}x{h}, a referência tem {ew}x{eh} (a nova está em target/visual/)");
+        panic!("{name}: tamanho {w}x{h}, a referência tem {ew}x{eh} (a nova está em {})", failed.display());
     }
     let changed = rgba.chunks_exact(4).zip(expected.chunks_exact(4)).filter(|(a, b)| a.iter().zip(b.iter()).take(3).any(|(x, y)| x.abs_diff(*y) > TONES)).count();
     let share = changed as f64 / (w * h) as f64;
     if share > SHARE {
         save();
-        panic!("{name}: {:.2}% dos pixels mudaram (limite {:.1}%); a nova está em target/visual/{name}.png", share * 100.0, SHARE * 100.0);
+        panic!("{name}: {:.2}% dos pixels mudaram (limite {:.1}%); a nova está em {}", share * 100.0, SHARE * 100.0, failed.join(format!("{name}.png")).display());
     }
 }
 

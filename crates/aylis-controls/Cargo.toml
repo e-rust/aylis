@@ -10,17 +10,17 @@ rust-version.workspace = true
 # Os controles moram em crates por família (compilam em paralelo); este junta todos e
 # registra as classes.
 [dependencies]
-aylis-core = { version = "0.2.0-beta.4", path = "../aylis-core" }
-aylis-controls-base = { version = "0.2.0-beta.4", path = "../aylis-controls-base" }
-aylis-controls-charts = { version = "0.2.0-beta.4", path = "../aylis-controls-charts" }
-aylis-controls-device = { version = "0.2.0-beta.4", path = "../aylis-controls-device" }
-aylis-controls-editors = { version = "0.2.0-beta.4", path = "../aylis-controls-editors" }
-aylis-controls-industrial = { version = "0.2.0-beta.4", path = "../aylis-controls-industrial" }
+aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core" }
+aylis-controls-base = { version = "0.2.0-beta.5", path = "../aylis-controls-base" }
+aylis-controls-charts = { version = "0.2.0-beta.5", path = "../aylis-controls-charts" }
+aylis-controls-device = { version = "0.2.0-beta.5", path = "../aylis-controls-device" }
+aylis-controls-editors = { version = "0.2.0-beta.5", path = "../aylis-controls-editors" }
+aylis-controls-industrial = { version = "0.2.0-beta.5", path = "../aylis-controls-industrial" }
 
 [dev-dependencies]
 serde_json = "1"
 # Os testes dos modos de texto (`layout` e `core`) usam o motor de texto do núcleo.
-aylis-core = { version = "0.2.0-beta.4", path = "../aylis-core", features = ["text-shaping"] }
+aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core", features = ["text-shaping"] }
 # O teste de pintar por parte x por inteiro compara pixels de verdade.
 aylis-skia = { path = "../aylis-skia" }
 

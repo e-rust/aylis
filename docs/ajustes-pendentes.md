@@ -321,6 +321,19 @@ analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
     `CARGO_TARGET_TMPDIR`. Falta: a ponte do MCP do Claude Desktop
     (`claude_desktop_config.json`) ainda aponta para `aylis\target\debug\aylis-tool.exe`,
     e o Claude Desktop aberto desfaz a troca.
+  - 12/11: a pasta era única só no nome. O Claude Desktop é um pacote MSIX, e tudo o que ele
+    abre (as sessões, o `cargo`, a IDE aberta pelo MCP) gravava o `%LOCALAPPDATA%\aylis\target`
+    numa cópia privada (`%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Local\aylis\target`, 65
+    GB); de fora do Claude, a pasta real estava vazia, e uma compilação de fora começaria do
+    zero noutra pasta. Decisão do autor: a pasta padrão passa a ser
+    `%USERPROFILE%\.aylis\target`, fora do `AppData` (`default_target_dir`), sem conversão da
+    pasta de antes (só a máquina do autor a usava). Na máquina do autor, os 65 GB foram movidos para a pasta nova (o mesmo disco: uma
+    renomeação), e o `config.toml` do cargo, o `tools.json` (as duas cópias) e a ponte do MCP
+    do Claude Desktop (trocada com ele fechado, por um script aberto pelo WMI) apontam para ela.
+    O teste `visual` da IDE gravava as falhas em `<repositório>/target/visual`; agora, no
+    `CARGO_TARGET_TMPDIR`. Ainda na cópia do Claude: o `mcp.json`, os segredos (`dev-key`,
+    `dev-secrets`), o `trusted.json` e as ferramentas baixadas (`tools`), que uma IDE aberta fora
+    do Claude não vê.
 - [ ] **Compilar com o app aberto em outro lugar:** "O compilador do Aylis não aceita compilar
   enquanto qualquer NoOBS.exe estiver aberto, inclusive o instalado." O autor: não é para ser
   assim. O Aylis deve conferir se o executável que a compilação vai gerar está em uso e não pode

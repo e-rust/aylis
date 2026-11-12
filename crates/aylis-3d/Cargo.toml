@@ -17,7 +17,7 @@ fbx = ["dep:ufbx"]
 diagnostics = []
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.4", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core" }
 # Cada plataforma leva só o backend dela (o resto entra nas seções abaixo).
 wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "wgsl"] }
 gltf = { version = "1.4", default-features = false, features = ["import", "utils", "names", "KHR_lights_punctual", "KHR_texture_transform", "extensions"] }

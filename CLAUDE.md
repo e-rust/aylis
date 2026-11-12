@@ -229,11 +229,16 @@ cargo run -p aylis-tools --bin aylis-tool -- <subcomando>  # as ferramentas
 ```
 
 **Onde ficam as compilações:** todo o Rust desta máquina, o repositório do Aylis inclusive,
-compila em `%LOCALAPPDATA%\aylis\target` (o `config.toml` global do cargo, gravado pela IDE:
+compila em `%USERPROFILE%\.aylis\target` (o `config.toml` global do cargo, gravado pela IDE:
 `aylis_tools::cargo_config`), e não no `target/` do repositório. Os executáveis
-(`aylis-tool.exe`, `aylis-ide.exe`) estão em `%LOCALAPPDATA%\aylis\target\debug`. Código que
+(`aylis-tool.exe`, `aylis-ide.exe`) estão em `%USERPROFILE%\.aylis\target\debug`. Código que
 procura o que o repositório compilou usa `aylis_tools::cargo_target_dir` (testes:
 `CARGO_TARGET_TMPDIR`), nunca `<repositório>/target`.
+
+Fora do `AppData` de propósito: o Claude Desktop é um pacote MSIX, e o que ele abre (as sessões, o
+`cargo`, a IDE aberta pelo MCP) grava o `AppData` numa cópia privada
+(`%LOCALAPPDATA%\Packages\Claude_*\LocalCache`). Por isso, o `%LOCALAPPDATA%\aylis` visto de
+dentro do Claude não é o mesmo visto de fora (o `tools.json`, o `mcp.json`, os segredos).
 
 **Ver sem janela**
 - Captura de um exemplo: `AYLIS_SNAPSHOT=pasta AYLIS_BENCH=5 cargo run ... --example x` grava
@@ -286,7 +291,7 @@ procura o que o repositório compilou usa `aylis_tools::cargo_target_dir` (teste
 - `installer-ide` gera `dist/aylis-ide-<versão>-setup.exe` (NSIS). A pasta do Aylis é achada em
   tempo de execução (`aylis_project::codegen::aylis_root`: `aylis/` ao lado do executável,
   depois o repositório onde foi compilado); instalada ou não, as compilações vão para
-  `%LOCALAPPDATA%\aylis\target` (`aylis_tools::shared_target_dir`).
+  `%USERPROFILE%\.aylis\target` (`aylis_tools::shared_target_dir`).
 - `clean [--project app.aylisproj]`: o `target` é limpo sozinho, sem mexer durante uma
   compilação. As compilações pelo Aylis anotam em `target/.aylis-index.json` que projeto usou
   que unidade (`aylis_tools::build_index`), e sai o que nenhum projeto vivo usa mais; fora do

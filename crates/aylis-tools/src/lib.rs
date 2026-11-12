@@ -155,9 +155,8 @@ pub fn aylis_root() -> PathBuf {
 /// Pasta `target/` compartilhada: o que o aylis já compilou é reaproveitado por todos os
 /// projetos (a primeira compilação de um projeto fica bem mais rápida).
 ///
-/// A escolhida nas Opções da IDE (`settings::target_dir`) vale sempre. Sem ela: rodando do
-/// repositório, é o `target/` dele; instalada, a IDE não grava na pasta da instalação e usa
-/// `%LOCALAPPDATA%\aylis\target` (`~/.cache/aylis/target` fora do Windows).
+/// A escolhida nas Opções da IDE (`settings::target_dir`) vale sempre; sem ela, a
+/// [`default_target_dir`].
 pub fn shared_target_dir() -> PathBuf {
     if let Some(dir) = settings::target_dir() {
         return dir;
@@ -168,14 +167,22 @@ pub fn shared_target_dir() -> PathBuf {
 /// A pasta de compilação sem a escolha das Opções (o que a tela mostra como automático): a
 /// mesma rodando do repositório ou instalada, porque o `config.toml` global do cargo
 /// (`cargo_config`) leva todo o Rust da máquina para ela, o repositório do Aylis inclusive.
+///
+/// No Windows é `%USERPROFILE%\.aylis\target`, fora do `AppData`: um programa instalado como
+/// pacote (MSIX, como o Claude Desktop) grava o `AppData` dos processos que abre numa cópia
+/// privada dele, e a pasta "única" virava duas (a de quem compilava pelo Claude e a de quem
+/// compilava fora dele). Fora do Windows, `~/.cache/aylis/target`.
 pub fn default_target_dir() -> PathBuf {
     let root = aylis_root();
-    let base = if cfg!(windows) {
-        std::env::var_os("LOCALAPPDATA").map(PathBuf::from)
+    let dir = if cfg!(windows) {
+        std::env::var_os("USERPROFILE").map(|h| PathBuf::from(h).join(".aylis").join("target"))
     } else {
-        std::env::var_os("XDG_CACHE_HOME").map(PathBuf::from).or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+        std::env::var_os("XDG_CACHE_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+            .map(|b| b.join("aylis").join("target"))
     };
-    base.map(|b| b.join("aylis").join("target")).unwrap_or_else(|| root.join("target"))
+    dir.unwrap_or_else(|| root.join("target"))
 }
 
 /// Onde o cargo compila o workspace de `dir` (o `CARGO_TARGET_DIR`, o `config.toml` do projeto

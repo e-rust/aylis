@@ -348,7 +348,8 @@ Section "Uninstall"
   Delete "$INSTDIR\desinstalar.exe"
   RMDir "$INSTDIR"
   ; As compilações dos projetos (cache; refeitas sob demanda).
-  RMDir /r "$LOCALAPPDATA\aylis\target"
+  RMDir /r "$PROFILE\.aylis\target"
+  RMDir "$PROFILE\.aylis"
   DeleteRegKey HKCU "${UNINST_KEY}"
   DeleteRegKey HKCU "Software\Aylis"
   !insertmacro AylisFileTypeRemove "aylisproj" "aylis.Projeto"
@@ -374,7 +375,7 @@ const README: &str = "Aylis IDE
   aylis\\          fontes e ícones; com \"Projetos em Rust\", o código do aylis (os projetos compilam contra ele)
 
 Para projetos em Rust é preciso o Rust instalado (rustup); a IDE confere o ambiente antes
-de executar. As compilações ficam em %LOCALAPPDATA%\\aylis\\target (outra pasta nas Opções da IDE),
+de executar. As compilações ficam em %USERPROFILE%\\.aylis\\target (outra pasta nas Opções da IDE),
 compartilhadas entre os projetos; o que nenhum projeto usa mais sai sozinho (ou com
 aylis-tool clean).
 ";
