@@ -76,7 +76,8 @@ fn a_user_project_points_to_its_sdk_link() {
     assert_eq!(link.canonicalize().unwrap(), root.canonicalize().unwrap(), "a junção chega ao aylis");
     assert!(link.join("crates/aylis/Cargo.toml").is_file());
     let ignore = std::fs::read_to_string(base.join(".aylis/.gitignore")).unwrap();
-    assert!(ignore.lines().any(|l| l == "sdk"), "{ignore}");
+    // Tudo na `.aylis` é desta máquina: uma regra só, que não muda quando aparece outro arquivo.
+    assert!(ignore.lines().any(|l| l == "*"), "{ignore}");
     // De novo: nada muda (nem duplica a regra), e a casca em `.aylis/shell` também chega lá.
     assert_eq!(codegen::aylis_path_for(&base.join("rust")), "../.aylis/sdk");
     assert_eq!(codegen::aylis_path_for(&base.join(".aylis/shell")), "../sdk");

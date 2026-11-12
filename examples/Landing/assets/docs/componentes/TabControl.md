@@ -13,6 +13,8 @@ Abas: os filhos são `TabItem`s, cada um uma página; só a de `tab_index` apare
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `show_tabs` | Mostra as abas | lógico |  |
+| `tab_position` | Posição das abas | um de: `top`, `bottom`, `left`, `right` | De que lado ficam as abas (`top`, `bottom`, `left`, `right`). |
+| `tab_width` | Largura das abas | número | Largura da coluna de abas nas laterais (`left`/`right`); em cima e embaixo não conta. |
 
 ### Comportamento
 

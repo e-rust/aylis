@@ -60,6 +60,14 @@ impl DevServer {
         Err(NO_APP.into())
     }
 
+    pub fn call_app(&self, _app: Option<&Value>, _command: Value) -> Result<Value, String> {
+        Err(NO_APP.into())
+    }
+
+    pub fn apps_json(&self) -> Value {
+        Value::Array(Vec::new())
+    }
+
     pub fn reload(&self, _kind: &str, _name: &str, _text: &str) -> Result<String, String> {
         Err(NO_APP.into())
     }

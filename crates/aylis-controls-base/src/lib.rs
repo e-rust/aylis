@@ -96,7 +96,7 @@ pub use planner::{CalendarEvent, CalendarView, CommandPalette, EventCalendar, pa
 pub use recycler::{ListOrientation, RowSource, Sizer, VirtualList};
 pub use recorder::{Analytics, EventRecorder, Recording, RECORDING_EXTENSION};
 pub use system::{ApplicationEvents, BusyAction, BusyWatcher, DataModule, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
-pub use tabs::{Expander, GroupBox, StatusBar, TabControl, TabItem, ToolBar};
+pub use tabs::{Expander, GroupBox, StatusBar, TabControl, TabItem, TabPosition, ToolBar};
 pub use feedback::{ToastKind, ToastStack, notify};
 pub use frame_view::FrameView;
 pub use crop_box::CropBox;

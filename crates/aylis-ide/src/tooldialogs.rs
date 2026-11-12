@@ -137,6 +137,9 @@ pub fn fill_environment(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 let b = ui.add(Button::new("Corrigir…"), line);
                 ui.control_mut(b).unwrap().set_align(Align::Right).set_width(96.0).set_margins([8.0, 2.0, 0.0, 2.0]);
                 let _ = ui.set_prop(b, "enabled", busy.is_none());
+                // O que este botão corrige: um "Corrigir…" por item, e o MCP (`dialog_state`)
+                // separa cada um pela dica (M11 do Tabernáculo).
+                let _ = ui.set_prop(b, "hint", format!("{} ({})", check.name, target.name()));
                 let (state, ids, fix) = (state.clone(), *ids, fix.clone());
                 ui.on_click(b, move |ui, _| confirm_fix(ui, &state, &ids, fix.clone()));
             }

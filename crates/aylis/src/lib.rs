@@ -20,6 +20,7 @@
 //! | [`mcp`] | McpServer e McpTool: o app como servidor MCP (agentes de IA usam o app pelos componentes) |
 //! | [`project`] | projetos (`.aylisproj`), geração de código |
 //! | [`platform`] | janelas (desktop, celular, navegador) |
+//! | [`headless`] | o modo sem plataforma: testes e fotos sem janela (clicar, digitar, avançar o relógio, PNG) |
 //!
 //! O jeito mais simples de começar é um projeto criado pela IDE. O código gerado é:
 //!
@@ -399,6 +400,9 @@ use aylis_core::{ComponentId, Ui};
 
 /// O componente com conteúdo de exemplo (a galeria, as imagens e as demonstrações da documentação).
 pub mod samples;
+/// O modo sem plataforma (testes e fotos sem janela).
+#[cfg(not(target_arch = "wasm32"))]
+pub mod headless;
 
 mod time_zone;
 

@@ -24,6 +24,46 @@ pub struct OutputLine {
     pub action: Option<OutAction>,
     /// O texto completo de um erro do compilador (com o trecho do código).
     pub detail: Option<String>,
+    /// Do programa em execução (depois da compilação), não da compilação: o `output` do MCP
+    /// separa os dois (M20 do Tabernáculo).
+    pub program: bool,
+}
+
+/// Uma linha do histórico das mensagens (o `output` do MCP).
+#[derive(Clone, Debug, PartialEq)]
+pub struct HistoryLine {
+    pub text: String,
+    pub kind: OutKind,
+    pub program: bool,
+    /// A execução em que apareceu ([`crate::state::State::run_number`]).
+    pub run: u64,
+    /// O projeto aberto quando apareceu (vazio: nenhum).
+    pub project: String,
+}
+
+impl HistoryLine {
+    pub fn of(line: &OutputLine, run: u64, project: String) -> Self {
+        Self { text: line.text.clone(), kind: line.kind, program: line.program || line.kind == OutKind::Program, run, project }
+    }
+
+    /// `build` (a compilação, a geração, a verificação) ou `program` (o app e o rastro).
+    pub fn source(&self) -> &'static str {
+        if self.program { "program" } else { "build" }
+    }
+}
+
+impl OutKind {
+    /// O nível da linha, pelo nome (o `output` do MCP).
+    pub fn level(self) -> &'static str {
+        match self {
+            OutKind::Error => "error",
+            OutKind::Warning => "warning",
+            OutKind::Success => "success",
+            OutKind::Step => "step",
+            OutKind::Info | OutKind::Program => "info",
+            OutKind::Muted => "note",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,7 +87,7 @@ pub enum OutAction {
 
 impl OutputLine {
     pub fn new(text: impl Into<String>, kind: OutKind) -> Self {
-        Self { text: text.into(), kind, action: None, detail: None }
+        Self { text: text.into(), kind, action: None, detail: None, program: false }
     }
 }
 
@@ -186,6 +226,7 @@ pub fn start(
     match slot {
         Slot::Main => {
             st.job = Some(job);
+            st.run_number += 1;
             st.output.clear();
             st.show_messages = true;
             st.push(OutputLine::new(format!("▶ {title}"), OutKind::Step));
@@ -270,7 +311,9 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
                         st.push(OutputLine::new(format!("✔ Compilado em {}", elapsed_text(took)), OutKind::Success));
                     }
                     let base = st.project.as_ref().map(Project::dir).unwrap_or_default();
-                    let line = output_line(event, &base);
+                    let mut line = output_line(event, &base);
+                    // Depois de compilar, o que chega é do programa.
+                    line.program = slot == Slot::Main && job.built.is_some();
                     if slot == Slot::Environment {
                         st.env_log = line.text.clone();
                         if st.languages_view.is_some() {
@@ -448,6 +491,7 @@ fn diagnostic_line(d: Diagnostic, base: &Path) -> OutputLine {
         kind,
         action: d.location.map(OutAction::Code),
         detail: Some(d.rendered).filter(|r| !r.is_empty()),
+        program: false,
     }
 }
 
@@ -601,7 +645,23 @@ fn run_with(state: &Shared, debug: bool, ide_debug: bool, release: bool) {
         options.ide_debug = ide_debug;
         options.release = release;
         options.frame = frame.filter(|_| target == aylis_tools::Target::Desktop);
-        run::run(&project, &options, control, &mut |e| sender.send(Msg::Event(e)))
+        // O que o cargo mexer (o `Cargo.lock`) vai para as mensagens quando a compilação acaba, ou
+        // no fim, se ela falhar (I06 do Tabernáculo).
+        let before = std::cell::RefCell::new(Some(aylis_tools::touched::before(&project)));
+        let report = || {
+            if let Some(b) = before.borrow_mut().take() {
+                b.report(&mut |e| sender.send(Msg::Event(e)));
+            }
+        };
+        let mut sink = |e: Event| {
+            if matches!(&e, Event::Step(s) if starts_program(s)) {
+                report();
+            }
+            sender.send(Msg::Event(e));
+        };
+        let result = run::run(&project, &options, control, &mut sink);
+        report();
+        result
     });
     if started {
         track_build(state, key);
@@ -696,7 +756,11 @@ pub fn publish_with(state: &Shared, target: Target, out_dir: Option<PathBuf>, ex
             }),
             _ => publish::Signing::from_env(&project),
         };
-        let published = publish::publish(&project, &options, control, &mut |e| sender.send(Msg::Event(e)))?;
+        let before = aylis_tools::touched::before(&project);
+        let mut sink = |e| sender.send(Msg::Event(e));
+        let published = publish::publish(&project, &options, control, &mut sink);
+        before.report(&mut sink);
+        let published = published?;
         sender.send(Msg::Published(published.main, published.dir));
         Ok("Publicação concluída.".into())
     });

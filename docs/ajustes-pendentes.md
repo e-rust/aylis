@@ -156,17 +156,83 @@ Lote 7, IDE e MCP (em parte, 12/11, sem commit):
   usuário abriu (I10); o Design desligado num fonte sem form (I05); a foto sem o cursor de texto e
   sem o hover (B03).
 
-Ficam para a próxima rodada (decididos, ainda não feitos):
-- Lote 7: I06, M10/M11, M12, M17, M18, M19/B04, M20 e M21.
-- W15 (o quadro por textura D3D11): pede o caminho de reserva na CPU para o Skia e o navegador
-  (senão o desenho não sai igual nos três) e um decodificador que entregue textura para testar.
-- C17: as abas laterais do TabControl (a aparência pelo tema já está feita).
-- W11: o som sozinho por endereço (o Symphonia só lê o disco).
-- Reproduzir os itens "a conferir": J03, J11, C08, C24, C38, C41, L02, L15, G21, G22.
-- T06 (o provedor de PDF que embute as fontes), decidido para depois.
-- Pintura por parte: com o Popover e o DateTimeEdit no começo da grade do `partial_paint`, 1 pixel
-  da borda do TrackBar e do Switch saía diferente (já acontecia; a grade nova só mostrou). As
-  classes novas foram registradas no fim e o teste passa; a diferença fica para investigar.
+Lote 7, o resto (feito em 12/11, sem commit; roteiros 112 a 117):
+- I06: a geração e o `Project::save` só gravam o que mudou (`codegen::write_changed`); a
+  `.aylis/.gitignore` tem uma regra só, `*` (`aylis_project::local_dir_ignored`), em vez de ganhar
+  uma linha por recurso; o build diz nas mensagens o que mexeu no projeto e por quê
+  (`aylis_tools::touched`, no `aylis-tool build`, no Executar e no Publicar). O `Cargo.lock` quem
+  reescreve é o cargo, quando o `Cargo.toml` muda (features pelas classes dos forms); a causa
+  exata no Tabernáculo segue a conferir.
+- M10: `ide_menus` com `id` e `count`; `menu` por `id`, por caminho (`/` ou `›`) e, no Object
+  Inspector, pela propriedade; o ambíguo é recusado com os candidatos. M11: `dialog_state` com
+  `id`, `hint` e `label` único (`Corrigir… — Android SDK (Android)`); `dialog_click` por eles.
+- M12: passados 45 s, a chamada responde `in_progress` com o número da tarefa e continua;
+  `task_status` espera e traz o resultado; o `status` lista as pendentes (`mcp_tasks.rs`).
+- M20: `output` com `source` (build/program) e `level` em cada linha, filtros e `previous` (o
+  histórico de 2000 linhas, mantido ao trocar de projeto). M21: o `app_command` descreve todos os
+  comandos e a feature `dev`, escolhe o app (`app`: pid ou projeto; `{"cmd":"apps"}` lista), e o
+  `snapshot` volta como imagem.
+- M17: o "Novo form" da IDE e o `new_form` com a pasta dentro de `forms/` (`folder`, sem absoluto
+  nem `..`). M18: `new_frame`, `get_theme`/`set_theme`, `translations`/`set_translations`,
+  `set_app_icon` e o `publish` com AAB e instalador, esperando como o `build` (a senha da chave
+  fica em `AYLIS_KEYSTORE_PASSWORD`). M19: `check`, `test` (cargo test, unittest, go test,
+  bun/node, dotnet test; recusado no modo restrito) e `screenshot` (qualquer form pelo designer,
+  ou o app em execução); `docs/proposta-llm-ci.md` atualizado. Falta: o executor de testes de
+  Java, C++ e Pascal; a pasta no "Novo DataModule"; o `set_theme` chegando ao app em execução.
+- B04: `aylis::headless::Headless` monta o `Ui` sem janela nem `platform::run` (as classes, o texto
+  e o desenho fora da tela do renderizador do projeto; `install_offscreen_service`), abre o projeto
+  ou um form, simula `click`, `type_text`, `press`, `advance` e tira a foto (`render_png`).
+  Documentado em `docs/funcionamento.md`; teste `crates/aylis/tests/headless.rs` (Skia e Direct2D).
+
+Mídia (feito em 12/11, sem commit; testes `aylis-media/tests/texture.rs` e `http.rs`):
+- W15: com o canvas no Direct2D da mesma placa, o Media Foundation entrega o quadro na placa, o
+  conversor do Direct3D 11 escreve BGRA numa textura compartilhada e o Direct2D a desenha sem
+  passar pela CPU; o Skia, o navegador e o `current_frame` recebem os pixels copiados uma vez (o
+  teste compara: diferença média abaixo de 3 por canal). API: `Frame::gpu`, `Frame::draw`,
+  `GpuFrame`, `VideoPlayer::current_video_frame`. Medido com um 4K a 60 quadros/s (RX 9070 XT,
+  release): o decodificador de 13–17 ms para 1,6 ms por quadro; a pintura no p95 de 8,6–9,0 para
+  0,62 ms; a CPU de 79–83% para 13–18% de um núcleo; a memória privada de 1,1–1,3 GB para 0,65 GB.
+  Com o quadro na placa, `frame.image` vem vazia: quem pinta usa `current_video_frame` e
+  `Frame::draw`. Não conferido: duas placas de vídeo.
+- W11: o som sozinho por endereço, lido aos poucos com `Range` (`HttpSource`, feature `http`, a
+  padrão, com o `ureq` que a plataforma já usa) e, no Windows, pelo Media Foundation como reserva;
+  vale no MediaPlayer, no VideoPlayer só de som e no `open_audio_location`. Não conferido no Linux
+  e no macOS.
+
+Controles, layout e projeto (feito em 12/11, sem commit; testes
+`aylis-controls/tests/tabernaculo_rendering.rs`, `tabernaculo_followup.rs`, `partial_paint.rs`,
+`aylis-core/tests/input.rs` e `ico_frames.rs`, `aylis-project/tests/frame_instances.rs` e
+`sync_hand_edits.rs`):
+- C17: as abas laterais do TabControl (`tab_position`, `tab_width`; o estilo `TabControl.tab` com a
+  variante do lado). C38: o `gap` no estilo do tema (ButtonGroup e SegmentedControl; 0 cola). L15:
+  o rodapé da caixa de mensagem pelo estilo `MessageDialog.footer` (antes, 36 + 14 fixos).
+- J11: `client_width`/`client_height` no Form, e a janela acompanhando o `width`/`height` mudado
+  com o app rodando (`WindowCommand::ApplySize`); a moldura opcional já era o `border_style`.
+- L02: o `update_layout` refaz até assentar (no máximo 8 vezes), e a janela de novo depois dos
+  relógios: o que o `on_resize` muda sai no mesmo quadro.
+- C41: o quadro do `.ico` do tamanho da bandeja na escala (`image::ico_frame_for_size`; 24 px a
+  150%), refeito quando a escala muda.
+- C24: o Skia e o Direct2D já faziam a opacidade de grupo; o Canvas 2D só multiplicava o
+  `globalAlpha` e agora desenha o grupo num canvas à parte. Falta conferir num navegador.
+- Pintura por parte: o Skia na CPU refazia as curvas cortadas pela borda da área (até ~100 tons na
+  beirada, até 4 px para dentro; o Direct2D não tem isso). A área pequena e compacta é pintada numa
+  superfície 16 px maior. O Popover e o DateTimeEdit voltaram ao lugar natural no `register`;
+  quadros com diferença acima de 4 tons, de 77 para 32. `giant_screen` igual dentro do ruído.
+- G21: o `create_in` pela pasta (feature `dev`, IDE) relia e interpretava o arquivo a cada
+  cartão; o `ProjectForms` guarda o JSON por form (`CachedForm`, com o `FileStamp`, conferido uma
+  vez por instante do `Ui::time`). Em release, 200 cartões de 7 controles: pasta de 136–142 para
+  22 µs; pacote de 24 para 22 µs; em código, 13–14 µs (o resto são os nomes do acesso tipado e a
+  tradução). O "18×" do relatório não se confirmou no pacote (era ~2×). Falta a máquina da igreja.
+- G22: o `sync` acha a definição de verdade (fora de comentários e strings), conta só as chaves
+  de código, e a impressão `v2:` ignora comentários e a vírgula do `cargo fmt`; a renomeação à
+  mão leva o histórico.
+- Não se aplicam: C08 (o `with_opacity` no `fill` aparece por todos os caminhos, nos dois
+  renderizadores; sem `ui.damage` a tela não repinta) e J03 (o núcleo exige o mesmo id; o
+  controle liberado ou escondido não passa a contagem; o teste fica como guarda).
+
+Ficam para depois:
+- T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
+- A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).
 
 **A placa de vídeo de cada janela (11/11/2026)**
 

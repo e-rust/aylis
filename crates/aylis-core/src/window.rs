@@ -48,6 +48,10 @@ pub enum WindowCommand {
     /// A propriedade `gpu` do form mudou: a janela confere em que placa de vídeo desenha
     /// (veja [`crate::gpu`]).
     UpdateGpu,
+    /// A janela fica com a área cliente do tamanho do form (`width`/`height`, ou
+    /// `client_width`/`client_height`, mudados com o app rodando): a moldura do sistema fica
+    /// por fora, sem o app descontar a borda (o relatório do Tabernáculo, J11).
+    ApplySize,
 }
 
 impl Ui {

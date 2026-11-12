@@ -104,25 +104,26 @@ impl Loader<'_> {
     }
 
     pub(crate) fn node(&mut self, value: &Value, parent: Option<ComponentId>, path: &mut Vec<String>) -> Result<ComponentId> {
-        let here = path.join(" > ");
-        let obj = object(value, "cada componente").map_err(structure(&here))?;
+        // O caminho (`frmX > pnl > btn`) só é montado quando há um erro: cada componente de um
+        // frame repetido (`FraX::create_in`) passava por dois `join` (G21 do Tabernáculo).
+        let obj = object(value, "cada componente").map_err(|e| structure(&path.join(" > "))(e))?;
         let class = obj
             .get("class")
             .and_then(Value::as_str)
-            .ok_or_else(|| structure(&here)("falta \"class\" (o nome da classe do componente)".into()))?;
+            .ok_or_else(|| structure(&path.join(" > "))("falta \"class\" (o nome da classe do componente)".into()))?;
         let name = match obj.get("name") {
             None | Some(Value::Null) => None,
             Some(Value::String(s)) => Some(s.as_str()),
-            Some(other) => return Err(structure(&here)(format!("\"name\" deve ser texto, recebido {}", describe(other)))),
+            Some(other) => return Err(structure(&path.join(" > "))(format!("\"name\" deve ser texto, recebido {}", describe(other)))),
         };
         path.push(name.unwrap_or(class).to_string());
-        let here = path.join(" > ");
+        let here = |path: &[String]| path.join(" > ");
 
         let id = match self.ui.create(class, parent) {
             Ok(id) => id,
             // Classe que não existe: no `validate`, anota e pula o componente (e os filhos).
             Err(source) => {
-                let error = Error::Component { path: here.clone(), source };
+                let error = Error::Component { path: here(path), source };
                 match parent {
                     Some(p) if self.errors.is_some() => {
                         self.soft(error)?;
@@ -141,16 +142,17 @@ impl Loader<'_> {
         self.created.get_or_insert(id);
         if let Some(name) = name {
             if let Err(source) = self.ui.set_name(id, name) {
-                self.soft(Error::Component { path: here.clone(), source })?;
+                self.soft(Error::Component { path: here(path), source })?;
             }
         }
 
         // Os limites antes do resto (como o `Loaded` do Delphi): o `value` de um NumberBox ou de
         // uma TrackBar, gravado antes do `max` na ordem da classe, não é cortado pelo máximo
         // padrão ao abrir (o 10.000.000 virava 1000).
-        let mut entries: Vec<(&String, &Value)> = obj.iter().collect();
         // O `translate` também vem antes: desligado, os textos não são traduzidos ao carregar.
-        entries.sort_by_key(|(key, _)| !(LIMITS.contains(&key.as_str()) || key.as_str() == "translate"));
+        // (Duas passadas pelo objeto, sem a lista ordenada de cada componente.)
+        let first = |key: &str| LIMITS.contains(&key) || key == "translate";
+        let entries = obj.iter().filter(|(key, _)| first(key)).chain(obj.iter().filter(|(key, _)| !first(key)));
         for (key, value) in entries {
             // `bindings` como texto é a propriedade da lista (`DataRepeater`, `VirtualList`:
             // "lblNome=nome"); como objeto, as ligações de propriedade a campo (abaixo). Pulada
@@ -158,7 +160,7 @@ impl Loader<'_> {
             if RESERVED.contains(&key.as_str()) && !(key == "bindings" && value.is_string()) {
                 continue;
             }
-            if let Err(e) = self.property(id, class, key, value, &here) {
+            if let Err(e) = self.property(id, class, key, value, path) {
                 self.soft(e)?;
             }
         }
@@ -179,7 +181,7 @@ impl Loader<'_> {
         // O Frame mostra o form de `form`: filhos dele no JSON tomavam o lugar desse form, e
         // excluir o Frame os jogava no form de fora (relatório do InsightDB, 11/11).
         if class == "Frame" && obj.get("children").and_then(Value::as_array).is_some_and(|c| !c.is_empty()) {
-            self.soft(structure(&here)("o Frame mostra o form da propriedade `form` e não tem filhos: ponha os componentes no form dele".into()))?;
+            self.soft(structure(&here(path))("o Frame mostra o form da propriedade `form` e não tem filhos: ponha os componentes no form dele".into()))?;
             path.pop();
             return Ok(id);
         }
@@ -191,7 +193,7 @@ impl Loader<'_> {
                 }
             }
             Some(other) => {
-                return Err(structure(&here)(format!("\"children\" deve ser uma lista, recebido {}", describe(other))));
+                return Err(structure(&here(path))(format!("\"children\" deve ser uma lista, recebido {}", describe(other))));
             }
         }
         path.pop();
@@ -199,8 +201,8 @@ impl Loader<'_> {
     }
 
     /// Uma propriedade do componente `id` (da classe `class`) pelo JSON.
-    fn property(&mut self, id: ComponentId, class: &str, key: &str, value: &Value, here: &str) -> Result<()> {
-        let fail = |message: String| Error::Property { path: here.to_string(), property: key.to_string(), message };
+    fn property(&mut self, id: ComponentId, class: &str, key: &str, value: &Value, path: &[String]) -> Result<()> {
+        let fail = |message: String| Error::Property { path: path.join(" > "), property: key.to_string(), message };
         // "margins.left": 4
         if key.contains('.') {
             let v = value.as_f64().ok_or_else(|| fail(format!("esperado número, recebido {}", describe(value))))?;
@@ -210,7 +212,7 @@ impl Loader<'_> {
         let prop = to_prop(value, info.kind, self.ui.theme()).map_err(fail)?;
         if info.kind == PropKind::Component {
             if let PropValue::String(target) = prop {
-                self.deferred.push((id, key.to_string(), target, here.to_string()));
+                self.deferred.push((id, key.to_string(), target, path.join(" > ")));
             }
             return Ok(());
         }

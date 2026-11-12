@@ -2379,11 +2379,8 @@ fn save_bookmarks(file: &Path, marks: &[aylis_controls::Bookmark], names: &[Stri
         all[key] = serde_json::Value::Array(items);
     }
     if let Some(dir) = path.parent() {
-        let _ = std::fs::create_dir_all(dir);
-        let ignore = dir.join(".gitignore");
-        if !ignore.exists() {
-            let _ = std::fs::write(ignore, "# Preferências de quem usa a IDE (marcadores...): fora do git.\n*\n");
-        }
+        // A mesma regra que a geração e as horas dos forms usam (o arquivo não muda mais).
+        aylis_project::local_dir_ignored(dir);
     }
     let _ = std::fs::write(&path, serde_json::to_string_pretty(&all).unwrap_or_default());
 }

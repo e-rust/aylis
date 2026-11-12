@@ -109,39 +109,83 @@ fn text_result(text: impl Into<String>, is_error: bool) -> Value {
     json!({ "content": [{ "type": "text", "text": text.into() }], "isError": is_error })
 }
 
-/// Roda `f` na thread da interface e espera a resposta (até 60 s).
-fn on_ui<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) -> R + Send + 'static) -> Result<R, String> {
-    let (tx, rx) = std::sync::mpsc::channel();
+/// Põe `f` na fila da thread da interface (e refaz a IDE depois).
+fn post_ui(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) + Send + 'static) {
     poster.post(move |ui| {
         let ctx = CONTEXT.with(|c| c.borrow().clone());
         if let Some((state, ids)) = ctx {
-            let _ = tx.send(f(ui, &state, &ids));
+            f(ui, &state, &ids);
             crate::app::refresh(ui, &state, &ids);
         }
     });
-    rx.recv_timeout(Duration::from_secs(60)).map_err(|_| "a IDE não respondeu".to_string())
+}
+
+/// Roda `f` na thread da interface e espera a resposta (até o prazo de uma chamada).
+fn on_ui<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) -> R + Send + 'static) -> Result<R, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    post_ui(poster, move |ui, state, ids| {
+        let _ = tx.send(f(ui, state, ids));
+    });
+    rx.recv_timeout(crate::mcp_tasks::DEADLINE)
+        .map_err(|_| format!("a IDE não respondeu em {} s (ocupada; o pedido pode ainda ser feito): veja status", crate::mcp_tasks::DEADLINE.as_secs()))
+}
+
+/// O resultado do MCP de uma ferramenta.
+fn tool_value(result: Result<Value, String>) -> Value {
+    match result {
+        Ok(v) => text_result(if let Value::String(s) = &v { s.clone() } else { serde_json::to_string_pretty(&v).unwrap_or_default() }, false),
+        Err(e) => text_result(e, true),
+    }
+}
+
+/// `app_command`: o comando vai ao app escolhido (`app`: o pid ou o projeto; sem ele, o último
+/// que conectou), por esta thread (o app responde por outra: a chamada não prende a interface).
+/// `{"cmd": "apps"}` a IDE responde: os conectados.
+fn app_command(args: &Value, poster: &Poster) -> Value {
+    let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
+    let Ok(Some(dev)) = link else {
+        return text_result("nenhum app em execução conectado (use run e espere abrir; o app precisa ter sido compilado pela IDE, com a feature `dev`)", true);
+    };
+    let command = args.get("command").cloned().unwrap_or(Value::Null);
+    if command["cmd"] == "apps" {
+        return text_result(serde_json::to_string_pretty(&json!({ "apps": dev.apps_json() })).unwrap_or_default(), false);
+    }
+    let snapshot = command["cmd"] == "snapshot";
+    app_reply(dev.call_app(args.get("app"), command), snapshot)
+}
+
+/// A resposta do app como resultado do MCP. A captura vai como imagem: o agente vê a tela do app
+/// (relatório do RTSPlayer, 10/11: só havia a árvore, que num app médio passa de 130 mil
+/// caracteres; M21 do Tabernáculo: vinha em base64 dentro do texto).
+fn app_reply(result: Result<Value, String>, snapshot: bool) -> Value {
+    match result {
+        Ok(Value::String(png)) if snapshot => json!({ "content": [{ "type": "image", "data": png, "mimeType": "image/png" }], "isError": false }),
+        Ok(v) => text_result(serde_json::to_string_pretty(&v).unwrap_or_default(), false),
+        Err(e) => text_result(e, true),
+    }
 }
 
 fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
-    // O app em execução responde por outra thread: a chamada não prende a interface.
     if name == "app_command" {
-        let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
-        let command = args.get("command").cloned().unwrap_or(Value::Null);
-        let snapshot = command["cmd"] == "snapshot";
-        let result = match link {
-            Ok(Some(dev)) => dev.call(command),
-            _ => return text_result("nenhum app em execução conectado (use run e espere abrir)", true),
-        };
-        return match result {
-            // A captura vai como imagem do MCP: o agente vê a tela do app (relatório do
-            // RTSPlayer, 10/11: só havia a árvore, que num app médio passa de 130 mil caracteres).
-            Ok(Value::String(png)) if snapshot => json!({ "content": [{ "type": "image", "data": png, "mimeType": "image/png" }], "isError": false }),
-            Ok(v) => text_result(serde_json::to_string_pretty(&v).unwrap_or_default(), false),
-            Err(e) => text_result(e, true),
-        };
+        return app_command(&args, poster);
     }
-    if name == "build" && args.get("wait").and_then(Value::as_bool).unwrap_or(true) {
-        return build_and_wait(args, poster);
+    // O fim de uma chamada que passou do prazo (M12 do Tabernáculo): responde desta thread, sem
+    // esperar a interface (que pode ainda estar nela).
+    if name == "task_status" {
+        let wait = Duration::from_secs(args.get("max_wait").and_then(Value::as_u64).unwrap_or(30).clamp(0, 30 * 60));
+        return crate::mcp_tasks::status(args.get("task").and_then(Value::as_u64), wait);
+    }
+    // O publicar espera como o compilar (antes só começava, e o resultado não voltava).
+    if matches!(name, "build" | "publish") && args.get("wait").and_then(Value::as_bool).unwrap_or(true) {
+        return build_and_wait(name, args, poster);
+    }
+    // A foto de um form do projeto (M19 do Tabernáculo), e os testes, que esperam aqui como o
+    // `build` (a interface segue respondendo).
+    if name == "screenshot" {
+        return screenshot(&args, poster);
+    }
+    if name == "test" {
+        return run_tests(args, poster);
     }
     if name == "build_wait" {
         return build_wait(&args, poster);
@@ -174,12 +218,15 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
             Ok((_, Err(e))) | Err(e) => text_result(e, true),
         };
     }
-    let name = name.to_string();
-    match on_ui(poster, move |ui, state, ids| run_tool(ui, state, ids, &name, &args)) {
-        Ok(Ok(v)) => text_result(if let Value::String(s) = &v { s.clone() } else { serde_json::to_string_pretty(&v).unwrap_or_default() }, false),
-        Ok(Err(e)) => text_result(e, true),
-        Err(e) => text_result(e, true),
-    }
+    // Passado o prazo, "em andamento" com o número da tarefa, e a chamada continua: o
+    // `task_status` traz o fim (M12 do Tabernáculo: respondia "a IDE não respondeu", e quem
+    // chamou não sabia se a ação tinha acontecido).
+    let tool = name.to_string();
+    let (tx, rx) = std::sync::mpsc::channel();
+    post_ui(poster, move |ui, state, ids| {
+        let _ = tx.send(tool_value(run_tool(ui, state, ids, &tool, &args)));
+    });
+    crate::mcp_tasks::wait_or_defer(rx, name, crate::mcp_tasks::DEADLINE)
 }
 
 /// Uma consulta na thread da interface sem refazer a IDE (o `on_ui` refaz a cada chamada).
@@ -198,15 +245,16 @@ fn peek<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&Shared) -> R + Send 
 /// linhas (pedido do autor em 08/11: "a sessão tem que ficar aguardando o Aylis compilar e o Aylis
 /// deve avisar quando terminar"). Até `max_wait` (45 s por padrão; depois, `build_wait`);
 /// `wait: false` só começa, como antes.
-fn build_and_wait(args: Value, poster: &Poster) -> Value {
+fn build_and_wait(tool: &str, args: Value, poster: &Poster) -> Value {
     let wait = args_wait(&args);
+    let tool = tool.to_string();
     let started = on_ui(poster, move |ui, state, ids| {
         // Um trabalho já em andamento (o app executando, outra compilação): recusa, em vez de
         // esperar por ele como se fosse esta compilação (conferência de 08/11).
         if let Some(title) = state.borrow().job.as_ref().map(|j| j.title.clone()) {
             return (false, Err(format!("já há um trabalho em andamento ({title}): pare com o `stop` antes de compilar")));
         }
-        let status = run_tool(ui, state, ids, "build", &args);
+        let status = run_tool(ui, state, ids, &tool, &args);
         (state.borrow().job.is_some(), status)
     });
     let status = match started {
@@ -269,16 +317,51 @@ fn unbase64(text: &str) -> Option<Vec<u8>> {
 
 /// O form aberto no designer, em PNG, do tamanho dele.
 fn designer_png(state: &Shared) -> Result<Vec<u8>, String> {
-    let mut st = state.borrow_mut();
-    if st.no_form {
-        return Err("nenhum form aberto no designer".into());
+    crate::mcp_project::form_png(state, "", "").map(|(_, png)| png)
+}
+
+/// `screenshot`: a foto de um form do projeto como o designer mostra (`form`, sem abrir aba;
+/// vazio: o aberto), ou, com `source: "app"`, a janela do app em execução. A foto do designer
+/// sai na IDE aberta; a de um app sem janela fica com o modo sem plataforma (B04).
+fn screenshot(args: &Value, poster: &Poster) -> Value {
+    let form = arg(args, "form").to_string();
+    if arg(args, "source") == "app" {
+        let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
+        let command = if form.is_empty() { json!({ "cmd": "snapshot" }) } else { json!({ "cmd": "snapshot", "form": form }) };
+        return match link {
+            Ok(Some(dev)) => match dev.call(command) {
+                Ok(Value::String(png)) => json!({ "content": [{ "type": "text", "text": "a janela do app em execução" }, { "type": "image", "data": png, "mimeType": "image/png" }], "isError": false }),
+                Ok(_) => text_result("a captura do app veio vazia", true),
+                Err(e) => text_result(e, true),
+            },
+            _ => text_result("nenhum app em execução conectado (use run e espere abrir)", true),
+        };
     }
-    let root = st.doc.root;
-    st.doc.ui.layout();
-    let (w, h) = st.doc.ui.control(root).map_or((800.0, 600.0), |c| (c.width(), c.height()));
-    let background = st.doc.ui.theme().color("background");
-    let ui = &mut st.doc.ui;
-    crate::host::render_png(w.ceil() as u32, h.ceil() as u32, background, |c| ui.paint(root, c)).ok_or_else(|| "não consegui desenhar o form (sem o renderizador nesta IDE)".to_string())
+    let variant = arg(args, "variant").to_string();
+    match on_ui(poster, move |_, state, _| crate::mcp_project::form_png(state, &form, &variant)) {
+        Ok(Ok((title, png))) => image_result(&format!("o form {title} no designer"), &png),
+        Ok(Err(e)) | Err(e) => text_result(e, true),
+    }
+}
+
+/// `test`: os testes do projeto (`aylis_tools::project_tests`), esperando até `max_wait` s nesta
+/// thread; ainda rodando, a próxima chamada espera a mesma rodada. No modo restrito, não roda.
+fn run_tests(args: Value, poster: &Poster) -> Value {
+    let wait = args_wait(&args);
+    let prepared = on_ui(poster, move |ui, state, ids| run_tool(ui, state, ids, "test", &args).map(|_| state.borrow().project.clone()));
+    let project = match prepared {
+        Ok(Ok(Some(project))) => project,
+        Ok(Ok(None)) => return text_result("abra um projeto antes (open_project)", true),
+        Ok(Err(e)) | Err(e) => return text_result(e, true),
+    };
+    if let Some(other) = crate::mcp_project::running_project().filter(|p| !aylis_tools::instances::same_path(p, &project.path)) {
+        return text_result(format!("os testes de outro projeto ainda estão rodando ({}): chame test de novo depois", other.display()), true);
+    }
+    match crate::mcp_project::wait_tests(project, wait) {
+        Some(Ok(report)) => text_result(serde_json::to_string_pretty(&crate::mcp_project::report_json(&report)).unwrap_or_default(), !report.success),
+        Some(Err(e)) => text_result(e, true),
+        None => text_result(format!("{{\"running\": true, \"note\": \"os testes ainda estão rodando depois de {wait} s: chame test de novo para esperar o resultado (não começa outra rodada)\"}}"), false),
+    }
 }
 
 /// `compare_image`: compara o designer (ou, com `source: "app"`, a tela do app em execução) com
@@ -443,35 +526,133 @@ fn code_file(state: &Shared, file: &str) -> Result<std::path::PathBuf, String> {
     aylis_project::codegen::form_source(project, &form).ok_or_else(|| format!("o form {form} não tem código"))
 }
 
-/// O item de menu de um caminho (`"Executar/Configurar linguagens…"`) nos forms abertos.
-fn menu_item(ui: &Ui, path: &str) -> Option<aylis_core::ComponentId> {
-    let norm = |t: &str| t.replace(['&', '…'], "").replace("...", "").trim().to_lowercase();
-    let wanted: Vec<String> = path.split('/').map(norm).filter(|p| !p.is_empty()).collect();
-    for form in ui.open_forms() {
-        let mut all = vec![form];
-        let mut i = 0;
-        while i < all.len() {
-            all.extend(ui.children(all[i]).iter().copied());
-            i += 1;
+/// Um item de menu (uma folha) dos forms abertos, com o que o `menu` aceita para achá-lo.
+struct MenuEntry {
+    id: aylis_core::ComponentId,
+    /// Os textos do item e dos itens acima dele (sem o `&`).
+    texts: Vec<String>,
+    /// O lugar do menu de contexto ("Object Inspector › (propriedade)"); `None`: um menu de
+    /// janela.
+    place: Option<String>,
+    /// No Object Inspector, a propriedade da linha (cada uma tem o seu menu, com os mesmos
+    /// itens).
+    property: Option<String>,
+    /// No menu principal da IDE (o que vale quando a janela de código tem o mesmo caminho).
+    ide_main: bool,
+}
+
+impl MenuEntry {
+    /// O caminho como `ide_menus` mostra: `Arquivo/Salvar` ou `Lugar › Item`.
+    fn path(&self) -> String {
+        match &self.place {
+            Some(place) => format!("{place} › {}", self.texts.join(" › ")),
+            None => self.texts.join("/"),
         }
-        for id in all {
-            // O caminho do item: os textos dele e dos itens de menu acima.
+    }
+
+    /// O caminho que só este item tem: no Object Inspector, com a propriedade.
+    fn exact_path(&self) -> String {
+        match (&self.place, &self.property) {
+            (Some(_), Some(p)) => format!("Object Inspector › {p} › {}", self.texts.join(" › ")),
+            _ => self.path(),
+        }
+    }
+}
+
+/// A normalização dos textos de um caminho: sem `&` e reticências, sem diferença de maiúsculas.
+fn menu_norm(text: &str) -> String {
+    text.replace(['&', '…'], "").replace("...", "").trim().to_lowercase()
+}
+
+/// As partes de um caminho: por `›` (o dos menus de contexto) ou por `/`.
+fn menu_parts(path: &str) -> Vec<String> {
+    let sep = if path.contains('›') { '›' } else { '/' };
+    path.split(sep).map(menu_norm).filter(|p| !p.is_empty()).collect()
+}
+
+/// Todas as folhas dos menus dos forms abertos (a IDE primeiro), sem os separadores.
+fn menu_entries(ui: &Ui, ids: &Ids) -> Vec<MenuEntry> {
+    let mut out = Vec::new();
+    let mut forms = ui.open_forms();
+    if !forms.contains(&ids.form) {
+        forms.insert(0, ids.form);
+    }
+    for form in forms {
+        for id in descendants(ui, form) {
+            let Some(item) = ui.get::<aylis_controls::MenuItem>(id) else { continue };
+            // Só as folhas (os submenus são o caminho), sem os separadores.
+            if item.text == "-" || ui.children(id).iter().any(|&c| ui.get::<aylis_controls::MenuItem>(c).is_some()) {
+                continue;
+            }
             let mut texts = Vec::new();
             let mut cur = Some(id);
+            let mut top = id;
             while let Some(c) = cur {
                 match ui.get::<aylis_controls::MenuItem>(c) {
-                    Some(m) => texts.push(norm(&m.text)),
+                    Some(m) => texts.push(m.text.replace('&', "")),
                     None => break,
                 }
+                top = c;
                 cur = ui.parent(c);
             }
             texts.reverse();
-            if !texts.is_empty() && texts == wanted {
-                return Some(id);
-            }
+            let holder = ui.parent(top);
+            let popup = holder.filter(|&p| ui.class_name(p) == Some("PopupMenu"));
+            let place = popup.map(|p| context_place(ui, ids, p));
+            // A linha do Object Inspector: o rótulo dela tem o nome da propriedade na dica.
+            let property = popup.filter(|_| place.as_deref().is_some_and(|p| p.starts_with("Object Inspector"))).and_then(|p| {
+                let line = ui.parent(p)?;
+                let label = *ui.children(line).first()?;
+                match ui.get_prop(label, "hint") {
+                    Ok(aylis_core::PropValue::String(s)) if !s.is_empty() => Some(s),
+                    _ => None,
+                }
+            });
+            let ide_main = form == ids.form && popup.is_none() && holder.is_some_and(|h| ui.class_name(h) == Some("MainMenu"));
+            out.push(MenuEntry { id, texts, place, property, ide_main });
         }
     }
-    None
+    out
+}
+
+/// O item de menu de um caminho (`"Executar/Configurar linguagens…"`, ou o de um menu de
+/// contexto, `"Object Inspector › caption › Ligar a campo…"`) nos forms abertos. Antes ia o
+/// primeiro com os mesmos textos, e num menu de contexto repetido em cada linha (o do Object
+/// Inspector) era o da primeira propriedade (M10 do Tabernáculo): agora dois que valem o
+/// recusam, com os candidatos; entre a IDE e a janela de código, vale o da IDE.
+fn menu_item(ui: &Ui, ids: &Ids, path: &str) -> Result<aylis_core::ComponentId, String> {
+    let wanted = menu_parts(path);
+    let entries = menu_entries(ui, ids);
+    let found: Vec<&MenuEntry> = entries
+        .iter()
+        .filter(|e| {
+            let texts: Vec<String> = e.texts.iter().map(|t| menu_norm(t)).collect();
+            texts == wanted || menu_parts(&e.path()) == wanted || menu_parts(&e.exact_path()) == wanted
+        })
+        .collect();
+    match found.as_slice() {
+        [] => Err(format!("item de menu não encontrado: {path} (ide_menus lista os caminhos e os ids)")),
+        [one] => Ok(one.id),
+        many => {
+            let main: Vec<&&MenuEntry> = many.iter().filter(|e| e.ide_main).collect();
+            if let [one] = main.as_slice() {
+                return Ok(one.id);
+            }
+            let list: Vec<String> = many.iter().take(20).map(|e| format!("{} (id {})", e.exact_path(), e.id.to_u64())).collect();
+            let more = if many.len() > 20 { format!(" e mais {}", many.len() - 20) } else { String::new() };
+            Err(format!("{} itens de menu valem para '{path}': escolha pelo caminho ou pelo id:\n- {}{more}", many.len(), list.join("\n- ")))
+        }
+    }
+}
+
+/// O item de menu de um `id` (de `ide_menus`).
+fn menu_item_by_id(ui: &Ui, id: u64) -> Result<aylis_core::ComponentId, String> {
+    let id = aylis_core::ComponentId::from_u64(id);
+    if ui.contains(id) && ui.get::<aylis_controls::MenuItem>(id).is_some() {
+        Ok(id)
+    } else {
+        Err(format!("não há item de menu com o id {} (os menus de contexto são refeitos: chame ide_menus de novo)", id.to_u64()))
+    }
 }
 
 /// Onde fica um menu de contexto (`PopupMenu`): o painel da IDE que tem o controle dono dele
@@ -499,49 +680,33 @@ fn context_place(ui: &Ui, ids: &Ids, popup: aylis_core::ComponentId) -> String {
     "Menu de contexto".into()
 }
 
-/// Os itens de menu dos forms abertos (a IDE e a janela de código), com o caminho que o
+/// Os itens de menu dos forms abertos (a IDE e a janela de código), com o caminho e o `id` que o
 /// `menu` aceita. Os menus de contexto (clique direito) vêm com o lugar na frente
 /// ("Object Inspector › (propriedade) › Ligar a campo…") e `context`, uma vez só cada um:
-/// a mesma entrada repetida em cada linha não diz nada a mais ao agente.
+/// a mesma entrada repetida em cada linha não diz nada a mais ao agente (`count` diz quantas
+/// há; no Object Inspector, o `menu` escolhe a da propriedade pelo caminho com o nome dela).
 fn menu_items(ui: &Ui, ids: &Ids) -> Vec<Value> {
-    let mut out = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-    let mut forms = ui.open_forms();
-    if !forms.contains(&ids.form) {
-        forms.insert(0, ids.form);
+    let entries = menu_entries(ui, ids);
+    let mut counts: std::collections::HashMap<String, usize> = Default::default();
+    for e in &entries {
+        *counts.entry(e.path()).or_default() += 1;
     }
-    for form in forms {
-        for id in descendants(ui, form) {
-            let Some(item) = ui.get::<aylis_controls::MenuItem>(id) else { continue };
-            // Só as folhas (os submenus são o caminho), sem os separadores.
-            if item.text == "-" || ui.children(id).iter().any(|&c| ui.get::<aylis_controls::MenuItem>(c).is_some()) {
-                continue;
-            }
-            let mut texts = Vec::new();
-            let mut cur = Some(id);
-            let mut top = id;
-            while let Some(c) = cur {
-                match ui.get::<aylis_controls::MenuItem>(c) {
-                    Some(m) => texts.push(m.text.replace('&', "")),
-                    None => break,
-                }
-                top = c;
-                cur = ui.parent(c);
-            }
-            texts.reverse();
-            let popup = ui.parent(top).filter(|&p| ui.class_name(p) == Some("PopupMenu"));
-            let entry = match popup {
-                Some(p) => {
-                    let path = format!("{} › {}", context_place(ui, ids, p), texts.join(" › "));
-                    seen.insert(path.clone()).then(|| json!({ "path": path, "context": true, "shortcut": item.shortcut, "enabled": item.enabled, "checked": item.checked }))
-                }
-                None => {
-                    let path = texts.join("/");
-                    seen.insert(path.clone()).then(|| json!({ "path": path, "shortcut": item.shortcut, "enabled": item.enabled, "checked": item.checked }))
-                }
-            };
-            out.extend(entry);
+    let mut seen = std::collections::HashSet::new();
+    let mut out = Vec::new();
+    for e in &entries {
+        let path = e.path();
+        if !seen.insert(path.clone()) {
+            continue;
         }
+        let Some(item) = ui.get::<aylis_controls::MenuItem>(e.id) else { continue };
+        let mut v = json!({ "path": path, "id": e.id.to_u64(), "shortcut": item.shortcut, "enabled": item.enabled, "checked": item.checked });
+        if e.place.is_some() {
+            v["context"] = json!(true);
+        }
+        if let Some(&n) = counts.get(&path).filter(|&&n| n > 1) {
+            v["count"] = json!(n);
+        }
+        out.push(v);
     }
     out
 }
@@ -635,15 +800,115 @@ fn dialog_json(ui: &Ui, form: aylis_core::ComponentId) -> Value {
         .collect();
     let error = all.iter().filter_map(|&c| ui.get::<aylis_controls::Label>(c)).map(|l| l.text.clone()).find(|t| t.starts_with('⚠')).unwrap_or_default();
     let checks: Vec<Value> = all.iter().filter_map(|&c| ui.get::<aylis_controls::CheckBox>(c)).map(|c| json!({ "text": c.text, "checked": c.checked })).collect();
-    let buttons: Vec<Value> = all
-        .iter()
-        .filter_map(|&c| ui.get::<aylis_controls::Button>(c).map(|b| (c, b)))
-        .filter(|(_, b)| !b.text.trim().is_empty())
-        .map(|(c, b)| json!({ "text": b.text.replace('&', ""), "enabled": ui.control(c).is_some_and(|c| c.enabled()) }))
+    let buttons: Vec<Value> = dialog_buttons(ui, form)
+        .into_iter()
+        .map(|b| {
+            let mut v = json!({ "text": b.text, "id": b.id.to_u64(), "enabled": b.enabled });
+            if b.label != b.text {
+                v["label"] = json!(b.label);
+            }
+            if !b.hint.is_empty() {
+                v["hint"] = json!(b.hint);
+            }
+            v
+        })
         .collect();
     let labels: Vec<String> = all.iter().filter_map(|&c| ui.get::<aylis_controls::Label>(c)).map(|l| l.text.clone()).filter(|t| !t.trim().is_empty()).collect();
     let memo = all.iter().find_map(|&c| ui.get::<aylis_controls::Memo>(c)).map(|m| m.text.clone()).unwrap_or_default();
     json!({ "title": title, "fields": fields, "combos": combos, "lists": lists, "checks": checks, "buttons": buttons, "labels": labels, "text": memo, "error": error })
+}
+
+/// Um botão do diálogo, como `dialog_state` mostra.
+struct DialogButton {
+    id: aylis_core::ComponentId,
+    text: String,
+    /// O texto, ou, havendo outro botão com o mesmo texto, o texto e o que é dele (a dica, ou os
+    /// rótulos da mesma linha): "Corrigir… — Android SDK (Android)".
+    label: String,
+    hint: String,
+    enabled: bool,
+}
+
+/// Os botões que aparecem no diálogo, com um `label` único para cada um (M11 do Tabernáculo: o
+/// "Verificar ambiente" tinha três "Corrigir…" iguais, e não dava para saber qual era qual).
+fn dialog_buttons(ui: &Ui, form: aylis_core::ComponentId) -> Vec<DialogButton> {
+    let mut out: Vec<DialogButton> = descendants(ui, form)
+        .into_iter()
+        .filter(|&c| shown(ui, c))
+        .filter_map(|c| ui.get::<aylis_controls::Button>(c).map(|b| (c, b)))
+        .filter(|(_, b)| !b.text.trim().is_empty())
+        .map(|(c, b)| {
+            let hint = match ui.get_prop(c, "hint") {
+                Ok(aylis_core::PropValue::String(s)) => s,
+                _ => String::new(),
+            };
+            let text = b.text.replace('&', "");
+            DialogButton { id: c, label: text.clone(), text, hint, enabled: ui.control(c).is_some_and(|c| c.enabled()) }
+        })
+        .collect();
+    let texts: Vec<String> = out.iter().map(|b| b.text.to_lowercase()).collect();
+    for (i, b) in out.iter_mut().enumerate() {
+        if texts.iter().filter(|t| **t == texts[i]).count() < 2 {
+            continue;
+        }
+        // O que é deste botão: a dica, ou os rótulos ao lado dele (a linha do item).
+        let beside = || -> String {
+            let Some(parent) = ui.parent(b.id) else { return String::new() };
+            ui.children(parent)
+                .iter()
+                .filter_map(|&c| ui.get::<aylis_controls::Label>(c).map(|l| l.text.trim().to_string()))
+                .filter(|t| t.chars().count() > 1)
+                .collect::<Vec<_>>()
+                .join(" · ")
+        };
+        let about = if b.hint.is_empty() { beside() } else { b.hint.clone() };
+        if !about.is_empty() {
+            b.label = format!("{} — {about}", b.text);
+        }
+    }
+    // Ainda iguais (sem dica nem rótulo que os separe): o número na ordem da tela.
+    let labels: Vec<String> = out.iter().map(|b| b.label.to_lowercase()).collect();
+    let mut seen: std::collections::HashMap<String, usize> = Default::default();
+    for (i, b) in out.iter_mut().enumerate() {
+        if labels.iter().filter(|l| **l == labels[i]).count() > 1 {
+            let n = seen.entry(labels[i].clone()).or_default();
+            *n += 1;
+            b.label = format!("{} #{n}", b.label);
+        }
+    }
+    out
+}
+
+/// O botão do `dialog_click`: pelo `id` ou pelo texto (o `label` de `dialog_state`, ou o texto,
+/// quando é de um botão só). Dois com o mesmo texto: recusa, com o `label` e o `id` de cada um.
+fn dialog_button(ui: &Ui, form: aylis_core::ComponentId, id: Option<u64>, text: &str) -> Result<aylis_core::ComponentId, String> {
+    let buttons = dialog_buttons(ui, form);
+    if let Some(id) = id {
+        return buttons.iter().find(|b| b.id.to_u64() == id).map(|b| b.id).ok_or_else(|| format!("o diálogo não tem o botão de id {id} (dialog_state lista os botões)"));
+    }
+    let text = text.replace('&', "");
+    let text = text.trim();
+    if text.is_empty() {
+        return Err("informe `text` (o texto ou o label do botão) ou `id`".into());
+    }
+    if let Some(b) = buttons.iter().find(|b| b.label.eq_ignore_ascii_case(text)) {
+        return Ok(b.id);
+    }
+    let same: Vec<&DialogButton> = buttons.iter().filter(|b| b.text.eq_ignore_ascii_case(text)).collect();
+    match same.as_slice() {
+        [one] => Ok(one.id),
+        [] => {
+            // Um botão escondido (uma página do assistente que não é a do passo): como antes.
+            descendants(ui, form)
+                .into_iter()
+                .find(|&c| ui.get::<aylis_controls::Button>(c).is_some_and(|b| b.text.replace('&', "").eq_ignore_ascii_case(text)))
+                .ok_or_else(|| format!("o diálogo não tem o botão '{text}'"))
+        }
+        many => {
+            let list: Vec<String> = many.iter().map(|b| format!("\"{}\" (id {})", b.label, b.id.to_u64())).collect();
+            Err(format!("o diálogo tem {} botões '{text}': escolha pelo label ou pelo id: {}", many.len(), list.join(", ")))
+        }
+    }
 }
 
 /// Escolhe um item de um ComboBox ou ListBox do diálogo, como o usuário: muda o `item_index`
@@ -1204,17 +1469,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         }
         "dialog_click" => {
             let form = automatable_dialog(ui)?;
-            let text = arg(args, "text");
-            let mut all = vec![form];
-            let mut i = 0;
-            while i < all.len() {
-                all.extend(ui.children(all[i]).iter().copied());
-                i += 1;
-            }
-            let id = all
-                .into_iter()
-                .find(|&c| ui.get::<aylis_controls::Button>(c).is_some_and(|b| b.text.replace('&', "").eq_ignore_ascii_case(text)))
-                .ok_or_else(|| format!("o diálogo não tem o botão '{text}'"))?;
+            let id = dialog_button(ui, form, args.get("id").and_then(Value::as_u64), arg(args, "text"))?;
             if ui.control(id).is_some_and(|c| !c.enabled()) {
                 return Err("o botão está desabilitado".into());
             }
@@ -1225,7 +1480,12 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             })
         }
         "menu" => {
-            let id = menu_item(ui, arg(args, "path")).ok_or_else(|| format!("item de menu não encontrado: {}", arg(args, "path")))?;
+            // Pelo `id` de `ide_menus` ou pelo caminho (M10 do Tabernáculo).
+            let id = match args.get("id").and_then(Value::as_u64) {
+                Some(id) => menu_item_by_id(ui, id)?,
+                None if arg(args, "path").is_empty() => return Err("informe `path` (o caminho, como ide_menus lista) ou `id`".into()),
+                None => menu_item(ui, ids, arg(args, "path"))?,
+            };
             if ui.get::<aylis_controls::MenuItem>(id).is_some_and(|m| !m.enabled) {
                 return Err("o item está desabilitado".into());
             }
@@ -1315,17 +1575,17 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             Ok(Value::String(state.borrow().status.clone()))
         }
         "debug_state" => Ok(crate::debugger::snapshot(state, Some(arg(args, "evaluate")))),
-        "status" => Ok(Value::String(state.borrow().status.clone())),
+        "status" => {
+            // As chamadas que passaram do prazo, ainda rodando ou com o resultado por ler (M12).
+            let tasks = crate::mcp_tasks::list();
+            let status = state.borrow().status.clone();
+            Ok(if tasks.as_array().is_some_and(|t| t.is_empty()) { Value::String(status) } else { json!({ "status": status, "tasks": tasks }) })
+        }
         "stop" => {
             crate::actions::stop(state);
             Ok(Value::String("parando".into()))
         }
-        "output" => {
-            let n = args.get("lines").and_then(Value::as_u64).unwrap_or(50) as usize;
-            let st = state.borrow();
-            let lines: Vec<&str> = st.output.iter().rev().take(n).map(|l| l.text.as_str()).collect();
-            Ok(Value::String(lines.into_iter().rev().collect::<Vec<_>>().join("\n")))
-        }
+        "output" => output_json(&state.borrow(), args),
         "ide_menus" => Ok(Value::Array(menu_items(ui, ids))),
         "new_project" => {
             let dir = std::path::PathBuf::from(arg(args, "dir"));
@@ -1358,21 +1618,16 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         }
         "new_form" => {
             let form = arg(args, "name").to_string();
-            if !aylis_project::is_identifier(&form) {
-                return Err("use letras, números e _ (começando com letra)".into());
+            let (folder, file) = (arg(args, "folder"), arg(args, "file"));
+            if !folder.is_empty() && !file.is_empty() {
+                return Err("use `folder` (a subpasta de forms/) ou `file` (o arquivo inteiro), não os dois".into());
             }
-            let result = {
-                let mut st = state.borrow_mut();
-                let project = st.project.as_mut().ok_or("abra um projeto antes (open_project)")?;
-                if project.form(&form).is_some() {
-                    return Err(format!("o projeto já tem um form '{form}'"));
-                }
-                let added = if args.get("data_module").and_then(Value::as_bool).unwrap_or(false) { project.add_data_module(&form) } else { project.add_form(&form, &form) };
-                added.and_then(|_| project.save())
-            };
-            result?;
+            if state.borrow().project.is_none() {
+                return Err("abra um projeto antes (open_project)".into());
+            }
+            // `folder`: a subpasta de forms/ (M17 do Tabernáculo), como o "Novo form" da IDE.
+            crate::actions::create_form(state, &form, args.get("data_module").and_then(Value::as_bool).unwrap_or(false), folder)?;
             // `file`: o arquivo (e a subpasta) do form, em vez do que sai do nome.
-            let file = arg(args, "file");
             if !file.is_empty() {
                 crate::actions::move_form(state, &form, file)?;
             }
@@ -1484,7 +1739,12 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             let out_dir = Some(arg(args, "out_dir")).filter(|d| !d.is_empty()).map(std::path::PathBuf::from);
             restricted(state)?;
             crate::codewindow::save_all(ui);
-            crate::jobs::publish(state, target, out_dir);
+            // As opções do diálogo Publicar (o pacote do Android e o instalador do Windows); a
+            // senha da chave do Android não passa por aqui: vem do ambiente
+            // (`AYLIS_KEYSTORE_PASSWORD`), ou sai com a chave de depuração.
+            let flag = |key: &str| args.get(key).and_then(Value::as_bool).unwrap_or(false);
+            let extras = crate::jobs::PublishExtras { bundle: flag("bundle"), installer: flag("installer"), key_password: None };
+            crate::jobs::publish_with(state, target, out_dir, extras);
             Ok(Value::String(state.borrow().status.clone()))
         }
         "undo" | "redo" => {
@@ -1514,13 +1774,52 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             crate::debugger::set_condition(ui, state, &file, line, arg(args, "condition"), arg(args, "hits"));
             Ok(json!({ "file": file.display().to_string(), "line": line, "condition": crate::debugger::condition_of(state, &file, line) }))
         }
-        _ => Err(format!("ferramenta desconhecida: {name}")),
+        // Frame, tema, traduções, ícone, verificação e testes (M18 e M19 do Tabernáculo).
+        _ => crate::mcp_project::run(ui, state, ids, name, args).unwrap_or_else(|| Err(format!("ferramenta desconhecida: {name}"))),
     }
 }
 
-/// Compilar, executar e publicar num projeto em modo restrito: o erro, para o agente dizer ao
-/// usuário (a confiança é só dele, pelo diálogo da IDE; o MCP não confirma).
-fn restricted(state: &Shared) -> Result<(), String> {
+/// `output`: as últimas linhas do histórico das mensagens, cada uma com a origem e o nível
+/// (M20 do Tabernáculo: vinha o texto puro, com a compilação e o programa misturados, e era
+/// limpo ao sair do projeto). Sem `previous`, só as da última execução, como o painel.
+pub fn output_json(st: &crate::state::State, args: &Value) -> Result<Value, String> {
+    let n = args.get("lines").and_then(Value::as_u64).unwrap_or(50) as usize;
+    let source = match arg(args, "source") {
+        "" | "all" => None,
+        s @ ("build" | "program") => Some(s),
+        other => return Err(format!("`source` é all, build ou program (recebido \"{other}\")")),
+    };
+    let levels: &[&str] = match arg(args, "level") {
+        "" | "all" => &[],
+        "warning" => &["warning", "error"],
+        "error" => &["error"],
+        other => return Err(format!("`level` é all, warning ou error (recebido \"{other}\")")),
+    };
+    let previous = args.get("previous").and_then(Value::as_bool).unwrap_or(false);
+    let picked: Vec<&crate::jobs::HistoryLine> = st
+        .history
+        .iter()
+        .filter(|l| previous || l.run == st.run_number)
+        .filter(|l| source.is_none_or(|s| l.source() == s))
+        .filter(|l| levels.is_empty() || levels.contains(&l.kind.level()))
+        .collect();
+    let lines: Vec<Value> = picked[picked.len().saturating_sub(n)..]
+        .iter()
+        .map(|l| {
+            let mut v = json!({ "source": l.source(), "level": l.kind.level(), "text": l.text });
+            if previous {
+                v["run"] = json!(l.run);
+                v["project"] = json!(l.project);
+            }
+            v
+        })
+        .collect();
+    Ok(json!({ "lines": lines, "matching": picked.len(), "run": st.run_number }))
+}
+
+/// Compilar, executar, publicar e testar num projeto em modo restrito: o erro, para o agente
+/// dizer ao usuário (a confiança é só dele, pelo diálogo da IDE; o MCP não confirma).
+pub(crate) fn restricted(state: &Shared) -> Result<(), String> {
     if state.borrow().restricted {
         return Err("o projeto está em modo restrito (não foi criado nem confiado nesta pasta; um projeto movido de pasta também conta como de fora): compilar, executar e publicar ficam desligados até o usuário confiar nele na IDE (o diálogo \"Confiar neste projeto?\" ou Projeto → Opções do projeto → Confiar neste projeto). Peça isso ao usuário; o MCP não confirma.".into());
     }

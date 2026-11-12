@@ -288,3 +288,58 @@ fn hit_test_false_children_route_to_the_parent() {
     assert!(take(&log).contains(&"a.on_click".to_string()));
     assert!(ui.get::<Boxy>(label).is_some());
 }
+
+/// J03 (relatório do Tabernáculo): o primeiro clique refaz a tela e põe outro controle no
+/// mesmo lugar; o segundo clique, rápido, não é duplo para o controle novo (ele recebeu um
+/// clique só). Vale para o controle liberado (no handler ou depois, pelo `free_later`) e para
+/// o escondido.
+#[test]
+fn a_double_click_goes_only_to_the_control_that_got_both_clicks() {
+    for how in ["free", "free_later", "hide"] {
+        let (mut ui, form, a, _b, log) = setup();
+        let replacement: Rc<RefCell<Option<ComponentId>>> = Rc::default();
+        let (r, l) = (replacement.clone(), log.clone());
+        ui.on(a, "on_click", move |ui, sender, _| {
+            match how {
+                "free" => {
+                    ui.free(sender);
+                }
+                "free_later" => ui.free_later(sender),
+                _ => {
+                    ui.control_mut(sender).unwrap().set_visible(false);
+                }
+            }
+            let c = ui.add(btn(100.0, 0.0), form);
+            ui.control_mut(c).unwrap().set_align(Align::Left);
+            log_events(ui, c, "c", &l);
+            *r.borrow_mut() = Some(c);
+        });
+        ui.set_time(1.0);
+        ui.pointer_down(form, at(10.0, 10.0));
+        ui.pointer_up(form, at(10.0, 10.0));
+        ui.process_events();
+        // O `free_later` roda na volta dos relógios.
+        ui.advance(0.05);
+        ui.layout();
+        let c = replacement.borrow().expect("o clique refez a tela");
+        assert_eq!(ui.hit_test(form, PointF::new(11.0, 10.0)), Some(c), "{how}");
+        take(&log);
+        let count = Rc::new(RefCell::new(0u8));
+        let n = count.clone();
+        ui.on(c, "on_pointer_down", move |_, _, args| {
+            if let EventArgs::Pointer(e) = args {
+                *n.borrow_mut() = e.click_count;
+            }
+        });
+        ui.set_time(1.2);
+        ui.pointer_down(form, at(11.0, 10.0));
+        ui.pointer_up(form, at(11.0, 10.0));
+        let events = take(&log);
+        assert!(!events.contains(&"c.on_dbl_click".to_string()), "{how}: {events:?}");
+        assert_eq!(*count.borrow(), 1, "{how}: o controle novo recebeu o primeiro clique");
+        // O terceiro, rápido, já é o duplo do controle novo.
+        ui.set_time(1.4);
+        ui.pointer_down(form, at(11.0, 10.0));
+        assert!(take(&log).contains(&"c.on_dbl_click".to_string()), "{how}");
+    }
+}

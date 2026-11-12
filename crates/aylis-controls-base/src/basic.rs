@@ -198,6 +198,29 @@ impl Default for Form {
 }
 
 impl Form {
+    /// A largura da área cliente (o `ClientWidth` do Delphi): no Aylis, o `width` do form já é
+    /// a área de dentro, sem a moldura e a barra de título do sistema.
+    pub fn client_width(&self) -> f32 {
+        self.base.width()
+    }
+
+    pub fn set_client_width(&mut self, width: f32) {
+        let height = self.base.height();
+        self.base.set_size(width.max(0.0), height);
+    }
+
+    /// A altura da área cliente (o `ClientHeight`), sem a barra de título.
+    pub fn client_height(&self) -> f32 {
+        self.base.height()
+    }
+
+    pub fn set_client_height(&mut self, height: f32) {
+        let width = self.base.width();
+        self.base.set_size(width, height.max(0.0));
+    }
+}
+
+impl Form {
     pub fn new(caption: impl Into<String>, width: f32, height: f32) -> Self {
         Self {
             base: ControlBase::new(width, height),
@@ -267,7 +290,8 @@ impl Component for Form {
         activate_on_show: bool => "Behavior",
         close_action: CloseAction => "Behavior",
         frame_rate: f32 => "Behavior";
-        events: on_show, on_window_created, on_close, on_close_query, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change
+        events: on_show, on_window_created, on_close, on_close_query, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change;
+        computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
@@ -303,6 +327,11 @@ impl Component for Form {
         // Com o app rodando, a janela segue (no designer não há janela).
         if name == "gpu" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
+        }
+        // O tamanho mudado pelo código com o app rodando: a janela acompanha, com a área
+        // cliente do tamanho pedido (a moldura fica por fora; J11).
+        if matches!(name, "width" | "height" | "client_width" | "client_height") && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::ApplySize);
         }
         if name == "window_state" && !ctx.ui.design_mode() {
             let form = ctx.id;

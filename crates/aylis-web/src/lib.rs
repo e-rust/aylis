@@ -300,7 +300,23 @@ pub struct Canvas2d<'a> {
     depth: usize,
     /// Os `begin_cached` abertos (`None`: não deu para guardar, desenha direto).
     cached: Vec<Option<WebCache>>,
+    /// As camadas de `save_layer` abertas (a opacidade de um contêiner com os filhos).
+    layers: Vec<WebLayer>,
     _life: std::marker::PhantomData<&'a CanvasRenderingContext2d>,
+}
+
+/// Uma camada de `save_layer`: o grupo é desenhado num canvas à parte, do tamanho do de
+/// baixo, e composto uma vez só com a opacidade no `restore`. Com o `globalAlpha` em cada
+/// desenho, o que os filhos cobrem uns dos outros aparecia por baixo (o fundo do painel através
+/// do botão), diferente do Skia e do Direct2D (o relatório do Tabernáculo, C24).
+struct WebLayer {
+    main: CanvasRenderingContext2d,
+    /// Os `save` de `main` abertos antes da camada.
+    depth: usize,
+    /// Quantos `begin_cached` estavam abertos: o `restore` só fecha a camada no mesmo nível.
+    cached: usize,
+    canvas: HtmlCanvasElement,
+    opacity: f64,
 }
 
 /// Um desenho sendo guardado: o contexto de antes e a imagem onde ele vai.
@@ -316,6 +332,25 @@ thread_local! {
     /// Os desenhos guardados (`Canvas::begin_cached`: o `cache_layer` de um controle, um
     /// mapa parado), pela chave.
     static LAYERS: RefCell<HashMap<u64, HtmlCanvasElement>> = RefCell::new(HashMap::new());
+    /// Os canvas das camadas de `save_layer` já usados, para o próximo quadro.
+    static SPARE_LAYERS: RefCell<Vec<HtmlCanvasElement>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Um canvas `width` × `height` limpo, para uma camada (um guardado, se houver).
+fn layer_canvas(width: u32, height: u32) -> Option<(HtmlCanvasElement, CanvasRenderingContext2d)> {
+    let canvas = match SPARE_LAYERS.with(|s| s.borrow_mut().pop()) {
+        Some(c) => c,
+        None => web_sys::window()?.document()?.create_element("canvas").ok()?.dyn_into::<HtmlCanvasElement>().ok()?,
+    };
+    if canvas.width() != width || canvas.height() != height {
+        canvas.set_width(width);
+        canvas.set_height(height);
+    }
+    let ctx = canvas.get_context("2d").ok().flatten()?.dyn_into::<CanvasRenderingContext2d>().ok()?;
+    let _ = ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+    ctx.set_global_alpha(1.0);
+    ctx.clear_rect(0.0, 0.0, width as f64, height as f64);
+    Some((canvas, ctx))
 }
 
 /// Desenha `canvas` com o canto em `at`, em pixels (sem a transformação atual; o recorte vale).
@@ -328,7 +363,7 @@ fn draw_at_device(ctx: &CanvasRenderingContext2d, canvas: &HtmlCanvasElement, at
 
 impl<'a> Canvas2d<'a> {
     pub fn new(ctx: &'a CanvasRenderingContext2d) -> Self {
-        Self { ctx: ctx.clone(), depth: 0, cached: Vec::new(), _life: std::marker::PhantomData }
+        Self { ctx: ctx.clone(), depth: 0, cached: Vec::new(), layers: Vec::new(), _life: std::marker::PhantomData }
     }
 
     /// O contexto 2D por baixo, para desenhos que o trait não cobre.
@@ -424,6 +459,23 @@ impl Canvas for Canvas2d<'_> {
         if self.depth > 0 {
             self.depth -= 1;
             self.ctx.restore();
+        } else if self.layers.last().is_some_and(|l| l.cached == self.cached.len()) {
+            // Fecha a camada: o grupo vai para o canvas de baixo com a opacidade, no recorte
+            // de lá.
+            let Some(layer) = self.layers.pop() else { return };
+            self.ctx = layer.main;
+            self.depth = layer.depth;
+            self.ctx.save();
+            let _ = self.ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+            self.ctx.set_global_alpha(self.ctx.global_alpha() * layer.opacity);
+            let _ = self.ctx.draw_image_with_html_canvas_element(&layer.canvas, 0.0, 0.0);
+            self.ctx.restore();
+            SPARE_LAYERS.with(|s| {
+                let mut spare = s.borrow_mut();
+                if spare.len() < 4 {
+                    spare.push(layer.canvas);
+                }
+            });
         }
     }
 
@@ -445,9 +497,19 @@ impl Canvas for Canvas2d<'_> {
     }
 
     fn save_layer(&mut self, opacity: f32) {
-        self.depth += 1;
-        self.ctx.save();
-        self.ctx.set_global_alpha(self.ctx.global_alpha() * opacity as f64);
+        // O grupo num canvas à parte, com a mesma transformação; o recorte de baixo vale ao
+        // compor. Sem como criar o canvas, o `globalAlpha` em cada desenho (o de antes).
+        let target = self.ctx.canvas().zip(self.ctx.get_transform().ok()).and_then(|(main, m)| Some((layer_canvas(main.width(), main.height())?, m)));
+        let Some(((canvas, target), m)) = target else {
+            self.depth += 1;
+            self.ctx.save();
+            self.ctx.set_global_alpha(self.ctx.global_alpha() * opacity as f64);
+            return;
+        };
+        let _ = target.set_transform(m.a(), m.b(), m.c(), m.d(), m.e(), m.f());
+        let main = std::mem::replace(&mut self.ctx, target);
+        let depth = std::mem::take(&mut self.depth);
+        self.layers.push(WebLayer { main, depth, cached: self.cached.len(), canvas, opacity: opacity as f64 });
     }
 
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush) {

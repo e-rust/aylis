@@ -63,11 +63,13 @@ impl Screen {
     }
 }
 
-/// Quanto um pixel pode mudar sem contar como resto. Um desenho cortado pela borda da área
-/// passa por outro caminho de rasterização no Skia, e a beirada anti-aliasing dele muda alguns
-/// tons (até uns 40, só nos pixels da beirada; o navegador, que repinta por partes, tem o mesmo
-/// efeito). Resto de verdade (o desenho velho que ficou, o que passou da área) muda o pixel
-/// inteiro: mais de 200 tons nos defeitos que o teste já pegou.
+/// Quanto um pixel pode mudar sem contar como resto. Um desenho cortado pela borda da
+/// superfície da pintura por parte passa por outro caminho de rasterização no Skia (as curvas
+/// cortadas são refeitas em retas), e a beirada anti-aliasing dele muda alguns tons (até uns
+/// 40, só nos pixels da beirada; o navegador, que repinta por partes, tem o mesmo efeito). O
+/// corte fica 16 pixels fora da área (`SkiaRenderer::draw_region`); sem isso, um círculo
+/// cortado pela área passava de 50 tons. Resto de verdade (o desenho velho que ficou, o que
+/// passou da área) muda o pixel inteiro: mais de 200 tons nos defeitos que o teste já pegou.
 const TOLERANCE: u32 = 48;
 
 /// Os pixels que mudaram mais que [`TOLERANCE`] entre as duas imagens (quantos e o primeiro,
@@ -461,4 +463,47 @@ fn scrolling_a_memo_by_parts_in_direct2d_gives_the_full_image() {
         assert_eq!(count, 0, "passo {step}: {count} pixels diferentes (até {worst} tons)");
         previous = whole;
     }
+}
+
+/// O polegar (um círculo) de um TrackBar cortado pela borda da área: o Skia corta as curvas no
+/// recorte e as refaz em retas, e a beirada saía até uns 100 tons diferente da pintura
+/// inteira, até 4 pixels para dentro (com o Popover e o DateTimeEdit no começo da grade, o
+/// TrackBar e o Switch caíam bem na borda da área do vizinho). A pintura por parte vai para uma
+/// superfície com margem, e só a área volta.
+#[test]
+fn a_circle_cut_by_the_area_edge_paints_like_the_full_frame() {
+    for painter in painters() {
+        let mut ui = Ui::new();
+        aylis_controls::register(&mut ui);
+        ui.services_mut().text = Some(painter.text_service());
+        let form = ui.create("Form", None).unwrap();
+        ui.set_prop(form, "width", W as f64).unwrap();
+        ui.set_prop(form, "height", H as f64).unwrap();
+        ui.show(form).unwrap();
+        let track = ui.create("TrackBar", Some(form)).unwrap();
+        for (prop, value) in [("align", PropValue::from("none")), ("left", 154.0.into()), ("top", 494.0.into()), ("width", 138.0.into()), ("height", 58.0.into())] {
+            ui.set_prop(track, prop, value).unwrap();
+        }
+        ui.set_time(1000.0);
+        ui.layout();
+        let mut screen = Screen { ui, form, painter };
+        let full = screen.full();
+        let mut worst = 0;
+        // A borda direita da área passando pelo polegar, pixel a pixel (e a de baixo, idem).
+        for cut in 0..24 {
+            for area in [RectF::new(0.0, 349.0, 154.0 + cut as f32, 209.25), RectF::new(100.0, 300.0, 300.0, 210.0 + cut as f32)] {
+                let partial = screen.painter.paint(&mut screen.ui, form, Some((&full, area)));
+                worst = worst.max(partial.iter().zip(&full).map(|(a, b)| tones(*a, *b)).max().unwrap_or(0));
+            }
+        }
+        assert!(worst <= 16, "a beirada do polegar mudou {worst} tons na pintura por parte");
+    }
+}
+
+fn painters() -> Vec<Box<dyn Painter>> {
+    #[allow(unused_mut)]
+    let mut list: Vec<Box<dyn Painter>> = vec![Box::new(aylis_skia::SkiaRenderer::new())];
+    #[cfg(windows)]
+    list.push(Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D")));
+    list
 }

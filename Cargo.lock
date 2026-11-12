@@ -875,6 +875,7 @@ dependencies = [
  "objc2-foundation 0.2.2",
  "png",
  "symphonia",
+ "ureq",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

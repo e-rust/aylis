@@ -870,7 +870,9 @@ impl Component for ButtonGroup {
             return;
         }
         let chosen = split(&self.selected);
-        let gap = if self.connected { 2.0 } else { 8.0 };
+        // O espaço entre os botões: o `gap` do estilo, se o tema disser (0 cola; o relatório
+        // do Tabernáculo, C38); senão 2 colados e 8 separados.
+        let gap = ctx.style.gap.unwrap_or(if self.connected { 2.0 } else { 8.0 }).max(0.0);
         let w = (r.width - gap * (items.len() as f32 - 1.0)) / items.len() as f32;
         let full = r.height / 2.0;
         let (sel_fill, sel_fg) = (theme.color("primary"), theme.color("on_primary"));

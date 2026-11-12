@@ -170,15 +170,7 @@ fn ensure_sdk_link(project: &str, root: &str) {
     if canon(&link).is_some_and(|l| Some(l) == canon(target)) {
         return;
     }
-    let _ = std::fs::create_dir_all(&aylis_dir);
-    let ignore = aylis_dir.join(".gitignore");
-    let rule = "sdk";
-    let text = std::fs::read_to_string(&ignore).unwrap_or_default();
-    if !text.lines().any(|l| l.trim() == rule) {
-        let head = if text.is_empty() { "# Gravado pelo aylis: a junção até o aylis desta máquina.\n" } else { "" };
-        let sep = if text.is_empty() || text.ends_with('\n') { "" } else { "\n" };
-        let _ = std::fs::write(&ignore, format!("{text}{sep}{head}{rule}\n"));
-    }
+    crate::local_dir_ignored(&aylis_dir);
     // Uma junção ou link velho (outra instalação) sai; uma pasta de verdade fica.
     if let Ok(meta) = std::fs::symlink_metadata(&link) {
         if !meta.file_type().is_symlink() && !is_junction(&link) {
@@ -1526,8 +1518,7 @@ fn rust_project(project: &Project, forms: &[(String, String, Vec<String>)], clas
         AylisSource::Version(_) => read(&cargo).and_then(|c| upgrade_cargo(&c, "", &dir)).map(|(t, n)| (sync_aylis_source(&t, &source).unwrap_or(t), n)),
     };
     if let Some((text, _)) = upgraded {
-        write(&cargo, &text)?;
-        if !written.contains(&cargo) {
+        if write_changed(&cargo, &text)? && !written.contains(&cargo) {
             written.push(cargo.clone());
         }
     }
@@ -1546,8 +1537,9 @@ fn rust_project(project: &Project, forms: &[(String, String, Vec<String>)], clas
     }
     let path = dir.join("generated/mod.rs");
     std::fs::create_dir_all(dir.join("generated")).map_err(|e| e.to_string())?;
-    write(&path, &generated_mod(project, forms))?;
-    written.push(path);
+    if write_changed(&path, &generated_mod(project, forms))? {
+        written.push(path);
+    }
     Ok(written)
 }
 
@@ -1722,11 +1714,21 @@ pub(crate) fn read(path: &Path) -> Option<String> {
 }
 
 pub(crate) fn write(path: &Path, text: &str) -> Result<(), String> {
+    write_changed(path, text).map(|_| ())
+}
+
+/// Grava só se o texto mudou (`true` se gravou): um arquivo igual não é regravado, e o
+/// controle de versão e quem vigia o disco não veem mudança que não houve (I06 do Tabernáculo).
+pub(crate) fn write_changed(path: &Path, text: &str) -> Result<bool, String> {
+    if read(path).is_some_and(|old| old == text) {
+        return Ok(false);
+    }
     // A pasta pode ainda não existir (o fonte de um form numa subpasta).
     if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty() && !d.exists()) {
         std::fs::create_dir_all(dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
     }
-    std::fs::write(path, text).map_err(|e| format!("não consegui gravar {}: {e}", path.display()))
+    std::fs::write(path, text).map_err(|e| format!("não consegui gravar {}: {e}", path.display()))?;
+    Ok(true)
 }
 
 /// Troca o que está entre os marcadores.
@@ -1866,7 +1868,8 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
              impl {ty} {{\n}}\n"
         )
     });
-    let missing: Vec<&String> = handlers.iter().filter(|h| !text.contains(&format!("fn {h}("))).collect();
+    // Só a função de verdade conta: a versão antiga num comentário não impede o handler novo.
+    let missing: Vec<&String> = handlers.iter().filter(|h| crate::sync::find_marker(Language::Rust, &text, &format!("fn {h}(")).is_none()).collect();
     if missing.is_empty() {
         return text;
     }
@@ -1925,39 +1928,17 @@ fn impl_end(text: &str, ty: &str) -> Option<usize> {
 }
 
 /// A chave que fecha a que abre em `open`, num texto em Rust: as chaves dentro de strings,
-/// caracteres e comentários não contam.
-fn matching_brace(text: &str, open: usize) -> Option<usize> {
+/// caracteres e comentários não contam (vale também nas outras linguagens de chaves).
+pub(crate) fn matching_brace(text: &str, open: usize) -> Option<usize> {
     let bytes = text.as_bytes();
     let mut depth = 0usize;
     let mut i = open;
     while i < bytes.len() {
+        if let Some(end) = skip_literal(text, i) {
+            i = end + 1;
+            continue;
+        }
         match bytes[i] {
-            b'/' if bytes.get(i + 1) == Some(&b'/') => i = text[i..].find('\n').map_or(bytes.len(), |n| i + n),
-            b'/' if bytes.get(i + 1) == Some(&b'*') => i = text[i + 2..].find("*/").map_or(bytes.len(), |n| i + 2 + n + 1),
-            b'r' if (bytes.get(i + 1) == Some(&b'"') || bytes.get(i + 1) == Some(&b'#')) && (i == 0 || !bytes[i - 1].is_ascii_alphanumeric()) => {
-                // r"..." e r#"..."#: até as aspas com o mesmo número de #.
-                let hashes = bytes[i + 1..].iter().take_while(|b| **b == b'#').count();
-                if bytes.get(i + 1 + hashes) == Some(&b'"') {
-                    let close = format!("\"{}", "#".repeat(hashes));
-                    i = text[i + 2 + hashes..].find(&close).map_or(bytes.len(), |n| i + 2 + hashes + n + close.len() - 1);
-                }
-            }
-            b'"' => {
-                i += 1;
-                while i < bytes.len() && bytes[i] != b'"' {
-                    i += if bytes[i] == b'\\' { 2 } else { 1 };
-                }
-            }
-            b'\'' => {
-                // Um caractere ('{', '\n', '\u{7b}'); um tempo de vida ('a) segue.
-                if bytes.get(i + 1) == Some(&b'\\') {
-                    i = text[i + 2..].find('\'').map_or(bytes.len(), |n| i + 2 + n);
-                } else if let Some(c) = text[i + 1..].chars().next() {
-                    if text[i + 1 + c.len_utf8()..].starts_with('\'') {
-                        i += c.len_utf8() + 1;
-                    }
-                }
-            }
             b'{' => depth += 1,
             b'}' => {
                 depth = depth.checked_sub(1)?;
@@ -1970,6 +1951,65 @@ fn matching_brace(text: &str, open: usize) -> Option<usize> {
         i += 1;
     }
     None
+}
+
+/// Onde `needle` aparece em código (fora de comentários, strings e caracteres), a partir de
+/// `from`; um `needle` que começa com letra não vale no meio de outro nome (`fn x(` não acha
+/// `fn ax(`). A versão antiga comentada de um handler não é o handler (G22 do Tabernáculo).
+pub(crate) fn find_in_code(text: &str, needle: &str, from: usize) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let ident = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
+    let word = needle.bytes().next().is_some_and(ident);
+    let mut i = from;
+    while i < bytes.len() {
+        if let Some(end) = skip_literal(text, i) {
+            i = end + 1;
+            continue;
+        }
+        if bytes[i..].starts_with(needle.as_bytes()) && !(word && i > 0 && ident(bytes[i - 1])) {
+            return Some(i);
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Se em `i` começa um comentário, uma string ou um caractere (de Rust e das outras
+/// linguagens de chaves), o último byte dele; `None` se ali é código.
+pub(crate) fn skip_literal(text: &str, i: usize) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let end = bytes.len();
+    let ident = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
+    match bytes[i] {
+        b'/' if bytes.get(i + 1) == Some(&b'/') => Some(text[i..].find('\n').map_or(end, |n| i + n)),
+        b'/' if bytes.get(i + 1) == Some(&b'*') => Some(text[i + 2..].find("*/").map_or(end, |n| i + 2 + n + 1)),
+        // r"..." e r#"..."# (e br"..."): até as aspas com o mesmo número de #.
+        b'r' if matches!(bytes.get(i + 1), Some(b'"' | b'#')) && (i == 0 || !ident(bytes[i - 1]) || (bytes[i - 1] == b'b' && (i == 1 || !ident(bytes[i - 2])))) => {
+            let hashes = bytes[i + 1..].iter().take_while(|b| **b == b'#').count();
+            if bytes.get(i + 1 + hashes) != Some(&b'"') {
+                return None;
+            }
+            let close = format!("\"{}", "#".repeat(hashes));
+            Some(text[i + 2 + hashes..].find(&close).map_or(end, |n| i + 2 + hashes + n + close.len() - 1))
+        }
+        // As strings de crase (TypeScript, Go) vão até a outra crase, sem escape.
+        q @ (b'"' | b'`') => {
+            let mut j = i + 1;
+            while j < end && bytes[j] != q {
+                j += if q == b'"' && bytes[j] == b'\\' { 2 } else { 1 };
+            }
+            Some(j.min(end))
+        }
+        // Um caractere ('{', '\n', '\'', '\u{7b}'); um tempo de vida ('a) é código.
+        b'\'' => {
+            if bytes.get(i + 1) == Some(&b'\\') {
+                return Some(text.get(i + 3..).and_then(|t| t.find('\'')).map_or(end, |n| i + 3 + n));
+            }
+            let c = text[i + 1..].chars().next()?;
+            text[i + 1 + c.len_utf8()..].starts_with('\'').then_some(i + 1 + c.len_utf8())
+        }
+        _ => None,
+    }
 }
 
 /// Quatro espaços a mais em cada linha (o corpo de um handler dentro do `impl`).
@@ -2043,7 +2083,7 @@ pub fn update_python(existing: Option<String>, handlers: &[String], form: &str) 
         )
     });
     for h in handlers {
-        if !text.contains(&format!("def {h}(")) {
+        if crate::sync::find_marker(Language::Python, &text, &format!("def {h}(")).is_none() {
             text.push_str(&format!("\n\ndef {h}(aylis, event):\n    pass\n"));
         }
     }

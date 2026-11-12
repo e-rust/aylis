@@ -176,3 +176,44 @@ impl ImageFit {
         }
     }
 }
+
+/// O quadro de um `.ico` com vários tamanhos que melhor serve para `size` pixels: o menor que
+/// tem pelo menos `size` (reduzir sai melhor que ampliar), ou o maior, se nenhum chegar lá.
+/// Devolve um `.ico` só com ele, que os decodificadores leem como qualquer `.ico`. `None` se
+/// `bytes` não for um `.ico` com mais de um quadro (aí vale o arquivo como está).
+///
+/// O ícone da bandeja usava o primeiro quadro, e a 150% (24 pixels) um de 16 ampliado saía
+/// borrado (o relatório do Tabernáculo, C41).
+pub fn ico_frame_for_size(bytes: &[u8], size: u32) -> Option<Vec<u8>> {
+    let u16_at = |i: usize| -> Option<u16> { Some(u16::from_le_bytes(bytes.get(i..i + 2)?.try_into().ok()?)) };
+    let u32_at = |i: usize| -> Option<u32> { Some(u32::from_le_bytes(bytes.get(i..i + 4)?.try_into().ok()?)) };
+    if u16_at(0)? != 0 || u16_at(2)? != 1 {
+        return None;
+    }
+    let count = u16_at(4)? as usize;
+    if count < 2 {
+        return None;
+    }
+    // (largura, bits por pixel, a entrada de 16 bytes, os dados).
+    let mut frames = Vec::with_capacity(count);
+    for i in 0..count {
+        let at = 6 + i * 16;
+        let entry = bytes.get(at..at + 16)?;
+        let width = if entry[0] == 0 { 256 } else { entry[0] as u32 };
+        let (len, offset) = (u32_at(at + 8)? as usize, u32_at(at + 12)? as usize);
+        let data = bytes.get(offset..offset.checked_add(len)?)?;
+        frames.push((width, u16_at(at + 6)?, entry, data));
+    }
+    // Do mesmo tamanho, o de mais cores.
+    let best = frames
+        .iter()
+        .filter(|f| f.0 >= size)
+        .min_by_key(|f| (f.0, std::cmp::Reverse(f.1)))
+        .or_else(|| frames.iter().max_by_key(|f| (f.0, f.1)))?;
+    let mut out = Vec::with_capacity(22 + best.3.len());
+    out.extend_from_slice(&[0, 0, 1, 0, 1, 0]);
+    out.extend_from_slice(&best.2[..12]);
+    out.extend_from_slice(&22u32.to_le_bytes());
+    out.extend_from_slice(best.3);
+    Some(out)
+}

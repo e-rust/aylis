@@ -328,6 +328,7 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
             "material" => p.material = Some(v.as_str().ok_or("\"material\" deve ser glass, frosted ou none")?.to_string()),
             "text_case" => p.text_case = Some(v.as_str().ok_or("\"text_case\" deve ser upper, lower ou none")?.to_string()),
             "letter_spacing" => p.letter_spacing = Some(v.as_f64().ok_or("\"letter_spacing\" deve ser número")? as f32),
+            "gap" => p.gap = Some(v.as_f64().ok_or("\"gap\" deve ser número (0 cola as partes)")? as f32),
             "border_sides" => p.border_sides = Some(bounds(v)?),
             "border_style" => p.border_style = Some(v.as_str().ok_or("\"border_style\" deve ser solid, dashed ou dotted")?.to_string()),
             "line_height" => p.line_height = Some(v.as_f64().ok_or("\"line_height\" deve ser número (1.5 = uma vez e meia a fonte)")? as f32),
@@ -348,7 +349,7 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
                 return Err(format!(
                     "chave desconhecida '{other}' (use fill, text, border, border_color, border_width, border_sides, \
                      border_style, radius, padding, font, font_weight, font_size, italic, line_height, opacity, transition, shadow, \
-                     material, text_case, letter_spacing{})",
+                     material, text_case, letter_spacing, gap{})",
                     if allow_states { " e os estados hover, pressed, focused, checked, disabled" } else { "" }
                 ));
             }
@@ -444,6 +445,9 @@ fn props_value(p: &StyleProps) -> Map<String, Value> {
     }
     if let Some(l) = p.letter_spacing {
         map.insert("letter_spacing".into(), number(l as f64));
+    }
+    if let Some(g) = p.gap {
+        map.insert("gap".into(), number(g as f64));
     }
     if let Some(b) = p.border_sides {
         map.insert("border_sides".into(), bounds_value(b));

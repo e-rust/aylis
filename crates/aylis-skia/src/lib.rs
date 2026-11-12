@@ -251,9 +251,6 @@ impl SkiaRenderer {
         self.draw_area(canvas, scale, background, None, paint);
     }
 
-    /// Como [`draw`](Self::draw), só na área `area` (unidades lógicas): o resto do canvas
-    /// fica como estava (a imagem do quadro anterior). O recorte é sem suavização, nos
-    /// pixels inteiros, para não aparecer emenda na borda.
     /// Como [`draw_area`](Self::draw_area), com várias áreas pintadas de uma vez: o recorte é
     /// a união delas (nos pixels inteiros) e `paint` recebe as áreas (um controle caro que
     /// aparece em duas áreas é pintado uma vez só; um que não toca nenhuma, nem é pintado).
@@ -262,30 +259,91 @@ impl SkiaRenderer {
             return;
         }
         let mut region = sk::Region::new();
+        let mut pixels = 0i64;
         for a in areas {
-            let r = sk::IRect::from_ltrb((a.x * scale).floor() as i32, (a.y * scale).floor() as i32, (a.right() * scale).ceil() as i32, (a.bottom() * scale).ceil() as i32);
+            let r = pixel_rect(*a, scale);
+            pixels += r.width() as i64 * r.height() as i64;
             region.op_rect(r, sk::region::RegionOp::Union);
         }
-        canvas.save();
-        canvas.clip_region(&region, sk::ClipOp::Intersect);
-        canvas.clear(to_sk(background));
-        canvas.scale((scale, scale));
-        paint(&mut self.canvas(canvas), areas);
-        canvas.restore();
+        self.draw_region(canvas, scale, background, &region, pixels, |c| paint(c, areas));
     }
 
+    /// Como [`draw`](Self::draw), só na área `area` (unidades lógicas): o resto do canvas
+    /// fica como estava (a imagem do quadro anterior). O recorte é sem suavização, nos
+    /// pixels inteiros, para não aparecer emenda na borda.
     pub(crate) fn draw_area(&self, canvas: &sk::Canvas, scale: f32, background: Color, area: Option<aylis_core::RectF>, paint: impl FnOnce(&mut SkiaCanvas<'_>)) {
-        canvas.save();
-        if let Some(a) = area {
-            let (l, t) = ((a.x * scale).floor(), (a.y * scale).floor());
-            let (r, b) = ((a.right() * scale).ceil(), (a.bottom() * scale).ceil());
-            canvas.clip_rect(sk::Rect::new(l, t, r, b), sk::ClipOp::Intersect, false);
+        match area {
+            Some(a) => {
+                let r = pixel_rect(a, scale);
+                self.draw_region(canvas, scale, background, &sk::Region::from_rect(r), r.width() as i64 * r.height() as i64, paint)
+            }
+            None => {
+                canvas.save();
+                canvas.clear(to_sk(background));
+                canvas.scale((scale, scale));
+                paint(&mut self.canvas(canvas));
+                canvas.restore();
+            }
         }
-        canvas.clear(to_sk(background));
-        canvas.scale((scale, scale));
-        paint(&mut self.canvas(canvas));
+    }
+
+    /// Pinta só em `region` (pixels do canvas). Na CPU, a pintura vai para uma superfície à
+    /// parte, [`REGION_MARGIN`] pixels maior de cada lado, e só a região volta ao canvas: o
+    /// rasterizador do Skia corta as curvas na borda do recorte e as refaz em retas de novo,
+    /// e um círculo cortado pela área (o polegar de um TrackBar ao lado do controle que mudou)
+    /// saía com a beirada até uns 100 tons diferente da pintura inteira, até 4 pixels para
+    /// dentro. Com a margem, o corte fica fora do que volta. Pintam direto: a GPU (que recorta
+    /// sem refazer as curvas), as áreas espalhadas (o retângulo que as junta passa do dobro
+    /// delas: a tela gigante, deslizando, ia de 3 para 8 ms) e as grandes (mais de
+    /// [`REGION_ASIDE_MAX`] pixels), em que copiar custa mais que a beirada vale.
+    fn draw_region(&self, canvas: &sk::Canvas, scale: f32, background: Color, region: &sk::Region, pixels: i64, paint: impl FnOnce(&mut SkiaCanvas<'_>)) {
+        let size = canvas.base_layer_size();
+        let device = sk::IRect::from_wh(size.width, size.height);
+        let bounds = region.bounds();
+        let outer = sk::IRect::from_ltrb(bounds.left - REGION_MARGIN, bounds.top - REGION_MARGIN, bounds.right + REGION_MARGIN, bounds.bottom + REGION_MARGIN);
+        let outer = sk::IRect::intersect(&outer, &device).unwrap_or_default();
+        let together = bounds.width() as i64 * bounds.height() as i64 <= pixels * 2;
+        let small = together && (outer.width() as i64 * outer.height() as i64) <= REGION_ASIDE_MAX;
+        #[cfg(feature = "gl")]
+        let gpu = canvas.direct_context().is_some();
+        #[cfg(not(feature = "gl"))]
+        let gpu = false;
+        let info = canvas.image_info().with_dimensions(outer.size());
+        let aside = if small && !gpu && !outer.is_empty() { canvas.new_surface(&info, None) } else { None };
+        canvas.save();
+        canvas.clip_region(region, sk::ClipOp::Intersect);
+        match aside {
+            Some(mut surface) => {
+                let target = surface.canvas();
+                target.clear(to_sk(background));
+                target.translate((-outer.left as f32, -outer.top as f32));
+                target.scale((scale, scale));
+                paint(&mut self.canvas(target));
+                let mut copy = sk::Paint::default();
+                copy.set_blend_mode(sk::BlendMode::Src);
+                canvas.draw_image(surface.image_snapshot(), (outer.left as f32, outer.top as f32), Some(&copy));
+            }
+            None => {
+                canvas.clear(to_sk(background));
+                canvas.scale((scale, scale));
+                paint(&mut self.canvas(canvas));
+            }
+        }
         canvas.restore();
     }
+}
+
+/// Quanto a superfície da pintura por parte passa da área, em pixels (veja
+/// [`SkiaRenderer::draw_region`]): com 16, a beirada de um círculo cortado muda no máximo uns
+/// poucos tons (com 4, ainda uns 45).
+const REGION_MARGIN: i32 = 16;
+
+/// Até quantos pixels a pintura por parte vai para a superfície à parte (uns 2 MB).
+const REGION_ASIDE_MAX: i64 = 512 * 1024;
+
+/// A área (unidades lógicas) alargada até os pixels inteiros.
+fn pixel_rect(a: aylis_core::RectF, scale: f32) -> sk::IRect {
+    sk::IRect::from_ltrb((a.x * scale).floor() as i32, (a.y * scale).floor() as i32, (a.right() * scale).ceil() as i32, (a.bottom() * scale).ceil() as i32)
 }
 
 #[cfg(feature = "gl")]

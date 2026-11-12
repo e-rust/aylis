@@ -200,10 +200,24 @@ impl DevServer {
         self.traces.lock().map(|mut t| std::mem::take(&mut *t)).unwrap_or_default()
     }
 
+    /// Os apps conectados, do mais antigo ao mais novo: `{"project", "pid", "latest"}` (o
+    /// `app_command` escolhe por eles; M21 do Tabernáculo).
+    pub fn apps_json(&self) -> Value {
+        let hellos: Vec<Value> = self.conns.lock().map(|c| c.iter().map(|x| x.hello.clone()).collect()).unwrap_or_default();
+        apps_of(&hellos)
+    }
+
     /// Manda um comando ao app mais recente e espera a resposta dele (`ok` ou `error`).
     pub fn call(&self, command: Value) -> Result<Value, String> {
+        self.call_app(None, command)
+    }
+
+    /// Manda um comando ao app `app` (o pid ou o nome do projeto; `None`: o mais recente) e
+    /// espera a resposta.
+    pub fn call_app(&self, app: Option<&Value>, command: Value) -> Result<Value, String> {
         let mut conns = self.conns.lock().map_err(|_| "canal ocupado")?;
-        let index = conns.len().checked_sub(1).ok_or("o app não está conectado")?;
+        let hellos: Vec<Value> = conns.iter().map(|c| c.hello.clone()).collect();
+        let index = pick_app(&hellos, app)?;
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let result = call_on(&mut conns[index], id, command, &self.traces);
         if result.as_ref().is_err_and(|e| e.starts_with("conexão perdida") || e.starts_with("o app fechou")) {
@@ -233,6 +247,38 @@ impl DevServer {
             conns.remove(i);
         }
         Ok(done.into_iter().next().unwrap_or_default())
+    }
+}
+
+/// A lista dos apps (o `hello` de cada um), com o mais recente marcado.
+pub fn apps_of(hellos: &[Value]) -> Value {
+    let last = hellos.len().saturating_sub(1);
+    Value::Array(hellos.iter().enumerate().map(|(i, h)| json!({ "project": h["project"], "pid": h["pid"], "latest": i == last })).collect())
+}
+
+/// Qual app: o pid (número, ou texto com o número) ou o nome do projeto (sem diferença de
+/// maiúsculas); sem escolha, o mais recente. Não achou, ou o nome vale para dois: o erro diz
+/// quais estão conectados.
+pub fn pick_app(hellos: &[Value], app: Option<&Value>) -> Result<usize, String> {
+    let last = hellos.len().checked_sub(1).ok_or("o app não está conectado")?;
+    let listed = || hellos.iter().map(|h| format!("{} (pid {})", h["project"].as_str().unwrap_or("?"), h["pid"])).collect::<Vec<_>>().join(", ");
+    let wanted = match app {
+        None | Some(Value::Null) => return Ok(last),
+        Some(Value::String(s)) if s.trim().is_empty() => return Ok(last),
+        Some(v) => v,
+    };
+    let pid = wanted.as_u64().or_else(|| wanted.as_str().and_then(|s| s.trim().parse().ok()));
+    let found: Vec<usize> = match pid {
+        Some(pid) => hellos.iter().enumerate().filter(|(_, h)| h["pid"].as_u64() == Some(pid)).map(|(i, _)| i).collect(),
+        None => {
+            let name = wanted.as_str().unwrap_or_default().trim();
+            hellos.iter().enumerate().filter(|(_, h)| h["project"].as_str().is_some_and(|p| p.eq_ignore_ascii_case(name))).map(|(i, _)| i).collect()
+        }
+    };
+    match found.as_slice() {
+        [one] => Ok(*one),
+        [] => Err(format!("nenhum app conectado é {wanted} (conectados: {})", listed())),
+        _ => Err(format!("mais de um app conectado é {wanted}: escolha pelo pid ({})", listed())),
     }
 }
 
@@ -291,5 +337,27 @@ fn call_on(conn: &mut Conn, id: u64, mut command: Value, traces: &Mutex<Vec<Stri
             }
             Err(e) => return Err(format!("conexão perdida: {e}")),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    /// M21 do Tabernáculo: com dois apps conectados, o `app_command` escolhe pelo pid ou pelo
+    /// projeto; sem escolha, o último que conectou.
+    #[test]
+    fn the_app_is_chosen_by_pid_or_project() {
+        let hellos = [json!({ "project": "frmPrincipal", "pid": 10 }), json!({ "project": "frmConsole", "pid": 20 })];
+        assert_eq!(super::pick_app(&hellos, None), Ok(1));
+        assert_eq!(super::pick_app(&hellos, Some(&json!(10))), Ok(0));
+        assert_eq!(super::pick_app(&hellos, Some(&json!("10"))), Ok(0));
+        assert_eq!(super::pick_app(&hellos, Some(&json!("FRMCONSOLE"))), Ok(1));
+        let e = super::pick_app(&hellos, Some(&json!("outro"))).unwrap_err();
+        assert!(e.contains("frmPrincipal (pid 10)") && e.contains("frmConsole (pid 20)"), "{e}");
+        assert!(super::pick_app(&[], None).is_err());
+        let list = super::apps_of(&hellos);
+        assert_eq!(list[1]["latest"], true);
+        assert_eq!(list[0]["pid"], 10);
     }
 }

@@ -422,3 +422,16 @@ fn a_dark_background_makes_a_dark_theme() {
     let forced = aylis_json::load_theme(r##"{"name": "X", "dark": false, "colors": {"background": "#000000"}}"##).unwrap();
     assert!(!forced.dark, "o \"dark\" do arquivo vale");
 }
+/// C38 (relatório do Tabernáculo): o `gap` do estilo (o espaço entre as partes de um controle)
+/// lido e gravado no tema.
+#[test]
+fn the_style_gap_round_trips() {
+    let json = r#"{"name": "t", "styles": {"ButtonGroup": {"gap": 0}, "SegmentedControl": {"gap": 1.5}}}"#;
+    let theme = aylis_json::load_theme(json).unwrap();
+    let state = aylis_core::ControlState::default();
+    assert_eq!(theme.resolve(&["ButtonGroup"], "", state).gap, Some(0.0));
+    assert_eq!(theme.resolve(&["SegmentedControl"], "", state).gap, Some(1.5));
+    assert_eq!(theme.resolve(&["Button"], "", state).gap, None);
+    let again = aylis_json::load_theme(&aylis_json::save_theme(&theme)).unwrap();
+    assert_eq!(again.resolve(&["SegmentedControl"], "", state).gap, Some(1.5));
+}

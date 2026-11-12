@@ -664,3 +664,7 @@ browser_args	Argumentos do navegador	Browser arguments	Argumentos del navegador	
 data_dir	Pasta de dados	Data folder	Carpeta de datos	Dossier de données	Datenordner	Папка данных	数据文件夹	データフォルダー	مجلد البيانات	ডেটা ফোল্ডার	डेटा फ़ोल्डर	Folder data
 frames_ahead	Quadros à frente	Frames ahead	Fotogramas por delante	Images d'avance	Vorausgepufferte Bilder	Кадров вперёд	预解码帧数	先読みフレーム数	الإطارات المسبقة	অগ্রিম ফ্রেম	आगे के फ़्रेम	Bingkai di depan
 show_video	Mostrar o vídeo	Show video	Mostrar el vídeo	Afficher la vidéo	Video anzeigen	Показывать видео	显示视频	動画を表示	إظهار الفيديو	ভিডিও দেখান	वीडियो दिखाएं	Tampilkan video
+tab_position	Posição das abas	Tab position	Posición de las pestañas	Position des onglets	Registerposition	Положение вкладок	标签页位置	タブの位置	موضع علامات التبويب	ট্যাবের অবস্থান	टैब की स्थिति	Posisi tab
+tab_width	Largura das abas	Tab width	Ancho de las pestañas	Largeur des onglets	Registerbreite	Ширина вкладок	标签页宽度	タブの幅	عرض علامات التبويب	ট্যাবের প্রস্থ	टैब की चौड़ाई	Lebar tab
+client_width	Largura da área cliente	Client width	Ancho del área cliente	Largeur de la zone client	Clientbreite	Ширина клиентской области	客户区宽度	クライアント領域の幅	عرض منطقة العميل	ক্লায়েন্ট এলাকার প্রস্থ	क्लाइंट क्षेत्र की चौड़ाई	Lebar area klien
+client_height	Altura da área cliente	Client height	Alto del área cliente	Hauteur de la zone client	Clienthöhe	Высота клиентской области	客户区高度	クライアント領域の高さ	ارتفاع منطقة العميل	ক্লায়েন্ট এলাকার উচ্চতা	क्लाइंट क्षेत्र की ऊँचाई	Tinggi area klien

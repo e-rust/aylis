@@ -732,3 +732,52 @@ fn a_corrected_text_keeps_its_translations() {
     assert!(text.contains("\"Gravar\": \"Save\"") && text.contains("\"Salvar\": \"Save\""), "{text}");
     assert_eq!(aylis_project::i18n::follow_text_change(&dir, "Salvar", "Gravar"), 0, "já tem");
 }
+
+/// I06 do Tabernáculo: gerar de novo sem mudança nos forms não regrava nada (nem o `Cargo.toml`,
+/// nem o gerado, nem o `.aylisproj`), e a `.aylis/.gitignore` nasce ignorando tudo e não muda
+/// mais quando aparece outro arquivo dela.
+#[test]
+fn generating_again_does_not_rewrite_unchanged_files() {
+    let dir = temp("rewrite");
+    let project = create(&dir, "Loja", Language::Rust).unwrap();
+    codegen::generate(&project).unwrap();
+    let stamps = |root: &std::path::Path| -> Vec<(PathBuf, std::time::SystemTime)> {
+        let mut out = Vec::new();
+        let mut pending = vec![root.to_path_buf()];
+        while let Some(d) = pending.pop() {
+            for e in std::fs::read_dir(&d).unwrap().flatten() {
+                let p = e.path();
+                if p.is_dir() {
+                    // A junção do SDK aponta para o Aylis inteiro.
+                    if !p.ends_with("sdk") {
+                        pending.push(p);
+                    }
+                } else {
+                    out.push((p.clone(), std::fs::metadata(&p).unwrap().modified().unwrap()));
+                }
+            }
+        }
+        out.sort();
+        out
+    };
+    let before = stamps(&dir);
+    std::thread::sleep(std::time::Duration::from_millis(30));
+    let written = codegen::generate(&project).unwrap();
+    project.save().unwrap();
+    let after = stamps(&dir);
+    let changed: Vec<_> = after.iter().filter(|a| !before.contains(a)).map(|a| a.0.display().to_string()).collect();
+    assert!(changed.is_empty(), "regravados sem mudança: {changed:?}");
+    assert!(written.is_empty(), "a geração não lista o que não mudou: {written:?}");
+
+    let local = project.dir().join(".aylis");
+    aylis_project::local_dir_ignored(&local);
+    let ignore = std::fs::read_to_string(local.join(".gitignore")).unwrap();
+    assert!(ignore.lines().any(|l| l == "*"), "{ignore}");
+    aylis_project::local_dir_ignored(&local);
+    assert_eq!(std::fs::read_to_string(local.join(".gitignore")).unwrap(), ignore, "não muda mais");
+    // Uma de antes (só com `sdk`) ganha o `*` uma vez, e as regras dela ficam.
+    std::fs::write(local.join(".gitignore"), "sdk\n").unwrap();
+    aylis_project::local_dir_ignored(&local);
+    assert_eq!(std::fs::read_to_string(local.join(".gitignore")).unwrap(), "sdk\n*\n");
+    let _ = std::fs::remove_dir_all(dir);
+}

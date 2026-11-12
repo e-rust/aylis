@@ -697,12 +697,7 @@ pub fn install_text_service(ui: &mut Ui, renderer: Renderer) {
     if ui.services().text.is_some() {
         return;
     }
-    let chosen = Painters::resolve(match setting("AYLIS_RENDERER").as_deref() {
-        Some("cpu") if renderer == Renderer::Auto => Renderer::Cpu,
-        Some("gpu") if renderer == Renderer::Auto => Renderer::Gpu,
-        Some("d2d") if renderer == Renderer::Auto => Renderer::D2d,
-        _ => renderer,
-    });
+    let chosen = service_renderer(renderer);
     let Ok(painters) = Painters::new() else { return };
     let services = ui.services_mut();
     let _ = (&painters, chosen);
@@ -719,6 +714,45 @@ pub fn install_text_service(ui: &mut Ui, renderer: Renderer) {
 /// No navegador o serviço de texto nasce com o `run` (precisa do documento).
 #[cfg(web)]
 pub fn install_text_service(_ui: &mut Ui, _renderer: Renderer) {}
+
+/// O renderizador dos serviços postos antes da janela (o texto e o desenho fora da tela): o
+/// pedido, ou, no automático, o do diagnóstico `AYLIS_RENDERER`.
+#[cfg(not(web))]
+fn service_renderer(renderer: Renderer) -> Renderer {
+    Painters::resolve(match setting("AYLIS_RENDERER").as_deref() {
+        Some("cpu") if renderer == Renderer::Auto => Renderer::Cpu,
+        Some("gpu") if renderer == Renderer::Auto => Renderer::Gpu,
+        Some("d2d") if renderer == Renderer::Auto => Renderer::D2d,
+        _ => renderer,
+    })
+}
+
+/// Põe já o desenho fora da tela do renderizador `renderer` (o mesmo que o
+/// [`install_text_service`] escolhe: Direct2D no Windows com a feature `d2d`, Skia nas
+/// outras), para o `Ui::render_png` e o `Ui::snapshot` valerem sem janela: o modo sem
+/// plataforma dos testes e das fotos (`aylis::headless`; o relatório do Tabernáculo, B04).
+/// O `run` mantém o que já estiver posto.
+#[cfg(not(web))]
+pub fn install_offscreen_service(ui: &mut Ui, renderer: Renderer) {
+    let services = ui.services_mut();
+    if services.offscreen.is_some() {
+        return;
+    }
+    let chosen = service_renderer(renderer);
+    let _ = chosen;
+    #[cfg(native_d2d)]
+    if chosen == Renderer::D2d {
+        services.offscreen = Some(Box::new(D2dOffscreen));
+    }
+    #[cfg(native_skia)]
+    if services.offscreen.is_none() {
+        services.offscreen = Some(Box::new(SkiaOffscreen));
+    }
+}
+
+/// No navegador não há desenho fora da tela sem o documento: o `render_png` devolve `None`.
+#[cfg(web)]
+pub fn install_offscreen_service(_ui: &mut Ui, _renderer: Renderer) {}
 
 #[cfg(not(web))]
 fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
@@ -899,10 +933,10 @@ impl aylis_core::platform::OffscreenService for SkiaOffscreen {
     }
 }
 
-#[cfg(all(native_d2d, not(native_skia)))]
+#[cfg(native_d2d)]
 struct D2dOffscreen;
 
-#[cfg(all(native_d2d, not(native_skia)))]
+#[cfg(native_d2d)]
 impl aylis_core::platform::OffscreenService for D2dOffscreen {
     fn render_png(&self, width: u32, height: u32, scale: f32, background: aylis_core::Color, paint: &mut dyn FnMut(&mut dyn aylis_core::Canvas)) -> Option<Vec<u8>> {
         let (w, h) = ((width as f32 * scale).ceil() as u32, (height as f32 * scale).ceil() as u32);
@@ -1298,6 +1332,19 @@ impl App {
                     }
                     window.set_outer_position(PhysicalPosition::new(x, y));
                     window.focus_window();
+                }
+                // A área cliente do tamanho do form (J11): o tamanho pedido é o de dentro, e o
+                // `Resized` que vem depois confirma (ou o sistema limita, e o form fica com o que
+                // coube). No celular e no navegador o form ocupa a tela: nada a fazer.
+                WindowCommand::ApplySize => {
+                    if let Some(cb) = self.ui.control(form).filter(|_| !SINGLE_SURFACE) {
+                        let zoom = self.ui.form_zoom(form) as f64;
+                        let want = LogicalSize::new(cb.width() as f64 * zoom, cb.height() as f64 * zoom);
+                        let now = window.inner_size().to_logical::<f64>(window.scale_factor());
+                        if (now.width - want.width).abs() > 0.5 || (now.height - want.height).abs() > 0.5 {
+                            let _ = window.request_inner_size(want);
+                        }
+                    }
                 }
                 WindowCommand::Close | WindowCommand::UpdateGpu => {}
             }
@@ -2447,6 +2494,9 @@ impl App {
         // tela pela largura nova) roda aqui, antes deste quadro, e não só ao soltar o mouse.
         self.ui.update_layout();
         self.ui.run_timers();
+        // O que os relógios mudaram (o `set_timeout` do on_resize) assenta antes do quadro
+        // (L02 do Tabernáculo): sem isso, um quadro saía com a largura de antes.
+        self.ui.update_layout();
         let background = self.ui.theme().color("background");
         let capture = self.snapshot_dir.is_some();
         let floating_mode = self.floating_mode();

@@ -58,6 +58,15 @@ pub enum BuildEvent {
 /// Gera, verifica e compila. `ui`: com as classes registradas, para a verificação carregar os
 /// forms (sem ela, não confere as referências entre componentes). Erro: o primeiro que parou.
 pub fn build(project: &Project, options: &Options, ui: Option<&mut aylis_core::Ui>, control: &Control, sink: &mut dyn FnMut(BuildEvent)) -> Result<String, String> {
+    // O que a geração e o cargo mexerem nos arquivos do projeto vai para as mensagens, com o
+    // motivo (I06 do Tabernáculo), tenha compilado ou não.
+    let before = crate::touched::before(project);
+    let result = steps(project, options, ui, control, sink);
+    before.report(&mut |e| sink(BuildEvent::Event(e)));
+    result
+}
+
+fn steps(project: &Project, options: &Options, ui: Option<&mut aylis_core::Ui>, control: &Control, sink: &mut dyn FnMut(BuildEvent)) -> Result<String, String> {
     // O que mudou, antes de gerar (a geração põe tudo em dia): a verificação confere só isso.
     let changed = aylis_project::codegen::changed_forms(project);
     if options.generate {

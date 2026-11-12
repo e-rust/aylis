@@ -102,6 +102,10 @@ pub struct StyleProps {
     pub font_weight: Option<crate::canvas::FontWeight>,
     pub font_size: Option<f32>,
     pub italic: Option<bool>,
+    /// O espaço entre as partes de um controle feito de várias (os botões do `ButtonGroup`, a
+    /// marcação do `SegmentedControl` até a borda), em pixels: 0 cola (o relatório do
+    /// Tabernáculo, C38). Sem ele, o de cada controle.
+    pub gap: Option<f32>,
 }
 
 /// O material do fundo de um controle ([`StyleProps::material`]).
@@ -232,6 +236,9 @@ impl StyleProps {
         if other.letter_spacing.is_some() {
             self.letter_spacing = other.letter_spacing;
         }
+        if other.gap.is_some() {
+            self.gap = other.gap;
+        }
         if other.border_sides.is_some() {
             self.border_sides = other.border_sides;
         }
@@ -332,6 +339,8 @@ pub struct ResolvedStyle {
     pub border_dash: Vec<f32>,
     /// A altura da linha em vezes o tamanho da fonte (0: a da fonte).
     pub line_height: f32,
+    /// O espaço entre as partes do controle (`None`: o dele; [`StyleProps::gap`]).
+    pub gap: Option<f32>,
 }
 
 impl ResolvedStyle {
@@ -361,6 +370,7 @@ impl Default for ResolvedStyle {
             border_sides: None,
             border_dash: Vec::new(),
             line_height: 0.0,
+            gap: None,
         }
     }
 }
@@ -395,6 +405,7 @@ impl ResolvedStyle {
             border_sides: other.border_sides,
             border_dash: other.border_dash.clone(),
             line_height: mix(self.line_height, other.line_height),
+            gap: other.gap,
         }
     }
 }
@@ -1122,6 +1133,7 @@ impl Theme {
                 _ => crate::text::TextCase::None,
             },
             letter_spacing: acc.letter_spacing.unwrap_or(0.0),
+            gap: acc.gap,
             border_sides: acc.border_sides,
             border_dash: match acc.border_style.as_deref() {
                 Some("dashed") => vec![6.0, 4.0],

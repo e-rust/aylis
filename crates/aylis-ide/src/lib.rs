@@ -48,6 +48,8 @@ pub mod lite;
 pub mod live;
 pub mod profiler;
 pub mod mcp;
+pub mod mcp_project;
+pub mod mcp_tasks;
 pub mod messages;
 pub mod menuview;
 pub mod nonvisual;

@@ -619,9 +619,15 @@ fn message_box(
     if let Some(cb) = ui.control_mut(form) {
         cb.set_padding(BOX_PADDING);
     }
+    // O rodapé pelo estilo `MessageDialog.footer` do tema, quando houver: `gap` é o espaço
+    // entre o texto e os botões (14 sem o tema) e `padding`, o de dentro do rodapé (a altura é
+    // a dos botões, 36, mais o de cima e o de baixo). O relatório do Tabernáculo, L15: o rodapé
+    // tinha 50 px fixos (36 + 14), e o HTML do console, 44,7.
+    let (footer_gap, footer_padding) = footer_metrics(ui.theme());
+    let footer_height = FOOTER_HEIGHT + footer_padding.top + footer_padding.bottom;
     let footer = ui.add(Layout::default(), form);
     if let Some(cb) = ui.control_mut(footer) {
-        cb.set_align(Align::Bottom).set_height(FOOTER_HEIGHT).set_margins([0.0, FOOTER_GAP, 0.0, 0.0]);
+        cb.set_align(Align::Bottom).set_height(footer_height).set_margins([0.0, footer_gap, 0.0, 0.0]).set_padding(footer_padding);
     }
     let buttons: Vec<ModalResult> = if buttons.is_empty() { vec![ModalResult::Ok] } else { buttons.to_vec() };
     // Com align right, o primeiro fica mais à direita: a ordem visual é a da lista.
@@ -675,7 +681,7 @@ fn message_box(
     }
     let buttons_width = buttons.len() as f32 * (BUTTON_WIDTH + BUTTON_GAP);
     let width = (BOX_PADDING * 2.0 + ICON_SIZE + ICON_GAP + client_width).max(BOX_PADDING * 2.0 + buttons_width);
-    let height = BOX_PADDING * 2.0 + text_height.min(TEXT_MAX_HEIGHT).max(ICON_SIZE) + FOOTER_GAP + FOOTER_HEIGHT;
+    let height = BOX_PADDING * 2.0 + text_height.min(TEXT_MAX_HEIGHT).max(ICON_SIZE) + footer_gap + footer_height;
     if let Some(cb) = ui.control_mut(form) {
         cb.set_width(width.ceil()).set_height(height.ceil());
     }
@@ -692,6 +698,16 @@ fn message_box(
         on_close(ui, result);
     });
     form
+}
+
+/// O espaço acima do rodapé da caixa de mensagem e o de dentro dele: o `gap` e o `padding`
+/// do estilo `MessageDialog.footer` do tema, ou 14 e nada.
+fn footer_metrics(theme: &aylis_core::Theme) -> (f32, aylis_core::Bounds) {
+    if !theme.styles.contains_key("MessageDialog.footer") {
+        return (FOOTER_GAP, aylis_core::Bounds::ZERO);
+    }
+    let look = theme.resolve(&["MessageDialog.footer"], "", aylis_core::ControlState::default());
+    (look.gap.unwrap_or(FOOTER_GAP).max(0.0), look.padding)
 }
 
 /// Mensagem simples com OK (como o `ShowMessage`).

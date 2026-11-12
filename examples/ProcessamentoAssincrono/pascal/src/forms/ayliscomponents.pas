@@ -298,6 +298,10 @@ type
     procedure SetCloseAction(Value: string);
     function GetFrameRate: Double;
     procedure SetFrameRate(Value: Double);
+    function GetClientWidth: Double;
+    procedure SetClientWidth(Value: Double);
+    function GetClientHeight: Double;
+    procedure SetClientHeight(Value: Double);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -453,6 +457,8 @@ type
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
     property CloseAction: string read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
+    property ClientWidth: Double read GetClientWidth write SetClientWidth;
+    property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
@@ -2025,6 +2031,26 @@ end;
 procedure TForm.SetFrameRate(Value: Double);
 begin
   SetProp('frame_rate', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetClientWidth: Double;
+begin
+  Result := GetProp('client_width').AsFloat;
+end;
+
+procedure TForm.SetClientWidth(Value: Double);
+begin
+  SetProp('client_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetClientHeight: Double;
+begin
+  Result := GetProp('client_height').AsFloat;
+end;
+
+procedure TForm.SetClientHeight(Value: Double);
+begin
+  SetProp('client_height', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetLeft: Double;

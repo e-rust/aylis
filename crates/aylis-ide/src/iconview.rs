@@ -122,35 +122,43 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     dialogs::run(ui, d, check, move |ui| {
         let bg = dialogs::text_of(ui, background).trim().to_string();
         let mut p = project.clone();
-        // O ícone fica no projeto (copiado para assets/images se veio de fora).
-        let rel = match file.strip_prefix(p.dir()) {
-            Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
-            Err(_) => {
-                let name = file.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "icone.png".into());
-                let dest = p.dir().join("assets/images").join(&name);
-                let _ = std::fs::create_dir_all(dest.parent().expect("tem pai"));
-                if let Err(e) = std::fs::copy(&file, &dest) {
-                    state.borrow_mut().status = format!("⚠ ícone: {e}");
-                    refresh(ui, &state, &ids);
-                    return;
-                }
-                format!("assets/images/{name}")
-            }
-        };
-        p.publish.icon = rel;
-        p.publish.icon_background = if bg.eq_ignore_ascii_case(&format!("#{:02X}{:02X}{:02X}", suggested[0], suggested[1], suggested[2])) { String::new() } else { bg };
-        let saved = p.save().map_err(|e| e.to_string()).and_then(|_| {
-            // O .ico do Windows já sai agora (o próximo build põe no .exe).
-            let icon = Icon::open(&p.file(&p.publish.icon))?;
-            icons::windows(&icon, &p.dir().join(aylis_build::APP_ICON))
-        });
+        let bg = if bg.eq_ignore_ascii_case(&format!("#{:02X}{:02X}{:02X}", suggested[0], suggested[1], suggested[2])) { String::new() } else { bg };
+        let saved = set_app_icon(&mut p, &file, &bg);
         let mut st = state.borrow_mut();
         st.status = match saved {
-            Ok(()) => format!("Ícone do app: {} (gerado para cada plataforma ao publicar)", p.publish.icon),
+            Ok(_) => format!("Ícone do app: {} (gerado para cada plataforma ao publicar)", p.publish.icon),
             Err(e) => format!("⚠ ícone: {e}"),
         };
         st.project = Some(p);
         drop(st);
         refresh(ui, &state, &ids);
     });
+}
+
+/// Põe `file` (PNG, SVG ou JPEG) como ícone do app, com `background` (`#RRGGBB`; vazio: a cor
+/// da borda da imagem) no adaptativo do Android, e grava o projeto. A imagem fica no projeto
+/// (copiada para `assets/images` se veio de fora), e o `.ico` do Windows já sai agora (o
+/// próximo build põe no `.exe`). Devolve os avisos da imagem (pequena, sem margem...). A aba
+/// Ícone do app e o `set_app_icon` do MCP passam por aqui.
+pub fn set_app_icon(p: &mut aylis_project::Project, file: &std::path::Path, background: &str) -> Result<Vec<String>, String> {
+    let icon = Icon::open(file)?;
+    let background = background.trim();
+    if !background.is_empty() && Color::from_hex(background).is_none() {
+        return Err("a cor de fundo é #RRGGBB".into());
+    }
+    let rel = match file.strip_prefix(p.dir()) {
+        Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
+        Err(_) => {
+            let name = file.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "icone.png".into());
+            let dest = p.dir().join("assets/images").join(&name);
+            let _ = std::fs::create_dir_all(dest.parent().expect("tem pai"));
+            std::fs::copy(file, &dest).map_err(|e| e.to_string())?;
+            format!("assets/images/{name}")
+        }
+    };
+    p.publish.icon = rel;
+    p.publish.icon_background = background.to_string();
+    p.save().map_err(|e| e.to_string())?;
+    icons::windows(&icon, &p.dir().join(aylis_build::APP_ICON))?;
+    Ok(icon.warnings())
 }

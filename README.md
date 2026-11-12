@@ -11,6 +11,10 @@ clica, digita ou escolhe algo.
 O mesmo aplicativo roda no **Windows**, no **Linux**, no **macOS**, no **Android**, no
 **iOS** e no **navegador**, com a mesma aparência em todos.
 
+<p align="center">
+  <img src="docs/imagens/ide-calculadora.png" alt="A IDE do Aylis com o form da Calculadora aberto no designer" width="900">
+</p>
+
 ## O que ele oferece
 
 - **Uma IDE completa**, feita com o próprio Aylis: paleta de componentes, designer de
@@ -36,6 +40,13 @@ O mesmo aplicativo roda no **Windows**, no **Linux**, no **macOS**, no **Android
 O projeto traz aplicativos de exemplo, como uma calculadora, um editor de desenho, um player de
 vídeo, um painel com os dados dos estados e municípios do Brasil e um ERP com mais de mil
 telas, além de uma galeria com todos os componentes.
+
+<p align="center">
+  <img src="docs/imagens/calculadora.png" alt="A Calculadora de exemplo rodando, com duas contas no histórico" width="480">
+</p>
+
+A Calculadora (`examples/Calculadora`) é o mesmo form com o código em cada uma das oito
+linguagens.
 
 ## Documentação
 

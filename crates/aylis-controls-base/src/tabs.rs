@@ -3,8 +3,9 @@
 use std::cell::{Cell, RefCell};
 
 use aylis_core::{
-    Align, Brush, Canvas, Color, GradientStop, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent,
-    PaintCtx, PointF, PointerButton, PointerEvent, PointerKind, RectF, Stroke, TRANSITION_MS, TextAlign, Transition, Ui, WheelEvent, properties,
+    Align, Brush, Canvas, GradientStop, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent,
+    PaintCtx, PointF, PointerButton, PointerEvent, PointerKind, PropEnum, RectF, Stroke, TRANSITION_MS, TextAlign, Transition, Ui, WheelEvent,
+    properties,
 };
 use aylis_core::automation::{AccessItem, ItemAction, ItemRole};
 
@@ -14,6 +15,34 @@ use crate::lists::paint_group_frame;
 const TAB_BAR: f32 = 38.0;
 /// Largura do esmaecido na borda da barra quando há abas escondidas daquele lado.
 const FADE: f32 = 28.0;
+
+/// De que lado do [`TabControl`] ficam as abas (como o `TabPosition` do `TTabControl`). Nas
+/// laterais as abas se empilham numa coluna de `tab_width` de largura, com o texto deitado.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TabPosition {
+    #[default]
+    Top,
+    Bottom,
+    Left,
+    Right,
+}
+
+impl PropEnum for TabPosition {
+    const NAMES: &'static [&'static str] = &["top", "bottom", "left", "right"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Top, Self::Bottom, Self::Left, Self::Right].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+impl TabPosition {
+    /// As abas numa coluna (esquerda ou direita).
+    pub fn is_vertical(self) -> bool {
+        matches!(self, Self::Left | Self::Right)
+    }
+}
 
 /// Abas (como o `TTabControl`): os filhos são [`TabItem`]s, cada um uma página; só a de
 /// `tab_index` aparece. Clique numa aba (ou Ctrl+Tab com o foco) troca; `on_change`
@@ -27,6 +56,12 @@ pub struct TabControl {
     /// Como a aba nova entra (`slide_left`/`slide_right` deslizam na direção da ordem das
     /// abas, `fade` esmaece).
     pub transition: Transition,
+    /// De que lado ficam as abas (`top`, `bottom`, `left`, `right`).
+    pub tab_position: TabPosition,
+    /// Largura da coluna de abas nas laterais (`left`/`right`); em cima e embaixo não conta.
+    pub tab_width: f32,
+    /// A barra das abas (da última pintura), para o clique e a roda.
+    bar: Cell<RectF>,
     /// Retângulos das abas (da última pintura), para o clique.
     headers: RefCell<Vec<(ComponentId, RectF)>>,
     /// Quanto a barra de abas está rolada (abas que não cabem: o dedo ou a roda rolam).
@@ -41,11 +76,48 @@ impl Default for TabControl {
     fn default() -> Self {
         let mut base = ControlBase::new(400.0, 300.0);
         base.set_padding([1.0, TAB_BAR, 1.0, 1.0]).set_can_focus(true).set_clip_children(true);
-        Self { base, tab_index: 0, show_tabs: true, transition: Transition::None, headers: RefCell::default(), scroll: Cell::new(0.0), reveal: Cell::new(true), pressed: Cell::new(None) }
+        Self {
+            base,
+            tab_index: 0,
+            show_tabs: true,
+            transition: Transition::None,
+            tab_position: TabPosition::Top,
+            tab_width: 140.0,
+            bar: Cell::new(RectF::new(0.0, 0.0, 0.0, 0.0)),
+            headers: RefCell::default(),
+            scroll: Cell::new(0.0),
+            reveal: Cell::new(true),
+            pressed: Cell::new(None),
+        }
     }
 }
 
 impl TabControl {
+    /// O espaço das páginas: a barra fica do lado de `tab_position` (sem `show_tabs`, nada).
+    fn page_padding(&self) -> [f32; 4] {
+        if !self.show_tabs {
+            return [0.0; 4];
+        }
+        let side = self.tab_width.max(TAB_BAR);
+        match self.tab_position {
+            TabPosition::Top => [1.0, TAB_BAR, 1.0, 1.0],
+            TabPosition::Bottom => [1.0, 1.0, 1.0, TAB_BAR],
+            TabPosition::Left => [side, 1.0, 1.0, 1.0],
+            TabPosition::Right => [1.0, 1.0, side, 1.0],
+        }
+    }
+
+    /// A barra das abas e o corpo (a moldura das páginas) dentro de `r`.
+    fn bar_and_body(&self, r: RectF) -> (RectF, RectF) {
+        let side = self.tab_width.max(TAB_BAR).min(r.width);
+        match self.tab_position {
+            TabPosition::Top => (RectF::new(r.x, r.y, r.width, TAB_BAR), RectF::new(r.x, r.y + TAB_BAR - 1.0, r.width, r.height - TAB_BAR + 1.0)),
+            TabPosition::Bottom => (RectF::new(r.x, r.bottom() - TAB_BAR, r.width, TAB_BAR), RectF::new(r.x, r.y, r.width, r.height - TAB_BAR + 1.0)),
+            TabPosition::Left => (RectF::new(r.x, r.y, side, r.height), RectF::new(r.x + side - 1.0, r.y, r.width - side + 1.0, r.height)),
+            TabPosition::Right => (RectF::new(r.right() - side, r.y, side, r.height), RectF::new(r.x, r.y, r.width - side + 1.0, r.height)),
+        }
+    }
+
     /// O índice da aba sob `p` (só as que estão à vista na barra).
     fn tab_at(&self, ui: &Ui, id: ComponentId, p: PointF) -> Option<usize> {
         let tab = self.headers.borrow().iter().find(|(_, r)| r.contains(p)).map(|(t, _)| *t)?;
@@ -141,15 +213,18 @@ impl Component for TabControl {
     properties! {
         tab_index: i64 => "Behavior",
         show_tabs: bool => "Appearance",
-        transition: Transition => "Behavior";
+        transition: Transition => "Behavior",
+        tab_position: TabPosition => "Appearance",
+        tab_width: f32 => "Appearance";
         events: on_change
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        // Sem a barra, as páginas vão até as bordas.
-        if name == "show_tabs" {
-            let p = if self.show_tabs { [1.0, TAB_BAR, 1.0, 1.0] } else { [0.0; 4] };
-            self.base.set_padding(p);
+        // Sem a barra, as páginas vão até as bordas; com ela, a barra fica do lado escolhido.
+        if matches!(name, "show_tabs" | "tab_position" | "tab_width") {
+            self.base.set_padding(self.page_padding());
+            self.scroll.set(0.0);
+            self.reveal.set(true);
             ctx.invalidate();
         }
         if name == "tab_index" {
@@ -174,7 +249,7 @@ impl Component for TabControl {
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
-        if !self.show_tabs || event.button != PointerButton::Primary || event.position.y > TAB_BAR {
+        if !self.show_tabs || event.button != PointerButton::Primary || !self.bar.get().contains(event.position) {
             return;
         }
         let Some(i) = self.tab_at(ctx.ui, ctx.id, event.position) else { return };
@@ -196,7 +271,7 @@ impl Component for TabControl {
 
     // Abas que não cabem: o dedo arrastando (ou a roda) sobre a barra rola as abas.
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &WheelEvent) {
-        if !self.show_tabs || event.position.y > TAB_BAR {
+        if !self.show_tabs || !self.bar.get().contains(event.position) {
             return;
         }
         let delta = if event.delta.x != 0.0 { event.delta.x } else { event.delta.y };
@@ -240,6 +315,8 @@ impl Component for TabControl {
             Key::Tab if event.modifiers.ctrl => if event.modifiers.shift { -1 } else { 1 },
             Key::Left => -1,
             Key::Right => 1,
+            Key::Up if self.tab_position.is_vertical() => -1,
+            Key::Down if self.tab_position.is_vertical() => 1,
             _ => return,
         };
         self.change(ctx, self.tab_index + delta);
@@ -249,50 +326,67 @@ impl Component for TabControl {
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         if !self.show_tabs {
             self.headers.borrow_mut().clear();
+            self.bar.set(RectF::new(0.0, 0.0, 0.0, 0.0));
             return;
         }
         let s = ctx.style;
         let r = ctx.rect;
         let theme = ctx.theme;
-        let body = RectF::new(r.x, r.y + TAB_BAR - 1.0, r.width, r.height - TAB_BAR + 1.0);
+        let position = self.tab_position;
+        let vertical = position.is_vertical();
+        let (bar, body) = self.bar_and_body(r);
+        self.bar.set(bar);
         canvas.fill_rect(body, s.radius, &Brush::Solid(s.fill));
         canvas.stroke_rect(body, s.radius, &Stroke::new(s.border_color, s.border_width.max(1.0)));
         let mut text = ctx.text_style();
-        text.h_align = TextAlign::Center;
+        // Nas laterais o texto encosta à esquerda, como numa lista.
+        text.h_align = if vertical { TextAlign::Leading } else { TextAlign::Center };
         let tabs = TabControl::tabs(ctx.ui, ctx.id);
         let captions: Vec<String> = tabs.iter().map(|&t| ctx.ui.get::<TabItem>(t).map(|t| t.caption.clone()).unwrap_or_default()).collect();
-        let widths: Vec<f32> = captions.iter().map(|c| canvas.measure_text(c, &text).width + 28.0).collect();
+        // O tamanho de cada aba ao longo da barra: a largura do texto em cima e embaixo, a
+        // altura da barra nas laterais.
+        let sizes: Vec<f32> =
+            if vertical { vec![TAB_BAR - 2.0; captions.len()] } else { captions.iter().map(|c| canvas.measure_text(c, &text).width + 28.0).collect() };
+        let along = if vertical { bar.height } else { bar.width };
         // Abas que não cabem: a barra rola (até a escolhida, quando ela muda).
-        let total: f32 = widths.iter().sum::<f32>() + 8.0;
-        let max_scroll = (total - r.width).max(0.0);
+        let total: f32 = sizes.iter().sum::<f32>() + 8.0;
+        let max_scroll = (total - along).max(0.0);
         let mut scroll = self.scroll.get().min(max_scroll);
         if self.reveal.replace(false) {
-            let index = (self.tab_index.max(0) as usize).min(widths.len());
-            let left: f32 = widths[..index].iter().sum::<f32>() + 4.0;
-            let right = left + widths.get(index).copied().unwrap_or(0.0);
-            if left - 4.0 < scroll {
-                scroll = (left - 4.0).max(0.0);
-            } else if right + 4.0 > scroll + r.width {
-                scroll = (right + 4.0 - r.width).min(max_scroll);
+            let index = (self.tab_index.max(0) as usize).min(sizes.len());
+            let first: f32 = sizes[..index].iter().sum::<f32>() + 4.0;
+            let last = first + sizes.get(index).copied().unwrap_or(0.0);
+            if first - 4.0 < scroll {
+                scroll = (first - 4.0).max(0.0);
+            } else if last + 4.0 > scroll + along {
+                scroll = (last + 4.0 - along).min(max_scroll);
             }
         }
         self.scroll.set(scroll);
         canvas.save();
-        canvas.clip_rect(RectF::new(r.x, r.y, r.width, TAB_BAR));
+        canvas.clip_rect(bar);
         let mut headers = Vec::new();
-        let mut x = r.x + 4.0 - scroll;
+        let mut at = 4.0 - scroll;
         // A aba pelo estilo `TabControl.tab` do tema, quando houver: normal, sob o mouse e
         // escolhida (`checked`), com fundo, texto, fonte, raio e borda (a borda de baixo faz o
-        // sublinhado). Sem ele, o visual de sempre. O relatório do Tabernáculo, C17.
+        // sublinhado). Fora de cima, a variante do lado (`TabControl.tab.left`...) troca o que
+        // precisar (a borda do lado das páginas). Sem o estilo, o visual de sempre. O
+        // relatório do Tabernáculo, C17.
         let themed = theme.styles.contains_key("TabControl.tab");
+        let variant = if position == TabPosition::Top { "" } else { TabPosition::NAMES[position.index()] };
         for (i, (&tab, caption)) in tabs.iter().zip(&captions).enumerate() {
-            let width = widths[i];
-            let rect = RectF::new(x, r.y, width, TAB_BAR - 1.0);
+            let size = sizes[i];
+            let rect = match position {
+                TabPosition::Top => RectF::new(bar.x + at, bar.y, size, TAB_BAR - 1.0),
+                TabPosition::Bottom => RectF::new(bar.x + at, bar.y + 1.0, size, TAB_BAR - 1.0),
+                TabPosition::Left => RectF::new(bar.x, bar.y + at, bar.width - 1.0, size),
+                TabPosition::Right => RectF::new(bar.x + 1.0, bar.y + at, bar.width - 1.0, size),
+            };
             let active = i as i64 == self.tab_index;
             let mut style = text.clone();
             if themed {
                 let state = aylis_core::ControlState { checked: active, focused: active && ctx.state.focused, ..Default::default() };
-                let look = theme.resolve(&["TabControl.tab"], "", state);
+                let look = theme.resolve(&["TabControl.tab"], variant, state);
                 if !look.fill.is_transparent() {
                     canvas.fill_rect(rect, look.radius, &Brush::Solid(look.fill));
                 }
@@ -302,33 +396,49 @@ impl Component for TabControl {
             } else if active {
                 style.color = theme.color("primary");
                 style.font.weight = aylis_core::FontWeight::Bold;
-                canvas.fill_rect(RectF::new(rect.x + 6.0, rect.bottom() - 3.0, rect.width - 12.0, 3.0), 1.5, &Brush::Solid(theme.color("primary")));
+                // O sublinhado fica do lado das páginas.
+                let mark = match position {
+                    TabPosition::Top => RectF::new(rect.x + 6.0, rect.bottom() - 3.0, rect.width - 12.0, 3.0),
+                    TabPosition::Bottom => RectF::new(rect.x + 6.0, rect.y, rect.width - 12.0, 3.0),
+                    TabPosition::Left => RectF::new(rect.right() - 3.0, rect.y + 6.0, 3.0, rect.height - 12.0),
+                    TabPosition::Right => RectF::new(rect.x, rect.y + 6.0, 3.0, rect.height - 12.0),
+                };
+                canvas.fill_rect(mark, 1.5, &Brush::Solid(theme.color("primary")));
             } else {
                 style.color = theme.color("text_muted");
             }
             if active && ctx.state.focused {
                 canvas.stroke_rect(rect.inflate(-3.0), 4.0, &Stroke::new(theme.color("focus_ring"), 1.5));
             }
-            canvas.draw_text(caption, rect, &style);
+            let caption_rect = if vertical { RectF::new(rect.x + 14.0, rect.y, (rect.width - 20.0).max(0.0), rect.height) } else { rect };
+            canvas.draw_text(caption, caption_rect, &style);
             headers.push((tab, rect));
-            x += width;
+            at += size;
         }
         // Há abas escondidas de um lado: a borda esmaece para o fundo (dá para rolar).
         let back = theme.color("background");
-        let fade = |canvas: &mut dyn Canvas, x: f32, from: Color, to: Color| {
-            let rect = RectF::new(x, r.y, FADE, TAB_BAR - 1.0);
+        let fade = |canvas: &mut dyn Canvas, at_start: bool| {
+            let rect = match (vertical, at_start) {
+                (true, true) => RectF::new(bar.x, bar.y, bar.width, FADE),
+                (true, false) => RectF::new(bar.x, bar.bottom() - FADE, bar.width, FADE),
+                (false, true) => RectF::new(bar.x, bar.y, FADE, bar.height - 1.0),
+                (false, false) => RectF::new(bar.right() - FADE, bar.y, FADE, bar.height - 1.0),
+            };
+            let (start, end) =
+                if vertical { (PointF::new(0.0, rect.y), PointF::new(0.0, rect.bottom())) } else { (PointF::new(rect.x, 0.0), PointF::new(rect.right(), 0.0)) };
+            let (from, to) = if at_start { (back, back.with_opacity(0.0)) } else { (back.with_opacity(0.0), back) };
             let stops = vec![GradientStop::new(0.0, from), GradientStop::new(1.0, to)];
-            canvas.fill_rect(rect, 0.0, &Brush::Linear { start: PointF::new(rect.x, 0.0), end: PointF::new(rect.right(), 0.0), stops });
+            canvas.fill_rect(rect, 0.0, &Brush::Linear { start, end, stops });
         };
         if scroll > 0.5 {
-            fade(canvas, r.x, back, back.with_opacity(0.0));
+            fade(canvas, true);
         }
         if scroll < max_scroll - 0.5 {
-            fade(canvas, r.right() - FADE, back.with_opacity(0.0), back);
+            fade(canvas, false);
         }
         canvas.restore();
         // Só as abas à vista recebem o clique.
-        headers.retain(|(_, rect)| rect.right() > r.x && rect.x < r.right());
+        headers.retain(|(_, rect)| rect.intersects(bar));
         *self.headers.borrow_mut() = headers;
     }
 }

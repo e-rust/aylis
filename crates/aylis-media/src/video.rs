@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use aylis_core::{Image, Poster};
+use aylis_core::{Canvas, GpuDevice, GpuSurface, Image, Poster, RectF, SizeF};
 
 use crate::audio::AudioOpener;
 
@@ -29,21 +29,147 @@ pub struct VideoInfo {
 }
 
 /// Um quadro: a imagem e o tempo (em segundos) em que ele aparece.
+///
+/// O quadro pode estar na placa de vídeo ([`gpu`](Self::gpu), o relatório do Tabernáculo,
+/// W15): aí `image` fica vazia e quem desenha usa [`draw`](Self::draw), que compõe a
+/// textura sem passar pela CPU quando o canvas sabe (o Direct2D na mesma placa) e, se não,
+/// copia os pixels uma vez ([`to_image`](Self::to_image)): o desenho sai igual nos três
+/// renderizadores.
 #[derive(Clone, Debug)]
 pub struct Frame {
     pub time: f64,
     pub image: Image,
+    /// O quadro como textura na placa de vídeo (`None`: os pixels estão em `image`).
+    pub gpu: Option<GpuFrame>,
 }
 
 impl Frame {
     /// Quadro com pixels RGBA.
     pub fn rgba(width: u32, height: u32, pixels: Vec<u8>, time: f64) -> Self {
-        Self { time, image: Image::rgba(width, height, pixels) }
+        Self { time, image: Image::rgba(width, height, pixels), gpu: None }
     }
 
     /// Quadro com pixels BGRA (o formato que os decodificadores costumam entregar).
     pub fn bgra(width: u32, height: u32, pixels: Vec<u8>, time: f64) -> Self {
-        Self { time, image: Image::bgra(width, height, pixels) }
+        Self { time, image: Image::bgra(width, height, pixels), gpu: None }
+    }
+
+    /// Quadro que está na placa de vídeo (uma textura compartilhada; veja [`GpuFrame`]).
+    pub fn texture(gpu: GpuFrame, time: f64) -> Self {
+        Self { time, image: Image::bgra(0, 0, Vec::new()), gpu: Some(gpu) }
+    }
+
+    /// Tamanho em pixels.
+    pub fn size(&self) -> Option<SizeF> {
+        match &self.gpu {
+            Some(g) => {
+                let (w, h) = g.size();
+                Some(SizeF::new(w as f32, h as f32))
+            }
+            None => self.image.known_size(),
+        }
+    }
+
+    /// A imagem com os pixels: a própria `image` ou, na placa de vídeo, a cópia para a CPU
+    /// (feita uma vez por quadro). `None` se a cópia falhar.
+    pub fn to_image(&self) -> Option<Image> {
+        match &self.gpu {
+            Some(g) => g.to_image(),
+            None => Some(self.image.clone()),
+        }
+    }
+
+    /// Desenha a parte `src` do quadro (em pixels dele) em `dest`, como
+    /// [`Canvas::draw_image`]. A textura vai direto quando o canvas aceita
+    /// ([`Canvas::draw_gpu_surface`]); senão, os pixels copiados para a CPU.
+    pub fn draw(&self, canvas: &mut dyn Canvas, src: RectF, dest: RectF, opacity: f32) {
+        let Some(g) = &self.gpu else {
+            canvas.draw_image(&self.image, src, dest, opacity);
+            return;
+        };
+        if g.draw(canvas, src, dest, opacity) {
+            return;
+        }
+        if let Some(image) = g.to_image() {
+            canvas.draw_image(&image, src, dest, opacity);
+        }
+    }
+}
+
+/// Quem está por trás de um [`GpuFrame`]: o decodificador que guarda a textura.
+pub trait GpuFrameSource: Send + Sync {
+    /// O canvas compôs a textura (a placa dele vai lê-la): quem a reaproveita espera a cerca
+    /// de liberação. Padrão: nada.
+    fn drawn(&self) {}
+    /// Copia a textura para a CPU, em BGRA (o caminho de reserva: Skia, navegador, o app que
+    /// quer os pixels).
+    fn download(&self) -> Option<Image>;
+}
+
+/// Um quadro de vídeo que está na placa (W15): a textura compartilhada ([`GpuSurface`]) que
+/// o canvas compõe sem passar pela CPU, e a cópia para a CPU quando o canvas não sabe.
+///
+/// Enquanto houver um clone, a textura não é reescrita pelo decodificador.
+#[derive(Clone)]
+pub struct GpuFrame {
+    pub surface: GpuSurface,
+    source: Arc<dyn GpuFrameSource>,
+    cpu: Arc<std::sync::OnceLock<Option<Image>>>,
+}
+
+impl std::fmt::Debug for GpuFrame {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GpuFrame").field("surface", &self.surface).finish_non_exhaustive()
+    }
+}
+
+impl GpuFrame {
+    pub fn new(surface: GpuSurface, source: impl GpuFrameSource + 'static) -> Self {
+        Self { surface, source: Arc::new(source), cpu: Arc::default() }
+    }
+
+    /// Largura e altura da textura.
+    pub fn size(&self) -> (u32, u32) {
+        match self.surface {
+            GpuSurface::D3D12 { width, height, .. } | GpuSurface::GlTexture { width, height, .. } | GpuSurface::WebCanvas { width, height, .. } => (width, height),
+        }
+    }
+
+    /// Os pixels, copiados da placa uma vez (as próximas chamadas devolvem a mesma imagem).
+    pub fn to_image(&self) -> Option<Image> {
+        self.cpu.get_or_init(|| self.source.download()).clone()
+    }
+
+    /// Compõe a textura direto, se o canvas souber; `false`: quem chama usa os pixels.
+    pub fn draw(&self, canvas: &mut dyn Canvas, src: RectF, dest: RectF, opacity: f32) -> bool {
+        let (w, h) = self.size();
+        if opacity <= 0.0 {
+            return true;
+        }
+        if w == 0 || h == 0 || src.width <= 0.0 || src.height <= 0.0 {
+            return false;
+        }
+        // A composição desenha a textura inteira: a parte `src` vira um destino maior,
+        // recortado em `dest`.
+        let (sx, sy) = (dest.width / src.width, dest.height / src.height);
+        let full = RectF::new(dest.x - src.x * sx, dest.y - src.y * sy, w as f32 * sx, h as f32 * sy);
+        let partial = src != RectF::new(0.0, 0.0, w as f32, h as f32);
+        canvas.save();
+        if partial {
+            canvas.clip_rect(dest);
+        }
+        if opacity < 1.0 {
+            canvas.save_layer(opacity);
+        }
+        let ok = canvas.draw_gpu_surface(full, &self.surface);
+        if opacity < 1.0 {
+            canvas.restore();
+        }
+        canvas.restore();
+        if ok {
+            self.source.drawn();
+        }
+        ok
     }
 }
 
@@ -83,6 +209,17 @@ pub trait VideoDecoder {
     fn skip_until(&mut self, seconds: f64) {
         let _ = seconds;
     }
+    /// O canvas que mostra o vídeo desenha nesta placa (`None`: na CPU, ou o app quer os
+    /// pixels): o decodificador pode entregar os quadros como textura ([`Frame::texture`]),
+    /// que o canvas compõe sem a ida e volta pela CPU (W15). Padrão: nada (quadros na CPU).
+    fn set_gpu_device(&mut self, device: Option<GpuDevice>) {
+        let _ = device;
+    }
+    /// Quantos quadros, no máximo, podem esperar na fila (as texturas vêm de um conjunto
+    /// fixo). Padrão: sem limite próprio.
+    fn max_queued(&self) -> Option<usize> {
+        None
+    }
     /// A trilha de áudio, se houver (o player toca junto): abre na thread do áudio.
     fn audio(&mut self) -> Option<AudioOpener> {
         None
@@ -105,11 +242,21 @@ pub trait VideoDecoder {
 
 /// O `file` é um endereço de rede (`http://`, `https://`, `rtsp://`), e não um arquivo: o
 /// decodificador do sistema abre direto, lendo aos poucos (o relatório do Tabernáculo, W11).
-#[cfg_attr(any(target_arch = "wasm32", target_os = "android"), allow(dead_code))]
 pub fn is_url(path: &std::path::Path) -> bool {
     let s = path.to_string_lossy();
     let lower = s.get(..8).unwrap_or(&s).to_ascii_lowercase();
     lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("rtsp://")
+}
+
+/// A extensão do arquivo (minúscula), também num endereço, sem a consulta (`?token=...`) nem
+/// o fragmento.
+pub(crate) fn file_extension(file: &str) -> String {
+    if !is_url(std::path::Path::new(file)) {
+        return std::path::Path::new(file).extension().and_then(|e| e.to_str()).unwrap_or_default().to_lowercase();
+    }
+    let path = file.split(['?', '#']).next().unwrap_or(file);
+    let name = path.rsplit('/').next().unwrap_or(path);
+    name.rsplit_once('.').map(|(_, e)| e.to_ascii_lowercase()).filter(|e| e.len() <= 5).unwrap_or_default()
 }
 
 /// De onde vem o vídeo.
@@ -122,7 +269,7 @@ pub enum MediaSource {
 impl MediaSource {
     pub fn extension(&self) -> String {
         match self {
-            MediaSource::File(p) => p.extension().and_then(|e| e.to_str()).unwrap_or_default().to_lowercase(),
+            MediaSource::File(p) => file_extension(&p.to_string_lossy()),
             MediaSource::Bytes { extension, .. } => extension.to_lowercase(),
         }
     }
@@ -212,6 +359,12 @@ pub(crate) struct Frames {
     pub(crate) want: (u32, u32),
     /// Quantos quadros o decodificador prepara à frente (0: o padrão, 6).
     pub(crate) ahead: usize,
+    /// A placa do canvas que mostra o vídeo (a pintura atualiza): o decodificador entrega
+    /// texturas para ela (W15).
+    pub(crate) gpu: Option<GpuDevice>,
+    /// O app pediu os pixels ([`VideoPlayer::current_frame`](crate::VideoPlayer::current_frame))
+    /// ou o canvas recusou a textura: quadros na CPU daqui em diante.
+    pub(crate) cpu_only: bool,
 }
 
 /// Entrega quadros prontos ao `VideoPlayer`, de qualquer thread (câmera, rede, um codec
@@ -227,7 +380,7 @@ impl FrameSink {
         if let Ok(mut f) = self.frames.lock() {
             f.live = true;
             f.queue.clear();
-            if let Some((w, h)) = frame.image.known_size().map(|s| (s.width as u32, s.height as u32)) {
+            if let Some((w, h)) = frame.size().map(|s| (s.width as u32, s.height as u32)) {
                 f.info.width = w;
                 f.info.height = h;
             }
@@ -279,6 +432,8 @@ impl DecodeThread {
                 let mut last = f64::NEG_INFINITY;
                 // O tamanho já pedido ao decodificador.
                 let mut applied = (0u32, 0u32);
+                // A placa já avisada ao decodificador (W15).
+                let mut applied_gpu: Option<GpuDevice> = None;
                 loop {
                     let (quit, seek) = match thread_control.lock() {
                         Ok(mut c) => (c.quit, c.seek.take()),
@@ -320,7 +475,15 @@ impl DecodeThread {
                         decoder.set_output_size(want.0, want.1);
                         applied = want;
                     }
-                    let (full, eof) = frames.lock().map_or((true, true), |f| (f.queue.len() >= ahead_of(&f), f.eof));
+                    // A placa do canvas mudou (ou o app quer os pixels): o decodificador troca
+                    // entre texturas e pixels.
+                    let gpu = frames.lock().ok().and_then(|f| f.gpu.filter(|_| !f.cpu_only));
+                    if gpu != applied_gpu {
+                        decoder.set_gpu_device(gpu);
+                        applied_gpu = gpu;
+                    }
+                    let limit = decoder.max_queued().unwrap_or(usize::MAX).max(1);
+                    let (full, eof) = frames.lock().map_or((true, true), |f| (f.queue.len() >= ahead_of(&f).min(limit), f.eof));
                     if full || eof {
                         // Fila cheia: 6 quadros (200 ms a 30 fps) dão folga para esperar um
                         // pouco. No fim do arquivo (ou pausado no fim), quase nada a fazer.

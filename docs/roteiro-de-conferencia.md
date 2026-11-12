@@ -140,6 +140,40 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     abrir continuam abertas ao reabrir o projeto. Um fonte sem form no editor deixa o Design
     desligado.
 
+112. **Lote 7, o resto: o build e o MCP** (12/11). Compile o Tabernáculo pela IDE e rode `git
+    status`: só muda o que a linha "ℹ A compilação mudou…" das Mensagens explicar. Pelo Claude
+    Code: `menu` com um texto repetido é recusado com os caminhos, e pelo caminho funciona; no
+    "Verificar ambiente", o `dialog_state` mostra cada "Corrigir…" com um rótulo diferente; um
+    `build` longo responde "em andamento" e o `task_status` traz o fim; o `output` com `source`
+    `program` só traz o app; com dois apps abertos, `app_command` com `app` escolhe um, e o
+    `snapshot` aparece como imagem.
+
+113. **Lote 7: form em pasta, frame, tema e testes pelo MCP** (12/11). Na IDE, "Novo form" com a
+    pasta `biblia` cria `forms/biblia/...json`. Pelo MCP: `new_frame` com `host` põe o Frame no
+    outro form; `set_theme` muda um token e os forms abertos acompanham; `check`, `test` e
+    `screenshot` (a foto aparece como imagem) num projeto confiado.
+
+114. **Modo sem plataforma** (12/11). No Tabernáculo, troque o `ForaDaTela` e o Timer de 500 ms
+    do `mostruario` por `aylis::headless::Headless` (`open`, `click`, `type_text`, `save_png`): a
+    foto sai igual à da janela.
+
+115. **Vídeo por textura e som por endereço** (12/11). Rode `cargo run --release -p aylis-media
+    --example video --features d2d -- <um 4K> --stats`: o rodapé diz "textura" e a CPU fica baixa;
+    com `--cpu-frames`, "pixels". No Tabernáculo, as projeções pintando por `current_video_frame`
+    e `Frame::draw`. Um MediaPlayer com `file` `https://.../musica.mp3` toca, e arrastar a
+    posição funciona.
+
+116. **Abas laterais, gap do tema e rodapé do modal** (12/11). Um TabControl com `tab_position`
+    `left`: as abas em coluna, Cima/Baixo trocam. Um tema com `"ButtonGroup": {"gap": 0}` cola os
+    botões. Um `MessageDialog.footer` com `padding` menor encurta o rodapé. Mudar `width` do form
+    com o app rodando muda a janela; `client_width` define a área sem a borda. Redimensionar a
+    janela de uma grade: nenhum quadro com a largura de antes. O ícone da bandeja a 150% nítido.
+
+117. **Opacidade de grupo no navegador e o create_in** (12/11). Publique um app para a web com um
+    painel em `opacity` 0.5 e dois filhos sobrepostos: o de baixo não aparece através do de cima.
+    No Tabernáculo, os 66 livros e as 150 teclas por `create_in` na máquina da igreja (antes, ~6,8
+    ms). Editar à mão um handler e rodar `cargo fmt`: o "Sincronizar código" não mostra pendência.
+
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
     rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela

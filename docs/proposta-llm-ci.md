@@ -2,8 +2,9 @@
 
 Pedido do autor em 07/11: "verificar integração contínua do futuro com LLM, pensar em algo que
 automatize a IDE e os projetos usando ela, code tracing com analytics, code coverage". Isto é
-o estudo: o que já existe, o que falta e as decisões que ficam com o autor (no fim). Nada
-daqui foi implementado ainda; o item 38 dos pendentes acompanha.
+o estudo: o que já existe, o que falta e as decisões que ficam com o autor (no fim). Do 2b,
+o `check`, o `test` e o `screenshot` já estão no MCP (12/11, M19 do relatório do Tabernáculo);
+o resto não foi implementado ainda, e o item 38 dos pendentes acompanha.
 
 ## O que já existe
 
@@ -12,12 +13,18 @@ daqui foi implementado ainda; o item 38 dos pendentes acompanha.
   - testes no Windows e no Linux, com as telas da IDE comparadas com as referências;
   - compilação para wasm e Android;
   - a cobertura por crate no resumo da execução (`cargo llvm-cov`, sem meta).
-- **MCP da IDE:** 54 ferramentas.
-  - projeto e forms: abrir, componentes, propriedades, layout, gerar código;
+- **MCP da IDE:** 81 ferramentas em 12/11 (78 da IDE, em `aylis_tools::mcp::ide_tools`, e
+  3 da ponte: `session_title`, `ide_list` e `ide_select`).
+  - projeto e forms: abrir, criar (na pasta escolhida), mover, componentes, propriedades,
+    layout, gerar código;
+  - frame (`new_frame`), tema (`get_theme`, `set_theme`), traduções (`translations`,
+    `set_translations`) e ícone do app (`set_app_icon`);
   - editor: digitar, teclas, hover, estado;
   - diálogos e menus;
   - depuração: pontos de parada, variáveis, quadro;
-  - compilar, executar, publicar;
+  - compilar, verificar (`check`), testar (`test`), executar, publicar (com AAB e instalador);
+  - imagens: `designer_snapshot`, `screenshot` (qualquer form do projeto, ou o app em
+    execução) e `compare_image`;
   - `app_command`, que comanda o app em execução pelo canal de desenvolvimento.
 
   `aylis-tool mcp` faz a ponte stdio, e as Opções da IDE configuram o Claude Code e o Claude
@@ -31,7 +38,10 @@ daqui foi implementado ainda; o item 38 dos pendentes acompanha.
   faixa (handlers, eventos, layout, pintura, timers, dados) e a tabela de métodos (chamadas,
   total, próprio, média, máximo), que abre o código do handler.
 - **Testes de apps:** o app de desenvolvimento aceita roteiro e `snapshot` pelo canal, e a
-  verificação antes de compilar (`aylis-tool check`) confere handlers, referências e assets.
+  verificação antes de compilar (`aylis-tool check`, o `check` do MCP) confere handlers,
+  referências e assets. O `test` do MCP roda os testes do projeto na ferramenta da linguagem
+  (`aylis_tools::project_tests`: `cargo test`, `unittest`, `go test`, `bun`/`node --test`,
+  `dotnet test`) e devolve o resultado por teste; no modo restrito, não roda.
 
 ## 1. CI com LLM
 
@@ -58,7 +68,9 @@ que pode ser checada por programa não deve depender dele.
 - **1d. IDE sem janela na CI:** `aylis-ide --headless --mcp-stdio` abre a IDE sem desenhar a
   janela, com o MCP no stdio. Um agente (ou um roteiro fixo) cria um projeto, põe componentes,
   gera, compila, executa e comanda o app pelo `app_command`. Isso testa a IDE de ponta a ponta
-  como um usuário, no lugar de só as funções.
+  como um usuário, no lugar de só as funções. A foto de um form já sai sem a janela do app (o
+  `screenshot` pinta o form do designer em PNG); falta a IDE em si sem janela, e o modo sem
+  plataforma do app (B04) está em andamento.
 - **1e. Gravação vira teste:** `aylis-tool recording-to-test arquivo.aylisrec` transforma uma
   gravação de uso (a que reproduziu o problema) em roteiro de teste do app. O agente da
   triagem usa o mesmo caminho para provar a correção.
@@ -78,10 +90,8 @@ que pode ser checada por programa não deve depender dele.
     do projeto já enxerga a IDE.
   - O texto vem de um modelo no aylis (atualizado com ele), uma versão por linguagem do
     projeto.
-- **2b. Ferramentas que faltam no MCP da IDE:**
-  - `check` (a verificação antes de compilar, com a lista de erros);
-  - `test` (os testes do projeto, com o resultado por teste);
-  - `screenshot` do form no designer e do app em execução (já existe no canal);
+- **2b. Ferramentas que faltam no MCP da IDE** (o `check`, o `test` e o `screenshot` já
+  existem):
   - `profile` (ligar, pegar, resumir);
   - `recording` (ler a gravação mais recente, resumida);
   - `coverage` (abaixo).
@@ -128,7 +138,7 @@ O Profiler já mede tudo, mas só ao vivo e só na IDE. Falta guardar, comparar 
 
 ## Decisões para o autor
 
-1. **Ordem.** Sugestão: 1a (`lint`) → 2a (guia no projeto) → 2b (ferramentas do MCP) → 4b
+1. **Ordem.** Sugestão: 1a (`lint`) → 2a (guia no projeto) → 2b (o resto das ferramentas do MCP) → 4b
    (cobertura de handlers) → 3a/3b (rastro salvo e na CI) → 4a → 1d → 1b/1c → o resto.
 2. **Agente na CI (1b, 1c):** usa uma chave da API num segredo do repositório (há custo por
    execução). Só comentar, ou também abrir um pull request de correção?

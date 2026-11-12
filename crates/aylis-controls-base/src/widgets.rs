@@ -676,8 +676,11 @@ impl Component for SegmentedControl {
             ctx.request_frame();
         }
         self.shown.set(x);
-        let thumb = RectF::new(x + 3.0, r.y + 3.0, w - 6.0, r.height - 6.0);
-        let thumb_radius = (s.radius - 2.0).max(0.0);
+        // A marcação a `gap` da borda (3 sem o tema dizer; 0 a cola nos vizinhos, como os
+        // botões colados do HTML; o relatório do Tabernáculo, C38).
+        let inset = s.gap.unwrap_or(3.0).max(0.0);
+        let thumb = RectF::new(x + inset, r.y + inset, (w - inset * 2.0).max(0.0), (r.height - inset * 2.0).max(0.0));
+        let thumb_radius = if inset > 0.0 { (s.radius - inset + 1.0).max(0.0) } else { s.radius };
         if let Some(shadow) = ctx.theme.shadows.get("sm") {
             canvas.draw_shadow(thumb, thumb_radius, shadow);
         }

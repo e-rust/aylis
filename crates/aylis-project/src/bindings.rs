@@ -665,7 +665,7 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
         let _ = std::fs::remove_dir_all(&classes_dir);
         std::fs::create_dir_all(&forms_dir).map_err(|e| e.to_string())?;
         std::fs::create_dir_all(&classes_dir).map_err(|e| e.to_string())?;
-        std::fs::write(dir.join("version"), &version).map_err(|e| e.to_string())?;
+        write_if_changed(&dir.join("version"), &version)?;
     }
     let mut files = crate::FormFiles::default();
     let mut sources = if full { SourceStamps::new() } else { load_sources(project) };
@@ -787,7 +787,7 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
         if write_if_changed(&main, &text)? {
             written.push(main.clone());
         }
-        std::fs::write(dir.join("index"), &list).map_err(|e| e.to_string())?;
+        write_if_changed(&dir.join("index"), &list)?;
     }
     // O `import` da instância do form no arquivo de eventos dele.
     for entry in project.forms.iter().filter(|e| regenerated.contains(&e.name) || only.is_some_and(|o| e.name.eq_ignore_ascii_case(o))) {

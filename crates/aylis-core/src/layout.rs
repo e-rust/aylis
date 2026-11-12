@@ -30,9 +30,25 @@ const DOCK_ORDER: [Align; 8] = [
     Align::Right,
 ];
 
+/// Quantas vezes o [`Ui::update_layout`] refaz o layout num quadro, no máximo.
+const LAYOUT_PASSES: usize = 8;
+
 impl Ui {
-    /// Recalcula o layout só se algo mudou desde a última vez.
+    /// Recalcula o layout só se algo mudou desde a última vez. O que os `on_resize` mudam
+    /// (o app arrumando as teclas pela largura nova) refaz de novo, até assentar: a janela
+    /// pinta o quadro com tudo no lugar, e não um com a largura de antes (o relatório do
+    /// Tabernáculo, L02). No máximo [`LAYOUT_PASSES`] vezes (um `on_resize` que sempre muda
+    /// algo não trava o quadro).
     pub fn update_layout(&mut self) {
+        for _ in 0..LAYOUT_PASSES {
+            if !self.needs_layout() {
+                break;
+            }
+            self.update_layout_once();
+        }
+    }
+
+    fn update_layout_once(&mut self) {
         if self.layout_dirty {
             self.layout();
         } else if !self.dirty_forms.is_empty() {

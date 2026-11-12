@@ -236,13 +236,54 @@ fn stub(language: Language, module: &str, form: &str, handler: &str) -> (String,
     }
 }
 
+/// Onde está a definição de um handler (`marker`, como `fn salvar_click(`) no texto do
+/// arquivo: só a de verdade, e não uma cópia comentada, num texto ou no meio de outro nome
+/// (G22 do Tabernáculo). Nas linguagens de chaves, fora de comentários e strings; em Python,
+/// no começo da linha; em Pascal, depois do `procedure`/`function`. No C++ a primeira
+/// ocorrência é a declaração (no bloco de registro): vale a última.
+pub fn find_marker(language: Language, text: &str, marker: &str) -> Option<usize> {
+    let marker = marker.trim_end_matches(" {").trim_end();
+    if marker.is_empty() {
+        return None;
+    }
+    match language {
+        Language::Python | Language::Pascal => {
+            let ident = |c: char| c.is_alphanumeric() || c == '_';
+            let mut from = 0;
+            while let Some(i) = text[from..].find(marker).map(|i| from + i) {
+                let line = text[text[..i].rfind('\n').map_or(0, |n| n + 1)..i].trim().to_ascii_lowercase();
+                let starts = match language {
+                    Language::Python => line.is_empty() || line == "async",
+                    _ => ["procedure", "function", "constructor", "destructor", "class procedure", "class function"].contains(&line.as_str()),
+                };
+                if starts && !text[..i].chars().next_back().is_some_and(ident) {
+                    return Some(i);
+                }
+                from = i + marker.len();
+            }
+            None
+        }
+        Language::Cpp => {
+            let mut last = None;
+            while let Some(i) = crate::codegen::find_in_code(text, marker, last.map_or(0, |l| l + marker.len())) {
+                last = Some(i);
+            }
+            last
+        }
+        _ => crate::codegen::find_in_code(text, marker, 0),
+    }
+}
+
 /// O corpo de um handler no texto do arquivo (sem a linha da definição), ou `None` se ele
-/// não está lá. As linguagens de chaves vão até a chave que fecha; Python, até a próxima
-/// linha sem recuo; Pascal, até a próxima rotina.
+/// não está lá. As linguagens de chaves vão até a chave que fecha (as de dentro de strings,
+/// caracteres e comentários não contam); Python, até a próxima linha sem recuo; Pascal, até a
+/// próxima rotina.
 pub fn body(language: Language, text: &str, marker: &str) -> Option<String> {
-    // No C++ a primeira ocorrência é a declaração (no bloco de registro): vale a última.
-    let at = if language == Language::Cpp { text.rfind(marker.trim_end_matches(" {").trim_end())? } else { text.find(marker)? };
-    let rest = &text[at..];
+    body_at(language, &text[find_marker(language, text, marker)?..])
+}
+
+/// O corpo do handler cuja definição começa `rest`.
+fn body_at(language: Language, rest: &str) -> Option<String> {
     match language {
         Language::Python => {
             let mut lines = rest.lines();
@@ -258,41 +299,145 @@ pub fn body(language: Language, text: &str, marker: &str) -> Option<String> {
             Some(body.join("\n"))
         }
         _ => {
-            // Pula a lista de parâmetros (pode ter `{`? não nas linguagens geradas) até a chave.
-            let open = rest.find('{')?;
-            let mut depth = 0usize;
-            for (i, c) in rest[open..].char_indices() {
-                match c {
-                    '{' => depth += 1,
-                    '}' => {
-                        depth -= 1;
-                        if depth == 0 {
-                            return Some(rest[open + 1..open + i].to_string());
-                        }
-                    }
-                    _ => {}
-                }
+            // Pula a lista de parâmetros (sem `{` nas linguagens geradas) até a chave.
+            let open = crate::codegen::find_in_code(rest, "{", 0)?;
+            match crate::codegen::matching_brace(rest, open) {
+                Some(close) => Some(rest[open + 1..close].to_string()),
+                None => Some(rest[open + 1..].to_string()),
             }
-            Some(rest[open + 1..].to_string())
         }
     }
 }
 
-/// A impressão de um corpo: sem espaços (mudar o recuo não é mudar a lógica). FNV-1a, que
-/// não muda com a versão do Rust.
-fn fingerprint(body: &str) -> String {
+/// O começo das impressões de agora: as de antes (só os 16 dígitos) são conferidas pela regra
+/// de antes ([`legacy_fingerprint`]).
+const FINGERPRINT_V2: &str = "v2:";
+
+/// O que conta como lógica num corpo: sem espaços, sem comentários e sem a vírgula antes do
+/// fecha (mudar o recuo, quebrar a linha ou passar o `cargo fmt` não é mudar a lógica; G22 do
+/// Tabernáculo). O texto entre aspas fica como está.
+fn logic(language: Language, body: &str) -> String {
+    let bytes = body.as_bytes();
+    let mut out = String::with_capacity(body.len());
+    let mut comma = false;
+    let push = |out: &mut String, piece: &str, comma: &mut bool| {
+        if std::mem::take(comma) && !piece.starts_with([')', ']', '}']) {
+            out.push(',');
+        }
+        if piece == "," {
+            *comma = true;
+        } else {
+            out.push_str(piece);
+        }
+    };
+    let mut i = 0;
+    while i < bytes.len() {
+        // Um comentário (pulado) ou um texto entre aspas (como está), até o último byte dele.
+        let (end, comment) = match language {
+            Language::Python => match bytes[i] {
+                b'#' => (body[i..].find('\n').map_or(bytes.len(), |n| i + n), true),
+                q @ (b'"' | b'\'') => {
+                    let triple = [q; 3];
+                    if bytes[i..].starts_with(&triple) {
+                        (body[i + 3..].find(std::str::from_utf8(&triple).unwrap_or("\"\"\"")).map_or(bytes.len(), |n| i + 3 + n + 2), false)
+                    } else {
+                        let mut j = i + 1;
+                        while j < bytes.len() && bytes[j] != q && bytes[j] != b'\n' {
+                            j += if bytes[j] == b'\\' { 2 } else { 1 };
+                        }
+                        (j.min(bytes.len()), false)
+                    }
+                }
+                _ => (usize::MAX, false),
+            },
+            Language::Pascal => match bytes[i] {
+                b'/' if bytes.get(i + 1) == Some(&b'/') => (body[i..].find('\n').map_or(bytes.len(), |n| i + n), true),
+                b'{' => (body[i..].find('}').map_or(bytes.len(), |n| i + n), true),
+                b'(' if bytes.get(i + 1) == Some(&b'*') => (body[i + 2..].find("*)").map_or(bytes.len(), |n| i + 2 + n + 1), true),
+                b'\'' => (body[i + 1..].find('\'').map_or(bytes.len(), |n| i + 1 + n), false),
+                _ => (usize::MAX, false),
+            },
+            _ => match crate::codegen::skip_literal(body, i) {
+                Some(end) => (end, bytes[i] == b'/'),
+                None => (usize::MAX, false),
+            },
+        };
+        if end != usize::MAX {
+            let end = end.min(bytes.len() - 1);
+            if !comment {
+                push(&mut out, &body[i..=end], &mut comma);
+            }
+            i = end + 1;
+            continue;
+        }
+        let c = body[i..].chars().next().unwrap_or(' ');
+        if !c.is_whitespace() {
+            push(&mut out, &body[i..i + c.len_utf8()], &mut comma);
+        }
+        i += c.len_utf8();
+    }
+    if comma {
+        out.push(',');
+    }
+    out
+}
+
+/// FNV-1a, que não muda com a versão do Rust.
+fn fnv(bytes: impl Iterator<Item = u8>) -> String {
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-    for b in body.bytes().filter(|b| !b.is_ascii_whitespace()) {
+    for b in bytes {
         h ^= u64::from(b);
         h = h.wrapping_mul(0x0100_0000_01b3);
     }
     format!("{h:016x}")
 }
 
+/// A impressão de um corpo: a da [`logic`] dele.
+fn fingerprint(language: Language, body: &str) -> String {
+    format!("{FINGERPRINT_V2}{}", fnv(logic(language, body).bytes()))
+}
+
+/// A impressão de antes (até o G22): todos os bytes sem espaço, comentários e vírgulas
+/// inclusive, do corpo achado pela primeira ocorrência do marcador e contando todas as chaves.
+/// Só para reconhecer, num `code-sync.json` de antes, o corpo que não mudou.
+fn legacy_fingerprint(language: Language, text: &str, marker: &str) -> Option<String> {
+    let at = if language == Language::Cpp { text.rfind(marker.trim_end_matches(" {").trim_end())? } else { text.find(marker)? };
+    let rest = &text[at..];
+    let body = match language {
+        Language::Python | Language::Pascal => body_at(language, rest)?,
+        _ => {
+            let open = rest.find('{')?;
+            let mut depth = 0usize;
+            let mut close = rest.len();
+            for (i, c) in rest[open..].char_indices() {
+                match c {
+                    '{' => depth += 1,
+                    '}' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            close = open + i;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            rest[open + 1..close].to_string()
+        }
+    };
+    Some(fnv(body.bytes().filter(|b| !b.is_ascii_whitespace())))
+}
+
+/// A impressão guardada `stored` é a do corpo de agora? Uma de antes do G22 é conferida pela
+/// regra de antes: o código que não mudou continua em dia depois de atualizar o Aylis.
+fn same_body(language: Language, stored: &str, now: &str, text: &str, marker: &str) -> bool {
+    stored == now || (!stored.starts_with(FINGERPRINT_V2) && legacy_fingerprint(language, text, marker).as_deref() == Some(stored))
+}
+
 /// A impressão do handler vazio da geração, numa linguagem.
 fn empty_fingerprint(language: Language, module: &str, form: &str, handler: &str) -> String {
     let (marker, stub) = stub(language, module, form, handler);
-    fingerprint(&body(language, &stub, &marker).unwrap_or_default())
+    fingerprint(language, &body(language, &stub, &marker).unwrap_or_default())
 }
 
 fn key(form: &str, handler: &str) -> String {
@@ -344,12 +489,16 @@ pub fn apply_renames_in(project: &Project, only: Option<&[String]>) -> Result<()
             }
             let (old_marker, _) = stub(language, &info.module, &info.form, old);
             let (new_marker, _) = stub(language, &info.module, &info.form, new);
-            if !text.contains(old_marker.trim_end_matches(" {").trim_end()) || text.contains(new_marker.trim_end_matches(" {").trim_end()) {
-                continue;
-            }
-            text = rename_identifier(&text, old, new);
-            // O histórico do handler vai junto, em todas as linguagens.
+            let (has_old, has_new) = (find_marker(language, &text, &old_marker).is_some(), find_marker(language, &text, &new_marker).is_some());
             let (old_key, new_key) = (key(&info.form, old), key(&info.form, new));
+            match (has_old, has_new) {
+                (true, false) => text = rename_identifier(&text, old, new),
+                // Já renomeada à mão no fonte (e depois no form): o texto fica, e o histórico vai
+                // junto do mesmo jeito (antes ficava a sobra com o nome antigo; G22).
+                (false, true) if !state.revisions.contains_key(&new_key) => {}
+                _ => continue,
+            }
+            // O histórico do handler vai junto, em todas as linguagens.
             if let Some(r) = state.revisions.remove(&old_key) {
                 state.revisions.insert(new_key.clone(), r);
             }
@@ -404,7 +553,7 @@ pub fn record_in(project: &Project, only: Option<&[String]>) -> Result<(), Strin
             for handler in &info.handlers {
                 let (marker, _) = stub(language, &info.module, &info.form, handler);
                 let Some(b) = body(language, &text, &marker) else { continue };
-                let hash = fingerprint(&b);
+                let hash = fingerprint(language, &b);
                 let empty = hash == empty_fingerprint(language, &info.module, &info.form, handler);
                 let k = key(&info.form, handler);
                 let revision = state.revisions.get(&k).copied().unwrap_or(0);
@@ -418,7 +567,9 @@ pub fn record_in(project: &Project, only: Option<&[String]>) -> Result<(), Strin
                         state.revisions.insert(k.clone(), r);
                         r
                     }
-                    Some(old) if old.hash == hash => old.seen,
+                    // O mesmo corpo (a impressão de antes do G22 conferida pela regra dela): a
+                    // impressão é refeita pelo fonte, sem revisão nova.
+                    Some(old) if same_body(language, &old.hash, &hash, &text, &marker) => old.seen,
                     // Mudou numa linguagem atrasada: é o porte.
                     Some(old) if old.seen < revision => revision,
                     // Mudou numa linguagem em dia: lógica nova, as outras ficam pendentes.
@@ -429,9 +580,21 @@ pub fn record_in(project: &Project, only: Option<&[String]>) -> Result<(), Strin
                 };
                 state.languages.entry(language.folder().to_string()).or_default().handlers.insert(k, HandlerState { hash, seen });
             }
+            // O que saiu do form e também do código (a função apagada à mão): nada mais a
+            // acompanhar. A que saiu do form e continua no código fica (aparece "sem uso").
+            if let Some(lang) = state.languages.get_mut(language.folder()) {
+                let prefix = format!("{}.", info.form);
+                lang.handlers.retain(|k, _| {
+                    let Some(handler) = k.strip_prefix(&prefix) else { return true };
+                    info.handlers.iter().any(|h| h == handler) || body(language, &text, &stub(language, &info.module, &info.form, handler).0).is_some()
+                });
+            }
         }
         state.languages.entry(language.folder().to_string()).or_default().bindings = bindings;
     }
+    // A revisão de um handler que nenhuma linguagem acompanha mais.
+    let followed: BTreeSet<String> = state.languages.values().flat_map(|l| l.handlers.keys().cloned()).collect();
+    state.revisions.retain(|k, _| followed.contains(k));
     save(project, &state)?;
     let marker = record_marker(project);
     if let Some(dir) = marker.parent() {
@@ -488,7 +651,7 @@ pub fn pending(project: &Project, language: Language) -> Result<Vec<Pending>, St
                 .filter(|l| *l != language && state.languages.get(l.folder()).and_then(|s| s.handlers.get(&k)).is_some_and(|h| h.seen == revision))
                 .collect();
             let (marker, _) = stub(language, &info.module, &info.form, handler);
-            let empty = body(language, &text, &marker).is_none_or(|b| fingerprint(&b) == empty_fingerprint(language, &info.module, &info.form, handler));
+            let empty = body(language, &text, &marker).is_none_or(|b| fingerprint(language, &b) == empty_fingerprint(language, &info.module, &info.form, handler));
             out.push(Pending::Changed { form: info.form.clone(), handler: handler.clone(), by, empty });
         }
         // As funções que saíram do form (anotadas antes, ainda no código).
@@ -498,7 +661,7 @@ pub fn pending(project: &Project, language: Language) -> Result<Vec<Pending>, St
                 continue;
             }
             let (marker, _) = stub(language, &info.module, &info.form, handler);
-            if text.contains(marker.trim_end_matches(" {").trim_end()) {
+            if find_marker(language, &text, &marker).is_some() {
                 out.push(Pending::Unused { form: info.form.clone(), handler: handler.to_string() });
             }
         }
@@ -528,8 +691,8 @@ pub fn handler_location(project: &Project, language: Language, form: &str, handl
     let file = source(project, language, form)?;
     let text = std::fs::read_to_string(&file).unwrap_or_default();
     let (marker, _) = stub(language, &module_name(&entry.file), form, handler);
-    let marker = marker.trim_end_matches(" {").trim_end();
-    let at = if language == Language::Cpp { text.rfind(marker) } else { text.find(marker) };
+    // A função de verdade, e não uma cópia comentada acima dela.
+    let at = find_marker(language, &text, &marker);
     let line = at.map_or(1, |i| text[..i].matches('\n').count() + 1);
     Some((file, line))
 }
@@ -589,9 +752,9 @@ mod tests {
         assert_eq!(body(Language::Rust, rust, "fn a(").unwrap().trim(), "if x { y(); }");
         assert_eq!(body(Language::Rust, rust, "fn b(").unwrap().trim(), "");
         let py = "def a(aylis, event):\n    x = 1\n\n    return x\n\n\ndef b(aylis, event):\n    pass\n";
-        assert_eq!(fingerprint(&body(Language::Python, py, "def a(").unwrap()), fingerprint("x = 1 return x"));
+        assert_eq!(fingerprint(Language::Python, &body(Language::Python, py, "def a(").unwrap()), fingerprint(Language::Python, "x = 1 return x"));
         let pas = "procedure TFrm.a(Aylis: TAylis);\nbegin\n  X := 1;\nend;\n\nprocedure TFrm.b(Aylis: TAylis);\nbegin\nend;\n\nend.\n";
-        assert_eq!(fingerprint(&body(Language::Pascal, pas, "TFrm.a(").unwrap()), fingerprint("begin X := 1; end;"));
+        assert_eq!(fingerprint(Language::Pascal, &body(Language::Pascal, pas, "TFrm.a(").unwrap()), fingerprint(Language::Pascal, "begin X := 1; end;"));
         assert_eq!(rename_identifier("salvar_click(); salvar_click_x(); a.salvar_click", "salvar_click", "gravar_click"), "gravar_click(); salvar_click_x(); a.gravar_click");
     }
 }

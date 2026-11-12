@@ -898,39 +898,94 @@ pub fn new_form(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let existing: Vec<String> = state.borrow().project.as_ref().map(|p| p.forms.iter().map(|f| f.name.clone()).collect()).unwrap_or_default();
     let suggestion = (2..).map(|n| format!("frmForm{n}")).find(|n| !existing.iter().any(|e| e.eq_ignore_ascii_case(n))).unwrap_or_default();
     let (state2, ids) = (state.clone(), *ids);
-    dialogs::input_text(
+    // O nome e a pasta dentro de forms/ (o relatório do Tabernáculo, M17: o form nascia sempre
+    // na raiz, e mudar de pasta era mexer no arquivo com o projeto fechado).
+    let d = dialogs::new_dialog(ui, "Novo form", 460.0, 190.0);
+    let line = dialogs::field(ui, d.body, "Nome do form");
+    let name_edit = dialogs::edit(ui, line, &suggestion);
+    let line = dialogs::field(ui, d.body, "Pasta em forms");
+    let folder_edit = dialogs::edit(ui, line, "");
+    let _ = ui.set_prop(folder_edit, "placeholder", "vazio: a raiz de forms (ex.: cadastros)");
+    dialogs::run(
         ui,
-        "Novo form",
-        "Nome do form",
-        &suggestion,
-        move |name| {
-            if !aylis_project::is_identifier(name) {
+        d,
+        move |ui| {
+            let name = dialogs::text_of(ui, name_edit);
+            if !aylis_project::is_identifier(&name) {
                 return Err("use letras, números e _ (começando com letra)".into());
             }
-            if existing.iter().any(|e| e.eq_ignore_ascii_case(name)) {
+            if existing.iter().any(|e| e.eq_ignore_ascii_case(&name)) {
                 return Err(format!("o projeto já tem um form '{name}'"));
             }
-            Ok(())
+            form_file_in(&dialogs::text_of(ui, folder_edit), &name).map(|_| ())
         },
-        move |ui, name| {
-            let result = {
-                let mut st = state2.borrow_mut();
-                // O projeto pode ter sido fechado com o diálogo aberto (na IDE ou pelo MCP).
-                match st.project.as_mut() {
-                    Some(project) => project.add_form(&name, &name).and_then(|_| project.save()),
-                    None => Err("o projeto foi fechado".into()),
-                }
+        move |ui| {
+            let (name, folder) = (dialogs::text_of(ui, name_edit), dialogs::text_of(ui, folder_edit));
+            // O projeto pode ter sido fechado com o diálogo aberto (na IDE ou pelo MCP).
+            let status = match create_form(&state2, &name, false, &folder) {
+                Ok(file) => format!("Form {} criado ({})", name, file),
+                Err(e) => format!("⚠ {e}"),
             };
-            match result {
-                Ok(()) => {
-                    open_project_form(&state2, &name);
-                    state2.borrow_mut().status = format!("Form {name} criado");
-                }
-                Err(e) => state2.borrow_mut().status = format!("⚠ {e}"),
-            }
+            state2.borrow_mut().status = status;
             refresh(ui, &state2, &ids);
         },
     );
+    ui.set_focus(name_edit);
+}
+
+/// O arquivo de um form novo na subpasta `folder` de `forms/` (`cadastros`, `painel/inicio`;
+/// vazio: a raiz de `forms/`), com o nome do arquivo saído do nome do form, como o
+/// `Project::add_form`. A pasta é relativa, sem `..` (pode vir com `forms/` na frente).
+pub fn form_file_in(folder: &str, name: &str) -> Result<String, String> {
+    let folder = folder.trim().replace('\\', "/");
+    let folder = folder.trim_end_matches('/');
+    let folder = folder.strip_prefix("forms/").or_else(|| (folder == "forms").then_some("")).unwrap_or(folder);
+    let stem = aylis_project::file_stem_for(name);
+    if folder.is_empty() {
+        return Ok(format!("forms/{stem}.json"));
+    }
+    let path = Path::new(folder);
+    let bad = path.is_absolute() || folder.contains(':') || path.components().any(|c| !matches!(c, std::path::Component::Normal(_)));
+    if bad || folder.split('/').any(|p| p.trim().is_empty() || p.ends_with('.')) {
+        return Err(format!("'{folder}': a pasta é uma subpasta de forms/, sem caminho absoluto nem .. (ex.: cadastros)"));
+    }
+    Ok(format!("forms/{folder}/{stem}.json"))
+}
+
+/// Cria um form (ou, com `data_module`, um DataModule) no projeto aberto, na subpasta `folder`
+/// de `forms/` ([`form_file_in`]), e abre no designer. Devolve o arquivo (relativo ao projeto).
+/// O "Novo form" da IDE e o `new_form` do MCP passam por aqui.
+pub fn create_form(state: &Shared, name: &str, data_module: bool, folder: &str) -> Result<String, String> {
+    if !aylis_project::is_identifier(name) {
+        return Err("use letras, números e _ (começando com letra)".into());
+    }
+    let file = form_file_in(folder, name)?;
+    {
+        let mut st = state.borrow_mut();
+        let project = st.project.as_mut().ok_or("abra um projeto antes")?;
+        if project.form(name).is_some() {
+            return Err(format!("o projeto já tem um form '{name}'"));
+        }
+        if project.file(&file).exists() {
+            return Err(format!("{file} já existe"));
+        }
+        let added = if data_module { project.add_data_module(name) } else { project.add_form(name, name) };
+        added.and_then(|_| project.save())?;
+    }
+    let created = state.borrow().project.as_ref().and_then(|p| p.form(name).map(|f| f.file.clone())).unwrap_or_default();
+    if created != file {
+        // Na pasta pedida (o `add_form` cria na raiz). Não deu: o form não fica pela metade.
+        if let Err(e) = move_form(state, name, &file) {
+            let mut st = state.borrow_mut();
+            if let Some(project) = st.project.as_mut() {
+                let _ = std::fs::remove_file(project.file(&created));
+                let _ = project.remove_form(name).and_then(|_| project.save());
+            }
+            return Err(e);
+        }
+    }
+    open_project_form(state, name);
+    Ok(file)
 }
 
 pub fn add_existing_form(state: &Shared, ids: &Ids) {
@@ -1298,6 +1353,21 @@ pub fn project_animations(ui: &mut Ui, state: &Shared, ids: &Ids) {
 }
 
 /// "Projeto → Opções do projeto → Aparência": tema do projeto, mistura por classe e quem usa qual tema.
+/// O tema (e as cores) do projeto em todos os forms abertos no designer: depois da Aparência
+/// e do `set_theme` do MCP.
+pub fn show_project_theme(st: &mut crate::state::State, project: &Project, theme: aylis_core::Theme) {
+    let palette = project.palette();
+    let themes = project_themes(project);
+    st.doc.palette = palette.clone();
+    st.doc.project_themes = themes.clone();
+    st.doc.set_theme(theme.clone());
+    for d in st.tabs.iter_mut().flatten() {
+        d.palette = palette.clone();
+        d.project_themes = themes.clone();
+        d.set_theme(theme.clone());
+    }
+}
+
 pub fn project_appearance(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else {
         state.borrow_mut().status = "Abra um projeto primeiro".into();
@@ -1347,13 +1417,7 @@ pub fn project_appearance(ui: &mut Ui, state: &Shared, ids: &Ids) {
         }
         st.status = match (updated.save(), theme) {
             (Ok(()), Ok(theme)) => {
-                let palette = updated.palette();
-                st.doc.palette = palette.clone();
-                st.doc.set_theme(theme.clone());
-                for d in st.tabs.iter_mut().flatten() {
-                    d.palette = palette.clone();
-                    d.set_theme(theme.clone());
-                }
+                show_project_theme(&mut st, &updated, theme);
                 if !result.own.is_empty() {
                     st.doc.begin_change();
                     for (id, name) in &result.own {

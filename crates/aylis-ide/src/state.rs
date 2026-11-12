@@ -50,6 +50,11 @@ pub struct State {
     /// Muda a cada alteração das mensagens (o painel só é refeito quando muda).
     pub output_version: u64,
     pub output_shown: std::cell::Cell<u64>,
+    /// O histórico das mensagens para o `output` do MCP (as últimas 2000 linhas): não é limpo ao
+    /// começar uma execução nem ao trocar de projeto, como o painel (M20 do Tabernáculo).
+    pub history: std::collections::VecDeque<crate::jobs::HistoryLine>,
+    /// A execução atual (cada trabalho principal conta uma): as linhas dela são as do painel.
+    pub run_number: u64,
     /// Projetos e forms abertos recentemente (o mais recente primeiro).
     pub recent: Vec<PathBuf>,
     /// A tela inicial pode aparecer (sem projeto e com o form vazio de partida; o "Novo form
@@ -158,6 +163,8 @@ impl Default for State {
             output: Vec::new(),
             output_version: 0,
             output_shown: std::cell::Cell::new(u64::MAX),
+            history: std::collections::VecDeque::new(),
+            run_number: 0,
             recent: Vec::new(),
             home: true,
             code_view: false,
@@ -322,6 +329,11 @@ impl State {
 
     /// Acrescenta uma linha às mensagens (mantém as últimas 2000).
     pub fn push(&mut self, line: crate::jobs::OutputLine) {
+        let project = self.project.as_ref().map(|p| p.name.clone()).unwrap_or_default();
+        self.history.push_back(crate::jobs::HistoryLine::of(&line, self.run_number, project));
+        if self.history.len() > 2000 {
+            self.history.pop_front();
+        }
         self.output.push(line);
         let excess = self.output.len().saturating_sub(2000);
         self.output.drain(..excess);

@@ -12,6 +12,8 @@
 //!
 //! **Áudio:** decodificado com o `symphonia` (MP3, AAC/M4A, WAV, FLAC, OGG Vorbis) e tocado
 //! com o `cpal`, igual em todos os sistemas. Fontes próprias implementam [`AudioSource`].
+//! Um endereço (`https://...`) toca lido aos poucos, com `Range` ([`open_audio_location`];
+//! feature `http`, a padrão; no Windows, sem ela, pelo Media Foundation).
 //!
 //! **Vídeo, em três camadas** (escolha onde plugar):
 //!
@@ -45,6 +47,15 @@
 //! 4K de 60 quadros por segundo: 60 mostrados em 1x, 120 em 2x, 240 em 4x; em 8x, cerca de
 //! 400 decodificados por segundo; em 16x e 32x, de 13 a 17 quadros-chave por segundo (antes
 //! eram 17 quadros por segundo em 1x).
+//!
+//! **O quadro na placa** (Windows, Direct2D; o relatório do Tabernáculo, W15): quando o
+//! canvas compõe texturas da mesma placa ([`Canvas::gpu_device`](aylis_core::Canvas::gpu_device)),
+//! o Media Foundation entrega o quadro decodificado e o conversor de vídeo do Direct3D 11 o
+//! escreve numa textura compartilhada ([`Frame::gpu`]), que o Direct2D desenha sem passar pela
+//! CPU. O Skia e o navegador recebem os pixels (a mesma imagem, copiada uma vez). Medido com
+//! um 4K de 60 quadros por segundo no tamanho dele: o decodificador gasta 1,6 ms por quadro
+//! (eram 13 a 15 ms descendo o quadro), a pintura no p95 0,6 ms (eram 8,6 a 9 ms subindo o
+//! quadro) e o processo 13 a 18% de um núcleo (eram 79 a 83%).
 
 #[cfg(target_os = "android")]
 mod android_camera;
@@ -58,6 +69,8 @@ mod sound;
 #[cfg(target_vendor = "apple")]
 pub mod avf;
 mod components;
+#[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+mod http;
 #[cfg(target_os = "linux")]
 pub mod gst;
 #[cfg(target_os = "android")]
@@ -68,14 +81,14 @@ mod video;
 #[cfg(target_arch = "wasm32")]
 mod web;
 
-pub use audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource};
+pub use audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
 pub use components::{MediaPlayer, PlaybackQuality, VideoPlayer};
 pub use camera::{CameraFacing, CameraInfo, cameras, resolve_camera};
 pub use camera_view::CameraView;
 pub use microphone::Microphone;
 pub use output::{OutputDevice, OutputSpec, Tap, format_outputs, output_devices, parse_outputs};
 pub use sound::{AudioMixer, AudioOutput, MixSource, Sound, parse_sources};
-pub use video::{Frame, FrameSink, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo, open_video, register_decoder};
+pub use video::{Frame, FrameSink, GpuFrame, GpuFrameSource, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo, open_video, register_decoder};
 
 use aylis_core::Ui;
 

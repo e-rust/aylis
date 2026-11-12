@@ -400,6 +400,10 @@ pub enum GpuSurface {
     /// compartilhadas: o renderizador espera `ready` chegar a `ready_value` antes de ler,
     /// e marca `release` com `release_value` quando o quadro que a leu terminar (aí quem
     /// desenha pode reescrever a textura).
+    ///
+    /// Vale também para uma textura do Direct3D 11 com handle NT e cercas `ID3D11Fence`
+    /// compartilhadas (os quadros de vídeo do `aylis-media`): o renderizador abre as duas do
+    /// mesmo jeito.
     D3D12 {
         /// Identifica a textura (o handle pode ser reaproveitado pelo sistema depois de fechado).
         id: u64,

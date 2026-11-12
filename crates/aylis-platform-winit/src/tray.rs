@@ -13,8 +13,9 @@ static EVENTS: Mutex<Vec<(u64, TrayEventKind, f64, f64)>> = Mutex::new(Vec::new(
 
 struct Hosted {
     icon: TrayIcon,
-    /// O que está na tela: (quadro, indicador, cor, primeiros bytes do quadro) e a dica.
-    shown: (usize, String, aylis_core::Color, usize),
+    /// O que está na tela: (quadro, indicador, cor, primeiros bytes do quadro, tamanho em
+    /// pixels) e a dica.
+    shown: (usize, String, aylis_core::Color, usize, u32),
     tooltip: String,
     visible: bool,
 }
@@ -41,8 +42,20 @@ fn default_icon() -> (Vec<u8>, u32, u32) {
     (px, n, n)
 }
 
-fn make_icon(spec: &TraySpec, frame: usize) -> Option<tray_icon::Icon> {
-    let (mut px, w, h) = spec.icons.get(frame).and_then(|b| crate::decode_rgba(b)).unwrap_or_else(default_icon);
+/// O tamanho do ícone da bandeja em pixels, na escala `scale` (o `SM_CXSMICON` do Windows: 16
+/// a 100%, 24 a 150%; a barra do macOS e a do Linux usam 22).
+fn tray_pixels(scale: f32) -> u32 {
+    let base = if cfg!(windows) { 16.0 } else { 22.0 };
+    (base * scale.max(1.0)).round() as u32
+}
+
+fn make_icon(spec: &TraySpec, frame: usize, scale: f32) -> Option<tray_icon::Icon> {
+    // Um `.ico` com vários tamanhos: o quadro do tamanho da bandeja nesta escala (C41).
+    let decode = |b: &std::sync::Arc<Vec<u8>>| match aylis_core::image::ico_frame_for_size(b, tray_pixels(scale)) {
+        Some(one) => crate::decode_rgba(&one),
+        None => crate::decode_rgba(b),
+    };
+    let (mut px, w, h) = spec.icons.get(frame).and_then(decode).unwrap_or_else(default_icon);
     crate::badge::draw(&mut px, w, h, &spec.badge, spec.badge_color, 0.6);
     tray_icon::Icon::from_rgba(px, w, h).ok()
 }
@@ -82,11 +95,11 @@ impl Trays {
                 let at = ((now / interval).floor() + 1.0) * interval;
                 next = Some(next.map_or(at, |n: f64| n.min(at)));
             }
-            let key = (frame, spec.badge.clone(), spec.badge_color, spec.icons.get(frame).map_or(0, |b| b.len()));
+            let key = (frame, spec.badge.clone(), spec.badge_color, spec.icons.get(frame).map_or(0, |b| b.len()), tray_pixels(scale));
             match self.hosted.get_mut(id) {
                 Some(h) => {
                     if h.shown != key {
-                        let _ = h.icon.set_icon(make_icon(spec, frame));
+                        let _ = h.icon.set_icon(make_icon(spec, frame, scale));
                         h.shown = key;
                     }
                     if h.tooltip != spec.tooltip {
@@ -100,7 +113,7 @@ impl Trays {
                 }
                 None => {
                     let mut builder = TrayIconBuilder::new().with_id(id.to_u64().to_string());
-                    if let Some(icon) = make_icon(spec, frame) {
+                    if let Some(icon) = make_icon(spec, frame, scale) {
                         builder = builder.with_icon(icon);
                     }
                     if !spec.tooltip.is_empty() {

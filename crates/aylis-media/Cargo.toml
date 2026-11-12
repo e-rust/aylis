@@ -7,12 +7,22 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = ["http"]
+# O som por endereço (`https://...`) lido aos poucos, com `Range`, pelo Symphonia (o ureq, com
+# rustls; o mesmo que o aylis-platform-winit já usa). Sem ela, no Windows o Media Foundation
+# ainda abre o endereço.
+http = ["dep:ureq"]
+
 [dependencies]
 aylis-core = { version = "0.2.0-beta.3", path = "../aylis-core" }
 symphonia = { version = "0.5", default-features = false, features = ["mp3", "aac", "isomp4", "flac", "vorbis", "ogg", "wav", "pcm", "adpcm"] }
 cpal = "0.18"
 # Foto da câmera em PNG.
 png = "0.18"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ureq = { version = "3", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [
@@ -25,6 +35,8 @@ windows = { version = "0.62", features = [
     "Win32_System_Com",
     "Win32_System_Com_StructuredStorage",
     "Win32_Foundation",
+    # As texturas e cercas compartilhadas do vídeo (CreateSharedHandle).
+    "Win32_Security",
     "Win32_System_Variant",
 ] }
 
@@ -57,4 +69,5 @@ web-sys = { version = "0.3", features = [
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }
-aylis-platform-winit = { path = "../aylis-platform-winit" }
+# O Direct2D nos exemplos (o `video` mede o quadro como textura: AYLIS_RENDERER=d2d).
+aylis-platform-winit = { path = "../aylis-platform-winit", features = ["d2d"] }

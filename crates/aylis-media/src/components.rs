@@ -9,21 +9,27 @@ use aylis_core::{
     Ui, properties,
 };
 
-use crate::audio::{AudioPlayer, AudioSource, SymphoniaSource};
+use crate::audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
 use crate::output::{Tap, parse_outputs};
 use crate::video::{DecodeThread, Frame, FrameSink, Frames, MediaSource};
 
 /// Abre o áudio do aplicativo (pasta do projeto ou pacote) ou, se não houver, do disco, lido
-/// aos poucos enquanto toca.
-fn open_audio(ui: &Ui, file: &str) -> Result<SymphoniaSource, String> {
-    match ui.services().resources.as_ref().and_then(|r| r.read(file)) {
-        Some(bytes) => SymphoniaSource::open(bytes, Some(&extension(file))),
-        None => SymphoniaSource::open_file(Path::new(file)),
+/// aos poucos enquanto toca. Um endereço (`https://...`) abre na thread do áudio, lido pela
+/// rede (W11): o erro chega pelo `on_error`.
+fn open_audio(ui: &Ui, file: &str) -> Result<AudioOpener, String> {
+    let ready = |s: SymphoniaSource| -> AudioOpener { Box::new(move || Ok(Box::new(s) as Box<dyn AudioSource>)) };
+    if let Some(bytes) = ui.services().resources.as_ref().and_then(|r| r.read(file)) {
+        return SymphoniaSource::open(bytes, Some(&extension(file))).map(ready);
     }
+    if crate::video::is_url(Path::new(file)) {
+        let location = file.to_string();
+        return Ok(Box::new(move || open_audio_location(&location)));
+    }
+    SymphoniaSource::open_file(Path::new(file)).map(ready)
 }
 
 fn extension(file: &str) -> String {
-    Path::new(file).extension().and_then(|e| e.to_str()).unwrap_or_default().to_lowercase()
+    crate::video::file_extension(file)
 }
 
 /// Extensões que são só áudio: o `VideoPlayer` toca sem procurar imagem.
@@ -138,7 +144,7 @@ impl MediaPlayer {
             let on_end: Box<dyn Fn() + Send> = Box::new(move || ended.post(move |ui| {
                 ui.fire(id, "on_end", &EventArgs::None);
             }));
-            let opened = AudioPlayer::open_on(Box::new(move || Ok(Box::new(source) as Box<dyn AudioSource>)), Some(on_end), parse_outputs(&output));
+            let opened = AudioPlayer::open_on(source, Some(on_end), parse_outputs(&output));
             poster.post(move |ui| Self::opened(ui, id, file, opened));
         })?;
         Ok(false)
@@ -195,7 +201,7 @@ impl MediaPlayer {
         let on_end: Box<dyn Fn() + Send> = Box::new(move || poster.post(move |ui| {
             ui.fire(id, "on_end", &EventArgs::None);
         }));
-        let player = AudioPlayer::open_on(Box::new(move || Ok(Box::new(source) as Box<dyn AudioSource>)), Some(on_end), parse_outputs(&output))?;
+        let player = AudioPlayer::open_on(source, Some(on_end), parse_outputs(&output))?;
         if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
             player.set_volume(m.volume);
             player.set_looping(m.looping);
@@ -538,10 +544,16 @@ impl VideoPlayer {
     /// Abre o arquivo só com o som (o mesmo motor do [`MediaPlayer`]), numa thread de fundo.
     /// O fim do áudio para o relógio e dispara o `on_end`.
     fn open_audio_only(source: &MediaSource, id: ComponentId, poster: &Poster, outputs: Vec<crate::output::OutputSpec>) -> Result<Opened, String> {
-        let source = match source {
-            MediaSource::Bytes { data, extension } => SymphoniaSource::open(data.as_ref().clone(), Some(extension)),
-            MediaSource::File(path) => SymphoniaSource::open_file(path),
-        }?;
+        let ready = |s: SymphoniaSource| -> AudioOpener { Box::new(move || Ok(Box::new(s) as Box<dyn AudioSource>)) };
+        let opener = match source {
+            MediaSource::Bytes { data, extension } => SymphoniaSource::open(data.as_ref().clone(), Some(extension)).map(ready)?,
+            // Um endereço: lido pela rede, na thread do áudio (W11).
+            MediaSource::File(path) if crate::video::is_url(path) => {
+                let location = path.to_string_lossy().into_owned();
+                Box::new(move || open_audio_location(&location))
+            }
+            MediaSource::File(path) => SymphoniaSource::open_file(path).map(ready)?,
+        };
         let ended = poster.clone();
         let on_end: Box<dyn Fn() + Send> = Box::new(move || {
             ended.post(move |ui| {
@@ -553,7 +565,7 @@ impl VideoPlayer {
                 ui.fire(id, "on_end", &EventArgs::None);
             })
         });
-        let audio = AudioPlayer::open_on(Box::new(move || Ok(Box::new(source) as Box<dyn AudioSource>)), Some(on_end), outputs)?;
+        let audio = AudioPlayer::open_on(opener, Some(on_end), outputs)?;
         Ok(Opened { decoder: None, audio: Some(audio), audio_only: true })
     }
 
@@ -701,10 +713,23 @@ impl VideoPlayer {
         }
     }
 
-    /// O quadro que o relógio mostra agora (para pintar o vídeo na ordem da cena, com
-    /// `show_video` desligado; W12).
+    /// O quadro que o relógio mostra agora, com os pixels (para pintar o vídeo na ordem da
+    /// cena, com `show_video` desligado; W12). Pedir os pixels faz o decodificador voltar a
+    /// entregá-los na CPU; para pintar sem a ida e volta pela CPU, use
+    /// [`current_video_frame`](Self::current_video_frame) e [`Frame::draw`](crate::Frame::draw).
     pub fn current_frame(ui: &Ui, id: ComponentId) -> Option<aylis_core::Image> {
-        ui.get::<VideoPlayer>(id)?.clock.borrow().current.as_ref().map(|f| f.image.clone())
+        let v = ui.get::<VideoPlayer>(id)?;
+        if let Ok(mut f) = v.frames.lock() {
+            f.cpu_only = true;
+        }
+        v.clock.borrow().current.as_ref().and_then(Frame::to_image)
+    }
+
+    /// O quadro que o relógio mostra agora, como está: na placa de vídeo (o Direct2D compõe a
+    /// textura direto) ou com os pixels. Pinte com [`Frame::draw`](crate::Frame::draw), que
+    /// escolhe o caminho pelo canvas (W15).
+    pub fn current_video_frame(ui: &Ui, id: ComponentId) -> Option<Frame> {
+        ui.get::<VideoPlayer>(id)?.clock.borrow().current.clone()
     }
 
     /// O relógio do player (W13): a posição, se está tocando e a velocidade.
@@ -901,10 +926,12 @@ impl Component for VideoPlayer {
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let r = ctx.rect;
         self.id_hint.set(Some(ctx.id));
-        // O decodificador entrega no tamanho em que aparece (não o 4K inteiro num player pequeno).
+        // O decodificador entrega no tamanho em que aparece (não o 4K inteiro num player
+        // pequeno) e, se o canvas compõe texturas da placa, como textura (W15).
         if let Ok(mut f) = self.frames.lock() {
             let scale = canvas.device_scale().max(0.1);
             f.want = ((r.width * scale).round().max(0.0) as u32, (r.height * scale).round().max(0.0) as u32);
+            f.gpu = canvas.gpu_device();
         }
         let was_playing = self.clock.borrow().playing;
         let next = self.advance(ctx.time);
@@ -942,12 +969,29 @@ impl Component for VideoPlayer {
         }
         let current = current.filter(|_| self.show_video);
         match current {
-            Some(frame) => {
-                if let Some(size) = canvas.image_size(&frame.image) {
-                    let (src, dest) = self.fit.place(size, r);
-                    canvas.draw_image(&frame.image, src, dest, 1.0);
+            Some(frame) => match &frame.gpu {
+                Some(gpu) => {
+                    let (w, h) = gpu.size();
+                    let (src, dest) = self.fit.place(aylis_core::SizeF::new(w as f32, h as f32), r);
+                    // O canvas disse que compõe texturas e recusou esta: pixels daqui em diante.
+                    if !gpu.draw(canvas, src, dest, 1.0) {
+                        if canvas.gpu_device().is_some() {
+                            if let Ok(mut f) = self.frames.lock() {
+                                f.cpu_only = true;
+                            }
+                        }
+                        if let Some(image) = gpu.to_image() {
+                            canvas.draw_image(&image, src, dest, 1.0);
+                        }
+                    }
                 }
-            }
+                None => {
+                    if let Some(size) = canvas.image_size(&frame.image) {
+                        let (src, dest) = self.fit.place(size, r);
+                        canvas.draw_image(&frame.image, src, dest, 1.0);
+                    }
+                }
+            },
             None if self.clock.borrow().error.is_some() => {
                 let mut style = ctx.text_style();
                 style.color = ctx.colors.text.unwrap_or(Color::WHITE.with_opacity(0.85));

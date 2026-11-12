@@ -1338,6 +1338,34 @@ janela não apaga o pedido da outra.
   (`examples/IBGE/assets/dados`): baixa o que falta da API do IBGE e as bandeiras do
   Wikimedia Commons, guarda as respostas em `ibge-cache` e gera os JSON e os mapas em SVG.
 
+### Testes e fotos sem janela (modo headless)
+
+O `aylis::headless::Headless` monta o `Ui` sem plataforma nem `platform::run`: as classes, o
+texto medido e o desenho fora da tela do renderizador (o do projeto; sem projeto, Direct2D no
+Windows com a feature `d2d` e Skia nas outras), para testes de tela e fotos em PNG.
+
+```rust
+let mut h = aylis::headless::Headless::open("app.aylisproj")?; // ou ::new() + load_form(json)
+h.click("edtNome")?;           // o mouse simulado no meio do componente
+h.type_text("Ana\n");         // tecla por tecla; \n é o Enter
+h.click("btnSalvar")?;
+h.advance(0.5);                // o relógio falso: Timer, set_timeout e animações
+h.leave();                     // a foto sem o hover do mouse
+h.save_png("tela.png")?;       // ou render_png() / render_png_scaled(2.0)
+```
+
+- `Headless::bundled(include_project!())` usa o projeto embutido, e
+  `Application::headless()` transforma o app já montado; `create_form("frmClientes")` abre
+  outro form do projeto, e `h.ui` dá o resto (propriedades, eventos, `ui.click(id)` para
+  disparar o `on_click` sem o mouse).
+- O clique passa pelo que estiver por cima, pelo foco e pelo `enabled`, como na tela; antes da
+  entrada e da foto o layout é refeito até assentar (com os `on_resize`).
+- Nada anda sozinho: o tempo só passa pelo `advance`, então o cursor de texto e as animações
+  saem iguais a cada execução.
+- A plataforma põe o mesmo desenho fora da tela com `aylis_platform_winit::install_offscreen_service`
+  (o par do `install_text_service`). Na web o modo não existe (o desenho fora da tela do
+  navegador precisa do documento).
+
 ### Variantes de form por plataforma
 
 Um form pode ter um visual diferente por plataforma: ao lado de `forms/principal.json`

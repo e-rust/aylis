@@ -6,6 +6,10 @@
 //! cargo run -p aylis-media --example video -- filme.mp4 --muted
 //! cargo run -p aylis-media --example video -- filme.mp4 --stats   quadros por segundo no terminal
 //! cargo run -p aylis-media --example video -- filme.mp4 --rate 4    em 4x
+//! cargo run -p aylis-media --example video -- 4k.mp4 --size 3840x2160 --stats --seconds 10
+//!     o player no tamanho do vídeo (passa da janela), e fecha depois de 10 s
+//! cargo run -p aylis-media --example video -- 4k.mp4 --cpu-frames   quadros sempre pela CPU
+//!     (sem a textura do W15: para medir o antes e o depois)
 //! ```
 
 use aylis_controls::{Button, Form, Label, Layout, Panel};
@@ -19,6 +23,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => generated()?,
     };
 
+    #[cfg(windows)]
+    if args.iter().any(|a| a == "--cpu-frames") {
+        aylis_media::register_decoder(pixels_only::PixelsOnly);
+    }
     let mut ui = Ui::new();
     aylis_controls::register(&mut ui);
     register(&mut ui);
@@ -38,7 +46,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.control_mut(time).unwrap().set_align(Align::Client).set_margins([12.0, 0.0, 0.0, 0.0]);
 
     let player = ui.add(VideoPlayer::new(file.as_str()), form);
-    ui.control_mut(player).unwrap().set_align(Align::Client);
+    match args.iter().position(|a| a == "--size").and_then(|i| args.get(i + 1)).and_then(|s| s.split_once('x')).and_then(|(w, h)| Some((w.parse::<f32>().ok()?, h.parse::<f32>().ok()?))) {
+        Some((w, h)) => {
+            ui.control_mut(player).unwrap().set_rect(16.0, 16.0, w, h);
+        }
+        None => {
+            ui.control_mut(player).unwrap().set_align(Align::Client);
+        }
+    }
+    if let Some(seconds) = args.iter().position(|a| a == "--seconds").and_then(|i| args.get(i + 1)).and_then(|s| s.parse::<f64>().ok()) {
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs_f64(seconds));
+            std::process::exit(0);
+        });
+    }
     ui.set_prop(player, "radius", 16)?;
     ui.set_prop(player, "looping", true)?;
     ui.set_prop(player, "muted", args.iter().any(|a| a == "--muted"))?;
@@ -79,7 +100,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 poster.post(move |ui| {
                     let q = VideoPlayer::playback_quality(ui, player);
                     let mut l = last.lock().unwrap();
-                    println!("{:5.1} s  mostrados {:4}/s  pulados {:4}/s", VideoPlayer::position(ui, player), q.shown - l.shown, q.dropped - l.dropped);
+                    let texture = VideoPlayer::current_video_frame(ui, player).is_some_and(|f| f.gpu.is_some());
+                    println!("{:5.1} s  mostrados {:4}/s  pulados {:4}/s  {}", VideoPlayer::position(ui, player), q.shown - l.shown, q.dropped - l.dropped, if texture { "textura" } else { "pixels" });
                     *l = q;
                 });
             }
@@ -100,6 +122,52 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
     aylis_platform_winit::run(ui, form)?;
     Ok(())
+}
+
+/// O Media Foundation sem a textura (W15): os quadros sempre descem para a CPU.
+#[cfg(windows)]
+mod pixels_only {
+    use aylis_media::{AudioOpener, Frame, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo};
+
+    pub struct PixelsOnly;
+
+    impl VideoDecoderFactory for PixelsOnly {
+        fn name(&self) -> &str {
+            "Media Foundation (pixels)"
+        }
+        fn open(&self, source: &MediaSource) -> Result<Box<dyn VideoDecoder>, String> {
+            aylis_media::mf::MediaFoundation.open(source).map(|d| Box::new(NoTexture(d)) as Box<dyn VideoDecoder>)
+        }
+    }
+
+    struct NoTexture(Box<dyn VideoDecoder>);
+
+    impl VideoDecoder for NoTexture {
+        fn info(&self) -> VideoInfo {
+            self.0.info()
+        }
+        fn seek(&mut self, seconds: f64) {
+            self.0.seek(seconds)
+        }
+        fn next_frame(&mut self) -> Option<Frame> {
+            self.0.next_frame()
+        }
+        fn set_output_size(&mut self, width: u32, height: u32) {
+            self.0.set_output_size(width, height)
+        }
+        fn seek_keyframe(&mut self, seconds: f64) {
+            self.0.seek_keyframe(seconds)
+        }
+        fn skip_until(&mut self, seconds: f64) {
+            self.0.skip_until(seconds)
+        }
+        fn audio(&mut self) -> Option<AudioOpener> {
+            self.0.audio()
+        }
+        fn error(&self) -> Option<String> {
+            self.0.error()
+        }
+    }
 }
 
 /// Gera um MP4 de 4 s: um degradê que muda de cor e um quadrado andando.

@@ -757,8 +757,12 @@ impl Project {
 
     /// Grava o `.aylisproj` (em `self.path`) e as horas dos forms (`.aylis/form-stamps.json`).
     pub fn save(&self) -> Result<(), Error> {
-        let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
-        std::fs::write(&self.path, text + "\n").map_err(|e| format!("não consegui gravar {}: {e}", self.path.display()))?;
+        let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())? + "\n";
+        // Igual ao que está no disco: não regrava (o build salvava o projeto a cada vez; I06 do
+        // Tabernáculo).
+        if std::fs::read_to_string(&self.path).ok().as_deref() != Some(text.as_str()) {
+            std::fs::write(&self.path, text).map_err(|e| format!("não consegui gravar {}: {e}", self.path.display()))?;
+        }
         self.save_stamps();
         Ok(())
     }
@@ -784,13 +788,7 @@ impl Project {
         if stamps.is_empty() && !dir.is_dir() {
             return;
         }
-        let _ = std::fs::create_dir_all(dir);
-        let ignore = dir.join(".gitignore");
-        let rules = std::fs::read_to_string(&ignore).unwrap_or_default();
-        if !rules.lines().any(|l| l.trim() == "form-stamps.json") {
-            let sep = if rules.is_empty() || rules.ends_with('\n') { "" } else { "\n" };
-            let _ = std::fs::write(&ignore, format!("{rules}{sep}form-stamps.json\n"));
-        }
+        local_dir_ignored(dir);
         let _ = std::fs::write(&file, text);
     }
 
@@ -1092,6 +1090,26 @@ pub fn file_stem_for(form_name: &str) -> String {
     let lower = form_name.to_lowercase();
     let stem = ["frm", "form", "dm"].iter().find_map(|p| lower.strip_prefix(p).filter(|r| !r.is_empty())).unwrap_or(&lower);
     stem.trim_start_matches('_').to_string()
+}
+
+/// O que a pasta `.aylis` de um projeto diz ao git: tudo nela é desta máquina (a junção do
+/// SDK, as horas dos forms, os marcadores, a casca e as compilações), e o próprio
+/// `.gitignore` também.
+pub const LOCAL_DIR_IGNORE: &str = "# Gravado pelo Aylis: tudo nesta pasta é desta máquina e fica fora do git (sdk,\n# form-stamps.json, bookmarks.json, shell/, build/).\n*\n";
+
+/// Deixa o `.gitignore` da pasta `.aylis` (`dir`) ignorando tudo, de uma vez: cada recurso
+/// acrescentava a regra dele quando aparecia (`sdk`, depois `form-stamps.json`...), e o arquivo,
+/// rastreado no projeto, mudava a cada versão (I06 do Tabernáculo). Já ignorando tudo: não mexe.
+pub fn local_dir_ignored(dir: &Path) {
+    let ignore = dir.join(".gitignore");
+    let rules = std::fs::read_to_string(&ignore).unwrap_or_default();
+    if rules.lines().any(|l| l.trim() == "*") {
+        return;
+    }
+    let _ = std::fs::create_dir_all(dir);
+    // As regras de antes ficam (o `*` cobre todas).
+    let text = if rules.trim().is_empty() { LOCAL_DIR_IGNORE.to_string() } else { format!("{}\n*\n", rules.trim_end()) };
+    let _ = std::fs::write(&ignore, text);
 }
 
 fn empty_form(name: &str, caption: &str) -> String {
@@ -1531,28 +1549,72 @@ pub fn uses_in(root: &serde_json::Value) -> Vec<String> {
 }
 
 /// Cria os forms do projeto pelo nome (carregando o `.json` de cada um). O terceiro campo
-/// guarda o JSON já lido de cada arquivo do pacote embutido: um frame repetido (um cartão
-/// por item, `FraX::create_in`) não relê nem reinterpreta o texto a cada instância. Da
-/// pasta (a IDE, o hot reload) o arquivo pode mudar, então é lido de novo.
-pub struct ProjectForms(pub Project, pub Files, pub HashMap<String, std::rc::Rc<serde_json::Value>>);
+/// guarda o JSON já lido de cada form: um frame repetido (um cartão por item,
+/// `FraX::create_in`) não relê nem reinterpreta o texto a cada instância (G21 do
+/// Tabernáculo: da pasta, o `create_in` relia e interpretava o arquivo a cada cartão).
+pub struct ProjectForms(pub Project, pub Files, pub HashMap<String, CachedForm>);
+
+/// O JSON já lido de um form (pela entrada do projeto: `forms/x.json`). Do pacote embutido o
+/// arquivo não muda. Da pasta (a feature `dev`, a IDE) vale enquanto a marca do arquivo
+/// (`FileStamp`) for a mesma, e a marca é conferida uma vez por instante do relógio do `Ui`
+/// (`Ui::time`, que a plataforma anda a cada evento): os 200 cartões de um handler perguntam
+/// ao disco uma vez, e não 600 (cada pergunta custa dezenas de µs no Windows).
+pub struct CachedForm {
+    /// O arquivo lido (a variante deste sistema, se havia uma).
+    file: String,
+    stamp: Option<FileStamp>,
+    /// O `Ui::time` da última conferência (sem relógio, 0: confere sempre).
+    checked: f64,
+    value: std::rc::Rc<serde_json::Value>,
+}
 
 impl ProjectForms {
+    /// O arquivo existe? Com a marca dele, se vem da pasta (o pacote não tem marca).
+    fn stamp(&self, file: &str) -> Option<Option<FileStamp>> {
+        match &self.1 {
+            Files::Bundle(b) => b.get(file).map(|_| None),
+            // Só dentro da pasta, como o `DirResources`.
+            Files::Dir(dir) => match Path::new(file).components().all(|c| matches!(c, std::path::Component::Normal(_) | std::path::Component::CurDir)) {
+                true => std::fs::metadata(dir.join(file)).ok().filter(|m| m.is_file()).map(|m| FileStamp::of(&m)),
+                false => None,
+            },
+        }
+    }
+
+    /// O JSON do form da entrada `entry_file` (na variante deste sistema, se houver), do que
+    /// já foi lido quando o arquivo não mudou.
+    fn form_value(&mut self, entry_file: &str, now: f64) -> Result<std::rc::Rc<serde_json::Value>, String> {
+        let bundle = matches!(self.1, Files::Bundle(_));
+        if let Some(c) = self.2.get(entry_file) {
+            if bundle || (now > 0.0 && c.checked == now) {
+                return Ok(c.value.clone());
+            }
+        }
+        // A variante deste sistema (`principal.android.json`), se houver (o `resolve_variant`,
+        // guardando a marca de quem existe): a pergunta é pela marca, sem ler o conteúdo.
+        let variant = current_variants().iter().find_map(|v| {
+            let f = variant_file(entry_file, v);
+            self.stamp(&f).map(|s| (f, s))
+        });
+        let (file, stamp) = variant.unwrap_or_else(|| (entry_file.to_string(), self.stamp(entry_file).flatten()));
+        if let Some(c) = self.2.get_mut(entry_file) {
+            // Sem marca (o sistema não deu a hora): lido de novo, por garantia.
+            if c.file == file && stamp.is_some() && c.stamp == stamp {
+                c.checked = now;
+                return Ok(c.value.clone());
+            }
+        }
+        let json = self.1.read_text(&file)?;
+        let value = std::rc::Rc::new(serde_json::from_str::<serde_json::Value>(&json).map_err(|e| format!("{file}: {e}"))?);
+        self.2.insert(entry_file.to_string(), CachedForm { file, stamp, checked: now, value: value.clone() });
+        Ok(value)
+    }
+
     /// Carrega o form `name` e os frames dele (cada `Frame` ganha o form que cita).
     fn load_form(&mut self, ui: &mut Ui, name: &str, loading: &mut Vec<String>) -> Result<ComponentId, String> {
         let entry = self.0.form(name).ok_or_else(|| format!("o projeto não tem o form '{name}'"))?;
-        // A variante deste sistema (`principal.android.json`), se houver.
-        let file = resolve_variant(&entry.file, |f| self.1.read(f).is_some());
-        let value = match self.2.get(&file) {
-            Some(value) => value.clone(),
-            None => {
-                let json = self.1.read_text(&file)?;
-                let value = std::rc::Rc::new(serde_json::from_str::<serde_json::Value>(&json).map_err(|e| format!("{file}: {e}"))?);
-                if matches!(self.1, Files::Bundle(_)) {
-                    self.2.insert(file.clone(), value.clone());
-                }
-                value
-            }
-        };
+        let entry_file = entry.file.clone();
+        let value = self.form_value(&entry_file, ui.time())?;
         // Os DataModules do `uses` antes (as referências `dmDados.x` precisam deles).
         for module in uses_in(&value["root"]) {
             if !module.eq_ignore_ascii_case(name) {

@@ -36,6 +36,33 @@ pub trait AudioSource {
 /// Abre a fonte na thread do áudio ([`AudioPlayer::open`]).
 pub type AudioOpener = Box<dyn FnOnce() -> Result<Box<dyn AudioSource>, String> + Send>;
 
+/// Abre o som de `location`, um arquivo do disco ou um endereço (`http://`, `https://`), na
+/// thread que chama (use dentro de um [`AudioOpener`]: a fonte vive na thread do áudio).
+///
+/// Por endereço: o Symphonia lendo por HTTP com `Range` (feature `http`, a padrão) e, no
+/// Windows, o Media Foundation quando o Symphonia não abre (o WMA, ou sem a feature).
+pub fn open_audio_location(location: &str) -> Result<Box<dyn AudioSource>, String> {
+    if !crate::video::is_url(std::path::Path::new(location)) {
+        return SymphoniaSource::open_file(std::path::Path::new(location)).map(|s| Box::new(s) as Box<dyn AudioSource>);
+    }
+    #[allow(unused_mut)]
+    let mut errors: Vec<String> = Vec::new();
+    #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+    match SymphoniaSource::open_url(location) {
+        Ok(s) => return Ok(Box::new(s)),
+        Err(e) => errors.push(e),
+    }
+    #[cfg(windows)]
+    match crate::mf::open_audio(location) {
+        Ok(s) => return Ok(s),
+        Err(e) => errors.push(e),
+    }
+    if errors.is_empty() {
+        errors.push(format!("{location}: o som por endereço precisa da feature `http` do aylis-media"));
+    }
+    Err(errors.join("; "))
+}
+
 /// Arquivo de áudio decodificado com o `symphonia`: MP3, AAC/M4A, WAV, FLAC, OGG Vorbis.
 pub struct SymphoniaSource {
     format: Box<dyn FormatReader>,
@@ -58,6 +85,16 @@ impl SymphoniaSource {
         let file = std::fs::File::open(path).map_err(|e| format!("não consegui ler {}: {e}", path.display()))?;
         let extension = path.extension().and_then(|e| e.to_str()).map(str::to_lowercase);
         Self::from_stream(MediaSourceStream::new(Box::new(file), Default::default()), extension.as_deref())
+    }
+
+    /// Abre um endereço (`http://`, `https://`), lido aos poucos com `Range` enquanto toca
+    /// (o relatório do Tabernáculo, W11). Bloqueia até o primeiro pedido responder: chame
+    /// fora da thread da interface (o [`AudioPlayer::open`] abre na thread do áudio).
+    #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+    pub fn open_url(url: &str) -> Result<Self, String> {
+        let source = crate::http::HttpSource::open(url)?;
+        let extension = crate::video::file_extension(url);
+        Self::from_stream(MediaSourceStream::new(Box::new(source), Default::default()), Some(extension.as_str()).filter(|e| !e.is_empty()))
     }
 
     fn from_stream(stream: MediaSourceStream, extension: Option<&str>) -> Result<Self, String> {
