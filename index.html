@@ -7,8 +7,8 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="modulepreload" href="./pkg/landing-c3da607924.js">
-  <link rel="preload" href="./pkg/landing_bg-c3da607924.wasm" as="fetch" type="application/wasm" crossorigin>
+  <link rel="modulepreload" href="./pkg/landing-c35e8dc877.js">
+  <link rel="preload" href="./pkg/landing_bg-c35e8dc877.wasm" as="fetch" type="application/wasm" crossorigin>
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #f3f4f6; }
     @media (prefers-color-scheme: dark) { html, body { background: #111; } }
@@ -19,8 +19,8 @@
 <body>
   <!-- Gerado pelo Aylis. Sirva esta pasta com qualquer servidor web (o .wasm não abre direto do disco). -->
   <script type="module">
-    import init from "./pkg/landing-c3da607924.js";
-    const wasm = await init({ module_or_path: "./pkg/landing_bg-c3da607924.wasm" });
+    import init from "./pkg/landing-c35e8dc877.js";
+    const wasm = await init({ module_or_path: "./pkg/landing_bg-c35e8dc877.wasm" });
     wasm.aylis_start();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   </script>
