@@ -786,9 +786,7 @@ impl Component for DlgIcon {
     fn shortcut(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         let ctrl = event.modifiers.ctrl || event.modifiers.meta;
         if ctrl && !event.modifiers.alt && matches!(event.key, Key::Char('c' | 'C')) {
-            if let Some(clipboard) = ctx.ui.services_mut().clipboard.as_mut() {
-                clipboard.set_text(&self.copy);
-            }
+            aylis_core::clipboard::set_text(ctx.ui, &self.copy);
             ctx.set_handled();
         }
     }

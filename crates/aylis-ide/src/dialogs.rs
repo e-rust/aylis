@@ -555,9 +555,9 @@ mod build_command_tests {
 
 /// Opções do projeto → Memória: os limites do cache de imagens (o `image_cache`), cada um
 /// com o que guarda, o que acontece ao passar dele e quando aumentar. `on_ok` recebe `None`
-/// quando os dois ficam no padrão (o `.aylisproj` não grava a chave).
+/// quando todos ficam no padrão (o `.aylisproj` não grava a chave).
 pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui, Option<ImageCacheSettings>) + 'static) {
-    let d = new_dialog(ui, "Opções do projeto · Memória", 640.0, 440.0);
+    let d = new_dialog(ui, "Opções do projeto · Memória", 640.0, 600.0);
     let current = project.image_cache.unwrap_or_default();
     let defaults = ImageCacheLimits::DEFAULT;
     let intro = label(
@@ -602,6 +602,20 @@ pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui
         "imagens",
         "PNG, JPEG, SVG e outros arquivos de imagem, decodificados e na placa. Precisa caber os que aparecem juntos numa tela (ícones, miniaturas, uma galeria). Aumente se uma tela com muitas imagens ficar lenta ao rolar ou repintar.",
     );
+    let layers = number(
+        ui,
+        d.body,
+        "Camadas guardadas",
+        current.layers_mb,
+        defaults.layers_mb,
+        "MB",
+        "O desenho de um controle com cache_layer, ou das páginas numa transição, guardado como imagem para andar e esmaecer sem repintar os filhos. Uma transição de aba em 4K usa ~66 MB enquanto anda; a imagem sai quando a transição acaba. Com 0, nada fica guardado e tudo é repintado a cada quadro.",
+    );
+    let line = field(ui, d.body, "");
+    let auto = ui.add(CheckBox::new("Camadas automáticas nas transições e animações"), line);
+    ui.control_mut(auto).unwrap().set_align(Align::Client);
+    let _ = ui.set_prop(auto, "checked", current.auto_layers);
+    let _ = ui.set_prop(auto, "hint", "Vale em todos os forms; cada form pode trocar pela propriedade layer_cache");
     let read = |ui: &Ui, id: ComponentId, default: u32| {
         let text = text_of(ui, id);
         if text.is_empty() { Some(default) } else { text.parse::<u32>().ok() }
@@ -617,14 +631,21 @@ pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui
                 _ => return Err(format!("imagens em pixels: de {} a {} MB", min_mb, max_mb)),
             }
             match read(ui, files, defaults.files) {
-                Some(v) if (min_files..=max_files).contains(&v) => Ok(()),
-                _ => Err(format!("imagens de arquivo: de {} a {}", min_files, max_files)),
+                Some(v) if (min_files..=max_files).contains(&v) => {}
+                _ => return Err(format!("imagens de arquivo: de {} a {}", min_files, max_files)),
+            }
+            let (min_layers, max_layers) = ImageCacheLimits::LAYERS_MB_RANGE;
+            match read(ui, layers, defaults.layers_mb) {
+                Some(v) if (min_layers..=max_layers).contains(&v) => Ok(()),
+                _ => Err(format!("camadas guardadas: de {} a {} MB", min_layers, max_layers)),
             }
         },
         move |ui| {
             let settings = ImageCacheSettings {
                 pixels_mb: read(ui, pixels, defaults.pixels_mb).unwrap_or(defaults.pixels_mb),
                 files: read(ui, files, defaults.files).unwrap_or(defaults.files),
+                layers_mb: read(ui, layers, defaults.layers_mb).unwrap_or(defaults.layers_mb),
+                auto_layers: ui.get::<CheckBox>(auto).is_none_or(|c| c.checked),
             };
             on_ok(ui, (settings != ImageCacheSettings::default()).then_some(settings));
         },

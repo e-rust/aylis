@@ -1,0 +1,43 @@
+{
+  "descricao": "Custo por quadro, na thread da interface, das transições de aba e de um painel animado (exemplo transitions do aylis-controls): Skia na CPU, sem janela, relógio de 60 Hz, 8 rodadas de 250 ms por cenário (136 quadros). Tempos em ms (p50 e p95 dos quadros depois do primeiro), release, máquina do autor em 12/11/2026, com a máquina livre; 'antes' é o HEAD (3255a77) e 'depois' as transições com camada guardada, soltas no fim (sem commit). Os controles por quadro e a área são exatos; 'guardado' é o que ficou nas camadas do renderizador depois do cenário.",
+  "antes": [
+    {
+      "largura": 1920, "altura": 1080, "componentes": 863, "pintura_inteira_ms": 4.8,
+      "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 5.33, "p50_ms": 5.82, "p95_ms": 8.98, "acima_de_16_7_ms": "0/136", "area": 1.0, "controles": 394 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 4.51, "p50_ms": 13.04, "p95_ms": 14.28, "acima_de_16_7_ms": "0/136", "area": 1.0, "controles": 680 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 6.48, "p50_ms": 4.65, "p95_ms": 5.00, "acima_de_16_7_ms": "0/136", "area": 0.543, "controles": 420 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 7.83, "p50_ms": 4.79, "p95_ms": 5.19, "acima_de_16_7_ms": "0/136", "area": 0.876, "controles": 342 }
+      ]
+    },
+    {
+      "largura": 3840, "altura": 2160, "componentes": 3344, "pintura_inteira_ms": 22.6,
+      "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 20.75, "p50_ms": 22.42, "p95_ms": 23.70, "acima_de_16_7_ms": "136/136", "area": 1.0, "controles": 1435 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 21.86, "p50_ms": 52.31, "p95_ms": 55.95, "acima_de_16_7_ms": "136/136", "area": 1.0, "controles": 2654 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 31.21, "p50_ms": 21.15, "p95_ms": 23.08, "acima_de_16_7_ms": "136/136", "area": 0.537, "controles": 1488 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 36.36, "p50_ms": 24.38, "p95_ms": 26.13, "acima_de_16_7_ms": "125/136", "area": 0.872, "controles": 1329 }
+      ]
+    }
+  ],
+  "depois": [
+    {
+      "largura": 1920, "altura": 1080, "componentes": 863, "pintura_inteira_ms": 4.8,
+      "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 12.47, "p50_ms": 2.13, "p95_ms": 5.00, "acima_de_16_7_ms": "0/136", "area": 1.0, "controles": 4, "guardado_mb": 0.0 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 6.86, "p50_ms": 7.71, "p95_ms": 12.34, "acima_de_16_7_ms": "0/136", "area": 0.978, "controles": 4, "guardado_mb": 0.0 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 6.36, "p50_ms": 4.61, "p95_ms": 5.13, "acima_de_16_7_ms": "0/136", "area": 0.543, "controles": 420, "guardado_mb": 0.0 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 7.90, "p50_ms": 4.70, "p95_ms": 5.32, "acima_de_16_7_ms": "0/136", "area": 0.876, "controles": 342, "guardado_mb": 4.0 }
+      ]
+    },
+    {
+      "largura": 3840, "altura": 2160, "componentes": 3344, "pintura_inteira_ms": 22.7,
+      "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 49.14, "p50_ms": 13.41, "p95_ms": 24.56, "acima_de_16_7_ms": "24/136", "area": 1.0, "controles": 4, "guardado_mb": 0.0 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 30.85, "p50_ms": 33.89, "p95_ms": 51.00, "acima_de_16_7_ms": "136/136", "area": 0.989, "controles": 4, "guardado_mb": 0.0 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 28.72, "p50_ms": 19.19, "p95_ms": 22.93, "acima_de_16_7_ms": "136/136", "area": 0.537, "controles": 1488, "guardado_mb": 0.0 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 34.11, "p50_ms": 21.54, "p95_ms": 22.59, "acima_de_16_7_ms": "113/136", "area": 0.872, "controles": 1329, "guardado_mb": 15.9 }
+      ]
+    }
+  ]
+}

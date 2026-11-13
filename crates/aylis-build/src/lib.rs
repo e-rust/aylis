@@ -87,9 +87,11 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("BusyWatcher", ""),
     ("OpenDialog", ""),
     ("SaveDialog", ""),
+    ("Clipboard", ""),
     ("Permissions", ""),
     ("Biometrics", ""),
     ("AppLink", ""),
+    ("UrlScheme", ""),
     ("Location", ""),
     ("Battery", ""),
     ("Network", ""),
@@ -255,6 +257,8 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("XlsxProvider", "providers"),
     ("AylisPdfProvider", "providers"),
     ("TileServerProvider", "providers"),
+    ("OleObject", "providers"),
+    ("WmiQuery", "providers"),
     ("MediaPlayer", "media"),
     ("VideoPlayer", "media"),
     ("Microphone", "media"),
@@ -288,6 +292,10 @@ pub const CLASS_PLATFORMS: &[(&str, &[Platform])] = {
         ("Nfc", &[Windows, MacOs, Linux, Android, Web]),
         ("Bluetooth", &[Windows, MacOs, Linux, Android, Web]),
         // Um servidor em 127.0.0.1: só onde o agente roda na mesma máquina.
+        // A automação OLE (COM) só existe no Windows.
+        ("OleObject", &[Windows]),
+        // O WMI é do Windows.
+        ("WmiQuery", &[Windows]),
         ("McpServer", &[Windows, MacOs, Linux]),
         ("McpTool", &[Windows, MacOs, Linux]),
     ]

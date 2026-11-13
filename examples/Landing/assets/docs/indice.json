@@ -567,6 +567,10 @@
           "arquivo": "componentes/BusyWatcher.md"
         },
         {
+          "titulo": "Clipboard",
+          "arquivo": "componentes/Clipboard.md"
+        },
+        {
           "titulo": "DragImage",
           "arquivo": "componentes/DragImage.md"
         },
@@ -599,6 +603,10 @@
           "arquivo": "componentes/Notification.md"
         },
         {
+          "titulo": "OleObject",
+          "arquivo": "componentes/OleObject.md"
+        },
+        {
           "titulo": "OpenDialog",
           "arquivo": "componentes/OpenDialog.md"
         },
@@ -621,6 +629,14 @@
         {
           "titulo": "TrayIcon",
           "arquivo": "componentes/TrayIcon.md"
+        },
+        {
+          "titulo": "UrlScheme",
+          "arquivo": "componentes/UrlScheme.md"
+        },
+        {
+          "titulo": "WmiQuery",
+          "arquivo": "componentes/WmiQuery.md"
         }
       ]
     },

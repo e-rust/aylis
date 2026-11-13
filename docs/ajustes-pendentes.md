@@ -262,9 +262,329 @@ clique (maximizar e restaurar) continuam os da barra. Conferido na tela (Direct2
 aparece e os dois cliques maximizam e restauram. Os ganchos do app (`on_message`) vêm antes e
 podem mudar isso. Fora do Windows, sem efeito.
 
+O instalador e o desinstalador mais rápidos (pedido de 12/11, sem commit: "os projetos de exemplo
+estão custando muito ao instalador e demorando muito para desinstalar, fica rodando arquivo por
+arquivo"):
+- O que demorava era a lista de detalhes do NSIS, uma linha por arquivo. Medido com 20 mil
+  arquivos: `RMDir /r` em 28,3 s com a lista, 3,1 s sem ela (`SetDetailsPrint textonly`) e 2,6 s
+  com o `rd /s /q` do Windows. A instalação e a desinstalação passam a mostrar só a etapa
+  ("Removendo o Aylis…", "Removendo as compilações dos projetos…"); com a pasta de compilação
+  (91 mil arquivos na máquina do autor), a remoção cai de uns 2 minutos para uns 15 s (estimado
+  pela medida; a desinstalação de verdade não foi rodada, para não apagar a pasta do autor).
+- Os exemplos vão sem o `generated/` (o Aylis refaz ao gerar, compilar ou executar; conferido com
+  a Calculadora: o `generate` refaz as 8 linguagens e o `check` passa). Instalado: 2.513 → 1.834
+  arquivos (os exemplos, 1.368 → 689); a instalação silenciosa, 32 → 20 s. O instalador quase
+  não muda (73,5 MB: o código gerado comprime bem). A documentação da Landing fica: o
+  `component_docs` do MCP lê as páginas dela.
+- Teste `the_script_leaves_generated_out_and_does_not_list_every_file`.
+
+Pacotes de ferramentas e a verificação de ambiente rápida (pedido de 12/11, sem commit; o
+desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
+- **Verificação de ambiente:** o resultado fica em `%USERPROFILE%\.aylis\environment.json`
+  (`aylis_tools::env_cache`); cada plataforma anota do que dependeu (o programa achado com a
+  marca, as pastas do SDK e do rustup, o `installed.json` dos pacotes, o `tools.json`, as
+  variáveis), e sem mudança nenhum processo roda; um resultado guardado vale no máximo 24 h
+  (`MAX_AGE_SECS`: o que muda dentro do WSL ou num `pip` feito fora não deixa marca). As
+  plataformas rodam em paralelo, com prazo nos processos (20 s; 45 s no WSL). A tela abre com o
+  guardado e reconfere só as do projeto (a do Executar à frente); as outras mostram "guardado
+  há…" e "Conferir". O F9 usa o guardado. Medido em debug: abrir, de 1,1 s (4,5–5 s com o WSL
+  desligado) para ~1 ms mais a reconferência em segundo plano (~130 ms sem mudança); o F9, de
+  ~300 para ~50 ms; "Verificar de novo", de 1,1 para 0,34 s (3,9 s com o WSL desligado).
+- **Núcleo dos pacotes** (`aylis_tools::toolpacks`, `resources/packages.lock.json`, sucessor do
+  `tools.lock.json`): instala em `%USERPROFILE%\.aylis\tools\<nome>\<versão>` (registro em
+  `installed.json`), com as dependências antes, a troca atômica, o progresso e o cancelamento.
+  Os arquivos vêm do cache, da pasta `pacotes` ao lado do executável, das pastas e dos espelhos
+  das Opções (um `pacotes.json` com `url` ou `drive`, com a confirmação do Drive, ou o link de
+  uma pasta compartilhada do Drive, listada pela vista embutida; conferido em 12/11 com a pasta
+  do autor: o nsis e o jdk de 183 MB baixados dela em 26 s e o java rodando), conferidos
+  pelo SHA-256 do manifesto embutido; prazo, proxy das variáveis e do Windows (sem PAC/WPAD), e
+  nunca a URL oficial (só o `packages pack`/`update` a usam). Pacotes no Windows: rust 1.99.0
+  (+ rust-android, rust-wasm), jdk 17.0.21+9, android-sdk, android-ndk 27.2.12479018,
+  cargo-ndk 4.1.2, wasm-bindgen 0.2.129, python 3.12.10, node 26.13.1, dotnet 8.0.428, go
+  1.27.4, nsis 3.11, codelldb, netcoredbg, js-debug, clangd, bundletool e jdtls. Conferido: o
+  `pack` de jdk, node, codelldb e rust (500 MB, 66 s) e o `install` sem rede (22 s), com java,
+  node, cargo, rustc, rust-analyzer e codelldb rodando e um projeto compilado (host e wasm).
+- **Na IDE:** Ferramentas → Pacotes de ferramentas (a lista, instalar e remover com o
+  andamento e o Cancelar, "já existe no sistema"); a aba Pacotes nas Opções (pastas, espelhos,
+  "Testar as origens"); o "Corrigir…" instala o pacote que resolve o item, sem trazer o que a
+  máquina já tem, e sem origem diz isso e leva às Opções. O `tools.json` passou para
+  `%USERPROFILE%\.aylis\tools.json` (o do `AppData` é copiado uma vez).
+- **No instalador:** uma página com os pacotes do manifesto para marcar (nenhum, ou o `rust` no
+  kit offline sem Rust na máquina) e a do espelho; no fim, o `aylis-tool` instalado instala os
+  marcados da pasta `pacotes` ao lado do setup (o que falhar é avisado, código 3, e a IDE
+  fica). Silencioso: `/S /PACOTES=rust,jdk|all /ESPELHO=https://...`. O desinstalador remove
+  também os pacotes, o cache e o `environment.json`. O kit offline: `aylis-tool installer-ide
+  --with-packages <nomes|all>`. Testado em modo silencioso por fora do Claude (WMI): o kit com
+  node e codelldb instalado em 37,8 s; com o `go` sem origem, saída 3 e a IDE instalada (o
+  registro, o PATH e os atalhos restaurados depois).
+- **Falta:** o Free Pascal (só há instalador Inno Setup), o WiX e o Build Tools da Microsoft (o
+  Rust do Windows depende dele para ligar; o Rust `gnu` com MinGW foi testado e funciona sem
+  ele, mas sem o Skia, e o autor decidiu manter o `msvc`, veja o histórico); pacotes para pylsp, tsls, gopls, delve, csharp-ls
+  e pasls (continuam pelos gerenciadores); android, dotnet, python e nsis no Linux e no macOS;
+  o JDK do macOS (testes-em-dispositivos); o proxy por PAC/WPAD; o "Configurar linguagens" ainda
+  cai no winget/rustup quando não há origem; as páginas do instalador vistas na tela e o
+  desinstalador numa máquina de teste.
+
 Ficam para depois:
 - T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
 - A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).
+
+**Compositor em outra thread (12/11/2026)**
+
+Pedido do autor: estudar um compositor como o do navegador e o Core Animation, em que as
+camadas já pintadas (lugar, transparência, recorte) são compostas e apresentadas por outra
+thread, e a animação de `translate_x`/`translate_y`/`opacity` segue lisa mesmo com a thread da
+interface ocupada. Aprovado só registrar e medir; a mudança de arquitetura espera o autor.
+
+Como seria, sem quebrar nem piorar o que existe:
+- O `Ui` continua numa thread só (`Rc`/`RefCell`) e os controles e o `Canvas` não mudam: o
+  compositor recebe um retrato (as imagens das camadas e as curvas) e não encosta no `Ui`.
+- Só nos caminhos de GPU (a swap chain do Direct2D, o Skia GPU). O Skia na CPU e o navegador
+  ficam como estão (compor noutra thread na CPU é copiar a tela inteira por quadro).
+- O Direct2D hoje é `D2D1_FACTORY_TYPE_SINGLE_THREADED`: medir a fábrica multithread (trava em
+  cada chamada) ou compor direto no Direct3D/DirectComposition.
+- Textura só para a camada que anima ou tem `cache_layer`, liberada no fim (a IDE abre um `Ui`
+  por aba). Sem animação, a thread dorme.
+- O compositor só assume quando a interface atrasa um quadro, para não somar um quadro de
+  latência no dia a dia. O `partial_paint` e o `giant_screen` seguem valendo.
+- Ajuda só no que move ou esmaece desenho pronto (transições, animação de lugar e
+  transparência, o vídeo e o 3D já na GPU, a rolagem se um dia houver ladrilhos); mudança de
+  conteúdo (hover, texto, dados) segue na interface.
+
+Medição de 12/11 (exemplo `transitions` do `aylis-controls`, Skia na CPU, sem janela; os
+números em `medicoes/transicoes.json`): duas abas cheias de controles e um painel cheio
+deslizando por cima, 250 ms a 60 Hz.
+
+| Cenário | 1920 × 1080: quadro p50 / p95 | > 16,7 ms | 3840 × 2160: p50 / p95 | > 16,7 ms | Controles por quadro (1080p / 4K) |
+|---|---|---|---|---|---|
+| Aba deslizando | 5,9 / 6,7 ms | 0 de 136 | 26 / 29 ms | 136 de 136 | 394 / 1435 |
+| Aba esmaecendo | 13,6 / 16,3 ms | 5 de 136 | 65 / 167 ms | 136 de 136 | 680 / 2654 |
+| Painel animado | 4,9 / 5,3 ms | 0 de 136 | 50 / 73 ms | 136 de 136 | 420 / 1488 |
+| Painel com `cache_layer` | 5,3 / 6,1 ms | 0 de 136 | 29 / 56 ms | 134 de 136 | 342 / 1329 |
+
+O que a medição mostrou:
+- Hoje o problema não é a interface ocupada: é o próprio quadro. As transições de aba repintam
+  a tela inteira a cada quadro (área 100%) e pintam todos os controles das duas páginas; o
+  esmaecer pinta as duas por inteiro com camada de transparência e é o mais caro. Em 4K na CPU,
+  nada cabe em 16,7 ms.
+- O painel com `cache_layer` tem a imagem guardada, mas o que ele descobre ao andar (a página
+  de trás) é repintado: 342 controles por quadro em 1080p.
+- Logo, a maior parte do ganho vem de compor camadas guardadas **na mesma thread** (as duas
+  páginas da transição e o fundo atrás de quem anda, como imagens, sem repintar controles); a
+  outra thread é o passo seguinte, menor.
+- Faltam: a mesma medição no Direct2D com janela (o padrão no Windows; só a CPU foi medida),
+  e quanto tempo os handlers de apps reais seguram a interface (o caso em que só a outra
+  thread ajuda).
+- Os tempos em 4K variaram até 2x entre rodadas (outras sessões compilando); a área e os
+  controles são exatos.
+
+As transições com camada guardada (feito em 12/11, sem commit; pedido do autor: "Sim, investigue"):
+- Por que a camada não valia: (1) o `tick_transitions` chamava `request_repaint` a cada quadro,
+  a janela inteira era repintada e a pintura inteira refaz as camadas (`layer_epoch`); (2) o
+  `apply_transition` mudava o `translate`/`opacity` pelo `control_mut`, que marca o desenho de
+  dentro (a versão da camada subia a cada quadro) e o layout do form; (3) a condição do
+  `cached` exigia `clip_children`, e o `TabItem` não recorta.
+- Agora (`aylis-core`: `transition.rs` e `paint.rs`): o `apply_transition` muda pelo `cb_mut` e
+  marca só o lugar (`damage_placement`), sem `request_repaint`; quem está em transição vai
+  para a camada guardada mesmo sem recortar os filhos (por 250 ms, o que passa da borda da
+  página fica de fora); e a camada guardada anda em pixels inteiros do dispositivo (a imagem
+  montada com a fração de um quadro, reposta arredondada noutro, saía meio pixel diferente da
+  pintura inteira: 32 pixels no primeiro quadro, achados pelo teste novo).
+- Teste `a_tab_transition_moves_the_pages_without_repainting_their_children` (`partial_paint`,
+  Skia e Direct2D, deslizar e esmaecer): os filhos não são repintados durante a transição e
+  cada quadro por parte sai igual à pintura inteira. Passam também o `partial_paint` inteiro,
+  os testes do `aylis-core`, `transitions`, `tab_pages`, `tab_strip`, `tab_strip_drag` e o
+  `cargo check` do `aylis-core` para wasm.
+- Medido com o exemplo `transitions` (antes e depois compilados e rodados alternados, a máquina
+  em 100% de CPU com outras sessões; tempos oscilaram até 2x entre rodadas, os controles são
+  exatos):
+
+| Cenário | Controles por quadro (1080p / 4K) | Quadro p50 1080p (melhor rodada) | Quadro p50 4K (melhor rodada) | 1º quadro 1080p |
+|---|---|---|---|---|
+| Aba deslizando | 394 → 4 / 1435 → 4 | 6,0 → 2,9 ms | 28 → 17 ms | 5 → 14 ms |
+| Aba esmaecendo | 680 → 4 / 2654 → 4 | 13,7 → 9,4 ms | 57 → 45 ms | 5 → 9 ms |
+| Painéis (não mudaram) | 420 e 342 | iguais | iguais | iguais |
+
+- O que piorou: o primeiro quadro, que monta as duas camadas de página inteira (em 1080p
+  ainda dentro de 16,7 ms; em 4K na CPU, de ~27 para 57 ms ou mais). E a memória: as duas
+  imagens (8 MB cada em 1080p, 33 MB em 4K) ficam no cache do renderizador depois da transição
+  até ele se limpar (16 imagens no Skia); falta soltá-las no fim da transição.
+- O resto do quadro na CPU agora é compor duas imagens do tamanho da tela (largura de banda
+  da memória); na GPU (Direct2D na janela) isso deve ficar perto de zero, mas não foi medido.
+- O `giant_screen`: a área e os controles iguais à base; com a máquina livre, o teste passa
+  (em 12/11 à tarde, com a CPU em 100%, os dois lados ficaram uns 3x acima da base).
+- Os painéis animados por cima de uma página (`painel animado`, `painel cache_layer`) seguem
+  repintando a página de trás que descobrem (342 a 420 controles por quadro): o fundo como
+  camada é o passo seguinte, se valer.
+
+As camadas guardadas soltas e configuráveis (feito em 12/11, sem commit; pedido do autor: "pode
+fazer, mais esse comportamento de cache que faz com que armazene em memória eu preciso que fique
+configurável por projeto ou por formulário"):
+- Antes, cada renderizador guardava até 16 imagens e só limpava tudo ao chegar nas 16; as das
+  transições ficavam mortas lá (a chave muda a cada pintura inteira): até 16 páginas inteiras,
+  ~130 MB em 1080p e ~530 MB em 4K, por janela.
+- Agora os três (Skia, Direct2D, Canvas 2D) usam o mesmo `aylis_core::LayerCache`: limite em
+  megabytes (sai a usada há mais tempo; uma maior que o limite inteiro nem é montada) e no
+  painel de memória ("· camadas guardadas"). O núcleo solta a camada de um controle quando ela
+  deixa de valer (`Canvas::forget_cached`): a chave mudou, a transição acabou, o controle foi
+  liberado.
+- No projeto: `image_cache.layers_mb` (padrão 128, de 0 a 4096; 0 = nada guardado) e
+  `image_cache.auto_layers` (padrão ligado), em Projeto → Opções do projeto → Memória. No
+  form: a propriedade `layer_cache` (`project`, `on`, `off`), que troca as camadas automáticas
+  (transição e contêiner animando) só nele. O `cache_layer` pedido num controle vale sempre.
+- Testes: `the_transition_layers_leave_the_renderer_when_it_ends` e
+  `the_form_and_the_project_turn_the_automatic_layers_off` (`aylis-controls/tests/transitions.rs`;
+  o primeiro falha sem o soltar: ficavam 2 imagens),
+  `the_layer_cache_keeps_the_byte_limit_and_forgets_by_owner` (`aylis-core/tests/image_cache.rs`)
+  e o `project_memory_saves_the_image_cache_limits` da IDE com o campo novo. Passam o
+  `aylis-core`, o `aylis-project` e o `aylis-controls` inteiros, o `giant_screen` em release, o
+  `catalog` do `aylis-remote` e o `cargo check` para wasm do núcleo, dos controles, do
+  `aylis-web` e da IDE lite. Catálogo regravado (`update-catalog`), rótulo em
+  `properties.tsv`, os 4 textos novos da IDE traduzidos e a linha na página do `Form` da
+  Landing (à mão; o `aylis-tool docs` regrava tudo e não foi rodado).
+- Falha na IDE, de outra sessão: `every_inspector_property_has_a_readable_translated_name`
+  (`UrlScheme.bring_to_front`, `UrlScheme.scheme`, `WmiQuery.namespace` sem rótulo no
+  `properties.tsv`).
+- Medido com o exemplo `transitions` (agora com a coluna "guardado"), a máquina livre, o HEAD
+  contra o de agora (`medicoes/transicoes.json`):
+
+| Cenário | Quadro p50 1080p | Quadro p50 4K | Acima de 16,7 ms em 4K | 1º quadro 1080p / 4K | Guardado depois |
+|---|---|---|---|---|---|
+| Aba deslizando | 5,8 → 2,1 ms | 22,4 → 13,4 ms | 136 → 24 de 136 | 5,3 → 12,5 / 20,8 → 49,1 ms | 0 MB |
+| Aba esmaecendo | 13,0 → 7,7 ms | 52,3 → 33,9 ms | 136 → 136 | 4,5 → 6,9 / 21,9 → 30,9 ms | 0 MB |
+| Painel animado | 4,7 → 4,6 ms | 21,2 → 19,2 ms | 136 → 136 | igual | 0 MB |
+| Painel `cache_layer` | 4,8 → 4,7 ms | 24,4 → 21,5 ms | 125 → 113 | igual | 4 MB / 16 MB (a dele) |
+
+- Segue mais caro o primeiro quadro da transição (monta as duas camadas); quem preferir o
+  primeiro quadro ao resto desliga com `layer_cache = off` no form ou `auto_layers` no projeto.
+
+**Área de transferência central (12/11/2026)**
+
+Pedido do autor: "pode implementar e ajustar os lugares onde tiveram que fazer diretamente em
+cada projeto, vamos centralizar isso para usar o do Aylis atendendo todos os casos". Feito,
+sem commit; falta o autor conferir (roteiro 119):
+- `aylis_core::clipboard`: texto, HTML, imagem e os formatos do app (`ClipboardContent`),
+  gravados de uma vez. O que a plataforma não guarda fica no processo até outro app copiar.
+  O `ClipboardService` ganhou `set_content`, `get_html`, `get_image`, `get_data`, `has` e
+  `sequence`, com padrões (um serviço só de texto continua valendo).
+- Por plataforma: Windows com o `clipboard-win` (tudo, e o formato do app vai para outra
+  instância; o `arboard` saiu do Windows); Linux e macOS com o `arboard` e a `image-data`
+  (texto, HTML com texto ou imagem: um por vez); Android com `newHtmlText`; navegador com o
+  `ClipboardItem` (texto e HTML).
+- Componente não visual `Clipboard` (System): `copy_text`, `copy_html`, `copy_data`,
+  `copy_image` (de um `Image` ou a foto de outro controle), `paste_*`, `has_format` e `clear`.
+- Saíram as cópias próprias: o PaintBox (a imagem vai para os outros apps e ele cola a de fora,
+  também PNG/JPEG) e o designer da IDE (os componentes em
+  `application/x-aylis-components+json` e como texto JSON: colam noutra aba, noutra IDE e de
+  um editor). `Edit`, `Memo`, `MemoEditor`, `RichEditor`, `DBGrid`, Markdown, o rótulo de
+  copiar e a IDE passam pelo `aylis_core::clipboard`.
+- Testes: `crates/aylis-controls/tests/clipboard.rs` (5), o do designer em
+  `crates/aylis-ide/tests/document.rs` e, no `aylis-platform-winit`, o DIB (2) e o da área de
+  transferência real do Windows (`#[ignore]`: grava e devolve o texto que estava; passou).
+- Falta: o iOS ainda não tem `ClipboardService` (copia e cola só dentro do app; o
+  `UIPasteboard` pede um Mac); no macOS a `image-data` traz o `image` com TIFF (o tamanho não
+  foi medido); o Linux só foi checado compilando o `clipboard.rs` à parte (o Docker estava
+  desligado); o macOS não foi compilado.
+
+**Prefixo de URL próprio: o `UrlScheme` (12/11/2026)**
+
+Pedido do autor: um componente que, ativado, registra no Windows um prefixo próprio, e o link
+chamado por qualquer app chega no evento dele. Feito, sem commit; falta o autor conferir
+(roteiro 125):
+- Componente não visual `UrlScheme` (System): `scheme`, `description`, `active`,
+  `bring_to_front`; `on_link` e `on_error`; `register()`, `unregister()`, `is_registered()`.
+  Cada um recebe só os links do seu prefixo; o `AppLink` continua recebendo todos.
+- Núcleo: `check_scheme` (o prefixo válido e fora dos do sistema), a fila dos links que abriram
+  o app (`push_startup_link`/`take_startup_links`) e o `LinkService` com `register_scheme`,
+  `unregister_scheme`, `scheme_registered`, `receive_links` e `can_register_schemes`.
+- Windows (`aylis-platform-winit/src/url_scheme.rs`): o registro em
+  `HKCU\Software\Classes\<prefixo>` (o `unregister` só tira se for deste executável) e o pipe
+  `\\.\pipe\aylis-links-<executável e usuário>` (`PIPE_REJECT_REMOTE_CLIENTS`; a próxima
+  instância do pipe nasce antes de a atual ser lida). Conferido de verdade com o exemplo
+  `url_scheme`: com o app aberto, dois links chegaram nele e a cópia nova fechou (um processo
+  só); com o app fechado, o link abriu o app e chegou no `on_link`.
+- Publicação: os prefixos dos `UrlScheme` ligados nos forms (`publish::url_schemes`) vão para o
+  `.msi` (um componente com `ForceDeleteOnUninstall`), o NSIS e o Inno (registram e tiram na
+  desinstalação) e para o manifesto do Android (um filtro de intent cada). O `.msi` só foi
+  conferido como texto (o WiX não está nesta máquina); o NSIS, o Inno e o Android, por teste.
+- Testes: `crates/aylis-controls/tests/url_scheme.rs` (4),
+  `url_schemes_are_registered_and_removed_by_the_installers` e o do manifesto do Android.
+- A conferir: o teste real rodou de dentro do Claude Desktop (pacote MSIX); o registro foi
+  visto pelo `reg` e pelo `Start-Process`, mas falta ver de fora (o navegador chamando o link).
+- Falta: macOS e iOS (`CFBundleURLTypes` no `Info.plist`), Linux (o `.desktop` com
+  `x-scheme-handler`) e o navegador (`registerProtocolHandler`, só `web+`) na publicação; com o
+  app aberto, o repasse para a cópia aberta só existe no Windows e no Android.
+
+**WMI pela API nativa (12/11/2026)**
+
+Pedido do autor: um componente que fale com o WMI do Windows pela API nativa (o `OleObject`
+chega só à API de script, sem laço sobre o resultado nem eventos). Feito, sem commit; falta o
+autor conferir (roteiro 126):
+- `WmiQuery` (System, `aylis-providers`, só Windows no `CLASS_PLATFORMS`): `namespace`
+  (`root\cimv2`), `query` (WQL), `data_set` (um `ClientDataSet`), `timeout` (s) e `watch`;
+  `busy`, `row_count`, `result` (JSON) e `last_event` só leitura; métodos `execute` (espera),
+  `execute_async` (`on_done`/`on_error`), `get_value(consulta, propriedade)` e
+  `get_json(consulta)`; eventos `on_done`, `on_event` e `on_error`. Sem campos, o dataset ganha
+  um `Field` por coluna, no tipo do CIM (64 bits como inteiro, `CIM_DATETIME` como data e hora
+  local, listas como memo em JSON); com campos, cada um recebe a coluna do mesmo nome.
+- Núcleo: `WmiService` (assíncrono: o fim pelo `done`, os eventos pelo `listener`, de outra
+  thread; o componente leva à tela pelo `post_to`), `WmiValue`, `WmiTable`, `WmiWatch` (para ao
+  ser largada), `wmi_namespace` (recusa outro computador), `wmi_datetime` e `wmi_select_list`
+  (as colunas na ordem do `SELECT`).
+- Windows (`aylis-platform-winit/src/win_wmi.rs`, feature `Win32_System_Wmi`): `IWbemLocator` →
+  `ConnectServer` → `CoSetProxyBlanket` (só na conexão; nada global do processo) →
+  `ExecQuery`, numa thread com o COM multithread e as conexões guardadas por namespace; cada
+  assinatura tem a thread dela (`ExecNotificationQuery`, esperando em fatias de 1 s).
+- Só consulta: nada de métodos do WMI (`Win32_Process.Create` abriria programas) nem de outra
+  máquina. O `watch` só liga com o app rodando, e o timer do componente existe só enquanto a
+  assinatura muda (parado, nenhum).
+- Testes: `crates/aylis-providers/tests/wmi.rs` (8, com um WMI falso: dataset com e sem
+  campos, JSON, assíncrono vindo de outra thread, eventos, recusas, designer) e, no
+  `aylis-platform-winit`, o WMI real (5: `Win32_OperatingSystem` com as colunas na ordem e os
+  tipos, `Win32_Process` com `*`, erros, assinatura e um processo novo chegando como evento).
+- Como no `OleObject`: o `aylis-project` não compila agora por uma mudança de outra sessão
+  (`ImageCacheLimits.layers_mb`), então o `aylis-tool update-catalog` rodou pelo exemplo do
+  `aylis-remote` (o mesmo que ele chama), o que também trouxe as mudanças de outras sessões no
+  catálogo (`OleObject` renomeado, `UrlScheme`, `Clipboard`, `Form.layer_cache`); a página da
+  documentação (`componentes/WmiQuery.md` e o `indice.json`) foi escrita à mão, no formato do
+  gerador, com o texto de `docs/componentes/WmiQuery.md`. Não rodaram a suíte inteira nem os
+  testes da IDE (o das traduções dos rótulos); rodaram os do componente, do serviço, das
+  mensagens, do catálogo e de `crates/aylis/tests/classes.rs`, mais o wasm e o Android.
+- Falta: exemplo na galeria (componente não visual, como o `OleObject`).
+
+**Automação OLE (12/11/2026)**
+
+Pedido do autor: um componente para falar com o Excel e outros programas por OLE/ActiveX; a
+automação "pode fazer" (embutir controle ActiveX no form ficou de fora, o porquê no histórico).
+Feito, sem commit; falta o autor conferir (roteiro 123):
+- `OleObject` (System, `aylis-providers`, só Windows no `CLASS_PLATFORMS`): `prog_id`,
+  `use_running`, `call_timeout` (ms) e `opened`; métodos `open`, `release`, `get_value`,
+  `get_number`, `set_value`, `call`, `get_values`/`set_values` (matriz JSON) e `put_data`
+  (títulos e registros de um `DataSource` ou `Export` numa chamada só, pelo `Resize` do Excel).
+  Os caminhos são os do VBA, só com nomes e literais (`aylis_providers::ole::parse_path`).
+- Núcleo: `OleService`, `OleValue` (com `Date` e `Array`), `allow_ole`/`ole_allowed` (o Office
+  vem permitido; outro programa só pelo código do app) e `ole_date`/`ole_date_parts`.
+- Windows (`aylis-platform-winit/src/win_ole.rs`): `IDispatch` numa thread própria com o COM em
+  STA; a tela espera pelo canal com o `call_timeout`, sem processar mensagens. VARIANT para
+  texto, números, datas, booleanos, objetos e SAFEARRAY de 2 dimensões; os erros do Excel numa
+  célula (`#N/A`, `#DIV/0!`...) voltam como texto; o `EXCEPINFO` vira a mensagem.
+- Testes: `crates/aylis-providers/tests/ole.rs` (7, com um programa falso: caminhos, lista de
+  permitidos, um `set` só para 500 registros, largar ao liberar) e, no `aylis-platform-winit`,
+  o COM real com o `Scripting.Dictionary` do Windows (texto com acento, data, matriz 2D de ida e
+  volta, erro do objeto) e a recusa do `WScript.Shell`.
+- Falta: esta máquina não tem o Office, então o `excel_round_trip` (`#[ignore]`) não rodou de
+  verdade: a ordem linha × coluna da matriz no Excel e o `Resize` do `put_data` esperam o
+  roteiro 123 numa máquina com o Excel. A tela espera enquanto o programa responde (não há
+  versão assíncrona). O backend remoto continua podendo comandar o Excel da máquina (decidido:
+  basta a lista de programas).
+- Na mesma rodada, o `aylis-tool update-catalog` também gravou no catálogo o `Clipboard` e o
+  `UrlScheme` (de outras sessões), que faltavam nele.
+- A página da documentação (`componentes/OleObject.md` e a entrada no `indice.json`) foi
+  ajustada à mão, no formato do gerador, com o texto de `docs/componentes/OleObject.md`: o
+  `aylis-tool docs` não rodava de novo porque o `aylis-project` estava sem compilar por uma
+  mudança de outra sessão (`ImageCacheLimits.layers_mb`). Pelo mesmo motivo não rodaram a suíte
+  inteira nem os testes da IDE (o das traduções); rodaram os do componente, do serviço, do
+  catálogo e de `crates/aylis/tests/classes.rs`, mais o wasm e o Android dos três crates.
 
 **A placa de vídeo de cada janela (11/11/2026)**
 

@@ -332,6 +332,13 @@ pub trait Canvas {
     /// Veja [`begin_cached`](Canvas::begin_cached).
     fn end_cached(&mut self) {}
 
+    /// Solta as imagens guardadas com a `key` de [`begin_cached`](Canvas::begin_cached): o
+    /// núcleo chama quando a camada de um controle deixa de valer (a transição acabou, o
+    /// desenho de dentro mudou), para ela não ocupar memória até sair pelo limite.
+    fn forget_cached(&mut self, key: u64) {
+        let _ = key;
+    }
+
     /// Contorna um caminho. O padrão desenha as curvas como retas.
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke) {
         for (points, closed) in path.flatten(8) {

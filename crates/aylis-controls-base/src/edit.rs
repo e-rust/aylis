@@ -575,9 +575,7 @@ impl Edit {
             return;
         }
         let text = self.selected_text().to_string();
-        if let Some(clipboard) = ctx.ui.services_mut().clipboard.as_mut() {
-            clipboard.set_text(&text);
-        }
+        aylis_core::clipboard::set_text(ctx.ui, &text);
     }
 }
 
@@ -816,7 +814,7 @@ impl Component for Edit {
                 }
             }
             Key::Char('v') if ctrl => {
-                let pasted = ctx.ui.services_mut().clipboard.as_mut().and_then(|c| c.get_text());
+                let pasted = aylis_core::clipboard::text(ctx.ui);
                 if let Some(text) = pasted {
                     // O colado passa pelos mesmos caracteres do digitado.
                     let text = ctx.ui.filter_text(ctx.id, Some(&self.char_filter()), &text);

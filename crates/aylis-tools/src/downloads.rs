@@ -1,38 +1,32 @@
-//! As ferramentas que a IDE baixa (depuradores, servidores de linguagem, o bundletool) com
-//! versão fixa e o SHA-256 de cada arquivo, em `resources/tools.lock.json`. O download, a
-//! conferência e a extração são feitos aqui, em Rust ([`fetch`], `aylis-tool fetch <nome>`):
-//! um arquivo que não confere com o hash fixado não é usado. O que vem por gerenciador de
-//! pacotes (go, pip, npm, dotnet, git) usa a versão fixada em [`version`]; o gerenciador
-//! confere a integridade.
+//! A fachada antiga das ferramentas baixadas (depuradores, servidores de linguagem, o
+//! bundletool): agora são pacotes do [`crate::toolpacks`], no mesmo manifesto
+//! (`resources/packages.lock.json`, sucessor do `tools.lock.json`), com a versão fixa e o
+//! SHA-256 de cada arquivo. O que vem por gerenciador de pacotes (go, pip, npm, dotnet, git)
+//! usa a versão fixada em [`version`]; o gerenciador confere a integridade.
 //!
-//! Mudar de versão: `aylis-tool update-tools` regrava o lock com os hashes publicados (os do
-//! GitHub, ou o `.sha256` ao lado do arquivo); com `--latest`, passa antes para a última
-//! versão de cada uma (as que têm teto, como o JDT LS que ainda roda no Java 17, ficam).
+//! [`fetch`] (o `aylis-tool fetch`) instala o pacote pelas origens dos pacotes (a pasta
+//! `pacotes`, as pastas e os espelhos das Opções). Nunca cai na URL oficial do manifesto
+//! (decisão do autor em docs/pacotes.md): só o `pack` e o `update` a usam.
+//!
+//! Mudar de versão: `aylis-tool update-tools` regrava estes pacotes no manifesto com os hashes
+//! publicados (os do GitHub, ou o `.sha256` ao lado do arquivo); com `--latest`, passa antes
+//! para a última versão de cada um (os que têm teto, como o JDT LS que ainda roda no Java 17,
+//! ficam).
 
-use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use serde_json::{Map, Value, json};
-use sha2::{Digest, Sha256};
 
-const LOCK: &str = include_str!("../../../resources/tools.lock.json");
+use crate::toolpacks::{Installer, Manifest, Progress};
 
-fn lock() -> Value {
-    serde_json::from_str(LOCK).expect("resources/tools.lock.json válido")
-}
-
-/// A versão fixada de um pacote (`gopls`, `delve`, `python-lsp-server`, `typescript`...).
+/// A versão fixada de um pacote de gerenciador (`gopls`, `delve`, `python-lsp-server`,
+/// `typescript`...).
 pub fn version(package: &str) -> String {
-    lock()["packages"][package].as_str().unwrap_or_default().to_string()
+    Manifest::embedded().manager_version(package)
 }
 
-/// Esta plataforma como no lock (`windows-x86_64`).
-fn platform() -> String {
-    format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
-}
-
-/// Um arquivo fixado para esta plataforma.
+/// O arquivo de uma ferramenta para esta plataforma.
 #[derive(Clone, Debug)]
 pub struct Archive {
     pub name: String,
@@ -42,9 +36,6 @@ pub struct Archive {
     pub url: String,
     pub sha256: String,
     pub size: u64,
-    /// Onde fica na pasta de ferramentas (uma pasta, ou o arquivo se não for extraído).
-    dest: String,
-    extract: bool,
 }
 
 impl Archive {
@@ -53,188 +44,27 @@ impl Archive {
     }
 }
 
-/// O arquivo de `name` para esta plataforma (a exata, depois só o sistema, depois `any`).
+/// O arquivo do pacote `name` para esta plataforma (o primeiro, se tiver vários).
 pub fn archive(name: &str) -> Option<Archive> {
-    let lock = lock();
-    let entry = &lock["archives"][name];
-    let files = entry["files"].as_object()?;
-    let f = files.get(&platform()).or_else(|| files.get(std::env::consts::OS)).or_else(|| files.get("any"))?;
-    Some(Archive {
-        name: name.to_string(),
-        version: entry["version"].as_str()?.to_string(),
-        file: f["name"].as_str()?.to_string(),
-        url: f["url"].as_str()?.to_string(),
-        sha256: f["sha256"].as_str()?.to_string(),
-        size: f["size"].as_u64().unwrap_or(0),
-        dest: entry["dest"].as_str()?.to_string(),
-        extract: entry["extract"].as_bool().unwrap_or(true),
-    })
+    let p = Manifest::embedded().package(name)?;
+    let f = p.files.first()?;
+    Some(Archive { name: p.name.clone(), version: p.version.clone(), file: f.name.clone(), url: f.url.clone().unwrap_or_default(), sha256: f.sha256.clone(), size: p.size() })
 }
 
-/// Baixa (ou reaproveita o que já está no cache), confere o SHA-256 e instala na pasta de
-/// ferramentas do aylis. Devolve onde ficou.
+/// Instala o pacote `name` pelas origens dos pacotes e devolve a pasta onde ficou.
 pub fn fetch(name: &str, say: &mut dyn FnMut(String)) -> Result<PathBuf, String> {
-    let a = archive(name).ok_or_else(|| format!("{name}: nenhum arquivo fixado para {}", platform()))?;
-    if !plain_name(&a.file) || !plain_name(&a.dest) {
-        return Err(format!("{name}: nome inválido no tools.lock.json"));
-    }
-    let tools = crate::dap::tools_dir().ok_or("sem a pasta de ferramentas do Aylis")?;
-    let cache = tools.parent().ok_or("sem a pasta de dados do Aylis")?.join("downloads");
-    std::fs::create_dir_all(&cache).map_err(|e| format!("{}: {e}", cache.display()))?;
-    let file = cache.join(&a.file);
-    if file.is_file() && sha256_file(&file)? == a.sha256 {
-        say(format!("{} {}: usando o que já foi baixado", a.name, a.version));
-    } else {
-        say(format!("Baixando {} {} ({}, {} MB)…", a.name, a.version, a.file, a.megabytes()));
-        download(&a.url, &file, &a.sha256)?;
-    }
-    say(format!("SHA-256 confere: {}", a.sha256));
-    let dest = tools.join(&a.dest);
-    if a.extract {
-        // Extrai numa pasta nova e troca no fim: nada de arquivos velhos misturados, e uma
-        // extração que falha não estraga a versão que já funcionava.
-        let fresh = tools.join(format!("{}.new-{}", a.dest, std::process::id()));
-        let _ = std::fs::remove_dir_all(&fresh);
-        say(format!("Extraindo em {}…", dest.display()));
-        if let Err(e) = extract(&file, &fresh) {
-            let _ = std::fs::remove_dir_all(&fresh);
-            return Err(e);
+    let installer = Installer::new()?;
+    let control = crate::process::Control::default();
+    installer.install(&[name], &control, &mut |p| {
+        if let Progress::Step(s) = p {
+            say(s)
         }
-        if dest.exists() && std::fs::remove_dir_all(&dest).is_err() {
-            // Não deu para apagar (um arquivo em uso): a anterior sai do caminho com outro nome.
-            let old = tools.join(format!("{}.old-{}", a.dest, std::process::id()));
-            std::fs::rename(&dest, &old).map_err(|e| format!("não consegui tirar a versão anterior de {}: {e}", dest.display()))?;
-            say(format!("A versão anterior ficou em {} (apague quando puder)", old.display()));
-        }
-        std::fs::rename(&fresh, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
-    } else {
-        std::fs::create_dir_all(&tools).map_err(|e| e.to_string())?;
-        std::fs::copy(&file, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
-    }
-    say(format!("{} {} instalado em {}", a.name, a.version, dest.display()));
-    Ok(dest)
-}
-
-/// Um nome de arquivo sem pasta, sem `..` e sem nada estranho.
-fn plain_name(name: &str) -> bool {
-    !name.is_empty() && !name.starts_with('.') && name.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c))
-}
-
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
-}
-
-fn sha256_file(path: &Path) -> Result<String, String> {
-    let mut f = File::open(path).map_err(|e| format!("{}: {e}", path.display()))?;
-    let mut hasher = Sha256::new();
-    let mut buf = vec![0u8; 1 << 16];
-    loop {
-        let n = f.read(&mut buf).map_err(|e| e.to_string())?;
-        if n == 0 {
-            break;
-        }
-        hasher.update(&buf[..n]);
-    }
-    Ok(hex(&hasher.finalize()))
-}
-
-/// No navegador (a IDE lite) não se baixa nada: o corpo vazio só para compilar.
-#[cfg(target_arch = "wasm32")]
-struct Body;
-
-#[cfg(target_arch = "wasm32")]
-impl Body {
-    fn as_reader(&mut self) -> std::io::Empty {
-        std::io::empty()
-    }
-
-    fn read_to_string(&mut self) -> std::io::Result<String> {
-        Ok(String::new())
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-fn get(url: &str) -> Result<Body, String> {
-    Err(format!("{url}: baixar não existe no navegador"))
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get(url: &str) -> Result<ureq::Body, String> {
-    let response = ureq::get(url).header("User-Agent", "aylis-ide").call().map_err(|e| format!("{url}: {e}"))?;
-    Ok(response.into_body())
-}
-
-/// Baixa `url` em `to` conferindo o SHA-256 no caminho: se não bater, apaga e devolve erro.
-fn download(url: &str, to: &Path, sha256: &str) -> Result<(), String> {
-    if !url.starts_with("https://") {
-        return Err(format!("{url}: só https"));
-    }
-    let part = to.with_extension("part");
-    let mut body = get(url)?;
-    let mut reader = body.as_reader();
-    let mut out = File::create(&part).map_err(|e| format!("{}: {e}", part.display()))?;
-    let mut hasher = Sha256::new();
-    let mut buf = vec![0u8; 1 << 16];
-    loop {
-        let n = reader.read(&mut buf).map_err(|e| format!("{url}: {e}"))?;
-        if n == 0 {
-            break;
-        }
-        hasher.update(&buf[..n]);
-        out.write_all(&buf[..n]).map_err(|e| e.to_string())?;
-    }
-    drop(out);
-    let got = hex(&hasher.finalize());
-    if got != sha256 {
-        let _ = std::fs::remove_file(&part);
-        return Err(format!("o arquivo baixado de {url} não confere (SHA-256 {got}, o fixado é {sha256}): não foi usado"));
-    }
-    std::fs::rename(&part, to).map_err(|e| format!("{}: {e}", to.display()))
-}
-
-/// Extrai um `.zip`/`.vsix` ou `.tar.gz` em `to`. Entradas que sairiam da pasta (`..`,
-/// caminho absoluto) são recusadas.
-fn extract(archive: &Path, to: &Path) -> Result<(), String> {
-    std::fs::create_dir_all(to).map_err(|e| e.to_string())?;
-    let name = archive.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
-    let file = File::open(archive).map_err(|e| format!("{}: {e}", archive.display()))?;
-    if name.ends_with(".tar.gz") || name.ends_with(".tgz") {
-        let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(file));
-        tar.set_preserve_permissions(cfg!(unix));
-        for entry in tar.entries().map_err(|e| e.to_string())? {
-            let mut entry = entry.map_err(|e| e.to_string())?;
-            // `unpack_in` não escreve fora de `to`.
-            entry.unpack_in(to).map_err(|e| e.to_string())?;
-        }
-        return Ok(());
-    }
-    let mut zip = zip::ZipArchive::new(file).map_err(|e| format!("{}: {e}", archive.display()))?;
-    for i in 0..zip.len() {
-        let mut entry = zip.by_index(i).map_err(|e| e.to_string())?;
-        let Some(relative) = entry.enclosed_name() else {
-            return Err(format!("{}: entrada fora da pasta ({})", archive.display(), entry.name().unwrap_or_default()));
-        };
-        let path = to.join(relative);
-        if entry.is_dir() {
-            std::fs::create_dir_all(&path).map_err(|e| e.to_string())?;
-            continue;
-        }
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-        }
-        let mut out = File::create(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-        std::io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
-        #[cfg(unix)]
-        if let Some(mode) = entry.unix_mode() {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode));
-        }
-    }
-    Ok(())
+    })?;
+    installer.installed_dir(name).ok_or_else(|| format!("{name}: não ficou instalado"))
 }
 
 // ---------------------------------------------------------------------------
-// `aylis-tool update-tools`: regrava o lock.
+// `aylis-tool update-tools`: regrava estes pacotes no manifesto.
 
 /// De onde vem cada arquivo.
 enum Source {
@@ -250,8 +80,6 @@ struct Spec {
     /// Plataforma (`windows-x86_64`, `linux`, `any`...) e o nome do arquivo (`{tag}` = a tag
     /// do release, `{v}` = a versão sem o `v`).
     files: &'static [(&'static str, &'static str)],
-    dest: &'static str,
-    extract: bool,
     /// O `--latest` muda a versão (as com teto ficam).
     follow_latest: bool,
 }
@@ -268,8 +96,6 @@ const SPECS: &[Spec] = &[
             ("macos-x86_64", "codelldb-darwin-x64.vsix"),
             ("macos-aarch64", "codelldb-darwin-arm64.vsix"),
         ],
-        dest: "codelldb",
-        extract: true,
         follow_latest: true,
     },
     Spec {
@@ -281,49 +107,44 @@ const SPECS: &[Spec] = &[
             ("linux-aarch64", "netcoredbg-linux-arm64.tar.gz"),
             ("macos-aarch64", "netcoredbg-osx-arm64.zip"),
         ],
-        dest: "netcoredbg",
-        extract: true,
         follow_latest: true,
     },
-    Spec {
-        name: "js-debug",
-        source: Source::GitHub("microsoft/vscode-js-debug"),
-        files: &[("any", "js-debug-dap-{tag}.tar.gz")],
-        dest: "js-debug",
-        extract: true,
-        follow_latest: true,
-    },
+    Spec { name: "js-debug", source: Source::GitHub("microsoft/vscode-js-debug"), files: &[("any", "js-debug-dap-{tag}.tar.gz")], follow_latest: true },
     Spec {
         name: "clangd",
         source: Source::GitHub("clangd/clangd"),
         files: &[("windows", "clangd-windows-{tag}.zip"), ("linux", "clangd-linux-{tag}.zip"), ("macos", "clangd-mac-{tag}.zip")],
-        dest: "clangd",
-        extract: true,
         follow_latest: true,
     },
-    Spec {
-        name: "bundletool",
-        source: Source::GitHub("google/bundletool"),
-        files: &[("any", "bundletool-all-{tag}.jar")],
-        dest: "bundletool.jar",
-        extract: false,
-        follow_latest: true,
-    },
+    Spec { name: "bundletool", source: Source::GitHub("google/bundletool"), files: &[("any", "bundletool-all-{tag}.jar")], follow_latest: true },
     // O 1.38 é o último que roda no Java 17 (os de depois pedem o 21).
     Spec {
         name: "jdtls",
         source: Source::Url("https://download.eclipse.org/jdtls/milestones/{v}/jdt-language-server-1.38.0-202408011337.tar.gz"),
         files: &[("any", "jdt-language-server-1.38.0-202408011337.tar.gz")],
-        dest: "jdtls",
-        extract: true,
         follow_latest: false,
     },
 ];
 
+#[cfg(target_arch = "wasm32")]
+fn get(url: &str) -> Result<Box<dyn Read>, String> {
+    Err(format!("{url}: baixar não existe no navegador"))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get(url: &str) -> Result<Box<dyn Read>, String> {
+    let response = ureq::get(url).header("User-Agent", "aylis-ide").call().map_err(|e| format!("{url}: {e}"))?;
+    Ok(Box::new(response.into_body().into_reader()))
+}
+
+fn get_text(url: &str) -> Result<String, String> {
+    let mut s = String::new();
+    get(url)?.take(16 << 20).read_to_string(&mut s).map_err(|e| format!("{url}: {e}"))?;
+    Ok(s)
+}
+
 fn get_json(url: &str) -> Result<Value, String> {
-    let mut body = get(url)?;
-    let text = body.read_to_string().map_err(|e| format!("{url}: {e}"))?;
-    serde_json::from_str(&text).map_err(|e| format!("{url}: {e}"))
+    serde_json::from_str(&get_text(url)?).map_err(|e| format!("{url}: {e}"))
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -342,12 +163,8 @@ fn content_length(url: &str) -> u64 {
         .unwrap_or(0)
 }
 
-fn get_text(url: &str) -> Result<String, String> {
-    get(url)?.read_to_string().map_err(|e| format!("{url}: {e}"))
-}
-
-/// A última versão de cada pacote (o `--latest`). Os de teto ficam como estão.
-fn latest_packages(current: &Map<String, Value>, say: &mut dyn FnMut(String)) -> Result<Map<String, Value>, String> {
+/// A última versão de cada pacote de gerenciador (o `--latest`). Os de teto ficam.
+fn latest_managers(current: &Map<String, Value>, say: &mut dyn FnMut(String)) -> Result<Map<String, Value>, String> {
     let mut out = current.clone();
     let mut set = |name: &str, version: String, say: &mut dyn FnMut(String)| {
         if current.get(name).and_then(Value::as_str) != Some(version.as_str()) {
@@ -384,13 +201,15 @@ fn latest_packages(current: &Map<String, Value>, say: &mut dyn FnMut(String)) ->
     Ok(out)
 }
 
-/// Regrava `resources/tools.lock.json` em `root` (o repositório do aylis): os hashes
-/// publicados de cada arquivo; com `latest`, antes passa para a última versão.
+/// Regrava, no `resources/packages.lock.json` de `root`, os pacotes de [`SPECS`] com os
+/// hashes publicados de cada arquivo (o resto de cada pacote, como o título e o `PATH`, fica);
+/// com `latest`, antes passa para a última versão, e também a dos pacotes de gerenciador.
 pub fn update_lock(root: &Path, latest: bool, say: &mut dyn FnMut(String)) -> Result<(), String> {
-    let old = lock();
-    let mut archives = Map::new();
+    let path = root.join("resources/packages.lock.json");
+    let mut lock: Value = serde_json::from_str(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?).map_err(|e| e.to_string())?;
     for spec in SPECS {
-        let mut version = old["archives"][spec.name]["version"].as_str().unwrap_or_default().to_string();
+        let entry = &mut lock["packages"][spec.name];
+        let mut version = entry["version"].as_str().unwrap_or_default().to_string();
         let release = match &spec.source {
             Source::GitHub(repo) => {
                 let url = if latest && spec.follow_latest || version.is_empty() {
@@ -414,7 +233,8 @@ pub fn update_lock(root: &Path, latest: bool, say: &mut dyn FnMut(String)) -> Re
             }
         };
         let bare = version.trim_start_matches('v');
-        let mut files = Map::new();
+        let old_platforms = entry["platforms"].as_object().cloned().unwrap_or_default();
+        let mut platforms = Map::new();
         for (platform, template) in spec.files {
             let file = template.replace("{tag}", &version).replace("{v}", bare);
             let (url, sha256, size) = match (&spec.source, &release) {
@@ -433,22 +253,27 @@ pub fn update_lock(root: &Path, latest: bool, say: &mut dyn FnMut(String)) -> Re
                 }
                 _ => unreachable!(),
             };
-            if sha256.len() != 64 || !sha256.chars().all(|c| c.is_ascii_hexdigit()) {
+            if !crate::toolpacks::is_sha256(&sha256) {
                 return Err(format!("{}: SHA-256 inválido para {file}", spec.name));
             }
-            files.insert(platform.to_string(), json!({ "name": file, "url": url, "sha256": sha256, "size": size }));
+            // Os campos de instalação (`strip`, `save_as`...) do arquivo anterior ficam.
+            let mut f = old_platforms[*platform]["files"][0].as_object().cloned().unwrap_or_default();
+            f.insert("name".into(), json!(file));
+            f.insert("size".into(), json!(size));
+            f.insert("sha256".into(), json!(sha256));
+            f.insert("url".into(), json!(url));
+            platforms.insert(platform.to_string(), json!({ "files": [f] }));
         }
-        archives.insert(spec.name.into(), json!({ "version": version, "dest": spec.dest, "extract": spec.extract, "files": files }));
+        entry["version"] = json!(version);
+        entry["platforms"] = Value::Object(platforms);
     }
-    let packages = old["packages"].as_object().cloned().unwrap_or_default();
-    let packages = if latest { latest_packages(&packages, say)? } else { packages };
-    let lock = json!({
-        "_": "Gerado por `aylis-tool update-tools [--latest]`: versões fixas e o SHA-256 de cada arquivo que a IDE baixa.",
-        "archives": archives,
-        "packages": packages,
-    });
-    let path = root.join("resources/tools.lock.json");
-    std::fs::write(&path, serde_json::to_string_pretty(&lock).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+    if latest {
+        let managers = lock["managers"].as_object().cloned().unwrap_or_default();
+        lock["managers"] = Value::Object(latest_managers(&managers, say)?);
+    }
+    let text = serde_json::to_string_pretty(&lock).map_err(|e| e.to_string())? + "\n";
+    Manifest::parse(&text)?;
+    std::fs::write(&path, text).map_err(|e| format!("{}: {e}", path.display()))?;
     say(format!("{} atualizado (recompile o aylis-tool e a IDE)", path.display()));
     Ok(())
 }
@@ -459,15 +284,15 @@ mod tests {
 
     #[test]
     fn the_lock_has_a_file_and_a_hash_for_each_tool() {
-        let lock = lock();
+        let m = Manifest::embedded();
         for spec in SPECS {
-            let files = lock["archives"][spec.name]["files"].as_object().unwrap_or_else(|| panic!("{} no lock", spec.name));
-            assert!(!files.is_empty(), "{}", spec.name);
-            for f in files.values() {
-                let sha = f["sha256"].as_str().unwrap();
-                assert!(sha.len() == 64 && sha.chars().all(|c| c.is_ascii_hexdigit()), "{}: {sha}", spec.name);
-                assert!(f["url"].as_str().unwrap().starts_with("https://"));
-                assert!(plain_name(f["name"].as_str().unwrap()));
+            let p = m.package_for(spec.name, "windows-x86_64").unwrap_or_else(|| panic!("{} no manifesto", spec.name));
+            assert!(!p.platforms.is_empty(), "{}", spec.name);
+            for plat in &p.platforms {
+                for f in m.package_for(spec.name, plat).unwrap().files {
+                    assert!(crate::toolpacks::is_sha256(&f.sha256), "{}: {}", spec.name, f.sha256);
+                    assert!(f.url.unwrap().starts_with("https://"));
+                }
             }
         }
         for package in ["gopls", "delve", "python-lsp-server", "typescript", "typescript-language-server", "csharp-ls", "csharp-ls-net9", "csharp-ls-net8", "pascal-language-server"] {
@@ -476,26 +301,11 @@ mod tests {
     }
 
     #[test]
-    fn names_with_folders_are_refused() {
-        assert!(plain_name("clangd-windows-23.1.0.zip"));
-        for bad in ["../x.zip", "a/b.zip", r"a\b.zip", ".hidden", ""] {
-            assert!(!plain_name(bad), "{bad}");
-        }
-    }
-
-    #[test]
-    fn a_zip_entry_outside_the_folder_is_refused() {
-        let dir = std::env::temp_dir().join(format!("aylis_zip_slip_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let archive = dir.join("bad.zip");
-        let mut zip = zip::ZipWriter::new(File::create(&archive).unwrap());
-        zip.start_file("../fora.txt", zip::write::SimpleFileOptions::default()).unwrap();
-        zip.write_all(b"x").unwrap();
-        zip.finish().unwrap();
-        let err = extract(&archive, &dir.join("out")).unwrap_err();
-        assert!(err.contains("fora da pasta"), "{err}");
-        assert!(!dir.join("fora.txt").exists());
-        let _ = std::fs::remove_dir_all(&dir);
+    fn the_old_archives_keep_their_files() {
+        let a = archive("bundletool").expect("bundletool");
+        assert!(a.file.ends_with(".jar") && a.size > 0);
+        let p = Manifest::embedded().package("bundletool").unwrap();
+        assert_eq!(p.files[0].save_as.as_deref(), Some("bundletool.jar"));
+        assert!(!p.files[0].extract);
     }
 }

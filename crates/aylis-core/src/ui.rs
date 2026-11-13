@@ -331,6 +331,12 @@ pub struct Ui {
     /// Muda a cada pintura inteira: as camadas guardadas (`cache_layer`) só valem entre
     /// pinturas por parte, em que o `Ui` sabe o que mudou.
     pub(crate) layer_epoch: std::cell::Cell<u64>,
+    /// As camadas guardadas que deixaram de valer fora da pintura (a transição acabou, o
+    /// controle foi liberado): a próxima pintura as solta do renderizador (`forget_cached`).
+    pub(crate) dead_layers: std::cell::RefCell<Vec<u64>>,
+    /// As camadas automáticas valem no form sendo pintado (a propriedade `layer_cache` dele,
+    /// ou o padrão do projeto): lido no começo de cada pintura.
+    pub(crate) auto_layers: std::cell::Cell<bool>,
     /// Quantos controles a última pintura desenhou (os que passaram do recorte das áreas):
     /// a medida do trabalho de um quadro que não depende da máquina ([`Ui::last_paint_count`]).
     pub(crate) paint_count: std::cell::Cell<usize>,
@@ -453,6 +459,8 @@ impl Ui {
             part_ids: Default::default(),
             scroll_moves: Default::default(),
             layer_epoch: Default::default(),
+            dead_layers: Default::default(),
+            auto_layers: std::cell::Cell::new(true),
             paint_count: Default::default(),
         }
     }
@@ -690,6 +698,10 @@ impl Ui {
         }
         for &d in &doomed {
             let slot = &mut self.slots[d.index as usize];
+            // A camada guardada dele sai do renderizador na próxima pintura.
+            if let Some(key) = slot.entry.as_ref().and_then(|e| e.visual.borrow_mut().layer_key.take()) {
+                self.dead_layers.get_mut().push(key);
+            }
             slot.entry = None;
             slot.generation = slot.generation.wrapping_add(1);
             self.free_slots.push(d.index);

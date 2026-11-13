@@ -29,6 +29,8 @@ rodar no simulador do iOS. Para o iOS, o `build-ios.sh` monta o app.
 | A barra de título própria no macOS (`border_style = custom`): a barra do sistema transparente, sem título nem botões, e o conteúdo por baixo, para manter os cantos arredondados e a sombra; com `window_corners = square`, sem moldura | escrito; não compilado para macOS | exemplo `titlebar`: os cantos, arrastar pela barra própria, redimensionar, e que os botões do sistema não aparecem |
 | Tempo de CPU e amostragem da pilha no profiler, no macOS | só Windows (e o tempo no Linux) | profiler da IDE num app em Rust |
 | `AppLink`, sensores e `BackgroundService` no iOS | **falta fazer** | `TesteAparelho` no simulador |
+| `UrlScheme` no macOS e no iOS (`CFBundleURLTypes` na publicação; o link com o app aberto) | **falta fazer** | um app com `UrlScheme` e o link no Safari |
+| Área de transferência no macOS (texto, HTML e imagem pelo `arboard`) e no iOS (o `UIPasteboard`) | macOS escrito, não compilado; iOS **falta fazer** (copia e cola só dentro do app) | o roteiro 119 no Paint e na IDE: imagem para o Preview, HTML para o Pages |
 | `PushNotifications` no iOS e no macOS (APNs) | compila para iOS; o macOS não foi compilado; nunca rodou. A dúvida maior: o toque que abre o app fechado (o delegado da central é posto quando o aylis cria os serviços, talvez depois do fim da partida) | o app com a capacidade Push no App ID; mandar pelo APNs sandbox (ou arrastar um `.apns` no simulador) com o app aberto, em segundo plano e fechado |
 
 ## Celular de verdade (Android e iOS)

@@ -210,6 +210,9 @@ impl Canvas for TextCanvas<'_> {
     fn end_cached(&mut self) {
         self.inner.end_cached();
     }
+    fn forget_cached(&mut self, key: u64) {
+        self.inner.forget_cached(key);
+    }
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke) {
         self.inner.stroke_path(path, stroke);
     }

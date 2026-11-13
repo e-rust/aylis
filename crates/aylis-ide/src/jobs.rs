@@ -94,8 +94,8 @@ impl OutputLine {
 /// O que a thread de trabalho manda para a interface.
 pub enum Msg {
     Event(Event),
-    /// Resultado da verificação do ambiente.
-    Checks(Vec<Check>),
+    /// Resultado da verificação do ambiente destas plataformas (as outras ficam como estão).
+    Checks(Vec<Target>, Vec<Check>),
     /// O ambiente não está pronto: abrir o "Verificar ambiente".
     NeedsEnvironment,
     /// Cada linguagem, se o compilador está instalado e o que falta (o assistente
@@ -110,6 +110,10 @@ pub enum Msg {
     /// A geração de código mexeu no disco: o texto dos arquivos abertos antes dela (o editor
     /// acompanha, `codewindow::follow_generation`).
     Generated(Vec<(PathBuf, String)>),
+    /// Os pacotes de ferramentas, com o que está instalado e o que a máquina já tem.
+    ToolPacks(Vec<crate::toolpacksview::Row>),
+    /// O que cada origem de pacotes tem (o "Testar as origens" das Opções).
+    Sources(Vec<aylis_tools::toolpacks::Probe>),
     /// Terminou: a mensagem final ou o erro.
     Done(Result<String, String>),
 }
@@ -178,6 +182,12 @@ pub struct Sender {
 }
 
 impl Sender {
+    /// Outro igual (para mandar de outra thread: a verificação de ambiente avisa de cada
+    /// plataforma, que roda na dela).
+    pub fn duplicate(&self) -> Sender {
+        Sender { tx: self.tx.clone(), waker: self.waker.clone() }
+    }
+
     pub fn send(&self, msg: Msg) {
         let _ = self.tx.send(msg);
         if let Some(w) = &self.waker {
@@ -272,6 +282,9 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
     let mut env_changed = false;
     let mut languages_done = false;
     let mut languages_checked = false;
+    let mut toolpacks_changed = false;
+    let mut toolpacks_done = false;
+    let mut sources: Option<Vec<aylis_tools::toolpacks::Probe>> = None;
     for slot in [Slot::Main, Slot::Environment] {
         let Some(mut job) = (match slot {
             Slot::Main => state.borrow_mut().job.take(),
@@ -342,11 +355,26 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
                         }
                     }
                 }
-                Msg::Checks(checks) => {
-                    st.checks = checks;
+                Msg::Checks(targets, checks) => {
+                    st.checks.retain(|c| !targets.contains(&c.target));
+                    st.checks.extend(checks);
+                    let now = aylis_tools::env_cache::now();
+                    for t in targets {
+                        st.env_pending.retain(|p| *p != t);
+                        if !st.env_fresh.contains(&t) {
+                            st.env_fresh.push(t);
+                        }
+                        st.env_saved.retain(|(p, _)| *p != t);
+                        st.env_saved.push((t, now));
+                    }
                     env_changed = true;
                 }
                 Msg::NeedsEnvironment => open_env = true,
+                Msg::ToolPacks(rows) => {
+                    st.toolpacks = rows;
+                    toolpacks_changed = true;
+                }
+                Msg::Sources(list) => sources = Some(list),
                 Msg::Languages(list) => {
                     st.language_status = list;
                     languages_checked = true;
@@ -391,7 +419,14 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
                         if job.title == DEVICE_DEBUG {
                             st.status = text.clone();
                         }
+                        if [crate::toolpacksview::INSTALLING, crate::toolpacksview::REMOVING].contains(&job.title.as_str()) {
+                            st.toolpacks_log = text.clone();
+                        }
+                        toolpacks_done = true;
                         st.env_log = if kind == OutKind::Error { text } else { String::new() };
+                        // O que não chegou (interrompido, uma correção que falhou) deixa de
+                        // aparecer como "conferindo…".
+                        st.env_pending.clear();
                         env_changed = true;
                     }
                 }
@@ -425,6 +460,19 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
     }
     if languages_done {
         check_languages(state);
+    }
+    // Pacotes de ferramentas: a lista nova, o andamento e, com a vaga livre, a conferência
+    // que esperava por ela.
+    if toolpacks_changed {
+        crate::toolpacksview::fill(ui, state);
+    } else if env_changed || toolpacks_done {
+        crate::toolpacksview::status(ui, state);
+    }
+    if toolpacks_done && !languages_done && state.borrow().toolpacks_pending && state.borrow().toolpacks_view.is_some() && state.borrow().env_job.is_none() {
+        crate::toolpacksview::check(state);
+    }
+    if let Some(list) = sources {
+        crate::options::show_probes(ui, state, &list);
     }
     // Os erros e avisos das MENSAGENS vão também para a gravação de uso: o que o autor relata
     // ("veja o log") aparece nela depois de a próxima execução limpar o painel (conferência de
@@ -528,14 +576,21 @@ fn beside_ide(name: &str) -> Option<PathBuf> {
 }
 
 /// Confere o ambiente da plataforma antes de compilar. Erro (e pede para abrir o
-/// "Verificar ambiente") se faltar algo.
+/// "Verificar ambiente") se faltar algo. Usa o resultado guardado quando as marcas dele não
+/// mudaram (`env_cache`: ~50 ms em vez de ~300 ms a cada F9); guardado com falta, confere de
+/// novo (a pessoa pode já ter resolvido).
 fn require(language: Language, target: Target, sender: &Sender) -> Result<(), String> {
-    let checks = env::check(language, &[target], aylis_host().as_deref());
+    let host = aylis_host();
+    let targets = [target];
+    let mut request = env::Request::new(language, &targets, host.as_deref());
+    request.live = false;
+    request.recheck_missing = true;
+    let checks = env::check_with(&request, &|_, _| {});
     if env::ready(&checks, target) {
         return Ok(());
     }
     let missing: Vec<String> = env::missing(&checks, target).iter().map(|c| c.name.clone()).collect();
-    sender.send(Msg::Checks(checks));
+    sender.send(Msg::Checks(vec![target], checks));
     sender.send(Msg::NeedsEnvironment);
     Err(format!("o ambiente não está pronto para {}: falta {}", target.name(), missing.join(", ")))
 }
@@ -769,13 +824,27 @@ pub fn publish_with(state: &Shared, target: Target, out_dir: Option<PathBuf>, ex
     }
 }
 
-/// Verifica o ambiente de todas as plataformas (para o diálogo).
-pub fn check_environment(state: &Shared) {
+/// Verifica o ambiente de `targets` (para o diálogo): cada plataforma chega assim que fica
+/// pronta. As de `force` rodam tudo de novo; as outras usam o resultado guardado quando as
+/// marcas dele não mudaram (`aylis_tools::env_cache`).
+pub fn check_environment(state: &Shared, targets: Vec<Target>, force: Vec<Target>) {
     let language = state.borrow().project.as_ref().map_or(Language::Rust, |p| p.language);
-    start(state, Slot::Environment, "Verificando o ambiente", move |_, sender| {
-        sender.send(Msg::Checks(env::check(language, &Target::ALL, aylis_host().as_deref())));
+    let pending = targets.clone();
+    let started = start(state, Slot::Environment, "Verificando o ambiente", move |_, sender| {
+        let host = aylis_host();
+        let mut request = env::Request::new(language, &targets, host.as_deref());
+        request.force = force;
+        let shared = std::sync::Mutex::new(sender.duplicate());
+        env::check_with(&request, &|t, checks| {
+            if let Ok(s) = shared.lock() {
+                s.send(Msg::Checks(vec![t], checks.to_vec()));
+            }
+        });
         Ok(String::new())
     });
+    if started {
+        state.borrow_mut().env_pending = pending;
+    }
 }
 
 /// Quais linguagens já estão instaladas (para o assistente; rápido, numa thread).
@@ -824,10 +893,23 @@ pub fn setup_languages(state: &Shared, languages: Vec<Language>) {
     });
 }
 
-/// Roda a correção de um item (o usuário já confirmou) e verifica de novo.
+/// Roda a correção de um item (o usuário já confirmou) e verifica de novo: tudo de novo nas
+/// plataformas que tinham o mesmo item (o Rust que falta aparece em todas), e pelas marcas
+/// nas outras do projeto.
 pub fn apply_fix(state: &Shared, fix: Fix) {
-    let language = state.borrow().project.as_ref().map_or(Language::Rust, |p| p.language);
-    start(state, Slot::Environment, format!("Corrigindo: {}", fix.description), move |control, sender| {
+    let (language, affected, targets) = {
+        let st = state.borrow();
+        let affected: Vec<Target> = Target::ALL.into_iter().filter(|t| st.checks.iter().any(|c| c.target == *t && c.fix.as_ref() == Some(&fix))).collect();
+        let mut targets = crate::tooldialogs::project_targets(&st);
+        for t in &affected {
+            if !targets.contains(t) {
+                targets.push(*t);
+            }
+        }
+        (st.project.as_ref().map_or(Language::Rust, |p| p.language), affected, targets)
+    };
+    let pending = targets.clone();
+    let started = start(state, Slot::Environment, format!("Corrigindo: {}", fix.description), move |control, sender| {
         if fix.interactive {
             let (program, args) = fix.command.split_first().ok_or("comando vazio")?;
             // Instaladores mostram a própria janela: só inicia (sem esconder o console).
@@ -839,9 +921,20 @@ pub fn apply_fix(state: &Shared, fix: Fix) {
             return Ok(String::new());
         }
         fix.run(control, &mut |e| sender.send(Msg::Event(e)))?;
-        sender.send(Msg::Checks(env::check(language, &Target::ALL, aylis_host().as_deref())));
+        let host = aylis_host();
+        let mut request = env::Request::new(language, &targets, host.as_deref());
+        request.force = affected;
+        let shared = std::sync::Mutex::new(sender.duplicate());
+        env::check_with(&request, &|t, checks| {
+            if let Ok(s) = shared.lock() {
+                s.send(Msg::Checks(vec![t], checks.to_vec()));
+            }
+        });
         Ok("Corrigido.".into())
     });
+    if started {
+        state.borrow_mut().env_pending = pending;
+    }
 }
 
 /// Clique numa linha das mensagens. O código abre no editor da IDE, na linha (abria no VS Code;

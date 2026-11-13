@@ -246,6 +246,7 @@ labels	Rótulos	Labels	Etiquetas	Libellés	Beschriftungen	Подписи	标签�
 landscape	Paisagem	Landscape	Horizontal	Paysage	Querformat	Альбомная	横向	横向き	أفقي (عرضي)	আড়াআড়ি	लैंडस्केप	Lanskap
 language	Idioma	Language	Idioma	Langue	Sprache	Язык	语言	言語	اللغة	ভাষা	भाषा	Bahasa
 latitude	Latitude	Latitude	Latitud	Latitude	Breitengrad	Широта	纬度	緯度	خط العرض	অক্ষাংশ	अक्षांश	Lintang
+layer_cache	Camadas automáticas	Automatic layers	Capas automáticas	Calques automatiques	Automatische Ebenen	Автоматические слои	自动图层	自動レイヤー	الطبقات التلقائية	স্বয়ংক্রিয় স্তর	स्वचालित परतें	Lapisan otomatis
 layout	Disposição	Layout	Disposición	Disposition	Anordnung	Компоновка	布局	レイアウト	التخطيط	বিন্যাস নকশা	लेआउट	Tata letak
 left	Esquerda	Left	Izquierda	Gauche	Links	Слева	左	左	اليسار	বাম	बायाँ	Kiri
 left_color	Cor da esquerda	Left color	Color izquierdo	Couleur gauche	Linke Farbe	Цвет слева	左侧颜色	左の色	لون اليسار	বাঁয়ের রং	बाएँ का रंग	Warna kiri
@@ -669,3 +670,17 @@ tab_width	Largura das abas	Tab width	Ancho de las pestañas	Largeur des onglets	
 client_width	Largura da área cliente	Client width	Ancho del área cliente	Largeur de la zone client	Clientbreite	Ширина клиентской области	客户区宽度	クライアント領域の幅	عرض منطقة العميل	ক্লায়েন্ট এলাকার প্রস্থ	क्लाइंट क्षेत्र की चौड़ाई	Lebar area klien
 client_height	Altura da área cliente	Client height	Alto del área cliente	Hauteur de la zone client	Clienthöhe	Высота клиентской области	客户区高度	クライアント領域の高さ	ارتفاع منطقة العميل	ক্লায়েন্ট এলাকার উচ্চতা	क्लाइंट क्षेत्र की ऊँचाई	Tinggi area klien
 window_corners	Cantos da janela	Window corners	Esquinas de la ventana	Coins de la fenêtre	Fensterecken	Углы окна	窗口圆角	ウィンドウの角	زوايا النافذة	উইন্ডোর কোণ	विंडो के कोने	Sudut jendela
+prog_id	Programa (ProgID)	Program (ProgID)	Programa (ProgID)	Programme (ProgID)	Programm (ProgID)	Программа (ProgID)	程序 (ProgID)	プログラム (ProgID)	البرنامج (ProgID)	প্রোগ্রাম (ProgID)	प्रोग्राम (ProgID)	Program (ProgID)
+use_running	Usar o já aberto	Use the running one	Usar el ya abierto	Utiliser celui déjà ouvert	Laufendes verwenden	Использовать открытый	使用已打开的	起動中のものを使う	استخدام المفتوح	খোলাটি ব্যবহার করুন	खुला हुआ उपयोग करें	Gunakan yang terbuka
+opened	Aberto	Open	Abierto	Ouvert	Geöffnet	Открыт	已打开	開いている	مفتوح	খোলা	खुला	Terbuka
+WmiQuery.namespace	Namespace do WMI	WMI namespace	Namespace de WMI	Espace de noms WMI	WMI-Namespace	Пространство имён WMI	WMI 命名空间	WMI 名前空間	مساحة أسماء WMI	WMI নেমস্পেস	WMI नेमस्पेस	Namespace WMI
+WmiQuery.query	Consulta (WQL)	Query (WQL)	Consulta (WQL)	Requête (WQL)	Abfrage (WQL)	Запрос (WQL)	查询 (WQL)	クエリ (WQL)	الاستعلام (WQL)	কোয়েরি (WQL)	क्वेरी (WQL)	Kueri (WQL)
+WmiQuery.timeout	Espera da consulta (s)	Query timeout (s)	Espera de la consulta (s)	Délai de la requête (s)	Abfrage-Zeitlimit (s)	Ожидание запроса (с)	查询超时 (秒)	クエリの待機 (秒)	مهلة الاستعلام (ث)	কোয়েরির অপেক্ষা (সে)	क्वेरी प्रतीक्षा (से)	Batas waktu kueri (dtk)
+WmiQuery.watch	Assinar eventos	Subscribe to events	Suscribirse a eventos	S'abonner aux événements	Ereignisse abonnieren	Подписаться на события	订阅事件	イベントを購読	الاشتراك في الأحداث	ইভেন্টে সাবস্ক্রাইব	इवेंट की सदस्यता	Berlangganan peristiwa
+WmiQuery.busy	Consultando	Querying	Consultando	Requête en cours	Abfrage läuft	Выполняется запрос	查询中	クエリ中	جارٍ الاستعلام	কোয়েরি চলছে	क्वेरी जारी	Sedang mengkueri
+WmiQuery.row_count	Linhas	Rows	Filas	Lignes	Zeilen	Строки	行数	行数	الصفوف	সারি	पंक्तियाँ	Baris
+WmiQuery.result	Resultado (JSON)	Result (JSON)	Resultado (JSON)	Résultat (JSON)	Ergebnis (JSON)	Результат (JSON)	结果 (JSON)	結果 (JSON)	النتيجة (JSON)	ফলাফল (JSON)	परिणाम (JSON)	Hasil (JSON)
+WmiQuery.last_event	Último evento (JSON)	Last event (JSON)	Último evento (JSON)	Dernier événement (JSON)	Letztes Ereignis (JSON)	Последнее событие (JSON)	最后的事件 (JSON)	最後のイベント (JSON)	آخر حدث (JSON)	শেষ ইভেন্ট (JSON)	अंतिम इवेंट (JSON)	Peristiwa terakhir (JSON)
+namespace	Namespace do WMI	WMI namespace	Namespace de WMI	Espace de noms WMI	WMI-Namespace	Пространство имён WMI	WMI 命名空间	WMI 名前空間	مساحة أسماء WMI	WMI নেমস্পেস	WMI नेमस्पेस	Namespace WMI
+scheme	Prefixo de URL	URL scheme	Prefijo de URL	Préfixe d’URL	URL-Schema	Префикс URL	URL 协议前缀	URL スキーム	بادئة عنوان URL	URL প্রিফিক্স	URL प्रीफ़िक्स	Skema URL
+bring_to_front	Trazer a janela para a frente	Bring the window to the front	Traer la ventana al frente	Amener la fenêtre au premier plan	Fenster in den Vordergrund holen	Выводить окно на передний план	将窗口置于前台	ウィンドウを前面に表示	إحضار النافذة إلى الأمام	উইন্ডো সামনে আনুন	विंडो को आगे लाएँ	Bawa jendela ke depan

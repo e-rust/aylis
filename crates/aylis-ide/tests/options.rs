@@ -21,13 +21,14 @@ fn the_options_screen_has_a_tab_per_language_and_mcp() {
         .iter()
         .filter_map(|&c| ui.get::<aylis_controls::TabItem>(c).map(|t| t.caption.clone()))
         .collect();
-    for wanted in ["Geral", "TypeScript", "C#", "Java", "Go", "C++", "Pascal", "Publicação", "Editor externo", "Rust e Python", "MCP"] {
+    for wanted in ["Geral", "TypeScript", "C#", "Java", "Go", "C++", "Pascal", "Publicação", "Editor externo", "Rust e Python", "MCP", "Pacotes"] {
         assert!(tabs.iter().any(|t| t == wanted), "falta a aba {wanted}: {tabs:?}");
     }
     let buttons: Vec<String> = all.iter().filter_map(|&c| ui.get::<aylis_controls::Button>(c).map(|b| b.text.clone())).collect();
     assert!(buttons.iter().any(|b| b == "Configurar o Claude Code"), "{buttons:?}");
     assert!(buttons.iter().any(|b| b == "Gerar novo token"), "{buttons:?}");
     assert!(buttons.iter().any(|b| b == "Limpar agora"), "a pasta de compilação, na aba do Rust: {buttons:?}");
+    assert!(buttons.iter().any(|b| b == "Testar as origens"), "as origens dos pacotes: {buttons:?}");
 
     // A captura (para conferir o visual): AYLIS_SHOTS=pasta.
     if let Ok(dir) = std::env::var("AYLIS_SHOTS") {

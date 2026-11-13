@@ -12,6 +12,7 @@ mod basic;
 mod mnemonic;
 mod chat;
 mod chips;
+mod clipboard;
 mod clock;
 mod color;
 mod combo;
@@ -63,6 +64,7 @@ pub use basic::{
     window_state_commands,
 };
 pub use chips::{Chip, ChipGroup, OtpInput, RangeSlider, Rating, SplitButton};
+pub use clipboard::Clipboard;
 pub use clock::TimePicker;
 pub use color::{ColorEdit, ColorPicker};
 pub use combo::{ComboArrow, ComboBox};

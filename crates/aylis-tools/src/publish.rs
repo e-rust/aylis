@@ -106,6 +106,7 @@ pub fn create_keystore(path: &Path, alias: &str, password: &str, name: &str, con
 /// ferramentas do aylis.
 pub fn bundletool() -> Option<PathBuf> {
     crate::settings::tool("bundletool")
+        .or_else(|| crate::toolpacks::installed_dir("bundletool").map(|d| d.join("bundletool.jar")).filter(|p| p.is_file()))
         .or_else(|| crate::dap::tools_dir().map(|d| d.join("bundletool.jar")))
         .filter(|p| p.is_file())
 }
@@ -265,6 +266,26 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     // Os arquivos ao lado do executável (o compilador DXC do traçado de raios).
     let extra_files: String = extra.iter().enumerate().map(|(i, p)| format!("\n          <File Id=\"Extra{i}\" Source=\"{}\" />", xml_escape(&p.display().to_string()))).collect();
     let icon = if project.publish.icon.is_empty() { String::new() } else { format!("\n    <Property Id=\"ARPPRODUCTICON\" Value=\"AppIcon\" />\n    <Icon Id=\"AppIcon\" SourceFile=\"{}\" />", xml_escape(&exe_path.display().to_string())) };
+    // Os prefixos dos `UrlScheme`: registrados na instalação e tirados na desinstalação.
+    let schemes = url_schemes(project);
+    let scheme_ref = if schemes.is_empty() { "" } else { "\n      <ComponentRef Id=\"UrlSchemes\" />" };
+    let scheme_component = if schemes.is_empty() {
+        String::new()
+    } else {
+        let exe_quoted = format!("&quot;[INSTALLFOLDER]{}&quot;", xml_escape(&exe_name));
+        let keys: String = schemes
+            .iter()
+            .enumerate()
+            .map(|(i, (scheme, description))| {
+                let description = xml_escape(if description.is_empty() { project.app_name() } else { description });
+                let key_path = if i == 0 { " KeyPath=\"yes\"" } else { "" };
+                format!(
+                    "\n        <RegistryKey Root=\"HKCU\" Key=\"Software\\Classes\\{scheme}\" ForceDeleteOnUninstall=\"yes\">\n          <RegistryValue Type=\"string\" Value=\"URL:{description}\"{key_path} />\n          <RegistryValue Name=\"URL Protocol\" Type=\"string\" Value=\"\" />\n          <RegistryKey Key=\"DefaultIcon\"><RegistryValue Type=\"string\" Value=\"{exe_quoted},0\" /></RegistryKey>\n          <RegistryKey Key=\"shell\\open\\command\"><RegistryValue Type=\"string\" Value=\"{exe_quoted} &quot;%1&quot;\" /></RegistryKey>\n        </RegistryKey>"
+                )
+            })
+            .collect();
+        format!("\n      <Component Id=\"UrlSchemes\" Guid=\"*\">{keys}\n      </Component>")
+    };
     let wxs = format!(
         r#"<!-- Gerado pelo aylis (Publicar → Windows → instalador). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
@@ -282,11 +303,11 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
       <Component Id="StartMenu" Guid="*">
         <Shortcut Id="AppShortcut" Name="{app}" Target="[INSTALLFOLDER]{exe_name}" WorkingDirectory="INSTALLFOLDER" />
         <RegistryValue Root="HKCU" Key="Software\aylis\{app}" Name="atalho" Type="integer" Value="1" KeyPath="yes" />
-      </Component>
+      </Component>{scheme_component}
     </StandardDirectory>
     <Feature Id="Main" Title="{app}">
       <ComponentRef Id="MainExe" />
-      <ComponentRef Id="StartMenu" />
+      <ComponentRef Id="StartMenu" />{scheme_ref}
     </Feature>
   </Package>
 </Wix>
@@ -816,6 +837,47 @@ fn ios_usage_plist(needs: &DeviceNeeds, saves: bool) -> String {
 /// As permissões que os componentes usados nos forms pedem (só as necessárias: a loja
 /// cobra justificativa de cada uma).
 
+/// Os prefixos de URL dos `UrlScheme` ligados nos forms (o prefixo e a descrição, sem
+/// repetir): os instaladores do Windows registram e tiram na desinstalação, e o Android ganha
+/// o filtro de intent de cada um.
+pub fn url_schemes(project: &Project) -> Vec<(String, String)> {
+    fn walk(value: &serde_json::Value, out: &mut Vec<(String, String)>) {
+        match value {
+            serde_json::Value::Object(map) => {
+                let class = map.get("class").and_then(|c| c.as_str()).unwrap_or_default();
+                let active = map.get("active").and_then(|a| a.as_bool()).unwrap_or(false);
+                if class.split('.').next() == Some("UrlScheme") && active {
+                    let scheme = map.get("scheme").and_then(|s| s.as_str()).unwrap_or_default();
+                    if let Ok(scheme) = aylis_core::platform::check_scheme(scheme) {
+                        let description = map.get("description").and_then(|d| d.as_str()).unwrap_or_default().trim().to_string();
+                        if !out.iter().any(|(s, _)| *s == scheme) {
+                            out.push((scheme, description));
+                        }
+                    }
+                }
+                map.values().for_each(|v| walk(v, out));
+            }
+            serde_json::Value::Array(items) => items.iter().for_each(|v| walk(v, out)),
+            _ => {}
+        }
+    }
+    let mut out = Vec::new();
+    let mut stack = vec![project.dir().join("forms")];
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        for path in entries.flatten().map(|e| e.path()) {
+            if path.is_dir() {
+                stack.push(path);
+            } else if path.extension().is_some_and(|x| x == "json") {
+                if let Ok(Ok(value)) = std::fs::read_to_string(&path).map(|t| serde_json::from_str::<serde_json::Value>(t.trim_start_matches('\u{feff}'))) {
+                    walk(&value, &mut out);
+                }
+            }
+        }
+    }
+    out
+}
+
 /// As permissões que os componentes do projeto pedem, com o motivo (o que a aba Android
 /// mostra marcado e travado).
 pub fn android_required_permissions(project: &Project) -> Vec<(String, String)> {
@@ -1006,13 +1068,16 @@ fn android_manifest(project: &Project, package: &str, icon: bool) -> Result<Stri
     }
     // Um link ou um compartilhar chega ao app já aberto (`onNewIntent`), e não numa segunda
     // activity na tarefa do outro app.
-    let single = if receives_shares || !dialer.is_empty() || a.deep_links.iter().any(|l| !l.trim().is_empty()) { "\n            android:launchMode=\"singleTask\"" } else { "" };
+    // Os prefixos dos `UrlScheme` ligados nos forms: cada um abre o app como um `deep_links`.
+    let schemes = url_schemes(project);
+    let single = if receives_shares || !dialer.is_empty() || !schemes.is_empty() || a.deep_links.iter().any(|l| !l.trim().is_empty()) { "\n            android:launchMode=\"singleTask\"" } else { "" };
     let mut links = String::new();
     links.push_str(&dialer);
     if receives_shares {
         links.push_str("            <intent-filter>\n                <action android:name=\"android.intent.action.SEND\" />\n                <action android:name=\"android.intent.action.SEND_MULTIPLE\" />\n                <category android:name=\"android.intent.category.DEFAULT\" />\n                <data android:mimeType=\"*/*\" />\n            </intent-filter>\n");
     }
-    for link in a.deep_links.iter().filter(|l| !l.trim().is_empty()) {
+    let scheme_links: Vec<String> = schemes.iter().filter(|(s, _)| !a.deep_links.iter().any(|l| l.split("://").next() == Some(s.as_str()))).map(|(s, _)| format!("{s}://")).collect();
+    for link in a.deep_links.iter().chain(&scheme_links).filter(|l| !l.trim().is_empty()) {
         let (scheme, rest) = link.split_once("://").unwrap_or((link.as_str(), ""));
         let (host, path) = rest.split_once('/').map_or((rest, String::new()), |(h, p)| (h, format!("/{p}")));
         let mut data = format!("android:scheme=\"{}\"", xml_escape(scheme));
@@ -1898,6 +1963,12 @@ mod tests {
         let manifest = android_manifest(&project, "fotos", true).unwrap();
         assert!(manifest.contains("CALL_PHONE") && manifest.contains("screenOrientation=\"portrait\""), "{manifest}");
         assert!(manifest.contains("android:host=\"loja.com\"") && manifest.contains("android:scheme=\"fotos\"") && manifest.contains("autoVerify"));
+        // Um `UrlScheme` ligado vira mais um prefixo que abre o app (o mesmo dos `deep_links`
+        // não repete).
+        std::fs::write(dir.join("links.json"), r#"{ "root": { "class": "Form", "children": [ { "class": "UrlScheme", "scheme": "pedidos", "active": true }, { "class": "UrlScheme", "scheme": "fotos", "active": true } ] } }"#).unwrap();
+        let manifest = android_manifest(&project, "fotos", true).unwrap();
+        assert!(manifest.contains("android:scheme=\"pedidos\""), "{manifest}");
+        assert_eq!(manifest.matches("android:scheme=\"fotos\"").count(), 1, "{manifest}");
         assert!(manifest.contains("<queries>") && manifest.contains("android:name=\"x\""), "o XML a mais entra");
         assert!(merge_manifest_extra(&manifest, "<manifest><queries>").is_err(), "XML quebrado dá erro");
         assert_eq!(manifest.matches("android.permission.CAMERA").count(), 1, "sem repetir: {manifest}");

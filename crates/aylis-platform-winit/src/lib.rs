@@ -92,6 +92,8 @@ mod gpu;
 #[cfg(all(native_gpu, target_os = "linux"))]
 mod gpu_linux;
 mod access;
+#[cfg(native_clipboard)]
+mod clipboard;
 mod http;
 #[cfg(not(mobile))]
 mod links;
@@ -114,6 +116,8 @@ mod android_gamepad;
 mod print;
 #[cfg(windows)]
 mod notify;
+#[cfg(windows)]
+mod url_scheme;
 mod input;
 #[cfg(target_os = "android")]
 mod android_jni;
@@ -131,6 +135,10 @@ mod windows_push;
 mod linux_push;
 #[cfg(all(feature = "nfc", not(any(web, mobile))))]
 mod desktop_nfc;
+#[cfg(windows)]
+mod win_ole;
+#[cfg(windows)]
+mod win_wmi;
 #[cfg(all(feature = "bluetooth", not(any(web, mobile))))]
 mod desktop_bluetooth;
 #[cfg(any(target_os = "android", test))]
@@ -835,8 +843,8 @@ fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
     }
     #[cfg(native_clipboard)]
     if services.clipboard.is_none() {
-        if let Ok(clipboard) = arboard::Clipboard::new() {
-            services.clipboard = Some(Box::new(SystemClipboard(clipboard)));
+        if let Some(clipboard) = clipboard::SystemClipboard::new() {
+            services.clipboard = Some(Box::new(clipboard));
         }
     }
     #[cfg(target_os = "android")]
@@ -861,6 +869,16 @@ fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
     #[cfg(all(feature = "bluetooth", not(any(web, mobile))))]
     if services.bluetooth.is_none() {
         services.bluetooth = Some(Box::new(desktop_bluetooth::DesktopBluetooth::new()));
+    }
+    // A automação OLE (o `OleObject`): a thread do COM só nasce no primeiro uso.
+    #[cfg(windows)]
+    if services.ole.is_none() {
+        services.ole = Some(Box::new(win_ole::WinOle::new()));
+    }
+    // O WMI (o `WmiQuery`): a thread das consultas só nasce na primeira.
+    #[cfg(windows)]
+    if services.wmi.is_none() {
+        services.wmi = Some(Box::new(win_wmi::WinWmi::new()));
     }
     #[cfg(any(windows, all(target_os = "linux", not(target_os = "android"))))]
     if services.sensors.is_none() {
@@ -1072,20 +1090,6 @@ impl aylis_core::platform::FileDialogService for SystemFileDialogs {
             }
             done(paths);
         });
-    }
-}
-
-#[cfg(native_clipboard)]
-struct SystemClipboard(arboard::Clipboard);
-
-#[cfg(native_clipboard)]
-impl aylis_core::platform::ClipboardService for SystemClipboard {
-    fn get_text(&mut self) -> Option<String> {
-        self.0.get_text().ok()
-    }
-
-    fn set_text(&mut self, text: &str) {
-        let _ = self.0.set_text(text.to_string());
     }
 }
 

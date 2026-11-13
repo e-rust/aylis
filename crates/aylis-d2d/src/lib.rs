@@ -979,7 +979,7 @@ pub struct DeviceCache {
     /// Gradientes cônicos já pintados (o Direct2D não tem esse gradiente).
     sweeps: RefCell<HashMap<Vec<u64>, ID2D1Bitmap>>,
     /// Desenhos guardados como imagem ([`Canvas::begin_cached`]), pela chave e pelo tamanho.
-    layers: HashMap<u64, ID2D1Bitmap>,
+    layers: aylis_core::LayerCache<ID2D1Bitmap>,
 }
 
 impl Default for DeviceCache {
@@ -990,7 +990,7 @@ impl Default for DeviceCache {
             gradients: RefCell::default(),
             shadows: RefCell::default(),
             sweeps: RefCell::default(),
-            layers: HashMap::new(),
+            layers: aylis_core::LayerCache::named("Direct2D · camadas guardadas"),
         }
     }
 }
@@ -1219,6 +1219,8 @@ struct CacheState {
     transform: Matrix3x2,
     content: ID2D1BitmapRenderTarget,
     key: u64,
+    /// A chave do núcleo (para soltar pela `forget_cached`).
+    owner: u64,
     dest: D2D_RECT_F,
 }
 
@@ -1342,12 +1344,11 @@ impl D2dCanvas<'_> {
         self.pushes = state.pushes;
         self.set_transform(state.transform);
         let Ok(bitmap) = (unsafe { state.content.GetBitmap() }) else { return };
-        // Poucos guardados por vez: cada destaque novo de um mapa é uma imagem nova.
-        const KEEP: usize = 16;
-        if self.cache.layers.len() >= KEEP {
-            self.cache.layers.clear();
-        }
-        self.cache.layers.insert(state.key, bitmap.clone());
+        // O limite é em bytes (`image_cache.layers_mb`): cada destaque novo de um mapa é uma
+        // imagem nova, e sai a usada há mais tempo.
+        let d = state.dest;
+        let bytes = (d.right - d.left).max(0.0) as usize * (d.bottom - d.top).max(0.0) as usize * 4;
+        self.cache.layers.insert(state.owner, state.key, bitmap.clone(), bytes);
         self.draw_layer(&bitmap, &state.dest);
     }
 
@@ -2090,9 +2091,14 @@ impl Canvas for D2dCanvas<'_> {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         (key, w as u32, h as u32, m.M11.to_bits(), m.M22.to_bits()).hash(&mut hasher);
         let full = hasher.finish();
-        if let Some(bitmap) = self.cache.layers.get(&full).cloned() {
+        if let Some(bitmap) = self.cache.layers.get(full).cloned() {
             self.draw_layer(&bitmap, &dest);
             return true;
+        }
+        // Sem lugar no limite das camadas (`image_cache.layers_mb`): desenha direto.
+        if !aylis_core::LayerCache::<ID2D1Bitmap>::accepts(w as usize * h as usize * 4) {
+            self.cached.push(None);
+            return false;
         }
         let size = D2D_SIZE_F { width: w, height: h };
         let pixels = D2D_SIZE_U { width: w as u32, height: h as u32 };
@@ -2115,12 +2121,16 @@ impl Canvas for D2dCanvas<'_> {
         let transform = self.transform;
         // A mesma escala; a origem da imagem é o canto de `dest`.
         self.set_transform(Matrix3x2 { M31: m.M31 - x0, M32: m.M32 - y0, ..m });
-        self.cached.push(Some(CacheState { main, pushes, transform, content, key: full, dest }));
+        self.cached.push(Some(CacheState { main, pushes, transform, content, key: full, owner: key, dest }));
         false
     }
 
     fn end_cached(&mut self) {
         self.end_cached_inner();
+    }
+
+    fn forget_cached(&mut self, key: u64) {
+        self.cache.layers.forget(key);
     }
 
     fn clip_path(&mut self, path: &Path, inverse: bool) {

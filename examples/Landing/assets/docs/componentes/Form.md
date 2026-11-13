@@ -20,6 +20,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `transition` | Transição | um de: `none`, `fade`, `slide_left`, `slide_right`, `slide_up`, `slide_down` | Celular e navegador (os forms se empilham): como o form entra ao abrir e sai ao fechar (`slide_left` como uma tela nova do Android/iOS, `slide_up` como uma folha, `fade`). No desktop cada form é uma janela e isto não vale. |
+| `layer_cache` | Camadas automáticas | um de: `project`, `on`, `off` | As camadas automáticas neste form: as páginas de uma transição e o contêiner que recorta os filhos com o lugar ou a transparência animando viram uma imagem guardada, que anda sem repintar os filhos (mais rápido, e a memória das imagens enquanto andam). `project`: o padrão do projeto (`image_cache.auto_layers`); `on`/`off` trocam só neste form. O `cache_layer` pedido num controle vale sempre. |
 | `topmost` | Sempre na frente | lógico | Sempre por cima das outras janelas (o `FormStyle := fsStayOnTop`). |
 | `show_in_taskbar` | Na barra de tarefas | lógico | Aparece na barra de tarefas (desligue para menus e janelas de ferramenta). |
 | `active_control` | Controle ativo | componente | O controle que recebe o foco quando o form abre (como o `ActiveControl`). |

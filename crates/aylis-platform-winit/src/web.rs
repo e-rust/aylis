@@ -173,14 +173,46 @@ impl aylis_core::platform::ClipboardService for WebClipboard {
     }
 
     fn set_text(&mut self, text: &str) {
-        CLIPBOARD.with(|c| *c.borrow_mut() = text.to_string());
+        self.set_content(&aylis_core::clipboard::ClipboardContent::text(text));
+    }
+
+    /// O texto e o HTML vão juntos pelo `ClipboardItem` (onde houver; senão, o
+    /// `writeText`). A imagem e os formatos do app ficam na cópia do processo: o navegador só
+    /// grava PNG, e de forma assíncrona.
+    fn set_content(&mut self, content: &aylis_core::clipboard::ClipboardContent) {
+        let text = content.text.clone().unwrap_or_default();
+        CLIPBOARD.with(|c| *c.borrow_mut() = text.clone());
         let Some(window) = web_sys::window() else { return };
         let Ok(clipboard) = js_sys::Reflect::get(&window.navigator(), &"clipboard".into()) else { return };
-        if let Ok(write) = js_sys::Reflect::get(&clipboard, &"writeText".into()).and_then(|f| f.dyn_into::<js_sys::Function>().map_err(Into::into)) {
-            // A promessa fica sem resposta: sem permissão, o texto ainda vale dentro do app.
+        let method = |name: &str| js_sys::Reflect::get(&clipboard, &name.into()).ok().and_then(|f| f.dyn_into::<js_sys::Function>().ok());
+        // As promessas ficam sem resposta: sem permissão, o que foi copiado ainda vale dentro
+        // do app.
+        if let (Some(html), Some(write)) = (&content.html, method("write")) {
+            if let Some(item) = clipboard_item(&window, &[("text/plain", &text), ("text/html", html)]) {
+                let _ = write.call1(&clipboard, &js_sys::Array::of1(&item));
+                return;
+            }
+        }
+        if let Some(write) = method("writeText") {
             let _ = write.call1(&clipboard, &text.into());
         }
     }
+}
+
+/// Um `ClipboardItem` com um `Blob` por formato.
+fn clipboard_item(window: &web_sys::Window, parts: &[(&str, &str)]) -> Option<wasm_bindgen::JsValue> {
+    let construct = |name: &str, args: &js_sys::Array| {
+        let ctor = js_sys::Reflect::get(window, &name.into()).ok()?.dyn_into::<js_sys::Function>().ok()?;
+        js_sys::Reflect::construct(&ctor, args).ok()
+    };
+    let items = js_sys::Object::new();
+    for (mime, value) in parts {
+        let options = js_sys::Object::new();
+        js_sys::Reflect::set(&options, &"type".into(), &(*mime).into()).ok()?;
+        let blob = construct("Blob", &js_sys::Array::of2(&js_sys::Array::of1(&(*value).into()), &options))?;
+        js_sys::Reflect::set(&items, &(*mime).into(), &blob).ok()?;
+    }
+    construct("ClipboardItem", &js_sys::Array::of1(&items))
 }
 
 /// Colar: o winit cancela o Ctrl+V (o `prevent_default` das teclas), e aí o navegador não

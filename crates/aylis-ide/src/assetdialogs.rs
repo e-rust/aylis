@@ -555,9 +555,7 @@ pub fn icons(
         let selected = selected.clone();
         ui.on_click(copy, move |ui, _| {
             if let Some(name) = selected.borrow().clone() {
-                if let Some(c) = ui.services_mut().clipboard.as_mut() {
-                    c.set_text(&name);
-                }
+                aylis_core::clipboard::set_text(ui, &name);
             }
         });
     }
@@ -794,9 +792,7 @@ pub fn animations(ui: &mut Ui, target: Option<String>, on_ok: impl FnOnce(&mut U
         let selected = selected.clone();
         ui.on_click(copy, move |ui, _| {
             if let Some(name) = selected.borrow().clone() {
-                if let Some(c) = ui.services_mut().clipboard.as_mut() {
-                    c.set_text(&name);
-                }
+                aylis_core::clipboard::set_text(ui, &name);
             }
         });
     }

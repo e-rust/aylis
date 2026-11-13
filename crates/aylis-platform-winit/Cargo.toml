@@ -20,9 +20,9 @@ gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl
 # Windows sem Skia: Direct2D + DirectWrite (já vêm no sistema). Executável bem menor;
 # use com `default-features = false` para tirar o Skia de vez.
 d2d = ["dep:aylis-d2d"]
-# Desktop: área de transferência do sistema (Ctrl+C / Ctrl+V nos campos de texto).
-# Sem efeito no Android e no iOS.
-clipboard = ["dep:arboard"]
+# Desktop: área de transferência do sistema (texto, HTML, imagem e, no Windows, os formatos do
+# app). Sem efeito no Android e no iOS, que têm a do sistema sempre.
+clipboard = ["dep:arboard", "dep:clipboard-win"]
 # Navegador embutido (componente WebView): WebView2 no Windows, WKWebView no macOS e no
 # iOS, WebKitGTK no Linux (precisa da libwebkit2gtk-4.1), o WebView do Android.
 webview = ["dep:wry", "dep:gtk"]
@@ -36,20 +36,23 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core" }
+aylis-core = { version = "0.2.0-beta.6", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.2.0-beta.5", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.2.0-beta.6", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.2.0-beta.5", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.2.0-beta.6", path = "../aylis-d2d", optional = true }
+# A área de transferência do Windows: texto, HTML, imagem e os formatos do app gravados de uma
+# vez (o arboard grava um só; o clipboard-win já vinha com ele).
+clipboard-win = { version = "5", optional = true }
 # A operação assíncrona do WinRT (a mesma versão que o windows 0.61 usa).
 windows-future = "0.3"
 # Notificações do Windows (toast): WinRT e o registro do AppUserModelID.
@@ -75,6 +78,13 @@ windows = { version = "0.62", features = [
     "Networking_PushNotifications", "Win32_Storage_Packaging_Appx",
     # Os cantos da janela no Windows 11 (`window_corners`).
     "Win32_Graphics_Dwm",
+    # O `UrlScheme`: a cópia do app chamada por um link repassa o endereço à que já está
+    # aberta por um pipe local.
+    "Win32_System_Pipes", "Win32_Storage_FileSystem", "Win32_System_IO",
+    # A automação OLE (o `OleObject`): IDispatch, VARIANT e SAFEARRAY.
+    "Win32_System_Ole",
+    # O WMI pela API nativa (o `WmiQuery`): IWbemLocator, IWbemServices.
+    "Win32_System_Wmi",
 ] }
 
 [target.'cfg(any(windows, target_os = "macos", target_os = "linux", target_os = "ios"))'.dependencies]
@@ -108,9 +118,12 @@ raw-window-handle = { version = "0.6", optional = true }
 accesskit = "0.25"
 accesskit_winit = { version = "0.34", default-features = false, features = ["accesskit_unix", "async-io", "rwh_06"] }
 
-# Área de transferência do sistema só no desktop (no celular fica para depois).
+# Área de transferência do Linux e do macOS: texto, HTML e imagem (o `image`, para o PNG do
+# Linux e o TIFF do macOS; o PNG já vem com o PaintBox).
+[target.'cfg(not(any(windows, target_arch = "wasm32", target_os = "android", target_os = "ios")))'.dependencies]
+arboard = { version = "3", optional = true, default-features = false, features = ["image-data"] }
+
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))'.dependencies]
-arboard = { version = "3", optional = true, default-features = false }
 # Diálogos de arquivo do sistema (OpenDialog/SaveDialog).
 rfd = "0.17"
 pcsc = { version = "2", optional = true }
@@ -146,7 +159,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.2.0-beta.5", path = "../aylis-web" }
+aylis-web = { version = "0.2.0-beta.6", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"

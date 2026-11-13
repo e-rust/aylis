@@ -8,17 +8,23 @@
 //! - [`Export`]: os registros de um dataset num arquivo, pelo [`CsvProvider`] (o padrão) ou
 //!   pelo [`XlsxProvider`] (planilha do Excel);
 //! - [`AylisPdfProvider`]: o PDF do próprio Aylis para o `Report` (o padrão);
-//! - [`TileServerProvider`]: o servidor dos blocos do `MapView` (o endereço e o crédito).
+//! - [`TileServerProvider`]: o servidor dos blocos do `MapView` (o endereço e o crédito);
+//! - [`OleObject`]: a automação OLE de um programa instalado (Excel, Word...), no Windows;
+//! - [`WmiQuery`]: consultas e eventos do WMI (hardware, discos, processos), no Windows.
 //!
 //! Os provedores ficam na aba "Providers" da paleta.
 
 mod barcode;
 pub mod barcodes;
 mod export;
+pub mod ole;
+pub mod wmi;
 
 pub use barcode::{Barcode, AylisBarcodeProvider};
 pub use barcodes::BuiltinBarcodes;
 pub use export::{CsvProvider, Export, XlsxProvider};
+pub use ole::OleObject;
+pub use wmi::WmiQuery;
 
 use aylis_core::providers::{BuiltinPdf, MapTileProvider, Provided, TileServer};
 use aylis_core::{Component, Ui, properties};
@@ -84,6 +90,8 @@ impl MapTileProvider for TileServerProvider {
 pub fn register(ui: &mut Ui) {
     ui.register_class::<Barcode>("Reports");
     ui.register_class::<Export>("Data");
+    ui.register_class::<OleObject>("System");
+    ui.register_class::<WmiQuery>("System");
     ui.register_class::<AylisBarcodeProvider>("Providers");
     ui.register_class::<CsvProvider>("Providers");
     ui.register_class::<XlsxProvider>("Providers");

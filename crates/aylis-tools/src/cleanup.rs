@@ -69,6 +69,15 @@ const INCREMENTAL_PER_CRATE: usize = 4;
 /// A limpeza automática: no máximo uma vez por hora (o `aylis-tool` chama antes de compilar,
 /// a IDE ao abrir). Guarda a hora da última em `target/.aylis-cleanup`.
 pub fn automatic(target: &Path) -> Option<Cleanup> {
+    automatic_unless(target, rust_running())
+}
+
+/// O [`automatic`] com a resposta de "tem cargo, rustc ou rustdoc rodando" (os testes passam).
+/// Ocupado, não limpa nem marca a hora: tenta de novo na próxima vez.
+fn automatic_unless(target: &Path, busy: bool) -> Option<Cleanup> {
+    if busy {
+        return None;
+    }
     let marker = target.join(".aylis-cleanup");
     let recent = std::fs::metadata(&marker)
         .and_then(|m| m.modified())
@@ -80,6 +89,28 @@ pub fn automatic(target: &Path) -> Option<Cleanup> {
     }
     let _ = std::fs::write(&marker, b"");
     Some(clean_with(target, &Policy::from_settings(), SystemTime::now()))
+}
+
+/// Um cargo, rustc ou rustdoc rodando nesta máquina. A trava do perfil (`.cargo-lock`) só
+/// protege enquanto o cargo compila: depois, nos binários de teste e nos doctests, ela já foi
+/// solta e os `.rlib` ainda são lidos. Com a pasta de compilação única, uma compilação pelo
+/// Aylis no meio de um `cargo test` apagava como "substituídas" as bibliotecas que os doctests
+/// iam usar (a suíte do workspace perdia os crates, 12/11).
+fn rust_running() -> bool {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
+        let mut system = System::new();
+        system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
+        let busy = |name: &str| {
+            let name = name.to_ascii_lowercase();
+            let name = name.strip_suffix(".exe").unwrap_or(&name);
+            matches!(name, "cargo" | "rustc" | "rustdoc")
+        };
+        system.processes().values().any(|p| busy(&p.name().to_string_lossy()))
+    }
+    #[cfg(target_arch = "wasm32")]
+    false
 }
 
 /// Os prazos da limpeza.
@@ -518,6 +549,22 @@ mod tests {
         // Terminou: agora sai.
         drop(cargo);
         assert_eq!(plain(&profile, later - Duration::from_secs(7 * 24 * 3600), later).units, 1);
+        let _ = std::fs::remove_dir_all(&target);
+    }
+
+    /// Com um cargo, rustc ou rustdoc rodando (um `cargo test` nos doctests, já sem a trava),
+    /// a limpeza automática espera e nem marca a hora: na próxima vez ela roda.
+    #[test]
+    fn the_automatic_cleanup_waits_while_rust_tools_run() {
+        let target = std::env::temp_dir().join(format!("aylis_cleanup_busy_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&target);
+        std::fs::create_dir_all(target.join("debug")).unwrap();
+        assert_eq!(automatic_unless(&target, true), None);
+        assert!(!target.join(".aylis-cleanup").exists(), "ocupado: a hora não é marcada");
+        assert!(automatic_unless(&target, false).is_some());
+        assert!(target.join(".aylis-cleanup").exists());
+        // Este próprio teste roda sob o cargo: a máquina está ocupada.
+        assert!(rust_running());
         let _ = std::fs::remove_dir_all(&target);
     }
 

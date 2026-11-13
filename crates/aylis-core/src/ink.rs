@@ -234,6 +234,9 @@ impl Canvas for InkCanvas<'_> {
     fn end_cached(&mut self) {
         self.inner.end_cached();
     }
+    fn forget_cached(&mut self, key: u64) {
+        self.inner.forget_cached(key);
+    }
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke) {
         self.mark_stroke(path.bounds(), stroke);
         self.inner.stroke_path(path, stroke);

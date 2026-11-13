@@ -69,7 +69,7 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
         Language::Rust => {
             // O do rustup (rust-analyzer do toolchain), o da pasta de ferramentas ou o do PATH.
             let from_rustup = crate::env::output("rustup", &["which", "rust-analyzer"]).map(|p| PathBuf::from(p.trim())).filter(|p| p.is_file());
-            let program = from_rustup.or_else(|| first(t.iter().map(|d| d.join("rust-analyzer").join(exe("rust-analyzer")))))?;
+            let program = from_rustup.or_else(|| first(t.iter().map(|d| d.join("rust-analyzer").join(exe("rust-analyzer"))))).or_else(|| crate::hostlang::which(&exe("rust-analyzer")))?;
             Server { name: "rust-analyzer", program, args: Vec::new(), env: Vec::new(), language_id: "rust", init_options: json!({}) }
         }
         Language::Go => {
@@ -117,7 +117,8 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
             Server { name: "csharp-ls", program, args: Vec::new(), env: Vec::new(), language_id: "csharp", init_options: json!({}) }
         }
         Language::Java => {
-            let dir = t.as_ref()?.join("jdtls");
+            // O do pacote jdtls ou o da pasta de ferramentas antiga.
+            let dir = crate::toolpacks::installed_dir("jdtls").unwrap_or(t.as_ref()?.join("jdtls"));
             let launcher = std::fs::read_dir(dir.join("plugins"))
                 .ok()?
                 .flatten()
@@ -146,9 +147,9 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
             Server { name: "Eclipse JDT LS", program: java, args, env: Vec::new(), language_id: "java", init_options: json!({ "settings": { "java": { "signatureHelp": { "enabled": true } } } }) }
         }
         Language::Cpp => {
-            let program = t
-                .as_ref()
-                .and_then(|d| find_below(&d.join("clangd"), &exe("clangd"), 2))
+            let program = crate::toolpacks::installed_dir("clangd")
+                .and_then(|d| find_below(&d, &exe("clangd"), 2))
+                .or_else(|| t.as_ref().and_then(|d| find_below(&d.join("clangd"), &exe("clangd"), 2)))
                 .or_else(|| crate::hostlang::which(&exe("clangd")))
                 .or_else(|| first([PathBuf::from("C:/Program Files/LLVM/bin/clangd.exe")]))?;
             Server {

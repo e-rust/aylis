@@ -8,12 +8,14 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core" }
-aylis-data = { version = "0.2.0-beta.5", path = "../aylis-data" }
+aylis-core = { version = "0.2.0-beta.6", path = "../aylis-core" }
+aylis-data = { version = "0.2.0-beta.6", path = "../aylis-data" }
 # O QR Code do provedor padrão de códigos de barras (sem dependências).
 qrcode = { version = "0.14", default-features = false }
 # A planilha do XlsxProvider.
 rust_xlsxwriter = { version = "0.102", default-features = false }
+# As matrizes do OleObject (`get_values`/`set_values`).
+serde_json = "1"
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }

@@ -1681,7 +1681,7 @@ fn project_memory_saves_the_image_cache_limits() {
     let mut ide = app::build(state.clone());
     ide.ui.show(ide.form).unwrap();
     actions::open_project(&mut ide.ui, &state, &ide.ids, &project.path);
-    let set = |ide: &mut aylis_ide::app::Ide, values: [&str; 2]| {
+    let set = |ide: &mut aylis_ide::app::Ide, values: [&str; 3]| {
         actions::project_memory(&mut ide.ui, &state, &ide.ids);
         let dialog = *ide.ui.open_forms().last().unwrap();
         assert!(ide.ui.get::<Form>(dialog).is_some_and(|f| f.caption.contains("Memória")));
@@ -1695,20 +1695,23 @@ fn project_memory_saves_the_image_cache_limits() {
             std::fs::write(PathBuf::from(dir).join("memoria.png"), png).unwrap();
         }
         let edits: Vec<ComponentId> = descendants(&ide.ui, dialog).into_iter().filter(|&id| ide.ui.get::<Edit>(id).is_some()).collect();
-        assert_eq!(edits.len(), 2, "pixels e arquivos");
+        assert_eq!(edits.len(), 3, "pixels, arquivos e camadas");
         for (edit, value) in edits.iter().zip(values) {
             ide.ui.get_mut::<Edit>(*edit).unwrap().text = value.into();
         }
         ide.ui.set_modal_result(dialog, ModalResult::Ok);
         dialog
     };
-    let dialog = set(&mut ide, ["4", "256"]);
+    let dialog = set(&mut ide, ["4", "256", "128"]);
     assert!(ide.ui.is_open(dialog), "4 MB está abaixo da faixa: o diálogo continua aberto");
     ide.ui.set_modal_result(dialog, ModalResult::Cancel);
-    set(&mut ide, ["200", "1000"]);
+    let dialog = set(&mut ide, ["96", "256", "5000"]);
+    assert!(ide.ui.is_open(dialog), "5000 MB de camadas passa da faixa: o diálogo continua aberto");
+    ide.ui.set_modal_result(dialog, ModalResult::Cancel);
+    set(&mut ide, ["200", "1000", "64"]);
     let saved = aylis_project::Project::open(&project.path).unwrap();
-    assert_eq!(saved.image_cache, Some(aylis_project::ImageCacheSettings { pixels_mb: 200, files: 1000 }));
-    set(&mut ide, ["96", "256"]);
+    assert_eq!(saved.image_cache, Some(aylis_project::ImageCacheSettings { pixels_mb: 200, files: 1000, layers_mb: 64, auto_layers: true }));
+    set(&mut ide, ["96", "256", "128"]);
     assert_eq!(aylis_project::Project::open(&project.path).unwrap().image_cache, None, "no padrão, a chave sai do .aylisproj");
     aylis_tools::trust::forget_dir(&project.dir());
 }

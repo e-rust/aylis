@@ -1652,9 +1652,7 @@ impl Component for DataGrid {
         // Ctrl+C: o texto da célula atual (como aparece na grade).
         if ctrl && matches!(event.key, Key::Char('c') | Key::Char('C') | Key::Insert) {
             if let Some(text) = self.current_cell_text(ctx.ui) {
-                if let Some(c) = ctx.ui.services_mut().clipboard.as_mut() {
-                    c.set_text(&text);
-                }
+                aylis_core::clipboard::set_text(ctx.ui, &text);
             }
             ctx.set_handled();
             return;

@@ -4,6 +4,9 @@
 use aylis_core::Image;
 use aylis_core::image_cache::{self, ImageCache, ImageCacheLimits};
 
+/// Os limites são do processo: os testes que os trocam esperam a vez.
+static LIMITS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[test]
 fn the_weak_image_dies_with_the_last_copy() {
     let image = Image::rgba(2, 2, vec![0; 16]);
@@ -78,12 +81,50 @@ fn dropped_images_leave_before_any_limit() {
 
 #[test]
 fn the_limits_stay_inside_the_accepted_range() {
+    let _turn = LIMITS.lock().unwrap_or_else(|e| e.into_inner());
     let (min_mb, max_mb) = ImageCacheLimits::PIXELS_MB_RANGE;
     let (min_files, max_files) = ImageCacheLimits::FILES_RANGE;
-    assert_eq!(ImageCacheLimits { pixels_mb: 0, files: 0 }.clamped(), ImageCacheLimits { pixels_mb: min_mb, files: min_files });
-    assert_eq!(ImageCacheLimits { pixels_mb: u32::MAX, files: u32::MAX }.clamped(), ImageCacheLimits { pixels_mb: max_mb, files: max_files });
-    image_cache::set_limits(ImageCacheLimits { pixels_mb: 200, files: 1000 });
-    assert_eq!(image_cache::limits(), ImageCacheLimits { pixels_mb: 200, files: 1000 });
+    let (min_layers, max_layers) = ImageCacheLimits::LAYERS_MB_RANGE;
+    assert_eq!(
+        ImageCacheLimits { pixels_mb: 0, files: 0, layers_mb: 0 }.clamped(),
+        ImageCacheLimits { pixels_mb: min_mb, files: min_files, layers_mb: min_layers }
+    );
+    assert_eq!(
+        ImageCacheLimits { pixels_mb: u32::MAX, files: u32::MAX, layers_mb: u32::MAX }.clamped(),
+        ImageCacheLimits { pixels_mb: max_mb, files: max_files, layers_mb: max_layers }
+    );
+    image_cache::set_limits(ImageCacheLimits { pixels_mb: 200, files: 1000, layers_mb: 64 });
+    assert_eq!(image_cache::limits(), ImageCacheLimits { pixels_mb: 200, files: 1000, layers_mb: 64 });
+    image_cache::set_limits(ImageCacheLimits::DEFAULT);
+}
+
+/// As camadas guardadas: o limite é em bytes (sai a usada há mais tempo, nunca a que entrou),
+/// uma maior que o limite inteiro não entra, e o núcleo solta as de uma chave sua.
+#[test]
+fn the_layer_cache_keeps_the_byte_limit_and_forgets_by_owner() {
+    let _turn = LIMITS.lock().unwrap_or_else(|e| e.into_inner());
+    use aylis_core::LayerCache;
+    let mb = 1 << 20;
+    image_cache::set_limits(ImageCacheLimits { layers_mb: 10, ..ImageCacheLimits::DEFAULT });
+    let mut cache: LayerCache<&str> = LayerCache::default();
+    assert!(LayerCache::<&str>::accepts(10 * mb) && !LayerCache::<&str>::accepts(11 * mb));
+    cache.insert(1, 100, "página A", 4 * mb);
+    cache.insert(2, 200, "página B", 4 * mb);
+    assert_eq!(cache.get(100), Some(&"página A"));
+    // A B é a usada há mais tempo: sai para a C caber.
+    cache.insert(3, 300, "página C", 4 * mb);
+    assert_eq!(cache.get(200), None);
+    assert_eq!((cache.len(), cache.bytes()), (2, 8 * mb));
+    cache.insert(4, 400, "grande demais", 11 * mb);
+    assert_eq!(cache.get(400), None);
+    // Duas imagens do mesmo dono (duas escalas): as duas saem juntas.
+    cache.insert(1, 101, "página A em 2x", 1 * mb);
+    cache.forget(1);
+    assert_eq!((cache.get(100).is_none(), cache.get(101).is_none()), (true, true));
+    assert_eq!((cache.len(), cache.bytes()), (1, 4 * mb));
+    // Com o limite em zero, nada é montado.
+    image_cache::set_limits(ImageCacheLimits { layers_mb: 0, ..ImageCacheLimits::DEFAULT });
+    assert!(!LayerCache::<&str>::accepts(1));
     image_cache::set_limits(ImageCacheLimits::DEFAULT);
 }
 

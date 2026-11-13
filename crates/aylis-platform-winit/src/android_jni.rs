@@ -331,20 +331,54 @@ impl aylis_core::platform::ClipboardService for Clipboard {
     }
 
     fn set_text(&mut self, text: &str) {
+        self.set_content(&aylis_core::clipboard::ClipboardContent::text(text));
+    }
+
+    /// O texto, com o HTML junto (`newHtmlText`) quando houver. A imagem e os formatos do app
+    /// ficam na cópia do processo (o Android só passa conteúdo por `content://`).
+    fn set_content(&mut self, content: &aylis_core::clipboard::ClipboardContent) {
+        let text = content.text.as_deref().unwrap_or("");
         with_env(|env, activity| {
             let cm = clipboard_manager(env, activity)?;
             let label = env.new_string("aylis")?;
             let value = env.new_string(text)?;
-            let clip = env
-                .call_static_method(
+            let clip = match &content.html {
+                Some(html) => {
+                    let html = env.new_string(html)?;
+                    env.call_static_method(
+                        "android/content/ClipData",
+                        "newHtmlText",
+                        "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;Ljava/lang/String;)Landroid/content/ClipData;",
+                        &[(&label).into(), (&value).into(), (&html).into()],
+                    )?
+                }
+                None => env.call_static_method(
                     "android/content/ClipData",
                     "newPlainText",
                     "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;",
                     &[(&label).into(), (&value).into()],
-                )?
-                .l()?;
+                )?,
+            }
+            .l()?;
             env.call_method(&cm, "setPrimaryClip", "(Landroid/content/ClipData;)V", &[(&clip).into()])?;
             Ok(())
         });
+    }
+
+    fn get_html(&mut self) -> Option<String> {
+        with_env(|env, activity| {
+            let cm = clipboard_manager(env, activity)?;
+            let clip = env.call_method(&cm, "getPrimaryClip", "()Landroid/content/ClipData;", &[])?.l()?;
+            if clip.is_null() || env.call_method(&clip, "getItemCount", "()I", &[])?.i()? == 0 {
+                return Ok(None);
+            }
+            let item = env.call_method(&clip, "getItemAt", "(I)Landroid/content/ClipData$Item;", &[JValue::Int(0)])?.l()?;
+            let html = env.call_method(&item, "getHtmlText", "()Ljava/lang/String;", &[])?.l()?;
+            if html.is_null() {
+                return Ok(None);
+            }
+            Ok(Some(env.get_string(&JString::from(html))?.into()))
+        })
+        .flatten()
     }
 }

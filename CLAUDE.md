@@ -189,8 +189,10 @@ faz por conta própria: vira pergunta ao autor e, aprovado, entra no histórico.
     PowerShell), que só rodam em projeto confiado e aparecem no "Confiar neste projeto?";
   - caminhos de forms sem absoluto nem `..`.
 - **Dependências e ferramentas:** as dependências passam pelo `cargo-deny` (`deny.toml`,
-  `aylis-tool audit`). Ferramenta baixada tem versão fixa e SHA-256
-  (`resources/tools.lock.json`).
+  `aylis-tool audit`). Ferramenta baixada é pacote, com versão fixa e SHA-256
+  (`resources/packages.lock.json`, `aylis_tools::toolpacks`, docs/pacotes.md); só das origens
+  configuradas (a pasta `pacotes`, as pastas e os espelhos das Opções), nunca da URL oficial
+  (essa só o `aylis-tool packages pack`/`update` usa).
 - **Projeto de fora é não confiável até o usuário dizer:** no modo restrito, sem compilar,
   executar, servidor de linguagem nem publicar. O MCP não confirma confiança.
 - **Dados sensíveis:**
@@ -238,7 +240,9 @@ procura o que o repositório compilou usa `aylis_tools::cargo_target_dir` (teste
 Fora do `AppData` de propósito: o Claude Desktop é um pacote MSIX, e o que ele abre (as sessões, o
 `cargo`, a IDE aberta pelo MCP) grava o `AppData` numa cópia privada
 (`%LOCALAPPDATA%\Packages\Claude_*\LocalCache`). Por isso, o `%LOCALAPPDATA%\aylis` visto de
-dentro do Claude não é o mesmo visto de fora (o `tools.json`, o `mcp.json`, os segredos).
+dentro do Claude não é o mesmo visto de fora (o `mcp.json`, os segredos). Por isso as Opções
+das ferramentas (`tools.json`), os pacotes de ferramentas (`tools\`, `downloads\`) e a
+verificação de ambiente guardada (`environment.json`) ficam em `%USERPROFILE%\.aylis`.
 
 **Ver sem janela**
 - Captura de um exemplo: `AYLIS_SNAPSHOT=pasta AYLIS_BENCH=5 cargo run ... --example x` grava
@@ -271,7 +275,9 @@ dentro do Claude não é o mesmo visto de fora (o `tools.json`, o `mcp.json`, os
   aylis-tools --test apps` (Calculadora, Paint, Player e IBGE no mesmo roteiro nas 8
   linguagens).
 - Ferramentas fora do PATH: a aba da linguagem nas Opções da IDE, que grava
-  `%LOCALAPPDATA%\aylis\tools.json` (`aylis_tools::settings`).
+  `%USERPROFILE%\.aylis\tools.json` (`aylis_tools::settings`; o antigo, do `AppData`, é copiado
+  uma vez). As ferramentas que o Aylis instala: Ferramentas → Pacotes de ferramentas ou
+  `aylis-tool packages`, com as origens na aba Pacotes das Opções.
 
 **Plataformas**
 - Android: `aylis-tool run app.aylisproj --target android` (emulador `aylis_pixel`; `adb` em

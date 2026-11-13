@@ -83,8 +83,17 @@ pub struct State {
     pub devices: Vec<aylis_tools::env::AndroidDevice>,
     pub run_device: Option<String>,
     pub device_watch: Option<std::sync::Arc<crate::devices::Watch>>,
-    /// Última verificação do ambiente.
+    /// Última verificação do ambiente (de cada plataforma, a conferida nesta sessão ou a
+    /// guardada em disco).
     pub checks: Vec<aylis_tools::env::Check>,
+    /// A linguagem de `checks` (outro projeto em outra linguagem: relê o guardado).
+    pub env_language: Option<aylis_project::Language>,
+    /// As plataformas de `checks` conferidas nesta sessão (as outras mostram o resultado
+    /// guardado) e as em conferência agora.
+    pub env_fresh: Vec<aylis_tools::Target>,
+    pub env_pending: Vec<aylis_tools::Target>,
+    /// Quando cada plataforma de `checks` foi conferida (segundos desde 1970).
+    pub env_saved: Vec<(aylis_tools::Target, u64)>,
     /// Diálogo "Verificar ambiente" aberto e a última linha da correção em andamento.
     pub env_view: Option<crate::tooldialogs::EnvView>,
     pub env_log: String,
@@ -92,6 +101,14 @@ pub struct State {
     pub languages_view: Option<crate::tooldialogs::LanguagesView>,
     /// As linhas da instalação das linguagens (o log do assistente).
     pub setup_log: Vec<String>,
+    /// Ferramentas → Pacotes de ferramentas aberto, a lista (com o que a máquina já tem), a
+    /// última mensagem e se a conferência ficou esperando a vaga do ambiente.
+    pub toolpacks_view: Option<crate::toolpacksview::View>,
+    pub toolpacks: Vec<crate::toolpacksview::Row>,
+    pub toolpacks_log: String,
+    pub toolpacks_pending: bool,
+    /// O resultado do "Testar as origens" nas Opções (a etiqueta), enquanto elas estão abertas.
+    pub sources_view: Option<aylis_core::ComponentId>,
     /// Cada linguagem, se o compilador está instalado e o que ainda falta (o depurador, o
     /// servidor de linguagem...). Vazio: ainda não verificou.
     pub language_status: Vec<(aylis_project::Language, bool, Vec<String>)>,
@@ -180,10 +197,19 @@ impl Default for State {
             run_device: None,
             device_watch: None,
             checks: Vec::new(),
+            env_language: None,
+            env_fresh: Vec::new(),
+            env_pending: Vec::new(),
+            env_saved: Vec::new(),
             env_view: None,
             env_log: String::new(),
             languages_view: None,
             setup_log: Vec::new(),
+            toolpacks_view: None,
+            toolpacks: Vec::new(),
+            toolpacks_log: String::new(),
+            toolpacks_pending: false,
+            sources_view: None,
             language_status: Vec::new(),
             wizard_on_start: false,
             dev: None,

@@ -1559,9 +1559,7 @@ impl RichEditor {
         let (a, b) = self.selection();
         if a < b {
             let text = self.doc.text(a, b);
-            if let Some(c) = ctx.ui.services_mut().clipboard.as_mut() {
-                c.set_text(&text);
-            }
+            aylis_core::clipboard::set_text(ctx.ui, &text);
         }
     }
 
@@ -1643,7 +1641,7 @@ impl Component for RichEditor {
                 changed = self.delete_selection();
             }
             Key::Char('v') if ctrl => {
-                let pasted = ctx.ui.services_mut().clipboard.as_mut().and_then(|c| c.get_text());
+                let pasted = aylis_core::clipboard::text(ctx.ui);
                 if let Some(text) = pasted {
                     self.merging = false;
                     changed = self.insert(&text);

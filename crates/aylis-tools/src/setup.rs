@@ -155,8 +155,21 @@ pub fn refresh_path() {
         }
     };
     if cfg!(windows) {
-        for key in ["HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "HKCU\\Environment"] {
-            for d in registry_path(key) {
+        // Cada `reg query` é um processo: todos ao mesmo tempo (a verificação de ambiente
+        // chama a cada abertura e a cada F9; um depois do outro, eram ~55 ms).
+        let keys = ["HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "HKCU\\Environment"];
+        let names = ["Path", "CARGO_HOME", "RUSTUP_HOME"];
+        let values: Vec<Option<String>> = std::thread::scope(|s| {
+            let handles: Vec<_> = keys
+                .iter()
+                .flat_map(|key| names.iter().map(move |name| (key, name)))
+                .map(|(key, name)| (*name == "Path" || std::env::var_os(name).is_none()).then(|| s.spawn(move || registry_value(key, name))))
+                .collect();
+            handles.into_iter().map(|h| h.and_then(|h| h.join().ok().flatten())).collect()
+        });
+        for (k, _) in keys.iter().enumerate() {
+            let value = |name: &str| values[k * names.len() + names.iter().position(|n| *n == name).unwrap_or(0)].clone();
+            for d in value("Path").map(|v| split_registry_path(&v)).unwrap_or_default() {
                 add(d);
             }
             // As pastas do Rust do usuário: a IDE aberta por um cliente MCP nasce com o ambiente
@@ -164,7 +177,7 @@ pub fn refresh_path() {
             // Tabernáculo, I01).
             for name in ["CARGO_HOME", "RUSTUP_HOME"] {
                 if std::env::var_os(name).is_none()
-                    && let Some(value) = registry_value(key, name)
+                    && let Some(value) = value(name)
                 {
                     // SAFETY: como o PATH abaixo: antes de verificar ou instalar.
                     unsafe { std::env::set_var(name, value) };
@@ -184,6 +197,17 @@ pub fn refresh_path() {
         add(PathBuf::from("/usr/local/go/bin"));
         add(PathBuf::from("/opt/homebrew/bin"));
     }
+    // Os pacotes de ferramentas do Aylis (`toolpacks`), só onde a máquina não tem a
+    // ferramenta: as variáveis que faltam (decididas antes de mexer no PATH) e as pastas no
+    // fim do PATH, depois das do sistema.
+    let packages = crate::toolpacks::environment();
+    for (name, value) in packages.wanted_vars() {
+        // SAFETY: como o PATH abaixo: antes de verificar ou instalar.
+        unsafe { std::env::set_var(name, value) };
+    }
+    for d in packages.path {
+        add(d);
+    }
     if let Ok(joined) = std::env::join_paths(&dirs) {
         if joined != current {
             // SAFETY: só muda o PATH (os outros leem com `var_os`, que copia); a IDE chama
@@ -194,14 +218,20 @@ pub fn refresh_path() {
 }
 
 /// As pastas do `Path` numa chave do registro, com as `%VARIAVEIS%` trocadas.
+#[cfg(test)]
 fn registry_path(key: &str) -> Vec<PathBuf> {
-    let Some(value) = registry_value(key, "Path") else { return Vec::new() };
+    registry_value(key, "Path").map(|v| split_registry_path(&v)).unwrap_or_default()
+}
+
+fn split_registry_path(value: &str) -> Vec<PathBuf> {
     value.split(';').filter(|s| !s.trim().is_empty()).map(|s| PathBuf::from(s.trim())).collect()
 }
 
 /// Um valor de uma chave do registro (`reg query`), com as `%VARIAVEIS%` trocadas.
 fn registry_value(key: &str, name: &str) -> Option<String> {
-    let out = crate::process::quiet(&mut Command::new("reg")).args(["query", key, "/v", name]).output().ok()?;
+    let mut command = Command::new("reg");
+    command.args(["query", key, "/v", name]);
+    let out = crate::env::output_within(crate::process::quiet(&mut command), crate::env::PROCESS_LIMIT).ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
     text.lines().find_map(|l| {
         let l = l.trim();

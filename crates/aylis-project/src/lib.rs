@@ -204,10 +204,12 @@ pub struct Project {
     /// esses padrões.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limits: Option<LimitSettings>,
-    /// O cache de imagens prontas dos renderizadores: `{ "pixels_mb": 96, "files": 256 }`. O
-    /// que o app solta sai sozinho; os limites só contam para o que ele ainda segura. Passar
-    /// deles não erra a tela, só refaz (decodifica ou reenvia à placa) a imagem usada há mais
-    /// tempo quando ela voltar. Sem ele, esses padrões (`aylis_core::ImageCacheLimits`).
+    /// O cache de imagens prontas dos renderizadores: `{ "pixels_mb": 96, "files": 256,
+    /// "layers_mb": 128, "auto_layers": true }`. O que o app solta sai sozinho; os limites só
+    /// contam para o que ele ainda segura. Passar deles não erra a tela, só refaz (decodifica,
+    /// reenvia à placa, repinta) a imagem usada há mais tempo quando ela voltar. As camadas
+    /// automáticas (`auto_layers`) valem em todos os forms, salvo o `layer_cache` de um form.
+    /// Sem ele, esses padrões (`aylis_core::ImageCacheLimits`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_cache: Option<ImageCacheSettings>,
     /// Onde fica o executável de desenvolvimento (a "pasta de saída" do Delphi): o Executar
@@ -310,6 +312,14 @@ pub struct ImageCacheSettings {
     /// aparecem juntas numa tela (ícones, miniaturas, galeria).
     #[serde(default = "ImageCacheSettings::default_files")]
     pub files: u32,
+    /// Megabytes das camadas guardadas (o `cache_layer` e as páginas de uma transição, como
+    /// imagem): precisa caber as que andam juntas; `0`, nenhuma fica guardada.
+    #[serde(default = "ImageCacheSettings::default_layers_mb")]
+    pub layers_mb: u32,
+    /// As camadas automáticas (as páginas de uma transição, o contêiner animando) em todos os
+    /// forms; cada form pode trocar pela propriedade `layer_cache`.
+    #[serde(default = "ImageCacheSettings::default_auto_layers")]
+    pub auto_layers: bool,
 }
 
 impl ImageCacheSettings {
@@ -319,16 +329,22 @@ impl ImageCacheSettings {
     fn default_files() -> u32 {
         aylis_core::ImageCacheLimits::DEFAULT.files
     }
+    fn default_layers_mb() -> u32 {
+        aylis_core::ImageCacheLimits::DEFAULT.layers_mb
+    }
+    fn default_auto_layers() -> bool {
+        true
+    }
 
     pub fn limits(&self) -> aylis_core::ImageCacheLimits {
-        aylis_core::ImageCacheLimits { pixels_mb: self.pixels_mb, files: self.files }
+        aylis_core::ImageCacheLimits { pixels_mb: self.pixels_mb, files: self.files, layers_mb: self.layers_mb }
     }
 }
 
 impl Default for ImageCacheSettings {
     fn default() -> Self {
         let d = aylis_core::ImageCacheLimits::DEFAULT;
-        Self { pixels_mb: d.pixels_mb, files: d.files }
+        Self { pixels_mb: d.pixels_mb, files: d.files, layers_mb: d.layers_mb, auto_layers: true }
     }
 }
 
@@ -1805,7 +1821,9 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
         }
         ui.set_limits(l.tree_depth, l.event_nesting);
     }
-    aylis_core::image_cache::set_limits(project.image_cache.unwrap_or_default().limits());
+    let image_cache = project.image_cache.unwrap_or_default();
+    aylis_core::image_cache::set_limits(image_cache.limits());
+    aylis_core::image_cache::set_auto_layers(image_cache.auto_layers);
     if let Some(z) = project.zoom {
         ui.set_zoom(z.value);
         ui.set_zoom_keys(z.keys);

@@ -262,6 +262,8 @@ type
     procedure SetWindowState(Value: string);
     function GetTransition: string;
     procedure SetTransition(Value: string);
+    function GetLayerCache: string;
+    procedure SetLayerCache(Value: string);
     function GetTopmost: Boolean;
     procedure SetTopmost(Value: Boolean);
     function GetShowInTaskbar: Boolean;
@@ -441,6 +443,7 @@ type
     property WindowCorners: string read GetWindowCorners write SetWindowCorners;
     property WindowState: string read GetWindowState write SetWindowState;
     property Transition: string read GetTransition write SetTransition;
+    property LayerCache: string read GetLayerCache write SetLayerCache;
     property Topmost: Boolean read GetTopmost write SetTopmost;
     property ShowInTaskbar: Boolean read GetShowInTaskbar write SetShowInTaskbar;
     property ActiveControl: string read GetActiveControl write SetActiveControl;
@@ -1854,6 +1857,16 @@ end;
 procedure TForm.SetTransition(Value: string);
 begin
   SetProp('transition', TJSONString.Create(Value));
+end;
+
+function TForm.GetLayerCache: string;
+begin
+  Result := AsText(GetProp('layer_cache'));
+end;
+
+procedure TForm.SetLayerCache(Value: string);
+begin
+  SetProp('layer_cache', TJSONString.Create(Value));
 end;
 
 function TForm.GetTopmost: Boolean;

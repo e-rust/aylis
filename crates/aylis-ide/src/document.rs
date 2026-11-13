@@ -4,6 +4,7 @@
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
+use aylis_core::clipboard;
 use aylis_core::platform::LocaleInfo;
 use aylis_core::{Align, ComponentId, PointF, PropValue, RectF, Theme, Ui};
 use serde_json::{Map, Value, json};
@@ -253,7 +254,6 @@ pub struct Document {
     modules: Vec<Value>,
     undo: Vec<Snapshot>,
     redo: Vec<Snapshot>,
-    clipboard: Vec<Value>,
     /// Editando numa vista por largura (Celular, Tablet...): veja [`Document::enter_view`].
     pub view_mode: Option<ViewMode>,
     /// O aparelho em que o form é visto no designer (a moldura, o tamanho e a área segura) e
@@ -317,7 +317,6 @@ impl Document {
             modules: Vec::new(),
             undo: Vec::new(),
             redo: Vec::new(),
-            clipboard: Vec::new(),
             view_mode: None,
             device: None,
         }
@@ -1814,29 +1813,45 @@ impl Document {
 
     // ----- copiar e colar -----
 
-    pub fn copy_selected(&mut self) -> bool {
+    /// Copia os selecionados para a área de transferência do Aylis (a de `ui`, o da janela da
+    /// IDE: as abas, as outras IDEs e os outros apps veem a mesma). Vai o JSON dos nós no
+    /// formato dos componentes e, como texto, o mesmo JSON (como o DFM do Delphi: cola num
+    /// editor e volta para o designer).
+    pub fn copy_selected(&mut self, ui: &mut Ui) -> bool {
         let ids = self.editable_selection();
         let copied: Vec<Value> = ids.iter().filter_map(|&id| aylis_json::save_value(&self.ui, id).ok()).map(|d| d["root"].clone()).collect();
         if copied.is_empty() {
             return false;
         }
-        self.clipboard = copied;
+        let text = serde_json::to_string_pretty(&Value::Array(copied)).unwrap_or_default();
+        let content = clipboard::ClipboardContent::text(text.clone()).with_data(clipboard::COMPONENTS, text.into_bytes());
+        clipboard::set(ui, content);
         true
     }
 
     /// Recortar: copia e exclui.
-    pub fn cut_selected(&mut self) -> bool {
-        self.copy_selected() && self.delete_selected()
+    pub fn cut_selected(&mut self, ui: &mut Ui) -> bool {
+        self.copy_selected(ui) && self.delete_selected()
     }
 
-    pub fn has_clipboard(&self) -> bool {
-        !self.clipboard.is_empty()
+    /// Os componentes na área de transferência: os copiados num designer ou um texto com o
+    /// JSON deles (uma lista de nós, um nó ou um form inteiro).
+    pub fn copied_components(ui: &mut Ui) -> Vec<Value> {
+        let bytes = clipboard::data(ui, clipboard::COMPONENTS).or_else(|| clipboard::text(ui).map(String::into_bytes));
+        let Some(value) = bytes.and_then(|b| serde_json::from_slice::<Value>(&b).ok()) else { return Vec::new() };
+        let nodes = match value {
+            Value::Array(nodes) => nodes,
+            Value::Object(ref obj) if obj.contains_key("root") => vec![value["root"].clone()],
+            other => vec![other],
+        };
+        nodes.into_iter().filter(|n| n.get("class").and_then(Value::as_str).is_some_and(|c| !c.is_empty())).collect()
     }
 
     /// Cola dentro do selecionado (se for contêiner) ou ao lado dele, com nomes novos e
     /// deslocado para não ficar exatamente por cima.
-    pub fn paste(&mut self) -> Result<ComponentId, String> {
-        if self.clipboard.is_empty() {
+    pub fn paste(&mut self, ui: &mut Ui) -> Result<ComponentId, String> {
+        let copied = Self::copied_components(ui);
+        if copied.is_empty() {
             return Err("nada copiado".into());
         }
         let selected = self.selection.unwrap_or(self.root);
@@ -1848,7 +1863,7 @@ impl Document {
         self.begin_change();
         let mut taken = Vec::new();
         let mut pasted = Vec::new();
-        for node in self.clipboard.clone() {
+        for node in copied {
             let mut node = node;
             self.rename(&mut node, &mut taken);
             if let Some(obj) = node.as_object_mut() {

@@ -325,13 +325,15 @@ struct WebCache {
     depth: usize,
     canvas: HtmlCanvasElement,
     key: u64,
+    /// A chave do núcleo (para soltar pela `forget_cached`).
+    owner: u64,
     at: (f64, f64),
 }
 
 thread_local! {
     /// Os desenhos guardados (`Canvas::begin_cached`: o `cache_layer` de um controle, um
     /// mapa parado), pela chave.
-    static LAYERS: RefCell<HashMap<u64, HtmlCanvasElement>> = RefCell::new(HashMap::new());
+    static LAYERS: RefCell<aylis_core::LayerCache<HtmlCanvasElement>> = RefCell::new(aylis_core::LayerCache::named("Canvas 2D · camadas guardadas"));
     /// Os canvas das camadas de `save_layer` já usados, para o próximo quadro.
     static SPARE_LAYERS: RefCell<Vec<HtmlCanvasElement>> = const { RefCell::new(Vec::new()) };
 }
@@ -582,9 +584,14 @@ impl Canvas for Canvas2d<'_> {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         (key, w as u32, h as u32, a.to_bits(), d.to_bits()).hash(&mut hasher);
         let full = hasher.finish();
-        if let Some(canvas) = LAYERS.with(|l| l.borrow().get(&full).cloned()) {
+        if let Some(canvas) = LAYERS.with(|l| l.borrow_mut().get(full).cloned()) {
             draw_at_device(&self.ctx, &canvas, (x0, y0));
             return true;
+        }
+        // Sem lugar no limite das camadas (`image_cache.layers_mb`): desenha direto.
+        if !aylis_core::LayerCache::<HtmlCanvasElement>::accepts(w as usize * h as usize * 4) {
+            self.cached.push(None);
+            return false;
         }
         let made = web_sys::window().and_then(|w| w.document()).and_then(|d| d.create_element("canvas").ok()).and_then(|e| e.dyn_into::<HtmlCanvasElement>().ok());
         let Some(canvas) = made else {
@@ -601,7 +608,7 @@ impl Canvas for Canvas2d<'_> {
         let _ = target.set_transform(a, 0.0, 0.0, d, m.e() - x0, m.f() - y0);
         let main = std::mem::replace(&mut self.ctx, target);
         let depth = std::mem::take(&mut self.depth);
-        self.cached.push(Some(WebCache { main, depth, canvas, key: full, at: (x0, y0) }));
+        self.cached.push(Some(WebCache { main, depth, canvas, key: full, owner: key, at: (x0, y0) }));
         false
     }
 
@@ -610,14 +617,14 @@ impl Canvas for Canvas2d<'_> {
         self.ctx = state.main;
         self.depth = state.depth;
         draw_at_device(&self.ctx, &state.canvas, state.at);
-        LAYERS.with(|l| {
-            let mut layers = l.borrow_mut();
-            // Poucos guardados por vez: cada destaque novo de um mapa é uma imagem nova.
-            if layers.len() >= 16 {
-                layers.clear();
-            }
-            layers.insert(state.key, state.canvas);
-        });
+        // O limite é em bytes (`image_cache.layers_mb`): cada destaque novo de um mapa é uma
+        // imagem nova, e sai a usada há mais tempo.
+        let bytes = state.canvas.width() as usize * state.canvas.height() as usize * 4;
+        LAYERS.with(|l| l.borrow_mut().insert(state.owner, state.key, state.canvas, bytes));
+    }
+
+    fn forget_cached(&mut self, key: u64) {
+        LAYERS.with(|l| l.borrow_mut().forget(key));
     }
 
     fn backdrop_blur(&mut self, rect: RectF, radius: f32, blur: f32) -> bool {

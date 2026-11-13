@@ -8,10 +8,10 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.0-beta.5", path = "../aylis-core" }
-aylis-vector = { version = "0.2.0-beta.5", path = "../aylis-vector" }
-aylis-json = { version = "0.2.0-beta.5", path = "../aylis-json" }
-aylis-build = { version = "0.2.0-beta.5", path = "../aylis-build" }
+aylis-core = { version = "0.2.0-beta.6", path = "../aylis-core" }
+aylis-vector = { version = "0.2.0-beta.6", path = "../aylis-vector" }
+aylis-json = { version = "0.2.0-beta.6", path = "../aylis-json" }
+aylis-build = { version = "0.2.0-beta.6", path = "../aylis-build" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 # Para atualizar o Cargo.toml de projetos antigos sem perder comentários e edições.

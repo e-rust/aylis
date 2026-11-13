@@ -94,7 +94,7 @@ fn export_with(ui: &Ui, e: &Export, _id: ComponentId) -> Result<Vec<u8>, String>
     with_provider(ui, e.provider, |p| p.write(&[table]))
 }
 
-fn table_of(ui: &Ui, e: &Export) -> Result<ExportTable, String> {
+pub(crate) fn table_of(ui: &Ui, e: &Export) -> Result<ExportTable, String> {
     let ds = e.data_source.and_then(|s| ui.get::<DataSource>(s)).and_then(|s| s.data_set).ok_or("o Export precisa de um data_source ligado a um dataset")?;
     let v = view(ui, ds);
     let names: Vec<String> = if e.fields.trim().is_empty() {

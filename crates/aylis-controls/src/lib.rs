@@ -33,8 +33,10 @@
 //! | [`Timer`] | `TTimer` |
 //! | [`DragImage`] | `TDragObject.GetDragImages` / `TCustomImageList` do arrasto: a imagem junto do cursor |
 //! | [`OpenDialog`], [`SaveDialog`] | `TOpenDialog`, `TSaveDialog` (assíncronos; desktop, navegador, Android e iOS: leia e grave com `aylis_core::files`) |
+//! | [`Clipboard`] | `TClipboard` / `IFMXClipboardService` (texto, HTML, imagem e os formatos do app; no Rust, `aylis_core::clipboard`) |
 //! | [`Permissions`], [`Biometrics`] | consultar e pedir permissões; digital, rosto, Windows Hello |
 //! | [`AppLink`] | abrir endereços e outros apps, compartilhar, receber links e o que foi compartilhado |
+//! | [`UrlScheme`] | um prefixo de URL próprio (`meuapp://`) que abre o app e entrega o endereço no `on_link` |
 //! | [`AnimatedText`] | texto com efeitos de entrada, saída e contínuos (apresentações) |
 //! | [`MessageDialog`], [`message_dlg`], [`show_message`], [`toast`] | `TTaskDialog`, `MessageDlg`, `ShowMessage`, toast do Android |
 //! | [`Chart`] | `TChart` (linhas, barras, área, pizza) |
@@ -61,7 +63,7 @@ pub use aylis_controls_charts::{
 pub use aylis_controls_device::{
     AppLink, BackgroundService, Battery, Biometrics, Bluetooth, Nfc, parse_hex, Compass, Gamepad, LightSensor, Location, LockScreen, MotionSensor, Network, Permissions, Phone, ProximitySensor,
     PushNotifications, PushTrigger, WakeAppAction, NotifyAction, Ringtone,
-    Screen, Vibration,
+    Screen, UrlScheme, Vibration,
 };
 pub use aylis_controls_editors::{AngleDial, AnimatedText, Bitmap, EasingEditor, PaintCanvas, PaintTool, ShadowEditor, TimingEditor};
 pub use aylis_controls_industrial::{
@@ -162,6 +164,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<Permissions>("System");
     ui.register_class::<Biometrics>("System");
     ui.register_class::<AppLink>("System");
+    ui.register_class::<UrlScheme>("System");
     ui.register_class::<Location>("Device");
     ui.register_class::<Battery>("Device");
     ui.register_class::<Network>("Device");
@@ -183,6 +186,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<NotifyAction>("Device");
     ui.register_class::<AnimatedText>("Standard");
     ui.register_class::<SaveDialog>("System");
+    ui.register_class::<Clipboard>("System");
     ui.register_class::<FloatAnimation>("Animations");
     ui.register_class::<ColorAnimation>("Animations");
     ui.register_class::<IconView>("Standard");

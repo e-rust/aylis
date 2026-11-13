@@ -1,0 +1,799 @@
+{
+  "_": "Os pacotes de ferramentas (docs/pacotes.md): versão fixa e o SHA-256 de cada arquivo. As URLs são as oficiais, usadas só pelo `aylis-tool packages pack`/`update` (a instalação usa o cache, as pastas de pacotes e os espelhos). `aylis-tool packages update` preenche os hashes e os tamanhos vazios; `update-tools` atualiza os do GitHub.",
+  "aylis": 1,
+  "packages": {
+    "rust": {
+      "title": "Rust 1.99 (stable)",
+      "description": "O compilador (rustc), o cargo, a biblioteca padrão do sistema, o rustfmt e o rust-analyzer, sem rustup. No Windows, o linker é o do Visual C++ (Build Tools da Microsoft, à parte).",
+      "version": "1.99.0",
+      "install": "rust-toolchain",
+      "exports": {
+        "path": [
+          "bin"
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "rustc-1.99.0-x86_64-pc-windows-msvc.tar.gz",
+              "size": 136130434,
+              "sha256": "4d05087fd7786cceb9460f573df54d1c0511ff3aa121e8e8da346c325b9fc3f6",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustc-1.99.0-x86_64-pc-windows-msvc.tar.gz"
+            },
+            {
+              "name": "cargo-1.99.0-x86_64-pc-windows-msvc.tar.gz",
+              "size": 13784063,
+              "sha256": "5e7c399c9bcc944791dcd6cb666eec826bfa8cd04e4b81b7790c030165927965",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/cargo-1.99.0-x86_64-pc-windows-msvc.tar.gz"
+            },
+            {
+              "name": "rust-std-1.99.0-x86_64-pc-windows-msvc.tar.gz",
+              "size": 37179536,
+              "sha256": "0f755f2339d6fcb97da532cde33566350e9690398a0fdd06fba8fc281e0bd6dc",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-x86_64-pc-windows-msvc.tar.gz"
+            },
+            {
+              "name": "rustfmt-1.99.0-x86_64-pc-windows-msvc.tar.gz",
+              "size": 4079932,
+              "sha256": "0a152a82f36aaefcf9380a7294126c0b70ab44c0342f792ba27006f47888e587",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustfmt-1.99.0-x86_64-pc-windows-msvc.tar.gz"
+            },
+            {
+              "name": "rust-analyzer-1.99.0-x86_64-pc-windows-msvc.tar.gz",
+              "size": 14908064,
+              "sha256": "a9265455e25f44a6105ec043c0de5e2b18f1fe5925066f4693e12bf1f4ae34e1",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-analyzer-1.99.0-x86_64-pc-windows-msvc.tar.gz"
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "rustc-1.99.0-x86_64-unknown-linux-gnu.tar.gz",
+              "size": 141398713,
+              "sha256": "238e72b8617f79bc96f27a5bfeb1a208b5755fe1a48f8bc190fe403ef6d54ab8",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustc-1.99.0-x86_64-unknown-linux-gnu.tar.gz"
+            },
+            {
+              "name": "cargo-1.99.0-x86_64-unknown-linux-gnu.tar.gz",
+              "size": 14521653,
+              "sha256": "c2b8ba1f59e7a230aa5522684f3f7aa620b98e5ad37683a5e5cf9b41f534fa1e",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/cargo-1.99.0-x86_64-unknown-linux-gnu.tar.gz"
+            },
+            {
+              "name": "rust-std-1.99.0-x86_64-unknown-linux-gnu.tar.gz",
+              "size": 50364291,
+              "sha256": "1dcaa01beb6bc78fdb13815b4f15214719167c58e3d79fbdf214591f8c195ee1",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-x86_64-unknown-linux-gnu.tar.gz"
+            },
+            {
+              "name": "rustfmt-1.99.0-x86_64-unknown-linux-gnu.tar.gz",
+              "size": 3133022,
+              "sha256": "9fc3a87d3d4f6e5e2bd87e6fb8779b7a95831f533cb8cc8ae1304a797c648733",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustfmt-1.99.0-x86_64-unknown-linux-gnu.tar.gz"
+            },
+            {
+              "name": "rust-analyzer-1.99.0-x86_64-unknown-linux-gnu.tar.gz",
+              "size": 14399889,
+              "sha256": "85bcab8993a9cd1dd73303241ed1044a1c6b0dcab3fbc01fb756ba8dfa8fb792",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-analyzer-1.99.0-x86_64-unknown-linux-gnu.tar.gz"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "rustc-1.99.0-aarch64-apple-darwin.tar.gz",
+              "size": 85303276,
+              "sha256": "2f6b9c9cdc9c2e87ab2e27335e8bb0c4dbe4daea486e39030b66980058f74353",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustc-1.99.0-aarch64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "cargo-1.99.0-aarch64-apple-darwin.tar.gz",
+              "size": 13080990,
+              "sha256": "318b85c276b43134102fb49bbb54bfd0757e5cce47a772461149aeab5adea2ab",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/cargo-1.99.0-aarch64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rust-std-1.99.0-aarch64-apple-darwin.tar.gz",
+              "size": 48529215,
+              "sha256": "3589b3a6c6470d590aa5aa7fa1a4af0101103847761a5372a7300b0aa85699c6",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-aarch64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rustfmt-1.99.0-aarch64-apple-darwin.tar.gz",
+              "size": 2217541,
+              "sha256": "c8d86490e38920ab7783483dc828695a9a678eff541c5fa793f165b374e87312",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustfmt-1.99.0-aarch64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rust-analyzer-1.99.0-aarch64-apple-darwin.tar.gz",
+              "size": 13198534,
+              "sha256": "07a9c072954126cd6a6978e4cec40aaec83dfde0452a0bb1863ad8a755df3ad7",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-analyzer-1.99.0-aarch64-apple-darwin.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "rust-android": {
+      "title": "Rust para Android",
+      "description": "A biblioteca padrão do Rust para os celulares (aarch64) e o emulador (x86_64), no toolchain do pacote rust.",
+      "version": "1.99.0",
+      "depends": [
+        "rust"
+      ],
+      "install": {
+        "rust-target": [
+          "aarch64-linux-android",
+          "x86_64-linux-android"
+        ]
+      },
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "rust-std-1.99.0-aarch64-linux-android.tar.gz",
+              "size": 46472656,
+              "sha256": "8913fbbad9d80136e0e9dec9865881a7d54119c28a9ac597eaebee1a7dfafad7",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-aarch64-linux-android.tar.gz"
+            },
+            {
+              "name": "rust-std-1.99.0-x86_64-linux-android.tar.gz",
+              "size": 46643932,
+              "sha256": "a8e237d1546e71739709376acc34991521b3a387a311dd68634d5cc56f526ca3",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-x86_64-linux-android.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "rust-wasm": {
+      "title": "Rust para o navegador (wasm)",
+      "description": "A biblioteca padrão do Rust para wasm32-unknown-unknown, no toolchain do pacote rust.",
+      "version": "1.99.0",
+      "depends": [
+        "rust"
+      ],
+      "install": {
+        "rust-target": [
+          "wasm32-unknown-unknown"
+        ]
+      },
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "rust-std-1.99.0-wasm32-unknown-unknown.tar.gz",
+              "size": 34930568,
+              "sha256": "4dffdca3c11a88f18a35021cea4ed0279b41650c0e3e2e98928ecc28958bceba",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-wasm32-unknown-unknown.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "jdk": {
+      "title": "JDK 17 (Eclipse Temurin)",
+      "description": "O Java para compilar o Android (d8, apksigner), o JDT LS e os projetos em Java.",
+      "version": "17.0.21+9",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "bin"
+        ],
+        "env": {
+          "JAVA_HOME": "."
+        }
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "OpenJDK17U-jdk_x64_windows_hotspot_17.0.21_9.zip",
+              "size": 191117380,
+              "sha256": "98518ecf554465057ee5509462631deeee374bc368c12a411d225cd29381f84b",
+              "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_windows_hotspot_17.0.21_9.zip",
+              "strip": 1
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "OpenJDK17U-jdk_x64_linux_hotspot_17.0.21_9.tar.gz",
+              "size": 193594705,
+              "sha256": "8b9b611d917e3dfd8419d3566b5949226f69b052fed7e109c1368add1dfe8711",
+              "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21_9.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.21_9.tar.gz",
+              "size": 186192554,
+              "sha256": "78b08c7f5a0598242d5719c022e19479cb4a3aa45c37c19726a757a469ed1c15",
+              "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.21_9.tar.gz",
+              "prefix": "jdk-17.0.21+9/Contents/Home"
+            }
+          ]
+        }
+      }
+    },
+    "android-sdk": {
+      "title": "Android SDK",
+      "description": "As command-line tools 23.0, as platform tools 37.0.3 (adb), a plataforma android-34 e as build tools 34.0.0, nos lugares em que o sdkmanager as põe.",
+      "version": "34.0.0",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "platform-tools"
+        ],
+        "env": {
+          "ANDROID_HOME": "."
+        }
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "commandlinetools-win-16111833_latest.zip",
+              "size": 154957218,
+              "sha256": "e5885e2e59038c0778a85fc19f01de7ce7c567c105553f7617b936b1e0e87b2b",
+              "url": "https://dl.google.com/android/repository/commandlinetools-win-16111833_latest.zip",
+              "strip": 1,
+              "into": "cmdline-tools/latest"
+            },
+            {
+              "name": "platform-tools_r37.0.3-win.zip",
+              "size": 8188595,
+              "sha256": "b5d2015f5d5b7a24a2ac646a245f20f63fb501e4174c61863c74bed1df6de4bd",
+              "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-win.zip"
+            },
+            {
+              "name": "platform-34-ext7_r03.zip",
+              "size": 63180081,
+              "sha256": "16fdb74c55e59ae3ef52def135aec713508467bd56d7dabcd8c9be31fa8b20f3",
+              "url": "https://dl.google.com/android/repository/platform-34-ext7_r03.zip",
+              "strip": 1,
+              "into": "platforms/android-34"
+            },
+            {
+              "name": "build-tools_r34-windows.zip",
+              "size": 58253258,
+              "sha256": "9be665ad74ef22bf0e489b37db465074484df79b95f26d759945d5c25a47b326",
+              "url": "https://dl.google.com/android/repository/build-tools_r34-windows.zip",
+              "strip": 1,
+              "into": "build-tools/34.0.0"
+            }
+          ]
+        }
+      }
+    },
+    "android-ndk": {
+      "title": "Android NDK 27.2",
+      "description": "O NDK r27c (27.2.12479018): o compilador C e o linker do Rust para o Android.",
+      "version": "27.2.12479018",
+      "depends": [
+        "android-sdk"
+      ],
+      "install": "extract",
+      "exports": {
+        "env": {
+          "ANDROID_NDK_HOME": "."
+        }
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "android-ndk-r27c-windows.zip",
+              "size": 781511249,
+              "sha256": "27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494",
+              "url": "https://dl.google.com/android/repository/android-ndk-r27c-windows.zip",
+              "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "cargo-ndk": {
+      "title": "cargo-ndk 4.1.2",
+      "description": "Compila o Rust para o Android com o NDK (o binário oficial do projeto).",
+      "version": "4.1.2",
+      "depends": [
+        "rust-android",
+        "android-ndk"
+      ],
+      "install": "extract",
+      "exports": {
+        "path": [
+          "."
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "cargo-ndk-x86_64-pc-windows-msvc-v4.1.2.zip",
+              "size": 1843382,
+              "sha256": "e2687c647748a8fb1c06981a4fc39376a5b5f640474db3f73de7ae247b7c55e0",
+              "url": "https://github.com/bbqsrc/cargo-ndk/releases/download/v4.1.2/cargo-ndk-x86_64-pc-windows-msvc-v4.1.2.zip"
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "cargo-ndk-x86_64-unknown-linux-musl-v4.1.2.tgz",
+              "size": 2736539,
+              "sha256": "dc148bebbfcd7d5355e9858530d5a69c20ce69cf3268c54b9f63c60cb4c9a966",
+              "url": "https://github.com/bbqsrc/cargo-ndk/releases/download/v4.1.2/cargo-ndk-x86_64-unknown-linux-musl-v4.1.2.tgz"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "cargo-ndk-aarch64-apple-darwin-v4.1.2.tgz",
+              "size": 2295901,
+              "sha256": "76d87f5f1bbbbe3980b979f7d1bdef00849dde11c669be243223942b296f5006",
+              "url": "https://github.com/bbqsrc/cargo-ndk/releases/download/v4.1.2/cargo-ndk-aarch64-apple-darwin-v4.1.2.tgz"
+            }
+          ]
+        }
+      }
+    },
+    "wasm-bindgen": {
+      "title": "wasm-bindgen 0.2.129",
+      "description": "Gera a ligação JavaScript do wasm (a mesma versão do crate wasm-bindgen do Aylis).",
+      "version": "0.2.129",
+      "depends": [
+        "rust-wasm"
+      ],
+      "install": "extract",
+      "exports": {
+        "path": [
+          "."
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "wasm-bindgen-0.2.129-x86_64-pc-windows-msvc.tar.gz",
+              "size": 7845552,
+              "sha256": "79e348c169d0c10c0b287647f1e753d0985353ca96800bc29be8f4261baf13e6",
+              "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.129/wasm-bindgen-0.2.129-x86_64-pc-windows-msvc.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "wasm-bindgen-0.2.129-x86_64-unknown-linux-musl.tar.gz",
+              "size": 11695824,
+              "sha256": "82d12bb940e2d4e72e0d5605387fc1b8ca179044e012b620f0ce4e7440e8320e",
+              "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.129/wasm-bindgen-0.2.129-x86_64-unknown-linux-musl.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "wasm-bindgen-0.2.129-aarch64-apple-darwin.tar.gz",
+              "size": 7925587,
+              "sha256": "81d4a23d56b3c3eb8187658329116d50e0b228a93b343825fb71f70179051cd1",
+              "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.129/wasm-bindgen-0.2.129-aarch64-apple-darwin.tar.gz",
+              "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "python": {
+      "title": "Python 3.12",
+      "description": "O Python 3.12.10 completo (com o pip), do pacote NuGet oficial do python.org: sem instalador e sem administrador.",
+      "version": "3.12.10",
+      "install": "extract",
+      "exports": {
+        "path": [
+          ".",
+          "Scripts"
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "python.3.12.10.nupkg",
+              "size": 14515433,
+              "sha256": "0eb85c2dfccccf1b17352de4c397f69194035b7d37149eacc16f1147d93de3b8",
+              "url": "https://api.nuget.org/v3-flatcontainer/python/3.12.10/python.3.12.10.nupkg",
+              "prefix": "tools"
+            }
+          ]
+        }
+      }
+    },
+    "node": {
+      "title": "Node.js 26 (LTS)",
+      "description": "O Node.js 26.13.1 com o npm: os projetos em TypeScript e o depurador de JavaScript.",
+      "version": "26.13.1",
+      "install": "extract",
+      "platforms": {
+        "windows-x86_64": {
+          "exports": {
+            "path": [
+              "."
+            ]
+          },
+          "files": [
+            {
+              "name": "node-v26.13.1-win-x64.zip",
+              "size": 41166246,
+              "sha256": "e2edda75bfb089654705cf65a13b58933bfd5f57148e8ebda916f58a2474f1f7",
+              "url": "https://nodejs.org/dist/v26.13.1/node-v26.13.1-win-x64.zip",
+              "strip": 1
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "exports": {
+            "path": [
+              "bin"
+            ]
+          },
+          "files": [
+            {
+              "name": "node-v26.13.1-linux-x64.tar.gz",
+              "size": 62904977,
+              "sha256": "518674de2b621728a5e4486f5fb3b7d2900bb3cc4aa97969edaa463db99f9778",
+              "url": "https://nodejs.org/dist/v26.13.1/node-v26.13.1-linux-x64.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "exports": {
+            "path": [
+              "bin"
+            ]
+          },
+          "files": [
+            {
+              "name": "node-v26.13.1-darwin-arm64.tar.gz",
+              "size": 58340590,
+              "sha256": "aec2514ea1ceb2ba52455e9ec65986f6749a06dd759e5db2a72e6889668c9735",
+              "url": "https://nodejs.org/dist/v26.13.1/node-v26.13.1-darwin-arm64.tar.gz",
+              "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "dotnet": {
+      "title": ".NET SDK 8",
+      "description": "O SDK do .NET 8.0.428: os projetos em C# e o csharp-ls.",
+      "version": "8.0.428",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "."
+        ],
+        "env": {
+          "DOTNET_ROOT": "."
+        }
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "dotnet-sdk-8.0.428-win-x64.zip",
+              "size": 285304526,
+              "sha256": "3528049a139fa0e336e340c82c1266532f497a4ba439747eca647078691c49c5",
+              "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-win-x64.zip"
+            }
+          ]
+        }
+      }
+    },
+    "go": {
+      "title": "Go 1.27",
+      "description": "O Go 1.27.4: os projetos em Go, o gopls e o Delve.",
+      "version": "1.27.4",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "bin"
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "go1.27.4.windows-amd64.zip",
+              "size": 79077744,
+              "sha256": "178ab98950ac69ab25069307dc6ade79f3816e414cce95b4da166a115cde1e7e",
+              "url": "https://go.dev/dl/go1.27.4.windows-amd64.zip",
+              "strip": 1
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "go1.27.4.linux-amd64.tar.gz",
+              "size": 70680823,
+              "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840",
+              "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "go1.27.4.darwin-arm64.tar.gz",
+              "size": 68231011,
+              "sha256": "91a44a2b8a716600ad94a4f143e156116620db8828086a6e3602291be9bd0bb4",
+              "url": "https://go.dev/dl/go1.27.4.darwin-arm64.tar.gz",
+              "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "nsis": {
+      "title": "NSIS 3.11",
+      "description": "O makensis: o instalador .exe do Windows que o Publicar gera.",
+      "version": "3.11",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "."
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "nsis-3.11.zip",
+              "size": 2361546,
+              "sha256": "c7d27f780ddb6cffb4730138cd1591e841f4b7edb155856901cdf5f214394fa1",
+              "url": "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.11/nsis-3.11.zip",
+              "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "codelldb": {
+      "title": "CodeLLDB",
+      "description": "O depurador de Rust, C++ e Free Pascal (o adaptador DAP do LLDB).",
+      "version": "v1.12.3",
+      "install": "extract",
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "codelldb-win32-x64.vsix",
+              "size": 50943475,
+              "sha256": "a916e509308dac817732f63ca604a8b93ed29cd16f38a2fa9f0b64ed58e8f51a",
+              "url": "https://github.com/vadimcn/codelldb/releases/download/v1.12.3/codelldb-win32-x64.vsix"
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "codelldb-linux-x64.vsix",
+              "size": 55571094,
+              "sha256": "1cd7f386598022b51a5b93b9ffa23e812b23f519cfe1833384ec4bef4bfd1be1",
+              "url": "https://github.com/vadimcn/codelldb/releases/download/v1.12.3/codelldb-linux-x64.vsix"
+            }
+          ]
+        },
+        "linux-aarch64": {
+          "files": [
+            {
+              "name": "codelldb-linux-arm64.vsix",
+              "size": 54544514,
+              "sha256": "0887f67d440554617894266f80706b700907c36b95e6e49d23b95a0e05318101",
+              "url": "https://github.com/vadimcn/codelldb/releases/download/v1.12.3/codelldb-linux-arm64.vsix"
+            }
+          ]
+        },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "codelldb-darwin-x64.vsix",
+              "size": 47735596,
+              "sha256": "e25cc716b94c62c07fec268ff2785d2b797245b160502baef8b9c970a0c4d8e8",
+              "url": "https://github.com/vadimcn/codelldb/releases/download/v1.12.3/codelldb-darwin-x64.vsix"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "codelldb-darwin-arm64.vsix",
+              "size": 45390048,
+              "sha256": "2f114a990e1b368dd1dbd33c80c0e719767af2d228391ec0df0571c957f9ac91",
+              "url": "https://github.com/vadimcn/codelldb/releases/download/v1.12.3/codelldb-darwin-arm64.vsix"
+            }
+          ]
+        }
+      }
+    },
+    "netcoredbg": {
+      "title": "netcoredbg",
+      "description": "O depurador de C# (.NET), da Samsung.",
+      "version": "3.2.0-1092",
+      "install": "extract",
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "netcoredbg-win64.zip",
+              "size": 3524161,
+              "sha256": "3c410a45fa502415203a94fcb88654af65bf8e3dac158a5527a722e7a6b9274a",
+              "url": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-win64.zip"
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "netcoredbg-linux-amd64.tar.gz",
+              "size": 3510717,
+              "sha256": "080eb3b2d2152465f599d3b33d1ee6e747794e11cc0a3773ec689f5e5f2c5afa",
+              "url": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-linux-amd64.tar.gz"
+            }
+          ]
+        },
+        "linux-aarch64": {
+          "files": [
+            {
+              "name": "netcoredbg-linux-arm64.tar.gz",
+              "size": 3424271,
+              "sha256": "065ff49badec8a695dbea2de6ab6a330c774a191e426a217ab8cc05250627ccb",
+              "url": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-linux-arm64.tar.gz"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "netcoredbg-osx-arm64.zip",
+              "size": 3389504,
+              "sha256": "f4fa33b3ff874910cc184b4bb3b9c56d0abdf5c6521cee0b144d7c6e4a6e59ea",
+              "url": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-osx-arm64.zip"
+            }
+          ]
+        }
+      },
+      "exports": {
+        "path": [
+          "netcoredbg"
+        ]
+      }
+    },
+    "js-debug": {
+      "title": "js-debug",
+      "description": "O depurador de JavaScript e TypeScript (o do VS Code, pelo Node).",
+      "version": "v1.140.0",
+      "install": "extract",
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "js-debug-dap-v1.140.0.tar.gz",
+              "size": 1249709,
+              "sha256": "27dab92937ec1ab35821ae955aac867544fe06a1b6307229049f2d789af10968",
+              "url": "https://github.com/microsoft/vscode-js-debug/releases/download/v1.140.0/js-debug-dap-v1.140.0.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "clangd": {
+      "title": "clangd",
+      "description": "O servidor de linguagem de C++.",
+      "version": "23.1.0",
+      "install": "extract",
+      "platforms": {
+        "windows": {
+          "files": [
+            {
+              "name": "clangd-windows-23.1.0.zip",
+              "size": 29690805,
+              "sha256": "23412a240756a162e7b98a282f36aa2a23a88db5ce16a0cbc4fef7253768c810",
+              "url": "https://github.com/clangd/clangd/releases/download/23.1.0/clangd-windows-23.1.0.zip"
+            }
+          ]
+        },
+        "linux": {
+          "files": [
+            {
+              "name": "clangd-linux-23.1.0.zip",
+              "size": 117949007,
+              "sha256": "e53b1a96196095faedb7642cf64964f7fb9ad4a0c1f00dd2c172a3d9dcbafdfd",
+              "url": "https://github.com/clangd/clangd/releases/download/23.1.0/clangd-linux-23.1.0.zip"
+            }
+          ]
+        },
+        "macos": {
+          "files": [
+            {
+              "name": "clangd-mac-23.1.0.zip",
+              "size": 100060151,
+              "sha256": "1082e6638223b785ca2daf0939f13afcd0bb95c84ee9a4bbaff4745365159253",
+              "url": "https://github.com/clangd/clangd/releases/download/23.1.0/clangd-mac-23.1.0.zip"
+            }
+          ]
+        }
+      }
+    },
+    "bundletool": {
+      "title": "bundletool",
+      "description": "Monta o AAB para a Play Store (precisa do JDK).",
+      "version": "1.18.3",
+      "install": "extract",
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "bundletool-all-1.18.3.jar",
+              "size": 32520401,
+              "sha256": "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29",
+              "url": "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar",
+              "save_as": "bundletool.jar",
+              "extract": false
+            }
+          ]
+        }
+      },
+      "depends": [
+        "jdk"
+      ]
+    },
+    "jdtls": {
+      "title": "Eclipse JDT LS",
+      "description": "O servidor de linguagem de Java (o 1.38, o último que roda no Java 17).",
+      "version": "1.38.0",
+      "install": "extract",
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "jdt-language-server-1.38.0-202408011337.tar.gz",
+              "size": 47209222,
+              "sha256": "ba697788a19f2ba57b16302aba6b343c649928c95f76b0d170494ac12d17ac78",
+              "url": "https://download.eclipse.org/jdtls/milestones/1.38.0/jdt-language-server-1.38.0-202408011337.tar.gz"
+            }
+          ]
+        }
+      },
+      "depends": [
+        "jdk"
+      ]
+    }
+  },
+  "managers": {
+    "gopls": "v0.24.0",
+    "delve": "v1.27.2",
+    "python-lsp-server": "1.15.0",
+    "typescript": "5.9.3",
+    "typescript-language-server": "6.0.2",
+    "csharp-ls": "0.28.0",
+    "csharp-ls-net9": "0.20.0",
+    "csharp-ls-net8": "0.16.0",
+    "pascal-language-server": "81eae69964436594d4bf42137fdba52199765fef"
+  }
+}

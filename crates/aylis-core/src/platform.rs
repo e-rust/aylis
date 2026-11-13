@@ -38,10 +38,44 @@ pub trait TimerService {
     fn now(&self) -> f64;
 }
 
-/// Área de transferência (como `IFMXClipboardService`).
+/// Área de transferência (como `IFMXClipboardService`). Os controles e os apps usam o
+/// [`crate::clipboard`], que guarda no processo o que a plataforma não souber guardar.
 pub trait ClipboardService {
     fn get_text(&mut self) -> Option<String>;
     fn set_text(&mut self, text: &str);
+
+    /// Grava tudo de uma vez (o que estava sai), cada formato que a plataforma souber.
+    fn set_content(&mut self, content: &crate::clipboard::ClipboardContent) {
+        self.set_text(content.text.as_deref().unwrap_or(""));
+    }
+
+    fn get_html(&mut self) -> Option<String> {
+        None
+    }
+
+    fn get_image(&mut self) -> Option<crate::Image> {
+        None
+    }
+
+    /// Os bytes de um formato do app gravado pela plataforma (o de outra instância também).
+    fn get_data(&mut self, _format: &str) -> Option<Vec<u8>> {
+        None
+    }
+
+    /// Se a plataforma tem o formato (`clipboard::HTML`, `IMAGE` ou um do app) agora.
+    fn has(&mut self, format: &str) -> bool {
+        match format {
+            crate::clipboard::HTML => self.get_html().is_some(),
+            crate::clipboard::IMAGE => self.get_image().is_some(),
+            _ => self.get_data(format).is_some(),
+        }
+    }
+
+    /// O número que muda a cada cópia (de qualquer app), onde a plataforma conta; sem ele,
+    /// a cópia do processo vale enquanto o texto da plataforma for o mesmo.
+    fn sequence(&mut self) -> Option<u64> {
+        None
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -521,6 +555,81 @@ pub trait LinkService {
         let _ = data;
         done(Err(format!("pedir a outro app não existe aqui ({action})")));
     }
+    /// Se registra prefixos em execução (o Windows); nas outras plataformas, quem registra é a
+    /// publicação, e o `UrlScheme` só recebe.
+    fn can_register_schemes(&self) -> bool {
+        false
+    }
+    /// Registra o prefixo (`meuapp`, já conferido por [`check_scheme`]) para abrir este app:
+    /// `meuapp://...` chamado por qualquer programa abre o app com o endereço (o componente
+    /// `UrlScheme`). Onde só a publicação registra (macOS, iOS, Linux, Android), `Err`.
+    fn register_scheme(&mut self, scheme: &str, description: &str) -> Result<(), String> {
+        let _ = description;
+        Err(format!("registrar o prefixo {scheme}:// em execução não existe aqui (vai na publicação)"))
+    }
+    /// Tira o registro do prefixo, se for deste app.
+    fn unregister_scheme(&mut self, scheme: &str) -> Result<(), String> {
+        Err(format!("tirar o registro do prefixo {scheme}:// não existe aqui"))
+    }
+    /// Se o prefixo abre este app.
+    fn scheme_registered(&mut self, scheme: &str) -> bool {
+        let _ = scheme;
+        false
+    }
+    /// Passa a receber os links que outra cópia do app repassar (o app já aberto, chamado de
+    /// novo por um link): `on_link` recebe o endereço, de qualquer thread.
+    fn receive_links(&mut self, on_link: Box<dyn Fn(String) + Send>) {
+        let _ = on_link;
+    }
+}
+
+/// Os prefixos que um app não registra: os da web, os do sistema e os que rodam código.
+const RESERVED_SCHEMES: &[&str] = &[
+    "http", "https", "file", "ftp", "ftps", "mailto", "tel", "sms", "data", "javascript", "vbscript", "about", "blob", "ws", "wss", "shell", "search",
+    "search-ms", "res", "its", "mk", "hcp", "callto", "news", "nntp", "telnet", "ldap", "ssh", "sftp", "smb", "git", "magnet", "steam", "zoommtg",
+];
+
+/// Confere o prefixo de um `UrlScheme` e devolve em minúsculas: letra, depois letras,
+/// números, `+`, `-` ou `.` (o esquema de URL), de 3 a 64 caracteres, fora dos do sistema
+/// (`http`, `file`, `ms-*`...).
+pub fn check_scheme(scheme: &str) -> Result<String, String> {
+    let s = scheme.trim().trim_end_matches("://").trim_end_matches(':').to_ascii_lowercase();
+    let valid = s.len() >= 3
+        && s.len() <= 64
+        && s.starts_with(|c: char| c.is_ascii_lowercase())
+        && s.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '+' | '-' | '.'));
+    if !valid {
+        return Err(crate::messages::tf("prefixo inválido: {0} (letras, números, + - ., de 3 a 64)", &[&scheme]));
+    }
+    if RESERVED_SCHEMES.contains(&s.as_str()) || s.starts_with("ms-") || s.starts_with("microsoft") || s.starts_with("windows") {
+        return Err(crate::messages::tf("o prefixo {0} é do sistema", &[&s]));
+    }
+    Ok(s)
+}
+
+/// Os links que abriram o app (a linha de comando), até um `UrlScheme` do prefixo pegar: o
+/// form ainda nem existe quando o app abre. Separados da fila do `AppLink`, que pega todos.
+static STARTUP_LINKS: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+/// A plataforma guarda o link que abriu o app.
+pub fn push_startup_link(url: String) {
+    if let Ok(mut list) = STARTUP_LINKS.lock() {
+        list.push(url);
+    }
+}
+
+/// Tira os links que abriram o app com o prefixo `scheme` (já em minúsculas).
+pub fn take_startup_links(scheme: &str) -> Vec<String> {
+    let Ok(mut list) = STARTUP_LINKS.lock() else { return Vec::new() };
+    let (mine, rest): (Vec<String>, Vec<String>) = std::mem::take(&mut *list).into_iter().partition(|url| link_scheme(url).as_deref() == Some(scheme));
+    *list = rest;
+    mine
+}
+
+/// O prefixo de um endereço, em minúsculas (`MeuApp://x` → `meuapp`).
+pub fn link_scheme(url: &str) -> Option<String> {
+    let (scheme, _) = url.split_once(':')?;
+    (!scheme.is_empty()).then(|| scheme.to_ascii_lowercase())
 }
 
 /// Os sensores do aparelho (os componentes da categoria "Dispositivo").
@@ -694,6 +803,8 @@ pub struct Services {
     pub window: Option<Box<dyn WindowService>>,
     pub timer: Option<Box<dyn TimerService>>,
     pub clipboard: Option<Box<dyn ClipboardService>>,
+    /// O que foi copiado por último, para o que a plataforma não guarda ([`crate::clipboard`]).
+    pub clipboard_local: crate::clipboard::LocalClipboard,
     pub cursor: Option<Box<dyn CursorService>>,
     pub screen: Option<Box<dyn ScreenService>>,
     pub text_input: Option<Box<dyn TextInputService>>,
@@ -733,6 +844,10 @@ pub struct Services {
     /// executadas pela plataforma, também com o app fechado. Sem ele, os componentes fazem o
     /// que dá com o app aberto (mostrar o form, a notificação comum).
     pub actions: Option<Box<dyn ActionService>>,
+    /// Automação OLE dos programas instalados (o `OleObject`): só no Windows.
+    pub ole: Option<Box<dyn OleService>>,
+    /// O WMI do Windows (o `WmiQuery`): consultas e eventos do sistema.
+    pub wmi: Option<Box<dyn WmiService>>,
 }
 
 /// Uma tag NFC encostada.
@@ -1186,6 +1301,243 @@ pub trait ActionService {
     fn set_push_rules(&mut self, rules: &str);
     /// O que aconteceu desde a última consulta (também o que aconteceu com o app fechado).
     fn poll(&mut self) -> Vec<ActionEvent>;
+}
+
+/// Um valor da automação OLE (o `VARIANT` do Windows, no que interessa a um app).
+#[derive(Clone, Debug, PartialEq)]
+pub enum OleValue {
+    Null,
+    Bool(bool),
+    Int(i64),
+    Float(f64),
+    String(String),
+    /// Data e hora como o OLE guarda: dias desde 30/12/1899, a fração é a hora
+    /// ([`ole_date`], [`ole_date_parts`]).
+    Date(f64),
+    /// Um objeto do programa (`Workbook`, `Range`): o número que o serviço deu, até o
+    /// [`OleService::release`].
+    Object(u64),
+    /// Uma matriz (linhas × colunas), como o `Range.Value` de várias células: vai e volta
+    /// numa chamada só.
+    Array(Vec<Vec<OleValue>>),
+}
+
+/// Automação OLE (o `IDispatch`): o app comanda um programa instalado (Excel, Word,
+/// Outlook...) pelos nomes do próprio programa. Cada chamada atravessa processos e custa
+/// milissegundos: os componentes mandam matrizes inteiras, nunca uma célula por vez.
+///
+/// Só cria o que [`ole_allowed`] permite: um programa qualquer (`WScript.Shell`)
+/// executaria comandos.
+pub trait OleService {
+    /// Cria o objeto do programa pelo ProgID (`Excel.Application`); com `running`, pega o
+    /// que já está aberto e só cria se não houver.
+    fn create(&mut self, prog_id: &str, running: bool) -> Result<u64, String>;
+    /// Lê a propriedade ou chama o método `name` do objeto (como o VBA, os dois de uma vez).
+    fn invoke(&mut self, object: u64, name: &str, args: Vec<OleValue>) -> Result<OleValue, String>;
+    /// Grava a propriedade `name` (com os argumentos dela, como `Cells(1, 2)`).
+    fn put(&mut self, object: u64, name: &str, args: Vec<OleValue>, value: OleValue) -> Result<(), String>;
+    /// Larga o objeto (o programa fecha quando ninguém mais o segura).
+    fn release(&mut self, object: u64);
+    /// Quanto esperar o programa em cada chamada (um diálogo aberto nele o prende).
+    fn set_timeout(&mut self, seconds: f64) {
+        let _ = seconds;
+    }
+    /// Quem larga um objeto sem o `Ui` à mão (o componente liberado, no `Drop`).
+    fn releaser(&self) -> Option<OleReleaser> {
+        None
+    }
+}
+
+/// Larga um objeto da automação de qualquer lugar ([`OleService::releaser`]).
+pub type OleReleaser = std::sync::Arc<dyn Fn(u64) + Send + Sync>;
+
+/// Os programas que a automação pode criar. Os do Office vêm permitidos; outro programa entra
+/// pelo código do app ([`allow_ole`]), nunca por propriedade ou protocolo: quem manda
+/// na tela de fora (um backend remoto) não escolhe o que roda nesta máquina.
+static OLE_ALLOWED: std::sync::RwLock<Vec<String>> = std::sync::RwLock::new(Vec::new());
+
+/// Os ProgIDs permitidos sem pedir.
+pub const OLE_DEFAULT: &[&str] = &["Excel.Application", "Word.Application", "Outlook.Application", "PowerPoint.Application"];
+
+/// Permite criar `prog_id` (`AutoCAD.Application`, `SldWorks.Application`).
+pub fn allow_ole(prog_id: &str) {
+    if let Ok(mut list) = OLE_ALLOWED.write() {
+        if !list.iter().any(|p| p.eq_ignore_ascii_case(prog_id)) {
+            list.push(prog_id.to_string());
+        }
+    }
+}
+
+/// Se `prog_id` pode ser criado (sem diferenciar maiúsculas; a versão no fim, como
+/// `Excel.Application.16`, conta como o mesmo programa).
+pub fn ole_allowed(prog_id: &str) -> bool {
+    let id = prog_id.trim();
+    let base = match id.rsplit_once('.') {
+        Some((head, tail)) if !tail.is_empty() && tail.chars().all(|c| c.is_ascii_digit()) => head,
+        _ => id,
+    };
+    let ok = |p: &str| p.eq_ignore_ascii_case(base) || p.eq_ignore_ascii_case(id);
+    OLE_DEFAULT.iter().any(|p| ok(p)) || OLE_ALLOWED.read().is_ok_and(|l| l.iter().any(|p| ok(p)))
+}
+
+/// A data do OLE (dias desde 30/12/1899) de ano, mês, dia, hora, minuto e segundo.
+pub fn ole_date(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: u32) -> f64 {
+    // Dias desde 1/1/1970 (o algoritmo de Howard Hinnant), mais os 25.569 até lá.
+    let y = i64::from(year) - i64::from(month <= 2);
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let m = i64::from(month);
+    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + i64::from(day) - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468 + 25_569;
+    days as f64 + f64::from(hour * 3600 + minute * 60 + second) / 86_400.0
+}
+
+/// Ano, mês, dia, hora, minuto e segundo de uma data do OLE.
+pub fn ole_date_parts(date: f64) -> (i32, u32, u32, u32, u32, u32) {
+    let mut days = date.floor() as i64;
+    let mut secs = ((date - date.floor()) * 86_400.0).round() as i64;
+    if secs >= 86_400 {
+        days += 1;
+        secs -= 86_400;
+    }
+    let z = days - 25_569 + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    let year = (yoe + era * 400 + i64::from(month <= 2)) as i32;
+    (year, month, day, (secs / 3600) as u32, (secs % 3600 / 60) as u32, (secs % 60) as u32)
+}
+
+/// Um valor do WMI: uma propriedade de um objeto, já no tipo do CIM.
+#[derive(Clone, Debug, PartialEq)]
+pub enum WmiValue {
+    Null,
+    Bool(bool),
+    Int(i64),
+    Float(f64),
+    String(String),
+    /// Data e hora local em ISO (`2026-11-12T08:30:00`), do `CIM_DATETIME` ([`wmi_datetime`]).
+    DateTime(String),
+    /// Uma lista (`CIM_FLAG_ARRAY`: os IPs de uma placa de rede).
+    Array(Vec<WmiValue>),
+    /// Um objeto embutido (o `TargetInstance` de um evento): nome e valor de cada propriedade.
+    Object(Vec<(String, WmiValue)>),
+}
+
+/// O tipo de uma coluna do resultado (o `CIMTYPE` da propriedade).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WmiType {
+    #[default]
+    String,
+    Integer,
+    Float,
+    Boolean,
+    DateTime,
+    Array,
+    Object,
+}
+
+/// Uma coluna do resultado: o nome da propriedade e o tipo dela.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct WmiColumn {
+    pub name: String,
+    pub kind: WmiType,
+}
+
+/// O resultado de uma consulta: as colunas (as propriedades, na ordem do `SELECT` quando ele
+/// lista os nomes) e um valor por coluna em cada linha.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct WmiTable {
+    pub columns: Vec<WmiColumn>,
+    pub rows: Vec<Vec<WmiValue>>,
+}
+
+/// O fim de uma consulta (chamado na thread do WMI; o componente leva à tela pelo
+/// [`Poster`](crate::Poster)).
+pub type WmiDone = Box<dyn FnOnce(Result<WmiTable, String>) + Send>;
+
+/// Quem recebe os eventos de uma assinatura: as propriedades do evento (com o
+/// `TargetInstance` como objeto) ou o erro que a encerrou.
+pub type WmiListener = std::sync::Arc<dyn Fn(Result<Vec<(String, WmiValue)>, String>) + Send + Sync>;
+
+/// Uma assinatura de eventos do WMI: para quando é largada.
+pub struct WmiWatch(Option<Box<dyn FnOnce() + Send>>);
+
+impl WmiWatch {
+    /// `stop` para a assinatura (a plataforma diz como).
+    pub fn new(stop: impl FnOnce() + Send + 'static) -> Self {
+        Self(Some(Box::new(stop)))
+    }
+}
+
+impl Drop for WmiWatch {
+    fn drop(&mut self) {
+        if let Some(stop) = self.0.take() {
+            stop();
+        }
+    }
+}
+
+/// O WMI do Windows pela API nativa (`IWbemLocator`/`IWbemServices`; o componente
+/// `WmiQuery`). Só consulta (WQL), sempre nesta máquina: nada de métodos (`Win32_Process.Create`
+/// executaria programas) nem de outro computador ([`wmi_namespace`]). Tudo em segundo plano:
+/// a consulta responde pelo `done`, e os eventos, pelo `listener`.
+pub trait WmiService {
+    /// Roda a consulta (`SELECT * FROM Win32_LogicalDisk`) no namespace (`root\cimv2`).
+    fn query(&mut self, namespace: &str, wql: &str, done: WmiDone);
+    /// Assina uma consulta de eventos (`SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE
+    /// TargetInstance ISA 'Win32_Process'`): cada evento chega no `listener` até a assinatura
+    /// ser largada.
+    fn watch(&mut self, namespace: &str, wql: &str, listener: WmiListener) -> Result<WmiWatch, String>;
+}
+
+/// O namespace conferido e normalizado (`root/cimv2` → `root\cimv2`): começa por `root` e só
+/// tem letras, números e `_`. Um computador (`\\servidor\root\cimv2`) é recusado: a tela não
+/// abre conexão com outra máquina.
+pub fn wmi_namespace(namespace: &str) -> Result<String, String> {
+    let ns = namespace.trim().replace('/', "\\");
+    let ns = if ns.is_empty() { "root\\cimv2".to_string() } else { ns };
+    let valid = ns.split('\\').all(|p| !p.is_empty() && p.chars().all(|c| c.is_alphanumeric() || c == '_'));
+    if !valid || !ns.split('\\').next().is_some_and(|r| r.eq_ignore_ascii_case("root")) {
+        return Err(crate::messages::tf("namespace do WMI inválido '{0}' (só desta máquina, como root\\cimv2)", &[&namespace]));
+    }
+    Ok(ns)
+}
+
+/// A data do CIM (`20261112083000.000000-180`: hora local e o fuso em minutos) em ISO
+/// (`2026-11-12T08:30:00`). Um intervalo (`00000001132312.000000:000`) ou um texto que não
+/// é data dá `None`.
+pub fn wmi_datetime(text: &str) -> Option<String> {
+    let t = text.trim();
+    let b = t.as_bytes();
+    if b.len() < 14 || !b[..14].iter().all(u8::is_ascii_digit) || b.get(21) == Some(&b':') {
+        return None;
+    }
+    let (y, mo, d, h, mi, s) = (&t[0..4], &t[4..6], &t[6..8], &t[8..10], &t[10..12], &t[12..14]);
+    let month: u32 = mo.parse().ok()?;
+    let day: u32 = d.parse().ok()?;
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+        return None;
+    }
+    Some(format!("{y}-{mo}-{d}T{h}:{mi}:{s}"))
+}
+
+/// Os nomes das propriedades de um `SELECT a, b FROM ...`, na ordem (vazio com `*`): o
+/// resultado do WMI vem em ordem alfabética, e as colunas seguem o que a consulta pediu.
+pub fn wmi_select_list(wql: &str) -> Vec<String> {
+    let t = wql.trim();
+    let lower = t.to_ascii_lowercase();
+    let (Some(rest), Some(from)) = (lower.strip_prefix("select"), lower.find(" from ")) else { return Vec::new() };
+    let start = t.len() - rest.len();
+    if from < start {
+        return Vec::new();
+    }
+    t[start..from].split(',').map(str::trim).filter(|n| !n.is_empty() && *n != "*").map(str::to_string).collect()
 }
 
 

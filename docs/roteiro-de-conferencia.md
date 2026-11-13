@@ -181,6 +181,74 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     Pare o mouse no botão maximizar da barra própria: o Windows 11 mostra o menu de layouts, e
     escolher um posiciona a janela; o clique no botão maximiza e restaura, com o realce da barra.
 
+119. **Área de transferência central** (12/11; detalhes nos pendentes). No Paint (qualquer
+    linguagem), selecione um pedaço, Ctrl+C e cole no Paint do Windows ou no Word; copie uma
+    imagem no navegador e cole no Paint do Aylis. Na IDE, copie um Panel com filhos, cole noutra
+    aba de form e noutra IDE aberta; cole no Bloco de Notas (sai o JSON), mude um `text` lá,
+    copie e cole de volta no designer. Num form com um `Clipboard`, `copy_html` e cole no Word
+    (sai formatado) e no Bloco de Notas (sai o texto). Os campos de texto copiam e colam como
+    antes.
+
+120. **Verificação de ambiente rápida** (12/11; detalhes nos pendentes). Abra Ferramentas →
+    Verificar ambiente duas vezes: a segunda abre na hora. Com o WSL desligado e um projeto sem
+    Linux, não pode demorar; as plataformas fora do projeto mostram "guardado há…" e "Conferir".
+    Rode `rustup target remove wasm32-unknown-unknown` e Executar no navegador: o F9 percebe.
+
+121. **Pacotes de ferramentas na IDE** (12/11). Monte uma pasta com `aylis-tool packages pack
+    --out <pasta> node jdk`, ponha-a nas Opções → Pacotes e clique em "Testar as origens". Em
+    Ferramentas → Pacotes de ferramentas, instale o Node e o JDK (o andamento, o Cancelar) e
+    remova; o Corrigir do JDK ou do NDK numa máquina sem eles, com e sem origem (sem origem, a
+    mensagem leva às Opções). Suba a pasta no Google Drive, monte o `pacotes.json` com os ids
+    (`"drive"`) e use-o como espelho.
+
+122. **Instalador com os pacotes** (12/11). Gere o kit com `aylis-tool installer-ide
+    --with-packages node,codelldb` e, numa máquina de teste, rode o setup pela tela: a página dos
+    pacotes, a do espelho, a instalação deles no fim; marque um pacote que não está no kit e veja
+    o aviso. Desinstale e confira que os pacotes, o cache e as compilações saíram rápido.
+
+123. **Automação OLE (`OleObject`)** (12/11; detalhes nos pendentes). Num form, ponha um
+    `OleObject` (paleta System), um `ClientDataSet` com alguns registros e o `DataSource`. Num
+    botão: `open()`, `set_value("Visible", "true")`, `call("Workbooks.Add")`, `put_data(
+    "ActiveSheet.Range(\"A1\")", dataSource)` e `get_value("ActiveSheet.Range(\"A2\").Value")`. O
+    Excel abre com os títulos e os registros (datas e valores como número, não texto); a tela
+    espera a resposta (a primeira abertura do Excel leva alguns segundos). Com
+    `prog_id = WScript.Shell`, o `open` recusa com a mensagem.
+    Feche o form sem o `call("Quit")`: o Excel aberto continua com você (largado, não fechado).
+
+124. **Transição de aba sem repintar as páginas** (12/11; detalhes nos pendentes, "Compositor
+    em outra thread"). Num form, um `TabControl` cheio (duas ou três abas com muitos controles)
+    com `transition` em `slide_left` e depois em `fade`; execute e troque de aba várias vezes,
+    também com a janela maximizada num monitor 4K. As páginas andam e esmaecem lisas, sem
+    tremer meio pixel nem deixar resto, e no fim ficam iguais a antes (o que passa da borda da
+    página pode sumir durante os 250 ms). Com o Profiler aberto, o "quadro · N% repintado"
+    durante a troca não pinta os controles das páginas.
+    A memória: no painel de memória do app em depuração (ou no Profiler da IDE), a linha
+    "· camadas guardadas" sobe durante a troca e volta a zero quando ela acaba, mesmo depois de
+    muitas trocas. Em Projeto → Opções do projeto → Memória, desmarque "Camadas automáticas nas
+    transições e animações": a troca continua lisa, mas a linha fica em zero (as páginas são
+    repintadas). Com a caixa marcada, ponha o `layer_cache` do form em `off` (Object Inspector,
+    "Camadas automáticas"): só esse form deixa de guardar. "Camadas guardadas" em 0 MB desliga
+    também o `cache_layer` dos controles.
+
+125. **Prefixo de URL próprio (`UrlScheme`)** (12/11; detalhes nos pendentes). Num terminal fora
+    do Claude: `cargo run -p aylis-platform-winit --example url_scheme --features cpu`. Com ele
+    aberto, digite `aylisexemplo://pedido/42` no Executar (Win+R) e num link do navegador: o
+    endereço aparece na janela, ela vem para a frente e não abre outra. Feche, chame o link de
+    novo: o app abre com o endereço. Num app publicado com instalador e um `UrlScheme` ligado, o
+    link funciona logo depois de instalar, e desinstalar tira a chave
+    (`HKCU\Software\Classes\<prefixo>`). Apague a chave do exemplo no fim.
+
+126. **WMI (`WmiQuery`)** (12/11; detalhes nos pendentes). Num form, ponha um `WmiQuery` (paleta
+    System), um `ClientDataSet` sem campos ligado no `data_set`, um `DataSource` e um `DBGrid`.
+    Com a `query` `SELECT Name, Size, FreeSpace FROM Win32_LogicalDisk`, um botão chama
+    `execute()`: a grade mostra os discos, com tamanho e espaço livre como números. Troque para
+    `SELECT * FROM Win32_Process` e use `execute_async()` com o `on_done`: a tela não para, e
+    todas as colunas aparecem. Em outro `WmiQuery`, `watch` ligado e a `query`
+    `SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_Process'`,
+    com o `on_event` mostrando o texto: abra o Bloco de Notas e o evento chega com o
+    `TargetInstance.Name` `notepad.exe`. Com `namespace` `\\outro\root\cimv2`, o `execute`
+    recusa com a mensagem.
+
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
     rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela

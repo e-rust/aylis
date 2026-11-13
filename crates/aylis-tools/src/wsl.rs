@@ -57,14 +57,22 @@ fn wsl() -> Command {
     command
 }
 
+/// O prazo das perguntas ao WSL (a primeira acorda a máquina virtual, uns 4 s): um WSL travado
+/// não prende a verificação de ambiente.
+const ASK_LIMIT: std::time::Duration = std::time::Duration::from_secs(45);
+
+fn ask(command: &mut Command) -> std::io::Result<std::process::Output> {
+    crate::env::output_within(command, ASK_LIMIT)
+}
+
 /// O WSL está instalado (o `wsl.exe` responde).
 pub fn available() -> bool {
-    cfg!(windows) && wsl().arg("--status").output().is_ok_and(|o| o.status.success())
+    cfg!(windows) && ask(wsl().arg("--status")).is_ok_and(|o| o.status.success())
 }
 
 /// As distribuições instaladas, sem as internas do Docker.
 pub fn distros() -> Vec<String> {
-    let Ok(out) = wsl().args(["-l", "-q"]).output() else { return Vec::new() };
+    let Ok(out) = ask(wsl().args(["-l", "-q"])) else { return Vec::new() };
     decode(&out.stdout)
         .lines()
         .map(|l| l.trim().trim_matches('\0').to_string())
@@ -79,7 +87,7 @@ pub fn distro() -> Option<String> {
 
 /// Roda `script` no bash da distribuição e devolve a saída (para conferir o ambiente).
 pub fn shell_output(distro: &str, script: &str) -> Option<String> {
-    let out = wsl().args(["-d", distro, "--exec", "bash", "-lc", script]).output().ok()?;
+    let out = ask(wsl().args(["-d", distro, "--exec", "bash", "-lc", script])).ok()?;
     out.status.success().then(|| decode(&out.stdout))
 }
 

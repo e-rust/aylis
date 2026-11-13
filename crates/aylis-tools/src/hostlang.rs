@@ -27,11 +27,14 @@ pub struct Toolchain {
 /// Procura `name` no PATH (com `.exe` no Windows).
 pub fn which(name: &str) -> Option<PathBuf> {
     let file = exe(name);
-    std::env::var_os("PATH").and_then(|paths| std::env::split_paths(&paths).map(|d| d.join(&file)).find(|p| p.is_file()))
+    let found = std::env::var_os("PATH").and_then(|paths| std::env::split_paths(&paths).map(|d| d.join(&file)).find(|p| p.is_file()));
+    crate::env_cache::note_found(&file, found.as_deref());
+    found
 }
 
 fn version(program: &Path, args: &[&str]) -> Option<String> {
-    let out = crate::process::quiet(Command::new(program).args(args)).output().ok()?;
+    crate::env_cache::note_path(program);
+    let out = crate::env::output_within(crate::process::quiet(Command::new(program).args(args)), crate::env::PROCESS_LIMIT).ok()?;
     let text = if out.stdout.is_empty() { out.stderr } else { out.stdout };
     Some(String::from_utf8_lossy(&text).lines().next().unwrap_or_default().trim().to_string()).filter(|s| !s.is_empty())
 }
@@ -42,10 +45,10 @@ fn vcvars() -> Option<PathBuf> {
         return Some(p);
     }
     let vswhere = PathBuf::from(std::env::var_os("ProgramFiles(x86)")?).join("Microsoft Visual Studio/Installer/vswhere.exe");
-    let out = crate::process::quiet(&mut Command::new(vswhere))
-        .args(["-latest", "-products", "*", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"])
-        .output()
-        .ok()?;
+    crate::env_cache::note_path(&vswhere);
+    let mut command = Command::new(vswhere);
+    command.args(["-latest", "-products", "*", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"]);
+    let out = crate::env::output_within(crate::process::quiet(&mut command), crate::env::PROCESS_LIMIT).ok()?;
     let dir = String::from_utf8_lossy(&out.stdout).trim().to_string();
     Some(PathBuf::from(dir).join("VC/Auxiliary/Build/vcvars64.bat")).filter(|p| p.is_file())
 }

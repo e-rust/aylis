@@ -75,6 +75,8 @@ fn the_same_button_text_gets_distinct_labels() {
     // A verificação das linguagens que a IDE começa ao abrir desabilitaria os botões.
     state.borrow_mut().env_job = None;
     state.borrow_mut().checks = vec![check(Target::Desktop, "Rust"), check(Target::Android, "Android SDK"), check(Target::Web, "Rust")];
+    // Só estas: sem o resultado guardado desta máquina (`env_cache`) nas outras plataformas.
+    state.borrow_mut().env_language = Some(aylis_project::Language::Rust);
     aylis_ide::tooldialogs::environment(&mut ide.ui, &state, &ide.ids, false);
     app::refresh(&mut ide.ui, &state, &ide.ids);
     let run = |ui: &mut aylis_core::Ui, name: &str, args: Value| mcp::run_tool(ui, &state, &ide.ids, name, &args);

@@ -40,6 +40,18 @@ impl ImageView {
         self.picture.as_ref()
     }
 
+    /// A imagem mostrada agora (a definida por código ou a do arquivo), fora da pintura: o
+    /// `Clipboard` copia esta.
+    pub fn current_image(&self, ui: &aylis_core::Ui) -> Option<Image> {
+        if let Some(p) = &self.picture {
+            return Some(p.clone());
+        }
+        if let Some((_, image)) = self.loaded.borrow().as_ref().filter(|(path, _)| *path == self.image) {
+            return image.clone();
+        }
+        (!self.image.is_empty()).then(|| ui.services().resources.as_ref()?.read(&self.image).map(Image::encoded)).flatten()
+    }
+
     fn current(&self, ctx: &PaintCtx<'_>) -> Option<Image> {
         if let Some(p) = &self.picture {
             return Some(p.clone());

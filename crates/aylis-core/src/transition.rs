@@ -144,7 +144,9 @@ impl Ui {
         // Transições que começaram durante o fim de outra (um form fechando abre outro).
         keep.append(&mut self.transitions);
         self.transitions = keep;
-        self.request_repaint();
+        // Sem `request_repaint`: o `apply_transition` marca só o lugar ou a transparência de
+        // quem anda (a janela inteira refazia as camadas guardadas a cada quadro, e as páginas
+        // eram repintadas controle por controle; medido em `medicoes/transicoes.json`).
     }
 
     /// O deslocamento de quem entra no começo (o tamanho do controle na direção).
@@ -162,32 +164,46 @@ impl Ui {
     fn apply_transition(&mut self, r: &Running, p: f32) {
         match r.kind {
             Transition::Fade => {
-                if let Some(cb) = r.to.and_then(|c| self.control_mut(c)) {
+                if let Some(cb) = r.to.and_then(|c| self.cb_mut(c)) {
                     cb.set_opacity(r.to_opacity * p);
                 }
-                if let Some(cb) = r.from.and_then(|c| self.control_mut(c)) {
+                if let Some(cb) = r.from.and_then(|c| self.cb_mut(c)) {
                     cb.set_opacity(r.from_opacity * (1.0 - p));
                 }
             }
-            Transition::None => {}
+            Transition::None => return,
             kind => {
                 if let Some(to) = r.to {
                     let v = self.slide_vector(kind, to);
-                    if let Some(cb) = self.control_mut(to) {
+                    if let Some(cb) = self.cb_mut(to) {
                         cb.set_translate(PointF::new(v.x * (1.0 - p), v.y * (1.0 - p)));
                     }
                 }
                 if let Some(from) = r.from {
                     let v = self.slide_vector(kind, from);
-                    if let Some(cb) = self.control_mut(from) {
+                    if let Some(cb) = self.cb_mut(from) {
                         cb.set_translate(PointF::new(-v.x * p, -v.y * p));
                     }
                 }
             }
         }
+        // Só o lugar ou a transparência mudou (por isso o `cb_mut`, e não o `control_mut`, que
+        // marcaria o desenho de dentro e o layout do form): a área antiga e a nova são
+        // repintadas, e a camada guardada de cada um (veja `paint_node`) continua valendo.
+        for id in [r.from, r.to].into_iter().flatten() {
+            self.damage_placement(id);
+        }
     }
 
     fn finish_transition(&mut self, r: Running) {
+        // As imagens das duas páginas não valem mais (a pintura do fim é inteira, e a página
+        // que sai some): saem do renderizador na próxima pintura, em vez de ocupar memória
+        // até passar do limite (`image_cache.layers_mb`).
+        for id in [r.from, r.to].into_iter().flatten() {
+            if let Some(key) = self.entry(id).and_then(|e| e.visual.borrow_mut().layer_key.take()) {
+                self.dead_layers.get_mut().push(key);
+            }
+        }
         if let Some(cb) = r.to.and_then(|c| self.control_mut(c)) {
             cb.set_translate(PointF::ZERO);
             cb.set_opacity(r.to_opacity);

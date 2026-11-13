@@ -125,6 +125,9 @@ pub struct Session {
 pub fn codelldb() -> Option<PathBuf> {
     let exe = if cfg!(windows) { "codelldb.exe" } else { "codelldb" };
     let mut dirs = Vec::new();
+    if let Some(d) = crate::toolpacks::installed_dir("codelldb") {
+        dirs.push(d.join("extension"));
+    }
     if let Some(d) = tools_dir() {
         dirs.push(d.join("codelldb/extension"));
     }
@@ -1159,7 +1162,8 @@ pub fn netcoredbg() -> Option<PathBuf> {
 
 /// O servidor DAP do js-debug (TypeScript e JavaScript, pelo Node).
 pub fn js_debug() -> Option<PathBuf> {
-    tools_dir().map(|d| d.join("js-debug/js-debug/src/dapDebugServer.js")).filter(|p| p.is_file())
+    let server = "js-debug/src/dapDebugServer.js";
+    crate::toolpacks::installed_dir("js-debug").map(|d| d.join(server)).filter(|p| p.is_file()).or_else(|| tools_dir().map(|d| d.join("js-debug").join(server)).filter(|p| p.is_file()))
 }
 
 /// O `jdb` do JDK (Java): em `JAVA_HOME` ou no PATH.

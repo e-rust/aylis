@@ -149,6 +149,10 @@ pub(crate) struct Visual {
     /// [`Component::opaque`](crate::Component::opaque), ou um filho do tamanho dele que cobre):
     /// o que fica inteiro atrás dele não é pintado nem pede quadros.
     pub(crate) covers: bool,
+    /// A chave da camada guardada dele na última pintura (`begin_cached`): quando ela muda ou
+    /// a camada deixa de valer, a imagem antiga é solta do renderizador (`forget_cached`), em
+    /// vez de ocupar memória até sair pelo limite.
+    pub(crate) layer_key: Option<u64>,
 }
 
 /// O que a pintura de um controle usa ([`Ui::look`]).
@@ -302,6 +306,18 @@ impl Ui {
             // Pintura inteira: não se sabe o que mudou desde a última, as camadas são refeitas.
             self.layer_epoch.set(self.layer_epoch.get() + 1);
         }
+        // As camadas que deixaram de valer fora da pintura (a transição acabou, um controle
+        // foi liberado) saem do renderizador.
+        for key in self.dead_layers.borrow_mut().drain(..) {
+            canvas.forget_cached(key);
+        }
+        // As camadas automáticas neste form: a propriedade `layer_cache` dele, ou o padrão do
+        // projeto (um form sem a propriedade, como o do designer, fica com o do projeto).
+        let caching = match self.get_prop(root, "layer_cache") {
+            Ok(crate::PropValue::Enum(name)) => <crate::LayerCaching as crate::prop::PropEnum>::from_name(&name).unwrap_or_default(),
+            _ => crate::LayerCaching::Project,
+        };
+        self.auto_layers.set(caching.enabled());
         // Só o que cabe no form aparece (o resto, numa caixa rolada, nem é pintado).
         let visible: Option<Vec<RectF>> = self.control(root).map(|cb| match area {
             Some(_) => areas.iter().map(|a| intersection(cb.bounds(), *a)).filter(|r| r.width > 0.0 && r.height > 0.0).collect(),
@@ -802,9 +818,31 @@ impl Ui {
             resources: self.services().resources.as_deref(),
         };
 
+        // Interface espelhada: o controle se desenha virado (a origem na borda direita).
+        let flip = self.flips_content(id);
+        // Camada guardada (`cache_layer`, ou o lugar ou a transparência animando num contêiner
+        // que recorta os filhos): enquanto nada muda por dentro, a imagem guardada é recomposta
+        // no lugar e na transparência de agora, sem pintar ele nem os filhos. Numa transição
+        // (as páginas de um `TabControl`, os forms empilhados), também sem recortar os filhos:
+        // por 250 ms, o que passa da borda da página fica de fora. As automáticas (sem o
+        // `cache_layer` no controle) seguem o `layer_cache` do form ou o padrão do projeto.
+        let automatic = self.auto_layers.get()
+            && !entry.children.is_empty()
+            && ((cb.clip_children() && self.animates_placement(id)) || self.in_transition(id));
+        let cached = !flip && (cb.cache_layer() || automatic);
+
         canvas.save();
         let shift = cb.translate();
-        canvas.translate(bounds.x + shift.x, bounds.y + shift.y);
+        // A camada guardada anda em pixels inteiros: a imagem é feita com a fração de pixel do
+        // quadro em que foi montada e reposta em posição arredondada, e um deslocamento com
+        // fração (a curva da animação) a deixaria meio pixel fora do que a pintura inteira faz.
+        let drawn = if cached && shift != PointF::ZERO {
+            let s = canvas.device_scale().max(f32::EPSILON);
+            PointF::new((shift.x * s).round() / s, (shift.y * s).round() / s)
+        } else {
+            shift
+        };
+        canvas.translate(bounds.x + drawn.x, bounds.y + drawn.y);
         let rotation = cb.rotation();
         if rotation != 0.0 {
             canvas.translate(bounds.width / 2.0, bounds.height / 2.0);
@@ -816,24 +854,25 @@ impl Ui {
             canvas.save_layer(opacity);
         }
 
-        // Interface espelhada: o controle se desenha virado (a origem na borda direita).
-        let flip = self.flips_content(id);
         // O desenho próprio resumido num hash, para o ensaio de `drawing_unchanged` (só de
         // quem pinta sem efeito colateral).
         let traced = component.paint_is_pure() && entry.paint_hook.is_none() && !flip && rotation == 0.0 && !self.paint_failed(id);
         let mut hasher = std::hash::DefaultHasher::new();
         std::hash::Hash::hash(&opacity.to_bits(), &mut hasher);
         let mut volatile = false;
-        // Camada guardada (`cache_layer`, ou o lugar ou a transparência animando num contêiner
-        // que recorta os filhos): enquanto nada muda por dentro, a imagem guardada é recomposta
-        // no lugar e na transparência de agora, sem pintar ele nem os filhos.
-        let cached = !flip && (cb.cache_layer() || (cb.clip_children() && !entry.children.is_empty() && self.animates_placement(id)));
-        let cache_hit = cached && {
+        let layer_key = cached.then(|| {
             let mut key = std::hash::DefaultHasher::new();
             let version = entry.visual.borrow().version;
             std::hash::Hash::hash(&(id, version, self.layer_epoch.get(), self.design_mode), &mut key);
-            canvas.begin_cached(std::hash::Hasher::finish(&key), ctx.rect.inflate(look.reach + 1.0))
-        };
+            std::hash::Hasher::finish(&key)
+        });
+        // A camada de antes deixou de valer (o desenho de dentro mudou, a pintura foi inteira,
+        // a transição acabou): sai do renderizador agora, e não quando passar do limite.
+        let old_key = std::mem::replace(&mut entry.visual.borrow_mut().layer_key, layer_key);
+        if let Some(old) = old_key.filter(|old| Some(*old) != layer_key) {
+            canvas.forget_cached(old);
+        }
+        let cache_hit = layer_key.is_some_and(|key| canvas.begin_cached(key, ctx.rect.inflate(look.reach + 1.0)));
         if !cache_hit {
             if traced {
                 let mut trace = crate::trace::TraceCanvas::new(Some(&mut *canvas), None, &mut hasher);

@@ -535,9 +535,7 @@ impl Memo {
             Key::Char('c') | Key::Char('x') if ctrl => {
                 let text = self.all_selected_text();
                 if !text.is_empty() {
-                    if let Some(c) = ctx.ui.services_mut().clipboard.as_mut() {
-                        c.set_text(&text);
-                    }
+                    aylis_core::clipboard::set_text(ctx.ui, &text);
                     if event.key == Key::Char('x') && !self.read_only {
                         edit(self, super::code::EditKind::Other);
                         self.edit_all(|m| {
@@ -549,7 +547,7 @@ impl Memo {
                 }
             }
             Key::Char('v') if ctrl && !self.read_only => {
-                let Some(pasted) = ctx.ui.services_mut().clipboard.as_mut().and_then(|c| c.get_text()) else { return true };
+                let Some(pasted) = aylis_core::clipboard::text(ctx.ui) else { return true };
                 // Uma linha para cada cursor, se o número bate (como no VS Code).
                 let parts: Vec<String> = pasted.replace("\r\n", "\n").split('\n').map(str::to_string).collect();
                 let spread = parts.len() == self.extra.len() + 1;

@@ -28,7 +28,7 @@
 use std::cell::RefCell;
 
 use aylis_core::{
-    Canvas, Color, Component, ControlBase, CursorShape, EventArgs, EventCtx, Image, Key, KeyEvent, PaintCtx, PointF, PointerButton, PointerEvent,
+    Canvas, Color, Component, ControlBase, CursorShape, EventArgs, EventCtx, Image, Key, KeyEvent, PaintCtx, PointF, PointerButton, PointerEvent, Ui,
     MethodInfo, PropEnum, PropKind, PropValue, RectF, Stroke, properties,
 };
 
@@ -308,7 +308,6 @@ pub struct PaintCanvas {
     selection: Option<Selection>,
     /// Arrastando a seleção: onde ela foi pega (em relação ao canto dela).
     grab: Option<(i32, i32)>,
-    clipboard: Option<Bitmap>,
     /// Arrastando uma alça da borda: qual e o tamanho novo (em pixels da imagem).
     resizing: Option<(Edge, (u32, u32))>,
 }
@@ -349,7 +348,6 @@ impl Default for PaintCanvas {
             tiles: RefCell::new(Vec::new()),
             selection: None,
             grab: None,
-            clipboard: None,
             resizing: None,
         };
         c.fit();
@@ -594,13 +592,15 @@ impl PaintCanvas {
         self.selection = Some(Selection { x: 0, y: 0, w: self.bitmap.width as i32, h: self.bitmap.height as i32, floating: None });
     }
 
-    /// Copia a seleção para a área de transferência do componente (Ctrl+C).
-    pub fn copy_selection(&mut self) -> bool {
+    /// Copia a seleção para a área de transferência do Aylis (Ctrl+C): os outros apps
+    /// colam a imagem também.
+    pub fn copy_selection(&mut self, ui: &mut Ui) -> bool {
         let Some(sel) = &self.selection else { return false };
-        self.clipboard = Some(match &sel.floating {
+        let b = match &sel.floating {
             Some(f) => f.clone(),
             None => self.bitmap.crop(sel.x, sel.y, sel.w, sel.h),
-        });
+        };
+        aylis_core::clipboard::set(ui, aylis_core::clipboard::ClipboardContent::image(Image::rgba(b.width, b.height, b.pixels)));
         true
     }
 
@@ -615,9 +615,25 @@ impl PaintCanvas {
         true
     }
 
-    /// Cola o que foi copiado no canto de cima, como seleção solta (Ctrl+V).
-    pub fn paste(&mut self) -> bool {
-        let Some(clip) = self.clipboard.clone() else { return false };
+    /// Cola a imagem da área de transferência (a copiada aqui ou noutro app) no canto de
+    /// cima, como seleção solta (Ctrl+V).
+    pub fn paste(&mut self, ui: &mut Ui) -> bool {
+        let Some(image) = aylis_core::clipboard::image(ui) else { return false };
+        let (width, height, pixels) = match aylis_core::clipboard::rgba(&image) {
+            Some((w, h, px)) => (w, h, px.into_owned()),
+            None => match image.source() {
+                aylis_core::ImageSource::Encoded(bytes) => {
+                    let Ok(decoded) = ::image::load_from_memory(bytes) else { return false };
+                    let decoded = decoded.to_rgba8();
+                    (decoded.width(), decoded.height(), decoded.into_raw())
+                }
+                _ => return false,
+            },
+        };
+        if width == 0 || height == 0 || width > 8192 || height > 8192 {
+            return false;
+        }
+        let clip = Bitmap { width, height, pixels };
         self.commit_selection();
         self.checkpoint();
         self.tool = PaintTool::Select;
@@ -1018,16 +1034,16 @@ impl Component for PaintCanvas {
                 PropValue::Bool(true)
             }
             "has_selection" => return Ok(PropValue::Bool(self.has_selection())),
-            "copy" => return Ok(PropValue::Bool(self.copy_selection())),
+            "copy" => return Ok(PropValue::Bool(self.copy_selection(ctx.ui))),
             "cut" => {
-                let ok = self.copy_selection() && self.delete_selection();
+                let ok = self.copy_selection(ctx.ui) && self.delete_selection();
                 if ok {
                     ctx.fire("on_change", EventArgs::None);
                 }
                 PropValue::Bool(ok)
             }
             "paste" => {
-                let ok = self.paste();
+                let ok = self.paste(ctx.ui);
                 if ok {
                     ctx.fire("on_change", EventArgs::None);
                 }

@@ -5,13 +5,14 @@
 //! aylis-tool run <projeto.aylisproj> [--target ...] [--language go]
 //! aylis-tool publish <projeto.aylisproj> [--target ...] [--out pasta] [--debug] [--features a,b]
 //! aylis-tool clean [--days 7] [--target pasta] [--project projeto.aylisproj]
-//! aylis-tool installer-ide [--out pasta] [--skip-build]
+//! aylis-tool installer-ide [--out pasta] [--skip-build] [--with-packages nome,...|all]
 //! aylis-tool translations [--apply tabela.tsv] [--templates]
 //! aylis-tool new <pasta> <nome> [linguagem]
 //! aylis-tool generate <projeto.aylisproj>
 //! aylis-tool script <projeto.aylisproj> <roteiro.json> [--language go] [--output estado.json]
 //! aylis-tool setup <linguagem>... | --all  instala o compilador, o depurador e o servidor de linguagem
 //! aylis-tool ibge <pasta> [--offline]     os dados do exemplo do IBGE (examples/IBGE/assets/dados)
+//! aylis-tool packages list|install|remove|sources|pack|update|env   os pacotes de ferramentas
 //! ```
 
 use std::path::PathBuf;
@@ -171,17 +172,20 @@ fn main() -> ExitCode {
         },
         // Configura linguagens sem passo manual (o assistente "Configurar linguagens" da IDE).
         Some("setup") => setup(&args[1..]),
+        // Os pacotes de ferramentas (docs/pacotes.md): listar, instalar, remover, as origens,
+        // montar a pasta de pacotes e preencher os hashes do manifesto.
+        Some("packages") => packages(&args[1..]),
         // Os dados do exemplo do IBGE (baixa o que falta e gera os arquivos do app).
         Some("ibge") => match args.get(1) {
             Some(dir) => aylis_tools::ibge::run(std::path::Path::new(dir), args.iter().any(|a| a == "--offline"), &mut |m| println!("{m}")),
             None => Err("uso: aylis-tool ibge <pasta dos dados> [--offline] (examples/IBGE/assets/dados)".to_string()),
         },
-        // Baixa uma ferramenta fixada em resources/tools.lock.json, confere o SHA-256 e instala.
+        // Instala o pacote de ferramentas pelas origens (resources/packages.lock.json; nunca da URL oficial).
         Some("fetch") => match args.get(1) {
             Some(name) => aylis_tools::downloads::fetch(name, &mut |m| println!("{m}")).map(|_| ()),
             None => Err("uso: aylis-tool fetch <codelldb|netcoredbg|js-debug|clangd|bundletool|jdtls>".into()),
         },
-        // Regrava resources/tools.lock.json com os hashes publicados (--latest: últimas versões).
+        // Regrava resources/packages.lock.json com os hashes publicados (--latest: últimas versões).
         Some("update-tools") => {
             let root = PathBuf::from(aylis_project::codegen::aylis_root());
             aylis_tools::downloads::update_lock(&root, args.iter().any(|a| a == "--latest"), &mut |m| println!("{m}"))
@@ -225,9 +229,16 @@ fn main() -> ExitCode {
         // A auditoria das dependências (cargo deny, regras em deny.toml).
         Some("audit") => aylis_tools::installer::audit(&PathBuf::from(aylis_project::codegen::aylis_root())),
         Some("installer-ide") => {
+            // `--with-packages [nomes|all]`: o kit offline (a pasta `pacotes` ao lado do setup).
+            let with_packages = args.iter().position(|a| a == "--with-packages").map(|i| {
+                let names: Vec<String> = args[i + 1..].iter().take_while(|a| !a.starts_with("--")).flat_map(|a| a.split(',')).map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect();
+                // Vazio ou `all`: todos os pacotes do Windows.
+                if names.iter().any(|n| n == "all") { Vec::new() } else { names }
+            });
             let options = aylis_tools::installer::Options {
                 out: value_of(&args, "--out").map(PathBuf::from),
                 skip_build: args.iter().any(|a| a == "--skip-build"),
+                with_packages,
             };
             aylis_tools::installer::installer_ide(&options).map(|setup| {
                 let mb = setup.metadata().map(|m| m.len() / (1024 * 1024)).unwrap_or(0);
@@ -415,6 +426,179 @@ fn setup(args: &[String]) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!("ainda falta:\n{}", missing.join("\n")))
+    }
+}
+
+const PACKAGES_USAGE: &str = "uso:
+  aylis-tool packages list
+  aylis-tool packages install <nome>... [--from <pasta>]... [--mirror <url>]... [--no-settings] [--utf16-output]
+  aylis-tool packages remove <nome>
+  aylis-tool packages sources [--add-dir <pasta>] [--add-mirror <url>] [--clear]
+  aylis-tool packages pack --out <pasta> [nome...] [--platform <p>,...|all]
+  aylis-tool packages update [nome...] [--force]
+  aylis-tool packages env";
+
+/// `aylis-tool packages ...`: os pacotes de ferramentas ([`aylis_tools::toolpacks`]).
+///
+/// `--utf16-output`: o andamento e o erro saem em UTF-16LE (com BOM). É para o instalador da
+/// IDE: o `nsExec` do NSIS mostra a saída nos detalhes, mas lê UTF-8 como ANSI (os acentos
+/// viravam "Ã§"); UTF-16 ele reconhece.
+fn packages(args: &[String]) -> Result<(), String> {
+    let utf16 = args.iter().any(|a| a == "--utf16-output");
+    if utf16 {
+        say(true, "\u{feff}");
+    }
+    match packages_run(args, utf16) {
+        // O erro também em UTF-16 (o `main` o escreveria em UTF-8, no meio da saída).
+        Err(e) if utf16 && !e.is_empty() => {
+            say(true, &format!("erro: {e}"));
+            Err(String::new())
+        }
+        other => other,
+    }
+}
+
+/// Uma linha na saída: em UTF-8 ou, com `utf16`, em UTF-16LE (veja [`packages`]).
+fn say(utf16: bool, line: &str) {
+    if !utf16 {
+        println!("{line}");
+        return;
+    }
+    use std::io::Write;
+    // O BOM sozinho, sem quebra de linha.
+    let text = if line == "\u{feff}" { line.to_string() } else { format!("{line}\r\n") };
+    let bytes: Vec<u8> = text.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    let mut out = std::io::stdout().lock();
+    let _ = out.write_all(&bytes);
+    let _ = out.flush();
+}
+
+fn packages_run(args: &[String], utf16: bool) -> Result<(), String> {
+    use aylis_tools::toolpacks::{self, Installer, Progress};
+    // Os valores das opções não são nomes de pacote.
+    let with_value = ["--from", "--mirror", "--out", "--platform", "--add-dir", "--add-mirror"];
+    let mut names = Vec::new();
+    let mut it = args.iter().skip(1);
+    while let Some(a) = it.next() {
+        if with_value.contains(&a.as_str()) {
+            it.next();
+        } else if !a.starts_with("--") {
+            names.push(a.as_str());
+        }
+    }
+    let values = |flag: &str| -> Vec<String> { args.windows(2).filter(|w| w[0] == flag).map(|w| w[1].clone()).collect() };
+    let mut last_percent = std::collections::HashMap::<String, u64>::new();
+    let mut show = move |p: Progress| match p {
+        Progress::Step(s) => say(utf16, &s),
+        Progress::Bytes { file, done, total, .. } if total > 0 => {
+            let percent = done * 100 / total;
+            let shown = last_percent.entry(file.clone()).or_insert(0);
+            if percent >= *shown + 10 || done == total {
+                *shown = percent;
+                say(utf16, &format!("  {file}: {percent}% ({} de {} MB)", done >> 20, total >> 20));
+            }
+        }
+        Progress::Bytes { .. } => {}
+    };
+    let mut installer = Installer::new()?;
+    if args.iter().any(|a| a == "--no-settings") {
+        installer.sources = toolpacks::Sources::default();
+    }
+    installer.sources.folders.extend(values("--from").into_iter().map(PathBuf::from));
+    installer.sources.mirrors.extend(values("--mirror"));
+    let control = Control::default();
+    match args.first().map(String::as_str) {
+        Some("list") => {
+            let platform = toolpacks::platform();
+            for s in installer.status() {
+                let p = &s.package;
+                let state = match (&s.installed, p.available()) {
+                    (Some(i), _) if s.up_to_date() => format!("instalado ({})", i.dir.display()),
+                    (Some(i), _) => format!("instalado na {} (a do Aylis é a {})", i.version, p.version),
+                    (None, true) => format!("{} MB", p.size().div_ceil(1 << 20)),
+                    (None, false) => format!("não há para {platform}"),
+                };
+                let deps = if p.depends.is_empty() { String::new() } else { format!(" [precisa de {}]", p.depends.join(", ")) };
+                println!("{:<14} {:<14} {}{deps} — {state}", p.name, p.version, p.title);
+            }
+            Ok(())
+        }
+        Some("install") if !names.is_empty() => installer.install(&names, &control, &mut show).map(|_| ()),
+        Some("remove") if names.len() == 1 => installer.remove(names[0], &mut show),
+        Some("sources") => {
+            let key = |k| aylis_tools::settings::list(k);
+            let mut dirs = key(aylis_tools::settings::PACKAGE_DIRS);
+            let mut mirrors = key(aylis_tools::settings::PACKAGE_MIRRORS);
+            if args.iter().any(|a| a == "--clear") {
+                dirs.clear();
+                mirrors.clear();
+            }
+            let add_dirs = values("--add-dir");
+            let add_mirrors = values("--add-mirror");
+            for m in &add_mirrors {
+                if !m.starts_with("https://") {
+                    return Err(format!("{m}: o espelho tem de ser https"));
+                }
+            }
+            if args.iter().any(|a| a == "--clear") || !add_dirs.is_empty() || !add_mirrors.is_empty() {
+                // Sem repetir (o instalador da IDE grava o espelho a cada instalação).
+                for d in add_dirs {
+                    if !dirs.contains(&d) {
+                        dirs.push(d);
+                    }
+                }
+                for m in add_mirrors {
+                    if !mirrors.contains(&m) {
+                        mirrors.push(m);
+                    }
+                }
+                aylis_tools::settings::set_list(aylis_tools::settings::PACKAGE_DIRS, &dirs)?;
+                aylis_tools::settings::set_list(aylis_tools::settings::PACKAGE_MIRRORS, &mirrors)?;
+                installer.sources = toolpacks::Sources::configured();
+            }
+            println!("Na ordem (o primeiro com o SHA-256 certo vence):");
+            for s in installer.sources.describe(&installer.paths.cache) {
+                println!("  {s}");
+            }
+            Ok(())
+        }
+        Some("pack") => {
+            let out = PathBuf::from(value_of(args, "--out").ok_or(PACKAGES_USAGE)?);
+            let platforms: Vec<String> = match value_of(args, "--platform").as_deref() {
+                Some("all") => {
+                    let mut all: Vec<String> = installer.manifest.packages().iter().flat_map(|p| p.platforms.clone()).filter(|p| p.contains('-')).collect();
+                    all.sort();
+                    all.dedup();
+                    all
+                }
+                Some(list) => list.split(',').map(str::to_string).collect(),
+                None => Vec::new(),
+            };
+            let started = std::time::Instant::now();
+            let report = toolpacks::pack(&installer.manifest, &installer.paths.cache, &out, &names, &platforms, &control, &mut show)?;
+            for (file, size, package, platform, how) in &report.files {
+                println!("  {package:<14} {platform:<15} {:>6} MB  {file} ({how})", size.div_ceil(1 << 20));
+            }
+            println!("{} arquivos, {} MB, em {:.0} s; índice: {}", report.files.len(), report.total().div_ceil(1 << 20), started.elapsed().as_secs_f64(), report.index.display());
+            Ok(())
+        }
+        Some("update") => {
+            let root = aylis_tools::aylis_root();
+            toolpacks::update_lock(&root, &installer.paths.cache, &names, args.iter().any(|a| a == "--force"), &control, &mut show).map(|_| ())
+        }
+        Some("env") => {
+            let env = installer.environment();
+            for d in &env.path {
+                println!("PATH += {}", d.display());
+            }
+            let wanted = env.wanted_vars();
+            for (k, v) in &env.vars {
+                let note = if wanted.iter().any(|(w, _)| w == k) { "" } else { " (a máquina já tem: não muda)" };
+                println!("{k} = {}{note}", v.display());
+            }
+            Ok(())
+        }
+        _ => Err(PACKAGES_USAGE.into()),
     }
 }
 

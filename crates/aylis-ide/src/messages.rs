@@ -122,9 +122,7 @@ impl MessageList {
 
 /// Copia `text` para a área de transferência.
 pub fn copy_text(ui: &mut aylis_core::Ui, text: &str) {
-    if let Some(c) = ui.services_mut().clipboard.as_mut() {
-        c.set_text(text);
-    }
+    aylis_core::clipboard::set_text(ui, text);
 }
 
 impl Component for MessageList {

@@ -1,7 +1,8 @@
 //! Ferramentas → Opções da IDE (como o Tools → Options do Delphi): a gravação do uso, os
 //! projetos confiáveis, onde está cada compilador e ferramenta (uma aba por linguagem: vazio é
 //! o automático, o PATH e as pastas padrão), o editor externo e o MCP (o servidor, o token e a
-//! configuração do Claude Code e do Claude Desktop). Vale no Windows, no macOS e no Linux.
+//! configuração do Claude Code e do Claude Desktop) e as origens dos pacotes de ferramentas
+//! (as pastas e os espelhos, com o "Testar as origens"). Vale no Windows, no macOS e no Linux.
 
 use std::path::{Path, PathBuf};
 
@@ -229,8 +230,141 @@ fn configure_claude_desktop() -> Result<String, String> {
     Ok(format!("Claude Desktop configurado ({}); reinicie o Claude Desktop", targets.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", ")))
 }
 
+/// A aba das origens dos pacotes de ferramentas (o "Corrigir" sem origem leva a ela).
+pub const PACKAGES_TAB: &str = "Pacotes";
+
+/// Os campos da aba Pacotes.
+struct PackageSources {
+    dirs: ComponentId,
+    mirrors: ComponentId,
+}
+
+/// O texto de um campo de várias linhas como lista (sem linhas vazias).
+fn lines_of(ui: &Ui, memo: ComponentId) -> Vec<String> {
+    crate::dialogs::text_of(ui, memo).lines().map(str::trim).filter(|l| !l.is_empty()).map(str::to_string).collect()
+}
+
+/// As origens dos pacotes (`aylis_tools::toolpacks`, docs/pacotes.md): as pastas e os
+/// espelhos, e o "Testar as origens" (quantos arquivos desta plataforma cada uma tem).
+fn package_sources(ui: &mut Ui, state: &Shared, page: ComponentId) -> PackageSources {
+    use aylis_tools::settings::{PACKAGE_DIRS, PACKAGE_MIRRORS, list};
+    let title = caption(ui, page, "Pastas de pacotes (uma por linha: uma pasta de rede, a do Google Drive para desktop)");
+    ui.control_mut(title).unwrap().set_margins([0.0, 4.0, 0.0, 2.0]);
+    let line = ui.add(Layout::default(), page);
+    ui.control_mut(line).unwrap().set_align(Align::Top).set_height(84.0);
+    let browse = ui.add(Button::new("Procurar…"), line);
+    ui.control_mut(browse).unwrap().set_align(Align::Right).set_width(110.0).set_margins([8.0, 0.0, 0.0, 50.0]).set_style("flat");
+    let dirs = ui.add(Memo::new(list(PACKAGE_DIRS).join("\n")), line);
+    ui.control_mut(dirs).unwrap().set_align(Align::Client);
+    let beside = aylis_tools::toolpacks::Sources::beside_exe();
+    let beside_text = match &beside {
+        Some(p) if p.is_dir() => format!("{} {}", ui.tr("A pasta pacotes ao lado da IDE entra sozinha:"), p.display()),
+        Some(p) => format!("{} {} ({})", ui.tr("A pasta pacotes ao lado da IDE entra sozinha:"), p.display(), ui.tr("não existe")),
+        None => String::new(),
+    };
+    let about = label(ui, page, &beside_text, Align::Top, 22.0);
+    muted(ui, about);
+    let title = caption(ui, page, "Espelhos (o link de uma pasta compartilhada do Google Drive ou o endereço HTTPS de um pacotes.json, um por linha)");
+    ui.control_mut(title).unwrap().set_margins([0.0, 12.0, 0.0, 2.0]);
+    let mirrors = ui.add(Memo::new(list(PACKAGE_MIRRORS).join("\n")), page);
+    ui.control_mut(mirrors).unwrap().set_align(Align::Top).set_height(84.0);
+    let hint = label(
+        ui,
+        page,
+        "Na ordem: o cache, as pastas e os espelhos; vale o primeiro arquivo com o SHA-256 do manifesto do Aylis. Não há endereço oficial: quem distribui monta a pasta com aylis-tool packages pack.",
+        Align::Top,
+        40.0,
+    );
+    let _ = ui.set_prop(hint, "wrap", true);
+    muted(ui, hint);
+    let buttons = ui.add(Layout::default(), page);
+    ui.control_mut(buttons).unwrap().set_align(Align::Top).set_height(32.0).set_margins([0.0, 8.0, 0.0, 0.0]);
+    let test = ui.add(Button::new("Testar as origens"), buttons);
+    ui.control_mut(test).unwrap().set_align(Align::Left).set_width(170.0).set_style("flat");
+    let result = ui.add(Memo::new(""), page);
+    ui.control_mut(result).unwrap().set_align(Align::Client).set_margins([0.0, 8.0, 0.0, 0.0]);
+    let _ = ui.set_prop(result, "read_only", true);
+    let _ = ui.set_prop(result, "font_size", 12);
+    state.borrow_mut().sources_view = Some(result);
+    {
+        let state2 = state.clone();
+        ui.on_click(browse, move |_, _| {
+            let state3 = state2.clone();
+            crate::actions::spawn(&state2, async move {
+                let Some(folder) = crate::files::AsyncFileDialog::new().pick_folder().await else { return };
+                let path = folder.path().display().to_string();
+                state3.borrow_mut().after_task = Some(Box::new(move |ui: &mut Ui| {
+                    let mut all = lines_of(ui, dirs);
+                    all.push(path);
+                    let _ = ui.set_prop(dirs, "text", all.join("\n"));
+                }));
+            });
+        });
+    }
+    {
+        let state = state.clone();
+        ui.on_click(test, move |ui, _| {
+            let mut sources = aylis_tools::toolpacks::Sources::default();
+            sources.folders.extend(aylis_tools::toolpacks::Sources::beside_exe());
+            sources.folders.extend(lines_of(ui, dirs).into_iter().map(PathBuf::from));
+            sources.mirrors = lines_of(ui, mirrors).into_iter().filter(|m| m.starts_with("https://")).collect();
+            let files: Vec<_> = aylis_tools::toolpacks::Manifest::embedded().packages().into_iter().filter(|p| p.available()).flat_map(|p| p.files).collect();
+            let started = crate::jobs::start(&state, crate::jobs::Slot::Environment, "Testando as origens", move |control, sender| {
+                sender.send(crate::jobs::Msg::Sources(sources.probe(&files, control)));
+                Ok(String::new())
+            });
+            let text = if started { ui.tr("Testando as origens…") } else { ui.tr("Aguarde: há outro trabalho do ambiente em andamento.") };
+            let _ = ui.set_prop(result, "text", text);
+        });
+    }
+    PackageSources { dirs, mirrors }
+}
+
+/// Mostra o resultado do "Testar as origens" (se as Opções ainda estiverem abertas).
+pub fn show_probes(ui: &mut Ui, state: &Shared, probes: &[aylis_tools::toolpacks::Probe]) {
+    let Some(result) = state.borrow().sources_view else { return };
+    let mut lines: Vec<String> = probes
+        .iter()
+        .map(|p| {
+            let kind = if p.mirror { "Espelho {0}: {1}" } else { "Pasta {0}: {1}" };
+            let detail = match &p.error {
+                Some(e) => e.clone(),
+                None => ui.tr("{0} de {1} arquivos desta plataforma").replace("{0}", &p.found.to_string()).replace("{1}", &p.total.to_string()),
+            };
+            ui.tr(kind).replace("{0}", &p.place).replace("{1}", &detail)
+        })
+        .collect();
+    if probes.iter().all(|p| p.found == 0) {
+        lines.push(ui.tr("Nenhuma origem tem os arquivos: o Corrigir e a instalação de pacotes não terão de onde obter."));
+    }
+    let _ = ui.set_prop(result, "text", lines.join("\n"));
+}
+
+/// Grava as origens (os espelhos só https).
+fn apply_package_sources(ui: &Ui, p: &PackageSources, errors: &mut Vec<String>) {
+    use aylis_tools::settings::{PACKAGE_DIRS, PACKAGE_MIRRORS, set_list};
+    let mirrors = lines_of(ui, p.mirrors);
+    for m in mirrors.iter().filter(|m| !m.starts_with("https://")) {
+        errors.push(format!("{m}: o espelho tem de ser https"));
+    }
+    let mirrors: Vec<String> = mirrors.into_iter().filter(|m| m.starts_with("https://")).collect();
+    for (key, values) in [(PACKAGE_DIRS, lines_of(ui, p.dirs)), (PACKAGE_MIRRORS, mirrors)] {
+        if let Err(e) = set_list(key, &values) {
+            errors.push(e);
+        }
+    }
+}
+
 /// Abre a tela de opções.
 pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
+    open_at(ui, state, ids, "");
+}
+
+/// Abre a tela de opções na aba `tab` (pelo título; vazio ou desconhecido, a primeira).
+pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
+    if ui.find("frmOpcoesIde").is_some() {
+        return;
+    }
     let form = ui.add_root(Form::new("Opções da IDE", 940.0, 600.0));
     let _ = ui.set_name(form, "frmOpcoesIde");
     let _ = ui.set_prop(form, "border_style", "single");
@@ -345,13 +479,25 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
         });
     }
 
-    TabControl::select(ui, tabs, 0);
+    // As origens dos pacotes de ferramentas.
+    let packages_page = TabControl::add_tab(ui, tabs, PACKAGES_TAB);
+    ui.control_mut(packages_page).unwrap().set_padding(12.0);
+    let sources = package_sources(ui, state, packages_page);
+
+    let titles = ["Geral"].into_iter().chain(TOOL_TABS.iter().map(|(t, _)| *t)).chain(["Rust e Python", "MCP", PACKAGES_TAB]);
+    TabControl::select(ui, tabs, titles.into_iter().position(|t| t == tab).unwrap_or(0));
     crate::lang::translate(ui);
     let (state2, ids2) = (state.clone(), *ids);
     let _ = ui.show_modal(form, move |ui, result| {
         if result == aylis_core::ModalResult::Ok {
+            let mut errors = Vec::new();
+            apply_package_sources(ui, &sources, &mut errors);
+            if !errors.is_empty() {
+                state2.borrow_mut().status = format!("⚠ {}", errors.join("; "));
+            }
             apply(ui, &state2, &ids2, &fields, [record, mask, splash], &build, mcp_on, port);
         }
+        state2.borrow_mut().sources_view = None;
         ui.free(form);
         crate::app::refresh(ui, &state2, &ids2);
     });

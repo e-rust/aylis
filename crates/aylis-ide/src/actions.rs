@@ -1697,16 +1697,16 @@ pub fn close_tab(ui: &mut Ui, state: &Shared, ids: &Ids, index: usize) {
 // Edição
 // ===========================================================================
 
-pub fn edit(state: &Shared, op: &str) {
+pub fn edit(ui: &mut Ui, state: &Shared, op: &str) {
     let mut st = state.borrow_mut();
     let doc = &mut st.doc;
     let message = match op {
         "undo" => (!doc.undo()).then_some("Nada para desfazer"),
         "redo" => (!doc.redo()).then_some("Nada para refazer"),
-        "cut" => (!doc.cut_selected()).then_some("Selecione um componente (o form não é recortado)"),
-        "copy" => (!doc.copy_selected()).then_some("Selecione um componente (o form não é copiado)"),
+        "cut" => (!doc.cut_selected(ui)).then_some("Selecione um componente (o form não é recortado)"),
+        "copy" => (!doc.copy_selected(ui)).then_some("Selecione um componente (o form não é copiado)"),
         "paste" => {
-            if let Err(e) = doc.paste() {
+            if let Err(e) = doc.paste(ui) {
                 st.status = e;
             }
             return;

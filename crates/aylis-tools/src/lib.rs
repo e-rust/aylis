@@ -27,6 +27,7 @@ pub mod downloads;
 pub mod installer;
 pub mod instances;
 pub mod env;
+pub mod env_cache;
 pub mod hostlang;
 pub mod icons;
 pub mod ide_package;
@@ -53,6 +54,7 @@ pub mod run;
 pub mod serve;
 pub mod settings;
 pub mod shell;
+pub mod toolpacks;
 pub mod touched;
 pub mod trust;
 pub mod updates;
@@ -198,8 +200,16 @@ pub fn cargo_target_dir(dir: &Path) -> PathBuf {
         .unwrap_or_else(|| dir.join("target"))
 }
 
-/// Onde o executável `name` está: no `PATH` (com `.exe`/`.cmd`/`.bat` no Windows).
+/// Onde o executável `name` está: no `PATH` (com `.exe`/`.cmd`/`.bat` no Windows). Durante a
+/// verificação de ambiente, a procura fica anotada ([`env_cache::note_found`]).
 pub fn which(name: &str) -> Option<PathBuf> {
+    let found = find_in_path(name);
+    env_cache::note_found(name, found.as_deref());
+    found
+}
+
+/// O [`which`] sem anotar (o que confere as marcas guardadas).
+pub fn find_in_path(name: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
     let exts: &[&str] = if cfg!(windows) { &[".exe", ".cmd", ".bat", ""] } else { &[""] };
     std::env::split_paths(&path).find_map(|dir| {

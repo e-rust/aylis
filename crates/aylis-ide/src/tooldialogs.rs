@@ -12,7 +12,7 @@ use aylis_tools::env::Status;
 use crate::app::{Ids, refresh};
 use crate::dialogs::{combo, combo_text, edit, field, new_dialog, run, text_of};
 use crate::jobs;
-use crate::state::Shared;
+use crate::state::{Shared, State};
 use crate::widgets::{caption, label, muted};
 
 /// O diálogo de ambiente aberto (para preencher quando a verificação termina).
@@ -24,12 +24,75 @@ pub struct EnvView {
     pub recheck: ComponentId,
 }
 
-/// Abre o "Verificar ambiente". Com `check`, verifica de novo (senão mostra o que já foi
-/// verificado, como depois de um F9 que parou por falta de algo).
+/// As plataformas que o projeto aberto usa (as do `.aylisproj`; sem escolha, as que a
+/// linguagem tem neste sistema), a do Executar primeiro. São as que o "Verificar ambiente"
+/// confere ao abrir; as outras mostram o resultado guardado até a pessoa pedir.
+pub fn project_targets(st: &State) -> Vec<Target> {
+    let language = st.project.as_ref().map_or(Language::Rust, |p| p.language);
+    let available = Target::available(language);
+    let chosen: Vec<Target> = match st.project.as_ref().map(|p| &p.platforms).filter(|p| !p.is_empty()) {
+        Some(list) => available.iter().copied().filter(|t| list.iter().any(|p| platform_target(p) == Some(*t))).collect(),
+        None => available,
+    };
+    let mut out = vec![st.run_target];
+    out.extend(chosen.into_iter().filter(|t| *t != st.run_target));
+    out
+}
+
+/// A plataforma do Executar de uma chave do `.aylisproj` (`windows`, `linux`...), neste sistema.
+fn platform_target(key: &str) -> Option<Target> {
+    match key {
+        "windows" if cfg!(windows) => Some(Target::Desktop),
+        "macos" if cfg!(target_os = "macos") => Some(Target::Desktop),
+        "linux" if cfg!(windows) => Some(Target::Linux),
+        "linux" if !cfg!(target_os = "macos") => Some(Target::Desktop),
+        "android" => Some(Target::Android),
+        "ios" => Some(Target::Ios),
+        "web" => Some(Target::Web),
+        _ => None,
+    }
+}
+
+/// Na primeira abertura (ou com o projeto noutra linguagem), põe em `checks` o resultado
+/// guardado em disco das plataformas que ainda não estão lá: a tela abre na hora com ele.
+/// Outra linguagem troca tudo; o que já estava (o F9 que parou) fica.
+fn load_stored(state: &Shared) {
+    let mut st = state.borrow_mut();
+    let language = st.project.as_ref().map_or(Language::Rust, |p| p.language);
+    match st.env_language {
+        Some(l) if l == language => return,
+        Some(_) => {
+            st.checks.clear();
+            st.env_fresh.clear();
+            st.env_saved.clear();
+        }
+        None => {}
+    }
+    st.env_language = Some(language);
+    for (target, checks, saved) in aylis_tools::env_cache::cached(language) {
+        if !st.checks.iter().any(|c| c.target == target) {
+            st.checks.extend(checks);
+            st.env_saved.retain(|(t, _)| *t != target);
+            st.env_saved.push((target, saved));
+        }
+    }
+}
+
+/// Confere de novo, em segundo plano, as plataformas do projeto (pelas marcas: sem mudança,
+/// nenhum processo roda).
+fn check_project_targets(state: &Shared) {
+    let targets = project_targets(&state.borrow());
+    jobs::check_environment(state, targets, Vec::new());
+}
+
+/// Abre o "Verificar ambiente" com o resultado guardado. Com `check`, confere de novo as
+/// plataformas do projeto em segundo plano (senão só mostra, como depois de um F9 que parou
+/// por falta de algo).
 pub fn environment(ui: &mut Ui, state: &Shared, ids: &Ids, check: bool) {
+    load_stored(state);
     if state.borrow().env_view.is_some() {
         if check {
-            jobs::check_environment(state);
+            check_project_targets(state);
         }
         fill_environment(ui, state, ids);
         return;
@@ -64,8 +127,9 @@ pub fn environment(ui: &mut Ui, state: &Shared, ids: &Ids, check: bool) {
     state.borrow_mut().env_view = Some(EnvView { form, list, log, recheck });
     {
         let (state, ids) = (state.clone(), *ids);
+        // Tudo de novo, sem o resultado guardado, todas as plataformas.
         ui.on_click(recheck, move |ui, _| {
-            jobs::check_environment(&state);
+            jobs::check_environment(&state, Target::ALL.to_vec(), Target::ALL.to_vec());
             fill_environment(ui, &state, &ids);
         });
     }
@@ -77,18 +141,27 @@ pub fn environment(ui: &mut Ui, state: &Shared, ids: &Ids, check: bool) {
         refresh(ui, &state2, &ids2);
     });
     if check || state.borrow().checks.is_empty() {
-        jobs::check_environment(state);
+        check_project_targets(state);
     }
     fill_environment(ui, state, ids);
+}
+
+/// Há quanto tempo (o "guardado há 3 h" das plataformas não conferidas nesta sessão).
+fn age_text(seconds: u64) -> String {
+    match seconds {
+        ..3600 => format!("{} min", (seconds / 60).max(1)),
+        ..86_400 => format!("{} h", seconds / 3600),
+        _ => format!("{} d", seconds / 86_400),
+    }
 }
 
 /// Refaz a lista do diálogo de ambiente (se estiver aberto).
 pub fn fill_environment(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(view) = state.borrow().env_view else { return };
-    let (checks, busy, log, run_target) = {
+    let (checks, busy, log, primary, fresh, pending, saved) = {
         let st = state.borrow();
         let busy = st.env_job.as_ref().map(|j| j.title.clone());
-        (st.checks.clone(), busy, st.env_log.clone(), st.run_target)
+        (st.checks.clone(), busy, st.env_log.clone(), project_targets(&st), st.env_fresh.clone(), st.env_pending.clone(), st.env_saved.clone())
     };
     let status = match &busy {
         Some(title) if log.is_empty() => format!("{title}…"),
@@ -99,25 +172,59 @@ pub fn fill_environment(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let _ = ui.set_prop(view.recheck, "enabled", busy.is_none());
     let children = ui.children(view.list).to_vec();
     ui.free_many(&children);
-    if checks.is_empty() {
-        let l = label(ui, view.list, "Verificando…", Align::Top, 30.0);
-        muted(ui, l);
-        ui.layout();
-        return;
-    }
     let (ok, warn, bad) = (ui.theme().color("success"), ui.theme().color("warning"), ui.theme().color("danger"));
-    // A plataforma do Executar primeiro.
-    let mut targets: Vec<Target> = Target::ALL.to_vec();
-    targets.sort_by_key(|t| *t != run_target);
+    let now = aylis_tools::env_cache::now();
+    // As do projeto primeiro (a do Executar à frente), depois as outras.
+    let mut targets = primary.clone();
+    targets.extend(Target::ALL.into_iter().filter(|t| !primary.contains(t)));
     for target in targets {
         let items: Vec<_> = checks.iter().filter(|c| c.target == target).collect();
-        if items.is_empty() {
-            continue;
-        }
         let ready = items.iter().all(|c| c.status != Status::Missing);
-        let title = format!("{}  —  {}", target.name().to_uppercase(), if ready { "pronto" } else { "falta algo" });
-        let c = caption(ui, view.list, &title);
-        let _ = ui.set_prop(c, "color", if ready { ok } else { bad });
+        let is_pending = pending.contains(&target) && busy.is_some();
+        let is_fresh = fresh.contains(&target);
+        let state_text = if items.is_empty() {
+            if is_pending { "conferindo…" } else { "não conferida" }
+        } else if ready {
+            "pronto"
+        } else {
+            "falta algo"
+        };
+        // O cabeçalho: o nome e a situação; sem conferir nesta sessão, de quando é o guardado e
+        // o "Conferir" (as plataformas fora do projeto só são conferidas quando pedidas).
+        let header = ui.add(Layout::default(), view.list);
+        ui.control_mut(header).unwrap().set_align(Align::Top).set_height(26.0).set_margins([4.0, 6.0, 0.0, 0.0]);
+        if !is_fresh && !is_pending {
+            let b = ui.add(Button::new("Conferir"), header);
+            ui.control_mut(b).unwrap().set_align(Align::Right).set_width(96.0).set_margins([8.0, 0.0, 0.0, 2.0]).set_style("flat");
+            let _ = ui.set_prop(b, "enabled", busy.is_none());
+            // Um "Conferir" por plataforma: o MCP (`dialog_state`) separa cada um pela dica.
+            let _ = ui.set_prop(b, "hint", target.name());
+            let (state, ids) = (state.clone(), *ids);
+            ui.on_click(b, move |ui, _| {
+                jobs::check_environment(&state, vec![target], vec![target]);
+                fill_environment(ui, &state, &ids);
+            });
+        }
+        let note = if is_pending && !items.is_empty() {
+            Some("conferindo…".to_string())
+        } else if is_fresh {
+            None
+        } else {
+            saved.iter().find(|(t, _)| *t == target).map(|(_, at)| format!("guardado há {}", age_text(now.saturating_sub(*at))))
+        };
+        if let Some(note) = note {
+            let n = label(ui, header, &note, Align::Right, 170.0);
+            muted(ui, n);
+            let _ = ui.set_prop(n, "font_size", 11);
+        }
+        let title = format!("{}  —  {}", target.name().to_uppercase(), state_text);
+        let c = label(ui, header, &title, Align::Client, 0.0);
+        let _ = ui.set_prop(c, "font_size", 11);
+        if items.is_empty() {
+            muted(ui, c);
+        } else {
+            let _ = ui.set_prop(c, "color", if ready { ok } else { bad });
+        }
         for check in items {
             let line = ui.add(Layout::default(), view.list);
             ui.control_mut(line).unwrap().set_align(Align::Top).set_height(30.0);
@@ -162,8 +269,15 @@ pub fn fill_environment(ui: &mut Ui, state: &Shared, ids: &Ids) {
     ui.layout();
 }
 
-/// Mostra o comando e pergunta antes de rodar uma correção.
+/// Mostra o comando e pergunta antes de rodar uma correção. Um pacote de ferramentas sem
+/// origem (nem a pasta `pacotes`, nem pasta ou espelho nas Opções, nem os arquivos no cache)
+/// não roda: a mensagem diz e leva às Opções.
 fn confirm_fix(ui: &mut Ui, state: &Shared, ids: &Ids, fix: aylis_tools::env::Fix) {
+    if let Some(name) = &fix.fetch
+        && !crate::toolpacksview::ensure_source(ui, state, ids, std::slice::from_ref(name))
+    {
+        return;
+    }
     let state2 = state.clone();
     let question = format!("{}\n\nComando:\n{}\n\nRodar agora?", fix.description, fix.command_line());
     crate::actions::confirm(ui, state, ids, &question, move |_| jobs::apply_fix(&state2, fix));
@@ -668,4 +782,41 @@ pub fn fill_languages(ui: &mut Ui, state: &Shared) {
     };
     let _ = ui.set_prop(view.progress, "text", progress);
     ui.request_repaint();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_project_platforms_come_first_with_the_run_target_ahead() {
+        let state = crate::state::shared(crate::document::Document::new());
+        let base = std::env::temp_dir().join(format!("aylis_env_targets_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let mut project = aylis_project::create(&base, "Alvos", Language::Rust).unwrap();
+        let _ = std::fs::remove_dir_all(&base);
+        project.platforms = vec!["windows".into(), "android".into(), "macos".into()];
+        {
+            let mut st = state.borrow_mut();
+            st.project = Some(project);
+            st.run_target = Target::Web;
+        }
+        let expected = if cfg!(any(windows, target_os = "macos")) { vec![Target::Web, Target::Desktop, Target::Android] } else { vec![Target::Web, Target::Android] };
+        assert_eq!(project_targets(&state.borrow()), expected);
+        // Sem escolha no projeto: as que a linguagem tem neste sistema (o WSL num Windows).
+        state.borrow_mut().project.as_mut().unwrap().platforms.clear();
+        state.borrow_mut().run_target = Target::Desktop;
+        assert_eq!(project_targets(&state.borrow()), Target::available(Language::Rust));
+        // Outra linguagem: só o desktop.
+        state.borrow_mut().project.as_mut().unwrap().language = Language::Python;
+        assert_eq!(project_targets(&state.borrow()), vec![Target::Desktop]);
+    }
+
+    #[test]
+    fn the_age_of_a_stored_result_is_short() {
+        assert_eq!(age_text(5), "1 min");
+        assert_eq!(age_text(3 * 3600 + 5), "3 h");
+        assert_eq!(age_text(2 * 86_400), "2 d");
+    }
 }

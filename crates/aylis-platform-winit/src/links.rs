@@ -17,13 +17,46 @@ impl LinkService for DesktopLinks {
     fn open_app(&mut self, app: &str) -> Result<(), String> {
         open(app, true)
     }
+
+    #[cfg(windows)]
+    fn can_register_schemes(&self) -> bool {
+        true
+    }
+
+    #[cfg(windows)]
+    fn register_scheme(&mut self, scheme: &str, description: &str) -> Result<(), String> {
+        crate::url_scheme::register(&aylis_core::platform::check_scheme(scheme)?, description)
+    }
+
+    #[cfg(windows)]
+    fn unregister_scheme(&mut self, scheme: &str) -> Result<(), String> {
+        crate::url_scheme::unregister(&aylis_core::platform::check_scheme(scheme)?)
+    }
+
+    #[cfg(windows)]
+    fn scheme_registered(&mut self, scheme: &str) -> bool {
+        aylis_core::platform::check_scheme(scheme).is_ok_and(|s| crate::url_scheme::registered(&s))
+    }
+
+    #[cfg(windows)]
+    fn receive_links(&mut self, on_link: Box<dyn Fn(String) + Send>) {
+        crate::url_scheme::receive(on_link);
+    }
 }
 
 /// O link que abriu o app pela linha de comando (o `deep_links` registrado no sistema passa o
 /// endereço como argumento): vai para o `on_link` do `AppLink`.
 #[cfg(not(any(web, mobile)))]
+/// No Windows, com outra cópia do app aberta recebendo links (um `UrlScheme` ativo), os
+/// links vão para ela e esta cópia fecha antes de abrir janela.
 pub(crate) fn command_line_links() {
-    for arg in std::env::args().skip(1).filter(|a| a.contains("://")) {
+    let links: Vec<String> = std::env::args().skip(1).filter(|a| a.contains("://")).collect();
+    #[cfg(windows)]
+    if !links.is_empty() && crate::url_scheme::forward(&links) {
+        std::process::exit(0);
+    }
+    for arg in links {
+        aylis_core::platform::push_startup_link(arg.clone());
         aylis_core::platform::push_incoming(aylis_core::platform::Incoming::Link(arg));
     }
 }

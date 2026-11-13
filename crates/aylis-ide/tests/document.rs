@@ -101,9 +101,11 @@ fn copy_paste_renames_and_offsets() {
     let panel = doc.add("Panel", Some(PointF::new(16.0, 16.0))).unwrap();
     doc.add("Button", Some(PointF::new(24.0, 24.0))).unwrap();
     doc.select(Some(panel));
-    assert!(doc.copy_selected());
+    // A área de transferência é a da janela da IDE (aqui, a do processo: sem serviço).
+    let mut window = aylis_core::Ui::new();
+    assert!(doc.copy_selected(&mut window));
     doc.select(Some(doc.root));
-    let copy = doc.paste().unwrap();
+    let copy = doc.paste(&mut window).unwrap();
     assert_eq!(doc.ui.name(copy), Some("Panel2"));
     assert_eq!(doc.ui.name(doc.ui.children(copy)[0]), Some("Button2"));
     assert_eq!(doc.ui.control(copy).unwrap().left(), 32.0);

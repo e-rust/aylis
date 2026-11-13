@@ -405,17 +405,17 @@ pub fn build(state: Shared) -> Ide {
     add_item(&mut ui, file_menu, "Sair", "Ctrl+Q", Some(|ui, s, i| actions::quit(ui, s, i)), &ids);
 
     let edit_menu = ui.add(MenuItem::new("Editar"), menu);
-    add_item(&mut ui, edit_menu, "Desfazer", "Ctrl+Z", Some(|_, s, _| actions::edit(s, "undo")), &ids);
-    add_item(&mut ui, edit_menu, "Refazer", "Ctrl+Y", Some(|_, s, _| actions::edit(s, "redo")), &ids);
+    add_item(&mut ui, edit_menu, "Desfazer", "Ctrl+Z", Some(|ui, s, _| actions::edit(ui, s, "undo")), &ids);
+    add_item(&mut ui, edit_menu, "Refazer", "Ctrl+Y", Some(|ui, s, _| actions::edit(ui, s, "redo")), &ids);
     separator(&mut ui, edit_menu);
-    add_item(&mut ui, edit_menu, "Recortar", "Ctrl+X", Some(|_, s, _| actions::edit(s, "cut")), &ids);
-    add_item(&mut ui, edit_menu, "Copiar", "Ctrl+C", Some(|_, s, _| actions::edit(s, "copy")), &ids);
-    add_item(&mut ui, edit_menu, "Colar", "Ctrl+V", Some(|_, s, _| actions::edit(s, "paste")), &ids);
-    add_item(&mut ui, edit_menu, "Excluir", "Delete", Some(|_, s, _| actions::edit(s, "delete")), &ids);
-    add_item(&mut ui, edit_menu, "Selecionar tudo", "Ctrl+A", Some(|_, s, _| actions::edit(s, "select_all")), &ids);
+    add_item(&mut ui, edit_menu, "Recortar", "Ctrl+X", Some(|ui, s, _| actions::edit(ui, s, "cut")), &ids);
+    add_item(&mut ui, edit_menu, "Copiar", "Ctrl+C", Some(|ui, s, _| actions::edit(ui, s, "copy")), &ids);
+    add_item(&mut ui, edit_menu, "Colar", "Ctrl+V", Some(|ui, s, _| actions::edit(ui, s, "paste")), &ids);
+    add_item(&mut ui, edit_menu, "Excluir", "Delete", Some(|ui, s, _| actions::edit(ui, s, "delete")), &ids);
+    add_item(&mut ui, edit_menu, "Selecionar tudo", "Ctrl+A", Some(|ui, s, _| actions::edit(ui, s, "select_all")), &ids);
     add_item(&mut ui, edit_menu, "Pesquisar no projeto…", "Ctrl+Shift+F", Some(|ui, s, i| crate::projectsearch::open(ui, s, i, "")), &ids);
     add_item(&mut ui, edit_menu, "Onde é usado…", "", Some(|ui, s, i| actions::show_usages(ui, s, i)), &ids);
-    add_item(&mut ui, edit_menu, "Selecionar o pai", "", Some(|_, s, _| actions::edit(s, "parent")), &ids);
+    add_item(&mut ui, edit_menu, "Selecionar o pai", "", Some(|ui, s, _| actions::edit(ui, s, "parent")), &ids);
     separator(&mut ui, edit_menu);
     let align_menu = add_item(&mut ui, edit_menu, "Alinhar", "", None, &ids);
     let align_items: [(&str, Action); 11] = [
@@ -438,10 +438,10 @@ pub fn build(state: Shared) -> Ide {
         add_item(&mut ui, align_menu, text, "", Some(action), &ids);
     }
     let order_menu = add_item(&mut ui, edit_menu, "Ordem", "", None, &ids);
-    add_item(&mut ui, order_menu, "Trazer para frente", "", Some(|_, s, _| actions::edit(s, "front")), &ids);
-    add_item(&mut ui, order_menu, "Enviar para trás", "", Some(|_, s, _| actions::edit(s, "back")), &ids);
+    add_item(&mut ui, order_menu, "Trazer para frente", "", Some(|ui, s, _| actions::edit(ui, s, "front")), &ids);
+    add_item(&mut ui, order_menu, "Enviar para trás", "", Some(|ui, s, _| actions::edit(ui, s, "back")), &ids);
     separator(&mut ui, edit_menu);
-    ids.mi_lock = add_item(&mut ui, edit_menu, "Travar controles", "", Some(|_, s, _| actions::edit(s, "lock")), &ids);
+    ids.mi_lock = add_item(&mut ui, edit_menu, "Travar controles", "", Some(|ui, s, _| actions::edit(ui, s, "lock")), &ids);
     add_item(&mut ui, edit_menu, "Ordem de tabulação…", "", Some(|ui, s, i| crate::taborder::open(ui, s, i)), &ids);
 
     let view_menu = ui.add(MenuItem::new("Exibir"), menu);
@@ -594,6 +594,8 @@ pub fn build(state: Shared) -> Ide {
     // O ambiente da máquina (compiladores, SDKs), não do projeto.
     add_item(&mut ui, tools_menu, "Verificar ambiente…", "", Some(|ui, s, i| crate::tooldialogs::environment(ui, s, i, true)), &ids);
     add_item(&mut ui, tools_menu, "Configurar linguagens…", "", Some(|ui, s, i| crate::tooldialogs::languages(ui, s, i)), &ids);
+    // Os pacotes de ferramentas (o Rust, o JDK, o SDK do Android...), instalados pelo Aylis.
+    add_item(&mut ui, tools_menu, "Pacotes de ferramentas…", "", Some(crate::toolpacksview::open), &ids);
     separator(&mut ui, tools_menu);
     // Os pacotes de componente (`.aylispkg`), instalados na IDE.
     let packages_menu = add_item(&mut ui, tools_menu, "Pacotes de componentes", "", None, &ids);
@@ -629,13 +631,13 @@ pub fn build(state: Shared) -> Ide {
 
     // Menu de contexto do designer.
     let context_items: [(&str, &str, Action); 9] = [
-        ("Recortar", "Ctrl+X", |_, s, _| actions::edit(s, "cut")),
-        ("Copiar", "Ctrl+C", |_, s, _| actions::edit(s, "copy")),
-        ("Colar", "Ctrl+V", |_, s, _| actions::edit(s, "paste")),
-        ("Excluir", "Delete", |_, s, _| actions::edit(s, "delete")),
-        ("Trazer para frente", "", |_, s, _| actions::edit(s, "front")),
-        ("Enviar para trás", "", |_, s, _| actions::edit(s, "back")),
-        ("Selecionar o pai", "", |_, s, _| actions::edit(s, "parent")),
+        ("Recortar", "Ctrl+X", |ui, s, _| actions::edit(ui, s, "cut")),
+        ("Copiar", "Ctrl+C", |ui, s, _| actions::edit(ui, s, "copy")),
+        ("Colar", "Ctrl+V", |ui, s, _| actions::edit(ui, s, "paste")),
+        ("Excluir", "Delete", |ui, s, _| actions::edit(ui, s, "delete")),
+        ("Trazer para frente", "", |ui, s, _| actions::edit(ui, s, "front")),
+        ("Enviar para trás", "", |ui, s, _| actions::edit(ui, s, "back")),
+        ("Selecionar o pai", "", |ui, s, _| actions::edit(ui, s, "parent")),
         ("Ir para o código (evento padrão)", "", |ui, s, _| {
             let handler = actions::default_event(s);
             actions::open_code(ui, s, handler.as_deref());
@@ -704,8 +706,8 @@ pub fn build(state: Shared) -> Ide {
         crate::codewindow::save_embedded(ui, true);
         actions::save_all(s);
     });
-    on(&mut ui, b_undo, |_, s, _| actions::edit(s, "undo"));
-    on(&mut ui, b_redo, |_, s, _| actions::edit(s, "redo"));
+    on(&mut ui, b_undo, |ui, s, _| actions::edit(ui, s, "undo"));
+    on(&mut ui, b_redo, |ui, s, _| actions::edit(ui, s, "redo"));
     on(&mut ui, b_form, actions::new_form);
     on(&mut ui, b_code, |ui, s, _| actions::open_code(ui, s, None));
     on(&mut ui, b_run, |ui, s, _| actions::run_project(ui, s));

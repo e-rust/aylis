@@ -26,7 +26,7 @@ pub struct SkiaRenderer {
     font_sync: Rc<FontSync>,
     /// Os desenhos guardados como imagem (`Canvas::begin_cached`: o `cache_layer` de um
     /// controle, um mapa parado), pela chave.
-    layers: Rc<RefCell<HashMap<u64, sk::Image>>>,
+    layers: Rc<RefCell<aylis_core::LayerCache<sk::Image>>>,
 }
 
 /// Até que geração do registro de fontes (`aylis_core::fonts`) a coleção está em dia.
@@ -111,7 +111,7 @@ impl SkiaRenderer {
     pub fn new() -> Self {
         let mut fonts = FontCollection::new();
         fonts.set_default_font_manager(sk::FontMgr::new(), None);
-        Self { fonts, images: Rc::default(), font_sync: Rc::default(), layers: Rc::default() }
+        Self { fonts, images: Rc::default(), font_sync: Rc::default(), layers: Rc::new(RefCell::new(aylis_core::LayerCache::named("Skia · camadas guardadas"))) }
     }
 
     /// Embrulha um canvas do Skia como um canvas do aylis.
@@ -360,7 +360,7 @@ pub struct SkiaCanvas<'a> {
     images: &'a RefCell<ImageCache>,
     /// Máscaras abertas: com `inverse`.
     masks: Vec<bool>,
-    layers: &'a RefCell<HashMap<u64, sk::Image>>,
+    layers: &'a RefCell<aylis_core::LayerCache<sk::Image>>,
     /// Os `begin_cached` abertos (`None`: não deu para guardar, desenha direto).
     cached: Vec<Option<CacheState<'a>>>,
 }
@@ -370,6 +370,8 @@ struct CacheState<'a> {
     main: &'a sk::Canvas,
     surface: sk::Surface,
     key: u64,
+    /// A chave do núcleo (para soltar pela `forget_cached`).
+    owner: u64,
     at: (f32, f32),
 }
 
@@ -514,9 +516,14 @@ impl<'a> Canvas for SkiaCanvas<'a> {
             format!("{:?}", context.id()).hash(&mut hasher);
         }
         let full = hasher.finish();
-        if let Some(image) = self.layers.borrow().get(&full) {
+        if let Some(image) = self.layers.borrow_mut().get(full) {
             draw_at_device(self.canvas, image, (x0, y0));
             return true;
+        }
+        // Sem lugar no limite das camadas (`image_cache.layers_mb`): desenha direto.
+        if !aylis_core::LayerCache::<sk::Image>::accepts(w as usize * h as usize * 4) {
+            self.cached.push(None);
+            return false;
         }
         let info = sk::ImageInfo::new_n32_premul((w as i32, h as i32), None);
         let Some(mut surface) = self.canvas.new_surface(&info, None) else {
@@ -531,7 +538,7 @@ impl<'a> Canvas for SkiaCanvas<'a> {
         target.translate((-x0, -y0));
         target.concat(&m);
         let main = std::mem::replace(&mut self.canvas, target);
-        self.cached.push(Some(CacheState { main, surface, key: full, at: (x0, y0) }));
+        self.cached.push(Some(CacheState { main, surface, key: full, owner: key, at: (x0, y0) }));
         false
     }
 
@@ -540,14 +547,15 @@ impl<'a> Canvas for SkiaCanvas<'a> {
         self.canvas = state.main;
         let image = state.surface.image_snapshot();
         drop(state.surface);
-        // Poucos guardados por vez: cada destaque novo de um mapa é uma imagem nova.
-        const KEEP: usize = 16;
-        let mut layers = self.layers.borrow_mut();
-        if layers.len() >= KEEP {
-            layers.clear();
-        }
         draw_at_device(self.canvas, &image, state.at);
-        layers.insert(state.key, image);
+        // O limite é em bytes (`image_cache.layers_mb`): cada destaque novo de um mapa é uma
+        // imagem nova, e sai a usada há mais tempo.
+        let bytes = image.width().max(0) as usize * image.height().max(0) as usize * 4;
+        self.layers.borrow_mut().insert(state.owner, state.key, image, bytes);
+    }
+
+    fn forget_cached(&mut self, key: u64) {
+        self.layers.borrow_mut().forget(key);
     }
 
     fn begin_masked(&mut self, inverse: bool) -> bool {

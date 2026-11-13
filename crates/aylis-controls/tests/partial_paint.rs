@@ -335,6 +335,83 @@ fn a_cached_layer_slides_without_repainting_its_children() {
     }
 }
 
+/// A troca de aba com transição (deslizar e esmaecer): as duas páginas andam como imagens
+/// guardadas, sem repintar os filhos a cada quadro, e cada quadro por parte sai igual à
+/// pintura inteira (antes, a transição repintava a janela inteira e as duas páginas, controle
+/// por controle; `medicoes/transicoes.json`).
+#[test]
+fn a_tab_transition_moves_the_pages_without_repainting_their_children() {
+    for transition in ["slide_left", "fade"] {
+        let mut painters: Vec<(Box<dyn Painter>, &str)> = vec![(Box::new(aylis_skia::SkiaRenderer::new()), "Skia")];
+        #[cfg(windows)]
+        painters.push((Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D")), "Direct2D"));
+        for (painter, name) in painters {
+            let mut ui = Ui::new();
+            aylis_controls::register(&mut ui);
+            ui.services_mut().text = Some(painter.text_service());
+            let form = ui.create("Form", None).unwrap();
+            ui.set_prop(form, "width", W as f64).unwrap();
+            ui.set_prop(form, "height", H as f64).unwrap();
+            ui.show(form).unwrap();
+            let tabs = ui.create("TabControl", Some(form)).unwrap();
+            ui.set_prop(tabs, "align", "client").unwrap();
+            ui.set_prop(tabs, "transition", transition).unwrap();
+            let painted = std::rc::Rc::new(std::cell::Cell::new(0));
+            for page in ["A", "B"] {
+                let item = ui.create("TabItem", Some(tabs)).unwrap();
+                ui.set_prop(item, "caption", format!("Página {page}")).unwrap();
+                for i in 0..8 {
+                    let child = ui.create(if i % 2 == 0 { "Button" } else { "Edit" }, Some(item)).unwrap();
+                    for (prop, value) in [("align", PropValue::from("top")), ("height", 40.0.into()), ("text", format!("{page} {i}").into())] {
+                        ui.set_prop(child, prop, value).unwrap();
+                    }
+                    let count = painted.clone();
+                    ui.on_paint(child, move |canvas, ctx, base| {
+                        count.set(count.get() + 1);
+                        base(canvas, ctx);
+                    });
+                }
+            }
+            ui.set_time(1000.0);
+            ui.layout();
+            let mut screen = Screen { ui, form, painter };
+            let _ = screen.ui.take_damage(form);
+            let _ = screen.full();
+            // A troca começa: o primeiro quadro é inteiro (a página nova aparece).
+            screen.ui.set_prop(tabs, "tab_index", 1i64).unwrap();
+            screen.ui.tick();
+            let _ = screen.ui.take_damage(form);
+            let mut previous = screen.full();
+            let _ = screen.ui.take_damage(form);
+            for step in 1..=20 {
+                let t = screen.ui.time() + 1.0 / 60.0;
+                screen.ui.set_time(t);
+                screen.ui.tick();
+                let before = painted.get();
+                let running = screen.ui.is_animating();
+                let Some((partial, _)) = screen.partial(&previous) else {
+                    // O fim da transição (a página antiga some, o layout é refeito) pinta tudo.
+                    assert!(!running, "{name} {transition}: quadro {step} da transição pediu a janela inteira");
+                    previous = screen.full();
+                    let _ = screen.ui.take_damage(form);
+                    continue;
+                };
+                // O Direct2D do teste cria um alvo novo por quadro (na janela, o cache é dela):
+                // lá só a imagem é conferida.
+                if name == "Skia" && running && step > 1 {
+                    assert_eq!(painted.get(), before, "{name} {transition}: quadro {step}, os filhos foram pintados de novo");
+                }
+                let full = screen.full();
+                let _ = screen.ui.take_damage(form);
+                let (count, first) = differences(&partial, &full);
+                assert_eq!(count, 0, "{name} {transition}: quadro {step} por parte saiu diferente da pintura inteira (o primeiro em {first:?})");
+                previous = full;
+            }
+            assert!(!screen.ui.is_animating(), "{name} {transition}: a transição não acabou");
+        }
+    }
+}
+
 /// Rolar um Memo com a roda: o texto já pintado é copiado (só a faixa nova e a barra são
 /// pintadas), e a imagem sai igual à pintura inteira.
 #[test]

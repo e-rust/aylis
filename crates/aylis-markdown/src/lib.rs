@@ -203,9 +203,7 @@ impl Markdown {
         if text.is_empty() {
             return;
         }
-        if let Some(clipboard) = ctx.ui.services_mut().clipboard.as_mut() {
-            clipboard.set_text(text);
-        }
+        aylis_core::clipboard::set_text(ctx.ui, text);
     }
 
     /// O retângulo do menu do botão direito (dentro do controle).

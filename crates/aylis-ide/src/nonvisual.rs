@@ -20,6 +20,8 @@ const INFO: &[(&str, &str, &str)] = &[
     ("MenuItem", "dot", "Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu."),
     ("OpenDialog", "folder", "Escolher um arquivo para abrir (diálogo do sistema)."),
     ("SaveDialog", "download", "Escolher onde salvar um arquivo (diálogo do sistema)."),
+    ("Clipboard", "copy", "Copiar e colar texto, HTML, imagem e os formatos do app pela área de transferência."),
+    ("UrlScheme", "link", "Um prefixo de URL próprio (meuapp://) que abre o app e entrega o endereço no on_link."),
     ("MessageDialog", "chat", "Caixa de mensagem com título, texto, tipo e botões; on_close recebe a resposta."),
     ("Notification", "bell", "Notificação do sistema (Windows, Android), com ações e imagem."),
     ("TrayIcon", "pin", "Ícone na bandeja do sistema, com menu e clique."),

@@ -1,7 +1,7 @@
 //! Controles simples: Form, Layout, Frame, Rectangle, Panel, Label, Button e ProgressBar.
 
 use aylis_core::{
-    Bounds, Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent,
+    Bounds, Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent, LayerCaching,
     GradientStop, ModalResult, PaintCtx, PointF, PropEnum, RectF, Stroke, TextAlign, TextCase, TextStyle, Transition, Trimming, properties,
 };
 
@@ -148,6 +148,12 @@ pub struct Form {
     /// fechar (`slide_left` como uma tela nova do Android/iOS, `slide_up` como uma folha,
     /// `fade`). No desktop cada form é uma janela e isto não vale.
     pub transition: Transition,
+    /// As camadas automáticas neste form: as páginas de uma transição e o contêiner que
+    /// recorta os filhos com o lugar ou a transparência animando viram uma imagem guardada,
+    /// que anda sem repintar os filhos (mais rápido, e a memória das imagens enquanto andam).
+    /// `project`: o padrão do projeto (`image_cache.auto_layers`); `on`/`off` trocam só neste
+    /// form. O `cache_layer` pedido num controle vale sempre.
+    pub layer_cache: LayerCaching,
     /// Sempre por cima das outras janelas (o `FormStyle := fsStayOnTop`).
     pub topmost: bool,
     /// Aparece na barra de tarefas (desligue para menus e janelas de ferramenta).
@@ -258,6 +264,7 @@ impl Form {
             window_corners: WindowCorners::Default,
             window_state: WindowState::Normal,
             transition: Transition::None,
+            layer_cache: LayerCaching::Project,
             topmost: false,
             show_in_taskbar: true,
             active_control: None,
@@ -301,6 +308,7 @@ impl Component for Form {
         window_corners: WindowCorners => "Appearance",
         window_state: WindowState => "Layout",
         transition: Transition => "Behavior",
+        layer_cache: LayerCaching => "Behavior",
         topmost: bool => "Behavior",
         show_in_taskbar: bool => "Behavior",
         active_control: Option<ComponentId> => "Behavior",

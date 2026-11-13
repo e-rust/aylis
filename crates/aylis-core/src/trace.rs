@@ -199,6 +199,11 @@ impl Canvas for TraceCanvas<'_> {
             c.end_cached();
         }
     }
+    fn forget_cached(&mut self, key: u64) {
+        if let Some(c) = self.inner.as_mut() {
+            c.forget_cached(key);
+        }
+    }
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke) {
         self.note(22, (path, stroke));
         if let Some(c) = self.inner.as_mut() {

@@ -69,6 +69,7 @@ pub mod state;
 pub mod surface;
 pub mod taborder;
 pub mod tooldialogs;
+pub mod toolpacksview;
 pub mod trust;
 pub mod updates;
 pub mod viewsdialog;

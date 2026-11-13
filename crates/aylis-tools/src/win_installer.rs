@@ -141,6 +141,9 @@ struct Plan<'a> {
     texts: Texts,
     /// O nome do instalador, sem a pasta (`App-1.0.0-setup.exe`).
     out_name: String,
+    /// Os prefixos dos `UrlScheme` ligados (prefixo e descrição): registrados e tirados na
+    /// desinstalação.
+    schemes: Vec<(String, String)>,
 }
 
 impl<'a> Plan<'a> {
@@ -158,6 +161,7 @@ impl<'a> Plan<'a> {
             extra: extra.to_vec(),
             icon,
             texts: texts(&project.locale),
+            schemes: super::url_schemes(project).into_iter().map(|(s, d)| (s, if d.is_empty() { app.clone() } else { d })).collect(),
             app,
             publisher,
         }
@@ -321,6 +325,13 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     line(&format!("  WriteRegStr HKCU {} \"UninstallString\" '\"$INSTDIR\\uninstall.exe\"'", nsis_str(&uninst)));
     line(&format!("  WriteRegDWORD HKCU {} \"NoModify\" 1", nsis_str(&uninst)));
     line(&format!("  WriteRegDWORD HKCU {} \"NoRepair\" 1", nsis_str(&uninst)));
+    for (scheme, description) in &p.schemes {
+        let key = format!("Software\\Classes\\{scheme}");
+        line(&format!("  WriteRegStr HKCU {} \"\" {}", nsis_str(&key), nsis_str(&format!("URL:{description}"))));
+        line(&format!("  WriteRegStr HKCU {} \"URL Protocol\" \"\"", nsis_str(&key)));
+        line(&format!("  WriteRegStr HKCU {} \"\" '\"{exe_target}\",0'", nsis_str(&format!("{key}\\DefaultIcon"))));
+        line(&format!("  WriteRegStr HKCU {} \"\" '\"{exe_target}\" \"%1\"'", nsis_str(&format!("{key}\\shell\\open\\command"))));
+    }
     line("SectionEnd");
     if let Some(on) = autostart {
         let args = if p.w.autostart_args.is_empty() { String::new() } else { format!(" {}", p.w.autostart_args) };
@@ -390,6 +401,9 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     line(&format!("  DeleteRegValue HKCU \"{run_key}\" {}", nsis_str(app)));
     line(&format!("  DeleteRegKey HKCU {}", nsis_str(&uninst)));
     line(&format!("  DeleteRegKey HKCU {}", nsis_str(&format!("Software\\{app}"))));
+    for (scheme, _) in &p.schemes {
+        line(&format!("  DeleteRegKey HKCU {}", nsis_str(&format!("Software\\Classes\\{scheme}"))));
+    }
     if !p.w.data_dir.is_empty() {
         line(&format!("  MessageBox MB_YESNO|MB_ICONQUESTION {} IDNO +2", nsis_str(t.remove_data)));
         line(&format!("    RMDir /r \"{}\"", expand(&p.w.data_dir, true)));
@@ -496,11 +510,20 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     if desktop.is_some() {
         line(&format!("Name: \"{{autodesktop}}\\{app}\"; Filename: \"{exe_rel}\"; Tasks: desktopicon"));
     }
+    if autostart.is_some() || !p.schemes.is_empty() {
+        line("");
+        line("[Registry]");
+    }
+    for (scheme, description) in &p.schemes {
+        let key = format!("Software\\Classes\\{scheme}");
+        line(&format!("Root: HKCU; Subkey: \"{key}\"; ValueType: string; ValueName: \"\"; ValueData: {}; Flags: uninsdeletekey", inno_str(&format!("URL:{description}"))));
+        line(&format!("Root: HKCU; Subkey: \"{key}\"; ValueType: string; ValueName: \"URL Protocol\"; ValueData: \"\""));
+        line(&format!("Root: HKCU; Subkey: \"{key}\\DefaultIcon\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{exe_rel}\"\",0\""));
+        line(&format!("Root: HKCU; Subkey: \"{key}\\shell\\open\\command\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{exe_rel}\"\" \"\"%1\"\"\""));
+    }
     if autostart.is_some() {
         let args = if p.w.autostart_args.is_empty() { String::new() } else { format!(" {}", p.w.autostart_args) };
         let run = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-        line("");
-        line("[Registry]");
         line(&format!("Root: HKCU; Subkey: \"{run}\"; ValueType: string; ValueName: \"{app}\"; ValueData: \"\"\"{exe_rel}\"\"{args}\"; Tasks: autostart; Flags: uninsdeletevalue"));
         // Desmarcado: tira a entrada de uma instalação anterior.
         line(&format!("Root: HKCU; Subkey: \"{run}\"; ValueType: none; ValueName: \"{app}\"; Tasks: not autostart; Flags: deletevalue"));
@@ -553,6 +576,37 @@ mod tests {
         assert_eq!(version4("0.52.7-beta"), "0.52.7.0");
         assert_eq!(version4("1.2"), "1.2.0.0");
         assert_eq!(version4("2.0.1.9"), "2.0.1.9");
+    }
+
+    /// Os prefixos dos `UrlScheme` ligados vão para os dois instaladores, que tiram na
+    /// desinstalação; o desligado e o inválido ficam de fora.
+    #[test]
+    fn url_schemes_are_registered_and_removed_by_the_installers() {
+        let base = std::env::temp_dir().join(format!("aylis_url_schemes_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let project = aylis_project::create(&base, "Loja", aylis_project::Language::Rust).unwrap();
+        std::fs::write(
+            project.dir().join("forms").join("links.json"),
+            r#"{ "root": { "class": "Form", "children": [
+                { "class": "UrlScheme", "name": "a", "scheme": "Pedidos", "description": "Pedidos da loja", "active": true },
+                { "class": "UrlScheme", "name": "b", "scheme": "desligado", "active": false },
+                { "class": "UrlScheme", "name": "c", "scheme": "https", "active": true } ] } }"#,
+        )
+        .unwrap();
+        assert_eq!(super::super::url_schemes(&project), [("pedidos".to_string(), "Pedidos da loja".to_string())]);
+        let p = Plan::new(&project, Path::new("C:/build/loja.exe"), &[]);
+        let nsis = nsis_script(&p, Path::new("C:/out/Loja-setup.exe"));
+        let uninstall = &nsis[nsis.find("Section \"Uninstall\"").unwrap()..];
+        assert!(nsis.contains(r#"WriteRegStr HKCU "Software\Classes\pedidos" "URL Protocol" """#), "{nsis}");
+        assert!(nsis.contains(r#"WriteRegStr HKCU "Software\Classes\pedidos\shell\open\command" "" '""#) && nsis.contains(r#"loja.exe" "%1"'"#), "{nsis}");
+        assert!(uninstall.contains(r#"DeleteRegKey HKCU "Software\Classes\pedidos""#), "{uninstall}");
+        assert!(!nsis.contains("desligado") && !nsis.contains(r"Classes\https"));
+        let inno = inno_script(&p, Path::new("C:/out"), "{0000}");
+        assert!(inno.contains(r#"Subkey: "Software\Classes\pedidos"; ValueType: string; ValueName: ""; ValueData: "URL:Pedidos da loja"; Flags: uninsdeletekey"#), "{inno}");
+        assert!(inno.contains(r#"loja.exe"" ""%1"""#), "{inno}");
+        assert_eq!(inno.matches("[Registry]").count(), 1);
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]

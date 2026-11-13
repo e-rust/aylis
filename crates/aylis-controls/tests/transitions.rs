@@ -89,3 +89,119 @@ fn without_stacking_forms_open_and_close_at_once() {
     assert!(ui.close(second));
     assert!(!ui.is_open(second));
 }
+
+/// Um canvas que só guarda as camadas pela chave (como um renderizador, sem pixels).
+#[derive(Default)]
+struct Layers {
+    live: std::collections::HashSet<u64>,
+    open: Vec<Option<u64>>,
+    built: usize,
+}
+
+struct LayerCanvas<'a>(&'a mut Layers);
+
+impl Canvas for LayerCanvas<'_> {
+    fn save(&mut self) {}
+    fn restore(&mut self) {}
+    fn translate(&mut self, _: f32, _: f32) {}
+    fn scale(&mut self, _: f32, _: f32) {}
+    fn rotate(&mut self, _: f32) {}
+    fn clip_rect(&mut self, _: RectF) {}
+    fn save_layer(&mut self, _: f32) {}
+    fn fill_rect(&mut self, _: RectF, _: f32, _: &Brush) {}
+    fn stroke_rect(&mut self, _: RectF, _: f32, _: &Stroke) {}
+    fn fill_ellipse(&mut self, _: RectF, _: &Brush) {}
+    fn stroke_ellipse(&mut self, _: RectF, _: &Stroke) {}
+    fn draw_line(&mut self, _: PointF, _: PointF, _: &Stroke) {}
+    fn draw_text(&mut self, _: &str, _: RectF, _: &TextStyle) {}
+    fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
+        SizeF::new(text.chars().count() as f32 * style.font.size * 0.55, style.font.size * 1.3)
+    }
+    fn begin_cached(&mut self, key: u64, _: RectF) -> bool {
+        if self.0.live.contains(&key) {
+            return true;
+        }
+        self.0.open.push(Some(key));
+        false
+    }
+    fn end_cached(&mut self) {
+        if let Some(key) = self.0.open.pop().flatten() {
+            self.0.live.insert(key);
+            self.0.built += 1;
+        }
+    }
+    fn forget_cached(&mut self, key: u64) {
+        self.0.live.remove(&key);
+    }
+}
+
+/// Uma troca de aba com transição, quadro a quadro como a plataforma (por parte).
+fn run_tab_transition(ui: &mut Ui, form: ComponentId, tabs: ComponentId, to: usize, layers: &mut Layers) {
+    let start = ui.time();
+    TabControl::select(ui, tabs, to);
+    for step in 0..=20 {
+        ui.set_time(start + step as f64 / 60.0);
+        ui.tick();
+        let area = ui.take_damage(form);
+        ui.paint_region(form, &mut LayerCanvas(layers), area);
+    }
+    ui.set_time(start + 1.0);
+    ui.tick();
+    let area = ui.take_damage(form);
+    ui.paint_region(form, &mut LayerCanvas(layers), area);
+    assert!(!ui.is_animating(), "a transição acabou");
+}
+
+fn tab_form() -> (Ui, ComponentId, ComponentId) {
+    let mut ui = Ui::new();
+    let form = ui.add_root(Form::new("t", 400.0, 300.0));
+    let tabs = ui.add(TabControl::default(), form);
+    ui.control_mut(tabs).unwrap().set_align(Align::Client);
+    for caption in ["A", "B"] {
+        let page = TabControl::add_tab(&mut ui, tabs, caption);
+        let b = ui.add(Button::new(caption), page);
+        ui.control_mut(b).unwrap().set_align(Align::Top);
+    }
+    let _ = ui.set_prop(tabs, "transition", PropValue::Enum("slide_left".into()));
+    ui.show(form).unwrap();
+    ui.set_time(10.0);
+    ui.layout();
+    (ui, form, tabs)
+}
+
+/// As páginas andam como camadas guardadas, e no fim da transição as imagens saem do
+/// renderizador (antes, ficavam no cache até ele se limpar sozinho).
+#[test]
+fn the_transition_layers_leave_the_renderer_when_it_ends() {
+    let (mut ui, form, tabs) = tab_form();
+    let mut layers = Layers::default();
+    ui.paint_region(form, &mut LayerCanvas(&mut layers), None);
+    run_tab_transition(&mut ui, form, tabs, 1, &mut layers);
+    assert!(layers.built >= 2, "as duas páginas viraram camada: {}", layers.built);
+    assert!(layers.live.is_empty(), "no fim, nenhuma imagem fica guardada: {}", layers.live.len());
+    run_tab_transition(&mut ui, form, tabs, 0, &mut layers);
+    assert!(layers.live.is_empty(), "nem depois da segunda troca: {}", layers.live.len());
+}
+
+/// `layer_cache = off` no form, ou `auto_layers` desligado no projeto: a transição não monta
+/// camada (repinta as páginas por parte, como sem o cache). `on` no form vale mesmo com o
+/// projeto desligado.
+#[test]
+fn the_form_and_the_project_turn_the_automatic_layers_off() {
+    let (mut ui, form, tabs) = tab_form();
+    let mut layers = Layers::default();
+    let _ = ui.set_prop(form, "layer_cache", PropValue::Enum("off".into()));
+    ui.paint_region(form, &mut LayerCanvas(&mut layers), None);
+    run_tab_transition(&mut ui, form, tabs, 1, &mut layers);
+    assert_eq!(layers.built, 0, "o form desligou as camadas");
+
+    let _ = ui.set_prop(form, "layer_cache", PropValue::Enum("project".into()));
+    image_cache::set_auto_layers(false);
+    run_tab_transition(&mut ui, form, tabs, 0, &mut layers);
+    let off = layers.built;
+    let _ = ui.set_prop(form, "layer_cache", PropValue::Enum("on".into()));
+    run_tab_transition(&mut ui, form, tabs, 1, &mut layers);
+    image_cache::set_auto_layers(true);
+    assert_eq!(off, 0, "o projeto desligou as camadas");
+    assert!(layers.built >= 2, "o form ligou de novo: {}", layers.built);
+}
