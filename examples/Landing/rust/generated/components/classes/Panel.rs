@@ -252,6 +252,12 @@ impl Panel {
     pub fn set_opacity(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "opacity", value)
     }
+    pub fn blend_mode(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "blend_mode"))
+    }
+    pub fn set_blend_mode(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "blend_mode", Into::<String>::into(value))
+    }
     pub fn cache_layer(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "cache_layer").and_then(|v| v.to_bool().ok()).unwrap_or_default()
     }
