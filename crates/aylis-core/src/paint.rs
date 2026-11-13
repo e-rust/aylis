@@ -663,6 +663,7 @@ impl Ui {
         }
         let mut hasher = std::hash::DefaultHasher::new();
         std::hash::Hash::hash(&opacity.to_bits(), &mut hasher);
+        std::hash::Hash::hash(&cb.blend_mode(), &mut hasher);
         let text = self.services().text.as_deref();
         let mut trace = crate::trace::TraceCanvas::new(None, text, &mut hasher);
         let painted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -844,7 +845,9 @@ impl Ui {
         let automatic = self.auto_layers.get()
             && !entry.children.is_empty()
             && ((cb.clip_children() && self.animates_placement(id)) || self.in_transition(id));
-        let cached = !flip && (cb.cache_layer() || automatic);
+        // Com mistura, o desenho depende do que está por baixo: não vira imagem guardada.
+        let blend = cb.blend_mode();
+        let cached = !flip && blend == crate::BlendMode::Normal && (cb.cache_layer() || automatic);
 
         canvas.save();
         let shift = cb.translate();
@@ -867,8 +870,10 @@ impl Ui {
         if scale != 1.0 {
             canvas.scale(scale, scale);
         }
-        let layer = opacity < 1.0;
-        if layer {
+        let layer = opacity < 1.0 || blend != crate::BlendMode::Normal;
+        if blend != crate::BlendMode::Normal {
+            canvas.save_layer_blend(opacity, blend, ctx.rect.inflate(look.reach + 1.0));
+        } else if layer {
             canvas.save_layer(opacity);
         }
 
@@ -877,6 +882,7 @@ impl Ui {
         let traced = component.paint_is_pure() && entry.paint_hook.is_none() && !flip && rotation == 0.0 && !self.paint_failed(id);
         let mut hasher = std::hash::DefaultHasher::new();
         std::hash::Hash::hash(&opacity.to_bits(), &mut hasher);
+        std::hash::Hash::hash(&blend, &mut hasher);
         let mut volatile = false;
         let layer_key = cached.then(|| {
             let mut key = std::hash::DefaultHasher::new();
@@ -1162,6 +1168,9 @@ impl Canvas for Mirror<'_> {
     }
     fn save_layer(&mut self, opacity: f32) {
         self.inner.save_layer(opacity);
+    }
+    fn save_layer_blend(&mut self, opacity: f32, mode: crate::BlendMode, bounds: crate::RectF) {
+        self.inner.save_layer_blend(opacity, mode, Self::rect(bounds));
     }
     fn fill_rect(&mut self, rect: crate::RectF, radius: f32, brush: &crate::Brush) {
         self.inner.fill_rect(Self::rect(rect), radius, &Self::brush(brush));

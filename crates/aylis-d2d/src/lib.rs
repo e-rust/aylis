@@ -785,6 +785,7 @@ impl D2dRenderer {
                 target: target.clone(),
                 masks: Vec::new(),
                 cached: Vec::new(),
+                blends: Vec::new(),
                 renderer: self,
                 brush,
                 transform: base,
@@ -1249,12 +1250,27 @@ struct MaskState {
     mask: Option<ID2D1BitmapRenderTarget>,
 }
 
+/// Uma camada com modo de mistura aberta ([`Canvas::save_layer_blend`]): o alvo de antes, a
+/// camada fora da tela e o pedaço (em pixels) onde ela se junta ao fundo no `restore`.
+struct BlendState {
+    main: ID2D1RenderTarget,
+    pushes: Vec<Push>,
+    content: ID2D1BitmapRenderTarget,
+    mode: D2D1_BLEND_MODE,
+    opacity: f32,
+    area: D2D_RECT_U,
+    /// O `frames.len()` do `save` que a abriu (o `restore` dele fecha a camada).
+    frame: usize,
+}
+
 pub struct D2dCanvas<'a> {
     /// O alvo atual (o da janela, ou um fora da tela enquanto desenha uma máscara).
     target: ID2D1RenderTarget,
     masks: Vec<MaskState>,
     /// Os desenhos guardados abertos (`None`: não deu para guardar, desenha direto).
     cached: Vec<Option<CacheState>>,
+    /// As camadas com modo de mistura abertas.
+    blends: Vec<BlendState>,
     renderer: &'a D2dRenderer,
     /// Um pincel sólido reaproveitado (só troca a cor).
     brush: ID2D1SolidColorBrush,
@@ -1370,8 +1386,59 @@ impl D2dCanvas<'_> {
         self.draw_layer(&bitmap, &state.dest);
     }
 
+    /// Fecha a camada com mistura aberta: volta ao alvo de antes e junta o pedaço dela ao
+    /// fundo pelo efeito Blend (o fundo copiado do alvo, como o desfoque do fundo faz).
+    fn end_blend_inner(&mut self) {
+        let Some(state) = self.blends.pop() else { return };
+        self.pop_until(0);
+        unsafe {
+            let _ = state.content.EndDraw(None, None);
+        }
+        self.target = state.main;
+        self.pushes = state.pushes;
+        let a = state.area;
+        if a.right <= a.left || a.bottom <= a.top {
+            return;
+        }
+        let _ = (|| -> windows_core::Result<()> {
+            unsafe {
+                let dc: ID2D1DeviceContext = self.target.cast()?;
+                let props = D2D1_BITMAP_PROPERTIES { pixelFormat: self.target.GetPixelFormat(), dpiX: 96.0, dpiY: 96.0 };
+                let size = D2D_SIZE_U { width: a.right - a.left, height: a.bottom - a.top };
+                let backdrop = self.target.CreateBitmap(size, None, 0, &props)?;
+                self.without_pushes(|c| c.target.Flush(None, None).and_then(|_| backdrop.CopyFromRenderTarget(None, &c.target, Some(&a))))?;
+                let layer = self.target.CreateBitmap(size, None, 0, &props)?;
+                layer.CopyFromBitmap(None, &state.content.GetBitmap()?, Some(&a))?;
+                let effect = dc.CreateEffect(&CLSID_D2D1Blend)?;
+                effect.SetInput(0, &backdrop, true);
+                if state.opacity < 1.0 {
+                    let fade = dc.CreateEffect(&CLSID_D2D1Opacity)?;
+                    fade.SetInput(0, &layer, true);
+                    fade.SetValue(D2D1_OPACITY_PROP_OPACITY.0 as u32, D2D1_PROPERTY_TYPE_FLOAT, &state.opacity.to_le_bytes())?;
+                    effect.SetInput(1, &fade.GetOutput()?, true);
+                } else {
+                    effect.SetInput(1, &layer, true);
+                }
+                effect.SetValue(D2D1_BLEND_PROP_MODE.0 as u32, D2D1_PROPERTY_TYPE_ENUM, &(state.mode.0 as u32).to_le_bytes())?;
+                // O resultado já é o fundo com a camada: substitui o pedaço (os recortes de
+                // fora continuam valendo). Recortado nele: a cópia apagaria o resto do recorte.
+                dc.SetTransform(&Matrix3x2::identity());
+                let piece = D2D_RECT_F { left: a.left as f32, top: a.top as f32, right: a.right as f32, bottom: a.bottom as f32 };
+                dc.PushAxisAlignedClip(&piece, D2D1_ANTIALIAS_MODE_ALIASED);
+                let offset = windows_numerics::Vector2 { X: a.left as f32, Y: a.top as f32 };
+                dc.DrawImage(&effect.GetOutput()?, Some(&offset), None, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_SOURCE_COPY);
+                dc.PopAxisAlignedClip();
+                Ok(())
+            }
+        })();
+        unsafe { self.target.SetTransform(&self.transform) };
+    }
+
     /// Fecha clips e camadas que a pintura deixou abertos (o EndDraw exige).
     fn unwind(&mut self) {
+        while !self.blends.is_empty() {
+            self.end_blend_inner();
+        }
         while !self.masks.is_empty() {
             self.end_mask_inner();
         }
@@ -1825,6 +1892,10 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn restore(&mut self) {
+        // O `restore` do `save_layer_blend`: a camada se junta ao fundo antes.
+        if self.blends.last().is_some_and(|b| b.frame == self.frames.len()) {
+            self.end_blend_inner();
+        }
         if let Some(f) = self.frames.pop() {
             self.pop_until(f.pushes);
             self.set_transform(f.transform);
@@ -1852,6 +1923,52 @@ impl Canvas for D2dCanvas<'_> {
     fn save_layer(&mut self, opacity: f32) {
         self.save();
         self.push_layer(None, opacity);
+    }
+
+    /// A camada num alvo fora da tela; no `restore`, o pedaço dela (o `bounds` em pixels) se
+    /// junta ao fundo pelo efeito Blend. Sem o alvo fora da tela, a camada normal.
+    fn save_layer_blend(&mut self, opacity: f32, mode: aylis_core::BlendMode, bounds: RectF) {
+        use aylis_core::BlendMode as B;
+        let mode = match mode {
+            B::Normal => return self.save_layer(opacity),
+            B::Multiply => D2D1_BLEND_MODE_MULTIPLY,
+            B::Screen => D2D1_BLEND_MODE_SCREEN,
+            B::Overlay => D2D1_BLEND_MODE_OVERLAY,
+            B::Darken => D2D1_BLEND_MODE_DARKEN,
+            B::Lighten => D2D1_BLEND_MODE_LIGHTEN,
+            B::ColorDodge => D2D1_BLEND_MODE_COLOR_DODGE,
+            B::ColorBurn => D2D1_BLEND_MODE_COLOR_BURN,
+            B::HardLight => D2D1_BLEND_MODE_HARD_LIGHT,
+            B::SoftLight => D2D1_BLEND_MODE_SOFT_LIGHT,
+            B::Difference => D2D1_BLEND_MODE_DIFFERENCE,
+            B::Exclusion => D2D1_BLEND_MODE_EXCLUSION,
+            B::Hue => D2D1_BLEND_MODE_HUE,
+            B::Saturation => D2D1_BLEND_MODE_SATURATION,
+            B::Color => D2D1_BLEND_MODE_COLOR,
+            B::Luminosity => D2D1_BLEND_MODE_LUMINOSITY,
+        };
+        // O pedaço em pixels: os quatro cantos pela transformação de agora (com giro, a caixa
+        // em volta), dentro do alvo.
+        let m = self.transform;
+        let map = |x: f32, y: f32| (x * m.M11 + y * m.M21 + m.M31, x * m.M12 + y * m.M22 + m.M32);
+        let corners = [map(bounds.x, bounds.y), map(bounds.right(), bounds.y), map(bounds.x, bounds.bottom()), map(bounds.right(), bounds.bottom())];
+        let size = unsafe { self.target.GetPixelSize() };
+        let (mut x0, mut y0, mut x1, mut y1) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+        for (x, y) in corners {
+            (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
+        }
+        let area = D2D_RECT_U {
+            left: x0.floor().max(0.0) as u32,
+            top: y0.floor().max(0.0) as u32,
+            right: (x1.ceil().max(0.0) as u32).min(size.width),
+            bottom: (y1.ceil().max(0.0) as u32).min(size.height),
+        };
+        let Some(content) = self.offscreen() else { return self.save_layer(opacity) };
+        let Ok(as_target) = content.cast::<ID2D1RenderTarget>() else { return self.save_layer(opacity) };
+        self.save();
+        let main = std::mem::replace(&mut self.target, as_target);
+        let pushes = std::mem::take(&mut self.pushes);
+        self.blends.push(BlendState { main, pushes, content, mode, opacity, area, frame: self.frames.len() });
     }
 
     fn fill_rect(&mut self, r: RectF, radius: f32, brush: &Brush) {

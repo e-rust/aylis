@@ -20,7 +20,9 @@
 //! | `create` | `class`, `parent`?, `name`?, `props`? | `{id}` |
 //! | `set` | `target`, `prop` e `value` ou `props` | — |
 //! | `get` | `target`, `prop` ou `props: [..]` | valor ou objeto |
-//! | `free`, `click`, `focus` | `target` | — |
+//! | `free`, `focus` | `target` | — |
+//! | `click` | `target`, `modifiers`?, `x`?, `y`?, `button`?, `double`? | — (sem os opcionais, o clique do componente; com eles, o mouse de verdade no ponto: `x`/`y` dentro do componente, padrão o meio; `modifiers`: `"Ctrl+Shift"` ou `["ctrl", "shift"]`; `button`: `left`, `right`, `middle`) |
+//! | `drag` | `from`, `to`, `from_x`?, `from_y`?, `to_x`?, `to_y`?, `modifiers`?, `button`?, `steps`? | — (aperta em `from`, anda em `steps` passos, padrão 10, e solta em `to`: o arrastar e soltar entre componentes e o arrastar dentro de um, como o mouse) |
 //! | `find` | `name` | id ou `null` |
 //! | `save` | `target` | documento de layout |
 //! | `theme` | `theme` (JSON de tema) ou `name: "light"/"dark"` | — |
@@ -328,7 +330,48 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         }
         "click" => {
             let id = target(ui, obj)?;
-            ui.click(id);
+            // Sem ponto, botão nem tecla: o clique do componente (vale mesmo coberto).
+            if !["modifiers", "x", "y", "button", "double"].iter().any(|k| obj.contains_key(*k)) {
+                ui.click(id);
+                return Ok(Value::Null);
+            }
+            let (root, at) = point_in(ui, id, obj.get("x"), obj.get("y"))?;
+            let mut event = aylis_core::PointerEvent { position: at, button: button(obj)?, modifiers: modifiers(obj)?, click_count: 1, ..Default::default() };
+            ui.pointer_move(root, event);
+            ui.pointer_down(root, event);
+            ui.pointer_up(root, event);
+            if obj.get("double").and_then(Value::as_bool) == Some(true) {
+                event.click_count = 2;
+                ui.pointer_down(root, event);
+                ui.pointer_up(root, event);
+            }
+            ui.process_events();
+            Ok(Value::Null)
+        }
+        // Arrasta de um componente a outro (ou dentro de um) com o mouse de verdade: aperta,
+        // anda em passos e solta, com as teclas que vierem (Ctrl, Shift...). O arrastar e
+        // soltar do Aylis, a barra, o controle deslizante e o designer veem o mesmo que veriam
+        // com a mão.
+        "drag" => {
+            let from = resolve(ui, obj.get("from").ok_or("falta \"from\"")?)?;
+            let to = resolve(ui, obj.get("to").ok_or("falta \"to\"")?)?;
+            let (root, start) = point_in(ui, from, obj.get("from_x"), obj.get("from_y"))?;
+            let (end_root, end) = point_in(ui, to, obj.get("to_x"), obj.get("to_y"))?;
+            if end_root != root {
+                return Err("drag: \"from\" e \"to\" estão em forms diferentes".into());
+            }
+            let steps = obj.get("steps").and_then(Value::as_u64).unwrap_or(10).clamp(1, 200) as usize;
+            let event = aylis_core::PointerEvent { position: start, button: button(obj)?, modifiers: modifiers(obj)?, click_count: 1, ..Default::default() };
+            ui.pointer_move(root, event);
+            ui.pointer_down(root, event);
+            for i in 1..=steps {
+                let t = i as f32 / steps as f32;
+                let at = aylis_core::PointF::new(start.x + (end.x - start.x) * t, start.y + (end.y - start.y) * t);
+                ui.pointer_move(root, aylis_core::PointerEvent { position: at, ..event });
+                ui.process_events();
+            }
+            ui.pointer_up(root, aylis_core::PointerEvent { position: end, ..event });
+            ui.process_events();
             Ok(Value::Null)
         }
         // Os itens que o controle desenha (abas, linhas, itens de menu, células).
@@ -385,10 +428,16 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         }
         // Uma tecla no form (`"Enter"`, `"Shift+Tab"`, `"Alt+S"`), como se fosse apertada:
         // vai ao controle com foco, e valem o Tab, as `tab_keys` e o Alt+letra.
+        // `modifiers` soma às da própria tecla (`{"key": "A", "modifiers": "Ctrl"}` é o Ctrl+A).
         "key" => {
             let form = target(ui, obj)?;
             let root = ui.root_of(form);
-            let (modifiers, key) = aylis_core::parse_shortcut(string(obj, "key")?).ok_or("tecla inválida (ex.: \"Enter\", \"Shift+Tab\", \"Alt+S\")")?;
+            let (mut modifiers, key) = aylis_core::parse_shortcut(string(obj, "key")?).ok_or("tecla inválida (ex.: \"Enter\", \"Shift+Tab\", \"Ctrl+A\", \"Alt+S\")")?;
+            let extra = self::modifiers(obj)?;
+            modifiers.shift |= extra.shift;
+            modifiers.ctrl |= extra.ctrl;
+            modifiers.alt |= extra.alt;
+            modifiers.meta |= extra.meta;
             let event = aylis_core::KeyEvent { key, modifiers, repeat: false };
             ui.key_down(root, event);
             ui.key_up(root, event);
@@ -726,6 +775,53 @@ fn named_everywhere(ui: &Ui, name: &str) -> Vec<ComponentId> {
         stack.extend(ui.children(id).iter().copied());
     }
     found
+}
+
+/// O ponto de um comando de mouse, no form: `x`/`y` dentro do componente (padrão: o meio).
+/// Devolve o form e o ponto nele.
+fn point_in(ui: &mut Ui, id: ComponentId, x: Option<&Value>, y: Option<&Value>) -> Result<(ComponentId, aylis_core::PointF), String> {
+    ui.update_layout();
+    let rect = ui.absolute_rect(id).ok_or("o componente não está numa tela")?;
+    let coord = |v: Option<&Value>, size: f32, name: &str| -> Result<f32, String> {
+        match v {
+            None | Some(Value::Null) => Ok(size / 2.0),
+            Some(v) => v.as_f64().map(|n| n as f32).ok_or(format!("\"{name}\" tem de ser um número")),
+        }
+    };
+    let at = aylis_core::PointF::new(rect.x + coord(x, rect.width, "x")?, rect.y + coord(y, rect.height, "y")?);
+    Ok((ui.root_of(id), at))
+}
+
+/// As teclas seguradas de um comando de mouse ou de tecla: `"Ctrl+Shift"` ou
+/// `["ctrl", "shift"]` (ctrl, shift, alt, meta/cmd/win).
+fn modifiers(obj: &Map<String, Value>) -> Result<aylis_core::Modifiers, String> {
+    let names: Vec<String> = match obj.get("modifiers") {
+        None | Some(Value::Null) => return Ok(aylis_core::Modifiers::default()),
+        Some(Value::String(s)) => s.split('+').map(|p| p.trim().to_lowercase()).filter(|p| !p.is_empty()).collect(),
+        Some(Value::Array(a)) => a.iter().map(|v| v.as_str().map(|s| s.trim().to_lowercase()).ok_or("\"modifiers\": uma lista de nomes")).collect::<Result<_, _>>()?,
+        Some(_) => return Err("\"modifiers\": \"Ctrl+Shift\" ou [\"ctrl\", \"shift\"]".into()),
+    };
+    let mut m = aylis_core::Modifiers::default();
+    for name in names {
+        match name.as_str() {
+            "ctrl" | "control" => m.ctrl = true,
+            "shift" => m.shift = true,
+            "alt" => m.alt = true,
+            "meta" | "cmd" | "win" => m.meta = true,
+            other => return Err(format!("tecla modificadora desconhecida: {other} (use ctrl, shift, alt, meta)")),
+        }
+    }
+    Ok(m)
+}
+
+/// O botão de um comando de mouse (`left`, o padrão; `right`; `middle`).
+fn button(obj: &Map<String, Value>) -> Result<PointerButton, String> {
+    match obj.get("button").and_then(Value::as_str).unwrap_or("left") {
+        "left" | "primary" => Ok(PointerButton::Primary),
+        "right" | "secondary" => Ok(PointerButton::Secondary),
+        "middle" => Ok(PointerButton::Middle),
+        other => Err(format!("botão desconhecido: {other} (use left, right, middle)")),
+    }
 }
 
 fn target(ui: &Ui, obj: &Map<String, Value>) -> Result<ComponentId, String> {

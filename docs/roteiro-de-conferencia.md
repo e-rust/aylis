@@ -283,6 +283,22 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     escolhe nem fecha. Ponha o ComboBox perto do pé do form, com 20 linhas: a lista abre para
     cima ou encolhe para caber, sem sair da janela. Com 5 opções e 10 linhas, não há barra.
 
+131. **`app_command`: arrastar e Ctrl/Shift** (13/11; detalhes nos pendentes). Num app rodando
+    pela IDE, com uma `ListBox` de seleção múltipla (`lstNomes`) e dois painéis, um
+    `draggable` com `drag_data` e outro `accepts_drops` com um `on_drag_drop` que mostra o
+    texto: peça ao agente, pelo MCP, `{"cmd":"click","target":"lstNomes","y":14}` e depois
+    `{"cmd":"click","target":"lstNomes","y":70,"modifiers":"Ctrl"}`: a lista fica com o 1º e o
+    3º marcados na tela. `{"cmd":"drag","from":"pnlA","to":"pnlB"}`: o `on_drag_drop` mostra o
+    texto. `{"cmd":"click","target":"btnX","button":"right"}` abre o menu de contexto do botão.
+
+132. **Marca d'água em negativo (`blend_mode`)** (13/11; detalhes nos pendentes). Num form com
+    um `VideoPlayer` tocando um vídeo, ponha por cima um `Label` grande branco (ou um `Svg` de
+    logo branco) e, no Object Inspector, "Modo de mistura" em `difference`: onde o vídeo é
+    claro a marca fica escura, onde é escuro fica clara, e acompanha o vídeo quadro a quadro,
+    sem piscar. Teste também `exclusion` e `multiply`, com `opacity` 0,5. Confira com o
+    renderizador Direct2D e com o Skia (Projeto → Opções) e, publicado para a web, no
+    navegador.
+
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
     rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela

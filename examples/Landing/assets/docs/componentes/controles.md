@@ -10,6 +10,7 @@ Todo controle visual (o que tem `ControlBase`) tem estas, além das próprias.
 |---|---|---|---|
 | `inherit_state` | Herdar o estado do pai | lógico | Pinta com o estado do pai (`hover`, `pressed`, `checked`): o rótulo da linha marcada fica com a cor de marcado do tema sem trocar o estilo filho a filho (C25 do Tabernáculo). |
 | `opacity` | Opacidade | número | Transparência de 0 (invisível) a 1, com os filhos; continua no layout e clicável. |
+| `blend_mode` | Modo de mistura | um de: `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color_dodge`, `color_burn`, `hard_light`, `soft_light`, `difference`, `exclusion`, `hue`, `saturation`, `color`, `luminosity` | Como o controle (com os filhos) se junta ao que está por baixo (o `mix-blend-mode` do CSS): `difference` com branco é o negativo, como a marca d'água sobre um vídeo. |
 | `cache_layer` | Guardar desenho em camada | lógico | O desenho dele e dos filhos guardado numa imagem, refeita só quando algo lá dentro muda (o `CacheAsBitmap`): um painel pesado que desliza ou some aos poucos. |
 | `translate_x` | Deslocar X | número |  |
 | `translate_y` | Deslocar Y | número |  |

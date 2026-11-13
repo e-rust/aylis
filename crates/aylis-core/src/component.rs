@@ -909,6 +909,9 @@ pub struct ControlBase {
     cursor: CursorShape,
     /// Transparência de 0 (invisível) a 1, com os filhos; continua no layout e clicável.
     opacity: f32,
+    /// Como o controle (com os filhos) se junta ao que está por baixo (o `mix-blend-mode`
+    /// do CSS): `difference` com branco é o negativo, como a marca d'água sobre um vídeo.
+    blend_mode: crate::BlendMode,
     /// Giro em graus, em torno do centro (o `RotationAngle` do FMX).
     rotation: f32,
     /// A escala do controle e de tudo dentro dele (o `Scale` do FMX; 1 = normal): ele ocupa o
@@ -1023,6 +1026,7 @@ impl ControlBase {
         PropInfo::new("tab_stop", PropKind::Bool, "Behavior"),
         PropInfo::new("cursor", PropKind::Enum(<CursorShape as crate::prop::PropEnum>::NAMES), "Behavior"),
         PropInfo::new("opacity", PropKind::Float, "Appearance"),
+        PropInfo::new("blend_mode", PropKind::Enum(<crate::BlendMode as crate::prop::PropEnum>::NAMES), "Appearance"),
         PropInfo::new("cache_layer", PropKind::Bool, "Appearance"),
         PropInfo::new("rotation", PropKind::Angle, "Layout"),
         PropInfo::new("scale", PropKind::Float, "Layout"),
@@ -1111,6 +1115,7 @@ impl ControlBase {
             popup_menu: None,
             cursor: CursorShape::Default,
             opacity: 1.0,
+            blend_mode: crate::BlendMode::Normal,
             rotation: 0.0,
             scale: 1.0,
             translate: PointF::ZERO,
@@ -1349,6 +1354,16 @@ impl ControlBase {
 
     pub fn opacity(&self) -> f32 {
         self.opacity
+    }
+
+    /// Como o controle se junta ao que está por baixo (veja o campo).
+    pub fn blend_mode(&self) -> crate::BlendMode {
+        self.blend_mode
+    }
+
+    pub fn set_blend_mode(&mut self, mode: crate::BlendMode) -> &mut Self {
+        self.blend_mode = mode;
+        self
     }
 
     /// O desenho guardado numa imagem (veja o campo).
@@ -1865,6 +1880,7 @@ impl ControlBase {
             "tab_stop" => self.tab_stop.into(),
             "cursor" => PropValue::enum_value(self.cursor),
             "opacity" => self.opacity.into(),
+            "blend_mode" => PropValue::enum_value(self.blend_mode),
             "cache_layer" => self.cache_layer.into(),
             "rotation" => self.rotation.into(),
             "scale" => self.scale.into(),
@@ -1946,6 +1962,7 @@ impl ControlBase {
             "tab_stop" => self.set_tab_stop(value.to_bool()?),
             "cursor" => self.set_cursor(value.to_enum()?),
             "opacity" => self.set_opacity(value.to_f32()?),
+            "blend_mode" => self.set_blend_mode(value.to_enum()?),
             "cache_layer" => self.set_cache_layer(value.to_bool()?),
             "rotation" => self.set_rotation(value.to_f32()?),
             "scale" => self.set_scale(value.to_f32()?),

@@ -163,6 +163,10 @@ impl Canvas for InkCanvas<'_> {
         self.stack.push(self.state);
         self.inner.save_layer(opacity);
     }
+    fn save_layer_blend(&mut self, opacity: f32, mode: crate::BlendMode, bounds: RectF) {
+        self.stack.push(self.state);
+        self.inner.save_layer_blend(opacity, mode, bounds);
+    }
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush) {
         self.mark(rect);
         self.inner.fill_rect(rect, radius, brush);

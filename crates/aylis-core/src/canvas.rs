@@ -35,6 +35,103 @@ impl From<Color> for Brush {
     }
 }
 
+/// Como uma camada se junta ao que está por baixo dela (o `mix-blend-mode` do CSS e do
+/// Photoshop). Só os modos que o Skia, o Direct2D e o Canvas 2D do navegador desenham igual.
+/// `Difference` com branco é o negativo (a marca d'água que inverte o vídeo por baixo).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum BlendMode {
+    /// Por cima, sem mistura.
+    #[default]
+    Normal,
+    Multiply,
+    Screen,
+    Overlay,
+    Darken,
+    Lighten,
+    ColorDodge,
+    ColorBurn,
+    HardLight,
+    SoftLight,
+    /// A diferença entre as cores: o branco inverte, o preto não muda.
+    Difference,
+    /// Como a diferença, com menos contraste.
+    Exclusion,
+    Hue,
+    Saturation,
+    Color,
+    Luminosity,
+}
+
+impl BlendMode {
+    pub const ALL: [BlendMode; 16] = [
+        BlendMode::Normal,
+        BlendMode::Multiply,
+        BlendMode::Screen,
+        BlendMode::Overlay,
+        BlendMode::Darken,
+        BlendMode::Lighten,
+        BlendMode::ColorDodge,
+        BlendMode::ColorBurn,
+        BlendMode::HardLight,
+        BlendMode::SoftLight,
+        BlendMode::Difference,
+        BlendMode::Exclusion,
+        BlendMode::Hue,
+        BlendMode::Saturation,
+        BlendMode::Color,
+        BlendMode::Luminosity,
+    ];
+
+    /// O nome no CSS (`globalCompositeOperation` do Canvas 2D): `color-dodge`...
+    pub fn css(self) -> &'static str {
+        match self {
+            BlendMode::Normal => "source-over",
+            BlendMode::Multiply => "multiply",
+            BlendMode::Screen => "screen",
+            BlendMode::Overlay => "overlay",
+            BlendMode::Darken => "darken",
+            BlendMode::Lighten => "lighten",
+            BlendMode::ColorDodge => "color-dodge",
+            BlendMode::ColorBurn => "color-burn",
+            BlendMode::HardLight => "hard-light",
+            BlendMode::SoftLight => "soft-light",
+            BlendMode::Difference => "difference",
+            BlendMode::Exclusion => "exclusion",
+            BlendMode::Hue => "hue",
+            BlendMode::Saturation => "saturation",
+            BlendMode::Color => "color",
+            BlendMode::Luminosity => "luminosity",
+        }
+    }
+}
+
+impl crate::prop::PropEnum for BlendMode {
+    const NAMES: &'static [&'static str] = &[
+        "normal",
+        "multiply",
+        "screen",
+        "overlay",
+        "darken",
+        "lighten",
+        "color_dodge",
+        "color_burn",
+        "hard_light",
+        "soft_light",
+        "difference",
+        "exclusion",
+        "hue",
+        "saturation",
+        "color",
+        "luminosity",
+    ];
+    fn from_index(i: usize) -> Option<Self> {
+        BlendMode::ALL.get(i).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 /// Ponta das linhas.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum LineCap {
@@ -248,6 +345,15 @@ pub trait Canvas {
     /// Abre uma camada com opacidade; tudo até o `restore` correspondente é composto
     /// junto com essa opacidade.
     fn save_layer(&mut self, opacity: f32);
+
+    /// Como [`save_layer`](Self::save_layer), e no `restore` a camada se junta ao que está
+    /// por baixo pelo modo `mode`. `bounds`: até onde a camada desenha (nas coordenadas de
+    /// agora), para o renderizador misturar só ali. O padrão (um canvas sem mistura) é a
+    /// camada normal.
+    fn save_layer_blend(&mut self, opacity: f32, mode: BlendMode, bounds: RectF) {
+        let _ = (mode, bounds);
+        self.save_layer(opacity);
+    }
 
     /// Preenche um retângulo (`radius` > 0 arredonda os cantos).
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush);

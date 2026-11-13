@@ -472,3 +472,58 @@ fn an_ambiguous_name_lists_the_paths() {
     assert!(error.contains("fraVendas.lblTotal") && error.contains("fraEstoque.lblTotal"), "{error}");
     assert_eq!(run(&mut ui, json!({ "cmd": "get", "target": "fraEstoque.lblTotal", "prop": "text" })), json!("0"));
 }
+/// O clique com o mouse de verdade e as teclas seguradas: Ctrl+clique e Shift+clique na
+/// lista de seleção múltipla, como a mão faria (o `click` simples continua o do componente).
+#[test]
+fn click_with_modifiers_uses_the_real_mouse() {
+    let mut ui = ui();
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "Frm", "width": 400, "height": 300, "children": [
+        { "class": "ListBox", "name": "lstNomes", "items": "Ana;Bia;Caio;Duda;Eva", "multi_select": true, "item_height": 28, "align": "client" }
+    ] } }));
+    let row = |i: u32| json!(14 + 28 * i);
+    run(&mut ui, json!({ "cmd": "click", "target": "lstNomes", "x": 40, "y": row(0) }));
+    run(&mut ui, json!({ "cmd": "click", "target": "lstNomes", "x": 40, "y": row(2), "modifiers": "Ctrl" }));
+    assert_eq!(run(&mut ui, json!({ "cmd": "get", "target": "lstNomes", "prop": "selected" })), "0;2");
+    run(&mut ui, json!({ "cmd": "click", "target": "lstNomes", "x": 40, "y": row(4), "modifiers": ["shift"] }));
+    let selected = run(&mut ui, json!({ "cmd": "get", "target": "lstNomes", "prop": "selected" }));
+    assert!(selected.as_str().unwrap().ends_with("2;3;4"), "Shift estende do último até o clicado: {selected}");
+    let e = execute(&mut ui, &json!({ "cmd": "click", "target": "lstNomes", "modifiers": "Ctrl+Hyper" })).unwrap_err();
+    assert!(e.contains("hyper"), "{e}");
+    let e = execute(&mut ui, &json!({ "cmd": "click", "target": "lstNomes", "button": "lateral" })).unwrap_err();
+    assert!(e.contains("lateral"), "{e}");
+}
+
+/// `drag` arrasta de um componente a outro: o arrastar e soltar do Aylis recebe o que o
+/// origem declarou, e as teclas seguradas vão junto.
+#[test]
+fn drag_moves_from_one_component_to_another() {
+    let mut ui = ui();
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "Frm", "width": 400, "height": 300, "children": [
+        { "class": "Panel", "name": "pnlOrigem", "align": "left", "width": 120, "draggable": true, "drag_data": "cliente:7" },
+        { "class": "Panel", "name": "pnlDestino", "align": "right", "width": 120, "accepts_drops": true }
+    ] } }));
+    let dropped = Rc::new(RefCell::new(Vec::new()));
+    let d = dropped.clone();
+    let destino = ui.find("pnlDestino").unwrap();
+    ui.on(destino, "on_drag_drop", move |_, _, args| d.borrow_mut().push(format!("{args:?}")));
+    run(&mut ui, json!({ "cmd": "drag", "from": "pnlOrigem", "to": "pnlDestino", "modifiers": "Ctrl" }));
+    assert_eq!(dropped.borrow().len(), 1, "soltou no destino");
+    assert!(dropped.borrow()[0].contains("cliente:7"), "{:?}", dropped.borrow());
+    // Soltar no próprio origem não chega ao destino.
+    run(&mut ui, json!({ "cmd": "drag", "from": "pnlOrigem", "to": "pnlOrigem", "to_x": 100, "steps": 3 }));
+    assert_eq!(dropped.borrow().len(), 1);
+    let e = execute(&mut ui, &json!({ "cmd": "drag", "from": "pnlOrigem" })).unwrap_err();
+    assert!(e.contains("to"), "{e}");
+}
+
+/// A tecla com `modifiers` soma às da própria tecla: Ctrl+A seleciona tudo na lista.
+#[test]
+fn key_takes_modifiers_too() {
+    let mut ui = ui();
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "Frm", "width": 400, "height": 300, "children": [
+        { "class": "ListBox", "name": "lstNomes", "items": "Ana;Bia;Caio", "multi_select": true, "align": "client" }
+    ] } }));
+    run(&mut ui, json!({ "cmd": "focus", "target": "lstNomes" }));
+    run(&mut ui, json!({ "cmd": "key", "target": "Frm", "key": "A", "modifiers": ["ctrl"] }));
+    assert_eq!(run(&mut ui, json!({ "cmd": "get", "target": "lstNomes", "prop": "selected" })), "0;1;2");
+}

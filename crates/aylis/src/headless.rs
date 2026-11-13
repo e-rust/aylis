@@ -307,6 +307,16 @@ impl Headless {
         out
     }
 
+    /// Os pixels do form em teste no tamanho dele, em RGBA (4 bytes por pixel, linha a linha),
+    /// com a largura e a altura: para conferir uma cor num ponto sem decodificar o PNG.
+    /// `None` sem form ou sem o renderizador.
+    pub fn render_rgba(&mut self) -> Option<(Vec<u8>, u32, u32)> {
+        self.settle();
+        let form = self.form?;
+        let (w, h) = self.ui.control(form).map(|cb| (cb.width().round() as u32, cb.height().round() as u32))?;
+        Some((self.paint_rgba(form, w, h, None)?, w, h))
+    }
+
     /// A foto do form em teste no tamanho dele, em PNG. `None` sem form ou sem o renderizador.
     pub fn render_png(&mut self) -> Option<Vec<u8>> {
         self.render_png_scaled(1.0)

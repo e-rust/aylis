@@ -95,6 +95,12 @@ impl Canvas for TraceCanvas<'_> {
             c.save_layer(opacity);
         }
     }
+    fn save_layer_blend(&mut self, opacity: f32, mode: crate::BlendMode, bounds: RectF) {
+        self.note(6, (opacity, mode as u8, bounds));
+        if let Some(c) = self.inner.as_mut() {
+            c.save_layer_blend(opacity, mode, bounds);
+        }
+    }
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush) {
         self.note(7, (rect, radius, brush));
         if let Some(c) = self.inner.as_mut() {

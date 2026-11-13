@@ -8,7 +8,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.0", path = "../aylis-core" }
+aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
 serde_json = { version = "1", features = ["preserve_order"] }
 
 [dev-dependencies]

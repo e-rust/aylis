@@ -1017,7 +1017,10 @@ pub fn ide_tools() -> Vec<Value> {
              - {\"cmd\":\"snapshot\"}: a imagem da janela, como imagem (com \"target\": só aquele componente; \"form\": outro form);\n\
              - {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true}: a árvore (sem eles, inteira, que pode ser enorme; \"target\" começa num componente; cada nó traz `rect`, onde ficou depois do layout);\n\
              - {\"cmd\":\"rect\",\"target\":\"pnlX\"}, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"get\",\"target\":\"edtNome\",\"prop\":\"text\"}: posição, propriedades, um valor;\n\
-             - {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{...}), {\"cmd\":\"click\",\"target\":\"btnSalvar\"}, {\"cmd\":\"key\",...}, {\"cmd\":\"type\",...}, {\"cmd\":\"focus\",...}, {\"cmd\":\"invoke\",\"target\":...,\"method\":...,\"args\":[]}, {\"cmd\":\"highlight\",\"target\":...};\n\
+             - {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{...}), {\"cmd\":\"focus\",...}, {\"cmd\":\"invoke\",\"target\":...,\"method\":...,\"args\":[]}, {\"cmd\":\"highlight\",\"target\":...};\n\
+             - {\"cmd\":\"click\",\"target\":\"btnSalvar\"}: o clique do componente; com \"modifiers\" (\"Ctrl+Shift\" ou [\"ctrl\",\"shift\"]; ctrl, shift, alt, meta), \"x\"/\"y\" (dentro do componente; padrão o meio), \"button\" (left, right, middle) ou \"double\":true, o mouse de verdade naquele ponto (Ctrl+clique e Shift+clique na lista, o menu do botão direito);\n\
+             - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click;\n\
+             - {\"cmd\":\"key\",\"target\":\"frmX\",\"key\":\"Ctrl+A\"} (\"Enter\", \"Shift+Tab\", \"Alt+S\"; \"modifiers\" soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}): a tecla no controle com foco do form; {\"cmd\":\"type\",\"target\":\"frmX\",\"text\":\"Ana\"}: o texto digitado nele;\n\
              - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program);\n\
              - {\"cmd\":\"profile\",\"on\":true} começa a medir e {\"cmd\":\"profile_take\"} devolve os blocos medidos, as amostras e a memória ({\"cmd\":\"profile\",\"on\":false} para);\n\
              - {\"cmd\":\"reload\",\"kind\":\"form\"|\"theme\"|\"locale\",\"name\":\"frmX\",\"text\":\"...\"}: o hot reload (a IDE já manda ao salvar);\n\
@@ -1225,10 +1228,11 @@ mod argument_tests {
         let tool = |name: &str| tools.iter().find(|t| t["name"] == name).unwrap_or_else(|| panic!("falta {name}")).clone();
         let app = tool("app_command");
         let text = app["description"].as_str().unwrap();
-        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
+        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
             assert!(text.contains(&format!("\"cmd\":\"{cmd}\"")), "falta {cmd}");
         }
         assert!(text.contains("feature `dev`"));
+        assert!(text.contains("\"modifiers\"") && text.contains("Ctrl+Shift"), "as teclas seguradas no clique e no arrasto");
         assert_eq!(super::unknown_arguments("app_command", &json!({ "command": { "cmd": "tree" }, "app": 1234 })), None);
         assert_eq!(super::unknown_arguments("menu", &json!({ "id": 12 })), None);
         assert_eq!(super::unknown_arguments("dialog_click", &json!({ "id": 12 })), None);

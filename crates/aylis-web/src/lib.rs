@@ -317,6 +317,8 @@ struct WebLayer {
     cached: usize,
     canvas: HtmlCanvasElement,
     opacity: f64,
+    /// Como a camada se junta ao canvas de baixo (o `globalCompositeOperation`).
+    blend: aylis_core::BlendMode,
 }
 
 /// Um desenho sendo guardado: o contexto de antes e a imagem onde ele vai.
@@ -470,6 +472,9 @@ impl Canvas for Canvas2d<'_> {
             self.ctx.save();
             let _ = self.ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
             self.ctx.set_global_alpha(self.ctx.global_alpha() * layer.opacity);
+            if layer.blend != aylis_core::BlendMode::Normal {
+                let _ = self.ctx.set_global_composite_operation(layer.blend.css());
+            }
             let _ = self.ctx.draw_image_with_html_canvas_element(&layer.canvas, 0.0, 0.0);
             self.ctx.restore();
             SPARE_LAYERS.with(|s| {
@@ -499,6 +504,13 @@ impl Canvas for Canvas2d<'_> {
     }
 
     fn save_layer(&mut self, opacity: f32) {
+        self.save_layer_blend(opacity, aylis_core::BlendMode::Normal, RectF::default());
+    }
+
+    // A camada já é um canvas à parte: ao fechar, ela se junta ao de baixo pelo
+    // `globalCompositeOperation` do modo (os mesmos nomes do CSS). Sem o canvas à parte, sem
+    // mistura.
+    fn save_layer_blend(&mut self, opacity: f32, blend: aylis_core::BlendMode, _bounds: RectF) {
         // O grupo num canvas à parte, com a mesma transformação; o recorte de baixo vale ao
         // compor. Sem como criar o canvas, o `globalAlpha` em cada desenho (o de antes).
         let target = self.ctx.canvas().zip(self.ctx.get_transform().ok()).and_then(|(main, m)| Some((layer_canvas(main.width(), main.height())?, m)));
@@ -511,7 +523,7 @@ impl Canvas for Canvas2d<'_> {
         let _ = target.set_transform(m.a(), m.b(), m.c(), m.d(), m.e(), m.f());
         let main = std::mem::replace(&mut self.ctx, target);
         let depth = std::mem::take(&mut self.depth);
-        self.layers.push(WebLayer { main, depth, cached: self.cached.len(), canvas, opacity: opacity as f64 });
+        self.layers.push(WebLayer { main, depth, cached: self.cached.len(), canvas, opacity: opacity as f64, blend });
     }
 
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush) {

@@ -99,7 +99,7 @@ pub use align::{Align, Anchors, SelfAlign};
 pub use i18n::{tr, tr_with};
 pub use anim::{AnimationOptions, ColorAnimation, Easing, FloatAnimation, PropertyAnimation, Trigger};
 pub use canvas::{
-    Brush, Canvas, FontSpec, FontWeight, GpuDevice, GpuSurface, GradientStop, LineCap, LineJoin, Shadow, Stroke, TextAlign,
+    BlendMode, Brush, Canvas, FontSpec, FontWeight, GpuDevice, GpuSurface, GradientStop, LineCap, LineJoin, Shadow, Stroke, TextAlign,
     TextService, TextStyle, decorate_line,
 };
 pub use color::Color;

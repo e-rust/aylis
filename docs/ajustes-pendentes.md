@@ -428,6 +428,42 @@ feito, sem commit; teste `aylis-media/tests/repaint.rs`):
   Testes em `crates/aylis-controls/tests/combo_drop_down.rs` (as linhas, a roda, a barra
   arrastada, o encolher e a barra pintada só quando rola). O catálogo e a página do ComboBox
   na documentação foram refeitos.
+- **`app_command`: arrastar e as teclas seguradas** (13/11; roteiro, item 131). Pedido: "O
+  app_command falta ter opção de arrastar de um componente ao outro, falta teclas de
+  modificadores Shift, Ctrl". No protocolo remoto (`aylis-remote`, o mesmo do canal de
+  desenvolvimento):
+  - `click` com `modifiers` (`"Ctrl+Shift"` ou `["ctrl", "shift"]`), `x`/`y` (dentro do
+    componente), `button` (`left`, `right`, `middle`) ou `double`: o mouse de verdade naquele
+    ponto. Sem eles, o clique do componente, como antes;
+  - `drag` (`from`, `to`, `from_x`/`from_y`/`to_x`/`to_y`, `modifiers`, `button`, `steps`):
+    aperta em um, anda em passos e solta no outro (o arrastar e soltar do Aylis; `from` igual
+    a `to` arrasta dentro de um componente);
+  - `key` aceita `modifiers` somado às da própria tecla (o `"Ctrl+A"` já valia).
+  A descrição do `app_command` no MCP lista os três. Testes em
+  `crates/aylis-remote/tests/protocol.rs` (Ctrl+clique e Shift+clique na lista de seleção
+  múltipla, o arrastar entre dois painéis, o Ctrl+A pelo `modifiers`). O `ui_click` do
+  `McpServer` do app ainda é o clique simples.
+- **Modo de mistura (`blend_mode`)** (13/11; roteiro, item 132). Pedido: "o Canvas não tem modo
+  de mistura para permitir colocar uma marca d'água em negativo por cima das imagens dos vídeo
+  sendo reproduzidos". Agora:
+  - `aylis_core::BlendMode` com os 16 modos que os três renderizadores desenham igual (normal,
+    multiply, screen, overlay, darken, lighten, color_dodge, color_burn, hard_light,
+    soft_light, difference, exclusion, hue, saturation, color, luminosity) e
+    `Canvas::save_layer_blend(opacity, mode, bounds)`, com padrão (sem suporte, a camada
+    normal);
+  - a propriedade `blend_mode` em todo controle (Appearance, com os filhos, junto com a
+    `opacity`); com mistura, o controle não vira camada guardada (o desenho depende do fundo);
+  - Skia: a camada com o `BlendMode`; Direct2D: a camada num alvo fora da tela e, no
+    `restore`, o fundo daquele pedaço copiado e juntado pelo efeito Blend (com o efeito Opacity
+    antes, se houver); navegador: o canvas da camada composto com o `globalCompositeOperation`.
+  - A marca d'água em negativo: um texto ou imagem branco por cima do player com `blend_mode:
+    "difference"`. O quadro novo repinta a área do player e a marca vem junto.
+  Testes em `crates/aylis/tests/blend.rs` (o negativo sobre vermelho e preto, a opacidade, os 16
+  modos iguais no Skia e no Direct2D com branco e com uma cor do meio, e a pintura por parte
+  com a marca por cima). `Headless::render_rgba` novo (os pixels sem o PNG). `giant_screen`
+  passou (relógio 5,0 ms). Falta: ver sobre um vídeo tocando numa janela; o navegador só
+  compilado; uma marca dentro de uma camada guardada (`cache_layer` num pai) mistura com o
+  fundo dessa camada, não com o da tela.
 
 Ficam para depois:
 - T06 (o provedor de PDF que embute as fontes), decidido pelo autor.

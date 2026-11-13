@@ -36,20 +36,20 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.2.0", path = "../aylis-core" }
+aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.2.0", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.2.1-beta.1", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.2.0", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.2.1-beta.1", path = "../aylis-d2d", optional = true }
 # A área de transferência do Windows: texto, HTML, imagem e os formatos do app gravados de uma
 # vez (o arboard grava um só; o clipboard-win já vinha com ele).
 clipboard-win = { version = "5", optional = true }
@@ -159,7 +159,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.2.0", path = "../aylis-web" }
+aylis-web = { version = "0.2.1-beta.1", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"

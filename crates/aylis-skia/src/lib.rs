@@ -479,6 +479,32 @@ impl<'a> Canvas for SkiaCanvas<'a> {
         self.canvas.save_layer_alpha_f(None, opacity);
     }
 
+    fn save_layer_blend(&mut self, opacity: f32, mode: aylis_core::BlendMode, bounds: RectF) {
+        use aylis_core::BlendMode as B;
+        let blend = match mode {
+            B::Normal => sk::BlendMode::SrcOver,
+            B::Multiply => sk::BlendMode::Multiply,
+            B::Screen => sk::BlendMode::Screen,
+            B::Overlay => sk::BlendMode::Overlay,
+            B::Darken => sk::BlendMode::Darken,
+            B::Lighten => sk::BlendMode::Lighten,
+            B::ColorDodge => sk::BlendMode::ColorDodge,
+            B::ColorBurn => sk::BlendMode::ColorBurn,
+            B::HardLight => sk::BlendMode::HardLight,
+            B::SoftLight => sk::BlendMode::SoftLight,
+            B::Difference => sk::BlendMode::Difference,
+            B::Exclusion => sk::BlendMode::Exclusion,
+            B::Hue => sk::BlendMode::Hue,
+            B::Saturation => sk::BlendMode::Saturation,
+            B::Color => sk::BlendMode::Color,
+            B::Luminosity => sk::BlendMode::Luminosity,
+        };
+        let mut paint = sk::Paint::default();
+        paint.set_alpha_f(opacity).set_blend_mode(blend);
+        let bounds = to_rect(bounds);
+        self.canvas.save_layer(&sk::canvas::SaveLayerRec::default().bounds(&bounds).paint(&paint));
+    }
+
     fn backdrop_blur(&mut self, rect: RectF, radius: f32, blur: f32) -> bool {
         let Some(filter) = sk::image_filters::blur((blur, blur), sk::TileMode::Clamp, None, None) else { return false };
         self.canvas.save();
