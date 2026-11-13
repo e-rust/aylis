@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Aylis — a IDE no navegador</title>
   <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="modulepreload" href="./pkg/aylis_ide_web-2e0e9e3c27.js">
-  <link rel="preload" href="./pkg/aylis_ide_web_bg-2e0e9e3c27.wasm" as="fetch" type="application/wasm" crossorigin>
+  <link rel="modulepreload" href="./pkg/aylis_ide_web-f2c5234ead.js">
+  <link rel="preload" href="./pkg/aylis_ide_web_bg-f2c5234ead.wasm" as="fetch" type="application/wasm" crossorigin>
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #1e1f22; color: #c9ccd3; font: 15px system-ui, sans-serif; }
     canvas { display: block; outline: none; width: 100vw !important; height: 100vh !important; }
@@ -17,8 +17,8 @@
   <!-- Gerado pelo aylis-tool ide-web. Sirva esta pasta com qualquer servidor web. -->
   <div id="carregando">Carregando a IDE do Aylis…</div>
   <script type="module">
-    import init from "./pkg/aylis_ide_web-2e0e9e3c27.js";
-    const wasm = await init({ module_or_path: "./pkg/aylis_ide_web_bg-2e0e9e3c27.wasm" });
+    import init from "./pkg/aylis_ide_web-f2c5234ead.js";
+    const wasm = await init({ module_or_path: "./pkg/aylis_ide_web_bg-f2c5234ead.wasm" });
     document.getElementById("carregando").remove();
     wasm.aylis_ide_start();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
