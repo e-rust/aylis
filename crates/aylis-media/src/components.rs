@@ -789,7 +789,7 @@ impl VideoPlayer {
     /// Para entregar quadros prontos de qualquer thread (o player mostra o último).
     pub fn sink(ui: &Ui, id: ComponentId) -> Option<FrameSink> {
         let v = ui.get::<VideoPlayer>(id)?;
-        Some(FrameSink { frames: v.frames.clone(), poster: ui.poster() })
+        Some(FrameSink { frames: v.frames.clone(), poster: ui.poster(), id })
     }
 
     /// Escolhe o quadro da hora `now` e devolve quando pedir o próximo (tempo da

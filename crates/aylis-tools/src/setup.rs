@@ -279,9 +279,15 @@ pub fn language_ready(language: Language) -> bool {
 }
 
 /// O que entra na configuração: o que falta para executar e depurar no desktop e o servidor
-/// de linguagem (o WiX é só para o instalador: fica para o Verificar ambiente).
-fn wanted(check: &Check) -> bool {
-    check.target == Target::Desktop && check.status != Status::Ok && check.fix.is_some() && !check.name.starts_with("WiX")
+/// de linguagem (o WiX é só para o instalador: fica para o Verificar ambiente). Nas outras
+/// saídas (o Android, a web), só o que falta de fato, e nada que abra uma janela (o emulador,
+/// o instalador do Android Studio) quando não há o pacote para pôr no lugar.
+fn wanted(check: &Check, targets: &[Target]) -> bool {
+    let Some(fix) = check.fix.as_ref() else { return false };
+    if !targets.contains(&check.target) || check.status == Status::Ok || check.name.starts_with("WiX") {
+        return false;
+    }
+    check.target == Target::Desktop || (check.status == Status::Missing && !(fix.interactive && !fix.fetch.as_deref().is_some_and(env::package_has_source)))
 }
 
 /// O que ainda falta para a linguagem ficar completa no desktop (o depurador, o servidor de
@@ -299,11 +305,17 @@ pub fn missing(language: Language, aylis_host: Option<&Path>) -> Vec<String> {
 /// confere de novo, até nada mais ter correção. Devolve a verificação final; o que ainda
 /// faltar vem nela.
 pub fn setup(language: Language, aylis_host: Option<&Path>, control: &Control, log: &mut dyn FnMut(Event)) -> Vec<Check> {
+    setup_targets(language, &[Target::Desktop], aylis_host, control, log)
+}
+
+/// Como [`setup`], para as saídas `targets` (o instalador da IDE: o Android e o navegador,
+/// em Rust).
+pub fn setup_targets(language: Language, targets: &[Target], aylis_host: Option<&Path>, control: &Control, log: &mut dyn FnMut(Event)) -> Vec<Check> {
     let mut tried: Vec<String> = Vec::new();
     loop {
         refresh_path();
-        let checks = env::check(language, &[Target::Desktop], aylis_host);
-        let next = checks.iter().filter(|c| wanted(c)).find(|c| !tried.contains(&c.fix.as_ref().map(Fix::command_line).unwrap_or_default()));
+        let checks = env::check(language, targets, aylis_host);
+        let next = checks.iter().filter(|c| wanted(c, targets)).find(|c| !tried.contains(&c.fix.as_ref().map(Fix::command_line).unwrap_or_default()));
         let Some(check) = next else { return checks };
         let fix = check.fix.clone().unwrap_or_else(|| unreachable!("filtrado por wanted"));
         tried.push(fix.command_line());

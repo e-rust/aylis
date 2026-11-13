@@ -911,6 +911,11 @@ pub struct ControlBase {
     opacity: f32,
     /// Giro em graus, em torno do centro (o `RotationAngle` do FMX).
     rotation: f32,
+    /// A escala do controle e de tudo dentro dele (o `Scale` do FMX; 1 = normal): ele ocupa o
+    /// mesmo retângulo no pai, e o desenho dele e o layout dos filhos acontecem num espaço do
+    /// tamanho do retângulo dividido pela escala, ampliado na pintura. O clique, o foco e a
+    /// área a repintar acompanham ([`ControlBase::inner_size`]).
+    scale: f32,
     /// Deslocamento só do desenho (não muda o layout): animações e transições.
     translate: PointF,
     /// O desenho dele e dos filhos guardado numa imagem, refeita só quando algo lá dentro
@@ -1020,6 +1025,7 @@ impl ControlBase {
         PropInfo::new("opacity", PropKind::Float, "Appearance"),
         PropInfo::new("cache_layer", PropKind::Bool, "Appearance"),
         PropInfo::new("rotation", PropKind::Angle, "Layout"),
+        PropInfo::new("scale", PropKind::Float, "Layout"),
         PropInfo::new("translate_x", PropKind::Float, "Appearance"),
         PropInfo::new("translate_y", PropKind::Float, "Appearance"),
         PropInfo::new("aspect_ratio", PropKind::Float, "Layout"),
@@ -1106,6 +1112,7 @@ impl ControlBase {
             cursor: CursorShape::Default,
             opacity: 1.0,
             rotation: 0.0,
+            scale: 1.0,
             translate: PointF::ZERO,
             cache_layer: false,
             aspect_ratio: 0.0,
@@ -1358,6 +1365,18 @@ impl ControlBase {
     /// sem giro.
     pub fn rotation(&self) -> f32 {
         self.rotation
+    }
+
+    /// A escala dele e de tudo dentro dele ([`set_scale`](Self::set_scale); 1 = normal).
+    pub fn scale(&self) -> f32 {
+        self.scale
+    }
+
+    /// O tamanho do espaço de dentro: o do retângulo dividido pela escala. É nele que o
+    /// controle se desenha (`PaintCtx::rect`) e que os filhos são arrumados.
+    pub fn inner_size(&self) -> SizeF {
+        let s = self.scale;
+        if s == 1.0 { self.bounds.size() } else { SizeF::new(self.bounds.width / s, self.bounds.height / s) }
     }
 
     pub fn shadow(&self) -> Option<crate::canvas::Shadow> {
@@ -1780,6 +1799,12 @@ impl ControlBase {
         self
     }
 
+    /// A escala dele e dos filhos (1 = normal; de 0,05 a 20).
+    pub fn set_scale(&mut self, scale: f32) -> &mut Self {
+        self.scale = if scale.is_finite() && scale > 0.0 { scale.clamp(0.05, 20.0) } else { 1.0 };
+        self
+    }
+
     pub fn set_rotation(&mut self, degrees: f32) -> &mut Self {
         self.rotation = if degrees.is_finite() { degrees % 360.0 } else { 0.0 };
         self
@@ -1842,6 +1867,7 @@ impl ControlBase {
             "opacity" => self.opacity.into(),
             "cache_layer" => self.cache_layer.into(),
             "rotation" => self.rotation.into(),
+            "scale" => self.scale.into(),
             "translate_x" => self.translate.x.into(),
             "translate_y" => self.translate.y.into(),
             "aspect_ratio" => self.aspect_ratio.into(),
@@ -1922,6 +1948,7 @@ impl ControlBase {
             "opacity" => self.set_opacity(value.to_f32()?),
             "cache_layer" => self.set_cache_layer(value.to_bool()?),
             "rotation" => self.set_rotation(value.to_f32()?),
+            "scale" => self.set_scale(value.to_f32()?),
             "translate_x" => self.set_translate(PointF::new(value.to_f32()?, self.translate.y)),
             "translate_y" => self.set_translate(PointF::new(self.translate.x, value.to_f32()?)),
             "aspect_ratio" => self.set_aspect_ratio(value.to_f32()?),

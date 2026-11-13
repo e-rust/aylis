@@ -1,6 +1,6 @@
 # WmiQuery
 
-Consulta o WMI do Windows pela API nativa (o hardware, os discos, os processos, os serviços): `query` em WQL (`SELECT Name, Size, FreeSpace FROM Win32_LogicalDisk`) no `namespace` (`root\cimv2`); as linhas vão para um `ClientDataSet`, e com `watch` os eventos do sistema chegam no `on_event`.
+Consulta o WMI: `query` em WQL (`SELECT Name, Size, FreeSpace FROM Win32_LogicalDisk`) no `namespace` (`root\cimv2`).
 
 **Paleta:** System · **componente não visual**
 
@@ -11,9 +11,9 @@ Consulta o WMI do Windows pela API nativa (o hardware, os discos, os processos, 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `namespace` | Namespace do WMI | texto | Onde estão as classes (`root\cimv2`, o padrão; só desta máquina). |
-| `query` | Consulta (WQL) | texto | A consulta em WQL (com `watch`, uma consulta de eventos). |
-| `timeout` | Espera da consulta (s) | real | Segundos que `execute`, `get_value` e `get_json` esperam. |
-| `watch` | Assinar eventos | lógico | Assina a consulta de eventos enquanto ligado (só com o app rodando). |
+| `query` | Busca | texto | A consulta em WQL (com `watch`, uma consulta de eventos). |
+| `timeout` | Tempo para sumir | número | Segundos que `execute`, `get_value` e `get_json` esperam. |
+| `watch` | Acompanhar mudanças | lógico | Assina a consulta de eventos enquanto ligado (só com o app rodando). |
 
 ### Dados
 
@@ -42,8 +42,8 @@ E o handler, um método do form (`self.WmiQuery1` já é um `WmiQuery`):
 ```rust
 impl FrmPrincipal {
     pub fn wmi_query1_done(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.WmiQuery1.watch(ui);
-        self.WmiQuery1.set_watch(ui, !atual);
+        let atual = self.WmiQuery1.namespace(ui);
+        self.WmiQuery1.set_namespace(ui, format!("{atual}!"));
     }
 }
 ```

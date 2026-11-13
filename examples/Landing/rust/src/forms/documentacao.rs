@@ -199,6 +199,23 @@ impl FrmDocumentacao {
         }
     }
 
+    /// O botão do menu, só no celular (a vista `phone`): o índice (ou os achados da busca)
+    /// ocupa a tela no lugar da página, e de novo volta à página.
+    pub fn alternar_menu(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+        let aberto = ui.get_prop(self.pnlLateral.id, "visible").is_ok_and(|v| v == PropValue::Bool(true));
+        self.mostrar_menu(ui, !aberto);
+    }
+
+    /// Abre ou fecha o menu do celular. Fora da vista `phone` não faz nada: o índice fica
+    /// sempre à esquerda (e a vista, ao sair, devolve o base do que mudou).
+    fn mostrar_menu(&mut self, ui: &mut Ui, aberto: bool) {
+        if ui.active_view(self.form.id) != Some("phone") {
+            return;
+        }
+        let _ = ui.set_prop(self.pnlLateral.id, "visible", aberto);
+        let _ = ui.set_prop(self.layConteudo.id, "visible", !aberto);
+    }
+
     pub fn voltar(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
         ui.close(self.form.id);
     }
@@ -229,6 +246,8 @@ impl FrmDocumentacao {
         if busca.is_empty() {
             return;
         }
+        // No celular os achados ficam no menu: ele abre.
+        self.mostrar_menu(ui, true);
         if self.data.textos.len() != self.data.ordem.len() {
             self.data.textos = self.data.ordem.iter().map(|p| ler(ui, &p.arquivo).unwrap_or_default().to_lowercase()).collect();
         }
@@ -253,8 +272,13 @@ impl FrmDocumentacao {
             let no = tree.selected()?;
             Some(if no.data.is_empty() { no.children.first().map(|c| c.data.clone()).unwrap_or_default() } else { no.data.clone() })
         });
+        let pagina = ui.get::<TreeView>(self.tvIndice.id).and_then(|tree| tree.selected()).is_some_and(|no| !no.data.is_empty());
         if let Some(arquivo) = arquivo.filter(|a| !a.is_empty() && *a != self.data.atual) {
             self.abrir(ui, &arquivo, "");
+        }
+        // No celular, escolher uma página fecha o menu; uma seção só abre na árvore.
+        if pagina {
+            self.mostrar_menu(ui, false);
         }
     }
 
@@ -267,6 +291,7 @@ impl FrmDocumentacao {
         if let Some(pagina) = self.data.achados.get(indice).cloned() {
             self.data.destaque = self.data.busca.clone();
             self.abrir(ui, &pagina.arquivo, "");
+            self.mostrar_menu(ui, false);
         }
     }
 

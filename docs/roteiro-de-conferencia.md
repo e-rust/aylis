@@ -249,6 +249,40 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     `TargetInstance.Name` `notepad.exe`. Com `namespace` `\\outro\root\cimv2`, o `execute`
     recusa com a mensagem.
 
+127. **Escala de um componente (`scale`)** (13/11; detalhes nos pendentes). Num form, um `Panel`
+    com botões, um `Edit` e um `ComboBox` dentro; ponha `scale` 1.5 no painel (categoria Layout):
+    no designer e no app rodando, o painel ocupa o mesmo lugar e tudo dentro sai 1,5 vez maior.
+    Clique nos botões perto das bordas (o clique acerta o certo), digite no `Edit` (o cursor fica
+    no lugar do texto), abra o `ComboBox` (a lista aparece logo abaixo dele) e passe o mouse para
+    ver a dica. No designer, selecione um botão de dentro: as alças ficam em volta dele. Com
+    `scale` 0.5 no form inteiro, a tela toda sai pela metade, como um zoom.
+
+128. **A documentação da Landing no celular** (13/11; detalhes nos pendentes). Publique a Landing
+    e abra no celular: no topo da página principal aparece "Documentação"; toque. A página ocupa
+    a tela toda, com o texto e as tabelas legíveis. O botão ☰ do topo abre o índice na tela
+    inteira; tocar numa seção abre a seção, tocar numa página fecha o menu e mostra a página.
+    Digite na busca: o menu abre com os achados, e um toque leva à página. "Anterior" e
+    "Próxima" ficam um embaixo do outro. Gire para paisagem ou abra no PC: o índice volta à
+    esquerda, sem o ☰.
+
+129. **O instalador da IDE agrupado** (13/11; detalhes nos pendentes). Rode o
+    `aylis-ide-<versão>-setup.exe`: uma página de componentes só, com "Aylis IDE e Rust
+    (obrigatório)" cinza e marcado, "Outras linguagens" e "Plataformas de destino" abertos e
+    desmarcados, e o atalho. Marque Python e Android e instale: nos detalhes, "Configurando
+    Rust…", "Configurando Python…" e "Configurando Android…", com os acentos certos. Na IDE,
+    Ferramentas → Configurar linguagens mostra Rust e Python prontos, e a verificação de
+    ambiente do Android não tem falta (só o aparelho). Em Ferramentas → Opções → Pacotes, o
+    espelho é o link da sua pasta do Drive. Na pasta instalada
+    (`%LOCALAPPDATA%\Programs\aylis\aylis`), não há `examples`, e um projeto novo em Rust
+    compila. Pelo MCP, `component_docs` do Button responde.
+
+130. **ComboBox: linhas da lista e a barra** (13/11; detalhes nos pendentes). Num form, um
+    `ComboBox` com 30 opções e, no Object Inspector, "Linhas da lista aberta"
+    (`drop_down_count`) em 5. Rode: a lista abre com 5 linhas e uma barra fina à direita.
+    Role com a roda e arraste a barra até o fim: aparece a última opção, e soltar a barra não
+    escolhe nem fecha. Ponha o ComboBox perto do pé do form, com 20 linhas: a lista abre para
+    cima ou encolhe para caber, sem sair da janela. Com 5 opções e 10 linhas, não há barra.
+
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
     rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela

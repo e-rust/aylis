@@ -24,6 +24,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_form_class("frmDocumentacao", FrmDocumentacao::bind);
     ui.register_handler("frmDocumentacao.form_show", aylis::prelude::instances::form_handler(FrmDocumentacao::form_show));
     ui.register_handler("frmDocumentacao.navegar", aylis::prelude::instances::form_handler(FrmDocumentacao::navegar));
+    ui.register_handler("frmDocumentacao.alternar_menu", aylis::prelude::instances::form_handler(FrmDocumentacao::alternar_menu));
     ui.register_handler("frmDocumentacao.voltar", aylis::prelude::instances::form_handler(FrmDocumentacao::voltar));
     ui.register_handler("frmDocumentacao.buscar", aylis::prelude::instances::form_handler(FrmDocumentacao::buscar));
     ui.register_handler("frmDocumentacao.abrir_no", aylis::prelude::instances::form_handler(FrmDocumentacao::abrir_no));

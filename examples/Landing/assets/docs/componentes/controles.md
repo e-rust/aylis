@@ -71,6 +71,7 @@ Todo controle visual (o que tem `ControlBase`) tem estas, além das próprias.
 | `margins` | Margens | número ou lista de números | Espaço por fora, até os vizinhos e a borda do pai: número, `[h, v]` ou `[esquerda, cima, direita, baixo]`. |
 | `padding` | Espaçamento interno | número ou lista de números | Espaço por dentro, até os filhos: número, `[h, v]` ou `[esquerda, cima, direita, baixo]`. |
 | `rotation` | Rotação | ângulo (graus) | Giro em graus, em torno do centro (o `RotationAngle` do FMX). |
+| `scale` | Escala | número | A escala do controle e de tudo dentro dele (o `Scale` do FMX; 1 = normal): ele ocupa o mesmo retângulo no pai, e o desenho dele e o layout dos filhos acontecem num espaço do tamanho do retângulo dividido pela escala, ampliado na pintura. O clique, o foco e a área a repintar acompanham (`ControlBase::inner_size`). |
 | `aspect_ratio` | Proporção | número | Proporção fixa (largura ÷ altura; 0 = livre), como o `VResponsive` do Vuetify. |
 | `max_width` | Largura máxima | número | Largura máxima (0 = sem limite), como o `max-width` do CSS com margem automática. |
 | `min_width` | Largura mínima | número | Largura mínima, altura mínima e máxima (0 = sem limite), como o `Constraints` da VCL. |

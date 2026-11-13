@@ -365,6 +365,29 @@ pub(crate) struct Frames {
     /// O app pediu os pixels ([`VideoPlayer::current_frame`](crate::VideoPlayer::current_frame))
     /// ou o canvas recusou a textura: quadros na CPU daqui em diante.
     pub(crate) cpu_only: bool,
+    /// Já foi pedido à tela que repinte o controle (um aviso até a próxima pintura, e não um
+    /// por quadro: 15 câmeras a 15 quadros por segundo mandavam ~950 mensagens por segundo).
+    pub(crate) repaint_pending: bool,
+}
+
+/// Avisa a tela de um quadro novo em `frames`: marca só o controle `id` (a área dele, na
+/// janela dele), e no máximo um aviso fica pendente até ele ser atendido. Antes, cada quadro
+/// pedia a repintura inteira de todas as janelas (`request_repaint`).
+pub(crate) fn notify_frame(frames: &Arc<Mutex<Frames>>, poster: &Poster, id: aylis_core::ComponentId) {
+    let post = frames.lock().map_or(true, |mut f| !std::mem::replace(&mut f.repaint_pending, true));
+    if !post {
+        return;
+    }
+    let frames = frames.clone();
+    poster.post(move |ui| {
+        // Antes de marcar: um quadro que chegar daqui em diante pede de novo.
+        if let Ok(mut f) = frames.lock() {
+            f.repaint_pending = false;
+        }
+        if ui.contains(id) {
+            ui.damage(id);
+        }
+    });
 }
 
 /// Entrega quadros prontos ao `VideoPlayer`, de qualquer thread (câmera, rede, um codec
@@ -373,6 +396,8 @@ pub(crate) struct Frames {
 pub struct FrameSink {
     pub(crate) frames: Arc<Mutex<Frames>>,
     pub(crate) poster: Poster,
+    /// O player: só a área dele é repintada.
+    pub(crate) id: aylis_core::ComponentId,
 }
 
 impl FrameSink {
@@ -386,7 +411,7 @@ impl FrameSink {
             }
             f.queue.push_back(frame);
         }
-        self.poster.post(|ui| ui.request_repaint());
+        notify_frame(&self.frames, &self.poster, self.id);
     }
 }
 

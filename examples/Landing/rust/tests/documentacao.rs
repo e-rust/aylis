@@ -161,3 +161,50 @@ fn a_component_page_shows_the_live_component_inside_the_page() {
         assert_eq!(text(ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/Gauge.md");
     }
 }
+
+/// No celular (a vista `phone`), o índice sai da esquerda e vira um menu de tela inteira: o
+/// botão do topo abre e fecha, escolher uma página fecha, a busca abre com os achados. De
+/// volta à tela larga, o índice fica à esquerda de novo.
+#[test]
+fn on_the_phone_the_index_is_a_full_screen_menu() {
+    let app = landing::app().expect("o app abre");
+    let mut h = app.headless();
+    let botao = h.ui.find_path("frmPrincipal.btnDocumentacao").unwrap();
+    h.ui.fire(botao, "on_click", &EventArgs::None);
+    let form = h.ui.find_path("frmDocumentacao").unwrap();
+    h.set_form(form);
+    h.resize(390.0, 844.0);
+    assert_eq!(h.ui.active_view(form), Some("phone"));
+    let visible = |h: &aylis::headless::Headless, name: &str| text(&h.ui, &format!("frmDocumentacao.{name}"), "visible") == "Bool(true)";
+    assert!(visible(&h, "btnMenu") && !visible(&h, "pnlLateral") && visible(&h, "layConteudo"), "a página, com o menu fechado");
+    let pagina = h.ui.absolute_rect(h.ui.find_path("frmDocumentacao.mdPagina").unwrap()).unwrap();
+    assert!(pagina.width > 340.0, "a página ocupa a largura: {pagina:?}");
+
+    // O menu abre no lugar da página; uma seção só abre na árvore; uma página fecha o menu.
+    let menu = h.ui.find_path("frmDocumentacao.btnMenu").unwrap();
+    h.ui.fire(menu, "on_click", &EventArgs::None);
+    h.settle();
+    assert!(visible(&h, "pnlLateral") && !visible(&h, "layConteudo"));
+    let tree = h.ui.find_path("frmDocumentacao.tvIndice").unwrap();
+    h.ui.get_mut::<TreeView>(tree).unwrap().set_selected_path(Some(vec![1]));
+    h.ui.fire(tree, "on_change", &EventArgs::None);
+    assert!(visible(&h, "pnlLateral"), "a seção não fecha o menu");
+    h.ui.get_mut::<TreeView>(tree).unwrap().set_selected_path(Some(vec![1, 0]));
+    h.ui.fire(tree, "on_change", &EventArgs::None);
+    assert!(!visible(&h, "pnlLateral") && visible(&h, "layConteudo"), "a página fecha o menu");
+
+    // A busca abre o menu com os achados; escolher um fecha.
+    let busca = h.ui.find_path("frmDocumentacao.edtBusca").unwrap();
+    h.ui.fire(busca, "on_change", &EventArgs::Text("interceptor".into()));
+    assert!(visible(&h, "pnlLateral") && visible(&h, "lbBusca"));
+    choose(&mut h.ui, "frmDocumentacao.lbBusca", "EventInterceptor — Componentes: System");
+    assert!(!visible(&h, "pnlLateral") && visible(&h, "layConteudo"));
+    assert_eq!(text(&h.ui, "frmDocumentacao.mdPagina", "source"), "assets/docs/componentes/EventInterceptor.md");
+
+    // Com o menu aberto, a tela alarga: o índice à esquerda e a página ao lado, sem o botão.
+    h.ui.fire(menu, "on_click", &EventArgs::None);
+    h.resize(1440.0, 900.0);
+    assert_eq!(h.ui.active_view(form), None);
+    assert!(!visible(&h, "btnMenu") && visible(&h, "pnlLateral") && visible(&h, "layConteudo"));
+    assert_eq!(h.ui.bounds(h.ui.find_path("frmDocumentacao.pnlLateral").unwrap()).unwrap().width, 300.0);
+}

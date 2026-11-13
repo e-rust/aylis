@@ -251,7 +251,8 @@ fn frames_pushed_from_another_thread_are_shown() {
     })
     .join()
     .unwrap();
-    assert_eq!(ui.process_posted(), 3, "cada quadro pede uma repintura");
+    // Um aviso até a tela atender (não um por quadro: veja tests/repaint.rs).
+    assert_eq!(ui.process_posted(), 1, "os três quadros pedem uma repintura só");
     assert_eq!(shown(&mut ui, form), Some(30), "mostra o último");
 }
 

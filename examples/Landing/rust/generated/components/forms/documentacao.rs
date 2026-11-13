@@ -5,6 +5,7 @@
 pub struct FrmDocumentacao {
     pub form: Form,
     pub pnlTopo: Panel,
+    pub btnMenu: Button,
     pub lblMarca: Label,
     pub lblDocs: Label,
     pub btnVoltar: Button,
@@ -33,6 +34,7 @@ pub struct FrmDocumentacao {
 pub struct FrmDocumentacaoComponents {
     pub form: Form,
     pub pnlTopo: Panel,
+    pub btnMenu: Button,
     pub lblMarca: Label,
     pub lblDocs: Label,
     pub btnVoltar: Button,
@@ -69,6 +71,7 @@ impl FrmDocumentacao {
         let instance = Self {
             form: Form { id: root },
             pnlTopo: Panel { id: handles::resolve(ui, root, "pnlTopo", "Panel", &mut problems) },
+            btnMenu: Button { id: handles::resolve(ui, root, "btnMenu", "Button", &mut problems) },
             lblMarca: Label { id: handles::resolve(ui, root, "lblMarca", "Label", &mut problems) },
             lblDocs: Label { id: handles::resolve(ui, root, "lblDocs", "Label", &mut problems) },
             btnVoltar: Button { id: handles::resolve(ui, root, "btnVoltar", "Button", &mut problems) },
@@ -96,6 +99,7 @@ impl FrmDocumentacao {
         ui.set_form_components(root, Box::new(FrmDocumentacaoComponents {
             form: instance.form,
             pnlTopo: instance.pnlTopo,
+            btnMenu: instance.btnMenu,
             lblMarca: instance.lblMarca,
             lblDocs: instance.lblDocs,
             btnVoltar: instance.btnVoltar,
@@ -167,6 +171,7 @@ impl FrmDocumentacao {
     /// O Button deste form com o nome (`None` se não há um Button com ele).
     pub fn find_button(&self, name: &str) -> Option<Button> {
         match name {
+            "btnMenu" => Some(self.btnMenu),
             "btnVoltar" => Some(self.btnVoltar),
             "btnAnterior" => Some(self.btnAnterior),
             "btnProxima" => Some(self.btnProxima),

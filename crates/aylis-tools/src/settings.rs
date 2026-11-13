@@ -114,24 +114,39 @@ pub fn target_dir() -> Option<PathBuf> {
 /// As pastas de pacotes de ferramentas (uma lista de caminhos: uma pasta de rede, a do Google
 /// Drive para desktop), procuradas depois do cache ([`crate::toolpacks::Sources`]).
 pub const PACKAGE_DIRS: &str = "package_dirs";
-/// Os espelhos dos pacotes de ferramentas: endereços HTTPS de um `pacotes.json`.
+/// Os espelhos dos pacotes de ferramentas: endereços HTTPS de um `pacotes.json` ou o link de
+/// uma pasta compartilhada do Google Drive.
 pub const PACKAGE_MIRRORS: &str = "package_mirrors";
 
+/// O espelho de quem distribui o Aylis (a pasta do Google Drive com os pacotes de
+/// ferramentas): a origem que vale enquanto ninguém escolheu outra nas Opções. Apagado nas
+/// Opções, fica apagado (a lista vazia é gravada).
+pub const DEFAULT_PACKAGE_MIRROR: &str = "https://drive.google.com/drive/folders/128gDbpqvVzI_nXRe9e2J2T17v7x90zfe";
+
 /// Uma lista gravada (`package_dirs`, `package_mirrors`); um texto só vale como lista de um.
+/// Os espelhos nunca gravados são o [`DEFAULT_PACKAGE_MIRROR`].
 pub fn list(key: &str) -> Vec<String> {
-    match read().get(key) {
+    list_in(&read(), key)
+}
+
+fn list_in(map: &Map<String, Value>, key: &str) -> Vec<String> {
+    match map.get(key) {
         Some(Value::Array(a)) => a.iter().filter_map(Value::as_str).map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect(),
         Some(Value::String(s)) if !s.trim().is_empty() => vec![s.trim().to_string()],
+        None if key == PACKAGE_MIRRORS => vec![DEFAULT_PACKAGE_MIRROR.to_string()],
         _ => Vec::new(),
     }
 }
 
-/// Grava (ou apaga, se vazia) a lista de `key`, mantendo o resto.
+/// Grava (ou apaga, se vazia) a lista de `key`, mantendo o resto. A dos espelhos vazia fica
+/// gravada vazia: senão voltaria a ser o espelho padrão.
 pub fn set_list(key: &str, values: &[String]) -> Result<(), String> {
     let path = path().ok_or("sem pasta de dados do usuário")?;
     let mut map = read();
     let values: Vec<Value> = values.iter().map(|v| v.trim()).filter(|v| !v.is_empty()).map(|v| Value::String(v.to_string())).collect();
-    if values.is_empty() {
+    if values.is_empty() && key == PACKAGE_MIRRORS {
+        map.insert(key.to_string(), Value::Array(Vec::new()));
+    } else if values.is_empty() {
         map.remove(key);
     } else {
         map.insert(key.to_string(), Value::Array(values));
@@ -155,6 +170,21 @@ pub fn number(key: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Sem nada gravado, o espelho é o Drive de quem distribui o Aylis; a lista gravada (até
+    /// vazia, quando o usuário apagou) vale no lugar dele. As pastas não têm padrão.
+    #[test]
+    fn the_default_mirror_holds_until_the_list_is_saved() {
+        let empty = Map::new();
+        assert_eq!(list_in(&empty, PACKAGE_MIRRORS), [DEFAULT_PACKAGE_MIRROR]);
+        assert!(list_in(&empty, PACKAGE_DIRS).is_empty());
+        assert!(crate::toolpacks::fetch::drive_folder_id(DEFAULT_PACKAGE_MIRROR).is_some(), "o link é de uma pasta do Drive");
+        let mut saved = Map::new();
+        saved.insert(PACKAGE_MIRRORS.into(), Value::Array(Vec::new()));
+        assert!(list_in(&saved, PACKAGE_MIRRORS).is_empty(), "apagado nas Opções, fica apagado");
+        saved.insert(PACKAGE_MIRRORS.into(), Value::Array(vec![Value::String("https://outro/pacotes.json".into())]));
+        assert_eq!(list_in(&saved, PACKAGE_MIRRORS), ["https://outro/pacotes.json"]);
+    }
 
     /// O `tools.json` sai do `AppData` (que o MSIX do Claude Desktop desvia): o antigo é
     /// copiado uma vez, e o novo, depois de existir, não é sobrescrito.

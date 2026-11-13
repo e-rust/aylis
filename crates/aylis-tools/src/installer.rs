@@ -1,78 +1,101 @@
 //! O instalador da IDE para Windows (`aylis-tool installer-ide`): compila em release, gera
 //! o script do NSIS e chama o `makensis`.
 //!
-//! O que vai ser instalado é escolhido nos componentes do instalador:
+//! Uma página de componentes, agrupada pelo que se programa e para onde se publica:
 //!
 //! ```text
-//! IDE (obrigatório)          aylis-ide, aylis-host, aylis-tool + aylis\resources (fontes, ícones, Lottie)
-//! Projetos em Rust           aylis\Cargo.toml, Cargo.lock, crates, examples (menos IBGE e ERP, e sem o generated/), third_party (os projetos compilam contra eles)
-//! Clientes das linguagens    aylis\clients (TypeScript, C#, Java, Go, C++, Free Pascal, Python)
-//! Documentação               aylis\docs, schema, README.md
+//! Aylis IDE e Rust (obrigatório)   a IDE, o aylis-host, o aylis-tool, o código do Aylis (crates,
+//!                                  third_party: os projetos em Rust compilam contra ele), os
+//!                                  clientes das linguagens, a documentação; e o Rust configurado
+//! Outras linguagens                Python, TypeScript, C#, Java, Go, C++, Free Pascal (opcionais)
+//! Plataformas de destino           Android, Navegador (opcionais; o Windows já vem)
 //! Atalho na área de trabalho
 //! ```
 //!
-//! Instala por usuário (`%LOCALAPPDATA%\Programs\aylis`, sem pedir administrador); as
-//! compilações dos projetos ficam fora da instalação (`crate::shared_target_dir`). A IDE
-//! acha a pasta `aylis\` sozinha, ao lado do executável (`aylis_project::codegen::aylis_root`).
+//! Sem o Rust o Aylis não funciona (a IDE, os componentes e a publicação passam por ele), e
+//! por isso ele não é opção. Uma linguagem ou uma plataforma marcada vem com tudo o que precisa
+//! para funcionar bem: no fim da instalação, o `aylis-tool` recém-instalado roda o
+//! `aylis-tool setup` dela ([`crate::setup`], o mesmo do "Configurar linguagens" da IDE), que
+//! instala o compilador ou o interpretador, o depurador e o servidor de linguagem (o Android: o
+//! JDK, o SDK, o NDK e o cargo-ndk; o navegador: o alvo wasm e o wasm-bindgen). Tudo vem dos
+//! pacotes de ferramentas (`docs/pacotes.md`), conferidos com o SHA-256, da pasta `pacotes` ao
+//! lado do instalador (o kit offline) ou do espelho padrão
+//! ([`crate::settings::DEFAULT_PACKAGE_MIRROR`]); o que não tem pacote vem pelo winget. A saída
+//! fica nos detalhes da instalação (`nsExec`, sem `cmd`). O que não se configurar é dito no
+//! fim, com o caminho para refazer (Ferramentas → Configurar linguagens), e a IDE fica.
 //!
-//! ## Os pacotes de ferramentas (`docs/pacotes.md`)
+//! Os projetos de exemplo não vão (o repositório os guarda): o `Cargo.toml` instalado é o do
+//! workspace sem eles entre os membros. As páginas de referência dos componentes (as que o
+//! MCP da IDE lê) vão para `aylis\docs\referencia`.
 //!
-//! Depois dos componentes vem uma segunda página com os pacotes do manifesto embutido
-//! ([`crate::toolpacks::Manifest`]) para Windows x86_64, um por caixa, com o título e o
-//! tamanho; a lista é gerada do manifesto a cada `installer-ide`. Depois dela, se algum foi
-//! marcado, a página do espelho (o endereço HTTPS de um `pacotes.json`, opcional). No fim da
-//! instalação, o `aylis-tool` recém-instalado grava o espelho nas Opções
-//! (`packages sources --add-mirror`) e instala cada pacote marcado
-//! (`packages install <nome> --from "<pasta do setup>\pacotes"`), com a saída nos detalhes da
-//! instalação (`nsExec`, sem `cmd`). O pacote que falhar (sem origem, hash que não confere) é
-//! dito no fim, com o caminho para instalar depois (Ferramentas → Pacotes), e a IDE fica.
-//!
-//! Nenhum pacote vem marcado, com uma exceção: o `rust`, quando a pasta `pacotes` ao lado do
-//! instalador tem os arquivos dele, "Projetos em Rust" está marcado e a máquina não tem o
-//! rustup (`%USERPROFILE%\.cargo\bin\rustc.exe`). É o caso do kit offline: quem o recebe
-//! quer compilar sem internet. Fora dele, marcar um pacote sem origem só daria erro no fim.
+//! Instala por usuário (`%LOCALAPPDATA%\Programs\aylis`, sem pedir administrador; o Windows
+//! ainda pede a permissão no que o winget instala para a máquina, como o Visual C++); as
+//! compilações dos projetos ficam fora da instalação (`crate::shared_target_dir`). A IDE acha
+//! a pasta `aylis\` sozinha, ao lado do executável (`aylis_project::codegen::aylis_root`).
 //!
 //! Em modo silencioso (ou para já abrir marcado):
 //!
 //! ```text
-//! aylis-ide-<versão>-setup.exe /S /PACOTES=rust,jdk /ESPELHO=https://exemplo/pacotes.json /D=C:\pasta
+//! aylis-ide-<versão>-setup.exe /S /LINGUAGENS=python,go /PLATAFORMAS=android,web /ESPELHO=https://... /D=C:\pasta
 //! ```
 //!
-//! `/PACOTES=` aceita os nomes do manifesto separados por vírgula (sem espaços) ou `all`; um
-//! nome que não existe é ignorado. O código de saída é 3 quando a IDE foi instalada e algum
-//! pacote não. O desinstalador remove também os pacotes (`%USERPROFILE%\.aylis\tools`), o
-//! cache deles (`downloads`) e o `environment.json`; as Opções (`tools.json`) ficam.
+//! `/LINGUAGENS=` e `/PLATAFORMAS=` aceitam os nomes separados por vírgula (sem espaços) ou
+//! `all`; `/ESPELHO=` acrescenta um espelho aos das Opções. O código de saída é 3 quando a IDE
+//! foi instalada e algo não se configurou. O desinstalador remove também os pacotes
+//! (`%USERPROFILE%\.aylis\tools`), o cache deles (`downloads`) e o `environment.json`; as
+//! Opções (`tools.json`) ficam.
 //!
 //! ## O kit offline
 //!
 //! `aylis-tool installer-ide --with-packages node,codelldb` (ou `all`, ou sem nomes: todos)
 //! gera o setup e, ao lado dele, a pasta `pacotes` (o `packages pack` para Windows x86_64,
-//! com as dependências). A pasta e o setup juntos (no Google Drive, numa pasta de rede, num
-//! pendrive) instalam tudo sem internet.
+//! com as dependências). A pasta e o setup juntos (numa pasta de rede, num pendrive)
+//! instalam sem internet.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::env::exe;
-use crate::toolpacks::{Manifest, Package};
+use aylis_project::Language;
 
-/// A plataforma do instalador (os pacotes da página e do kit).
+use crate::env::exe;
+use crate::toolpacks::Manifest;
+
+/// A plataforma do instalador (os pacotes do kit offline).
 const PLATFORM: &str = "windows-x86_64";
+
+/// As plataformas de destino além do Windows: (o `--target` do `aylis-tool setup`, o nome, o
+/// que vem junto).
+const TARGETS: &[(&str, &str, &str)] = &[
+    ("android", "Android", "Publicar e depurar no Android: o alvo do Rust, o JDK, o Android SDK, o NDK e o cargo-ndk."),
+    ("web", "Navegador (web)", "Publicar para o navegador (wasm): o alvo do Rust e o wasm-bindgen."),
+];
+
+/// As linguagens opcionais: todas menos o Rust (que sempre vem).
+fn languages() -> impl Iterator<Item = Language> {
+    Language::ALL.into_iter().filter(|l| *l != Language::Rust)
+}
 
 /// Os executáveis (o pacote do cargo e o nome do binário).
 const BINARIES: &[(&str, &str)] = &[("aylis-ide", "aylis-ide"), ("aylis-host", "aylis-host"), ("aylis-tools", "aylis-tool"), ("aylis-migrate", "aylis-migrate")];
 
-/// Os exemplos que ficam fora do instalador (grandes e só de demonstração: o IBGE com os
-/// dados e as bandeiras, o ERP com mil forms). Continuam no repositório.
-const EXAMPLES_LEFT_OUT: &[&str] = &["IBGE", "ERP"];
-
-/// O `Cargo.toml` do workspace sem os membros de [`EXAMPLES_LEFT_OUT`].
+/// O `Cargo.toml` do workspace sem os exemplos entre os membros (os exemplos não vão para o
+/// instalador; com eles listados, o cargo recusaria o workspace instalado).
 fn without_examples(manifest: &str) -> String {
-    let mut text = manifest.to_string();
-    for name in EXAMPLES_LEFT_OUT {
-        text = text.replace(&format!("\"examples/{name}/rust\", "), "").replace(&format!(", \"examples/{name}/rust\""), "");
-    }
-    text
+    manifest
+        .lines()
+        .map(|line| {
+            let key = line.trim_start();
+            if !(key.starts_with("members") || key.starts_with("exclude")) {
+                return line.to_string();
+            }
+            let Some((head, list)) = line.split_once('[') else { return line.to_string() };
+            let list = list.trim_end().trim_end_matches(']');
+            let kept: Vec<&str> = list.split(',').map(str::trim).filter(|m| !m.is_empty() && !m.trim_matches('"').starts_with("examples/")).collect();
+            format!("{head}[{}]", kept.join(", "))
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
 }
 
 /// Saídas de compilação e coisas locais que não vão para o instalador (nomes, em qualquer
@@ -223,59 +246,45 @@ fn offline_kit(out: &Path, names: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// Os pacotes do manifesto que existem para o instalador (Windows x86_64), na ordem dele.
-fn installer_packages(manifest: &Manifest) -> Vec<Package> {
-    manifest.names().iter().filter_map(|n| manifest.package_for(n, PLATFORM)).filter(Package::available).collect()
-}
-
 /// Um texto entre aspas duplas no script do NSIS (`$` e `"` escapados, numa linha só).
 fn nsis_text(s: &str) -> String {
     s.replace('$', "$$").replace('"', "$\\\"").replace(['\r', '\n'], " ")
 }
 
-/// As partes do script com os pacotes: as seções, as descrições, mostrar e esconder (as duas
-/// páginas de componentes), os marcados ao abrir e "algum marcado?".
-struct PackageScript {
-    sections: String,
+/// As seções das linguagens e das plataformas, as descrições delas e o marcar pela linha de
+/// comando (`/LINGUAGENS=`, `/PLATAFORMAS=`).
+struct ChoiceScript {
+    languages: String,
+    targets: String,
     descriptions: String,
-    show: String,
-    hide: String,
-    from_parameter: String,
-    default: String,
-    any: String,
+    from_parameters: String,
 }
 
-fn package_script(manifest: &Manifest) -> PackageScript {
-    let mut s = PackageScript { sections: String::new(), descriptions: String::new(), show: String::new(), hide: String::new(), from_parameter: String::new(), default: String::new(), any: String::new() };
-    for (i, p) in installer_packages(manifest).iter().enumerate() {
-        let id = format!("SecPkg{i}");
-        let label = nsis_text(&format!("{} ({} MB)", p.title, p.size().div_ceil(1 << 20)));
-        // O nome vai para a linha de comando: só os do manifesto (já conferidos por ele).
-        assert!(crate::toolpacks::plain_name(&p.name), "nome de pacote inválido: {}", p.name);
-        s.sections.push_str(&format!(
-            "Section /o \"{label}\" {id}\n  AddSize {}\n  !insertmacro AylisPackage \"{}\" \"{}\"\nSectionEnd\n\n",
-            p.size().div_ceil(1024),
-            p.name,
-            nsis_text(&p.title)
-        ));
-        let needs = if p.depends.is_empty() { String::new() } else { format!(" Instala junto: {}.", p.depends.join(", ")) };
-        s.descriptions.push_str(&format!("  !insertmacro MUI_DESCRIPTION_TEXT ${{{id}}} \"{}{}\"\n", nsis_text(&p.description), nsis_text(&needs)));
-        s.show.push_str(&format!("  SectionSetText ${{{id}}} \"{label}\"\n"));
-        s.hide.push_str(&format!("  SectionSetText ${{{id}}} \"\"\n"));
-        s.from_parameter.push_str(&format!(
-            "  ${{StrStr}} $R2 \"$R1\" \",{name},\"\n  StrCmp $R2 \"\" 0 aylis_pkg_on_{i}\n  ${{StrStr}} $R2 \"$R1\" \",all,\"\n  StrCmp $R2 \"\" aylis_pkg_next_{i}\n  aylis_pkg_on_{i}:\n  !insertmacro SelectSection ${{{id}}}\n  aylis_pkg_next_{i}:\n",
-            name = p.name
-        ));
-        s.any.push_str(&format!("  SectionGetFlags ${{{id}}} $R8\n  IntOp $R8 $R8 & ${{SF_SELECTED}}\n  IntOp $R9 $R9 | $R8\n"));
-        // O Rust já marcado no kit offline (veja o módulo).
-        if p.name == "rust" {
-            let files: String = p.files.iter().map(|f| format!("  IfFileExists \"$EXEDIR\\pacotes\\{}\" 0 aylis_packages_done\n", f.name)).collect();
-            s.default = format!(
-                "  SectionGetFlags ${{SecRust}} $R2\n  IntOp $R2 $R2 & ${{SF_SELECTED}}\n  IntCmp $R2 0 aylis_packages_done\n  IfFileExists \"$PROFILE\\.cargo\\bin\\rustc.exe\" aylis_packages_done\n{files}  !insertmacro SelectSection ${{{id}}}\n"
-            );
-        }
+/// Uma seção opcional que roda o `aylis-tool setup` (`args`) no fim; `select` marca pelo nome
+/// na lista de `$R1` (`,nome,` ou `,all,`).
+fn setup_section(id: &str, label: &str, args: &str, name: &str, description: &str, out: &mut ChoiceScript, group: fn(&mut ChoiceScript) -> &mut String) {
+    group(out).push_str(&format!("Section /o \"{label}\" {id}\n  !insertmacro AylisSetup \"{args}\" \"{label}\"\nSectionEnd\n", label = nsis_text(label)));
+    out.descriptions.push_str(&format!("  !insertmacro MUI_DESCRIPTION_TEXT ${{{id}}} \"{}\"\n", nsis_text(description)));
+    out.from_parameters.push_str(&format!(
+        "  ${{StrStr}} $R2 \"$R1\" \",{name},\"\n  StrCmp $R2 \"\" 0 aylis_on_{id}\n  ${{StrStr}} $R2 \"$R1\" \",all,\"\n  StrCmp $R2 \"\" aylis_next_{id}\n  aylis_on_{id}:\n  !insertmacro SelectSection ${{{id}}}\n  aylis_next_{id}:\n"
+    ));
+}
+
+fn choice_script() -> ChoiceScript {
+    let mut out = ChoiceScript { languages: String::new(), targets: String::new(), descriptions: String::new(), from_parameters: String::new() };
+    out.from_parameters.push_str("  ClearErrors\n  ${GetOptions} $R0 \"/LINGUAGENS=\" $R1\n  StrCpy $R1 \",$R1,\"\n");
+    for language in languages() {
+        let folder = language.folder();
+        // O nome vai para a linha de comando: só os do Aylis.
+        assert!(aylis_project::is_identifier(folder), "{folder}");
+        let description = format!("Programar em {}: o compilador ou o interpretador, o depurador e o servidor de linguagem, instalados e configurados.", language.name());
+        setup_section(&format!("SecLang_{folder}"), language.name(), folder, folder, &description, &mut out, |o| &mut o.languages);
     }
-    s
+    out.from_parameters.push_str("  ClearErrors\n  ${GetOptions} $R0 \"/PLATAFORMAS=\" $R1\n  StrCpy $R1 \",$R1,\"\n");
+    for (id, name, description) in TARGETS {
+        setup_section(&format!("SecTarget_{id}"), name, &format!("rust --target {id}"), id, description, &mut out, |o| &mut o.targets);
+    }
+    out
 }
 
 /// O `makensis`: o escolhido nas Opções da IDE, o `PATH` ou a pasta padrão do NSIS.
@@ -298,37 +307,27 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
     let tree = |name: &str| format!("  File /r {skip}\"{}\"\n", p(&root.join(name)));
     let file = |name: &str| format!("  File \"{}\"\n", p(&root.join(name)));
     let bins: String = BINARIES.iter().map(|(_, b)| format!("  File \"{}\"\n", p(&release.join(exe(b))))).collect();
-    // O `third_party` também: o cargo exige as dependências por caminho mesmo de outro alvo
-    // (a cópia do `accesskit_android`), senão nenhum projeto em Rust compila.
-    // Os exemplos, um por um, sem os de [`EXAMPLES_LEFT_OUT`]; o `Cargo.toml` é a cópia sem
-    // eles entre os membros (senão o cargo recusa o workspace instalado).
-    let examples: String = std::fs::read_dir(root.join("examples"))
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter(|e| !EXAMPLES_LEFT_OUT.iter().any(|x| e.file_name() == *x))
-        // Sem o `generated/`: o Aylis o refaz sozinho ao gerar, compilar ou executar (a metade
-        // dos arquivos dos exemplos, que pesavam na cópia e na remoção).
-        .map(|e| if e.path().is_dir() { format!("  File /r {skip}/x generated \"{}\"\n", p(&e.path())) } else { format!("  File \"{}\"\n", p(&e.path())) })
-        .collect();
-    let rust = format!(
-        "  File \"{}\"\n{}{}  SetOutPath \"$INSTDIR\\aylis\\examples\"\n{examples}  SetOutPath \"$INSTDIR\\aylis\"\n{}",
-        p(manifest),
-        file("Cargo.lock"),
-        tree("crates"),
-        tree("third_party")
+    // O código do Aylis (os projetos em Rust compilam contra ele), sem os exemplos: o
+    // `Cargo.toml` é a cópia sem eles entre os membros. O `third_party` também: o cargo exige
+    // as dependências por caminho mesmo de outro alvo (a cópia do `accesskit_android`).
+    let code = format!("  File \"{}\"\n{}{}{}{}", p(manifest), file("Cargo.lock"), tree("crates"), tree("third_party"), tree("clients"));
+    // A documentação e, em `docs\referencia`, as páginas dos componentes (o MCP da IDE lê),
+    // sem as imagens.
+    let reference = root.join("examples").join("Landing").join("assets").join("docs").join("componentes");
+    let docs = format!(
+        "{}{}{}  SetOutPath \"$INSTDIR\\aylis\\docs\\referencia\"\n  File \"{}\\*.md\"\n  SetOutPath \"$INSTDIR\\aylis\"\n",
+        tree("docs"),
+        tree("schema"),
+        file("README.md"),
+        p(&reference)
     );
-    let docs = format!("{}{}{}", tree("docs"), tree("schema"), file("README.md"));
     let file_icons: String = crate::icons::FILE_TYPES.iter().map(|(ext, _, _)| format!("  File \"{}\"\n", p(&icons.join(format!("{ext}.ico"))))).collect();
-    let packages = package_script(&Manifest::embedded());
+    let choices = choice_script();
     TEMPLATE
-        .replace("@PACKAGE_SECTIONS@", &packages.sections)
-        .replace("@PACKAGE_DESCRIPTIONS@", &packages.descriptions)
-        .replace("@PACKAGE_SHOW@", &packages.show)
-        .replace("@PACKAGE_HIDE@", &packages.hide)
-        .replace("@PACKAGE_PARAMETER@", &packages.from_parameter)
-        .replace("@PACKAGE_DEFAULT@", &packages.default)
-        .replace("@PACKAGE_ANY@", &packages.any)
+        .replace("@LANGUAGE_SECTIONS@", &choices.languages)
+        .replace("@TARGET_SECTIONS@", &choices.targets)
+        .replace("@CHOICE_DESCRIPTIONS@", &choices.descriptions)
+        .replace("@CHOICE_PARAMETERS@", &choices.from_parameters)
         .replace("@VERSION@", version)
         .replace("@ICON@", &p(&root.join("crates").join("aylis-ide").join("resources").join("aylis-ide.ico")))
         .replace("@SETUP@", &p(setup))
@@ -339,8 +338,7 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
         .replace("@LICENSE@", &p(&root.join("LICENSE")))
         .replace("@RESOURCES@", &tree("resources"))
         .replace("@FILEICONS@", &file_icons)
-        .replace("@RUST@", &rust)
-        .replace("@CLIENTS@", &tree("clients"))
+        .replace("@CODE@", &code)
         .replace("@DOCS@", &docs)
 }
 
@@ -351,35 +349,27 @@ const TEMPLATE: &str = r#"Unicode true
 !include "WinMessages.nsh"
 !include "StrFunc.nsh"
 !include "Sections.nsh"
-!include "nsDialogs.nsh"
 ; As funções de texto usadas (o StrFunc pede a declaração antes).
 ${StrStr}
 ${UnStrRep}
 
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\aylis-ide"
 
-; Os nomes das seções da primeira página (a segunda, a dos pacotes, as esconde e volta).
-!define TEXT_IDE "IDE"
-!define TEXT_RUST "Projetos em Rust"
-!define TEXT_CLIENTS "Clientes das outras linguagens"
-!define TEXT_DOCS "Documentação"
-!define TEXT_DESKTOP "Atalho na área de trabalho"
-
-; O espelho dos pacotes (a página ou /ESPELHO=), os pacotes que falharam e o campo da página.
+; O espelho a mais (/ESPELHO=) e o que não se configurou.
 Var Mirror
-Var PackagesFailed
-Var MirrorField
+Var SetupFailed
 
-; Um pacote de ferramentas: o aylis-tool recém-instalado o instala (e as dependências) da
-; pasta `pacotes` ao lado do setup, das origens das Opções e do espelho gravado. A saída vai
-; para os detalhes (em UTF-16: o nsExec lê UTF-8 como ANSI). Falhar não desfaz a IDE.
-!macro AylisPackage NAME TITLE
+; Configura uma linguagem ou uma plataforma: o aylis-tool recém-instalado roda o setup dela
+; (o compilador, o depurador, o servidor de linguagem), dos pacotes da pasta ao lado do
+; instalador, das origens das Opções ou do espelho padrão. A saída vai para os detalhes (em
+; UTF-16: o nsExec lê UTF-8 como ANSI). Falhar não desfaz a IDE.
+!macro AylisSetup ARGS TITLE
   SetDetailsPrint both
-  DetailPrint "Instalando o pacote ${TITLE}…"
-  nsExec::ExecToLog '"$INSTDIR\aylis-tool.exe" packages install ${NAME} --from "$EXEDIR\pacotes" --utf16-output'
+  DetailPrint "Configurando ${TITLE}…"
+  nsExec::ExecToLog '"$INSTDIR\aylis-tool.exe" setup ${ARGS} --utf16-output'
   Pop $R0
   StrCmp $R0 "0" +2
-  StrCpy $PackagesFailed "$PackagesFailed, ${TITLE} (${NAME})"
+  StrCpy $SetupFailed "$SetupFailed, ${TITLE}"
 !macroend
 
 ; Um tipo de arquivo do aylis (em HKCU\Software\Classes): a extensão, o nome, o ícone e o abrir.
@@ -413,16 +403,8 @@ ShowInstDetails show
 !define MUI_FINISHPAGE_RUN "$INSTDIR\aylis-ide.exe"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "@LICENSE@"
-!define MUI_PAGE_CUSTOMFUNCTION_PRE AylisComponentsPre
+!define MUI_COMPONENTSPAGE_TEXT_TOP "O Aylis e o Rust sempre se instalam. Marque as outras linguagens e as plataformas que vai usar: cada uma vem com tudo o que precisa (compilador, depurador, servidor de linguagem). O resto se configura depois, na IDE (Ferramentas → Configurar linguagens)."
 !insertmacro MUI_PAGE_COMPONENTS
-; A segunda página de componentes: só os pacotes de ferramentas (como no Delphi).
-!define MUI_PAGE_HEADER_TEXT "Pacotes de ferramentas"
-!define MUI_PAGE_HEADER_SUBTEXT "Marque as ferramentas que os seus projetos vão usar."
-!define MUI_COMPONENTSPAGE_TEXT_TOP "Os marcados se instalam no fim, da pasta pacotes ao lado do instalador ou do espelho da página seguinte. O resto se instala depois, na IDE (Ferramentas → Pacotes). O que a máquina já tem não precisa de pacote."
-!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "Pacotes:"
-!define MUI_PAGE_CUSTOMFUNCTION_PRE AylisPackagesPre
-!insertmacro MUI_PAGE_COMPONENTS
-Page custom AylisMirrorPage AylisMirrorLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -430,20 +412,25 @@ Page custom AylisMirrorPage AylisMirrorLeave
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "PortugueseBR"
 
-Section "${TEXT_IDE}" SecIde
+Section "Aylis IDE e Rust (obrigatório)" SecIde
   SectionIn RO
   ; Os milhares de arquivos sem a linha de cada um na lista de detalhes: escrever na lista é o
   ; que mais custa (medido em 12/11: 20 mil arquivos apagados em 28,3 s com a lista e 3,1 s
   ; sem ela). A barra mostra só a etapa.
   SetDetailsPrint textonly
   DetailPrint "Removendo a versão anterior…"
-  ; Uma versão anterior sai inteira (sem sobrar arquivos que a nova não tem).
+  ; Uma versão anterior sai inteira (sem sobrar arquivos que a nova não tem, como os
+  ; exemplos das versões que os levavam).
   RMDir /r "$INSTDIR\aylis"
   DetailPrint "Copiando a IDE…"
   SetOutPath "$INSTDIR"
 @BINS@@README@
   SetOutPath "$INSTDIR\aylis"
 @RESOURCES@
+  DetailPrint "Copiando o código do Aylis…"
+@CODE@
+  DetailPrint "Copiando a documentação…"
+@DOCS@
   ; Os ícones dos tipos de arquivo (um por extensão).
   RMDir /r "$INSTDIR\icons"
   SetOutPath "$INSTDIR\icons"
@@ -488,34 +475,12 @@ Section "${TEXT_IDE}" SecIde
   aylis_path_done:
 SectionEnd
 
-Section "${TEXT_RUST}" SecRust
-  DetailPrint "Copiando o código do Aylis e os exemplos…"
-  SetOutPath "$INSTDIR\aylis"
-@RUST@SectionEnd
-
-Section "${TEXT_CLIENTS}" SecClients
-  DetailPrint "Copiando os clientes das outras linguagens…"
-  SetOutPath "$INSTDIR\aylis"
-@CLIENTS@SectionEnd
-
-Section "${TEXT_DOCS}" SecDocs
-  DetailPrint "Copiando a documentação…"
-  SetOutPath "$INSTDIR\aylis"
-@DOCS@SectionEnd
-
-Section /o "${TEXT_DESKTOP}" SecDesktop
-  CreateShortcut "$DESKTOP\Aylis IDE.lnk" "$INSTDIR\aylis-ide.exe"
-SectionEnd
-
-; O tamanho em "Aplicativos instalados" (depois de tudo copiado).
-Section "-Tamanho"
-  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
-  WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" $0
-SectionEnd
-
-; O espelho informado vai para as Opções (pelo aylis-tool, como a IDE grava), antes dos
-; pacotes: eles o usam para o que não estiver na pasta `pacotes`.
-Section "-Espelho"
+; O espelho de /ESPELHO= vai para as Opções (pelo aylis-tool, como a IDE grava), antes das
+; configurações. A pasta `pacotes` ao lado do instalador (o kit offline) vale só para elas,
+; pela variável (não fica gravada).
+Section "-Origens"
+  IfFileExists "$EXEDIR\pacotes\*.*" 0 +2
+  System::Call 'kernel32::SetEnvironmentVariable(t "AYLIS_PACKAGE_DIR", t "$EXEDIR\pacotes")'
   StrCmp $Mirror "" aylis_mirror_done
   Call AylisCheckMirror
   StrCmp $R0 "" 0 aylis_mirror_bad
@@ -532,35 +497,38 @@ Section "-Espelho"
   aylis_mirror_done:
 SectionEnd
 
-; Os pacotes de ferramentas (a segunda página), gerados do manifesto embutido.
-@PACKAGE_SECTIONS@; O que não se instalou: a IDE fica, e o pacote se instala depois pela IDE.
-Section "-Pacotes que falharam"
-  StrCmp $PackagesFailed "" aylis_packages_ok
-  StrCpy $R0 $PackagesFailed "" 2
-  SetDetailsPrint both
-  DetailPrint "Não se instalaram: $R0. Instale-os depois na IDE, em Ferramentas → Pacotes."
-  MessageBox MB_ICONEXCLAMATION|MB_OK "Não deu para instalar estes pacotes: $R0.$\r$\n$\r$\nA IDE foi instalada. O motivo está nos detalhes da instalação (o arquivo não está na pasta pacotes ao lado do instalador nem no espelho, ou não confere com o SHA-256 do Aylis).$\r$\n$\r$\nInstale-os depois na IDE, em Ferramentas → Pacotes (ou com aylis-tool packages install)." /SD IDOK
-  SetErrorLevel 3
-  aylis_packages_ok:
+; O Rust sempre: sem ele o Aylis não compila nada (o compilador, o Visual C++, o depurador e
+; o servidor de linguagem).
+Section "-Rust"
+  !insertmacro AylisSetup "rust" "Rust"
 SectionEnd
 
-; A primeira página de componentes: a IDE e o resto, sem os pacotes.
-Function AylisComponentsPre
-  SectionSetText ${SecIde} "${TEXT_IDE}"
-  SectionSetText ${SecRust} "${TEXT_RUST}"
-  SectionSetText ${SecClients} "${TEXT_CLIENTS}"
-  SectionSetText ${SecDocs} "${TEXT_DOCS}"
-  SectionSetText ${SecDesktop} "${TEXT_DESKTOP}"
-@PACKAGE_HIDE@FunctionEnd
+SectionGroup /e "Outras linguagens" SecLanguages
+@LANGUAGE_SECTIONS@SectionGroupEnd
 
-; A segunda: só os pacotes (uma seção sem texto não aparece na lista).
-Function AylisPackagesPre
-  SectionSetText ${SecIde} ""
-  SectionSetText ${SecRust} ""
-  SectionSetText ${SecClients} ""
-  SectionSetText ${SecDocs} ""
-  SectionSetText ${SecDesktop} ""
-@PACKAGE_SHOW@FunctionEnd
+SectionGroup /e "Plataformas de destino" SecTargets
+@TARGET_SECTIONS@SectionGroupEnd
+
+Section /o "Atalho na área de trabalho" SecDesktop
+  CreateShortcut "$DESKTOP\Aylis IDE.lnk" "$INSTDIR\aylis-ide.exe"
+SectionEnd
+
+; O tamanho em "Aplicativos instalados" (depois de tudo copiado).
+Section "-Tamanho"
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" $0
+SectionEnd
+
+; O que não se configurou: a IDE fica, e a linguagem se configura depois pela IDE.
+Section "-O que não se configurou"
+  StrCmp $SetupFailed "" aylis_setup_ok
+  StrCpy $R0 $SetupFailed "" 2
+  SetDetailsPrint both
+  DetailPrint "Não ficaram prontas: $R0. Configure-as depois na IDE, em Ferramentas → Configurar linguagens."
+  MessageBox MB_ICONEXCLAMATION|MB_OK "Não deu para deixar prontas: $R0.$\r$\n$\r$\nA IDE foi instalada. O motivo está nos detalhes da instalação (sem internet, um pacote que não confere com o SHA-256 do Aylis ou uma instalação recusada).$\r$\n$\r$\nConfigure depois na IDE, em Ferramentas → Configurar linguagens (ou com aylis-tool setup <linguagem>)." /SD IDOK
+  SetErrorLevel 3
+  aylis_setup_ok:
+SectionEnd
 
 ; O espelho em $Mirror confere? $R0: vazio, ou o motivo.
 Function AylisCheckMirror
@@ -577,42 +545,8 @@ Function AylisCheckMirror
   aylis_check_done:
 FunctionEnd
 
-; A página do espelho: só se algum pacote foi marcado.
-Function AylisMirrorPage
-  StrCpy $R9 0
-@PACKAGE_ANY@  StrCmp $R9 0 0 +2
-  Abort
-  !insertmacro MUI_HEADER_TEXT "Espelho dos pacotes" "De onde vêm os pacotes que não estiverem ao lado do instalador (opcional)."
-  nsDialogs::Create 1018
-  Pop $R0
-  IfFileExists "$EXEDIR\pacotes\*.*" 0 aylis_no_folder
-  StrCpy $R1 "A pasta de pacotes ao lado do instalador foi encontrada ($EXEDIR\pacotes): os pacotes marcados vêm dela, e o espelho fica para o que faltar."
-  Goto aylis_folder_done
-  aylis_no_folder:
-  StrCpy $R1 "Não há a pasta pacotes ao lado do instalador ($EXEDIR\pacotes): sem um espelho, os pacotes marcados não terão de onde vir (dá para instalá-los depois, na IDE)."
-  aylis_folder_done:
-  ${NSD_CreateLabel} 0 0 100% 30u "$R1"
-  Pop $R0
-  ${NSD_CreateLabel} 0 36u 100% 20u "Espelho dos pacotes: o link da pasta compartilhada do Google Drive ou o endereço HTTPS de um pacotes.json (de quem distribui o Aylis). Fica gravado nas Opções da IDE."
-  Pop $R0
-  ${NSD_CreateText} 0 60u 100% 12u "$Mirror"
-  Pop $MirrorField
-  ${NSD_CreateLabel} 0 80u 100% 30u "Os arquivos são conferidos com o SHA-256 que o Aylis traz, venham de onde vierem."
-  Pop $R0
-  nsDialogs::Show
-FunctionEnd
-
-Function AylisMirrorLeave
-  ${NSD_GetText} $MirrorField $Mirror
-  Call AylisCheckMirror
-  StrCmp $R0 "" aylis_leave_ok
-  MessageBox MB_ICONEXCLAMATION|MB_OK "Espelho dos pacotes: $R0."
-  Abort
-  aylis_leave_ok:
-FunctionEnd
-
-; /PACOTES=rust,jdk (ou all) e /ESPELHO=https://... na linha de comando (o modo silencioso,
-; /S, usa só eles). Sem /PACOTES=, nada marcado, menos o Rust do kit offline (veja o módulo).
+; /LINGUAGENS=python,go, /PLATAFORMAS=android,web (ou all) e /ESPELHO=https://... na linha
+; de comando (o modo silencioso, /S, usa só eles). Sem eles, só o Rust.
 Function .onInit
   ${GetParameters} $R0
   ; O espelho à mão: o GetOptions corta o valor no primeiro "/" (o "https:" da URL). Vai do
@@ -636,22 +570,14 @@ Function .onInit
   StrCmp $R2 " " 0 +2
   StrCpy $Mirror $Mirror -1
   aylis_mirror_parsed:
-  ClearErrors
-  ${GetOptions} $R0 "/PACOTES=" $R1
-  IfErrors aylis_packages_default
-  StrCpy $R1 ",$R1,"
-@PACKAGE_PARAMETER@  Goto aylis_packages_done
-  aylis_packages_default:
-@PACKAGE_DEFAULT@  aylis_packages_done:
-FunctionEnd
+@CHOICE_PARAMETERS@FunctionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecIde} "A IDE, o aylis-host (projetos em Python e nas outras linguagens), o aylis-tool e as fontes e ícones."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecRust} "O código do aylis: os projetos em Rust compilam contra ele. Precisa do Rust (rustup) instalado."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecClients} "Os clientes do protocolo em TypeScript, C#, Java, Go, C++ e Free Pascal."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecDocs} "A documentação do Aylis e os esquemas JSON dos forms."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecIde} "A IDE, o código do Aylis, a documentação e o Rust (o compilador, o Visual C++, o depurador e o servidor de linguagem): sem ele o Aylis não funciona."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecLanguages} "Programar os eventos em outras linguagens: cada uma marcada vem pronta para executar e depurar."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecTargets} "Publicar para outras plataformas além do Windows."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Um atalho da IDE na área de trabalho."
-@PACKAGE_DESCRIPTIONS@!insertmacro MUI_FUNCTION_DESCRIPTION_END
+@CHOICE_DESCRIPTIONS@!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "Uninstall"
   ; Sem a linha de cada arquivo na lista (veja a seção IDE): com a pasta de compilação são
@@ -698,28 +624,32 @@ const README: &str = "Aylis IDE
 
   aylis-ide       a IDE
   aylis-host      roda os projetos em Python e nas outras linguagens (TypeScript, C#, Java, Go, C++, Free Pascal)
-  aylis-tool      Executar/Publicar na linha de comando (aylis-tool check | run | publish)
-  aylis\\          fontes e ícones; com \"Projetos em Rust\", o código do aylis (os projetos compilam contra ele)
+  aylis-tool      Executar/Publicar na linha de comando (aylis-tool check | run | publish | setup)
+  aylis\\          o código do Aylis (os projetos em Rust compilam contra ele), os clientes das
+                  linguagens, a documentação, as fontes e os ícones
 
-Para projetos em Rust é preciso o Rust instalado (rustup); a IDE confere o ambiente antes
-de executar. As compilações ficam em %USERPROFILE%\\.aylis\\target (outra pasta nas Opções da IDE),
+O Rust sempre se instala: sem ele o Aylis não funciona. As outras linguagens e as plataformas
+(Android, navegador) marcadas no instalador vêm prontas (o compilador ou o interpretador, o
+depurador e o servidor de linguagem); as que faltarem se configuram depois na IDE
+(Ferramentas -> Configurar linguagens) ou com: aylis-tool setup <linguagem>
+
+As compilações ficam em %USERPROFILE%\\.aylis\\target (outra pasta nas Opções da IDE),
 compartilhadas entre os projetos; o que nenhum projeto usa mais sai sozinho (ou com
 aylis-tool clean).
 
 Pacotes de ferramentas
-  O instalador mostra, depois dos componentes, os pacotes (o Rust, o JDK, o SDK e o NDK do
-  Android, o Python, o Node, o .NET, o Go, os depuradores...). Os marcados se instalam no fim,
-  em %USERPROFILE%\\.aylis\\tools, da pasta \"pacotes\" ao lado do instalador ou do espelho
-  informado (o endereço HTTPS de um pacotes.json; fica gravado nas Opções da IDE). Cada
-  arquivo é conferido com o SHA-256 que o Aylis traz. O que falhar se instala depois, na IDE
-  (Ferramentas -> Pacotes) ou com: aylis-tool packages install <nome>
+  O que se instala vem dos pacotes do Aylis (em %USERPROFILE%\\.aylis\\tools): da pasta
+  \"pacotes\" ao lado do instalador, das origens das Opções da IDE (aba Pacotes) ou do espelho
+  padrão. Cada arquivo é conferido com o SHA-256 que o Aylis traz. O que não tem pacote vem
+  pelo winget.
 
   Sem janelas (modo silencioso):
-    aylis-ide-<versão>-setup.exe /S /PACOTES=rust,jdk /ESPELHO=https://.../pacotes.json /D=C:\\pasta
-  /PACOTES= recebe os nomes separados por vírgula, sem espaços (aylis-tool packages list
-  mostra os nomes), ou all. Sai com o código 3 se a IDE foi instalada e algum pacote não.
+    aylis-ide-<versão>-setup.exe /S /LINGUAGENS=python,go /PLATAFORMAS=android,web /D=C:\\pasta
+  Os nomes separados por vírgula, sem espaços, ou all (linguagens: python, typescript, csharp,
+  java, go, cpp, pascal; plataformas: android, web). /ESPELHO=https://... acrescenta um
+  espelho. Sai com o código 3 se a IDE foi instalada e algo não ficou pronto.
 
-  O kit offline (para distribuir tudo junto, numa pasta de rede ou no Google Drive):
+  O kit offline (para distribuir tudo junto, numa pasta de rede ou num pendrive):
     aylis-tool installer-ide --with-packages rust,jdk      (ou all)
   grava o setup e, ao lado dele, a pasta \"pacotes\" com os arquivos e as dependências. Copie
   os dois juntos; quem roda o setup instala sem internet.
@@ -732,84 +662,84 @@ Pacotes de ferramentas
 mod tests {
     use super::*;
 
-    #[test]
-    fn the_installed_workspace_leaves_the_big_examples_out() {
-        let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../../Cargo.toml")).unwrap();
-        assert!(manifest.contains("examples/IBGE/rust"), "o repositório tem o IBGE");
-        let installed = without_examples(&manifest);
-        assert!(!installed.contains("examples/IBGE/rust"));
-        assert!(installed.contains("examples/Calculadora/rust"));
-        assert!(!installed.contains(", ,") && !installed.contains("[, "), "a lista continua válida");
-    }
-
-    /// Os exemplos vão sem o `generated/` (o Aylis refaz), e a cópia e a remoção não escrevem
-    /// uma linha por arquivo na lista de detalhes (era o que deixava a desinstalação lenta).
-    #[test]
-    fn the_script_leaves_generated_out_and_does_not_list_every_file() {
-        let root = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
-        let x = Path::new("x");
-        let text = script(root, x, x, x, x, x, "0.0.0");
-        let examples: Vec<&str> = text.lines().filter(|l| l.contains("File /r") && l.contains("\\examples\\")).collect();
-        assert!(examples.iter().any(|l| l.contains("Calculadora")), "{text}");
-        assert!(examples.iter().all(|l| l.contains("/x generated")), "{examples:#?}");
-        assert!(!text.lines().any(|l| l.contains("\\crates\"") && l.contains("/x generated")), "só nos exemplos");
-        let uninstall = &text[text.find("Section \"Uninstall\"").unwrap()..];
-        let quiet = uninstall.find("SetDetailsPrint textonly").expect("a remoção sem a lista");
-        assert!(quiet < uninstall.find("RMDir /r \"$INSTDIR\\aylis\"").unwrap() && quiet < uninstall.find("$PROFILE\\.aylis\\target").unwrap());
-        let install = &text[text.find("Section \"${TEXT_IDE}\"").unwrap()..];
-        assert!(install.find("SetDetailsPrint textonly").unwrap() < install.find("RMDir /r").unwrap());
-    }
-
     fn generated_script() -> String {
         let root = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
         let x = Path::new("x");
         script(root, x, x, x, x, x, "0.0.0")
     }
 
-    /// A página dos pacotes sai do manifesto embutido: uma seção desmarcada por pacote do
-    /// Windows, com o título e o tamanho, e nada sobra dos marcadores do modelo.
+    /// Nenhum exemplo vai: o workspace instalado não os lista (o cargo recusaria), e o script
+    /// não copia a pasta `examples` (só as páginas de referência dos componentes, em
+    /// `docs\referencia`).
     #[test]
-    fn the_script_has_a_page_with_the_manifest_packages() {
+    fn the_installer_leaves_the_examples_out() {
+        let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../../Cargo.toml")).unwrap();
+        assert!(manifest.contains("examples/Calculadora/rust"), "o repositório tem os exemplos");
+        let installed = without_examples(&manifest);
+        assert!(!installed.contains("examples/"), "{installed}");
+        assert!(installed.contains("\"crates/aylis-core\"") && installed.contains("\"crates/aylis\""));
+        assert!(!installed.contains(", ,") && !installed.contains("[, ") && !installed.contains(", ]"), "a lista continua válida");
+        assert!(installed.parse::<toml_edit::DocumentMut>().is_ok(), "{installed}");
         let text = generated_script();
-        assert!(!text.contains("@PACKAGE"), "marcador sem trocar");
-        let packages = installer_packages(&Manifest::embedded());
-        assert!(packages.iter().any(|p| p.name == "rust") && packages.iter().any(|p| p.name == "jdk"), "{packages:#?}");
-        for (i, p) in packages.iter().enumerate() {
-            let header = format!("Section /o \"{} ({} MB)\" SecPkg{i}", nsis_text(&p.title), p.size().div_ceil(1 << 20));
-            assert!(text.contains(&header), "falta {header}");
-            assert!(text.contains(&format!("!insertmacro AylisPackage \"{}\"", p.name)));
-            assert!(text.contains(&format!("\",{},\"", p.name)), "/PACOTES= reconhece {}", p.name);
-        }
-        // Duas páginas de componentes (a segunda só com os pacotes) e a do espelho.
-        assert_eq!(text.matches("!insertmacro MUI_PAGE_COMPONENTS").count(), 2);
-        assert!(text.contains("MUI_PAGE_CUSTOMFUNCTION_PRE AylisPackagesPre") && text.contains("Page custom AylisMirrorPage AylisMirrorLeave"));
-        assert!(text.contains("\"/PACOTES=\"") && text.contains("\"/ESPELHO=\""));
-        // O GetOptions cortaria a URL no primeiro "/" (sobrava "https:").
-        assert!(!text.contains("${GetOptions} $R0 \"/ESPELHO=\""));
-        // Os pacotes vêm depois de tudo copiado e do espelho gravado.
-        let size = text.find("Section \"-Tamanho\"").unwrap();
-        let mirror = text.find("Section \"-Espelho\"").unwrap();
-        let first = text.find("SecPkg0\n").unwrap();
-        let failed = text.find("Section \"-Pacotes que falharam\"").unwrap();
-        assert!(size < mirror && mirror < first && first < failed);
-        // Só o Rust pode vir marcado (o kit offline), conferindo cada arquivo dele.
-        let rust = Manifest::embedded().package_for("rust", PLATFORM).unwrap();
-        for f in &rust.files {
-            assert!(text.contains(&format!("IfFileExists \"$EXEDIR\\pacotes\\{}\"", f.name)));
-        }
+        let copies: Vec<&str> = text.lines().filter(|l| l.trim_start().starts_with("File")).collect();
+        assert!(copies.iter().all(|l| !l.contains("\\examples\\") || l.contains("\\componentes\\*.md")), "{copies:#?}");
+        assert!(text.contains("SetOutPath \"$INSTDIR\\aylis\\docs\\referencia\""));
+        assert!(!text.contains("SetOutPath \"$INSTDIR\\aylis\\examples\""));
     }
 
-    /// O `packages install` roda direto o aylis-tool instalado (sem `cmd` nem shell), com a
-    /// pasta `pacotes` ao lado do setup, e a falha não desfaz a IDE.
+    /// Uma página só: a IDE com o Rust (obrigatória), as outras linguagens e as plataformas
+    /// em grupos, desmarcadas, cada uma rodando o `aylis-tool setup` dela; o Rust sempre roda.
     #[test]
-    fn the_script_installs_the_packages_without_a_shell() {
+    fn the_page_groups_the_languages_and_the_platforms() {
+        let text = generated_script();
+        assert!(!text.contains('@') || !text.lines().any(|l| l.contains("@LANGUAGE") || l.contains("@TARGET") || l.contains("@CHOICE") || l.contains("@CODE@")), "marcador sem trocar");
+        assert_eq!(text.matches("!insertmacro MUI_PAGE_COMPONENTS").count(), 1, "uma página de componentes");
+        assert!(!text.contains("Page custom"), "sem a página do espelho");
+        let ide = &text[text.find("Section \"Aylis IDE e Rust (obrigatório)\" SecIde").expect("a IDE com o Rust")..];
+        assert!(ide[..ide.find("SectionEnd").unwrap()].contains("SectionIn RO"));
+        assert!(text.contains("Section \"-Rust\"\n  !insertmacro AylisSetup \"rust\" \"Rust\""), "o Rust sempre");
+        let group = &text[text.find("SectionGroup /e \"Outras linguagens\"").unwrap()..];
+        let group = &group[..group.find("SectionGroupEnd").unwrap()];
+        for language in languages() {
+            assert!(group.contains(&format!("Section /o \"{}\" SecLang_{}\n  !insertmacro AylisSetup \"{}\"", nsis_text(language.name()), language.folder(), language.folder())), "{}", language.name());
+        }
+        assert!(!group.contains("\"Rust\""), "o Rust não é opção");
+        let targets = &text[text.find("SectionGroup /e \"Plataformas de destino\"").unwrap()..];
+        assert!(targets.contains("!insertmacro AylisSetup \"rust --target android\"") && targets.contains("!insertmacro AylisSetup \"rust --target web\""));
+        // A ordem: copiar, as origens, o Rust, as linguagens, as plataformas, o que falhou.
+        let order = ["SecIde", "Section \"-Origens\"", "Section \"-Rust\"", "\"Outras linguagens\"", "\"Plataformas de destino\"", "Section \"-O que não se configurou\""];
+        let at: Vec<usize> = order.iter().map(|o| text.find(o).unwrap_or_else(|| panic!("falta {o}"))).collect();
+        assert!(at.windows(2).all(|w| w[0] < w[1]), "{at:?}");
+        // A linha de comando marca pelos nomes.
+        assert!(text.contains("\"/LINGUAGENS=\"") && text.contains("\"/PLATAFORMAS=\"") && text.contains("\",python,\"") && text.contains("\",android,\""));
+        assert!(!text.contains("${GetOptions} $R0 \"/ESPELHO=\""), "o GetOptions cortaria a URL");
+    }
+
+    /// O `setup` roda direto o aylis-tool instalado (sem `cmd` nem shell), a pasta `pacotes`
+    /// ao lado do instalador vale pela variável, e a falha não desfaz a IDE.
+    #[test]
+    fn the_script_sets_up_without_a_shell() {
         let text = generated_script();
         let exec: Vec<&str> = text.lines().filter(|l| l.contains("nsExec::")).collect();
-        assert!(exec.iter().any(|l| l.contains("'\"$INSTDIR\\aylis-tool.exe\" packages install ${NAME} --from \"$EXEDIR\\pacotes\" --utf16-output'")), "{exec:#?}");
+        assert!(exec.iter().any(|l| l.contains("'\"$INSTDIR\\aylis-tool.exe\" setup ${ARGS} --utf16-output'")), "{exec:#?}");
         assert!(exec.iter().any(|l| l.contains("packages sources --add-mirror \"$Mirror\"")));
+        assert!(text.contains("SetEnvironmentVariable(t \"AYLIS_PACKAGE_DIR\", t \"$EXEDIR\\pacotes\")"));
         assert!(!text.to_lowercase().contains("cmd /c") && !text.to_lowercase().contains("cmd.exe") && !text.contains("powershell"));
-        let failed = &text[text.find("Section \"-Pacotes que falharam\"").unwrap()..];
-        assert!(failed.contains("Ferramentas → Pacotes") && failed.contains("/SD IDOK") && !failed[..failed.find("SectionEnd").unwrap()].contains("Abort"));
+        let failed = &text[text.find("Section \"-O que não se configurou\"").unwrap()..];
+        let failed = &failed[..failed.find("SectionEnd").unwrap()];
+        assert!(failed.contains("Configurar linguagens") && failed.contains("/SD IDOK") && failed.contains("SetErrorLevel 3") && !failed.contains("Abort"));
+    }
+
+    /// A cópia e a remoção não escrevem uma linha por arquivo na lista de detalhes (era o que
+    /// deixava a desinstalação lenta).
+    #[test]
+    fn the_script_does_not_list_every_file() {
+        let text = generated_script();
+        let uninstall = &text[text.find("Section \"Uninstall\"").unwrap()..];
+        let quiet = uninstall.find("SetDetailsPrint textonly").expect("a remoção sem a lista");
+        assert!(quiet < uninstall.find("RMDir /r \"$INSTDIR\\aylis\"").unwrap() && quiet < uninstall.find("$PROFILE\\.aylis\\target").unwrap());
+        let install = &text[text.find("SecIde").unwrap()..];
+        assert!(install.find("SetDetailsPrint textonly").unwrap() < install.find("RMDir /r").unwrap());
     }
 
     /// O desinstalador leva os pacotes e o cache do Aylis, quieto como o resto, e a pasta

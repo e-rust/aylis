@@ -30,7 +30,12 @@ impl PropEnum for ComboArrow {
 use crate::leaf_control;
 
 const ROW: f32 = 28.0;
-const MAX_ROWS: usize = 10;
+/// As opções à vista na lista aberta, sem `drop_down_count` (o `DropDownCount` do Delphi).
+const DEFAULT_ROWS: i64 = 10;
+/// A largura da barra de rolagem da lista aberta.
+const BAR: f32 = 6.0;
+/// A folga da lista até a borda do form.
+const EDGE: f32 = 4.0;
 /// O lugar da seta, à direita do texto.
 pub const ARROW_ROOM: f32 = 18.0;
 
@@ -38,7 +43,9 @@ pub const ARROW_ROOM: f32 = 18.0;
 ///
 /// - `items`: opções separadas por `;` (ou pela API, [`ComboBox::set_items`]);
 /// - `item_index`: opção escolhida (-1 = nenhuma); `on_change` dispara ao mudar;
-/// - clique ou Espaço/Enter abrem a lista; setas trocam a opção com a lista fechada.
+/// - clique ou Espaço/Enter abrem a lista; setas trocam a opção com a lista fechada;
+/// - `drop_down_count`: quantas opções a lista aberta mostra de uma vez (10); com mais, ela
+///   rola (roda, dedo, a barra à direita) e, sem lugar no form, encolhe para caber.
 /// - `values`: o código de cada opção (separados por `;`, como `items`); `value` lê e escolhe
 ///   pelo código (sem `values`, pelo texto). Ligado a um dataset, `items` e `values` vêm da
 ///   lista e `value` grava o código (o `TDBLookupComboBox`).
@@ -62,6 +69,9 @@ pub struct ComboBox {
     pub groups: String,
     /// As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem.
     pub disabled_items: String,
+    /// Quantas linhas a lista aberta mostra de uma vez (o `DropDownCount` do Delphi; mínimo 1).
+    /// Com mais opções, ela rola; sem lugar no form, mostra menos.
+    pub drop_down_count: i64,
     popup: Option<ComponentId>,
 }
 
@@ -69,7 +79,7 @@ impl Default for ComboBox {
     fn default() -> Self {
         let mut base = ControlBase::new(160.0, 32.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, groups: String::new(), disabled_items: String::new(), popup: None }
+        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, groups: String::new(), disabled_items: String::new(), drop_down_count: DEFAULT_ROWS, popup: None }
     }
 }
 
@@ -191,18 +201,21 @@ impl ComboBox {
         let selected = rows.iter().position(|r| r.item.is_some_and(|i| i as i64 == self.item_index));
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.base.bounds());
-        let height = ROW * count.min(MAX_ROWS) as f32 + 4.0;
         let root_height = ctx.ui.bounds(root).map_or(f32::MAX, |b| b.height);
-        // Abre para cima se não couber embaixo.
-        let top = if rect.bottom() + height > root_height && rect.y - height > 0.0 { rect.y - height - 2.0 } else { rect.bottom() + 2.0 };
+        let wanted = count.min(self.drop_down_count.max(1) as usize);
+        let (top, visible) = drop_place(rect, root_height, wanted);
+        let height = popup_height(visible);
         let popup = ComboPopup {
             base: ControlBase::new(rect.width, height),
             owner: ctx.id,
             items: rows,
             selected,
             hovered: None,
-            first: selected.unwrap_or(0).saturating_sub(MAX_ROWS - 1),
+            first: selected.unwrap_or(0).saturating_sub(visible - 1),
+            visible,
             touch_rest: 0.0,
+            dragging: None,
+            bar_press: false,
         };
         let id = ctx.ui.add(popup, root);
         if let Some(cb) = ctx.ui.control_mut(id) {
@@ -238,7 +251,8 @@ impl Component for ComboBox {
         arrow: ComboArrow => "Appearance",
         sensitive: bool => "Behavior",
         groups: String => "Data",
-        disabled_items: String => "Data";
+        disabled_items: String => "Data",
+        drop_down_count: i64 => "Behavior";
         events: on_change;
         computed: value: String => value / set_value
     }
@@ -346,6 +360,32 @@ impl Component for ComboBox {
     }
 }
 
+/// A altura da lista aberta com `rows` linhas.
+fn popup_height(rows: usize) -> f32 {
+    ROW * rows as f32 + 4.0
+}
+
+/// Onde a lista abre (o topo, no form) e quantas linhas mostra, para um ComboBox em `rect`
+/// (no form) num form de altura `form_height`, querendo `wanted` linhas: embaixo, se couber;
+/// senão em cima, se couber; senão do lado com mais lugar, com as linhas que couberem (ao menos
+/// uma).
+fn drop_place(rect: RectF, form_height: f32, wanted: usize) -> (f32, usize) {
+    let below = form_height - rect.bottom() - 2.0 - EDGE;
+    let above = rect.y - 2.0 - EDGE;
+    let height = popup_height(wanted);
+    let fit = |room: f32| (((room - 4.0) / ROW).floor().max(1.0) as usize).min(wanted);
+    if height <= below {
+        (rect.bottom() + 2.0, wanted)
+    } else if height <= above {
+        (rect.y - height - 2.0, wanted)
+    } else if below >= above {
+        (rect.bottom() + 2.0, fit(below))
+    } else {
+        let rows = fit(above);
+        (rect.y - popup_height(rows) - 2.0, rows)
+    }
+}
+
 /// Uma linha da lista aberta: uma opção (com o índice dela) ou a cabeça de um grupo.
 struct PopupRow {
     item: Option<usize>,
@@ -361,14 +401,51 @@ struct ComboPopup {
     selected: Option<usize>,
     hovered: Option<usize>,
     first: usize,
+    /// As linhas à vista (o `drop_down_count`, ou menos se o form não tem lugar).
+    visible: usize,
     /// Arrasto do dedo ainda não convertido em linhas.
     touch_rest: f32,
+    /// A barra sendo arrastada: onde o polegar foi pego (y dentro dele).
+    dragging: Option<f32>,
+    /// O último aperto foi na barra: o clique que vem dele não escolhe a linha.
+    bar_press: bool,
 }
 
 impl ComboPopup {
     fn index_at(&self, y: f32) -> Option<usize> {
-        let i = self.first + ((y - 2.0) / ROW).max(0.0) as usize;
-        (i < self.items.len()).then_some(i)
+        let row = ((y - 2.0) / ROW).max(0.0) as usize;
+        let i = self.first + row;
+        (row < self.visible && i < self.items.len()).then_some(i)
+    }
+
+    /// A primeira linha mais alta possível (a lista no fim).
+    fn max_first(&self) -> usize {
+        self.items.len().saturating_sub(self.visible)
+    }
+
+    /// O polegar da barra de rolagem (no controle), se há mais linhas que as à vista.
+    fn thumb(&self) -> Option<RectF> {
+        let total = self.items.len();
+        if total <= self.visible {
+            return None;
+        }
+        let b = self.base.bounds();
+        let track = b.height - 4.0;
+        let len = (track * self.visible as f32 / total as f32).max(20.0).min(track);
+        let at = 2.0 + (track - len) * self.first as f32 / self.max_first().max(1) as f32;
+        Some(RectF::new(b.width - BAR - 3.0, at, BAR, len))
+    }
+
+    /// Põe o centro do polegar em `y` (no controle): a primeira linha proporcional. Devolve se
+    /// mudou.
+    fn drag_to(&mut self, y: f32) -> bool {
+        let Some(thumb) = self.thumb() else { return false };
+        let track = self.base.bounds().height - 4.0;
+        let fraction = ((y - 2.0 - thumb.height / 2.0) / (track - thumb.height).max(1.0)).clamp(0.0, 1.0);
+        let first = (fraction * self.max_first() as f32).round() as usize;
+        let changed = first != self.first;
+        self.first = first;
+        changed
     }
 }
 
@@ -386,7 +463,43 @@ impl Component for ComboPopup {
         true
     }
 
+    // A barra: pegar o polegar e arrastar (na calha, fora do polegar, pula para lá).
+    fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        self.bar_press = false;
+        let Some(thumb) = self.thumb() else { return };
+        if event.position.x < thumb.x - 3.0 {
+            return;
+        }
+        self.bar_press = true;
+        if (thumb.y..thumb.bottom()).contains(&event.position.y) {
+            self.dragging = Some(event.position.y - thumb.y);
+        } else {
+            self.dragging = Some(thumb.height / 2.0);
+            self.drag_to(event.position.y);
+        }
+        ctx.repaint();
+        ctx.set_handled();
+    }
+
+    fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, _event: &PointerEvent) {
+        if self.dragging.take().is_some() {
+            ctx.repaint();
+        }
+    }
+
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some(grab) = self.dragging {
+            if self.drag_to(event.position.y - grab + self.thumb().map_or(0.0, |t| t.height / 2.0)) {
+                ctx.repaint();
+            }
+            return;
+        }
+        if self.thumb().is_some_and(|t| event.position.x >= t.x - 3.0) {
+            if self.hovered.take().is_some() {
+                ctx.repaint();
+            }
+            return;
+        }
         let hovered = self.index_at(event.position.y);
         if hovered != self.hovered {
             self.hovered = hovered;
@@ -395,7 +508,7 @@ impl Component for ComboPopup {
     }
 
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::WheelEvent) {
-        let max = self.items.len().saturating_sub(MAX_ROWS);
+        let max = self.max_first();
         // Dedo: a lista anda junto (uma linha a cada ROW); roda: uma linha por passo.
         let step = if event.touch {
             self.touch_rest -= event.delta.y;
@@ -413,6 +526,10 @@ impl Component for ComboPopup {
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
+        // Soltar a barra não escolhe nada.
+        if self.bar_press {
+            return;
+        }
         // A cabeça de um grupo e a opção desligada não escolhem nem fecham.
         let row = self.hovered.and_then(|h| self.items.get(h));
         if row.is_some_and(|r| !r.enabled) {
@@ -431,8 +548,11 @@ impl Component for ComboPopup {
         canvas.stroke_rect(r, 6.0, &Stroke::new(theme.color("border"), 1.0));
         let mut text = ctx.text_style();
         text.color = theme.color("text");
-        for (row, i) in (self.first..self.items.len()).take(MAX_ROWS).enumerate() {
-            let line = RectF::new(r.x + 2.0, r.y + 2.0 + row as f32 * ROW, r.width - 4.0, ROW);
+        // Com a barra, as linhas param antes dela.
+        let thumb = self.thumb();
+        let room = if thumb.is_some() { BAR + 4.0 } else { 0.0 };
+        for (row, i) in (self.first..self.items.len()).take(self.visible).enumerate() {
+            let line = RectF::new(r.x + 2.0, r.y + 2.0 + row as f32 * ROW, r.width - 4.0 - room, ROW);
             let item = &self.items[i];
             if item.item.is_none() {
                 let mut head = text.clone();
@@ -453,6 +573,10 @@ impl Component for ComboPopup {
             // Num grupo, as opções ficam recuadas sob a cabeça.
             let indent = if self.items.iter().any(|r| r.item.is_none()) { 18.0 } else { 10.0 };
             canvas.draw_text(&item.text, RectF::new(line.x + indent, line.y, line.width - indent - 10.0, line.height), &t);
+        }
+        if let Some(thumb) = thumb {
+            let alpha = if self.dragging.is_some() { 0.6 } else { 0.35 };
+            canvas.fill_rect(thumb.offset(r.x, r.y), BAR / 2.0, &Brush::Solid(theme.color("text_muted").with_opacity(alpha)));
         }
     }
 }

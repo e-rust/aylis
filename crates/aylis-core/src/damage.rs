@@ -74,18 +74,39 @@ impl Ui {
         if self.overlay_users.borrow().contains(&id) || !self.open_forms().contains(&root) || self.flips_content(id) {
             return None;
         }
-        let mut shift = crate::PointF::ZERO;
+        // O deslocamento de cada um da cadeia está nas coordenadas do pai dele: vale a escala
+        // dos ancestrais desse pai (`scale`).
+        let mut chain: Vec<(crate::PointF, f32)> = Vec::new();
         let mut current = Some(id);
         while let Some(c) = current {
             let cb = self.control(c)?;
             if cb.rotation() != 0.0 {
                 return None;
             }
-            let t = cb.translate();
-            shift = crate::PointF::new(shift.x + t.x, shift.y + t.y);
+            chain.push((cb.translate(), cb.scale()));
             current = self.parent(c);
         }
+        let mut shift = crate::PointF::ZERO;
+        let mut factor = 1.0;
+        for i in (0..chain.len()).rev() {
+            let (t, s) = chain[i];
+            shift = crate::PointF::new(shift.x + t.x * factor, shift.y + t.y * factor);
+            factor *= s;
+        }
         self.absolute_rect(id).map(|r| r.offset(shift.x, shift.y))
+    }
+
+    /// O controle ou algum ancestral tem `scale` (as coordenadas de dentro dele não são as do
+    /// form em tamanho).
+    fn scaled(&self, id: ComponentId) -> bool {
+        let mut current = Some(id);
+        while let Some(c) = current {
+            if self.control(c).is_some_and(|cb| cb.scale() != 1.0) {
+                return true;
+            }
+            current = self.parent(c);
+        }
+        false
     }
 
     /// Onde os descendentes de `id` desenharam na última pintura: quem se desloca leva os
@@ -131,6 +152,10 @@ impl Ui {
     /// ancestrais e pelo form), se nada é pintado por cima dele e se o fundo do controle é
     /// opaco e parado. `None`: repinta.
     fn movable(&self, root: ComponentId, id: ComponentId, rect: RectF) -> Option<RectF> {
+        // Com escala, os pixels não andam o mesmo que o conteúdo: repinta.
+        if self.scaled(id) {
+            return None;
+        }
         let abs = self.damage_rect(id)?;
         let entry = self.entry(id)?;
         let cb = self.control(id)?;
@@ -237,6 +262,8 @@ impl Ui {
             }
             self.bump_versions(id, true);
             match self.damage_rect(id) {
+                // A parte está nas coordenadas de dentro dele: com escala, o controle inteiro.
+                Some(abs) if self.scaled(id) => areas.push(self.extent(id, abs).unwrap_or(abs)),
                 Some(abs) => areas.push(rect.offset(abs.x, abs.y).inflate(EDGE)),
                 None => whole = true,
             }
@@ -285,6 +312,7 @@ impl Ui {
                 }
                 Some(r) => areas.push(r),
                 None => match self.damage_rect(id) {
+                    Some(abs) if self.scaled(id) => areas.push(self.extent(id, abs).unwrap_or(abs)),
                     Some(abs) => areas.push(rect.offset(abs.x, abs.y).inflate(EDGE)),
                     None => whole = true,
                 },
@@ -305,6 +333,55 @@ impl Ui {
             return FrameDamage::Whole;
         }
         FrameDamage::Parts { moves, areas }
+    }
+
+    /// Os quadros pedidos por hora ([`PaintCtx::request_frame_at`](crate::PaintCtx)) que já
+    /// venceram em `now`: cada controle que pediu é marcado ([`Ui::damage`]), e só ele é
+    /// repintado. Devolve se marcou algum (sem nenhum, a plataforma faz como antes).
+    pub fn take_due_frames(&mut self, now: f64) -> bool {
+        let due: Vec<ComponentId> = {
+            let mut timed = self.timed_frames.borrow_mut();
+            let due: Vec<ComponentId> = timed.iter().filter(|(_, t)| **t <= now).map(|(id, _)| *id).collect();
+            for id in &due {
+                timed.remove(id);
+            }
+            due
+        };
+        let mut any = false;
+        for id in due {
+            if self.contains(id) {
+                self.damage(id);
+                any = true;
+            }
+        }
+        any
+    }
+
+    /// Das janelas (`windows`, os forms delas), as que têm o que pintar no próximo quadro.
+    /// Um quadro de câmera num `VideoPlayer` repinta só a janela dele, e não as outras
+    /// abertas (antes, todas, e cada uma inteira). Na dúvida, todas: o layout por refazer, uma
+    /// animação, um [`Ui::request_repaint`] (que não diz onde) ou uma marca num form que não é
+    /// janela (o designer da IDE, pintado dentro dela).
+    pub fn forms_to_paint(&self, windows: &[ComponentId]) -> Vec<ComponentId> {
+        if self.layout_dirty || self.is_animating() {
+            return windows.to_vec();
+        }
+        let mut marked: std::collections::HashSet<ComponentId> = self.dirty_forms.iter().copied().collect();
+        let ids = self.frame_ids.borrow();
+        let placed = self.placed_ids.borrow();
+        let parts = self.part_ids.borrow();
+        let scrolls = self.scroll_moves.borrow();
+        let all = ids.iter().chain(placed.iter()).copied().chain(parts.iter().map(|(id, _)| *id)).chain(scrolls.iter().map(|(id, _, _)| *id));
+        for id in all {
+            if self.contains(id) {
+                marked.insert(self.root_of(id));
+            }
+        }
+        if marked.iter().any(|root| !windows.contains(root)) {
+            return windows.to_vec();
+        }
+        let epoch = self.damage_epoch;
+        windows.iter().copied().filter(|w| marked.contains(w) || self.painted_epoch.get(w) != Some(&epoch)).collect()
     }
 
     /// A área a repintar do form `root` na próxima pintura (nas coordenadas dele), num

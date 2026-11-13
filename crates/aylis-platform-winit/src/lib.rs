@@ -978,6 +978,28 @@ impl aylis_core::platform::OffscreenService for SkiaOffscreen {
         let (w, h) = ((width as f32 * scale).ceil() as u32, (height as f32 * scale).ceil() as u32);
         aylis_skia::SkiaRenderer::new().render_png(w, h, scale, background, |canvas| paint(canvas))
     }
+
+    fn render_area_rgba(
+        &self,
+        width: u32,
+        height: u32,
+        background: aylis_core::Color,
+        over: Option<(&[u8], aylis_core::RectF)>,
+        paint: &mut dyn FnMut(&mut dyn aylis_core::Canvas),
+    ) -> Option<Vec<u8>> {
+        // O Skia pinta em `0xAARRGGBB` (BGRA lido como u32).
+        let mut pixels: Vec<u32> = match over {
+            Some((previous, _)) if previous.len() == (width * height * 4) as usize => {
+                previous.chunks_exact(4).map(|p| 0xFF00_0000 | (p[0] as u32) << 16 | (p[1] as u32) << 8 | p[2] as u32).collect()
+            }
+            _ => vec![0; (width * height) as usize],
+        };
+        let area = over.map(|(_, a)| a);
+        if !aylis_skia::SkiaRenderer::new().render_area_to_pixels(&mut pixels, width, height, 1.0, background, area, |canvas| paint(canvas)) {
+            return None;
+        }
+        Some(pixels.iter().flat_map(|&x| [(x >> 16) as u8, (x >> 8) as u8, x as u8, 255]).collect())
+    }
 }
 
 #[cfg(native_d2d)]
@@ -989,6 +1011,17 @@ impl aylis_core::platform::OffscreenService for D2dOffscreen {
         let (w, h) = ((width as f32 * scale).ceil() as u32, (height as f32 * scale).ceil() as u32);
         let rgba = aylis_d2d::D2dRenderer::new().ok()?.render_rgba(w, h, scale, background, |canvas| paint(canvas))?;
         aylis_d2d::encode_png(&rgba, w, h)
+    }
+
+    fn render_area_rgba(
+        &self,
+        width: u32,
+        height: u32,
+        background: aylis_core::Color,
+        over: Option<(&[u8], aylis_core::RectF)>,
+        paint: &mut dyn FnMut(&mut dyn aylis_core::Canvas),
+    ) -> Option<Vec<u8>> {
+        aylis_d2d::D2dRenderer::new().ok()?.render_area_rgba(width, height, 1.0, background, over, |canvas| paint(canvas))
     }
 }
 
@@ -2707,7 +2740,12 @@ impl App {
         if self.frame_due().is_some() {
             return; // o limite de FPS ainda não deixa
         }
+        let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
+        let paint = self.ui.forms_to_paint(&forms);
         for index in 0..self.windows.len() {
+            if !paint.contains(&self.windows[index].form) {
+                continue;
+            }
             if let Err(e) = self.redraw(index) {
                 self.fail(event_loop, e);
                 return;
@@ -3011,9 +3049,15 @@ impl ApplicationHandler for App {
             // Só um quadro pedido na pintura (o cursor piscando) repinta; um timer vencido roda no
             // about_to_wait e pede repintura se mudar algo (repintar a cada tique de um timer
             // deixava o app parado gastando CPU).
-            let due = self.ui.next_paint_wake().is_some_and(|at| at <= self.started.elapsed().as_secs_f64() + 0.001);
+            let now = self.started.elapsed().as_secs_f64() + 0.001;
+            let due = self.ui.next_paint_wake().is_some_and(|at| at <= now);
             if due {
-                for w in &self.windows {
+                // Quem pediu o quadro desta hora (o vídeo, o cursor) é marcado, e só a janela
+                // dele pinta, só a área dele. Sem dono (um pedido de fora de um controle),
+                // todas, como antes.
+                let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
+                let paint = if self.ui.take_due_frames(now) { self.ui.forms_to_paint(&forms) } else { forms };
+                for w in self.windows.iter().filter(|w| paint.contains(&w.form)) {
                     w.window.request_redraw();
                 }
             }
@@ -3136,7 +3180,10 @@ impl ApplicationHandler for App {
             // Limite de FPS: espera a vez do próximo quadro.
             event_loop.set_control_flow(ControlFlow::WaitUntil(at));
         } else if self.ui.needs_repaint() {
-            for w in &self.windows {
+            // Só as janelas com o que pintar (um quadro de câmera não repinta as outras).
+            let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
+            let paint = self.ui.forms_to_paint(&forms);
+            for w in self.windows.iter().filter(|w| paint.contains(&w.form)) {
                 w.window.request_redraw();
             }
             event_loop.set_control_flow(ControlFlow::Wait);

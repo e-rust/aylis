@@ -19,14 +19,40 @@
           "layNestaPagina": {
             "visible": false
           },
-          "pnlLateral": {
-            "width": 220
+          "pnlTopo": {
+            "padding": [8, 10, 12, 10]
           },
-          "edtBusca": {
-            "width": 180
+          "btnMenu": {
+            "visible": true
           },
           "lblDocs": {
             "visible": false
+          },
+          "btnVoltar": {
+            "text": "Site",
+            "width": 56
+          },
+          "edtBusca": {
+            "align": "client",
+            "margins": [4, 2, 8, 2]
+          },
+          "pnlLateral": {
+            "visible": false,
+            "align": "client",
+            "padding": 12
+          },
+          "layConteudo": {
+            "visible": true,
+            "padding": [16, 12, 16, 8]
+          },
+          "layNavegacao": {
+            "height": 100
+          },
+          "btnAnterior": {
+            "align": "top"
+          },
+          "btnProxima": {
+            "align": "bottom"
           }
         }
       },
@@ -50,6 +76,17 @@
         "padding": [24, 10],
         "border_color": "#262A36",
         "children": [
+          {
+            "class": "Button",
+            "name": "btnMenu",
+            "icon": "material:menu",
+            "width": 40,
+            "align": "left",
+            "margins": [0, 2, 6, 2],
+            "visible": false,
+            "style": "flat",
+            "on_click": "alternar_menu"
+          },
           {
             "class": "Label",
             "name": "lblMarca",

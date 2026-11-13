@@ -259,7 +259,8 @@ impl CameraView {
                         f.queue.clear();
                         f.queue.push_back(frame);
                     }
-                    poster.post(|ui| ui.request_repaint());
+                    // Só a área desta câmera, e um aviso até a tela atender.
+                    crate::video::notify_frame(&frames, &poster, id);
                 }
             });
             match spawned {

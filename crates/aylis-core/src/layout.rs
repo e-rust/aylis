@@ -145,7 +145,8 @@ impl Ui {
 
     fn realign(&mut self, id: ComponentId, resized: &mut Vec<ComponentId>) {
         let Some(cb) = self.cb(id) else { return };
-        let size = cb.bounds.size();
+        // O espaço de dentro (com `scale`, o retângulo dividido pela escala).
+        let size = cb.inner_size();
         let full = RectF::from_size(size);
         let mut area = full.deflate(cb.padding()).deflate(cb.safe_area);
         let scales = (cb.text_scale, cb.spacing_scale);
@@ -172,7 +173,8 @@ impl Ui {
             if !self.cb(child).is_some_and(|cb| cb.visible() && cb.auto_size() && matches!(cb.align(), Align::Left | Align::Right | Align::MostLeft | Align::MostRight | Align::None)) {
                 continue;
             }
-            if let Some(w) = self.component(child).and_then(|c| c.auto_width(self, child)) {
+            let scale = self.cb(child).map_or(1.0, |cb| cb.scale());
+            if let Some(w) = self.component(child).and_then(|c| c.auto_width(self, child)).map(|w| w * scale) {
                 if let Some(cb) = self.cb_mut(child) {
                     let w = cb.clamp_width(w);
                     cb.set_measured_width(w);
@@ -317,7 +319,7 @@ impl Ui {
         } else if offset != crate::geometry::PointF::ZERO && self.parent(id).is_some() {
             // Um contêiner rolado cujo conteúdo encolheu (uma busca filtrou a lista): a
             // rolagem não passa do fim, senão o que sobrou fica acima da parte visível.
-            let size = self.cb(id).map_or(SizeF::new(0.0, 0.0), |cb| cb.bounds.size());
+            let size = self.cb(id).map_or(SizeF::new(0.0, 0.0), |cb| cb.inner_size());
             let clamped = crate::geometry::PointF::new(
                 offset.x.min((extent.width - size.width).max(0.0)).max(0.0),
                 offset.y.min((extent.height - size.height).max(0.0)).max(0.0),
@@ -383,6 +385,16 @@ impl Ui {
     /// mede ou, num contêiner, a soma dos filhos encaixados em cima e embaixo (sem nenhum, só
     /// o padding: uma lista vazia não ocupa lugar).
     fn auto_height_of(&self, id: ComponentId, width: f32) -> Option<f32> {
+        // Com `scale`, o conteúdo é medido no espaço de dentro e ocupa a escala vezes isso.
+        let scale = self.cb(id).map_or(1.0, |cb| cb.scale());
+        if scale != 1.0 {
+            return self.auto_height_inside(id, width / scale).map(|h| (h * scale).ceil());
+        }
+        self.auto_height_inside(id, width)
+    }
+
+    /// A altura do conteúdo de `id` na largura `width` (no espaço de dentro dele).
+    fn auto_height_inside(&self, id: ComponentId, width: f32) -> Option<f32> {
         if let Some(h) = self.component(id).and_then(|c| c.auto_height(self, id, width)) {
             return Some(h.ceil());
         }

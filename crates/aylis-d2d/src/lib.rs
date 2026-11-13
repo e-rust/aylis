@@ -808,13 +808,19 @@ pub struct GpuLink {
     luid: i64,
     /// O nome da placa de vídeo.
     adapter: String,
-    /// Texturas abertas (pelo id), com o último quadro em que foram usadas.
-    surfaces: HashMap<u64, (ID2D1Bitmap1, u64)>,
+    /// Texturas abertas (pelo id e pelo handle da textura), com a hora em que foram usadas
+    /// pela última vez.
+    surfaces: HashMap<(u64, isize), (ID2D1Bitmap1, std::time::Instant)>,
     fences: HashMap<isize, ID3D11Fence>,
     /// Cercas a marcar quando o quadro terminar (a textura foi lida).
     signals: Vec<(ID3D11Fence, u64)>,
     frame: u64,
 }
+
+/// Quanto tempo uma textura sem ser desenhada fica aberta no cache.
+const SURFACE_KEEP: std::time::Duration = std::time::Duration::from_secs(2);
+/// Quantas texturas abertas no máximo (as mais antigas saem antes).
+const SURFACE_MAX: usize = 64;
 
 impl GpuLink {
     fn fence(&mut self, handle: isize) -> Option<ID3D11Fence> {
@@ -835,8 +841,20 @@ impl GpuLink {
                 let _ = unsafe { ctx.Signal(&fence, value) };
             }
         }
-        let frame = self.frame;
-        self.surfaces.retain(|_, (_, used)| *used + 2 >= frame);
+        // A textura fica aberta enquanto for desenhada nos últimos segundos, e não só nos
+        // últimos 2 quadros: o vídeo gira várias texturas (até 12 por vídeo) e a tela pinta
+        // mais vezes do que a câmera manda quadros (89 contra 15), e cada textura saía do cache
+        // antes de voltar — o Direct2D reabria a textura a cada quadro de câmera (~8% da thread
+        // da interface num app com várias câmeras, 13/11). O teto limita a memória presa.
+        let now = std::time::Instant::now();
+        self.surfaces.retain(|_, (_, used)| now.duration_since(*used) < SURFACE_KEEP);
+        if self.surfaces.len() > SURFACE_MAX {
+            let mut ages: Vec<((u64, isize), std::time::Instant)> = self.surfaces.iter().map(|(k, (_, used))| (*k, *used)).collect();
+            ages.sort_by_key(|(_, used)| *used);
+            for (key, _) in ages.into_iter().take(self.surfaces.len() - SURFACE_MAX) {
+                self.surfaces.remove(&key);
+            }
+        }
         self.frame += 1;
     }
 }
@@ -1753,10 +1771,11 @@ impl D2dCanvas<'_> {
         let GpuSurface::D3D12 { id, texture, ready, ready_value, release, release_value, .. } = *surface else { return None };
         let dc: ID2D1DeviceContext = self.target.cast().ok()?;
         let link = self.gpu.as_deref_mut()?;
-        let frame = link.frame;
-        let bitmap = match link.surfaces.get_mut(&id) {
+        let now = std::time::Instant::now();
+        let key = (id, texture);
+        let bitmap = match link.surfaces.get_mut(&key) {
             Some((bitmap, used)) => {
-                *used = frame;
+                *used = now;
                 bitmap.clone()
             }
             None => unsafe {
@@ -1769,7 +1788,7 @@ impl D2dCanvas<'_> {
                     colorContext: std::mem::ManuallyDrop::new(None),
                 };
                 let bitmap = dc.CreateBitmapFromDxgiSurface(&shared, Some(&props)).ok()?;
-                link.surfaces.insert(id, (bitmap.clone(), frame));
+                link.surfaces.insert(key, (bitmap.clone(), now));
                 bitmap
             },
         };

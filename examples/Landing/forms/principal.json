@@ -69,7 +69,7 @@
           "pnlRodape": {
             "padding": [20, 24]
           },
-          "fluMenu": {
+          "btnExperimentar": {
             "visible": false
           },
           "grdLinguagens": {

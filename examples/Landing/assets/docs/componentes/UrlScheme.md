@@ -10,10 +10,10 @@ Um prefixo de URL próprio (meuapp://) que abre o app e entrega o endereço no o
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `scheme` | scheme | texto | O prefixo, sem `://` (`meuapp`): letras, números, `+`, `-` e `.`. |
+| `scheme` | Prefixo de URL | texto | O prefixo, sem `://` (`meuapp`): letras, números, `+`, `-` e `.`. |
 | `description` | Descrição | texto | O nome que o sistema mostra ao perguntar com que app abrir. |
 | `active` | Ativo | lógico |  |
-| `bring_to_front` | bring_to_front | lógico | Trazer a janela do form para a frente quando um link chega com o app aberto. |
+| `bring_to_front` | Trazer a janela para a frente | lógico | Trazer a janela do form para a frente quando um link chega com o app aberto. |
 
 ## Eventos
 

@@ -325,6 +325,110 @@ desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
   cai no winget/rustup quando não há origem; as páginas do instalador vistas na tela e o
   desinstalador numa máquina de teste.
 
+Quadros de câmera e a repintura (relatado em 13/11 por um app com várias câmeras e duas janelas;
+feito, sem commit; teste `aylis-media/tests/repaint.rs`):
+- Conferido no código: o `FrameSink::push_frame` (e o `CameraView`) pedia `request_repaint` a
+  cada quadro — a época do dano subia e todas as janelas repintavam inteiras —, com uma
+  mensagem por quadro para a thread da interface; o Direct2D soltava a textura não desenhada
+  nos últimos 2 quadros de tela, e o vídeo (até 12 texturas girando, 15 quadros de câmera
+  contra 89 de tela) a reabria a cada quadro; e uma janela sem marca própria, quando só outra
+  mudava, também pintava inteira (`take_frame` devolve `Whole` sem marca).
+- Agora: o quadro marca só o controle (`ui.damage`) e um aviso fica pendente até a tela atender
+  (`video::notify_frame`; 30 quadros com a tela ocupada viram 1 mensagem); o quadro pedido por
+  hora (`request_frame_at`: o vídeo tocando, o cursor) marca só quem pediu
+  (`Ui::take_due_frames`); a plataforma pede a pintura só das janelas com o que pintar
+  (`Ui::forms_to_paint`; na dúvida — layout, animação, `request_repaint`, marca num form sem
+  janela, como o designer da IDE — todas, como antes); o Direct2D mantém a textura aberta
+  enquanto ela for desenhada nos últimos 2 s, com teto de 64 e a chave pelo id e pelo handle.
+- Conferido: os testes de núcleo, mídia (o antigo `frames_pushed_from_another_thread_are_shown`
+  esperava uma mensagem por quadro e passou a esperar uma), Direct2D, pintura por parte, IDE e
+  telas da IDE; o `giant_screen` (relógio 6,1 ms contra a base 4,57, dentro do limite; a
+  máquina com uma IDE aberta), wasm e Android; o exemplo `video` com um MP4 a 30 quadros por
+  segundo, pela textura, sem pular. Não medido no app das câmeras (as ~950 mensagens por
+  segundo, os ~8% das texturas): falta o autor rodar o app.
+- Para quem cria componente ("o desenvolvimento de componentes está fácil ainda?" — "Sim"):
+  `Headless::check_partial_paint(nome, mudança)` (o mesmo teste das classes do Aylis, para o
+  componente do app) passa o componente pelo mouse, pelo foco, por um deslocamento e pela
+  mudança dada, compara a pintura só da área com a inteira e aponta o desenho que mudou sem
+  aviso (o `ctx.repaint()` que faltou); o `OffscreenService` ganhou `render_area_rgba` (o
+  Skia e o Direct2D). O guia (`docs/criar-componente.md`, e a cópia da Landing) diz o que
+  avisa sozinho (o que passa pelo `Ui`, inclusive o `ui.get_mut`) e o que não (o dado de fora,
+  o `on_frame`), e que o `request_frame_at` repinta só o próprio componente. Testes em
+  `crates/aylis/tests/headless.rs` (Skia e Direct2D).
+- **Escala de um componente com os filhos (`scale`, como o `Scale` do FMX)** (13/11; roteiro,
+  item 127). Propriedade nova do `ControlBase` (categoria Layout, 1 = normal, de 0,05 a 20): o
+  controle ocupa o mesmo retângulo no pai, e por dentro o espaço é o retângulo dividido pela
+  escala (`inner_size`). Acompanham: o layout dos filhos, o `auto_size` (medido dentro, vezes a
+  escala), o clique (`hit_node`, `local_point`), o `absolute_rect`, o `to_form` e o
+  `Ui::inner_scale` (o produto das escalas até o form), a pintura (`canvas.scale` depois da
+  rotação) e o dano (a parte e a rolagem por cópia dentro de um controle com escala viram o
+  controle inteiro). No `Form` vale como zoom da tela toda. O nome é `scale` porque `zoom` já é
+  do Chart, DocViewer, MapView, Model3D, PaintCanvas, ReportPreview e Form. Testes:
+  `crates/aylis-controls/tests/scale.rs` e o painel com escala no `check_partial_paint`
+  (`crates/aylis/tests/headless.rs`); `giant_screen` passou (relógio ~5 ms, base 4,57).
+  Falta conferir numa janela de verdade: as alças do designer, as listas que abrem (popups), o
+  cursor e o IME de texto dentro de um painel com escala, e a pintura no Canvas 2D do navegador
+  (só compilado).
+- **A documentação da Landing no celular** (13/11; roteiro, item 128). Pedido: "Documentação do
+  landing page não é responsiva para funcionar no smartphone". Antes, na vista `phone` do
+  `frmDocumentacao` o índice ficava à esquerda com 220 de largura e a página sobrava com ~100
+  (uma palavra por linha), e o "Próxima" saía por cima do índice. Agora, no celular:
+  - o índice sai da esquerda e vira um menu de tela inteira, aberto e fechado pelo botão novo
+    `btnMenu` do topo (`alternar_menu`); escolher uma página fecha o menu, e uma seção só abre na
+    árvore; a busca abre o menu com os achados, e escolher um fecha;
+  - no topo, a marca, a busca ocupando o meio e "Site" no lugar de "Voltar ao site";
+  - a página com a largura toda (margens de 16 e 12) e "Anterior" / "Próxima" um embaixo do
+    outro;
+  - fora do celular nada muda (a vista devolve o base ao sair, inclusive com o menu aberto).
+  Na página principal, a vista `phone` escondia o `fluMenu` inteiro, e o "Documentação" do topo
+  sumia (só restava o "Ver todos na documentação" lá embaixo); agora só o "Experimentar" some.
+  Teste `on_the_phone_the_index_is_a_full_screen_menu` (`examples/Landing/rust/tests/
+  documentacao.rs`) e a conferência do topo em `pagina.rs`. Conferido no navegador (o wasm
+  publicado, 375×812 emulado): o menu, a seção e a página. Falta: publicar a Landing e ver num
+  celular de verdade.
+- **O instalador da IDE mais simples** (13/11; roteiro, item 129). Pedido: "Simplificar as opções
+  do instalador, deve mostrar agrupado por linguagem/plataforma de destino, Rust deve sempre ter
+  [...] ao marcar uma linguagem deve instalar tudo pra ela funcionar bem, e o link da pasta do
+  meu drive não apareceu como provedor padrão [...] remover os projetos de exemplo".
+  - Uma página de componentes só (saíram a dos pacotes e a do espelho): "Aylis IDE e Rust
+    (obrigatório)", com o código do Aylis, os clientes e a documentação; os grupos "Outras
+    linguagens" (Python, TypeScript, C#, Java, Go, C++, Free Pascal) e "Plataformas de destino"
+    (Android, Navegador), desmarcados; e o atalho.
+  - O Rust sempre se configura, e cada linguagem ou plataforma marcada também, no fim, pelo
+    `aylis-tool setup` dela (o mesmo do "Configurar linguagens": compilador, Visual C++,
+    depurador, servidor de linguagem; no Android, JDK, SDK, NDK e cargo-ndk; no navegador, o alvo
+    wasm e o wasm-bindgen). O `setup` ganhou `--target android|web` (`setup::setup_targets`,
+    que nessas saídas só roda o que falta de fato e nada que abra janela sem pacote) e
+    `--utf16-output` (os acentos nos detalhes do instalador). O que não ficar pronto é dito no
+    fim (código de saída 3), com o caminho para refazer na IDE.
+  - Silencioso: `/LINGUAGENS=python,go|all`, `/PLATAFORMAS=android,web|all` e `/ESPELHO=` (no
+    lugar do `/PACOTES=`). A pasta `pacotes` ao lado do instalador vale pela variável
+    `AYLIS_PACKAGE_DIR` (sem ficar gravada nas Opções).
+  - O espelho padrão: a pasta do Drive (`settings::DEFAULT_PACKAGE_MIRROR`) vale enquanto
+    nada foi gravado em `package_mirrors`; apagada nas Opções, fica apagada (a lista vazia é
+    gravada). Antes, sem informar o espelho na página do instalador, nada era gravado (o
+    `tools.json` desta máquina não tinha espelho).
+  - Os exemplos não vão: o `Cargo.toml` instalado sai sem nenhum `examples/` nos membros. As
+    páginas de referência dos componentes (o `component_docs` do MCP) vão para
+    `aylis\docs\referencia`, onde o MCP procura primeiro.
+  - Testes em `installer.rs` (a página agrupada, o Rust sempre, sem shell, sem exemplos) e em
+    `settings.rs` (o espelho padrão). O instalador foi gerado; não foi rodado nesta máquina (ele
+    trocaria a instalação do autor). Falta: instalar numa máquina limpa (ou numa VM) com Python
+    e Android marcados e conferir que ficam prontos.
+- **ComboBox: quantas opções a lista mostra, a barra e o caber na tela** (13/11; roteiro, item
+  130). Pergunta: "O combobox tem scroll para os itens com possibilidade de definir quantos itens
+  deve exibir?". Rolava (roda, dedo, setas), mas eram 10 linhas fixas no código e sem barra.
+  Agora:
+  - `drop_down_count` (o `DropDownCount` do Delphi; padrão 10, mínimo 1), propriedade do
+    registro (JSON, Object Inspector, protocolo, clientes), com o rótulo traduzido;
+  - com mais opções que as à vista, uma barra fina à direita da lista (`text_muted` do tema):
+    o polegar se arrasta, um clique na calha pula para lá, e soltar não escolhe nem fecha;
+  - a lista abre embaixo se couber, senão em cima; sem lugar para todas as linhas pedidas em
+    nenhum dos lados, abre no lado com mais lugar e mostra as que couberem (`drop_place`).
+  Testes em `crates/aylis-controls/tests/combo_drop_down.rs` (as linhas, a roda, a barra
+  arrastada, o encolher e a barra pintada só quando rola). O catálogo e a página do ComboBox
+  na documentação foram refeitos.
+
 Ficam para depois:
 - T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
 - A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).

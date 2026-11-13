@@ -264,6 +264,12 @@ impl Panel {
     pub fn set_rotation(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "rotation", value)
     }
+    pub fn scale(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "scale").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_scale(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "scale", value)
+    }
     pub fn translate_x(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "translate_x").and_then(|v| v.to_f64().ok()).unwrap_or_default()
     }

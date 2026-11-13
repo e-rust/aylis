@@ -1,9 +1,10 @@
 {
   "revisions": {
-    "frmDocumentacao.abrir_achado": 2,
-    "frmDocumentacao.abrir_no": 1,
+    "frmDocumentacao.abrir_achado": 3,
+    "frmDocumentacao.abrir_no": 2,
+    "frmDocumentacao.alternar_menu": 1,
     "frmDocumentacao.anterior": 1,
-    "frmDocumentacao.buscar": 3,
+    "frmDocumentacao.buscar": 4,
     "frmDocumentacao.demo_mensagem": 1,
     "frmDocumentacao.form_show": 3,
     "frmDocumentacao.ir_para_titulo": 1,
@@ -20,6 +21,7 @@
     "rust": {
       "bindings": {
         "frmDocumentacao/btnAnterior.on_click": "anterior",
+        "frmDocumentacao/btnMenu.on_click": "alternar_menu",
         "frmDocumentacao/btnProxima.on_click": "proxima",
         "frmDocumentacao/btnVoltar.on_click": "voltar",
         "frmDocumentacao/edtBusca.on_change": "buscar",
@@ -38,11 +40,15 @@
       },
       "handlers": {
         "frmDocumentacao.abrir_achado": {
-          "hash": "v2:d2d22d8a7651e75b",
-          "seen": 2
+          "hash": "v2:93ab39bd0a89873a",
+          "seen": 3
         },
         "frmDocumentacao.abrir_no": {
-          "hash": "v2:f975f4ecc6177acf",
+          "hash": "v2:41e665cd0051d719",
+          "seen": 2
+        },
+        "frmDocumentacao.alternar_menu": {
+          "hash": "v2:7d3d8dfd73ce9f99",
           "seen": 1
         },
         "frmDocumentacao.anterior": {
@@ -50,8 +56,8 @@
           "seen": 1
         },
         "frmDocumentacao.buscar": {
-          "hash": "v2:e66c09b9a7e26672",
-          "seen": 3
+          "hash": "v2:ce3b88c3e12b8062",
+          "seen": 4
         },
         "frmDocumentacao.demo_mensagem": {
           "hash": "v2:a2623fd47dfa1878",
@@ -121,6 +127,7 @@
     "btnFaq",
     "btnGaleria",
     "btnLinguagens",
+    "btnMenu",
     "btnProxima",
     "btnRecursos",
     "btnVoltar",

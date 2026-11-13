@@ -33,7 +33,7 @@
 use crate::anim::Trigger;
 use crate::component::{Component, ComponentId};
 use crate::event::{EventArgs, EventCtx, Key, KeyEvent, PointerButton, PointerEvent, PointerKind, WheelEvent};
-use crate::geometry::{PointF, SizeF};
+use crate::geometry::{PointF, RectF, SizeF};
 use crate::platform::CursorShape;
 use crate::ui::Ui;
 
@@ -377,7 +377,9 @@ impl Ui {
             return None;
         }
         let b = cb.bounds();
-        let local = unrotate(cb, pos_in_parent - b.origin());
+        // No espaço de dentro (desfeitos o lugar, o giro e a escala).
+        let local = unscale(cb, unrotate(cb, pos_in_parent - b.origin()));
+        let b = RectF::from_size(cb.inner_size());
         let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < b.width && local.y < b.height;
         if cb.clip_children() && !inside {
             return None;
@@ -447,12 +449,12 @@ impl Ui {
             parent = self.parent(p);
         }
         let local = chain.iter().rev().fold(pos, |pt, &c| match self.cb(c) {
-            Some(cb) => unrotate(cb, pt - cb.bounds().origin()),
+            Some(cb) => unscale(cb, unrotate(cb, pt - cb.bounds().origin())),
             None => pt,
         });
         // Interface espelhada: o controle se desenha virado, então o mouse também vira.
         match self.cb(id).filter(|_| self.flips_content(id)) {
-            Some(cb) => PointF::new(cb.bounds().width - local.x, local.y),
+            Some(cb) => PointF::new(cb.inner_size().width - local.x, local.y),
             None => local,
         }
     }
@@ -1935,6 +1937,12 @@ impl Ui {
 
 /// Desfaz o giro do controle (em volta do centro) num ponto já relativo a ele: a pintura
 /// gira com `rotation`, e o clique tem de cair no mesmo lugar.
+/// Do retângulo do controle (já sem o lugar e o giro) para o espaço de dentro dele (`scale`).
+fn unscale(cb: &crate::component::ControlBase, local: PointF) -> PointF {
+    let s = cb.scale();
+    if s == 1.0 { local } else { PointF::new(local.x / s, local.y / s) }
+}
+
 fn unrotate(cb: &crate::component::ControlBase, local: PointF) -> PointF {
     let degrees = cb.rotation();
     if degrees == 0.0 {

@@ -1269,7 +1269,10 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             if !aylis_project::is_identifier(class) {
                 return Err("informe a classe (Button, Panel, Chart...)".into());
             }
-            let dir = std::path::PathBuf::from(aylis_project::codegen::aylis_root()).join("examples/Landing/assets/docs/componentes");
+            // Instalado, em `aylis\docs\referencia` (o instalador não leva os exemplos); no
+            // repositório, nas páginas da Landing.
+            let root = std::path::PathBuf::from(aylis_project::codegen::aylis_root());
+            let dir = [root.join("docs/referencia"), root.join("examples/Landing/assets/docs/componentes")].into_iter().find(|d| d.is_dir()).unwrap_or_default();
             let page = std::fs::read_to_string(dir.join(format!("{class}.md"))).map_err(|_| format!("não achei a documentação do {class} (aylis-tool docs refaz)"))?;
             let property = arg(args, "property");
             if property.is_empty() {

@@ -229,6 +229,84 @@ impl Headless {
         }
     }
 
+    /// Confere a pintura por parte do componente `name` (o teste que o Aylis roda em todas as
+    /// classes dele, para o componente do app). O componente passa pelo mouse em cima, pelo
+    /// foco, por um deslocamento e volta e, por fim, por `change` (o que o seu componente
+    /// muda: uma propriedade, um dado novo). Em cada passo:
+    ///
+    /// - pintar só a área que o núcleo marcou, por cima do quadro anterior, tem de dar a mesma
+    ///   imagem que pintar tudo (senão, o componente desenha fora de onde diz, e fica resto na
+    ///   tela);
+    /// - se a imagem mudou, alguém tinha de ter avisado: um desenho que muda sem marca nenhuma
+    ///   é o `ctx.repaint()` que faltou (na janela, o controle ficaria parado no desenho velho).
+    ///
+    /// Devolve o resumo, ou o erro com cada passo que falhou. Precisa do desenho fora da tela
+    /// (o do renderizador do projeto, que o `Headless` instala).
+    pub fn check_partial_paint(&mut self, name: &str, mut change: impl FnMut(&mut Ui, ComponentId)) -> Result<PartialPaintReport, Error> {
+        let id = self.require(name)?;
+        let form = self.form.ok_or("sem form em teste")?;
+        self.settle();
+        let (w, h) = self.ui.control(form).map(|cb| (cb.width().ceil() as u32, cb.height().ceil() as u32)).ok_or("o form não tem tamanho")?;
+        let mut previous = self.paint_rgba(form, w, h, None).ok_or("o renderizador fora da tela não pinta por área")?;
+        let _ = self.ui.take_damage(form);
+        let mut report = PartialPaintReport::default();
+        let mut failures = Vec::new();
+        for step in ["mouse em cima", "foco", "deslocado", "de volta", "mudança"] {
+            match step {
+                "mouse em cima" => {
+                    if let Some(r) = self.ui.absolute_rect(id) {
+                        self.ui.pointer_move(form, PointerEvent { position: PointF::new(r.x + r.width / 2.0, r.y + r.height / 2.0), ..Default::default() });
+                    }
+                }
+                "foco" => {
+                    self.ui.set_focus(id);
+                }
+                "deslocado" | "de volta" => {
+                    let shift = if step == "deslocado" { PointF::new(15.0, 10.0) } else { PointF::ZERO };
+                    if let Some(cb) = self.ui.control_mut(id) {
+                        cb.set_translate(shift);
+                    }
+                    self.ui.damage(id);
+                }
+                _ => change(&mut self.ui, id),
+            }
+            self.settle();
+            // Alguém avisou? (uma marca neste form, um pedido sem lugar, o layout).
+            let noticed = self.ui.needs_repaint() && !self.ui.forms_to_paint(&[form]).is_empty();
+            let area = if noticed { self.ui.take_damage(form) } else { None };
+            let full = self.paint_rgba(form, w, h, None).ok_or("falha ao pintar")?;
+            let _ = self.ui.take_damage(form);
+            report.steps += 1;
+            if !noticed {
+                if let Some((count, at)) = differences(&previous, &full, w) {
+                    failures.push(format!("{step}: o desenho mudou ({count} pixels, o primeiro em {at:?}) sem aviso — falta o ctx.repaint() (ou o ui.damage) no componente"));
+                }
+            } else if let Some(area) = area {
+                report.partial += 1;
+                let partial = self.paint_rgba(form, w, h, Some((&previous, area))).ok_or("falha ao pintar por área")?;
+                if let Some((count, at)) = differences(&partial, &full, w) {
+                    failures.push(format!("{step}: pintar só a área {area:?} deixou {count} pixels diferentes da pintura inteira (o primeiro em {at:?}): o componente desenha fora de onde diz"));
+                }
+            } else {
+                report.whole += 1;
+            }
+            previous = full;
+        }
+        if failures.is_empty() { Ok(report) } else { Err(failures.join("\n").into()) }
+    }
+
+    /// O form pintado em RGBA pelo desenho fora da tela: inteiro, ou só `over.1` por cima de
+    /// `over.0`.
+    fn paint_rgba(&mut self, form: ComponentId, w: u32, h: u32, over: Option<(&[u8], aylis_core::RectF)>) -> Option<Vec<u8>> {
+        let service = self.ui.services_mut().offscreen.take()?;
+        let background = self.ui.theme().color("background");
+        let area = over.map(|(_, a)| a);
+        let ui = &mut self.ui;
+        let out = service.render_area_rgba(w, h, background, over, &mut |canvas| ui.paint_region(form, canvas, area));
+        self.ui.services_mut().offscreen = Some(service);
+        out
+    }
+
     /// A foto do form em teste no tamanho dele, em PNG. `None` sem form ou sem o renderizador.
     pub fn render_png(&mut self) -> Option<Vec<u8>> {
         self.render_png_scaled(1.0)
@@ -249,6 +327,35 @@ impl Headless {
         std::fs::write(path, png)?;
         Ok(())
     }
+}
+
+/// O que [`Headless::check_partial_paint`] conferiu.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PartialPaintReport {
+    /// Os passos (o mouse, o foco, o deslocamento, a volta, a mudança).
+    pub steps: usize,
+    /// Os que repintaram só uma área, comparada com a pintura inteira.
+    pub partial: usize,
+    /// Os que repintaram a janela inteira (certo, mas sem a economia da área).
+    pub whole: usize,
+}
+
+/// Quanto um pixel pode mudar sem contar: a beirada anti-aliasing de um desenho cortado pela
+/// borda da área muda alguns tons (o mesmo limite do teste das classes do Aylis); resto de
+/// verdade muda o pixel inteiro.
+const TOLERANCE: u8 = 48;
+
+/// Quantos pixels mudaram mais que [`TOLERANCE`] e o primeiro; `None` se nenhum.
+fn differences(a: &[u8], b: &[u8], width: u32) -> Option<(usize, (u32, u32))> {
+    let mut first = None;
+    let mut count = 0;
+    for (i, (x, y)) in a.as_chunks::<4>().0.iter().zip(b.as_chunks::<4>().0.iter()).enumerate() {
+        if (0..3).any(|c| x[c].abs_diff(y[c]) > TOLERANCE) {
+            count += 1;
+            first.get_or_insert(((i as u32) % width, (i as u32) / width));
+        }
+    }
+    first.map(|at| (count, at))
 }
 
 impl Application {

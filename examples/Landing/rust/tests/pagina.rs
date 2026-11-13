@@ -22,6 +22,10 @@ fn a_pagina_carrega_e_vira_celular() {
     assert_eq!(get(ui, "frmPrincipal.layLingote", "visible"), PropValue::Bool(false));
     assert_eq!(get(ui, "frmPrincipal.lblTitulo", "font_size"), PropValue::Float(30.0));
     assert_eq!(get(ui, "frmPrincipal.grdLinguagens", "columns"), PropValue::Int(1));
+    // No topo fica só "Documentação" (a documentação também serve no celular), dentro da tela.
+    assert_eq!(get(ui, "frmPrincipal.btnExperimentar", "visible"), PropValue::Bool(false));
+    let docs = ui.absolute_rect(ui.find_path("frmPrincipal.btnDocumentacao").unwrap()).unwrap();
+    assert!(get(ui, "frmPrincipal.fluMenu", "visible") == PropValue::Bool(true) && docs.right() <= 390.0 && docs.width > 0.0, "{docs:?}");
     // As seções crescem com o conteúdo: numa coluna, os 8 cartões de linguagem cabem.
     let section = ui.find_path("frmPrincipal.secLinguagens").unwrap();
     let grid = ui.find_path("frmPrincipal.grdLinguagens").unwrap();

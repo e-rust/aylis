@@ -101,6 +101,10 @@ impl PaintCtx<'_> {
     pub fn request_frame_at(&self, time: f64) {
         let next = self.wake_at.get().map_or(time, |t| t.min(time));
         self.wake_at.set(Some(next));
+        // Na hora, só este controle é repintado (veja `Ui::take_due_frames`).
+        let mut timed = self.ui.timed_frames.borrow_mut();
+        let at = timed.get(&self.id).map_or(time, |t| t.min(time));
+        timed.insert(self.id, at);
     }
 
     /// Pede mais um frame logo em seguida. Use em pinturas que mudam com `time` (efeitos
@@ -803,10 +807,21 @@ impl Ui {
         // a conta do pai).
         let outer_ink = self.ink.borrow_mut().take();
         let bounds = cb.bounds();
+        // O quadro que ele pediu numa hora (`request_frame_at`) vale até ele se pintar de novo:
+        // a pintura de agora pede o próximo, se precisar.
+        {
+            let mut timed = self.timed_frames.borrow_mut();
+            if !timed.is_empty() {
+                timed.remove(&id);
+            }
+        }
+        // Com `scale`, o controle se desenha no espaço de dentro (o retângulo dividido pela
+        // escala), que a pintura amplia.
+        let scale = cb.scale();
         let ctx = PaintCtx {
             ui: self,
             id,
-            rect: RectF::from_size(bounds.size()),
+            rect: RectF::from_size(cb.inner_size()),
             state,
             style: &style,
             theme,
@@ -848,6 +863,9 @@ impl Ui {
             canvas.translate(bounds.width / 2.0, bounds.height / 2.0);
             canvas.rotate(rotation);
             canvas.translate(-bounds.width / 2.0, -bounds.height / 2.0);
+        }
+        if scale != 1.0 {
+            canvas.scale(scale, scale);
         }
         let layer = opacity < 1.0;
         if layer {
@@ -905,6 +923,8 @@ impl Ui {
                 Some(v) => Some(
                     v.iter()
                         .map(|r| r.offset(-place.x, -place.y))
+                        // No espaço de dentro (`scale`).
+                        .map(|r| if scale == 1.0 { r } else { RectF::new(r.x / scale, r.y / scale, r.width / scale, r.height / scale) })
                         .map(|local| if clip { intersection(local, ctx.rect) } else { local })
                         .filter(|r| r.width > 0.0 && r.height > 0.0)
                         .collect(),

@@ -211,6 +211,10 @@ pub struct Ui {
     /// O que cada form pediu na última pintura dele (transição em andamento, próximo
     /// frame): cada janela pinta em separado, e uma não apaga o pedido da outra.
     pub(crate) frame_requests: std::cell::RefCell<HashMap<ComponentId, (bool, Option<f64>)>>,
+    /// Quem pediu um quadro numa hora ([`PaintCtx::request_frame_at`](crate::PaintCtx)) e
+    /// para quando: na hora, só ele é repintado ([`Ui::take_due_frames`]), e não a janela
+    /// inteira de cada form.
+    pub(crate) timed_frames: std::cell::RefCell<HashMap<ComponentId, f64>>,
     /// Os componentes que pediram os próximos quadros ([`Component::frame`]).
     pub(crate) frame_hooks: Vec<ComponentId>,
     /// O que os controles pediram para desenhar por cima de tudo neste quadro (o balão do
@@ -398,6 +402,7 @@ impl Ui {
             recolored: RefCell::new(HashMap::new()),
             wake_at: Cell::new(None),
             frame_requests: Default::default(),
+            timed_frames: Default::default(),
             frame_hooks: Vec::new(),
             overlays: Default::default(),
             pending_focus: None,
@@ -1202,8 +1207,29 @@ impl Ui {
     }
 
     pub fn to_form(&self, id: ComponentId, rect_in_parent: RectF) -> RectF {
-        let origin = self.parent(id).and_then(|p| self.absolute_rect(p)).map_or(crate::geometry::PointF::ZERO, |r| r.origin());
-        rect_in_parent.offset(origin.x, origin.y)
+        let Some(parent) = self.parent(id) else { return rect_in_parent };
+        let origin = self.absolute_rect(parent).map_or(crate::geometry::PointF::ZERO, |r| r.origin());
+        // As coordenadas de dentro do pai, na escala dele e dos ancestrais (`scale`).
+        let k = self.inner_scale(parent);
+        if k == 1.0 {
+            rect_in_parent.offset(origin.x, origin.y)
+        } else {
+            RectF::new(origin.x + rect_in_parent.x * k, origin.y + rect_in_parent.y * k, rect_in_parent.width * k, rect_in_parent.height * k)
+        }
+    }
+
+    /// Quanto uma unidade de dentro de `id` mede no form: a `scale` dele vezes a de cada
+    /// ancestral (1 sem escala).
+    pub fn inner_scale(&self, id: ComponentId) -> f32 {
+        let mut k = 1.0;
+        let mut current = Some(id);
+        while let Some(c) = current {
+            if let Some(cb) = self.cb(c) {
+                k *= cb.scale();
+            }
+            current = self.parent(c);
+        }
+        k
     }
 
     /// As vistas nativas do form (WebView...), com a posição na janela (descontada a
@@ -1245,13 +1271,15 @@ impl Ui {
         out
     }
 
-    /// Posição e tamanho reais relativos ao form.
+    /// Posição e tamanho reais relativos ao form (com a escala dos ancestrais: um controle
+    /// dentro de um contêiner com `scale` 2 ocupa o dobro na tela).
     pub fn absolute_rect(&self, id: ComponentId) -> Option<RectF> {
         let mut rect = self.laid_out_bounds(id)?;
         let mut parent = self.parent(id);
         while let Some(p) = parent {
-            if let Some(b) = self.laid_out_bounds(p) {
-                rect = rect.offset(b.x, b.y);
+            if let Some(cb) = self.cb(p) {
+                let (b, s) = (cb.bounds, cb.scale());
+                rect = if s == 1.0 { rect.offset(b.x, b.y) } else { RectF::new(b.x + rect.x * s, b.y + rect.y * s, rect.width * s, rect.height * s) };
             }
             parent = self.parent(p);
         }
@@ -1566,11 +1594,15 @@ impl Ui {
     /// ele chega, a plataforma repinta; um timer vencido só roda (e pede repintura se mudar
     /// algo).
     pub fn next_paint_wake(&self) -> Option<f64> {
-        self.frame_requests.borrow().iter().filter(|(id, _)| self.contains(**id)).filter_map(|(_, f)| f.1).reduce(f64::min)
+        let forms = self.frame_requests.borrow().iter().filter(|(id, _)| self.contains(**id)).filter_map(|(_, f)| f.1).reduce(f64::min);
+        // Os pedidos por controle continuam valendo mesmo que a pintura do form inteiro (que
+        // regrava `frame_requests`) não tenha passado por ele (uma pintura só de outra área).
+        let controls = self.timed_frames.borrow().iter().filter(|(id, _)| self.contains(**id)).map(|(_, t)| *t).reduce(f64::min);
+        [forms, controls].into_iter().flatten().reduce(f64::min)
     }
 
     pub fn next_wake(&self) -> Option<f64> {
-        let painted = self.frame_requests.borrow().iter().filter(|(id, _)| self.contains(**id)).filter_map(|(_, f)| f.1).reduce(f64::min);
+        let painted = self.next_paint_wake();
         match (painted, self.timers_wake()) {
             (Some(a), Some(b)) => Some(a.min(b)),
             (a, b) => a.or(b),

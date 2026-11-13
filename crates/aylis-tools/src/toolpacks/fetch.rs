@@ -71,10 +71,14 @@ impl Default for Sources {
 }
 
 impl Sources {
-    /// As de sempre: a pasta `pacotes` ao lado do executável (o instalador ou a IDE), as
-    /// pastas e os espelhos das Opções (`settings`: `package_dirs`, `package_mirrors`).
+    /// As de sempre: a pasta de `AYLIS_PACKAGE_DIR` (o instalador da IDE), a pasta `pacotes`
+    /// ao lado do executável (a IDE), as pastas e os espelhos das Opções (`settings`:
+    /// `package_dirs`, `package_mirrors`; sem nada gravado, o espelho padrão).
     pub fn configured() -> Sources {
         let mut s = Sources::default();
+        // A pasta `pacotes` ao lado do instalador da IDE (o kit offline): o instalador a passa
+        // ao `aylis-tool setup` por esta variável, sem gravá-la nas Opções.
+        s.folders.extend(std::env::var_os("AYLIS_PACKAGE_DIR").filter(|d| !d.is_empty()).map(PathBuf::from));
         s.folders.extend(Sources::beside_exe());
         s.folders.extend(crate::settings::list(crate::settings::PACKAGE_DIRS).into_iter().map(PathBuf::from));
         s.mirrors.extend(crate::settings::list(crate::settings::PACKAGE_MIRRORS));

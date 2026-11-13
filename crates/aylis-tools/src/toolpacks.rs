@@ -26,7 +26,7 @@
 //! installer.remove("jdk", &mut |p| ...)?;
 //! ```
 
-mod fetch;
+pub(crate) mod fetch;
 mod pack;
 #[cfg(test)]
 mod tests;

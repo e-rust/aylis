@@ -101,3 +101,97 @@ fn the_photo_also_comes_out_of_direct2d() {
     assert_eq!(png_size(&h.render_png().unwrap()), (320, 200));
     assert_eq!(png_size(&h.render_png_scaled(2.0).unwrap()), (640, 400));
 }
+
+/// Um componente do app: uma barra do tamanho de um valor que vem de fora do `Ui` (um dado
+/// compartilhado, como o que chega de outra thread). Mudar o valor não avisa ninguém: quem
+/// muda tem de marcar o controle (`ui.damage`, ou `ctx.repaint()` dentro do componente).
+struct Meter {
+    base: aylis::core::ControlBase,
+    value: std::rc::Rc<std::cell::Cell<u32>>,
+}
+
+impl aylis::core::Component for Meter {
+    fn class_name(&self) -> &'static str {
+        "Meter"
+    }
+    fn control(&self) -> Option<&aylis::core::ControlBase> {
+        Some(&self.base)
+    }
+    fn control_mut(&mut self) -> Option<&mut aylis::core::ControlBase> {
+        Some(&mut self.base)
+    }
+    fn paint(&self, canvas: &mut dyn aylis::core::Canvas, ctx: &aylis::core::PaintCtx<'_>) {
+        let bar = aylis::core::RectF::new(ctx.rect.x, ctx.rect.y, (self.value.get() as f32 * 10.0).min(ctx.rect.width), ctx.rect.height);
+        canvas.fill_rect(bar, 0.0, &aylis::core::Brush::Solid(ctx.theme.color("primary")));
+    }
+}
+
+fn with_meter() -> (Headless, std::rc::Rc<std::cell::Cell<u32>>) {
+    let mut h = Headless::new();
+    let form = h.load_form(r#"{"aylis": 1, "root": {"class": "Form", "name": "frmMedidor", "width": 300, "height": 120}}"#).unwrap();
+    h.set_form(form);
+    let value = std::rc::Rc::new(std::cell::Cell::new(3));
+    let meter = h.ui.add(Meter { base: aylis::core::ControlBase::new(200.0, 30.0), value: value.clone() }, form);
+    h.ui.set_name(meter, "medidor").unwrap();
+    h.settle();
+    (h, value)
+}
+
+/// A conferência da pintura por parte para o componente do app: quem avisa passa; quem muda o
+/// desenho sem avisar é apanhado (na janela, ficaria parado no desenho velho).
+#[test]
+fn a_component_is_checked_for_partial_paint_and_for_the_missing_repaint() {
+    let (mut h, value) = with_meter();
+    let report = h
+        .check_partial_paint("medidor", |ui: &mut Ui, id| {
+            value.set(12);
+            ui.damage(id);
+        })
+        .expect("avisando, passa");
+    assert_eq!(report.steps, 5);
+    assert!(report.partial >= 1 && report.partial + report.whole <= report.steps, "{report:?}");
+
+    let (mut h, value) = with_meter();
+    let err = h
+        .check_partial_paint("medidor", |_: &mut Ui, _| {
+            value.set(12);
+        })
+        .expect_err("sem avisar, é apanhado")
+        .to_string();
+    assert!(err.contains("mudança") && err.contains("ctx.repaint()"), "{err}");
+}
+
+/// As classes do Aylis passam na mesma conferência (aqui, o botão com o texto mudado).
+#[test]
+fn an_aylis_button_passes_the_partial_paint_check() {
+    let mut h = Headless::new();
+    h.load_form(FORM).unwrap();
+    h.check_partial_paint("btnOk", |ui: &mut Ui, id| {
+        ui.set_prop(id, "text", "Salvar").unwrap();
+    })
+    .expect("o botão");
+}
+
+/// Dentro de um painel com `scale`, a área a repintar sai ampliada no lugar certo: pintar só a
+/// área dá a mesma imagem que pintar tudo.
+#[test]
+fn a_button_inside_a_scaled_panel_passes_the_partial_paint_check() {
+    let mut h = Headless::new();
+    h.load_form(
+        r#"{"aylis": 1, "root": {"class": "Form", "name": "frmEscala", "width": 400, "height": 240, "children": [
+            {"class": "Panel", "name": "pnlZoom", "left": 20, "top": 20, "width": 300, "height": 180, "scale": 1.5, "children": [
+                {"class": "Button", "name": "btnDentro", "text": "Dentro", "left": 10, "top": 10, "width": 120, "height": 32},
+                {"class": "Edit", "name": "edtDentro", "left": 10, "top": 60, "width": 160, "height": 28}
+            ]}
+        ]}}"#,
+    )
+    .unwrap();
+    h.check_partial_paint("btnDentro", |ui: &mut Ui, id| {
+        ui.set_prop(id, "text", "Salvar").unwrap();
+    })
+    .expect("o botão ampliado");
+    h.check_partial_paint("edtDentro", |ui: &mut Ui, id| {
+        ui.set_prop(id, "text", "texto novo").unwrap();
+    })
+    .expect("o campo ampliado (o cursor de texto marca só uma parte)");
+}

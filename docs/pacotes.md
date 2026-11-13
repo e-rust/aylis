@@ -36,7 +36,9 @@ Na ordem, e o primeiro que tiver o arquivo com o hash certo vence:
 2. **A pasta de pacotes**: a pasta `pacotes` ao lado do instalador ou da IDE, e as pastas
    configuradas nas Opções (uma pasta de rede, a pasta do Google Drive para desktop). Os
    arquivos estão lá pelo nome.
-3. **Os espelhos** configurados nas Opções (e que o instalador pode gravar): cada espelho é o
+3. **Os espelhos** configurados nas Opções (sem nada gravado, o espelho padrão: a pasta do
+   Google Drive de quem distribui o Aylis, `settings::DEFAULT_PACKAGE_MIRROR`; apagado nas
+   Opções, fica apagado). Cada espelho é o
    endereço HTTPS de um índice (`pacotes.json`) que diz onde está cada arquivo — um endereço
    HTTPS, ou o id de um arquivo do Google Drive (`"drive": "<id>"`, baixado pelo endereço de
    download direto do Drive, com a confirmação que ele pede nos arquivos grandes). O índice
@@ -45,7 +47,7 @@ Na ordem, e o primeiro que tiver o arquivo com o hash certo vence:
    lista da pasta (a vista embutida dela, sem chave de API) vira o índice, pelo nome de cada
    arquivo. Basta subir a pasta do `pack` e compartilhar como "qualquer pessoa com o link".
 
-Não há endereço oficial como último recurso (decisão do autor): quem distribui o Aylis monta a
+Não há endereço oficial dos fabricantes como último recurso (decisão do autor): quem distribui o Aylis monta a
 pasta de pacotes uma vez, numa máquina com internet, com `aylis-tool packages pack --out
 <pasta>` (baixa das origens oficiais as versões fixadas, confere os hashes e grava a pasta e o
 `pacotes.json` com os nomes), e a sobe no Drive, num servidor ou ao lado do instalador.
@@ -57,9 +59,12 @@ O download respeita o proxy do sistema e tem prazo; um erro diz qual arquivo, de
 - **`aylis-tool packages`**: `list`, `install <nome>...`, `remove <nome>`, `sources`, `pack`.
 - **A IDE**: Ferramentas → Pacotes (a lista, instalar e remover, com o progresso; as origens nas
   Opções). O "Corrigir…" da verificação de ambiente instala o pacote que resolve o item.
-- **O instalador da IDE**: instala só a IDE e mostra a lista de pacotes para marcar (como o
-  Delphi); os marcados se instalam no fim, pela mesma ferramenta, da pasta `pacotes` ao lado do
-  instalador ou do espelho que a pessoa informar. O resto se instala depois, pela IDE.
+- **O instalador da IDE**: uma página só, agrupada. A IDE com o Rust é obrigatória (sem ele o
+  Aylis não funciona); as outras linguagens e as plataformas de destino (Android, navegador) são
+  opcionais, e cada uma marcada vem com tudo o que precisa: no fim, o `aylis-tool setup` dela
+  instala o compilador ou o interpretador, o depurador e o servidor de linguagem (o mesmo do
+  "Configurar linguagens" da IDE), dos pacotes da pasta `pacotes` ao lado do instalador ou do
+  espelho padrão. Os projetos de exemplo não vão no instalador.
 
 ## A verificação de ambiente
 

@@ -392,11 +392,40 @@ fn main() -> ExitCode {
 }
 
 /// `aylis-tool setup go csharp` (ou `--all`): configura cada uma e diz o que ainda falta.
+/// `aylis-tool setup <linguagem>... | --all [--target android|web]... [--utf16-output]`:
+/// configura as linguagens ([`aylis_tools::setup`]); com `--target`, as saídas dela (o
+/// Android, o navegador) no lugar do desktop. O instalador da IDE chama este para cada
+/// linguagem e plataforma marcada, com `--utf16-output` (veja [`packages`]).
 fn setup(args: &[String]) -> Result<(), String> {
+    let utf16 = args.iter().any(|a| a == "--utf16-output");
+    if utf16 {
+        say(true, "\u{feff}");
+    }
+    match setup_run(args, utf16) {
+        Err(e) if utf16 && !e.is_empty() => {
+            say(true, &format!("erro: {e}"));
+            Err(String::new())
+        }
+        other => other,
+    }
+}
+
+fn setup_run(args: &[String], utf16: bool) -> Result<(), String> {
+    let list = targets(args)?;
+    let mut words = Vec::new();
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        if a == "--target" {
+            it.next();
+        } else if !a.starts_with("--") {
+            words.push(a);
+        }
+    }
     let languages: Vec<Language> = if args.iter().any(|a| a == "--all") {
         Language::ALL.to_vec()
     } else {
-        args.iter()
+        words
+            .into_iter()
             .map(|a| {
                 Language::ALL
                     .into_iter()
@@ -406,21 +435,30 @@ fn setup(args: &[String]) -> Result<(), String> {
             .collect::<Result<_, _>>()?
     };
     if languages.is_empty() {
-        return Err("uso: aylis-tool setup <linguagem>... | --all".into());
+        return Err("uso: aylis-tool setup <linguagem>... | --all [--target android|web]... [--utf16-output]".into());
     }
+    let list = if list.is_empty() { vec![Target::Desktop] } else { list };
     let host = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(env::exe("aylis-host")))).filter(|p| p.is_file());
     let control = aylis_tools::process::Control::new();
     let mut missing = Vec::new();
     for language in languages {
-        let checks = aylis_tools::setup::setup(language, host.as_deref(), &control, &mut |e| match e {
-            Event::Step(s) => println!("▶ {s}"),
-            Event::Line(l, _) => println!("  {l}"),
-            Event::Diagnostic(d) => println!("  {}", d.message),
+        let checks = aylis_tools::setup::setup_targets(language, &list, host.as_deref(), &control, &mut |e| match e {
+            Event::Step(s) => say(utf16, &format!("▶ {s}")),
+            Event::Line(l, _) => say(utf16, &format!("  {l}")),
+            Event::Diagnostic(d) => say(utf16, &format!("  {}", d.message)),
         });
-        for c in checks.iter().filter(|c| c.status != Status::Ok && !c.name.starts_with("WiX")) {
+        // No desktop conta também o que falta com aviso (o depurador, o servidor de
+        // linguagem); nas outras saídas, só o que falta de fato (um aparelho conectado não).
+        let gaps: Vec<_> = checks
+            .iter()
+            .filter(|c| list.contains(&c.target) && !c.name.starts_with("WiX"))
+            .filter(|c| c.status == Status::Missing || (c.target == Target::Desktop && c.status != Status::Ok))
+            .collect();
+        for c in &gaps {
             missing.push(format!("{}: {} — {}", language.name(), c.name, c.detail));
         }
-        println!("{}: {}", language.name(), if aylis_tools::setup::language_ready(language) { "pronta" } else { "não ficou pronta" });
+        let what = list.iter().map(|t| if *t == Target::Desktop { language.name().to_string() } else { format!("{} ({})", language.name(), t.id()) }).collect::<Vec<_>>().join(", ");
+        say(utf16, &format!("{what}: {}", if gaps.is_empty() { "pronta" } else { "não ficou pronta" }));
     }
     if missing.is_empty() {
         Ok(())

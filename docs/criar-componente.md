@@ -183,7 +183,14 @@ Regras da pintura:
 - quando o desenho muda, só avise (`ctx.repaint()`): a área a repintar é do núcleo, que
   mede onde cada controle desenhou na pintura anterior (a sombra, um bulbo ou uma lista que
   passa da borda entram sozinhos). Não guarde pixels nem faça a própria cópia de rolagem.
-  Desenhar além de onde desenhava antes funciona, mas custa um quadro inteiro.
+  Desenhar além de onde desenhava antes funciona, mas custa um quadro inteiro;
+- mudar o componente pelo `Ui` (`set_prop`, o acesso tipado, `ui.get_mut`) já avisa sozinho.
+  O que a pintura lê de fora do `Ui` (um dado compartilhado, o que chega de outra thread por
+  `post`, um quadro de vídeo no `on_frame`) não avisa: quem recebe o dado marca o controle
+  (`ctx.repaint()` no componente, `ui.damage(id)` de fora). Sem a marca, o controle fica
+  parado no desenho velho — nada mais repinta a janela inteira por ele;
+- `ctx.request_frame_at(t)` repinta só o próprio componente na hora `t`. Se nessa hora o
+  desenho de outro controle também muda, marque o outro.
 
 ### 4. Mouse e teclado
 
@@ -378,6 +385,22 @@ fn estrelas() {
 
 Os testes do próprio Aylis usam um `Canvas` falso que só mede e conta o que foi
 desenhado (veja `crates/aylis-controls/tests/modern.rs`).
+
+A pintura por parte, pronta para conferir: o `Headless` (o app sem janela) passa o componente
+pelo mouse em cima, pelo foco, por um deslocamento e pela mudança que você der, e compara a
+pintura só da área marcada com a pintura inteira. Ele aponta o componente que desenha fora de
+onde diz (fica resto na tela) e o desenho que mudou sem aviso (falta o `ctx.repaint()`):
+
+```rust
+#[test]
+fn estrelas_pintam_por_parte() {
+    let mut h = aylis::headless::Headless::new();
+    h.ui.register_class::<StarRating>("Teste");
+    h.load_form(r#"{"aylis": 1, "root": {"class": "Form", "name": "frmTeste", "width": 300, "height": 100,
+        "children": [{"class": "StarRating", "name": "estrelas", "width": 160, "height": 32}]}}"#).unwrap();
+    h.check_partial_paint("estrelas", |ui, id| ui.set_prop(id, "value", 4i64).unwrap()).unwrap();
+}
+```
 
 ---
 

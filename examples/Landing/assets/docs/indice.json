@@ -77,6 +77,10 @@
           "arquivo": "guias/medidas.md"
         },
         {
+          "titulo": "Pacotes de ferramentas",
+          "arquivo": "guias/pacotes.md"
+        },
+        {
           "titulo": "Notificações push (`PushNotifications`)",
           "arquivo": "guias/push.md"
         },
