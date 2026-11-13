@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Aylis — Reports</title>
-  <link rel="modulepreload" href="./pkg/aylis_demos-adc7130a58.js">
-  <link rel="preload" href="./pkg/aylis_demos_bg-adc7130a58.wasm" as="fetch" type="application/wasm" crossorigin>
+  <link rel="modulepreload" href="./pkg/aylis_demos-c4de1fc521.js">
+  <link rel="preload" href="./pkg/aylis_demos_bg-c4de1fc521.wasm" as="fetch" type="application/wasm" crossorigin>
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg, #f3f4f6); color: #555; font: 14px system-ui, sans-serif; }
     html.dark, html.dark body { background: var(--bg, #1e1f24); color: #9aa0ad; }
@@ -35,8 +35,8 @@
   <!-- Gerado pelo aylis-tool demos: a família Reports de componentes de verdade. -->
   <div id="carregando" role="progressbar" aria-label="Carregando"><b></b><i></i></div>
   <script type="module">
-    import init from "./pkg/aylis_demos-adc7130a58.js";
-    const wasm = await init({ module_or_path: "./pkg/aylis_demos_bg-adc7130a58.wasm" });
+    import init from "./pkg/aylis_demos-c4de1fc521.js";
+    const wasm = await init({ module_or_path: "./pkg/aylis_demos_bg-c4de1fc521.wasm" });
     wasm.aylis_demo_start();
     // Sai depois do primeiro quadro do componente (antes, ficaria um instante só o fundo).
     requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById("carregando").remove()));
