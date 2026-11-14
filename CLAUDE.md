@@ -96,7 +96,8 @@ faz por conta própria: vira pergunta ao autor e, aprovado, entra no histórico.
   `edit_mask`, `required`) pode.
 - **Formatos em JSON** (`{"aylis": 1, "root": {...}}`), sem nomes antigos nem "obsoletos". Os
   forms são gravados no formato canônico (`aylis_json::to_form_text`), bom para merge.
-  Mudança incompatível sobe a versão, e a conversão vai para o `aylis-migrate`.
+  Mudança incompatível sobe a versão, e a conversão vai para o `aylis-migrate` a partir da
+  1.0.0 (na 0.x, beta, não há conversão; nunca há suporte a versão antiga).
 - **Eventos:** reentrantes, um handler por vez, nunca em paralelo. Thread é
   escolha do programador e volta à tela por `post`/`post_to`. Na web, `aylis::background`
   (`std::thread` compila para wasm, mas falha ao rodar).

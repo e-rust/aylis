@@ -6,19 +6,82 @@ porquê, no [histórico de decisões](historico-decisoes.md) (até 09/11 havia t
 concluídos, que saiu a pedido do autor). O que só dá para conferir num Mac, num celular ou num
 PC com outro hardware fica em [testes-em-dispositivos.md](testes-em-dispositivos.md).
 
-O plano de 01/11/2026 (9 fases) foi feito em `c475abd` e `48081bc`. Abaixo, o que sobrou dele e o que ainda não começou.
+O plano de 01/11/2026 (9 fases) foi feito antes do primeiro commit público (`3256ba3`, 09/11). Abaixo, o que sobrou dele e o que ainda não começou.
 
 Decidido pelo autor em 05/11: o que precisa de hardware ou de outra máquina (o ZenFone, um
 leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro PC) fica para
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Pedidos de 14/11/2026: a barra de status, a tecla Voltar, os gestos e o fim da rolagem no celular**
+
+- [ ] Um componente para mudar a cor da barra de status do Android e do iOS (pedido do autor em
+  14/11: "preciso de um componente que consiga manipular a cor da barra de status do Android ou
+  iOS"). Não começou. O que já existe e o que foi levantado:
+  - Hoje, no Android, a plataforma pinta sozinha a barra de status e a de navegação com o fundo do
+    form principal, com ícones escuros sobre fundo claro (`sync_system_bars` no
+    `aylis-platform-winit`, `setSystemBars` na `AylisActivity.java`); o app não escolhe.
+  - Proposta: um componente não visual (`SystemBars`, família Device) com `status_bar_color` e
+    `navigation_bar_color` (vazio = o fundo do form, como hoje), `icons` (`auto`, `light`,
+    `dark`) e, talvez, esconder as barras (tela cheia). No Android, a `setSystemBars` que já
+    existe; no iOS, o winit tem `set_preferred_status_bar_style` e
+    `set_prefers_status_bar_hidden` (a cor no iOS é o que o app desenha por baixo da barra, então
+    seria uma faixa pintada pelo núcleo); no navegador, a `<meta name="theme-color">`; no desktop,
+    `available` falso.
+  - Atenção: com `targetSdk` 35 (Android 15), o Android ignora a cor da barra (o app desenha por
+    baixo dela); o padrão do Aylis hoje é 34.
+  - O iOS precisa de Mac para conferir (`docs/testes-em-dispositivos.md`).
+  - Desenho aprovado pelo autor em 14/11: o `SystemBars` com `status_bar_color`,
+    `navigation_bar_color`, `icons` (`auto`, `light`, `dark`), `status_bar_visible` e
+    `navigation_bar_visible`; Android pela `setSystemBars` (e o esconder), iOS pelo winit e a
+    faixa pintada pelo núcleo, navegador pela `theme-color`, desktop `available` falso.
+
+- [ ] A tecla Voltar do Android não chega ao app (relatado por outra sessão em 14/11, do
+  RTSPlayer). Hoje a plataforma trata o "voltar" sozinha (`aylis-platform-winit/src/lib.rs`,
+  `NamedKey::GoBack`): cancela o modal, fecha o form aberto com `show` (esse passa pelo
+  `on_close_query`) e, no form principal, manda o app para segundo plano sem perguntar. Um app
+  que troca de tela dentro de um form só (frames) não volta à tela anterior: no player do
+  RTSPlayer, a tecla tira o app da frente em vez de voltar à lista de câmeras. Proposta: um
+  evento `on_back` no form do topo, uma pergunta como o `on_close_query` (o app responde que
+  tratou, e a plataforma não faz mais nada); sem handler, ou sem tratar, o comportamento de
+  hoje. No iOS não dispara (não há "voltar" do sistema). Decidido pelo autor em 14/11: fazer
+  o `on_back`; não começou.
+
+- [ ] Os gestos do celular que faltam (pergunta do autor em 14/11: "se ja tem componente que
+  suporte os gestos dos smartphones"). Já existem: em todo controle o `on_long_press`, o
+  `on_dbl_click` (toque duplo), o `on_gesture` (dois dedos: pinça, giro e arrastar) e o toque
+  cru com cada dedo (`on_pointer_*`); rolar com inércia nas caixas, listas e grades; o
+  `pull_to_refresh` do `ScrollBox`; deslizar no `Carousel`; a alça do `BottomSheet`; a pinça
+  no mapa, no grafo, no visualizador de documentos e no `Model3D`. Faltam:
+  - um evento `on_swipe` (esquerda, direita, cima, baixo) em todo controle, para o app não
+    calcular pelo `on_pointer_down`/`on_pointer_up` (como o `Carousel` faz por dentro);
+  - o `NavigationDrawer` abrir deslizando a partir da borda da tela;
+  - o `TabControl` trocar de página deslizando o dedo;
+  - deslizar um item de lista para revelar ações (como o "excluir" do e-mail);
+  - a pinça para zoom no `Image`.
+  Decidido pelo autor em 14/11 ("Seguir todas"): fazer os cinco. O `on_swipe` no núcleo, junto
+  do `on_long_press`, com a direção e a velocidade (o `Carousel` passa a usá-lo; a rolagem e o
+  deslizar não podem atrapalhar um ao outro); a gaveta pela borda respeitando a faixa do gesto
+  de voltar do Android; o `TabControl` com `swipe`, desligado por padrão; as ações ao deslizar o
+  item na `VirtualList` e no `DataRepeater`, com os botões do app; o `Image` com `zoomable`,
+  desligado por padrão. Não começou.
+
+- [ ] O efeito de fim da rolagem (pergunta do autor em 14/11: "tem o efeito no smartphone quando
+  chega no final ou no inicio que aparece uma barra meia lua indicando o fim?"). Não tem: no
+  `ScrollBox`, nas listas e nas grades, a rolagem e a inércia param na ponta sem sinal. Cada
+  sistema faz um: o Android até o 11, o brilho em meia-lua na borda (na cor do tema, cresce com
+  o puxão e some devagar); o Android 12 em diante, o conteúdo estica e volta; o iOS, passa do
+  fim e volta com mola; o desktop, nada. Proposta: o efeito no núcleo (vale para todo controle
+  com rolagem), pela plataforma por padrão, com uma propriedade `overscroll` (`glow`, `stretch`,
+  `bounce`, `none`) para forçar, na cor do tema. Decidido pelo autor em 14/11 ("Pela
+  plataforma"): fazer assim (`overscroll: auto` é o padrão); não começou.
+
 **Defeitos relatados por outras sessões (13/11/2026)**
 
 - [ ] **Hífen no nome do pacote** (o RTSPlayer, item 24 do `relatorio-mcp-aylis.md`): o pacote
   `rtsplayer-app` publicava para Android e parava em "a biblioteca ...librtsplayer-app.so não
   foi gerada", porque o cargo grava `librtsplayer_app.so` (troca o `-` por `_` na biblioteca).
-  Feito em 13/11 (sem commit; roteiro 135): `Project::lib_name` (o `[lib] name`, ou o pacote com
+  Feito em 13/11 (roteiro 135): `Project::lib_name` (o `[lib] name`, ou o pacote com
   `_`), usado no Android (o `.so` e o `lib_name` do manifesto), no navegador (o `.wasm` e o que o
   wasm-bindgen gera) e no `main.rs` gerado; o executável continua o do `[[bin]]`, com o hífen.
   Testes `a_package_with_a_hyphen_has_the_library_with_an_underscore` (aylis-project) e
@@ -26,8 +89,8 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   a `rtsplayer-app` (falta publicar para Android de verdade).
 - [ ] **O motivo exato quando um pacote não vem** (relatado pelo autor em 13/11: numa
   instalação em outra máquina, a mensagem dizia "sem internet, um pacote que não confere com o
-  SHA-256 do Aylis ou uma instalação recusada", sem dizer qual). Feito em 13/11 (sem commit;
-  roteiro 136): o erro do `toolpacks::fetch::obtain` começa pela causa — "Sem internet" (com o
+  SHA-256 do Aylis ou uma instalação recusada", sem dizer qual). Feito em 13/11
+  (roteiro 136): o erro do `toolpacks::fetch::obtain` começa pela causa — "Sem internet" (com o
   espelho e o motivo: DNS, conexão, prazo), "Os arquivos não estão ao lado do instalador" (não há
   a pasta `pacotes` ou falta o arquivo nela, com o caminho), "não confere com o SHA-256 do
   Aylis" (onde) — e depois o que cada origem respondeu. O instalador passa sempre a pasta
@@ -36,7 +99,7 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   "Motivo:"; a caixa do fim do instalador diz a causa de cada linguagem. Testes
   `the_error_says_exactly_what_went_wrong` e `the_script_sets_up_without_a_shell`.
 - [ ] **Tirar o "(fechado)" da árvore do projeto** (pedido do autor em 13/11): feito em 13/11
-  (sem commit; roteiro 135): em Projeto › Forms, só o nome (com ★, ● e ⛁ como antes).
+  (roteiro 135): em Projeto › Forms, só o nome (com ★, ● e ⛁ como antes).
 - [ ] **O relatório do RTSPlayer de 13/11** (`RTSPlayer`, migração do cliente pelo MCP, 9 itens
   conferidos no código da 0.2.1-beta.1). Feitos em 13/11 a pedido do autor ("Sim, corrija"; sem
   commit; roteiro 138):
@@ -51,14 +114,31 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   - **5 (parte).** As arquiteturas do APK escolhidas: `publish.android.abis` do projeto
     (`set_project_setting`) ou o `abis` do `publish` do MCP (`arm64-v8a` só, por exemplo), com a
     lista das aceitas no erro; `armeabi-v7a` entrou em `env::ANDROID_ALL_ABIS`, fora do padrão.
-  - [ ] **5. Esperando o autor: Android de 32 bits está bloqueado pelo Skia.** O
-    `cargo ndk -t armeabi-v7a check -p aylis-platform-winit` (13/11) para no `skia-bindings`: o
-    `skia-binaries` 0.153.3 não tem `armv7-linux-androideabi` com as features do Aylis (404). Por
-    isso a caixa "Também 32 bits" nas Opções do Android não entrou, e o erro do publicar diz que
-    falta um Skia compilado para 32 bits. Caminho: compilar o Skia para armv7 uma vez (o
-    `skia-bindings` com `SKIA_BUILD_FROM_SOURCE`, que pede Python, Ninja e LLVM) e guardar como
-    pacote de ferramenta com SHA-256 (`SKIA_BINARIES_URL` apontando para ele), e só então a caixa;
-    falta o autor decidir se vale (o RTSPlayer em TV box é o caso).
+  - **5. Android de 32 bits** (14/11, a pedido do autor: "Sim, compile o Skia"; sem commit;
+    roteiro 139). O `skia-binaries` 0.153.3 não tem `armv7-linux-androideabi` com as features do
+    Aylis (404), então o Skia é compilado pelo Aylis uma vez e vira o pacote de ferramenta
+    `skia-android-armv7` (17,6 MB, SHA-256 no manifesto, `"built": "aylis-tool skia-android"`
+    no lugar da URL oficial: vem só do cache, da pasta de pacotes e dos espelhos). O publicar com
+    `armeabi-v7a` instala o pacote (e o `rust-android-armv7`, com o Rust do Aylis; com o rustup,
+    o erro diz `rustup target add`) e passa o `SKIA_BINARIES_URL` (`file://` para a pasta dele)
+    só nessa compilação. A caixa "Também 32 bits" voltou nas Opções do Android, e o
+    `aylis-tool publish` ganhou `--abis`.
+    - `aylis-tool skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta]` refaz o
+      pacote (`skia_android.rs`): clona o fork do rust-skia (`m153-0.101.2`, sem links
+      simbólicos: o Windows sem modo de desenvolvedor não deixa criar), roda o `git-sync-deps`,
+      compila em modo offline (`SKIA_SOURCE_DIR`) e monta o `skia-binaries-<chave>.tar.gz` com os
+      mesmos arquivos do oficial; grava o hash no manifesto. Pede Python, Ninja (o do Visual
+      Studio Build Tools é achado) e libclang (o do pacote `libclang` do PyPI). Os contornos: um
+      `python3.bat` (o `python3` do Windows é o atalho da Microsoft Store) e o `-resource-dir`
+      do clang do NDK no bindgen (`BINDGEN_EXTRA_CLANG_ARGS_armv7-linux-androideabi`).
+    - Só as features do `aylis-platform-winit` padrão (`cpu` + `gpu`: `ganesh-gl-jpegd-jpege-
+      pdf-textlayout`); com outras, a chave muda e o erro do publicar manda refazer. Subir o
+      `skia-bindings` exige refazer o pacote: o teste `the_constants_follow_the_skia_bindings_in_use`
+      falha até lá.
+    - [ ] **Falta o autor:** subir o arquivo (`%USERPROFILE%\.aylis\downloads\skia-binaries-...
+      .tar.gz`) para a pasta de pacotes e o espelho (`aylis-tool packages pack`); sem isso, outra
+      máquina não acha o pacote. E rodar num aparelho de 32 bits
+      ([testes-em-dispositivos.md](testes-em-dispositivos.md)).
   - **8.** A ponte do MCP procura a IDE ao lado de si, depois na instalação para a qual o
     `<projeto>/.aylis/sdk` aponta e em `%LOCALAPPDATA%\Programs\aylis`; o erro diz onde procurou.
   - **9.** `max_wait` fica em no máximo 50 s (`MAX_WAIT`; antes aceitava 30 min, e a resposta se
@@ -69,13 +149,6 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
     `the_ide_is_looked_for_beside_the_bridge_then_in_the_project_installation`,
     `max_wait_stays_within_the_client_deadline`.
   - **6** (hífen no pacote) é o item acima, de outra sessão.
-  - [ ] **3. Esperando o autor:** `align: contents` não desconta a área segura (no Android, por
-    baixo da barra de status). É a semântica do `alContents` do FMX (cobre o pai inteiro, bom para
-    fundo de borda a borda); proposta: manter e o `check` avisar quando um `contents` com
-    controles interativos estiver num projeto com alvo móvel.
-  - [ ] **7. Esperando o autor:** o APK publicado não é depurável (`run-as` recusado). Proposta:
-    só o publicar com `debug: true` grava `android:debuggable="true"`; o `app_command` que grava
-    na pasta do app, sugerido no relatório, abriria uma porta e fica de fora.
 
 **Relatório do Tabernáculo (11/11/2026)**
 
@@ -86,7 +159,7 @@ não se aplicam mais. A análise item a item ficou com o autor (`ANALISE-versao-
 pasta do relatório). Pedido do autor: registrar os defeitos abertos e começar pela R01 e pela
 R02.
 
-Feitos em 11/11 (sem commit; roteiros 105 e 106), conferidos com as reproduções do relatório
+Feitos em 11/11 (roteiros 105 e 106), conferidos com as reproduções do relatório
 e com testes:
 - R01: o form secundário que nasce em tela cheia, sem dona e por cima, tinha a swap chain
   recusada (`0x887A0001`) e o `run` voltava com erro (na 0.1.0 caía no `dxgi.dll`). No Windows, a
@@ -104,7 +177,7 @@ e com testes:
   Agora entra antes da chave que fecha, que vai para a linha de baixo. Teste
   `a_new_handler_goes_inside_an_impl_joined_by_rustfmt`.
 
-Lote 1, os defeitos (feito em 11/11, sem commit; testes `aylis-controls/tests/tabernaculo.rs`,
+Lote 1, os defeitos (feito em 11/11; testes `aylis-controls/tests/tabernaculo.rs`,
 `aylis-ide/tests/tabernaculo.rs`, `aylis-core/tests/theme_tokens.rs`):
 - R04: o arquivo solto só vai a uma zona à vista e habilitada (F01); o `*.*` fica no filtro (o
   "Todos os arquivos"; no macOS o painel já mostra todos) e o recusado dispara `on_reject` (F02);
@@ -138,7 +211,7 @@ Lote 1, os defeitos (feito em 11/11, sem commit; testes `aylis-controls/tests/ta
   sobrou; o `MostLeft` pega a altura inteira) e W03 (o wry só cria o WebView2 na hora, na thread
   da janela; como o W02, é do WebView).
 
-Lote 2, janelas e plataforma (feito em 12/11, sem commit; teste
+Lote 2, janelas e plataforma (feito em 12/11; teste
 `aylis-controls/tests/tabernaculo_janelas.rs`; o resumo em `docs/tempo-de-execucao.md`, "Forms"):
 - Forms: `on_window_created` (R03, do lote 1); `show_owned` (J19); o principal é o `main_form`
   do projeto (J20); `close_action` hide/free e `ui.free_later` (J21, J22); `activate_on_show`
@@ -159,7 +232,7 @@ Lote 2, janelas e plataforma (feito em 12/11, sem commit; teste
   com o app rodando (L13); o arquivo passando por cima (`on_file_enter`, `on_file_leave`, F03); o
   `FileDropZone` com `with_filter`/`with_multiple`/`with_title` (F05).
 
-Lote 3, controles e tema (feito em 12/11, sem commit; teste
+Lote 3, controles e tema (feito em 12/11; teste
 `aylis-controls/tests/tabernaculo_controles.rs`):
 - Tema: `text_case`, `letter_spacing`, `border_sides` (a borda por lado, C11) e `border_style`
   (`dashed`, `dotted`; C12) no estilo; o Label pinta o fundo, a borda e o raio do estilo (C10) e
@@ -179,7 +252,7 @@ Lote 3, controles e tema (feito em 12/11, sem commit; teste
   `accessible_name` (C29); `auto_select` no Edit (C36); `translate` (G19).
 - O `tag_string` e o `accessible_name` dividem uma caixa no `ControlBase` (8 bytes por controle).
 
-Lote 4, layout e texto (feito em 12/11, sem commit; teste `aylis-controls/tests/tabernaculo_layout.rs`):
+Lote 4, layout e texto (feito em 12/11; teste `aylis-controls/tests/tabernaculo_layout.rs`):
 - `gap` no Layout e no Panel (L05); o FlowLayout com `v_align`, `baseline` (L12) e o `grow` dos
   filhos (o espaçador, L04); a GridLayout com `grid_row`, `grid_column` e `row_span` (G12); o
   ScrollBox com `gutter` e a barra só com o que rolar (L01); o form com `auto_size`, desligado por
@@ -189,7 +262,7 @@ Lote 4, layout e texto (feito em 12/11, sem commit; teste `aylis-controls/tests/
   (T04, T05); no Label, `line_height`, `text_shadow` e os métodos `min_content_width` e
   `max_content_width` (T02); o traço por dentro documentado no `Canvas` (T09).
 
-Lote 5, mídia e WebView (feito em 12/11, sem commit; testes em `aylis-media/tests/media.rs` e
+Lote 5, mídia e WebView (feito em 12/11; testes em `aylis-media/tests/media.rs` e
 `aylis-webview/tests/environment.rs`):
 - No fim do vídeo a posição fica no fim (W04); vídeo por endereço `http(s)`/`rtsp` no Media
   Foundation, no GStreamer e no AVFoundation (W11; o macOS e o Linux por conferir); o VideoPlayer
@@ -198,7 +271,7 @@ Lote 5, mídia e WebView (feito em 12/11, sem commit; testes em `aylis-media/tes
   `data_dir` e `browser_args`, sem a depuração remota (W07); a foto do `snapshot` com o WebView
   pela captura da janela (`WindowCaptureService`, no Windows; W10).
 
-Lote 6, gerador e projeto (feito em 12/11, sem commit; testes em `aylis-project/tests/project.rs`):
+Lote 6, gerador e projeto (feito em 12/11; testes em `aylis-project/tests/project.rs`):
 - A chave `sdk` do `.aylisproj`: projetos novos com o Aylis do crates.io, a pasta fixa como opção,
   e vazio como antes, pela junção (G11, G03; também resolve G15 e G16 nos projetos novos); a
   opção nas Opções do projeto.
@@ -211,7 +284,7 @@ Lote 6, gerador e projeto (feito em 12/11, sem commit; testes em `aylis-project/
   (B09); o texto com contexto (`arquivo|Abrir`) e as traduções seguindo a correção do texto no
   designer (O02).
 
-Lote 7, IDE e MCP (em parte, 12/11, sem commit):
+Lote 7, IDE e MCP (em parte, 12/11):
 - O argumento desconhecido é recusado com os que valem (M06); `ide_list` com o pid e `ide_select`
   por ele (M03); o `set_property` com `margins.left` em texto (M09); `set_properties` (M15) e
   `move_component` (M16); o `read_code` pelo caminho relativo ao projeto, com qualquer barra e
@@ -220,7 +293,7 @@ Lote 7, IDE e MCP (em parte, 12/11, sem commit):
   usuário abriu (I10); o Design desligado num fonte sem form (I05); a foto sem o cursor de texto e
   sem o hover (B03).
 
-Lote 7, o resto (feito em 12/11, sem commit; roteiros 112 a 117):
+Lote 7, o resto (feito em 12/11; roteiros 112 a 117):
 - I06: a geração e o `Project::save` só gravam o que mudou (`codegen::write_changed`); a
   `.aylis/.gitignore` tem uma regra só, `*` (`aylis_project::local_dir_ignored`), em vez de ganhar
   uma linha por recurso; o build diz nas mensagens o que mexeu no projeto e por quê
@@ -242,13 +315,16 @@ Lote 7, o resto (feito em 12/11, sem commit; roteiros 112 a 117):
   fica em `AYLIS_KEYSTORE_PASSWORD`). M19: `check`, `test` (cargo test, unittest, go test,
   bun/node, dotnet test; recusado no modo restrito) e `screenshot` (qualquer form pelo designer,
   ou o app em execução); `docs/proposta-llm-ci.md` atualizado. Falta: o executor de testes de
-  Java, C++ e Pascal; a pasta no "Novo DataModule"; o `set_theme` chegando ao app em execução.
+  Java, C++ e Pascal (decidido em 14/11: fazer; um executor mínimo no projeto gerado, o JUnit
+  quando o projeto já o usa, o FPCUnit no Pascal; não começou); a pasta no "Novo DataModule" (decidido em
+  14/11: fazer, com o mesmo campo de subpasta do "Novo form"; não começou); o `set_theme` chegando ao app em execução (decidido em 14/11: fazer, chamando o `push_reload`
+  como a Aparência; não começou).
 - B04: `aylis::headless::Headless` monta o `Ui` sem janela nem `platform::run` (as classes, o texto
   e o desenho fora da tela do renderizador do projeto; `install_offscreen_service`), abre o projeto
   ou um form, simula `click`, `type_text`, `press`, `advance` e tira a foto (`render_png`).
   Documentado em `docs/funcionamento.md`; teste `crates/aylis/tests/headless.rs` (Skia e Direct2D).
 
-Mídia (feito em 12/11, sem commit; testes `aylis-media/tests/texture.rs` e `http.rs`):
+Mídia (feito em 12/11; testes `aylis-media/tests/texture.rs` e `http.rs`):
 - W15: com o canvas no Direct2D da mesma placa, o Media Foundation entrega o quadro na placa, o
   conversor do Direct3D 11 escreve BGRA numa textura compartilhada e o Direct2D a desenha sem
   passar pela CPU; o Skia, o navegador e o `current_frame` recebem os pixels copiados uma vez (o
@@ -263,7 +339,7 @@ Mídia (feito em 12/11, sem commit; testes `aylis-media/tests/texture.rs` e `htt
   vale no MediaPlayer, no VideoPlayer só de som e no `open_audio_location`. Não conferido no Linux
   e no macOS.
 
-Controles, layout e projeto (feito em 12/11, sem commit; testes
+Controles, layout e projeto (feito em 12/11; testes
 `aylis-controls/tests/tabernaculo_rendering.rs`, `tabernaculo_followup.rs`, `partial_paint.rs`,
 `aylis-core/tests/input.rs` e `ico_frames.rs`, `aylis-project/tests/frame_instances.rs` e
 `sync_hand_edits.rs`):
@@ -306,7 +382,7 @@ As duas falhas da suíte que vinham desde o 0.2.0-beta.3 (corrigidas em 12/11):
   features do `aylis`, o Gauge fica registrado e a página o monta ao vivo; sozinha, a Landing
   não o registra e mostra a imagem. O teste confere o registro e espera o caso certo.
 
-Cantos da janela (pedido de 12/11, sem commit; roteiro 118): a propriedade `window_corners` do Form
+Cantos da janela (pedido de 12/11; roteiro 118): a propriedade `window_corners` do Form
 (`default`, `round`, `small`, `square`). No Windows 11 o DWM desenha os cantos
 (`DWMWA_WINDOW_CORNER_PREFERENCE`), com a borda suave e a sombra dele; o `default` com
 `border_style = custom` arredonda como uma janela comum, e com `none` fica como o sistema deixa
@@ -316,7 +392,7 @@ transparente com o conteúdo por baixo (mantém os cantos e a sombra); escrito, 
 conferido num Mac (testes-em-dispositivos). No Linux, no celular e no navegador, sem efeito.
 Conferido na tela com o Direct2D e o Skia na CPU (a captura por GDI não mostra o Skia em OpenGL).
 
-O menu de layouts do Windows 11 na barra própria (pedido de 12/11, sem commit; roteiro 118): a
+O menu de layouts do Windows 11 na barra própria (pedido de 12/11; roteiro 118): a
 TitleBar diz ao `Ui` onde fica o botão maximizar (`Ui::set_maximize_button`,
 `Ui::maximize_button`), e a subclass da janela responde `HTMAXBUTTON` no `WM_NCHITTEST` sobre
 ele: o Windows passa a tratá-lo como o botão da janela e, com o mouse parado, mostra o próprio
@@ -326,7 +402,7 @@ clique (maximizar e restaurar) continuam os da barra. Conferido na tela (Direct2
 aparece e os dois cliques maximizam e restauram. Os ganchos do app (`on_message`) vêm antes e
 podem mudar isso. Fora do Windows, sem efeito.
 
-O instalador e o desinstalador mais rápidos (pedido de 12/11, sem commit: "os projetos de exemplo
+O instalador e o desinstalador mais rápidos (pedido de 12/11: "os projetos de exemplo
 estão custando muito ao instalador e demorando muito para desinstalar, fica rodando arquivo por
 arquivo"):
 - O que demorava era a lista de detalhes do NSIS, uma linha por arquivo. Medido com 20 mil
@@ -342,7 +418,7 @@ arquivo"):
   `component_docs` do MCP lê as páginas dela.
 - Teste `the_script_leaves_generated_out_and_does_not_list_every_file`.
 
-Pacotes de ferramentas e a verificação de ambiente rápida (pedido de 12/11, sem commit; o
+Pacotes de ferramentas e a verificação de ambiente rápida (pedido de 12/11; o
 desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
 - **Verificação de ambiente:** o resultado fica em `%USERPROFILE%\.aylis\environment.json`
   (`aylis_tools::env_cache`); cada plataforma anota do que dependeu (o programa achado com a
@@ -381,16 +457,20 @@ desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
   --with-packages <nomes|all>`. Testado em modo silencioso por fora do Claude (WMI): o kit com
   node e codelldb instalado em 37,8 s; com o `go` sem origem, saída 3 e a IDE instalada (o
   registro, o PATH e os atalhos restaurados depois).
-- **Falta:** o Free Pascal (só há instalador Inno Setup), o WiX e o Build Tools da Microsoft (o
-  Rust do Windows depende dele para ligar; o Rust `gnu` com MinGW foi testado e funciona sem
-  ele, mas sem o Skia, e o autor decidiu manter o `msvc`, veja o histórico); pacotes para pylsp, tsls, gopls, delve, csharp-ls
-  e pasls (continuam pelos gerenciadores); android, dotnet, python e nsis no Linux e no macOS;
-  o JDK do macOS (testes-em-dispositivos); o proxy por PAC/WPAD; o "Configurar linguagens" ainda
-  cai no winget/rustup quando não há origem; as páginas do instalador vistas na tela e o
-  desinstalador numa máquina de teste.
+- **Falta** (decidido pelo autor em 14/11, "Seguir todas"; nada começou):
+  - fazer: o pacote do Free Pascal (o `packages pack` extrai o instalador Inno Setup oficial uma
+    vez), o do WiX (zip, código aberto) e o Android SDK, o NDK e o .NET para Linux e macOS;
+  - não fazer: empacotar o Build Tools da Microsoft (a licença não permite redistribuir; continua
+    o instalador da Microsoft), pacotes para pylsp, tsls, gopls, delve, csharp-ls e pasls
+    (continuam pelos gerenciadores, que já vêm nos pacotes das linguagens), Python e NSIS no
+    Linux e no macOS (não fazem falta lá) e o proxy por PAC/WPAD (continua o proxy das
+    variáveis e do Windows);
+  - manter: o "Configurar linguagens" cair no winget/rustup só quando não há origem de pacotes;
+  - conferir: o JDK do macOS (testes-em-dispositivos), as páginas do instalador vistas na tela
+    e o desinstalador numa máquina de teste.
 
 Quadros de câmera e a repintura (relatado em 13/11 por um app com várias câmeras e duas janelas;
-feito, sem commit; teste `aylis-media/tests/repaint.rs`):
+feito; teste `aylis-media/tests/repaint.rs`):
 - Conferido no código: o `FrameSink::push_frame` (e o `CameraView`) pedia `request_repaint` a
   cada quadro — a época do dano subia e todas as janelas repintavam inteiras —, com uma
   mensagem por quadro para a thread da interface; o Direct2D soltava a textura não desenhada
@@ -506,7 +586,8 @@ feito, sem commit; teste `aylis-media/tests/repaint.rs`):
   A descrição do `app_command` no MCP lista os três. Testes em
   `crates/aylis-remote/tests/protocol.rs` (Ctrl+clique e Shift+clique na lista de seleção
   múltipla, o arrastar entre dois painéis, o Ctrl+A pelo `modifiers`). O `ui_click` do
-  `McpServer` do app ainda é o clique simples.
+  `McpServer` do app ainda é o clique simples (decidido em 14/11: fazer, com `modifiers`, ponto,
+  botão, duplo, um `ui_drag` e o `ui_key` com `modifiers`, repassados ao `execute`; não começou).
 - **Modo de mistura (`blend_mode`)** (13/11; roteiro, item 132). Pedido: "o Canvas não tem modo
   de mistura para permitir colocar uma marca d'água em negativo por cima das imagens dos vídeo
   sendo reproduzidos". Agora:
@@ -543,7 +624,7 @@ interface ocupada. Aprovado só registrar e medir; a mudança de arquitetura esp
 Decidido pelo autor em 13/11 ("Medir e fundo"): a outra thread fica de fora por enquanto. A
 fazer, na mesma thread:
 - [x] Medir as transições no Direct2D com janela (o padrão no Windows; só a CPU foi medida).
-  Feito em 13/11 (sem commit): o exemplo `transitions` do `aylis-platform-winit` (a mesma tela
+  Feito em 13/11: o exemplo `transitions` do `aylis-platform-winit` (a mesma tela
   numa janela; o quadro é a pintura mais o mandar e o apresentar, pelo profiler;
   `AYLIS_VSYNC=0`, novo, apresenta sem esperar o monitor; o terceiro argumento é o `zoom` do
   form, `0.6667` no monitor 4K a 150% para valer em pixels). Os números em
@@ -561,7 +642,7 @@ fazer, na mesma thread:
   camadas: 34 a 47 ms em 4K, um tranco só) e o painel, que repinta a página de trás a cada
   quadro (32 ms em 4K, todos acima). O passo seguinte é mesmo o fundo guardado.
 - [x] O fundo atrás de um painel que anda vira camada guardada (hoje ele repinta a página de
-  trás que descobre: 342 a 420 controles por quadro em 1080p). Feito em 13/11 (sem commit):
+  trás que descobre: 342 a 420 controles por quadro em 1080p). Feito em 13/11:
   no `paint_node`, os filhos que ficam atrás do último irmão com o lugar ou a transparência
   animando (`Ui::placement_movers`, lidos uma vez por pintura) e que recortam os filhos viram
   camada automática enquanto ele anda (`layer_cache` do form ou do projeto); a área descoberta
@@ -650,13 +731,12 @@ O que a medição mostrou:
 - Logo, a maior parte do ganho vem de compor camadas guardadas **na mesma thread** (as duas
   páginas da transição e o fundo atrás de quem anda, como imagens, sem repintar controles); a
   outra thread é o passo seguinte, menor.
-- Faltam: a mesma medição no Direct2D com janela (o padrão no Windows; só a CPU foi medida),
-  e quanto tempo os handlers de apps reais seguram a interface (o caso em que só a outra
-  thread ajuda).
+- Faltavam a mesma medição no Direct2D com janela e quanto tempo os handlers de apps reais
+  seguram a interface: feitas em 13/11 (as caixas acima).
 - Os tempos em 4K variaram até 2x entre rodadas (outras sessões compilando); a área e os
   controles são exatos.
 
-As transições com camada guardada (feito em 12/11, sem commit; pedido do autor: "Sim, investigue"):
+As transições com camada guardada (feito em 12/11; pedido do autor: "Sim, investigue"):
 - Por que a camada não valia: (1) o `tick_transitions` chamava `request_repaint` a cada quadro,
   a janela inteira era repintada e a pintura inteira refaz as camadas (`layer_epoch`); (2) o
   `apply_transition` mudava o `translate`/`opacity` pelo `control_mut`, que marca o desenho de
@@ -686,16 +766,17 @@ As transições com camada guardada (feito em 12/11, sem commit; pedido do autor
 - O que piorou: o primeiro quadro, que monta as duas camadas de página inteira (em 1080p
   ainda dentro de 16,7 ms; em 4K na CPU, de ~27 para 57 ms ou mais). E a memória: as duas
   imagens (8 MB cada em 1080p, 33 MB em 4K) ficam no cache do renderizador depois da transição
-  até ele se limpar (16 imagens no Skia); falta soltá-las no fim da transição.
+  até ele se limpar (16 imagens no Skia). Feito depois: soltas no fim da transição
+  (`Canvas::forget_cached`, veja abaixo).
 - O resto do quadro na CPU agora é compor duas imagens do tamanho da tela (largura de banda
-  da memória); na GPU (Direct2D na janela) isso deve ficar perto de zero, mas não foi medido.
+  da memória); na GPU (Direct2D na janela) fica perto de zero (medido em 13/11, acima).
 - O `giant_screen`: a área e os controles iguais à base; com a máquina livre, o teste passa
   (em 12/11 à tarde, com a CPU em 100%, os dois lados ficaram uns 3x acima da base).
 - Os painéis animados por cima de uma página (`painel animado`, `painel cache_layer`) seguem
   repintando a página de trás que descobrem (342 a 420 controles por quadro): o fundo como
-  camada é o passo seguinte, se valer.
+  camada foi feito em 13/11 (a 2ª caixa acima).
 
-As camadas guardadas soltas e configuráveis (feito em 12/11, sem commit; pedido do autor: "pode
+As camadas guardadas soltas e configuráveis (feito em 12/11; pedido do autor: "pode
 fazer, mais esse comportamento de cache que faz com que armazene em memória eu preciso que fique
 configurável por projeto ou por formulário"):
 - Antes, cada renderizador guardava até 16 imagens e só limpava tudo ao chegar nas 16; as das
@@ -719,10 +800,10 @@ configurável por projeto ou por formulário"):
   `catalog` do `aylis-remote` e o `cargo check` para wasm do núcleo, dos controles, do
   `aylis-web` e da IDE lite. Catálogo regravado (`update-catalog`), rótulo em
   `properties.tsv`, os 4 textos novos da IDE traduzidos e a linha na página do `Form` da
-  Landing (à mão; o `aylis-tool docs` regrava tudo e não foi rodado).
-- Falha na IDE, de outra sessão: `every_inspector_property_has_a_readable_translated_name`
-  (`UrlScheme.bring_to_front`, `UrlScheme.scheme`, `WmiQuery.namespace` sem rótulo no
-  `properties.tsv`).
+  Landing (à mão; depois regravada pelo `aylis-tool docs` nas releases de 13/11).
+- A falha na IDE que vinha de outra sessão (`every_inspector_property_has_a_readable_translated_name`,
+  sem rótulo para `bring_to_front`, `scheme` e `namespace`) está resolvida: os rótulos estão no
+  `properties.tsv`.
 - Medido com o exemplo `transitions` (agora com a coluna "guardado"), a máquina livre, o HEAD
   contra o de agora (`medicoes/transicoes.json`):
 
@@ -740,7 +821,7 @@ configurável por projeto ou por formulário"):
 
 Pedido do autor: "pode implementar e ajustar os lugares onde tiveram que fazer diretamente em
 cada projeto, vamos centralizar isso para usar o do Aylis atendendo todos os casos". Feito,
-sem commit; falta o autor conferir (roteiro 119):
+falta o autor conferir (roteiro 119):
 - `aylis_core::clipboard`: texto, HTML, imagem e os formatos do app (`ClipboardContent`),
   gravados de uma vez. O que a plataforma não guarda fica no processo até outro app copiar.
   O `ClipboardService` ganhou `set_content`, `get_html`, `get_image`, `get_data`, `has` e
@@ -767,7 +848,7 @@ sem commit; falta o autor conferir (roteiro 119):
 **Prefixo de URL próprio: o `UrlScheme` (12/11/2026)**
 
 Pedido do autor: um componente que, ativado, registra no Windows um prefixo próprio, e o link
-chamado por qualquer app chega no evento dele. Feito, sem commit; falta o autor conferir
+chamado por qualquer app chega no evento dele. Feito; falta o autor conferir
 (roteiro 125):
 - Componente não visual `UrlScheme` (System): `scheme`, `description`, `active`,
   `bring_to_front`; `on_link` e `on_error`; `register()`, `unregister()`, `is_registered()`.
@@ -789,14 +870,15 @@ chamado por qualquer app chega no evento dele. Feito, sem commit; falta o autor 
   `url_schemes_are_registered_and_removed_by_the_installers` e o do manifesto do Android.
 - A conferir: o teste real rodou de dentro do Claude Desktop (pacote MSIX); o registro foi
   visto pelo `reg` e pelo `Start-Process`, mas falta ver de fora (o navegador chamando o link).
-- Falta: macOS e iOS (`CFBundleURLTypes` no `Info.plist`), Linux (o `.desktop` com
-  `x-scheme-handler`) e o navegador (`registerProtocolHandler`, só `web+`) na publicação; com o
-  app aberto, o repasse para a cópia aberta só existe no Windows e no Android.
+- Falta: macOS e iOS (`CFBundleURLTypes` no `Info.plist`) e o Linux (o `.desktop` com
+  `x-scheme-handler` na publicação, e o repasse para a cópia aberta, como no Windows). O navegador
+  fica sem (decidido em 14/11: o `registerProtocolHandler` só aceita `web+` e abre a página de
+  novo; um app web recebe pelo endereço da página).
 
 **WMI pela API nativa (12/11/2026)**
 
 Pedido do autor: um componente que fale com o WMI do Windows pela API nativa (o `OleObject`
-chega só à API de script, sem laço sobre o resultado nem eventos). Feito, sem commit; falta o
+chega só à API de script, sem laço sobre o resultado nem eventos). Feito; falta o
 autor conferir (roteiro 126):
 - `WmiQuery` (System, `aylis-providers`, só Windows no `CLASS_PLATFORMS`): `namespace`
   (`root\cimv2`), `query` (WQL), `data_set` (um `ClientDataSet`), `timeout` (s) e `watch`;
@@ -820,21 +902,22 @@ autor conferir (roteiro 126):
   campos, JSON, assíncrono vindo de outra thread, eventos, recusas, designer) e, no
   `aylis-platform-winit`, o WMI real (5: `Win32_OperatingSystem` com as colunas na ordem e os
   tipos, `Win32_Process` com `*`, erros, assinatura e um processo novo chegando como evento).
-- Como no `OleObject`: o `aylis-project` não compila agora por uma mudança de outra sessão
+- Como no `OleObject`: o `aylis-project` não compilava então por uma mudança de outra sessão
   (`ImageCacheLimits.layers_mb`), então o `aylis-tool update-catalog` rodou pelo exemplo do
   `aylis-remote` (o mesmo que ele chama), o que também trouxe as mudanças de outras sessões no
   catálogo (`OleObject` renomeado, `UrlScheme`, `Clipboard`, `Form.layer_cache`); a página da
   documentação (`componentes/WmiQuery.md` e o `indice.json`) foi escrita à mão, no formato do
   gerador, com o texto de `docs/componentes/WmiQuery.md`. Não rodaram a suíte inteira nem os
   testes da IDE (o das traduções dos rótulos); rodaram os do componente, do serviço, das
-  mensagens, do catálogo e de `crates/aylis/tests/classes.rs`, mais o wasm e o Android.
-- Falta: exemplo na galeria (componente não visual, como o `OleObject`).
+  mensagens, do catálogo e de `crates/aylis/tests/classes.rs`, mais o wasm e o Android. Depois,
+  a suíte inteira e o `aylis-tool docs` rodaram nas releases de 12 e 13/11.
+- Sem exemplo na galeria, como os outros não visuais (decidido pelo autor em 14/11).
 
 **Automação OLE (12/11/2026)**
 
 Pedido do autor: um componente para falar com o Excel e outros programas por OLE/ActiveX; a
 automação "pode fazer" (embutir controle ActiveX no form ficou de fora, o porquê no histórico).
-Feito, sem commit; falta o autor conferir (roteiro 123):
+Feito; falta o autor conferir (roteiro 123):
 - `OleObject` (System, `aylis-providers`, só Windows no `CLASS_PLATFORMS`): `prog_id`,
   `use_running`, `call_timeout` (ms) e `opened`; métodos `open`, `release`, `get_value`,
   `get_number`, `set_value`, `call`, `get_values`/`set_values` (matriz JSON) e `put_data`
@@ -852,8 +935,8 @@ Feito, sem commit; falta o autor conferir (roteiro 123):
   volta, erro do objeto) e a recusa do `WScript.Shell`.
 - Falta: esta máquina não tem o Office, então o `excel_round_trip` (`#[ignore]`) não rodou de
   verdade: a ordem linha × coluna da matriz no Excel e o `Resize` do `put_data` esperam o
-  roteiro 123 numa máquina com o Excel. A tela espera enquanto o programa responde (não há
-  versão assíncrona). O backend remoto continua podendo comandar o Excel da máquina (decidido:
+  roteiro 123 numa máquina com o Excel. A tela espera enquanto o programa responde (sem versão
+  assíncrona, decidido pelo autor em 14/11). O backend remoto continua podendo comandar o Excel da máquina (decidido:
   basta a lista de programas).
 - Na mesma rodada, o `aylis-tool update-catalog` também gravou no catálogo o `Clipboard` e o
   `UrlScheme` (de outras sessões), que faltavam nele.
@@ -863,12 +946,13 @@ Feito, sem commit; falta o autor conferir (roteiro 123):
   mudança de outra sessão (`ImageCacheLimits.layers_mb`). Pelo mesmo motivo não rodaram a suíte
   inteira nem os testes da IDE (o das traduções); rodaram os do componente, do serviço, do
   catálogo e de `crates/aylis/tests/classes.rs`, mais o wasm e o Android dos três crates.
+  Depois, a suíte inteira e o `aylis-tool docs` rodaram nas releases de 12 e 13/11.
 
 **A placa de vídeo de cada janela (11/11/2026)**
 
 Pedido do autor: uma janela arrastada de um monitor da placa dedicada para um da integrada
 trava (o Windows copia cada quadro entre as placas). Veio num patch escrito sem compilar;
-analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
+analisado, aplicado e corrigido em 11/11 (roteiro 104). Tudo em
 [gpu-por-monitor.md](gpu-por-monitor.md):
 - `GpuChoice::FollowMonitor` (`monitor`), no projeto e na propriedade nova `gpu` do `Form`;
   o evento `on_gpu_change` e os métodos `gpu_adapter()`/`gpu_adapters()`.
@@ -891,11 +975,13 @@ analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
   D3D12 e llvmpipe): a troca de contexto e o quadro depois dela; o WSLg não tem o feedback v4,
   e o `GALLIUM_DRIVER` força o D3D12 nas duas, então falta um Linux com duas placas.
 - Não começado: um form ocupando vários monitores (uma janela por monitor, todas como um form).
+  Decidido pelo autor em 14/11: fazer (o desenho em `docs/gpu-por-monitor.md`, de uma a três
+  semanas; conferir pede várias placas e monitores).
 
 **Pedido de 11/11/2026**
 - [ ] **Uma pasta de compilação para todo o Rust da máquina:** "armazenamento está sendo o
   maior problema do rust, e o aylis deveria corrigir isso" — "por padrão é pra tudo ir pra um
-  só lugar", e quem quiser desmarca. Feito em 11/11 (sem commit; roteiro 106):
+  só lugar", e quem quiser desmarca. Feito em 11/11 (roteiro 106):
   - `aylis_tools::cargo_config`: a IDE grava no `config.toml` global do cargo (`CARGO_HOME`
     ou `~/.cargo`) o `build.target-dir` com a pasta das Opções e o
     `profile.dev.package."*".debug = false`, ao abrir e no OK das Opções. Cada chave leva o
@@ -913,12 +999,11 @@ analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
   - Com uma pasta só, dois projetos com executável de mesmo nome gravam o mesmo
     `target/debug/<nome>.exe`, e um `cargo clean` em qualquer projeto limpa a pasta de todos.
   - Ativado na máquina do autor em 11/11. "Seguir a pasta única": o repositório do Aylis
-    também compila em `%LOCALAPPDATA%\aylis\target`. O `default_target_dir` não tem mais o
+    também compila na pasta única (hoje `%USERPROFILE%\.aylis\target`, desde a 0.2.0-beta.5). O `default_target_dir` não tem mais o
     caso "rodando do repositório"; o instalador, o `bench` e o teste `apps` acham os
     executáveis por `aylis_tools::cargo_target_dir` (o `cargo metadata`) ou pelo
-    `CARGO_TARGET_TMPDIR`. Falta: a ponte do MCP do Claude Desktop
-    (`claude_desktop_config.json`) ainda aponta para `aylis\target\debug\aylis-tool.exe`,
-    e o Claude Desktop aberto desfaz a troca.
+    `CARGO_TARGET_TMPDIR`. A ponte do MCP do Claude Desktop (`claude_desktop_config.json`)
+    aponta para `%USERPROFILE%\.aylis\target\debug\aylis-tool.exe` (conferido em 14/11).
   - 12/11: a pasta era única só no nome. O Claude Desktop é um pacote MSIX, e tudo o que ele
     abre (as sessões, o `cargo`, a IDE aberta pelo MCP) gravava o `%LOCALAPPDATA%\aylis\target`
     numa cópia privada (`%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Local\aylis\target`, 65
@@ -930,14 +1015,14 @@ analisado, aplicado e corrigido em 11/11 (sem commit; roteiro 104). Tudo em
     do Claude Desktop (trocada com ele fechado, por um script aberto pelo WMI) apontam para ela.
     O teste `visual` da IDE gravava as falhas em `<repositório>/target/visual`; agora, no
     `CARGO_TARGET_TMPDIR`. Ainda na cópia do Claude: o `mcp.json`, os segredos (`dev-key`,
-    `dev-secrets`), o `trusted.json` e as ferramentas baixadas (`tools`), que uma IDE aberta fora
-    do Claude não vê.
+    `dev-secrets`) e o `trusted.json`, que uma IDE aberta fora do Claude não vê (as ferramentas
+    baixadas já ficam em `%USERPROFILE%\.aylis\tools`).
 - [ ] **Compilar com o app aberto em outro lugar:** "O compilador do Aylis não aceita compilar
   enquanto qualquer NoOBS.exe estiver aberto, inclusive o instalado." O autor: não é para ser
   assim. O Aylis deve conferir se o executável que a compilação vai gerar está em uso e não pode
   ser substituído, e não se há um processo com aquele nome rodando: pode haver mais de um na
   máquina, e o que roda pode não ser o da pasta de saída. Feito em 11/11 (falta o autor
-  confirmar; sem commit): antes de compilar, `aylis_tools::run` confere os executáveis que a
+  confirmar): antes de compilar, `aylis_tools::run` confere os executáveis que a
   compilação grava (o do `target` e o da pasta de saída) abrindo-os para escrita; um em uso
   recusa (ou, com "Encerrar o app aberto", encerra só os processos daquele arquivo, pelo
   caminho). Outra cópia do app, de outra pasta, não atrapalha mais. O Parar sem nada rodando na
@@ -950,7 +1035,7 @@ O agente que refez a página inicial do InsightDB (monitoramento de banco, de we
 pelo MCP anotou as lacunas (L-01 a L-28). Pedido do autor em 11/11: "pode colocar e já começar a
 fazer". Os números são os do relatório.
 
-Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
+Feitos em 11/11 (falta o autor confirmar; roteiro 102):
 - **L-24:** a causa era o `auto_size`, que regravava a altura a cada arrumação e zerava a
   referência das âncoras; os setters só zeram quando o valor muda, e a medida do layout
   (`set_measured_height`/`width`) mantém a referência. Teste `aylis-controls/tests/anchors.rs`
@@ -977,7 +1062,7 @@ Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
   ficam com a largura desenhada). **L-23:** os itens aceitam quebra de linha, e o `class_info`
   diz o formato dos textos com estrutura. **L-16/L-21:** nas notas do `class_info` e nas
   instruções do MCP.
-- Decididos pelo autor em 11/11 e feitos (falta confirmar; sem commit):
+- Decididos pelo autor em 11/11 e feitos (falta confirmar):
   - **L-19** ("fazer igual ao Delphi, o design junto do código" → "a subpasta do form se repete no
     código"): `forms/painel/inicio.json` → `rust/src/forms/painel/inicio.rs` (e
     `python/src/forms/painel/inicio.py`, com o `__init__.py` da pasta), módulo `painel_inicio`; os
@@ -994,11 +1079,12 @@ Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
     Rectangle e Button com o raio por canto (cima-esquerda, cima-direita, baixo-direita,
     baixo-esquerda); negativo curva o canto para fora (`aylis_core::Path::corners`); `radius: 8`
     continua valendo para os quatro.
-- Ficou: a cor no markup do Label (L-15, a segunda parte).
+- A cor no markup do Label (L-15, a segunda parte) foi feita depois: `<color=...>` com token do
+  tema ou `#rrggbb` (`aylis-controls-base/src/basic.rs`).
 - **A explicação das propriedades** (pedido de 11/11: "o mcp consegue explicar as propriedades
   como funcionam, o negativo do radius por exemplo"; decidido: a explicação fica na documentação,
   tirada do comentário `///` do campo no código, mais um `docs/componentes/<Classe>.md` opcional, e o
-  MCP a devolve sob demanda, só o essencial). Feito em 11/11 (sem commit): a página de cada
+  MCP a devolve sob demanda, só o essencial). Feito em 11/11: a página de cada
   componente ganhou a coluna "O que faz" (`reference::source_field_docs`, pelas camadas da classe e
   o `ControlBase`), o `.md` escrito à mão entra no fim da página, e a ferramenta `component_docs`
   (com `property`, só a linha dela e a seção `### propriedade` do texto à mão). Comentários novos e
@@ -1007,12 +1093,15 @@ Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
   as classes cujo tipo no código tem outro nome (o `Image` é o `ImageView`).
 - **Renomear embutido no MediaCard** (pedido de 11/11, do NoOBS: "o card ganha uma propriedade
   como editable_title e cuida sozinho do campo de edição, dispara um on_rename com o nome novo, e o
-  app só grava"). Feito em 11/11 (sem commit; roteiro 103): `editable_title` (o clique no nome abre
+  app só grava"). Feito em 11/11 (roteiro 103): `editable_title` (o clique no nome abre
   o campo; a miniatura continua no `on_click`), `on_rename` com o nome novo (já gravado no `title`;
   vazio ou igual não dispara), Esc cancela, e o método `rename()` abre pelo código (o F2). O campo
   é uma camada sobre o form que segue o card (como o calendário do DateEdit). No núcleo: a camada
   que fecha com o clique fora perde o foco antes de sair, para o campo gravar. Teste
   `aylis-controls/tests/media_card_rename.rs`; texto em `docs/componentes/MediaCard.md`.
+
+As caixas abaixo descrevem as lacunas como foram relatadas; todas foram feitas (o resumo acima)
+e só esperam o autor conferir.
 
 - Altos:
   - [ ] **L-01.** Depois do `new_form`, o designer ficou fora de sincronia: `set_layout`/`save`
@@ -1055,7 +1144,7 @@ Feitos em 11/11 (falta o autor confirmar; sem commit; roteiro 102):
 O agente que migrou o cliente do RTSPlayer só pelo MCP anotou o que travou
 (`RTSPlayer/relatorio-mcp-aylis.md`). Os números são os do relatório.
 
-Feitos todos em 10/11 (pedido do autor: "faça todos"; falta o autor confirmar; sem commit;
+Feitos todos em 10/11 (pedido do autor: "faça todos"; falta o autor confirmar;
 roteiro 101):
 - **14:** o `call_named` sobe de escopo em escopo até o form que tem o handler (a linha clonada
   é um escopo sem os handlers). **16:** a causa era o carregador do JSON: `bindings` é chave
@@ -1086,6 +1175,9 @@ roteiro 101):
   compilação, ou que o app está rodando, ou que abriu e caiu. **7:** sem a chamada passar do
   prazo do cliente, a ponte não é reiniciada no meio (a causa provável); `ide_list` mostra também
   as IDEs com o MCP desligado. **9:** resolvido pelo `project` em cada chamada (roteiro 100).
+
+As caixas abaixo descrevem o defeito como foi relatado; todos foram feitos (o resumo acima) e
+só esperam o autor conferir (o 7 continua suspeita).
 
 - MCP — o vínculo da conversa com a IDE:
   - [ ] **7.** Depois do `Request timed out` de um `build`, a IDE com o projeto sumiu da conversa e
@@ -1142,7 +1234,7 @@ roteiro 101):
   o progresso e as mensagens dele. Hoje a geração e a verificação rodam numa thread da IDE
   (`jobs.rs`, `aylis_project::check`) e só o `cargo`/as ferramentas das linguagens rodam fora.
   Decidido pelo autor em 09/11: um subcomando do `aylis-tool`. Feito em 09/11 (falta o autor
-  confirmar; sem commit; roteiro 97): `aylis-tool build <projeto> [--target t] [--release]
+  confirmar; roteiro 97): `aylis-tool build <projeto> [--target t] [--release]
   [--no-generate] [--no-compile] [--language l] [--json]` gera, verifica e compila, parando no
   primeiro erro (`aylis_tools::build`; compila o desktop em Rust, as outras plataformas e linguagens
   só geram e verificam, e compilam ao executar ou publicar). Com `--json`, uma linha por evento
@@ -1159,9 +1251,8 @@ roteiro 101):
   (`the_events_go_and_come_back_through_the_json`); à mão, um projeto novo compilado pelo
   subcomando e pelo `build_external`, e interrompido no meio de uma compilação release (nenhum
   cargo ou rustc sobrou).
-- [ ] **Publicar no crates.io** (pedido do autor; os nomes `aylis`, `aylis-core`... e
-  `aylis-accesskit-android` estavam livres em 09/11). Preparado em 09/11 (sem commit; falta o autor
-  publicar): `cargo publish --dry-run` passou nos 27 crates, cada um empacotado e compilado a partir
+- [x] **Publicar no crates.io** (pedido do autor; os nomes `aylis`, `aylis-core`... e
+  `aylis-accesskit-android` estavam livres em 09/11). Preparado em 09/11: `cargo publish --dry-run` passou nos 27 crates, cada um empacotado e compilado a partir
   do pacote. O que mudou: (1) o `emoji.tsv` foi para dentro do `aylis-controls-base`
   (`data/emoji.tsv`; o `aylis-tool emoji` grava lá); fontes, ícones e animações não vão nos crates
   (são copiados para o projeto), e cada crate tem menos de 1,5 MB; (2) a cópia do
@@ -1181,13 +1272,13 @@ roteiro 101):
   aylis-providers aylis-webview aylis-remote aylis` (o cargo publica na ordem das dependências).
   Publicado em 13/11 (a 0.2.0 e a 0.2.1-beta.1, os 26 crates). Os projetos novos já nascem
   com `sdk: "crates.io"` (decidido em 11/11, G11); a chave vazia continua a junção
-  `.aylis/sdk`. Um README curto por crate (decidido em 13/11, feito sem commit; o teste
+  `.aylis/sdk`. Um README curto por crate (decidido em 13/11, feito; o teste
   `every_published_crate_has_a_readme`): aparece no crates.io na próxima versão publicada.
 
 **Arrastar**
 - [ ] Abas que saem e entram em janelas, como as do navegador (pedido em 06/11): arrastar a
   aba para fora cria outra janela, arrastar uma janela de fora para dentro também, com a
-  imagem de prévia junto do mouse. Feito em 06/11 (falta o autor confirmar; sem commit) no
+  imagem de prévia junto do mouse. Feito em 06/11 (falta o autor confirmar) no
   `TabStrip`: puxada para fora da faixa, a aba vira um arrasto do núcleo com a prévia (o
   título e a miniatura do conteúdo, que no Windows segue o cursor fora da janela); solta noutra
   faixa do mesmo `drop_group` (em qualquer janela) entra no lugar marcado; de volta na sua,
@@ -1219,14 +1310,13 @@ roteiro 101):
   largura presa continuarem). Arrastar troca a ordem e ela fica guardada enquanto a IDE está
   aberta (os forms pelo nome, o código pelo caminho; as abas novas vão para o fim); a aba de
   código puxada para fora vai para a janela de código.
-  Fora deste passo: o `TabControl` (abas sublinhadas, de páginas `TabItem`) não ganhou o
-  arrastar; a janela não acompanha o mouse durante o arrasto (como no Chrome), quem acompanha
-  é a prévia; juntar todas as abas de uma janela arrastando a faixa vazia.
+  Decidido pelo autor em 14/11 não fazer: o arrastar no `TabControl`, a janela acompanhar o
+  mouse durante o arrasto e juntar as abas pela faixa vazia.
 
 **IDE**
 - [ ] Recuo do Object Inspector (pedido em 09/11: "as propriedades deveriam estar identadas à
   frente do agrupador, e o agrupador parece um espaço à frente do alinhamento lateral"). Feito em
-  09/11 (falta o autor confirmar; sem commit): o nome do grupo na borda do painel, alinhado com a
+  09/11 (falta o autor confirmar): o nome do grupo na borda do painel, alinhado com a
   busca e com o título do componente, e as propriedades 16 px à frente (`GROUP_INDENT` em
   `inspector.rs`; os lados de `margins`, mais 14). A aba Eventos, sem grupos, ficou como estava.
   Referência `designer-windows.png` regravada (a de Linux, no Docker).
@@ -1307,7 +1397,7 @@ roteiro 101):
   ZenFone): a entrada `loopback:Android` no `AudioInput`, com a autorização do
   MediaProjection e o serviço `AylisActivity$Projection`. No emulador as amostras chegam
   (96 mil/s), mas em silêncio; no aparelho deve sair o som dos outros apps.
-- [ ] `Nfc` (pedido em 01/11; não começou): componente não visual (categoria "Device",
+- [ ] `Nfc` (pedido em 01/11; feito depois, falta conferir com um leitor e tags reais): componente não visual (categoria "Device",
   `available` falso onde não houver) para ler e gravar tags NDEF e dar o id da tag, com
   `on_tag` e `write(registros)`. Android: `NfcAdapter` em modo leitor (a publicação põe a
   permissão `NFC` e o `uses-feature`). iOS: Core NFC (ler; gravar no iOS 13+), com a
@@ -1318,7 +1408,7 @@ roteiro 101):
   tipo 2), o `NfcService`, o componente (`records` em texto, `text:`/`uri:`/MIME por linha);
   Android pelo `NfcAdapter` (Java na `AylisActivity`), desktop pelo PC/SC (feature `nfc`), web
   pela Web NFC. iOS ainda não (pede um Mac). Testado com serviço falso; aqui não há leitor USB.
-- [ ] `Bluetooth` (pedido em 01/11; não começou): suporte completo num componente não visual
+- [ ] `Bluetooth` (pedido em 01/11; feito depois, falta conferir com um aparelho real): suporte completo num componente não visual
   (categoria "Device", `available` falso onde não houver). BLE: procurar aparelhos (filtro
   por serviço e nome, RSSI), conectar e desconectar, listar serviços e características, ler,
   gravar (com e sem resposta) e ser avisado das mudanças (`notify`/`indicate`), com os eventos
@@ -1350,39 +1440,39 @@ roteiro 101):
 - [ ] A IDE só grava na vista por largura `left`, `top`, `width`, `height`, `visible` e
   `align` (`Document::VIEW_PROPS`): outra propriedade mexida no inspetor dentro da vista
   (`font_size`, `padding`, `columns`...) ia para o base, em todas as larguras. Pedido em 06/11:
-  qualquer propriedade mexida na vista vale só nela. Feito em 06/11 (sem commit; falta o autor
+  qualquer propriedade mexida na vista vale só nela. Feito em 06/11 (falta o autor
   confirmar): ao entrar na vista, o designer guarda o base de toda propriedade gravada de cada
   componente com nome e do próprio form (menos a posição e o tamanho do form, que são da
   prévia); o que ficar diferente vira mudança da vista. Mudança no próprio form vai com o nome
   vazio (`"": { "padding": 6 }`), que o núcleo e o `aylis-json` entendem.
 - [ ] Vistas personalizáveis (pedido em 06/11): hoje a IDE só tem Celular (até 599) e Tablet
   (até 1023). Criar, renomear, apagar e mudar o limite de cada vista pelo designer. Feito em
-  06/11 (sem commit; falta o autor confirmar): o seletor da barra mostra as vistas do form
-  (Celular e Tablet sempre) e "Vistas…", que abre o editor (`viewsdialog.rs`): nome, largura e
+  06/11 (falta o autor confirmar): o seletor da barra mostra as vistas do form
+  (Celular e Tablet sempre) e "Editar vistas…", que abre o editor (`viewsdialog.rs`): nome, largura e
   altura de/até, orientação, plataformas e as escalas; com desfazer (`Document::set_views`).
 - [ ] A vista escolhida por mais que a largura (pedido em 06/11): altura, orientação
-  (retrato/paisagem) e plataforma/tipo de aparelho, sem código. Feito em 06/11 (sem commit;
-  falta o autor confirmar): `FormView` com `min_width`, `max_width`, `min_height`,
+  (retrato/paisagem) e plataforma/tipo de aparelho, sem código. Feito em 06/11
+  (falta o autor confirmar): `FormView` com `min_width`, `max_width`, `min_height`,
   `max_height`, `orientation` e `platforms` (windows, linux, macos, android, ios, web); vale
   uma vista por vez, a primeira da mais estreita para a mais larga cujas condições todas valem.
   O tipo de aparelho fica pela largura e pela plataforma (não há como saber "tablet" de outro
   jeito sem o sistema).
 - [ ] Escala de fonte e de densidade por vista (pedido em 06/11): mudar o tamanho das
   fontes e os espaços do form inteiro numa vista, sem mexer componente a componente. Feito em
-  06/11 (sem commit; falta o autor confirmar): `font_scale` e `spacing_scale` na vista (0,25 a
+  06/11 (falta o autor confirmar): `font_scale` e `spacing_scale` na vista (0,25 a
   4). O layout carimba as escalas nos controles do form; a fonte da pintura e a medida
   (`font_of`) saem escaladas, e `margins`/`padding` e o `gap` do `GridLayout`/`FlowLayout`
   também; as propriedades continuam com os valores do desenho. O espaçamento interno de cada
   controle (o do tema: a altura de um botão, por exemplo) não muda.
 - [ ] `GridLayout` com um filho ocupando mais de uma coluna (o `colspan`; pedido em 06/11).
-  Feito em 06/11 (sem commit; falta o autor confirmar): `column_span` em todo controle
+  Feito em 06/11 (falta o autor confirmar): `column_span` em todo controle
   (categoria Layout); o que não cabe no resto da linha vai para a próxima, e mais que a grade
   tem ocupa a linha inteira (numa grade responsiva que encolheu).
 - [ ] Ver por que a vista não muda um componente de contêiner (pedido em 06/11): se o motivo
   for forte, fica como está e o motivo fica escrito; se não, a vista passa a mover. Visto em
   06/11: não havia motivo registrado; a vista só foi modelada como "propriedade → valor", e o
   núcleo já move um componente dentro do mesmo form sem problema de nomes (`set_parent`).
-  Feito (sem commit; falta o autor confirmar): as pseudo-propriedades `parent` (nome do
+  Feito (falta o autor confirmar): as pseudo-propriedades `parent` (nome do
   contêiner; vazio: o form) e `index` na vista; ao sair dela, o componente volta ao lugar e à
   ordem; o `aylis-json` grava a árvore do base (`Ui::base_children`) mesmo com a vista ativa;
   no designer, arrastar para outro contêiner com a vista à mostra grava a mudança, e "Voltar ao
@@ -1426,7 +1516,7 @@ roteiro 101):
   plataformas, com o app aberto. Guia em [docs/push.md](push.md); testes em
   `crates/aylis-controls/tests/push.rs`. Falta: o iOS por cima do bloqueio (CallKit e push de
   VoIP pelo PushKit) e o toque no desktop.
-- [ ] Assistente de novo projeto (pedido em 01/11; não começou): no lugar do diálogo único
+- [ ] Assistente de novo projeto (pedido em 01/11; feito depois, `crates/aylis-ide/src/wizard.rs`; falta o autor conferir): no lugar do diálogo único
   de hoje (nome, pasta, linguagem, renderizador e modelo), um passo a passo: linguagem (com a
   instalação do que faltar), plataformas alvo (Windows, Linux, macOS, Android, iOS, web),
   modelo e as configurações iniciais (tema, renderizador por plataforma, ícone, nome e id do
@@ -1597,9 +1687,9 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     no `aylis-host`, deram "Mês fechado: 100 notas" e "Cancelado na nota 27 de 100").
     Depois, também em 02/11: o mesmo nos clientes TypeScript, C#, Java, Go, C++ e
     Python (a trava na escrita, o `Post` com o `wake` no desktop, o erro do `Call` de outra
-    thread) e o guia em `docs/threads.md`. Falta:
-    - os projetos já criados guardam a própria cópia do cliente (`src/aylis.pas`, que a
-      geração não sobrescreve): eles não recebem o `Post` sozinhos.
+    thread) e o guia em `docs/threads.md`. Os projetos já criados guardavam a própria cópia
+    do cliente (`src/aylis.pas`); feito depois: o cliente vem da instalação, e a geração apaga a
+    cópia antiga (`aylis_project::hostlang`, `remove_client_copy`).
   - 3.3 O que a tela mostra (decidido): coberto pelo 3.1 (cursor de espera, a pintura
     continua e, depois de uns 3 s, o indicador discreto; com o `BusyWatcher`, o declarado).
   - 3.4 Diálogo dentro do handler (decidido em 02/11, opção C). Nos clientes remotos,
@@ -1728,13 +1818,13 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     o selftest das 7 linguagens fechando o form pelo backend (`on_close_query`) e o Python com
     `before_post` durante o `data post`.
   Ficou de fora: a sessão abandonada da `--bridge` receber `Aylis.Cancelled` (fechar a tela já
-  encerra a sessão).
+  encerra a sessão); decidido pelo autor em 14/11 não fazer.
 
-  Revisto em 02/11 (o que outra sessão fez, ainda sem commit, com a rolagem do editor de
+  Revisto em 02/11 (o que outra sessão fez, com a rolagem do editor de
   código): já existe parte da etapa 2 no núcleo: `Ui::damage(id)` (o `ctx.repaint()` passou a
   marcar só a área do controle, com folga fixa de 24), `take_damage` e `paint_region`; o
   Skia na GPU guarda a imagem do quadro anterior e repinta só a área (o Skia na CPU, o
-  Direct2D e a web ainda repintam inteiro); o Skia guarda os parágrafos de uma linha já
+  Direct2D e a web ainda repintavam inteiro, feito logo abaixo); o Skia guarda os parágrafos de uma linha já
   montados (`LINES`); o `Memo` desliza a roda pelo `frame()` do núcleo e marca a área pelo
   `ctx.repaint()`, sem lógica de repintura própria (os testes `damage` e `memo_scroll`
   passam). Para a repintura não se duplicar entre o núcleo e os componentes:
@@ -1744,13 +1834,13 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   - a camada de rolagem (etapa 4) precisa servir também quem rola por dentro (o `Memo`, o
     `DataGrid`, o `VirtualList`, as listas): uma API do núcleo em que o componente diz a
     área visível e o deslocamento, e o núcleo guarda e copia, em vez de cada um fazer a sua;
-  - o cache de parágrafos do Skia vira o do motor de texto do núcleo quando os modos
-    `layout`/`core` do item 10 chegarem (um cache só, valendo também para o Direct2D e a
-    web), e o do Skia sai;
+  - o cache de parágrafos do Skia viraria o do motor de texto do núcleo quando os modos
+    `layout`/`core` chegassem; decidido pelo autor em 14/11 manter os dois (o do Skia serve ao
+    modo `native`, o do núcleo aos outros);
   - a folga fixa de 24 troca pela extensão real dos efeitos (sombra, desfoque, anel de
     foco), como decidido;
-  - falta o teste de pintar por parte × por inteiro e comparar as imagens, que pega o
-    controle que desenha fora da própria área depois da mudança do `ctx.repaint()`.
+  - o teste de pintar por parte × por inteiro e comparar as imagens foi feito depois
+    (`aylis-controls/tests/partial_paint.rs`).
 
   Feito em 02/11 (falta o autor confirmar): o Skia na CPU também repinta só a área (quando o
   `softbuffer` guarda o quadro anterior); a folga fixa de 24 saiu: o núcleo mede, na pintura,
@@ -1796,7 +1886,8 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   repintada é a mesma do desktop (é do núcleo); o custo maior vem do Canvas 2D.
 
   Pela regra decidida (parar na etapa 2 se a medição mostrar que o nível da VCL basta), as
-  etapas 3 (desenho gravado) e 4 (camadas, com a API de rolagem interna) ficam esperando:
+  etapas 3 (desenho gravado) e 4 (camadas, com a API de rolagem interna) ficaram esperando (feitas
+  depois, a partir de 05/11, veja abaixo):
   o que elas resolveriam hoje é o mouse indo de um controle para o fundo do form (repinta
   tudo, porque o form muda de estado) e a rolagem do Memo (20% da janela, 1,4 ms). Voltam
   se uma medição num app de verdade mostrar quadro lento nesses casos.
@@ -1805,7 +1896,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   etapas 3 (desenho gravado por controle, regravado só quando ele muda) e 4 (camadas na rolagem
   e nos controles animando posição ou opacidade, e o `cache_layer`), nos três renderizadores.
 
-  Feito em 05/11 (sem commit; falta o autor confirmar na janela de verdade):
+  Feito em 05/11 (falta o autor confirmar na janela de verdade):
   - Etapa 3: o desenho próprio de um controle vira uma "impressão digital" (`trace.rs`); quando
     só o estado (hover, foco...) de um contêiner muda, o `Ui` ensaia o desenho dele e, igual,
     não repinta nada. Vale para quem declara `Component::paint_is_pure` (Form, Panel,
@@ -1849,7 +1940,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     handler do `on_apply_updates` adia (`ui.defer_question()`), grava numa thread e entrega com
     `post` (`ui.answer(n, Answer::Accepted(vec![("results", ...)]))`). O `reconcile` continua
     aceito.
-- [ ] 9. (Feito em 02/11 em `f5f3b51`; o aviso do `panic = "abort"` foi com a verificação do
+- [ ] 9. (Feito em 02/11, antes do primeiro commit público; o aviso do `panic = "abort"` foi com a verificação do
   1b, os outros 6 clientes mandando o `exception` com os forms com instância, e o evento de
   exceção da aplicação é o `on_exception` do `ApplicationEvents` (item 3.6); falta o autor
   confirmar.) Um erro no handler não derruba o app, como no Delphi (`Application.HandleException`).
@@ -1874,7 +1965,9 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   - há teste.
   Conferido em 08/11 (roteiro 48): não aprovado. O `panic!` vira a caixa de erro com o lugar e o
   processo segue, mas o form fica marcado como "handler rodando" para sempre e todo evento
-  seguinte dele é adiado e nunca roda (veja os ajustes de 08/11, grave).
+  seguinte dele é adiado e nunca roda (veja os ajustes de 08/11, grave). Corrigido depois: o
+  `catch_unwind` devolve a instância antes de repassar o pânico (`aylis-core/src/instances.rs`);
+  falta o autor conferir de novo.
 
   Feito em 02/11 (o "agora", falta o autor confirmar): o projeto novo vem com a Inter em
   `assets/fonts/inter/` como fonte do projeto (`aylis_project::DEFAULT_FONT`); a verificação
@@ -1889,7 +1982,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     só, e mostrar o form em outro seria pintar fora da tela e mostrar a imagem; com a fonte
     embutida as medidas já batem entre o Skia e o DirectWrite, então a diferença que sobra é
     a da fonte de fallback. Decidido pelo autor em 03/11: fica como está (o `core` e o `layout` já dão as mesmas medidas no designer); se surgir a necessidade, faz-se;
-  - o "depois" (os modos de texto `native`/`layout`/`core` por plataforma).
+  - o "depois" (os modos de texto `native`/`layout`/`core` por plataforma), feito logo abaixo.
 
   O "depois", feito em 03/11 (falta o autor confirmar): o motor de texto do núcleo
   (`aylis_core::textcore`, com o `ttf-parser` e o `rustybuzz`, em Rust puro e também no wasm)
@@ -2025,8 +2118,7 @@ mudar a solução.
     em todos (`SELFTEST <lang> delta 2 1 1 501 1`, nos testes `languages` e `python_backend`; o
     C++ conferido à parte com o Visual C++, que o teste não acha sem o `vcvars` nas Opções).
     Testes: `master_detail_delta` do `aylis-data`;
-  16.1 e 16.2 conferidos e confirmados pelo autor em 07/11 (Sessão 2 do roteiro); falta a 16.3
-  (Sessão 4).
+  16.1 e 16.2 conferidos e confirmados pelo autor em 07/11; falta a 16.3.
   - 16.3: os guias `docs/gravar-alteracoes.md` (o delta em cada linguagem) e
     `docs/interceptador.md`; a documentação na página: `aylis-tool docs` (o exemplo `docs` do
     `aylis-ide`, `aylis_ide::reference`) copia os guias de `docs/` e gera uma página por componente
@@ -2035,15 +2127,18 @@ mudar a solução.
     `examples/Landing/assets/docs` (235 páginas); o form `frmDocumentacao` da Landing (botão
     "Documentação"): seções, páginas, busca em todas e os links entre páginas (teste
     `documentacao` da Landing). Falta: exemplos de uso escritos para cada componente (hoje a página
-    traz só o trecho gerado) e um teste que avise quando a documentação ficar velha. Os exemplos
-    escritos: adiados pelo autor em 05/11 ("para outro momento").
+    traz só o trecho gerado; adiados pelo autor em 05/11, "para outro momento", e de novo em
+    14/11) e um teste que avise quando a documentação ficar velha (decidido em 14/11: fazer; ele
+    regera as páginas e falha se o resultado mudou). Também decidido em 14/11: escrever o "O que
+    faz" de todas as propriedades (1238 das 1810 linhas do site estavam vazias), com um teste que
+    falha quando uma propriedade entra sem o comentário. Nada começou.
 
   Aprovado pelo autor em 04/11, como sugerido: com dados parciais, ordenar, filtrar e
   localizar viram um evento ao backend, que recarrega o dataset; sem handler ligado, a tela
   avisa ("ordenando só os 500 carregados"); o total de registros pode vir do backend; limite
   de memória opcional.
 
-  Feito em 07/11 (pedido do autor: "faça" os aprovados; sem commit; falta o autor
+  Feito em 07/11 (pedido do autor: "faça" os aprovados; falta o autor
   confirmar):
   - com mais registros no backend (`has_more`), `set_index`, `set_index_name`, `set_filter` e
     o `locate` que não acha entre os carregados disparam o `on_server_query` do dataset, com o
@@ -2098,9 +2193,10 @@ mudar a solução.
   no código (`textDocument/rename`).
   Conferido em 08/11 (roteiro 59): não aprovado. Renomear o `cdsPedidos` para `cdsVendas` pelo
   Object Inspector renomeou também o form (a raiz e o `main_form` do `.aylisproj`); o handler
-  renomeou certo (veja os ajustes de 08/11, grave).
+  renomeou certo (veja os ajustes de 08/11, grave). Corrigido e aprovado na noite de 08/11 (o
+  cabeçalho do roteiro).
 
-  Feito em 07/11 (sem commit; falta o autor confirmar; `crate::rename`). No código, pelo
+  Feito em 07/11 (falta o autor confirmar; `crate::rename`). No código, pelo
   servidor de linguagem, como aprovado (a primeira versão, por texto, foi mostrada ao autor,
   que confirmou em 07/11: "LSP como o planejado"): o `textDocument/rename` perguntado no
   primeiro uso do código do usuário acha só o que é de fato aquele símbolo; a prévia leva a
@@ -2121,7 +2217,7 @@ mudar a solução.
   (`the_language_server_finds_the_code_to_rename`, ignorado: 47 s indexando), o uso no código
   do usuário com a troca exata e a declaração no gerado fora da prévia.
 
-  Feito em 07/11 (sem commit; falta o autor confirmar): "Onde é usado…" no menu de contexto do
+  Feito em 07/11 (falta o autor confirmar): "Onde é usado…" no menu de contexto do
   designer e em Editar (`crate::usages`), na janela da pesquisa (a lista com clique que leva
   ao código na linha ou ao form com o componente):
   - componente: as propriedades dos forms que apontam para ele (também de outro form, pelo
@@ -2133,7 +2229,7 @@ mudar a solução.
   - o código gerado fica de fora; a ferramenta `usages` no MCP da IDE dá o mesmo aos agentes.
   Testes `usages` (no Relatórios de exemplo) e os do módulo.
 
-  Feito em 07/11 (sem commit; falta o autor confirmar):
+  Feito em 07/11 (falta o autor confirmar):
   - o formato fixo (`aylis_json::to_form_text`): uma chave por linha, listas curtas numa linha
     (`"margins": [8, 4, 8, 8]`), a ordem da classe, `children` por último; a IDE e o
     `aylis_json::save` gravam assim (antes, o `to_string_pretty` abria cada número numa
@@ -2147,7 +2243,7 @@ mudar a solução.
     exemplos; do ERP, uma amostra de 1 em 20) e o do `aylis-json`;
   - o guia `docs/forms-em-equipe.md` (o formato, resolver um conflito, evitar conflitos).
 
-  Feito em 07/11 (sem commit; falta o autor confirmar; o subrelatório mestre-detalhe já
+  Feito em 07/11 (falta o autor confirmar; o subrelatório mestre-detalhe já
   existia, nas bandas `sub_header`/`sub_detail`/`sub_footer`):
   - código de barras e QR Code: o controle `Barcode` (paleta Reports; o dado em `text`, então
     `[campo]` numa banda dá o código de cada registro), pelo provedor ligado ou o do Aylis:
@@ -2164,7 +2260,7 @@ mudar a solução.
   - impressora térmica (ESC/POS): fora, como decidido.
   Testes `providers.rs` do `aylis-providers` e `a_big_report_is_written_page_by_page...`.
 
-  Feito em 07/11 (sem commit; falta o autor confirmar):
+  Feito em 07/11 (falta o autor confirmar):
   - no núcleo, `aylis_core::providers`: `BarcodeProvider`, `ExportProvider`, `PdfProvider` e
     `MapTileProvider`; o componente provedor devolve o seu em `Component::provided`;
   - a propriedade `provider` no `Barcode`, no `Export`, no `Report` (o PDF) e no `MapView`
@@ -2179,7 +2275,7 @@ mudar a solução.
   a navegação no fonte mod.rs"; o minimapa, arrastado até embaixo, não chegava ao fim do
   fonte; "garanta que fique rápido com quantidade infinita de linhas, limitado apenas pela
   memória do computador").
-  Feito em 05/11 (sem commit; falta o autor confirmar):
+  Feito em 05/11 (falta o autor confirmar):
   - O minimapa: a escala tinha um piso de 0,25 px por linha; com 8 mil linhas o fim ficava
     fora da faixa e o arrasto parava por volta da linha 3.200. Agora o arquivo inteiro cabe e
     o arrasto chega à última linha (teste `dragging_the_minimap_to_the_bottom_reaches_the_last_line`).
@@ -2200,30 +2296,31 @@ mudar a solução.
     visuais são refeitas a cada tecla, o realce recomeça do início e o desfazer guarda uma
     cópia do texto inteiro a cada alteração. Proposta: texto em pedaços (rope), tabela das
     linhas e linhas visuais atualizadas só na linha editada, realce retomado da linha editada
-    (o estado de cada linha guardado) e desfazer pelas diferenças. Espera a decisão do autor.
+    (o estado de cada linha guardado) e desfazer pelas diferenças. Decidido pelo autor em 14/11
+    ("Fazer o rope"): fazer, no `Memo` (o editor da IDE e o controle dos apps); não começou.
 - [ ] 27. Tabela da documentação com o texto da primeira coluna por cima da segunda (achado na
   conferência do roteiro em 05/11, na Landing publicada para a web): na página "Fontes e
   ícones offline", os caminhos `resources/fonts/...` e `resources/icons/...` passam da
   coluna "Recurso" e ficam por cima de "O que é". A coluna precisa quebrar o texto (ou ter a
   largura do conteúdo).
-  Feito em 05/11 (sem commit; falta o autor confirmar): no `aylis-markdown`, cada coluna tem
+  Feito em 05/11 (falta o autor confirmar): no `aylis-markdown`, cada coluna tem
   de piso a palavra mais larga dela (medida com a fonte do trecho, a mono no código) e o que
   sobra é dividido pelo quanto cada uma ainda queria (antes todas encolhiam na mesma
   proporção); uma palavra mais larga que a linha quebra por caractere. Teste
   `table_cells_never_overlap_the_next_column`.
 - [ ] 28. Sem referências ao Delphi no site (pedido do autor em 05/11: "pode remover
-  referencias ao Delphi"). Feito em 05/11 (sem commit): na página da Landing, o título
+  referencias ao Delphi"). Feito em 05/11: na página da Landing, o título
   ("montadas visualmente"), o cartão do Free Pascal ("Units, classes e eventos com var, no
   jeito do Pascal") e o "E os dados?"; nos guias que vão para a documentação do site
   (`docs/criar-componente.md`, `gravar-alteracoes.md`, `interceptador.md`, `threads.md`) e na
-  cópia deles na Landing. Os comentários do código e os documentos internos continuam com as
-  comparações.
-- [ ] 29. Na documentação da Landing (web), um clique na lista de guias não abriu a página; com
-  dois cliques abriu (visto na conferência de 05/11). A lista saiu no item 30 (agora é uma
-  árvore); conferido em 05/11: um clique na árvore abre a página.
+  cópia deles na Landing. Os comentários do código e os documentos internos continuavam com as
+  comparações, e elas voltaram ao site pelos comentários dos campos (16 páginas em 14/11).
+  Decidido pelo autor em 14/11: "Tirar qualquer referencia a Delphi/FMX/VCL de qualquer fonte
+  ou documentação": o código (comentários e textos), os docs, o site e o CLAUDE.md (549
+  ocorrências em 14/11), com um teste que barra a volta. Não começou.
 - [ ] 30. A documentação em tela cheia, no jeito do Docusaurus (pedido do autor em 05/11: "a
   documentação tem que abrir em tela cheia, seguindo um layout de navegação igual ao
-  https://docusaurus.io/docs"). Feito em 05/11 (sem commit; falta o autor confirmar):
+  https://docusaurus.io/docs"). Feito em 05/11 (falta o autor confirmar):
   - O form `frmDocumentacao` maximizado; no navegador, um form maximizado (ou em tela cheia)
     ocupa a página inteira, sem a barra de janela (`web_windows.rs`), como no desktop.
   - No topo, a marca, a busca e "Voltar ao site"; à esquerda, as seções em árvore (só a da
@@ -2249,7 +2346,7 @@ mudar a solução.
   para criar um novo projeto e um para criar um novo componente"; "não entendi o que significa
   o check e o NEW do ícone.. não vejo necessidade"). Decidido pelo autor: código em Rust com
   abas das outras linguagens; o tutorial de projeto faz o "Olá, nome"; o de componente, um
-  botão com contador; imagens geradas automaticamente. Feito em 05/11 (sem commit; falta o
+  botão com contador; imagens geradas automaticamente. Feito em 05/11 (falta o
   autor confirmar):
   - Guia do Vuetify sem a coluna de ícones (✅, 🆕, ◐).
   - Seção "Comece aqui" no índice: a visão geral e os tutoriais `docs/tutorial-primeiro-
@@ -2266,16 +2363,12 @@ mudar a solução.
     imagem guardada por caminho (cada `Image` nova recomeçava a decodificação e nunca
     aparecia) e o layout refeito quando ela termina de carregar.
   - Atenção: outra sessão regenerou `examples/Landing/assets/docs` com um gerador anterior
-    (às 22:35) e a pasta perdeu os tutoriais e as imagens; regerei depois. Antes do commit,
-    conferir que a pasta está com a seção "Comece aqui".
-- [ ] 24. (Adiado pelo autor em 04/11: cedo demais, nada foi lançado ainda.) Versões e suporte.
-  Quando o projeto ficar público, o suporte é pela comunidade, com o autor como mantenedor e
-  revisor. A política de versões (estável, por quanto tempo uma versão recebe correção, como
-  uma mudança incompatível é anunciada, o changelog) volta a ser discutida no lançamento.
+    (às 22:35) e a pasta perdeu os tutoriais e as imagens; regerei depois. Conferido em 14/11:
+    a pasta tem a seção "Comece aqui" (`examples/Landing/assets/docs/indice.json`).
 - [ ] 31. Redimensionar a janela pela borda (achado no NoOBS em 05/11: "os componentes são
   empurrados mesmo tendo espaço pra eles, só depois que eu solto o clique que eles se
   redimensionam"; depois, "deveria ter uma largura mínima onde parasse de tentar quebrar
-  linha"). Feito em 05/11 (sem commit; falta o autor confirmar):
+  linha"). Feito em 05/11 (falta o autor confirmar):
   - Arrastando a borda no Windows, o laço do sistema não passa pelo `about_to_wait`, e os
     `set_timeout` do `on_resize` só rodavam ao soltar. Agora o quadro refaz o layout e roda
     os timers vencidos antes de pintar (`aylis-platform-winit`, `redraw`).
@@ -2320,7 +2413,7 @@ mudar a solução.
   carregamento inicial deve ser rápido"). Hoje a Landing é um wasm só de ~11,8 MB (3D, Markdown
   e vetores; sem os controles das outras famílias). Aguardando a decisão do formato (ver a
   conversa de 06/11). Decidido em 06/11: um wasm por família (a categoria da paleta). Feito em
-  06/11 (sem commit; falta o autor confirmar): o crate `aylis-demos` (registra só as classes de
+  06/11 (falta o autor confirmar): o crate `aylis-demos` (registra só as classes de
   `AYLIS_DEMO_FAMILY`, com `aylis_build::class_categories`) e `aylis-tool demos --out pasta` (as 18
   famílias, de 3 a 10 MB cada); a página de um componente visual, no navegador, mostra o
   componente de verdade no painel "Ao vivo" (um `WebView`, que agora também funciona nos forms
@@ -2344,12 +2437,12 @@ mudar a solução.
   06/11: "o hover dos botões dão só uma piscada com o efeito e depois ficam normais"). O estado
   de hover ficava certo; a transição do estilo misturava as cores canal a canal, e o
   `transparent` (preto com alfa 0) passava por cinzas escuros meio opacos até chegar no
-  cinza-claro do hover. Feito em 06/11 (sem commit; falta o autor confirmar): `Color::lerp`
+  cinza-claro do hover. Feito em 06/11 (falta o autor confirmar): `Color::lerp`
   mistura com alfa pré-multiplicado (entre cores opacas, igual a antes). Teste
   `mixing_from_transparent_does_not_go_through_black`.
 - [ ] 37. Cada componente aparece direito na demonstração ao vivo (pedido do autor em 07/11:
   "alguns componentes não cabem dentro do container dele e outros não mostram nada"). Feito em
-  07/11 (sem commit; falta o autor confirmar): `aylis::samples` (conteúdo de exemplo por classe,
+  07/11 (falta o autor confirmar): `aylis::samples` (conteúdo de exemplo por classe,
   em `crates/aylis/src/samples.json` e por código: o dataset do DataGrid, as mensagens do
   ChatView, os nós do NodeGraph, a árvore aberta, o lingote no Model3D, os arquivos do Svg e do
   Lottie); a demonstração tem o tamanho do componente mais a folga e encolhe para caber (nunca
@@ -2448,7 +2541,8 @@ mudar a solução.
     trader pedia parado com o mouse em cima; o Markdown conferia as imagens carregando a cada
     quadro (agora 20 vezes por segundo, por até 10 s). Os outros só pedem enquanto algo anda.
     O `cargo test -p aylis-ide --test visual` falha no designer (0,74%): os cabeçalhos de
-    categoria do Object Inspector mudaram, de outra sessão (falha igual sem a oclusão).
+    categoria do Object Inspector mudaram, de outra sessão (falha igual sem a oclusão);
+    resolvida depois (o `visual` 4/4, abaixo).
   - Roda e alças na prévia da exportação do NoOBS (pedido do autor em 07/11: "ao usar o
     scroll dentro para aumentar ou diminuir o zoom, a janela de fora scrolla também"; "os
     quadrados brancos nas bordas do vídeo deveria ser clicável para eu redimensionar"):
@@ -2477,7 +2571,8 @@ mudar a solução.
     `scripts\build.bat` do NoOBS cria a junção pelo registro. Teste
     `a_user_project_points_to_its_sdk_link` (também confere que apagar o projeto não apaga o
     aylis). Falha à parte, de outra sessão: `the_landing_template_brings_the_form_the_theme_and_
-    the_handlers` (o tema `"dark"` × `"Aylis Dark"`).
+    the_handlers` (o tema `"dark"` × `"Aylis Dark"`); resolvida depois (o teste confere
+    `"Aylis Dark"`).
   - Para o frame repetido valer a pena: o índice de nomes (`aylis-core/src/names.rs`) era
     jogado fora a cada `add`/`set_name`/`set_parent` e remontado percorrendo a tela inteira, o
     que deixava montar N frames quadrático. Agora é um índice por escopo, atualizado no lugar
@@ -2530,38 +2625,14 @@ mudar a solução.
   Conferido em 08/11 (roteiro 67): o teste `apps` igual nas 8 linguagens (Calculadora, Paint,
   Player e IBGE) e a Calculadora à mão em Pascal, Python e Rust; não aprovado no ERP, que cai ao
   fechar a segunda de duas telas abertas pelo menu (pânico no winit, veja os ajustes de 08/11,
-  grave). E o Relatórios ainda procura componente pelo nome (`relatorios.rs:33`, `find_path`).
-- [ ] 47. A roda não rolava o ScrollBox do form no designer (relatado pelo autor em 07/11, na
-  Landing: "a scroll interna quando o componente está no design não funciona, impedindo eu ver
-  o que tem abaixo"). A roda só movia a vista do designer e nunca chegava ao form desenhado.
-  Feito em 07/11 e confirmado pelo autor no mesmo dia (sem commit): sem Ctrl nem Shift, a roda vai primeiro
-  aos controles do form sob o ponteiro (`Ui::wheel_controls`, novo no núcleo: a roda sobe pelos
-  pais sem rolar o form), sem deslize (o `Ui` do form não anda de quadro em quadro no designer:
-  salta direto), e o layout refeito põe o clique e a seleção no lugar novo; sem nada para rolar
-  ali, move a vista como antes. A rolagem não vai para o JSON do form. Teste
-  `the_wheel_scrolls_a_scroll_box_of_the_designed_form`.
-- [ ] 49. No designer, a seleção aparecia fora da área visível depois de rolar, e o retângulo de
-  seleção não começava dentro do form (relatados pelo autor em 07/11, na Landing). Feito em
-  07/11 e confirmado pelo autor no mesmo dia (sem commit): o contorno e as alças só aparecem na parte
-  visível dos contêineres que recortam (`Document::visible_area`), somem quando o componente
-  sai da vista e a alça escondida não se pega; clicar num componente que não se move (alinhado:
-  o ScrollBox e os layouts que cobrem o form) seleciona ele e o arrasto abre o retângulo, que
-  seleciona o que ele toca, como no Delphi, a partir do contêiner onde começou: um contêiner
-  coberto inteiro entra como um só; o que ele só corta dá lugar aos de dentro que ele toca (no
-  NoOBS, um retângulo fino do campo de busca até os botões de uma barra da largura toda) e entra
-  ele mesmo se não tocar nenhum; o miolo de um frame fica de fora. Testes
-  `the_selection_area_starts_over_an_aligned_container_and_hides_when_scrolled_away` e
-  `the_selection_area_picks_what_fits_inside_a_wider_bar`.
-- [ ] 51. A tela inicial da IDE com a lista de projetos de ponta a ponta numa tela larga (pedido
-  do autor em 07/11: "deveria estar centralizada a lista com largura máxima"). Feito em 07/11
-  e confirmado pelo autor no mesmo dia (sem commit): o conteúdo numa coluna de no máximo 960, no meio da
-  janela (`max_width`). A referência `principal-windows.png` regravada.
+  grave); aprovado na noite de 08/11, depois da correção (o cabeçalho do roteiro). O Relatórios
+  procurava componente pelo nome; não procura mais (o teste `examples_typed_access`).
 - [ ] 68. O MCP do Aylis ligado à sessão do Claude (pedidos do autor em 08/11: "caso o Aylis não
   esteja aberto o MCP deve abri-lo para a sessão do Claude que pediu, e o MCP deve relacionar a
   Sessão com a instância da IDE aberta"; "no Aylis deve mostrar o título da sessão do Claude que
   está conectada nele"; "o Claude deve conseguir pelo MCP pedir para compilar, e com isso a
   sessão tem que ficar aguardando o Aylis compilar e o Aylis deve avisar quando terminar"). Feito
-  em 08/11 (sem commit; falta o autor confirmar):
+  em 08/11 (falta o autor confirmar):
   - a ponte (`aylis-tool mcp`) tem uma marca por sessão (por conexão: no Claude Code, uma por
     sessão; no Claude Desktop, pelo que se sabe, uma para o app inteiro); na primeira chamada de
     ferramenta sem IDE para ela, abre o `aylis-ide` ao lado do `aylis-tool` com o MCP ligado
@@ -2585,7 +2656,7 @@ mudar a solução.
 - [ ] 70. A auditoria das dependências barrava o instalador da IDE pelo RUSTSEC-2026-0436 no
   `calamine` (o leitor de planilhas do `aylis-docview`: um `.xls`/`.xlsb` malicioso causa pânico ou
   alocação sem limite; só negação de serviço), achado em 08/11 ao gerar o instalador para o
-  plugin (item 69). Feito em 08/11 (sem commit; falta o autor confirmar): o `calamine` subiu de
+  plugin (item 69). Feito em 08/11 (falta o autor confirmar): o `calamine` subiu de
   0.37 para 0.38.0 (`crates/aylis-docview/Cargo.toml` e `Cargo.lock`), sem mudança de API no que o
   `office.rs` usa. Conferido: `cargo test -p aylis-docview`, o wasm e o Android (`cargo ndk -t
   x86_64 -P 26`) passam, e o `aylis-tool audit` não acusa mais o `calamine`.
@@ -2611,7 +2682,8 @@ mudar a solução.
   momento não compilam pela mudança em andamento de outra sessão (o `Instance` sem o campo
   `session`, itens 67 e 68); antes disso, o `the_bridge_adds_and_answers_its_own_tools` falhava
   por não esperar a ferramenta `session_title`. Falta rodar esses quatro quando a outra sessão
-  terminar, e gerar o instalador (`installer-ide`).
+  terminar, e gerar o instalador (`installer-ide`). Feito depois: a suíte inteira e o instalador
+  nas releases de 09 a 13/11.
   Conferido em 08/11 (roteiro 96): o texto com o `harfrust` igual ao de antes (acentos, negrito,
   emoji, o código no editor) e `cargo test -p aylis-ide --test visual` 4/4. Os testes do
   `aylis-tools` (`mcp`, `apps` inteiro nas 8 linguagens) e o `--test mcp` do `aylis-ide` também
@@ -2620,7 +2692,7 @@ mudar a solução.
   sessões abertas e o usuário pedir para fazer alteração no mesmo projeto, oque acontece?";
   escolha: "Na mesma IDE"). Antes, cada sessão ficava numa IDE, e as duas podiam abrir o mesmo
   projeto (uma gravava por cima da outra); numa IDE aberta pelo usuário, as duas caíam juntas e
-  a barra mostrava só uma. Feito em 08/11 (sem commit; falta o autor confirmar):
+  a barra mostrava só uma. Feito em 08/11 (falta o autor confirmar):
   - o registro das IDEs guarda as sessões ligadas a cada uma (`Instance::sessions`; a IDE
     atualiza pelo `aylis/session`, que agora leva a marca da sessão): IDE com sessão está ocupada
     para as outras;
@@ -2647,7 +2719,7 @@ mudar a solução.
 - [ ] 72. A Landing no celular: rolagem lenta, 3D que não aparece e ~2 MB por componente da
   documentação (relato do autor em 11/11: "no smartphone o 3D não mostra e também a scroll é
   bem lenta [...] cada componente que vejo na documentação ele baixa o componente
-  aproximadamente 2mb cada"). Feito em 11/11 (sem commit; falta o autor confirmar no celular;
+  aproximadamente 2mb cada"). Feito em 11/11 (falta o autor confirmar no celular;
   roteiro 105):
   - **Rolagem:** o `ScrollBox` refazia o layout do form inteiro a cada passo (na web, ~300
     `measureText` por quadro, cada texto umas 4 vezes; 12,6 ms de mediana e 38 ms no p90 por
@@ -2818,8 +2890,8 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
 - [ ] Painel ESTRUTURA (roteiro 60, autor): recolher e abrir os filhos de cada componente (a seta,
   →/← no teclado), lembrando por form.
   Feito em 08/11 (falta o autor confirmar): a seta (o começo da linha) recolhe e abre os filhos; o
-  form lembra o que está recolhido; o escolhido dentro de um recolhido abre os de cima. Falta o ←/→
-  do teclado.
+  form lembra o que está recolhido; o escolhido dentro de um recolhido abre os de cima. O ←/→
+  do teclado veio logo depois (abaixo).
   Depois, também em 08/11: com o foco no painel (clicar numa linha), ↑/↓ andam, → abre (aberto, vai
   ao primeiro filho) e ← recolhe (recolhido ou sem filhos, vai ao pai); teste
   `the_structure_panel_follows_the_arrows`.
@@ -2858,7 +2930,10 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   em…)" pela tradução, e o idioma escolhido fica marcado no menu Exibir → Idioma. O teste só
   conferia dois textos fixos; agora confere também os do roteiro. A lista do `aylis-tool
   translations` ainda tem ~390 textos (a maioria não é de tela: dados de exemplo, nomes de fonte,
-  mensagens para o agente, textos de teste), acumulados de outras sessões.
+  mensagens para o agente, textos de teste), acumulados de outras sessões. Decidido pelo autor
+  em 14/11 ("Separar e traduzir"): o que não é de tela vai para uma lista de "não traduzir" (um
+  arquivo, como o `properties.tsv`), o que sobra é traduzido pelo `--apply`, e um teste cobra a
+  lista vazia. Não começou.
 - [ ] Profiler (roteiros 54 e 87, autor): a roda invertida (o zoom da linha do tempo e a lista de
   Métodos); mostrar a área repintada de cada quadro (hoje só o tempo, então o "a pintura do mouse no
   fundo quase some" não dá para conferir); e conferir se mover o mouse no fundo, sem trocar de botão,
@@ -2866,7 +2941,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   Feito em 08/11 (falta o autor confirmar): a roda corrigida nos dois lugares (para cima aproxima; a
   lista de Métodos sobe). Conferido no núcleo, com rastro: mover o mouse no fundo de um form não
   marca nada para repintar (só ao entrar no form); os quadros do relato vêm de outro lugar (falta
-  achar com o app). A área repintada de cada quadro ainda não aparece no Profiler.
+  achar com o app). A área repintada de cada quadro passou a aparecer no Profiler (abaixo).
   Depois, também em 08/11: cada quadro aparece na faixa da GPU como "quadro · N% repintado" (a
   tabela de Métodos junta todos em "quadro"). Pista para os quadros do mouse: um quadro pedido sem
   área marcada vira a janela inteira (`take_frame` dá `Whole` sem nada marcado), então um
@@ -3002,7 +3077,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   e 4 MB depois de esvaziar. Falta conferir na janela.
 
 *MCP e agentes*
-- [ ] A ponte sem a IDE (feito nesta conferência, sem commit; conferir no roteiro 92): a lista das
+- [ ] A ponte sem a IDE (feito nesta conferência; conferir no roteiro 92): a lista das
   ferramentas da IDE passou para `aylis_tools::mcp::ide_tools()`, e a ponte responde a lista completa
   com a IDE fechada (o Claude Code não pede a lista de novo pelo `tools/list_changed`, que a ponte
   também passou a mandar depois do `session_title`); teste `the_list_without_the_ide_has_the_ide_tools`.
@@ -3066,13 +3141,13 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   alterações" e na tabela de eventos das páginas de componente (coluna "Quando"); o `Barcode` numa
   banda no exemplo do `ReportPreview`; o `on_close_query` no `ProcessamentoAssincrono` (o X cancela
   a thread, e o fim dela fecha), com roteiro de teste; as variantes "Chart · Sankey" e "Chart ·
-  Waffle" na galeria. Falta rodar o `aylis-tool docs`.
+  Waffle" na galeria. O `aylis-tool docs` rodou depois (releases de 12 e 13/11).
 - [ ] O roteiro: tirar "o menu leva a seção ao topo" (os itens saíram a pedido do autor) e o "aos
   pacotes" do GradeGigante. (Feito em 08/11 na reescrita do roteiro: os dois itens saíram com os
   aprovados.)
   Feito em 08/11 (falta o autor confirmar): feito na reescrita do roteiro.
 
-*Achados e feitos na conferência de 08/11 à noite (sem commit; falta o autor conferir o que não foi
+*Achados e feitos na conferência de 08/11 à noite (falta o autor conferir o que não foi
 testado na hora)*
 - [ ] Renomear sem confirmar (decidido pelo autor, item 59): com o servidor de linguagem, a troca é
   automática (sem a prévia); ainda não aberto, a caixa de erro e o nome não muda; aberto e respondendo
@@ -3118,3 +3193,15 @@ testado na hora)*
 - [ ] A exceção dos comandos antes e depois da compilação (cmd e PowerShell só em projeto confiado,
   mostrados no "Confiar neste projeto?") na diretriz "Texto não vira código nem comando".
   Feito em 08/11 (falta o autor confirmar): feito no `CLAUDE.md`.
+- [ ] 73. "Abrir como administrador" no instalador do Windows (pedido do autor em 14/11, pelo
+  NoOBS: "o Aylis tem que ter essa opção nos projetos dele, mais por padrão do Aylis isso não
+  viria ativado"). Feito em 14/11 (falta o autor confirmar):
+  - `publish.windows.run_as_admin` (`on`/`off`/vazio, como o `autostart`; vazio é o padrão e não
+    oferece). NSIS e Inno mostram a caixa, mas o instalador continua sem pedir administrador: só
+    grava a escolha em `HKCU\Software\<app>\RunAsAdmin` (DWORD 1 ou 0), e o app lê e decide
+    como elevar. Atualizando, a caixa vem como está no registro (sem o valor, o padrão do
+    projeto). IDE: Projeto → Opções do projeto → Windows.
+  - Com `close_running`, o NSIS confere depois do `taskkill`: o app que continua aberto (um app
+    de administrador não aceita ser fechado por quem não é) faz o instalador avisar e parar,
+    em vez de seguir e falhar ao gravar o executável.
+  - Teste `run_as_admin_is_offered_and_saved_for_the_app` (`win_installer.rs`).
