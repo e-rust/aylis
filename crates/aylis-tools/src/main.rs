@@ -401,16 +401,29 @@ fn setup(args: &[String]) -> Result<(), String> {
     if utf16 {
         say(true, "\u{feff}");
     }
-    match setup_run(args, utf16) {
+    let mut causes = 0u8;
+    let result = setup_run(args, utf16, &mut causes);
+    let result = match result {
         Err(e) if utf16 && !e.is_empty() => {
             say(true, &format!("erro: {e}"));
             Err(String::new())
         }
         other => other,
+    };
+    // A causa de um pacote que não veio no código de saída (16 + os bits de
+    // `toolpacks::causes`): o instalador da IDE diz qual foi, sem ler a saída.
+    if result.is_err() && causes != 0 {
+        if let Err(e) = &result
+            && !e.is_empty()
+        {
+            eprintln!("erro: {e}");
+        }
+        std::process::exit(16 + i32::from(causes));
     }
+    result
 }
 
-fn setup_run(args: &[String], utf16: bool) -> Result<(), String> {
+fn setup_run(args: &[String], utf16: bool, causes: &mut u8) -> Result<(), String> {
     let list = targets(args)?;
     let mut words = Vec::new();
     let mut it = args.iter();
@@ -441,10 +454,22 @@ fn setup_run(args: &[String], utf16: bool) -> Result<(), String> {
     let host = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(env::exe("aylis-host")))).filter(|p| p.is_file());
     let control = aylis_tools::process::Control::new();
     let mut missing = Vec::new();
+    // A frase da causa de cada pacote que não veio (a primeira linha do erro), para o resumo.
+    let mut reasons: Vec<String> = Vec::new();
     for language in languages {
         let checks = aylis_tools::setup::setup_targets(language, &list, host.as_deref(), &control, &mut |e| match e {
             Event::Step(s) => say(utf16, &format!("▶ {s}")),
-            Event::Line(l, _) => say(utf16, &format!("  {l}")),
+            Event::Line(l, _) => {
+                let found = aylis_tools::toolpacks::causes(&l);
+                if found != 0 {
+                    *causes |= found;
+                    let first = l.trim_start_matches("⚠ ").lines().next().unwrap_or_default().to_string();
+                    if !reasons.contains(&first) {
+                        reasons.push(first);
+                    }
+                }
+                say(utf16, &format!("  {l}"))
+            }
             Event::Diagnostic(d) => say(utf16, &format!("  {}", d.message)),
         });
         // No desktop conta também o que falta com aviso (o depurador, o servidor de
@@ -462,8 +487,10 @@ fn setup_run(args: &[String], utf16: bool) -> Result<(), String> {
     }
     if missing.is_empty() {
         Ok(())
-    } else {
+    } else if reasons.is_empty() {
         Err(format!("ainda falta:\n{}", missing.join("\n")))
+    } else {
+        Err(format!("ainda falta:\n{}\nMotivo:\n{}", missing.join("\n"), reasons.join("\n")))
     }
 }
 

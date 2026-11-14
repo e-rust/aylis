@@ -1,6 +1,7 @@
 [package]
 name = "aylis-dbcontrols"
 description = "Controles ligados a dados do Aylis (DBEdit, DBText, DBCheckBox, DBNavigator)"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +9,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
-aylis-controls = { version = "0.2.1-beta.1", path = "../aylis-controls" }
-aylis-data = { version = "0.2.1-beta.1", path = "../aylis-data" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-controls = { version = "0.2.1", path = "../aylis-controls" }
+aylis-data = { version = "0.2.1", path = "../aylis-data" }
 # As imagens dos relatórios (PNG, JPEG) viram pixels para o PDF e a impressora.
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 

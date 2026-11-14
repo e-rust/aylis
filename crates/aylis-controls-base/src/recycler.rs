@@ -303,9 +303,12 @@ impl VirtualList {
         starts.1.partition_point(|s| *s <= pos).saturating_sub(1)
     }
 
-    /// O tamanho da área à vista, no sentido da lista.
+    /// O tamanho da área à vista, no sentido da lista: o que o layout deu (`bounds`, com
+    /// `align: client` maior que o desenhado), não o `width`/`height` do projeto (o relatório
+    /// do RTSPlayer de 13/11, item 1: 8 linhas de 13 numa tela de 900).
     fn viewport(&self) -> f32 {
-        if self.horizontal() { self.base.width() } else { self.base.height() }
+        let (size, p) = (self.base.inner_size(), self.base.padding());
+        if self.horizontal() { (size.width - p.horizontal()).max(0.0) } else { (size.height - p.vertical()).max(0.0) }
     }
 
     fn count(&self, ui: &Ui) -> usize {
@@ -358,7 +361,11 @@ impl VirtualList {
         while self.pool.borrow().len() < wanted.len() {
             let Ok(copy) = ctx.ui.clone_component(template, Some(ctx.id)) else { break };
             if let Some(cb) = ctx.ui.control_mut(copy) {
-                cb.set_visible(true);
+                // Quem põe a linha no lugar é a lista (`arrange`, que só recebe os soltos): o
+                // modelo desenhado com `align: top` (o natural no designer) seria empilhado pelo
+                // align, sem `sizes` nem rolagem (RTSPlayer, 13/11, item 2). O modelo fica como
+                // foi desenhado.
+                cb.set_visible(true).set_align(aylis_core::Align::None);
             }
             self.pool.borrow_mut().push((copy, None));
         }

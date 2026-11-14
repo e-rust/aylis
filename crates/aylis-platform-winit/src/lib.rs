@@ -2862,7 +2862,9 @@ fn create_backend(
     match renderer {
         #[cfg(native_d2d)]
         Renderer::D2d => {
-            let vsync = diag::diagnostic_setting("AYLIS_BENCH").is_none();
+            // `AYLIS_VSYNC=0`: sem esperar o monitor fora do `AYLIS_BENCH` também (o exemplo
+            // `transitions`, que mede o custo de cada quadro de uma animação).
+            let vsync = diag::diagnostic_setting("AYLIS_BENCH").is_none() && diag::diagnostic_setting("AYLIS_VSYNC").as_deref() != Some("0");
             d2d::create(event_loop, attributes, &painters.d2d, vsync, gpu).map(|(w, b)| (w, Backend::D2d(b)))
         }
         #[cfg(native_gpu)]

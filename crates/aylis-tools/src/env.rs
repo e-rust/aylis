@@ -1078,6 +1078,12 @@ fn msvc_linker() -> Option<String> {
 /// Arquiteturas de Android que o aylis compila: celulares (arm64) e o emulador (x86_64).
 pub const ANDROID_ABIS: [(&str, &str); 2] = [("arm64-v8a", "aarch64-linux-android"), ("x86_64", "x86_64-linux-android")];
 
+/// Todas as que o publicar aceita: as padrão e, pedida no projeto (`publish.android.abis`) ou no
+/// `publish`, a de 32 bits (TV box, celular de entrada; relatório do RTSPlayer de 13/11, item
+/// 5). Fica fora do padrão: dobraria o tempo de compilação e o tamanho do APK, e o Skia não tem
+/// binário pronto para ela (falta compilá-lo; veja os pendentes).
+pub const ANDROID_ALL_ABIS: [(&str, &str); 3] = [ANDROID_ABIS[0], ANDROID_ABIS[1], ("armeabi-v7a", "armv7-linux-androideabi")];
+
 /// A pasta do Android SDK (`ANDROID_HOME`, `ANDROID_SDK_ROOT` ou o lugar padrão).
 pub fn android_sdk() -> Option<PathBuf> {
     let from_env = ["ANDROID_HOME", "ANDROID_SDK_ROOT"].iter().find_map(std::env::var_os).map(PathBuf::from);

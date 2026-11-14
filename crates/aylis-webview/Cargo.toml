@@ -1,6 +1,7 @@
 [package]
 name = "aylis-webview"
 description = "Componente WebView do Aylis: a página fica numa vista nativa que a plataforma põe sobre o controle"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +9,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }

@@ -492,6 +492,32 @@ fn the_package_name_comes_from_the_cargo_toml() {
     assert_eq!(project.package_name(), "noobs");
 }
 
+/// O pacote com hífen (o RTSPlayer, item 24: `rtsplayer-app`): a biblioteca que o cargo grava
+/// tem `_` (`librtsplayer_app.so`, `rtsplayer_app.wasm`), e o Android, o navegador e o `main.rs`
+/// gerado usam esse nome; o executável continua o do `[[bin]]`, com o hífen.
+#[test]
+fn a_package_with_a_hyphen_has_the_library_with_an_underscore() {
+    let base = temp("hyphen");
+    let project = create(&base, "RTSPlayer", Language::Rust).unwrap();
+    let cargo = project.code_dir_of(Language::Rust).join("Cargo.toml");
+    let old = format!("name = \"{}\"", project.package_name());
+    let text = std::fs::read_to_string(&cargo).unwrap().replace(&old, "name = \"rtsplayer-app\"");
+    std::fs::write(&cargo, text).unwrap();
+    assert_eq!(project.package_name(), "rtsplayer-app");
+    assert_eq!(project.lib_name(), "rtsplayer_app");
+    assert_eq!(project.bin_name(), "rtsplayer-app");
+    // Com `[lib] name`, vale o dele.
+    let text = std::fs::read_to_string(&cargo).unwrap().replacen("[lib]\n", "[lib]\nname = \"rtsplayer_ui\"\n", 1);
+    std::fs::write(&cargo, text).unwrap();
+    assert_eq!(project.lib_name(), "rtsplayer_ui");
+    // O `main.rs` (gerado só quando não existe: é do usuário) chama o crate pelo nome da
+    // biblioteca.
+    std::fs::remove_file(project.code_dir_of(Language::Rust).join("src/main.rs")).unwrap();
+    aylis_project::codegen::generate(&project).unwrap();
+    let main = std::fs::read_to_string(project.code_dir_of(Language::Rust).join("src/main.rs")).unwrap();
+    assert!(main.contains("rtsplayer_ui::app()"), "{main}");
+}
+
 /// A subpasta do form se repete no código (como o Delphi mantém a unit junto do form; pedido
 /// do autor em 11/11): `forms/painel/inicio.json` → `rust/src/forms/painel/inicio.rs`, com o
 /// módulo `painel_inicio` (não colide com um `inicio.json` da raiz), e o fonte que estava no

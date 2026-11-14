@@ -403,7 +403,12 @@ impl Ui {
     /// `id` está com o lugar ou a transparência animando (`translate_x`, `translate_y`,
     /// `opacity`): o desenho dele, igual de um quadro para o outro, vai numa camada guardada.
     pub(crate) fn animates_placement(&self, id: ComponentId) -> bool {
-        self.animations.iter().any(|a| a.target == id && matches!(a.property.as_str(), "translate_x" | "translate_y" | "opacity"))
+        self.placement_movers().any(|m| m == id)
+    }
+
+    /// Os controles com o lugar ou a transparência animando (veja [`Ui::animates_placement`]).
+    pub(crate) fn placement_movers(&self) -> impl Iterator<Item = ComponentId> + '_ {
+        self.animations.iter().filter(|a| matches!(a.property.as_str(), "translate_x" | "translate_y" | "opacity")).map(|a| a.target)
     }
 
     /// Há animação ou transição de estilo em andamento.

@@ -462,17 +462,27 @@ pub fn device_abi(serial: Option<&str>) -> Option<String> {
     env::output(&adb, &args).map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
 }
 
+/// As arquiteturas do APK: as pedidas no publicar (`Options::abis`, o Executar põe a do
+/// aparelho), senão as do projeto (`publish.android.abis`), senão as padrão (arm64 e x86_64).
+fn android_abis(project: &Project, options: &Options) -> Result<Vec<(&'static str, &'static str)>, String> {
+    let wanted = if options.abis.is_empty() { &project.publish.android.abis } else { &options.abis };
+    if wanted.is_empty() {
+        return Ok(env::ANDROID_ABIS.to_vec());
+    }
+    let unknown: Vec<&str> = wanted.iter().map(|a| a.trim()).filter(|a| !env::ANDROID_ALL_ABIS.iter().any(|(abi, _)| abi == a)).collect();
+    if !unknown.is_empty() {
+        let known: Vec<&str> = env::ANDROID_ALL_ABIS.iter().map(|(abi, _)| *abi).collect();
+        return Err(format!("arquitetura não suportada: {} (as aceitas: {})", unknown.join(", "), known.join(", ")));
+    }
+    Ok(env::ANDROID_ALL_ABIS.iter().copied().filter(|(abi, _)| wanted.iter().any(|a| a.trim() == *abi)).collect())
+}
+
 fn android(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     let tools = android_tools()?;
-    let abis: Vec<(&str, &str)> = env::ANDROID_ABIS
-        .iter()
-        .copied()
-        .filter(|(abi, _)| options.abis.is_empty() || options.abis.iter().any(|a| a == abi))
-        .collect();
-    if abis.is_empty() {
-        return Err(format!("arquitetura não suportada: {}", options.abis.join(", ")));
-    }
-    let package = project.package_name();
+    let abis = android_abis(project, options)?;
+    // O nome da biblioteca (`[lib] name`, ou o pacote com `_` no lugar do `-`): o cargo grava
+    // `librtsplayer_app.so` para o pacote `rtsplayer-app`.
+    let package = project.lib_name();
     let work = out.join("build");
     let _ = std::fs::remove_dir_all(&work);
     std::fs::create_dir_all(&work).map_err(|e| e.to_string())?;
@@ -491,7 +501,16 @@ fn android(project: &Project, options: &Options, out: &Path, control: &Control, 
             args.extend(["--features", features.as_str()]);
         }
         let crate_dir = options.crate_dir.clone().unwrap_or_else(|| project.code_dir());
-        let built = cargo("cargo", &args, &crate_dir, &[("ANDROID_NDK_HOME", tools.ndk.as_path())], control, sink)?;
+        // A de 32 bits fica fora da verificação de ambiente (não é padrão), e o Skia não publica
+        // binário pronto para ela com as features do Aylis (404 em 13/11): a mensagem diz o que
+        // falta, em vez de só o erro do build do `skia-bindings`.
+        let built = cargo("cargo", &args, &crate_dir, &[("ANDROID_NDK_HOME", tools.ndk.as_path())], control, sink).map_err(|e| {
+            if env::ANDROID_ABIS.iter().any(|(a, _)| a == abi) {
+                e
+            } else {
+                format!("{e}\n{abi} precisa do alvo do Rust (rustup target add {triple}) e de um Skia compilado para ele: o projeto do Skia não publica binário pronto para Android de 32 bits")
+            }
+        })?;
         let so = built
             .artifacts
             .iter()
@@ -984,9 +1003,10 @@ pub const ANDROID_MANIFEST_EXTRA: &str = "android/manifest-extra.xml";
 /// O manifesto final do Android (o mesmo do publicar), para a aba Android mostrar.
 pub fn android_manifest_preview(project: &Project) -> Result<String, String> {
     let has_icon = !project.publish.icon.is_empty();
-    android_manifest(project, &project.package_name(), has_icon)
+    android_manifest(project, &project.lib_name(), has_icon)
 }
 
+/// `package`: o nome da biblioteca (`Project::lib_name`), que a AylisActivity carrega.
 fn android_manifest(project: &Project, package: &str, icon: bool) -> Result<String, String> {
     let a = &project.publish.android;
     let version_code: u32 = if a.version_code > 0 {
@@ -1329,7 +1349,8 @@ fn web_release_env<'a>() -> Vec<(&'a str, &'a Path)> {
 
 fn web(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     sink(Event::Step("Compilando para WebAssembly…".into()));
-    let package = project.package_name();
+    // O `.wasm` e o que o wasm-bindgen gera levam o nome da biblioteca (com `_`).
+    let package = project.lib_name();
     let mut args = vec!["rustc", "--lib", "--crate-type", "cdylib", "--target", "wasm32-unknown-unknown"];
     if !options.debug {
         args.push("--release");
@@ -1915,6 +1936,26 @@ fn ray_tracing_dlls(project: &Project, dir: &Path, sink: Sink) -> Result<Vec<Pat
 mod tests {
     use super::*;
 
+    /// As arquiteturas do APK: as padrão, as do projeto (com a de 32 bits) e as do publicar, que
+    /// valem sobre as do projeto (relatório do RTSPlayer de 13/11, item 5).
+    #[test]
+    fn android_abis_come_from_the_publish_then_the_project() {
+        let base = std::env::temp_dir().join(format!("aylis_abis_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let mut project = aylis_project::create(&base, "Abis", Language::Rust).unwrap();
+        let mut options = Options::new(Target::Android);
+        let names = |p: &Project, o: &Options| android_abis(p, o).map(|v| v.iter().map(|(a, _)| *a).collect::<Vec<_>>());
+        assert_eq!(names(&project, &options).unwrap(), ["arm64-v8a", "x86_64"]);
+        project.publish.android.abis = vec!["arm64-v8a".into(), "armeabi-v7a".into()];
+        assert_eq!(names(&project, &options).unwrap(), ["arm64-v8a", "armeabi-v7a"]);
+        options.abis = vec!["x86_64".into()];
+        assert_eq!(names(&project, &options).unwrap(), ["x86_64"], "o publicar (o Executar: a do aparelho) manda");
+        options.abis = vec!["mips".into()];
+        assert!(names(&project, &options).unwrap_err().contains("armeabi-v7a"), "a mensagem diz as aceitas");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
     /// Sem servidor, a página abria nos primeiros F5 e depois dava `ERR_FAILED` (conferência de
     /// 08/11): ela nunca ia para o cache. Agora entra na instalação, e o cache antigo só sai na
     /// ativação, com o novo pronto.
@@ -1936,6 +1977,22 @@ mod tests {
             assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
         }
         let _ = std::fs::remove_file(&file);
+    }
+
+    /// O pacote com hífen (o RTSPlayer, item 24): o Android carrega a biblioteca que o cargo
+    /// gravou, `librtsplayer_app.so`, e não `librtsplayer-app.so`.
+    #[test]
+    fn the_android_manifest_loads_the_library_with_an_underscore() {
+        let base = std::env::temp_dir().join(format!("aylis_hyphen_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let project = aylis_project::create(&base, "RTSPlayer", Language::Rust).unwrap();
+        let cargo = project.code_dir_of(Language::Rust).join("Cargo.toml");
+        let old = format!("name = \"{}\"", project.package_name());
+        std::fs::write(&cargo, std::fs::read_to_string(&cargo).unwrap().replace(&old, "name = \"rtsplayer-app\"")).unwrap();
+        let manifest = android_manifest_preview(&project).unwrap();
+        assert!(manifest.contains("android:name=\"android.app.lib_name\" android:value=\"rtsplayer_app\""), "{manifest}");
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]

@@ -72,6 +72,22 @@ fn changing_the_window_corners_asks_the_window() {
     assert!(ui.take_window_commands().is_empty());
 }
 
+/// `topmost` mudado com a janela aberta: a janela vem para a frente (ou sai); antes só valia na
+/// criação (relatório do RTSPlayer de 13/11, item 4).
+#[test]
+fn changing_topmost_asks_the_window() {
+    let mut ui = Ui::new();
+    let form = ui.add_root(Form::new("Meu app", 600.0, 400.0));
+    let _ = ui.take_window_commands();
+    ui.set_prop(form, "topmost", true).unwrap();
+    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::SetTopmost(true))]);
+    ui.set_prop(form, "topmost", false).unwrap();
+    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::SetTopmost(false))]);
+    ui.set_design_mode(true);
+    ui.set_prop(form, "topmost", true).unwrap();
+    assert!(ui.take_window_commands().is_empty());
+}
+
 /// O botão maximizar da barra própria vai para o `Ui` (a plataforma o entrega ao sistema, que
 /// no Windows 11 mostra o menu de layouts com o mouse parado nele).
 #[test]

@@ -1,6 +1,7 @@
 [package]
 name = "aylis-providers"
 description = "Provedores do Aylis (código de barras, exportação CSV e XLSX, PDF, servidor de mapa) e os componentes que os usam"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,8 +9,8 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
-aylis-data = { version = "0.2.1-beta.1", path = "../aylis-data" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-data = { version = "0.2.1", path = "../aylis-data" }
 # O QR Code do provedor padrão de códigos de barras (sem dependências).
 qrcode = { version = "0.14", default-features = false }
 # A planilha do XlsxProvider.

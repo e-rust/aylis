@@ -1,6 +1,7 @@
 [package]
 name = "aylis-core"
 description = "Núcleo do Aylis: componentes, layout, propriedades, temas e interfaces de plataforma"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

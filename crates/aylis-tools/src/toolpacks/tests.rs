@@ -246,6 +246,38 @@ fn a_file_with_the_wrong_hash_is_refused() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// O erro começa pela causa (sem internet, os arquivos não estão ao lado do instalador, o
+/// SHA-256 não confere), e `causes` a acha para o código de saída do `aylis-tool setup`.
+#[test]
+fn the_error_says_exactly_what_went_wrong() {
+    let dir = temp("causes");
+    let zip = zip_bytes(&[("tool-1/bin/tool.exe", b"ok")]);
+    // Sem a pasta pacotes ao lado do instalador e sem internet (um espelho que não conecta).
+    let beside = dir.join("instalador/pacotes");
+    let offline = Sources {
+        folders: vec![beside.clone()],
+        installer_folder: Some(beside.clone()),
+        mirrors: vec!["http://127.0.0.1:1/pacotes.json".into()],
+        ..Sources::default()
+    };
+    let err = installer(&dir, manifest(tool_package("1.0", &zip)), offline.clone()).install(&["tool"], &Control::default(), &mut quiet()).unwrap_err();
+    let first = err.lines().next().unwrap();
+    assert!(first.contains(fetch::SAYS_OFFLINE) && first.contains(fetch::SAYS_NOT_BESIDE) && first.contains("não há a pasta pacotes"), "{err}");
+    assert!(!first.contains(fetch::SAYS_MISMATCH), "{err}");
+    assert_eq!(causes(&err), CAUSE_OFFLINE | CAUSE_NOT_BESIDE);
+    // A pasta existe, mas sem o arquivo.
+    std::fs::create_dir_all(&beside).unwrap();
+    let err = installer(&dir, manifest(tool_package("1.0", &zip)), offline).install(&["tool"], &Control::default(), &mut quiet()).unwrap_err();
+    assert!(err.lines().next().unwrap().contains("falta tool-1.0.zip"), "{err}");
+    // O arquivo ao lado do instalador, mas com outro conteúdo: só o hash.
+    std::fs::write(beside.join("tool-1.0.zip"), zip_bytes(&[("tool-1/bin/tool.exe", b"ko")])).unwrap();
+    let local = Sources { folders: vec![beside.clone()], installer_folder: Some(beside.clone()), ..Sources::default() };
+    let err = installer(&dir, manifest(tool_package("1.0", &zip)), local).install(&["tool"], &Control::default(), &mut quiet()).unwrap_err();
+    assert_eq!(causes(&err), CAUSE_MISMATCH, "{err}");
+    assert!(err.lines().next().unwrap().contains("corrompido ou é de outra versão"), "{err}");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn a_failed_install_keeps_the_previous_version() {
     let dir = temp("atomic");

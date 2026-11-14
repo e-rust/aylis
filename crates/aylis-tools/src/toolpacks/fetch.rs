@@ -54,6 +54,9 @@ pub struct Sources {
     /// Pastas com os arquivos pelo nome (a `pacotes` ao lado do executável, as das Opções,
     /// uma pasta de rede, a do Google Drive para desktop).
     pub folders: Vec<PathBuf>,
+    /// A pasta `pacotes` ao lado do instalador da IDE (também em `folders`): o erro diz quando
+    /// falta o arquivo nela, exista ela ou não.
+    pub installer_folder: Option<PathBuf>,
     /// Endereços HTTPS de um `pacotes.json` (o índice diz o lugar de cada arquivo).
     /// Não há a URL oficial do manifesto como última origem (decisão do autor): só o `pack` e
     /// o `update` a usam.
@@ -66,7 +69,7 @@ pub struct Sources {
 
 impl Default for Sources {
     fn default() -> Self {
-        Sources { folders: Vec::new(), mirrors: Vec::new(), drive: DRIVE.into(), indexes: Arc::default() }
+        Sources { folders: Vec::new(), installer_folder: None, mirrors: Vec::new(), drive: DRIVE.into(), indexes: Arc::default() }
     }
 }
 
@@ -77,8 +80,10 @@ impl Sources {
     pub fn configured() -> Sources {
         let mut s = Sources::default();
         // A pasta `pacotes` ao lado do instalador da IDE (o kit offline): o instalador a passa
-        // ao `aylis-tool setup` por esta variável, sem gravá-la nas Opções.
-        s.folders.extend(std::env::var_os("AYLIS_PACKAGE_DIR").filter(|d| !d.is_empty()).map(PathBuf::from));
+        // ao `aylis-tool setup` por esta variável, sem gravá-la nas Opções (exista a pasta ou
+        // não: o erro diz que os arquivos não estão ao lado do instalador).
+        s.installer_folder = std::env::var_os("AYLIS_PACKAGE_DIR").filter(|d| !d.is_empty()).map(PathBuf::from);
+        s.folders.extend(s.installer_folder.clone());
         s.folders.extend(Sources::beside_exe());
         s.folders.extend(crate::settings::list(crate::settings::PACKAGE_DIRS).into_iter().map(PathBuf::from));
         s.mirrors.extend(crate::settings::list(crate::settings::PACKAGE_MIRRORS));
@@ -181,8 +186,64 @@ impl Sources {
     }
 }
 
+/// O começo da frase de cada causa no erro de [`obtain`]. São fixos: o `aylis-tool setup`
+/// os procura ([`causes`]) para dizer a causa ao instalador da IDE pelo código de saída.
+pub const SAYS_MISMATCH: &str = "não confere com o SHA-256 do Aylis";
+pub const SAYS_OFFLINE: &str = "Sem internet";
+pub const SAYS_NOT_BESIDE: &str = "Os arquivos não estão ao lado do instalador";
+
+/// As causas de uma falha, em bits (o código de saída do `aylis-tool setup` é 16 + estes).
+pub const CAUSE_MISMATCH: u8 = 1;
+pub const CAUSE_OFFLINE: u8 = 2;
+pub const CAUSE_NOT_BESIDE: u8 = 4;
+
+/// As causas ditas num texto de erro de [`obtain`] (0: nenhuma das três).
+pub fn causes(text: &str) -> u8 {
+    let mut bits = 0;
+    if text.contains(SAYS_MISMATCH) {
+        bits |= CAUSE_MISMATCH;
+    }
+    if text.contains(SAYS_OFFLINE) {
+        bits |= CAUSE_OFFLINE;
+    }
+    if text.contains(SAYS_NOT_BESIDE) {
+        bits |= CAUSE_NOT_BESIDE;
+    }
+    bits
+}
+
+/// O prefixo dos erros de rede ([`describe`]): o que separa "sem internet" de "o espelho
+/// respondeu que não tem".
+const NETWORK: &str = "sem conexão: ";
+
+/// Por que uma origem não deu o arquivo.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Why {
+    /// A pasta não existe, não tem o arquivo, ou o espelho não o lista.
+    Absent,
+    /// O arquivo veio, mas o SHA-256 (ou o tamanho) não é o fixado.
+    Mismatch,
+    /// Não deu para chegar ao espelho (DNS, conexão, prazo, a leitura parou).
+    Offline,
+    Other,
+}
+
+fn why(error: &str) -> Why {
+    if error.starts_with("não confere") || error.starts_with("maior que") {
+        Why::Mismatch
+    } else if error.contains(NETWORK) || error.starts_with("a leitura parou") {
+        Why::Offline
+    } else if error.contains("HTTP 404") || error.starts_with("o índice não tem") {
+        Why::Absent
+    } else {
+        Why::Other
+    }
+}
+
 /// O arquivo no cache, conferido: do cache, de uma pasta ou de um espelho (nunca da URL
-/// oficial: decisão do autor). Um erro diz o arquivo e o que cada origem respondeu.
+/// oficial: decisão do autor). O erro começa pela causa em português claro (sem internet, o
+/// SHA-256 não confere, os arquivos não estão ao lado do instalador) e segue com o que cada
+/// origem respondeu.
 pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: &Control, progress: &mut dyn FnMut(Progress)) -> Result<PathBuf, String> {
     if !super::is_sha256(&file.sha256) {
         return Err(format!("{}: o manifesto não tem o SHA-256 (rode aylis-tool packages update)", file.name));
@@ -190,6 +251,12 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
     std::fs::create_dir_all(cache).map_err(|e| format!("{}: {e}", cache.display()))?;
     let dest = cache.join(&file.name);
     let mut tried = Vec::new();
+    // Para a frase da causa: onde não conferiu, que espelhos não responderam (e por quê),
+    // quais não têm o arquivo, e se a pasta do instalador não o tem.
+    let mut mismatched: Vec<String> = Vec::new();
+    let mut offline: Vec<(String, String)> = Vec::new();
+    let mut absent_mirrors: Vec<String> = Vec::new();
+    let mut beside: Option<String> = None;
     if dest.is_file() {
         match sha256_file(&dest) {
             Ok(h) if h == file.sha256 => return Ok(dest),
@@ -202,9 +269,20 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
     }
     for folder in &sources.folders {
         control.check()?;
+        let of_installer = sources.installer_folder.as_ref() == Some(folder);
+        if !folder.is_dir() {
+            tried.push(format!("pasta {}: a pasta não existe", folder.display()));
+            if of_installer {
+                beside = Some(format!("não há a pasta pacotes ao lado dele ({})", folder.display()));
+            }
+            continue;
+        }
         let candidate = folder.join(&file.name);
         if !candidate.is_file() {
             tried.push(format!("pasta {}: não está", folder.display()));
+            if of_installer {
+                beside = Some(format!("falta {} em {}", file.name, folder.display()));
+            }
             continue;
         }
         let from = candidate.display().to_string();
@@ -212,7 +290,12 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
         match File::open(&candidate).map_err(|e| e.to_string()).and_then(|f| save_verified(f, file, &dest, &from, control, progress)) {
             Ok(()) => return Ok(dest),
             Err(e) if e == crate::process::CANCELLED => return Err(e),
-            Err(e) => tried.push(format!("pasta {}: {e}", folder.display())),
+            Err(e) => {
+                if why(&e) == Why::Mismatch {
+                    mismatched.push(format!("na pasta {}", folder.display()));
+                }
+                tried.push(format!("pasta {}: {e}", folder.display()));
+            }
         }
     }
     for mirror in &sources.mirrors {
@@ -220,17 +303,44 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
         match from_mirror(mirror, file, sources, &dest, control, progress) {
             Ok(()) => return Ok(dest),
             Err(e) if e == crate::process::CANCELLED => return Err(e),
-            Err(e) => tried.push(format!("espelho {mirror}: {e}")),
+            Err(e) => {
+                match why(&e) {
+                    Why::Mismatch => mismatched.push(format!("o baixado de {mirror}")),
+                    Why::Offline => offline.push((mirror.clone(), e.replace(NETWORK, ""))),
+                    Why::Absent => absent_mirrors.push(mirror.clone()),
+                    Why::Other => {}
+                }
+                tried.push(format!("espelho {mirror}: {}", e.replace(NETWORK, "")));
+            }
         }
     }
-    let hint = if !sources.has_any() {
-        "\n  Nenhuma origem configurada: indique uma pasta de pacotes ou um espelho (Opções da IDE → Pacotes, ou aylis-tool packages sources)."
-    } else {
-        ""
-    };
+    let mut headline = Vec::new();
+    if !mismatched.is_empty() {
+        headline.push(format!(
+            "O {} {SAYS_MISMATCH} ({}): o arquivo está corrompido ou é de outra versão, e não foi usado.",
+            file.name,
+            mismatched.join("; ")
+        ));
+    }
+    if !offline.is_empty() {
+        let places: Vec<String> = offline.iter().map(|(m, e)| format!("{m} ({e})")).collect();
+        headline.push(format!("{SAYS_OFFLINE} (ou a rede bloqueou o acesso): não deu para baixar o {} de {}.", file.name, places.join("; ")));
+    }
+    if let Some(b) = beside {
+        headline.push(format!("{SAYS_NOT_BESIDE}: {b}."));
+    }
+    if !absent_mirrors.is_empty() {
+        headline.push(format!("O espelho {} não tem o {}.", absent_mirrors.join(", "), file.name));
+    }
+    if !sources.has_any() {
+        headline.push("Nenhuma origem configurada: indique uma pasta de pacotes ou um espelho (Opções da IDE → Pacotes, ou aylis-tool packages sources).".into());
+    }
+    if headline.is_empty() {
+        headline.push(format!("Não deu para obter o {} com o SHA-256 fixado em nenhuma origem.", file.name));
+    }
     // Sem nada tentado (nenhuma origem e nada no cache), sem a lista vazia.
-    let tried = if tried.is_empty() { String::new() } else { format!(":\n  - {}", tried.join("\n  - ")) };
-    Err(format!("{}: não achei o arquivo com o SHA-256 fixado em nenhuma origem{tried}{hint}", file.name))
+    let tried = if tried.is_empty() { String::new() } else { format!("\n  O que cada origem respondeu:\n  - {}", tried.join("\n  - ")) };
+    Err(format!("{}{tried}", headline.join(" ")))
 }
 
 /// O arquivo pelo índice de um espelho: `{"files": {"<nome>": {"url": "..."} | {"drive": "<id>"}}}`.
@@ -437,9 +547,10 @@ fn describe(e: &ureq::Error) -> String {
         ureq::Error::StatusCode(404) => "não encontrado (HTTP 404)".into(),
         ureq::Error::StatusCode(403) => "acesso negado (HTTP 403)".into(),
         ureq::Error::StatusCode(c) => format!("o servidor respondeu HTTP {c}"),
-        ureq::Error::Timeout(t) => format!("passou do prazo ({t})"),
-        ureq::Error::HostNotFound => "endereço não encontrado (sem rede ou DNS?)".into(),
-        ureq::Error::ConnectionFailed => "não conectou (sem rede, firewall ou proxy?)".into(),
+        ureq::Error::Timeout(t) => format!("{NETWORK}passou do prazo ({t})"),
+        ureq::Error::HostNotFound => format!("{NETWORK}o endereço não foi encontrado (sem rede ou sem DNS)"),
+        ureq::Error::ConnectionFailed => format!("{NETWORK}não conectou (sem rede, firewall ou proxy)"),
+        ureq::Error::Io(e) => format!("{NETWORK}{e}"),
         other => other.to_string(),
     }
 }

@@ -1,6 +1,7 @@
 [package]
 name = "aylis-3d"
 description = "3D do Aylis: modelos glTF/GLB com esqueleto, morph targets e animação, desenhados com wgpu e compostos com os controles"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -17,7 +18,7 @@ fbx = ["dep:ufbx"]
 diagnostics = []
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
 # Cada plataforma leva só o backend dela (o resto entra nas seções abaixo).
 wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "wgsl"] }
 gltf = { version = "1.4", default-features = false, features = ["import", "utils", "names", "KHR_lights_punctual", "KHR_texture_transform", "extensions"] }

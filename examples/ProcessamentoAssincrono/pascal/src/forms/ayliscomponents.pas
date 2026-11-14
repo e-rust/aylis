@@ -93,10 +93,14 @@ type
     procedure SetCursor(Value: string);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: string;
+    procedure SetBlendMode(Value: string);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -208,8 +212,10 @@ type
     property TabStop: Boolean read GetTabStop write SetTabStop;
     property Cursor: string read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: string read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -356,10 +362,14 @@ type
     procedure SetCursor(Value: string);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: string;
+    procedure SetBlendMode(Value: string);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -490,8 +500,10 @@ type
     property TabStop: Boolean read GetTabStop write SetTabStop;
     property Cursor: string read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: string read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -614,10 +626,14 @@ type
     procedure SetCursor(Value: string);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: string;
+    procedure SetBlendMode(Value: string);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -732,8 +748,10 @@ type
     property TabStop: Boolean read GetTabStop write SetTabStop;
     property Cursor: string read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: string read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -832,10 +850,14 @@ type
     procedure SetCursor(Value: string);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: string;
+    procedure SetBlendMode(Value: string);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -936,8 +958,10 @@ type
     property TabStop: Boolean read GetTabStop write SetTabStop;
     property Cursor: string read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: string read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -1424,6 +1448,16 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
+function TButton.GetBlendMode: string;
+begin
+  Result := AsText(GetProp('blend_mode'));
+end;
+
+procedure TButton.SetBlendMode(Value: string);
+begin
+  SetProp('blend_mode', TJSONString.Create(Value));
+end;
+
 function TButton.GetCacheLayer: Boolean;
 begin
   Result := GetProp('cache_layer').AsBoolean;
@@ -1442,6 +1476,16 @@ end;
 procedure TButton.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TButton.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TButton.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TButton.GetTranslateX: Double;
@@ -2329,6 +2373,16 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
+function TForm.GetBlendMode: string;
+begin
+  Result := AsText(GetProp('blend_mode'));
+end;
+
+procedure TForm.SetBlendMode(Value: string);
+begin
+  SetProp('blend_mode', TJSONString.Create(Value));
+end;
+
 function TForm.GetCacheLayer: Boolean;
 begin
   Result := GetProp('cache_layer').AsBoolean;
@@ -2347,6 +2401,16 @@ end;
 procedure TForm.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TForm.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetTranslateX: Double;
@@ -3139,6 +3203,16 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
+function TLabel.GetBlendMode: string;
+begin
+  Result := AsText(GetProp('blend_mode'));
+end;
+
+procedure TLabel.SetBlendMode(Value: string);
+begin
+  SetProp('blend_mode', TJSONString.Create(Value));
+end;
+
 function TLabel.GetCacheLayer: Boolean;
 begin
   Result := GetProp('cache_layer').AsBoolean;
@@ -3157,6 +3231,16 @@ end;
 procedure TLabel.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TLabel.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TLabel.GetTranslateX: Double;
@@ -3809,6 +3893,16 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
+function TProgressBar.GetBlendMode: string;
+begin
+  Result := AsText(GetProp('blend_mode'));
+end;
+
+procedure TProgressBar.SetBlendMode(Value: string);
+begin
+  SetProp('blend_mode', TJSONString.Create(Value));
+end;
+
 function TProgressBar.GetCacheLayer: Boolean;
 begin
   Result := GetProp('cache_layer').AsBoolean;
@@ -3827,6 +3921,16 @@ end;
 procedure TProgressBar.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TProgressBar.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TProgressBar.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TProgressBar.GetTranslateX: Double;

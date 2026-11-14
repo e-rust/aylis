@@ -136,3 +136,29 @@ fn a_click_inside_a_row_reaches_the_form_and_knows_the_record() {
     assert_eq!(ui.invoke(list, "index_of", &[PropValue::Component(Some(button_of(&ui, 1)))]).unwrap(), PropValue::Int(1));
     assert_eq!(ui.invoke(list, "part", &[PropValue::Int(1), PropValue::Component(Some(model_button))]).unwrap(), PropValue::Component(Some(button_of(&ui, 1))));
 }
+
+/// `VirtualList::set_sizer`, `refresh` e `item_span` acham a lista dentro do `DataRepeater` (o
+/// relatório do RTSPlayer de 13/11, item 2, achou que não: a causa era o align do modelo).
+#[test]
+fn the_list_functions_work_on_a_data_repeater() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    aylis_dbcontrols::register(&mut ui);
+    let form = ui.add_root(Form::new("lista", 400.0, 400.0));
+    let cds = ui.add(ClientDataSet::new().with_key("id"), form);
+    ui.add(Field::new("id", FieldType::Integer), cds);
+    let ds = ui.add(DataSource::new(cds), form);
+    let data = (0..50).map(|i| vec![(i as i64).into()]).collect();
+    data_set(&mut ui, cds).load_rows(data).unwrap();
+    let list = ui.add(DataRepeater::default(), form);
+    ui.control_mut(list).unwrap().set_rect(0.0, 0.0, 400.0, 300.0);
+    ui.add(Panel::new(400.0, 60.0), list);
+    ui.set_prop(list, "item_height", 60.0).unwrap();
+    ui.set_prop(list, "data_source", ds).unwrap();
+    ui.layout();
+    VirtualList::set_sizer(&mut ui, list, |i| if i == 0 { 200.0 } else { 20.0 });
+    ui.layout();
+    assert_eq!(VirtualList::item_span(&ui, list, 2), Some((220.0, 20.0)));
+    let row = VirtualList::item(&ui, list, 1).unwrap();
+    assert_eq!(ui.control(row).unwrap().bounds().y, 200.0, "a linha no lugar do tamanho pelo código");
+}

@@ -38,7 +38,7 @@ use std::path::{Component, Path, PathBuf};
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
 
-pub use fetch::{Probe, Sources};
+pub use fetch::{CAUSE_MISMATCH, CAUSE_NOT_BESIDE, CAUSE_OFFLINE, Probe, Sources, causes};
 pub use pack::{PackReport, pack, update_lock};
 
 use crate::process::Control;

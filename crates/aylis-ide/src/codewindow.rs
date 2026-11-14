@@ -640,6 +640,11 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
     if embedded {
         let _ = ui.set_prop(form, "popup_menu", aylis_core::PropValue::Component(Some(menu)));
     }
+    // No menu do botão direito, os clássicos primeiro (como em todo editor).
+    if embedded {
+        clipboard_items(ui, menu);
+        menu_separator(ui, menu);
+    }
     let file_menu = ui.add(MenuItem::new("Arquivo"), menu);
     let mi_save = ui.add(MenuItem::new("Salvar").with_shortcut("Ctrl+S"), file_menu);
     let mi_close = ui.add(MenuItem::new("Fechar arquivo").with_shortcut("Ctrl+F4"), file_menu);
@@ -1382,12 +1387,47 @@ fn menu_separator(ui: &mut Ui, parent: ComponentId) {
     ui.add(MenuItem::new("-"), parent);
 }
 
+thread_local! {
+    /// Um item de Recortar/Copiar/Colar mandando a tecla ao editor: a tecla que o editor não
+    /// tratar (Colar num editor só de leitura) cai nos atalhos e voltaria ao mesmo item.
+    static SENDING_KEY: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Ctrl+`key` no editor da aba ativa, pelo mesmo caminho do teclado (os vários cursores, o
+/// desfazer, o `on_change` e a área de transferência do Aylis).
+fn send_ctrl_key(ui: &mut Ui, key: char) {
+    let Some((_, memo)) = active(ui) else { return };
+    if SENDING_KEY.with(|s| s.replace(true)) {
+        return;
+    }
+    ui.set_focus(memo);
+    let modifiers = aylis_core::Modifiers { ctrl: true, ..Default::default() };
+    let root = ui.root_of(memo);
+    ui.key_down(root, aylis_core::KeyEvent { key: aylis_core::Key::Char(key), modifiers, repeat: false });
+    SENDING_KEY.with(|s| s.set(false));
+    ui.request_repaint();
+}
+
+/// Recortar, Copiar, Colar e Selecionar tudo (os clássicos do menu do botão direito).
+fn clipboard_items(ui: &mut Ui, parent: ComponentId) {
+    add_menu_item(ui, parent, "Recortar", "Ctrl+X", |ui| send_ctrl_key(ui, 'x'));
+    add_menu_item(ui, parent, "Copiar", "Ctrl+C", |ui| send_ctrl_key(ui, 'c'));
+    add_menu_item(ui, parent, "Colar", "Ctrl+V", |ui| send_ctrl_key(ui, 'v'));
+    menu_separator(ui, parent);
+    add_menu_item(ui, parent, "Selecionar tudo", "Ctrl+A", |ui| send_ctrl_key(ui, 'a'));
+}
+
 /// Editar, Navegar e Exibir.
 fn create_menus(ui: &mut Ui, menu: ComponentId, embedded: bool) {
     let edit = ui.add(MenuItem::new("Editar"), menu);
     add_menu_item(ui, edit, "Desfazer", "Ctrl+Z", |ui| with_active_memo(ui, |m, _| m.undo()));
     add_menu_item(ui, edit, "Refazer", "Ctrl+Y", |ui| with_active_memo(ui, |m, _| m.redo()));
     menu_separator(ui, edit);
+    // No menu do botão direito eles já estão no topo.
+    if !embedded {
+        clipboard_items(ui, edit);
+        menu_separator(ui, edit);
+    }
     add_menu_item(ui, edit, "Localizar", "Ctrl+F", |ui| show_find(ui, false));
     add_menu_item(ui, edit, "Substituir", "Ctrl+H", |ui| show_find(ui, true));
     add_menu_item(ui, edit, "Pesquisar no projeto…", "Ctrl+Shift+F", |ui| {

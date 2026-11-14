@@ -366,6 +366,10 @@ impl Component for Form {
         if name == "gpu" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
         }
+        // `topmost` com a janela aberta: antes só valia na criação (RTSPlayer, 13/11, item 4).
+        if name == "topmost" && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::SetTopmost(self.topmost));
+        }
         if matches!(name, "window_corners" | "border_style") && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateCorners);
         }

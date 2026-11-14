@@ -1,6 +1,7 @@
 [package]
 name = "aylis-skia"
 description = "Renderizador Skia do Aylis: implementa Canvas e TextService (CPU e GPU)"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,5 +14,5 @@ default = []
 gl = ["skia-safe/gl"]
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
 skia-safe = { version = "0.153", features = ["textlayout", "embed-icudtl"] }

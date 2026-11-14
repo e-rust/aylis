@@ -84,6 +84,7 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let show = ui.add(aylis_controls::Button::new("Ver o manifesto final"), line);
     ui.control_mut(show).unwrap().set_align(Align::Left).set_width(200.0);
 
+    let abis = a.abis.clone();
     let read = move |ui: &Ui| -> Result<AndroidOptions, String> {
         let orientation = dialogs::combo_text(ui, orientation);
         let features = list(&text_of(ui, features))
@@ -104,6 +105,8 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             permissions: list(&text_of(ui, permissions)),
             features,
             deep_links: list(&text_of(ui, links)),
+            // As do projeto (`publish.android.abis`, pelo `set_project_setting`) ficam como estão.
+            abis: abis.clone(),
         })
     };
     {

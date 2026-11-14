@@ -180,3 +180,28 @@ fn horizontal_lists_and_grids() {
     ui.layout();
     assert_eq!(VirtualList::visible(&ui, list).first(), Some(&40), "rola até a linha do item");
 }
+
+/// A lista com `align: client` numa tela maior que a desenhada (400) cria as linhas da altura
+/// real, e o modelo com `align: top` (o natural no designer) não empilha as cópias: valem as
+/// posições da lista e os `sizes` (relatório do RTSPlayer de 13/11, itens 1 e 2).
+#[test]
+fn an_aligned_list_uses_the_real_height_and_ignores_the_template_align() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let form = ui.add_root(Form::new("lista", 400.0, 900.0));
+    let list = ui.add(VirtualList::default(), form); // 320 x 400 desenhado
+    ui.control_mut(list).unwrap().set_align(aylis_core::Align::Client);
+    let template = ui.add(Panel::new(400.0, 80.0), list);
+    ui.control_mut(template).unwrap().set_align(aylis_core::Align::Top);
+    ui.add(Label::new("modelo"), template);
+    ui.set_prop(list, "item_height", 80.0).unwrap();
+    ui.set_prop(list, "sizes", "50;120").unwrap();
+    ui.set_prop(list, "item_count", 13i64).unwrap();
+    ui.layout();
+    ui.layout(); // as linhas nascem no `resized` da primeira arrumação
+    // Nos 900 aparecem do item 0 ao 11 (com os 400 desenhados, só até o 4), e mais 2 de reserva.
+    assert_eq!(VirtualList::visible(&ui, list), (0..13).collect::<Vec<_>>());
+    let tops: Vec<(f32, f32)> = (0..3).map(|i| (rect_of(&ui, list, i).y, rect_of(&ui, list, i).height)).collect();
+    assert_eq!(tops, [(0.0, 50.0), (50.0, 120.0), (170.0, 80.0)], "as posições da lista, não as do align");
+    assert_eq!(ui.control(template).unwrap().align(), aylis_core::Align::Top, "o modelo fica como foi desenhado");
+}

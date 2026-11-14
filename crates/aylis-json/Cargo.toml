@@ -1,6 +1,7 @@
 [package]
 name = "aylis-json"
 description = "Layouts e temas do Aylis em JSON: carregar, salvar e gerar o JSON Schema"
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +9,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1-beta.1", path = "../aylis-core" }
+aylis-core = { version = "0.2.1", path = "../aylis-core" }
 serde_json = { version = "1", features = ["preserve_order"] }
 
 [dev-dependencies]

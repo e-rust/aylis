@@ -1471,9 +1471,9 @@ fn main_rs(project: &Project) -> String {
          fn main() -> Result<(), aylis::Error> {{\n    \
          {package}::app()?.run()\n}}\n",
         name = project.name,
-        // O crate se chama pelo nome do pacote com `_` no lugar do `-` (o relatório do
+        // O crate se chama pelo nome da biblioteca, com `_` no lugar do `-` (o relatório do
         // Tabernáculo, G06: `meu-app::app()` não compila).
-        package = project.package_name().replace('-', "_")
+        package = project.lib_name()
     )
 }
 

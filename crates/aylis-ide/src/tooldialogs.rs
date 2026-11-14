@@ -412,6 +412,7 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 bundle: checked(ui, bundle),
                 installer: checked(ui, installer),
                 key_password: Some(text_of(ui, password)).filter(|s| !s.is_empty()),
+                abis: Vec::new(), // as do projeto (Opções do projeto → Android)
             };
             state2.borrow_mut().project = Some(p);
             crate::codewindow::save_all(ui);

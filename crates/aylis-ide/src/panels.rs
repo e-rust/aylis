@@ -643,8 +643,7 @@ pub fn project(ui: &mut Ui, state: &Shared, ids: &Ids) {
     };
     let scan = project_scan(ui, state, ids, &project);
     let build = |st: &crate::state::State| {
-        let open: Vec<String> = (0..st.tab_count()).filter_map(|i| st.tab(i)).map(|d| d.form_name()).collect();
-        project_nodes(&project, &scan, &current, &open, &st.project_tree_open)
+        project_nodes(&project, &scan, &current, &st.project_tree_open)
     };
     let (nodes, selected) = build(&state.borrow());
     // A árvore começa fechada e fica como o usuário deixar (guardada por projeto; I10 do
@@ -840,7 +839,6 @@ fn project_nodes(
     project: &aylis_project::Project,
     scan: &ProjectScan,
     current: &str,
-    open: &[String],
     opened: &std::collections::HashSet<String>,
 ) -> (Vec<TreeNode>, Option<Vec<usize>>) {
     use std::path::{Path, PathBuf};
@@ -877,7 +875,9 @@ fn project_nodes(
         let main = form.name == project.main_form;
         let module = scan.modules.contains(&form.name);
         let marks = format!("{}{}{}", if main { "★ " } else { "" }, if form.auto_create && !main { "● " } else { "" }, if module { "⛁ " } else { "" });
-        let text = format!("{marks}{}{}", form.name, if open.contains(&form.name) { "" } else { "  (fechado)" });
+        // Só o nome: o "(fechado)" de quem não está aberto saiu a pedido do autor (13/11); o
+        // aberto já aparece nas abas.
+        let text = format!("{marks}{}", form.name);
         let mut node = TreeNode::new(text);
         node.data = format!("form:{}", form.name);
         for variant in scan.variants.get(&form.name).into_iter().flatten() {

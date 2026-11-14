@@ -39,5 +39,64 @@
         { "nome": "painel cache_layer", "primeiro_quadro_ms": 34.11, "p50_ms": 21.54, "p95_ms": 22.59, "acima_de_16_7_ms": "113/136", "area": 0.872, "controles": 1329, "guardado_mb": 15.9 }
       ]
     }
-  ]
+  ],
+  "direct2d_janela": {
+    "descricao": "O mesmo, numa janela de verdade no Direct2D (exemplo transitions do aylis-platform-winit, AYLIS_RENDERER=d2d, AYLIS_VSYNC=0, zoom 0.6667 no monitor 4K a 150% para as medidas valerem em pixels), AMD Radeon RX 9070 XT, 6 rodadas por cenário, 13/11/2026. O quadro é a pintura mais o mandar e o apresentar (o profiler), com o relógio real, então os quadros por cenário variam (até ~150 por segundo). Antes do fundo guardado atrás do painel.",
+    "medidas": [
+      {
+        "largura": 1920, "altura": 1080, "componentes": 864,
+        "cenarios": [
+          { "nome": "aba deslizar", "primeiro_quadro_ms": 6.82, "p50_ms": 0.53, "p95_ms": 3.05, "acima_de_16_7_ms": "1/229" },
+          { "nome": "aba esmaecer", "primeiro_quadro_ms": 7.02, "p50_ms": 0.74, "p95_ms": 1.16, "acima_de_16_7_ms": "0/233" },
+          { "nome": "painel animado", "primeiro_quadro_ms": 8.59, "p50_ms": 6.96, "p95_ms": 10.01, "acima_de_16_7_ms": "0/198" },
+          { "nome": "painel cache_layer", "primeiro_quadro_ms": 10.00, "p50_ms": 5.81, "p95_ms": 11.89, "acima_de_16_7_ms": "0/177" }
+        ]
+      },
+      {
+        "largura": 3840, "altura": 2160, "componentes": 3345,
+        "cenarios": [
+          { "nome": "aba deslizar", "primeiro_quadro_ms": 46.82, "p50_ms": 1.58, "p95_ms": 23.59, "acima_de_16_7_ms": "18/157" },
+          { "nome": "aba esmaecer", "primeiro_quadro_ms": 33.66, "p50_ms": 2.50, "p95_ms": 3.58, "acima_de_16_7_ms": "9/204" },
+          { "nome": "painel animado", "primeiro_quadro_ms": 34.94, "p50_ms": 32.33, "p95_ms": 35.91, "acima_de_16_7_ms": "60/60" },
+          { "nome": "painel cache_layer", "primeiro_quadro_ms": 22.54, "p50_ms": 14.82, "p95_ms": 27.38, "acima_de_16_7_ms": "44/105" }
+        ]
+      }
+    ]
+  },
+  "fundo_guardado": {
+    "descricao": "Depois do fundo guardado atrás de quem anda e da tinta fora do form deixar de contar como fora da área (13/11/2026, sem commit), medido com a CPU livre (carga abaixo de 25%, sem rustc rodando). Sem janela: o exemplo do aylis-controls (Skia na CPU, 8 rodadas). Na janela: o do aylis-platform-winit no Direct2D (zoom 0.6667, 6 rodadas), com a pintura (só a thread da interface) e os controles por quadro.",
+    "sem_janela": [
+      { "largura": 1920, "altura": 1080, "cenarios": [
+        { "nome": "painel animado", "primeiro_quadro_ms": 10.34, "p50_ms": 3.19, "p95_ms": 5.06, "acima_de_16_7_ms": "0/136", "controles": 185 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 11.82, "p50_ms": 2.32, "p95_ms": 3.62, "acima_de_16_7_ms": "0/136", "controles": 3 } ] },
+      { "largura": 3840, "altura": 2160, "cenarios": [
+        { "nome": "painel animado", "primeiro_quadro_ms": 42.53, "p50_ms": 14.79, "p95_ms": 21.68, "acima_de_16_7_ms": "21/136", "controles": 692 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 48.94, "p50_ms": 12.60, "p95_ms": 16.05, "acima_de_16_7_ms": "10/136", "controles": 3 } ] }
+    ],
+    "direct2d_janela": [
+      { "largura": 1920, "altura": 1080, "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 7.66, "p50_ms": 0.56, "p95_ms": 1.15, "acima_de_16_7_ms": "0/233", "pintura_p50_ms": 0.05, "controles": 4 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 12.74, "p50_ms": 1.04, "p95_ms": 1.86, "acima_de_16_7_ms": "0/224", "pintura_p50_ms": 0.06, "controles": 4 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 7.30, "p50_ms": 2.27, "p95_ms": 3.88, "acima_de_16_7_ms": "0/233", "pintura_p50_ms": 1.33, "controles": 185 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 5.46, "p50_ms": 0.49, "p95_ms": 1.09, "acima_de_16_7_ms": "0/232", "pintura_p50_ms": 0.02, "controles": 3 } ] },
+      { "largura": 3840, "altura": 2160, "cenarios": [
+        { "nome": "aba deslizar", "primeiro_quadro_ms": 21.97, "p50_ms": 0.78, "p95_ms": 1.17, "acima_de_16_7_ms": "6/214", "pintura_p50_ms": 0.05, "controles": 4 },
+        { "nome": "aba esmaecer", "primeiro_quadro_ms": 22.85, "p50_ms": 1.60, "p95_ms": 2.26, "acima_de_16_7_ms": "6/214", "pintura_p50_ms": 0.05, "controles": 4 },
+        { "nome": "painel animado", "primeiro_quadro_ms": 16.79, "p50_ms": 5.65, "p95_ms": 6.18, "acima_de_16_7_ms": "5/233", "pintura_p50_ms": 5.04, "controles": 692 },
+        { "nome": "painel cache_layer", "primeiro_quadro_ms": 17.33, "p50_ms": 0.55, "p95_ms": 0.94, "acima_de_16_7_ms": "6/217", "pintura_p50_ms": 0.02, "controles": 3 } ] }
+    ]
+  },
+  "noobs_gravar": {
+    "descricao": "Os handlers do NoOBS durante a onda do Gravar (tmrRipple), a única animação dele: o NoOBS de desenvolvimento em release pela IDE, o profiler ligado pelo app_command, um clique em btnRecord e uma gravação real (apagada em seguida), 13/11/2026, Direct2D, RX 9070 XT. Tempos em ms.",
+    "onda_ms": 162,
+    "quadros": 23,
+    "record_click_max_ms": 2.32,
+    "main_ripple_frame_max_ms": 0.11,
+    "intervalo_entre_quadros_p50_ms": 6.7,
+    "intervalo_entre_quadros_max_ms": 8.6,
+    "acima_de_16_7_ms": 0,
+    "pintura_p50_ms": 1.62,
+    "pintura_max_ms": 4.07,
+    "controles_por_quadro": 136
+  }
 }

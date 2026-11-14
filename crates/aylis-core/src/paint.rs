@@ -159,6 +159,26 @@ pub(crate) struct Visual {
     pub(crate) layer_key: Option<u64>,
 }
 
+/// Quanto o desenho pode passar da área sem contar como fora dela: o erro de arredondamento das
+/// contas em `f32` (a área e a tinta vêm de caminhos diferentes).
+const SPILL_SLACK: f32 = 0.01;
+
+/// Um contêiner atrás de quem anda, guardado como camada ([`Ui::backdrop_worth`]).
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Backdrop {
+    /// O pai dele e de quem anda: a camada vale enquanto algum filho desse pai anda.
+    parent: Option<ComponentId>,
+    /// A versão do desenho de dentro na última pintura.
+    version: u64,
+    /// Quantas vezes a camada foi montada desde que ele virou fundo.
+    builds: u32,
+}
+
+/// Mais que isso, o fundo muda sozinho a cada quadro (um medidor animando, o cursor do texto)
+/// e a camada seria montada de novo, com todos os filhos, onde a pintura por parte pintaria só
+/// a área: ele volta a ser pintado direto até o movimento parar.
+const BACKDROP_BUILDS: u32 = 2;
+
 /// O que a pintura de um controle usa ([`Ui::look`]).
 struct Look<'t> {
     enabled: bool,
@@ -315,6 +335,26 @@ impl Ui {
         for key in self.dead_layers.borrow_mut().drain(..) {
             canvas.forget_cached(key);
         }
+        // Quem anda agora (o lugar ou a transparência), com o pai: atrás deles, o fundo vira
+        // camada (`paint_node`). O fundo cujo movimento acabou solta a imagem.
+        {
+            let mut movers = self.movers.borrow_mut();
+            movers.clear();
+            movers.extend(self.placement_movers().filter_map(|m| self.parent(m).map(|p| (p, m))));
+            if !self.backdrops.borrow().is_empty() {
+                self.backdrops.borrow_mut().retain(|&id, b| {
+                    let keep = movers.iter().any(|&(p, _)| Some(p) == b.parent);
+                    if !keep {
+                        let own = self.control(id).is_some_and(|cb| cb.cache_layer()) || self.in_transition(id);
+                        if let Some(key) = self.entry(id).filter(|_| !own).and_then(|e| e.visual.borrow_mut().layer_key.take()) {
+                            canvas.forget_cached(key);
+                        }
+                    }
+                    keep
+                });
+            }
+        }
+        self.backdrop_next.set(false);
         // As camadas automáticas neste form: a propriedade `layer_cache` dele, ou o padrão do
         // projeto (um form sem a propriedade, como o do designer, fica com o do projeto).
         let caching = match self.get_prop(root, "layer_cache") {
@@ -330,6 +370,7 @@ impl Ui {
         let visible = visible.as_deref();
         self.spilled.set(false);
         self.paint_area.set(area);
+        self.paint_form.set(self.control(root).map(|cb| cb.bounds()));
         self.paint_count.set(0);
         let mut ink = crate::ink::InkCanvas::new(&mut *canvas, &self.ink);
         // O modo de texto do app (`layout`/`core`: o núcleo mede e desenha o texto, veja `textcore.rs`).
@@ -352,6 +393,8 @@ impl Ui {
         self.paint_hint(root, canvas);
         self.paint_busy(root, canvas);
         self.frame_requests.borrow_mut().insert(root, (self.style_animating.get(), self.wake_at.get()));
+        // No profiler, ao lado do bloco da pintura: quantos controles ela desenhou.
+        crate::profile::sample("controles pintados", self.paint_count.get() as f64);
         self.repaint_requested = false;
         // Um controle desenhou além de onde desenhava antes e fora da área: o que passou foi
         // recortado, e o próximo quadro repinta tudo.
@@ -763,6 +806,9 @@ impl Ui {
         parent_font: &crate::component::FontOverride,
         visible: Option<&[RectF]>,
     ) {
+        // Marcado pelo pai: ele fica atrás de um irmão que anda (lido antes de qualquer saída,
+        // para não passar a marca adiante).
+        let behind_mover = self.backdrop_next.replace(false);
         let Some(entry) = self.entry(id) else { return };
         let Some(component) = entry.component.as_deref() else { return };
         let Some(cb) = component.control() else { return };
@@ -842,9 +888,12 @@ impl Ui {
         // (as páginas de um `TabControl`, os forms empilhados), também sem recortar os filhos:
         // por 250 ms, o que passa da borda da página fica de fora. As automáticas (sem o
         // `cache_layer` no controle) seguem o `layer_cache` do form ou o padrão do projeto.
+        // Atrás de um irmão que anda (o painel que desliza por cima de uma página), o contêiner
+        // que recorta os filhos também: a área que o movimento descobre a cada quadro sai da
+        // imagem guardada, sem repintar os controles dele.
         let automatic = self.auto_layers.get()
             && !entry.children.is_empty()
-            && ((cb.clip_children() && self.animates_placement(id)) || self.in_transition(id));
+            && ((cb.clip_children() && (self.animates_placement(id) || (behind_mover && self.backdrop_worth(id, entry.visual.borrow().version)))) || self.in_transition(id));
         // Com mistura, o desenho depende do que está por baixo: não vira imagem guardada.
         let blend = cb.blend_mode();
         let cached = !flip && blend == crate::BlendMode::Normal && (cb.cache_layer() || automatic);
@@ -939,10 +988,17 @@ impl Ui {
                 None => None,
             };
             let hidden = self.covered_children(&entry.children, inner.as_deref());
+            // O último filho que anda: os de antes dele ficam por baixo (o fundo que ele descobre).
+            let mover_at = if self.auto_layers.get() {
+                self.movers.borrow().iter().filter(|&&(p, _)| p == id).filter_map(|&(_, m)| entry.children.iter().position(|&c| c == m)).max()
+            } else {
+                None
+            };
             for (k, &child) in entry.children.iter().enumerate() {
                 if hidden.get(k).copied().unwrap_or(false) {
                     continue;
                 }
+                self.backdrop_next.set(mover_at.is_some_and(|m| k < m));
                 self.paint_node(child, canvas, enabled, classes, inherited, &font, inner.as_deref());
             }
             if clip {
@@ -981,8 +1037,13 @@ impl Ui {
         let mut visual = entry.visual.borrow_mut();
         if let (Some(new), Some(area)) = (ink, self.paint_area.get()) {
             // Desenhou fora da área e além de onde desenhava antes: o que passou ficou
-            // recortado na tela.
-            if !area.contains_rect(new) && !visual.ink.is_some_and(|old| old.contains_rect(new)) {
+            // recortado na tela. Só conta o que fica dentro do form (a sombra e o anel de foco
+            // de um controle na borda passam dele e nunca aparecem; a área da janela é
+            // cortada no form, e cada quadro de um movimento ali virava pintura inteira), com
+            // folga para o arredondamento de uma escala quebrada (150% com zoom 0,6667).
+            let seen = self.paint_form.get().map_or(new, |form| intersection(new, form));
+            let outside = seen.width > 0.0 && seen.height > 0.0 && !area.inflate(SPILL_SLACK).contains_rect(seen);
+            if outside && !visual.ink.is_some_and(|old| old.inflate(SPILL_SLACK).contains_rect(seen)) {
                 self.spilled.set(true);
             }
         }
@@ -1010,6 +1071,20 @@ impl Ui {
             self.style_animating.set(true);
             self.frame_ids.borrow_mut().push(id);
         }
+    }
+
+    /// O contêiner `id`, atrás de quem anda, vale como camada guardada: a camada é montada no
+    /// primeiro quadro e, se o desenho de dentro mudar, mais uma vez; mudando mais (algo
+    /// dentro dele anima sozinho), ele volta a ser pintado direto (veja [`BACKDROP_BUILDS`]).
+    fn backdrop_worth(&self, id: ComponentId, version: u64) -> bool {
+        let parent = self.parent(id);
+        let mut backdrops = self.backdrops.borrow_mut();
+        let b = backdrops.entry(id).or_insert(Backdrop { parent, version, builds: 1 });
+        if b.version != version {
+            b.version = version;
+            b.builds += 1;
+        }
+        b.builds <= BACKDROP_BUILDS
     }
 
     /// Os filhos que não precisam ser pintados: inteiros atrás de um irmão pintado depois que

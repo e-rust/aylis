@@ -507,6 +507,10 @@ pub struct AndroidOptions {
     /// Links que abrem o app: `https://empresa.com/pedido` ou um esquema próprio (`meuapp://`).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub deep_links: Vec<String>,
+    /// As arquiteturas do publicar (`arm64-v8a`, `x86_64`, `armeabi-v7a`); vazio: as padrão,
+    /// arm64 e x86_64 (o emulador).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub abis: Vec<String>,
 }
 
 fn is_zero(n: &u32) -> bool {
@@ -711,6 +715,18 @@ impl Project {
             .ok()
             .and_then(|text| cargo_section_name(&text, "[[bin]]"))
             .unwrap_or_else(|| self.package_name())
+    }
+
+    /// O nome da biblioteca (o crate do app: `librtsplayer_app.so` no Android, o
+    /// `rtsplayer_app.wasm` no navegador): o `[lib] name` do `Cargo.toml` ou, sem ele, o do
+    /// pacote com `_` no lugar do `-`, como o cargo faz (o relatório do RTSPlayer, item 24: o
+    /// pacote `rtsplayer-app` gera `librtsplayer_app.so`).
+    pub fn lib_name(&self) -> String {
+        std::fs::read_to_string(self.code_dir_of(Language::Rust).join("Cargo.toml"))
+            .ok()
+            .and_then(|text| cargo_section_name(&text, "[lib]"))
+            .unwrap_or_else(|| self.package_name())
+            .replace('-', "_")
     }
 }
 

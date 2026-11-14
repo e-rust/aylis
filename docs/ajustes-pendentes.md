@@ -13,6 +13,70 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Defeitos relatados por outras sessões (13/11/2026)**
+
+- [ ] **Hífen no nome do pacote** (o RTSPlayer, item 24 do `relatorio-mcp-aylis.md`): o pacote
+  `rtsplayer-app` publicava para Android e parava em "a biblioteca ...librtsplayer-app.so não
+  foi gerada", porque o cargo grava `librtsplayer_app.so` (troca o `-` por `_` na biblioteca).
+  Feito em 13/11 (sem commit; roteiro 135): `Project::lib_name` (o `[lib] name`, ou o pacote com
+  `_`), usado no Android (o `.so` e o `lib_name` do manifesto), no navegador (o `.wasm` e o que o
+  wasm-bindgen gera) e no `main.rs` gerado; o executável continua o do `[[bin]]`, com o hífen.
+  Testes `a_package_with_a_hyphen_has_the_library_with_an_underscore` (aylis-project) e
+  `the_android_manifest_loads_the_library_with_an_underscore` (publish). O RTSPlayer pode voltar
+  a `rtsplayer-app` (falta publicar para Android de verdade).
+- [ ] **O motivo exato quando um pacote não vem** (relatado pelo autor em 13/11: numa
+  instalação em outra máquina, a mensagem dizia "sem internet, um pacote que não confere com o
+  SHA-256 do Aylis ou uma instalação recusada", sem dizer qual). Feito em 13/11 (sem commit;
+  roteiro 136): o erro do `toolpacks::fetch::obtain` começa pela causa — "Sem internet" (com o
+  espelho e o motivo: DNS, conexão, prazo), "Os arquivos não estão ao lado do instalador" (não há
+  a pasta `pacotes` ou falta o arquivo nela, com o caminho), "não confere com o SHA-256 do
+  Aylis" (onde) — e depois o que cada origem respondeu. O instalador passa sempre a pasta
+  `pacotes` ao lado dele (`AYLIS_PACKAGE_DIR`, `Sources::installer_folder`), exista ou não; o
+  `aylis-tool setup` sai com 16 + os bits da causa (`toolpacks::causes`) e o resumo traz o
+  "Motivo:"; a caixa do fim do instalador diz a causa de cada linguagem. Testes
+  `the_error_says_exactly_what_went_wrong` e `the_script_sets_up_without_a_shell`.
+- [ ] **Tirar o "(fechado)" da árvore do projeto** (pedido do autor em 13/11): feito em 13/11
+  (sem commit; roteiro 135): em Projeto › Forms, só o nome (com ★, ● e ⛁ como antes).
+- [ ] **O relatório do RTSPlayer de 13/11** (`RTSPlayer`, migração do cliente pelo MCP, 9 itens
+  conferidos no código da 0.2.1-beta.1). Feitos em 13/11 a pedido do autor ("Sim, corrija"; sem
+  commit; roteiro 138):
+  - **1.** A `VirtualList`/`DataRepeater` com `align: client` criava as linhas da altura do
+    projeto (8 de 13 numa tela de 900): o `viewport()` usa o tamanho que o layout deu (`bounds`,
+    menos o `padding`).
+  - **2.** O modelo desenhado com `align: top` empilhava as cópias pelo align (sem `sizes` nem
+    rolagem): as cópias nascem com `align: none` e quem as põe no lugar é a lista; o modelo fica
+    como foi desenhado. A outra metade do item (`set_sizer`/`refresh` não acharem a lista no
+    `DataRepeater`) não procedia: o `get_mut` desce pelo `inner`; um teste agora confere.
+  - **4.** `topmost` mudado com a janela aberta envia `WindowCommand::SetTopmost`.
+  - **5 (parte).** As arquiteturas do APK escolhidas: `publish.android.abis` do projeto
+    (`set_project_setting`) ou o `abis` do `publish` do MCP (`arm64-v8a` só, por exemplo), com a
+    lista das aceitas no erro; `armeabi-v7a` entrou em `env::ANDROID_ALL_ABIS`, fora do padrão.
+  - [ ] **5. Esperando o autor: Android de 32 bits está bloqueado pelo Skia.** O
+    `cargo ndk -t armeabi-v7a check -p aylis-platform-winit` (13/11) para no `skia-bindings`: o
+    `skia-binaries` 0.153.3 não tem `armv7-linux-androideabi` com as features do Aylis (404). Por
+    isso a caixa "Também 32 bits" nas Opções do Android não entrou, e o erro do publicar diz que
+    falta um Skia compilado para 32 bits. Caminho: compilar o Skia para armv7 uma vez (o
+    `skia-bindings` com `SKIA_BUILD_FROM_SOURCE`, que pede Python, Ninja e LLVM) e guardar como
+    pacote de ferramenta com SHA-256 (`SKIA_BINARIES_URL` apontando para ele), e só então a caixa;
+    falta o autor decidir se vale (o RTSPlayer em TV box é o caso).
+  - **8.** A ponte do MCP procura a IDE ao lado de si, depois na instalação para a qual o
+    `<projeto>/.aylis/sdk` aponta e em `%LOCALAPPDATA%\Programs\aylis`; o erro diz onde procurou.
+  - **9.** `max_wait` fica em no máximo 50 s (`MAX_WAIT`; antes aceitava 30 min, e a resposta se
+    perdia no prazo do cliente); as descrições do MCP dizem o limite.
+  - Testes: `an_aligned_list_uses_the_real_height_and_ignores_the_template_align`,
+    `the_list_functions_work_on_a_data_repeater`, `changing_topmost_asks_the_window`,
+    `android_abis_come_from_the_publish_then_the_project`,
+    `the_ide_is_looked_for_beside_the_bridge_then_in_the_project_installation`,
+    `max_wait_stays_within_the_client_deadline`.
+  - **6** (hífen no pacote) é o item acima, de outra sessão.
+  - [ ] **3. Esperando o autor:** `align: contents` não desconta a área segura (no Android, por
+    baixo da barra de status). É a semântica do `alContents` do FMX (cobre o pai inteiro, bom para
+    fundo de borda a borda); proposta: manter e o `check` avisar quando um `contents` com
+    controles interativos estiver num projeto com alvo móvel.
+  - [ ] **7. Esperando o autor:** o APK publicado não é depurável (`run-as` recusado). Proposta:
+    só o publicar com `debug: true` grava `android:debuggable="true"`; o `app_command` que grava
+    na pasta do app, sugerido no relatório, abriria uma porta e fica de fora.
+
 **Relatório do Tabernáculo (11/11/2026)**
 
 O console do Tabernáculo (51 forms, projeções em tela cheia) foi feito no Aylis 0.1.0, e o
@@ -475,6 +539,80 @@ Pedido do autor: estudar um compositor como o do navegador e o Core Animation, e
 camadas já pintadas (lugar, transparência, recorte) são compostas e apresentadas por outra
 thread, e a animação de `translate_x`/`translate_y`/`opacity` segue lisa mesmo com a thread da
 interface ocupada. Aprovado só registrar e medir; a mudança de arquitetura espera o autor.
+
+Decidido pelo autor em 13/11 ("Medir e fundo"): a outra thread fica de fora por enquanto. A
+fazer, na mesma thread:
+- [x] Medir as transições no Direct2D com janela (o padrão no Windows; só a CPU foi medida).
+  Feito em 13/11 (sem commit): o exemplo `transitions` do `aylis-platform-winit` (a mesma tela
+  numa janela; o quadro é a pintura mais o mandar e o apresentar, pelo profiler;
+  `AYLIS_VSYNC=0`, novo, apresenta sem esperar o monitor; o terceiro argumento é o `zoom` do
+  form, `0.6667` no monitor 4K a 150% para valer em pixels). Os números em
+  `medicoes/transicoes.json` (`direct2d_janela`), RX 9070 XT:
+
+  | Cenário | 1920 × 1080: 1º quadro / p50 / p95 | > 16,7 ms | 3840 × 2160: 1º / p50 / p95 | > 16,7 ms |
+  |---|---|---|---|---|
+  | Aba deslizando | 6,8 / 0,5 / 3,1 ms | 1 de 229 | 47 / 1,6 / 24 ms | 18 de 157 |
+  | Aba esmaecendo | 7,0 / 0,7 / 1,2 ms | 0 de 233 | 34 / 2,5 / 3,6 ms | 9 de 204 |
+  | Painel animado | 8,6 / 7,0 / 10 ms | 0 de 198 | 35 / 32 / 36 ms | 60 de 60 |
+  | Painel com `cache_layer` | 10 / 5,8 / 12 ms | 0 de 177 | 23 / 15 / 27 ms | 44 de 105 |
+
+  O que mostrou: na GPU, compor as páginas guardadas quase não custa (p50 de 0,5 a 2,5 ms
+  até em 4K, contra 15 a 38 ms no Skia na CPU); o que passa do quadro é o primeiro (montar as
+  camadas: 34 a 47 ms em 4K, um tranco só) e o painel, que repinta a página de trás a cada
+  quadro (32 ms em 4K, todos acima). O passo seguinte é mesmo o fundo guardado.
+- [x] O fundo atrás de um painel que anda vira camada guardada (hoje ele repinta a página de
+  trás que descobre: 342 a 420 controles por quadro em 1080p). Feito em 13/11 (sem commit):
+  no `paint_node`, os filhos que ficam atrás do último irmão com o lugar ou a transparência
+  animando (`Ui::placement_movers`, lidos uma vez por pintura) e que recortam os filhos viram
+  camada automática enquanto ele anda (`layer_cache` do form ou do projeto); a área descoberta
+  sai da imagem, sem repintar os controles. Se o desenho de dentro do fundo muda mais de uma
+  vez durante o movimento (um medidor, um texto mudando), a camada seria remontada inteira a
+  cada quadro: ele volta a ser pintado por parte (`BACKDROP_BUILDS`). Quando o movimento para,
+  a imagem sai do renderizador (`forget_cached`) na pintura seguinte. Controles por quadro
+  (exatos): painel com `cache_layer` de 342 para 3 (1080p) e de 1329 para 3 (4K); painel sem
+  `cache_layer` de 420 para 185 e de 1488 para 692 (sobram os filhos do próprio painel: o
+  `Panel` não recorta os filhos, então ele mesmo não vira camada). Testes novos no
+  `partial_paint`: `a_sliding_panel_does_not_repaint_the_page_behind_it` (Skia e Direct2D, com
+  e sem `cache_layer`; falha sem a mudança) e
+  `a_backdrop_that_keeps_changing_is_painted_by_parts_again`. O `giant_screen`: áreas e
+  controles iguais à base, e passa nos tempos com a máquina livre.
+
+  Achado na medição com janela (e corrigido): na janela, todo quadro de um movimento perto da
+  borda do form virava pintura inteira (e a pintura inteira refaz todas as camadas). A área da
+  janela é cortada no form, e a sombra e o anel de foco de um controle na borda passam dele
+  (y = −2): a pintura achava que tinha desenhado fora da área (`spilled`) e pedia a janela
+  inteira no quadro seguinte. Com escala quebrada (150% com zoom 0,6667) também, por 0,0001 px
+  de arredondamento. Agora só conta a tinta dentro do form (`Ui::paint_form`), com folga de
+  0,01 (`SPILL_SLACK`). Sem janela não aparecia (lá a área não é cortada).
+
+  Medido com a CPU livre (`medicoes/transicoes.json`, `fundo_guardado`); p50 do quadro:
+
+  | Cenário | Sem janela (Skia CPU) 1080p / 4K | Direct2D na janela 1080p / 4K | Controles por quadro 1080p / 4K |
+  |---|---|---|---|
+  | Painel animado | 4,6 → 3,2 / 19,2 → 14,8 ms | 7,0 → 2,3 / 32 → 5,7 ms | 420 → 185 / 1488 → 692 |
+  | Painel com `cache_layer` | 4,7 → 2,3 / 21,5 → 12,6 ms | 5,8 → 0,5 / 15 → 0,6 ms | 342 → 3 / 1329 → 3 |
+
+  No Direct2D em 4K, os quadros acima de 16,7 ms caíram de 60 em 60 para 5 em 233 (painel
+  animado) e de 44 em 105 para 6 em 217 (com `cache_layer`); os que sobram são o primeiro de
+  cada movimento, que monta a camada (17 ms em 4K, contra 23 a 35 antes). O primeiro quadro sem
+  janela ficou mais caro (10 a 12 ms em 1080p, 42 a 49 ms em 4K na CPU): é a montagem da camada
+  da página inteira.
+- [x] Medir quanto os handlers de apps reais (NoOBS, Tabernáculo) seguram a interface durante
+  uma animação: só com isso a outra thread volta à mesa. Medido no NoOBS em 13/11 (o
+  Tabernáculo não está nesta máquina), com autorização do autor: o NoOBS de desenvolvimento em
+  release, pela IDE, o profiler pelo `app_command`, uma gravação de verdade (o vídeo e a
+  miniatura do cache apagados em seguida; o "Abrir como administrador" desligado só durante a
+  medição e religado). A onda do Gravar (`tmrRipple`) correu 162 ms, 23 quadros:
+  - o `record_click` (a partida da gravação) segurou a interface 2,3 ms no máximo, e cada
+    quadro da onda (`main_ripple_frame`) 0,11 ms; o motor de gravação roda fora da thread da
+    interface;
+  - intervalo entre quadros p50 6,7 ms, máximo 8,6 ms, nenhum acima de 16,7 ms; a pintura
+    p50 1,6 ms (máximo 4,1), 136 controles por quadro.
+
+  Conclusão: no NoOBS, nenhum handler segura a interface a ponto de travar uma animação; a
+  outra thread **não** volta à mesa por ele. Os números em `medicoes/transicoes.json`
+  (`noobs_gravar`). O profiler agora grava também a amostra "controles pintados" de cada
+  quadro.
 
 Como seria, sem quebrar nem piorar o que existe:
 - O `Ui` continua numa thread só (`Rc`/`RefCell`) e os controles e o `Canvas` não mudam: o
@@ -1041,8 +1179,10 @@ roteiro 101):
   aylis-controls aylis-data aylis-dbcontrols aylis-devlink aylis-docview aylis-json aylis-markdown
   aylis-media aylis-skia aylis-web aylis-d2d aylis-platform-winit aylis-vector aylis-project
   aylis-providers aylis-webview aylis-remote aylis` (o cargo publica na ordem das dependências).
-  Fica para depois: o gerador continuar apontando os projetos para `.aylis/sdk` (decisão do autor
-  ao trocar para a versão publicada) e um README por crate (a página do crates.io sai vazia).
+  Publicado em 13/11 (a 0.2.0 e a 0.2.1-beta.1, os 26 crates). Os projetos novos já nascem
+  com `sdk: "crates.io"` (decidido em 11/11, G11); a chave vazia continua a junção
+  `.aylis/sdk`. Um README curto por crate (decidido em 13/11, feito sem commit; o teste
+  `every_published_crate_has_a_readme`): aparece no crates.io na próxima versão publicada.
 
 **Arrastar**
 - [ ] Abas que saem e entram em janelas, como as do navegador (pedido em 06/11): arrastar a

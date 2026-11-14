@@ -172,7 +172,7 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
     // O fim de uma chamada que passou do prazo (M12 do Tabernáculo): responde desta thread, sem
     // esperar a interface (que pode ainda estar nela).
     if name == "task_status" {
-        let wait = Duration::from_secs(args.get("max_wait").and_then(Value::as_u64).unwrap_or(30).clamp(0, 30 * 60));
+        let wait = Duration::from_secs(args.get("max_wait").and_then(Value::as_u64).unwrap_or(30).clamp(0, MAX_WAIT));
         return crate::mcp_tasks::status(args.get("task").and_then(Value::as_u64), wait);
     }
     // O publicar espera como o compilar (antes só começava, e o resultado não voltava).
@@ -422,8 +422,13 @@ fn compare_image(args: &Value, poster: &Poster) -> Value {
 /// cliente MCP (a primeira compilação de um projeto passa disso, e o cliente desistia da chamada
 /// sem resposta; relatório do RTSPlayer, 10/11). O resto se espera com `build_wait`.
 fn args_wait(args: &Value) -> u64 {
-    args.get("max_wait").and_then(Value::as_u64).unwrap_or(45).clamp(1, 30 * 60)
+    args.get("max_wait").and_then(Value::as_u64).unwrap_or(45).clamp(1, MAX_WAIT)
 }
+
+/// O máximo de `max_wait`: passando do prazo do cliente (~60 s), o cliente desiste e a resposta
+/// se perde (`run_without_debug` e `publish` com 120 a 200 s; relatório do RTSPlayer de 13/11,
+/// item 9). Esperar mais é chamar `build_wait` ou `task_status` de novo.
+pub(crate) const MAX_WAIT: u64 = 50;
 
 /// Onde o trabalho estava quando a espera acabou.
 enum Phase {
@@ -1746,7 +1751,8 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             // senha da chave do Android não passa por aqui: vem do ambiente
             // (`AYLIS_KEYSTORE_PASSWORD`), ou sai com a chave de depuração.
             let flag = |key: &str| args.get(key).and_then(Value::as_bool).unwrap_or(false);
-            let extras = crate::jobs::PublishExtras { bundle: flag("bundle"), installer: flag("installer"), key_password: None };
+            let abis = args.get("abis").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
+            let extras = crate::jobs::PublishExtras { bundle: flag("bundle"), installer: flag("installer"), key_password: None, abis };
             crate::jobs::publish_with(state, target, out_dir, extras);
             Ok(Value::String(state.borrow().status.clone()))
         }
@@ -1837,5 +1843,18 @@ mod image_tests {
         for bytes in [vec![], vec![1u8], vec![1, 2], vec![1, 2, 3], (0..=255u8).collect::<Vec<_>>()] {
             assert_eq!(super::unbase64(&super::base64(&bytes)).unwrap(), bytes);
         }
+    }
+}
+#[cfg(test)]
+mod wait_tests {
+    use super::*;
+
+    /// `max_wait` acima do prazo do cliente MCP perdia a resposta (relatório do RTSPlayer de
+    /// 13/11, item 9): fica no máximo em `MAX_WAIT`.
+    #[test]
+    fn max_wait_stays_within_the_client_deadline() {
+        assert_eq!(args_wait(&serde_json::json!({})), 45);
+        assert_eq!(args_wait(&serde_json::json!({ "max_wait": 20 })), 20);
+        assert_eq!(args_wait(&serde_json::json!({ "max_wait": 200 })), MAX_WAIT);
     }
 }

@@ -319,6 +319,9 @@ pub struct Ui {
     pub(crate) ink: RefCell<Option<RectF>>,
     pub(crate) spilled: Cell<bool>,
     pub(crate) paint_area: Cell<Option<RectF>>,
+    /// O retângulo do form sendo pintado: o desenho que passa dele (a sombra de um controle na
+    /// borda) não aparece e não conta como fora da área.
+    pub(crate) paint_form: Cell<Option<RectF>>,
     /// Os controles que desenharam por cima de tudo no último quadro (`PaintCtx::overlay`):
     /// o desenho deles sai da área deles.
     pub(crate) overlay_users: std::cell::RefCell<std::collections::HashSet<ComponentId>>,
@@ -341,6 +344,13 @@ pub struct Ui {
     /// As camadas automáticas valem no form sendo pintado (a propriedade `layer_cache` dele,
     /// ou o padrão do projeto): lido no começo de cada pintura.
     pub(crate) auto_layers: std::cell::Cell<bool>,
+    /// Os irmãos com o lugar animando na pintura de agora, com o pai de cada um: atrás deles
+    /// fica o fundo que o movimento descobre (`paint_node`).
+    pub(crate) movers: std::cell::RefCell<Vec<(ComponentId, ComponentId)>>,
+    /// O próximo `paint_node` é de um contêiner atrás de quem anda (o pai marca antes).
+    pub(crate) backdrop_next: std::cell::Cell<bool>,
+    /// Os contêineres que viraram camada guardada por estarem atrás de quem anda.
+    pub(crate) backdrops: std::cell::RefCell<std::collections::HashMap<ComponentId, crate::paint::Backdrop>>,
     /// Quantos controles a última pintura desenhou (os que passaram do recorte das áreas):
     /// a medida do trabalho de um quadro que não depende da máquina ([`Ui::last_paint_count`]).
     pub(crate) paint_count: std::cell::Cell<usize>,
@@ -458,6 +468,7 @@ impl Ui {
             ink: Default::default(),
             spilled: Default::default(),
             paint_area: Default::default(),
+            paint_form: Default::default(),
             overlay_users: Default::default(),
             frame_ids: Default::default(),
             placed_ids: Default::default(),
@@ -466,6 +477,9 @@ impl Ui {
             layer_epoch: Default::default(),
             dead_layers: Default::default(),
             auto_layers: std::cell::Cell::new(true),
+            movers: Default::default(),
+            backdrop_next: Default::default(),
+            backdrops: Default::default(),
             paint_count: Default::default(),
         }
     }

@@ -107,10 +107,14 @@
     procedure SetCursor(Value: string);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: string;
+    procedure SetBlendMode(Value: string);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -241,8 +245,10 @@
     property TabStop: Boolean read GetTabStop write SetTabStop;
     property Cursor: string read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: string read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -811,6 +817,16 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
+function TForm.GetBlendMode: string;
+begin
+  Result := AsText(GetProp('blend_mode'));
+end;
+
+procedure TForm.SetBlendMode(Value: string);
+begin
+  SetProp('blend_mode', TJSONString.Create(Value));
+end;
+
 function TForm.GetCacheLayer: Boolean;
 begin
   Result := GetProp('cache_layer').AsBoolean;
@@ -829,6 +845,16 @@ end;
 procedure TForm.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TForm.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetTranslateX: Double;

@@ -170,6 +170,8 @@ pub fn bridge() -> Result<(), String> {
     // cada conversa trabalha numa IDE: nada aqui é "a IDE da sessão", e sim o de cada IDE.
     let mut titles: std::collections::HashMap<u32, String> = std::collections::HashMap::new();
     let mut told: Vec<u32> = Vec::new();
+    // O último projeto pedido (o `project` das chamadas): para achar a IDE instalada que ele usa.
+    let mut last_project: Option<PathBuf> = None;
     for line in stdin.lock().lines() {
         let mut line = line.map_err(|e| e.to_string())?;
         if line.trim().is_empty() {
@@ -193,6 +195,10 @@ pub fn bridge() -> Result<(), String> {
             if project.is_some() {
                 line = request.to_string();
             }
+            // O projeto da conversa: se for preciso abrir a IDE, a instalação dele diz qual.
+            if let Some(p) = &project {
+                last_project = Some(PathBuf::from(p));
+            }
             // Um argumento que a ferramenta não tem é recusado com a lista dos que ela tem (antes
             // era ignorado calado, e o agente achava que tinha valido; M06 do Tabernáculo).
             if let Some(text) = unknown_arguments(&name, &request["params"]["arguments"]) {
@@ -214,7 +220,7 @@ pub fn bridge() -> Result<(), String> {
         // `session_title`: guarda o título, abre a IDE se preciso e mostra nela.
         if request["method"] == "tools/call" && request["params"]["name"] == "session_title" {
             let title = request["params"]["arguments"]["title"].as_str().unwrap_or_default().trim().to_string();
-            let (text, opened) = match target_port(&mut pinned, &session, true) {
+            let (text, opened) = match target_port(&mut pinned, &session, true, last_project.as_deref()) {
                 Ok(_) => {
                     if let Some(pid) = pinned {
                         titles.insert(pid, title.clone());
@@ -258,7 +264,7 @@ pub fn bridge() -> Result<(), String> {
             continue;
         }
         let ides_before: Vec<u32> = crate::instances::list().iter().map(|i| i.pid).collect();
-        let target = access().and_then(|a| Ok(Access { port: target_port(&mut pinned, &session, launch)?, ..a }));
+        let target = access().and_then(|a| Ok(Access { port: target_port(&mut pinned, &session, launch, last_project.as_deref())?, ..a }));
         // Uma IDE nova para esta sessão: ela fica sabendo quem está nela (e a de antes, que saiu).
         // A sessão que sumiu do registro da IDE (tirada por engano, ou a IDE reiniciou o registro)
         // também se anuncia de novo, senão a IDE parece livre para outra conversa.
@@ -385,7 +391,7 @@ fn route_project(pinned: &mut Option<u32>, session: &str, path: &Path) -> Result
     }
     *pinned = Some(match ides.iter().find(|i| usable(i)) {
         Some(i) => i.pid,
-        None => open_ide(session)?.pid,
+        None => open_ide(session, Some(path))?.pid,
     });
     Ok(())
 }
@@ -501,7 +507,7 @@ fn recalled(what: &str) -> Option<Value> {
 /// lista), a ponte abre a IDE com o MCP ligado e a marca da sessão, e espera ela ficar pronta
 /// (pedido do autor em 08/11: "caso o Aylis não esteja aberto o MCP deve abri-lo para a sessão
 /// do Claude que pediu").
-fn target_port(pinned: &mut Option<u32>, session: &str, launch: bool) -> Result<u16, String> {
+fn target_port(pinned: &mut Option<u32>, session: &str, launch: bool, project: Option<&Path>) -> Result<u16, String> {
     let ides: Vec<crate::instances::Instance> = crate::instances::list().into_iter().filter(|i| i.mcp_port.is_some()).collect();
     if let Some(pid) = *pinned {
         if let Some(port) = ides.iter().find(|i| i.pid == pid).and_then(|i| i.mcp_port) {
@@ -532,18 +538,48 @@ fn target_port(pinned: &mut Option<u32>, session: &str, launch: bool) -> Result<
     if !launch {
         return Err("a IDE do Aylis ainda não está aberta: a primeira chamada de ferramenta abre ela".into());
     }
-    let ide = open_ide(session)?;
+    let ide = open_ide(session, project)?;
     *pinned = Some(ide.pid);
     Ok(ide.mcp_port.unwrap_or_default())
 }
 
-/// Abre a IDE (o `aylis-ide` ao lado deste `aylis-tool`) com o MCP ligado e a marca da sessão, e
-/// espera ela aparecer no registro das IDEs com o servidor pronto.
-fn open_ide(session: &str) -> Result<crate::instances::Instance, String> {
-    let exe = std::env::current_exe().map_err(|e| e.to_string())?.with_file_name(if cfg!(windows) { "aylis-ide.exe" } else { "aylis-ide" });
-    if !exe.is_file() {
-        return Err(format!("não achei a IDE do Aylis em {} para abrir", exe.display()));
+/// Onde procurar a IDE, em ordem: ao lado deste `aylis-tool`; a instalação para a qual o projeto
+/// aponta (`<projeto>/.aylis/sdk` é a pasta `aylis/` dela, e a IDE fica ao lado); a instalação
+/// padrão do Windows (`%LOCALAPPDATA%\Programs\aylis`). A ponte compilada na pasta única de
+/// compilação não achava a IDE instalada (relatório do RTSPlayer de 13/11, item 8).
+fn ide_candidates(beside: Option<&Path>, project: Option<&Path>, local_app_data: Option<&Path>) -> Vec<PathBuf> {
+    let name = if cfg!(windows) { "aylis-ide.exe" } else { "aylis-ide" };
+    let mut out: Vec<PathBuf> = beside.map(|d| d.join(name)).into_iter().collect();
+    if let Some(project) = project {
+        let dir = if project.extension().is_some_and(|e| e == "aylisproj") { project.parent().unwrap_or(project) } else { project };
+        if let Some(sdk) = dir.join(".aylis").join("sdk").canonicalize().ok() {
+            // Sem o prefixo `\\?\` do Windows, para a mensagem.
+            let sdk = PathBuf::from(sdk.to_string_lossy().trim_start_matches(r"\\?\"));
+            if let Some(install) = sdk.parent() {
+                out.push(install.join(name));
+            }
+        }
     }
+    if cfg!(windows) {
+        if let Some(d) = local_app_data {
+            out.push(d.join("Programs").join("aylis").join(name));
+        }
+    }
+    out.dedup();
+    out
+}
+
+/// Abre a IDE (a primeira de [`ide_candidates`] que existe) com o MCP ligado e a marca da sessão,
+/// e espera ela aparecer no registro das IDEs com o servidor pronto. `project`: o da chamada, para
+/// achar a instalação que ele usa.
+fn open_ide(session: &str, project: Option<&Path>) -> Result<crate::instances::Instance, String> {
+    let beside = std::env::current_exe().ok().and_then(|e| e.parent().map(Path::to_path_buf));
+    let local = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+    let candidates = ide_candidates(beside.as_deref(), project, local.as_deref());
+    let Some(exe) = candidates.iter().find(|p| p.is_file()).cloned() else {
+        let places: Vec<String> = candidates.iter().map(|p| p.display().to_string()).collect();
+        return Err(format!("não achei a IDE do Aylis para abrir; procurei em: {}. Abra a IDE à mão ou instale o Aylis", places.join("; ")));
+    };
     // A sessão pode já estar numa IDE (dividida com outra sessão): espera a nova, não aquela.
     let before: Vec<u32> = crate::instances::list().iter().map(|i| i.pid).collect();
     let mut command = std::process::Command::new(&exe);
@@ -902,12 +938,12 @@ pub fn ide_tools() -> Vec<Value> {
             &[],
         ),
         tool("breakpoint", "Liga (`on` true, o padrão) ou desliga o ponto de parada de uma linha (a partir de 1), como o clique na calha ou F5. `file`: caminho do código ou nome do form.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "on": { "type": "boolean" } }), &["file", "line"]),
-        tool("run", "Executar (F9): com ponto de parada, executa no depurador; depurando, continua. Espera a compilação (até `max_wait` s, 45 por padrão) e responde com os erros dela, ou que o app está rodando (ou que abriu e caiu); compilando ainda, `build_wait` espera o resto. A saída aparece em `output`; a depuração, em `debug_state`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }), &[]),
-        tool("debug", "Depurar na IDE (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada. Espera a compilação como o `run`.", json!({ "max_wait": { "type": "integer" } }), &[]),
+        tool("run", "Executar (F9): com ponto de parada, executa no depurador; depurando, continua. Espera a compilação (até `max_wait` s, 45 por padrão) e responde com os erros dela, ou que o app está rodando (ou que abriu e caiu); compilando ainda, `build_wait` espera o resto. A saída aparece em `output`; a depuração, em `debug_state`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
+        tool("debug", "Depurar na IDE (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada. Espera a compilação como o `run`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
         tool(
             "build_wait",
             "Espera a compilação em andamento (do `build` ou do `run` que respondeu \"ainda compilando\") até `max_wait` s (padrão 45) e devolve o resultado: se compilou, os erros e as últimas linhas, ou que o app está rodando. Sem nada em andamento, o resultado da última.",
-            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }),
+            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
             &[],
         ),
         tool("debug_command", "Comando de depuração: continue (F9), step_over (F8), step_in (F7), step_out (Shift+F8), pause, stop (Ctrl+F2), ou run_to (F4) com `file` e `line`.", json!({ "command": s("continue | step_over | step_in | step_out | pause | stop | run_to"), "file": s("para run_to"), "line": { "type": "integer" } }), &["command"]),
@@ -916,7 +952,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool(
             "task_status",
             "O fim de uma chamada que respondeu `in_progress` (a IDE levou mais que o prazo de uma chamada, ~45 s, e seguiu trabalhando): espera até `max_wait` s (padrão 30) e devolve o resultado dela, ou que ainda está em andamento. Sem `task`, lista as chamadas em andamento e as terminadas que ninguém leu.",
-            json!({ "task": { "type": "integer", "description": "o número da tarefa (o `task` da resposta)" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 30)" } }),
+            json!({ "task": { "type": "integer", "description": "o número da tarefa (o `task` da resposta)" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 30, no máximo 50: o prazo do cliente MCP)" } }),
             &[],
         ),
         tool("stop", "Para o programa em execução.", json!({}), &[]),
@@ -949,12 +985,12 @@ pub fn ide_tools() -> Vec<Value> {
         tool("set_project_setting", "Muda uma chave da configuração do projeto (como Projeto → Opções) e salva. `key` com pontos para dentro (`output.dir`, `publish.version`); `value` é o JSON.", json!({ "key": s("a chave (output.dir, publish.app_name...)"), "value": { "description": "o valor JSON" } }), &["key", "value"]),
         tool("targets", "Os alvos (desktop, linux, android, web, ios) e o escolhido para Executar e Compilar.", json!({}), &[]),
         tool("set_target", "Escolhe o alvo do Executar (desktop, linux, android, web, ios).", json!({ "target": s("o alvo") }), &["target"]),
-        tool("build", "Compilar (Ctrl+F9): compila sem executar (`release` true: otimizado) e espera até `max_wait` s (padrão 45, dentro do prazo de um cliente MCP): a resposta diz se compilou, com os erros e as últimas linhas, ou \"ainda compilando\" (a primeira compilação de um projeto leva minutos): aí chame `build_wait`. `wait` false só começa.", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }), &[]),
-        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9); `release` true compila otimizado. Espera a compilação como o `run` e devolve os erros dela, ou que o app está rodando (ou que abriu e caiu).", json!({ "release": { "type": "boolean" }, "max_wait": { "type": "integer" } }), &[]),
+        tool("build", "Compilar (Ctrl+F9): compila sem executar (`release` true: otimizado) e espera até `max_wait` s (padrão 45, dentro do prazo de um cliente MCP): a resposta diz se compilou, com os erros e as últimas linhas, ou \"ainda compilando\" (a primeira compilação de um projeto leva minutos): aí chame `build_wait`. `wait` false só começa.", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
+        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9); `release` true compila otimizado. Espera a compilação como o `run` e devolve os erros dela, ou que o app está rodando (ou que abriu e caiu).", json!({ "release": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
         tool(
             "publish",
-            "Publica para um alvo (desktop, linux, android, web, ios), como Executar → Publicar, e espera como o `build` (até `max_wait` s; depois, `build_wait`; `wait` false só começa). `bundle`: Android em AAB (Play Store) no lugar do APK; `installer`: o instalador do Windows (o tipo das Opções do projeto). Nome, versão e identificador do app ficam em `publish.*` (set_project_setting); o ícone, em set_app_icon. A senha da chave do Android não passa pelo MCP: vem de AYLIS_KEYSTORE_PASSWORD (sem ela, a chave de depuração).",
-            json!({ "target": s("o alvo (padrão: o escolhido)"), "out_dir": s("pasta de saída, opcional"), "bundle": { "type": "boolean" }, "installer": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }),
+            "Publica para um alvo (desktop, linux, android, web, ios), como Executar → Publicar, e espera como o `build` (até `max_wait` s; depois, `build_wait`; `wait` false só começa). `bundle`: Android em AAB (Play Store) no lugar do APK; `installer`: o instalador do Windows (o tipo das Opções do projeto); `abis`: as arquiteturas do Android desta publicação (arm64-v8a, x86_64; armeabi-v7a ainda falha: o Skia não tem binário pronto para 32 bits; sem ele, as de `publish.android.abis` do projeto, e sem essas, arm64-v8a e x86_64). Nome, versão e identificador do app ficam em `publish.*` (set_project_setting); o ícone, em set_app_icon. A senha da chave do Android não passa pelo MCP: vem de AYLIS_KEYSTORE_PASSWORD (sem ela, a chave de depuração).",
+            json!({ "target": s("o alvo (padrão: o escolhido)"), "out_dir": s("pasta de saída, opcional"), "bundle": { "type": "boolean" }, "installer": { "type": "boolean" }, "abis": { "type": "array", "items": { "type": "string" }, "description": "Android: arm64-v8a, x86_64, armeabi-v7a (padrão: as do projeto)" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
             &[],
         ),
         tool(
@@ -996,7 +1032,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool(
             "test",
             "Roda os testes do projeto na ferramenta da linguagem (Rust: cargo test; Python: unittest; Go: go test; TypeScript: bun/node --test; C#: dotnet test) e devolve o resumo: quantos passaram e falharam, cada teste, o que os que falharam mostraram e os erros de compilação. Salva os fontes e gera o código antes. Espera até `max_wait` s (padrão 45); ainda rodando, chame de novo (espera a mesma rodada). No modo restrito, não roda.",
-            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45)" } }),
+            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
             &[],
         ),
         tool(
@@ -1036,6 +1072,31 @@ pub fn ide_tools() -> Vec<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A IDE é procurada ao lado da ponte, depois na instalação para a qual o projeto aponta
+    /// (`.aylis/sdk` é a pasta `aylis/` dela) e na padrão; o erro diz onde procurou (relatório do
+    /// RTSPlayer de 13/11, item 8).
+    #[test]
+    fn the_ide_is_looked_for_beside_the_bridge_then_in_the_project_installation() {
+        let base = std::env::temp_dir().join(format!("aylis_ide_candidates_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        let install = base.join("Programs").join("aylis");
+        std::fs::create_dir_all(install.join("aylis")).unwrap();
+        let project = base.join("app");
+        std::fs::create_dir_all(project.join(".aylis")).unwrap();
+        // A junção do Windows vira uma pasta comum no teste: o que vale é o pai do `sdk`.
+        std::fs::create_dir_all(project.join(".aylis").join("sdk")).unwrap();
+        let name = if cfg!(windows) { "aylis-ide.exe" } else { "aylis-ide" };
+        let found = ide_candidates(Some(&base.join("target")), Some(&project.join("app.aylisproj")), Some(&base));
+        assert_eq!(found[0], base.join("target").join(name), "primeiro, ao lado da ponte");
+        let sdk_parent = project.join(".aylis").canonicalize().unwrap();
+        let sdk_parent = PathBuf::from(sdk_parent.to_string_lossy().trim_start_matches(r"\\?\"));
+        assert_eq!(found[1], sdk_parent.join(name), "depois, a instalação do projeto");
+        if cfg!(windows) {
+            assert_eq!(found[2], install.join(name), "e a instalação padrão");
+        }
+        let _ = std::fs::remove_dir_all(&base);
+    }
 
     #[test]
     fn the_token_is_checked_exactly() {

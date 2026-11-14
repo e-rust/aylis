@@ -412,6 +412,154 @@ fn a_tab_transition_moves_the_pages_without_repainting_their_children() {
     }
 }
 
+/// Um painel que desliza por cima de uma página (com e sem `cache_layer`): a página de trás,
+/// que o movimento descobre, vira camada guardada e não é repintada controle por controle a
+/// cada quadro, e cada quadro por parte sai igual à pintura inteira (antes, 342 a 1488
+/// controles por quadro; `medicoes/transicoes.json`).
+#[test]
+fn a_sliding_panel_does_not_repaint_the_page_behind_it() {
+    for cache_panel in [true, false] {
+        let mut painters: Vec<(Box<dyn Painter>, &str)> = vec![(Box::new(aylis_skia::SkiaRenderer::new()), "Skia")];
+        #[cfg(windows)]
+        painters.push((Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D")), "Direct2D"));
+        for (painter, name) in painters {
+            let mut ui = Ui::new();
+            aylis_controls::register(&mut ui);
+            ui.services_mut().text = Some(painter.text_service());
+            let form = ui.create("Form", None).unwrap();
+            ui.set_prop(form, "width", W as f64).unwrap();
+            ui.set_prop(form, "height", H as f64).unwrap();
+            ui.show(form).unwrap();
+            let tabs = ui.create("TabControl", Some(form)).unwrap();
+            ui.set_prop(tabs, "align", "client").unwrap();
+            let page = ui.create("TabItem", Some(tabs)).unwrap();
+            ui.set_prop(page, "caption", "Página").unwrap();
+            let painted = std::rc::Rc::new(std::cell::Cell::new(0));
+            for i in 0..12 {
+                let child = ui.create(if i % 2 == 0 { "Button" } else { "Edit" }, Some(page)).unwrap();
+                for (prop, value) in [("align", PropValue::from("top")), ("height", 40.0.into()), ("text", format!("Campo {i}").into())] {
+                    ui.set_prop(child, prop, value).unwrap();
+                }
+                let count = painted.clone();
+                ui.on_paint(child, move |canvas, ctx, base| {
+                    count.set(count.get() + 1);
+                    base(canvas, ctx);
+                });
+            }
+            let panel = ui.create("Panel", Some(form)).unwrap();
+            for (prop, value) in [("left", PropValue::from(0.0)), ("top", 60.0.into()), ("width", 400.0.into()), ("height", 500.0.into()), ("cache_layer", cache_panel.into())] {
+                ui.set_prop(panel, prop, value).unwrap();
+            }
+            for i in 0..4 {
+                let child = ui.create("Label", Some(panel)).unwrap();
+                for (prop, value) in [("align", PropValue::from("top")), ("height", 30.0.into()), ("text", format!("Painel {i}").into())] {
+                    ui.set_prop(child, prop, value).unwrap();
+                }
+            }
+            ui.set_time(1000.0);
+            ui.layout();
+            let mut screen = Screen { ui, form, painter };
+            let _ = screen.ui.take_damage(form);
+            let _ = screen.full();
+            // O movimento começa: o primeiro quadro é inteiro.
+            screen.ui.animate(panel, "translate_x", 600.0, AnimationOptions::new(250.0, Easing::OutCubic)).unwrap();
+            screen.ui.tick();
+            let _ = screen.ui.take_damage(form);
+            let mut previous = screen.full();
+            let _ = screen.ui.take_damage(form);
+            let label = format!("{name}, painel {}", if cache_panel { "com cache_layer" } else { "sem cache_layer" });
+            for step in 1..=20 {
+                let t = screen.ui.time() + 1.0 / 60.0;
+                screen.ui.set_time(t);
+                screen.ui.tick();
+                let before = painted.get();
+                let running = screen.ui.is_animating();
+                let Some((partial, _)) = screen.partial(&previous) else {
+                    assert!(!running, "{label}: quadro {step} do movimento pediu a janela inteira");
+                    previous = screen.full();
+                    let _ = screen.ui.take_damage(form);
+                    continue;
+                };
+                // O primeiro quadro monta a camada da página; o Direct2D do teste cria um alvo
+                // novo por quadro (na janela, o cache é dela): lá só a imagem é conferida.
+                if name == "Skia" && running && step > 1 {
+                    assert_eq!(painted.get(), before, "{label}: quadro {step}, a página de trás foi repintada");
+                }
+                let full = screen.full();
+                let _ = screen.ui.take_damage(form);
+                let (count, first) = differences(&partial, &full);
+                assert_eq!(count, 0, "{label}: quadro {step} por parte saiu diferente da pintura inteira (o primeiro em {first:?})");
+                previous = full;
+            }
+            assert!(!screen.ui.is_animating(), "{label}: o movimento não acabou");
+        }
+    }
+}
+
+/// O fundo atrás do painel que muda a cada quadro (um campo da página trocando de texto): a
+/// camada seria remontada com a página inteira em todo quadro, então depois de duas ele volta
+/// a ser pintado por parte (só o campo que mudou), e a imagem continua igual à inteira.
+#[test]
+fn a_backdrop_that_keeps_changing_is_painted_by_parts_again() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let painter: Box<dyn Painter> = Box::new(aylis_skia::SkiaRenderer::new());
+    ui.services_mut().text = Some(painter.text_service());
+    let form = ui.create("Form", None).unwrap();
+    ui.set_prop(form, "width", W as f64).unwrap();
+    ui.set_prop(form, "height", H as f64).unwrap();
+    ui.show(form).unwrap();
+    let tabs = ui.create("TabControl", Some(form)).unwrap();
+    ui.set_prop(tabs, "align", "client").unwrap();
+    let page = ui.create("TabItem", Some(tabs)).unwrap();
+    let painted = std::rc::Rc::new(std::cell::Cell::new(0));
+    let mut fields = Vec::new();
+    for i in 0..12 {
+        let child = ui.create("Label", Some(page)).unwrap();
+        for (prop, value) in [("align", PropValue::from("top")), ("height", 40.0.into()), ("text", format!("Campo {i}").into())] {
+            ui.set_prop(child, prop, value).unwrap();
+        }
+        let count = painted.clone();
+        ui.on_paint(child, move |canvas, ctx, base| {
+            count.set(count.get() + 1);
+            base(canvas, ctx);
+        });
+        fields.push(child);
+    }
+    let panel = ui.create("Panel", Some(form)).unwrap();
+    for (prop, value) in [("left", PropValue::from(0.0)), ("top", 600.0.into()), ("width", 400.0.into()), ("height", 300.0.into()), ("cache_layer", true.into())] {
+        ui.set_prop(panel, prop, value).unwrap();
+    }
+    ui.set_time(1000.0);
+    ui.layout();
+    let mut screen = Screen { ui, form, painter };
+    let _ = screen.ui.take_damage(form);
+    let _ = screen.full();
+    screen.ui.animate(panel, "translate_x", 600.0, AnimationOptions::new(250.0, Easing::OutCubic)).unwrap();
+    screen.ui.tick();
+    let _ = screen.ui.take_damage(form);
+    let mut previous = screen.full();
+    let _ = screen.ui.take_damage(form);
+    for step in 1..=12 {
+        let t = screen.ui.time() + 1.0 / 60.0;
+        screen.ui.set_time(t);
+        screen.ui.tick();
+        // O último campo (os campos ficam acima do painel) muda a cada quadro.
+        screen.ui.set_prop(fields[11], "text", format!("Mudou {step}")).unwrap();
+        let before = painted.get();
+        let Some((partial, _)) = screen.partial(&previous) else { panic!("quadro {step} pediu a janela inteira") };
+        if step > 3 {
+            // O campo que mudou e os vizinhos pela margem do recorte; a camada pintaria os 12.
+            assert!(painted.get() - before <= 3, "quadro {step}: a página inteira foi repintada ({} campos)", painted.get() - before);
+        }
+        let full = screen.full();
+        let _ = screen.ui.take_damage(form);
+        let (count, first) = differences(&partial, &full);
+        assert_eq!(count, 0, "quadro {step} por parte saiu diferente da pintura inteira (o primeiro em {first:?})");
+        previous = full;
+    }
+}
+
 /// Rolar um Memo com a roda: o texto já pintado é copiado (só a faixa nova e a barra são
 /// pintadas), e a imagem sai igual à pintura inteira.
 #[test]

@@ -298,6 +298,40 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     sem piscar. Teste também `exclusion` e `multiply`, com `opacity` 0,5. Confira com o
     renderizador Direct2D e com o Skia (Projeto → Opções) e, publicado para a web, no
     navegador.
+133. **Recortar, Copiar e Colar no editor de código** (13/11). Com um fonte aberto na IDE,
+    clique com o botão direito: no topo do menu vêm Recortar, Copiar, Colar e Selecionar tudo,
+    antes de Arquivo, Editar... Selecione um trecho, recorte e cole em outro lugar (o Ctrl+Z
+    desfaz cada um); com vários cursores, o colar põe uma linha em cada. Na janela própria
+    (Arquivo → Abrir em outra janela), os mesmos itens ficam no menu Editar.
+134. **Painel deslizando por cima de uma página** (13/11; detalhes nos pendentes, "Compositor em
+    outra thread"). Rode `cargo run --release -p aylis-platform-winit --example transitions
+    --features d2d` (com `AYLIS_RENDERER=d2d`; no monitor 4K a 150%, acrescente `1920 1080
+    0.6667`): a janela troca de aba deslizando e esmaecendo e passa um painel cheio por cima
+    da página, sozinha, e fecha mostrando a tabela no terminal. Olhe se tudo anda liso e se,
+    durante e depois de cada movimento, nada fica com resto, borrado ou meio pixel fora (os
+    textos e as bordas da página de trás iguais a quando está parada). Repita com
+    `AYLIS_RENDERER=gpu` e `cpu`.
+135. **O hífen no nome do pacote e a árvore sem "(fechado)"** (13/11; detalhes nos pendentes).
+    Na IDE, Projeto › Forms mostra só os nomes, sem o "(fechado)" dos forms não abertos. No
+    RTSPlayer, volte o pacote de `client/rust/Cargo.toml` para `rtsplayer-app` e publique para
+    Android (e para a web): o APK sai e o app abre no aparelho; o executável do Windows continua
+    `rtsplayer-app`.
+136. **O motivo exato quando um pacote não vem** (13/11; detalhes nos pendentes). Gere o
+    instalador e rode-o (marcando, por exemplo, Python) em três situações: sem internet e sem a
+    pasta `pacotes` ao lado; com a pasta `pacotes`, mas com um arquivo trocado por outro de mesmo
+    nome; sem internet e com a pasta `pacotes` sem um dos arquivos. *Esperado:* no fim, a caixa
+    diz em cada linguagem a causa ("sem internet", "os arquivos não estão ao lado do instalador",
+    "um arquivo não confere com o SHA-256 do Aylis"), e a lista de detalhes começa pela mesma
+    frase, com o caminho da pasta e o nome do arquivo. Na IDE, Ferramentas → Configurar
+    linguagens, sem internet: a linha do ⚠ diz "Sem internet" antes da lista das origens.
+138. **O relatório do RTSPlayer de 13/11** (detalhes nos pendentes). No RTSPlayer, tire o
+    contorno do `on_resize` (o `set_height` da lista) e ponha o modelo da linha com `align: top`:
+    numa janela alta, a lista mostra todos os registros que cabem e rola até o último, com as
+    alturas de `sizes`. Num app com um botão que troca `topmost`, a janela vai para a frente das
+    outras e sai. Com `publish.android.abis` = `["arm64-v8a"]` (pelo MCP, `set_project_setting`),
+    publique para Android: o APK traz só `lib/arm64-v8a`. Feche a IDE e, num Claude Desktop com o MCP da ponte compilada, peça
+    `open_project`: abre a IDE instalada (ou o erro lista onde procurou). Um `build` com
+    `max_wait` 200 responde em até ~50 s ("ainda compilando").
 
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a

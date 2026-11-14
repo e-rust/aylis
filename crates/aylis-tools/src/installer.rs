@@ -368,9 +368,39 @@ Var SetupFailed
   DetailPrint "Configurando ${TITLE}…"
   nsExec::ExecToLog '"$INSTDIR\aylis-tool.exe" setup ${ARGS} --utf16-output'
   Pop $R0
-  StrCmp $R0 "0" +2
-  StrCpy $SetupFailed "$SetupFailed, ${TITLE}"
+  Push "${TITLE}"
+  Call AylisSetupResult
 !macroend
+
+; O resultado de um setup ($R0, o código de saída; no topo da pilha, o nome): 0 é pronto;
+; de 16 a 23, um pacote não veio, com a causa nos bits (1: o SHA-256 não confere; 2: sem
+; internet; 4: os arquivos não estão ao lado do instalador; toolpacks::causes). O que não
+; ficou pronto entra em $SetupFailed, uma linha por item com o motivo.
+Function AylisSetupResult
+  Exch $R2
+  StrCmp $R0 "0" aylis_result_done
+  StrCpy $R1 ""
+  IntCmp $R0 16 0 aylis_result_other 0
+  IntCmp $R0 23 0 0 aylis_result_other
+  IntOp $R3 $R0 & 2
+  StrCmp $R3 "0" +2
+  StrCpy $R1 "$R1; sem internet (ou a rede bloqueou o acesso: firewall ou proxy)"
+  IntOp $R3 $R0 & 4
+  StrCmp $R3 "0" +2
+  StrCpy $R1 "$R1; os arquivos não estão ao lado do instalador (falta a pasta pacotes ou um arquivo nela)"
+  IntOp $R3 $R0 & 1
+  StrCmp $R3 "0" +2
+  StrCpy $R1 "$R1; um arquivo não confere com o SHA-256 do Aylis (corrompido ou de outra versão)"
+  StrCpy $R1 $R1 "" 2
+  Goto aylis_result_add
+  aylis_result_other:
+  StrCpy $R1 "o motivo está nos detalhes da instalação (código $R0)"
+  aylis_result_add:
+  DetailPrint "$R2 não ficou pronta: $R1."
+  StrCpy $SetupFailed "$SetupFailed$\r$\n• $R2: $R1."
+  aylis_result_done:
+  Pop $R2
+FunctionEnd
 
 ; Um tipo de arquivo do aylis (em HKCU\Software\Classes): a extensão, o nome, o ícone e o abrir.
 !macro AylisFileType EXT PROGID DESC
@@ -477,9 +507,9 @@ SectionEnd
 
 ; O espelho de /ESPELHO= vai para as Opções (pelo aylis-tool, como a IDE grava), antes das
 ; configurações. A pasta `pacotes` ao lado do instalador (o kit offline) vale só para elas,
-; pela variável (não fica gravada).
+; pela variável (não fica gravada); vai sempre, existindo ou não, para o erro dizer quando os
+; arquivos não estão ao lado do instalador.
 Section "-Origens"
-  IfFileExists "$EXEDIR\pacotes\*.*" 0 +2
   System::Call 'kernel32::SetEnvironmentVariable(t "AYLIS_PACKAGE_DIR", t "$EXEDIR\pacotes")'
   StrCmp $Mirror "" aylis_mirror_done
   Call AylisCheckMirror
@@ -524,8 +554,8 @@ Section "-O que não se configurou"
   StrCmp $SetupFailed "" aylis_setup_ok
   StrCpy $R0 $SetupFailed "" 2
   SetDetailsPrint both
-  DetailPrint "Não ficaram prontas: $R0. Configure-as depois na IDE, em Ferramentas → Configurar linguagens."
-  MessageBox MB_ICONEXCLAMATION|MB_OK "Não deu para deixar prontas: $R0.$\r$\n$\r$\nA IDE foi instalada. O motivo está nos detalhes da instalação (sem internet, um pacote que não confere com o SHA-256 do Aylis ou uma instalação recusada).$\r$\n$\r$\nConfigure depois na IDE, em Ferramentas → Configurar linguagens (ou com aylis-tool setup <linguagem>)." /SD IDOK
+  DetailPrint "Configure depois na IDE, em Ferramentas → Configurar linguagens."
+  MessageBox MB_ICONEXCLAMATION|MB_OK "Não deu para deixar prontas:$\r$\n$R0$\r$\n$\r$\nA IDE foi instalada. Os detalhes de cada arquivo estão na lista da instalação.$\r$\n$\r$\nConfigure depois na IDE, em Ferramentas → Configurar linguagens (ou com aylis-tool setup <linguagem>)." /SD IDOK
   SetErrorLevel 3
   aylis_setup_ok:
 SectionEnd
@@ -728,6 +758,15 @@ mod tests {
         let failed = &text[text.find("Section \"-O que não se configurou\"").unwrap()..];
         let failed = &failed[..failed.find("SectionEnd").unwrap()];
         assert!(failed.contains("Configurar linguagens") && failed.contains("/SD IDOK") && failed.contains("SetErrorLevel 3") && !failed.contains("Abort"));
+        // A causa de cada uma pelo código de saída (16 + os bits de toolpacks::causes).
+        let result = &text[text.find("Function AylisSetupResult").unwrap()..];
+        let result = &result[..result.find("FunctionEnd").unwrap()];
+        for (bit, says) in [(crate::toolpacks::CAUSE_MISMATCH, "SHA-256"), (crate::toolpacks::CAUSE_OFFLINE, "sem internet"), (crate::toolpacks::CAUSE_NOT_BESIDE, "ao lado do instalador")] {
+            let line = result.lines().position(|l| l.contains(&format!("IntOp $R3 $R0 & {bit}"))).unwrap_or_else(|| panic!("bit {bit}"));
+            assert!(result.lines().nth(line + 2).is_some_and(|l| l.contains(says)), "bit {bit}: {result}");
+        }
+        assert!(result.contains("IntCmp $R0 16") && result.contains("IntCmp $R0 23"));
+        assert!(!text.contains("IfFileExists \"$EXEDIR\\pacotes"), "a pasta vai sempre, para o erro dizer que falta");
     }
 
     /// A cópia e a remoção não escrevem uma linha por arquivo na lista de detalhes (era o que
