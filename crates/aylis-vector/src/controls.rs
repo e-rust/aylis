@@ -57,7 +57,7 @@ fn placeholder(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
 // Lottie
 // ===========================================================================
 
-/// Animação Lottie (o JSON do After Effects/Bodymovin), como o `TLottieAnimation`. Desenha
+/// Animação Lottie (o JSON do After Effects/Bodymovin). Desenha
 /// vetor: nítida em qualquer tamanho, em qualquer renderizador.
 ///
 /// - `source`: `"noto:fogo"` (pacote de animações da IDE; o app leva só as citadas) ou um
@@ -66,11 +66,18 @@ fn placeholder(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
 /// - pelo código: [`Lottie::set_animation`] com uma [`Animation`] lida de qualquer lugar.
 pub struct Lottie {
     pub base: ControlBase,
+    /// A animação: `"noto:fogo"` (do pacote de animações da IDE) ou um caminho no projeto
+    /// (`assets/lottie/carregando.json`).
     pub source: String,
+    /// A animação anda; desligado, fica parada na `position`.
     pub playing: bool,
+    /// Recomeça ao chegar ao fim; desligado, toca uma vez e para no último quadro.
     pub repeat: bool,
+    /// Velocidade (1 = normal, 2 = o dobro).
     pub speed: f32,
+    /// O ponto da animação, em segundos: onde ela fica parada e de onde começa a tocar.
     pub position: f32,
+    /// Como a animação ocupa o controle: caber inteira, cobrir, esticar...
     pub fit: ImageFit,
     animation: Option<Rc<Animation>>,
     loaded: RefCell<Option<(String, Option<Rc<Animation>>)>>,
@@ -201,7 +208,7 @@ impl Component for Lottie {
 // Svg
 // ===========================================================================
 
-/// Imagem SVG desenhada como vetor (o `TPath` com um arquivo inteiro). `source` é o
+/// Imagem SVG desenhada como vetor. `source` é o
 /// arquivo no projeto (`assets/images/logo.svg`); `color` é o `currentColor` (sem ela,
 /// a cor de texto do tema: ícones em SVG acompanham o tema claro e o escuro).
 ///
@@ -210,11 +217,17 @@ impl Component for Lottie {
 /// elemento com esse `id` (o município dentro do mapa do estado).
 pub struct Svg {
     pub base: ControlBase,
+    /// O arquivo SVG no projeto (`assets/images/logo.svg`).
     pub source: String,
+    /// A cor do `currentColor` do SVG; sem cor, a cor de texto do tema.
     pub color: Option<Color>,
+    /// Como a imagem ocupa o controle: caber inteira, cobrir, esticar...
     pub fit: ImageFit,
+    /// Os `id` dos elementos pintados com `highlight_color`, separados por `;`; vazio: nenhum.
     pub highlight: String,
+    /// A cor dos elementos do `highlight`; sem cor, a cor de destaque do tema.
     pub highlight_color: Option<Color>,
+    /// O `id` do elemento cuja área é mostrada (o município dentro do mapa); vazio: o SVG inteiro.
     pub zoom_to: String,
     image: Option<Rc<SvgImage>>,
     loaded: RefCell<Option<(String, Option<Rc<SvgImage>>)>>,

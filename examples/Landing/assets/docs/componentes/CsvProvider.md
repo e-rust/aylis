@@ -10,9 +10,9 @@ CSV (o padrão do `Export`): `separator` entre as colunas (`;`, o que o Excel em
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `separator` | Separadores | texto |  |
-| `decimal_comma` | Vírgula decimal | lógico |  |
-| `bom` | Marca BOM (UTF-8) | lógico |  |
+| `separator` | Separadores | texto | O que vai entre as colunas (`;`, o que o Excel em português abre direto; `,`; `\t`). |
+| `decimal_comma` | Vírgula decimal | lógico | Os números com vírgula decimal (`1234,5`); desligado, com ponto. |
+| `bom` | Marca BOM (UTF-8) | lógico | Começa o arquivo com o BOM do UTF-8, para o Excel mostrar os acentos. |
 | `header` | Linha de títulos | lógico | A primeira linha com os títulos. |
 
 ## Em código

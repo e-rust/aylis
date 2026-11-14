@@ -332,6 +332,62 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     publique para Android: o APK traz só `lib/arm64-v8a`. Feche a IDE e, num Claude Desktop com o MCP da ponte compilada, peça
     `open_project`: abre a IDE instalada (ou o erro lista onde procurou). Um `build` com
     `max_wait` 200 responde em até ~50 s ("ainda compilando").
+139. **Android de 32 bits** (14/11; detalhes nos pendentes, relatório do RTSPlayer, item 5). Em
+    Opções do projeto → Android, marque "Também 32 bits" e publique: o publicar instala o pacote
+    "Skia para Android de 32 bits" (Ferramentas → Pacotes mostra) e o APK traz `lib/armeabi-v7a`,
+    `lib/arm64-v8a` e `lib/x86_64`. Desmarque e publique de novo: o APK volta às duas. Se tiver um
+    TV box ou celular de 32 bits, instale e abra o app.
+140. **Barras do sistema, tecla Voltar, gestos e fim da rolagem no celular** (14/11; detalhes nos
+    pendentes, "Pedidos de 14/11"). Num app de teste no emulador `aylis_pixel` ou no ZenFone:
+    - um `SystemBars` com `status_bar_color` vermelho e `icons` `light`: a barra fica vermelha com
+      ícones claros; `status_bar_visible` falso: a tela fica cheia;
+    - um `on_back` no form que troca de frame e responde `handled`: a tecla Voltar volta ao frame
+      anterior em vez de tirar o app da frente; sem tratar, o de antes;
+    - um `NavigationDrawer` fechado: deslizar da borda esquerda abre, deslizar para a esquerda fecha;
+      um `TabControl` com `swipe`: o dedo troca de página; um `ImageView` com `zoomable`: a pinça
+      aproxima e o dedo arrasta; uma `VirtualList` com `swipe_actions` "Excluir": deslizar o item
+      mostra o botão, e o toque chega no `on_swipe_action`;
+    - uma lista rolada até o fim: no Android 12 ou mais o conteúdo estica e volta; num Android 11, o
+      brilho na cor do tema; `overscroll` `none` desliga.
+141. **Testes do projeto em Java, C++ e Pascal** (14/11). Na Calculadora, troque a linguagem para
+    Java, C++ e Pascal e rode Projeto → Testes (ou o `test` do MCP): os testes de `tests/` rodam e o
+    resultado aparece por teste; quebre um de propósito e ele aparece como falha, com a linha.
+142. **Novo DataModule com pasta e o tema chegando ao app** (14/11). Arquivo → Novo DataModule:
+    o diálogo pede o nome e a pasta, e o arquivo vai para ela. Com o app aberto pelo F9, troque o tema
+    pelo MCP (`set_theme`): o app muda sem reiniciar.
+143. **Clique com Ctrl, arrastar e teclas no `McpServer` do app** (14/11). Num app com `McpServer`, peça
+    a um agente: Ctrl+clique em dois itens de uma lista de seleção múltipla (`ui_click` com
+    `modifiers`), arrastar um item (`ui_drag`) e Ctrl+A (`ui_key`).
+144. **Compartilhar no Windows** (14/11). Um `AppLink` com `share` de um texto e de um arquivo: abre a
+    folha "Compartilhar" do Windows sobre a janela, e o e-mail ou outro app recebe o texto e o
+    arquivo. Um arquivo que não existe dá a mensagem em vez de abrir a folha.
+145. **Um form em vários monitores** (14/11; detalhes em `docs/gpu-por-monitor.md`). Na máquina dos
+    seis monitores: `cargo run -p aylis-platform-winit --example span_monitors --features d2d` com o
+    form entre dois monitores de placas diferentes: duas janelas sem moldura, uma só na barra de
+    tarefas; o mouse passando de um para o outro sem piscar; o ComboBox perto da divisa abrindo no
+    monitor dele; `-- --full` cobrindo todos; desligar um monitor com o app aberto refaz as janelas.
+146. **CI com agente, lint, cobertura e IDE sem janela** (14/11; detalhes nos pendentes, item 38).
+    - `aylis-tool lint` não lista nada; um `Color::rgb(1, 2, 3)` num `paint` aparece com a linha.
+    - Novo projeto: a caixa "Guia para agentes de IA" vem marcada e o projeto ganha `AGENTS.md`,
+      `CLAUDE.md` e `.mcp.json`; o Claude Code aberto na pasta vê o `aylis` no `/mcp`.
+    - F9, clique num botão e Projeto → Cobertura de handlers…: o clicado em RODARAM; o clique num
+      handler abre o código; Limpar zera. Repita em Python ou Pascal.
+    - Profiler: Salvar rastro… como `.json` abre no ui.perfetto.dev; `.aylisprof` reabre.
+    - Pelo MCP: `profile` start/stop com o app aberto, `recording` `source: ide` e `coverage`.
+    - `aylis-tool recording-to-test <gravação>` e `aylis-tool ide-script roteiro.json --headless`.
+    - No GitHub: o segredo `ANTHROPIC_API_KEY` e um pull request de teste (vem a revisão; um teste
+      quebrado traz a triagem); na primeira CI, gravar as bases com `aylis-tool coverage-check
+      ... --update`.
+    - Um app com `Analytics` e `performance` ligado: o `analytics.json` traz os tempos.
+147. **Pacotes do Free Pascal e do WiX** (14/11). Ferramentas → Pacotes de ferramentas: instale `fpc`
+    e `wix` (da pasta de pacotes ou do espelho, depois de subidos). Um projeto em Pascal compila sem
+    o Lazarus; o publicar com instalador `.msi` usa o WiX do pacote.
+148. **O editor com um fonte enorme** (14/11; detalhes nos pendentes, item 26). `cargo run --release
+    -p aylis-controls --example large_text 1000000`: digitar, apagar, Ctrl+Z e colar sem travar; a
+    cor da sintaxe acompanhando ao rolar.
+149. **A documentação do site sem comparações com outros frameworks** (14/11). Na Landing publicada,
+    as páginas dos componentes trazem o "O que faz" de toda propriedade, e nenhuma compara o Aylis com
+    outro framework.
 
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
@@ -369,7 +425,7 @@ Cada um tem, nos pendentes ("Conferência de 08/11/2026" e "Achados e feitos na 
 - **Execução e projeto:** encerrar o app aberto antes de executar e o aviso antes de compilar; os
   comandos antes e depois da compilação (e o "Confiar" mostrando cada um); o `.aylisproj` sem mudar a
   cada salvar de form; a cópia da Landing compilando fora do repositório; o `allow(non_snake_case)`;
-  o `on_change` disparado pelo código, como na VCL; o modelo Web e o Desktop (o Smartphone passou).
+  o `on_change` disparado pelo código; o modelo Web e o Desktop (o Smartphone passou).
 - **Componentes:** o Enter que repete o clique e o Espaço que clica ao soltar; o anel de foco com folga;
   o Memo no fim do texto; o QR com o nível de correção; o MapView só pelo provedor; os métodos tipados
   com nome e `Result`; o `write_pdf` com a memória plana; a GradeGigante (a memória, o "Montando…" e o

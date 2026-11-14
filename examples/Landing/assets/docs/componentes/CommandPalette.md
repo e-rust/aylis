@@ -12,14 +12,14 @@ Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa (`on_s
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `placeholder` | Texto de exemplo | texto |  |
+| `placeholder` | Texto de exemplo | texto | O texto apagado da busca vazia. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `query` | Busca | texto |  |
+| `items` | Itens | texto | Os comandos, separados por `;`, cada um `nome\|atalho\|ícone` (atalho e ícone opcionais). |
+| `query` | Busca | texto | O texto digitado na busca: a lista mostra só os comandos que o contêm. Vazio: todos. |
 
 ## Eventos
 

@@ -122,7 +122,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let flow = client(ui, p, FlowLayout::default());
         for (text, style, closable) in [
             ("Rust", "", false),
-            ("Delphi", "outline", false),
+            ("Pascal", "outline", false),
             ("Pronto", "success", false),
             ("Atrasado", "danger", false),
             ("Filtro", "filter", false),
@@ -410,7 +410,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = ui.set_prop(l, "highlight", "sao");
         let g = top(ui, p, ChipGroup::default(), 40.0);
         let _ = ui.set_prop(g, "wrap", false);
-        let _ = ui.set_prop(g, "items", "Todos;Rust;Delphi;Python;Go;Kotlin;Swift;TypeScript");
+        let _ = ui.set_prop(g, "items", "Todos;Rust;Pascal;Python;Go;Kotlin;Swift;TypeScript");
         let sb = top(ui, p, ScrollBox::default(), 70.0);
         let _ = ui.set_prop(sb, "horizontal", true);
         for i in 0..8 {

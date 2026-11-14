@@ -1,5 +1,5 @@
-//! A lista aberta do ComboBox: quantas opções mostra (`drop_down_count`, o `DropDownCount`
-//! do Delphi), a rolagem pela roda e pela barra, e o encolher quando o form não tem lugar.
+//! A lista aberta do ComboBox: quantas opções mostra (`drop_down_count`), a
+//! rolagem pela roda e pela barra, e o encolher quando o form não tem lugar.
 
 use aylis_controls::*;
 use aylis_core::*;

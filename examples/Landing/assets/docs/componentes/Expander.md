@@ -12,19 +12,19 @@ Seção que abre e fecha: clique no cabeçalho (ou Espaço/Enter). Fechada, fica
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `caption` | Título | texto |  |
+| `caption` | Título | texto | O título no cabeçalho. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `expanded` | Aberto | lógico |  |
+| `expanded` | Aberto | lógico | Aberta; fechada, fica só o cabeçalho. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

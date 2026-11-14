@@ -12,22 +12,22 @@ Barra de reprodução de mídia: posição, trecho já carregado (`buffered`), m
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `show_time` | Mostra o tempo | lógico |  |
+| `show_time` | Mostra o tempo | lógico | Mostra, sob o mouse, o horário daquele ponto. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `position` | Posição | número | Em segundos. |
-| `duration` | Duração | número |  |
-| `buffered` | Carregado | número |  |
-| `markers` | Marcadores | texto |  |
+| `duration` | Duração | número | A duração da mídia, em segundos: o fim da barra. |
+| `buffered` | Carregado | número | Até onde a mídia já carregou, em segundos (o trecho mais claro); 0: nada. |
+| `markers` | Marcadores | texto | Marcas na barra, em segundos, separadas por `;` (`12.5;30`); vazio: nenhuma. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_seek` | — | — |  |
 
 ## Em código

@@ -9,9 +9,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
 # O realce dos blocos de código (o mesmo do `Memo`).
-aylis-controls-base = { version = "0.2.1", path = "../aylis-controls-base" }
+aylis-controls-base = { version = "0.3.0", path = "../aylis-controls-base" }
 pulldown-cmark = { version = "0.13", default-features = false }
 
 [dev-dependencies]

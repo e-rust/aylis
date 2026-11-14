@@ -1,4 +1,4 @@
-//! Ferramentas → Opções da IDE (como o Tools → Options do Delphi): a gravação do uso, os
+//! Ferramentas → Opções da IDE: a gravação do uso, os
 //! projetos confiáveis, onde está cada compilador e ferramenta (uma aba por linguagem: vazio é
 //! o automático, o PATH e as pastas padrão), o editor externo e o MCP (o servidor, o token e a
 //! configuração do Claude Code e do Claude Desktop) e as origens dos pacotes de ferramentas

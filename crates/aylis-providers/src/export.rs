@@ -9,6 +9,7 @@ use aylis_data::{DataSource, FieldType, Value, view};
 
 /// Exporta os registros de um `DataSource` (na ordem e com o filtro que a tela mostra).
 pub struct Export {
+    /// O `DataSource` dos registros exportados (na ordem e com o filtro da tela).
     pub data_source: Option<ComponentId>,
     /// Quem grava o arquivo (um provedor de exportação); sem ele, CSV.
     pub provider: Option<ComponentId>,
@@ -148,8 +149,11 @@ fn cell(value: Value) -> CellValue {
 /// abre direto), a vírgula decimal (`decimal_comma`) e o BOM do UTF-8 (para o Excel mostrar
 /// os acentos).
 pub struct CsvProvider {
+    /// O que vai entre as colunas (`;`, o que o Excel em português abre direto; `,`; `\t`).
     pub separator: String,
+    /// Os números com vírgula decimal (`1234,5`); desligado, com ponto.
     pub decimal_comma: bool,
+    /// Começa o arquivo com o BOM do UTF-8, para o Excel mostrar os acentos.
     pub bom: bool,
     /// A primeira linha com os títulos.
     pub header: bool,

@@ -1,14 +1,14 @@
 //! # aylis-data
 //!
-//! Camada de dados do aylis no modelo da VCL — sem lógica de backend:
+//! Camada de dados do aylis — sem lógica de backend:
 //!
-//! | VCL | aylis |
+//! | Tipo | O que faz |
 //! |---|---|
-//! | `TClientDataSet` | [`ClientDataSet`]: registros em memória, cursor, estados e change log |
-//! | `TField` | [`Field`]: tipo, formatos, validação, `on_get_text`/`on_set_text`/`on_validate` |
-//! | `TDataSource` | [`DataSource`] |
-//! | `TFieldDataLink` | [`FieldLink`], usado pelos controles DB |
-//! | `ApplyUpdates` / `OnReconcileError` | [`DataSet::apply_updates`] / [`DataSet::reconcile`] |
+//! | [`ClientDataSet`] | registros em memória, cursor, estados e change log |
+//! | [`Field`] | tipo, formatos, validação, `on_get_text`/`on_set_text`/`on_validate` |
+//! | [`DataSource`] | liga os controles a um dataset |
+//! | [`FieldLink`] | o que um controle ligado a um campo precisa, usado pelos controles DB |
+//! | [`DataSet::apply_updates`] / [`DataSet::reconcile`] | mandar o delta ao backend e tratar o que ele recusou |
 //!
 //! O frontend não sabe nada de banco: os dados chegam do backend (`load_rows`,
 //! `load_json`) e as alterações voltam como **delta**; o backend decide o que fazer e
@@ -63,6 +63,6 @@ pub fn register(ui: &mut aylis_core::Ui) {
     ui.register_class::<ClientDataSet>("Data");
     ui.register_class::<Field>("Data");
     ui.register_class::<DataSource>("Data");
-    // As propriedades ligadas a campos (o LiveBindings).
+    // As propriedades ligadas a campos.
     binding::install(ui);
 }

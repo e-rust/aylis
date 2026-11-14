@@ -12,17 +12,17 @@ Controle deslizante de intervalo (o `v-range-slider`): `low` e `high` entre `min
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `low` | Limite baixo | número |  |
-| `high` | Limite alto | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
-| `step` | Passo | número |  |
+| `low` | Limite baixo | número | O começo do intervalo escolhido (o controle da esquerda). |
+| `high` | Limite alto | número | O fim do intervalo escolhido (o controle da direita). |
+| `min` | Mínimo | número | O menor valor do trilho. |
+| `max` | Máximo | número | O maior valor do trilho. |
+| `step` | Passo | número | O passo dos valores; 0 = contínuo. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

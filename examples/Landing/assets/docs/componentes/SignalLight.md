@@ -12,9 +12,9 @@ Sinaleiro (torre de luz): vermelho, amarelo e verde empilhados; `state` acende u
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `state` | Estado | um de: `off`, `green`, `yellow`, `red`, `blue`, `white` |  |
-| `lights` | Luzes | texto |  |
-| `blink` | Piscar | lógico |  |
+| `state` | Estado | um de: `off`, `green`, `yellow`, `red`, `blue`, `white` | A luz acesa (`off`: nenhuma); vale quando `lights` está vazio. |
+| `lights` | Luzes | texto | Várias luzes acesas ao mesmo tempo, separadas por `;` (`red;green`); vazio: vale o `state`. |
+| `blink` | Piscar | lógico | As luzes acesas piscam (duas vezes por segundo). |
 
 ## Em código
 

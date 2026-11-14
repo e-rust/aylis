@@ -112,7 +112,7 @@ fn click_handler_can_change_and_free_the_sender() {
     let btn = ui.add(boxy(10.0, 10.0), form);
 
     ui.on_click(btn, |ui, sender| {
-        // como TButton(Sender).Caption := ...
+        // o sender é o próprio botão
         ui.get_mut::<Boxy>(sender).unwrap().caption = "clicado".into();
         ui.add(boxy(5.0, 5.0), ui.parent(sender).unwrap());
     });
@@ -196,7 +196,7 @@ fn an_event_that_requeues_itself_does_not_freeze_the_ui() {
 }
 
 #[test]
-fn handlers_are_reentrant_like_in_delphi() {
+fn handlers_are_reentrant() {
     use std::cell::RefCell;
     use std::rc::Rc;
     let mut ui = Ui::new();

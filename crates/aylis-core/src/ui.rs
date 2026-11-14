@@ -51,7 +51,7 @@ pub type HandlerFn = dyn Fn(&mut Ui, ComponentId, &EventArgs);
 /// C ABI e para o protocolo remoto.
 pub type EventSinkFn = dyn Fn(&mut Ui, ComponentId, &str, &str, &EventArgs);
 
-/// Pintura personalizada de uma instância (como o `OnPaint`): recebe o canvas, o
+/// Pintura personalizada de uma instância: recebe o canvas, o
 /// contexto e a pintura padrão do controle, que pode ser chamada ou não.
 pub type PaintHookFn = dyn Fn(&mut dyn Canvas, &PaintCtx<'_>, &dyn Fn(&mut dyn Canvas, &PaintCtx<'_>));
 
@@ -65,7 +65,7 @@ pub(crate) struct Entry {
     /// `None` enquanto um método do próprio componente está executando.
     pub(crate) component: Option<Box<dyn Component>>,
     pub(crate) name: String,
-    /// Escopo de nomes (como o `Owner` do Delphi): os nomes dos componentes de dentro só
+    /// Escopo de nomes: os nomes dos componentes de dentro só
     /// precisam ser únicos aqui. Todo form é um escopo, inclusive embutido em outro.
     pub(crate) scope: bool,
     pub(crate) parent: Option<ComponentId>,
@@ -251,6 +251,10 @@ pub struct Ui {
     pub(crate) minimized_forms: std::collections::HashSet<ComponentId>,
     /// A placa de vídeo de cada janela (veja `gpu.rs`).
     pub(crate) form_gpus: std::collections::HashMap<ComponentId, String>,
+    /// Os pedaços dos forms em vários monitores, um por janela (`span.rs`).
+    pub(crate) form_pieces: std::collections::HashMap<ComponentId, Vec<RectF>>,
+    /// Os pedidos de quadro somados dos pedaços pintados neste quadro (`Ui::paint_piece`).
+    pub(crate) piece_requests: std::cell::Cell<Option<(bool, Option<f64>)>>,
     pub(crate) main_form: Option<ComponentId>,
     /// Os eventos-pergunta em andamento e os adiados (`question.rs`).
     pub(crate) questions: crate::question::Questions,
@@ -281,7 +285,7 @@ pub struct Ui {
     /// Quantos métodos de componente estão executando (um dentro do outro).
     pub(crate) call_depth: u32,
     pub(crate) design_mode: bool,
-    /// O atraso da dica escolhido pelo app (o `HintPause` do Delphi); `None`: o do tema.
+    /// O atraso da dica escolhido pelo app; `None`: o do tema.
     hint_delay: Option<f64>,
     /// Pintando uma foto (o `snapshot`): sem o mouse em cima, o aperto e o foco (o cursor de
     /// texto piscando e o anel), que são do momento e não da tela (B03 do Tabernáculo).
@@ -338,6 +342,14 @@ pub struct Ui {
     /// Muda a cada pintura inteira: as camadas guardadas (`cache_layer`) só valem entre
     /// pinturas por parte, em que o `Ui` sabe o que mudou.
     pub(crate) layer_epoch: std::cell::Cell<u64>,
+    /// O efeito de fim da rolagem do sistema (o `auto`; [`Ui::set_overscroll_style`]).
+    pub(crate) overscroll_style: crate::overscroll::Overscroll,
+    /// Os puxões de fim da rolagem em andamento, por contêiner (`overscroll.rs`).
+    pub(crate) pulls: std::cell::RefCell<crate::overscroll::Pulls>,
+    /// O pedido das barras do sistema (`system_bars.rs`) e quando mudou.
+    pub(crate) system_bars: Option<crate::system_bars::SystemBarsStyle>,
+    pub(crate) system_bars_version: u64,
+    pub(crate) paints_status_strip: bool,
     /// As camadas guardadas que deixaram de valer fora da pintura (a transição acabou, o
     /// controle foi liberado): a próxima pintura as solta do renderizador (`forget_cached`).
     pub(crate) dead_layers: std::cell::RefCell<Vec<u64>>,
@@ -432,6 +444,8 @@ impl Ui {
             minimized_forms: std::collections::HashSet::new(),
             drop_point: None,
             form_gpus: std::collections::HashMap::new(),
+            form_pieces: std::collections::HashMap::new(),
+            piece_requests: std::cell::Cell::new(None),
             main_form: None,
             questions: Default::default(),
             busy: Default::default(),
@@ -475,6 +489,11 @@ impl Ui {
             part_ids: Default::default(),
             scroll_moves: Default::default(),
             layer_epoch: Default::default(),
+            overscroll_style: crate::overscroll::Overscroll::None,
+            pulls: Default::default(),
+            system_bars: None,
+            system_bars_version: 0,
+            paints_status_strip: false,
             dead_layers: Default::default(),
             auto_layers: std::cell::Cell::new(true),
             movers: Default::default(),
@@ -617,7 +636,7 @@ impl Ui {
         Ok(id)
     }
 
-    /// Cria pelo nome de uma classe registrada (como `GetClass('TButton').Create`).
+    /// Cria pelo nome de uma classe registrada.
     ///
     /// Aceita também um subtipo, `"Classe.variante"` (`"Button.icon"`): cria a classe,
     /// aplica os valores iniciais do subtipo registrado e põe `style = variante`.
@@ -831,7 +850,7 @@ impl Ui {
         current
     }
 
-    /// Troca o pai (como `Parent := X`). `None` transforma em raiz.
+    /// Troca o pai. `None` transforma em raiz.
     /// Em que nível da árvore `id` está (uma raiz: 1).
     fn depth_of(&self, id: ComponentId) -> usize {
         let mut depth = 1;
@@ -893,7 +912,7 @@ impl Ui {
         self.detach(id);
         let entry = self.entry_mut(id).expect("verificado acima");
         entry.parent = parent;
-        // Uma raiz continua sendo um escopo ao ser embutida (`Form2.Parent := Panel1`).
+        // Uma raiz continua sendo um escopo ao ser embutida em outro form.
         entry.scope |= parent.is_none();
         match parent {
             Some(p) => self.entry_mut(p).expect("verificado acima").children.push(id),
@@ -947,7 +966,7 @@ impl Ui {
     /// Define o nome. Precisa ser um identificador (`letra|_` seguido de letras, dígitos
     /// ou `_`) e único dentro do form a que o componente pertence, sem diferenciar
     /// maiúsculas. Forms diferentes podem ter componentes com o mesmo nome (dois
-    /// `btnSalvar`), como no Delphi. Os forms raiz têm nomes únicos entre si. Vazio = sem
+    /// `btnSalvar`). Os forms raiz têm nomes únicos entre si. Vazio = sem
     /// nome.
     pub fn set_name(&mut self, id: ComponentId, name: &str) -> Result<()> {
         if !self.contains(id) {
@@ -973,7 +992,7 @@ impl Ui {
 
     /// Um nome livre para um componente que vai entrar em `parent`: `base` se ninguém do
     /// form de `parent` o usa, senão `base2`, `base3`... (o frame repetido: cada cartão
-    /// de uma lista com o seu, como no Delphi).
+    /// de uma lista com o seu).
     pub fn free_name_in(&self, parent: ComponentId, base: &str) -> String {
         let scope = self.form_of(parent);
         if self.find_in(scope, base).is_none() {
@@ -1069,8 +1088,8 @@ impl Ui {
 
     /// Resolve uma referência escrita num componente (`data_source: "dsClientes"`): procura
     /// no form dele, depois nos forms em volta (um form embutido enxerga os componentes do
-    /// form onde está). Com ponto, é um caminho: `"dmDados.dsClientes"` (outro form, como
-    /// um DataModule do Delphi).
+    /// form onde está). Com ponto, é um caminho: `"dmDados.dsClientes"` (outro form ou
+    /// um DataModule).
     pub fn resolve_reference(&self, from: ComponentId, text: &str) -> Option<ComponentId> {
         if text.contains('.') {
             return self.find_path(text);
@@ -1098,7 +1117,7 @@ impl Ui {
     }
 
     /// O form a que o componente pertence: o escopo de nomes mais próximo, contando ele
-    /// mesmo (para um form, ele próprio). Como o `Owner` de um componente no Delphi.
+    /// mesmo (para um form, ele próprio).
     pub fn form_of(&self, id: ComponentId) -> ComponentId {
         let mut current = id;
         loop {
@@ -1164,8 +1183,7 @@ impl Ui {
     }
 
     /// Acesso tipado. Procura também nas camadas de composição: num `GlowButton` que
-    /// contém um `Button`, `get::<Button>` devolve o `Button` interno (como um cast
-    /// `TButton(Sender)` no Delphi).
+    /// contém um `Button`, `get::<Button>` devolve o `Button` interno.
     pub fn get<T: Component>(&self, id: ComponentId) -> Option<&T> {
         find_layer(self.component(id)?)
     }
@@ -1188,8 +1206,8 @@ impl Ui {
     }
 
     /// Posição e tamanho reais, relativos ao pai, sempre em dia: com o layout pendente (algo
-    /// mudou de tamanho, apareceu, trocou de aba), ele roda antes (como o realinhamento
-    /// imediato da VCL). Sem nada pendente, custa só conferir. Para ler sem refazer o layout
+    /// mudou de tamanho, apareceu, trocou de aba), ele roda antes.
+    /// Sem nada pendente, custa só conferir. Para ler sem refazer o layout
     /// (num `&Ui`, na pintura), [`laid_out_bounds`](Self::laid_out_bounds).
     pub fn bounds(&mut self, id: ComponentId) -> Option<RectF> {
         self.update_layout();
@@ -1754,7 +1772,7 @@ impl Ui {
         if entry.component.is_none() {
             return Err(Error::Busy(self.path_of(id)));
         }
-        // O tamanho de um controle alinhado é o que o layout deu (o `Width` do Delphi), com o app
+        // O tamanho de um controle alinhado é o que o layout deu, com o app
         // rodando; no designer, o declarado (é o que se grava no form). O relatório do
         // Tabernáculo, L13: a largura de um controle encaixado vinha 100, a declarada.
         // Só o lado que o alinhamento estica (a largura do `Top`, a altura do `Left`) e só
@@ -1896,7 +1914,7 @@ impl Ui {
             || PAINT_ONLY.contains(&name)
             || self.entry(id).and_then(|e| e.component.as_deref()).is_some_and(|c| c.paint_only_property(name));
         let before = self.cb(id).map(|cb| cb.state());
-        // O valor do controle mudando pelo código: o `on_change` dispara depois (como na VCL).
+        // O valor do controle mudando pelo código: o `on_change` dispara depois.
         let old_value = if self.announces_change(id, &info) {
             self.entry(id).and_then(|e| e.component.as_deref()).and_then(|c| crate::component::read_prop(c, name))
         } else {
@@ -1945,7 +1963,7 @@ impl Ui {
     }
 
     /// Roda `f` sem o `on_change` que o `set_prop` dispara quando o valor de um controle muda
-    /// pelo código: carregar um form (como o `.dfm` na VCL), o hot reload, copiar um
+    /// pelo código: carregar um form, o hot reload, copiar um
     /// componente, aplicar as vistas por largura.
     pub fn without_change_events<R>(&mut self, f: impl FnOnce(&mut Ui) -> R) -> R {
         self.quiet_changes += 1;
@@ -1977,7 +1995,7 @@ impl Ui {
 
     /// O valor de `name` mudou pelo código: dispara o `on_change` com os argumentos que o
     /// controle usa ([`Component::change_args`]). Sem gravar de volta no campo ligado (é o
-    /// campo que pode estar chegando na tela, como no `TDBEdit`).
+    /// campo que pode estar chegando na tela).
     fn fire_value_change(&mut self, id: ComponentId, name: &str, old: PropValue) {
         let Some(component) = self.entry(id).and_then(|e| e.component.as_deref()) else { return };
         let Some(new) = crate::component::read_prop(component, name) else { return };
@@ -2065,7 +2083,7 @@ impl Ui {
         self.set_event_handler(id, event, Some(Handler::Closure(std::rc::Rc::new(handler))));
     }
 
-    /// Atalho para `on_click` (como `Button1.OnClick := ...`).
+    /// Atalho para `on_click`.
     pub fn on_click(&mut self, id: ComponentId, handler: impl Fn(&mut Ui, ComponentId) + 'static) {
         self.on(id, "on_click", move |ui, sender, _| handler(ui, sender));
     }
@@ -2129,7 +2147,7 @@ impl Ui {
     /// Dispara agora o evento `event` do componente. Devolve `true` se algum handler
     /// tratou.
     ///
-    /// Como no Delphi, um handler pode disparar outros eventos (inclusive o próprio, de outro
+    /// Um handler pode disparar outros eventos (inclusive o próprio, de outro
     /// componente ou do mesmo): eles são entregues na hora. Acima de [`MAX_EVENT_NESTING`]
     /// eventos aninhados, o evento não é entregue e vira um aviso (em vez de estourar a pilha).
     pub fn fire(&mut self, id: ComponentId, event: &str, args: &EventArgs) -> bool {
@@ -2440,8 +2458,8 @@ impl Ui {
 
     /// Modo de design (a IDE liga no `Ui` do documento): os controles podem se mostrar de
     /// um jeito próprio para o designer (veja [`PaintCtx::design`](crate::PaintCtx::design)).
-    /// Quanto o mouse fica parado até a dica aparecer, em segundos (o `HintPause` do Delphi;
-    /// o relatório do Tabernáculo, C19). `None` volta ao do tema (`durations.hint`, em ms) ou
+    /// Quanto o mouse fica parado até a dica aparecer, em segundos
+    /// (o relatório do Tabernáculo, C19). `None` volta ao do tema (`durations.hint`, em ms) ou
     /// ao padrão de 1 s.
     pub fn set_hint_delay(&mut self, seconds: Option<f64>) {
         self.hint_delay = seconds.map(|s| s.max(0.0));

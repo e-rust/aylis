@@ -83,7 +83,7 @@ public class Aylis {
         T make(Aylis aylis, long id, String name);
     }
 
-    /** A base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua instância
+    /** A base dos forms: cada form aberto na tela tem a sua instância
      *  (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao abrir. A
      *  classe gerada de cada form monta os componentes em {@code bind}. */
     public static class AylisForm extends AylisComponent {
@@ -166,7 +166,7 @@ public class Aylis {
         return instance;
     }
 
-    /** Cria o form na tela e devolve a instância dele (como o Application.CreateForm do Delphi);
+    /** Cria o form na tela e devolve a instância dele;
      *  {@code another}: mais uma janela do mesmo form. */
     @SuppressWarnings("unchecked")
     public AylisForm createForm(String form, boolean another) {
@@ -345,13 +345,13 @@ public class Aylis {
         return value == null ? null : new java.math.BigDecimal(value.toString());
     }
 
-    /** Caixa de mensagem que espera, como o {@code MessageDlg} do Delphi: devolve o botão ({@code "yes"},
+    /** Caixa de mensagem que espera: devolve o botão ({@code "yes"},
      *  {@code "no"}, {@code "ok"}...). Enquanto espera, os eventos continuam rodando. */
     public String messageDlg(String text, String kind, String... buttons) {
         return waitFor("message_dlg", obj("text", text, "kind", kind, "buttons", java.util.List.of(buttons.length == 0 ? new String[] {"ok"} : buttons)));
     }
 
-    /** Abre o form como modal e espera ele fechar, como o {@code ShowModal} do Delphi: devolve o resultado. */
+    /** Abre o form como modal e espera ele fechar: devolve o resultado. */
     public String showModal(AylisForm form) {
         return waitFor("show_modal", obj("target", form.id));
     }
@@ -359,7 +359,7 @@ public class Aylis {
     private String waitFor(String cmd, Map<String, Object> fields) {
         fields.put("wait", true);
         waiting++;
-        // Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro call esperava) roda já.
+        // O que chegou antes (enquanto outro call esperava) roda já.
         for (int n = queued.size(); n > 0; n--) {
             Map<String, Object> m = queued.poll();
             Object k = m.get("event");
@@ -426,7 +426,7 @@ public class Aylis {
 
     /** Roda o handler do evento. Um evento que pergunta (com {@code ask}) recebe a resposta quando
      *  o handler termina: o {@code ev.reply()} ou, com exceção, a recusa com a mensagem (a tela
-     *  mostra), como no BeforePost do Delphi. */
+     *  mostra). */
     @SuppressWarnings("unchecked")
     private void handleEvent(Map<String, Object> m) {
         // Forms liberados na tela: as instâncias saem e os postTo deles não rodam.
@@ -461,7 +461,7 @@ public class Aylis {
                 send("answer", obj("ask", ask, "error", String.valueOf(e.getMessage())));
             } else {
                 log("erro no handler", ev.handler(), e.getMessage());
-                // A tela mostra o erro ao usuário (como o Application.HandleException do Delphi).
+                // A tela mostra o erro ao usuário.
                 send("exception", obj("message", String.valueOf(e.getMessage()), "path", ev.form(), "handler", ev.handler()));
             }
         } finally {

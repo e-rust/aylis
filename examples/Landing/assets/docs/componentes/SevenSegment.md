@@ -13,13 +13,13 @@ Mostrador de 7 segmentos (números, `-`, `.` e algumas letras).
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `digits` | Só números | inteiro | Quantos dígitos (alinha à direita, como num painel). |
-| `color` | Cor | cor |  |
+| `color` | Cor | cor | A cor dos segmentos acesos. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O que aparece nos dígitos (números, `-`, `.` e algumas letras; o resto fica apagado). |
 
 ## Em código
 

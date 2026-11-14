@@ -32,7 +32,7 @@ begin
   Controle.Cancelar;
 end;
 
-{ O X com o trabalho rodando (o OnCloseQuery do Delphi): fechar no meio deixaria a thread
+{ O X com o trabalho rodando: fechar no meio deixaria a thread
   gravando num form fechado, então o form fica aberto e a thread é cancelada, como pelo
   Cancelar. Quando ela termina, o Post do fim fecha o modal (aí CanClose fica True). }
 procedure TFrmProgresso.form_close_query(Sender: TAylisComponent; var CanClose: Boolean);

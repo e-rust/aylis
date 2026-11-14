@@ -1,9 +1,9 @@
-//! Um erro num handler ou num componente não derruba o app, como o
-//! `Application.HandleException` do Delphi: o `Ui` pega o pânico (Rust) ou o erro que o
+//! Um erro num handler ou num componente não derruba o app: o `Ui`
+//! pega o pânico (Rust) ou o erro que o
 //! backend relata (as outras linguagens), e o mostra ao usuário; o app continua aberto.
 //!
-//! O caminho de um erro: o handler da aplicação ([`Ui::on_exception`], o
-//! `TApplicationEvents.OnException`) e, se ele não tratar, a exibição padrão
+//! O caminho de um erro: o handler da aplicação ([`Ui::on_exception`]) e,
+//! se ele não tratar, a exibição padrão
 //! ([`Ui::set_exception_display`], a caixa de mensagem que o `aylis-controls` instala). Sempre
 //! vai também para o `activity` (o log e a gravação de uso).
 //!
@@ -55,7 +55,7 @@ pub fn panic_message(payload: &(dyn Any + Send)) -> String {
 }
 
 impl Ui {
-    /// O tratamento de erro da aplicação (o `TApplicationEvents.OnException`): recebe todo
+    /// O tratamento de erro da aplicação: recebe todo
     /// erro de handler e de componente; devolva `true` se tratou (log próprio, envio ao
     /// suporte) e a caixa padrão não aparece.
     pub fn on_exception(&mut self, f: impl Fn(&mut Ui, &Exception) -> bool + 'static) {

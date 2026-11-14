@@ -62,6 +62,8 @@ pub struct EmojiPicker {
     pub base: ControlBase,
     /// A busca (o campo de cima; também dá para mudar pelo código).
     pub filter: String,
+    /// Os usados por último, separados por espaço (o mais novo primeiro); o app pode guardar e
+    /// devolver.
     pub recent: String,
     /// Quantos recentes guardar.
     pub max_recent: i64,

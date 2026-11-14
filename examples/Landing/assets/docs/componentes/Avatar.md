@@ -14,7 +14,7 @@ Foto ou iniciais de uma pessoa, redondo (ou quadrado arredondado com a variante 
 |---|---|---|---|
 | `display_name` | Nome exibido | texto | Nome da pessoa (as iniciais e a cor saem dele). Não é o `name` do componente. |
 | `image` | Imagem | texto | Foto do aplicativo (`assets/...`); vazio = iniciais. |
-| `presence` | Presença | um de: `none`, `online`, `away`, `busy`, `offline` |  |
+| `presence` | Presença | um de: `none`, `online`, `away`, `busy`, `offline` | A bolinha de presença no canto: online, ausente, ocupado ou offline; `none`: sem bolinha. |
 
 ## Em código
 

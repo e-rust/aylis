@@ -9,7 +9,7 @@ use crate::field::FieldKind;
 use crate::store::ColumnStore;
 use crate::value::Value;
 
-/// Estado do dataset (como `TDataSetState`).
+/// Estado do dataset.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum DataSetState {
     #[default]
@@ -270,7 +270,7 @@ pub struct DataMessage {
 pub(crate) type DataSetHook = dyn FnMut(&mut Ui, ComponentId) -> Result<(), String>;
 pub(crate) type FetchHook = dyn FnMut(&mut Ui, ComponentId, usize);
 pub(crate) type ApplyHandler = dyn FnMut(&[Change]) -> Vec<ApplyResult>;
-/// Filtro em Rust (como o `OnFilterRecord`): recebe uma função que lê os campos.
+/// Filtro em Rust: recebe uma função que lê os campos.
 pub(crate) type FilterHook = dyn Fn(&dyn Fn(&str) -> Value) -> bool;
 
 #[derive(Default)]
@@ -293,7 +293,7 @@ pub(crate) struct Column {
     pub(crate) kind: FieldKind,
 }
 
-/// Dataset em memória (como o `TClientDataSet`/`TFDMemTable`).
+/// Dataset em memória.
 ///
 /// Não sabe nada de banco: os registros chegam do backend (`load_rows`, `load_json`) e as
 /// alterações voltam como **delta** (`apply_updates`). Os campos são os componentes
@@ -303,18 +303,23 @@ pub(crate) struct Column {
 pub struct ClientDataSet {
     /// Campos-chave separados por `;` (identificam o registro no delta).
     pub key_fields: String,
+    /// Quando o delta vai para o backend: `cached` (acumula até o `apply_updates`) ou
+    /// `on_post` (cada gravação ou exclusão envia na hora).
     pub apply_mode: ApplyMode,
+    /// Só leitura: os registros não podem ser incluídos, alterados nem excluídos.
     pub read_only: bool,
     /// Expressão de filtro (`cidade = 'São Paulo' and limite > 1000`, ver [`crate::expr`]);
     /// vale com `filtered` ligado.
     pub filter: String,
+    /// Aplica o `filter`: só os registros que passam nele aparecem (os outros continuam no
+    /// delta).
     pub filtered: bool,
     /// Ordem dos registros: campos separados por `;`, com `desc` opcional
-    /// (`cidade;limite desc`), como o `IndexFieldNames`.
+    /// (`cidade;limite desc`).
     pub index_field_names: String,
-    /// Índices com nome (como o `IndexDefs`): `porNome=nome|porValor=valor desc;nome`.
+    /// Índices com nome: `porNome=nome|porValor=valor desc;nome`.
     pub indexes: String,
-    /// O índice de `indexes` em uso (como o `IndexName`); vale no lugar de
+    /// O índice de `indexes` em uso; vale no lugar de
     /// `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome.
     pub index_name: String,
     /// Valores dos parâmetros do filtro (`:minimo`): `minimo=100;cidade=São Paulo`. Por
@@ -336,8 +341,8 @@ pub struct ClientDataSet {
     /// Registros escondidos pelo filtro ou pelo mestre (continuam no delta).
     pub(crate) hidden: Vec<Row>,
     pub(crate) needs_refilter: bool,
-    /// Pedido de abertura (pela propriedade `active`); a abertura acontece no próximo
-    /// acesso por `data_set(...)`.
+    /// Aberto: os campos e os registros ficam disponíveis; desligar fecha. Ligado pela
+    /// propriedade `active`, a abertura acontece no próximo acesso por `data_set(...)`.
     pub(crate) wants_open: bool,
     pub(crate) columns: Vec<Column>,
     /// A posição de cada coluna pelo nome em minúsculas (um grid procura a coluna de cada
@@ -651,8 +656,9 @@ impl Component for ClientDataSet {
 /// Propriedades que mudam quais registros aparecem ou a ordem deles.
 const REFILTER_PROPS: &[&str] = &["filter", "filtered", "index_field_names", "indexes", "index_name", "params", "status_filter", "master_source", "master_fields"];
 
-/// Liga controles a um dataset (como o `TDataSource`).
+/// Liga controles a um dataset.
 pub struct DataSource {
+    /// O `ClientDataSet` cujos dados os controles ligados mostram e editam.
     pub data_set: Option<ComponentId>,
     /// Começar a digitar num controle coloca o dataset em edição sozinho.
     pub auto_edit: bool,

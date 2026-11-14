@@ -38,6 +38,14 @@ fn permission_title(p: Permission) -> &'static str {
     }
 }
 
+/// O `aylis-tool` ao lado da IDE (a ponte do MCP que o `.mcp.json` do projeto chama); sem ele
+/// (a IDE do navegador), o `.mcp.json` chama pelo nome.
+pub fn aylis_tool() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let tool = exe.with_file_name(format!("aylis-tool{}", std::env::consts::EXE_SUFFIX));
+    tool.is_file().then_some(tool)
+}
+
 fn checked(ui: &Ui, id: ComponentId) -> bool {
     ui.get::<CheckBox>(id).is_some_and(|c| c.checked)
 }
@@ -154,6 +162,12 @@ pub fn new_project(
         }
     }
 
+    caption(ui, p, "AGENTES DE IA");
+    let agent_guide = ui.add(CheckBox::new("Guia para agentes de IA (AGENTS.md, CLAUDE.md e .mcp.json)"), p);
+    ui.control_mut(agent_guide).unwrap().set_align(Align::Top).set_height(30.0);
+    let _ = ui.set_prop(agent_guide, "checked", true);
+    note(ui, p, "As regras do código do projeto para o Claude Code e outros agentes, e a ligação deles com a IDE pelo MCP.", 36.0);
+
     // 5. Resumo.
     let summary = ui.add(Label::new(""), pages[4]);
     ui.control_mut(summary).unwrap().set_align(Align::Top).set_height(420.0);
@@ -179,6 +193,8 @@ pub fn new_project(
             app_name: text_of(ui, app_name),
             identifier: text_of(ui, identifier),
             permissions: permission_checks.iter().filter(|(_, c)| checked(ui, *c)).map(|(p, _)| p.name().to_string()).collect(),
+            agent_guide: checked(ui, agent_guide),
+            aylis_tool: aylis_tool(),
         }
     };
     let options = Rc::new(options);
@@ -246,6 +262,7 @@ pub fn new_project(
                     format!("{}: {} ({})", ui.tr("Aplicativo"), o.app_name, o.identifier),
                     format!("{}: {}", ui.tr("Ícone"), o.icon.as_ref().map_or(ui.tr("nenhum"), |p| p.display().to_string())),
                     format!("{}: {}", ui.tr("Permissões"), if permissions.is_empty() { none } else { permissions.join(", ") }),
+                    format!("{}: {}", ui.tr("Guia para agentes de IA"), if o.agent_guide { aylis_project::agents::FILES.join(", ") } else { ui.tr("não") }),
                 ]
                 .join("\n\n");
                 let _ = ui.set_prop(summary, "text", text);

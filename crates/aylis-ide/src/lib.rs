@@ -13,6 +13,7 @@ pub mod assetdialogs;
 pub mod code_sync;
 pub mod codegen;
 pub mod codewindow;
+pub mod coverage;
 pub mod androidview;
 pub mod windowsview;
 pub mod grammars;
@@ -36,6 +37,9 @@ pub mod edit_guard;
 pub mod fieldsview;
 pub mod files;
 pub mod gallery;
+/// A IDE sem janela, com o MCP no stdio (`aylis-ide --headless --mcp-stdio`).
+#[cfg(feature = "desktop")]
+pub mod headless;
 pub mod home;
 pub mod host;
 pub mod hovertip;
@@ -48,6 +52,7 @@ pub mod lite;
 pub mod live;
 pub mod profiler;
 pub mod mcp;
+pub mod mcp_insight;
 pub mod mcp_project;
 pub mod mcp_tasks;
 pub mod messages;

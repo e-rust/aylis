@@ -80,7 +80,7 @@ export class AylisComponent {
 }
 
 /**
- * A base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua instância
+ * A base dos forms: cada form aberto na tela tem a sua instância
  * (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao abrir. A
  * classe gerada de cada form monta os componentes em `bind`.
  */
@@ -252,12 +252,12 @@ export class Aylis {
     return value === null ? null : String(value);
   }
 
-  /** Caixa de mensagem que espera, como o `MessageDlg` do Delphi: devolve o botão (`"yes"`, `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando. */
+  /** Caixa de mensagem que espera: devolve o botão (`"yes"`, `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando. */
   async messageDlg(text: string, kind: "information" | "warning" | "error" | "confirmation" = "information", buttons: string[] = ["ok"]): Promise<string> {
     return String(await this.waitFor("message_dlg", { text, kind, buttons }));
   }
 
-  /** Abre o form como modal e espera ele fechar, como o `ShowModal` do Delphi: devolve o resultado (`"ok"`, `"cancel"`...). */
+  /** Abre o form como modal e espera ele fechar: devolve o resultado (`"ok"`, `"cancel"`...). */
   async showModal(form: string | number | AylisForm): Promise<string> {
     const target = form instanceof AylisForm ? form.id : form;
     return String(await this.waitFor("show_modal", { target }));
@@ -265,7 +265,7 @@ export class Aylis {
 
   private async waitFor(cmd: string, fields: { [key: string]: Json }): Promise<Json> {
     this.waiting++;
-    // Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro call esperava) roda já.
+    // O que chegou antes (enquanto outro call esperava) roda já.
     for (const event of this.events.splice(0)) {
       if (event.event === "ping") this.send("pong");
       else if (event.event === "closed") this.events.push(event);
@@ -311,7 +311,7 @@ export class Aylis {
     return instance;
   }
 
-  /** Cria o form na tela e devolve a instância dele (como o Application.CreateForm do Delphi); `another`: mais uma janela do mesmo form. */
+  /** Cria o form na tela e devolve a instância dele; `another`: mais uma janela do mesmo form. */
   async createForm(form: string, another = false): Promise<AylisForm | undefined> {
     const created = (await this.call("create_form", { name: form, new: another })) as { id: number };
     return this.formInstance(form, created.id);
@@ -393,7 +393,7 @@ export class Aylis {
         this.send("answer", { ask: event.ask, error: message });
       } else {
         log("erro no handler", event.handler, String(e));
-        // A tela mostra o erro ao usuário (como o Application.HandleException do Delphi).
+        // A tela mostra o erro ao usuário.
         this.send("exception", { message, path: event.form, handler: event.handler });
       }
     } finally {

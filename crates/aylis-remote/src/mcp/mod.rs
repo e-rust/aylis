@@ -7,8 +7,8 @@
 //!   `ui_click`, `ui_type`, `ui_rows`...), que são os comandos do protocolo remoto; com
 //!   `read_only`, só as que leem.
 //! - [`McpTool`] (filho do servidor): uma ferramenta do domínio do app, com nome, descrição e
-//!   parâmetros; o agente chama e o `on_execute` responde (como uma `TAction` que a IA
-//!   dispara). É aqui que mora a regra de negócio: `criar_pedido(cliente, itens)` em vez de
+//!   parâmetros; o agente chama e o `on_execute` responde.
+//!   É aqui que mora a regra de negócio: `criar_pedido(cliente, itens)` em vez de
 //!   preencher campo por campo.
 //!
 //! Tudo roda na thread da interface: a conexão chega numa thread, a chamada vai pelo
@@ -107,15 +107,22 @@ const READ_DATA_OPS: &[&str] = &["first", "prior", "next", "last", "move_to", "l
 /// `on_call` dispara antes de cada chamada (o texto é `{"tool": .., "arguments": ..}`):
 /// recusar ([`Ui::refuse`]) devolve o erro ao agente. `on_error` recebe as falhas ao ligar.
 pub struct McpServer {
+    /// Liga o servidor (fora do designer); desligado, ele para.
     pub active: bool,
+    /// A porta em `127.0.0.1`; 0: uma porta livre (o endereço fica em `url`).
     pub port: u32,
+    /// O segredo que o agente precisa mandar; vazio: um aleatório gerado ao ligar.
     pub token: String,
     /// O nome que o agente vê (vazio: o nome do componente).
     pub server_name: String,
     /// O que o agente lê ao conectar: para que serve o app e como usar as ferramentas.
     pub instructions: String,
+    /// Dá ao agente as ferramentas genéricas de tela (ler a árvore, mexer em propriedades,
+    /// clicar, os dados).
     pub expose_ui: bool,
+    /// Das ferramentas de tela, só as que leem (nenhuma muda a tela nem os registros).
     pub read_only: bool,
+    /// Os forms que o agente alcança, por nome separados por vírgula; vazio: todos.
     pub forms: String,
     /// Quanto uma chamada pode demorar, em milissegundos (vale ao ligar).
     pub call_timeout: u32,
@@ -303,10 +310,16 @@ fn random_token() -> Result<String, String> {
 /// ([`Ui::refuse`]) devolve o erro. Um backend em outra linguagem responde depois, como em
 /// todo evento-pergunta. `read_only` avisa o agente que a ferramenta não muda nada.
 pub struct McpTool {
+    /// O nome que o agente chama; vazio: o nome do componente.
     pub tool_name: String,
+    /// O que a ferramenta faz e quando usar (o agente lê para escolher).
     pub description: String,
+    /// Os parâmetros: um JSON Schema, só as propriedades ou a forma curta
+    /// `cliente: string, quantidade: integer, obs?: string` (`?`: opcional); vazio: nenhum.
     pub params: String,
+    /// Avisa o agente que a ferramenta só lê, não muda nada.
     pub read_only: bool,
+    /// Oferecida ao agente; desligada, ele não a vê.
     pub enabled: bool,
 }
 
@@ -525,10 +538,23 @@ fn ui_tools() -> Vec<Value> {
         tool("ui_items", "Os itens que um controle desenha sozinho (abas, linhas de lista e grid, nós de árvore, itens de menu): papel, texto, selecionado, marcado.", json!({ "target": target }), &["target"], true),
         tool("ui_rows", "Os registros de um ClientDataSet (como o grid mostra, sem rolar), a partir de `offset` (padrão 0), até `limit` (padrão 50), e o total.", json!({ "target": target, "offset": { "type": "integer" }, "limit": { "type": "integer" } }), &["target"], true),
         tool("ui_set", "Muda uma propriedade (`value` é o valor JSON, como no layout: texto, número, booleano, \"#rrggbb\").", json!({ "target": target, "prop": s("a propriedade"), "value": {} }), &["target", "prop", "value"], false),
-        tool("ui_click", "Clica num controle (botão, caixa, item de menu), como o usuário.", json!({ "target": target }), &["target"], false),
+        tool(
+            "ui_click",
+            "Clica num controle (botão, caixa, item de menu), como o usuário. Com `modifiers` (\"Ctrl+Shift\" ou [\"ctrl\",\"shift\"]; ctrl, shift, alt, meta), `x`/`y` (dentro do controle; padrão o meio), `button` (left, right, middle) ou `double`, é o mouse de verdade naquele ponto (Ctrl+clique na lista, o menu do botão direito).",
+            json!({ "target": target, "modifiers": {}, "x": { "type": "number" }, "y": { "type": "number" }, "button": s("left | right | middle"), "double": { "type": "boolean" } }),
+            &["target"],
+            false,
+        ),
+        tool(
+            "ui_drag",
+            "Arrasta de um controle (`from`) a outro (`to`): aperta no meio de `from`, anda em `steps` passos (10) e solta no meio de `to` (o arrastar e soltar entre listas; `from` igual a `to` arrasta dentro dele), com `from_x`/`from_y`/`to_x`/`to_y` (dentro de cada um), `modifiers` e `button` como no ui_click.",
+            json!({ "from": target, "to": target, "from_x": { "type": "number" }, "from_y": { "type": "number" }, "to_x": { "type": "number" }, "to_y": { "type": "number" }, "steps": { "type": "integer" }, "modifiers": {}, "button": s("left | right | middle") }),
+            &["from", "to"],
+            false,
+        ),
         tool("ui_click_item", "Clica num item desenhado (de ui_items) pelo texto (`item`) ou pela posição (`index`); `action`: click, select, expand ou collapse.", json!({ "target": target, "item": s("o texto do item"), "index": { "type": "integer" }, "action": s("click | select | expand | collapse") }), &["target"], false),
         tool("ui_type", "Põe o foco no controle e digita o texto, como o teclado (passa pelas máscaras e validações).", json!({ "target": target, "text": s("o texto") }), &["target", "text"], false),
-        tool("ui_key", "Aperta uma tecla no form do controle (\"Enter\", \"Tab\", \"Escape\", \"Ctrl+S\"); com `target`, o foco vai antes para ele.", json!({ "target": target, "key": s("a tecla") }), &["target", "key"], false),
+        tool("ui_key", "Aperta uma tecla no form do controle (\"Enter\", \"Tab\", \"Escape\", \"Ctrl+S\"; `modifiers` soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}); com `target`, o foco vai antes para ele.", json!({ "target": target, "key": s("a tecla"), "modifiers": {} }), &["target", "key"], false),
         tool("ui_invoke", "Chama um método do componente (os do ui_get de cada classe: refresh, clear...).", json!({ "target": target, "method": s("o método"), "args": { "type": "array" } }), &["target", "method"], false),
         data_tool(false),
     ]
@@ -655,8 +681,8 @@ fn ui_tool(ui: &mut Ui, server: ComponentId, name: &str, args: &Value) -> Result
                 .map(|&r| {
                     let class = ui.component(r).map(|c| c.class_name()).unwrap_or_default();
                     let caption = ui.get_prop(r, "caption").ok().and_then(|v| v.to_str().ok().map(str::to_string));
-                    // `open`: a janela está aberta. Um form criado no início e não mostrado (como o
-                    // `CreateForm` do Delphi) existe mas não aparece: `visible` só vale aberto
+                    // `open`: a janela está aberta. Um form criado no início e não mostrado
+                    // existe mas não aparece: `visible` só vale aberto
                     // (antes dizia `true` para todos, e parecia que tinham aberto).
                     let open = ui.is_open(r);
                     json!({ "name": ui.name(r), "class": class, "caption": caption, "open": open, "visible": open && ui.control(r).is_some_and(|c| c.visible()) })
@@ -710,7 +736,26 @@ fn ui_tool(ui: &mut Ui, server: ComponentId, name: &str, args: &Value) -> Result
         }
         "ui_click" => {
             let id = reach(ui, server, args.get("target"))?;
-            crate::execute(ui, &json!({ "cmd": "click", "target": id.to_u64() }))
+            // As opções do clique (o mouse de verdade) passam como estão ao protocolo, o mesmo
+            // caminho do `app_command` da IDE.
+            let mut command = json!({ "cmd": "click", "target": id.to_u64() });
+            for key in ["modifiers", "x", "y", "button", "double"] {
+                if let Some(v) = args.get(key) {
+                    command[key] = v.clone();
+                }
+            }
+            crate::execute(ui, &command)
+        }
+        "ui_drag" => {
+            // Os dois lados passam pelo alcance do servidor (os forms permitidos, nunca ele).
+            let (from, to) = (reach(ui, server, args.get("from"))?, reach(ui, server, args.get("to"))?);
+            let mut command = json!({ "cmd": "drag", "from": from.to_u64(), "to": to.to_u64() });
+            for key in ["from_x", "from_y", "to_x", "to_y", "steps", "modifiers", "button"] {
+                if let Some(v) = args.get(key) {
+                    command[key] = v.clone();
+                }
+            }
+            crate::execute(ui, &command)
         }
         "ui_click_item" => {
             let id = reach(ui, server, args.get("target"))?;
@@ -732,7 +777,11 @@ fn ui_tool(ui: &mut Ui, server: ComponentId, name: &str, args: &Value) -> Result
             if ui.root_of(id) != id {
                 ui.set_focus(id);
             }
-            crate::execute(ui, &json!({ "cmd": "key", "target": id.to_u64(), "key": str_arg("key") }))
+            let mut command = json!({ "cmd": "key", "target": id.to_u64(), "key": str_arg("key") });
+            if let Some(v) = args.get("modifiers") {
+                command["modifiers"] = v.clone();
+            }
+            crate::execute(ui, &command)
         }
         "ui_invoke" => {
             let id = reach(ui, server, args.get("target"))?;

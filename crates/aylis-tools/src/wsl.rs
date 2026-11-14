@@ -174,6 +174,15 @@ pub fn publish_script(project: &Project, out: &Path, app_file: &str, deb: bool) 
     if deb {
         let id = package.replace('_', "-");
         let version = project_version(project);
+        // Os prefixos dos `UrlScheme` ligados (decidido em 14/11): o `.desktop` do pacote os
+        // declara e recebe o endereço (`%u`); a instalação e a remoção atualizam a lista do
+        // sistema (`update-desktop-database`).
+        let schemes = crate::publish::url_schemes(project);
+        let (exec_arg, mime) = if schemes.is_empty() {
+            (String::new(), String::new())
+        } else {
+            (" %u".to_string(), format!("MimeType={}\n", schemes.iter().map(|(s, _)| format!("x-scheme-handler/{s};")).collect::<String>()))
+        };
         s.push_str("echo '▶ Montando o pacote .deb…'\n");
         s.push_str(&format!(
             r#"D="$HOME/.aylis-wsl/deb/{id}"
@@ -192,10 +201,14 @@ cat > "$D/usr/share/applications/{id}.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
 Name={app}
-Exec=/opt/{id}/{id}
+Exec=/opt/{id}/{id}{exec_arg}
 Terminal=false
 Categories=Utility;
-DESKTOP
+{mime}DESKTOP
+for hook in postinst postrm; do
+  printf '#!/bin/sh\nset -e\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q /usr/share/applications || true; fi\n' > "$D/DEBIAN/$hook"
+  chmod 755 "$D/DEBIAN/$hook"
+done
 dpkg-deb --build --root-owner-group "$D" {out_l}/{id}_{version}_amd64.deb >/dev/null
 echo "pacote: {id}_{version}_amd64.deb"
 "#,
@@ -233,4 +246,33 @@ pub fn run(distro: &str, script: &str, control: &Control, sink: Sink, program_ou
         };
         sink(Event::Line(line, kind));
     })
+}
+
+#[cfg(test)]
+mod deb_tests {
+    use std::path::Path;
+
+    /// O `.deb` declara os prefixos dos `UrlScheme` ligados (`x-scheme-handler`), recebe o
+    /// endereço (`%u`) e atualiza a lista do sistema ao instalar e ao remover (decidido em 14/11).
+    #[test]
+    fn the_deb_declares_the_url_schemes() {
+        let base = std::env::temp_dir().join(format!("aylis_deb_schemes_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let project = aylis_project::create(&base, "Loja", aylis_project::Language::Rust).unwrap();
+        let plain = super::publish_script(&project, Path::new("C:/out"), "loja", true);
+        assert!(!plain.contains("MimeType") && !plain.contains("%u"), "sem UrlScheme, nada de prefixo");
+        std::fs::write(
+            project.dir().join("forms").join("links.json"),
+            r#"{ "root": { "class": "Form", "children": [
+                { "class": "UrlScheme", "name": "a", "scheme": "Pedidos", "active": true },
+                { "class": "UrlScheme", "name": "b", "scheme": "desligado", "active": false } ] } }"#,
+        )
+        .unwrap();
+        let script = super::publish_script(&project, Path::new("C:/out"), "loja", true);
+        assert!(script.contains("%u\n") && script.contains("MimeType=x-scheme-handler/pedidos;\n"), "{script}");
+        assert!(!script.contains("desligado"));
+        assert!(script.contains("DEBIAN/$hook") && script.contains("update-desktop-database"), "{script}");
+        let _ = std::fs::remove_dir_all(&base);
+    }
 }

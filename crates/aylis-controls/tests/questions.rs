@@ -191,3 +191,40 @@ fn a_busy_backend_refuses_clicks_and_holds_keys_until_done() {
     assert!(ui.backend_busy());
     ui.backend_done(8);
 }
+
+/// A tecla Voltar do celular (`Ui::back_pressed`, decidido em 14/11): sem handler, o de sempre;
+/// o `on_back` que responde `handled` (ou recusa) trata a tecla e o de sempre não roda; com o
+/// backend em outra linguagem, o de sempre espera a resposta.
+#[test]
+fn the_back_key_asks_the_top_form_first() {
+    let (mut ui, form, _) = setup();
+    let ran = Rc::new(RefCell::new(0));
+    let fallback = |ran: &Rc<RefCell<i32>>| {
+        let r = ran.clone();
+        move |_: &mut Ui| *r.borrow_mut() += 1
+    };
+
+    // Sem handler: o de sempre.
+    ui.back_pressed(fallback(&ran));
+    assert_eq!(*ran.borrow(), 1);
+
+    // O app trata (volta a tela de dentro).
+    ui.on(form, "on_back", |ui, _, _| ui.reply("handled", true));
+    ui.back_pressed(fallback(&ran));
+    assert_eq!(*ran.borrow(), 1, "tratado: o de sempre não roda");
+
+    // Respondeu sem tratar: o de sempre.
+    ui.on(form, "on_back", |ui, _, _| ui.reply("handled", false));
+    ui.back_pressed(fallback(&ran));
+    assert_eq!(*ran.borrow(), 2);
+
+    // O backend em outra linguagem: o de sempre espera a resposta.
+    let (mut ui2, form2, _) = setup();
+    let asked = deferring_sink(&mut ui2);
+    ui2.set_prop(form2, "on_back", PropValue::Event(Some("voltar".into()))).unwrap();
+    ui2.back_pressed(fallback(&ran));
+    assert_eq!(*ran.borrow(), 2, "espera a resposta");
+    let token = asked.borrow().iter().find(|(e, _)| e == "on_back").map(|(_, t)| *t).unwrap();
+    ui2.answer(token, Answer::Accepted(vec![]));
+    assert_eq!(*ran.borrow(), 3, "sem `handled`: o de sempre");
+}

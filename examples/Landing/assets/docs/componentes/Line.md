@@ -12,9 +12,9 @@ Uma linha reta; o clique acerta perto dela (`stroke_width` mais uma folga).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
-| `direction` | Direção | um de: `down`, `up`, `horizontal`, `vertical` |  |
+| `stroke` | Cor do traço | cor | A cor da linha; vazio: a cor do texto do tema. |
+| `stroke_width` | Largura do traço | número | A espessura da linha, em pontos. |
+| `direction` | Direção | um de: `down`, `up`, `horizontal`, `vertical` | Para onde a linha vai no controle: `down` e `up` nas diagonais, `horizontal` e `vertical` pelo meio. |
 
 ## Em código
 

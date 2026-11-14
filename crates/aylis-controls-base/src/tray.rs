@@ -1,4 +1,4 @@
-//! TrayIcon: ícone na bandeja do sistema (perto do relógio), como o `TTrayIcon`. Ícone
+//! TrayIcon: ícone na bandeja do sistema (perto do relógio). Ícone
 //! parado ou animado, dica, indicador (ponto ou número, como os apps de mensagem) e um menu
 //! próprio no clique direito, claro, escuro ou de qualquer cor.
 
@@ -19,16 +19,19 @@ pub struct TrayIcon {
     pub icons: String,
     /// Tempo de cada quadro da animação (ms).
     pub interval: u32,
+    /// A dica que aparece com o mouse parado em cima do ícone.
     pub hint: String,
     /// Indicador: vazio, `•` ou um texto curto (`3`, `9+`).
     pub badge: String,
+    /// A cor do fundo do indicador.
     pub badge_color: Color,
+    /// O ícone aparece na bandeja; desligado, sai dela.
     pub visible: bool,
     /// O menu do clique direito: itens separados por `;` (`-` é uma linha).
     pub menu_items: String,
     /// `light`, `dark` ou uma cor (`#1E293B`).
     pub menu_theme: String,
-    /// O menu do clique direito por um `PopupMenu` (o `PopupMenu` do `TTrayIcon`): os
+    /// O menu do clique direito por um `PopupMenu`: os
     /// `MenuItem` dele, com `enabled`, `checked`, `header`, divisória e submenu (recuado).
     /// Escolher um item dispara o `on_click` dele (e o `on_item_click` do menu) e o `on_menu`
     /// daqui, com o texto. Vence o `menu_items`. O relatório do Tabernáculo, C26.
@@ -175,7 +178,7 @@ impl Component for TrayIcon {
         METHODS
     }
 
-    /// `show_balloon(title, text)`: o balão do ícone (o `ShowBalloonHint` do Delphi), pelo
+    /// `show_balloon(title, text)`: o balão do ícone, pelo
     /// serviço de notificações do sistema (C27 do Tabernáculo).
     fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
         match method {

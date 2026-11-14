@@ -12,14 +12,14 @@ Um símbolo elétrico (o diagrama, na horizontal; gire pelo `rotation`). `state`
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `symbol` | Símbolo | um de: `resistor`, `capacitor`, `inductor`, `diode`, `led`, `transistor`, `source`, `ground`, `switch`, `relay`, `lamp`, `motor` |  |
-| `label` | Rótulo | texto |  |
+| `symbol` | Símbolo | um de: `resistor`, `capacitor`, `inductor`, `diode`, `led`, `transistor`, `source`, `ground`, `switch`, `relay`, `lamp`, `motor` | Qual símbolo desenhar (resistor, capacitor, diodo, chave, lâmpada...). |
+| `label` | Rótulo | texto | O valor escrito junto do símbolo (`10 kΩ`, `24 V`); vazio: sem texto. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `state` | Estado | lógico |  |
+| `state` | Estado | lógico | Ligado: a chave e o relé fechados, a lâmpada e o LED acesos (nos outros não muda nada). |
 
 ## Em código
 

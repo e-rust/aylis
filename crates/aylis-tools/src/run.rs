@@ -253,6 +253,7 @@ fn build_commands(project: &Project, commands: &[aylis_project::BuildCommand], e
                     continue;
                 }
                 let file = dir.join(format!("build-command-{i}.bat"));
+                // lint-allow: cmd-shell (o comando antes ou depois da compilação, só em projeto confiado)
                 let mut command = Command::new("cmd");
                 command.args(["/D", "/C"]).arg(&file);
                 (file, command)

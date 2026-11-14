@@ -12,7 +12,7 @@ Só as comuns.
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

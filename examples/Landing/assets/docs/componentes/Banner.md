@@ -12,15 +12,15 @@ Aviso em faixa (alerta): ícone, título e texto, com a cor da variante (`info` 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
-| `text` | Texto | texto |  |
+| `title` | Título | texto | O título do aviso, em destaque; vazio: só o texto. |
+| `text` | Texto | texto | O texto do aviso, abaixo do título. |
 | `icon` | Ícone | texto | Ícone; vazio = o da variante (info, success, warning, error). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `closable` | Pode fechar | lógico |  |
+| `closable` | Pode fechar | lógico | Mostra o "×" que esconde a faixa e dispara o `on_close`. |
 
 ## Eventos
 

@@ -1,27 +1,27 @@
 //! # aylis-core
 //!
-//! Núcleo do aylis: modelo de componentes, árvore, propriedades publicadas, layout no
-//! estilo FMX (Align, Anchors, Margins, Padding), temas e as interfaces (traits) com a
+//! Núcleo do aylis: modelo de componentes, árvore, propriedades publicadas, layout
+//! (Align, Anchors, Margins, Padding), temas e as interfaces (traits) com a
 //! plataforma.
 //!
 //! Este crate **não depende de nada do sistema operacional**. Janela, input, timers e o
 //! desenho de verdade ficam em crates de plataforma e de renderização, que implementam
 //! os traits definidos aqui ([`Canvas`], [`TextService`], [`platform`]).
 //!
-//! ## Conceitos (comparando com o Delphi)
+//! ## Conceitos
 //!
-//! | Delphi / FMX | aylis |
+//! | Conceito | No Aylis |
 //! |---|---|
-//! | `TComponent` | qualquer tipo que implementa [`Component`] |
-//! | `TControl` | um [`Component`] que tem um [`ControlBase`] |
-//! | `inherited` | composição: o componente guarda o "pai" e devolve em [`Component::inner`] |
-//! | `TButton.Create(Self)` + `Parent := X` | [`Ui::add`] / [`Ui::create`] |
-//! | `Free` | [`Ui::free`] (libera os filhos junto) |
-//! | `FindComponent` | [`Ui::find`] / [`Ui::find_in`] / [`Ui::find_path`] (`"frmClientes.btnSalvar"`) |
-//! | `Owner` (nomes únicos por form) | [`Ui::form_of`]: todo form é um escopo de nomes |
-//! | `Show` / `ShowModal` / `Close` | [`Ui::show`] / [`Ui::show_modal`] (resultado numa função) / [`Ui::close`] |
-//! | `SetPropValue` / RTTI | [`Ui::set_prop`] / [`Ui::get_prop`] |
-//! | `OnClick := ...` | [`Ui::on_click`] / [`Ui::on`] ou por nome via [`Ui::register_handler`] |
+//! | Componente | qualquer tipo que implementa [`Component`] |
+//! | Controle visual | um [`Component`] que tem um [`ControlBase`] |
+//! | Estender um componente | composição: o componente guarda o "pai" e devolve em [`Component::inner`] |
+//! | Criar e pôr num pai | [`Ui::add`] / [`Ui::create`] |
+//! | Liberar | [`Ui::free`] (libera os filhos junto) |
+//! | Achar pelo nome | [`Ui::find`] / [`Ui::find_in`] / [`Ui::find_path`] (`"frmClientes.btnSalvar"`) |
+//! | Nomes únicos por form | [`Ui::form_of`]: todo form é um escopo de nomes |
+//! | Abrir, abrir modal e fechar | [`Ui::show`] / [`Ui::show_modal`] (resultado numa função) / [`Ui::close`] |
+//! | Propriedade por nome | [`Ui::set_prop`] / [`Ui::get_prop`] |
+//! | Ligar um evento | [`Ui::on_click`] / [`Ui::on`] ou por nome via [`Ui::register_handler`] |
 
 pub mod activity;
 pub mod automation;
@@ -65,6 +65,10 @@ mod intercept;
 mod keyflow;
 mod layout;
 pub use layout::is_right_to_left_language;
+pub mod overscroll;
+pub mod system_bars;
+/// Um form em vários monitores (uma janela por monitor).
+pub mod span;
 pub mod pages;
 pub mod paint;
 pub mod palette;
@@ -112,11 +116,13 @@ pub use ui::DesignChanged;
 pub use input::{DragEnd, DragVisual, HINT_DELAY, ScreenPointer};
 pub use event::{
     EventArgs, EventCtx, GestureEvent, GesturePhase, Intercepted, Key, KeyEvent, Modifiers, PointerButton, PointerEvent, PointerKind,
-    PopupRequest, ScrollOptions, WHEEL_LINE, WheelEvent,
+    PopupRequest, ScrollOptions, SwipeDirection, SwipeEvent, WHEEL_LINE, WheelEvent,
 };
 pub use forms::{ModalResult, WindowPlacement};
 pub use bindings::Binding;
 pub use timing::TimerPrecision;
+pub use overscroll::Overscroll;
+pub use system_bars::{BarIcons, SystemBarsStyle};
 pub use transition::{TRANSITION_MS, Transition};
 pub use taskbar::{JumpTask, TaskbarEvent, TaskbarProgress, TaskbarSpec, ThumbButton};
 pub use tray::{TrayEvent, TrayEventKind, TraySpec};

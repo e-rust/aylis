@@ -168,6 +168,7 @@ pub struct NodeGraph {
     pub base: ControlBase,
     /// Encaixe na grade ao soltar um nó.
     pub snap: bool,
+    /// Pinta a grade de pontos no fundo.
     pub show_grid: bool,
     nodes: Vec<GraphNode>,
     cables: Vec<GraphCable>,

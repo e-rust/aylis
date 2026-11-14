@@ -558,7 +558,7 @@ impl Session {
         self.go("continue")
     }
 
-    /// Próxima linha (F8 no Delphi).
+    /// Próxima linha (F8).
     pub fn step_over(&mut self) -> Result<(), String> {
         self.go("next")
     }
@@ -611,7 +611,7 @@ impl Session {
 
     /// Um texto do Free Pascal (`AnsiString`, `UnicodeString`...) é um ponteiro para os
     /// caracteres, e o CodeLLDB mostra os bytes do ponteiro: lê o texto por ele e devolve
-    /// como no Delphi (`'abc'`). `None` se não é um texto do Pascal.
+    /// entre aspas simples (`'abc'`). `None` se não é um texto do Pascal.
     fn pascal_string(&mut self, frame: i64, expression: &str, kind: &str) -> Option<String> {
         if self.adapter != "lldb" {
             return None;
@@ -700,7 +700,7 @@ impl Session {
         value
     }
 
-    /// Calcula uma expressão no quadro (o "Avaliar/Modificar" do Delphi).
+    /// Calcula uma expressão no quadro.
     pub fn evaluate(&mut self, frame: i64, expression: &str) -> Result<String, String> {
         let body = self.request("evaluate", json!({ "expression": expression, "frameId": frame, "context": "watch" }))?;
         if let Some(text) = body["type"].as_str().and_then(|kind| self.pascal_string(frame, expression, kind)) {

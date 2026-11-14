@@ -36,10 +36,20 @@ pub struct Diagnostic {
     pub message: String,
 }
 
-/// O texto e o cursor guardados para o desfazer.
+/// Uma troca no texto: em `at` (em caracteres), saiu `removed` e entrou `inserted`.
 #[derive(Clone, Debug, PartialEq)]
-pub(super) struct Snapshot {
-    text: String,
+struct Change {
+    at: usize,
+    removed: String,
+    inserted: String,
+}
+
+/// Um passo do desfazer: as trocas, na ordem em que foram feitas, e o cursor de antes delas.
+/// Guarda só o trecho trocado (antes, uma cópia do texto inteiro a cada passo: num fonte de
+/// um milhão de linhas, 100 MB por alteração).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(super) struct Step {
+    changes: Vec<Change>,
     caret: usize,
     anchor: usize,
 }
@@ -71,21 +81,73 @@ fn changed_region(old: &str, new: &str) -> (usize, usize) {
     (prefix, new_len - suffix)
 }
 
+/// O trecho mudado por uma sequência de trocas, sem comparar os textos: nada antes do menor
+/// `at` muda, nem os caracteres do fim depois da troca mais perto do fim.
+#[derive(Default)]
+struct Region {
+    start: Option<usize>,
+    /// Quantos caracteres do fim nenhuma troca alcançou.
+    tail: Option<usize>,
+}
+
+impl Region {
+    fn add(&mut self, at: usize, tail: usize) {
+        self.start = Some(self.start.map_or(at, |s| s.min(at)));
+        self.tail = Some(self.tail.map_or(tail, |t| t.min(tail)));
+    }
+
+    /// O trecho (começo, fim) no texto de tamanho `len` depois das trocas.
+    fn of(&self, len: usize) -> (usize, usize) {
+        let end = len.saturating_sub(self.tail.unwrap_or(0));
+        (self.start.unwrap_or(len).min(end), end)
+    }
+}
+
 impl Memo {
     // ---------------------------------------------------------------- desfazer
 
-    /// Guarda o estado antes de uma mudança. Digitações (ou apagamentos) seguidas, sem
-    /// pausa, ficam num passo só, como no VS Code.
+    /// Abre um passo do desfazer antes de uma mudança (as trocas feitas até o próximo entram
+    /// nele). Digitações (ou apagamentos) seguidas, sem pausa, ficam num passo só, como no VS
+    /// Code.
     pub(super) fn begin_edit(&mut self, kind: EditKind, now: f64) {
+        // O texto mudou por fora desde a última troca guardada: as posições não valem mais.
+        if self.history_key != self.text_key() {
+            self.clear_history();
+        }
         let merge = kind != EditKind::Other && self.last_edit.is_some_and(|(k, t, at)| k == kind && now - t < 1.0 && at == self.caret);
         if !merge {
-            self.undo_stack.push(Snapshot { text: self.text.clone(), caret: self.caret, anchor: self.anchor });
+            self.undo_stack.push(Step { changes: Vec::new(), caret: self.caret, anchor: self.anchor });
             if self.undo_stack.len() > 500 {
                 self.undo_stack.remove(0);
             }
         }
         self.redo_stack.clear();
         self.last_edit = Some((kind, now, usize::MAX));
+    }
+
+    /// Guarda uma troca (feita com o texto de chave `before`) no passo aberto. Uma troca sem
+    /// passo aberto (pelo código do app) entra no último, como quando o desfazer guardava o
+    /// texto inteiro: desfazê-lo volta ao texto de antes dele, com ela junto.
+    pub(super) fn record(&mut self, before: u64, at: usize, removed: String, inserted: &str) {
+        if self.history_key != before {
+            self.undo_stack.clear();
+        }
+        self.redo_stack.clear();
+        self.history_key = self.text_key();
+        let Some(step) = self.undo_stack.last_mut() else { return };
+        // Digitando (ou apagando) em seguida: a mesma troca cresce.
+        if let Some(last) = step.changes.last_mut() {
+            if removed.is_empty() && last.removed.is_empty() && last.at + last.inserted.chars().count() == at {
+                last.inserted.push_str(inserted);
+                return;
+            }
+            if inserted.is_empty() && last.inserted.is_empty() && at + removed.chars().count() == last.at {
+                last.removed.insert_str(0, &removed);
+                last.at = at;
+                return;
+            }
+        }
+        step.changes.push(Change { at, removed, inserted: inserted.to_string() });
     }
 
     /// Depois da mudança: onde o cursor ficou (a próxima digitação junta se continuar daqui).
@@ -103,36 +165,56 @@ impl Memo {
         !self.redo_stack.is_empty()
     }
 
-    /// Ctrl+Z.
+    /// Ctrl+Z: desfaz as trocas do último passo, da última para a primeira.
     pub fn undo(&mut self) -> bool {
-        let Some(s) = self.undo_stack.pop() else { return false };
-        let region = changed_region(&self.text, &s.text);
-        self.redo_stack.push(Snapshot { text: std::mem::take(&mut self.text), caret: self.caret, anchor: self.anchor });
-        self.restore(s, region);
+        if self.history_key != self.text_key() {
+            self.clear_history();
+        }
+        let Some(step) = self.undo_stack.pop() else { return false };
+        let (caret, anchor) = (self.caret, self.anchor);
+        let mut region = Region::default();
+        for c in step.changes.iter().rev() {
+            let len = self.len();
+            let end = c.at + c.inserted.chars().count();
+            region.add(c.at, len - end.min(len));
+            self.splice_raw(c.at, end, &c.removed);
+        }
+        self.history_key = self.text_key();
+        self.restore(step.caret, step.anchor, region.of(self.len()));
+        self.redo_stack.push(Step { changes: step.changes, caret, anchor });
         true
     }
 
-    /// Ctrl+Y (ou Ctrl+Shift+Z).
+    /// Ctrl+Y (ou Ctrl+Shift+Z): refaz as trocas do passo, na ordem.
     pub fn redo(&mut self) -> bool {
-        let Some(s) = self.redo_stack.pop() else { return false };
-        let region = changed_region(&self.text, &s.text);
-        self.undo_stack.push(Snapshot { text: std::mem::take(&mut self.text), caret: self.caret, anchor: self.anchor });
-        self.restore(s, region);
+        if self.history_key != self.text_key() {
+            self.clear_history();
+        }
+        let Some(step) = self.redo_stack.pop() else { return false };
+        let (caret, anchor) = (self.caret, self.anchor);
+        let mut region = Region::default();
+        for c in &step.changes {
+            let len = self.len();
+            let end = c.at + c.removed.chars().count();
+            region.add(c.at, len - end.min(len));
+            self.splice_raw(c.at, end, &c.inserted);
+        }
+        self.history_key = self.text_key();
+        self.restore(step.caret, step.anchor, region.of(self.len()));
+        self.undo_stack.push(Step { changes: step.changes, caret, anchor });
         true
     }
 
-    /// Volta ao texto `s`; `region` é o trecho dele que muda (em caracteres). O cursor guardado
-    /// vale se está nesse trecho; senão (uma troca feita de fora, como o `edit_code` do agente,
-    /// com o cursor do usuário noutro lugar), ele vai ao fim do trecho e a rolagem vai junto:
-    /// antes pulava para o lugar de uma edição antiga (conferência de 08/11).
-    fn restore(&mut self, s: Snapshot, region: (usize, usize)) {
-        self.text = s.text;
-        self.text_changed();
+    /// Depois de desfazer ou refazer: `region` é o trecho que mudou (em caracteres). O cursor
+    /// guardado vale se está nesse trecho; senão (uma troca feita de fora, como o `edit_code`
+    /// do agente, com o cursor do usuário noutro lugar), ele vai ao fim do trecho e a rolagem
+    /// vai junto: antes pulava para o lugar de uma edição antiga (conferência de 08/11).
+    fn restore(&mut self, caret: usize, anchor: usize, region: (usize, usize)) {
         let (start, end) = region;
         let inside = |i: usize| i >= start && i <= end;
-        if inside(s.caret) && inside(s.anchor) {
-            self.caret = s.caret.min(self.len());
-            self.anchor = s.anchor.min(self.len());
+        if inside(caret) && inside(anchor) {
+            self.caret = caret.min(self.len());
+            self.anchor = anchor.min(self.len());
         } else {
             self.caret = end.min(self.len());
             self.anchor = self.caret;
@@ -147,6 +229,22 @@ impl Memo {
         self.undo_stack.clear();
         self.redo_stack.clear();
         self.last_edit = None;
+        self.history_key = self.text_key();
+    }
+
+    /// Quanto o desfazer guarda (em bytes de texto).
+    #[cfg(test)]
+    pub(super) fn history_bytes(&self) -> usize {
+        self.undo_stack.iter().chain(&self.redo_stack).flat_map(|s| &s.changes).map(|c| c.removed.len() + c.inserted.len()).sum()
+    }
+
+    /// Troca o texto todo por `text`, mudando só o trecho do meio que difere (o desfazer guarda
+    /// só ele; o realce e a tabela das linhas são acertados dali em diante).
+    pub(super) fn splice_whole(&mut self, text: &str) {
+        let (start, new_end) = changed_region(&self.text, text);
+        let old_end = self.len() - (text.chars().count() - new_end);
+        let middle: String = text.chars().skip(start).take(new_end - start).collect();
+        self.splice(start, old_end.max(start), &middle);
     }
 
     // ---------------------------------------------------------------- posições
@@ -154,38 +252,27 @@ impl Memo {
     /// O índice (em caracteres) da linha `line` (a partir de 0) e da coluna `column` contada
     /// em unidades UTF-16, como o LSP conta. Além do fim, o fim.
     pub fn index_of_position(&self, line: usize, column_utf16: usize) -> usize {
-        let mut index = 0;
-        for (i, l) in self.text.split('\n').enumerate() {
-            if i == line {
-                let mut units = 0;
-                for (n, c) in l.chars().enumerate() {
-                    if units >= column_utf16 {
-                        return index + n;
-                    }
-                    units += c.len_utf16();
-                }
-                return index + l.chars().count();
+        // Pela tabela das linhas: só a linha é contada (o servidor de linguagem manda uma
+        // posição por erro; andar o texto até cada uma pesava num fonte enorme).
+        let table = self.lines_of(self.text_key());
+        let Some(&(index, byte)) = table.get(line) else { return self.len() };
+        let end = table.get(line + 1).map_or(self.text.len(), |next| next.1 - 1);
+        let mut units = 0;
+        for (n, c) in self.text[byte..end].chars().enumerate() {
+            if units >= column_utf16 {
+                return index + n;
             }
-            index += l.chars().count() + 1;
+            units += c.len_utf16();
         }
-        self.len()
+        index + self.text[byte..end].chars().count()
     }
 
     /// A linha (a partir de 0) e a coluna em UTF-16 de um índice (em caracteres).
     pub fn position_of_index(&self, index: usize) -> (usize, usize) {
-        let (mut line, mut col) = (0, 0);
-        for (i, c) in self.text.chars().enumerate() {
-            if i == index {
-                break;
-            }
-            if c == '\n' {
-                line += 1;
-                col = 0;
-            } else {
-                col += c.len_utf16();
-            }
-        }
-        (line, col)
+        let index = index.min(self.len());
+        let line = self.line_of(index);
+        let start = self.lines_of(self.text_key())[line].0;
+        (line, self.slice(start, index).chars().map(char::len_utf16).sum())
     }
 
     /// O índice do cursor (em caracteres).
@@ -204,9 +291,7 @@ impl Memo {
         let caret = self.caret;
         let mut shift: isize = 0;
         for (start, end, text) in edits {
-            let (a, b) = (self.byte_at(start), self.byte_at(end.max(start)));
-            self.text.replace_range(a..b, &text);
-            self.text_changed();
+            self.splice(start, end.max(start), &text);
             if start < caret {
                 shift += text.chars().count() as isize - (end.max(start) - start) as isize;
             }
@@ -224,8 +309,7 @@ impl Memo {
             return;
         }
         self.begin_edit(EditKind::Other, now);
-        self.text = text.to_string();
-        self.text_changed();
+        self.splice_whole(text);
         self.caret = self.caret.min(self.len());
         self.anchor = self.anchor.min(self.len());
         self.end_edit();
@@ -385,7 +469,7 @@ impl Memo {
     /// As sugestões que casam com o que já foi digitado da palavra (em ordem: as que
     /// começam igual primeiro).
     fn filter_suggestions(&mut self) {
-        let typed: String = self.text.chars().skip(self.suggest_start).take(self.caret.saturating_sub(self.suggest_start)).collect();
+        let typed = self.slice(self.suggest_start.min(self.caret), self.caret).to_string();
         let typed = typed.to_lowercase();
         let mut scored: Vec<(u8, usize)> = self
             .suggestions
@@ -499,11 +583,11 @@ impl Memo {
 
     /// O começo da linha `line` (a partir de 0), em caracteres.
     fn line_index(&self, line: usize) -> usize {
-        self.text.split('\n').take(line).map(|l| l.chars().count() + 1).sum::<usize>().min(self.len())
+        self.lines_of(self.text_key()).get(line).map_or(self.len(), |&(c, _)| c)
     }
 
     fn line_count(&self) -> usize {
-        self.text.split('\n').count()
+        self.lines_of(self.text_key()).len()
     }
 
     /// O comentário de linha da linguagem (o do `language-configuration.json` registrado, se
@@ -572,8 +656,7 @@ impl Memo {
             let moved = lines.remove(last + 1);
             lines.insert(first, moved);
         }
-        self.text = lines.join("\n");
-        self.text_changed();
+        self.splice_whole(&lines.join("\n"));
         let delta: isize = if up { -1 } else { 1 };
         let at = |p: (usize, usize)| (p.0 as isize + delta).max(0) as usize;
         self.caret = self.line_index(at(caret_pos)) + self.col_chars(at(caret_pos), caret_pos.1);
@@ -694,7 +777,7 @@ impl Memo {
     /// Home esperto: o primeiro caractere da linha que não é espaço; de novo, a coluna 0.
     pub(super) fn smart_home(&mut self, extend: bool) {
         let start = self.line_start(self.caret);
-        let lead = self.text.chars().skip(start).take_while(|c| *c == ' ' || *c == '\t').count();
+        let lead = self.text[self.byte_at(start)..].chars().take_while(|c| *c == ' ' || *c == '\t').count();
         let to = if self.caret == start + lead { start } else { start + lead };
         self.move_to(to, extend);
     }
@@ -858,7 +941,7 @@ impl Memo {
             }
             Key::Backspace if !ctrl && !alt && !self.has_selection() && !self.read_only => {
                 // Entre um par vazio ("(|)"), apaga os dois.
-                let chars: Vec<char> = self.text.chars().skip(self.caret.saturating_sub(1)).take(2).collect();
+                let chars: Vec<char> = self.text[self.byte_at(self.caret.saturating_sub(1))..].chars().take(2).collect();
                 if self.caret > 0 && chars.len() == 2 && self.pairs().iter().any(|&(o, c)| chars[0] == o && chars[1] == c) {
                     self.begin_edit(EditKind::Deleting, now);
                     let at = self.caret - 1;
@@ -900,8 +983,8 @@ impl Memo {
         let mut chars = text.chars();
         let (Some(c), None) = (chars.next(), chars.next()) else { return false };
         let now = ctx.ui.time();
-        let next = self.text.chars().nth(self.caret);
-        let prev = self.caret.checked_sub(1).and_then(|i| self.text.chars().nth(i));
+        let next = self.char_at(self.caret);
+        let prev = self.caret.checked_sub(1).and_then(|i| self.char_at(i));
         // Fecha o que já está fechado: só passa por cima.
         if !self.has_selection() && next == Some(c) && self.pairs().iter().any(|&(o, cl)| cl == c && (o != c || prev.is_some_and(|p| p != '\\'))) {
             self.move_to(self.caret + 1, false);
@@ -948,7 +1031,7 @@ impl Memo {
         if !self.code_editing {
             return;
         }
-        if is_word(c) || c == '.' || (c == ':' && self.caret >= 2 && self.text.chars().nth(self.caret - 2) == Some(':')) || c == '>' {
+        if is_word(c) || c == '.' || (c == ':' && self.caret >= 2 && self.char_at(self.caret - 2) == Some(':')) || c == '>' {
             if self.suggestions_visible() && is_word(c) {
                 self.filter_suggestions();
             }
@@ -995,7 +1078,7 @@ impl Memo {
             .pointer_at
             .filter(|p| ctrl && self.code_editing && !self.dragging && self.bar_at(*p).is_none() && p.x >= self.origin.get().x)
             .map(|p| self.word_bounds(self.index_at(ctx, p)))
-            .filter(|&(a, b)| a < b && self.text.chars().nth(a).is_some_and(|c| c.is_alphabetic() || c == '_'));
+            .filter(|&(a, b)| a < b && self.char_at(a).is_some_and(|c| c.is_alphabetic() || c == '_'));
         if link == self.link {
             return;
         }

@@ -19,16 +19,16 @@ Editor da curva de suavização (o de `cubic-bezier` do DevTools): arraste os do
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `x1` | X1 da curva | número |  |
-| `y1` | Y1 da curva | número |  |
-| `x2` | X2 da curva | número |  |
-| `y2` | Y2 da curva | número |  |
+| `x1` | X1 da curva | número | O tempo (de 0 a 1) do primeiro ponto de controle da curva. |
+| `y1` | Y1 da curva | número | O valor do primeiro ponto de controle (pode passar de 0..1). |
+| `x2` | X2 da curva | número | O tempo (de 0 a 1) do segundo ponto de controle da curva. |
+| `y2` | Y2 da curva | número | O valor do segundo ponto de controle (pode passar de 0..1). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_commit` | — | — |  |
 
 ## Em código

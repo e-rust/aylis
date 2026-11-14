@@ -179,7 +179,7 @@ impl Stroke {
     }
 }
 
-/// Sombra projetada (o `TShadowEffect`).
+/// Sombra projetada.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Shadow {
     pub color: Color,
@@ -258,7 +258,7 @@ pub struct FontSpec {
     pub weight: FontWeight,
     pub italic: bool,
     pub underline: bool,
-    /// Riscado no meio (o `fsStrikeOut` do Delphi).
+    /// Riscado no meio.
     pub strikeout: bool,
 }
 
@@ -288,7 +288,7 @@ pub enum TextAlign {
     Center,
     /// Direita (ou base).
     Trailing,
-    /// Justificado (como o `taJustify` do Delphi): as linhas quebradas ocupam a largura
+    /// Justificado: as linhas quebradas ocupam a largura
     /// toda, com o espaço que sobra dividido entre as palavras; a última linha de cada
     /// parágrafo (e o texto de uma linha só) fica à esquerda. Na vertical, vale o topo.
     Justify,

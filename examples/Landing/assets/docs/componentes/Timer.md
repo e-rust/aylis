@@ -1,6 +1,6 @@
 # Timer
 
-Dispara on_timer a cada intervalo (como o TTimer).
+Dispara on_timer a cada intervalo.
 
 **Paleta:** System · **componente não visual**
 
@@ -10,10 +10,10 @@ Dispara on_timer a cada intervalo (como o TTimer).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `interval` | Intervalo | duração (ms) |  |
-| `enabled` | Habilitado | lógico |  |
-| `precision` | Precisão | um de: `normal`, `high`, `exact` |  |
-| `background` | Fundo | lógico |  |
+| `interval` | Intervalo | duração (ms) | O intervalo entre os disparos do `on_timer`, em milissegundos. |
+| `enabled` | Habilitado | lógico | Contando; desligado, parado e sem gastar nada. |
+| `precision` | Precisão | um de: `normal`, `high`, `exact` | Quanto o disparo pode atrasar: `normal` (o relógio do sistema, ~15,6 ms no Windows), `high` (~1 ms) ou `exact` (abaixo de 0,1 ms, gastando CPU no fim da espera). |
+| `background` | Fundo | lógico | Conta numa thread própria, sem depender do laço da tela estar livre; o `on_timer` continua chegando na tela. |
 | `one_shot` | Disparo único | lógico | Dispara uma vez e se desliga (`enabled` volta a `false`); ligar de novo conta outra vez. |
 
 ## Eventos

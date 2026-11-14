@@ -350,7 +350,7 @@ mod tests {
     /// O hover do rust-analyzer: o caminho do módulo e a assinatura em blocos de código, a
     /// linha, e a documentação com Markdown (negrito, `código`, um link, um título e um
     /// exemplo sem linguagem).
-    const RUST_ANALYZER: &str = "\n```rust\naylis_core::ui::Ui\n```\n\n```rust\npub fn set_prop(&mut self, id: ComponentId, name: &str, value: impl Into<PropValue>) -> Result<(), Error>\n```\n\n---\n\nMuda uma propriedade **pelo nome** (como o `SetPropValue`). Veja [`get_prop`](https://docs.rs/aylis/latest/aylis/struct.Ui.html#method.get_prop).\n\n# Examples\n\n```\nui.set_prop(id, \"text\", \"Olá\")?;\n```\n";
+    const RUST_ANALYZER: &str = "\n```rust\naylis_core::ui::Ui\n```\n\n```rust\npub fn set_prop(&mut self, id: ComponentId, name: &str, value: impl Into<PropValue>) -> Result<(), Error>\n```\n\n---\n\nMuda uma propriedade **pelo nome**. Veja [`get_prop`](https://docs.rs/aylis/latest/aylis/struct.Ui.html#method.get_prop).\n\n# Examples\n\n```\nui.set_prop(id, \"text\", \"Olá\")?;\n```\n";
 
     #[test]
     fn the_rust_analyzer_hover_becomes_the_right_parts() {
@@ -361,7 +361,7 @@ mod tests {
                 HoverPart::Code { lang: "rust".into(), text: "aylis_core::ui::Ui".into() },
                 HoverPart::Code { lang: "rust".into(), text: "pub fn set_prop(&mut self, id: ComponentId, name: &str, value: impl Into<PropValue>) -> Result<(), Error>".into() },
                 HoverPart::Separator,
-                HoverPart::Text("Muda uma propriedade **pelo nome** (como o `SetPropValue`). Veja `get_prop`.\n\n# Examples".into()),
+                HoverPart::Text("Muda uma propriedade **pelo nome**. Veja `get_prop`.\n\n# Examples".into()),
                 HoverPart::Code { lang: String::new(), text: "ui.set_prop(id, \"text\", \"Olá\")?;".into() },
             ]
         );

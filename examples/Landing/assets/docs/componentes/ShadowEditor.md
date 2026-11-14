@@ -18,17 +18,17 @@ Editor de sombra (o do DevTools para `box-shadow`): o quadro arrasta o deslocame
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `offset_x` | Deslocamento X | número |  |
-| `offset_y` | Deslocamento Y | número |  |
-| `blur` | Desfoque | número |  |
-| `spread` | Expansão | número |  |
-| `color` | Cor | cor |  |
+| `offset_x` | Deslocamento X | número | Deslocamento da sombra para a direita (negativo: para a esquerda), em pontos. |
+| `offset_y` | Deslocamento Y | número | Deslocamento da sombra para baixo (negativo: para cima), em pontos. |
+| `blur` | Desfoque | número | Desfoque da sombra, em pontos; 0: borda nítida. |
+| `spread` | Expansão | número | Quanto a sombra cresce (negativo: encolhe) além do tamanho do controle, em pontos. |
+| `color` | Cor | cor | A cor da sombra (com a transparência). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_commit` | — | — |  |
 
 ## Em código

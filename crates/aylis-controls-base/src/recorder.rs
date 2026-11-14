@@ -414,6 +414,7 @@ fn append_line(file: &Path, line: &str) {
 /// digitação. Ligar e desligar o `record_sensitive` ou o `sensitive` de um campo durante a
 /// gravação fica registrado nela.
 pub struct EventRecorder {
+    /// Grava: ligado, começa sozinho ao entrar na tela; desligar para a gravação.
     pub active: bool,
     /// Pasta das gravações; vazio: `<pasta do app>/recordings` ([`app_data_dir`]).
     pub folder: String,
@@ -736,17 +737,73 @@ impl Recording {
 /// atalhos, erros (os últimos com a mensagem) e métricas do próprio app
 /// ([`Analytics::track`]). Grava a cada 30 s com novidades, num erro e ao fechar o form
 /// principal. [`Analytics::summary`] devolve o JSON.
+///
+/// Com `performance` (desligado por padrão: decisão do autor de 08/11, só quando o app pede),
+/// também o desempenho, somado entre as sessões em `"performance"`: por handler, quantas vezes,
+/// o total, a média, o p95 e o máximo; e os quadros (quantos, os lentos, acima de
+/// [`SLOW_FRAME_MS`], e o mais lento). Mede pelo profiler do núcleo ([`aylis_core::profile`]);
+/// se ele já estava ligado por outro (o Profiler da IDE), não mexe nele e não mede. Nada vai
+/// para a rede.
 pub struct Analytics {
+    /// Mede: ligado (o padrão), começa sozinho ao entrar na tela; desligar para de medir.
     pub active: bool,
     /// O arquivo; vazio: `<pasta do app>/analytics.json`.
     pub file: String,
+    /// O nome do app (a pasta do arquivo); vazio: o título do form principal.
     pub app_name: String,
+    /// Mede também o tempo dos handlers e os quadros lentos (desligado por padrão).
+    pub performance: bool,
     state: Rc<RefCell<Option<Metrics>>>,
 }
 
 impl Default for Analytics {
     fn default() -> Self {
-        Self { active: true, file: String::new(), app_name: String::new(), state: Rc::default() }
+        Self { active: true, file: String::new(), app_name: String::new(), performance: false, state: Rc::default() }
+    }
+}
+
+/// Um quadro acima disso (ms) é lento: dois quadros a 60 Hz.
+pub const SLOW_FRAME_MS: f64 = 33.3;
+
+/// Os limites (ms) das faixas do histograma de cada handler: a soma entre sessões guarda as
+/// contagens por faixa, e o p95 sai delas (o limite de cima da faixa, nunca acima do máximo).
+const BUCKETS_MS: [f64; 13] = [1.0, 2.0, 4.0, 8.0, 16.0, 33.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0];
+
+/// Soma os blocos do profiler no `"performance"` das métricas.
+fn add_performance(data: &mut Value, spans: &[aylis_core::profile::Span]) {
+    use aylis_core::profile::Lane;
+    let round = |v: f64| (v * 1000.0).round() / 1000.0;
+    for s in spans {
+        let ms = s.duration * 1000.0;
+        match s.lane {
+            Lane::Handler => {
+                let h = &mut data["performance"]["handlers"][&s.name];
+                let count = h["count"].as_u64().unwrap_or(0) + 1;
+                let total = h["total_ms"].as_f64().unwrap_or(0.0) + ms;
+                let max = h["max_ms"].as_f64().unwrap_or(0.0).max(ms);
+                let mut buckets: Vec<u64> = h["buckets"].as_array().map(|b| b.iter().map(|v| v.as_u64().unwrap_or(0)).collect()).unwrap_or_default();
+                buckets.resize(BUCKETS_MS.len() + 1, 0);
+                buckets[BUCKETS_MS.iter().position(|&edge| ms <= edge).unwrap_or(BUCKETS_MS.len())] += 1;
+                // O p95: a faixa em que a contagem acumulada passa de 95%.
+                let wanted = (count as f64 * 0.95).ceil() as u64;
+                let mut seen = 0;
+                let p95_bucket = buckets.iter().position(|&n| {
+                    seen += n;
+                    seen >= wanted
+                });
+                let p95 = p95_bucket.and_then(|i| BUCKETS_MS.get(i).copied()).unwrap_or(max).min(max);
+                *h = json!({ "count": count, "total_ms": round(total), "mean_ms": round(total / count as f64), "p95_ms": round(p95), "max_ms": round(max), "buckets": buckets });
+            }
+            // A pintura de um form inteiro é um quadro.
+            Lane::Paint => {
+                let f = &mut data["performance"]["frames"];
+                let count = f["count"].as_u64().unwrap_or(0) + 1;
+                let slow = f["slow"].as_u64().unwrap_or(0) + u64::from(ms > SLOW_FRAME_MS);
+                let max = f["max_ms"].as_f64().unwrap_or(0.0).max(ms);
+                *f = json!({ "count": count, "slow": slow, "slow_ms": SLOW_FRAME_MS, "max_ms": round(max) });
+            }
+            _ => {}
+        }
     }
 }
 
@@ -773,9 +830,45 @@ struct Metrics {
     session_start: Instant,
     last_save: Instant,
     dirty: bool,
+    /// O profiler foi ligado por estas métricas (o `performance`): só então elas tiram os blocos.
+    profiling: bool,
+    /// Quando os blocos do profiler foram tirados pela última vez.
+    last_take: Instant,
 }
 
 impl Metrics {
+    /// Liga o profiler para medir o desempenho, se ninguém o ligou antes.
+    fn start_profiling(&mut self) {
+        if !self.profiling && !aylis_core::profile::is_on() {
+            aylis_core::profile::start();
+            self.profiling = true;
+            if !self.data["performance"].is_object() {
+                self.data["performance"] = json!({ "handlers": {}, "frames": {} });
+            }
+        }
+    }
+
+    /// Soma o que o profiler mediu desde a última vez.
+    fn take_profile(&mut self) {
+        if !self.profiling {
+            return;
+        }
+        let (spans, _, _) = aylis_core::profile::take();
+        self.last_take = Instant::now();
+        if !spans.is_empty() {
+            add_performance(&mut self.data, &spans);
+            self.dirty = true;
+        }
+    }
+
+    fn stop_profiling(&mut self) {
+        if self.profiling {
+            self.take_profile();
+            aylis_core::profile::stop();
+            self.profiling = false;
+        }
+    }
+
     fn bump(&mut self, section: &str, key: &str) {
         let v = &mut self.data[section][key];
         *v = json!(v.as_u64().unwrap_or(0) + 1);
@@ -783,6 +876,7 @@ impl Metrics {
     }
 
     fn save(&mut self) {
+        self.take_profile();
         let elapsed = self.session_start.elapsed().as_secs_f64();
         let mut data = self.data.clone();
         let total = data["total_time_s"].as_f64().unwrap_or(0.0) + elapsed;
@@ -810,6 +904,7 @@ impl Analytics {
             return;
         }
         let state = a.state.clone();
+        let performance = a.performance;
         let app = if a.app_name.is_empty() { ui.main_form().and_then(|f| caption(ui, f)).unwrap_or_else(|| "aylis-app".into()) } else { a.app_name.clone() };
         let file = if a.file.is_empty() { app_data_dir(&app).join("analytics.json") } else { PathBuf::from(&a.file) };
         let mut data: Value = std::fs::read_to_string(&file).ok().and_then(|t| serde_json::from_str(&t).ok()).filter(Value::is_object).unwrap_or_else(|| json!({}));
@@ -888,12 +983,19 @@ impl Analytics {
                 }
                 _ => {}
             }
+            // O desempenho: o que o profiler mediu, a cada segundo com atividade (parado, nada).
+            if m.profiling && m.last_take.elapsed().as_secs() >= 1 {
+                m.take_profile();
+            }
             if m.dirty && m.last_save.elapsed().as_secs() >= 30 {
                 m.save();
             }
         });
         let open: HashMap<ComponentId, (String, Instant)> = ui.open_forms().into_iter().map(|f| (f, (ui.name(f).unwrap_or_default().to_string(), Instant::now()))).collect();
-        let mut m = Metrics { observer, file, data, open, session_start: Instant::now(), last_save: Instant::now(), dirty: true };
+        let mut m = Metrics { observer, file, data, open, session_start: Instant::now(), last_save: Instant::now(), dirty: true, profiling: false, last_take: Instant::now() };
+        if performance {
+            m.start_profiling();
+        }
         m.save();
         *state.borrow_mut() = Some(m);
     }
@@ -902,6 +1004,7 @@ impl Analytics {
         let Some(m) = ui.get::<Analytics>(id).and_then(|a| a.state.borrow_mut().take()) else { return };
         ui.remove_observer(m.observer);
         let mut m = m;
+        m.stop_profiling();
         m.save();
     }
 
@@ -940,7 +1043,8 @@ impl Component for Analytics {
     properties! {
         active: bool => "Behavior",
         file: String => "Behavior",
-        app_name: String => "Behavior"
+        app_name: String => "Behavior",
+        performance: bool => "Behavior"
     }
 
     fn timer_interval(&self) -> Option<f64> {
@@ -959,6 +1063,12 @@ impl Component for Analytics {
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        // Ligar ou desligar o desempenho durante a medição.
+        if name == "performance" {
+            if let Some(m) = self.state.borrow_mut().as_mut() {
+                if self.performance { m.start_profiling() } else { m.stop_profiling() }
+            }
+        }
         if name == "active" && !self.active && self.started() {
             let id = ctx.id;
             ctx.ui.poster().post(move |ui| {

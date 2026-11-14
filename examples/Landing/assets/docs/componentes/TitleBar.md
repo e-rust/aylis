@@ -13,9 +13,9 @@ Barra de título própria da janela, desenhada pelo Aylis: o título, os botões
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `caption` | Título | texto | Vazio: o `caption` do form. |
-| `show_minimize` | Mostra o minimizar | lógico |  |
-| `show_maximize` | Mostra o maximizar | lógico |  |
-| `show_close` | Mostra o fechar | lógico |  |
+| `show_minimize` | Mostra o minimizar | lógico | Mostra o botão minimizar. |
+| `show_maximize` | Mostra o maximizar | lógico | Mostra o botão maximizar/restaurar. |
+| `show_close` | Mostra o fechar | lógico | Mostra o botão fechar. |
 
 ## Em código
 

@@ -284,14 +284,18 @@ impl Bitmap {
 /// Uma imagem para desenhar com o mouse (o Paint). Veja o [módulo](self).
 pub struct PaintCanvas {
     pub base: ControlBase,
+    /// A ferramenta do mouse: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`,
+    /// `fill` (balde), `picker` (conta-gotas) ou `select`.
     pub tool: PaintTool,
     /// Cor 1 (botão esquerdo).
     pub color: Color,
     /// Cor 2 (botão direito, borracha e preenchimento das formas).
     pub back_color: Color,
+    /// A espessura do traço, em pixels da imagem (1 a 64).
     pub brush_size: i64,
     /// Retângulo e elipse preenchidos com `back_color`.
     pub filled: bool,
+    /// O aumento da imagem na tela (1 = tamanho real; de 0,1 a 16).
     pub zoom: f32,
     bitmap: Bitmap,
     undo: Vec<Bitmap>,

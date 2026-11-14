@@ -118,6 +118,10 @@ mod print;
 mod notify;
 #[cfg(windows)]
 mod url_scheme;
+#[cfg(windows)]
+mod share_windows;
+#[cfg(all(target_os = "linux", not(mobile)))]
+mod url_scheme_linux;
 mod input;
 #[cfg(target_os = "android")]
 mod android_jni;
@@ -165,6 +169,8 @@ mod tray;
 mod badge;
 #[cfg(windows)]
 mod win32;
+// Um form em vários monitores (uma janela por monitor).
+mod span;
 #[cfg(windows)]
 mod drag_window;
 #[cfg(target_os = "windows")]
@@ -566,7 +572,7 @@ fn run_on(
         let _ = ui.set_prop(form, "height", size.height);
         let _ = ui.set_prop(form, "caption", format!("{} — {}", ui.get_prop(form, "caption").ok().and_then(|c| c.to_str().ok().map(str::to_string)).unwrap_or_default(), device.name));
     }
-    // O form passado é o principal (como o `Application.CreateForm` do primeiro form).
+    // O form passado é o principal.
     ui.set_main_form(form);
     // Celular e navegador: os forms se empilham numa superfície (abrem e fecham com a
     // `transition` deles).
@@ -600,6 +606,8 @@ fn run_on(
         keyboard: false,
         #[cfg(target_os = "android")]
         system_bars: None,
+        #[cfg(any(target_os = "ios", web))]
+        system_bars_applied: 0,
         tapped: false,
         started_once: false,
         #[cfg(windows)]
@@ -631,6 +639,9 @@ fn run_on(
             None => placements::Placements::load(),
         },
         hovered_files: Vec::new(),
+        spans: Default::default(),
+        span_checks: Vec::new(),
+        deactivations: Vec::new(),
     };
     #[cfg(web)]
     {
@@ -793,6 +804,18 @@ pub fn install_offscreen_service(_ui: &mut Ui, _renderer: Renderer) {}
 
 #[cfg(not(web))]
 fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
+    // O efeito de fim da rolagem do sistema (o `overscroll: auto`): o Android até o 11 com o
+    // brilho, do 12 em diante esticando; o iOS com a mola; o desktop e o navegador sem nada.
+    #[cfg(target_os = "android")]
+    ui.set_overscroll_style(if android_device::sdk() >= 31 { aylis_core::Overscroll::Stretch } else { aylis_core::Overscroll::Glow });
+    #[cfg(target_os = "ios")]
+    ui.set_overscroll_style(aylis_core::Overscroll::Bounce);
+    // As barras do sistema (o `SystemBars`): o Android, o iOS (com a faixa da cor pintada pelo
+    // núcleo) e a `theme-color` do navegador.
+    #[cfg(any(target_os = "android", target_os = "ios", web))]
+    aylis_core::system_bars::set_available(true);
+    #[cfg(target_os = "ios")]
+    ui.set_paints_status_strip(true);
     let poster = ui.poster();
     let services = ui.services_mut();
     #[cfg(native_skia)]
@@ -1173,7 +1196,7 @@ struct FormWindow {
     enabled: bool,
     /// `border_style = custom`: a borda sob o mouse (redimensiona ao apertar).
     edge: Option<winit::window::ResizeDirection>,
-    /// O título mostrado (o `caption` do form muda e a janela acompanha, como no Delphi).
+    /// O título mostrado (o `caption` do form muda e a janela acompanha).
     title: String,
     /// O tamanho mínimo e o máximo aplicados à janela (largura e altura, lógicos com o zoom;
     /// 0 = sem limite): `min_width`/`min_height`/`max_width`/`max_height` do form.
@@ -1188,6 +1211,13 @@ struct FormWindow {
     minimized: bool,
     /// A barra de título escura (acompanha o tema).
     dark_title: bool,
+    /// O form em vários monitores (`span_monitors`): o pedaço que esta janela mostra.
+    span: Option<span::SpanPiece>,
+    /// A janela tem o foco (os pedaços de um form: o `on_deactivate` só sai quando nenhum tem).
+    focused: bool,
+    /// O mouse está sobre ela (os pedaços de um form: o `pointer_leave` só sai quando o mouse
+    /// sai de todos).
+    hovered: bool,
 }
 
 struct App {
@@ -1208,9 +1238,12 @@ struct App {
     modifiers: Modifiers,
     /// Teclado virtual aberto (celular).
     keyboard: bool,
-    /// Android: a cor já mandada para as barras do sistema.
+    /// Android: o que já foi mandado às barras do sistema (as cores, os ícones escuros e o que
+    /// aparece); iOS e navegador: a versão do pedido (`SystemBars`) já aplicada.
     #[cfg(target_os = "android")]
-    system_bars: Option<aylis_core::Color>,
+    system_bars: Option<(aylis_core::Color, aylis_core::Color, bool, bool, bool, bool)>,
+    #[cfg(any(target_os = "ios", web))]
+    system_bars_applied: u64,
     /// Houve um toque: se o foco está num campo, pede o teclado de novo (o usuário pode
     /// tê-lo fechado com o "voltar" sem o campo perder o foco).
     tapped: bool,
@@ -1259,6 +1292,12 @@ struct App {
     /// A taxa do monitor e quando foi perguntada (pedir ao sistema leva milissegundos, e o
     /// arraste com um mouse rápido pergunta a cada evento).
     display_hz: std::cell::Cell<Option<(Instant, f64)>>,
+    /// Os forms em vários monitores (`span.rs`).
+    spans: std::collections::HashMap<ComponentId, span::SpanForm>,
+    /// Os forms que conferem, na próxima volta do laço, se viram janelas por monitor.
+    span_checks: Vec<ComponentId>,
+    /// Os forms com um pedaço que perdeu o foco (o `on_deactivate` sai se nenhum ganhou).
+    deactivations: Vec<ComponentId>,
 }
 
 impl App {
@@ -1294,7 +1333,7 @@ impl App {
     fn resize_edge(&self, index: usize, p: PointF) -> Option<winit::window::ResizeDirection> {
         use winit::window::ResizeDirection as D;
         let w = self.windows.get(index)?;
-        if SINGLE_SURFACE || w.window.is_maximized() || self.enum_prop(w.form, "border_style") != "custom" {
+        if SINGLE_SURFACE || w.span.is_some() || w.window.is_maximized() || self.enum_prop(w.form, "border_style") != "custom" {
             return None;
         }
         let size = w.window.inner_size().to_logical::<f32>(w.window.scale_factor() * self.ui.form_zoom(w.form) as f64);
@@ -1323,6 +1362,11 @@ impl App {
             // mutável, então fica fora do `match` abaixo).
             if command == WindowCommand::UpdateGpu {
                 self.update_gpu(form);
+                continue;
+            }
+            // O form em vários monitores (ou que pode virar): o lugar, o tamanho e a tela cheia
+            // refazem os pedaços (`span.rs`).
+            if self.span_command(form, command) {
                 continue;
             }
             let Some(w) = self.window_of(form) else { continue };
@@ -1417,7 +1461,7 @@ impl App {
                 WindowCommand::UpdateCorners => win32::set_window_corners(window, self.corner_preference(form)),
                 #[cfg(not(windows))]
                 WindowCommand::UpdateCorners => {}
-                WindowCommand::Close | WindowCommand::UpdateGpu => {}
+                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan => {}
             }
         }
     }
@@ -1442,9 +1486,10 @@ impl App {
                 win32::CaptionInput::Leave => self.ui.pointer_leave(form),
             }
         }
-        for w in &self.windows {
+        // Um form em vários monitores não maximiza (e a janela principal não começa no canto dele).
+        for w in self.windows.iter().filter(|w| !w.is_extra()) {
             let scale = w.window.scale_factor() as f32 * self.ui.form_zoom(w.form);
-            let rect = self.ui.maximize_button(w.form).map(|r| {
+            let rect = self.ui.maximize_button(w.form).filter(|_| w.span.is_none()).map(|r| {
                 ((r.x * scale).round() as i32, (r.y * scale).round() as i32, (r.right() * scale).round() as i32, (r.bottom() * scale).round() as i32)
             });
             win32::set_maximize_button(w.form, rect);
@@ -1462,7 +1507,8 @@ impl App {
     /// Trata um evento de entrada da janela `index`. Devolve `false` se não for de entrada.
     fn handle_input(&mut self, index: usize, event: &WindowEvent) -> bool {
         let form = self.windows[index].form;
-        let scale = self.windows[index].window.scale_factor() * self.ui.form_zoom(form) as f64;
+        // Nos pedaços de um form em vários monitores, a escala do form (`span.rs`).
+        let scale = self.input_scale(index);
         self.ui.set_time(self.started.elapsed().as_secs_f64());
         // Navegador com janelas: o ponteiro vai ao form sob ele; o teclado, ao de cima.
         #[cfg(web)]
@@ -1486,7 +1532,15 @@ impl App {
     fn drag_between_windows(&mut self, index: usize, form: ComponentId, position: winit::dpi::PhysicalPosition<f64>) {
         let w = &self.windows[index];
         let size = w.window.inner_size();
-        let inside = position.x >= 0.0 && position.y >= 0.0 && position.x < size.width as f64 && position.y < size.height as f64;
+        let inside = match w.span {
+            // Um form em vários monitores: dentro de qualquer pedaço dele é dentro (o
+            // `pointer_move` já levou o ponto ao form).
+            Some(_) => {
+                let p = self.window_to_form(index, position.x, position.y, self.input_scale(index));
+                self.ui.control(form).is_some_and(|cb| p.x >= 0.0 && p.y >= 0.0 && p.x < cb.width() && p.y < cb.height())
+            }
+            None => position.x >= 0.0 && position.y >= 0.0 && position.x < size.width as f64 && position.y < size.height as f64,
+        };
         let Ok(origin) = w.window.inner_position() else { return };
         let screen = (origin.x as f64 + position.x, origin.y as f64 + position.y);
         // Quem solta fora das janelas (a aba que vira janela) precisa saber onde.
@@ -1494,14 +1548,13 @@ impl App {
         let mut over = None;
         if !inside {
             for (i, other) in self.windows.iter().enumerate() {
-                if i == index || other.window.is_minimized() == Some(true) {
+                if i == index || other.form == form || other.window.is_minimized() == Some(true) {
                     continue;
                 }
                 let (Ok(at), size) = (other.window.inner_position(), other.window.inner_size()) else { continue };
                 let local = (screen.0 - at.x as f64, screen.1 - at.y as f64);
                 if local.0 >= 0.0 && local.1 >= 0.0 && local.0 < size.width as f64 && local.1 < size.height as f64 {
-                    let scale = other.window.scale_factor() * self.ui.form_zoom(other.form) as f64;
-                    over = Some((other.form, PointF::new((local.0 / scale) as f32, (local.1 / scale) as f32)));
+                    over = Some((other.form, self.window_to_form(i, local.0, local.1, self.input_scale(i))));
                     break;
                 }
             }
@@ -1521,9 +1574,10 @@ impl App {
         match event {
             WindowEvent::ModifiersChanged(m) => self.modifiers = input::modifiers(m.state()),
             WindowEvent::CursorMoved { position, .. } => {
-                let p = position.to_logical::<f32>(scale);
-                let p = PointF::new(p.x, p.y);
+                // O ponto no form (num pedaço de um form em vários monitores, mais a origem dele).
+                let p = self.window_to_form(index, position.x, position.y, scale);
                 self.windows[index].pointer = p;
+                self.windows[index].hovered = true;
                 // Janela sem a barra do sistema (`border_style = custom`): as bordas
                 // redimensionam.
                 let edge = self.resize_edge(index, p);
@@ -1540,9 +1594,10 @@ impl App {
                     #[cfg(windows)]
                     {
                         let w = &mut self.windows[index];
-                        for (x, y) in w.trail.points_before(&w.window, position.x, position.y) {
-                            let q = winit::dpi::PhysicalPosition::new(x, y).to_logical::<f32>(scale);
-                            self.ui.pointer_move(form, pointer_event(PointF::new(q.x, q.y), Default::default(), PointerKind::Mouse));
+                        let points = w.trail.points_before(&w.window, position.x, position.y);
+                        for (x, y) in points {
+                            let q = self.window_to_form(index, x, y, scale);
+                            self.ui.pointer_move(form, pointer_event(q, Default::default(), PointerKind::Mouse));
                         }
                     }
                     self.ui.pointer_move(form, pointer_event(p, Default::default(), PointerKind::Mouse));
@@ -1556,7 +1611,12 @@ impl App {
             WindowEvent::CursorLeft { .. } => {
                 #[cfg(windows)]
                 self.windows[index].trail.reset();
-                self.ui.pointer_leave(form)
+                self.windows[index].hovered = false;
+                // Num form em vários monitores, o mouse que passou para o pedaço vizinho
+                // continua no form.
+                if !self.windows.iter().any(|w| w.form == form && w.hovered) {
+                    self.ui.pointer_leave(form)
+                }
             }
             // Arquivos arrastados do sistema (um evento por arquivo).
             WindowEvent::DroppedFile(path) => {
@@ -1619,8 +1679,7 @@ impl App {
             #[cfg(target_os = "android")]
             WindowEvent::KeyboardInput { device_id, event, .. } if android_gamepad::key(device_id, event) => {}
             WindowEvent::Touch(touch) => {
-                let p = touch.location.to_logical::<f32>(scale);
-                let p = PointF::new(p.x, p.y);
+                let p = self.window_to_form(index, touch.location.x, touch.location.y, scale);
                 self.windows[index].pointer = p;
                 let e = PointerEvent { pointer_id: touch.id, ..pointer_event(p, Default::default(), PointerKind::Touch) };
                 match touch.phase {
@@ -1641,18 +1700,22 @@ impl App {
                     && input::is_pressed(event)
                     && matches!(event.logical_key, winit::keyboard::Key::Named(winit::keyboard::NamedKey::BrowserBack | winit::keyboard::NamedKey::GoBack)) =>
             {
-                let top = self.ui.open_forms().last().copied();
-                match top {
-                    Some(f) if self.ui.is_modal(f) => self.ui.set_modal_result(f, aylis_core::ModalResult::Cancel),
-                    Some(f) if Some(f) != self.ui.main_form() => {
-                        self.ui.close(f);
+                // Antes, o `on_back` do form do topo: o app que troca de tela por dentro (frames)
+                // trata a tecla e nada mais acontece.
+                self.ui.back_pressed(|ui| {
+                    let top = ui.open_forms().last().copied();
+                    match top {
+                        Some(f) if ui.is_modal(f) => ui.set_modal_result(f, aylis_core::ModalResult::Cancel),
+                        Some(f) if Some(f) != ui.main_form() => {
+                            ui.close(f);
+                        }
+                        // Android: o app vai para segundo plano e volta como estava (como os
+                        // apps do Android 12 em diante); no iOS não há "voltar" do sistema.
+                        #[cfg(target_os = "android")]
+                        _ if android_jni::move_task_to_back() => {}
+                        _ => ui.request_close(),
                     }
-                    // Android: o app vai para segundo plano e volta como estava (como os
-                    // apps do Android 12 em diante); no iOS não há "voltar" do sistema.
-                    #[cfg(target_os = "android")]
-                    _ if android_jni::move_task_to_back() => {}
-                    _ => self.ui.request_close(),
-                }
+                });
             }
             WindowEvent::KeyboardInput { event, .. }
                 if self.ui.zoom_keys()
@@ -1701,7 +1764,22 @@ impl App {
             }
             // Texto composto pelo IME (teclado do iOS, acentos e idiomas asiáticos).
             WindowEvent::Ime(Ime::Commit(text)) => self.ui.text_input(form, text),
+            // Num form em vários monitores, o foco que passa de um pedaço para outro não sai do
+            // form: quem perdeu espera o fim da volta do laço (`App::settle_deactivations`).
+            WindowEvent::Focused(focused) if self.windows[index].span.is_some() => {
+                self.windows[index].focused = *focused;
+                let moved = self.deactivations.contains(&form);
+                if *focused {
+                    self.deactivations.retain(|&f| f != form);
+                    if !moved {
+                        self.ui.fire(form, "on_activate", &aylis_core::EventArgs::None);
+                    }
+                } else if !moved {
+                    self.deactivations.push(form);
+                }
+            }
             WindowEvent::Focused(focused) => {
+                self.windows[index].focused = *focused;
                 if !focused {
                     self.ui.pointer_cancel(form);
                 }
@@ -1759,23 +1837,76 @@ impl App {
         self.after_input();
     }
 
-    /// Android: as barras de status e de navegação com a cor de fundo do form principal
-    /// (muda junto com o tema); ícones escuros sobre fundo claro.
+    /// Android: as barras de status e de navegação com o pedido do `SystemBars` ou, sem ele (ou
+    /// sem cor), com a cor de fundo do form principal (muda junto com o tema); ícones escuros
+    /// sobre fundo claro.
     #[cfg(target_os = "android")]
     fn sync_system_bars(&mut self) {
         let Some(form) = self.ui.main_form() else { return };
-        let mut color = self.ui.background_color(form);
-        if color.a == 0 {
-            color = self.ui.theme().color("background");
+        let mut background = self.ui.background_color(form);
+        if background.a == 0 {
+            background = self.ui.theme().color("background");
         }
-        if self.system_bars == Some(color) {
+        let style = self.ui.system_bars().cloned().unwrap_or_default();
+        let status = style.status_color.unwrap_or(background);
+        let navigation = style.navigation_color.unwrap_or(status);
+        let wanted = (status, navigation, style.dark_icons(status), style.dark_icons(navigation), style.status_visible, style.navigation_visible);
+        if self.system_bars == Some(wanted) {
             return;
         }
-        let luminance = 0.299 * color.r as f32 + 0.587 * color.g as f32 + 0.114 * color.b as f32;
-        let argb = 0xFF00_0000 | (color.r as u32) << 16 | (color.g as u32) << 8 | color.b as u32;
-        if android_jni::set_system_bars(argb, luminance > 140.0) {
-            self.system_bars = Some(color);
+        let argb = |c: aylis_core::Color| 0xFF00_0000 | (c.r as u32) << 16 | (c.g as u32) << 8 | c.b as u32;
+        if android_jni::set_system_bars(argb(status), argb(navigation), wanted.2, wanted.3, wanted.4, wanted.5) {
+            self.system_bars = Some(wanted);
         }
+    }
+
+    /// iOS: o pedido do `SystemBars` (os ícones e o esconder pelo sistema; a cor é a faixa
+    /// que o núcleo pinta por baixo da barra de status).
+    #[cfg(target_os = "ios")]
+    fn sync_system_bars(&mut self) {
+        use winit::platform::ios::{StatusBarStyle, WindowExtIOS};
+        let version = self.ui.system_bars_version();
+        if version == self.system_bars_applied {
+            return;
+        }
+        self.system_bars_applied = version;
+        let style = self.ui.system_bars().cloned().unwrap_or_default();
+        let icons = match (style.icons, style.status_color) {
+            (aylis_core::BarIcons::Light, _) => StatusBarStyle::LightContent,
+            (aylis_core::BarIcons::Dark, _) => StatusBarStyle::DarkContent,
+            (aylis_core::BarIcons::Auto, Some(c)) if style.dark_icons(c) => StatusBarStyle::DarkContent,
+            (aylis_core::BarIcons::Auto, Some(_)) => StatusBarStyle::LightContent,
+            (aylis_core::BarIcons::Auto, None) => StatusBarStyle::Default,
+        };
+        for w in &self.windows {
+            w.window.set_prefers_status_bar_hidden(!style.status_visible);
+            w.window.set_preferred_status_bar_style(icons);
+        }
+    }
+
+    /// Navegador: a cor da barra de status vai para a `theme-color` da página (a barra do
+    /// navegador no celular).
+    #[cfg(web)]
+    fn sync_system_bars(&mut self) {
+        let version = self.ui.system_bars_version();
+        if version == self.system_bars_applied {
+            return;
+        }
+        self.system_bars_applied = version;
+        let Some(color) = self.ui.system_bars().and_then(|s| s.status_color) else { return };
+        let Some(document) = web_sys::window().and_then(|w| w.document()) else { return };
+        let meta = match document.query_selector("meta[name=theme-color]").ok().flatten() {
+            Some(m) => m,
+            None => {
+                let Ok(m) = document.create_element("meta") else { return };
+                let _ = m.set_attribute("name", "theme-color");
+                if let Some(head) = document.query_selector("head").ok().flatten() {
+                    let _ = head.append_child(&m);
+                }
+                m
+            }
+        };
+        let _ = meta.set_attribute("content", &color.to_hex());
     }
 
     /// O tipo de teclado do controle com foco: 0 texto, 1 senha, 2 número, 3 e-mail,
@@ -1844,7 +1975,8 @@ impl App {
             }
         }
         if self.ui.needs_repaint() && self.frame_due().is_none() {
-            for w in &self.windows {
+            // Os pedaços extras de um form em vários monitores pintam junto com a principal.
+            for w in self.windows.iter().filter(|w| !w.is_extra()) {
                 w.window.request_redraw();
             }
         }
@@ -2036,7 +2168,7 @@ impl App {
             attributes = attributes.with_skip_taskbar(true);
         }
         // Windows: a janela de um form aberto por outro é "possuída" por ele (fica por
-        // cima dele e minimiza junto), como as janelas do Delphi.
+        // cima dele e minimiza junto).
         #[cfg(target_os = "windows")]
         if let Some(owner) = &owner {
             use winit::platform::windows::WindowAttributesExtWindows;
@@ -2067,6 +2199,7 @@ impl App {
         let known: Vec<aylis_core::monitors::Monitor> = self.ui.monitors().iter().map(|m| aylis_core::monitors::Monitor { modes: Vec::new(), ..m.clone() }).collect();
         if light != known {
             self.ui.set_monitors(monitors::list(event_loop, true));
+            self.monitors_changed();
         }
         self.sync_form_monitors();
     }
@@ -2076,6 +2209,7 @@ impl App {
         let found: Vec<(ComponentId, Option<usize>)> = self
             .windows
             .iter()
+            .filter(|w| !w.is_extra())
             .map(|w| (w.form, w.window.current_monitor().and_then(|m| monitors::index_of(self.ui.monitors(), &m))))
             .collect();
         for (form, index) in found {
@@ -2147,7 +2281,7 @@ impl App {
         #[cfg(windows)]
         win32::set_window_corners(&window, self.corner_preference(form));
         #[cfg(windows)]
-        if let Some(fullscreen) = fullscreen_later {
+        if let Some(fullscreen) = fullscreen_later.filter(|_| !self.spans_full_screen(form)) {
             window.set_fullscreen(Some(fullscreen));
         }
         if self.enum_prop(form, "window_state") == "minimized" {
@@ -2203,7 +2337,14 @@ impl App {
             last_draw: f64::NEG_INFINITY,
             minimized: false,
             dark_title: self.ui.theme().dark,
+            span: None,
+            focused: false,
+            hovered: false,
         });
+        // O form em vários monitores vira as janelas por monitor na próxima volta do laço.
+        if matches!(self.ui.get_prop(form, "span_monitors"), Ok(PropValue::Bool(true))) {
+            self.span_checks.push(form);
+        }
         self.sync_form_size(self.windows.len() - 1);
         // A janela existe (com o alvo de desenho e, no Windows, o HWND em
         // `aylis::platform::win::hwnd`): o `on_show` vem antes dela, então quem precisa da
@@ -2334,6 +2475,14 @@ impl App {
             if !closing.is_empty() {
                 self.reown_windows_of(&closing);
             }
+            // Os pedaços extras antes da principal, que é a dona deles (o Windows destruiria
+            // as extras junto com ela, por baixo do winit).
+            for form in &closing {
+                self.spans.remove(form);
+                self.ui.set_form_pieces(*form, Vec::new());
+                self.deactivations.retain(|f| f != form);
+            }
+            self.windows.retain(|w| !(w.is_extra() && closing.contains(&w.form)));
             self.windows.retain(|w| open.contains(&w.form));
             for form in closing {
                 self.ui.set_form_gpu(form, None);
@@ -2363,7 +2512,8 @@ impl App {
             // mudam (o Windows reaplica o tamanho a cada chamada, e isso vira outro Resized).
             if !SINGLE_SURFACE {
                 let limits: Vec<[f64; 4]> = self.windows.iter().map(|w| self.size_limits(w.form)).collect();
-                for (w, limits) in self.windows.iter_mut().zip(limits) {
+                // Os pedaços de um form em vários monitores têm o tamanho do monitor deles.
+                for (w, limits) in self.windows.iter_mut().zip(limits).filter(|(w, _)| w.span.is_none()) {
                     if w.limits != limits {
                         let [min_w, min_h, max_w, max_h] = limits;
                         w.window.set_min_inner_size((min_w > 0.0 || min_h > 0.0).then(|| LogicalSize::new(min_w, min_h)));
@@ -2377,7 +2527,7 @@ impl App {
             // Form com `auto_size`: a janela fica da altura do conteúdo (L07 do Tabernáculo). Só
             // quando a diferença passa de meio ponto (cada pedido vira outro Resized).
             if !SINGLE_SURFACE {
-                for w in &self.windows {
+                for w in self.windows.iter().filter(|w| w.span.is_none()) {
                     let Some(want) = self.ui.auto_form_height(w.form) else { continue };
                     let zoom = w.window.scale_factor() * self.ui.form_zoom(w.form) as f64;
                     let size = w.window.inner_size().to_logical::<f64>(zoom);
@@ -2397,7 +2547,7 @@ impl App {
                 if enabled != w.enabled || (resync && !enabled) {
                     w.enabled = enabled;
                     // Windows: a janela debaixo de um modal fica desabilitada (clicar nela
-                    // traz o modal para a frente), como no Delphi.
+                    // traz o modal para a frente).
                     #[cfg(target_os = "windows")]
                     {
                         use winit::platform::windows::WindowExtWindows;
@@ -2511,6 +2661,11 @@ impl App {
                     _ => None,
                 });
                 w.window.request_redraw();
+                // Os pedaços extras de um form em vários monitores podem estar em outra placa:
+                // o form fica com a da janela principal.
+                if w.is_extra() {
+                    return;
+                }
                 if let Some(gpu) = &adapter {
                     self.ui.set_platform_info("gpu", gpu);
                 }
@@ -2526,7 +2681,8 @@ impl App {
     /// (a posição e o tamanho de antes ficam, para voltar a eles).
     fn store_placement(&mut self, index: usize) {
         let Some(w) = self.windows.get(index) else { return };
-        if SINGLE_SURFACE || w.window.is_minimized() == Some(true) {
+        // Num form em vários monitores, o lugar é o dos pedaços (`span.rs`), não o da janela.
+        if SINGLE_SURFACE || w.span.is_some() || w.window.is_minimized() == Some(true) {
             return;
         }
         let form = w.form;
@@ -2560,7 +2716,11 @@ impl App {
             gpu.resize(&w.window);
         }
         let form = w.form;
-        let logical = surface_size(&w.window).to_logical::<f64>(draw_scale(&w.window) * self.ui.form_zoom(form) as f64);
+        // Num form em vários monitores, o tamanho é o do form inteiro (todos os pedaços).
+        let logical = match self.span_size(form).filter(|_| w.span.is_some()) {
+            Some((width, height)) => LogicalSize::new(width, height),
+            None => surface_size(&w.window).to_logical::<f64>(draw_scale(&w.window) * self.ui.form_zoom(form) as f64),
+        };
         if let Some(cb) = self.ui.control_mut(form) {
             cb.set_size(logical.width as f32, logical.height as f32);
         }
@@ -2592,6 +2752,10 @@ impl App {
 
     fn redraw(&mut self, index: usize) -> Result<(), Error> {
         let Some(w) = self.windows.get(index) else { return Ok(()) };
+        // Um form em vários monitores pinta os pedaços juntos (`span.rs`).
+        if w.span.is_some() && self.spans.contains_key(&w.form) {
+            return self.redraw_span(index);
+        }
         // O `frame_rate` do form: antes da vez dele, o quadro fica para depois (o que mudou
         // continua marcado, e o laço volta a pedir).
         if let Ok(PropValue::Float(rate)) = self.ui.get_prop(w.form, "frame_rate")
@@ -2743,7 +2907,7 @@ impl App {
         let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
         let paint = self.ui.forms_to_paint(&forms);
         for index in 0..self.windows.len() {
-            if !paint.contains(&self.windows[index].form) {
+            if !paint.contains(&self.windows[index].form) || self.is_extra(index) {
                 continue;
             }
             if let Err(e) = self.redraw(index) {
@@ -2959,7 +3123,7 @@ impl ApplicationHandler for App {
         }
         match event {
             WindowEvent::CloseRequested => {
-                // Como o X do Delphi: passa pelo on_close_query; fechar o principal encerra.
+                // O X passa pelo on_close_query; fechar o principal encerra.
                 let form = self.windows[index].form;
                 if SINGLE_SURFACE && self.ui.open_forms().len() <= 1 {
                     self.ui.request_close();
@@ -2983,6 +3147,19 @@ impl ApplicationHandler for App {
                 if self.ui.close_requested() || self.windows.is_empty() {
                     event_loop.exit();
                 }
+            }
+            // Um pedaço de um form em vários monitores fica do tamanho do pedaço, mesmo num
+            // monitor com outra escala (o sistema sugere outro tamanho).
+            WindowEvent::ScaleFactorChanged { mut inner_size_writer, .. } if self.windows[index].span.is_some() => {
+                if let Some(s) = self.windows[index].span {
+                    let _ = inner_size_writer.request_inner_size(PhysicalSize::new(s.piece.screen.width, s.piece.screen.height));
+                }
+                self.follow_monitor(index, false);
+                self.windows[index].window.request_redraw();
+            }
+            WindowEvent::Resized(_) if self.is_extra(index) => {
+                self.follow_monitor(index, false);
+                self.windows[index].window.request_redraw();
             }
             WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => {
                 // Minimizou ou voltou: o form fica sabendo (o relatório do Tabernáculo, P06).
@@ -3010,7 +3187,7 @@ impl ApplicationHandler for App {
                 if let Err(e) = self.redraw(index) {
                     self.fail(event_loop, e);
                 }
-                #[cfg(target_os = "android")]
+                #[cfg(any(target_os = "android", target_os = "ios", web))]
                 self.sync_system_bars();
                 // A tela mudou: o leitor de tela recebe a árvore nova (só se estiver ativo).
                 #[cfg(not(web))]
@@ -3059,7 +3236,7 @@ impl ApplicationHandler for App {
                 // todas, como antes.
                 let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
                 let paint = if self.ui.take_due_frames(now) { self.ui.forms_to_paint(&forms) } else { forms };
-                for w in self.windows.iter().filter(|w| paint.contains(&w.form)) {
+                for w in self.windows.iter().filter(|w| paint.contains(&w.form) && !w.is_extra()) {
                     w.window.request_redraw();
                 }
             }
@@ -3093,8 +3270,13 @@ impl ApplicationHandler for App {
         }
         #[cfg(windows)]
         self.caption_buttons();
+        self.settle_deactivations();
         self.apply_window_commands();
         self.refresh_monitors(event_loop, false);
+        // Os forms em vários monitores: viram (ou deixam de ser) uma janela por monitor.
+        if !self.span_checks.is_empty() {
+            self.check_spans(event_loop);
+        }
         #[cfg(not(any(web, mobile)))]
         self.placements.flush_if_due();
         if self.ui.take_zoom_changed() {
@@ -3102,10 +3284,13 @@ impl ApplicationHandler for App {
                 self.sync_form_size(index);
                 self.windows[index].window.request_redraw();
             }
+            // Com outro zoom, os pedaços mudam de lugar no form.
+            let spanned: Vec<ComponentId> = self.spans.keys().copied().collect();
+            self.span_checks.extend(spanned);
         }
         #[cfg(windows)]
         {
-            let windows: Vec<(ComponentId, &Window)> = self.windows.iter().map(|w| (w.form, &*w.window)).collect();
+            let windows: Vec<(ComponentId, &Window)> = self.windows.iter().filter(|w| !w.is_extra()).map(|w| (w.form, &*w.window)).collect();
             self.taskbars.sync(&mut self.ui, &windows);
         }
         #[cfg(all(native_gpu, target_os = "linux"))]
@@ -3120,7 +3305,9 @@ impl ApplicationHandler for App {
         }
         #[cfg(native_d2d)]
         for (form, force) in win32::take_gpu_checks() {
-            if let Some(index) = self.windows.iter().position(|w| w.form == form) {
+            // Todas as janelas do form (os pedaços de um form em vários monitores também).
+            let indices: Vec<usize> = (0..self.windows.len()).filter(|&i| self.windows[i].form == form).collect();
+            for index in indices {
                 self.follow_monitor(index, force);
             }
         }
@@ -3133,7 +3320,23 @@ impl ApplicationHandler for App {
         #[cfg(any(native_webview, web_webview, android_webview))]
         {
             #[cfg_attr(not(web), allow(unused_mut))]
-            let mut windows: Vec<(ComponentId, Rc<Window>, aylis_core::PointF, bool)> = self.windows.iter().map(|w| (w.form, w.window.clone(), aylis_core::PointF::new(0.0, 0.0), true)).collect();
+            // Num form em vários monitores, os navegadores embutidos ficam na janela principal
+            // (com a origem dela no form).
+            let mut windows: Vec<(ComponentId, Rc<Window>, aylis_core::PointF, bool)> = self
+                .windows
+                .iter()
+                .filter(|w| !w.is_extra())
+                .map(|w| {
+                    let origin = match (w.span, self.spans.contains_key(&w.form)) {
+                        (Some(s), true) => {
+                            let scale = self.input_scale(self.index_of(w.window.id()).unwrap_or(0));
+                            aylis_core::PointF::new((-s.piece.origin_x as f64 / scale) as f32, (-s.piece.origin_y as f64 / scale) as f32)
+                        }
+                        _ => aylis_core::PointF::new(0.0, 0.0),
+                    };
+                    (w.form, w.window.clone(), origin, true)
+                })
+                .collect();
             // Navegador com janelas: os forms abertos por cima ficam no canvas do principal.
             #[cfg(web)]
             if self.floating_mode() {
@@ -3185,7 +3388,7 @@ impl ApplicationHandler for App {
             // Só as janelas com o que pintar (um quadro de câmera não repinta as outras).
             let forms: Vec<ComponentId> = self.windows.iter().map(|w| w.form).collect();
             let paint = self.ui.forms_to_paint(&forms);
-            for w in self.windows.iter().filter(|w| paint.contains(&w.form)) {
+            for w in self.windows.iter().filter(|w| paint.contains(&w.form) && !w.is_extra()) {
                 w.window.request_redraw();
             }
             event_loop.set_control_flow(ControlFlow::Wait);

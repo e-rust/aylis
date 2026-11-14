@@ -1,4 +1,4 @@
-//! Recuperação dos forms não salvos, como a pasta `__recovery` do Delphi: a cada 30 s a IDE
+//! Recuperação dos forms não salvos: a cada 30 s a IDE
 //! guarda na memória o JSON dos forms alterados e, de 2 em 2 minutos (ou num pânico), grava
 //! em `%LOCALAPPDATA%\aylis\recovery`. Ao fechar normalmente, a pasta é limpa; se a IDE caiu,
 //! na próxima abertura ela pergunta se recupera.

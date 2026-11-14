@@ -12,21 +12,21 @@ Trilho de navegação (o "navigation rail" do Material 3, para telas largas): í
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto |  |
-| `fab_icon` | Ícone do botão flutuante | texto |  |
+| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem dos `items`, separados por `;`. |
+| `fab_icon` | Ícone do botão flutuante | texto | O ícone do botão de ação em cima (dispara `on_fab`); vazio: sem botão. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | Os nomes dos destinos, separados por `;` (`Início;Buscar;Perfil`). |
+| `item_index` | Item escolhido | inteiro | O destino escolhido (0 = o primeiro; -1 = nenhum). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_fab` | — | — |  |
 
 ## Em código

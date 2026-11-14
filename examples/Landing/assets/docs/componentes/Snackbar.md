@@ -12,15 +12,15 @@ Aviso no rodapé com uma ação opcional (o `v-snackbar`): "Item apagado · DESF
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `action` | Ação | texto |  |
+| `text` | Texto | texto | A mensagem do aviso. |
+| `action` | Ação | texto | O texto do botão de ação ("DESFAZER"); vazio: sem botão. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `timeout` | Tempo para sumir | duração (ms) |  |
-| `active` | Ativo | lógico |  |
+| `timeout` | Tempo para sumir | duração (ms) | Quanto tempo o aviso fica na tela, em ms; 0: fica até fechar. |
+| `active` | Ativo | lógico | Mostra o aviso; desliga sozinho quando ele some. |
 
 ## Eventos
 

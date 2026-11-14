@@ -12,26 +12,27 @@ O editor de texto rico (`QEditor`): o texto com formato e, em cima, a barra de f
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `toolbar` | Barra de ferramentas | texto |  |
-| `placeholder` | Texto de exemplo | texto |  |
+| `toolbar` | Barra de ferramentas | texto | Os botões da barra, separados por `;` (`\|` é um separador): `bold`, `italic`, `h1`, `link`, `undo`... Vazio esconde a barra. |
+| `placeholder` | Texto de exemplo | texto | O texto apagado mostrado com o conteúdo vazio. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `read_only` | Somente leitura | lógico |  |
+| `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
+| `read_only` | Somente leitura | lógico | Só leitura: dá para selecionar e copiar, mas não editar. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `html` | Conteúdo (HTML) | texto |  |
+| `html` | Conteúdo (HTML) | texto | O conteúdo em HTML (lido e escrito; muda a cada edição). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

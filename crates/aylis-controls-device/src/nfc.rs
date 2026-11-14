@@ -17,6 +17,7 @@ use aylis_core::{Component, EventArgs, EventCtx, MethodInfo, PropValue, Ui, prop
 /// falso.
 #[derive(Default)]
 pub struct Nfc {
+    /// Lê as tags encostadas enquanto o app está aberto (cada uma chega no `on_tag`).
     pub active: bool,
     tag_id: String,
     tag_type: String,

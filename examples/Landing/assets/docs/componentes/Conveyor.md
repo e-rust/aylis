@@ -18,8 +18,8 @@ Esteira: a correia com os rolos girando e as marcas andando quando ligada.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `running` | Ligado | lógico |  |
-| `alarm` | Alarme | lógico |  |
+| `running` | Ligado | lógico | Ligada: a correia anda e o contorno fica verde; desligada, parada e cinza. |
+| `alarm` | Alarme | lógico | Em alarme: o contorno fica vermelho e pisca. |
 
 ## Em código
 

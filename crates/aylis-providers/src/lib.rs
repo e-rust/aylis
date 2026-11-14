@@ -50,7 +50,9 @@ impl Component for AylisPdfProvider {
 /// o crédito que a licença dele pede. O padrão é o OpenStreetMap (o mesmo do `MapView` sem
 /// provedor); um servidor pago ou próprio é só outro endereço.
 pub struct TileServerProvider {
+    /// O endereço dos blocos, com `{z}`, `{x}` e `{y}` (e `{s}`, trocado por `a`, `b` ou `c`).
     pub url: String,
+    /// O crédito que a licença do servidor pede, mostrado no canto do mapa.
     pub attribution: String,
 }
 

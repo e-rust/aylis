@@ -210,7 +210,7 @@ pub fn build(state: Shared) -> Ide {
     let messages_splitter = ui.add(Splitter::new(Align::Bottom), form);
     ui.control_mut(messages_splitter).unwrap().set_visible(false);
 
-    // Como no Delphi: estrutura e Object Inspector à esquerda; projeto e paleta à direita.
+    // Estrutura e Object Inspector à esquerda; projeto e paleta à direita.
     // ----- esquerda: estrutura e Object Inspector -----
     let left = ui.add(Panel::new(350.0, 0.0), form);
     ui.control_mut(left).unwrap().set_align(Align::Left).set_padding(8.0);
@@ -268,7 +268,7 @@ pub fn build(state: Shared) -> Ide {
     // As abas do navegador (`TabStrip`, montada em `panels::tabs`): a escolhida se junta ao
     // designer embaixo.
     ui.control_mut(tabs).unwrap().set_align(Align::Top).set_height(38.0);
-    // Embaixo, como no Delphi: alternar entre o form (Design) e o código embutido.
+    // Embaixo: alternar entre o form (Design) e o código embutido.
     let view_bar = ui.add(Layout::default(), center);
     ui.control_mut(view_bar).unwrap().set_align(Align::Bottom).set_height(32.0).set_padding([6.0, 2.0, 6.0, 2.0]).set_visible(false);
     let view_design = tool(&mut ui, view_bar, "Design", 90.0, "");
@@ -507,12 +507,14 @@ pub fn build(state: Shared) -> Ide {
     separator(&mut ui, project_menu);
     add_item(&mut ui, project_menu, "Gerar código", "", Some(|_, s, _| actions::generate_code_command(s)), &ids);
     add_item(&mut ui, project_menu, "Abrir código do form", "F12", Some(|ui, s, _| actions::open_code(ui, s, None)), &ids);
-    // Os fontes do projeto pelo nome (o "View Unit" do Delphi).
+    // Os fontes do projeto pelo nome.
     add_item(&mut ui, project_menu, "Abrir fonte…", "Ctrl+F12", Some(|ui, _, _| crate::codewindow::open_source_dialog(ui)), &ids);
     needs_project.push(add_item(&mut ui, project_menu, "Novo fonte…", "", Some(actions::new_source_dialog), &ids));
     needs_project.push(add_item(&mut ui, project_menu, "Pendências entre linguagens…", "", Some(|ui, s, _| {
         crate::code_sync::open(ui, s, false);
     }), &ids));
+    // Os handlers que nenhum uso ou teste do app em execução disparou (4b).
+    needs_project.push(add_item(&mut ui, project_menu, "Cobertura de handlers…", "", Some(crate::coverage::open), &ids));
     separator(&mut ui, project_menu);
     // O que se escolhe enquanto desenha a tela (ícones e animações para os componentes).
     needs_project.push(add_item(&mut ui, project_menu, "Ícones…", "Ctrl+Alt+I", Some(actions::project_icons), &ids));
@@ -524,9 +526,9 @@ pub fn build(state: Shared) -> Ide {
     needs_project.push(add_item(&mut ui, project_menu, "Abrir pasta do projeto", "", Some(|_, s, _| actions::open_project_folder(s)), &ids));
 
     let run_menu = ui.add(MenuItem::new("Executar"), menu);
-    // Como no Delphi: com ponto de parada, F9 executa no depurador; depurando, continua.
+    // Com ponto de parada, F9 executa no depurador; depurando, continua.
     add_item(&mut ui, run_menu, "Executar", "F9", Some(|ui, s, _| crate::debugger::run(ui, s)), &ids);
-    // Como o Ctrl+Shift+F9 do Delphi: roda sem o depurador mesmo com pontos de parada.
+    // Roda sem o depurador mesmo com pontos de parada.
     add_item(&mut ui, run_menu, "Executar sem depurar", "Ctrl+Shift+F9", Some(|ui, s, _| actions::run_project(ui, s)), &ids);
     add_item(&mut ui, run_menu, "Compilar e executar em release", "", Some(|ui, s, _| actions::run_release(ui, s)), &ids);
     add_item(&mut ui, run_menu, "Compilar", "Ctrl+F9", Some(|ui, s, _| {
@@ -947,7 +949,7 @@ pub fn build(state: Shared) -> Ide {
             },
         });
     }
-    // Design | Código, como o F12 do Delphi: "Código" mostra o código do form da aba (abre se
+    // Design | Código (o F12 alterna): "Código" mostra o código do form da aba (abre se
     // preciso); "Design", o form do código que estava à vista.
     for (button, code) in [(ids.view_design, false), (ids.view_code, true)] {
         let (state, ids) = (state.clone(), *ids);

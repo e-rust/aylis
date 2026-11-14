@@ -1,4 +1,4 @@
-//! Chart: gráfico como o do Chart.js (e o `TChart` do Delphi). Linhas (retas, em degraus
+//! Chart: gráfico como o do Chart.js. Linhas (retas, em degraus
 //! ou suavizadas), barras (de pé ou deitadas), área, dispersão, bolhas, pizza, rosca, área
 //! polar, radar, empilhados e o misto (cada série com o seu tipo); e os de BI: cascata,
 //! funil, treemap, mapa de calor, sparkline, Sankey e waffle (em [`more`]).
@@ -444,7 +444,7 @@ impl Hit {
     }
 }
 
-/// Gráfico (como o `TChart` e o Chart.js): veja os tipos em [`ChartKind`].
+/// Gráfico (como o do Chart.js): veja os tipos em [`ChartKind`].
 ///
 /// Pelo texto (JSON, Object Inspector): `labels` = `Jan;Fev;Mar`, `series` =
 /// `Vendas=10,20,30|Custos[line;right;#EF4444;dash 4 2]=5,8,9`; pontos `x:y` (dispersão) e
@@ -452,12 +452,18 @@ impl Hit {
 /// [{"label": ..., "data": [...], "type": "bar", ...}]}`). Pelo código: [`Chart::set_data`].
 pub struct Chart {
     pub base: ControlBase,
+    /// O tipo do gráfico: barras, linhas, área, pizza, rosca, dispersão...
     pub kind: ChartKind,
+    /// O título em cima do gráfico; vazio: sem título.
     pub title: String,
+    /// Os rótulos do eixo X (ou das fatias), separados por `;` (`Jan;Fev;Mar`).
     pub labels: String,
+    /// As séries, separadas por `|`: `Nome=10,20,30`, com opções entre colchetes
+    /// (`Custos[line;right;#EF4444]=5,8,9`).
     pub series: String,
     /// Os dados no formato do Chart.js (vazio: `labels` e `series`).
     pub json: String,
+    /// Mostra a legenda com o nome de cada série.
     pub legend: bool,
     /// Linhas em degraus.
     pub stepped: bool,
@@ -469,7 +475,9 @@ pub struct Chart {
     pub zoom: bool,
     /// Eixo Y automático; sem ele, de `y_min` a `y_max`.
     pub auto_scale: bool,
+    /// O começo do eixo Y quando o `auto_scale` está desligado.
     pub y_min: f64,
+    /// O fim do eixo Y quando o `auto_scale` está desligado.
     pub y_max: f64,
     /// Escala logarítmica no eixo Y.
     pub log_scale: bool,
@@ -479,6 +487,7 @@ pub struct Chart {
     pub time_axis: bool,
     /// O último ponto clicado (série e índice; -1 = nenhum).
     pub clicked_series: i64,
+    /// O índice do último ponto clicado na série (-1 = nenhum).
     pub clicked_index: i64,
     // As escolhas de aparência pedidas no relatório do InsightDB (11/11); os padrões são o
     // desenho de antes.
@@ -489,6 +498,7 @@ pub struct Chart {
     pub label_angle: f32,
     /// Onde fica o título: `left`, `center` ou `right`.
     pub title_align: String,
+    /// O título em negrito.
     pub title_bold: bool,
     /// Opacidade do preenchimento das áreas (0 a 1).
     pub area_opacity: f32,

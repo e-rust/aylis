@@ -10,9 +10,9 @@ Um controle de jogo (Xbox, PlayStation, genérico): o `index` (0 = o primeiro co
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `index` | Índice | inteiro |  |
-| `active` | Ativo | lógico |  |
-| `dead_zone` | Zona morta | número |  |
+| `index` | Índice | inteiro | Qual controle conectado ler (0 = o primeiro). |
+| `active` | Ativo | lógico | Lê o controle a cada quadro e dispara os eventos; desligado, para. |
+| `dead_zone` | Zona morta | número | A zona morta dos analógicos e gatilhos, de 0 a 1: abaixo dela é 0 (a folga do controle parado). |
 
 ## Eventos
 
@@ -20,7 +20,7 @@ Um controle de jogo (Xbox, PlayStation, genérico): o `index` (0 = o primeiro co
 |---|---|---|---|
 | `on_button_down` | — | — |  |
 | `on_button_up` | — | — |  |
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_connect` | — | — |  |
 | `on_disconnect` | — | — |  |
 

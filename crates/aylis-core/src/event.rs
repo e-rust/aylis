@@ -86,8 +86,43 @@ impl Default for ScrollOptions {
     }
 }
 
-/// Gesto de dois dedos: pinça (escala), giro e arrasto do centro, como o `OnGesture` do
-/// FMX (`igZoom`, `igRotate`, `igPan`). O controle sob o primeiro dedo recebe; se não
+/// Para onde o dedo deslizou (o `on_swipe`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SwipeDirection {
+    #[default]
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl SwipeDirection {
+    /// O nome no protocolo e nos eventos (`left`, `right`, `up`, `down`).
+    pub fn name(self) -> &'static str {
+        match self {
+            SwipeDirection::Left => "left",
+            SwipeDirection::Right => "right",
+            SwipeDirection::Up => "up",
+            SwipeDirection::Down => "down",
+        }
+    }
+}
+
+/// Um deslizar do dedo (decidido em 14/11): um arrasto rápido que não rolou nada no mesmo
+/// eixo, ao soltar. O controle tocado recebe `on_swipe`; se não tratar, sobe para os pais.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct SwipeEvent {
+    pub direction: SwipeDirection,
+    /// Onde o dedo encostou (coordenadas do controle que recebe).
+    pub start: PointF,
+    /// Quanto o dedo andou do começo ao fim.
+    pub distance: PointF,
+    /// A velocidade ao soltar, em pontos por segundo.
+    pub velocity: PointF,
+}
+
+/// Gesto de dois dedos: pinça (escala), giro e arrasto do centro.
+/// O controle sob o primeiro dedo recebe; se não
 /// tratar, sobe para os pais.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct GestureEvent {
@@ -163,6 +198,7 @@ pub enum EventArgs {
     Pointer(PointerEvent),
     Wheel(WheelEvent),
     Gesture(GestureEvent),
+    Swipe(SwipeEvent),
     Key(KeyEvent),
     Text(String),
     Value(PropValue),

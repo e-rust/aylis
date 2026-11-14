@@ -10,8 +10,8 @@ A biometria do aparelho: a digital ou o rosto no celular, o Windows Hello, o aut
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `reason` | Motivo | texto |  |
-| `allow_device_credential` | Aceita a senha do aparelho | lógico |  |
+| `reason` | Motivo | texto | O texto que a verificação do sistema mostra (por que o app pede a biometria). |
+| `allow_device_credential` | Aceita a senha do aparelho | lógico | O PIN, o padrão ou a senha do aparelho também valem, além da biometria. |
 
 ## Eventos
 

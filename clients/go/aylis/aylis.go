@@ -83,7 +83,7 @@ func (c Component) Set(prop string, value any) {
 // Focus põe o foco no componente.
 func (c Component) Focus() { c.App.Send("focus", M{"target": c.ID}) }
 
-// Form é a base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua
+// Form é a base dos forms: cada form aberto na tela tem a sua
 // instância (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao
 // abrir. O tipo gerado de cada form embute Form e monta os componentes em Bind.
 type Form struct {
@@ -174,8 +174,7 @@ func (i *Aylis) FormInstanceOf(form string, id int64) (FormInstance, error) {
 	return instance, nil
 }
 
-// CreateForm cria o form na tela e devolve a instância dele (como o Application.CreateForm do
-// Delphi); another: mais uma janela do mesmo form.
+// CreateForm cria o form na tela e devolve a instância dele; another: mais uma janela do mesmo form.
 func (i *Aylis) CreateForm(form string, another bool) (FormInstance, error) {
 	created, err := i.Call("create_form", M{"name": form, "new": another})
 	if err != nil {
@@ -346,7 +345,7 @@ func (i *Aylis) Call(cmd string, fields M) (any, error) {
 	}
 }
 
-// Post roda fn na goroutine do Loop, de qualquer goroutine (o TThread.Queue do Delphi): no
+// Post roda fn na goroutine do Loop, de qualquer goroutine: no
 // desktop, a tela devolve um eco (wake) que acorda o Loop.
 func (i *Aylis) Post(fn func()) {
 	if i.session != nil {
@@ -386,7 +385,7 @@ func (i *Aylis) FieldDecimal(dataSet, field string) (*big.Rat, error) {
 	return r, nil
 }
 
-// MessageDlg é a caixa de mensagem que espera, como o MessageDlg do Delphi: devolve o botão
+// MessageDlg é a caixa de mensagem que espera: devolve o botão
 // ("yes", "no", "ok"...). Enquanto espera, os eventos continuam rodando.
 func (i *Aylis) MessageDlg(text, kind string, buttons ...string) string {
 	if len(buttons) == 0 {
@@ -395,7 +394,7 @@ func (i *Aylis) MessageDlg(text, kind string, buttons ...string) string {
 	return i.waitFor("message_dlg", M{"text": text, "kind": kind, "buttons": buttons})
 }
 
-// ShowModal abre o form como modal e espera ele fechar, como o ShowModal do Delphi: devolve o
+// ShowModal abre o form como modal e espera ele fechar: devolve o
 // resultado ("ok", "cancel"...).
 func (i *Aylis) ShowModal(form *Form) string {
 	return i.waitFor("show_modal", M{"target": form.ID})
@@ -405,7 +404,7 @@ func (i *Aylis) waitFor(cmd string, fields M) string {
 	fields["wait"] = true
 	i.waiting++
 	defer func() { i.waiting-- }()
-	// Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro Call esperava) roda já.
+	// O que chegou antes (enquanto outro Call esperava) roda já.
 	queued := i.queued
 	i.queued = nil
 	for _, m := range queued {
@@ -522,8 +521,7 @@ func (i *Aylis) runPosted() {
 }
 
 // handleEvent roda o handler do evento. Um evento que pergunta (com ask) recebe a resposta
-// quando o handler termina: o ev.Reply ou, com panic, a recusa com a mensagem (a tela mostra),
-// como no BeforePost do Delphi.
+// quando o handler termina: o ev.Reply ou, com panic, a recusa com a mensagem (a tela mostra).
 func (i *Aylis) handleEvent(message map[string]json.RawMessage) {
 	// Forms liberados na tela: as instâncias saem e os PostTo deles não rodam.
 	if raw, ok := message["event"]; ok && string(raw) == `"__freed"` {
@@ -564,7 +562,7 @@ func (i *Aylis) handleEvent(message map[string]json.RawMessage) {
 				return
 			}
 			Log("erro no handler", ev.Handler, r)
-			// A tela mostra o erro ao usuário (como o Application.HandleException do Delphi).
+			// A tela mostra o erro ao usuário.
 			i.Send("exception", M{"message": fmt.Sprint(r), "path": ev.Form, "handler": ev.Handler})
 		}
 	}()

@@ -18,7 +18,7 @@ Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reorde
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tab_index` | Aba escolhida | inteiro |  |
+| `tab_index` | Aba escolhida | inteiro | A aba ativa, a partir de 0; -1: nenhuma. |
 | `closable` | Pode fechar | lógico | O × em cada aba. |
 | `show_add` | Mostra o "+" | lógico | O "+" depois da última aba. |
 | `auto_close` | Fecha sozinho | lógico | O × fecha a aba sozinho (desligado: só avisa, e o código fecha com `remove`). |
@@ -31,7 +31,7 @@ Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reorde
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_close` | o form fechou | — |  |
 | `on_add` | — | — |  |
 | `on_reorder` | — | — |  |

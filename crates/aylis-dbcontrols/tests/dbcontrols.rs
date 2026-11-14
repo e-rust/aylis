@@ -233,7 +233,7 @@ fn serde_json_rows() -> serde_json::Value {
 
 #[test]
 fn navigator_asks_before_action_and_a_refusal_keeps_the_record() {
-    // Item 18 (04/11): o botão pergunta antes (o `BeforeAction` do Delphi), e um
+    // Item 18 (04/11): o botão pergunta antes, e um
     // `EventInterceptor` pode recusar no lugar de cada form.
     let mut s = screen();
     let asked = Rc::new(RefCell::new(Vec::new()));

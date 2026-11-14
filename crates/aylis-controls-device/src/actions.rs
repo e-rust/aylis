@@ -190,10 +190,17 @@ fn deliver(ui: &mut Ui, id: ComponentId, event: ActionEvent) {
 /// executa a ação); nas outras plataformas, com o app aberto. O `on_trigger` traz os dados
 /// quando o app roda.
 pub struct PushTrigger {
+    /// A regra vale; desligada, as mensagens passam sem disparar a ação.
     pub active: bool,
+    /// O `PushNotifications` de onde vêm as mensagens.
     pub source: Option<ComponentId>,
+    /// As condições sobre os dados, separadas por `;` (`kind=call`, `kind!=chat`, `caller`: a
+    /// chave existe); vazio aceita todas.
     pub filter: String,
+    /// O componente executado quando a mensagem casa (qualquer um com o método
+    /// `execute(dados)`: o `WakeAppAction`, o `NotifyAction` ou um do app).
     pub action: Option<ComponentId>,
+    /// A notificação comum da mensagem não aparece: a ação cuida dela.
     pub replace_default: bool,
     data: String,
 }
@@ -330,16 +337,28 @@ pub(crate) fn all_rules(ui: &Ui) -> String {
 /// resposta. Nas outras plataformas, com o app aberto: mostra o form, traz a janela para a
 /// frente e avisa por uma notificação comum (sem tocar).
 pub struct WakeAppAction {
+    /// O form que abre por cima da tela bloqueada (o nome dele); vazio: o form onde a ação está.
     pub form: String,
+    /// O título da notificação; `{chave}` vira o valor da chave nos dados.
     pub title: String,
+    /// O texto da notificação; `{chave}` vira o valor da chave nos dados.
     pub text: String,
+    /// Os botões da notificação: `id:Texto;...` (`answer:Atender;reject:Recusar`).
     pub buttons: String,
+    /// Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. Os outros
+    /// respondem sem abrir.
     pub open_buttons: String,
+    /// O som enquanto espera a resposta: `default` (o toque de chamada), `notification`,
+    /// `alarm` ou `none`.
     pub ringtone: Ringtone,
+    /// Vibra junto com o toque.
     pub vibrate: bool,
     /// Segundos até desistir (0: sem limite).
     pub timeout: f32,
+    /// Android 12+: a notificação no estilo de chamada, com os botões `answer` e
+    /// `reject`/`decline` em destaque.
     pub call_style: bool,
+    /// Acende a tela ao disparar.
     pub turn_screen_on: bool,
     data: String,
     running: bool,
@@ -490,13 +509,22 @@ impl Component for WakeAppAction {
 /// `on_click` (o toque no corpo, com os dados) e `on_button` (o id do botão). `stop()` tira a
 /// notificação.
 pub struct NotifyAction {
+    /// O título da notificação; `{chave}` vira o valor da chave nos dados.
     pub title: String,
+    /// O texto da notificação; `{chave}` vira o valor da chave nos dados.
     pub text: String,
+    /// A imagem grande: um asset, um arquivo ou, no Android, um endereço `https`; vazio: sem
+    /// imagem.
     pub image: String,
+    /// O canal do Android (o usuário configura som e destaque por canal).
     pub channel: String,
+    /// O nome do canal que o usuário vê nas configurações do Android.
     pub channel_name: String,
+    /// `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som).
     pub priority: NotificationPriority,
+    /// Os botões da notificação: `id:Texto;...`; o toque chega em `on_button` com o id.
     pub buttons: String,
+    /// Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos.
     pub open_buttons: String,
     data: String,
 }

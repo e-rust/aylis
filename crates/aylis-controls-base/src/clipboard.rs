@@ -29,6 +29,7 @@ use crate::ImageView;
 /// | Navegador | texto, HTML | imagem, o formato do app |
 #[derive(Default)]
 pub struct Clipboard {
+    /// Um número livre para o código (não muda nada na área de transferência).
     pub tag: i64,
 }
 

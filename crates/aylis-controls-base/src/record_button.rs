@@ -15,10 +15,15 @@ use crate::leaf_control;
 /// `on_click` no clique.
 pub struct RecordButton {
     pub base: ControlBase,
+    /// Gravando: o ponto vira o quadrado de parar e o brilho pulsa.
     pub recording: bool,
+    /// Gravação pausada: o brilho para de pulsar.
     pub paused: bool,
+    /// Fechando o arquivo: um arco verde gira em volta e o clique é ignorado.
     pub finalizing: bool,
+    /// Os segundos da contagem antes de gravar, no meio do botão; 0 = sem contagem.
     pub countdown: u32,
+    /// Quanto da contagem falta, de 1 (o anel âmbar cheio) a 0 (vazio).
     pub countdown_fraction: f32,
     /// O brilho colorido em volta (desligue com uma camada translúcida por cima, onde ele
     /// vira pontos soltos em alguns renderizadores).

@@ -2,9 +2,9 @@
 //! `data_set` de um DataSource, o `popup_menu`) formam um índice que o `Ui` monta quando
 //! alguém pergunta e joga fora quando uma referência pode ter mudado.
 //!
-//! Serve a duas coisas: o dataset avisa só os controles ligados a ele (como os `TDataLink`
-//! do Delphi), sem percorrer o app inteiro a cada registro; e liberar um componente limpa
-//! sozinho as referências a ele (o `Notification` do Delphi, sem cada componente fazer à mão).
+//! Serve a duas coisas: o dataset avisa só os controles ligados a ele, sem
+//! percorrer o app inteiro a cada registro; e liberar um componente limpa
+//! sozinho as referências a ele (sem cada componente fazer à mão).
 //!
 //! O índice cai quando: uma propriedade de componente é gravada (`set_prop`), um componente
 //! entra ou sai, ou alguém pega o componente para alterar direto (`get_mut`,

@@ -1,0 +1,4 @@
+{
+  "note": "Tempos dos handlers dos exemplos (roteiros com \"profile\", na CI). Só avisam: média acima de 1,5 vez a daqui e por mais de 2 ms. aylis-tool handler-times --update regrava.",
+  "apps": {}
+}

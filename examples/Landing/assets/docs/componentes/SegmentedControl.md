@@ -12,20 +12,20 @@ Seletor segmentado: opções lado a lado, uma escolhida (abas de modo, filtro de
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto |  |
+| `icons` | Ícones | texto | Os ícones das opções, na mesma ordem, separados por `;`; vazio: só o texto. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | As opções, separadas por `;` (`Tela;Janela;Área`). |
+| `item_index` | Item escolhido | inteiro | A opção escolhida (a partir de 0). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

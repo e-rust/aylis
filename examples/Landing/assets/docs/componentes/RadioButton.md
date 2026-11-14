@@ -12,25 +12,25 @@ Opção exclusiva. Ao ser clicado, desmarca os irmãos (mesmo pai) que tenham o 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O texto ao lado da bolinha. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `group` | Grupo | texto |  |
+| `group` | Grupo | texto | O nome do grupo: só uma opção por grupo (no mesmo pai) fica marcada. Vazio é um grupo também. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `checked` | Marcado | lógico |  |
+| `checked` | Marcado | lógico | Escolhida; marcar desmarca as outras do mesmo `group` no mesmo pai. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

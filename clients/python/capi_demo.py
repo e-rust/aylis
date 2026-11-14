@@ -1,6 +1,6 @@
 """O aylis usado pela C ABI (aylis.dll) a partir de Python com ctypes — no mesmo processo.
 
-O mesmo vale para Delphi, C#, Go ou C: carregar a biblioteca e chamar as funções.
+O mesmo vale para Free Pascal, C#, Go ou C: carregar a biblioteca e chamar as funções.
 
     cargo build -p aylis-capi
     python clients/python/capi_demo.py              # abre a janela

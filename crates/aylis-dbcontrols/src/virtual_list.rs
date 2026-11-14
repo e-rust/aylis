@@ -1,4 +1,4 @@
-//! [`DataRepeater`]: a [`VirtualList`] ligada a um dataset (como o `TDBCtrlGrid`): um item
+//! [`DataRepeater`]: a [`VirtualList`] ligada a um dataset: um item
 //! por registro, desenhado com o modelo, com os campos de `bindings` preenchidos sozinhos.
 
 use std::any::Any;
@@ -34,6 +34,7 @@ impl RowSource for DataRows {
 #[derive(Default)]
 pub struct DataRepeater {
     pub base: VirtualList,
+    /// O `DataSource` dos registros: um item por registro, com os campos de `bindings`.
     pub data_source: Option<ComponentId>,
 }
 

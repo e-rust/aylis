@@ -21,8 +21,8 @@ Controle deslizante: arraste o polegar, clique no trilho, use as setas, Home/End
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
+| `min` | Mínimo | número | O valor da ponta esquerda (ou de baixo, na vertical). |
+| `max` | Máximo | número | O valor da ponta direita (ou de cima, na vertical). |
 | `frequency` | Frequência das marcas | número | Passo (0 = contínuo). |
 | `limit` | Limite | número | Daqui para cima o trilho preenchido e o polegar ficam na cor de perigo, com uma marca fina no ponto (o volume acima de 100 %: amplificando). 0 = sem limite. |
 
@@ -30,13 +30,13 @@ Controle deslizante: arraste o polegar, clique no trilho, use as setas, Home/End
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
+| `value` | Valor | número | O valor, a posição do polegar entre `min` e `max`. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

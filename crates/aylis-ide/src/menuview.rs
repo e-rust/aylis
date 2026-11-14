@@ -1,4 +1,4 @@
-//! O editor de menu (como o Menu Designer do Delphi): uma janela ao lado da IDE com a
+//! O editor de menu: uma janela ao lado da IDE com a
 //! árvore de itens de um `PopupMenu` ou `MainMenu` (submenus recuados, divisores como
 //! linha). Clicar num item seleciona-o — o Object Inspector mostra texto, ícone, atalho,
 //! `checked`, `auto_check` e o `on_click` dele. Adicionar item, subitem e divisor,

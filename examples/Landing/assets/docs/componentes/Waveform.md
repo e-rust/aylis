@@ -19,8 +19,8 @@ Onda de um áudio (mensagem de voz, gravação): barras com a intensidade de cad
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `position` | Posição | número |  |
-| `duration` | Duração | número |  |
+| `position` | Posição | número | A posição tocada, em segundos: a onda fica em destaque até ela. |
+| `duration` | Duração | número | A duração do áudio, em segundos (a largura inteira da onda); 0: nada tocado em destaque. |
 
 ## Eventos
 

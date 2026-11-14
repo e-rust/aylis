@@ -1,10 +1,10 @@
-//! Alinhamento e âncoras, com o mesmo comportamento do FMX.
+//! Alinhamento e âncoras dos controles dentro do pai.
 
 use std::ops::BitOr;
 
 use crate::prop::PropEnum;
 
-/// Alinhamento de um controle dentro do pai (como `TAlignLayout`).
+/// Alinhamento de um controle dentro do pai.
 ///
 /// Os alinhamentos de encaixe (`MostTop`…`Right`) consomem espaço da área livre do pai,
 /// nesta ordem: `MostTop`, `MostBottom`, `MostLeft`, `MostRight`, `Top`, `Bottom`,
@@ -141,7 +141,7 @@ impl PropEnum for SelfAlign {
     }
 }
 
-/// Lados do pai aos quais um controle com `Align::None` fica preso (como `TAnchors`).
+/// Lados do pai aos quais um controle com `Align::None` fica preso.
 ///
 /// - esquerda + direita: a largura acompanha o pai;
 /// - só direita: o controle se move junto com a borda direita;

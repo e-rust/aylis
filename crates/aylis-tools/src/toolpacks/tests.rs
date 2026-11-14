@@ -117,7 +117,8 @@ fn the_embedded_manifest_is_valid_and_complete() {
             for f in &e.files {
                 assert!(is_sha256(&f.sha256), "{name} ({}): {} sem SHA-256 (aylis-tool packages update)", e.key, f.name);
                 assert!(f.size > 0, "{name}: {} sem tamanho", f.name);
-                assert!(f.url.as_deref().is_some_and(|u| u.starts_with("https://")), "{name}: {} sem URL oficial", f.name);
+                // Sem URL oficial, só o que o Aylis faz (`built`: o comando que gera o arquivo).
+                assert!(f.url.as_deref().is_some_and(|u| u.starts_with("https://")) || f.built.as_deref().is_some_and(|c| c.starts_with("aylis-tool ")), "{name}: {} sem URL oficial", f.name);
                 // A pasta de pacotes guarda pelo nome: um nome, um arquivo.
                 if let Some(other) = names.insert(f.name.clone(), f.sha256.clone()) {
                     assert_eq!(other, f.sha256, "{} com dois conteúdos", f.name);

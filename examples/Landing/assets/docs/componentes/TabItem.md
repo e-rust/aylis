@@ -10,7 +10,7 @@ Uma página do `TabControl`: um contêiner com o título da aba.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `caption` | Título | texto |  |
+| `caption` | Título | texto | O título da aba. |
 
 ## Eventos
 

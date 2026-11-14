@@ -27,12 +27,14 @@ impl PropEnum for PopoverPlacement {
     }
 }
 
-/// Cartão flutuante (o popover das bibliotecas web; no Delphi, um `TPopup`): desenhado no form
+/// Cartão flutuante (o popover das bibliotecas web): desenhado no form
 /// com os filhos, fica escondido até `popup(anchor)`, que o abre ao lado de `anchor`, por cima
 /// de tudo e sem sair do form. Fecha com o clique fora, o Escape ou `close()`, e avisa em
 /// `on_close`. A aparência é o estilo `Popover` do tema.
 pub struct Popover {
     pub base: Rectangle,
+    /// De que lado do componente abre: `bottom` (em cima, se não couber), `top`, `right` ou
+    /// `left`.
     pub placement: PopoverPlacement,
     /// A distância até o componente.
     pub gap: f32,
@@ -55,20 +57,21 @@ impl Popover {
         // Na raiz do form, a última: por cima de tudo e fora do recorte dos contêineres.
         ui.set_parent(id, Some(root)).map_err(|e| e.to_string())?;
         let target = ui.absolute_rect(anchor).unwrap_or_default();
-        let form = ui.bounds(root).map(|b| b.size()).unwrap_or_default();
+        // O form ou, com ele em vários monitores, o pedaço em que está a âncora.
+        let form = ui.popup_area(root, aylis_core::PointF::new(target.x + target.width / 2.0, target.y + target.height / 2.0));
         let (w, h) = ui.control(id).map(|cb| (cb.width(), cb.height())).unwrap_or((260.0, 160.0));
         let below = target.bottom() + gap;
         let above = target.y - gap - h;
         let (x, y) = match placement {
-            PopoverPlacement::Bottom if below + h > form.height && above >= 0.0 => (target.x, above),
+            PopoverPlacement::Bottom if below + h > form.bottom() && above >= form.y => (target.x, above),
             PopoverPlacement::Bottom => (target.x, below),
-            PopoverPlacement::Top if above < 0.0 => (target.x, below),
+            PopoverPlacement::Top if above < form.y => (target.x, below),
             PopoverPlacement::Top => (target.x, above),
             PopoverPlacement::Right => (target.right() + gap, target.y),
             PopoverPlacement::Left => (target.x - gap - w, target.y),
         };
-        let x = x.min(form.width - w - 4.0).max(4.0);
-        let y = y.min(form.height - h - 4.0).max(4.0);
+        let x = x.min(form.right() - w - 4.0).max(form.x + 4.0);
+        let y = y.min(form.bottom() - h - 4.0).max(form.y + 4.0);
         if let Some(cb) = ui.control_mut(id) {
             cb.set_align(aylis_core::Align::None);
             cb.set_rect(x, y, w, h);

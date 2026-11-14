@@ -1,4 +1,4 @@
-//! Acesso tipado aos componentes, como no Delphi: cada form vira uma instância global com
+//! Acesso tipado aos componentes: cada form vira uma instância global com
 //! o nome dele e um campo por componente, e cada componente tem as propriedades com o tipo
 //! certo — `frmCalculadora.pnlLateral.Visible` em vez de `Aylis.Call('get', ...)`.
 //!
@@ -341,7 +341,7 @@ fn pascal_method_head(mth: &Method, class: Option<&str>) -> String {
     }
 }
 
-/// O argumento em Pascal, como no Delphi (`path` → `APath`; o sem nome, `a1` → `A1`): com o
+/// O argumento em Pascal (`path` → `APath`; o sem nome, `a1` → `A1`): com o
 /// `A` na frente, não bate com uma propriedade da classe (o `Width` do `resize`), o que o
 /// Free Pascal recusa.
 fn pascal_arg(name: &str) -> String {
@@ -557,7 +557,8 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 9: a feature `text-shaping` no `Cargo.toml` só com fontes em `assets/fonts`.
 /// 10: o `generated/mod.rs` sem o `use form_handler` (G07) e o `main.rs` com o `_` (G06).
 /// 11: o `create_in` transparente sem `fill` próprio, como o Frame (G05).
-const GENERATOR_VERSION: u32 = 11;
+/// 12: o `on_back` do Pascal com `var Handled: Boolean` (14/11).
+const GENERATOR_VERSION: u32 = 12;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -939,7 +940,7 @@ fn rust(m: &Model) -> Out {
                 // O foco: `set_focus` do controle; no form, quem tem o foco e o Tab pelo código.
                 "focus" => s.push_str("    pub fn set_focus(self, ui: &mut Ui) -> bool {\n        ui.set_focus(self.id)\n    }\n"),
                 "focused" => s.push_str(
-                    "    /// O nome do controle com foco (vazio sem foco), como o `ActiveControl`.\n    pub fn focused(self, ui: &Ui) -> String {\n        ui.focused(ui.root_of(self.id)).and_then(|f| ui.name(f)).unwrap_or_default().to_string()\n    }\n",
+                    "    /// O nome do controle com foco (vazio sem foco).\n    pub fn focused(self, ui: &Ui) -> String {\n        ui.focused(ui.root_of(self.id)).and_then(|f| ui.name(f)).unwrap_or_default().to_string()\n    }\n",
                 ),
                 "focus_next" | "focus_prev" => s.push_str(&format!(
                     "    pub fn {name}(self, ui: &mut Ui) -> bool {{\n        let root = ui.root_of(self.id);\n        ui.focus_next(root, {})\n    }}\n",
@@ -1032,10 +1033,10 @@ fn rust(m: &Model) -> Out {
              \x20   pub fn components(ui: &Ui) -> Option<{ty}Components> {{\n        ui.form_components(ui.find_path(\"{name}\")?)\n    }}\n\n",
             name = f.name
         ));
-        // Criar uma janela do form (o `Application.CreateForm` do Delphi), sem o nome em texto
+        // Criar uma janela do form, sem o nome em texto
         // no código do usuário: `FrmClientes::create(ui)?` e depois `ui.show(form)`.
         s.push_str(&format!(
-            "    /// Cria o {name} (ou devolve o que já está criado, como o `CreateForm`); mostrar é com\n\
+            "    /// Cria o {name} (ou devolve o que já está criado); mostrar é com\n\
              \x20   /// `ui.show`.\n\
              \x20   pub fn create(ui: &mut Ui) -> Result<ComponentId, aylis::prelude::Error> {{\n        ui.create_form(\"{name}\")\n    }}\n\n",
             name = f.name
@@ -1063,14 +1064,14 @@ fn rust(m: &Model) -> Out {
              \x20   pub fn components_of(ui: &Ui, root: ComponentId) -> Option<{ty}Components> {{\n        ui.form_components(root)\n    }}\n\n",
             name = f.name
         ));
-        // Outro form chegando neste (o `Form2.Edit1` do Delphi): o primeiro aberto.
+        // Outro form chegando neste: o primeiro aberto.
         s.push_str(&format!(
             "    /// O {name} aberto (o primeiro, se houver dois), para outro form ler ou mexer nele.\n\
              \x20   pub fn get(ui: &Ui) -> Option<&{ty}> {{\n        ui.form_instance(ui.find_path(\"{name}\")?)\n    }}\n\n\
              \x20   pub fn get_mut(ui: &mut Ui) -> Option<&mut {ty}> {{\n        let form = ui.find_path(\"{name}\")?;\n        ui.form_instance_mut(form)\n    }}\n",
             name = f.name
         ));
-        // Pelo nome (`self.find_button("btn7")`, como o FindComponent) e o do evento
+        // Pelo nome (`self.find_button("btn7")`) e o do evento
         // (`self.sender_as_button(ui, sender)`), pela classe.
         for class in Model::classes_of(f) {
             let sn = snake(class);
@@ -1141,7 +1142,7 @@ fn python(m: &Model) -> Out {
         }
         for class in Model::classes_of(f) {
             let sn = snake(class);
-            s.push_str(&format!("\n    def find_{sn}(self, name):\n        \"\"\"O {class} deste form com o nome (como o FindComponent).\"\"\"\n"));
+            s.push_str(&format!("\n    def find_{sn}(self, name):\n        \"\"\"O {class} deste form com o nome.\"\"\"\n"));
             for (n, _) in fs.iter().filter(|(_, c)| c == class) {
                 s.push_str(&format!("        if name == \"{n}\":\n            return self.{n}\n"));
             }
@@ -1226,7 +1227,7 @@ fn typescript(m: &Model) -> Out {
         }
         s.push_str("    }\n");
         for class in Model::classes_of(f) {
-            s.push_str(&format!("    /** O {class} deste form com o nome (como o FindComponent). */\n    find{class}(name: string): {class} | undefined {{\n        switch (name) {{\n"));
+            s.push_str(&format!("    /** O {class} deste form com o nome. */\n    find{class}(name: string): {class} | undefined {{\n        switch (name) {{\n"));
             for (n, _) in fs.iter().filter(|(_, c)| c == class) {
                 s.push_str(&format!("            case \"{n}\": return this.{n};\n"));
             }
@@ -1343,7 +1344,7 @@ fn csharp(m: &Model) -> Out {
         }
         s.push_str("        }\n");
         for class in Model::classes_of(f) {
-            s.push_str(&format!("\n        /// <summary>O {class} deste form com o nome (como o FindComponent).</summary>\n        public {class}? Find{class}(string name) => name switch\n        {{\n"));
+            s.push_str(&format!("\n        /// <summary>O {class} deste form com o nome.</summary>\n        public {class}? Find{class}(string name) => name switch\n        {{\n"));
             for (n, _) in fs.iter().filter(|(_, c)| c == class) {
                 s.push_str(&format!("            \"{n}\" => {n},\n"));
             }
@@ -1450,7 +1451,7 @@ fn java(m: &Model) -> Out {
         }
         s.push_str("        }\n");
         for class in Model::classes_of(f) {
-            s.push_str(&format!("\n        /** O {class} deste form com o nome (como o FindComponent). */\n        public {class} find{class}(String name) {{\n            return switch (name) {{\n"));
+            s.push_str(&format!("\n        /** O {class} deste form com o nome. */\n        public {class} find{class}(String name) {{\n            return switch (name) {{\n"));
             for (n, _) in f.components.iter().filter(|(_, c)| c == class) {
                 s.push_str(&format!("                case \"{n}\" -> {n};\n"));
             }
@@ -1542,7 +1543,7 @@ fn go(m: &Model) -> Out {
             name = f.name
         ));
         for class in Model::classes_of(f) {
-            s.push_str(&format!("\n// Find{class} é o {class} deste form com o nome (como o FindComponent).\nfunc (f *{ty}) Find{class}(name string) aylis{class} {{\n\tswitch name {{\n"));
+            s.push_str(&format!("\n// Find{class} é o {class} deste form com o nome.\nfunc (f *{ty}) Find{class}(name string) aylis{class} {{\n\tswitch name {{\n"));
             for (n, _) in f.components.iter().filter(|(_, c)| c == class) {
                 if f.optional.contains(n) {
                     s.push_str(&format!("\tcase \"{n}\":\n\t\tif f.{n} != nil {{\n\t\t\treturn *f.{n}\n\t\t}}\n"));
@@ -1635,7 +1636,7 @@ fn cpp(m: &Model) -> Out {
         }
         s.push_str("    }\n");
         for class in Model::classes_of(f) {
-            s.push_str(&format!("    // O {class} deste form com o nome (como o FindComponent; vazio se não há).\n    {class} find_{sn}(const std::string& name) const {{\n", sn = snake(class)));
+            s.push_str(&format!("    // O {class} deste form com o nome (vazio se não há).\n    {class} find_{sn}(const std::string& name) const {{\n", sn = snake(class)));
             for (n, _) in fs.iter().filter(|(_, c)| c == class) {
                 if f.optional.contains(n) {
                     s.push_str(&format!("        if (name == \"{n}\") return {n} ? *{n} : {class}();\n"));
@@ -1675,7 +1676,7 @@ fn cpp(m: &Model) -> Out {
 
 
 // ---------------------------------------------------------------------------
-// Free Pascal (propriedades, como no Delphi)
+// Free Pascal (propriedades)
 
 fn pascal_unit(m: &Model) -> Out {
     let s = String::from(
@@ -1730,7 +1731,7 @@ fn pascal_unit(m: &Model) -> Out {
         s.push_str("  protected\n    procedure BindComponents(List: TJSONArray); override;\n  public\n");
         for class in Model::classes_of(f) {
             s.push_str(&format!(
-                "    {{ O {class} deste form com o nome, como o FindComponent (nil se não há). }}\n    function Find{class}(const Nome: string): T{class};\n    \
+                "    {{ O {class} deste form com o nome (nil se não há). }}\n    function Find{class}(const Nome: string): T{class};\n    \
                  {{ O {class} que disparou o evento (nil se não é um {class} deste form). }}\n    function SenderAs{class}(Sender: TAylisComponent): T{class}; overload;\n    \
                  function SenderAs{class}(Event: TJSONObject): T{class}; overload;\n"
             ));

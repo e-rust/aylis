@@ -12,24 +12,24 @@ Linha do tempo de uma animação (o painel Animations do DevTools): o atraso (tr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `delay` | Atraso | duração (ms) |  |
-| `duration` | Duração | duração (ms) |  |
-| `easing` | Curva de aceleração | curva de suavização |  |
-| `auto_reverse` | Volta sozinho | lógico |  |
-| `looping` | Repetindo | lógico |  |
+| `delay` | Atraso | duração (ms) | O atraso antes de a animação começar, em ms (o tracejado). |
+| `duration` | Duração | duração (ms) | A duração da animação, em ms (a barra). |
+| `easing` | Curva de aceleração | curva de suavização | A curva de suavização desenhada sobre a barra. |
+| `auto_reverse` | Volta sozinho | lógico | A animação volta ao valor de partida depois de chegar ao fim. |
+| `looping` | Repetindo | lógico | A animação se repete sem parar. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `snap` | Passo com Shift | número |  |
-| `playing` | Tocando | lógico |  |
+| `snap` | Passo com Shift | número | O passo dos tempos ao arrastar, em ms (com Shift: 1 ms). |
+| `playing` | Tocando | lógico | Uma agulha percorre a linha do tempo, como a animação tocando. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_commit` | — | — |  |
 
 ## Em código

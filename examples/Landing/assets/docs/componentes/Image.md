@@ -12,9 +12,15 @@ Mostra uma imagem do aplicativo (`image: "assets/images/logo.png"`, lida pelo se
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `image` | Imagem | texto |  |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
-| `radius` | Raio dos cantos | número |  |
+| `image` | Imagem | texto | Caminho do arquivo, relativo à pasta do projeto. |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a imagem ocupa o controle: `contain` (inteira, mantendo a proporção), `cover` (cobre, cortando as bordas), `stretch` (estica), `center` ou `original` (tamanho real). |
+| `radius` | Raio dos cantos | número | Arredonda os cantos (recorta a imagem). |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `zoomable` | Ampliar com pinça | lógico | A pinça amplia e o dedo arrasta a imagem ampliada. |
 
 ## Em código
 

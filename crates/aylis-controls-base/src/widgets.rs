@@ -34,11 +34,13 @@ fn split_items(items: &str) -> Vec<&str> {
 // Icon
 // ===========================================================================
 
-/// Um ícone sozinho (como um `TPath` com dados prontos). `icon` é o nome (os do aylis ou
+/// Um ícone sozinho. `icon` é o nome (os do aylis ou
 /// os registrados com `Ui::register_icon`); a cor vem do tema (`text`) ou de `color`.
 pub struct IconView {
     pub base: ControlBase,
+    /// O nome do ícone (os do Aylis ou os registrados com `Ui::register_icon`).
     pub icon: String,
+    /// A cor do ícone; vazio: a do texto do tema (ou a da variante).
     pub color: Option<Color>,
 }
 
@@ -87,11 +89,15 @@ impl Component for IconView {
 /// sobre o sino de notificações. `anchor` escolhe o canto; sem texto, vira uma bolinha.
 pub struct Badge {
     pub base: ControlBase,
+    /// O texto curto do selo; vazio, preso a um `target`, vira uma bolinha.
     pub text: String,
+    /// Ícone pelo nome, antes do texto; vazio: sem ícone.
     pub icon: String,
     /// Bolinha colorida antes do texto (estado: no ar, gravando...).
     pub dot: bool,
+    /// O controle irmão em cujo canto o selo fica preso; vazio: fica onde foi posto.
     pub target: Option<ComponentId>,
+    /// O canto do `target` onde o selo fica.
     pub anchor: BadgeAnchor,
 }
 
@@ -227,10 +233,13 @@ impl Component for Badge {
 /// `on_close`.
 pub struct Banner {
     pub base: ControlBase,
+    /// O título do aviso, em destaque; vazio: só o texto.
     pub title: String,
+    /// O texto do aviso, abaixo do título.
     pub text: String,
     /// Ícone; vazio = o da variante (info, success, warning, error).
     pub icon: String,
+    /// Mostra o "×" que esconde a faixa e dispara o `on_close`.
     pub closable: bool,
     close_rect: Cell<Option<RectF>>,
 }
@@ -365,6 +374,7 @@ pub struct Avatar {
     pub display_name: String,
     /// Foto do aplicativo (`assets/...`); vazio = iniciais.
     pub image: String,
+    /// A bolinha de presença no canto: online, ausente, ocupado ou offline; `none`: sem bolinha.
     pub presence: Presence,
     picture: Option<Image>,
     loaded: RefCell<Option<(String, Option<Image>)>>,
@@ -503,8 +513,11 @@ impl Component for Avatar {
 /// opção escolhida. Setas trocam a opção com o foco.
 pub struct SegmentedControl {
     pub base: ControlBase,
+    /// As opções, separadas por `;` (`Tela;Janela;Área`).
     pub items: String,
+    /// Os ícones das opções, na mesma ordem, separados por `;`; vazio: só o texto.
     pub icons: String,
+    /// A opção escolhida (a partir de 0).
     pub item_index: i64,
     /// Posição animada da marcação (de onde saiu, quando).
     slide: Cell<(f32, f64)>,
@@ -717,11 +730,13 @@ impl Component for SegmentedControl {
 // ActivityIndicator
 // ===========================================================================
 
-/// Indicador de atividade girando (o `TAniIndicator`). Só anima com `active`. `kind` escolhe
+/// Indicador de atividade girando. Só anima com `active`. `kind` escolhe
 /// o desenho (os spinners do Quasar: `dots`, `bars`, `audio`, `ios`...).
 pub struct ActivityIndicator {
     pub base: ControlBase,
+    /// Gira e aparece; desligado, não desenha nada.
     pub active: bool,
+    /// O desenho: o anel (o padrão) ou um dos outros spinners (`dots`, `bars`, `audio`, `ios`...).
     pub kind: crate::quasar::SpinnerKind,
 }
 
@@ -787,14 +802,24 @@ impl Component for ActivityIndicator {
 /// cores (o dispositivo desligado).
 pub struct LevelMeter {
     pub base: ControlBase,
+    /// O nível, de 0 a 1 (a barra de cima, no estéreo).
     pub value: f32,
+    /// O nível do canal direito, de 0 a 1 (a barra de baixo, com `stereo`).
     pub value_right: f32,
+    /// Duas barras, esquerda e direita (`value` e `value_right`).
     pub stereo: bool,
+    /// Pinta um degradê pela posição (verde, âmbar perto de `high`, vermelho no fim), visível
+    /// só até o nível.
     pub gradient: bool,
+    /// Enche a barra com a cor `meter_high`: o dispositivo está mudo.
     pub muted: bool,
+    /// Apaga as cores: o dispositivo está desligado.
     pub dim: bool,
+    /// A barra cresce de baixo para cima em vez da esquerda para a direita.
     pub vertical: bool,
+    /// Desenha em tantos gomos; 0 = barra contínua.
     pub segments: usize,
+    /// Mostra a marca de pico, que cai devagar.
     pub show_peak: bool,
     /// Daqui para cima a cor é `meter_mid`.
     pub mid: f32,
@@ -1002,6 +1027,7 @@ impl LevelMeter {
 /// `on_change` com o índice. A última é a atual (em destaque).
 pub struct Breadcrumb {
     pub base: ControlBase,
+    /// As partes da trilha, separadas por `;`; a última é a atual.
     pub items: String,
     hits: RefCell<Vec<RectF>>,
     hover: Cell<Option<usize>>,
@@ -1095,9 +1121,13 @@ pub struct SeekBar {
     pub base: ControlBase,
     /// Em segundos.
     pub position: f64,
+    /// A duração da mídia, em segundos: o fim da barra.
     pub duration: f64,
+    /// Até onde a mídia já carregou, em segundos (o trecho mais claro); 0: nada.
     pub buffered: f64,
+    /// Marcas na barra, em segundos, separadas por `;` (`12.5;30`); vazio: nenhuma.
     pub markers: String,
+    /// Mostra, sob o mouse, o horário daquele ponto.
     pub show_time: bool,
     dragging: bool,
     /// A posição escolhida com o mouse enquanto o botão está apertado: ganha de quem
@@ -1270,11 +1300,13 @@ impl Component for SeekBar {
 // HotkeyEdit
 // ===========================================================================
 
-/// Campo de tecla de atalho (o `THotKey`): com o foco, a próxima combinação vira o texto
+/// Campo de tecla de atalho: com o foco, a próxima combinação vira o texto
 /// ("Ctrl+Shift+R"). Backspace ou Delete sozinhos limpam. `on_change` a cada troca.
 pub struct HotkeyEdit {
     pub base: ControlBase,
+    /// A combinação escolhida, como texto (`Ctrl+Shift+R`); vazio: nenhuma.
     pub hotkey: String,
+    /// O texto apagado mostrado enquanto não há combinação.
     pub placeholder: String,
 }
 
@@ -1402,6 +1434,7 @@ impl Component for HotkeyEdit {
 /// `on_release`. `diagonals = false` deixa só as quatro principais.
 pub struct DirectionPad {
     pub base: ControlBase,
+    /// Aceita as quatro diagonais; desligado, só cima, baixo, esquerda e direita.
     pub diagonals: bool,
     /// Ícone do botão do meio (vazio = sem botão).
     pub center_icon: String,
@@ -1531,7 +1564,9 @@ impl Component for DirectionPad {
 /// de verdade, o componente `Gamepad`.
 pub struct Joystick {
     pub base: ControlBase,
+    /// A zona morta, de 0 a 1: movimentos menores que ela dão 0 (o tremor do dedo).
     pub dead_zone: f32,
+    /// Ao soltar, o botão volta ao centro.
     pub spring: bool,
     /// A posição do botão (sem a zona morta), de -1 a 1.
     knob: (f32, f32),
@@ -1659,6 +1694,8 @@ pub struct FpsMeter {
     pub base: ControlBase,
     /// `{0}` vira o número.
     pub format: String,
+    /// Atualiza o número duas vezes por segundo, mesmo sem nada mudando (o que já são 2
+    /// quadros por segundo); desligado, só quando a tela é repintada.
     pub live: bool,
 }
 

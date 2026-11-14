@@ -198,7 +198,7 @@ ds.apply_updates()?;
 
 Para só ler, sem precisar de `&mut Ui`, use `view(&ui, cds)`.
 
-Eventos do conjunto de dados, como `BeforePost`, `AfterScroll` e `OnNewRecord`:
+Eventos do conjunto de dados, como `before_post`, `after_scroll` e `on_new_record`:
 
 ```rust
 data_set(&mut ui, cds)

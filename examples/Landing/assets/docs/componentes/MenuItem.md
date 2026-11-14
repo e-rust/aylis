@@ -10,8 +10,8 @@ Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `checked` | Marcado | lógico |  |
+| `text` | Texto | texto | O texto do item; `"-"` faz dele um separador. |
+| `checked` | Marcado | lógico | Marcado: mostra o ✓ à esquerda. |
 | `icon` | Ícone | texto | Ícone à esquerda do texto (`"save"`, `"pacote:nome"`); marcado, aparece o ✓. |
 | `danger` | Perigoso | lógico | Ação destrutiva ("Excluir"): texto na cor `danger_text` (ou `danger`) do tema e, sob o mouse, fundo `danger` com texto branco. |
 | `header` | Linha de títulos | lógico | Título de uma seção do menu (a cabeça de um menu de contexto: o nome do item clicado): texto fraco em negrito, sem clique nem realce. O relatório do Tabernáculo, C15. |
@@ -21,9 +21,9 @@ Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu.
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `shortcut` | Atalho | texto | Atalho: `"Ctrl+S"`, `"Ctrl+Shift+N"`, `"F9"`, `"Delete"`... |
-| `enabled` | Habilitado | lógico |  |
-| `auto_check` | Marca sozinho | lógico | Clicar alterna `checked` sozinho (como o `AutoCheck` do Delphi). |
-| `visible` | Visível | lógico |  |
+| `enabled` | Habilitado | lógico | Aceita clique e atalho; desligado, aparece apagado. |
+| `auto_check` | Marca sozinho | lógico | Clicar alterna `checked` sozinho. |
+| `visible` | Visível | lógico | Aparece no menu; escondido, some (e o atalho também não vale). |
 
 ## Eventos
 

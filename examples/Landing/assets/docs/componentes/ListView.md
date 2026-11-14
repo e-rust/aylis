@@ -12,21 +12,21 @@ Lista de itens com título, detalhe e imagem opcional, pensada também para o ce
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `item_height` | Altura do item | número |  |
+| `item_height` | Altura do item | número | Altura de cada linha, em pontos. |
 | `accessory` | Seta à direita | lógico | Seta › à direita de cada item (navegação). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | Os itens, separados por `;`, cada um `Título\|detalhe` (o detalhe é opcional). |
+| `item_index` | Item escolhido | inteiro | O item escolhido, a partir de 0; -1: nenhum. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_item_click` | — | — |  |
 
 ## Em código

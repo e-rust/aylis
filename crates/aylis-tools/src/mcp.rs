@@ -53,6 +53,10 @@ situação; uma chamada que passar de ~45 s responde in_progress com o número d
 traz o fim.Com o app aberto, app_command lê e mexe na tela dele ({\"cmd\": \"tree\"}, \
 {\"cmd\": \"click\", \"target\": \"btnSalvar\"}).
 
+Conferir e medir: check (antes de compilar), test (os testes do projeto), profile (os handlers e \
+os quadros mais lentos do app em execução), recording (a última gravação de uso, resumida) e \
+coverage (os handlers que nenhum uso ou teste disparou).
+
 Como o código do Aylis é escrito: componentes pelo acesso tipado (self.btnSalvar, \
 frmCliente.edtNome), nunca procurando pelo nome em texto (os tipos gerados, como Button e Label, \
 têm o nome dos controles do aylis::prelude: no código do form use os do acesso tipado e, se \
@@ -747,7 +751,7 @@ fn post_waiting(access: Access, body: String, request: &Value, out: &mut impl Wr
 }
 
 /// Manda uma mensagem ao servidor da IDE; `None` quando ele aceita sem resposta (202).
-fn post(access: &Access, body: &str) -> Result<Option<String>, String> {
+pub fn post(access: &Access, body: &str) -> Result<Option<String>, String> {
     let closed = || "a IDE do Aylis não está aberta com o servidor MCP ligado (Ferramentas → Opções da IDE → MCP)".to_string();
     let mut stream = TcpStream::connect(("127.0.0.1", access.port)).map_err(|_| closed())?;
     // Uma compilação pelo `build` espera até 30 minutos na IDE.
@@ -968,7 +972,7 @@ pub fn ide_tools() -> Vec<Value> {
             &[],
         ),
         tool("ide_menus", "Todos os itens dos menus da IDE (e da janela de código): o caminho e o `id` para `menu`, o atalho, se está habilitado e marcado. Os menus de contexto (clique direito) vêm uma vez só, com o lugar na frente (\"Object Inspector › (propriedade) › Ligar a campo…\") e `context` true. O que o usuário faz pelos menus, o agente faz com `menu` e os `dialog_*`.", json!({}), &[]),
-        tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro; com `here`, o projeto fica direto em `dir`, mesmo que ela já tenha outras coisas, como o app dentro de um repositório), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java). Crie onde o projeto vai ficar: a confiança é pela pasta, e um projeto movido abre em modo restrito.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" } }), &["dir", "name"]),
+        tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro; com `here`, o projeto fica direto em `dir`, mesmo que ela já tenha outras coisas, como o app dentro de um repositório), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java). Crie onde o projeto vai ficar: a confiança é pela pasta, e um projeto movido abre em modo restrito. Como o Novo projeto da IDE, grava o guia para agentes de IA (AGENTS.md da linguagem, um CLAUDE.md que aponta para ele e o .mcp.json com o aylis-tool mcp; os que já existem na pasta ficam), a não ser com `agent_guide` false.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" }, "agent_guide": { "type": "boolean", "description": "o guia para agentes de IA (padrão true)" } }), &["dir", "name"]),
         tool("close_project", "Fecha o projeto (volta à tela inicial).", json!({}), &[]),
         tool("resolve_conflict", "Resolve um arquivo aberto na IDE que mudou no disco e também tem alterações não salvas (as outras ferramentas recusam com o diff até lá): `keep` \"disk\" recarrega do disco, \"ide\" fica com a da IDE.", json!({ "file": s("o arquivo (como veio no aviso, ou relativo ao projeto)"), "keep": { "type": "string", "enum": ["disk", "ide"] } }), &["file", "keep"]),
         tool("new_form", "Cria um form no projeto aberto e abre no designer (`data_module` true: um DataModule), como Projeto → Novo form. `folder` é a subpasta de forms/ onde ele nasce (cadastros, painel/inicio; sem caminho absoluto nem ..); `file` escolhe o arquivo inteiro (forms/painel/inicio.json); sem eles, forms/ e o nome do arquivo sai do nome do form.", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" }, "folder": s("subpasta de forms/, opcional (cadastros)"), "file": s("arquivo do form, opcional (forms/painel/inicio.json)") }), &["name"]),
@@ -1039,6 +1043,24 @@ pub fn ide_tools() -> Vec<Value> {
             "screenshot",
             "A foto de um form do projeto como o designer mostra (`form`; vazio: o aberto), sem abrir aba: o aberto sai com o que não foi salvo, o outro é lido do arquivo; `variant` é a de uma plataforma (android...). Com `source: \"app\"`, a janela do app em execução (`form`: outro form dele).",
             json!({ "form": s("nome do form, opcional"), "variant": s("variante, opcional"), "source": s("designer (padrão) ou app") }),
+            &[],
+        ),
+        tool(
+            "profile",
+            "Mede o app em execução (o Profiler, pelo canal de desenvolvimento): `action` start começa a medir (do zero), take devolve o resumo do que foi medido desde o start e stop para e devolve o resumo. O resumo traz os handlers mais lentos (chamadas, total, próprio, média e máximo em ms), os quadros mais lentos (e quantos passaram de 16,7 ms), o que mais tomou tempo e a memória, não o rastro inteiro; `top` diz quantos de cada (padrão 10). `trace_file` grava também o rastro no formato de eventos do Chrome (.json, abre no Perfetto) ou no do Profiler (.aylisprof). Com o Profiler da IDE aberto ao mesmo tempo, cada um vê só o que pegou.",
+            json!({ "action": { "type": "string", "enum": ["start", "take", "stop"], "description": "start, take (padrão) ou stop" }, "top": { "type": "integer", "description": "quantos de cada lista (padrão 10)" }, "trace_file": s("onde gravar o rastro inteiro, opcional (.json: Chrome/Perfetto; .aylisprof: o do Profiler)"), "app": { "description": "o app (pid ou nome do projeto), como no app_command; padrão: o último que conectou" } }),
+            &[],
+        ),
+        tool(
+            "recording",
+            "Resume a gravação de uso mais recente (.aylisrec, a caixa-preta do EventRecorder): o app, quando, a duração, quantos acontecimentos de cada tipo, os erros com a mensagem, os componentes mais clicados, os handlers que rodaram, os forms abertos e os últimos acontecimentos. `source` app (padrão) procura as gravações do app do projeto (a pasta do EventRecorder dos forms, ou a padrão dele); ide, as da própria IDE. `file` lê uma gravação dada.",
+            json!({ "source": { "type": "string", "enum": ["app", "ide"], "description": "de quem (padrão app)" }, "file": s("uma gravação .aylisrec, opcional"), "last": { "type": "integer", "description": "quantos dos últimos acontecimentos (padrão 20)" } }),
+            &[],
+        ),
+        tool(
+            "coverage",
+            "A cobertura de handlers do projeto, em qualquer linguagem: os handlers que os forms ligam a eventos e quais nenhum uso ou teste do app em execução pela IDE (run, run_without_debug, app_command) disparou, somados entre as execuções. Cada um que falta vem com os eventos que o chamam e o arquivo e a linha do código. `clear` recomeça do zero.",
+            json!({ "clear": { "type": "boolean", "description": "esquece o que já rodou" } }),
             &[],
         ),
         tool("undo", "Desfaz a última mudança no form aberto (Ctrl+Z).", json!({}), &[]),

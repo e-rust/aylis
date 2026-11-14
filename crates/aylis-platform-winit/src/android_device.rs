@@ -69,7 +69,7 @@ extern "system" fn native_biometric_result(mut env: JNIEnv, _class: JClass, requ
 }
 
 /// A versão do Android (`Build.VERSION.SDK_INT`).
-fn sdk() -> i32 {
+pub(crate) fn sdk() -> i32 {
     with_env(|env, _| env.get_static_field("android/os/Build$VERSION", "SDK_INT", "I")?.i()).unwrap_or(26)
 }
 

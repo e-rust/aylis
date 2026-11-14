@@ -35,7 +35,7 @@ pub struct State {
     /// Classes abertas na paleta (mostrando os subtipos).
     pub palette_open: std::collections::HashSet<String>,
     /// Os grupos do Object Inspector recolhidos (Identidade, Posição e tamanho...), pela
-    /// categoria: valem para todos os componentes, como no Object Inspector do Delphi.
+    /// categoria: valem para todos os componentes.
     pub inspector_closed: std::collections::HashSet<String>,
     /// A aba da paleta: "aylis" ou uma plataforma ("Windows", "Apple", "Android").
     pub palette_tab: String,

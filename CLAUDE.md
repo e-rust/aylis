@@ -115,7 +115,7 @@ faz por conta própria: vira pergunta ao autor e, aprovado, entra no histórico.
     propriedade) e eventos por nome;
   - criar, liberar e trocar de pai em execução, e mexer em propriedade por nome, valem para
     todos.
-- **Estender por composição e delegação** (o `inherited`, como o `GlowButton`), não copiando
+- **Estender por composição e delegação** (como o `GlowButton`), não copiando
   um controle para mudar a pintura. Comportamento fica separado da aparência.
 - **Aparência pelo tema:**
   - tokens, estados e variantes;

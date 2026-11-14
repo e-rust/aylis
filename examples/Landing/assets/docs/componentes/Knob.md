@@ -12,30 +12,30 @@ O botão giratório (`QKnob`): o valor de `min` a `max` num círculo, que se arr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `thickness` | Espessura | número |  |
-| `show_value` | Mostra o valor | lógico |  |
-| `suffix` | Sufixo | texto |  |
+| `thickness` | Espessura | número | A grossura do arco, de 0 a 1 do raio. |
+| `show_value` | Mostra o valor | lógico | Escreve o valor no meio do círculo. |
+| `suffix` | Sufixo | texto | O texto depois do valor escrito no meio (`%`, `°C`). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `read_only` | Somente leitura | lógico |  |
+| `read_only` | Somente leitura | lógico | Só mostra: o mouse, a roda e as setas não mudam o valor. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
-| `step` | Passo | número |  |
+| `value` | Valor | número | O valor escolhido, entre `min` e `max`. |
+| `min` | Mínimo | número | O valor do começo do arco. |
+| `max` | Máximo | número | O valor do fim do arco. |
+| `step` | Passo | número | O passo do valor ao arrastar, na roda e nas setas (0: de 1 em 1). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

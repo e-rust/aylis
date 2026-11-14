@@ -12,26 +12,26 @@
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
+| `title` | Título | texto | O texto no meio da área, ao lado do ícone de envio. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `filter` | Filtro | texto |  |
-| `multiple` | Vários | lógico |  |
+| `filter` | Filtro | texto | Os tipos aceitos, como no `OpenDialog` (`Imagens\|*.png;*.jpg\|Todos\|*.*`); vazio: todos. |
+| `multiple` | Vários | lógico | Aceita vários arquivos (senão, o novo troca o anterior). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `files` | Arquivos | texto |  |
+| `files` | Arquivos | texto | Os caminhos escolhidos, separados por `;`; vazio: nenhum. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_reject` | — | — |  |
 | `on_file_enter` | — | — |  |
 | `on_file_leave` | — | — |  |

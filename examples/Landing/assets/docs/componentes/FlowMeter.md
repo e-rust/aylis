@@ -12,16 +12,16 @@ Medidor de vazão: a turbina girando na velocidade da vazão e o valor.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `unit` | Unidade | texto |  |
+| `unit` | Unidade | texto | A unidade escrita depois do número (`m³/h`, `L/min`). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `max` | Máximo | número |  |
-| `running` | Ligado | lógico |  |
-| `alarm` | Alarme | lógico |  |
+| `value` | Valor | número | A vazão mostrada; a turbina gira mais rápido quanto mais perto de `max` (0: parada). |
+| `max` | Máximo | número | A vazão da velocidade máxima da turbina. |
+| `running` | Ligado | lógico | Ligado: a turbina gira (verde); desligado, para (cinza). |
+| `alarm` | Alarme | lógico | Em alarme: a turbina fica vermelha e o contorno pisca. |
 
 ## Em código
 

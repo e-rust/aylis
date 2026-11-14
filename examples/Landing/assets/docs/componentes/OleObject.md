@@ -1,6 +1,6 @@
 # OleObject
 
-Comanda um programa instalado pela automação OLE (Excel, Word, Outlook), como o `CreateOleObject` do Delphi, por caminhos do VBA: `ActiveSheet.Range("A1").Value`.
+Comanda um programa instalado pela automação OLE (Excel, Word, Outlook), por caminhos do VBA: `ActiveSheet.Range("A1").Value`.
 
 **Paleta:** System · **componente não visual**
 

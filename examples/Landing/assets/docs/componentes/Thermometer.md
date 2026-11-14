@@ -12,16 +12,16 @@ Termômetro: o tubo com o bulbo, a coluna subindo com o valor e as marcas.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `unit` | Unidade | texto |  |
+| `unit` | Unidade | texto | A unidade escrita depois do número (`°C`, `°F`). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
-| `alarm` | Alarme | lógico |  |
+| `value` | Valor | número | A temperatura: a altura da coluna entre `min` e `max`. |
+| `min` | Mínimo | número | A temperatura do pé da escala (coluna vazia). |
+| `max` | Máximo | número | A temperatura do topo da escala (coluna cheia). |
+| `alarm` | Alarme | lógico | Em alarme: a coluna fica na cor de perigo e o contorno vermelho pisca. |
 
 ## Em código
 

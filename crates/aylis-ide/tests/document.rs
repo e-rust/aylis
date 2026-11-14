@@ -7,7 +7,7 @@ fn text(doc: &Document, name: &str, prop: &str) -> PropValue {
 }
 
 #[test]
-fn add_names_like_delphi_and_snaps_to_the_grid() {
+fn add_names_and_snaps_to_the_grid() {
     let mut doc = Document::new();
     let b1 = doc.add("Button", Some(PointF::new(37.0, 21.0))).unwrap();
     let b2 = doc.add("Button", Some(PointF::new(100.0, 100.0))).unwrap();

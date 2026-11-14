@@ -12,26 +12,26 @@ Slides (o `v-carousel` / `v-window`): os controles de dentro, um de cada vez. `i
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `show_arrows` | Mostra as setas | lógico |  |
+| `show_arrows` | Mostra as setas | lógico | Mostra as setas de anterior e próximo nas laterais. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `interval` | Intervalo | duração (ms) |  |
-| `cycle` | Circular | lógico |  |
+| `interval` | Intervalo | duração (ms) | Passa para o próximo sozinho a cada tantos ms; 0 = parado. |
+| `cycle` | Circular | lógico | Depois do último volta ao primeiro (e antes do primeiro, o último); desligado, para nas pontas. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `index` | Índice | inteiro |  |
+| `index` | Índice | inteiro | O slide mostrado (a partir de 0, na ordem dos filhos). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

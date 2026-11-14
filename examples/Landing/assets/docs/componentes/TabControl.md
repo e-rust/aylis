@@ -12,7 +12,7 @@ Abas: os filhos são `TabItem`s, cada um uma página; só a de `tab_index` apare
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `show_tabs` | Mostra as abas | lógico |  |
+| `show_tabs` | Mostra as abas | lógico | Mostra a barra de abas e a moldura; desligado, só as páginas (a tela troca pelo `tab_index`). |
 | `tab_position` | Posição das abas | um de: `top`, `bottom`, `left`, `right` | De que lado ficam as abas (`top`, `bottom`, `left`, `right`). |
 | `tab_width` | Largura das abas | número | Largura da coluna de abas nas laterais (`left`/`right`); em cima e embaixo não conta. |
 
@@ -20,14 +20,15 @@ Abas: os filhos são `TabItem`s, cada um uma página; só a de `tab_index` apare
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tab_index` | Aba escolhida | inteiro |  |
+| `tab_index` | Aba escolhida | inteiro | A página que aparece, a partir de 0 (a ordem dos `TabItem` filhos). |
 | `transition` | Transição | um de: `none`, `fade`, `slide_left`, `slide_right`, `slide_up`, `slide_down` | Como a aba nova entra (`slide_left`/`slide_right` deslizam na direção da ordem das abas, `fade` esmaece). |
+| `swipe` | Trocar de página deslizando | lógico | Deslizar o dedo para os lados troca de página (desligado: as páginas com mapa, grade ou controles que também arrastam para os lados não brigam com ele). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

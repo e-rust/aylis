@@ -149,8 +149,8 @@ fn every_language_gets_typed_access_to_the_components() {
     std::fs::remove_dir_all(&base).unwrap();
 }
 
-/// Os eventos que perguntam ganham o esqueleto com a assinatura certa: `var` em Pascal (como o
-/// `FormCloseQuery(Sender; var CanClose)` do Delphi), `Result` em Rust; e a assinatura comum de
+/// Os eventos que perguntam ganham o esqueleto com a assinatura certa: `var` em Pascal
+/// (`var CanClose: Boolean`), `Result` em Rust; e a assinatura comum de
 /// um projeto de antes é atualizada.
 #[test]
 fn question_events_get_the_right_signature() {
@@ -279,7 +279,7 @@ fn methods_have_named_parameters_and_rust_returns_the_error() {
         (Language::Java, &["saveTo(String path)", "java.util.List.of(path)"]),
         (Language::Go, &["SaveTo(path string)", "[]any{path}"]),
         (Language::Cpp, &["save_to(const std::string& path) const", "aylis::Json::array({path})"]),
-        // Em Pascal, com o `A` do Delphi (o `Width` do `resize` bateria com a propriedade).
+        // Em Pascal, com o `A` na frente (o `Width` do `resize` bateria com a propriedade).
         (Language::Pascal, &["SaveTo(APath: ", "TJSONArray.Create([APath])", "Resize(AWidth: Int64; AHeight: Int64)"]),
     ];
     let mut missing = Vec::new();

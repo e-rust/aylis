@@ -12,23 +12,23 @@ Cartão de indicador: título, o valor grande, a variação contra o período an
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
-| `prefix` | Prefixo | texto |  |
-| `suffix` | Sufixo | texto |  |
-| `decimals` | Casas decimais | inteiro |  |
-| `subtitle` | Subtítulo | texto |  |
+| `title` | Título | texto | O nome do indicador, no topo do cartão. |
+| `prefix` | Prefixo | texto | O texto antes do valor (`R$`). |
+| `suffix` | Sufixo | texto | O texto depois do valor (`%`, `kg`). |
+| `decimals` | Casas decimais | inteiro | Casas decimais do valor. |
+| `subtitle` | Subtítulo | texto | O texto ao lado da variação ("vs. mês anterior"). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `higher_is_better` | Maior é melhor | lógico |  |
+| `higher_is_better` | Maior é melhor | lógico | Subir é bom (▲ verde); desligado, subir é ruim (custos, reclamações) e fica vermelho. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
+| `value` | Valor | número | O valor atual, em letras grandes. |
 | `previous` | Valor anterior | número | O valor do período anterior (para a variação); 0: sem variação. |
 | `trend` | Tendência | texto | A tendência, `"10,12,9,15"` (vírgula ou `;`): uma linha embaixo. |
 

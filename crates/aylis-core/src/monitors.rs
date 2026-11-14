@@ -1,4 +1,4 @@
-//! Os monitores (como o `Screen.Monitors` do Delphi): a plataforma informa a lista
+//! Os monitores: a plataforma informa a lista
 //! ([`Ui::set_monitors`]) e em qual deles está a janela de cada form; o app lê com
 //! [`Ui::monitors`] e [`Ui::form_monitor`] (nas outras linguagens, pelo componente `Screen`).
 //! Coordenadas em pixels físicos da área de trabalho, como o sistema dá (o monitor à esquerda

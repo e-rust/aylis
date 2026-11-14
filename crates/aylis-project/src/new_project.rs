@@ -31,6 +31,12 @@ pub struct NewProjectOptions {
     /// As permissões (`camera`, `location`...; [`aylis_core::platform::Permission`]): o form
     /// principal ganha um `Permissions` com elas, que a publicação declara no Android e no iOS.
     pub permissions: Vec<String>,
+    /// Grava o guia para agentes de IA (`AGENTS.md`, `CLAUDE.md` e `.mcp.json`; veja
+    /// [`crate::agents`]). O assistente marca por padrão.
+    pub agent_guide: bool,
+    /// O `aylis-tool` que o `.mcp.json` chama (a IDE passa o que está ao lado dela; sem ele, o
+    /// nome, pelo PATH).
+    pub aylis_tool: Option<PathBuf>,
 }
 
 /// O id sugerido para o app a partir do nome (`Vendas Web` → `dev.aylis.vendasweb`).
@@ -83,6 +89,9 @@ pub fn create_with(location: &Path, name: &str, language: Language, options: &Ne
     }
     project.save()?;
     crate::codegen::sync_cargo(&project)?;
+    if options.agent_guide {
+        crate::agents::write_guide(&project, options.aylis_tool.as_deref())?;
+    }
     Ok(project)
 }
 

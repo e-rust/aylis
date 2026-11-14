@@ -97,7 +97,7 @@ TypeScript, no desktop e nas sessões da ponte):
 - **gravar** (`Send`, mudar uma propriedade) vale de qualquer thread: a escrita tem trava;
 - **ler** (`Call`, que espera a resposta) só na thread dos handlers: a resposta chega pela
   mesma leitura, e o cliente recusa um `Call` de outra thread com um erro claro;
-- **`Post(função)`** roda a função na thread dos handlers (o `TThread.Queue`): no desktop o
+- **`Post(função)`** roda a função na thread dos handlers: no desktop o
   cliente pede à tela um eco (`wake`), que acorda o laço parado lendo a entrada. É o jeito de
   fechar o modal de progresso no fim do trabalho.
 

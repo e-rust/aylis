@@ -66,8 +66,11 @@ enum Part {
 /// faixa de transparência (`alpha`), `#hex` e amostras prontas. `on_change` com a cor.
 pub struct ColorPicker {
     pub base: ControlBase,
+    /// A cor escolhida.
     pub color: Color,
+    /// Mostra a faixa de transparência (sem ela, a cor fica opaca).
     pub alpha: bool,
+    /// Mostra as amostras prontas embaixo.
     pub swatches: bool,
     /// Matiz guardado à parte (cinzas não têm matiz: mexer no quadro não o perde).
     hue: Cell<f32>,
@@ -272,7 +275,9 @@ impl Component for ColorPicker {
 /// [`ColorPicker`] logo abaixo (fecha ao clicar de novo ou ao sair do campo).
 pub struct ColorEdit {
     pub base: ControlBase,
+    /// A cor escolhida.
     pub color: Color,
+    /// O seletor que abre mostra a faixa de transparência (sem ela, a cor fica opaca).
     pub alpha: bool,
     popup: Option<ComponentId>,
 }

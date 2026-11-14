@@ -12,13 +12,13 @@ Os anéis de atividade da Apple: até três valores (`values`, frações; passan
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `ring_colors` | Cores dos anéis | texto |  |
+| `ring_colors` | Cores dos anéis | texto | As cores dos anéis, de fora para dentro, separadas por `;` (`#FF0000;#00AA00`); vazio: as da Apple. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `values` | Valores | texto |  |
+| `values` | Valores | texto | Até três frações, de fora para dentro, separadas por `;` (`0.8;1.25;0.5`); passando de 1 dá outra volta. |
 
 ## Em código
 

@@ -12,13 +12,13 @@ Botão de emergência (cogumelo vermelho sobre fundo amarelo): o clique trava e 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `pressed` | Pressionado | lógico |  |
+| `pressed` | Pressionado | lógico | Travado (apertado); o clique alterna e dispara `on_change`. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

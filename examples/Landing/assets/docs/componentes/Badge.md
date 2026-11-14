@@ -12,16 +12,16 @@ Selo (etiqueta, "chip"): um texto curto numa pílula, com ícone ou bolinha opci
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `icon` | Ícone | texto |  |
+| `text` | Texto | texto | O texto curto do selo; vazio, preso a um `target`, vira uma bolinha. |
+| `icon` | Ícone | texto | Ícone pelo nome, antes do texto; vazio: sem ícone. |
 | `dot` | Ponto | lógico | Bolinha colorida antes do texto (estado: no ar, gravando...). |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `target` | Alvo | componente |  |
-| `anchor` | Âncora | um de: `top_right`, `top_left`, `bottom_right`, `bottom_left` |  |
+| `target` | Alvo | componente | O controle irmão em cujo canto o selo fica preso; vazio: fica onde foi posto. |
+| `anchor` | Âncora | um de: `top_right`, `top_left`, `bottom_right`, `bottom_left` | O canto do `target` onde o selo fica. |
 
 ## Em código
 

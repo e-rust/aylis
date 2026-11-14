@@ -60,7 +60,7 @@ fn report(ui: &mut Ui, id: ComponentId, error: &str) {
 
 // ---------------------------------------------------------------------------
 
-/// Toca áudio (como o `TMediaPlayer`): MP3, AAC/M4A, WAV, FLAC, OGG. Não visual.
+/// Toca áudio: MP3, AAC/M4A, WAV, FLAC, OGG. Não visual.
 ///
 /// ```no_run
 /// # use aylis_core::Ui;
@@ -70,7 +70,9 @@ fn report(ui: &mut Ui, id: ComponentId, error: &str) {
 pub struct MediaPlayer {
     /// Arquivo do aplicativo (`assets/audio/aviso.mp3`) ou caminho no disco.
     pub file: String,
+    /// O volume, de 0 (mudo) a 1 (o máximo).
     pub volume: f32,
+    /// Volta ao começo ao terminar, sem parar.
     pub looping: bool,
     /// Começa a tocar quando o aplicativo abre.
     pub autoplay: bool,
@@ -335,7 +337,7 @@ impl Clock {
     }
 }
 
-/// Mostra vídeo (como o `TMediaPlayer` + `TMediaPlayerControl`): **ele mesmo desenha cada
+/// Mostra vídeo: **ele mesmo desenha cada
 /// quadro**, então dá para ter cantos arredondados, controles por cima e animação.
 ///
 /// O arquivo é aberto pelo primeiro decodificador que aceitar (os registrados com
@@ -349,11 +351,18 @@ pub struct VideoPlayer {
     pub base: ControlBase,
     /// Arquivo do aplicativo (`assets/video/abertura.mp4`) ou caminho no disco.
     pub file: String,
+    /// Começa a tocar assim que o arquivo abre.
     pub autoplay: bool,
+    /// Volta ao começo ao terminar, sem parar.
     pub looping: bool,
+    /// O volume, de 0 (mudo) a 1 (o máximo).
     pub volume: f32,
+    /// Sem som, sem perder o `volume`.
     pub muted: bool,
+    /// Como o quadro ocupa o controle: `contain` (inteiro), `cover` (cobre, cortando as
+    /// bordas), `stretch`, `center` ou `original`.
     pub fit: ImageFit,
+    /// O raio dos cantos arredondados, em pontos (0: retos).
     pub radius: f32,
     /// A velocidade: 1 é a normal, 2 o dobro, 0.5 a metade. Fora de 1 o som fica mudo
     /// (volta no lugar certo em 1). Só áudio e o navegador tocam sempre em 1.

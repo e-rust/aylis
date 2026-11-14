@@ -28,17 +28,30 @@ use crate::{Edit, leaf_control};
 /// `on_rename` com o nome novo; Esc cancela.
 pub struct MediaCard {
     pub base: ControlBase,
+    /// O nome do item, embaixo da miniatura.
     pub title: String,
+    /// A linha menor embaixo do título (tamanho, data).
     pub subtitle: String,
+    /// A duração no canto de baixo da miniatura (`"02:15"`); vazio: nenhuma.
     pub duration: String,
+    /// Os selos à direita do subtítulo, separados por `;` (`*` na frente destaca,
+    /// `icon:nome` é um ícone).
     pub badges: String,
+    /// O ícone no meio quando não há miniatura (e à esquerda no `compact`).
     pub icon: String,
+    /// A linha de uma pasta: o ícone à esquerda, o título e o subtítulo ao lado.
     pub compact: bool,
+    /// Marcado (a caixa da seleção aparece preenchida).
     pub selected: bool,
+    /// O número da ordem mostrado na caixa da seleção; 0: nenhum.
     pub order: u32,
+    /// A caixa da seleção sempre à vista (não só com o mouse em cima).
     pub selection_mode: bool,
+    /// Aparece apagado (recortado, esperando colar).
     pub dimmed: bool,
+    /// A barra de progresso sobre a miniatura, de 0 a 1; negativo: sem barra.
     pub progress: f32,
+    /// O texto junto da barra de progresso.
     pub progress_text: String,
     /// Um alvo de soltar marcado (a pasta sob o item arrastado).
     pub highlighted: bool,

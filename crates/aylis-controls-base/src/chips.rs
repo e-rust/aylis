@@ -76,10 +76,15 @@ fn chip_width(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, text: &str, icon: boo
 /// botão de fechar (`closable`, evento `on_close`). Variantes: `outline`, `success`...
 pub struct Chip {
     pub base: ControlBase,
+    /// O texto da etiqueta.
     pub text: String,
+    /// Ícone pelo nome, antes do texto; vazio: sem ícone.
     pub icon: String,
+    /// Mostra o "×" de fechar, que dispara o `on_close`.
     pub closable: bool,
+    /// Cada clique alterna o `checked` (e dispara o `on_change`).
     pub checkable: bool,
+    /// Marcado, com `checkable`.
     pub checked: bool,
     close_rect: Cell<RectF>,
 }
@@ -154,10 +159,16 @@ impl Component for Chip {
 /// mouse, arrasto no toque e setas nas pontas.
 pub struct ChipGroup {
     pub base: ControlBase,
+    /// As opções, separadas por `;`: um chip para cada.
     pub items: String,
+    /// Os itens escolhidos, separados por `;`; vazio: nenhum.
     pub selected: String,
+    /// Deixa escolher vários (sem ele, escolher um desmarca o outro).
     pub multiple: bool,
+    /// Quebra a linha quando os chips não cabem; desligado, fica numa linha só que rola para
+    /// os lados.
     pub wrap: bool,
+    /// A altura de cada chip, em pontos.
     pub chip_height: f32,
     rects: RefCell<Vec<RectF>>,
     /// Rolagem lateral (sem `wrap`) e a largura de tudo.
@@ -340,9 +351,13 @@ const ARROW_ZONE: f32 = 28.0;
 /// (`half`). Mostra a prévia ao passar o mouse; `read_only` só mostra.
 pub struct Rating {
     pub base: ControlBase,
+    /// A nota, de 0 (nenhuma estrela) a `max`.
     pub value: f32,
+    /// Quantas estrelas aparecem.
     pub max: u32,
+    /// Aceita meia estrela: o clique na metade esquerda e as setas andam de 0,5 em 0,5.
     pub half: bool,
+    /// Só mostra a nota: o clique e o teclado não mudam.
     pub read_only: bool,
     hover: Cell<Option<f32>>,
 }
@@ -471,10 +486,15 @@ impl Component for Rating {
 /// `max`, com passo `step` (0 = contínuo). Arrasta o controle mais perto.
 pub struct RangeSlider {
     pub base: ControlBase,
+    /// O começo do intervalo escolhido (o controle da esquerda).
     pub low: f64,
+    /// O fim do intervalo escolhido (o controle da direita).
     pub high: f64,
+    /// O menor valor do trilho.
     pub min: f64,
+    /// O maior valor do trilho.
     pub max: f64,
+    /// O passo dos valores; 0 = contínuo.
     pub step: f64,
     dragging: Cell<Option<bool>>,
 }
@@ -586,9 +606,13 @@ impl Component for RangeSlider {
 /// código; `on_complete` quando todas as caixas estão cheias. `digits` aceita só números.
 pub struct OtpInput {
     pub base: ControlBase,
+    /// O código digitado até agora.
     pub text: String,
+    /// Quantas caixas (caracteres) o código tem.
     pub length: u32,
+    /// Só aceita números.
     pub digits: bool,
+    /// Mostra `•` no lugar dos caracteres.
     pub password: bool,
 }
 
@@ -697,7 +721,9 @@ impl Component for OtpInput {
 /// `on_dropdown`.
 pub struct SplitButton {
     pub base: ControlBase,
+    /// O texto da ação principal.
     pub text: String,
+    /// Ícone pelo nome, antes do texto; vazio: sem ícone.
     pub icon: String,
 }
 

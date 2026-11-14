@@ -2,7 +2,7 @@
 
 ![Popover](img/Popover.png)
 
-Cartão flutuante: desenhado no form com os filhos, fica escondido até `popup(anchor)`, que o abre ao lado de `anchor`, por cima de tudo e sem sair do form. Fecha com o clique fora, o Escape ou `close()`, e avisa em `on_close`. A aparência é o estilo `Popover` do tema.
+Cartão flutuante (o popover das bibliotecas web): desenhado no form com os filhos, fica escondido até `popup(anchor)`, que o abre ao lado de `anchor`, por cima de tudo e sem sair do form. Fecha com o clique fora, o Escape ou `close()`, e avisa em `on_close`. A aparência é o estilo `Popover` do tema.
 
 **Paleta:** Menus · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -17,15 +17,15 @@ Cartão flutuante: desenhado no form com os filhos, fica escondido até `popup(a
 | `fill_mid_at` | Posição da cor do meio | número | Onde fica a `fill_mid`, de 0 a 1 (0 = no meio). |
 | `gradient_angle` | Ângulo do degradê | ângulo (graus) | Direção do gradiente em graus, como no CSS: 0 = para cima, 90 = para a direita. |
 | `gradient_radial` | Degradê circular | lógico | Gradiente radial: `fill` no centro até `fill2` na borda (o menor raio do retângulo). |
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
+| `stroke` | Cor do traço | cor | Cor da borda; vazio: a do tema. |
+| `stroke_width` | Largura do traço | número | Espessura da borda, em pontos (0 = sem borda); vazio: a do tema. |
 | `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `placement` | Posição | um de: `bottom`, `top`, `right`, `left` |  |
+| `placement` | Posição | um de: `bottom`, `top`, `right`, `left` | De que lado do componente abre: `bottom` (em cima, se não couber), `top`, `right` ou `left`. |
 | `gap` | Espaço entre itens | número | A distância até o componente. |
 
 ## Eventos

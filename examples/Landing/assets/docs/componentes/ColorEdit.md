@@ -12,19 +12,19 @@ Campo de cor (o `v-color-input`): amostra e `#rrggbb`; o clique abre um `ColorPi
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `alpha` | Transparência (alfa) | lógico |  |
+| `alpha` | Transparência (alfa) | lógico | O seletor que abre mostra a faixa de transparência (sem ela, a cor fica opaca). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `color` | Cor | cor |  |
+| `color` | Cor | cor | A cor escolhida. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

@@ -1,0 +1,300 @@
+# Literais das fontes da IDE que parecem texto de tela mas não são (dados de exemplo, nomes
+# próprios e de fonte, o que vai para o agente do MCP, testes): o `aylis-tool translations` não
+# os lista. Um por linha, como no código.
+(sem explicação ainda)
+A imagem que acompanha o mouse durante um arrastar e soltar.
+Abas dos forms
+Alvos
+Ana Souza
+Analytics
+Android 7
+Animation
+Appearance
+Apple
+Arial
+Aylis
+Aylis Dark
+Aylis IDE
+Aylis Light
+Bahasa Indonesia
+Behavior
+Belo Horizonte
+Blob
+Bomba de supervisório: o símbolo com o rotor girando quando ligada e o estado em cor.
+Bruno Lima
+Button
+CALL_PHONE; VIBRATE
+CSS ease
+CSS ease-in
+CSS ease-in-out
+CSS ease-out
+Caixa de marcação para uma opção de sim ou não ("Lembrar de mim"), com o texto ao lado; clicar no texto também marca.
+Campo de texto de várias linhas: observações, descrições, código. Rola, quebra linhas e pode mostrar os números das linhas e realçar a sintaxe.
+Campo numérico com setas para aumentar e diminuir, mínimo, máximo, passo e casas decimais.
+Card
+Caret
+Carla Dias
+Chart
+Cidade
+Cliente desde 2019.
+Clipboard
+Code
+Comece aqui
+Componentes: formulários e subcomponentes
+Comuns a todo controle
+Consolas
+Courier New
+Curitiba
+Data
+Delete
+Delphi
+Desconto de 5%.
+Designer
+Deutsch
+Diego Alves
+Documents
+Down
+Edit
+Editor de código com realce de sintaxe, números de linha, minimapa e dobra de blocos, para mostrar ou editar código dentro do app.
+Editor de nós ligados por cabos: fluxos, roteamento de áudio, automações. Arrastar os nós, ligar as portas e aproximar.
+Elisa Rocha
+English
+Enter
+Español
+Estrutura
+Events
+Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reordenar e mostrar a página da aba escolhida.
+Fan
+Field
+Font
+Form
+Formulários e subcomponentes
+Frame
+Français
+Fábio Nunes
+GUI Framework
+Georgia
+Gravar as alterações no banco
+Gráfico de linhas, barras, áreas, pizza e outros tipos, com legenda e eixos; as séries vêm por código ou ligadas aos dados.
+Guias
+Helvetica
+Interceptar eventos num lugar só
+Italic
+Java
+Keyboard
+Label
+Left
+Lookup
+Lottie
+Mapa interativo de blocos (como os mapas da web): arrastar, aproximar com a roda e marcadores nas coordenadas.
+Maria
+Markdown
+Material 2
+Material 3
+Memo
+Menu de contexto
+Misc
+Mostra texto em Markdown com as cores e fontes do tema: títulos, listas, tabelas, código realçado, imagens e links, com seleção e cópia.
+Motor
+Motor de supervisório: o símbolo com o estado (ligado, desligado, em alarme) nas cores da indústria.
+Notification
+Object Inspector
+Object Inspector › (propriedade)
+Olá, Maria!
+PWA 192
+Paleta
+Panel
+Parallax
+Pascal
+Pedido em análise.
+Pipe
+Porto Alegre
+Português
+Prefere contato por e-mail.
+Pump
+Quasar
+Read
+Recife
+Rectangle
+Report
+Right
+Rust
+Saldo
+Salvador
+Segoe UI
+Sound
+São Paulo
+Taskbar
+Tela inicial
+Teste
+Text
+Timer
+Times New Roman
+Um pedaço de tela reaproveitável (um form dentro de outro), com os seus próprios componentes e eventos.
+VS Code
+Veja o módulo
+Veja o módulo.
+Ventilador de supervisório: gira quando ligado e muda de cor no alarme.
+Verdana
+Visão geral
+WinUI 3
+Windows 10
+Windows 11
+Windows 16
+Windows 256
+Windows 32
+Windows 7
+Windows Phone
+Wire
+Write
+Write-Host "pronto"
+a IDE mudou de lugar
+a IDE não executou a chamada (sem o estado da IDE nesta janela)
+a IDE não respondeu
+a IDE não respondeu no prazo, e não consegui acompanhar a chamada
+a IDE não terminou a chamada (fechou antes)
+a aba do form sumiu
+a captura do app veio inválida
+a captura do app veio vazia
+a confiança num projeto de fora só pode ser confirmada pelo usuário, na IDE
+a imagem mostra em vermelho onde a tela atual difere da referência (tamanhos diferentes: o que sobra conta como diferente)
+a janela de código não está aberta
+a janela de código não está aberta (open_code)
+a janela do app em execução
+a lista está desabilitada
+a lista tem a tarefa
+a palavra inteira, das duas caixas
+abra um projeto antes (open_project)
+android.hardware.nfc; android.hardware.telephony:opcional
+as imagens do cache, na última amostra
+as tarefas estão indisponíveis
+assets e docs ficam livres
+atual + 1
+atual + 10.0
+aylis: erro ao tratar um erro: x
+aylis: frmA.btnOk.on_click cancelado por frmA.intercept
+com ..
+componente não visual
+componente: a caixa vale
+conexão perdida
+const fn
+controle visual
+cubic-bezier(0.05, 0.7, 0.1, 1)
+cubic-bezier(0.1, 0.9, 0.2, 1)
+cubic-bezier(0.2, 0, 0, 1)
+cubic-bezier(0.3, 0, 0.8, 0.15)
+cubic-bezier(0.34, 1.56, 0.64, 1)
+curva de suavização
+da memória: já renomeado
+do disco
+duração (ms)
+echo ok
+entrada vazia
+enviado ao app aberto
+esses textos não aparecem nos forms nem num tr("...") do código (gravados assim mesmo): confira se o original está igual
+falta "layout" (o objeto do componente, com class, name, propriedades e children)
+falta "layout" (ou "layout_file")
+fica a versão da IDE (salve para gravar por cima do disco)
+frmConsole (pid 20)
+frmPrincipal (pid 10)
+gravação inválida
+iOS 13
+iOS 26
+iOS 26 Light
+iOS 7
+imagens no cache
+informe a classe (Button, Panel, Chart...)
+já estava: não regrava
+layout trocado
+ler pode
+lido uma vez só
+linha 4
+linha 5
+memória das imagens
+nada a fazer
+name alterado
+negativo não
+nenhum app em execução conectado (use run e espere abrir)
+nenhum diálogo aberto
+nenhum form aberto no designer
+nenhuma depuração em andamento
+no código, entre aspas
+nome;Saldo desc
+não consegui
+não consegui desenhar o form (sem o renderizador nesta IDE)
+não está registrada
+não tem
+não é JSON válido
+não é um objeto
+número ou lista de números
+o .ico do Windows já foi gerado; as outras plataformas saem ao publicar
+o app fechou
+o arquivo de tema não é um objeto JSON
+o botão está desabilitado
+o clique (ou Enter e Espaço com o foco)
+o componente foi criado (o DataModule, ao abrir o app)
+o de outro form pelo nome completo
+o depurador não respondeu
+o diálogo não tem lista nem caixa de escolha
+o duplo clique
+o editor sumiu
+o form aberto no designer
+o form abriu
+o form fechou
+o form: o tipo e o nome, pelo servidor
+o item está desabilitado
+o layout carrega sem erros (dry_run: nada foi trocado)
+o maior primeiro
+o maior total primeiro
+o primeiro pronto
+o programa não está parado ou o quadro não existe
+o projeto está em modo restrito (não foi criado nem confiado nesta pasta; um projeto movido de pasta também conta como de fora): compilar, executar e publicar ficam desligados até o usuário confiar nele na IDE (o diálogo "Confiar neste projeto?" ou Projeto → Opções do projeto → Confiar neste projeto). Peça isso ao usuário; o MCP não confirma.
+o que vem antes do main fica de fora
+o registro atual mudou
+o registro foi gravado
+o renomeado não cai na raiz
+o tamanho mudou
+o texto do Label e o campo de outro dataset ficam de fora
+o texto escrito no designer (e o do tr("...") no código) é a chave; set_translations grava as traduções de um idioma (um idioma novo nasce assim)
+o valor mudou (pelo usuário ou pelo código)
+offline continua escolhido
+os forms mudam pelo designer: set_property, add_component, set_layout (o arquivo é regravado ao salvar)
+os testes já estão rodando
+outro projeto
+pelo menos um
+pintura frm
+projeto aberto
+projeto fechado
+recarregado do disco
+relativo à pasta de trabalho
+saldo * 2
+self.edtNome; self.EdtNome; edtNomeX
+sem IDE aberta
+sem documento
+sem nenhum, fica o de antes
+sem pixels
+sempre há um número livre
+sim (recusar com a exceção)
+sumiu: o primeiro pronto
+tecla inválida
+tem pai
+thread de trabalho
+ui.set_prop(id, "text", "Olá")?;
+uma tecla com o foco no componente
+use um caminho dentro do projeto (sem ..) ou um caminho completo
+ângulo (graus)
+Русский
+linha 0\nlinha 1
+linha 2\nlinha 4\nlinha 5
+struct RareTexts
+Aylis Profiler
+a memória como contador
+evento frm.btn.on_click → salvar
+medindo: use o app (ou app_command) e chame profile com action take (o resumo até agora) ou stop (para e resume)
+nada medido: chame profile com action start antes e use o app
+nada rodou ainda: execute o app pela IDE (run_without_debug) e use-o, ou comande pelo app_command; cada handler que disparar sai da lista
+o do Chrome não reabre como próprio
+o nome da outra thread
+pintura frmPrincipal · 10×10
+pintura frmPrincipal · 800×600
+profile ocupado

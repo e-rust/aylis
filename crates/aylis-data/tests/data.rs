@@ -39,7 +39,7 @@ fn row(id: i64, name: &str, email: &str, (y, m, d): (i32, u8, u8), limit: &str, 
 }
 
 #[test]
-fn navigation_follows_delphi_bof_eof() {
+fn navigation_follows_bof_and_eof() {
     let (mut ui, cds) = setup();
     let mut ds = data_set(&mut ui, cds);
     let mut names = Vec::new();
@@ -159,7 +159,7 @@ fn delete_and_navigation_auto_post() {
     let mut ds = data_set(&mut ui, cds);
     ds.edit().unwrap();
     ds.set_text("email", "nova@x.com").unwrap();
-    ds.next().unwrap(); // grava antes de navegar, como na VCL
+    ds.next().unwrap(); // grava antes de navegar
     assert_eq!(ds.state(), DataSetState::Browse);
     assert_eq!(ds.change_count(), 1);
 

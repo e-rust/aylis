@@ -88,7 +88,11 @@ fn pack_file(f: &FileSpec, cache: &Path, out: &Path, control: &Control, progress
         }
         return Ok("cache");
     }
-    let url = f.url.as_deref().ok_or_else(|| format!("{}: o manifesto não tem a URL oficial", f.name))?;
+    let url = f.url.as_deref().ok_or_else(|| match &f.built {
+        // Feito pelo Aylis: não há de onde baixar; o comando o põe no cache.
+        Some(command) => format!("{}: não está no cache ({}); gere com `{command}`", f.name, cache.display()),
+        None => format!("{}: o manifesto não tem a URL oficial", f.name),
+    })?;
     progress(Progress::Step(format!("Baixando {} ({} MB) de {url}…", f.name, f.megabytes())));
     download_verified(url, f, &dest, control, progress).map_err(|e| format!("{url}: {e}"))?;
     Ok("baixado")
@@ -118,11 +122,15 @@ pub fn update_lock(root: &Path, cache: &Path, names: &[&str], force: bool, contr
                 if !force && super::is_sha256(sha) && f["size"].as_u64().unwrap_or(0) > 0 {
                     continue;
                 }
+                // Feito pelo Aylis (sem URL oficial): o comando dele grava o hash.
+                if f.get("built").is_some() {
+                    continue;
+                }
                 control.check()?;
                 let file_name = f["name"].as_str().unwrap_or_default().to_string();
                 let url = f["url"].as_str().ok_or_else(|| format!("{name} ({plat}): {file_name} sem URL"))?.to_string();
                 progress(Progress::Step(format!("{name} ({plat}): baixando {url}…")));
-                let spec = FileSpec { name: file_name.clone(), size: 0, sha256: String::new(), url: Some(url.clone()), strip: 0, prefix: None, into: String::new(), extract: false, save_as: None };
+                let spec = FileSpec { name: file_name.clone(), size: 0, sha256: String::new(), url: Some(url.clone()), strip: 0, prefix: None, into: String::new(), extract: false, save_as: None, built: None };
                 let dest = cache.join(&file_name);
                 let mut body = super::fetch::get(&url).map_err(|e| format!("{url}: {e}"))?;
                 let (sha, size) = save_hashing(&mut body, &spec, &dest, &url, control, progress).map_err(|e| format!("{url}: {e}"))?;

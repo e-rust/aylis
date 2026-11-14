@@ -10,16 +10,16 @@ Abre o app por cima da tela bloqueada e acende a tela, tocando, como uma chamada
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `form` | Form | texto |  |
-| `title` | Título | texto |  |
-| `text` | Texto | texto |  |
-| `buttons` | Botões | texto |  |
-| `open_buttons` | Botões que abrem o app | texto |  |
-| `ringtone` | Toque | um de: `default`, `notification`, `alarm`, `none` |  |
-| `vibrate` | Vibrar | lógico |  |
+| `form` | Form | texto | O form que abre por cima da tela bloqueada (o nome dele); vazio: o form onde a ação está. |
+| `title` | Título | texto | O título da notificação; `{chave}` vira o valor da chave nos dados. |
+| `text` | Texto | texto | O texto da notificação; `{chave}` vira o valor da chave nos dados. |
+| `buttons` | Botões | texto | Os botões da notificação: `id:Texto;...` (`answer:Atender;reject:Recusar`). |
+| `open_buttons` | Botões que abrem o app | texto | Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. Os outros respondem sem abrir. |
+| `ringtone` | Toque | um de: `default`, `notification`, `alarm`, `none` | O som enquanto espera a resposta: `default` (o toque de chamada), `notification`, `alarm` ou `none`. |
+| `vibrate` | Vibrar | lógico | Vibra junto com o toque. |
 | `timeout` | Tempo para sumir | número | Segundos até desistir (0: sem limite). |
-| `call_style` | Estilo de chamada | lógico |  |
-| `turn_screen_on` | Acender a tela | lógico |  |
+| `call_style` | Estilo de chamada | lógico | Android 12+: a notificação no estilo de chamada, com os botões `answer` e `reject`/`decline` em destaque. |
+| `turn_screen_on` | Acender a tela | lógico | Acende a tela ao disparar. |
 
 ## Eventos
 

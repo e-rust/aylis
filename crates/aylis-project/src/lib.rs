@@ -1,11 +1,11 @@
 //! # aylis-project
 //!
-//! Um projeto do aylis é uma pasta (como um projeto do Delphi):
+//! Um projeto do aylis é uma pasta:
 //!
 //! ```text
 //! Vendas/
 //!   Vendas.aylisproj      índice: nome, linguagem, form principal, forms, tema, idioma
-//!   forms/               um .json por form (o .fmx do aylis)
+//!   forms/               um .json por form (o visual)
 //!   assets/              images/, audio/, video/, fonts/
 //!   themes/              temas próprios (opcional)
 //!   src/                 código dos eventos (Rust: Cargo.toml na raiz; Python: main.py)
@@ -15,10 +15,12 @@
 //! a fábrica de forms e o acesso aos arquivos do projeto ([`install`]) e gera o código dos
 //! eventos ([`codegen`]). Abrir a janela fica com o crate `aylis` (`aylis::Application`).
 
+pub mod agents;
 pub mod assets;
 pub mod bindings;
 pub mod check;
 pub mod codegen;
+pub mod coverage;
 pub mod hostlang;
 pub mod i18n;
 pub mod new_project;
@@ -120,7 +122,7 @@ pub struct FormEntry {
     pub name: String,
     /// Arquivo do layout, relativo à pasta do projeto (`forms/clientes.json`).
     pub file: String,
-    /// Criado quando o aplicativo abre (como a lista "Auto-create forms" do Delphi). Os
+    /// Criado quando o aplicativo abre. Os
     /// outros são criados sob demanda com `ui.create_form("frmClientes")`.
     #[serde(default)]
     pub auto_create: bool,
@@ -212,7 +214,7 @@ pub struct Project {
     /// Sem ele, esses padrões (`aylis_core::ImageCacheLimits`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_cache: Option<ImageCacheSettings>,
-    /// Onde fica o executável de desenvolvimento (a "pasta de saída" do Delphi): o Executar
+    /// Onde fica o executável de desenvolvimento: o Executar
     /// e a depuração compilam, copiam o executável para lá e rodam de lá (ao lado das DLLs
     /// e dos arquivos que o app precisa). Sem ela, roda do `target` do cargo.
     #[serde(default, skip_serializing_if = "OutputSettings::is_empty")]
@@ -391,7 +393,7 @@ pub struct OutputSettings {
     /// NoOBS da IDE terminava na hora com o instalado aberto). Sem isso, o Executar avisa e para.
     #[serde(default, skip_serializing_if = "is_false")]
     pub close_running: bool,
-    /// Comandos antes da compilação (como os Build Events do Delphi). Só rodam em projeto
+    /// Comandos antes da compilação. Só rodam em projeto
     /// confiado, e o "Confiar neste projeto?" mostra cada um.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub before_build: Vec<BuildCommand>,
@@ -607,6 +609,13 @@ pub struct WindowsOptions {
     /// `autostart`).
     #[serde(skip_serializing_if = "String::is_empty")]
     pub desktop_shortcut: String,
+    /// NSIS e Inno: oferecer "Abrir como administrador" (`on`, `off` ou vazio, como o
+    /// `autostart`). O instalador continua sem pedir administrador: ele só grava a escolha em
+    /// `HKCU\Software\<app>\RunAsAdmin` (DWORD 1 ou 0), e o app lê e decide como elevar (quem
+    /// não tem permissão desmarca e instala do mesmo jeito). Atualizando, vem marcado como
+    /// está no registro.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub run_as_admin: String,
     /// NSIS e Inno: com o app aberto, pergunta e fecha antes de instalar e de desinstalar.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub close_running: bool,

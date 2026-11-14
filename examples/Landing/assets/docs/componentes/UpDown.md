@@ -2,7 +2,7 @@
 
 ![UpDown](img/UpDown.png)
 
-Os botões − e +: `value` entre `min` e `max`, de `step` em `step`; segurar repete. `on_change` com o valor.
+Os botões − e + (o "stepper" do iOS): `value` entre `min` e `max`, de `step` em `step`; segurar repete. `on_change` com o valor.
 
 **Paleta:** Standard · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -12,16 +12,16 @@ Os botões − e +: `value` entre `min` e `max`, de `step` em `step`; segurar re
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
-| `step` | Passo | número |  |
+| `value` | Valor | número | O valor atual, entre `min` e `max`. |
+| `min` | Mínimo | número | O menor valor: nele o − fica apagado. |
+| `max` | Máximo | número | O maior valor: nele o + fica apagado. |
+| `step` | Passo | número | Quanto cada toque no − ou no + soma ou tira. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

@@ -1,4 +1,4 @@
-//! Caminhos vetoriais (o `TPathData` do FMX): retas, curvas e arcos, para ícones, cabos,
+//! Caminhos vetoriais: retas, curvas e arcos, para ícones, cabos,
 //! gráficos e formas livres. Lê o atributo `d` do SVG.
 
 use crate::geometry::{PointF, RectF};

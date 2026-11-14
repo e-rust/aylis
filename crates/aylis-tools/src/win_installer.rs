@@ -4,8 +4,9 @@
 //! Os dois instalam por usuário (sem pedir administrador), com atalho no menu Iniciar,
 //! desinstalação em Aplicativos e os dados de versão no próprio instalador (sem eles o Windows
 //! Defender marcava instaladores como `Program:Win32/Contebrew.A!ml`). Opcionais, do projeto:
-//! iniciar com o Windows, atalho na área de trabalho, fechar o app aberto, abrir no fim e
-//! perguntar se apaga a pasta de dados ao desinstalar.
+//! iniciar com o Windows, atalho na área de trabalho, "Abrir como administrador" (só a escolha,
+//! no registro, para o app ler), fechar o app aberto, abrir no fim e perguntar se apaga a pasta
+//! de dados ao desinstalar.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -89,7 +90,10 @@ struct Texts {
     code: &'static str,
     autostart: &'static str,
     desktop: &'static str,
+    run_as_admin: &'static str,
     running: &'static str,
+    /// O app continuou aberto depois do `taskkill` (aberto como administrador, por exemplo).
+    still_running: &'static str,
     remove_data: &'static str,
     need_64: &'static str,
     description: &'static str,
@@ -101,7 +105,9 @@ fn texts(locale: &str) -> Texts {
             code: "pt",
             autostart: "Iniciar com o Windows",
             desktop: "Atalho na área de trabalho",
+            run_as_admin: "Abrir como administrador",
             running: "está aberto. Clique em OK para fechar e continuar.",
+            still_running: "continua aberto e não pôde ser fechado (talvez esteja rodando como administrador). Feche-o e tente de novo.",
             remove_data: "Apagar também as configurações e os dados?",
             need_64: "precisa do Windows de 64 bits.",
             description: "Instalador do",
@@ -110,7 +116,9 @@ fn texts(locale: &str) -> Texts {
             code: "es",
             autostart: "Iniciar con Windows",
             desktop: "Acceso directo en el escritorio",
+            run_as_admin: "Abrir como administrador",
             running: "está abierto. Haga clic en Aceptar para cerrarlo y continuar.",
+            still_running: "sigue abierto y no se pudo cerrar (quizás se ejecuta como administrador). Ciérrelo e inténtelo de nuevo.",
             remove_data: "¿Borrar también la configuración y los datos?",
             need_64: "necesita Windows de 64 bits.",
             description: "Instalador de",
@@ -119,7 +127,9 @@ fn texts(locale: &str) -> Texts {
             code: "en",
             autostart: "Start with Windows",
             desktop: "Desktop shortcut",
+            run_as_admin: "Run as administrator",
             running: "is open. Click OK to close it and continue.",
+            still_running: "is still open and could not be closed (it may be running as administrator). Close it and try again.",
             remove_data: "Also delete the settings and data?",
             need_64: "needs 64-bit Windows.",
             description: "Installer for",
@@ -228,6 +238,8 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     let run_key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
     let autostart = p.offers(&p.w.autostart);
     let desktop = p.offers(&p.w.desktop_shortcut);
+    let admin = p.offers(&p.w.run_as_admin);
+    let choices = autostart.is_some() || desktop.is_some() || admin.is_some();
     let mut s = String::new();
     let mut line = |text: &str| {
         s.push_str(text);
@@ -251,7 +263,7 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     }
     line("!define MUI_ABORTWARNING");
     line("!insertmacro MUI_PAGE_DIRECTORY");
-    if autostart.is_some() || desktop.is_some() {
+    if choices {
         line("!insertmacro MUI_PAGE_COMPONENTS");
     }
     line("!insertmacro MUI_PAGE_INSTFILES");
@@ -289,6 +301,18 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
         line(&format!("    nsExec::Exec 'taskkill /F /IM \"{}\" /T'", p.exe_name));
         line("    Pop $0");
         line("    Sleep 800");
+        // Continua aberto (o Windows nega encerrar um app de administrador a quem não é): avisa
+        // e para, em vez de seguir e falhar ao gravar o executável.
+        line(&format!(
+            "    nsExec::ExecToStack '\"$SYSDIR\\cmd.exe\" /c tasklist /FI \"IMAGENAME eq {0}\" /NH | \"$SYSDIR\\findstr.exe\" /I /C:\"{0}\"'",
+            p.exe_name
+        ));
+        line("    Pop $0");
+        line("    Pop $1");
+        line("    ${If} $0 == 0");
+        line(&format!("      MessageBox MB_OK|MB_ICONSTOP {}", nsis_str(&format!("{app} {}", t.still_running))));
+        line("      Abort");
+        line("    ${EndIf}");
         line("  ${EndIf}");
         line("FunctionEnd");
         line("!macroend");
@@ -303,7 +327,7 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     if p.w.close_running {
         line("  Call AylisCloseApp");
     }
-    if autostart.is_some() || desktop.is_some() {
+    if choices {
         line("  Call AylisKeepChoices");
     }
     line("FunctionEnd");
@@ -350,7 +374,19 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
         line(&format!("  CreateShortcut {} \"{exe_target}\"", nsis_str(&format!("$DESKTOP\\{app}.lnk"))));
         line("SectionEnd");
     }
-    if autostart.is_some() || desktop.is_some() {
+    if let Some(on) = admin {
+        // Só a escolha, para o app ler: o instalador segue sem pedir administrador.
+        let key = nsis_str(&format!("Software\\{app}"));
+        line(&format!("Section {}{} SecRunAsAdmin", if on { "" } else { "/o " }, nsis_str(t.run_as_admin)));
+        line(&format!("  WriteRegDWORD HKCU {key} \"RunAsAdmin\" 1"));
+        line("SectionEnd");
+        line("Section \"-AylisRunAsAdminOff\"");
+        line("  ${IfNot} ${SectionIsSelected} ${SecRunAsAdmin}");
+        line(&format!("    WriteRegDWORD HKCU {key} \"RunAsAdmin\" 0"));
+        line("  ${EndIf}");
+        line("SectionEnd");
+    }
+    if choices {
         // Atualização (já instalado): as opções vêm marcadas como o usuário deixou, não no
         // padrão de novo (quem desligou o iniciar com o Windows não o vê religado). Depois
         // das seções, que definem os ${Sec...}.
@@ -370,6 +406,18 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
             line("      !insertmacro SelectSection ${SecDesktop}");
             line("    ${Else}");
             line("      !insertmacro UnselectSection ${SecDesktop}");
+            line("    ${EndIf}");
+        }
+        if admin.is_some() {
+            // Sem o valor (instalado por uma versão sem a opção): fica o padrão do projeto.
+            line("    ClearErrors");
+            line(&format!("    ReadRegDWORD $1 HKCU {} \"RunAsAdmin\"", nsis_str(&format!("Software\\{app}"))));
+            line("    ${IfNot} ${Errors}");
+            line("      ${If} $1 == 1");
+            line("        !insertmacro SelectSection ${SecRunAsAdmin}");
+            line("      ${Else}");
+            line("        !insertmacro UnselectSection ${SecRunAsAdmin}");
+            line("      ${EndIf}");
             line("    ${EndIf}");
         }
         line("  ${EndIf}");
@@ -449,6 +497,8 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     let exe_dir = format!("{{app}}\\{}", p.exe_sub()).trim_end_matches('\\').to_string();
     let autostart = p.offers(&p.w.autostart);
     let desktop = p.offers(&p.w.desktop_shortcut);
+    let admin = p.offers(&p.w.run_as_admin);
+    let choices = autostart.is_some() || desktop.is_some() || admin.is_some();
     let base = p.out_name.trim_end_matches(".exe");
     let mut s = String::new();
     let mut line = |text: &str| {
@@ -488,7 +538,7 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     line("");
     line("[Languages]");
     line(&format!("Name: \"main\"; MessagesFile: \"{messages}\""));
-    if autostart.is_some() || desktop.is_some() {
+    if choices {
         line("");
         line("[Tasks]");
         if let Some(on) = autostart {
@@ -496,6 +546,9 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
         }
         if let Some(on) = desktop {
             line(&format!("Name: \"desktopicon\"; Description: {}{}", inno_str(t.desktop), if on { "" } else { "; Flags: unchecked" }));
+        }
+        if let Some(on) = admin {
+            line(&format!("Name: \"runasadmin\"; Description: {}{}", inno_str(t.run_as_admin), if on { "" } else { "; Flags: unchecked" }));
         }
     }
     line("");
@@ -510,9 +563,15 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     if desktop.is_some() {
         line(&format!("Name: \"{{autodesktop}}\\{app}\"; Filename: \"{exe_rel}\"; Tasks: desktopicon"));
     }
-    if autostart.is_some() || !p.schemes.is_empty() {
+    if autostart.is_some() || admin.is_some() || !p.schemes.is_empty() {
         line("");
         line("[Registry]");
+    }
+    if admin.is_some() {
+        // Só a escolha, para o app ler (o Inno lembra a tarefa ao atualizar).
+        let key = format!("Software\\{app}");
+        line(&format!("Root: HKCU; Subkey: \"{key}\"; ValueType: dword; ValueName: \"RunAsAdmin\"; ValueData: 1; Tasks: runasadmin; Flags: uninsdeletevalue"));
+        line(&format!("Root: HKCU; Subkey: \"{key}\"; ValueType: dword; ValueName: \"RunAsAdmin\"; ValueData: 0; Tasks: not runasadmin; Flags: uninsdeletevalue"));
     }
     for (scheme, description) in &p.schemes {
         let key = format!("Software\\Classes\\{scheme}");
@@ -606,6 +665,43 @@ mod tests {
         assert!(inno.contains(r#"Subkey: "Software\Classes\pedidos"; ValueType: string; ValueName: ""; ValueData: "URL:Pedidos da loja"; Flags: uninsdeletekey"#), "{inno}");
         assert!(inno.contains(r#"loja.exe"" ""%1"""#), "{inno}");
         assert_eq!(inno.matches("[Registry]").count(), 1);
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// "Abrir como administrador": a caixa nos dois instaladores, que só gravam a escolha
+    /// (1 ou 0) para o app; o NSIS a mantém ao atualizar e, com o app aberto que não fecha,
+    /// avisa e para.
+    #[test]
+    fn run_as_admin_is_offered_and_saved_for_the_app() {
+        let base = std::env::temp_dir().join(format!("aylis_run_as_admin_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let mut project = aylis_project::create(&base, "Loja", aylis_project::Language::Rust).unwrap();
+        project.publish.windows.close_running = true;
+
+        let p = Plan::new(&project, Path::new("C:/build/loja.exe"), &[]);
+        let nsis = nsis_script(&p, Path::new("C:/out/Loja-setup.exe"));
+        assert!(!nsis.contains("RunAsAdmin") && !nsis.contains("MUI_PAGE_COMPONENTS"), "sem a opção, nada: {nsis}");
+        assert!(nsis.contains("taskkill") && nsis.contains("MB_ICONSTOP"), "o app que não fecha para a instalação: {nsis}");
+
+        project.publish.windows.run_as_admin = "on".into();
+        let p = Plan::new(&project, Path::new("C:/build/loja.exe"), &[]);
+        let nsis = nsis_script(&p, Path::new("C:/out/Loja-setup.exe"));
+        assert!(nsis.contains(&format!("Section \"{}\" SecRunAsAdmin", p.texts.run_as_admin)), "{nsis}");
+        assert!(nsis.contains(r#"WriteRegDWORD HKCU "Software\Loja" "RunAsAdmin" 1"#), "{nsis}");
+        assert!(nsis.contains(r#"WriteRegDWORD HKCU "Software\Loja" "RunAsAdmin" 0"#), "{nsis}");
+        assert!(nsis.contains("MUI_PAGE_COMPONENTS") && nsis.contains(r#"ReadRegDWORD $1 HKCU "Software\Loja" "RunAsAdmin""#), "{nsis}");
+        assert!(nsis.contains("RequestExecutionLevel user"), "o instalador continua sem pedir administrador");
+        let inno = inno_script(&p, Path::new("C:/out"), "{0000}");
+        assert!(inno.contains(&format!("Name: \"runasadmin\"; Description: \"{}\"\n", p.texts.run_as_admin)), "{inno}");
+        assert!(inno.contains(r#"ValueName: "RunAsAdmin"; ValueData: 1; Tasks: runasadmin"#), "{inno}");
+        assert!(inno.contains(r#"ValueName: "RunAsAdmin"; ValueData: 0; Tasks: not runasadmin"#), "{inno}");
+        assert!(inno.contains("PrivilegesRequired=lowest"));
+
+        project.publish.windows.run_as_admin = "off".into();
+        let p = Plan::new(&project, Path::new("C:/build/loja.exe"), &[]);
+        assert!(nsis_script(&p, Path::new("C:/out/Loja-setup.exe")).contains(&format!("Section /o \"{}\" SecRunAsAdmin", p.texts.run_as_admin)));
+        assert!(inno_script(&p, Path::new("C:/out"), "{0000}").contains(&format!("Description: \"{}\"; Flags: unchecked", p.texts.run_as_admin)));
         let _ = std::fs::remove_dir_all(&base);
     }
 

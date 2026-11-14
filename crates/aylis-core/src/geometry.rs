@@ -1,4 +1,4 @@
-//! Tipos geométricos (equivalentes a `TPointF`, `TSizeF`, `TRectF` e `TBounds` do FMX).
+//! Tipos geométricos: ponto, tamanho, retângulo e as medidas por lado.
 //!
 //! Todas as medidas são em unidades lógicas; a escala de DPI é aplicada pelo canvas.
 
@@ -147,7 +147,7 @@ impl RectF {
     }
 }
 
-/// Quatro medidas, uma por lado (como `TBounds`): usado em `margins` e `padding`.
+/// Quatro medidas, uma por lado: usado em `margins` e `padding`.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Bounds {
     pub left: f32,

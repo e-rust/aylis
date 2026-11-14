@@ -74,7 +74,9 @@ fn at(values: &[f64], i: usize) -> f64 {
 /// Liga com `active`; a primeira vez pede a permissão (no Android, declare `location` no
 /// `Permissions` ou ela é declarada pela publicação ao achar este componente).
 pub struct Location {
+    /// Mede a localização (a primeira vez pede a permissão); desligado, para.
     pub active: bool,
+    /// De quanto em quanto tempo mede, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -128,6 +130,7 @@ impl Component for Location {
 
 /// A bateria: `level` (0 a 100) e `charging`. Sempre medindo (a cada `interval`, 5 s).
 pub struct Battery {
+    /// De quanto em quanto tempo lê a bateria, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -171,6 +174,7 @@ impl Component for Battery {
 
 /// A rede: `connected` e `kind` (`wifi`, `cellular`, `ethernet`, `other` ou `none`).
 pub struct Network {
+    /// De quanto em quanto tempo confere a rede, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -221,7 +225,9 @@ impl Component for Network {
 
 /// O acelerômetro (com a gravidade), em m/s²: `x`, `y` e `z`.
 pub struct MotionSensor {
+    /// Lê o acelerômetro; desligado, para.
     pub active: bool,
+    /// De quanto em quanto tempo lê, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -268,7 +274,9 @@ impl Component for MotionSensor {
 
 /// A bússola: `heading` em graus (0 = norte, 90 = leste).
 pub struct Compass {
+    /// Lê a bússola; desligado, para.
     pub active: bool,
+    /// De quanto em quanto tempo lê, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -309,7 +317,9 @@ impl Component for Compass {
 
 /// O sensor de proximidade (o rosto encostado no telefone): `near` e `distance` (cm).
 pub struct ProximitySensor {
+    /// Lê o sensor de proximidade; desligado, para.
     pub active: bool,
+    /// De quanto em quanto tempo lê, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -353,7 +363,9 @@ impl Component for ProximitySensor {
 
 /// O sensor de luz ambiente: `lux`.
 pub struct LightSensor {
+    /// Lê a luz ambiente; desligado, para.
     pub active: bool,
+    /// De quanto em quanto tempo lê, em segundos.
     pub interval: f32,
     values: Vec<f64>,
     available: bool,
@@ -441,10 +453,16 @@ impl Component for Vibration {
 /// em `on_message` (guardado enquanto a tela estava fechada). No iOS não há serviço assim: a
 /// lógica roda com o app aberto.
 pub struct BackgroundService {
+    /// Liga o serviço e a lógica do projeto; desligado, para os dois.
     pub active: bool,
+    /// O título da notificação fixa do serviço; vazio: "Rodando em segundo plano".
     pub title: String,
+    /// O texto da notificação fixa do serviço.
     pub text: String,
+    /// O tipo do serviço no Android 14+ (`dataSync`, `location`, `mediaPlayback`,
+    /// `connectedDevice`...).
     pub kind: String,
+    /// O sistema reinicia o serviço (e no boot) e o app pede para sair da otimização de bateria.
     pub keep_alive: bool,
     started: bool,
 }
@@ -539,8 +557,13 @@ impl Component for BackgroundService {
 /// últimas). A Play Store só aceita essas permissões em apps de telefone. Hoje, o Android.
 #[derive(Default)]
 pub struct Phone {
+    /// Acompanha o estado das chamadas (`state`, `number` e o `on_call_state`); a publicação
+    /// declara `READ_PHONE_STATE` e `READ_CALL_LOG`.
     pub watch_state: bool,
+    /// O `call` liga direto, sem passar pelo discador; a publicação declara `CALL_PHONE`.
     pub direct_call: bool,
+    /// O modo "app de telefone": o app pode virar o discador padrão, receber as chamadas e
+    /// atender, recusar e desligar.
     pub dialer_app: bool,
     state: String,
     number: String,
@@ -633,7 +656,9 @@ impl Component for Phone {
 /// `full_screen`, o app abre por cima do bloqueio (uma ligação, um alarme). Hoje, o Android.
 #[derive(Default)]
 pub struct LockScreen {
+    /// O form aparece por cima da tela de bloqueio.
     pub show_when_locked: bool,
+    /// Acende a tela quando o form abre.
     pub turn_screen_on: bool,
     applied: Option<(bool, bool)>,
 }
@@ -698,8 +723,12 @@ impl Component for LockScreen {
 /// | Android | botões, direcional e o analógico esquerdo (o winit descarta o direito e os gatilhos analógicos) |
 /// | iOS | ainda não (`connected` falso) |
 pub struct Gamepad {
+    /// Qual controle conectado ler (0 = o primeiro).
     pub index: u32,
+    /// Lê o controle a cada quadro e dispara os eventos; desligado, para.
     pub active: bool,
+    /// A zona morta dos analógicos e gatilhos, de 0 a 1: abaixo dela é 0 (a folga do
+    /// controle parado).
     pub dead_zone: f32,
     state: Option<aylis_core::platform::GamepadState>,
     axes: [f32; 6],
@@ -849,7 +878,7 @@ impl Component for Gamepad {
     }
 }
 
-/// Os monitores (como o `Screen` do Delphi), para todas as linguagens: `count()`, `primary()`
+/// Os monitores, para todas as linguagens: `count()`, `primary()`
 /// (o índice do principal), `monitors()` (a lista em JSON: nome do aparelho, nome do sistema,
 /// principal, posição e tamanho, área útil sem a barra de tarefas, escala, taxa de
 /// atualização e modos de vídeo), `monitor(i)`, `refresh_rate(i)` e `form_monitor(form)` (em

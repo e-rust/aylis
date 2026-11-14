@@ -12,15 +12,15 @@ Barra de progresso. O trilho usa o `fill` do tema e a barra, o token `primary` (
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `color` | Cor | cor |  |
+| `color` | Cor | cor | Cor da barra; vazio: o token `primary` do tema. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
+| `value` | Valor | número | O valor atual, entre `min` e `max`: quanto da barra fica preenchido. |
+| `min` | Mínimo | número | O valor da barra vazia. |
+| `max` | Máximo | número | O valor da barra cheia. |
 
 ## Em código
 

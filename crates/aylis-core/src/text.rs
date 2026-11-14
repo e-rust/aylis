@@ -1,7 +1,7 @@
 //! Disposição de texto em linhas: quebra automática e reticências ("…"), iguais em todos
-//! os renderizadores (Skia, navegador). Como o `WordWrap` e o `Trimming` do FMX.
+//! os renderizadores (Skia, navegador).
 
-/// O que fazer quando o texto não cabe na largura (como o `TTextTrimming`).
+/// O que fazer quando o texto não cabe na largura.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Trimming {
     /// Não corta: o texto passa da borda (e o controle recorta).

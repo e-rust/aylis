@@ -33,8 +33,8 @@ pub struct DevServer {
     next_id: AtomicU64,
     /// O segredo do projeto aberto (trocar de projeto troca).
     secret: Arc<Mutex<[u8; 32]>>,
-    /// As linhas do rastro de eventos que os apps mandaram.
-    traces: Arc<Mutex<Vec<String>>>,
+    /// O que os apps mandaram sem pedido: o rastro de eventos e os handlers que rodaram.
+    traces: Arc<Inbox>,
     /// O rastro de eventos ligado (vale para quem conectar depois também).
     trace: Arc<AtomicBool>,
 }
@@ -75,7 +75,7 @@ impl DevServer {
             conns: Arc::new(Mutex::new(Vec::new())),
             next_id: AtomicU64::new(1),
             secret: Arc::new(Mutex::new(secret)),
-            traces: Arc::new(Mutex::new(Vec::new())),
+            traces: Arc::new(Inbox::default()),
             trace: Arc::new(AtomicBool::new(false)),
         });
         let (conns, secret, trace) = (server.conns.clone(), server.secret.clone(), server.trace.clone());
@@ -136,10 +136,8 @@ impl DevServer {
                 match conn.ws.read() {
                     Ok(Message::Binary(frame)) => {
                         let Ok(Some(text)) = conn.session.open(&frame) else { continue };
-                        if let Some(line) = serde_json::from_str::<Value>(&text).ok().and_then(|v| v.get("trace").and_then(Value::as_str).map(str::to_string)) {
-                            if let Ok(mut t) = self.traces.lock() {
-                                t.push(line);
-                            }
+                        if let Ok(message) = serde_json::from_str::<Value>(&text) {
+                            self.traces.accept(&message);
                         }
                     }
                     Ok(Message::Close(_)) => break false,
@@ -197,7 +195,13 @@ impl DevServer {
 
     /// As linhas do rastro que chegaram desde a última vez.
     pub fn take_traces(&self) -> Vec<String> {
-        self.traces.lock().map(|mut t| std::mem::take(&mut *t)).unwrap_or_default()
+        self.traces.lines.lock().map(|mut t| std::mem::take(&mut *t)).unwrap_or_default()
+    }
+
+    /// Os handlers que os apps avisaram ter rodado desde a última vez (`frmX.btnSalvar_click`;
+    /// a cobertura de handlers).
+    pub fn take_handlers(&self) -> Vec<String> {
+        self.traces.handlers.lock().map(|mut t| std::mem::take(&mut *t)).unwrap_or_default()
     }
 
     /// Os apps conectados, do mais antigo ao mais novo: `{"project", "pid", "latest"}` (o
@@ -307,7 +311,33 @@ fn send(conn: &mut Conn, command: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn call_on(conn: &mut Conn, id: u64, mut command: Value, traces: &Mutex<Vec<String>>) -> Result<Value, String> {
+/// O que os apps mandam sem pedido.
+#[derive(Default)]
+struct Inbox {
+    /// As linhas do rastro de eventos (`{"trace": ".."}`).
+    lines: Mutex<Vec<String>>,
+    /// Os handlers que rodaram pela primeira vez (`{"handler": "frmX.h"}`).
+    handlers: Mutex<Vec<String>>,
+}
+
+impl Inbox {
+    /// Guarda a mensagem, se for uma das que chegam sem pedido; `false`: é resposta.
+    fn accept(&self, message: &Value) -> bool {
+        let (list, text) = if let Some(line) = message.get("trace").and_then(Value::as_str) {
+            (&self.lines, line)
+        } else if let Some(handler) = message.get("handler").and_then(Value::as_str) {
+            (&self.handlers, handler)
+        } else {
+            return false;
+        };
+        if let Ok(mut l) = list.lock() {
+            l.push(text.to_string());
+        }
+        true
+    }
+}
+
+fn call_on(conn: &mut Conn, id: u64, mut command: Value, traces: &Inbox) -> Result<Value, String> {
     command["id"] = json!(id);
     send(conn, &command)?;
     loop {
@@ -315,11 +345,8 @@ fn call_on(conn: &mut Conn, id: u64, mut command: Value, traces: &Mutex<Vec<Stri
             Ok(Message::Binary(frame)) => {
                 let Some(text) = conn.session.open(&frame).map_err(|e| format!("conexão perdida: {e}"))? else { continue };
                 let Ok(answer) = serde_json::from_str::<Value>(&text) else { continue };
-                // O rastro chega sem pedido.
-                if let Some(line) = answer.get("trace").and_then(Value::as_str) {
-                    if let Ok(mut t) = traces.lock() {
-                        t.push(line.to_string());
-                    }
+                // O rastro e os handlers que rodaram chegam sem pedido.
+                if traces.accept(&answer) {
                     continue;
                 }
                 if answer.get("id").and_then(Value::as_u64) != Some(id) {
@@ -359,5 +386,17 @@ mod tests {
         let list = super::apps_of(&hellos);
         assert_eq!(list[1]["latest"], true);
         assert_eq!(list[0]["pid"], 10);
+    }
+
+    /// O rastro e os handlers que rodaram chegam sem pedido, cada um na sua fila; a resposta de
+    /// um comando não entra em nenhuma.
+    #[test]
+    fn unsolicited_messages_go_to_their_lists() {
+        let inbox = super::Inbox::default();
+        assert!(inbox.accept(&json!({ "trace": "evento frm.btn.on_click → salvar" })));
+        assert!(inbox.accept(&json!({ "handler": "frmPrincipal.btnSalvar_click" })));
+        assert!(!inbox.accept(&json!({ "id": 3, "ok": null })));
+        assert_eq!(*inbox.lines.lock().unwrap(), ["evento frm.btn.on_click → salvar"]);
+        assert_eq!(*inbox.handlers.lock().unwrap(), ["frmPrincipal.btnSalvar_click"]);
     }
 }

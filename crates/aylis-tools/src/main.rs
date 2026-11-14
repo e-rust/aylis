@@ -3,16 +3,21 @@
 //! ```text
 //! aylis-tool check [--python] [--target desktop|android|web|ios]...
 //! aylis-tool run <projeto.aylisproj> [--target ...] [--language go]
-//! aylis-tool publish <projeto.aylisproj> [--target ...] [--out pasta] [--debug] [--features a,b]
+//! aylis-tool publish <projeto.aylisproj> [--target ...] [--out pasta] [--debug] [--features a,b] [--abis arm64-v8a,armeabi-v7a]
 //! aylis-tool clean [--days 7] [--target pasta] [--project projeto.aylisproj]
 //! aylis-tool installer-ide [--out pasta] [--skip-build] [--with-packages nome,...|all]
 //! aylis-tool translations [--apply tabela.tsv] [--templates]
 //! aylis-tool new <pasta> <nome> [linguagem]
 //! aylis-tool generate <projeto.aylisproj>
-//! aylis-tool script <projeto.aylisproj> <roteiro.json> [--language go] [--output estado.json]
+//! aylis-tool script <projeto.aylisproj> <roteiro.json> [--language go] [--output estado.json] [--profile]
 //! aylis-tool setup <linguagem>... | --all  instala o compilador, o depurador e o servidor de linguagem
 //! aylis-tool ibge <pasta> [--offline]     os dados do exemplo do IBGE (examples/IBGE/assets/dados)
 //! aylis-tool packages list|install|remove|sources|pack|update|env   os pacotes de ferramentas
+//! aylis-tool lint [--all] [--update-baseline]   as diretrizes do CLAUDE.md checáveis por programa
+//! aylis-tool coverage-check lcov.info --platform linux [--update] [--summary arquivo.md]
+//! aylis-tool recording-to-test sessao.aylisrec [--out roteiro.json] [--no-waits]
+//! aylis-tool ide-script roteiro.json [--headless]  ferramentas do MCP da IDE em sequência
+//! aylis-tool handler-times <base.json> <estado.json>... [--update] [--summary arquivo.md]
 //! ```
 
 use std::path::PathBuf;
@@ -39,6 +44,92 @@ fn main() -> ExitCode {
                     }
                     Ok(())
                 }
+            }
+        }
+        // As diretrizes do CLAUDE.md que dá para checar por programa (aylis_tools::lint): uma
+        // linha por achado e código de saída 1 se houver.
+        Some("lint") => {
+            let root = PathBuf::from(aylis_project::codegen::aylis_root());
+            if args.iter().any(|a| a == "--update-baseline") {
+                aylis_tools::lint::update_baseline(&root).map(|n| println!("{n} achados na base ({})", aylis_tools::lint::BASELINE))
+            } else {
+                let found = aylis_tools::lint::run(&root, args.iter().any(|a| a == "--all"));
+                for f in &found {
+                    println!("{f}");
+                }
+                if found.is_empty() { Ok(()) } else { Err(format!("{} achado(s) do lint", found.len())) }
+            }
+        }
+        // A cobertura por crate contra medicoes/cobertura.json (cair mais de 1 ponto reprova).
+        // aylis-tool coverage-check lcov.info --platform linux [--update] [--summary arquivo.md]
+        Some("coverage-check") => match args.get(1).filter(|a| !a.starts_with("--")) {
+            Some(lcov) => {
+                let root = PathBuf::from(aylis_project::codegen::aylis_root());
+                let platform = value_of(&args, "--platform").unwrap_or_else(|| std::env::consts::OS.into());
+                let result = aylis_tools::coverage::check(&root, std::path::Path::new(lcov), &platform, args.iter().any(|a| a == "--update"));
+                let text = match &result {
+                    Ok(t) | Err(t) => t.clone(),
+                };
+                println!("{text}");
+                // --summary: acrescenta a tabela num arquivo (o $GITHUB_STEP_SUMMARY da CI).
+                if let Some(summary) = value_of(&args, "--summary") {
+                    use std::io::Write;
+                    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&summary) {
+                        let _ = writeln!(f, "{text}");
+                    }
+                }
+                result.map(|_| ()).map_err(|_| "a cobertura caiu".into())
+            }
+            None => Err("uso: aylis-tool coverage-check lcov.info --platform linux|windows [--update] [--summary arquivo.md]".into()),
+        },
+        // Uma gravação de uso (.aylisrec) vira roteiro de teste (o do `aylis-tool script`).
+        Some("recording-to-test") => match args.get(1).filter(|a| !a.starts_with("--")) {
+            Some(file) => {
+                let options = aylis_tools::recording_test::Options { waits: !args.iter().any(|a| a == "--no-waits") };
+                let out = value_of(&args, "--out").map(PathBuf::from);
+                aylis_tools::recording_test::convert(std::path::Path::new(file), out.as_deref(), options).map(|p| println!("pronto: {}", p.display()))
+            }
+            None => Err("uso: aylis-tool recording-to-test arquivo.aylisrec [--out roteiro.json] [--no-waits]".into()),
+        },
+        // Uma lista de ferramentas do MCP da IDE, tocada pela ponte (aylis_tools::ide_script).
+        // --headless: na IDE sem janela (`aylis-ide --headless --mcp-stdio`, ao lado deste
+        // executável), como na CI; sem: pela ponte, na IDE aberta (ou que ela abre).
+        Some("ide-script") => match args.get(1).filter(|a| !a.starts_with("--")) {
+            Some(script) => std::env::current_exe().map_err(|e| e.to_string()).and_then(|exe| {
+                let mut server = if args.iter().any(|a| a == "--headless") {
+                    let ide = exe.with_file_name(aylis_tools::env::exe("aylis-ide"));
+                    let mut c = std::process::Command::new(ide);
+                    c.args(["--headless", "--mcp-stdio"]);
+                    c
+                } else {
+                    let mut c = std::process::Command::new(&exe);
+                    c.arg("mcp");
+                    c
+                };
+                aylis_tools::ide_script::run(std::path::Path::new(script), &mut server, args.iter().any(|a| a == "--headless"), &mut |l| println!("{l}"))
+            }),
+            None => Err("uso: aylis-tool ide-script roteiro.json [--headless]".into()),
+        },
+        // Os tempos dos handlers dos exemplos contra medicoes/handler_times.json: só avisa.
+        Some("handler-times") => {
+            let paths: Vec<&String> = args[1..].iter().take_while(|a| !a.starts_with("--")).collect();
+            match paths.split_first() {
+                Some((base, files)) if !files.is_empty() => {
+                    let files: Vec<PathBuf> = files.iter().map(PathBuf::from).collect();
+                    aylis_tools::handler_times::check(std::path::Path::new(base), &files, args.iter().any(|a| a == "--update")).map(|(text, warnings)| {
+                        println!("{text}");
+                        for w in warnings {
+                            println!("{w}");
+                        }
+                        if let Some(summary) = value_of(&args, "--summary") {
+                            use std::io::Write;
+                            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&summary) {
+                                let _ = writeln!(f, "{text}");
+                            }
+                        }
+                    })
+                }
+                _ => Err("uso: aylis-tool handler-times <base.json> <app.handlers.json>... [--update] [--summary arquivo.md]".into()),
             }
         }
         // A IDE lite no navegador (o "Experimentar" da página do aylis).
@@ -86,6 +177,29 @@ fn main() -> ExitCode {
             }
             _ => Err("uso: aylis-tool pack-code <pasta do crate> --name Medidor --component PressureDial [--version 1.0.0] [--author nome] [--category aba] [--out arquivo.aylispkg]".into()),
         },
+        // O Skia do Android de 32 bits, que o projeto do Skia não publica pronto: compila uma vez,
+        // guarda no cache de downloads e grava o SHA-256 no manifesto (o pacote skia-android-armv7).
+        Some("skia-android") => (|| -> Result<(), String> {
+            use aylis_tools::skia_android;
+            let tools = skia_android::Tools::find(value_of(&args, "--libclang").map(PathBuf::from), value_of(&args, "--ninja").map(PathBuf::from))?;
+            let work = value_of(&args, "--work").map(PathBuf::from).or_else(|| aylis_tools::toolpacks::Paths::user().map(|p| p.tools.parent().unwrap_or(&p.tools).join("skia-build"))).ok_or("informe --work")?;
+            let built = skia_android::build(&work, &tools, &Control::new(), &mut print)?;
+            skia_android::update_lock(&aylis_tools::aylis_root(), &built)?;
+            println!("{} ({} bytes, SHA-256 {}); o manifesto foi atualizado. Ponha o arquivo na pasta de pacotes (aylis-tool packages pack) e no espelho.", built.archive.display(), built.size, built.sha256);
+            Ok(())
+        })(),
+        // O Free Pascal do Windows, que só tem instalador: tira os arquivos com o innoextract
+        // (sem executar o instalador), monta o zip no cache e grava o SHA-256 (o pacote fpc).
+        Some("fpc-package") => (|| -> Result<(), String> {
+            use aylis_tools::fpc_package;
+            let installer = value_of(&args, "--installer").map(PathBuf::from).ok_or(format!("informe --installer {}", fpc_package::INSTALLER))?;
+            let innoextract = value_of(&args, "--innoextract").map(PathBuf::from).ok_or("informe --innoextract innoextract.exe")?;
+            let cache = aylis_tools::toolpacks::Paths::user().map(|p| p.cache).ok_or("sem a pasta do usuário")?;
+            let built = fpc_package::build(&installer, &innoextract, &cache, &Control::new(), &mut print)?;
+            fpc_package::update_lock(&aylis_tools::aylis_root(), &built)?;
+            println!("{} ({} bytes, SHA-256 {}); o manifesto foi atualizado. Ponha o arquivo na pasta de pacotes (aylis-tool packages pack) e no espelho.", built.archive.display(), built.size, built.sha256);
+            Ok(())
+        })(),
         // Os documentos de teste do aylis-docview (PDF, XLSX, DOCX montados à mão).
         Some("test-docs") => {
             let dir = aylis_tools::aylis_root().join("crates").join("aylis-docview").join("tests").join("data");
@@ -163,7 +277,19 @@ fn main() -> ExitCode {
         Some("script") => match (args.get(1), args.get(2)) {
             (Some(path), Some(script)) => std::path::absolute(path).map_err(|e| format!("{path}: {e}")).and_then(Project::open).and_then(|project| with_language(project, &args)).and_then(|project| {
                 let output = value_of(&args, "--output").map(PathBuf::from).unwrap_or_else(|| std::env::temp_dir().join(format!("aylis_script_{}.json", std::process::id())));
-                let script = std::path::absolute(script).map_err(|e| format!("{script}: {e}"))?;
+                let mut script = std::path::absolute(script).map_err(|e| format!("{script}: {e}"))?;
+                // --profile: o roteiro com `"profile": true` (os tempos dos handlers vão para
+                // <estado>.handlers.json), sem mexer no arquivo do roteiro.
+                if args.iter().any(|a| a == "--profile") {
+                    let text = std::fs::read_to_string(&script).map_err(|e| format!("{}: {e}", script.display()))?;
+                    let mut value: serde_json::Value = serde_json::from_str(&text).map_err(|e| format!("{}: {e}", script.display()))?;
+                    if value.get("profile").is_none() {
+                        value["profile"] = serde_json::Value::Bool(true);
+                    }
+                    let copy = std::env::temp_dir().join(format!("aylis_script_profile_{}.json", std::process::id()));
+                    std::fs::write(&copy, value.to_string()).map_err(|e| e.to_string())?;
+                    script = copy;
+                }
                 let state = run::script(&project, &script, &output, aylis_host(), &Control::new(), &mut print)?;
                 println!("{state}");
                 Ok(())
@@ -368,6 +494,8 @@ fn main() -> ExitCode {
             // Android vem do projeto, com as senhas de AYLIS_KEYSTORE_PASSWORD/AYLIS_KEY_PASSWORD.
             options.android_bundle = args.iter().any(|a| a == "--aab");
             options.installer = args.iter().any(|a| a == "--installer" || a == "--msi");
+            // --abis arm64-v8a,armeabi-v7a: as arquiteturas do Android (sem ele, as do projeto).
+            options.abis = value_of(&args, "--abis").map(|f| f.split(',').map(|a| a.trim().to_string()).filter(|a| !a.is_empty()).collect()).unwrap_or_default();
             options.signing = publish::Signing::from_env(&project);
             if !project.publish.keystore.is_empty() && options.signing.is_none() {
                 return Err("o projeto tem chave de assinatura: informe a senha em AYLIS_KEYSTORE_PASSWORD".into());
@@ -377,7 +505,7 @@ fn main() -> ExitCode {
             println!("pronto: {}", published.main.display());
             Ok(())
         }),
-        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | docs".into()),
+        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--abis a,b] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

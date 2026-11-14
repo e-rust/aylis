@@ -1,4 +1,4 @@
-//! A janela de campos do ClientDataSet (como o Fields Editor do Delphi): fica aberta ao
+//! A janela de campos do ClientDataSet: fica aberta ao
 //! lado da IDE, lista os campos na ordem e, ao clicar num, seleciona-o — o Object
 //! Inspector passa a mostrar todas as propriedades dele. Adicionar, excluir, subir e
 //! descer; "Editar todos…" abre a tabela com nome, tipo, tamanho e rótulo de uma vez.

@@ -12,21 +12,21 @@ Avaliação em estrelas (o `v-rating`): `value` de 0 a `max`, com meia estrela (
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `half` | Meia estrela | lógico |  |
-| `read_only` | Somente leitura | lógico |  |
+| `half` | Meia estrela | lógico | Aceita meia estrela: o clique na metade esquerda e as setas andam de 0,5 em 0,5. |
+| `read_only` | Somente leitura | lógico | Só mostra a nota: o clique e o teclado não mudam. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `max` | Máximo | inteiro |  |
+| `value` | Valor | número | A nota, de 0 (nenhuma estrela) a `max`. |
+| `max` | Máximo | inteiro | Quantas estrelas aparecem. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

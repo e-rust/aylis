@@ -7,7 +7,7 @@
 //! - passado o `delay` (1 s), o cursor de espera; depois de uns 3 s, um indicador discreto do
 //!   aylis no canto do form. Com um `BusyWatcher`, vale o que ele declara (`action`,
 //!   `busy_form`, `block_input`, `min_visible`, `on_busy_start`/`on_busy_end`);
-//! - uma janela aberta pelo próprio pedido (o `MessageDlg` que espera, o `ShowModal`) põe o
+//! - uma janela aberta pelo próprio pedido (o `message_dlg` que espera, o `show_modal`) põe o
 //!   pedido em "esperando o usuário": a entrada volta, o relógio para e o `busy_form` some;
 //!   recomeça do zero na resposta.
 //!

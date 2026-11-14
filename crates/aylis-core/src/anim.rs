@@ -4,7 +4,7 @@
 //! sistema de propriedades permite ler e gravar qualquer uma:
 //!
 //! - por código: [`Ui::animate`];
-//! - por componente filho, como no FMX: [`PropertyAnimation`] (`FloatAnimation` /
+//! - por componente filho: [`PropertyAnimation`] (`FloatAnimation` /
 //!   `ColorAnimation`), disparado por um [`Trigger`] (hover, pressed, focused, checked)
 //!   do controle pai, sem código.
 //!
@@ -413,13 +413,14 @@ impl Ui {
 
     /// Há animação ou transição de estilo em andamento.
     pub fn is_animating(&self) -> bool {
-        !self.animations.is_empty() || !self.frame_hooks.is_empty() || self.frame_requests.borrow().iter().any(|(id, f)| f.0 && self.contains(*id)) || self.is_flinging() || !self.transitions.is_empty()
+        !self.animations.is_empty() || !self.frame_hooks.is_empty() || self.frame_requests.borrow().iter().any(|(id, f)| f.0 && self.contains(*id)) || self.is_flinging() || self.overscroll_active() || !self.transitions.is_empty()
     }
 
     /// Avança as animações até o tempo atual ([`Ui::time`]). A plataforma chama isto antes
     /// de cada pintura.
     pub fn tick(&mut self) {
         self.tick_flings();
+        self.tick_overscroll();
         self.tick_busy();
         self.tick_transitions();
         self.check_appear();
@@ -564,8 +565,8 @@ impl Ui {
     }
 }
 
-/// Animação declarada como componente filho do controle animado (como `TFloatAnimation`
-/// e `TColorAnimation`). Funciona sem código, inclusive vinda do arquivo de layout.
+/// Animação declarada como componente filho do controle animado.
+/// Funciona sem código, inclusive vinda do arquivo de layout.
 ///
 /// ```ignore
 /// let anim = ui.add(PropertyAnimation::color("fill", Color::rgb(255, 0, 0)), botao);
@@ -574,18 +575,26 @@ impl Ui {
 #[derive(Clone, Debug, PartialEq)]
 pub struct PropertyAnimation {
     color: bool,
+    /// A propriedade do pai que a animação muda (`opacity`, `fill`, `left`...).
     pub property: String,
     /// Valor inicial; `Null` = o valor atual da propriedade.
     pub start_value: PropValue,
+    /// O valor a que a propriedade chega no fim da animação.
     pub stop_value: PropValue,
-    /// Milissegundos.
+    /// Quanto dura a ida, em milissegundos.
     pub duration: f32,
     /// Espera antes de começar, em milissegundos (só na ida).
     pub delay: f32,
+    /// A curva de velocidade da animação (`linear`, `out_quad`...): como o valor anda no tempo.
     pub easing: Easing,
+    /// O estado do pai que dispara a animação (`hover`, `pressed`, `focused`, `checked`,
+    /// `appear`); `none`: só por código.
     pub trigger: Trigger,
+    /// Chegando ao fim, volta ao valor inicial pelo mesmo caminho.
     pub auto_reverse: bool,
+    /// Repete sem parar até ser desligada.
     pub looping: bool,
+    /// Desligada, o gatilho não a dispara.
     pub enabled: bool,
     /// Sequência de passos (`0:0; 0.6:1.15; 1:1`: fração do tempo e valor), no lugar de ir de
     /// `start_value` a `stop_value` (só números).

@@ -12,10 +12,10 @@ Um caminho SVG qualquer (`data`, o atributo `d`), esticado para o controle (`kee
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
-| `data` | Dados | texto |  |
-| `keep_aspect` | Mantém a proporção | lógico |  |
+| `stroke` | Cor do traço | cor | A cor do traço; vazio: sem traço nas figuras fechadas e a cor do texto do tema nas abertas. |
+| `stroke_width` | Largura do traço | número | A espessura do traço, em pontos; 0: sem traço. |
+| `data` | Dados | texto | O caminho no formato SVG (o atributo `d`: `M12 21 C... Z`), esticado para o controle; com `Z` a figura é fechada e leva preenchimento. |
+| `keep_aspect` | Mantém a proporção | lógico | Estica sem distorcer, centralizado; desligado, ocupa a largura e a altura do controle. |
 
 ## Em código
 

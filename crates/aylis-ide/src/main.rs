@@ -8,6 +8,7 @@
 //!                                             desenha a IDE (ou a galeria de componentes) num PNG
 //!                [--recording arquivo.aylisrec]  ou o visualizador de uma gravação
 //! aylis-ide --format-forms projeto.aylisproj    regrava os forms no formato que a IDE salva
+//! aylis-ide --headless --mcp-stdio [projeto]    a IDE sem janela, com o MCP no stdin/stdout
 //! ```
 
 // Programa de janela no Windows: abrir com dois cliques não traz um console junto.
@@ -63,9 +64,14 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     });
     // Dois cliques num projeto já aberto em outra IDE (ou com uma na tela inicial): ele vai
     // para lá e esta não abre. `--new-window` (Arquivo → Nova janela) abre sempre.
+    let headless = args.iter().any(|a| a == "--headless");
+    if headless && !args.iter().any(|a| a == "--mcp-stdio") {
+        return Err("--headless só existe com --mcp-stdio (a IDE sem janela comandada pelo MCP no stdio)".into());
+    }
     if let Some(target) = &target
         && !args.iter().any(|a| a == "--new-window")
         && png.is_none()
+        && !headless
         && aylis_tools::instances::send(Path::new(target))
     {
         return Ok(());
@@ -89,6 +95,13 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(target) = &target {
         actions::open_recent(&mut ide.ui, &state, &ide.ids, Path::new(target));
         app::refresh(&mut ide.ui, &state, &ide.ids);
+    }
+
+    // A IDE sem janela, com o MCP no stdio (aylis_ide::headless): na CI, por um agente ou pelo
+    // `aylis-tool ide-script`.
+    #[cfg(feature = "desktop")]
+    if headless {
+        return aylis_ide::headless::run_mcp_stdio(ide).map_err(Into::into);
     }
 
     if let Some(out) = png {
@@ -143,8 +156,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     // A abertura (o lingote em 3D) vem antes e troca para a IDE; desligada nas Opções da IDE,
     // e as medições de desempenho e as capturas vão direto para a IDE.
     let diagnostics = ["AYLIS_BENCH", "AYLIS_SNAPSHOT"].iter().any(|v| std::env::var_os(v).is_some());
-    // A sessão anterior caiu com forms alterados: oferece recuperar (como o __recovery do
-    // Delphi). Com a pergunta, a IDE abre direto (a abertura e um diálogo juntos travavam).
+    // A sessão anterior caiu com forms alterados: oferece recuperar.
+    // Com a pergunta, a IDE abre direto (a abertura e um diálogo juntos travavam).
     let pending = aylis_ide::recovery::start();
     let splash = aylis_ide::splash::enabled() && !diagnostics && ide.ui.open_forms().is_empty() && pending.is_empty() && crash.is_none();
     let first = if splash { aylis_ide::splash::show(&mut ide.ui, ide.form)? } else { ide.form };

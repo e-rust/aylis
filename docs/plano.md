@@ -42,8 +42,8 @@ O input usa tipos próprios: `PointerEvent` (mouse e toque), `KeyEvent` e `Wheel
 
 ## 4. Modelo de componentes
 
-- **`Component`** é a base de tudo (como o `TComponent`): nome, propriedades e notificação de destruição. Os componentes não visuais (`ClientDataSet`, `DataSource`, `Field`, `Timer`, animações, efeitos) derivam dele.
-- **`Control`** é a base visual (como o `TControl`). Dados comuns em `ControlBase`:
+- **`Component`** é a base de tudo: nome, propriedades e notificação de destruição. Os componentes não visuais (`ClientDataSet`, `DataSource`, `Field`, `Timer`, animações, efeitos) derivam dele.
+- **`Control`** é a base visual. Dados comuns em `ControlBase`:
   - posição e tamanho: `position` (left/top), `width`, `height`;
   - layout: `margins`, `padding`, `align`, `anchors`;
   - estado e pintura: `visible`, `enabled`, `hit_test`, `opacity`, `clip_children`;
@@ -52,7 +52,7 @@ O input usa tipos próprios: `PointerEvent` (mouse e toque), `KeyEvent` e `Wheel
 - Herança por composição: `struct GlowButton { base: Button, .. }` + `delegate_to!(base)`. Chamar `self.base.paint(..)` equivale ao `inherited`.
 - Arena `Ui` com `ControlId` geracional (um ID de componente destruído devolve `None`, não um Access Violation).
 - API: `ui.add`, `ui.create("Button", parent)`, `ui.free`, `ui.set_parent`, `ui.find`, `ui.set_prop`/`get_prop`, `ui.children`.
-- **Sistema de propriedades:** registro de classes (o `RegisterClass`) e propriedades publicadas com metadados: tipo, default, categoria, editor, valores de enum, min/max, readonly, oculta. Há o tipo `ComponentRef`, resolvido por fixup ao carregar.
+- **Sistema de propriedades:** registro de classes e propriedades publicadas com metadados: tipo, default, categoria, editor, valores de enum, min/max, readonly, oculta. Há o tipo `ComponentRef`, resolvido por fixup ao carregar.
 - **Modo design** no `Ui` (desvia o input para o designer) e `design_paint` opcional.
 
 ## 5. Layout
@@ -187,7 +187,7 @@ examples/
 ## 11.4 DBGrid (fase 9)
 
 - `DBGrid` virtualizado: só as linhas visíveis são lidas e pintadas (~3 ms por frame na CPU, igual com 2 mil ou 1 milhão de registros, medido no `--release`).
-- Busca sob demanda: `ClientDataSet.on_fetch`/evento `on_fetch` + `append_rows`/`append_json` (pacotes, como o `fmOnDemand` do FireDAC).
+- Busca sob demanda: `ClientDataSet.on_fetch`/evento `on_fetch` + `append_rows`/`append_json` (pacotes).
 - Colunas pelos campos (`columns: "a;b"` escolhe e ordena), redimensionar no cabeçalho, edição na célula reaproveitando o `DBEdit` (Enter/F2/duplo clique/digitar; Enter grava, Esc desfaz, Tab próxima coluna).
 - Demo: `cargo run --release -p aylis-platform-winit --example grid` (1 milhão sob demanda) ou `-- --all 1000000`.
 - Atenção: 1 milhão de registros carregados de uma vez ocupa ~600 MB (cada valor é um `Value` de 48 bytes mais o texto). Para volumes assim, prefira a busca sob demanda; um armazenamento em colunas pode reduzir isso depois.
@@ -222,7 +222,7 @@ examples/
 
 ## 11.8 Vários forms, projeto e IDE profissional (fase 13)
 
-- **Forms:** `ui.show`, `ui.show_modal(form, |ui, resultado| ...)` (não bloqueia; a janela de baixo fica desabilitada), `ui.close` com `on_close_query` (`ui.cancel_close()`) e `on_close`, `ModalResult` (botões com `modal_result`, o form fecha depois do `on_click`, que ainda pode cancelar), `ui.create_form("frmX")` (como o `Application.CreateForm`). Uma janela por form no desktop; no celular e na web, a tela mostra o form do topo. Forms com `position` (centro do dono, da tela, desenhado, padrão) e `border_style` (redimensionável, fixa, sem borda).
+- **Forms:** `ui.show`, `ui.show_modal(form, |ui, resultado| ...)` (não bloqueia; a janela de baixo fica desabilitada), `ui.close` com `on_close_query` (`ui.cancel_close()`) e `on_close`, `ModalResult` (botões com `modal_result`, o form fecha depois do `on_click`, que ainda pode cancelar), `ui.create_form("frmX")`. Uma janela por form no desktop; no celular e na web, a tela mostra o form do topo. Forms com `position` (centro do dono, da tela, desenhado, padrão) e `border_style` (redimensionável, fixa, sem borda).
 - **Nomes por form:** todo form é um escopo de nomes, inclusive embutido em outro (`ui.set_parent(form, Some(painel))`); dois forms podem ter `btnSalvar`. Caminhos: `ui.find_path("frmClientes.btnSalvar")`, `ui.path_of(id)`. Handlers por form: `frmClientes.btn_salvar_click` tem prioridade sobre `btn_salvar_click`. Referências (`data_source`) procuram no form e nos de fora; com ponto, em outro form (`dmDados.dsClientes`).
 - **Protocolo:** `create_form`, `show`, `show_modal` (com `handler` que recebe `on_modal_result`), `close` com alvo, `modal_result`; alvos por caminho; eventos com `form` e `sender.path`. Cliente Python: `aylis.create_form`, `aylis.show`, `aylis.show_modal(form, on_close)`, handlers `"frmX.handler"`.
 - **Projeto** (`aylis-project`): pasta com `<nome>.aylisproj`, `forms/`, `assets/{images,audio,video,fonts}`, `themes/`, `src/`; linguagem (Rust/Python) trocável; forms com "criar no início"; `aylis_project::install` (tema, idioma, assets, fábrica de forms). Geração de código por form (`src/forms/<form>.rs|py`), `main` e `Cargo.toml`/cliente Python criados uma vez; regerar preserva o código. Crate fachada `aylis` (`aylis::Application::open(...).run()`, `aylis::prelude`). `aylis-host --project` roda projetos Python. Testado de ponta a ponta: projeto Rust gerado compila e roda (modal, imagem de assets); projeto Python roda pelo host.
@@ -241,7 +241,7 @@ examples/
   3. `VideoDecoderFactory` + `register_decoder` — FFmpeg ou codecs próprios entram por extensão, com prioridade sobre o padrão.
 - **Padrão no Windows:** Media Foundation (`mf::MfVideo`, `mf::MfAudio`), com aceleração de hardware e conversão para BGRA no próprio leitor; busca precisa; corta o enchimento do H.264 (área visível); `mf::write_mp4` gera MP4 (usado nos testes e no exemplo). O formato garantido é MP4 (H.264 + AAC); o inspector avisa quando o vídeo escolhido não é MP4.
 - **VideoPlayer:** `fit`, `radius` (cantos arredondados), controles por cima do vídeo como filhos comuns; pausado não gasta CPU. Exemplo: `cargo run -p aylis-media --example video [-- arquivo.mp4 --muted]`.
-- **Core:** `ui.poster()` (o `TThread.Queue`: qualquer thread põe trabalho na fila da interface e acorda a janela), `ImageSource::Bgra`.
+- **Core:** `ui.poster()` (qualquer thread põe trabalho na fila da interface e acorda a janela), `ImageSource::Bgra`.
 - Ainda não: decodificador padrão de vídeo no Android (MediaCodec), iOS/macOS (AVFoundation), Linux (GStreamer) e web (`<video>`); nessas plataformas, por enquanto, o vídeo vem de uma fábrica registrada (ex.: FFmpeg) ou do `FrameSink`. O áudio já funciona em todas.
 
 ## 11.10 Executar e publicar (fase 15)

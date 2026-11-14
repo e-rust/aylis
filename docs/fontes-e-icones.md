@@ -78,8 +78,8 @@ Os três renderizadores usam as fontes registradas:
 
 ### O mesmo texto em todas as plataformas
 
-Cada plataforma mede e quebra o texto com o próprio motor (Skia, DirectWrite, o navegador),
-como no FMX. A maior diferença vem da fonte do sistema, que muda de uma plataforma para outra:
+Cada plataforma mede e quebra o texto com o próprio motor (Skia, DirectWrite, o navegador).
+A maior diferença vem da fonte do sistema, que muda de uma plataforma para outra:
 o mesmo "Salvar alterações" ocupa uma largura no Windows (Segoe UI), outra no Android (Roboto)
 e outra no Mac (SF). Por isso:
 

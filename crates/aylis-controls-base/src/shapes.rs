@@ -1,5 +1,5 @@
-//! Formas geométricas (como as do FMX: `TEllipse`, `TCircle`, `TLine`, `TPie`, `TArc`,
-//! `TPath`...), com preenchimento, borda e clique/hover que acertam a figura, não o
+//! Formas geométricas (elipse, círculo, linha, pizza, arco, caminho...),
+//! com preenchimento, borda e clique/hover que acertam a figura, não o
 //! retângulo em volta: um clique no canto de um círculo passa para o que está embaixo.
 //!
 //! Cada forma monta o seu [`Path`] no retângulo do controle; o mesmo caminho é pintado e
@@ -79,7 +79,9 @@ macro_rules! shape {
 pub struct Ellipse {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da borda; vazio: sem borda.
     pub stroke: Option<Color>,
+    /// A espessura da borda, em pontos; 0: sem borda.
     pub stroke_width: f32,
 }
 
@@ -103,7 +105,9 @@ shape!(Ellipse, "Ellipse", closed: |_: &Ellipse| true, {});
 pub struct Circle {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da borda; vazio: sem borda.
     pub stroke: Option<Color>,
+    /// A espessura da borda, em pontos; 0: sem borda.
     pub stroke_width: f32,
 }
 
@@ -156,8 +160,12 @@ impl PropEnum for LineDirection {
 pub struct Line {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da linha; vazio: a cor do texto do tema.
     pub stroke: Option<Color>,
+    /// A espessura da linha, em pontos.
     pub stroke_width: f32,
+    /// Para onde a linha vai no controle: `down` e `up` nas diagonais, `horizontal` e
+    /// `vertical` pelo meio.
     pub direction: LineDirection,
 }
 
@@ -191,9 +199,14 @@ shape!(Line, "Line", closed: |_: &Line| false, { direction: LineDirection => "Ap
 pub struct Polygon {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da borda; vazio: sem borda.
     pub stroke: Option<Color>,
+    /// A espessura da borda, em pontos; 0: sem borda.
     pub stroke_width: f32,
+    /// Quantos lados tem o polígono regular (no mínimo 3); vale sem `points`.
     pub sides: u32,
+    /// Os pontos da figura (`"0.5,0 1,1 0,1"`, de 0 a 1 na largura e na altura); vazio ou
+    /// menos de três: o polígono regular de `sides` lados.
     pub points: String,
 }
 
@@ -234,9 +247,13 @@ shape!(Polygon, "Polygon", closed: |_: &Polygon| true, { sides: u32 => "Appearan
 pub struct Star {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da borda; vazio: sem borda.
     pub stroke: Option<Color>,
+    /// A espessura da borda, em pontos; 0: sem borda.
     pub stroke_width: f32,
+    /// Quantas pontas tem a estrela (no mínimo 2).
     pub points: u32,
+    /// O raio de dentro em relação ao de fora, de 0 a 1: menor, pontas mais finas.
     pub inner: f32,
 }
 
@@ -274,9 +291,13 @@ shape!(Star, "Star", closed: |_: &Star| true, { points: u32 => "Appearance", inn
 pub struct Pie {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor da borda; vazio: sem borda.
     pub stroke: Option<Color>,
+    /// A espessura da borda, em pontos; 0: sem borda.
     pub stroke_width: f32,
+    /// Onde a fatia começa, em graus (0 = em cima, sentido horário).
     pub start_angle: f32,
+    /// Onde a fatia termina, em graus (0 = em cima, sentido horário).
     pub end_angle: f32,
 }
 
@@ -309,9 +330,13 @@ shape!(Pie, "Pie", closed: |_: &Pie| true, { start_angle: f32 as Angle => "Appea
 pub struct Arc {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor do arco; vazio: a cor do texto do tema.
     pub stroke: Option<Color>,
+    /// A espessura do arco, em pontos (o traço fica todo dentro do controle).
     pub stroke_width: f32,
+    /// Onde o arco começa, em graus (0 = em cima, sentido horário).
     pub start_angle: f32,
+    /// Onde o arco termina, em graus (0 = em cima, sentido horário).
     pub end_angle: f32,
 }
 
@@ -341,9 +366,15 @@ shape!(Arc, "Arc", closed: |_: &Arc| false, { start_angle: f32 as Angle => "Appe
 pub struct PathShape {
     pub base: aylis_core::ControlBase,
     pub fill: Option<Color>,
+    /// A cor do traço; vazio: sem traço nas figuras fechadas e a cor do texto do tema nas
+    /// abertas.
     pub stroke: Option<Color>,
+    /// A espessura do traço, em pontos; 0: sem traço.
     pub stroke_width: f32,
+    /// O caminho no formato SVG (o atributo `d`: `M12 21 C... Z`), esticado para o controle;
+    /// com `Z` a figura é fechada e leva preenchimento.
     pub data: String,
+    /// Estica sem distorcer, centralizado; desligado, ocupa a largura e a altura do controle.
     pub keep_aspect: bool,
 }
 

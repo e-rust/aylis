@@ -18,10 +18,10 @@ A imagem que acompanha o mouse durante um arrastar e soltar.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `width` | Largura | número | Tamanho na tela, em pontos; 0 = automático (160 × 90 numa imagem, o tamanho do controle num desenho). |
-| `height` | Altura | número |  |
-| `hot_x` | Ponto no cursor (X) | número | O ponto da imagem (em pontos) que fica no cursor; negativo = o padrão (no meio, um pouco acima: como o Explorer). |
-| `hot_y` | Ponto no cursor (Y) | número |  |
+| `width` | Largura | número | Largura na tela, em pontos; 0 = automática (160 × 90 numa imagem, o tamanho do controle num desenho). |
+| `height` | Altura | número | Altura na tela, em pontos; 0 = automática, como a `width`. |
+| `hot_x` | Ponto no cursor (X) | número | O ponto da imagem (em pontos) que fica no cursor, na horizontal; negativo = o padrão (no meio, um pouco acima: como o Explorer). |
+| `hot_y` | Ponto no cursor (Y) | número | O mesmo ponto, na vertical; negativo = o padrão. |
 
 ## Em código
 

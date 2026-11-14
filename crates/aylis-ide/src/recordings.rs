@@ -277,6 +277,115 @@ fn overview(rec: &Recording) -> String {
     out
 }
 
+/// O resumo de uma gravação para quem não vê a tela (o `recording` do MCP): o cabeçalho, a
+/// contagem por tipo, os erros, os mais clicados, os handlers que rodaram, os forms abertos e
+/// os últimos `last` acontecimentos, legíveis.
+pub fn summary_json(rec: &Recording, last: usize) -> Value {
+    use std::collections::BTreeMap;
+    let mut by_type: BTreeMap<String, usize> = BTreeMap::new();
+    let mut clicks: BTreeMap<String, usize> = BTreeMap::new();
+    let mut handlers: BTreeMap<String, usize> = BTreeMap::new();
+    let mut forms: Vec<String> = Vec::new();
+    for e in &rec.entries {
+        *by_type.entry(e["type"].as_str().unwrap_or("?").to_string()).or_default() += 1;
+        match e["type"].as_str().unwrap_or_default() {
+            "pointer_down" => {
+                let target = e["target_text"].as_str().map(|t| format!("\"{t}\" ")).unwrap_or_default() + e["target"].as_str().unwrap_or("?");
+                *clicks.entry(target).or_default() += 1;
+            }
+            "event" => {
+                if let Some(h) = e["handler"].as_str() {
+                    *handlers.entry(h.to_string()).or_default() += 1;
+                }
+            }
+            "form_shown" => {
+                if let Some(f) = e["form"].as_str().filter(|f| !forms.iter().any(|x| x == f)) {
+                    forms.push(f.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+    let top = |m: BTreeMap<String, usize>| {
+        let mut v: Vec<_> = m.into_iter().collect();
+        v.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        v.into_iter().take(15).map(|(k, n)| serde_json::json!({ "name": k, "count": n })).collect::<Vec<_>>()
+    };
+    let errors: Vec<Value> = rec
+        .entries
+        .iter()
+        .filter(|e| e["type"] == "error")
+        .take(20)
+        .map(|e| serde_json::json!({ "t": e["t"], "message": e["message"], "location": e["location"] }))
+        .collect();
+    let tail: Vec<String> = rec.entries[rec.entries.len().saturating_sub(last)..].iter().map(|e| format!("{}  {}", time_text(e["t"].as_f64().unwrap_or(0.0)), Recording::describe(e))).collect();
+    let h = &rec.header;
+    serde_json::json!({
+        "app": h["app"],
+        "start": h["start_ms"].as_u64().map(local_time),
+        "seconds": (rec.duration() * 10.0).round() / 10.0,
+        "os": h["os"],
+        "platform": h["platform"],
+        "entries": rec.entries.len(),
+        "by_type": by_type,
+        "errors": errors,
+        "error_count": rec.errors(),
+        "most_clicked": top(clicks),
+        "handlers": top(handlers),
+        "forms_shown": forms,
+        "last": tail,
+    })
+}
+
+/// A gravação mais nova (`.aylisrec`) das pastas dadas.
+pub fn newest(folders: &[PathBuf]) -> Option<PathBuf> {
+    folders
+        .iter()
+        .filter_map(|d| std::fs::read_dir(d).ok())
+        .flat_map(|r| r.flatten())
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == aylis_controls::RECORDING_EXTENSION))
+        .filter_map(|p| Some((std::fs::metadata(&p).and_then(|m| m.modified()).ok()?, p)))
+        .max_by_key(|(t, _)| *t)
+        .map(|(_, p)| p)
+}
+
+/// As pastas onde o app do projeto grava o uso: a `folder` do `EventRecorder` dos forms, ou a
+/// padrão dele (`<dados do app>/recordings`, pelo `app_name` ou pelo título do form principal),
+/// e a do nome do projeto.
+pub fn app_folders(project: &aylis_project::Project) -> Vec<PathBuf> {
+    let mut names: Vec<String> = Vec::new();
+    let mut out: Vec<PathBuf> = Vec::new();
+    for entry in &project.forms {
+        let Some(doc) = project.read_form(&entry.name).ok().and_then(|t| serde_json::from_str::<Value>(t.trim_start_matches('\u{feff}')).ok()) else { continue };
+        let root = doc.get("root").unwrap_or(&doc);
+        if entry.name == project.main_form {
+            if let Some(c) = root["caption"].as_str() {
+                names.push(c.to_string());
+            }
+        }
+        let mut stack = vec![root];
+        while let Some(node) = stack.pop() {
+            if node["class"] == "EventRecorder" {
+                match node["folder"].as_str().filter(|f| !f.is_empty()) {
+                    Some(f) => out.push(PathBuf::from(f)),
+                    None => names.extend(node["app_name"].as_str().filter(|a| !a.is_empty()).map(str::to_string)),
+                }
+            }
+            stack.extend(node["children"].as_array().into_iter().flatten());
+        }
+    }
+    names.push(project.publish.app_name.clone());
+    names.push(project.name.clone());
+    for name in names.into_iter().filter(|n| !n.is_empty()) {
+        let dir = recorder::app_data_dir(&name).join("recordings");
+        if !out.contains(&dir) {
+            out.push(dir);
+        }
+    }
+    out
+}
+
 /// `1:02.345` (minutos:segundos).
 fn time_text(t: f64) -> String {
     let m = (t / 60.0).floor();

@@ -19,7 +19,7 @@ typedef struct AylisCtx AylisCtx;
 /* Evento com handler por nome, em JSON:
  * {"event": "on_click", "handler": "...", "sender": {"id", "name", "class"}, "args": ...}
  * Um evento disparado de dentro do callback (aylis_ctx_execute com "click") chega a ele na
- * hora, como no Delphi. Trate as exceções (C++, Delphi) dentro do callback: uma que escape
+ * hora. Trate as exceções (C++, Pascal) dentro do callback: uma que escape
  * encerra o processo. */
 typedef void (*AylisEventFn)(AylisCtx *ctx, const char *event_json, void *user);
 

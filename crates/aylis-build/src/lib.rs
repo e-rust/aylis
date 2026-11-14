@@ -92,6 +92,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("Biometrics", ""),
     ("AppLink", ""),
     ("UrlScheme", ""),
+    ("SystemBars", ""),
     ("Location", ""),
     ("Battery", ""),
     ("Network", ""),
@@ -296,6 +297,8 @@ pub const CLASS_PLATFORMS: &[(&str, &[Platform])] = {
         ("OleObject", &[Windows]),
         // O WMI é do Windows.
         ("WmiQuery", &[Windows]),
+        // As barras do sistema do celular (e a `theme-color` do navegador).
+        ("SystemBars", &[Android, Ios, Web]),
         ("McpServer", &[Windows, MacOs, Linux]),
         ("McpTool", &[Windows, MacOs, Linux]),
     ]

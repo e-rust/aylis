@@ -1,6 +1,6 @@
 //! Menus: [`MainMenu`] (a barra), [`PopupMenu`] (menu de contexto) e [`MenuItem`].
 //!
-//! Os itens são componentes filhos (como no Delphi): um `MenuItem` dentro de outro é um
+//! Os itens são componentes filhos: um `MenuItem` dentro de outro é um
 //! submenu; `text: "-"` é um separador. O atalho (`shortcut: "Ctrl+S"`) funciona no form
 //! inteiro, mesmo com o menu fechado. Cada item tem o seu `on_click`; o menu (`PopupMenu`,
 //! `MainMenu`) também avisa em `on_item_click`, com o item clicado, para quem prefere um
@@ -24,17 +24,21 @@ const ROW: f32 = 30.0;
 const SEPARATOR: f32 = 9.0;
 const PAD: f32 = 4.0;
 
-/// Item de menu (como o `TMenuItem`). Filhos são o submenu.
+/// Item de menu. Filhos são o submenu.
 pub struct MenuItem {
+    /// O texto do item; `"-"` faz dele um separador.
     pub text: String,
     /// Atalho: `"Ctrl+S"`, `"Ctrl+Shift+N"`, `"F9"`, `"Delete"`...
     pub shortcut: String,
+    /// Aceita clique e atalho; desligado, aparece apagado.
     pub enabled: bool,
+    /// Marcado: mostra o ✓ à esquerda.
     pub checked: bool,
-    /// Clicar alterna `checked` sozinho (como o `AutoCheck` do Delphi).
+    /// Clicar alterna `checked` sozinho.
     pub auto_check: bool,
     /// Ícone à esquerda do texto (`"save"`, `"pacote:nome"`); marcado, aparece o ✓.
     pub icon: String,
+    /// Aparece no menu; escondido, some (e o atalho também não vale).
     pub visible: bool,
     /// Ação destrutiva ("Excluir"): texto na cor `danger_text` (ou `danger`) do tema e,
     /// sob o mouse, fundo `danger` com texto branco.
@@ -131,7 +135,7 @@ fn has_submenu(ui: &Ui, id: ComponentId) -> bool {
 
 // ---------------------------------------------------------------------------
 
-/// Barra de menu (como o `TMainMenu`), normalmente `align: top`.
+/// Barra de menu, normalmente `align: top`.
 pub struct MainMenu {
     pub base: ControlBase,
     /// Retângulos dos itens da barra no último frame (coordenadas do controle).
@@ -248,7 +252,7 @@ impl Component for MainMenu {
 
 // ---------------------------------------------------------------------------
 
-/// Menu de contexto (como o `TPopupMenu`): ligue na propriedade `popup_menu` de um controle
+/// Menu de contexto: ligue na propriedade `popup_menu` de um controle
 /// (abre no clique direito) ou abra por código com [`PopupMenu::popup`].
 #[derive(Default)]
 pub struct PopupMenu {}
@@ -275,8 +279,8 @@ impl Component for PopupMenu {
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
-        // Fechou, por item, Escape, clique fora ou foco perdido: `on_close` (o `OnClose` do
-        // `TPopupMenu`; C16 do Tabernáculo).
+        // Fechou, por item, Escape, clique fora ou foco perdido: `on_close` (C16
+        // do Tabernáculo).
         if let Some(MenuClosed(None)) = message.downcast_ref::<MenuClosed>() {
             ctx.ui.queue_event(ctx.id, "on_close", EventArgs::None);
             return;
@@ -333,7 +337,7 @@ fn open_overlay(ui: &mut Ui, owner: ComponentId, anchor: Anchor) {
             (item, PointF::new(r.x, r.bottom() + 2.0))
         }
     };
-    overlay.push_level(ui, parent, at, None, size);
+    overlay.push_level(ui, parent, at, None);
     let id = ui.add(overlay, root);
     if let Some(cb) = ui.control_mut(id) {
         cb.set_rect(0.0, 0.0, size.width, size.height);
@@ -378,8 +382,11 @@ impl MenuOverlay {
     }
 
     /// Abre o painel com os itens de `parent` em `at` (ou ao lado de `beside`), sem sair
-    /// da tela.
-    fn push_level(&mut self, ui: &Ui, parent: ComponentId, at: PointF, beside: Option<RectF>, screen: aylis_core::SizeF) {
+    /// da tela: do form ou, com ele em vários monitores, do pedaço em que nasce
+    /// ([`Ui::popup_area`]).
+    fn push_level(&mut self, ui: &Ui, parent: ComponentId, at: PointF, beside: Option<RectF>) {
+        let anchor = beside.map_or(at, |r| PointF::new(r.x + r.width / 2.0, r.y + r.height / 2.0));
+        let screen = ui.popup_area(self.owner, anchor);
         let items = visible_items(ui, parent);
         if items.is_empty() {
             return;
@@ -405,15 +412,15 @@ impl MenuOverlay {
         if let Some(row) = beside {
             x = row.right() - 2.0;
             y = row.y - PAD;
-            if x + width > screen.width {
+            if x + width > screen.right() {
                 x = row.x - width + 2.0;
             }
         }
-        x = x.min(screen.width - width).max(0.0);
-        if y + height > screen.height {
-            y = if beside.is_some() { screen.height - height } else { at.y - height };
+        x = x.min(screen.right() - width).max(screen.x);
+        if y + height > screen.bottom() {
+            y = if beside.is_some() { screen.bottom() - height } else { at.y - height };
         }
-        y = y.max(0.0);
+        y = y.max(screen.y);
         self.levels.push(Level { items, rect: RectF::new(x, y, width, height), hovered: None });
     }
 
@@ -447,8 +454,7 @@ impl MenuOverlay {
         let id = self.levels[level].items[row];
         if Self::selectable(ui, id) && has_submenu(ui, id) {
             let rect = Self::rows(ui, &self.levels[level]).into_iter().find(|(i, _)| *i == row).map(|(_, r)| r);
-            let screen = self.base.bounds().size();
-            self.push_level(ui, id, PointF::ZERO, rect, screen);
+            self.push_level(ui, id, PointF::ZERO, rect);
         }
     }
 
@@ -478,8 +484,7 @@ impl MenuOverlay {
         self.bar_index = index;
         self.levels.clear();
         let (id, r) = self.bar[index];
-        let screen = self.base.bounds().size();
-        self.push_level(ctx.ui, id, PointF::new(r.x, r.bottom() + 2.0), None, screen);
+        self.push_level(ctx.ui, id, PointF::new(r.x, r.bottom() + 2.0), None);
         ctx.ui.send_message(self.owner, &MenuClosed(Some(id)));
         ctx.repaint();
     }

@@ -1,4 +1,4 @@
-//! Registro de classes (o `RegisterClass` do Delphi): permite criar componentes pelo
+//! Registro de classes: permite criar componentes pelo
 //! nome da classe, o que é usado pelos arquivos de layout, pela paleta da IDE e pelo
 //! controle remoto.
 

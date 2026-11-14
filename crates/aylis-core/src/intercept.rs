@@ -64,8 +64,8 @@ fn cancelled(answer: &Answer) -> Option<String> {
 }
 
 impl Ui {
-    /// Dentro de um `on_intercept`: o handler do evento interceptado não roda (o
-    /// `Cancel := True`).
+    /// Dentro de um `on_intercept`: o handler do evento interceptado não
+    /// roda.
     pub fn cancel_event(&mut self) {
         self.reply("cancel", true);
     }

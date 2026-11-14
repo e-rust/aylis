@@ -10,12 +10,15 @@ use crate::{data_message, link_of};
 
 // ---------------------------------------------------------------------------
 
-/// Imagem de um campo (como o `TDBImage`): campo `blob` com os bytes da imagem (PNG,
+/// Imagem de um campo: campo `blob` com os bytes da imagem (PNG,
 /// JPEG...) ou campo de texto com o caminho de um arquivo do projeto.
 #[derive(Default)]
 pub struct DBImage {
     pub base: ImageView,
+    /// O `DataSource` do registro cuja imagem aparece.
     pub data_source: Option<ComponentId>,
+    /// O campo com a imagem: `blob` com os bytes (PNG, JPEG...) ou texto com o caminho de um
+    /// arquivo do projeto.
     pub data_field: String,
 }
 

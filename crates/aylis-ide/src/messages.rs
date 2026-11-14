@@ -1,5 +1,5 @@
-//! A lista das mensagens (compilação, saída do programa, publicação), como a janela de
-//! mensagens do Delphi: uma linha por mensagem, com a cor do tipo. Clique seleciona, Shift+clique
+//! A lista das mensagens (compilação, saída do programa, publicação):
+//! uma linha por mensagem, com a cor do tipo. Clique seleciona, Shift+clique
 //! estende, Ctrl+clique alterna; Ctrl+C copia as selecionadas e Ctrl+A seleciona tudo; o duplo
 //! clique numa mensagem com local abre o código na linha; o clique direito abre "Copiar" e
 //! "Copiar tudo". Só as linhas à vista são desenhadas (a saída de um programa pode ter milhares).

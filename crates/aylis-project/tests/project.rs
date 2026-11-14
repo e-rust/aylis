@@ -414,7 +414,7 @@ fn package_names_keep_acronyms_and_dataset_events_count_as_handlers() {
     assert_eq!(codegen::package_name("IBGE"), "ibge");
     assert_eq!(codegen::package_name("HTTPServer"), "http_server");
     assert_eq!(codegen::package_name("Vendas Web"), "vendas_web");
-    // Os eventos do Delphi (after_scroll, before_post) também são handlers do form.
+    // Os eventos do dataset (after_scroll, before_post) também são handlers do form.
     let layout = r#"{"root": {"class": "Form", "name": "frmX", "on_show": "mostrar",
         "children": [{"class": "ClientDataSet", "name": "cds", "after_scroll": "mudou", "before_post": "gravar"}]}}"#;
     let (form, handlers) = codegen::form_handlers(layout).unwrap();
@@ -518,7 +518,7 @@ fn a_package_with_a_hyphen_has_the_library_with_an_underscore() {
     assert!(main.contains("rtsplayer_ui::app()"), "{main}");
 }
 
-/// A subpasta do form se repete no código (como o Delphi mantém a unit junto do form; pedido
+/// A subpasta do form se repete no código (o código junto do form; pedido
 /// do autor em 11/11): `forms/painel/inicio.json` → `rust/src/forms/painel/inicio.rs`, com o
 /// módulo `painel_inicio` (não colide com um `inicio.json` da raiz), e o fonte que estava no
 /// lugar antigo vai para a subpasta.

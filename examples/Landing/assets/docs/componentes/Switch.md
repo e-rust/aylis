@@ -12,19 +12,19 @@ Chave liga/desliga. A bolinha desliza quando muda; o trilho muda de cor pela tra
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O texto ao lado da chave. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `checked` | Marcado | lógico |  |
+| `checked` | Marcado | lógico | Ligada. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

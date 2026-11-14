@@ -703,6 +703,23 @@ pub fn handler_location(project: &Project, language: Language, form: &str, handl
     Some((file, line))
 }
 
+/// O [`handler_location`] de vários handlers do mesmo form, lendo o arquivo uma vez: o arquivo
+/// e a linha de cada um (`None`: não está no código).
+pub fn handler_lines(project: &Project, language: Language, form: &str, handlers: &[String]) -> Option<(PathBuf, Vec<Option<usize>>)> {
+    let entry = project.form(form)?;
+    let file = source(project, language, form)?;
+    let text = std::fs::read_to_string(&file).unwrap_or_default();
+    let module = module_name(&entry.file);
+    let lines = handlers
+        .iter()
+        .map(|handler| {
+            let (marker, _) = stub(language, &module, form, handler);
+            find_marker(language, &text, &marker).map(|i| text[..i].matches('\n').count() + 1)
+        })
+        .collect();
+    Some((file, lines))
+}
+
 /// O handler tem função no código do form numa linguagem? `None` se o arquivo do form não
 /// existe nela.
 /// O handler está no código `text` (o arquivo de eventos do form `entry` na linguagem): quem

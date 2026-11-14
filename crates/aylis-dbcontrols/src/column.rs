@@ -1,4 +1,4 @@
-//! [`Column`]: uma coluna do `DataGrid`, como componente filho dele (como o `TColumn`). Com
+//! [`Column`]: uma coluna do `DataGrid`, como componente filho dele. Com
 //! colunas, a grade mostra só elas, na ordem; sem nenhuma, vale a lista `columns` (ou todos
 //! os campos visíveis).
 
@@ -16,6 +16,7 @@ pub struct Column {
     pub width: f32,
     /// O alinhamento do texto (`None` = o do campo).
     pub alignment: Option<TextAlign>,
+    /// A coluna aparece na grade; escondida, sai dela (o campo continua no dataset).
     pub visible: bool,
     /// Não edita nesta coluna, mesmo com a grade editável.
     pub read_only: bool,

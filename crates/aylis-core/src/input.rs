@@ -6,7 +6,7 @@
 //! pressed, focused), chama os métodos do componente e dispara os eventos públicos
 //! (`on_click`, `on_pointer_down`...).
 //!
-//! Regras (iguais às do FMX/VCL):
+//! Regras:
 //! - o controle sob o ponteiro é o mais de cima com `hit_test = true`; controles com
 //!   `hit_test = false` deixam o ponteiro passar para os filhos e para o que está atrás;
 //! - controles desabilitados (ou com algum ancestral desabilitado) não recebem eventos;
@@ -22,7 +22,7 @@
 //!   por inércia. Controles com `pan_on_touch` desligado recebem o arrasto normalmente;
 //! - no toque, o foco muda ao soltar (um toque), não ao encostar: começar a rolar em
 //!   cima de um campo de texto não abre o teclado.
-//! - arrastar e soltar entre controles (o `DragMode`/`OnDragOver`/`OnDragDrop` do FMX):
+//! - arrastar e soltar entre controles:
 //!   num controle `draggable` (ou dentro dele), passar de [`DRAG_START`] pontos com o
 //!   botão principal pressionado dispara `on_drag_start`; se o handler chamar
 //!   [`Ui::begin_drag`], o arrasto começa (sem clique ao soltar). O destino é o controle
@@ -45,6 +45,14 @@ const DOUBLE_CLICK_DISTANCE: f32 = 4.0;
 pub const DRAG_START: f32 = 5.0;
 /// Quanto o dedo anda antes de o toque virar rolagem.
 const TOUCH_SLOP: f32 = 8.0;
+/// O deslizar (`on_swipe`): o dedo anda pelo menos isto, saindo a pelo menos esta velocidade
+/// (pontos por segundo), sem ter rolado mais que isto no mesmo eixo.
+const SWIPE_DISTANCE: f32 = 32.0;
+const SWIPE_SPEED: f32 = 250.0;
+const SWIPE_SCROLLED: f32 = 4.0;
+/// A faixa da borda do form em que um deslizar abre a gaveta (fora dela, o gesto de voltar do
+/// Android, que pega a borda de fora, não briga com o app).
+const EDGE_SWIPE: f32 = 32.0;
 /// Inércia: abaixo desta velocidade (unidades por segundo) a rolagem para...
 const FLING_MIN_SPEED: f32 = 40.0;
 /// ...e a velocidade cai por este fator exponencial por segundo.
@@ -62,6 +70,9 @@ struct Touch {
     time: f64,
     panning: bool,
     velocity: PointF,
+    /// Quanto o arrasto rolou alguma coisa em cada eixo: o deslizar só vale no eixo em que
+    /// nada rolou (senão era rolagem).
+    scrolled: PointF,
 }
 
 /// Botão (ou dedo) segurado: vira toque longo se ficar parado.
@@ -366,7 +377,7 @@ impl Ui {
         self.process_events();
     }
 
-    /// Controle sob o ponto `pos` (coordenadas do form), como o `ObjectAtPoint`.
+    /// Controle sob o ponto `pos` (coordenadas do form).
     pub fn hit_test(&self, root: ComponentId, pos: PointF) -> Option<ComponentId> {
         self.hit_node(root, pos)
     }
@@ -377,8 +388,10 @@ impl Ui {
             return None;
         }
         let b = cb.bounds();
-        // No espaço de dentro (desfeitos o lugar, o giro e a escala).
-        let local = unscale(cb, unrotate(cb, pos_in_parent - b.origin()));
+        // No espaço de dentro (desfeitos o lugar, o deslocamento, o giro e a escala): o mouse
+        // acerta onde o controle está desenhado (o `translate` de uma animação, da linha
+        // deslizada da lista, da página em transição), como a pintura.
+        let local = unscale(cb, unrotate(cb, pos_in_parent - b.origin() - cb.translate()));
         let b = RectF::from_size(cb.inner_size());
         let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < b.width && local.y < b.height;
         if cb.clip_children() && !inside {
@@ -440,7 +453,7 @@ impl Ui {
     }
 
     /// O ponto `pos` (coordenadas do form) nas coordenadas do controle, desfazendo a
-    /// posição e o giro de cada ancestral e do próprio controle (o `AbsoluteToLocal` do FMX).
+    /// posição e o giro de cada ancestral e do próprio controle.
     pub fn local_point(&self, id: ComponentId, pos: PointF) -> PointF {
         let mut chain = vec![id];
         let mut parent = self.parent(id);
@@ -449,7 +462,7 @@ impl Ui {
             parent = self.parent(p);
         }
         let local = chain.iter().rev().fold(pos, |pt, &c| match self.cb(c) {
-            Some(cb) => unscale(cb, unrotate(cb, pt - cb.bounds().origin())),
+            Some(cb) => unscale(cb, unrotate(cb, pt - cb.bounds().origin() - cb.translate())),
             None => pt,
         });
         // Interface espelhada: o controle se desenha virado, então o mouse também vira.
@@ -631,7 +644,7 @@ impl Ui {
             // Tocar na tela para a inércia (como em qualquer celular).
             state.fling = None;
             let p = event.position;
-            state.touch = Some(Touch { id: event.pointer_id, target: hit, start: p, last: p, time: now, panning: false, velocity: PointF::ZERO });
+            state.touch = Some(Touch { id: event.pointer_id, target: hit, start: p, last: p, time: now, panning: false, velocity: PointF::ZERO, scrolled: PointF::ZERO });
         }
         self.set_hover(root, hit);
         let Some(target) = hit else { return };
@@ -737,6 +750,10 @@ impl Ui {
                 self.touch_pan(root, event);
             }
             let now = self.time;
+            // O puxão de fim da rolagem volta sozinho.
+            if self.overscroll_active() {
+                self.overscroll_release();
+            }
             let state = self.input_state(root);
             match state.touch {
                 Some(t) if t.id != event.pointer_id => return,
@@ -744,9 +761,19 @@ impl Ui {
                     state.touch = None;
                     if t.panning {
                         // Só continua se o dedo ainda estava andando ao soltar.
-                        if now - t.time < 0.1 && speed(t.velocity) >= FLING_MIN_SPEED {
+                        let moving = now - t.time < 0.1;
+                        if moving && speed(t.velocity) >= FLING_MIN_SPEED {
                             state.fling = Some(Fling { target: t.target, position: t.start, velocity: t.velocity, time: now });
                             self.request_repaint();
+                        }
+                        if moving {
+                            self.swipe_check(root, t);
+                        }
+                        // O fim do arrasto, ao tocado e aos pais (a linha deslizada da lista).
+                        let mut current = t.target.filter(|&c| self.contains(c));
+                        while let Some(id) = current {
+                            self.with_component(id, |c, ctx| c.touch_end(ctx));
+                            current = self.parent(id);
                         }
                         return;
                     }
@@ -1389,6 +1416,75 @@ impl Ui {
     }
 
     // =====================================================================
+    // Deslizar (`on_swipe`)
+    // =====================================================================
+
+    /// O dedo saiu de um arrasto ainda andando: rápido e longo o bastante, sem ter rolado nada
+    /// no eixo em que mais andou, é um deslizar. Começando na borda do form, vai primeiro ao
+    /// `edge_swipe` dos componentes do form; senão, ao controle tocado, subindo.
+    fn swipe_check(&mut self, root: ComponentId, t: Touch) {
+        let distance = t.last - t.start;
+        let horizontal = distance.x.abs() >= distance.y.abs();
+        let (along, scrolled, velocity) = if horizontal { (distance.x, t.scrolled.x, t.velocity.x) } else { (distance.y, t.scrolled.y, t.velocity.y) };
+        if along.abs() < SWIPE_DISTANCE || velocity.abs() < SWIPE_SPEED || scrolled > SWIPE_SCROLLED || along.signum() != velocity.signum() {
+            return;
+        }
+        let direction = match (horizontal, along > 0.0) {
+            (true, true) => crate::event::SwipeDirection::Right,
+            (true, false) => crate::event::SwipeDirection::Left,
+            (false, true) => crate::event::SwipeDirection::Down,
+            (false, false) => crate::event::SwipeDirection::Up,
+        };
+        let event = crate::event::SwipeEvent { direction, start: t.start, distance, velocity: t.velocity };
+        // Da borda do form, primeiro a gaveta (como no Android: puxar da borda abre, mesmo com
+        // um carrossel embaixo); ninguém tratando, segue como um deslizar comum.
+        let form = self.cb(root).map(|cb| cb.bounds().size()).unwrap_or_default();
+        let at_edge = t.start.x <= EDGE_SWIPE || t.start.x >= form.width - EDGE_SWIPE || t.start.y <= EDGE_SWIPE || t.start.y >= form.height - EDGE_SWIPE;
+        if at_edge && self.edge_swipe(root, event) {
+            return;
+        }
+        let target = t.target.filter(|&c| self.is_effectively_enabled(c));
+        self.swipe_from(target, event);
+    }
+
+    /// O deslizar da borda vai ao `edge_swipe` dos componentes do form (só um trata).
+    fn edge_swipe(&mut self, root: ComponentId, event: crate::event::SwipeEvent) -> bool {
+        // De cima para baixo na árvore (raro: só no deslizar da borda). Um escondido também
+        // ouve (a gaveta fechada fica escondida), mas não os filhos dele.
+        let mut stack = vec![root];
+        while let Some(id) = stack.pop() {
+            // Só habilitado (o escondido conta: quem esconde é ele mesmo, e os pais são visíveis,
+            // senão o percurso nem chegava aqui).
+            if !self.cb(id).is_some_and(|cb| cb.enabled()) {
+                continue;
+            }
+            if id != root && self.with_component(id, |c, ctx| c.edge_swipe(ctx, &event)).unwrap_or(false) {
+                self.request_repaint();
+                return true;
+            }
+            if self.cb(id).is_some_and(|cb| cb.visible()) {
+                stack.extend(self.children(id).iter().rev().copied());
+            }
+        }
+        false
+    }
+
+    /// Entrega o deslizar ao controle e sobe para os pais até alguém tratar.
+    fn swipe_from(&mut self, start: Option<ComponentId>, event: crate::event::SwipeEvent) -> bool {
+        let mut current = start;
+        while let Some(id) = current {
+            let e = crate::event::SwipeEvent { start: self.local_point(id, event.start), ..event };
+            self.fire(id, "on_swipe", &EventArgs::Swipe(e));
+            if self.deliver(id, |c, ctx| c.swipe(ctx, &e)) {
+                self.request_repaint();
+                return true;
+            }
+            current = self.parent(id);
+        }
+        false
+    }
+
+    // =====================================================================
     // Rolagem pelo toque
     // =====================================================================
 
@@ -1440,8 +1536,27 @@ impl Ui {
         self.input_state(root).touch = Some(t);
         self.update_layout();
         let target = t.target.filter(|&c| self.is_effectively_enabled(c));
-        if !self.wheel_from(target, WheelEvent { position: t.start, delta, touch: true, ..Default::default() }) {
-            self.scroll_form(root, delta.y);
+        // O fim da rolagem (`overscroll.rs`): o puxão aberto fecha antes de rolar de novo; o
+        // que ninguém rola (o conteúdo na ponta) abre o puxão do contêiner.
+        let host = self.overscroll_host(target);
+        let delta = match host {
+            Some(h) => self.overscroll_take_back(h, delta),
+            None => delta,
+        };
+        let mut scrolled = false;
+        if delta != PointF::ZERO {
+            scrolled = self.wheel_from(target, WheelEvent { position: t.start, delta, touch: true, ..Default::default() });
+            if !scrolled {
+                match host {
+                    Some(h) => self.overscroll_drag(h, delta),
+                    None => scrolled = self.scroll_form(root, delta.y),
+                }
+            }
+        }
+        if scrolled {
+            if let Some(t) = self.input_state(root).touch.as_mut() {
+                t.scrolled = PointF::new(t.scrolled.x + delta.x.abs(), t.scrolled.y + delta.y.abs());
+            }
         }
         true
     }
@@ -1475,6 +1590,12 @@ impl Ui {
             // "Ninguém rolou" só conta como fim se o passo era de pelo menos um ponto.
             if (!moved && speed(delta) >= 1.0) || speed(f.velocity) < FLING_MIN_SPEED {
                 self.input_state(root).fling = None;
+                // Bateu na ponta com velocidade: o efeito de fim da rolagem recebe o impulso.
+                if !moved && speed(f.velocity) >= FLING_MIN_SPEED {
+                    if let Some(host) = self.overscroll_host(target) {
+                        self.overscroll_absorb(host, f.velocity);
+                    }
+                }
             }
         }
     }
@@ -1601,7 +1722,7 @@ impl Ui {
             self.input_state(root).pointer_focus = false;
         }
         // As teclas que o form põe no lugar do Tab (`tab_keys`, `back_tab_keys`): o Enter que
-        // pula de campo, como nos sistemas em Delphi. O controle que usa a tecla (o Enter de
+        // pula de campo, como nos sistemas de cadastro. O controle que usa a tecla (o Enter de
         // um Memo) fica com ela.
         if let Some(forward) = self.tab_key(root, &event) {
             self.focus_next(root, forward);
@@ -1649,8 +1770,8 @@ impl Ui {
 
     /// Ninguém tratou a tecla: o Tab, os atalhos e as letras com `&`.
     pub(crate) fn key_down_unhandled(&mut self, root: ComponentId, event: KeyEvent) {
-        // O Enter e o Esc que ninguém usou: o botão padrão e o de cancelar do form (o `Default`
-        // e o `Cancel` do `TButton`; o relatório do Tabernáculo, J23).
+        // O Enter e o Esc que ninguém usou: o botão padrão e o de cancelar do form (o relatório
+        // do Tabernáculo, J23).
         let plain = !event.modifiers.ctrl && !event.modifiers.alt && !event.modifiers.shift && !event.modifiers.meta;
         if plain && !event.repeat && matches!(event.key, Key::Enter | Key::Escape) {
             let prop = if event.key == Key::Enter { "default_button" } else { "cancel_button" };
@@ -1722,7 +1843,7 @@ impl Ui {
     }
 
     /// As letras de `&` repetidas no form: cada letra com os controles que a usam (para a
-    /// IDE avisar, como o Delphi não avisa).
+    /// IDE avisar).
     pub fn mnemonic_conflicts(&self, root: ComponentId) -> Vec<(char, Vec<ComponentId>)> {
         let mut seen: Vec<(char, Vec<ComponentId>)> = Vec::new();
         let mut stack = vec![root];
@@ -1739,8 +1860,8 @@ impl Ui {
         seen
     }
 
-    /// Alt+letra num controle: o rótulo leva o foco ao `focus_control` dele (como o
-    /// `FocusControl` do Delphi); o que recebe foco e não é clicável (um grupo) passa ao
+    /// Alt+letra num controle: o rótulo leva o foco ao `focus_control` dele;
+    /// o que recebe foco e não é clicável (um grupo) passa ao
     /// primeiro filho; o resto é clicado.
     fn activate_mnemonic(&mut self, id: ComponentId) {
         if let Ok(crate::prop::PropValue::Component(Some(target))) = self.get_prop(id, "focus_control") {
@@ -1848,7 +1969,7 @@ impl Ui {
     }
 
     /// Os menus de contexto cujos atalhos valem agora: os do `popup_menu` do controle com o
-    /// foco e dos pais dele, até o form, como o `IsMenuKey` do VCL (antes valiam todos, até
+    /// foco e dos pais dele, até o form (antes valiam todos, até
     /// com o menu de outro controle; o relatório do Tabernáculo, J01).
     fn active_popup_menus(&self, root: ComponentId) -> Vec<ComponentId> {
         let mut out = Vec::new();

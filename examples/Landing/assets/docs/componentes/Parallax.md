@@ -12,13 +12,13 @@ O fundo com paralaxe (`QParallax`): a imagem (`image`, um arquivo do app) anda m
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `image` | Imagem | texto |  |
+| `image` | Imagem | texto | A imagem do fundo (um arquivo do app); vazio: um degradê da cor de destaque. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `speed` | Velocidade | número |  |
+| `speed` | Velocidade | número | Quanto a imagem se desloca com a rolagem, de 0 (parada com o componente) a 1. |
 
 ## Em código
 

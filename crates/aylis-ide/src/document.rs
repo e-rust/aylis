@@ -785,7 +785,7 @@ impl Document {
         inside.then_some(id)
     }
 
-    /// Controles visuais (não o form) que o retângulo toca (seleção por área, como no Delphi),
+    /// Controles visuais (não o form) que o retângulo toca (seleção por área),
     /// a partir do contêiner onde ele começou. Um contêiner coberto inteiro entra como um só; o
     /// que ele só corta dá lugar aos de dentro que o retângulo toca (no NoOBS, o campo de busca
     /// e os botões de uma barra da largura toda, com um retângulo fino passando por eles;
@@ -869,7 +869,7 @@ impl Document {
         }
     }
 
-    /// `Button1`, `Button2`... (como o Delphi).
+    /// O nome da classe com o primeiro número livre: `Button1`, `Button2`...
     pub fn unique_name(&self, class: &str) -> String {
         (1..).map(|n| format!("{class}{n}")).find(|name| self.ui.find_in(self.root, name).is_none()).expect("sempre há um número livre")
     }
@@ -1356,7 +1356,7 @@ impl Document {
         if let Some(look) = look {
             let _ = self.ui.set_prop(id, "theme", look);
         }
-        // Texto inicial = nome (como o Caption no Delphi), menos quando o subtipo já
+        // Texto inicial = nome, menos quando o subtipo já
         // define o texto (o botão de ícone fica sem texto).
         let (_, variant) = aylis_core::split_variant(full);
         let preset: Vec<String> = variant
@@ -1693,7 +1693,7 @@ impl Document {
         self.ui.layout();
     }
 
-    /// Muda o tamanho dos escolhidos (Shift+seta no designer, como no Delphi), um passo de
+    /// Muda o tamanho dos escolhidos (Shift+seta no designer), um passo de
     /// `dw`×`dh`; o tamanho não fica abaixo de 1. O que o alinhamento estica no outro eixo
     /// muda só no eixo livre (um `align: top` muda só a altura).
     pub fn resize_by(&mut self, id: ComponentId, dw: f32, dh: f32) {
@@ -1815,7 +1815,7 @@ impl Document {
 
     /// Copia os selecionados para a área de transferência do Aylis (a de `ui`, o da janela da
     /// IDE: as abas, as outras IDEs e os outros apps veem a mesma). Vai o JSON dos nós no
-    /// formato dos componentes e, como texto, o mesmo JSON (como o DFM do Delphi: cola num
+    /// formato dos componentes e, como texto, o mesmo JSON (cola num
     /// editor e volta para o designer).
     pub fn copy_selected(&mut self, ui: &mut Ui) -> bool {
         let ids = self.editable_selection();

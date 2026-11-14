@@ -12,20 +12,20 @@ Barra de navegação do rodapé (o `v-bottom-navigation`, a "navigation bar" do 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto |  |
+| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem, separados por `;`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | Os nomes dos destinos, separados por `;`. |
+| `item_index` | Item escolhido | inteiro | O destino escolhido (a partir de 0). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

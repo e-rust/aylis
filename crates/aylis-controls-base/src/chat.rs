@@ -111,13 +111,15 @@ pub struct ChatView {
     scroll: Cell<f32>,
     stick_bottom: Cell<bool>,
     view_height: Cell<f32>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for ChatView {
     fn default() -> Self {
         let mut base = ControlBase::new(420.0, 480.0);
         base.set_clip_children(true);
-        Self {
+        Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             show_authors: true,
             messages: Vec::new(),
@@ -253,6 +255,7 @@ impl Component for ChatView {
     leaf_control!("ChatView");
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         show_authors: bool => "Appearance";
         events: on_message_click
     }
@@ -406,7 +409,9 @@ impl Component for ChatView {
 /// a parte já tocada em destaque. Clicar ou arrastar busca (`on_seek`, em segundos).
 pub struct Waveform {
     pub base: ControlBase,
+    /// A posição tocada, em segundos: a onda fica em destaque até ela.
     pub position: f64,
+    /// A duração do áudio, em segundos (a largura inteira da onda); 0: nada tocado em destaque.
     pub duration: f64,
     /// Barra de busca de player: trilho fino com o polegar e a onda embaixo, discreta
     /// (sem ela, a onda inteira é a barra, pintada até a posição).

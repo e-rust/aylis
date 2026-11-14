@@ -12,6 +12,7 @@ pub struct Microphone {
     pub base: ControlBase,
     /// O dispositivo (vazio: o padrão do sistema); `capture::input_devices()` lista.
     pub device: String,
+    /// Liga o microfone (a barra mostra o nível do som); desligado, ele fecha.
     pub active: bool,
     /// Manda a entrada para uma ou mais saídas (o formato do `output` dos players, com volume
     /// e atraso por saída); vazio: não manda.

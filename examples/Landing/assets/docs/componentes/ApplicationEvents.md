@@ -10,7 +10,7 @@ Os eventos da aplicação inteira, num componente não visual de qualquer form: 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tag` | Marca (número) | inteiro |  |
+| `tag` | Marca (número) | inteiro | Um número livre para o código (não muda nada). |
 
 ## Eventos
 

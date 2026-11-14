@@ -18,6 +18,13 @@ impl LinkService for DesktopLinks {
         open(app, true)
     }
 
+    // Windows: a folha "Compartilhar" do sistema. macOS e Linux: ainda não (o macOS pede um
+    // Mac; o Linux não tem um portal de compartilhar padrão).
+    #[cfg(windows)]
+    fn share(&mut self, text: &str, files: &[String]) -> Result<(), String> {
+        crate::share_windows::share(text, files)
+    }
+
     #[cfg(windows)]
     fn can_register_schemes(&self) -> bool {
         true
@@ -42,6 +49,32 @@ impl LinkService for DesktopLinks {
     fn receive_links(&mut self, on_link: Box<dyn Fn(String) + Send>) {
         crate::url_scheme::receive(on_link);
     }
+
+    // Linux: o `.desktop` do usuário e o socket local (decidido em 14/11).
+    #[cfg(target_os = "linux")]
+    fn can_register_schemes(&self) -> bool {
+        true
+    }
+
+    #[cfg(target_os = "linux")]
+    fn register_scheme(&mut self, scheme: &str, description: &str) -> Result<(), String> {
+        crate::url_scheme_linux::register(&aylis_core::platform::check_scheme(scheme)?, description)
+    }
+
+    #[cfg(target_os = "linux")]
+    fn unregister_scheme(&mut self, scheme: &str) -> Result<(), String> {
+        crate::url_scheme_linux::unregister(&aylis_core::platform::check_scheme(scheme)?)
+    }
+
+    #[cfg(target_os = "linux")]
+    fn scheme_registered(&mut self, scheme: &str) -> bool {
+        aylis_core::platform::check_scheme(scheme).is_ok_and(|s| crate::url_scheme_linux::registered(&s))
+    }
+
+    #[cfg(target_os = "linux")]
+    fn receive_links(&mut self, on_link: Box<dyn Fn(String) + Send>) {
+        crate::url_scheme_linux::receive(on_link);
+    }
 }
 
 /// O link que abriu o app pela linha de comando (o `deep_links` registrado no sistema passa o
@@ -53,6 +86,10 @@ pub(crate) fn command_line_links() {
     let links: Vec<String> = std::env::args().skip(1).filter(|a| a.contains("://")).collect();
     #[cfg(windows)]
     if !links.is_empty() && crate::url_scheme::forward(&links) {
+        std::process::exit(0);
+    }
+    #[cfg(target_os = "linux")]
+    if !links.is_empty() && crate::url_scheme_linux::forward(&links) {
         std::process::exit(0);
     }
     for arg in links {

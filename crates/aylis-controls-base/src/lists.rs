@@ -150,33 +150,40 @@ fn key_index(key: Key, current: i64, count: usize, page: usize) -> Option<usize>
 // ---------------------------------------------------------------------------
 // ListBox
 
-/// Lista de opções (como o `TListBox`): `items` separados por `;`, `item_index`
+/// Lista de opções: `items` separados por `;`, `item_index`
 /// escolhido. Setas, Home/End, PageUp/PageDown e a roda navegam; `on_change` traz o texto
 /// e `on_dbl_click` funciona como sempre.
 ///
-/// Com `multi_select` (o `MultiSelect` do FMX, no modo estendido do Windows): o clique
+/// Com `multi_select` (no modo estendido do Windows): o clique
 /// escolhe um, Ctrl+clique marca/desmarca, Shift+clique e Shift+setas estendem, Ctrl+A
 /// seleciona tudo e Ctrl+Espaço alterna o atual. `selected` guarda os índices ("1;4;5") e
 /// `on_change` traz os textos selecionados separados por `;`. `item_index` é o item atual.
 pub struct ListBox {
     pub base: ControlBase,
+    /// Os itens, separados por `;`.
     pub items: String,
+    /// O item escolhido (o atual, com `multi_select`), a partir de 0; -1: nenhum.
     pub item_index: i64,
+    /// Altura de cada linha, em pontos.
     pub item_height: f32,
+    /// Escolhe vários (Ctrl+clique, Shift+clique, Ctrl+A); os escolhidos ficam em `selected`.
     pub multi_select: bool,
+    /// Os índices escolhidos com `multi_select`, separados por `;` (`"1;4;5"`); vazio: nenhum.
     pub selected: String,
     list: Vec<String>,
     marks: Vec<bool>,
     anchor: Option<usize>,
     rows: Rows,
     hovered: Option<usize>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for ListBox {
     fn default() -> Self {
         let mut base = ControlBase::new(200.0, 160.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self {
+        Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             items: String::new(),
             item_index: -1,
@@ -348,6 +355,7 @@ impl Component for ListBox {
     }
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         items: String => "Data",
         item_index: i64 => "Data",
         item_height: f32 => "Appearance",
@@ -503,13 +511,17 @@ impl Component for ListBox {
 // ---------------------------------------------------------------------------
 // RadioGroup
 
-/// Grupo de opções exclusivas com título e moldura (como o `TRadioGroup`). `items`
+/// Grupo de opções exclusivas com título e moldura. `items`
 /// separados por `;`, `item_index` escolhido, `columns` colunas. `on_change` traz o texto.
 pub struct RadioGroup {
     pub base: ControlBase,
+    /// O título na moldura.
     pub caption: String,
+    /// As opções, separadas por `;`.
     pub items: String,
+    /// A opção escolhida, a partir de 0; -1: nenhuma.
     pub item_index: i64,
+    /// Em quantas colunas as opções se distribuem.
     pub columns: u32,
     focus_index: Cell<usize>,
 }
@@ -672,7 +684,7 @@ pub(crate) fn paint_group_frame(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, cap
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ListItem {
     pub text: String,
-    /// Texto menor embaixo (`detail`), como no `TListView` do FMX.
+    /// Texto menor embaixo (`detail`).
     pub detail: String,
     pub image: Option<Image>,
 }
@@ -683,13 +695,16 @@ impl ListItem {
     }
 }
 
-/// Lista de itens com título, detalhe e imagem opcional (como o `TListView` do FMX),
+/// Lista de itens com título, detalhe e imagem opcional,
 /// pensada também para o celular (linhas altas, rolagem com o dedo). `items` no texto:
 /// `Título|detalhe;Outro|mais`. `on_change` traz o índice; `on_item_click` também.
 pub struct ListView {
     pub base: ControlBase,
+    /// Os itens, separados por `;`, cada um `Título|detalhe` (o detalhe é opcional).
     pub items: String,
+    /// O item escolhido, a partir de 0; -1: nenhum.
     pub item_index: i64,
+    /// Altura de cada linha, em pontos.
     pub item_height: f32,
     /// Seta › à direita de cada item (navegação).
     pub accessory: bool,
@@ -966,7 +981,7 @@ impl TreeNode {
     }
 }
 
-/// Árvore (como o `TTreeView`), virtualizada: só as linhas visíveis são pintadas.
+/// Árvore, virtualizada: só as linhas visíveis são pintadas.
 ///
 /// `items` no texto: um nó por item (`;`), com `>` na frente para cada nível:
 /// `Brasil;>São Paulo;>>Campinas;>Rio de Janeiro;Portugal`. Pela API,
@@ -974,7 +989,10 @@ impl TreeNode {
 /// `on_change` traz o caminho do nó (`Brasil/São Paulo`).
 pub struct TreeView {
     pub base: ControlBase,
+    /// Os nós, separados por `;`, com um `>` na frente por nível
+    /// (`Brasil;>São Paulo;>>Campinas;Portugal`).
     pub items: String,
+    /// Altura de cada linha, em pontos.
     pub item_height: f32,
     nodes: Vec<TreeNode>,
     /// Caminho (índices) do nó escolhido.
@@ -985,6 +1003,8 @@ pub struct TreeView {
     toggled: Option<Vec<usize>>,
     /// O nó do último clique com o botão direito (o do menu de contexto).
     context: Option<Vec<usize>>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 const INDENT: f32 = 18.0;
@@ -993,7 +1013,7 @@ impl Default for TreeView {
     fn default() -> Self {
         let mut base = ControlBase::new(240.0, 300.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None }
+        Self { overscroll: aylis_core::Overscroll::Auto, base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None }
     }
 }
 
@@ -1068,7 +1088,7 @@ impl TreeView {
         (1..=path.len()).filter_map(|n| self.node(&path[..n]).map(|x| x.text.clone())).collect::<Vec<_>>().join("/")
     }
 
-    /// Abre todos os nós disparando o `on_expand` de cada um (o `FullExpand` do Delphi): um por
+    /// Abre todos os nós disparando o `on_expand` de cada um: um por
     /// vez, de cima para baixo, sem um evento dentro do outro; os filhos que o handler
     /// acrescentar (carregamento sob demanda, com [`set_children`](Self::set_children))
     /// também são abertos. No handler, [`last_toggled`](Self::last_toggled) é o nó da vez.
@@ -1226,6 +1246,7 @@ impl Component for TreeView {
     leaf_control!("TreeView");
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         items: String => "Data",
         item_height: f32 => "Appearance";
         events: on_change, on_click, on_dbl_click, on_expand, on_collapse;

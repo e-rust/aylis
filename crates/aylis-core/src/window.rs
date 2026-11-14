@@ -55,6 +55,9 @@ pub enum WindowCommand {
     /// A propriedade `window_corners` (ou a `border_style`) do form mudou: a janela pede ao
     /// sistema os cantos dela de novo.
     UpdateCorners,
+    /// A propriedade `span_monitors` do form mudou: a janela confere se o form vira uma
+    /// janela por monitor (veja [`crate::span`]).
+    UpdateSpan,
 }
 
 impl Ui {

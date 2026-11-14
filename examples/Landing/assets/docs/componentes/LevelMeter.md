@@ -12,12 +12,12 @@ Medidor de nível (VU) para áudio: barra de `value` (0 a 1) com as cores do tem
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stereo` | Estéreo | lógico |  |
-| `gradient` | Degradê | lógico |  |
-| `dim` | Escurecer | lógico |  |
-| `vertical` | Vertical | lógico |  |
-| `segments` | Segmentos | inteiro |  |
-| `show_peak` | Mostra o pico | lógico |  |
+| `stereo` | Estéreo | lógico | Duas barras, esquerda e direita (`value` e `value_right`). |
+| `gradient` | Degradê | lógico | Pinta um degradê pela posição (verde, âmbar perto de `high`, vermelho no fim), visível só até o nível. |
+| `dim` | Escurecer | lógico | Apaga as cores: o dispositivo está desligado. |
+| `vertical` | Vertical | lógico | A barra cresce de baixo para cima em vez da esquerda para a direita. |
+| `segments` | Segmentos | inteiro | Desenha em tantos gomos; 0 = barra contínua. |
+| `show_peak` | Mostra o pico | lógico | Mostra a marca de pico, que cai devagar. |
 | `mid` | Limite do meio | número | Daqui para cima a cor é `meter_mid`. |
 | `high` | Limite alto | número | Daqui para cima a cor é `meter_high`. |
 
@@ -31,9 +31,9 @@ Medidor de nível (VU) para áudio: barra de `value` (0 a 1) com as cores do tem
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `value_right` | Valor da direita | número |  |
-| `muted` | Mudo | lógico |  |
+| `value` | Valor | número | O nível, de 0 a 1 (a barra de cima, no estéreo). |
+| `value_right` | Valor da direita | número | O nível do canal direito, de 0 a 1 (a barra de baixo, com `stereo`). |
+| `muted` | Mudo | lógico | Enche a barra com a cor `meter_high`: o dispositivo está mudo. |
 
 ## Em código
 

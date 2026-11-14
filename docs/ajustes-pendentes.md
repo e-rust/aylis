@@ -35,6 +35,11 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
     `navigation_bar_color`, `icons` (`auto`, `light`, `dark`), `status_bar_visible` e
     `navigation_bar_visible`; Android pela `setSystemBars` (e o esconder), iOS pelo winit e a
     faixa pintada pelo núcleo, navegador pela `theme-color`, desktop `available` falso.
+  - Feito em 14/11 (falta o autor conferir): o `SystemBars` (família Device; `CLASS_PLATFORMS`
+    Android, iOS e navegador) com as cinco propriedades e o `available`; o pedido vale para o app
+    todo (`Ui::set_system_bars`, `aylis_core::system_bars`). Android pela `setSystemBars` com o
+    esconder; iOS pelo estilo da barra e a faixa pintada pelo núcleo (não compilado aqui: precisa
+    de Mac); navegador pela `theme-color`. Testes em `crates/aylis-controls/tests/system_bars.rs`.
 
 - [ ] A tecla Voltar do Android não chega ao app (relatado por outra sessão em 14/11, do
   RTSPlayer). Hoje a plataforma trata o "voltar" sozinha (`aylis-platform-winit/src/lib.rs`,
@@ -45,7 +50,10 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   evento `on_back` no form do topo, uma pergunta como o `on_close_query` (o app responde que
   tratou, e a plataforma não faz mais nada); sem handler, ou sem tratar, o comportamento de
   hoje. No iOS não dispara (não há "voltar" do sistema). Decidido pelo autor em 14/11: fazer
-  o `on_back`; não começou.
+  o `on_back`. Feito em 14/11 (falta o autor conferir no celular): o evento `on_back` do form
+  (uma pergunta, `handled`), que o form do topo recebe primeiro (`Ui::back_pressed`); sem
+  tratar, o comportamento de antes. Também no Pascal (`var Handled`) e nos outros clientes pelo
+  nome; `GENERATOR_VERSION` 12. Teste `the_back_key_asks_the_top_form_first`.
 
 - [ ] Os gestos do celular que faltam (pergunta do autor em 14/11: "se ja tem componente que
   suporte os gestos dos smartphones"). Já existem: em todo controle o `on_long_press`, o
@@ -64,7 +72,13 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   deslizar não podem atrapalhar um ao outro); a gaveta pela borda respeitando a faixa do gesto
   de voltar do Android; o `TabControl` com `swipe`, desligado por padrão; as ações ao deslizar o
   item na `VirtualList` e no `DataRepeater`, com os botões do app; o `Image` com `zoomable`,
-  desligado por padrão. Não começou.
+  desligado por padrão. Feito em 14/11 (falta o autor conferir no celular): o `on_swipe` em todo
+  controle (direção e velocidade; não dispara se a rolagem andou); a gaveta abre pela borda (32
+  pontos) e fecha deslizando; o `Carousel` troca pelo `swipe`; o `TabControl` com `swipe`; o
+  `ImageView` com `zoomable` (pinça, roda e arrastar); a `VirtualList` com `swipe_actions` e o
+  `on_swipe_action` (`{index, action}`). O `DataRepeater` ficou sem as ações. O toque passou a
+  achar o controle com o deslocamento (`translate`) somado. Testes em
+  `crates/aylis-controls/tests/swipe.rs` (6).
 
 - [ ] O efeito de fim da rolagem (pergunta do autor em 14/11: "tem o efeito no smartphone quando
   chega no final ou no inicio que aparece uma barra meia lua indicando o fim?"). Não tem: no
@@ -74,7 +88,12 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   fim e volta com mola; o desktop, nada. Proposta: o efeito no núcleo (vale para todo controle
   com rolagem), pela plataforma por padrão, com uma propriedade `overscroll` (`glow`, `stretch`,
   `bounce`, `none`) para forçar, na cor do tema. Decidido pelo autor em 14/11 ("Pela
-  plataforma"): fazer assim (`overscroll: auto` é o padrão); não começou.
+  plataforma"): fazer assim (`overscroll: auto` é o padrão). Feito em 14/11 (falta o autor
+  conferir no celular): `aylis_core::overscroll`, com a propriedade `overscroll` no `ScrollBox`,
+  `ListBox`, `TreeView`, `Memo`, `VirtualList`, `RichEditor`, `ChatView` e `DataGrid`; a
+  plataforma escolhe o padrão (Android 12 ou mais: esticar; antes: brilho na cor `primary` do
+  tema; iOS: mola; desktop: nada); a animação só roda enquanto volta. Teste
+  `the_end_of_scroll_effect_paints_by_parts_and_goes_back` (`partial_paint`).
 
 **Defeitos relatados por outras sessões (13/11/2026)**
 
@@ -190,8 +209,7 @@ Lote 1, os defeitos (feito em 11/11; testes `aylis-controls/tests/tabernaculo.rs
   faz o mesmo que o Object Inspector (o código e os outros forms).
 - C07: `Theme::unknown_color_tokens`, e a verificação do projeto avisa a cor que o tema não tem.
 - C04: o `letter_spacing` também com `wrap` e `markup`. C05: o Label soma o `padding` do controle.
-- J01: os atalhos de um PopupMenu valem só com ele ligado ao controle com o foco ou a um pai (o
-  `IsMenuKey` do VCL).
+- J01: os atalhos de um PopupMenu valem só com ele ligado ao controle com o foco ou a um pai.
 - T08: o BGRA é pré-multiplicado nos três renderizadores (o contrato do tipo).
 - M04: a ponte `aylis-tool mcp` sai quando o processo que a abriu some. M22: o `add_component`
   com `parent` põe nele, não num filho sob o canto.
@@ -207,7 +225,7 @@ Lote 1, os defeitos (feito em 11/11; testes `aylis-controls/tests/tabernaculo.rs
 - M13: os forms e fontes abertos guardam a marca do arquivo; ao voltar o foco e antes de cada
   chamada do MCP, o que mudou por fora recarrega (sem alteração na IDE) ou vira conflito: a IDE
   pergunta; o MCP recusa com o diff até o `resolve_conflict` (`keep`: disk ou ide).
-- Não se aplicam: L03 (o encaixe é o do Delphi e do FMX: `Left` depois de `Top` fica com o que
+- Não se aplicam: L03 (o encaixe é por ordem, de propósito: `Left` depois de `Top` fica com o que
   sobrou; o `MostLeft` pega a altura inteira) e W03 (o wry só cria o WebView2 na hora, na thread
   da janela; como o W02, é do WebView).
 
@@ -315,10 +333,13 @@ Lote 7, o resto (feito em 12/11; roteiros 112 a 117):
   fica em `AYLIS_KEYSTORE_PASSWORD`). M19: `check`, `test` (cargo test, unittest, go test,
   bun/node, dotnet test; recusado no modo restrito) e `screenshot` (qualquer form pelo designer,
   ou o app em execução); `docs/proposta-llm-ci.md` atualizado. Falta: o executor de testes de
-  Java, C++ e Pascal (decidido em 14/11: fazer; um executor mínimo no projeto gerado, o JUnit
-  quando o projeto já o usa, o FPCUnit no Pascal; não começou); a pasta no "Novo DataModule" (decidido em
-  14/11: fazer, com o mesmo campo de subpasta do "Novo form"; não começou); o `set_theme` chegando ao app em execução (decidido em 14/11: fazer, chamando o `push_reload`
-  como a Aparência; não começou).
+  Java, C++ e Pascal (decidido em 14/11: fazer); a pasta no "Novo DataModule"; o `set_theme`
+  chegando ao app em execução. Os três feitos em 14/11 (falta o autor conferir): o executor
+  mínimo de Java (`clients/java/dev/aylis/Test.java`, ou o JUnit quando o projeto o usa), de C++
+  (`clients/cpp/aylis_test.hpp`) e de Pascal (FPCUnit, `clients/pascal/aylistest.pas`), no `test`
+  do MCP, com a Calculadora de exemplo e o guia `docs/testes-do-projeto.md` (teste
+  `java_cpp_and_pascal_run_the_project_tests`); o "Novo DataModule" com nome e pasta; o
+  `set_theme` chama o `push_reload` (a resposta diz se o app recebeu).
 - B04: `aylis::headless::Headless` monta o `Ui` sem janela nem `platform::run` (as classes, o texto
   e o desenho fora da tela do renderizador do projeto; `install_offscreen_service`), abre o projeto
   ou um form, simula `click`, `type_text`, `press`, `advance` e tira a foto (`render_png`).
@@ -457,9 +478,16 @@ desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
   --with-packages <nomes|all>`. Testado em modo silencioso por fora do Claude (WMI): o kit com
   node e codelldb instalado em 37,8 s; com o `go` sem origem, saída 3 e a IDE instalada (o
   registro, o PATH e os atalhos restaurados depois).
-- **Falta** (decidido pelo autor em 14/11, "Seguir todas"; nada começou):
-  - fazer: o pacote do Free Pascal (o `packages pack` extrai o instalador Inno Setup oficial uma
-    vez), o do WiX (zip, código aberto) e o Android SDK, o NDK e o .NET para Linux e macOS;
+- **Feito em 14/11** (decidido pelo autor em 14/11, "Seguir todas"; falta o autor conferir):
+  - o pacote `fpc` (o Free Pascal 3.2.2 do Windows: `aylis-tool fpc-package` confere o
+    instalador oficial, tira os arquivos com o innoextract sem executá-lo e monta o zip, que vem
+    só das pastas de pacotes e dos espelhos, como o Skia de 32 bits; conferido: instalado, compila
+    um programa de 64 bits); o pacote `wix` (o `.nupkg` oficial, que roda com `dotnet wix.dll`; a
+    verificação de ambiente instala o pacote em vez do `dotnet tool install`); o `android-sdk` e o
+    `dotnet` de Linux e de macOS ARM, e o `android-ndk` de Linux (o de macOS só sai em `.dmg`).
+    Falta subir o `fpc-3.2.2-x86_64-win64.zip`, o `wix.5.0.2.nupkg` e os de Linux e macOS para o
+    espelho (o `packages pack`), e conferir os de Linux e macOS numa máquina deles.
+- **Falta** (decidido pelo autor em 14/11, "Seguir todas"):
   - não fazer: empacotar o Build Tools da Microsoft (a licença não permite redistribuir; continua
     o instalador da Microsoft), pacotes para pylsp, tsls, gopls, delve, csharp-ls e pasls
     (continuam pelos gerenciadores, que já vêm nos pacotes das linguagens), Python e NSIS no
@@ -499,7 +527,7 @@ feito; teste `aylis-media/tests/repaint.rs`):
   avisa sozinho (o que passa pelo `Ui`, inclusive o `ui.get_mut`) e o que não (o dado de fora,
   o `on_frame`), e que o `request_frame_at` repinta só o próprio componente. Testes em
   `crates/aylis/tests/headless.rs` (Skia e Direct2D).
-- **Escala de um componente com os filhos (`scale`, como o `Scale` do FMX)** (13/11; roteiro,
+- **Escala de um componente com os filhos (`scale`)** (13/11; roteiro,
   item 127). Propriedade nova do `ControlBase` (categoria Layout, 1 = normal, de 0,05 a 20): o
   controle ocupa o mesmo retângulo no pai, e por dentro o espaço é o retângulo dividido pela
   escala (`inner_size`). Acompanham: o layout dos filhos, o `auto_size` (medido dentro, vezes a
@@ -563,7 +591,7 @@ feito; teste `aylis-media/tests/repaint.rs`):
   130). Pergunta: "O combobox tem scroll para os itens com possibilidade de definir quantos itens
   deve exibir?". Rolava (roda, dedo, setas), mas eram 10 linhas fixas no código e sem barra.
   Agora:
-  - `drop_down_count` (o `DropDownCount` do Delphi; padrão 10, mínimo 1), propriedade do
+  - `drop_down_count` (padrão 10, mínimo 1), propriedade do
     registro (JSON, Object Inspector, protocolo, clientes), com o rótulo traduzido;
   - com mais opções que as à vista, uma barra fina à direita da lista (`text_muted` do tema):
     o polegar se arrasta, um clique na calha pula para lá, e soltar não escolhe nem fecha;
@@ -586,8 +614,9 @@ feito; teste `aylis-media/tests/repaint.rs`):
   A descrição do `app_command` no MCP lista os três. Testes em
   `crates/aylis-remote/tests/protocol.rs` (Ctrl+clique e Shift+clique na lista de seleção
   múltipla, o arrastar entre dois painéis, o Ctrl+A pelo `modifiers`). O `ui_click` do
-  `McpServer` do app ainda é o clique simples (decidido em 14/11: fazer, com `modifiers`, ponto,
-  botão, duplo, um `ui_drag` e o `ui_key` com `modifiers`, repassados ao `execute`; não começou).
+  `McpServer` do app ganhou o mesmo em 14/11 (falta o autor conferir): o `ui_click` com
+  `modifiers`, ponto, botão e duplo, o `ui_drag` e o `ui_key` com `modifiers`, repassados ao
+  `execute` (teste `the_agent_clicks_with_modifiers_and_drags`).
 - **Modo de mistura (`blend_mode`)** (13/11; roteiro, item 132). Pedido: "o Canvas não tem modo
   de mistura para permitir colocar uma marca d'água em negativo por cima das imagens dos vídeo
   sendo reproduzidos". Agora:
@@ -870,8 +899,11 @@ chamado por qualquer app chega no evento dele. Feito; falta o autor conferir
   `url_schemes_are_registered_and_removed_by_the_installers` e o do manifesto do Android.
 - A conferir: o teste real rodou de dentro do Claude Desktop (pacote MSIX); o registro foi
   visto pelo `reg` e pelo `Start-Process`, mas falta ver de fora (o navegador chamando o link).
-- Falta: macOS e iOS (`CFBundleURLTypes` no `Info.plist`) e o Linux (o `.desktop` com
-  `x-scheme-handler` na publicação, e o repasse para a cópia aberta, como no Windows). O navegador
+- Linux feito em 14/11 (decidido pelo autor: "Só o Linux"; falta conferir num Linux com
+  área de trabalho): em execução, um `.desktop` do usuário com `xdg-mime default`; na
+  publicação, o `.deb` declara os prefixos (`MimeType`, `%u`); o link chega à cópia aberta por um
+  socket em `XDG_RUNTIME_DIR` (`url_scheme_linux.rs`; teste `the_deb_declares_the_url_schemes`).
+- Falta: macOS e iOS (`CFBundleURLTypes` no `Info.plist`). O navegador
   fica sem (decidido em 14/11: o `registerProtocolHandler` só aceita `web+` e abre a página de
   novo; um app web recebe pelo endereço da página).
 
@@ -974,9 +1006,14 @@ analisado, aplicado e corrigido em 11/11 (roteiro 104). Tudo em
   o app fazer (o servidor desenha a tela toda na placa principal). Testado no WSL (Radeon pelo
   D3D12 e llvmpipe): a troca de contexto e o quadro depois dela; o WSLg não tem o feedback v4,
   e o `GALLIUM_DRIVER` força o D3D12 nas duas, então falta um Linux com duas placas.
-- Não começado: um form ocupando vários monitores (uma janela por monitor, todas como um form).
-  Decidido pelo autor em 14/11: fazer (o desenho em `docs/gpu-por-monitor.md`, de uma a três
-  semanas; conferir pede várias placas e monitores).
+- Um form ocupando vários monitores (decidido pelo autor em 14/11: fazer). Feito em 14/11 no
+  Windows (falta o autor conferir na máquina dos seis monitores): a propriedade `span_monitors` do
+  form; o núcleo divide o form em pedaços (`aylis_core::span`), e a plataforma abre uma janela sem
+  moldura por monitor, cada uma na placa do seu monitor, com a pintura, a entrada e os menus pelo
+  núcleo. `AYLIS_SPAN_SPLIT=N` simula N monitores num só; o exemplo `span_monitors` (`--auto`,
+  `--full`). Linux e macOS ficam numa janela só. Detalhes e o que ficou de fora em
+  `docs/gpu-por-monitor.md`; testes em `crates/aylis-core/tests/span.rs` e
+  `crates/aylis-controls/tests/span_monitors.rs`.
 
 **Pedido de 11/11/2026**
 - [ ] **Uma pasta de compilação para todo o Rust da máquina:** "armazenamento está sendo o
@@ -1261,7 +1298,7 @@ só esperam o autor conferir (o 7 continua suspeita).
   ganharam `version = "0.1.0"` (subir a versão do workspace pede subir essas também); (4)
   `publish = false` na IDE, no `aylis-tools`, no `aylis-host`, no `aylis-capi` e no `aylis-migrate`
   (os demos, a IDE web e os exemplos já tinham); (5) as descrições com "Aylis" maiúsculo e sem
-  Delphi/FMX/VCL (como no site, item 28). O repositório ficou público em 09/11 (com a release
+  comparações com outras ferramentas (como no site, item 28). O repositório ficou público em 09/11 (com a release
   v0.1.0), e o `repository` está nos manifestos (`repository.workspace`; a cópia do AccessKit
   também aponta para o Aylis, onde o código dela fica); o dry-run passou de novo sem avisos. Para publicar (o token é do autor, e publicar é permanente: só dá para "yank"):
   `cargo login`, depois `cargo publish` (depois do commit) com os 27
@@ -1371,7 +1408,9 @@ só esperam o autor conferir (o 7 continua suspeita).
     Android conferido com outro app, e compartilhar no desktop (não há folha do sistema).
     Decidido pelo autor em 05/11: compartilhar em todos os sistemas onde der (no Windows, a
     folha "Compartilhar" do sistema, o `DataTransferManager`; no macOS, o `NSSharingServicePicker`;
-    no Linux, onde houver um portal).
+    no Linux, onde houver um portal). Windows feito em 14/11 (falta o autor conferir): o `share`
+    abre a folha "Compartilhar" do sistema com o texto e os arquivos (`share_windows.rs`). Falta
+    o macOS e o Linux.
 - [ ] `BackgroundService` (feito; falta o autor confirmar): a lógica em `src/background.rs`
   (o gerador cria; `aylis_core::background`: uma thread e as duas filas `send`/`on_message`),
   rodando no Android num serviço em primeiro plano (`AylisActivity$Background`, notificação
@@ -1611,7 +1650,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   bate levanta `EAylis`); a unit do form é do usuário: `TFrmX = class(TFrmXBase)` com os
   handlers `published` `(Sender: TAylisComponent; Event: TJSONObject)` (o cliente acha pelo
   nome com `MethodAddress`; o `Aylis` dos corpos é a propriedade herdada), o estado em campos
-  `private`, a variável global `frmX` (a primeira instância, como no Delphi) e o
+  `private`, a variável global `frmX` (a primeira instância) e o
   `RegisterForm` na `initialization`; a geração só acrescenta os handlers novos. O protocolo
   manda o `form_id` no evento e ganhou o `components` e o `create_form` com `new`; o cliente
   ganhou `TAylisForm`, `CreateForm` e a instância por janela. Os 5 exemplos Pascal compilam, e o
@@ -1670,7 +1709,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     - trava na escrita das mensagens: gravar propriedades de qualquer thread; ler (o que
       espera resposta, como o `Call`) só na thread dos handlers, porque a resposta chega
       pela mesma leitura (em debug, avisar quem ler de outra thread);
-    - `Post` para rodar código na thread dos handlers (o `TThread.Queue` do Delphi), por
+    - `Post` para rodar código na thread dos handlers, por
       exemplo para fechar o modal no fim; no desktop, o laço está parado lendo a entrada,
       então o `Post` pede à tela um eco (`{"cmd": "wake"}` → `{"event": "__post"}`) que o
       acorda;
@@ -1693,12 +1732,12 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   - 3.3 O que a tela mostra (decidido): coberto pelo 3.1 (cursor de espera, a pintura
     continua e, depois de uns 3 s, o indicador discreto; com o `BusyWatcher`, o declarado).
   - 3.4 Diálogo dentro do handler (decidido em 02/11, opção C). Nos clientes remotos,
-    `MessageDlg` e `ShowModal` esperam como no Delphi (`if FrmCliente.ShowModal = mrOk`,
+    `MessageDlg` e `ShowModal` esperam o diálogo fechar (`if FrmCliente.ShowModal = mrOk`,
     `CanClose := MessageDlg(...) = mrYes`), e a versão com callback continua:
     - o protocolo ganha `"wait": true` no `message_dlg` e no `show_modal`: a resposta
       `{"id": .., "result": "yes"}` só sai quando o diálogo fecha (resposta adiada na tela);
-    - enquanto espera, o cliente trata os eventos que chegam (os do modal e os `Post`), como
-      o laço do `ShowModal` do Delphi; num `Call` comum, os eventos continuam na fila;
+    - enquanto espera, o cliente trata os eventos que chegam (os do modal e os `Post`);
+      num `Call` comum, os eventos continuam na fila;
     - o pedido fica em "esperando o usuário" (3.1), sem prazo;
     - em Rust, só callback (a thread da tela não pode esperar, e o winit e o navegador não
       têm laço aninhado), explicado no guia;
@@ -1706,16 +1745,16 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   - 3.5 `before_post` com backend remoto (decidido em 02/11). `before_post` e
     `before_delete` viram eventos do form, por nome, em todas as linguagens (hoje só closure
     em Rust); `before_insert`, `before_edit` e `before_scroll` só se precisar:
-    - recusar como no Delphi: exceção no handler (`raise EAylis.Create('Informe o CPF')` em
+    - recusar: exceção no handler (`raise EAylis.Create('Informe o CPF')` em
       Pascal, `throw`/`raise` nas outras, `error` em Go) recusa, e a mensagem vai para a
       tela; terminar normalmente aceita; em Rust, o handler devolve `Result<(), String>`
       (`Err` recusa, o `?` repassa) e a IDE gera o esqueleto já com esse tipo;
-    - a tela espera naturalmente, como no Delphi: enquanto o `post` roda, a entrada fica
+    - a tela espera naturalmente: enquanto o `post` roda, a entrada fica
       bloqueada com o cursor de espera (3.2) e a tela continua pintando; o registro só
       grava (e dispara o `after_post`) com a resposta; recusado, continua em edição, com a
       mensagem e o foco no campo; os controles DB* respeitam o `post` pendente;
-    - o código do backend que chama `Post` só segue depois de o `post` terminar, como no
-      Delphi: um evento-pergunta roda mesmo durante um `Call` (senão o `Post` do próprio
+    - o código do backend que chama `Post` só segue depois de o `post` terminar:
+      um evento-pergunta roda mesmo durante um `Call` (senão o `Post` do próprio
       backend esperaria a si mesmo), com limite de profundidade;
     - uma exceção inesperada também recusa; em modo dev, o log mostra a pilha.
   - 3.6 Teclas (decidido em 02/11). Já existem: `allowed_chars`, `blocked_chars`,
@@ -1734,11 +1773,10 @@ gravidade. A discussão item por item ainda pode mudar a solução.
       Teclado;
     - a ordem de um caractere digitado: `char_map` → `char_case` → filtros → `on_key_press`
       (vê o caractere já transformado, pode trocar ou engolir) → o controle;
-    - `key_preview` no form (recebe o `on_key_down` antes do controle com foco, como o
-      `KeyPreview` do Delphi) e um evento de teclado da aplicação inteira (antes de todos, como
-      o `TApplicationEvents`): aplicação → form (`key_preview`) → controle → os pais;
-    - o handler engole ou troca a tecla (o `Key := 0` e o `Key := #0`/`Key := '.'` do
-      Delphi): em Rust na hora; nas linguagens remotas também (casos legítimos existem), com
+    - `key_preview` no form (recebe o `on_key_down` antes do controle com
+      foco) e um evento de teclado da aplicação inteira (antes de todos): aplicação → form (`key_preview`) → controle → os pais;
+    - o handler engole ou troca a tecla (o `Key := 0` e o `Key := #0`/`Key := '.'` em
+      Pascal): em Rust na hora; nas linguagens remotas também (casos legítimos existem), com
       `on_key_down` e `on_key_press` como eventos-pergunta quando ligados a um handler remoto:
       cada tecla daquele controle espera a resposta, e as teclas digitadas enquanto isso
       ficam numa fila da tela, em ordem, sem se perder; quem não liga o evento não paga
@@ -1758,11 +1796,11 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   - 3.8 A forma da API nos clientes (decidido em 02/11). Eventos-pergunta:
     `on_close_query`, `before_post`, `before_delete`, `on_key_down` e `on_key_press` (onde
     ligados), `on_drag_start`, `on_drag_over` e o `on_validate` do Field (o `raise` recusa o
-    valor na hora e o foco fica no campo, como o `OnValidate` do Delphi; o `field_error`
+    valor na hora e o foco fica no campo; o `field_error`
     continua para a validação que termina mais tarde). Mais o `ShowModal` e o `MessageDlg`
     que esperam (3.4), com a mesma resposta adiada:
     - recusar com mensagem é sempre exceção (`raise`, `throw`; `Err` em Rust, `error` em Go);
-    - responder um valor é do jeito de cada linguagem: em Pascal, `var` como no Delphi
+    - responder um valor é do jeito de cada linguagem: em Pascal, `var`
       (`var CanClose: Boolean`, `var Key: Char`, `var Data, Caption: string`); nas outras,
       um objeto de argumentos com campos graváveis (`e.Cancel`, `e.KeyChar`, `e.Handled`,
       `e.Data`; em Rust, `args` com `&mut`);
@@ -1885,7 +1923,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
   19,8 ms (o pior, 20,6 ms, é o quadro que repinta a janela inteira ao trocar o foco). A área
   repintada é a mesma do desktop (é do núcleo); o custo maior vem do Canvas 2D.
 
-  Pela regra decidida (parar na etapa 2 se a medição mostrar que o nível da VCL basta), as
+  Pela regra decidida (parar na etapa 2 se a medição mostrar que o layout por parte e a pintura por retângulo bastam), as
   etapas 3 (desenho gravado) e 4 (camadas, com a API de rolagem interna) ficaram esperando (feitas
   depois, a partir de 05/11, veja abaixo):
   o que elas resolveriam hoje é o mouse indo de um controle para o fundo do form (repinta
@@ -1943,7 +1981,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
 - [ ] 9. (Feito em 02/11, antes do primeiro commit público; o aviso do `panic = "abort"` foi com a verificação do
   1b, os outros 6 clientes mandando o `exception` com os forms com instância, e o evento de
   exceção da aplicação é o `on_exception` do `ApplicationEvents` (item 3.6); falta o autor
-  confirmar.) Um erro no handler não derruba o app, como no Delphi (`Application.HandleException`).
+  confirmar.) Um erro no handler não derruba o app: a tela mostra o erro e continua.
   Hoje, em Rust, um `panic` derruba o app (só a C ABI usa `catch_unwind`); nas linguagens
   remotas, a exceção só vai para o log, e o usuário não sabe que falhou; na web, o wasm para.
   Decidido em 02/11. Pronto quando:
@@ -1952,7 +1990,7 @@ gravidade. A discussão item por item ainda pode mudar a solução.
     (item 4);
   - o erro aparece no `MessageDialog`; em modo dev, também o caminho do handler e a pilha,
     no log, no `activity` e na gravação (`.aylisrec`);
-  - há um evento de exceção da aplicação (como o `TApplicationEvents.OnException`), no
+  - há um evento de exceção da aplicação, no
     componente de eventos da aplicação do 3.6; tratado, a caixa padrão não aparece;
   - nas linguagens remotas, o cliente avisa a tela, que mostra a mesma caixa (ou chama o
     evento);
@@ -2075,7 +2113,7 @@ mudar a solução.
 
 - [ ] 16. Provider de banco de referência. O `aylis-data` não sabe de banco (de propósito): o
   delta vai ao backend e cada equipe escreve a gravação (o `clients/python/registration_backend.py`
-  faz à mão, num SQLite). Falta o que o `TDataSetProvider`/FireDAC dá: transformar o delta em
+  faz à mão, num SQLite). Falta o que um provedor de gravação dá: transformar o delta em
   SQL, controlar a concorrência (`UpdateMode`: chave, campos alterados, todos), mestre-detalhe
   gravado em cascata numa transação, devolver ao cliente as chaves geradas e os valores do
   banco. Pronto quando houver um provider (pelo menos Postgres) num crate próprio e, nas
@@ -2131,7 +2169,9 @@ mudar a solução.
     14/11) e um teste que avise quando a documentação ficar velha (decidido em 14/11: fazer; ele
     regera as páginas e falha se o resultado mudou). Também decidido em 14/11: escrever o "O que
     faz" de todas as propriedades (1238 das 1810 linhas do site estavam vazias), com um teste que
-    falha quando uma propriedade entra sem o comentário. Nada começou.
+    falha quando uma propriedade entra sem o comentário. Feitos em 14/11: o teste
+    `crates/aylis-ide/tests/docs_fresh.rs` (as páginas iguais às do gerador, e toda propriedade
+    com o "O que faz"), os ~760 comentários de campo que faltavam e as páginas regeradas.
 
   Aprovado pelo autor em 04/11, como sugerido: com dados parciais, ordenar, filtrar e
   localizar viram um evento ao backend, que recarrega o dataset; sem handler ligado, a tela
@@ -2178,7 +2218,7 @@ mudar a solução.
   remoto, o evento e a pergunta dele esperam a resposta; o botão com `modal_result` não fecha o
   form se o clique foi cancelado); o componente `EventInterceptor` (System, nas três listas de
   classes, no catálogo e na paleta, com os rótulos e a descrição traduzidos); o `before_action`
-  do `DataNavigator` (o `BeforeAction` do Delphi, que passa pelo interceptador); no protocolo, o
+  do `DataNavigator` (antes de cada ação, passando pelo interceptador); no protocolo, o
   evento interceptado em JSON (`form`, `sender`, `event`, `handler`, `args`) e a resposta
   `cancel`; no Pascal, a assinatura `(Sender; Info: TJSONObject; var Cancel: Boolean)` no
   cliente e na geração. Testes: `interceptor` do `aylis-controls` (cancelar, sem handler, ordem
@@ -2271,7 +2311,7 @@ mudar a solução.
     pedidos), na aba "Providers" da paleta (as abas da paleta ficam em inglês, como as
     outras);
   - nas três listas de classes, no catálogo e com os rótulos das propriedades nos 12 idiomas.
-- [ ] 26. Fonte enorme no editor de código (pedido do autor em 05/11: "no projeto ERP está lento
+- [x] 26. Fonte enorme no editor de código (pedido do autor em 05/11: "no projeto ERP está lento
   a navegação no fonte mod.rs"; o minimapa, arrastado até embaixo, não chegava ao fim do
   fonte; "garanta que fique rápido com quantidade infinita de linhas, limitado apenas pela
   memória do computador").
@@ -2297,7 +2337,50 @@ mudar a solução.
     cópia do texto inteiro a cada alteração. Proposta: texto em pedaços (rope), tabela das
     linhas e linhas visuais atualizadas só na linha editada, realce retomado da linha editada
     (o estado de cada linha guardado) e desfazer pelas diferenças. Decidido pelo autor em 14/11
-    ("Fazer o rope"): fazer, no `Memo` (o editor da IDE e o controle dos apps); não começou.
+    ("Fazer o rope"): fazer, no `Memo` (o editor da IDE e o controle dos apps).
+  Feito em 14/11 (falta o autor conferir), por etapas, com os testes a cada uma:
+  - Um caminho só para mudar o texto (`Memo::splice`): digitar, apagar, colar, o `add_line`, o
+    `apply_edits`, o desfazer e as operações de linha passam por ele, e ele acerta o resto só
+    da linha editada em diante.
+  - Desfazer pelas diferenças (`memo_code.rs`): cada passo guarda as trocas (onde, o que saiu,
+    o que entrou) e o cursor de antes; digitações seguidas juntam numa troca só. Desfazer
+    aplica as trocas ao contrário, e o cursor vai ao trecho desfeito como antes (o trecho sai
+    das próprias trocas, sem comparar os textos). O texto trocado por fora (o campo direto)
+    esquece o desfazer, como a propriedade `text` já fazia.
+  - Tabela das linhas e linhas visuais: as quebras do trecho saem, as do novo entram e as de
+    depois só andam (sem quebra automática nem bloco dobrado; com eles, refeitas como antes).
+    A linha visual do cursor sai por busca binária. A linha mais larga mede só as editadas.
+  - Realce retomado da linha editada (`memo_highlight.rs`, para a gramática TextMate e para o
+    realce embutido): o estado do começo de cada linha fica guardado; uma edição troca só as
+    linhas dela e o realce recomeça ali até o estado bater com o guardado. O `LineCache`
+    comparava o texto inteiro a cada tecla e guardava uma cópia de cada linha; o realce
+    embutido de um texto grande recomeçava do início a cada tecla (o resto ficava sem cor
+    por vários quadros).
+  - As posições pela tabela das linhas (antes andavam o texto desde o começo): a do servidor de
+    linguagem (`index_of_position`, uma por erro), `position_of_index`, `go_to`,
+    `go_to_line`, o caractere do lado do cursor (pares que fecham, `::`), Ctrl+seta e
+    Ctrl+Backspace (copiavam o texto inteiro), o clique triplo e os marcadores (andam com a
+    edição, sem comparar o texto).
+  - Medido (`cargo run --release -p aylis-controls --example large_text <linhas>`, que agora
+    mede uma tecla na linha do meio, 100 alterações separadas e o desfazer), 8 mil / 100 mil /
+    1 milhão de linhas, por tecla (evento + quadro): antes 18 / 30 / 237 ms, depois 3,7 / 6,7
+    / 27,6 ms. Memória a mais depois de 100 alterações: antes 80 MB / 981 MB / ~10 GB (1 GB em
+    10), depois 44 KB nos três. Ctrl+Z: antes 1,4 / 18,9 / 203 ms por passo, depois 0,04 /
+    2,5 / 23 ms. Primeiro quadro com 1 milhão: 136 → ~90 ms. O quadro ficou igual nos três
+    tamanhos (3,6 a 4,8 ms).
+  - O que ainda cresce com o tamanho (1 milhão de linhas, ~100 MB): o `on_change` leva o
+    texto inteiro como valor (uma cópia por tecla, ~14 ms dos 23 do evento) e, na IDE, o
+    handler copia de novo para o servidor de linguagem; mover o resto do `String` ao inserir
+    custa ~3,5 ms e andar a tabela das linhas e as linhas visuais, ~1 a 3 ms.
+  - O rope (texto em pedaços) não foi feito: o `text` é um campo público `String`, lido direto
+    pela IDE (`codewindow.rs`, `tooldialogs.rs`) e pelos apps (`ui.get::<Memo>`), e vai para o
+    JSON e o protocolo; com o texto em pedaços, ele teria de virar um método (`text()`), o que
+    muda a API. E o ganho medido é pequeno perto do resto: os ~3,5 ms do `String` com 1
+    milhão de linhas, contra ~14 ms da cópia do `on_change`. Sem dependência nova (o `ropey`
+    não entrou).
+  - Para o autor decidir: (a) o `on_change` sem a cópia quando ninguém escuta (precisa de uma
+    pergunta do `aylis-core`, "alguém trata este evento?", que veja também os
+    interceptadores); (b) o rope, trocando o campo `text` por um método (muda a API e a IDE).
 - [ ] 27. Tabela da documentação com o texto da primeira coluna por cima da segunda (achado na
   conferência do roteiro em 05/11, na Landing publicada para a web): na página "Fontes e
   ícones offline", os caminhos `resources/fonts/...` e `resources/icons/...` passam da
@@ -2308,7 +2391,7 @@ mudar a solução.
   sobra é dividido pelo quanto cada uma ainda queria (antes todas encolhiam na mesma
   proporção); uma palavra mais larga que a linha quebra por caractere. Teste
   `table_cells_never_overlap_the_next_column`.
-- [ ] 28. Sem referências ao Delphi no site (pedido do autor em 05/11: "pode remover
+- [ ] 28. Sem comparações com outras ferramentas no site (pedido do autor em 05/11: "pode remover
   referencias ao Delphi"). Feito em 05/11: na página da Landing, o título
   ("montadas visualmente"), o cartão do Free Pascal ("Units, classes e eventos com var, no
   jeito do Pascal") e o "E os dados?"; nos guias que vão para a documentação do site
@@ -2317,7 +2400,9 @@ mudar a solução.
   comparações, e elas voltaram ao site pelos comentários dos campos (16 páginas em 14/11).
   Decidido pelo autor em 14/11: "Tirar qualquer referencia a Delphi/FMX/VCL de qualquer fonte
   ou documentação": o código (comentários e textos), os docs, o site e o CLAUDE.md (549
-  ocorrências em 14/11), com um teste que barra a volta. Não começou.
+  ocorrências em 14/11), com um teste que barra a volta. Feito em 14/11 (falta o autor
+  conferir): os comentários, os textos, os docs e o site reescritos sem as comparações, e o teste
+  `crates/aylis/tests/no_delphi.rs` (com a lista do que pode citar o nome, como o histórico).
 - [ ] 30. A documentação em tela cheia, no jeito do Docusaurus (pedido do autor em 05/11: "a
   documentação tem que abrir em tela cheia, seguindo um layout de navegação igual ao
   https://docusaurus.io/docs"). Feito em 05/11 (falta o autor confirmar):
@@ -2373,7 +2458,7 @@ mudar a solução.
     `set_timeout` do `on_resize` só rodavam ao soltar. Agora o quadro refaz o layout e roda
     os timers vencidos antes de pintar (`aylis-platform-winit`, `redraw`).
   - Propriedades novas em todo controle: `min_width`, `min_height` e `max_height` (com a
-    `max_width` que já havia), como o `Constraints` da VCL. O layout não deixa o controle
+    `max_width` que já havia). O layout não deixa o controle
     sair delas em nenhum alinhamento; com a mínima maior que a área, ele encosta à esquerda e
     o resto fica cortado (ou rola, num ScrollBox), e um texto com `wrap` para de quebrar ali.
     No form, viram o tamanho mínimo e o máximo da janela. Testes
@@ -2384,7 +2469,7 @@ mudar a solução.
     autor pediu a correção no core: "não ter que fazer isso em todo componente"). A causa: o
     layout é adiado para o quadro e pula o que está escondido, então a página que acabou de
     aparecer ainda tinha a largura antiga. Agora `Ui::bounds` (`&mut self`) roda o layout
-    pendente antes de responder, como o realinhamento imediato da VCL (sem nada pendente,
+    pendente antes de responder (sem nada pendente,
     só confere uma flag); `Ui::laid_out_bounds` lê o do último layout, para quem só tem
     `&Ui` (pintura). Teste `bounds_read_right_after_a_change_are_already_laid_out`; a tela
     gigante segue na base.
@@ -2599,6 +2684,30 @@ mudar a solução.
   CI a cobertura reprova (cair mais de 1 ponto) e o tempo só avisa; (5) as métricas de desempenho
   no `Analytics` do app publicado só quando o app pede. Passar para a seção de decisões do
   `docs/proposta-llm-ci.md`.
+  Feito em 14/11 (falta o autor conferir; os workflows só se confirmam no GitHub):
+  - 2b: `profile`, `recording` e `coverage` no MCP da IDE (`mcp_insight.rs`);
+  - 1a: `aylis-tool lint` (o núcleo sem sistema e sem `unsafe`, `unsafe` sem `SAFETY`, `cmd`,
+    cor fixa, classe fora das listas ou sem exemplo, texto sem tradução), com a base
+    `resources/lint-baseline.tsv`, que só pode diminuir (185 classes sem exemplo, 49 cores fixas,
+    187 `unsafe` sem `SAFETY`), e o comentário `lint-allow: <regra>` para o que é de propósito;
+  - 2a: a opção "Guia para agentes de IA" no Novo projeto (marcada), com `AGENTS.md`, `CLAUDE.md`
+    e `.mcp.json`, e o `agent_guide` no `new_project` do MCP;
+  - 4b: a cobertura de handlers em qualquer linguagem (o app avisa o primeiro disparo de cada um
+    pelo canal de desenvolvimento; `.aylis/coverage.json`; Projeto → Cobertura de handlers…);
+  - 3a: o Profiler salva e abre o rastro (`.json` do Chrome/Perfetto e `.aylisprof`); 3d: o clique
+    no handler mostra o arquivo e a linha;
+  - 3b: o roteiro com `"profile"` mede os handlers e pode reprovar por limite, e o `aylis-tool
+    handler-times` compara com `medicoes/handler_times.json` (só avisa);
+  - 4a: `aylis-tool coverage-check` com `medicoes/cobertura.json` (reprova ao cair mais de 1
+    ponto) e o `cargo llvm-cov` na CI do Windows e do Linux;
+  - 1d: `aylis-ide --headless --mcp-stdio`; 2c: `aylis-tool ide-script`; 1e: `aylis-tool
+    recording-to-test`;
+  - 1b/1c: os workflows `agent-review.yml` (o agente só comenta) e `failure-triage.yml` (precisam
+    do segredo `ANTHROPIC_API_KEY`);
+  - 3c: a propriedade `performance` do `Analytics` (desligada por padrão; nada vai para a rede).
+  Falta: as bases de cobertura e de tempos (a primeira CI), o tempo do backend nas outras 7
+  linguagens no 3b, o 4c (cobertura por linha no editor, por linguagem), o visualizador de
+  gravações levando ao código e a marca de tempo no editor (3d).
 - [ ] 44. Os exemplos só pelo acesso tipado (pedido do autor em 07/11: "todos os projetos de
   exemplo estão usando os componentes tipados? Sem localizar pelo nome"). Feito em 07/11 (sem
   commit; falta o autor confirmar):
@@ -2609,8 +2718,7 @@ mudar a solução.
   - ERP: o código comum das 1009 telas recebe as `Partes` de cada form (`self.cdsMestre.id`...)
     em vez de achar `cdsMestre`/`cdsItens`/`lblStatus` pelo nome; a lista acha o `cdsMestre`
     do cadastro que abriu pelas partes que ele deu ao abrir. Fica o `create_form(nome)` do
-    menu: o form vem do nome que está na linha de dados (são 1009), como o
-    `CreateForm(FindClass(...))` do Delphi;
+    menu: o form vem do nome que está na linha de dados (são 1009);
   - IBGE nas outras 7 linguagens: os datasets pelo componente tipado (`frmIBGE.cdsEstados`,
     pelo id) no lugar do caminho em texto; Paint nas outras 7: as ferramentas e as cores como
     componentes tipados (o botão do evento pelo `SenderAsButton` gerado); Calculadora em
@@ -2847,7 +2955,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
 
 *IDE: projeto, designer e editor*
 - [ ] F12 de volta ao Código volta onde estava (roteiro 59, autor): hoje vai ao topo do arquivo;
-  manter o cursor, a seleção e a rolagem, como no Delphi.
+  manter o cursor, a seleção e a rolagem.
   Feito em 08/11 (falta o autor confirmar): o F12 sem handler volta à aba com o cursor, a seleção e
   a rolagem de antes (só a primeira vez vai ao topo).
 - [ ] Ctrl+Z depois do `edit_code` (roteiro 72, autor): desfaz a mudança certa, mas o cursor pula
@@ -2899,7 +3007,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   enquanto há texto (hoje o achado fica escondido).
   Feito em 08/11 (falta o autor confirmar): o código já abre os grupos enquanto há busca
   (`searching`); conferir de novo na IDE recompilada.
-- [ ] Designer pelo teclado como no Delphi (autor): Shift+seta muda o tamanho (1 px), Ctrl+seta move
+- [ ] Designer pelo teclado (autor): Shift+seta muda o tamanho (1 px), Ctrl+seta move
   (1 px), com vários selecionados.
   Feito em 08/11 (falta o autor confirmar): seta e Ctrl+seta movem 1 px, Ctrl+Shift+seta move 8 px,
   Shift+seta muda o tamanho 1 px, Alt+↑/↓ muda a ordem entre os irmãos (era o Ctrl+↑/↓); vale para
@@ -2933,7 +3041,9 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   mensagens para o agente, textos de teste), acumulados de outras sessões. Decidido pelo autor
   em 14/11 ("Separar e traduzir"): o que não é de tela vai para uma lista de "não traduzir" (um
   arquivo, como o `properties.tsv`), o que sobra é traduzido pelo `--apply`, e um teste cobra a
-  lista vazia. Não começou.
+  lista vazia. Feito em 14/11: `crates/aylis-ide/resources/locales/untranslated.txt` (o que não é
+  de tela; o `aylis-tool translations` o pula), os textos de tela traduzidos e o teste
+  `no_screen_text_of_the_ide_lacks_a_translation`.
 - [ ] Profiler (roteiros 54 e 87, autor): a roda invertida (o zoom da linha do tempo e a lista de
   Métodos); mostrar a área repintada de cada quadro (hoje só o tempo, então o "a pintura do mouse no
   fundo quase some" não dá para conferir); e conferir se mover o mouse no fundo, sem trocar de botão,
@@ -2960,7 +3070,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   árvore, "versão anterior do aylis" e o `MIGRATE_HINT`.
   Feito em 08/11 (falta o autor confirmar): "Gerado pelo Aylis (somente leitura)", "versão anterior
   do Aylis", o `MIGRATE_HINT` e a mensagem do formato no `aylis-json` (e as traduções).
-- [ ] Os forms com "criar no início" abrem todos visíveis ao executar (roteiro 70): como o Delphi,
+- [ ] Os forms com "criar no início" abrem todos visíveis ao executar (roteiro 70): o certo é
   criar sem mostrar (só o principal aparece).
   Feito em 08/11 (falta o autor confirmar): não abriam: o `ui_forms` do app dizia `visible: true`
   pela propriedade de forms criados e não mostrados. Agora diz `open` e `visible` só para o aberto.
@@ -2976,7 +3086,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   encerrar pela propriedade acima).
   Feito em 08/11 (falta o autor confirmar): o app aberto com o mesmo nome de executável para a
   compilação antes de começar, com a mensagem (ou é encerrado, com a propriedade acima).
-- [ ] Comandos antes e depois da compilação (cmd e PowerShell), como os Build Events do Delphi. Decidido
+- [ ] Comandos antes e depois da compilação (cmd e PowerShell). Decidido
   pelo autor: só em projeto confiado, e a janela "Confiar neste projeto?" mostra esses comandos. É
   exceção à diretriz "Texto não vira código nem comando" (ajustar o `CLAUDE.md` e o histórico).
   Feito em 08/11 (falta o autor confirmar): `output.before_build`/`after_build` (cmd ou PowerShell;
@@ -3000,7 +3110,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   usuário com `#[allow(non_snake_case)]`.
   Feito em 08/11 (falta o autor confirmar): o `impl` do form ganha `#[allow(non_snake_case)]` no
   arquivo novo e num de antes que recebe um handler com maiúscula; teste.
-- [ ] Mudar o valor de um controle pelo código dispara o `on_change`, como na VCL (roteiro 53;
+- [ ] Mudar o valor de um controle pelo código dispara o `on_change`, como a mudança do usuário (roteiro 53;
   decidido pelo autor): `text`, `checked`, `value`, `item_index`..., também pelo protocolo; conferir
   os controles e exemplos que mudam o próprio valor no `on_change`.
   Feito em 08/11 (falta o autor confirmar): central no núcleo: o `set_prop` de uma propriedade de
@@ -3011,11 +3121,11 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   acesso tipado e pelo `set` do protocolo; o registro que chega num controle DB dispara sem gravar de
   volta. Laço: o limite de eventos aninhados para com erro, sem travar. Três diálogos da IDE (ângulo,
   cor, sombra) passaram a gravar sem disparar. `giant_screen` igual à base. Testes em
-  `change_by_code.rs`, `change_events.rs` e `bindings.rs`. Diferença da VCL: lá o `ItemIndex` da
-  ComboBox pelo código não dispara; aqui dispara (a lista do autor inclui o `item_index`).
+  `change_by_code.rs`, `change_events.rs` e `bindings.rs`. O `item_index` da
+  ComboBox pelo código também dispara (a lista do autor inclui o `item_index`).
 
 *Componentes*
-- [ ] Botão com Enter seguro repete o clique, como na VCL (roteiro 42, autor), com uma propriedade
+- [ ] Botão com Enter seguro repete o clique (roteiro 42, autor), com uma propriedade
   para ligar ou desligar; o Espaço clica ao soltar.
   Feito em 08/11 (falta o autor confirmar): `repeat_enter` (ligada por padrão, rótulo traduzido): o
   Enter clica ao apertar e repete seguro; o Espaço afunda ao apertar e clica ao soltar (sair do foco
@@ -3188,7 +3298,7 @@ testado na hora)*
   laços ou funções do usuário); expressões só de valor, sem efeito colateral (o `filter`, o campo
   calculado, o texto `[...]` do relatório); regra de negócio continua sendo código do app.
   Feito em 08/11 (falta o autor confirmar): feito no `CLAUDE.md`.
-- [ ] "Eventos como no Delphi:" vira só "Eventos:" (a única menção ao Delphi no `CLAUDE.md`).
+- [ ] A diretriz dos eventos no `CLAUDE.md` começa só com "Eventos:", sem a comparação de antes.
   Feito em 08/11 (falta o autor confirmar): feito no `CLAUDE.md`.
 - [ ] A exceção dos comandos antes e depois da compilação (cmd e PowerShell só em projeto confiado,
   mostrados no "Confiar neste projeto?") na diretriz "Texto não vira código nem comando".

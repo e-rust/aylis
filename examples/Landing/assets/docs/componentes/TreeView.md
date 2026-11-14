@@ -12,19 +12,25 @@
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `item_height` | Altura do item | número |  |
+| `item_height` | Altura do item | número | Altura de cada linha, em pontos. |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
+| `items` | Itens | texto | Os nós, separados por `;`, com um `>` na frente por nível (`Brasil;>São Paulo;>>Campinas;Portugal`). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_expand` | — | — |  |
 | `on_collapse` | — | — |  |
 

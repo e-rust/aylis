@@ -10,7 +10,7 @@ As saídas de áudio do sistema e o aviso quando uma entra ou sai.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `watch` | Acompanhar mudanças | lógico |  |
+| `watch` | Acompanhar mudanças | lógico | Confere as saídas a cada 2 s e avisa no `on_devices_changed` quando uma entra ou sai. |
 
 ## Eventos
 

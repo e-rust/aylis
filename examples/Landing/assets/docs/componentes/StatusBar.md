@@ -12,7 +12,7 @@ Barra de status no rodapé: `text` à esquerda; aceita controles dentro (labels 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O texto à esquerda da barra. |
 
 ## Em código
 

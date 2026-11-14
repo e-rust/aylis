@@ -1,4 +1,4 @@
-//! As ligações de propriedades a dados ([`aylis_core::Binding`], o LiveBindings): mostra o
+//! As ligações de propriedades a dados ([`aylis_core::Binding`]): mostra o
 //! campo (ou o texto montado, ou a expressão) na propriedade quando o dataset muda e grava de
 //! volta quando o usuário muda uma propriedade ligada só a um campo.
 //!

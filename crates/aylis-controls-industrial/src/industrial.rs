@@ -110,13 +110,19 @@ macro_rules! paint_value_props {
 /// Manômetro: o mostrador redondo com o ponteiro, as marcas e a faixa de alarme.
 pub struct Manometer {
     pub base: ControlBase,
+    /// A pressão mostrada pelo ponteiro (fica no começo ou no fim da escala fora de `min`..`max`).
     pub value: f64,
+    /// O começo da escala.
     pub min: f64,
+    /// O fim da escala.
     pub max: f64,
+    /// A unidade escrita depois do número (`bar`, `psi`).
     pub unit: String,
     /// A partir daqui o arco fica vermelho (0 = sem faixa).
     pub alarm_above: f64,
+    /// Em alarme: o contorno vermelho pisca.
     pub alarm: bool,
+    /// Casas decimais do número.
     pub decimals: u32,
 }
 
@@ -175,10 +181,15 @@ impl Component for Manometer {
 /// Termômetro: o tubo com o bulbo, a coluna subindo com o valor e as marcas.
 pub struct Thermometer {
     pub base: ControlBase,
+    /// A temperatura: a altura da coluna entre `min` e `max`.
     pub value: f64,
+    /// A temperatura do pé da escala (coluna vazia).
     pub min: f64,
+    /// A temperatura do topo da escala (coluna cheia).
     pub max: f64,
+    /// A unidade escrita depois do número (`°C`, `°F`).
     pub unit: String,
+    /// Em alarme: a coluna fica na cor de perigo e o contorno vermelho pisca.
     pub alarm: bool,
 }
 
@@ -232,13 +243,19 @@ impl Component for Thermometer {
 /// `min` e `max`), as marcas e o número.
 pub struct TankLevel {
     pub base: ControlBase,
+    /// O nível: a altura do líquido entre `min` e `max`.
     pub value: f64,
+    /// O valor do tanque vazio.
     pub min: f64,
+    /// O valor do tanque cheio.
     pub max: f64,
+    /// A unidade escrita depois do número (`%`, `L`).
     pub unit: String,
+    /// A cor do líquido.
     pub liquid: Color,
     /// O líquido ondula (pede quadros enquanto ligado).
     pub running: bool,
+    /// Em alarme: o contorno vermelho pisca.
     pub alarm: bool,
 }
 
@@ -298,10 +315,15 @@ impl Component for TankLevel {
 /// Medidor de vazão: a turbina girando na velocidade da vazão e o valor.
 pub struct FlowMeter {
     pub base: ControlBase,
+    /// A vazão mostrada; a turbina gira mais rápido quanto mais perto de `max` (0: parada).
     pub value: f64,
+    /// A vazão da velocidade máxima da turbina.
     pub max: f64,
+    /// A unidade escrita depois do número (`m³/h`, `L/min`).
     pub unit: String,
+    /// Ligado: a turbina gira (verde); desligado, para (cinza).
     pub running: bool,
+    /// Em alarme: a turbina fica vermelha e o contorno pisca.
     pub alarm: bool,
 }
 
@@ -352,9 +374,11 @@ impl Component for FlowMeter {
 /// Mostrador de 7 segmentos (números, `-`, `.` e algumas letras).
 pub struct SevenSegment {
     pub base: ControlBase,
+    /// O que aparece nos dígitos (números, `-`, `.` e algumas letras; o resto fica apagado).
     pub text: String,
     /// Quantos dígitos (alinha à direita, como num painel).
     pub digits: u32,
+    /// A cor dos segmentos acesos.
     pub color: Color,
 }
 
@@ -486,8 +510,11 @@ impl SignalState {
 /// `lights`: vários, `red;green`), `blink` pisca.
 pub struct SignalLight {
     pub base: ControlBase,
+    /// A luz acesa (`off`: nenhuma); vale quando `lights` está vazio.
     pub state: SignalState,
+    /// Várias luzes acesas ao mesmo tempo, separadas por `;` (`red;green`); vazio: vale o `state`.
     pub lights: String,
+    /// As luzes acesas piscam (duas vezes por segundo).
     pub blink: bool,
 }
 
@@ -563,7 +590,9 @@ impl PropEnum for ValveState {
 /// em trânsito. Clicar dispara `on_click` (quem abre é o app).
 pub struct Valve {
     pub base: ControlBase,
+    /// Aberta (verde), fechada (cinza) ou em trânsito (amarela).
     pub state: ValveState,
+    /// Em alarme: a válvula fica vermelha e o contorno pisca.
     pub alarm: bool,
 }
 
@@ -620,10 +649,13 @@ macro_rules! rotating {
         #[doc = $doc]
         pub struct $name {
             pub base: ControlBase,
+            /// Ligado: gira e fica verde; desligado, parado e cinza.
             pub running: bool,
+            /// Em alarme: fica vermelho e o contorno pisca.
             pub alarm: bool,
             /// Voltas por segundo do desenho, ligado.
             pub speed: f64,
+            /// O texto do equipamento: no corpo do motor (vazio: "M") e embaixo da bomba.
             pub label: String,
         }
 
@@ -752,7 +784,9 @@ impl Fan {
 /// Esteira: a correia com os rolos girando e as marcas andando quando ligada.
 pub struct Conveyor {
     pub base: ControlBase,
+    /// Ligada: a correia anda e o contorno fica verde; desligada, parada e cinza.
     pub running: bool,
+    /// Em alarme: o contorno fica vermelho e pisca.
     pub alarm: bool,
     /// Velocidade do desenho (pixels por segundo); negativa anda para a esquerda.
     pub speed: f64,
@@ -813,8 +847,11 @@ impl Component for Conveyor {
 /// Silo: o corpo com o funil embaixo e o nível do material (`value`, %).
 pub struct Silo {
     pub base: ControlBase,
+    /// O nível do material, de 0 a 100 (%).
     pub value: f64,
+    /// A cor do material.
     pub material: Color,
+    /// Em alarme: o contorno vermelho pisca.
     pub alarm: bool,
 }
 
@@ -866,6 +903,7 @@ impl Component for Silo {
 /// (`pressed`), com `on_change`.
 pub struct EmergencyStop {
     pub base: ControlBase,
+    /// Travado (apertado); o clique alterna e dispara `on_change`.
     pub pressed: bool,
 }
 
@@ -913,7 +951,9 @@ impl Component for EmergencyStop {
 /// para a próxima (com `on_change`).
 pub struct SelectorSwitch {
     pub base: ControlBase,
+    /// As posições, separadas por `;` (`Man;0;Auto`), num arco da esquerda para a direita.
     pub positions: String,
+    /// A posição escolhida (0 = a primeira); o clique passa para a próxima.
     pub item_index: i64,
 }
 
@@ -976,6 +1016,8 @@ impl Component for SelectorSwitch {
 /// num deles dispara `on_click` com o índice (e o texto) dele.
 pub struct PushButtons {
     pub base: ControlBase,
+    /// Os botões, separados por `;`, cada um `texto:cor` (`Liga:green;Desliga:red`; a cor pelo
+    /// nome ou `#rrggbb`, sem cor: cinza).
     pub buttons: String,
     /// O botão que está aceso (o último clicado; -1 = nenhum).
     pub item_index: i64,
@@ -1121,13 +1163,21 @@ fn polyline(points: &[PointF]) -> Path {
 /// cotovelos; `running` mostra o fluxo andando na cor do produto.
 pub struct Pipe {
     pub base: ControlBase,
+    /// O componente onde o cano começa (vazio: um cano reto no próprio retângulo).
     pub from: Option<ComponentId>,
+    /// O lado do componente de origem onde o cano se prende.
     pub from_port: Port,
+    /// O componente onde o cano termina (vazio: um cano reto no próprio retângulo).
     pub to: Option<ComponentId>,
+    /// O lado do componente de destino onde o cano se prende.
     pub to_port: Port,
+    /// Mostra o fluxo andando dentro do cano.
     pub running: bool,
+    /// Em alarme: o fluxo fica na cor de perigo.
     pub alarm: bool,
+    /// A cor do produto que corre no cano.
     pub flow_color: Color,
+    /// A grossura do cano, em pontos (mínimo 2).
     pub thickness: f32,
 }
 
@@ -1209,11 +1259,17 @@ fn shifted(points: &[PointF], offset: f32) -> Path {
 /// cor de energizado.
 pub struct Wire {
     pub base: ControlBase,
+    /// O componente onde o fio começa (vazio: um fio reto no próprio retângulo).
     pub from: Option<ComponentId>,
+    /// O lado do componente de origem onde o fio se prende.
     pub from_port: Port,
+    /// O componente onde o fio termina (vazio: um fio reto no próprio retângulo).
     pub to: Option<ComponentId>,
+    /// O lado do componente de destino onde o fio se prende.
     pub to_port: Port,
+    /// Energizado: o fio fica laranja, no lugar da `color`.
     pub energized: bool,
+    /// A cor do fio desenergizado.
     pub color: Color,
 }
 
@@ -1322,8 +1378,11 @@ pub const SYMBOLS: [(&str, &str); 12] = [
 /// nos lados esquerdo e direito (os `Wire` prendem ali).
 pub struct ElectricalSymbol {
     pub base: ControlBase,
+    /// Qual símbolo desenhar (resistor, capacitor, diodo, chave, lâmpada...).
     pub symbol: Symbol,
+    /// Ligado: a chave e o relé fechados, a lâmpada e o LED acesos (nos outros não muda nada).
     pub state: bool,
+    /// O valor escrito junto do símbolo (`10 kΩ`, `24 V`); vazio: sem texto.
     pub label: String,
 }
 

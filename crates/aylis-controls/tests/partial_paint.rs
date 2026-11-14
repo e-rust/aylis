@@ -732,3 +732,78 @@ fn painters() -> Vec<Box<dyn Painter>> {
     list.push(Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D")));
     list
 }
+
+/// O efeito de fim da rolagem (decidido em 14/11): o dedo puxa um `ScrollBox` além do topo, e
+/// cada quadro por parte do brilho, do esticar e da mola sai igual à pintura inteira; ao
+/// soltar, o puxão volta sozinho e a tela para de pedir quadros, igual a antes de puxar.
+#[test]
+fn the_end_of_scroll_effect_paints_by_parts_and_goes_back() {
+    let touch = |y: f32| PointerEvent { position: PointF::new(200.0, y), kind: PointerKind::Touch, pointer_id: 3, ..Default::default() };
+    for style in [Overscroll::Glow, Overscroll::Stretch, Overscroll::Bounce] {
+        let mut painters: Vec<(Box<dyn Painter>, &str)> = vec![(Box::new(aylis_skia::SkiaRenderer::new()), "Skia")];
+        #[cfg(windows)]
+        painters.push((Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D")), "Direct2D"));
+        for (painter, name) in painters {
+            let mut ui = Ui::new();
+            aylis_controls::register(&mut ui);
+            ui.services_mut().text = Some(painter.text_service());
+            ui.set_overscroll_style(style);
+            let form = ui.create("Form", None).unwrap();
+            ui.set_prop(form, "width", W as f64).unwrap();
+            ui.set_prop(form, "height", H as f64).unwrap();
+            ui.show(form).unwrap();
+            let scroll = ui.create("ScrollBox", Some(form)).unwrap();
+            ui.set_prop(scroll, "align", "client").unwrap();
+            for i in 0..30 {
+                let child = ui.create("Button", Some(scroll)).unwrap();
+                for (prop, value) in [("align", PropValue::from("top")), ("height", 40.0.into()), ("text", format!("Linha {i}").into())] {
+                    ui.set_prop(child, prop, value).unwrap();
+                }
+            }
+            ui.set_time(1000.0);
+            ui.layout();
+            let mut screen = Screen { ui, form, painter };
+            let _ = screen.ui.take_damage(form);
+            let before = screen.full();
+            let _ = screen.ui.take_damage(form);
+            let mut previous = before.clone();
+            let label = format!("{name}, {style:?}");
+            // O dedo desce no topo: o conteúdo já está no começo, então abre o puxão.
+            screen.ui.pointer_down(form, touch(100.0));
+            let mut frame = |screen: &mut Screen, previous: &mut Vec<u32>, step: &str| {
+                screen.ui.tick();
+                let Some((partial, _)) = screen.partial(previous) else {
+                    // Soltar com o dedo andando começa a inércia, que pede a janela inteira.
+                    assert!(step.starts_with("voltando"), "{label} {step}: pediu a janela inteira");
+                    *previous = screen.full();
+                    let _ = screen.ui.take_damage(form);
+                    return;
+                };
+                let full = screen.full();
+                let _ = screen.ui.take_damage(form);
+                let (count, first) = differences(&partial, &full);
+                assert_eq!(count, 0, "{label} {step}: por parte saiu diferente da inteira (o primeiro em {first:?})");
+                *previous = full;
+            };
+            for (i, y) in [130.0, 170.0, 220.0, 280.0].into_iter().enumerate() {
+                let t = screen.ui.time() + 1.0 / 60.0;
+                screen.ui.set_time(t);
+                screen.ui.pointer_move(form, touch(y));
+                frame(&mut screen, &mut previous, &format!("puxando {i}"));
+            }
+            assert_ne!(differences(&previous, &before).0, 0, "{label}: o puxão aparece");
+            screen.ui.pointer_up(form, touch(280.0));
+            for i in 0..90 {
+                if !screen.ui.is_animating() {
+                    break;
+                }
+                let t = screen.ui.time() + 1.0 / 60.0;
+                screen.ui.set_time(t);
+                frame(&mut screen, &mut previous, &format!("voltando {i}"));
+            }
+            assert!(!screen.ui.is_animating(), "{label}: o puxão não voltou");
+            let end = screen.full();
+            assert_eq!(differences(&end, &before).0, 0, "{label}: voltou ao que era");
+        }
+    }
+}

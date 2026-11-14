@@ -1,9 +1,9 @@
-//! Formatação no estilo do Delphi, respeitando o idioma ([`LocaleInfo`]).
+//! Formatação de números e datas por máscara, respeitando o idioma ([`LocaleInfo`]).
 //!
-//! - números (`FormatFloat`): `0`, `#`, `,` (milhar), `.` (decimal) e texto em volta, por
+//! - números: `0`, `#`, `,` (milhar), `.` (decimal) e texto em volta, por
 //!   exemplo `"R$ #,##0.00"` ou `"0.0 kg"`; `"pos;neg"` dá um formato para negativos;
-//! - datas (`FormatDateTime`): `dd`, `d`, `mm`, `m`, `yyyy`, `yy`, `hh`, `h`, `nn`, `n`,
-//!   `ss`, `s`, `zzz`; o resto é literal. Como no Delphi, `nn` é minuto.
+//! - datas: `dd`, `d`, `mm`, `m`, `yyyy`, `yy`, `hh`, `h`, `nn`, `n`,
+//!   `ss`, `s`, `zzz`; o resto é literal. `nn` é minuto.
 
 use aylis_core::platform::LocaleInfo;
 

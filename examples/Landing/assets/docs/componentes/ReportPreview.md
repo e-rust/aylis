@@ -18,14 +18,14 @@ A visualização de um `Report` (como o preview do FastReport): uma página por 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `page` | Página | inteiro |  |
-| `zoom` | Zoom | número |  |
+| `page` | Página | inteiro | A página mostrada, a partir de 0. |
+| `zoom` | Zoom | número | A escala da página (1 = tamanho real); 0: a página inteira na largura. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `report` | Relatório | componente |  |
+| `report` | Relatório | componente | O `Report` mostrado. |
 
 ## Eventos
 

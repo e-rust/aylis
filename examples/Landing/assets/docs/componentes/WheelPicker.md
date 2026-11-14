@@ -12,20 +12,20 @@ A roda de opções do iOS (o `UIPickerView`): arrastar ou rolar gira a roda; ao 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `row_height` | Altura da linha | número |  |
+| `row_height` | Altura da linha | número | A altura de cada linha da roda, em pontos. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | As opções da roda, separadas por `;`. |
+| `item_index` | Item escolhido | inteiro | A opção escolhida, a do meio da roda (0 = a primeira). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

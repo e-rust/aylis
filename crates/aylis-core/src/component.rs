@@ -1,5 +1,5 @@
-//! O modelo de componentes: [`Component`] (o "TComponent") e [`ControlBase`] (os dados
-//! comuns de todo controle visual, como no `TControl`).
+//! O modelo de componentes: [`Component`] e [`ControlBase`] (os dados
+//! comuns de todo controle visual).
 
 use std::any::Any;
 use std::fmt;
@@ -55,7 +55,7 @@ pub struct ControlState {
 /// Componente: a base de tudo que vive no [`Ui`](crate::Ui), visual ou não.
 ///
 /// Todos os métodos, exceto [`class_name`](Component::class_name), têm implementação
-/// padrão — funcionam como métodos `virtual` do Delphi: sobrescreva só o que precisar.
+/// padrão — sobrescreva só o que precisar.
 ///
 /// ## Controle visual
 /// Um componente é um **controle** quando devolve um [`ControlBase`] em
@@ -120,8 +120,8 @@ pub trait Component: Any {
         &[]
     }
 
-    /// O evento padrão: o duplo clique no designer cria o handler dele e abre o código
-    /// (como no Delphi). `None`: a IDE escolhe pelo nome (o `on_change` da classe, o
+    /// O evento padrão: o duplo clique no designer cria o handler dele e abre o código.
+    /// `None`: a IDE escolhe pelo nome (o `on_change` da classe, o
     /// `on_timer`... ou o `on_click`).
     fn default_event(&self) -> Option<&'static str> {
         self.inner().and_then(|c| c.default_event())
@@ -154,7 +154,7 @@ pub trait Component: Any {
     }
 
     /// O controle não tem fundo (um texto, uma caixa de seleção, um medidor): com o `fill`
-    /// próprio, o `Ui` pinta o fundo dele inteiro (como o `Color` do Delphi). Os que têm
+    /// próprio, o `Ui` pinta o fundo dele inteiro. Os que têm
     /// fundo usam o `fill` no desenho deles.
     fn transparent_background(&self) -> bool {
         self.inner().is_some_and(|i| i.transparent_background())
@@ -250,6 +250,32 @@ pub trait Component: Any {
         }
     }
 
+    /// Um deslizar do dedo (o `Carousel` troca de item, o `TabControl` de página). Marque
+    /// como tratado (`ctx.set_handled()`) para não subir para os pais.
+    fn swipe(&mut self, ctx: &mut EventCtx<'_>, event: &crate::event::SwipeEvent) {
+        if let Some(inner) = self.inner_mut() {
+            inner.swipe(ctx, event);
+        }
+    }
+
+    /// O dedo que arrastava (rolando) saiu da tela: quem segue o arrasto por dentro (a linha da
+    /// lista deslizada para mostrar as ações) fecha ou fica aberto. Vai ao controle tocado e a
+    /// todos os pais.
+    fn touch_end(&mut self, ctx: &mut EventCtx<'_>) {
+        if let Some(inner) = self.inner_mut() {
+            inner.touch_end(ctx);
+        }
+    }
+
+    /// Um deslizar que começou na borda do form (`event.start` nas coordenadas do form) e que
+    /// ninguém tratou: a `NavigationDrawer` abre. `true` se tratou.
+    fn edge_swipe(&mut self, ctx: &mut EventCtx<'_>, event: &crate::event::SwipeEvent) -> bool {
+        match self.inner_mut() {
+            Some(inner) => inner.edge_swipe(ctx, event),
+            None => false,
+        }
+    }
+
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         if let Some(inner) = self.inner_mut() {
             inner.key_down(ctx, event);
@@ -262,7 +288,7 @@ pub trait Component: Any {
         }
     }
 
-    /// Tecla de atalho que ninguém tratou (como o `ShortCut` de um item de menu): o `Ui`
+    /// Tecla de atalho que ninguém tratou (como o atalho de um item de menu): o `Ui`
     /// oferece a todos os componentes do form. Marque como tratado
     /// ([`EventCtx::set_handled`]) se for sua.
     fn shortcut(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
@@ -386,7 +412,7 @@ pub trait Component: Any {
     }
 
     /// Uma propriedade publicada mudou por nome ([`Ui::set_prop`](crate::Ui::set_prop): JSON,
-    /// Object Inspector, protocolo). Como um *setter* do Delphi com efeitos colaterais: aqui
+    /// Object Inspector, protocolo). É o lugar dos efeitos colaterais da mudança: aqui
     /// o componente tem o `Ui` (por exemplo, o TabControl mostra a aba nova).
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
         if let Some(inner) = self.inner_mut() {
@@ -401,7 +427,7 @@ pub trait Component: Any {
     }
 
     /// Os argumentos do `on_change` quando a propriedade de valor `name` muda pelo código
-    /// ([`Ui::set_prop`](crate::Ui::set_prop): o acesso tipado, o protocolo), como na VCL;
+    /// ([`Ui::set_prop`](crate::Ui::set_prop): o acesso tipado, o protocolo);
     /// `value` é o valor novo. O padrão é `EventArgs::Value(value)`: o controle que dispara
     /// outro argumento quando o usuário muda (o texto do item, numa ComboBox) devolve o mesmo
     /// aqui, e `None` não dispara. Quais propriedades contam: [`is_value_property`].
@@ -422,7 +448,7 @@ pub trait Component: Any {
     }
 
     /// Intervalo do timer deste componente, em segundos (`None` = parado). O `Ui` dispara
-    /// `on_timer` a cada intervalo (como o `TTimer`); ver [`Ui::sync_timer`](crate::Ui::sync_timer).
+    /// `on_timer` a cada intervalo; ver [`Ui::sync_timer`](crate::Ui::sync_timer).
     fn timer_interval(&self) -> Option<f64> {
         self.inner().and_then(|i| i.timer_interval())
     }
@@ -464,7 +490,7 @@ pub trait Component: Any {
     /// Organiza os filhos com `align = None` (grade, fluxo...): recebe a área livre (já
     /// sem o padding e sem o que os filhos encaixados ocuparam) e o tamanho pedido e as
     /// margens de cada filho; devolve o retângulo de cada um, na mesma ordem. `None` (o
-    /// padrão) = posição livre, como no FMX.
+    /// padrão) = posição livre.
     fn arrange(&self, area: RectF, children: &[ArrangeItem]) -> Option<Vec<RectF>> {
         self.inner().and_then(|i| i.arrange(area, children))
     }
@@ -549,8 +575,8 @@ pub trait Component: Any {
         self.inner().map(|i| i.event_info(event)).unwrap_or_default()
     }
 
-    /// Mensagem enviada por outro componente com [`Ui::send_message`](crate::Ui::send_message)
-    /// (como o `Perform`/mensagens do Delphi). O tipo da mensagem é livre: cada camada
+    /// Mensagem enviada por outro componente com [`Ui::send_message`](crate::Ui::send_message).
+    /// O tipo da mensagem é livre: cada camada
     /// (por exemplo a de dados) define as suas e o componente faz `downcast_ref`.
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
         if let Some(inner) = self.inner_mut() {
@@ -821,8 +847,8 @@ pub const VALUE_PROPERTIES: [&str; 19] = [
     "angle", "pressed", "position", "low", "high",
 ];
 
-/// Mudar a propriedade pelo código dispara o `on_change` do controle (se ele tiver um),
-/// como na VCL: as de [`VALUE_PROPERTIES`] (fora das de aparência, como o `text` de um
+/// Mudar a propriedade pelo código dispara o `on_change` do controle (se ele tiver um):
+/// as de [`VALUE_PROPERTIES`] (fora das de aparência, como o `text` de um
 /// CheckBox, que é a legenda), a aba escolhida e o aberto/fechado.
 pub fn is_value_property(info: &PropInfo) -> bool {
     match info.name {
@@ -850,7 +876,7 @@ pub(crate) struct AnchorRef {
     pub(crate) rect: RectF,
 }
 
-/// Dados comuns de todo controle visual (o que o `TControl` tem).
+/// Dados comuns de todo controle visual.
 ///
 /// `left`, `top`, `width` e `height` são os valores **pedidos**. A posição e o tamanho
 /// **reais**, calculados pelo layout (Align/Anchors), ficam em [`bounds`](Self::bounds).
@@ -903,7 +929,7 @@ pub struct ControlBase {
     tab_stop: bool,
     /// No toque, arrastar rola o contêiner de fora em vez de ir para o controle.
     pan_on_touch: bool,
-    /// Menu de contexto (como o `PopupMenu` do `TControl`): abre no clique direito.
+    /// Menu de contexto: abre no clique direito.
     pub(crate) popup_menu: Option<ComponentId>,
     /// O cursor do mouse em cima dele.
     cursor: CursorShape,
@@ -912,9 +938,9 @@ pub struct ControlBase {
     /// Como o controle (com os filhos) se junta ao que está por baixo (o `mix-blend-mode`
     /// do CSS): `difference` com branco é o negativo, como a marca d'água sobre um vídeo.
     blend_mode: crate::BlendMode,
-    /// Giro em graus, em torno do centro (o `RotationAngle` do FMX).
+    /// Giro em graus, em torno do centro.
     rotation: f32,
-    /// A escala do controle e de tudo dentro dele (o `Scale` do FMX; 1 = normal): ele ocupa o
+    /// A escala do controle e de tudo dentro dele (1 = normal): ele ocupa o
     /// mesmo retângulo no pai, e o desenho dele e o layout dos filhos acontecem num espaço do
     /// tamanho do retângulo dividido pela escala, ampliado na pintura. O clique, o foco e a
     /// área a repintar acompanham ([`ControlBase::inner_size`]).
@@ -922,15 +948,17 @@ pub struct ControlBase {
     /// Deslocamento só do desenho (não muda o layout): animações e transições.
     translate: PointF,
     /// O desenho dele e dos filhos guardado numa imagem, refeita só quando algo lá dentro
-    /// muda (o `CacheAsBitmap`): um painel pesado que desliza ou some aos poucos.
+    /// muda: um painel pesado que desliza ou some aos poucos.
     cache_layer: bool,
     /// Proporção fixa (largura ÷ altura; 0 = livre), como o `VResponsive` do Vuetify.
     aspect_ratio: f32,
     /// Largura máxima (0 = sem limite), como o `max-width` do CSS com margem automática.
     max_width: f32,
-    /// Largura mínima, altura mínima e máxima (0 = sem limite), como o `Constraints` da VCL.
+    /// Largura mínima, altura mínima e máxima (0 = sem limite).
     min_width: f32,
+    /// Altura mínima: o layout e o `auto_size` não o deixam mais baixo (0 = sem limite).
     min_height: f32,
+    /// Altura máxima: o layout e o `auto_size` não o deixam mais alto (0 = sem limite; a mínima vence).
     max_height: f32,
     /// Encaixado: estica na faixa ou fica com o próprio tamanho no começo, meio ou fim.
     self_align: SelfAlign,
@@ -938,10 +966,12 @@ pub struct ControlBase {
     auto_size: bool,
     /// Quantas colunas ocupa num `GridLayout` (o `colspan`; 1 ou 0: uma).
     column_span: u32,
-    /// O lugar fixo num `GridLayout` (o `TGridPanel`): linha e coluna (-1: segue a ordem) e
+    /// O lugar fixo num `GridLayout`: linha e coluna (-1: segue a ordem) e
     /// quantas linhas ocupa. O relatório do Tabernáculo, G12.
     grid_row: i16,
+    /// A coluna fixa num `GridLayout`, contando de 0 (-1: segue a ordem); vale junto com o `grid_row`.
     grid_column: i16,
+    /// Quantas linhas ocupa num `GridLayout` (1 ou 0: uma).
     row_span: u16,
     /// Quanto do espaço que sobra na linha de um `FlowLayout` ele toma (o `flex-grow`): um
     /// `Layout` vazio com `grow` 1 é o espaçador que empurra o resto para o fim (L04).
@@ -961,7 +991,7 @@ pub struct ControlBase {
     style: String,
     /// Tema próprio (pelo nome), que vale também para os filhos. Vazio = o do pai.
     theme: String,
-    /// Dica mostrada com o mouse parado em cima (o `Hint` do Delphi).
+    /// Dica mostrada com o mouse parado em cima.
     hint: String,
     state: ControlState,
     pub(crate) bounds: RectF,
@@ -979,9 +1009,9 @@ pub struct ControlBase {
     pub(crate) keep_left_to_right: bool,
     /// As cores próprias (vazio = as do tema).
     pub(crate) colors: ColorOverride,
-    /// A fonte própria (o `Font` do `TControl`); o que ficar sem valor vem do pai.
+    /// A fonte própria; o que ficar sem valor vem do pai.
     pub(crate) font: FontOverride,
-    /// Quanto o conteúdo está rolado (como o `ViewportPosition` do FMX).
+    /// Quanto o conteúdo está rolado.
     scroll_offset: PointF,
     /// A rolagem com que o último layout pôs os filhos: a posição de um filho no conteúdo é a
     /// dele mais esta, mesmo antes do próximo layout.
@@ -1075,6 +1105,7 @@ impl ControlBase {
         PropInfo::new("on_pointer_leave", PropKind::Event, "Events"),
         PropInfo::new("on_wheel", PropKind::Event, "Events"),
         PropInfo::new("on_gesture", PropKind::Event, "Events"),
+        PropInfo::new("on_swipe", PropKind::Event, "Events"),
         PropInfo::new("on_key_down", PropKind::Event, "Events"),
         PropInfo::new("on_key_press", PropKind::Event, "Events"),
         PropInfo::new("on_key_up", PropKind::Event, "Events"),
@@ -1270,7 +1301,7 @@ impl ControlBase {
     }
 
     /// Pode receber o foco do teclado (como `CanFocus`).
-    /// Arrastável (o `DragMode = dmAutomatic` do FMX): passar de alguns pontos com o
+    /// Arrastável: passar de alguns pontos com o
     /// botão pressionado dispara `on_drag_start`, e o handler começa o arrasto com
     /// [`Ui::begin_drag`](crate::Ui::begin_drag).
     pub fn draggable(&self) -> bool {
@@ -1511,8 +1542,8 @@ impl ControlBase {
         }
     }
 
-    /// A altura sai do conteúdo, na largura que o controle tem (como o `AutoSize` do
-    /// Delphi): um Label com `wrap` fica da altura do texto quebrado; um contêiner, da
+    /// A altura sai do conteúdo, na largura que o controle tem:
+    /// um Label com `wrap` fica da altura do texto quebrado; um contêiner, da
     /// altura dos filhos encaixados em cima e embaixo (mais o padding). Vale com `align`
     /// `top`, `bottom` ou `none`.
     pub fn auto_size(&self) -> bool {
@@ -2068,18 +2099,22 @@ fn font_weight_named(name: &str) -> Result<Option<crate::canvas::FontWeight>> {
     }
 }
 
-/// A fonte de um controle por cima da do tema, como o `Font` do Delphi: família, tamanho,
-/// peso, itálico, sublinhado e tachado. O que não tem valor vem do pai (o `ParentFont`):
+/// A fonte de um controle por cima da do tema: família, tamanho,
+/// peso, itálico, sublinhado e tachado. O que não tem valor vem do pai:
 /// a fonte posta no form vale para tudo dentro dele.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FontOverride {
-    /// Vazio: a do pai.
+    /// A família da fonte (`"Segoe UI"`, `"monospace"`); vazio: a do pai.
     pub family: String,
+    /// O tamanho da fonte, em pontos; sem valor: o do pai.
     pub size: Option<f32>,
+    /// O peso da fonte (`normal`, `bold`...); sem valor: o do pai.
     pub weight: Option<crate::canvas::FontWeight>,
-    /// Ligados valem também para os filhos.
+    /// Itálico; ligado vale também para os filhos.
     pub italic: bool,
+    /// Sublinhado; ligado vale também para os filhos.
     pub underline: bool,
+    /// Tachado (uma linha no meio do texto); ligado vale também para os filhos.
     pub strikeout: bool,
 }
 
@@ -2129,23 +2164,28 @@ impl ControlBase {
     }
 }
 
-/// As cores próprias de um controle (vazio = as do tema), como as do `TButton` estilizado:
+/// As cores próprias de um controle (vazio = as do tema):
 /// valem para qualquer controle (`fill`, `border_color`, `text_color`, `accent_color` e as de
 /// sentido: `success_color`, `warning_color`, `danger_color`).
 /// O `Ui` as põe no estilo resolvido e no tema que o controle vê (`primary` e as variações,
 /// `text`, `border`), então até os controles que leem o tema direto as seguem.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ColorOverride {
-    /// O fundo.
+    /// A cor do fundo; vazio: a do tema.
     pub fill: Option<crate::Color>,
+    /// A cor da borda; vazio: a do tema.
     pub border: Option<crate::Color>,
+    /// A cor do texto; vazio: a do tema.
     pub text: Option<crate::Color>,
     /// O destaque: a marca da caixa de seleção, a barra do progresso, o trilho preenchido,
     /// a seleção, o foco.
     pub accent: Option<crate::Color>,
     /// As cores de sentido: subir/positivo, atenção e cair/erro (candles, variações, avisos).
+    /// Esta é a de subir/positivo; vazio: a do tema.
     pub success: Option<crate::Color>,
+    /// A cor de sentido de atenção (avisos); vazio: a do tema.
     pub warning: Option<crate::Color>,
+    /// A cor de sentido de cair/erro (candles em queda, variações negativas, erros); vazio: a do tema.
     pub danger: Option<crate::Color>,
 }
 
@@ -2269,8 +2309,13 @@ impl Connection {
 /// O arrasto declarado de um controle (fica fora do `ControlBase` comum: quase nenhum tem).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DragDecl {
+    /// O que vai num arrasto que começa nele, sem handler (`"cliente:123"`: o tipo é o que vem
+    /// antes do primeiro `:`); vazio: o arrasto declarado não leva nada.
     pub data: String,
+    /// O texto que acompanha o mouse durante o arrasto; vazio: sem rótulo.
     pub label: String,
+    /// Os tipos que este destino aceita, separados por `;` (`"cliente;produto"`); vazio: quem
+    /// decide é o `on_drag_over`.
     pub drop_types: String,
     /// O `DragImage` que acompanha o cursor no arrasto (a imagem e o tamanho).
     pub image: Option<ComponentId>,
@@ -2279,7 +2324,9 @@ pub struct DragDecl {
 /// Os textos raros do [`ControlBase`].
 #[derive(Clone, Debug, Default)]
 struct RareTexts {
-    /// Um texto livre para o código (o `TagString` do FMX: um id, um caminho, um JSON pequeno).
+    /// Um texto livre para o código (um id, um caminho, um JSON pequeno).
     tag_string: Box<str>,
+    /// O nome que o leitor de tela fala, no lugar do texto do controle (um botão só com
+    /// ícone, um campo sem rótulo); vazio: o texto do próprio controle.
     accessible_name: Box<str>,
 }

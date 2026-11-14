@@ -1,4 +1,4 @@
-//! Máscaras de edição (como o `EditMask` do Delphi, no essencial).
+//! Máscaras de edição.
 //!
 //! | Caractere | Aceita |
 //! |---|---|

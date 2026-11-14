@@ -12,18 +12,18 @@ Manômetro: o mostrador redondo com o ponteiro, as marcas e a faixa de alarme.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `unit` | Unidade | texto |  |
-| `decimals` | Casas decimais | inteiro |  |
+| `unit` | Unidade | texto | A unidade escrita depois do número (`bar`, `psi`). |
+| `decimals` | Casas decimais | inteiro | Casas decimais do número. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
+| `value` | Valor | número | A pressão mostrada pelo ponteiro (fica no começo ou no fim da escala fora de `min`..`max`). |
+| `min` | Mínimo | número | O começo da escala. |
+| `max` | Máximo | número | O fim da escala. |
 | `alarm_above` | Alarme acima de | número | A partir daqui o arco fica vermelho (0 = sem faixa). |
-| `alarm` | Alarme | lógico |  |
+| `alarm` | Alarme | lógico | Em alarme: o contorno vermelho pisca. |
 
 ## Em código
 

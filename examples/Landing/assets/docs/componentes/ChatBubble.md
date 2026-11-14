@@ -12,11 +12,11 @@ O balão de conversa (`QChatMessage`; aqui `ChatBubble`, porque o `ChatMessage` 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `author` | Autor | texto |  |
-| `text` | Texto | texto |  |
-| `stamp` | Hora | texto |  |
-| `sent` | Enviada | lógico |  |
-| `avatar` | Avatar | texto |  |
+| `author` | Autor | texto | O nome de quem escreveu, em cima do balão (e as iniciais do avatar). |
+| `text` | Texto | texto | A mensagem (pode ter várias linhas). |
+| `stamp` | Hora | texto | A hora embaixo do balão (`há 2 minutos`, `14:05`); vazio: sem hora. |
+| `sent` | Enviada | lógico | Mensagem de quem usa o app: o balão à direita, na cor primária. |
+| `avatar` | Avatar | texto | A foto ao lado do balão (um arquivo do app); vazio: as iniciais do `author`. |
 
 ## Em código
 

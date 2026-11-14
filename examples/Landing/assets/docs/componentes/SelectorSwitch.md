@@ -12,14 +12,14 @@ Chave seletora (`Man;0;Auto`): a manopla aponta para a posição escolhida; o cl
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `positions` | Posições | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `positions` | Posições | texto | As posições, separadas por `;` (`Man;0;Auto`), num arco da esquerda para a direita. |
+| `item_index` | Item escolhido | inteiro | A posição escolhida (0 = a primeira); o clique passa para a próxima. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

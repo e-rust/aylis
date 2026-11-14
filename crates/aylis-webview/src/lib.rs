@@ -1,6 +1,6 @@
 //! # aylis-webview
 //!
-//! O componente [`WebView`] (o `TWebBrowser` do FMX): mostra uma página da web dentro do
+//! O componente [`WebView`]: mostra uma página da web dentro do
 //! form. O controle só descreve o que mostrar ([`Component::native_view`]); quem cria o
 //! navegador é a plataforma (`aylis-platform-winit` com a feature `webview`):
 //!
@@ -33,7 +33,9 @@ use aylis_core::{
 /// Navegador embutido. `url` abre um endereço; sem ele, `html` mostra o texto dado.
 pub struct WebView {
     pub base: ControlBase,
+    /// O endereço aberto (`https://...`); vazio: mostra o `html`.
     pub url: String,
+    /// O HTML mostrado quando não há `url`.
     pub html: String,
     /// Origens que podem mandar mensagens (`https://pagamento.exemplo.com`), separadas por
     /// vírgula ou espaço; vazia, a origem do `url` (com `html`, só o próprio conteúdo).

@@ -16,7 +16,7 @@ const TAB_BAR: f32 = 38.0;
 /// Largura do esmaecido na borda da barra quando há abas escondidas daquele lado.
 const FADE: f32 = 28.0;
 
-/// De que lado do [`TabControl`] ficam as abas (como o `TabPosition` do `TTabControl`). Nas
+/// De que lado do [`TabControl`] ficam as abas. Nas
 /// laterais as abas se empilham numa coluna de `tab_width` de largura, com o texto deitado.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum TabPosition {
@@ -44,14 +44,17 @@ impl TabPosition {
     }
 }
 
-/// Abas (como o `TTabControl`): os filhos são [`TabItem`]s, cada um uma página; só a de
+/// Abas: os filhos são [`TabItem`]s, cada um uma página; só a de
 /// `tab_index` aparece. Clique numa aba (ou Ctrl+Tab com o foco) troca; `on_change`
 /// traz o índice. Sem `show_tabs`, só as páginas, sem barra nem moldura (como um
 /// `PageControl` com as abas escondidas): a tela tem a própria navegação e troca a página
 /// pelo `tab_index`; no designer aparece uma página por vez.
 pub struct TabControl {
     pub base: ControlBase,
+    /// A página que aparece, a partir de 0 (a ordem dos `TabItem` filhos).
     pub tab_index: i64,
+    /// Mostra a barra de abas e a moldura; desligado, só as páginas (a tela troca pelo
+    /// `tab_index`).
     pub show_tabs: bool,
     /// Como a aba nova entra (`slide_left`/`slide_right` deslizam na direção da ordem das
     /// abas, `fade` esmaece).
@@ -60,6 +63,9 @@ pub struct TabControl {
     pub tab_position: TabPosition,
     /// Largura da coluna de abas nas laterais (`left`/`right`); em cima e embaixo não conta.
     pub tab_width: f32,
+    /// Deslizar o dedo para os lados troca de página (desligado: as páginas com mapa, grade ou
+    /// controles que também arrastam para os lados não brigam com ele).
+    pub swipe: bool,
     /// A barra das abas (da última pintura), para o clique e a roda.
     bar: Cell<RectF>,
     /// Retângulos das abas (da última pintura), para o clique.
@@ -83,6 +89,7 @@ impl Default for TabControl {
             transition: Transition::None,
             tab_position: TabPosition::Top,
             tab_width: 140.0,
+            swipe: false,
             bar: Cell::new(RectF::new(0.0, 0.0, 0.0, 0.0)),
             headers: RefCell::default(),
             scroll: Cell::new(0.0),
@@ -210,10 +217,29 @@ fn apply_visibility(ui: &mut Ui, tabs: &[ComponentId], index: i64) {
 impl Component for TabControl {
     leaf_control!("TabControl");
 
+    // Com `swipe`, deslizar o dedo para os lados troca de página (sem dar a volta nas pontas).
+    fn swipe(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::SwipeEvent) {
+        if !self.swipe {
+            return;
+        }
+        let step = match event.direction {
+            aylis_core::SwipeDirection::Left => 1,
+            aylis_core::SwipeDirection::Right => -1,
+            _ => return,
+        };
+        let count = Self::tabs(ctx.ui, ctx.id).len() as i64;
+        let next = self.tab_index + step;
+        if (0..count).contains(&next) {
+            self.change(ctx, next);
+            ctx.set_handled();
+        }
+    }
+
     properties! {
         tab_index: i64 => "Behavior",
         show_tabs: bool => "Appearance",
         transition: Transition => "Behavior",
+        swipe: bool => "Behavior",
         tab_position: TabPosition => "Appearance",
         tab_width: f32 => "Appearance";
         events: on_change
@@ -443,9 +469,10 @@ impl Component for TabControl {
     }
 }
 
-/// Uma página do [`TabControl`] (como o `TTabItem`): um contêiner com o título da aba.
+/// Uma página do [`TabControl`]: um contêiner com o título da aba.
 pub struct TabItem {
     pub base: ControlBase,
+    /// O título da aba.
     pub caption: String,
 }
 
@@ -476,15 +503,20 @@ impl Component for TabItem {
 
 // ---------------------------------------------------------------------------
 
-/// Moldura com título que agrupa controles (como o `TGroupBox`).
+/// Moldura com título que agrupa controles.
 pub struct GroupBox {
     pub base: ControlBase,
     /// O título; com `&` antes de uma letra, Alt+letra leva ao primeiro campo do grupo.
     pub caption: String,
     /// Os caracteres dos campos dentro do grupo (veja o `Form`).
     pub allowed_chars: String,
+    /// Os caracteres que os campos do grupo não aceitam (digitados ou colados); faixas como
+    /// `a-z`. Vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` entram nos campos do grupo.
     pub only_allowed: bool,
+    /// O filtro de caracteres do grupo manda nos campos de dentro (sem ele, o do campo decide
+    /// primeiro).
     pub chars_override: bool,
     /// Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a
     /// mesma herança dos filtros.
@@ -539,11 +571,13 @@ impl Component for GroupBox {
 
 const EXPANDER_HEADER: f32 = 40.0;
 
-/// Seção que abre e fecha (como o `TExpander`): clique no cabeçalho (ou Espaço/Enter).
+/// Seção que abre e fecha: clique no cabeçalho (ou Espaço/Enter).
 /// Fechada, fica só com o cabeçalho; `on_change` traz `expanded`.
 pub struct Expander {
     pub base: ControlBase,
+    /// O título no cabeçalho.
     pub caption: String,
+    /// Aberta; fechada, fica só o cabeçalho.
     pub expanded: bool,
     /// Altura aberta (guardada ao fechar).
     full_height: f32,
@@ -648,10 +682,11 @@ impl Component for Expander {
 
 // ---------------------------------------------------------------------------
 
-/// Barra de status no rodapé (como o `TStatusBar`): `text` à esquerda; aceita controles
+/// Barra de status no rodapé: `text` à esquerda; aceita controles
 /// dentro (labels alinhados à direita, por exemplo).
 pub struct StatusBar {
     pub base: ControlBase,
+    /// O texto à esquerda da barra.
     pub text: String,
 }
 
@@ -688,7 +723,7 @@ impl Component for StatusBar {
     }
 }
 
-/// Barra de ferramentas no topo (como o `TToolBar`): os botões dentro ficam lado a lado
+/// Barra de ferramentas no topo: os botões dentro ficam lado a lado
 /// (use `align: left`).
 pub struct ToolBar {
     pub base: ControlBase,
@@ -713,7 +748,7 @@ impl Component for ToolBar {
     }
 }
 
-/// A página que ficou à vista avisa: `on_show` (o `OnShow` da `TTabSheet`; C18 do Tabernáculo).
+/// A página que ficou à vista avisa: `on_show` (C18 do Tabernáculo).
 fn show_page(ui: &mut Ui, tabs: &[ComponentId], index: i64) {
     if let Some(&page) = usize::try_from(index).ok().and_then(|i| tabs.get(i)) {
         ui.queue_event(page, "on_show", EventArgs::None);

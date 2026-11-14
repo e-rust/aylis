@@ -1,6 +1,6 @@
 [package]
 name = "aylis-capi"
-description = "C ABI do aylis: use a interface a partir de C, Delphi, C#, Go, Python..."
+description = "C ABI do aylis: use a interface a partir de C, Free Pascal, C#, Go, Python..."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -10,11 +10,11 @@ O serviço em segundo plano: a lógica sem tela do projeto (`src/background.rs`,
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
-| `title` | Título | texto |  |
-| `text` | Texto | texto |  |
-| `kind` | Tipo | texto |  |
-| `keep_alive` | Manter vivo | lógico |  |
+| `active` | Ativo | lógico | Liga o serviço e a lógica do projeto; desligado, para os dois. |
+| `title` | Título | texto | O título da notificação fixa do serviço; vazio: "Rodando em segundo plano". |
+| `text` | Texto | texto | O texto da notificação fixa do serviço. |
+| `kind` | Tipo | texto | O tipo do serviço no Android 14+ (`dataSync`, `location`, `mediaPlayback`, `connectedDevice`...). |
+| `keep_alive` | Manter vivo | lógico | O sistema reinicia o serviço (e no boot) e o app pede para sair da otimização de bateria. |
 
 ## Eventos
 

@@ -607,7 +607,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 let _ = ui.set_prop(label, "hint", name.clone());
             }
         }
-        // Botão direito: ligar a propriedade a um campo (o LiveBindings).
+        // Botão direito: ligar a propriedade a um campo.
         if !events_tab && targets.len() == 1 && !matches!(kind, PropKind::Component | PropKind::Event) && name != "name" {
             binding_menu(ui, state, ids, targets[0], l, &name);
         }
@@ -661,8 +661,8 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 });
             }
             PropKind::Event => {
-                // → abre o código (vazio: cria o handler padrão antes, como o duplo clique
-                // no evento do Delphi); ▾ escolhe um handler existente ou cria o padrão.
+                // → abre o código (vazio: cria o handler padrão antes);
+                // ▾ escolhe um handler existente ou cria o padrão.
                 let go = small_button(ui, l, "→");
                 let pick = small_button(ui, l, "▾");
                 let shown = display(&value);
@@ -890,7 +890,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 }
             }
             PropKind::String if class == "Frame" && name == "form" => {
-                // Os forms do projeto (menos este e os DataModules), como o frame do Delphi.
+                // Os forms do projeto (menos este e os DataModules).
                 let forms = {
                     let st = state.borrow();
                     let own = st.doc.form_name();
@@ -935,7 +935,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                     let (state, ids, target, prop) = (state.clone(), *ids, targets[0], name.clone());
                     ui.on_click(more, move |ui, _| actions::pick_icon(ui, &state, &ids, Some(target), prop.clone()));
                 } else if name == "font_family" {
-                    // O editor de fonte (o `Font` do Delphi): família, tamanho, peso e estilos.
+                    // O editor de fonte: família, tamanho, peso e estilos.
                     let more = small_button(ui, l, "…");
                     let (state, ids, targets) = (state.clone(), *ids, targets.clone());
                     ui.on_click(more, move |ui, _| {

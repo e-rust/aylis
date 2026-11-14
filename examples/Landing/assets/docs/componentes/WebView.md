@@ -29,8 +29,8 @@ Navegador embutido. `url` abre um endereço; sem ele, `html` mostra o texto dado
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `url` | Endereço (URL) | texto |  |
-| `html` | Conteúdo (HTML) | texto |  |
+| `url` | Endereço (URL) | texto | O endereço aberto (`https://...`); vazio: mostra o `html`. |
+| `html` | Conteúdo (HTML) | texto | O HTML mostrado quando não há `url`. |
 
 ## Eventos
 

@@ -1,6 +1,6 @@
-//! Contêineres que organizam os filhos sozinhos: `GridLayout` (grade responsiva, o
-//! `v-row`/`v-col` do Vuetify ou o `TGridPanelLayout` do FMX), `FlowLayout` (em fila, quebrando
-//! a linha, o `TFlowLayout`) e o `Divider` (linha divisória).
+//! Contêineres que organizam os filhos sozinhos: `GridLayout` (grade responsiva, como o
+//! `v-row`/`v-col` do Vuetify), `FlowLayout` (em fila, quebrando
+//! a linha) e o `Divider` (linha divisória).
 //!
 //! Os filhos com `align = None` são organizados; os encaixados (Top, Client...) continuam
 //! como sempre e a grade usa o espaço que sobrar.
@@ -19,9 +19,13 @@ use crate::leaf_control;
 /// mais alto dela (ou `row_height`, se > 0).
 pub struct GridLayout {
     pub base: ControlBase,
+    /// Quantas colunas; 0: as que couberem na largura (cada uma com `min_column_width`).
     pub columns: u32,
+    /// A menor largura de uma coluna quando `columns` é 0.
     pub min_column_width: f32,
+    /// Espaço entre as colunas e entre as linhas.
     pub gap: f32,
+    /// Altura fixa de cada linha; 0: a do filho mais alto dela.
     pub row_height: f32,
 }
 
@@ -65,8 +69,8 @@ impl Component for GridLayout {
         let gap = self.gap * children.first().map_or(1.0, |c| c.spacing);
         let cols = self.columns_with_gap(area.width, gap);
         let w = ((area.width - gap * (cols as f32 - 1.0)) / cols as f32).max(0.0);
-        // Cada filho na linha e coluna dele. Os de lugar fixo (`grid_row`/`grid_column`, o
-        // `TGridPanel`; G12 do Tabernáculo) ocupam as células deles primeiro; os outros seguem a
+        // Cada filho na linha e coluna dele. Os de lugar fixo (`grid_row`/`grid_column`;
+        // G12 do Tabernáculo) ocupam as células deles primeiro; os outros seguem a
         // ordem nas que sobram. O que ocupa várias colunas (`column_span`) e não cabe no que
         // sobrou da linha vai para a próxima; mais que a grade tem, a linha toda.
         let mut taken: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
@@ -158,8 +162,12 @@ impl Component for GridLayout {
 /// cheias na largura toda (a última fica à esquerda).
 pub struct FlowLayout {
     pub base: ControlBase,
+    /// Espaço entre os filhos de uma linha.
     pub gap: f32,
+    /// Espaço entre uma linha e a seguinte.
     pub line_gap: f32,
+    /// Onde cada linha fica na largura: começo, centro, fim ou `justify` (as linhas cheias
+    /// espalhadas na largura toda; a última fica no começo).
     pub h_align: TextAlign,
     /// Onde cada filho fica na altura da linha (o `align-items`): em cima (o padrão), no meio
     /// ou embaixo; o botão mais baixo não sobe mais (L04 do Tabernáculo). Um filho com `grow`
@@ -268,8 +276,11 @@ impl Component for FlowLayout {
 /// Linha divisória (o `v-divider`), horizontal ou vertical, com texto no meio opcional.
 pub struct Divider {
     pub base: ControlBase,
+    /// A linha em pé (divide colunas) em vez de deitada.
     pub vertical: bool,
+    /// Texto no meio da linha; vazio: só a linha.
     pub text: String,
+    /// Espessura da linha, em pontos.
     pub thickness: f32,
 }
 

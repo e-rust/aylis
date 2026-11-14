@@ -53,10 +53,12 @@ fn mark_rect(ctx: &PaintCtx<'_>, width: f32, height: f32) -> RectF {
 
 // ---------------------------------------------------------------------------
 
-/// Caixa de marcação (como o `TCheckBox`).
+/// Caixa de marcação.
 pub struct CheckBox {
     pub base: ControlBase,
+    /// O texto ao lado da caixinha.
     pub text: String,
+    /// Marcada.
     pub checked: bool,
     /// Lado da caixinha (0 = o do visual do tema).
     pub box_size: f32,
@@ -141,12 +143,16 @@ impl Component for CheckBox {
 
 // ---------------------------------------------------------------------------
 
-/// Opção exclusiva (como o `TRadioButton`). Ao ser clicado, desmarca os irmãos (mesmo
+/// Opção exclusiva. Ao ser clicado, desmarca os irmãos (mesmo
 /// pai) que tenham o mesmo `group`.
 pub struct RadioButton {
     pub base: ControlBase,
+    /// O texto ao lado da bolinha.
     pub text: String,
+    /// Escolhida; marcar desmarca as outras do mesmo `group` no mesmo pai.
     pub checked: bool,
+    /// O nome do grupo: só uma opção por grupo (no mesmo pai) fica marcada. Vazio é um grupo
+    /// também.
     pub group: String,
 }
 
@@ -235,11 +241,13 @@ impl Component for RadioButton {
 
 // ---------------------------------------------------------------------------
 
-/// Chave liga/desliga (como o `TSwitch`). A bolinha desliza quando muda; o trilho muda
+/// Chave liga/desliga. A bolinha desliza quando muda; o trilho muda
 /// de cor pela transição do tema.
 pub struct Switch {
     pub base: ControlBase,
+    /// O texto ao lado da chave.
     pub text: String,
+    /// Ligada.
     pub checked: bool,
     toggled_at: f64,
 }

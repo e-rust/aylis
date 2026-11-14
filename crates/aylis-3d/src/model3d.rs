@@ -142,14 +142,23 @@ struct State {
 ///   `playing = true` toca do começo); com `looping`, a cada volta. Como a animação anda na pintura, um `Model3D` invisível não avisa.
 pub struct Model3D {
     pub base: ControlBase,
+    /// O arquivo do modelo (`.glb`, glTF 2.0) no projeto.
     pub source: String,
+    /// O nome do clipe de animação tocando; vazio: o primeiro do arquivo.
     pub animation: String,
+    /// A animação anda; desligado, o modelo fica na pose atual.
     pub playing: bool,
+    /// O clipe recomeça ao chegar ao fim; desligado, toca uma vez e fica na última pose.
     pub looping: bool,
+    /// Velocidade da animação (1 = normal, 2 = o dobro).
     pub speed: f32,
+    /// Duração da transição ao trocar de clipe, em ms; 0: troca seca.
     pub crossfade: f32,
+    /// Giro da câmera em volta do modelo, na horizontal, em graus.
     pub yaw: f32,
+    /// Inclinação da câmera, olhando de cima ou de baixo, em graus.
     pub pitch: f32,
+    /// Aproximação da câmera (1 = o modelo inteiro na vista; maior aproxima), de 0,2 a 8.
     pub zoom: f32,
     /// Giro do modelo em graus.
     pub model_rotation: f32,
@@ -165,6 +174,7 @@ pub struct Model3D {
     pub shadows: bool,
     /// Traçado de raios (onde a placa traça).
     pub ray_traced: bool,
+    /// A cor do fundo; sem cor, transparente (o que está atrás aparece).
     pub background: Option<Color>,
     /// Mesa giratória: as luzes e as câmeras do arquivo ficam paradas quando o modelo gira
     /// (`model_rotation` e `auto_rotate`), como um objeto girando debaixo da luz e da câmera
@@ -508,7 +518,7 @@ impl Component for Model3D {
         if w < 2 || h < 2 {
             return;
         }
-        // No designer o modelo fica parado na pose inicial (como o Delphi, o designer não
+        // No designer o modelo fica parado na pose inicial (o designer não
         // roda animações): sem isso, a IDE inteira se redesenharia sem parar.
         let (pose, ended) = self.pose(&mut st, &model, if ctx.design { 0.0 } else { ctx.time });
         if let Some(name) = ended {

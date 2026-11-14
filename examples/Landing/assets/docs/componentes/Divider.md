@@ -12,9 +12,9 @@ Linha divisória (o `v-divider`), horizontal ou vertical, com texto no meio opci
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `vertical` | Vertical | lógico |  |
-| `text` | Texto | texto |  |
-| `thickness` | Espessura | número |  |
+| `vertical` | Vertical | lógico | A linha em pé (divide colunas) em vez de deitada. |
+| `text` | Texto | texto | Texto no meio da linha; vazio: só a linha. |
+| `thickness` | Espessura | número | Espessura da linha, em pontos. |
 
 ## Em código
 

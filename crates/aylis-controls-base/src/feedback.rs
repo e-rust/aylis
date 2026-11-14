@@ -40,9 +40,13 @@ pub type SnackAction = Box<dyn FnMut(&mut Ui)>;
 /// componente no form, veja [`snackbar`] (que também usa a fila).
 pub struct Snackbar {
     pub base: ControlBase,
+    /// A mensagem do aviso.
     pub text: String,
+    /// O texto do botão de ação ("DESFAZER"); vazio: sem botão.
     pub action: String,
+    /// Quanto tempo o aviso fica na tela, em ms; 0: fica até fechar.
     pub timeout: u32,
+    /// Mostra o aviso; desliga sozinho quando ele some.
     pub active: bool,
     action_rect: Cell<RectF>,
     queue: std::collections::VecDeque<(String, String, Option<SnackAction>)>,
@@ -419,7 +423,10 @@ pub fn notify(ui: &mut Ui, title: &str, message: &str, kind: ToastKind, ttl_ms: 
 /// (imagem, título e texto), `table-row`.
 pub struct SkeletonLoader {
     pub base: ControlBase,
+    /// As peças do esqueleto, separadas por vírgula (`avatar`, `heading`, `text@3`, `card`,
+    /// `list-item`, `table-row`...).
     pub layout: String,
+    /// Uma faixa de brilho passa pelas peças, mostrando que está carregando.
     pub animated: bool,
 }
 
@@ -530,9 +537,13 @@ impl Component for SkeletonLoader {
 /// (`show_value`), ou girando sem fim com `indeterminate`.
 pub struct ProgressCircle {
     pub base: ControlBase,
+    /// O progresso, de 0 a 100.
     pub value: f32,
+    /// Gira sem fim, sem valor (quando não se sabe quanto falta).
     pub indeterminate: bool,
+    /// A espessura do anel, em pontos.
     pub thickness: f32,
+    /// Mostra o número no meio (com o controle de pelo menos 32 pontos).
     pub show_value: bool,
 }
 
@@ -602,9 +613,13 @@ impl Component for ProgressCircle {
 /// (`on_action`). "Nenhum resultado", "Sem conexão", "Comece criando um item".
 pub struct EmptyState {
     pub base: ControlBase,
+    /// O ícone grande do topo (nome do ícone); vazio: sem ícone.
     pub icon: String,
+    /// O título ("Nenhum resultado").
     pub title: String,
+    /// O texto de explicação, embaixo do título.
     pub text: String,
+    /// O texto do botão de ação (`on_action`); vazio: sem botão.
     pub action: String,
     action_rect: Cell<RectF>,
 }
@@ -682,8 +697,11 @@ impl Component for EmptyState {
 /// botões (o resto vira "…"). `on_change` com a página nova.
 pub struct Pagination {
     pub base: ControlBase,
+    /// A página atual, de 1 a `length`.
     pub page: i64,
+    /// Quantas páginas há.
     pub length: i64,
+    /// Quantos botões de página aparecem no máximo; o resto vira "…".
     pub total_visible: u32,
     buttons: RefCell<Vec<(RectF, i64)>>,
 }
@@ -819,8 +837,11 @@ impl Component for Pagination {
 /// feita volta para ela (`on_change`).
 pub struct Stepper {
     pub base: ControlBase,
+    /// Os nomes das etapas, separados por `;`.
     pub items: String,
+    /// A etapa atual (0 é a primeira); as anteriores aparecem com ✓.
     pub step: i64,
+    /// As etapas uma embaixo da outra; desligado, lado a lado.
     pub vertical: bool,
     hits: RefCell<Vec<RectF>>,
 }
@@ -935,7 +956,9 @@ impl Component for Stepper {
 /// variante; o primeiro em destaque.
 pub struct Timeline {
     pub base: ControlBase,
+    /// Os eventos, separados por `;`, cada um `título|quando|texto` (depois do título, opcionais).
     pub items: String,
+    /// A altura de cada evento na linha, em pontos.
     pub item_height: f32,
 }
 

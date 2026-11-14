@@ -12,13 +12,13 @@ Linha do tempo (o `v-timeline`): `items` separados por `;`, cada um `título|qua
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `item_height` | Altura do item | número |  |
+| `item_height` | Altura do item | número | A altura de cada evento na linha, em pontos. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
+| `items` | Itens | texto | Os eventos, separados por `;`, cada um `título\|quando\|texto` (depois do título, opcionais). |
 
 ## Em código
 

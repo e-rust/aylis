@@ -11,8 +11,8 @@ Toca áudio e vídeo sem tela (sons, música).
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `file` | Arquivo | texto | Arquivo do aplicativo (`assets/audio/aviso.mp3`) ou caminho no disco. |
-| `volume` | Volume | número |  |
-| `looping` | Repetindo | lógico |  |
+| `volume` | Volume | número | O volume, de 0 (mudo) a 1 (o máximo). |
+| `looping` | Repetindo | lógico | Volta ao começo ao terminar, sem parar. |
 | `autoplay` | Toca sozinho | lógico | Começa a tocar quando o aplicativo abre. |
 | `output` | Saída | texto | As saídas: vazio é a padrão; várias tocam o mesmo som sincronizado, cada uma com volume e atraso (`Alto-falantes\|Fone BT;volume=0.8;delay=180`). Veja `crate::AudioOutput`. |
 

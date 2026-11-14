@@ -10,13 +10,13 @@ A rede: `connected` e `kind` (`wifi`, `cellular`, `ethernet`, `other` ou `none`)
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `interval` | Intervalo | número |  |
+| `interval` | Intervalo | número | De quanto em quanto tempo confere a rede, em segundos. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

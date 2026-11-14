@@ -2,10 +2,10 @@
 //!
 //! Áudio e vídeo para o aylis.
 //!
-//! | Componente | Equivalente no Delphi |
+//! | Componente | O que faz |
 //! |---|---|
-//! | [`MediaPlayer`] (não visual) | `TMediaPlayer` (áudio) |
-//! | [`VideoPlayer`] | `TMediaPlayer` + `TMediaPlayerControl` |
+//! | [`MediaPlayer`] (não visual) | toca áudio |
+//! | [`VideoPlayer`] | toca vídeo (com o áudio) e mostra a imagem |
 //! | [`Sound`] (não visual) | efeitos curtos, tocando por cima de si mesmos |
 //! | [`AudioOutput`] (não visual) | a lista de saídas de áudio (veja [`output`]) |
 //! | [`AudioMixer`] (não visual) | mistura microfones, loopback e players |

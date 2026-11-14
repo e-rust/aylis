@@ -12,15 +12,15 @@ O item que desliza (`QSlideItem`): uma linha de lista (`text`, `detail`, `icon`)
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `detail` | Detalhe | texto |  |
-| `icon` | Ícone | texto |  |
-| `left_text` | Texto da esquerda | texto |  |
-| `left_icon` | Ícone da esquerda | texto |  |
-| `left_color` | Cor da esquerda | cor |  |
-| `right_text` | Texto da direita | texto |  |
-| `right_icon` | Ícone da direita | texto |  |
-| `right_color` | Cor da direita | cor |  |
+| `text` | Texto | texto | O texto principal da linha. |
+| `detail` | Detalhe | texto | A segunda linha, menor e apagada; vazio: só o `text`, centrado. |
+| `icon` | Ícone | texto | O ícone à esquerda da linha (vazio: sem ícone). |
+| `left_text` | Texto da esquerda | texto | O texto da ação que aparece ao puxar para a direita. |
+| `left_icon` | Ícone da esquerda | texto | O ícone da ação da esquerda; com ele e o `left_text` vazios, não puxa para a direita. |
+| `left_color` | Cor da esquerda | cor | O fundo da ação da esquerda; vazio: a cor de sucesso do tema. |
+| `right_text` | Texto da direita | texto | O texto da ação que aparece ao puxar para a esquerda. |
+| `right_icon` | Ícone da direita | texto | O ícone da ação da direita; com ele e o `right_text` vazios, não puxa para a esquerda. |
+| `right_color` | Cor da direita | cor | O fundo da ação da direita; vazio: a cor de perigo do tema. |
 
 ## Eventos
 

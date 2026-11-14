@@ -329,7 +329,7 @@ struct Component {
     void tell_(const std::string& cmd, Json fields) const;
 };
 
-/// A base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua instância
+/// A base dos forms: cada form aberto na tela tem a sua instância
 /// (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao abrir. A
 /// classe gerada de cada form monta os componentes em `bind`.
 struct FormBase : Component {
@@ -391,8 +391,7 @@ public:
         return it->second.get();
     }
 
-    /// Cria o form na tela e devolve a instância dele (como o Application.CreateForm do
-    /// Delphi); `another`: mais uma janela do mesmo form.
+    /// Cria o form na tela e devolve a instância dele; `another`: mais uma janela do mesmo form.
     FormBase* create_form(const std::string& form, bool another = false) {
         Json created = call("create_form", {{"name", form}, {"new", another}});
         return form_instance(form, static_cast<long long>(created["id"].number()));
@@ -476,14 +475,14 @@ public:
         return call("data", {{"target", data_set}, {"op", "value"}, {"field", field}}).str();
     }
 
-    /// Caixa de mensagem que espera, como o `MessageDlg` do Delphi: devolve o botão (`"yes"`,
+    /// Caixa de mensagem que espera: devolve o botão (`"yes"`,
     /// `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando.
     std::string message_dlg(const std::string& text, const std::string& kind = "information", std::vector<std::string> buttons = {"ok"}) {
         std::vector<Json> list(buttons.begin(), buttons.end());
         return wait_for("message_dlg", {{"text", text}, {"kind", kind}, {"buttons", Json::array(list)}});
     }
 
-    /// Abre o form como modal e espera ele fechar, como o `ShowModal` do Delphi: devolve o
+    /// Abre o form como modal e espera ele fechar: devolve o
     /// resultado (`"ok"`, `"cancel"`...).
     std::string show_modal(const Component& form) { return wait_for("show_modal", {{"target", Json(form.id_)}}); }
 
@@ -551,8 +550,7 @@ public:
     }
 
     /// Roda o handler do evento. Um evento que pergunta (com `ask`) recebe a resposta quando o
-    /// handler termina: o `ev.reply` ou, com exceção, a recusa com a mensagem (a tela mostra),
-    /// como no BeforePost do Delphi.
+    /// handler termina: o `ev.reply` ou, com exceção, a recusa com a mensagem (a tela mostra).
     void handle_event(const Json& m) {
         // Forms liberados na tela: as instâncias saem e os `post_to` deles não rodam.
         if (m["event"].str() == "__freed") {
@@ -660,7 +658,7 @@ private:
     std::string wait_for(const std::string& cmd, Json fields) {
         fields.set("wait", true);
         ++waiting_;
-        // Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro call esperava) roda já.
+        // O que chegou antes (enquanto outro call esperava) roda já.
         for (size_t n = queued_.size(); n > 0; --n) {
             Json m = queued_.front();
             queued_.pop_front();

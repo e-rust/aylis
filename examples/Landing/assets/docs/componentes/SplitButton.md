@@ -12,8 +12,8 @@ Botão com ação principal e uma seta para mais opções (o `v-split-btn`): o c
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `icon` | Ícone | texto |  |
+| `text` | Texto | texto | O texto da ação principal. |
+| `icon` | Ícone | texto | Ícone pelo nome, antes do texto; vazio: sem ícone. |
 
 ## Eventos
 

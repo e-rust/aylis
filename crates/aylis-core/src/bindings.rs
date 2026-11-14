@@ -1,4 +1,4 @@
-//! Ligações de propriedades a dados (como o LiveBindings do Delphi): qualquer propriedade de
+//! Ligações de propriedades a dados: qualquer propriedade de
 //! qualquer componente pode mostrar um campo de um dataset (ou um texto montado com campos,
 //! ou uma expressão), e as editáveis gravam de volta.
 //!

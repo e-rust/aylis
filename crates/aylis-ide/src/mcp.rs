@@ -121,7 +121,7 @@ fn post_ui(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) + Send + 'sta
 }
 
 /// Roda `f` na thread da interface e espera a resposta (até o prazo de uma chamada).
-fn on_ui<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) -> R + Send + 'static) -> Result<R, String> {
+pub(crate) fn on_ui<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&mut Ui, &Shared, &Ids) -> R + Send + 'static) -> Result<R, String> {
     let (tx, rx) = std::sync::mpsc::channel();
     post_ui(poster, move |ui, state, ids| {
         let _ = tx.send(f(ui, state, ids));
@@ -186,6 +186,17 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
     }
     if name == "test" {
         return run_tests(args, poster);
+    }
+    // O ciclo "mudar, conferir, testar, medir" (2b): medir o app, a gravação de uso e a cobertura
+    // de handlers, nesta thread (o app responde por outra; o disco não prende a interface).
+    if name == "profile" {
+        return tool_value(crate::mcp_insight::profile(&args, poster));
+    }
+    if name == "recording" {
+        return tool_value(crate::mcp_insight::recording(&args, poster));
+    }
+    if name == "coverage" {
+        return tool_value(crate::mcp_insight::coverage(&args, poster));
     }
     if name == "build_wait" {
         return build_wait(&args, poster);
@@ -1608,8 +1619,18 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             let project = if here { aylis_project::create_at(&dir, arg(args, "name"), language)? } else { aylis_project::create(&dir, arg(args, "name"), language)? };
             // Criado aqui: confiável (um projeto que já existia não passa por este caminho).
             aylis_tools::trust::trust(&project.dir())?;
+            // O guia para agentes, como no Novo projeto (marcado por padrão).
+            let guide = if args.get("agent_guide").and_then(Value::as_bool).unwrap_or(true) {
+                aylis_project::agents::write_guide(&project, crate::wizard::aylis_tool().as_deref())?
+            } else {
+                Vec::new()
+            };
             crate::actions::open_recent(ui, state, ids, &project.path);
             let mut notes = vec!["Confiável nesta pasta: mover o projeto para outra pasta conta como projeto de fora (modo restrito até o usuário confiar). Para criar onde ele vai ficar, use `here`.".to_string()];
+            if !guide.is_empty() {
+                let names: Vec<String> = guide.iter().filter_map(|p| p.file_name().map(|n| n.to_string_lossy().to_string())).collect();
+                notes.push(format!("Guia para agentes gravado: {} (leia o AGENTS.md: as regras do código deste projeto).", names.join(", ")));
+            }
             // O gancho que impede gravar direto nos arquivos que a IDE guarda (com o MCP ligado).
             if project.dir().join(".claude").join("settings.local.json").is_file() {
                 notes.push("Criado .claude/settings.local.json: o gancho que impede o agente de gravar direto nos arquivos que a IDE guarda (fora do git, pelo .claude/.gitignore).".into());

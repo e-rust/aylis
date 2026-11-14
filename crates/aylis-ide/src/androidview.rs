@@ -6,12 +6,15 @@
 use aylis_controls::{CheckBox, DlgKind, message_dlg};
 use aylis_core::{Align, ComponentId, ModalResult, PropValue, Ui};
 use aylis_project::AndroidOptions;
+use aylis_tools::env::ANDROID_ALL_ABIS;
 use aylis_tools::publish::{ANDROID_MANIFEST_EXTRA, ANDROID_RESTRICTED, android_manifest_preview, android_required_permissions};
 
 use crate::app::{Ids, refresh};
 use crate::dialogs::{self, combo, edit, field, text_of};
 use crate::state::Shared;
 use crate::widgets::{label, muted};
+
+const ARMV7: &str = "armeabi-v7a";
 
 const ORIENTATIONS: [&str; 6] = ["(gira com o aparelho)", "portrait", "landscape", "sensorPortrait", "sensorLandscape", "fullSensor"];
 
@@ -39,7 +42,7 @@ fn list(text: &str) -> Vec<String> {
 pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else { return };
     let a = project.publish.android.clone();
-    let d = dialogs::new_dialog(ui, "Android", 680.0, 720.0);
+    let d = dialogs::new_dialog(ui, "Android", 680.0, 760.0);
     let line = field(ui, d.body, "Identificador");
     let id = label(ui, line, &format!("{}   (Projeto → Opções)", project.identifier()), Align::Client, 0.0);
     muted(ui, id);
@@ -60,6 +63,10 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let keep_on = check(ui, line, "Manter a tela acesa", a.keep_screen_on);
     let line = field(ui, d.body, "");
     let tablet = check(ui, line, "Só tablets", a.tablet_only);
+    // A de 32 bits fica fora do padrão (dobra a compilação e o APK; o Skia dela vem do pacote
+    // skia-android-armv7); marcada, o APK leva as três.
+    let line = field(ui, d.body, "Arquiteturas");
+    let armv7 = check(ui, line, "Também 32 bits (armeabi-v7a: TV box, celular de entrada)", a.abis.iter().any(|x| x == ARMV7));
     // As dos componentes: marcadas e travadas, com o motivo.
     let required = android_required_permissions(&project);
     let line = field(ui, d.body, "Permissões dos componentes");
@@ -105,8 +112,13 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             permissions: list(&text_of(ui, permissions)),
             features,
             deep_links: list(&text_of(ui, links)),
-            // As do projeto (`publish.android.abis`, pelo `set_project_setting`) ficam como estão.
-            abis: abis.clone(),
+            // Uma lista própria (do `set_project_setting`) fica; a caixa só põe ou tira a de 32 bits.
+            abis: match (checked(ui, armv7), abis.iter().any(|x| x == ARMV7)) {
+                (true, false) if abis.is_empty() => ANDROID_ALL_ABIS.iter().map(|(abi, _)| abi.to_string()).collect(),
+                (true, false) => abis.iter().cloned().chain([ARMV7.to_string()]).collect(),
+                (false, true) => abis.iter().filter(|x| *x != ARMV7).cloned().collect(),
+                _ => abis.clone(),
+            },
         })
     };
     {

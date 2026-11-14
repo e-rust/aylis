@@ -12,8 +12,8 @@ Um ícone sozinho. `icon` é o nome (os do aylis ou os registrados com `Ui::regi
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icon` | Ícone | texto |  |
-| `color` | Cor | cor |  |
+| `icon` | Ícone | texto | O nome do ícone (os do Aylis ou os registrados com `Ui::register_icon`). |
+| `color` | Cor | cor | A cor do ícone; vazio: a do texto do tema (ou a da variante). |
 
 ## Em código
 

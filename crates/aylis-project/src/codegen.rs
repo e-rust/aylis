@@ -1,4 +1,4 @@
-//! Código dos eventos (o "duplo clique no OnClick" do Delphi), em Rust ou Python.
+//! Código dos eventos (o duplo clique no evento), em Rust ou Python.
 //!
 //! Num projeto ([`generate`]):
 //!
@@ -235,7 +235,7 @@ fn snake(name: &str) -> String {
     out
 }
 
-/// A chave do layout é um evento? `on_*` e os do Delphi `after_*` e `before_*` (os do
+/// A chave do layout é um evento? `on_*` e os `after_*` e `before_*` (os do
 /// dataset: `after_scroll`, `before_post`...).
 pub fn is_event_key(key: &str) -> bool {
     key.starts_with("on_") || key.starts_with("after_") || key.starts_with("before_")
@@ -637,7 +637,7 @@ fn module_folders(file: &str) -> Vec<String> {
 }
 
 /// O caminho do fonte do form dentro de `src/forms/`, sem a extensão: a subpasta do form se
-/// repete no código (`forms/painel/inicio.json` → `painel/inicio`), como o Delphi mantém a unit
+/// repete no código (`forms/painel/inicio.json` → `painel/inicio`), e o código fica
 /// junto do form (pedido do autor em 11/11). Vale para Rust e Python.
 pub fn module_path(file: &str) -> String {
     module_folders(file).iter().map(|f| snake(f)).chain(std::iter::once(module_stem(file))).collect::<Vec<_>>().join("/")
@@ -1846,8 +1846,7 @@ pub fn update_rust(existing: Option<String>, handlers: &[String], form: &str, us
 }
 
 /// O corpo inicial de um handler. Os de texto de um `Field` (pelo nome padrão,
-/// `campo_get_text` e `campo_set_text`) já vêm com a resposta, como o `OnGetText` e o
-/// `OnSetText` do Delphi.
+/// `campo_get_text` e `campo_set_text`) já vêm com a resposta.
 /// O arquivo do form em Rust num projeto (`src/forms/x.rs`): é do usuário e nunca é refeito.
 /// Novo, nasce com o estado do form (`Data`) e o `impl` da struct gerada; depois a geração só
 /// acrescenta, no fim do `impl`, o handler novo que o form cita e que ainda não existe.
@@ -1881,7 +1880,7 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
     let mut stubs = String::new();
     for h in missing {
         // Um evento que pergunta (o `before_post`, o `on_close_query`): `Err` recusa, com a
-        // mensagem na tela, como a exceção no handler do Delphi.
+        // mensagem na tela.
         if let Some(event) = question_event(form, h) {
             stubs.push_str(&format!(
                 "\n    /// `{event}`: `Err(mensagem)` recusa (o `?` repassa).\n    pub fn {h}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) -> Result<(), String> {{\n        let _ = (ui, sender, args);\n        Ok(())\n    }}\n"
@@ -2032,7 +2031,7 @@ pub(crate) fn rust_stub_body(handler: &str) -> &'static str {
 /// Tira do arquivo do form os handlers que nenhum evento usa mais (`bound`: os ligados no form)
 /// e que continuam **exatamente** como a IDE os gerou, vazios, e que nada mais no arquivo chama.
 /// Um handler com qualquer código do usuário fica (decidido pelo autor em 11/11: "remover o
-/// handler somente se estiver vazio", como o Delphi faz ao salvar). Devolve os tirados.
+/// handler somente se estiver vazio"). Devolve os tirados.
 pub fn drop_unused_stubs(text: &mut String, bound: &[String], language: Language) -> Vec<String> {
     let declaration = match language {
         Language::Rust => "pub fn ",

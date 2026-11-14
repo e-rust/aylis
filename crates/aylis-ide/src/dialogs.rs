@@ -1094,7 +1094,7 @@ pub struct FieldSpec {
     pub label: String,
 }
 
-/// Editor de campos de um ClientDataSet (como o "Fields Editor" do Delphi).
+/// Editor de campos de um ClientDataSet.
 pub fn fields_editor(ui: &mut Ui, title: &str, fields: Vec<FieldSpec>, types: &'static [&'static str], on_ok: impl FnOnce(&mut Ui, Vec<FieldSpec>) + 'static) {
     let d = new_dialog(ui, title, 720.0, 540.0);
     let tools = ui.add(Layout::default(), d.body);

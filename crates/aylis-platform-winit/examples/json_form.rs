@@ -1,4 +1,4 @@
-//! Abre uma tela descrita em JSON e liga os eventos por nome — como um .fmx com os
+//! Abre uma tela descrita em JSON e liga os eventos por nome aos
 //! métodos do form.
 //!
 //! ```text

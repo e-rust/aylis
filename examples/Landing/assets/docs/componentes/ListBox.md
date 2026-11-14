@@ -12,27 +12,28 @@ Lista de opções: `items` separados por `;`, `item_index` escolhido. Setas, Hom
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `item_height` | Altura do item | número |  |
+| `item_height` | Altura do item | número | Altura de cada linha, em pontos. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `multi_select` | Seleção múltipla | lógico |  |
+| `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
+| `multi_select` | Seleção múltipla | lógico | Escolhe vários (Ctrl+clique, Shift+clique, Ctrl+A); os escolhidos ficam em `selected`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
-| `selected` | Escolhidos | texto |  |
+| `items` | Itens | texto | Os itens, separados por `;`. |
+| `item_index` | Item escolhido | inteiro | O item escolhido (o atual, com `multi_select`), a partir de 0; -1: nenhum. |
+| `selected` | Escolhidos | texto | Os índices escolhidos com `multi_select`, separados por `;` (`"1;4;5"`); vazio: nenhum. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

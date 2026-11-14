@@ -18,7 +18,7 @@ Direcional redondo (controle PTZ de câmera, joystick): oito direções e o cent
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `diagonals` | Diagonais | lógico |  |
+| `diagonals` | Diagonais | lógico | Aceita as quatro diagonais; desligado, só cima, baixo, esquerda e direita. |
 
 ## Eventos
 

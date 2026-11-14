@@ -1086,7 +1086,7 @@ impl Theme {
         }
         let active = [state.hover, state.pressed, state.focused, state.checked, state.disabled];
         // Marcado sem estilo próprio (um botão `checkable` num tema que não pinta o
-        // `checked`): fica com cara de apertado, como o `StaysPressed` do FMX.
+        // `checked`): fica com cara de apertado.
         let checked_as_pressed = state.checked && layers.iter().all(|s| s.checked == StyleProps::default());
         for (i, on) in active.into_iter().enumerate() {
             if on {

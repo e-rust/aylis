@@ -62,7 +62,7 @@ fn an_embedded_form_keeps_its_own_names() {
     ui.set_name(panel, "pnlConteudo").unwrap();
     let (customers, b_customers) = form(&mut ui, "frmClientes");
 
-    // Form2.Parent := Panel1, com um btnSalvar nos dois
+    // Um form embutido num painel de outro, com um btnSalvar nos dois
     ui.set_parent(customers, Some(panel)).unwrap();
     assert_eq!(ui.form_of(b_customers), customers);
     assert_eq!(ui.find_in(main_form, "btnSalvar"), Some(b_main), "não entra no form embutido");
@@ -149,7 +149,7 @@ fn on_close_query_can_keep_the_form_open() {
     ui.show_modal(dialog, |_, _| {}).unwrap();
 
     ui.set_modal_result(dialog, ModalResult::Cancel);
-    assert!(ui.is_open(dialog), "CanClose := False");
+    assert!(ui.is_open(dialog), "cancel_close mantém o form aberto");
     assert_eq!(ui.modal_result(dialog), ModalResult::None, "o resultado volta a None");
 
     *allow.borrow_mut() = true;

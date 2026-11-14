@@ -215,6 +215,7 @@ fn each_class_function_registers_its_class() {
         ("Biometrics", aylis::classes::Biometrics),
         ("AppLink", aylis::classes::AppLink),
         ("UrlScheme", aylis::classes::UrlScheme),
+        ("SystemBars", aylis::classes::SystemBars),
         ("Location", aylis::classes::Location),
         ("McpServer", aylis::classes::McpServer),
         ("McpTool", aylis::classes::McpTool),

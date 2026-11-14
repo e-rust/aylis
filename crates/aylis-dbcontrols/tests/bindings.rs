@@ -1,4 +1,4 @@
-//! Ligações a dataset ("Ligar a campo…", o LiveBindings): qualquer propriedade de qualquer
+//! Ligações a dataset ("Ligar a campo…"): qualquer propriedade de qualquer
 //! componente mostra um campo, um texto montado ou uma expressão, e as editáveis gravam de
 //! volta.
 
@@ -149,7 +149,7 @@ fn a_combo_box_lists_one_dataset_and_writes_the_code_in_another() {
 
 #[test]
 fn the_record_arriving_fires_on_change_without_writing_back() {
-    // Como o `TDBEdit` da VCL: o registro muda, o valor chega na tela e o `on_change` sai; mas
+    // O registro muda, o valor chega na tela e o `on_change` sai; mas
     // é o campo chegando, não o usuário mudando: o dataset não entra em edição.
     let (mut ui, form, cds, ds) = setup();
     let edit = ui.add(Edit::new(""), form);

@@ -1,4 +1,4 @@
-//! Marcadores no código (como os do Delphi): numerados de 0 a 9 (Ctrl+Shift+número marca ou
+//! Marcadores no código: numerados de 0 a 9 (Ctrl+Shift+número marca ou
 //! desmarca a linha, Ctrl+número vai até ela; Ctrl+B põe o primeiro número livre a partir do 1, ou
 //! tira o marcador da linha) e sem número (Ctrl+Alt+K marca, Ctrl+Alt+L vai
 //! ao próximo e Ctrl+Alt+J ao anterior). Aparecem na calha e acompanham as linhas inseridas e
@@ -38,11 +38,11 @@ impl Memo {
         let lines = self.text.split('\n').count();
         self.bookmarks = marks.into_iter().filter(|m| m.line < lines).collect();
         self.bookmarks.sort_by_key(|m| m.line);
-        self.marks_text = self.text.clone();
+        self.sync_marks();
     }
 
     /// Marca a linha do cursor com `number` (ou tira, se ela já tem esse número); o número sai
-    /// da linha onde estava, e a linha fica com um marcador só, o último (como no Delphi:
+    /// da linha onde estava, e a linha fica com um marcador só, o último (antes,
     /// Ctrl+Shift+1 e depois Ctrl+Shift+2 deixavam os dois na linha, conferência de 08/11).
     pub fn toggle_numbered_bookmark(&mut self, number: u8) {
         let line = self.caret_line() - 1;
@@ -52,7 +52,7 @@ impl Memo {
             self.bookmarks.push(Bookmark { line, number: Some(number) });
         }
         self.bookmarks.sort_by_key(|m| m.line);
-        self.marks_text = self.text.clone();
+        self.sync_marks();
     }
 
     /// Marca a linha do cursor sem número (ou tira o marcador dela).
@@ -64,7 +64,7 @@ impl Memo {
             self.bookmarks.push(Bookmark { line, number: None });
             self.bookmarks.sort_by_key(|m| m.line);
         }
-        self.marks_text = self.text.clone();
+        self.sync_marks();
     }
 
     /// Ctrl+B: a linha do cursor com marcador perde o marcador; sem, ganha o primeiro número
@@ -78,7 +78,7 @@ impl Memo {
             self.bookmarks.push(Bookmark { line, number: free });
             self.bookmarks.sort_by_key(|m| m.line);
         }
-        self.marks_text = self.text.clone();
+        self.sync_marks();
     }
 
     /// Vai até o marcador `number`; `false` se não há.
@@ -107,7 +107,8 @@ impl Memo {
     /// Depois de uma edição: os marcadores abaixo do trecho mudado andam junto com as linhas
     /// (as do meio ficam no começo dele). Compara o texto de antes linha a linha, pelas pontas.
     pub(super) fn shift_bookmarks(&mut self) {
-        if self.bookmarks.is_empty() {
+        // As edições daqui já andaram com eles (veja `Memo::splice_raw`).
+        if self.bookmarks.is_empty() || self.marks_key.get() == self.text_key() {
             return;
         }
         let old: Vec<&str> = self.marks_text.split('\n').collect();
@@ -116,20 +117,37 @@ impl Memo {
             let prefix = old.iter().zip(&new).take_while(|(a, b)| a == b).count();
             let max_suffix = old.len().min(new.len()) - prefix;
             let suffix = old.iter().rev().zip(new.iter().rev()).take(max_suffix).take_while(|(a, b)| a == b).count();
-            let old_end = old.len() - suffix;
-            let delta = new.len() as isize - old.len() as isize;
-            let last = new.len().saturating_sub(1);
-            for m in &mut self.bookmarks {
-                if m.line >= old_end {
-                    m.line = (m.line as isize + delta).max(0) as usize;
-                } else if m.line > prefix {
-                    m.line = m.line.min(prefix + (new.len() - suffix).saturating_sub(prefix + 1));
-                }
-                m.line = m.line.min(last);
-            }
-            self.bookmarks.dedup_by(|a, b| a.line == b.line && a.number == b.number);
+            let (old_end, new_end, lines) = (old.len() - suffix, new.len() - suffix, new.len());
+            drop((old, new));
+            self.move_marks(prefix, old_end, new_end, lines);
         }
+        self.sync_marks();
+    }
+
+    /// As linhas `[prefix, old_end)` viraram `[prefix, new_end)` (o texto tem `lines` linhas):
+    /// os marcadores de depois andam junto; os do meio ficam no trecho.
+    pub(super) fn move_marks(&mut self, prefix: usize, old_end: usize, new_end: usize, lines: usize) {
+        if old_end == new_end {
+            return;
+        }
+        let delta = new_end as isize - old_end as isize;
+        let last = lines.saturating_sub(1);
+        for m in &mut self.bookmarks {
+            if m.line >= old_end {
+                m.line = (m.line as isize + delta).max(0) as usize;
+            } else if m.line > prefix {
+                m.line = m.line.min(prefix + new_end.saturating_sub(prefix + 1));
+            }
+            m.line = m.line.min(last);
+        }
+        self.bookmarks.dedup_by(|a, b| a.line == b.line && a.number == b.number);
+    }
+
+    /// Os marcadores valem para o texto de agora (guarda uma cópia, para acompanhar uma troca
+    /// feita por fora).
+    fn sync_marks(&mut self) {
         self.marks_text = self.text.clone();
+        self.marks_key.set(self.text_key());
     }
 
     /// As teclas dos marcadores; `true` se tratou.

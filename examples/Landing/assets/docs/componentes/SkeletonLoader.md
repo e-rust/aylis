@@ -12,8 +12,8 @@ Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho pass
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `layout` | Disposição | texto |  |
-| `animated` | Animado | lógico |  |
+| `layout` | Disposição | texto | As peças do esqueleto, separadas por vírgula (`avatar`, `heading`, `text@3`, `card`, `list-item`, `table-row`...). |
+| `animated` | Animado | lógico | Uma faixa de brilho passa pelas peças, mostrando que está carregando. |
 
 ## Em código
 

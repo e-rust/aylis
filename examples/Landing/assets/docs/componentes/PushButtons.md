@@ -12,7 +12,7 @@ Botoeira: botões de painel lado a lado (`buttons`: `Liga:green;Desliga:red`); o
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `buttons` | Botões | texto |  |
+| `buttons` | Botões | texto | Os botões, separados por `;`, cada um `texto:cor` (`Liga:green;Desliga:red`; a cor pelo nome ou `#rrggbb`, sem cor: cinza). |
 | `item_index` | Item escolhido | inteiro | O botão que está aceso (o último clicado; -1 = nenhum). |
 
 ## Em código

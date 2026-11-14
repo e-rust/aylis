@@ -10,11 +10,14 @@ use aylis_core::{Color, Component, EventArgs, EventCtx, JumpTask, TaskbarEvent, 
 
 /// O botão do form na barra de tarefas. Não visual: fica no form, e vale para a janela dele.
 pub struct Taskbar {
+    /// A barra de progresso no botão: `none` (sem barra), `normal` (verde), `paused`
+    /// (amarela), `error` (vermelha) ou `indeterminate` (anda sozinha, sem valor).
     pub progress: TaskbarProgress,
     /// 0 a 100.
     pub value: f32,
     /// Indicador sobre o ícone: vazio, `•` ou um número.
     pub badge: String,
+    /// A cor do fundo do indicador.
     pub badge_color: Color,
     /// Botões da miniatura (até 7): `icone.png|Dica` separados por `;`.
     pub buttons: String,

@@ -111,12 +111,26 @@ pub fn bundletool() -> Option<PathBuf> {
         .filter(|p| p.is_file())
 }
 
-/// O WiX (monta o .msi): o escolhido nas Opções da IDE, a pasta de ferramentas do aylis ou o PATH.
+/// O WiX (monta o .msi): o escolhido nas Opções da IDE, o pacote `wix` (o `wix.dll`, que roda
+/// pelo `dotnet`), a pasta de ferramentas do aylis ou o PATH.
 pub fn wix() -> Option<PathBuf> {
     crate::settings::tool("wix")
-        .or_else(|| crate::dap::tools_dir().map(|d| d.join("wix").join(exe("wix"))))
+        .or_else(|| crate::toolpacks::installed_dir("wix").map(|d| d.join("wix.dll")))
         .filter(|p| p.is_file())
+        .or_else(|| crate::dap::tools_dir().map(|d| d.join("wix").join(exe("wix"))).filter(|p| p.is_file()))
         .or_else(|| crate::hostlang::which("wix"))
+}
+
+/// O comando do WiX: o `.dll` do pacote roda pelo `dotnet` (é uma ferramenta do .NET sem
+/// executável próprio); o `.exe`, direto.
+fn wix_command(wix: &Path) -> Result<Command, String> {
+    if wix.extension().is_some_and(|e| e.eq_ignore_ascii_case("dll")) {
+        let dotnet = crate::hostlang::which("dotnet").ok_or("o WiX do pacote precisa do .NET (o pacote dotnet ou o instalado)")?;
+        let mut c = Command::new(dotnet);
+        c.arg(wix);
+        return Ok(c);
+    }
+    Ok(Command::new(wix))
 }
 
 /// O que foi gerado.
@@ -253,7 +267,7 @@ fn stable_guid(text: &str) -> String {
 /// O instalador do Windows (`.msi`, pelo WiX): instala em Arquivos de Programas, com atalho
 /// no menu Iniciar e desinstalação em Aplicativos; uma versão nova substitui a anterior.
 fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out: &Path, control: &Control, sink: Sink) -> Result<PathBuf, String> {
-    let wix = wix().ok_or("WiX não encontrado (Ferramentas → Verificar ambiente instala; ou dotnet tool install --global wix --version 5.0.2)")?;
+    let wix = wix().ok_or("WiX não encontrado (Ferramentas → Verificar ambiente instala o pacote wix)")?;
     sink(Event::Step("Montando o instalador (.msi)…".into()));
     let app = xml_escape(project.app_name());
     let publisher = xml_escape(if project.publish.publisher.is_empty() { project.app_name() } else { &project.publish.publisher });
@@ -317,7 +331,7 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     let wxs_path = out.join("instalador.wxs");
     std::fs::write(&wxs_path, wxs).map_err(|e| e.to_string())?;
     let msi = out.join(format!("{}-{}.msi", file_name(project.app_name()), project.version()));
-    run_tool(Command::new(&wix).arg("build").arg(&wxs_path).arg("-arch").arg("x64").arg("-o").arg(&msi), control, sink, LineKind::Tool)?;
+    run_tool(wix_command(&wix)?.arg("build").arg(&wxs_path).arg("-arch").arg("x64").arg("-o").arg(&msi), control, sink, LineKind::Tool)?;
     let _ = std::fs::remove_file(&wxs_path);
     let _ = std::fs::remove_file(msi.with_extension("wixpdb"));
     sink(Event::Line(format!("{} ({})", msi.display(), size(&msi)), LineKind::Tool));
@@ -462,6 +476,30 @@ pub fn device_abi(serial: Option<&str>) -> Option<String> {
     env::output(&adb, &args).map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
 }
 
+/// O que o `armeabi-v7a` precisa antes de compilar: o alvo do Rust (o pacote
+/// `rust-android-armv7` no toolchain do Aylis; com o rustup, `rustup target add`) e o Skia de 32
+/// bits (o pacote `skia-android-armv7`). Devolve o `SKIA_BINARIES_URL` que aponta para ele.
+fn armv7_prerequisites(control: &Control, sink: Sink) -> Result<String, String> {
+    let triple = crate::skia_android::TRIPLE;
+    if !env::rust_has_target(triple) {
+        if crate::toolpacks::installed_dir("rust").is_some() {
+            sink(Event::Step("Instalando o Rust para Android de 32 bits…".into()));
+            env::install_package("rust-android-armv7", control, sink)?;
+        } else {
+            return Err(format!("falta o alvo do Rust para Android de 32 bits: rustup target add {triple}"));
+        }
+    }
+    let skia = match crate::toolpacks::installed_dir(crate::skia_android::PACKAGE) {
+        Some(dir) => dir,
+        None => {
+            sink(Event::Step("Instalando o Skia para Android de 32 bits…".into()));
+            env::install_package(crate::skia_android::PACKAGE, control, sink)?;
+            crate::toolpacks::installed_dir(crate::skia_android::PACKAGE).ok_or("o pacote do Skia de 32 bits não ficou instalado")?
+        }
+    };
+    Ok(crate::skia_android::binaries_url(&skia))
+}
+
 /// As arquiteturas do APK: as pedidas no publicar (`Options::abis`, o Executar põe a do
 /// aparelho), senão as do projeto (`publish.android.abis`), senão as padrão (arm64 e x86_64).
 fn android_abis(project: &Project, options: &Options) -> Result<Vec<(&'static str, &'static str)>, String> {
@@ -501,14 +539,23 @@ fn android(project: &Project, options: &Options, out: &Path, control: &Control, 
             args.extend(["--features", features.as_str()]);
         }
         let crate_dir = options.crate_dir.clone().unwrap_or_else(|| project.code_dir());
-        // A de 32 bits fica fora da verificação de ambiente (não é padrão), e o Skia não publica
-        // binário pronto para ela com as features do Aylis (404 em 13/11): a mensagem diz o que
-        // falta, em vez de só o erro do build do `skia-bindings`.
-        let built = cargo("cargo", &args, &crate_dir, &[("ANDROID_NDK_HOME", tools.ndk.as_path())], control, sink).map_err(|e| {
-            if env::ANDROID_ABIS.iter().any(|(a, _)| a == abi) {
-                e
+        let mut envs: Vec<(&str, PathBuf)> = vec![("ANDROID_NDK_HOME", tools.ndk.clone())];
+        // A de 32 bits fica fora da verificação de ambiente (não é padrão): o alvo do Rust e o
+        // Skia dela (o projeto do Skia não publica pronto; o pacote skia-android-armv7) vêm aqui.
+        let armv7 = *abi == "armeabi-v7a";
+        if armv7 {
+            envs.push(("SKIA_BINARIES_URL", PathBuf::from(armv7_prerequisites(control, sink)?)));
+        }
+        let env_refs: Vec<(&str, &Path)> = envs.iter().map(|(k, v)| (*k, v.as_path())).collect();
+        let built = cargo("cargo", &args, &crate_dir, &env_refs, control, sink).map_err(|e| {
+            if armv7 {
+                format!(
+                    "{e}\nO Skia de 32 bits do pacote {} é o das features {} do aylis-platform-winit; com outras, refaça com `aylis-tool skia-android`",
+                    crate::skia_android::PACKAGE,
+                    crate::skia_android::FEATURES_KEY
+                )
             } else {
-                format!("{e}\n{abi} precisa do alvo do Rust (rustup target add {triple}) e de um Skia compilado para ele: o projeto do Skia não publica binário pronto para Android de 32 bits")
+                e
             }
         })?;
         let so = built

@@ -81,11 +81,17 @@ impl PropEnum for AppBarSize {
 /// `on_action` (índice da ação).
 pub struct AppBar {
     pub base: ControlBase,
+    /// O título da barra.
     pub title: String,
+    /// A linha menor embaixo do título; vazio: sem subtítulo.
     pub subtitle: String,
+    /// O tamanho: `small` e `center` numa linha, `medium` e `large` com o título grande embaixo.
     pub size: AppBarSize,
+    /// O ícone do botão de navegação à esquerda (`arrow-left`, `menu`); vazio: sem botão.
     pub nav_icon: String,
+    /// No iOS, o texto ao lado da seta de voltar (`Voltar`); vazio: só a seta.
     pub back_text: String,
+    /// Os ícones das ações à direita, separados por `;` (`search;menu`); o clique dispara `on_action` com o índice.
     pub actions: String,
     hits: RefCell<Vec<(RectF, i64)>>,
 }
@@ -271,9 +277,13 @@ impl Component for AppBar {
 /// `on_fab`). `item_index`, `on_change`.
 pub struct NavigationRail {
     pub base: ControlBase,
+    /// Os nomes dos destinos, separados por `;` (`Início;Buscar;Perfil`).
     pub items: String,
+    /// Os ícones dos destinos, na mesma ordem dos `items`, separados por `;`.
     pub icons: String,
+    /// O destino escolhido (0 = o primeiro; -1 = nenhum).
     pub item_index: i64,
+    /// O ícone do botão de ação em cima (dispara `on_fab`); vazio: sem botão.
     pub fab_icon: String,
     hits: RefCell<Vec<(RectF, i64)>>,
 }
@@ -364,8 +374,11 @@ impl Component for NavigationRail {
 /// botão de fechar (`on_close`, que também desliga `open`). Coloque os controles dentro.
 pub struct SideSheet {
     pub base: ControlBase,
+    /// O título no alto da folha.
     pub title: String,
+    /// Aberta (visível); o botão de fechar desliga.
     pub open: bool,
+    /// A largura da folha, em pontos.
     pub sheet_width: f32,
     close: Cell<RectF>,
 }
@@ -435,7 +448,9 @@ impl Component for SideSheet {
 /// de vidro; no Material, o atual vira um traço.
 pub struct PageControl {
     pub base: ControlBase,
+    /// Quantas páginas (pontos); 0: não desenha nada.
     pub count: i64,
+    /// A página atual (0 = a primeira), destacada.
     pub index: i64,
 }
 
@@ -505,13 +520,17 @@ impl Component for PageControl {
 // UpDown (o Stepper do iOS)
 // ===========================================================================
 
-/// Os botões − e + (o "stepper" do iOS, o `TUpDown` do Delphi): `value` entre `min` e
+/// Os botões − e + (o "stepper" do iOS): `value` entre `min` e
 /// `max`, de `step` em `step`; segurar repete. `on_change` com o valor.
 pub struct UpDown {
     pub base: ControlBase,
+    /// O valor atual, entre `min` e `max`.
     pub value: f64,
+    /// O menor valor: nele o − fica apagado.
     pub min: f64,
+    /// O maior valor: nele o + fica apagado.
     pub max: f64,
+    /// Quanto cada toque no − ou no + soma ou tira.
     pub step: f64,
     pressed: Cell<Option<bool>>,
 }
@@ -616,8 +635,11 @@ impl Component for UpDown {
 /// ficam menores e mais apagadas, como num cilindro.
 pub struct WheelPicker {
     pub base: ControlBase,
+    /// As opções da roda, separadas por `;`.
     pub items: String,
+    /// A opção escolhida, a do meio da roda (0 = a primeira).
     pub item_index: i64,
+    /// A altura de cada linha da roda, em pontos.
     pub row_height: f32,
     /// Posição contínua (em linhas) enquanto gira.
     offset: Cell<f32>,
@@ -768,10 +790,15 @@ impl Component for WheelPicker {
 /// itens separados por `;`; `on_change`.
 pub struct ButtonGroup {
     pub base: ControlBase,
+    /// Os textos dos botões, separados por `;` (`Dia;Semana;Mês`).
     pub items: String,
+    /// Os ícones dos botões, na mesma ordem dos `items`, separados por `;`; vazio: só texto.
     pub icons: String,
+    /// Os botões marcados: os textos, separados por `;` (vazio: nenhum).
     pub selected: String,
+    /// Deixa marcar vários; desligado, marcar um desmarca o outro.
     pub multiple: bool,
+    /// Os botões colados, com os cantos de dentro pequenos; desligado, separados.
     pub connected: bool,
     rects: RefCell<Vec<RectF>>,
 }
@@ -927,10 +954,15 @@ impl Component for ButtonGroup {
 /// `label` no meio.
 pub struct Gauge {
     pub base: ControlBase,
+    /// O valor mostrado: o tamanho do arco e o número no meio.
     pub value: f64,
+    /// O valor do arco vazio.
     pub min: f64,
+    /// O valor do arco cheio.
     pub max: f64,
+    /// O texto pequeno embaixo do número (`bpm`, `km/h`).
     pub label: String,
+    /// O arco em gradiente verde → amarelo → vermelho; desligado, na cor de destaque.
     pub gradient: bool,
 }
 
@@ -1017,7 +1049,9 @@ impl Component for Gauge {
 /// Apple); o `accent_color` troca a do anel de fora.
 pub struct ActivityRings {
     pub base: ControlBase,
+    /// Até três frações, de fora para dentro, separadas por `;` (`0.8;1.25;0.5`); passando de 1 dá outra volta.
     pub values: String,
+    /// As cores dos anéis, de fora para dentro, separadas por `;` (`#FF0000;#00AA00`); vazio: as da Apple.
     pub ring_colors: String,
 }
 
@@ -1103,7 +1137,9 @@ impl Component for ActivityRings {
 /// fundo.
 pub struct LoadingIndicator {
     pub base: ControlBase,
+    /// Põe um círculo de fundo atrás da forma.
     pub contained: bool,
+    /// Animando; desligado, a forma fica parada.
     pub active: bool,
 }
 

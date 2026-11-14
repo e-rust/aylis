@@ -24,13 +24,13 @@ Relógio de ângulo (o do DevTools): arraste o ponteiro; com Shift, ele anda de 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `angle` | Ângulo | ângulo (graus) |  |
+| `angle` | Ângulo | ângulo (graus) | O ângulo em graus: 0 aponta para cima e cresce no sentido horário. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_commit` | — | — |  |
 
 ## Em código

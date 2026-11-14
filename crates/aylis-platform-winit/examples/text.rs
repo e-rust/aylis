@@ -1,4 +1,4 @@
-//! Configurações de texto (como o `TextSettings` do FMX): alinhamento, quebra
+//! Configurações de texto: alinhamento, quebra
 //! automática e reticências por caractere, por palavra ou nenhuma.
 //!
 //! ```text

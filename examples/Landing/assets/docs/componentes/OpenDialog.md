@@ -10,21 +10,21 @@ Escolher um arquivo para abrir (diálogo do sistema).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
+| `title` | Título | texto | O título do diálogo; vazio: o do sistema. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `filter` | Filtro | texto | `Imagens\|*.png;*.jpg\|Todos\|*.*` |
-| `initial_dir` | Pasta inicial | texto |  |
-| `multiple` | Vários | lógico |  |
+| `initial_dir` | Pasta inicial | texto | A pasta em que o diálogo abre; vazio: a que o sistema escolher. |
+| `multiple` | Vários | lógico | Deixa escolher vários arquivos de uma vez. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `file_name` | Nome do arquivo | texto |  |
+| `file_name` | Nome do arquivo | texto | O arquivo escolhido (com `multiple`, os caminhos separados por `;`); antes de abrir, o nome sugerido. |
 
 ## Eventos
 

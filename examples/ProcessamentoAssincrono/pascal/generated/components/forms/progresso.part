@@ -8,17 +8,17 @@
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    { O Button deste form com o nome (nil se não há). }
     function FindButton(const Nome: string): TButton;
     { O Button que disparou o evento (nil se não é um Button deste form). }
     function SenderAsButton(Sender: TAylisComponent): TButton; overload;
     function SenderAsButton(Event: TJSONObject): TButton; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
     function SenderAsLabel(Event: TJSONObject): TLabel; overload;
-    { O ProgressBar deste form com o nome, como o FindComponent (nil se não há). }
+    { O ProgressBar deste form com o nome (nil se não há). }
     function FindProgressBar(const Nome: string): TProgressBar;
     { O ProgressBar que disparou o evento (nil se não é um ProgressBar deste form). }
     function SenderAsProgressBar(Sender: TAylisComponent): TProgressBar; overload;

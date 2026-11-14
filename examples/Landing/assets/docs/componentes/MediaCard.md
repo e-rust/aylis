@@ -12,30 +12,30 @@ O cartão de um item de uma biblioteca de mídia (vídeos, fotos, gravações).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
-| `subtitle` | Subtítulo | texto |  |
-| `duration` | Duração | texto |  |
-| `badges` | Selos | texto |  |
-| `icon` | Ícone | texto |  |
-| `compact` | Compacto | lógico |  |
-| `dimmed` | Apagado | lógico |  |
+| `title` | Título | texto | O nome do item, embaixo da miniatura. |
+| `subtitle` | Subtítulo | texto | A linha menor embaixo do título (tamanho, data). |
+| `duration` | Duração | texto | A duração no canto de baixo da miniatura (`"02:15"`); vazio: nenhuma. |
+| `badges` | Selos | texto | Os selos à direita do subtítulo, separados por `;` (`*` na frente destaca, `icon:nome` é um ícone). |
+| `icon` | Ícone | texto | O ícone no meio quando não há miniatura (e à esquerda no `compact`). |
+| `compact` | Compacto | lógico | A linha de uma pasta: o ícone à esquerda, o título e o subtítulo ao lado. |
+| `dimmed` | Apagado | lógico | Aparece apagado (recortado, esperando colar). |
 | `highlighted` | Destacado | lógico | Um alvo de soltar marcado (a pasta sob o item arrastado). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `selection_mode` | Modo de seleção | lógico |  |
+| `selection_mode` | Modo de seleção | lógico | A caixa da seleção sempre à vista (não só com o mouse em cima). |
 | `editable_title` | Nome editável | lógico | O clique no nome abre o campo de renomear (em vez do `on_click`); o nome novo vem no `on_rename`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `selected` | Escolhidos | lógico |  |
-| `order` | Ordem | inteiro |  |
-| `progress` | Progresso | número |  |
-| `progress_text` | Texto do progresso | texto |  |
+| `selected` | Escolhidos | lógico | Marcado (a caixa da seleção aparece preenchida). |
+| `order` | Ordem | inteiro | O número da ordem mostrado na caixa da seleção; 0: nenhum. |
+| `progress` | Progresso | número | A barra de progresso sobre a miniatura, de 0 a 1; negativo: sem barra. |
+| `progress_text` | Texto do progresso | texto | O texto junto da barra de progresso. |
 
 ## Eventos
 

@@ -1,4 +1,4 @@
-//! CodeEditor: o editor de código (como o `TSynEdit` do Delphi). É o [`Memo`] com o que um
+//! CodeEditor: o editor de código. É o [`Memo`] com o que um
 //! editor de programação tem: as cores da linguagem, a calha com os números e os pontos de
 //! parada, as sugestões e as dicas de um servidor de linguagem, desfazer e refazer, as
 //! operações de linha do VS Code, vários cursores, dobrar blocos e o minimapa.

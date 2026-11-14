@@ -12,17 +12,17 @@ Animação Lottie (o JSON do After Effects/Bodymovin). Desenha vetor: nítida em
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `source` | Origem | texto |  |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
+| `source` | Origem | texto | A animação: `"noto:fogo"` (do pacote de animações da IDE) ou um caminho no projeto (`assets/lottie/carregando.json`). |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a animação ocupa o controle: caber inteira, cobrir, esticar... |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `playing` | Tocando | lógico |  |
-| `repeat` | Repetir | lógico |  |
-| `speed` | Velocidade | número |  |
-| `position` | Posição | número |  |
+| `playing` | Tocando | lógico | A animação anda; desligado, fica parada na `position`. |
+| `repeat` | Repetir | lógico | Recomeça ao chegar ao fim; desligado, toca uma vez e para no último quadro. |
+| `speed` | Velocidade | número | Velocidade (1 = normal, 2 = o dobro). |
+| `position` | Posição | número | O ponto da animação, em segundos: onde ela fica parada e de onde começa a tocar. |
 
 ## Em código
 

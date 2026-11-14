@@ -1,7 +1,7 @@
 //! # aylis-capi
 //!
 //! C ABI do aylis (`aylis.dll` / `libaylis.so` / `libaylis.dylib`): use a interface a partir
-//! de qualquer linguagem com FFI — C, Delphi, C#, Go, Python (ctypes)... — no **mesmo
+//! de qualquer linguagem com FFI — C, Free Pascal, C#, Go, Python (ctypes)... — no **mesmo
 //! processo**, com eventos síncronos.
 //!
 //! Tudo passa pelo mesmo protocolo JSON do `aylis-remote` (veja os comandos lá):
@@ -39,7 +39,7 @@ use serde_json::{Value, json};
 
 /// Callback de eventos: `ctx` só vale durante a chamada. Pode chamar `aylis_ctx_execute`, e
 /// um evento disparado por ele (um `click`) chega a este mesmo callback na hora. Trate as
-/// exceções (C++, Delphi) dentro dele: uma exceção que escape encerra o processo com
+/// exceções (C++, Pascal) dentro dele: uma exceção que escape encerra o processo com
 /// mensagem (`C-unwind`), em vez de corromper a memória.
 pub type AylisEventFn = extern "C-unwind" fn(ctx: *mut AylisCtx, event_json: *const c_char, user: *mut c_void);
 

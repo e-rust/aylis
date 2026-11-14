@@ -19,9 +19,9 @@ Moldura com título que agrupa controles.
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `allowed_chars` | Caracteres permitidos | texto | Os caracteres dos campos dentro do grupo (veja o `Form`). |
-| `blocked_chars` | Caracteres bloqueados | texto |  |
-| `only_allowed` | Só os permitidos | lógico |  |
-| `chars_override` | Força os caracteres | lógico |  |
+| `blocked_chars` | Caracteres bloqueados | texto | Os caracteres que os campos do grupo não aceitam (digitados ou colados); faixas como `a-z`. Vazio: nenhum. |
+| `only_allowed` | Só os permitidos | lógico | Só os caracteres de `allowed_chars` entram nos campos do grupo. |
+| `chars_override` | Força os caracteres | lógico | O filtro de caracteres do grupo manda nos campos de dentro (sem ele, o do campo decide primeiro). |
 | `char_map` | Trocas de caracteres | texto | Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a mesma herança dos filtros. |
 
 ## Em código

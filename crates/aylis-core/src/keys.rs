@@ -1,6 +1,6 @@
 //! Teclado do form: atalhos ("Ctrl+S"), as teclas que fazem o papel do Tab, os caracteres
 //! que cada campo aceita (`allowed_chars`/`blocked_chars`) e a letra do `&` nas legendas
-//! (o Alt+letra do Windows, como no Delphi).
+//! (o Alt+letra do Windows).
 
 use crate::event::{Key, KeyEvent, Modifiers};
 
@@ -60,7 +60,7 @@ pub fn shortcut_matches((modifiers, key): (Modifiers, Key), event: &KeyEvent) ->
     same_key && modifiers.ctrl == (m.ctrl || m.meta) && modifiers.shift == m.shift && modifiers.alt == m.alt
 }
 
-/// O atalho escrito para mostrar (o `ShortCutToText` do Delphi): `"ctrl+shift+s"` vira
+/// O atalho escrito para mostrar: `"ctrl+shift+s"` vira
 /// `"Ctrl+Shift+S"`, `"del"` vira `"Del"`, no idioma do Aylis (o espaço). Texto que não é atalho
 /// volta como veio (o relatório do Tabernáculo, J13: o nome era escrito à mão).
 pub fn shortcut_text(text: &str) -> String {
@@ -165,7 +165,7 @@ pub struct CharFilter {
     pub case: CharCase,
 }
 
-/// Maiúsculas ou minúsculas no valor de um campo de texto (o `CharCase` do Delphi): vale ao
+/// Maiúsculas ou minúsculas no valor de um campo de texto: vale ao
 /// digitar, ao colar e quando o código grava o texto, com as regras do Unicode (`ß` → `SS`).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum CharCase {

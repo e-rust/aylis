@@ -18,17 +18,17 @@ A página do relatório. Tamanho em pontos (1/72"): A4 = 595 × 842; `landscape`
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data_source` | Fonte de dados | componente |  |
+| `data_source` | Fonte de dados | componente | O `DataSource` dos registros: a banda de detalhe se repete uma vez por registro. |
 | `provider` | Provedor | componente | Quem gera o PDF (um provedor de PDF, item 25); sem ele, o PDF do próprio Aylis. |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `page_width` | Largura da página | número |  |
-| `page_height` | Altura da página | número |  |
-| `landscape` | Paisagem | lógico |  |
-| `margin` | Margem | número |  |
+| `page_width` | Largura da página | número | Largura da página em pontos (1/72"; A4 = 595). |
+| `page_height` | Altura da página | número | Altura da página em pontos (1/72"; A4 = 842). |
+| `landscape` | Paisagem | lógico | Deita a página (troca a largura pela altura). |
+| `margin` | Margem | número | A margem dos quatro lados da página, em pontos. |
 
 ## Em código
 

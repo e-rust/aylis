@@ -10,17 +10,17 @@ Anima uma propriedade numérica (posição, tamanho, opacidade).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `property` | Propriedade | texto |  |
-| `start_value` | Valor inicial | número |  |
-| `stop_value` | Valor final | número |  |
-| `duration` | Duração | duração (ms) |  |
-| `delay` | Atraso | duração (ms) |  |
-| `easing` | Curva de aceleração | curva de suavização |  |
-| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` |  |
-| `auto_reverse` | Volta sozinho | lógico |  |
-| `looping` | Repetindo | lógico |  |
-| `enabled` | Habilitado | lógico |  |
-| `keyframes` | Passos (keyframes) | texto |  |
+| `property` | Propriedade | texto | A propriedade do pai que a animação muda (`opacity`, `fill`, `left`...). |
+| `start_value` | Valor inicial | número | Valor inicial; `Null` = o valor atual da propriedade. |
+| `stop_value` | Valor final | número | O valor a que a propriedade chega no fim da animação. |
+| `duration` | Duração | duração (ms) | Quanto dura a ida, em milissegundos. |
+| `delay` | Atraso | duração (ms) | Espera antes de começar, em milissegundos (só na ida). |
+| `easing` | Curva de aceleração | curva de suavização | A curva de velocidade da animação (`linear`, `out_quad`...): como o valor anda no tempo. |
+| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` | O estado do pai que dispara a animação (`hover`, `pressed`, `focused`, `checked`, `appear`); `none`: só por código. |
+| `auto_reverse` | Volta sozinho | lógico | Chegando ao fim, volta ao valor inicial pelo mesmo caminho. |
+| `looping` | Repetindo | lógico | Repete sem parar até ser desligada. |
+| `enabled` | Habilitado | lógico | Desligada, o gatilho não a dispara. |
+| `keyframes` | Passos (keyframes) | texto | Sequência de passos (`0:0; 0.6:1.15; 1:1`: fração do tempo e valor), no lugar de ir de `start_value` a `stop_value` (só números). |
 
 ## Em código
 

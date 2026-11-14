@@ -1,4 +1,4 @@
-//! A escala de um controle e de tudo dentro dele (`scale`, o `Scale` do FMX): ele ocupa o
+//! A escala de um controle e de tudo dentro dele: ele ocupa o
 //! mesmo retângulo no pai, e o desenho e o layout dos filhos acontecem num espaço do tamanho
 //! do retângulo dividido pela escala. O clique, o lugar no form e a pintura acompanham.
 
@@ -64,7 +64,7 @@ fn the_click_reaches_the_right_child_in_the_scaled_space() {
     clicked.set("");
     click_at(&mut ui, form, 50.0 + 100.0, 40.0 + 50.0);
     assert_eq!(clicked.get(), "");
-    // O ponto do form nas coordenadas do botão (o `AbsoluteToLocal`).
+    // O ponto do form nas coordenadas do botão.
     let right = ui.find("direito").or_else(|| ui.children(panel).last().copied()).unwrap();
     let local = ui.local_point(right, PointF::new(50.0 + 140.0, 40.0 + 20.0));
     assert!((local.x - 10.0).abs() < 0.01 && (local.y - 10.0).abs() < 0.01, "{local:?}");

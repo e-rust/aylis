@@ -1,5 +1,5 @@
-//! O componente `OleObject`: automação OLE de um programa instalado (Excel, Word, Outlook...),
-//! como o `CreateOleObject` do Delphi. A plataforma faz o trabalho
+//! O componente `OleObject`: automação OLE de um programa instalado (Excel, Word, Outlook...).
+//! A plataforma faz o trabalho
 //! ([`aylis_core::platform::OleService`]; só no Windows), e o componente fala com ela por
 //! caminhos como os do VBA: `Workbooks.Add`, `ActiveSheet.Range("A1").Value`.
 //!
@@ -14,8 +14,8 @@ use aylis_core::providers::CellValue;
 
 use crate::export::Export;
 
-/// Comanda um programa instalado pela automação OLE (Excel, Word, Outlook), como o
-/// `CreateOleObject` do Delphi, por caminhos do VBA: `ActiveSheet.Range("A1").Value`.
+/// Comanda um programa instalado pela automação OLE (Excel, Word, Outlook),
+/// por caminhos do VBA: `ActiveSheet.Range("A1").Value`.
 ///
 /// Os métodos, a partir do objeto do programa:
 ///

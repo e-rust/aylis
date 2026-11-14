@@ -135,7 +135,7 @@ pub fn days_in_month(year: i32, month: u32) -> u32 {
 const HEADER: f32 = 36.0;
 const NAMES: f32 = 24.0;
 
-/// Calendário de um mês (como o `TCalendar`): clique num dia escolhe; ‹ › trocam o mês;
+/// Calendário de um mês: clique num dia escolhe; ‹ › trocam o mês;
 /// setas andam pelos dias, PageUp/PageDown pelos meses. `on_change` traz a data ISO.
 pub struct Calendar {
     pub base: ControlBase,
@@ -144,6 +144,7 @@ pub struct Calendar {
     /// Intervalo (o `v-date-picker` com `multiple="range"`): o 1º clique é `date`, o 2º
     /// `end_date`; `on_change` recebe `início;fim`.
     pub range: bool,
+    /// O fim do intervalo, com `range` (ISO); vazia = só o início escolhido.
     pub end_date: String,
     /// Escolhe o mês (o `v-month-picker`): `date` fica no dia 1.
     pub month_mode: bool,
@@ -492,11 +493,12 @@ impl Component for Calendar {
 
 const BUTTON: f32 = 28.0;
 
-/// Campo de data com calendário suspenso (como o `TDateEdit`). Digite no formato do
+/// Campo de data com calendário suspenso. Digite no formato do
 /// idioma ou escolha no calendário (clique no ícone, Alt+↓ ou F4). `date` é ISO;
 /// `on_change` traz a data ISO (vazia ao apagar).
 pub struct DateEdit {
     pub edit: Edit,
+    /// A data, em ISO (`2026-10-24`); a tela mostra no formato do idioma. Vazia = nenhuma.
     pub date: String,
     pattern: String,
     popup: Option<ComponentId>,
@@ -568,9 +570,10 @@ impl DateEdit {
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.edit.base.bounds());
         let (w, h) = (280.0, 290.0);
-        let root_size = ctx.ui.bounds(root).map_or((f32::MAX, f32::MAX), |b| (b.width, b.height));
-        let top = if rect.bottom() + h > root_size.1 && rect.y - h > 0.0 { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
-        let left = rect.x.min(root_size.0 - w - 4.0).max(0.0);
+        // O form ou, com ele em vários monitores, o pedaço em que o campo está.
+        let area = ctx.ui.popup_area(root, PointF::new(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0));
+        let top = if rect.bottom() + h > area.bottom() && rect.y - h > area.y { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
+        let left = rect.x.min(area.right() - w - 4.0).max(area.x);
         let mut calendar = Calendar::new(&self.date);
         calendar.owner = Some(ctx.id);
         calendar.base.set_can_focus(false);
@@ -708,12 +711,14 @@ impl Component for DateEdit {
 // ---------------------------------------------------------------------------
 // TimeEdit
 
-/// Campo de hora (como o `TTimeEdit`): `time` é `14:30` (ou `14:30:15` com `seconds`).
+/// Campo de hora: `time` é `14:30` (ou `14:30:15` com `seconds`).
 /// ↑/↓ e a roda (com o foco) somam `increment` minutos. `on_change` traz a hora. O botão
 /// do relógio (ou F4, Alt+↓) abre o [`TimePicker`](crate::TimePicker).
 pub struct TimeEdit {
     pub edit: Edit,
+    /// A hora, `14:30` (ou `14:30:15` com `seconds`); vazia = nenhuma.
     pub time: String,
+    /// Mostra e edita também os segundos (`14:30:15`).
     pub seconds: bool,
     /// Minutos somados pelas setas.
     pub increment: u32,
@@ -787,9 +792,10 @@ impl TimeEdit {
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.edit.base.bounds());
         let (w, h) = (280.0, 340.0);
-        let root_size = ctx.ui.bounds(root).map_or((f32::MAX, f32::MAX), |b| (b.width, b.height));
-        let top = if rect.bottom() + h > root_size.1 && rect.y - h > 0.0 { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
-        let left = rect.x.min(root_size.0 - w - 4.0).max(0.0);
+        // O form ou, com ele em vários monitores, o pedaço em que o campo está.
+        let area = ctx.ui.popup_area(root, PointF::new(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0));
+        let top = if rect.bottom() + h > area.bottom() && rect.y - h > area.y { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
+        let left = rect.x.min(area.right() - w - 4.0).max(area.x);
         let current = Self::parse(&self.time).map(|s| format!("{:02}:{:02}", s / 3600, s / 60 % 60)).unwrap_or_else(|| "12:00".into());
         let mut picker = crate::TimePicker::new(&current);
         picker.owner = Some(ctx.id);
@@ -917,13 +923,14 @@ impl Component for TimeEdit {
 // ---------------------------------------------------------------------------
 // DateTimeEdit
 
-/// Campo de dia e hora juntos (como o `TDateTimePicker` com data e hora): `date_time` é
+/// Campo de dia e hora juntos: `date_time` é
 /// `2026-11-12T14:30` (ISO, sem fuso), e a tela mostra no formato do idioma
 /// (`12/11/2026 14:30`). O botão (ou F4, Alt+↓) abre o calendário, que troca o dia e mantém a
 /// hora; ↑/↓ somam um dia com o cursor na data e `increment` minutos com o cursor na hora.
 /// `on_change` traz o valor ISO. O relatório do Tabernáculo, C30.
 pub struct DateTimeEdit {
     pub edit: Edit,
+    /// O dia e a hora, em ISO sem fuso (`2026-11-12T14:30`); vazio = nenhum.
     pub date_time: String,
     /// Minutos somados pelas setas na parte da hora.
     pub increment: u32,
@@ -1019,9 +1026,10 @@ impl DateTimeEdit {
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.edit.base.bounds());
         let (w, h) = (280.0, 290.0);
-        let root_size = ctx.ui.bounds(root).map_or((f32::MAX, f32::MAX), |b| (b.width, b.height));
-        let top = if rect.bottom() + h > root_size.1 && rect.y - h > 0.0 { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
-        let left = rect.x.min(root_size.0 - w - 4.0).max(0.0);
+        // O form ou, com ele em vários monitores, o pedaço em que o campo está.
+        let area = ctx.ui.popup_area(root, PointF::new(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0));
+        let top = if rect.bottom() + h > area.bottom() && rect.y - h > area.y { rect.y - h - 2.0 } else { rect.bottom() + 2.0 };
+        let left = rect.x.min(area.right() - w - 4.0).max(area.x);
         let day = self.selected().map(|(d, _)| d.iso()).unwrap_or_default();
         let mut calendar = Calendar::new(&day);
         calendar.owner = Some(ctx.id);

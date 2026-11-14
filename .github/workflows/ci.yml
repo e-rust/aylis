@@ -7,7 +7,13 @@
 #   imagens de referência e a pintura por parte comparada com a inteira;
 # - linux: compila tudo e roda os testes do núcleo e dos controles;
 # - web e android: o que vai para o navegador e para o celular compila;
-# - coverage: a cobertura dos testes por crate, no resumo (sem meta obrigatória).
+# - coverage: a cobertura dos testes por crate no Linux; o job do Windows mede a sua junto com os
+#   testes. As duas comparam com medicoes/cobertura.json (`aylis-tool coverage-check`: cair mais
+#   de 1 ponto reprova, decisão de 08/11) e guardam o lcov como artefato;
+# - o `aylis-tool lint` (as diretrizes do CLAUDE.md checáveis por programa) roda no Windows.
+#
+# Quando a CI falha num pull request, o failure-triage.yml comenta a causa provável; o
+# agent-review.yml revisa o pull request (os dois só comentam).
 name: CI
 
 on:
@@ -41,23 +47,63 @@ jobs:
   windows:
     name: Windows (compilar e testar)
     runs-on: windows-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Compilar tudo (com testes e exemplos)
         run: cargo check --workspace --all-targets
-      - name: Testes
-        run: cargo test --workspace --exclude aylis-platform-winit --no-fail-fast
+      # As diretrizes checáveis por programa (aylis_tools::lint): uma linha por achado.
+      - name: Lint (diretrizes do CLAUDE.md)
+        run: cargo run -q -p aylis-tools --bin aylis-tool -- lint
+      # Os testes já com a cobertura: uma rodada só (o relatório sai no passo seguinte).
+      - name: Testes (com a cobertura)
+        run: cargo llvm-cov --no-report --workspace --exclude aylis-platform-winit --no-fail-fast
+      - name: Cobertura comparada com a base
+        shell: bash
+        run: |
+          cargo llvm-cov report --lcov --output-path lcov-windows.info
+          cargo run -q -p aylis-tools --bin aylis-tool -- coverage-check lcov-windows.info --platform windows --summary "$GITHUB_STEP_SUMMARY"
+      - name: lcov do Windows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-windows
+          path: lcov-windows.info
+          if-no-files-found: ignore
+      # Os tempos dos handlers dos exemplos em Rust (o rastro dos roteiros, `--profile`) contra
+      # medicoes/handler_times.json: só avisam (decisão de 08/11), por isso não reprovam o job.
+      - name: Tempos dos handlers dos exemplos
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p target/handlers
+          for app in Calculadora:calculadora Paint:paint; do
+            cargo run -q -p aylis-tools --bin aylis-tool -- script "examples/${app%%:*}/${app%%:*}.aylisproj" "examples/scripts/${app##*:}.json" --language rust --profile --output "target/handlers/${app##*:}.json"
+          done
+          cargo run -q -p aylis-tools --bin aylis-tool -- handler-times medicoes/handler_times.json target/handlers/*.handlers.json --summary "$GITHUB_STEP_SUMMARY"
+      - name: Tempos dos handlers (artefato)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tempos-dos-handlers
+          path: target/handlers/*.handlers.json
+          if-no-files-found: ignore
       # As telas da IDE comparadas com as imagens de referência (crates/aylis-ide/tests/visual):
-      # numa falha, as imagens novas ficam no artefato para comparar.
+      # numa falha, as imagens novas ficam no artefato para comparar (com a cobertura, os testes
+      # compilam em target/llvm-cov-target).
       - name: Imagens das telas que mudaram
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: telas-que-mudaram
-          path: target/visual/
+          path: |
+            target/visual/
+            target/llvm-cov-target/visual/
           if-no-files-found: ignore
 
   linux:
@@ -90,30 +136,36 @@ jobs:
           path: target/visual/
           if-no-files-found: ignore
 
-  # Cobertura por crate (item 11.4): aparece no resumo da execução, sem meta obrigatória.
+  # Cobertura por crate (item 11.4; base e reprovação no item 38, 4a): a tabela no resumo da
+  # execução, comparada com medicoes/cobertura.json. Crate sem base só aparece ("sem base"); a
+  # base se regrava com o lcov do artefato: aylis-tool coverage-check lcov.info --platform linux --update.
   coverage:
     name: Cobertura dos testes
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Bibliotecas do sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libfontconfig1-dev libfreetype-dev libgl1-mesa-dev libegl1-mesa-dev libasound2-dev libudev-dev libxkbcommon-dev
+          sudo apt-get install -y build-essential pkg-config libx11-dev libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libwayland-dev libfontconfig1-dev libfreetype-dev libgl1-mesa-dev libegl1-mesa-dev libasound2-dev libudev-dev
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Medir
-        run: |
-          cargo llvm-cov --no-fail-fast -p aylis-core -p aylis-controls -p aylis-json -p aylis-data -p aylis-dbcontrols -p aylis-project -p aylis-remote --summary-only > cobertura.txt
-          echo '## Cobertura dos testes' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat cobertura.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+        run: cargo llvm-cov --no-fail-fast -p aylis-core -p aylis-controls -p aylis-json -p aylis-data -p aylis-dbcontrols -p aylis-project -p aylis-remote --lcov --output-path lcov-linux.info
+      - name: lcov do Linux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-linux
+          path: lcov-linux.info
+          if-no-files-found: ignore
+      - name: Comparar com a base (cair mais de 1 ponto reprova)
+        run: cargo run -q -p aylis-tools --bin aylis-tool -- coverage-check lcov-linux.info --platform linux --summary "$GITHUB_STEP_SUMMARY"
 
   web:
     name: Navegador (wasm)

@@ -12,14 +12,14 @@ Pontos de página (o "page control" do iOS): `count` pontos, o atual (`index`) d
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `count` | Quantidade | inteiro |  |
-| `index` | Índice | inteiro |  |
+| `count` | Quantidade | inteiro | Quantas páginas (pontos); 0: não desenha nada. |
+| `index` | Índice | inteiro | A página atual (0 = a primeira), destacada. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

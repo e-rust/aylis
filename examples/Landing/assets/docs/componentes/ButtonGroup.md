@@ -12,27 +12,27 @@ Grupo de botões do Material 3 Expressive: lado a lado (`connected` = colados, c
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto |  |
-| `connected` | Juntos | lógico |  |
+| `icons` | Ícones | texto | Os ícones dos botões, na mesma ordem dos `items`, separados por `;`; vazio: só texto. |
+| `connected` | Juntos | lógico | Os botões colados, com os cantos de dentro pequenos; desligado, separados. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `multiple` | Vários | lógico |  |
+| `multiple` | Vários | lógico | Deixa marcar vários; desligado, marcar um desmarca o outro. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `selected` | Escolhidos | texto |  |
+| `items` | Itens | texto | Os textos dos botões, separados por `;` (`Dia;Semana;Mês`). |
+| `selected` | Escolhidos | texto | Os botões marcados: os textos, separados por `;` (vazio: nenhum). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

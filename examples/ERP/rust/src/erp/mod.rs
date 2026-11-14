@@ -174,7 +174,7 @@ pub fn buscar(ui: &mut Ui, p: Partes, texto: &str) {
 }
 
 /// Abre a tela `nome` (escolhida numa linha de dados: o menu tem as 1009, então o form vem
-/// pelo nome que está na linha, como o `CreateForm(FindClass(...))` do Delphi).
+/// pelo nome que está na linha).
 fn mostrar(ui: &mut Ui, nome: &str) -> Result<ComponentId, String> {
     let form = ui.create_form(nome).map_err(|e| e.to_string())?;
     ui.show(form).map_err(|e| e.to_string())?;

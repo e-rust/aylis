@@ -12,7 +12,7 @@ A barra de carregamento do topo (`QAjaxBar`): fina, na borda de cima (ou de baix
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Ligado: a barra aparece e anda devagar; desligado: completa e some. |
 
 ## Em código
 

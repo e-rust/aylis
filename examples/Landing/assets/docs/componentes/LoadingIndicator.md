@@ -12,13 +12,13 @@ O indicador de carregamento do Material 3 Expressive: uma forma que gira e se tr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `contained` | Com fundo | lógico |  |
+| `contained` | Com fundo | lógico | Põe um círculo de fundo atrás da forma. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Animando; desligado, a forma fica parada. |
 
 ## Em código
 

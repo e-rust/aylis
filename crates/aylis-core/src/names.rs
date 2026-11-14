@@ -16,7 +16,7 @@ use crate::ui::Ui;
 
 #[derive(Default)]
 pub(crate) struct NameIndex {
-    /// Escopo → (nome → o componente): os nomes de cada form (o `FindComponent`), montados
+    /// Escopo → (nome → o componente): os nomes de cada form, montados
     /// um escopo por vez.
     scoped: HashMap<ComponentId, HashMap<String, ComponentId>>,
     /// Nome → o primeiro na ordem da árvore, em qualquer form (o `find`).

@@ -11,8 +11,8 @@ Caixa de mensagem com título, texto, tipo e botões; on_close recebe a resposta
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `title` | Título | texto | Título da janela; vazio: o do tipo ("Confirmação", "Aviso"...). |
-| `text` | Texto | texto |  |
-| `kind` | Tipo | um de: `information`, `warning`, `error`, `confirmation` |  |
+| `text` | Texto | texto | A mensagem. |
+| `kind` | Tipo | um de: `information`, `warning`, `error`, `confirmation` | O tipo, que dá o ícone e o título padrão: `information`, `warning`, `error` ou `confirmation`. |
 
 ### Comportamento
 

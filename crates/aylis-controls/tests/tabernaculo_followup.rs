@@ -48,8 +48,8 @@ fn what_on_resize_changes_settles_before_the_frame() {
     assert_eq!((r.x, r.width), (600.0, 200.0), "a tecla ficou com a largura de antes");
 }
 
-/// J11: a área cliente se define pelo código (`client_width`/`client_height`, o `ClientWidth`
-/// do Delphi, ou o `width`/`height`, que no Aylis já são a área de dentro): o form muda e a
+/// J11: a área cliente se define pelo código (`client_width`/`client_height`,
+/// ou o `width`/`height`, que no Aylis já são a área de dentro): o form muda e a
 /// janela recebe o pedido de ficar com aquela área (a moldura por fora). No designer, nada vai
 /// para a janela.
 #[test]

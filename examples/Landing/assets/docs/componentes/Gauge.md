@@ -12,16 +12,16 @@ Medidor (o `Gauge` do iOS e do watchOS): arco de 270° com o valor entre `min` e
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `label` | Rótulo | texto |  |
-| `gradient` | Degradê | lógico |  |
+| `label` | Rótulo | texto | O texto pequeno embaixo do número (`bpm`, `km/h`). |
+| `gradient` | Degradê | lógico | O arco em gradiente verde → amarelo → vermelho; desligado, na cor de destaque. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `min` | Mínimo | número |  |
-| `max` | Máximo | número |  |
+| `value` | Valor | número | O valor mostrado: o tamanho do arco e o número no meio. |
+| `min` | Mínimo | número | O valor do arco vazio. |
+| `max` | Máximo | número | O valor do arco cheio. |
 
 ## Em código
 

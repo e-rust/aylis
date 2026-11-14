@@ -12,19 +12,19 @@ Folha lateral (o "side sheet" do Material 3): um contêiner à direita com títu
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
+| `title` | Título | texto | O título no alto da folha. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `open` | Aberto | lógico |  |
+| `open` | Aberto | lógico | Aberta (visível); o botão de fechar desliga. |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `sheet_width` | Largura da folha | número |  |
+| `sheet_width` | Largura da folha | número | A largura da folha, em pontos. |
 
 ## Eventos
 

@@ -149,6 +149,50 @@
         }
       }
     },
+    "rust-android-armv7": {
+      "title": "Rust para Android de 32 bits",
+      "description": "A biblioteca padrão do Rust para os aparelhos de 32 bits (armeabi-v7a: TV box, celular de entrada), no toolchain do pacote rust. Só o publicar com 32 bits usa.",
+      "version": "1.99.0",
+      "depends": [
+        "rust"
+      ],
+      "install": {
+        "rust-target": [
+          "armv7-linux-androideabi"
+        ]
+      },
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "rust-std-1.99.0-armv7-linux-androideabi.tar.gz",
+              "size": 42411157,
+              "sha256": "d07e85d6811d3abf31dfa76c3c47c3463173174479752cec8c19bcfad0005825",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-armv7-linux-androideabi.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "skia-android-armv7": {
+      "title": "Skia para Android de 32 bits",
+      "description": "O Skia do skia-bindings 0.153.3 para armeabi-v7a, compilado pelo Aylis (o projeto do Skia não publica pronto para 32 bits; aylis-tool skia-android refaz). Só o publicar com 32 bits usa.",
+      "version": "0.153.3",
+      "install": "extract",
+      "platforms": {
+        "any": {
+          "files": [
+            {
+              "name": "skia-binaries-b7f043e0b1e2a850e702-armv7-linux-androideabi-ganesh-gl-jpegd-jpege-pdf-textlayout.tar.gz",
+              "size": 17586889,
+              "sha256": "3dc4abfbc10228dc858770e6315b6328716e9f8570daf8fd8fa664ddcf7ad5e1",
+              "extract": false,
+              "built": "aylis-tool skia-android"
+            }
+          ]
+        }
+      }
+    },
     "rust-wasm": {
       "title": "Rust para o navegador (wasm)",
       "description": "A biblioteca padrão do Rust para wasm32-unknown-unknown, no toolchain do pacote rust.",
@@ -270,12 +314,80 @@
               "into": "build-tools/34.0.0"
             }
           ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "commandlinetools-linux-16111833_latest.zip",
+              "size": 181052239,
+              "sha256": "0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8",
+              "url": "https://dl.google.com/android/repository/commandlinetools-linux-16111833_latest.zip",
+              "strip": 1,
+              "into": "cmdline-tools/latest"
+            },
+            {
+              "name": "platform-tools_r37.0.3-linux.zip",
+              "size": 9571024,
+              "sha256": "214548146cadb2ca3508143d8a1d4be4c59de5bb837253e3ede89ed74cf450d1",
+              "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-linux.zip"
+            },
+            {
+              "name": "platform-34-ext7_r03.zip",
+              "size": 63180081,
+              "sha256": "16fdb74c55e59ae3ef52def135aec713508467bd56d7dabcd8c9be31fa8b20f3",
+              "url": "https://dl.google.com/android/repository/platform-34-ext7_r03.zip",
+              "strip": 1,
+              "into": "platforms/android-34"
+            },
+            {
+              "name": "build-tools_r34-linux.zip",
+              "size": 61224257,
+              "sha256": "e858c4b60069d0431051b225d384413b1643e1289b00a4825aed347f25bd510f",
+              "url": "https://dl.google.com/android/repository/build-tools_r34-linux.zip",
+              "strip": 1,
+              "into": "build-tools/34.0.0"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "commandlinetools-mac_arm64-16111833_latest.zip",
+              "size": 155384151,
+              "sha256": "58da8f215781cc0208743e88b65ae259780c55e7eb40e50373d377cf369232d6",
+              "url": "https://dl.google.com/android/repository/commandlinetools-mac_arm64-16111833_latest.zip",
+              "strip": 1,
+              "into": "cmdline-tools/latest"
+            },
+            {
+              "name": "platform-tools_r37.0.3-darwin.zip",
+              "size": 16597640,
+              "sha256": "f89baeb829903ceaf3ac92a78a2d25152728049d6316ebeaaca06d716e64842d",
+              "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-darwin.zip"
+            },
+            {
+              "name": "platform-34-ext7_r03.zip",
+              "size": 63180081,
+              "sha256": "16fdb74c55e59ae3ef52def135aec713508467bd56d7dabcd8c9be31fa8b20f3",
+              "url": "https://dl.google.com/android/repository/platform-34-ext7_r03.zip",
+              "strip": 1,
+              "into": "platforms/android-34"
+            },
+            {
+              "name": "build-tools_r34-macosx.zip",
+              "size": 76559180,
+              "sha256": "76bf668fe037b1a69197e298ddae5633d4d7f0f41af7ed17e537c80c1ed8a6f3",
+              "url": "https://dl.google.com/android/repository/build-tools_r34-macosx.zip",
+              "strip": 1,
+              "into": "build-tools/34.0.0"
+            }
+          ]
         }
       }
     },
     "android-ndk": {
       "title": "Android NDK 27.2",
-      "description": "O NDK r27c (27.2.12479018): o compilador C e o linker do Rust para o Android.",
+      "description": "O NDK r27c (27.2.12479018): o compilador C e o linker do Rust para o Android. No macOS o Google só publica o .dmg, que o Aylis não extrai: instale pelo Android Studio.",
       "version": "27.2.12479018",
       "depends": [
         "android-sdk"
@@ -294,6 +406,17 @@
               "size": 781511249,
               "sha256": "27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494",
               "url": "https://dl.google.com/android/repository/android-ndk-r27c-windows.zip",
+              "strip": 1
+            }
+          ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "android-ndk-r27c-linux.zip",
+              "size": 663987688,
+              "sha256": "59c2f6dc96743b5daf5d1626684640b20a6bd2b1d85b13156b90333741bad5cc",
+              "url": "https://dl.google.com/android/repository/android-ndk-r27c-linux.zip",
               "strip": 1
             }
           ]
@@ -500,6 +623,50 @@
               "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-win-x64.zip"
             }
           ]
+        },
+        "linux-x86_64": {
+          "files": [
+            {
+              "name": "dotnet-sdk-8.0.428-linux-x64.tar.gz",
+              "size": 217266728,
+              "sha256": "6f8b64ef9644b11bcab6748ebfec088d2ae4868df26204bb2354c3ada0f09cbe",
+              "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-linux-x64.tar.gz"
+            }
+          ]
+        },
+        "macos-aarch64": {
+          "files": [
+            {
+              "name": "dotnet-sdk-8.0.428-osx-arm64.tar.gz",
+              "size": 210034414,
+              "sha256": "4ce04ab524f2e176506a7dbaf72020f5198af032a8cf685573de3fa9c2bf236b",
+              "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-osx-arm64.tar.gz"
+            }
+          ]
+        }
+      }
+    },
+    "fpc": {
+      "title": "Free Pascal 3.2.2",
+      "description": "O compilador do Free Pascal 3.2.2 (o de 32 bits e o cruzado para 64 bits) e as units de x86_64-win64: os projetos em Pascal. Tirado do instalador oficial (fpc-3.2.2.win32.and.win64.exe, do SourceForge) com o innoextract, sem executá-lo; os exemplos, a documentação e as units de 32 bits ficam de fora.",
+      "version": "3.2.2",
+      "install": "extract",
+      "exports": {
+        "path": [
+          "bin/i386-win32"
+        ]
+      },
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "fpc-3.2.2-x86_64-win64.zip",
+              "size": 90863064,
+              "sha256": "fa624033d08aee8d960860191518d636ce03009ebdbbe814967e01f483d62625",
+              "strip": 1,
+              "built": "aylis-tool fpc-package"
+            }
+          ]
         }
       }
     },
@@ -568,6 +735,25 @@
               "sha256": "c7d27f780ddb6cffb4730138cd1591e841f4b7edb155856901cdf5f214394fa1",
               "url": "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.11/nsis-3.11.zip",
               "strip": 1
+            }
+          ]
+        }
+      }
+    },
+    "wix": {
+      "title": "WiX 5.0.2",
+      "description": "O WiX Toolset (a ferramenta do .NET, sem o dotnet tool install): o instalador .msi que o Publicar gera. Roda pelo .NET 6 ou mais novo (o pacote dotnet ou o instalado).",
+      "version": "5.0.2",
+      "install": "extract",
+      "platforms": {
+        "windows-x86_64": {
+          "files": [
+            {
+              "name": "wix.5.0.2.nupkg",
+              "size": 4587200,
+              "sha256": "f30ef0c74e2a986126539c5780be93ac24e8136eaf723b1937b26272703ae173",
+              "url": "https://www.nuget.org/api/v2/package/wix/5.0.2",
+              "prefix": "tools/net6.0/any"
             }
           ]
         }

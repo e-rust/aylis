@@ -1,6 +1,7 @@
 //! Projeto → Opções do projeto → Windows: o tipo de instalador do Publicar (`.msi` do WiX,
 //! `.exe` do NSIS ou do Inno Setup) e o que vai nele: os arquivos ao lado do executável, a
-//! pasta de instalação, iniciar com o Windows, atalho na área de trabalho, fechar o app aberto,
+//! pasta de instalação, iniciar com o Windows, atalho na área de trabalho, abrir como
+//! administrador (só a escolha, no registro), fechar o app aberto,
 //! abrir no fim e a pasta de dados que o desinstalar oferece apagar.
 
 use aylis_controls::CheckBox;
@@ -54,7 +55,7 @@ fn offer_value(label: &str) -> String {
 pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else { return };
     let w = project.publish.windows.clone();
-    let d = dialogs::new_dialog(ui, "Windows", 680.0, 640.0);
+    let d = dialogs::new_dialog(ui, "Windows", 680.0, 720.0);
     let line = field(ui, d.body, "Instalador");
     let current = match w.kind() {
         aylis_project::WindowsInstaller::Msi => INSTALLERS[0],
@@ -83,6 +84,13 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let _ = ui.set_prop(autostart_args, "placeholder", "/autostart");
     let line = field(ui, d.body, "Atalho na área de trabalho");
     let desktop = combo(ui, line, &OFFERS, offer_label(&w.desktop_shortcut));
+    let line = field(ui, d.body, "Abrir como administrador");
+    let run_as_admin = combo(ui, line, &OFFERS, offer_label(&w.run_as_admin));
+    let line = field(ui, d.body, "");
+    let note = label(ui, line, "O instalador só grava a escolha em HKCU\\Software\\<app>\\RunAsAdmin (1 ou 0); o app lê e decide como elevar.", Align::Client, 0.0);
+    let _ = ui.set_prop(note, "wrap", true);
+    muted(ui, note);
+    ui.control_mut(line).unwrap().set_height(36.0);
     let line = field(ui, d.body, "");
     let close_running = check(ui, line, "Fechar o app aberto antes de instalar e de desinstalar", w.close_running);
     let line = field(ui, d.body, "");
@@ -104,6 +112,7 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             autostart: offer_value(&dialogs::combo_text(ui, autostart)),
             autostart_args: text_of(ui, autostart_args).trim().to_string(),
             desktop_shortcut: offer_value(&dialogs::combo_text(ui, desktop)),
+            run_as_admin: offer_value(&dialogs::combo_text(ui, run_as_admin)),
             close_running: checked(ui, close_running),
             run_after_install: checked(ui, run_after),
             data_dir: text_of(ui, data_dir).trim().to_string(),

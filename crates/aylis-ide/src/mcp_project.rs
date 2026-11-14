@@ -198,10 +198,18 @@ fn set_theme(state: &Shared, args: &Value) -> Result<Value, String> {
     }
     let theme = aylis_project::resolve_theme(&project, &aylis_project::Files::Dir(project.dir()))?;
     let mut st = state.borrow_mut();
+    // No Android e no navegador o app aberto não lê o disco do projeto: o tema vai pelo canal,
+    // como na Aparência (no desktop ele relê o arquivo sozinho). Falhar aqui não desfaz a
+    // gravação: vira um aviso na resposta.
+    let app = crate::actions::push_reload(&st, "theme", "", &path).map(|r| r.map(|_| "enviado ao app aberto".to_string()).unwrap_or_else(|e| format!("não chegou ao app aberto: {e}")));
     crate::actions::show_project_theme(&mut st, &project, theme);
     st.project = Some(project);
     st.status = format!("Tema: {}.{} alterado ({})", section, key, file);
-    Ok(json!({ "file": file, "created": created, "changed": format!("{section}.{key}") }))
+    let mut answer = json!({ "file": file, "created": created, "changed": format!("{section}.{key}") });
+    if let Some(app) = app {
+        answer["app"] = json!(app);
+    }
+    Ok(answer)
 }
 
 // ---------------------------------------------------------------------------

@@ -60,6 +60,7 @@ fn number(v: f32) -> String {
 /// `rotate()` e nos gradientes do CSS. Setas e roda do mouse andam 1° (com Shift, `snap`).
 pub struct AngleDial {
     pub base: ControlBase,
+    /// O ângulo em graus: 0 aponta para cima e cresce no sentido horário.
     pub angle: f32,
     /// Passo com Shift, em graus.
     pub snap: f32,
@@ -217,10 +218,15 @@ enum ShadowPart {
 /// resultado. A cor vem de `color` (a IDE abre o seletor de cores ao lado).
 pub struct ShadowEditor {
     pub base: ControlBase,
+    /// Deslocamento da sombra para a direita (negativo: para a esquerda), em pontos.
     pub offset_x: f32,
+    /// Deslocamento da sombra para baixo (negativo: para cima), em pontos.
     pub offset_y: f32,
+    /// Desfoque da sombra, em pontos; 0: borda nítida.
     pub blur: f32,
+    /// Quanto a sombra cresce (negativo: encolhe) além do tamanho do controle, em pontos.
     pub spread: f32,
+    /// A cor da sombra (com a transparência).
     pub color: Color,
     /// Deslocamento máximo do quadro (o desfoque vai até o dobro).
     pub range: f32,
@@ -434,9 +440,13 @@ impl Component for ShadowEditor {
 /// bolinha mostra o movimento com a curva. `compact` desenha só a curva (para miniaturas).
 pub struct EasingEditor {
     pub base: ControlBase,
+    /// O tempo (de 0 a 1) do primeiro ponto de controle da curva.
     pub x1: f32,
+    /// O valor do primeiro ponto de controle (pode passar de 0..1).
     pub y1: f32,
+    /// O tempo (de 0 a 1) do segundo ponto de controle da curva.
     pub x2: f32,
+    /// O valor do segundo ponto de controle (pode passar de 0..1).
     pub y2: f32,
     /// A bolinha animada embaixo da curva.
     pub preview: bool,
@@ -623,12 +633,19 @@ enum TimingPart {
 /// Com `playing`, uma agulha percorre a linha do tempo.
 pub struct TimingEditor {
     pub base: ControlBase,
+    /// O atraso antes de a animação começar, em ms (o tracejado).
     pub delay: f32,
+    /// A duração da animação, em ms (a barra).
     pub duration: f32,
+    /// A curva de suavização desenhada sobre a barra.
     pub easing: Easing,
+    /// A animação volta ao valor de partida depois de chegar ao fim.
     pub auto_reverse: bool,
+    /// A animação se repete sem parar.
     pub looping: bool,
+    /// O passo dos tempos ao arrastar, em ms (com Shift: 1 ms).
     pub snap: f32,
+    /// Uma agulha percorre a linha do tempo, como a animação tocando.
     pub playing: bool,
     /// Escala da régua travada durante o arrasto (para a barra não fugir do mouse).
     frozen: Cell<Option<f32>>,

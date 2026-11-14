@@ -12,14 +12,14 @@ Times & trades: os negócios do mais novo para o mais velho, verde na compra e v
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `big_size` | Volume grande | número |  |
-| `decimals` | Casas decimais | inteiro |  |
+| `big_size` | Volume grande | número | A partir desta quantidade o negócio aparece em negrito. |
+| `decimals` | Casas decimais | inteiro | Casas decimais dos preços. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `max_rows` | Máximo de linhas | inteiro |  |
+| `max_rows` | Máximo de linhas | inteiro | Quantos negócios a lista guarda; os mais velhos saem. |
 
 ## Em código
 

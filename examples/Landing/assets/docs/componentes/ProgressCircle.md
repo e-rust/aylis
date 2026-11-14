@@ -12,15 +12,15 @@ Progresso redondo (o `v-progress-circular`): `value` de 0 a 100 com o número no
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `indeterminate` | Sem progresso definido | lógico |  |
-| `thickness` | Espessura | número |  |
-| `show_value` | Mostra o valor | lógico |  |
+| `indeterminate` | Sem progresso definido | lógico | Gira sem fim, sem valor (quando não se sabe quanto falta). |
+| `thickness` | Espessura | número | A espessura do anel, em pontos. |
+| `show_value` | Mostra o valor | lógico | Mostra o número no meio (com o controle de pelo menos 32 pontos). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
+| `value` | Valor | número | O progresso, de 0 a 100. |
 
 ## Em código
 

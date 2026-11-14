@@ -12,10 +12,10 @@ Grade: os filhos em colunas de mesma largura, linha a linha. Com `columns` = 0 a
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `columns` | Colunas | inteiro |  |
-| `min_column_width` | Largura mínima da coluna | número |  |
-| `gap` | Espaço entre itens | número |  |
-| `row_height` | Altura da linha | número |  |
+| `columns` | Colunas | inteiro | Quantas colunas; 0: as que couberem na largura (cada uma com `min_column_width`). |
+| `min_column_width` | Largura mínima da coluna | número | A menor largura de uma coluna quando `columns` é 0. |
+| `gap` | Espaço entre itens | número | Espaço entre as colunas e entre as linhas. |
+| `row_height` | Altura da linha | número | Altura fixa de cada linha; 0: a do filho mais alto dela. |
 
 ## Em código
 

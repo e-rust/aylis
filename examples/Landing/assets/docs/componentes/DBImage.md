@@ -12,16 +12,22 @@ Imagem de um campo: campo `blob` com os bytes da imagem (PNG, JPEG...) ou campo 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `image` | Imagem | texto |  |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
-| `radius` | Raio dos cantos | número |  |
+| `image` | Imagem | texto | Caminho do arquivo, relativo à pasta do projeto. |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a imagem ocupa o controle: `contain` (inteira, mantendo a proporção), `cover` (cobre, cortando as bordas), `stretch` (estica), `center` ou `original` (tamanho real). |
+| `radius` | Raio dos cantos | número | Arredonda os cantos (recorta a imagem). |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `zoomable` | Ampliar com pinça | lógico | A pinça amplia e o dedo arrasta a imagem ampliada. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data_source` | Fonte de dados | componente |  |
-| `data_field` | Campo de dados | texto |  |
+| `data_source` | Fonte de dados | componente | O `DataSource` do registro cuja imagem aparece. |
+| `data_field` | Campo de dados | texto | O campo com a imagem: `blob` com os bytes (PNG, JPEG...) ou texto com o caminho de um arquivo do projeto. |
 
 ## Em código
 

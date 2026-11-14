@@ -12,20 +12,20 @@ Etapas de um processo (o `v-stepper`): `items` com os nomes, `step` a atual (0 �
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `vertical` | Vertical | lógico |  |
+| `vertical` | Vertical | lógico | As etapas uma embaixo da outra; desligado, lado a lado. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `step` | Passo | inteiro |  |
+| `items` | Itens | texto | Os nomes das etapas, separados por `;`. |
+| `step` | Passo | inteiro | A etapa atual (0 é a primeira); as anteriores aparecem com ✓. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

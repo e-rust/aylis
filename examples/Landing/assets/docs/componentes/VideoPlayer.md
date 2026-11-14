@@ -12,8 +12,8 @@ Mostra vídeo: **ele mesmo desenha cada quadro**, então dá para ter cantos arr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
-| `radius` | Raio dos cantos | número |  |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como o quadro ocupa o controle: `contain` (inteiro), `cover` (cobre, cortando as bordas), `stretch`, `center` ou `original`. |
+| `radius` | Raio dos cantos | número | O raio dos cantos arredondados, em pontos (0: retos). |
 | `show_video` | Mostrar o vídeo | lógico | Pinta o quadro no próprio lugar (o padrão). Desligado, o player só decodifica e segue o relógio: o app pinta o `current_frame`(VideoPlayer::current_frame) onde quiser, na ordem da cena (a letra por cima do vídeo), avisado por `on_frame`. O relatório do Tabernáculo, W12. |
 
 ### Comportamento
@@ -21,10 +21,10 @@ Mostra vídeo: **ele mesmo desenha cada quadro**, então dá para ter cantos arr
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `file` | Arquivo | texto | Arquivo do aplicativo (`assets/video/abertura.mp4`) ou caminho no disco. |
-| `autoplay` | Toca sozinho | lógico |  |
-| `looping` | Repetindo | lógico |  |
-| `volume` | Volume | número |  |
-| `muted` | Mudo | lógico |  |
+| `autoplay` | Toca sozinho | lógico | Começa a tocar assim que o arquivo abre. |
+| `looping` | Repetindo | lógico | Volta ao começo ao terminar, sem parar. |
+| `volume` | Volume | número | O volume, de 0 (mudo) a 1 (o máximo). |
+| `muted` | Mudo | lógico | Sem som, sem perder o `volume`. |
 | `rate` | Velocidade | número | A velocidade: 1 é a normal, 2 o dobro, 0.5 a metade. Fora de 1 o som fica mudo (volta no lugar certo em 1). Só áudio e o navegador tocam sempre em 1. |
 | `output` | Saída | texto | As saídas do som (como no `MediaPlayer`). No navegador, o `<video>` toca na saída padrão. |
 | `frames_ahead` | Quadros à frente | inteiro | Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13). |

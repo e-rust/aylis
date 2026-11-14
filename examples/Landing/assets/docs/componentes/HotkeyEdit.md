@@ -12,19 +12,19 @@ Campo de tecla de atalho: com o foco, a próxima combinação vira o texto ("Ctr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `placeholder` | Texto de exemplo | texto |  |
+| `placeholder` | Texto de exemplo | texto | O texto apagado mostrado enquanto não há combinação. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `hotkey` | Atalho | texto |  |
+| `hotkey` | Atalho | texto | A combinação escolhida, como texto (`Ctrl+Shift+R`); vazio: nenhuma. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

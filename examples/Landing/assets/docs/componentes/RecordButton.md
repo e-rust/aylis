@@ -18,11 +18,11 @@ Botão redondo de gravar: um círculo vermelho com o ponto branco no meio que vi
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `recording` | Gravando | lógico |  |
-| `paused` | Pausado | lógico |  |
-| `finalizing` | Finalizando | lógico |  |
-| `countdown` | Contagem regressiva | inteiro |  |
-| `countdown_fraction` | Fração da contagem | número |  |
+| `recording` | Gravando | lógico | Gravando: o ponto vira o quadrado de parar e o brilho pulsa. |
+| `paused` | Pausado | lógico | Gravação pausada: o brilho para de pulsar. |
+| `finalizing` | Finalizando | lógico | Fechando o arquivo: um arco verde gira em volta e o clique é ignorado. |
+| `countdown` | Contagem regressiva | inteiro | Os segundos da contagem antes de gravar, no meio do botão; 0 = sem contagem. |
+| `countdown_fraction` | Fração da contagem | número | Quanto da contagem falta, de 1 (o anel âmbar cheio) a 0 (vazio). |
 
 ## Em código
 

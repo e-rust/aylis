@@ -10,7 +10,7 @@ Um evento a cada quadro do monitor (`on_frame`, com os segundos desde o anterior
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `enabled` | Habilitado | lógico |  |
+| `enabled` | Habilitado | lógico | Dispara o `on_frame` a cada quadro; desligado (o começo), o laço dorme. |
 
 ## Eventos
 

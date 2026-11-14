@@ -1,4 +1,4 @@
-//! DBChart: o `Chart` com os dados de um DataSource (como o `TDBChart`).
+//! DBChart: o `Chart` com os dados de um DataSource.
 
 use std::any::Any;
 
@@ -14,8 +14,11 @@ use crate::{data_message, link_of};
 #[derive(Default)]
 pub struct DBChart {
     pub base: Chart,
+    /// O `DataSource` de onde vêm os registros (um ponto por registro).
     pub data_source: Option<ComponentId>,
+    /// O campo com o rótulo de cada ponto (o eixo X); vazio: sem rótulos.
     pub label_field: String,
+    /// Os campos com os valores, separados por `;` (`Vendas;Custos`): uma série por campo.
     pub value_fields: String,
 }
 

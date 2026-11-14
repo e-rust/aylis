@@ -1,4 +1,4 @@
-//! Depuração dentro da IDE, como no Delphi: pontos de parada na calha da janela de código
+//! Depuração dentro da IDE: pontos de parada na calha da janela de código
 //! (F5 ou clique), Ctrl+F5 depura o projeto, e quando o programa para a linha fica em
 //! amarelo e a janela "Depuração" mostra a pilha, as variáveis e o "Avaliar". F8 vai para
 //! a próxima linha, F7 entra na função, Shift+F8 sai dela, F9 continua e Ctrl+F2 para.
@@ -308,7 +308,7 @@ pub fn condition_of(state: &Shared, file: &Path, line: usize) -> (String, String
     state.borrow().bp_conditions.get(&(norm(file), line)).cloned().unwrap_or_default()
 }
 
-/// "Executar até o cursor" (F4, como no Delphi): roda até a linha, com um ponto de parada
+/// "Executar até o cursor" (F4): roda até a linha, com um ponto de parada
 /// temporário (sem depuração em andamento, começa uma).
 pub fn run_to_cursor(ui: &mut Ui, state: &Shared, file: &Path, line: usize) {
     let file = norm(file);
@@ -345,7 +345,7 @@ pub fn breakpoints_of(state: &Shared, file: &Path) -> Vec<usize> {
     state.borrow().breakpoints.get(&norm(file)).map(|s| s.iter().copied().collect()).unwrap_or_default()
 }
 
-/// Executar (F9), como no Delphi: com uma depuração em andamento, continua; com algum ponto
+/// Executar (F9): com uma depuração em andamento, continua; com algum ponto
 /// de parada no desktop, executa no depurador; senão, executa sem ele (sobe mais rápido).
 pub fn run(ui: &mut Ui, state: &Shared) {
     let (active, has_points, desktop) = {

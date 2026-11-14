@@ -1206,7 +1206,7 @@ fn build_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Par
     text_style.set_font_size(style.font.size);
     text_style.set_font_families(&font_families(&style.font));
     text_style.set_font_style(font_style(&style.font));
-    // Sublinhado e tachado (o `Font.Style` do Delphi).
+    // Sublinhado e tachado.
     let mut decoration = sk::textlayout::TextDecoration::NO_DECORATION;
     if style.font.underline {
         decoration |= sk::textlayout::TextDecoration::UNDERLINE;

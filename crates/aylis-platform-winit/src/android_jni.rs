@@ -274,13 +274,29 @@ pub(crate) fn show_keyboard(show: bool, kind: i32) -> bool {
         .is_some()
 }
 
-/// Pinta as barras do sistema com `color` (ARGB) e ícones escuros se `light`.
-pub(crate) fn set_system_bars(color: u32, light: bool) -> bool {
+/// Pinta a barra de status com `status` e a de navegação com `navigation` (ARGB), os ícones
+/// escuros onde `light_*` (fundo claro), e mostra ou esconde cada uma (o `SystemBars`).
+pub(crate) fn set_system_bars(status: u32, navigation: u32, light_status: bool, light_navigation: bool, show_status: bool, show_navigation: bool) -> bool {
     if !STATE.get().is_some_and(|s| s.aylis_activity) {
         return false;
     }
-    with_env(|env, activity| env.call_method(activity, "setSystemBars", "(IZ)V", &[JValue::Int(color as i32), JValue::Bool(light.into())]).map(|_| ()))
-        .is_some()
+    with_env(|env, activity| {
+        env.call_method(
+            activity,
+            "setSystemBars",
+            "(IIZZZZ)V",
+            &[
+                JValue::Int(status as i32),
+                JValue::Int(navigation as i32),
+                JValue::Bool(light_status.into()),
+                JValue::Bool(light_navigation.into()),
+                JValue::Bool(show_status.into()),
+                JValue::Bool(show_navigation.into()),
+            ],
+        )
+        .map(|_| ())
+    })
+    .is_some()
 }
 
 /// "Voltar" no form principal: o app vai para segundo plano, como os apps do Android 12

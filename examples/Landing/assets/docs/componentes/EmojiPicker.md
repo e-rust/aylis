@@ -19,7 +19,7 @@ Seletor de emoji. Tocar num emoji dispara `on_select` (o emoji em `EventArgs::Te
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `filter` | Filtro | texto | A busca (o campo de cima; também dá para mudar pelo código). |
-| `recent` | Recentes | texto |  |
+| `recent` | Recentes | texto | Os usados por último, separados por espaço (o mais novo primeiro); o app pode guardar e devolver. |
 
 ## Eventos
 

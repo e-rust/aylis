@@ -12,20 +12,20 @@ Motor de supervisório: o símbolo com o estado (ligado, desligado, em alarme) n
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `label` | Rótulo | texto |  |
+| `label` | Rótulo | texto | O texto do equipamento: no corpo do motor (vazio: "M") e embaixo da bomba. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `speed` | Velocidade | número |  |
+| `speed` | Velocidade | número | Voltas por segundo do desenho, ligado. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `running` | Ligado | lógico |  |
-| `alarm` | Alarme | lógico |  |
+| `running` | Ligado | lógico | Ligado: gira e fica verde; desligado, parado e cinza. |
+| `alarm` | Alarme | lógico | Em alarme: fica vermelho e o contorno pisca. |
 
 ## Em código
 

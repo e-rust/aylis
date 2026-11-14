@@ -10,7 +10,7 @@ Copiar e colar texto, HTML, imagem e os formatos do app pela área de transferê
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tag` | Marca (número) | inteiro |  |
+| `tag` | Marca (número) | inteiro | Um número livre para o código (não muda nada na área de transferência). |
 
 ## Em código
 

@@ -1,4 +1,4 @@
-//! O editor de código da IDE: uma janela só, com uma aba por arquivo (como o Delphi), e o
+//! O editor de código da IDE: uma janela só, com uma aba por arquivo, e o
 //! que o VS Code tem: realce, números de linha, desfazer, localizar e substituir, as
 //! operações de linha, os pares que fecham sozinhos, a paleta de comandos e, pelo servidor de
 //! linguagem ([`crate::intel`]), as sugestões, a dica, a ajuda dos parâmetros, ir para a
@@ -8,7 +8,7 @@
 //! Depurando, o painel da direita mostra os botões, a pilha, as variáveis e o "Avaliar"; a
 //! linha onde o programa parou abre na aba do arquivo dela.
 //!
-//! Como no Delphi, o editor fica embutido na janela da IDE, no lugar do designer
+//! O editor fica embutido na janela da IDE, no lugar do designer
 //! ([`set_host`]; os botões "Design | Código" alternam). Uma aba pode ir para outra janela
 //! (Arquivo → Abrir em outra janela, ou arrastando a aba para fora da faixa), que junta
 //! quantas abas forem para lá; arrastar uma aba para fora da janela de fora a traz de
@@ -132,7 +132,7 @@ pub struct Hooks {
     /// a IDE refaz a faixa de abas dela, que junta forms e código.
     pub tabs: Box<dyn Fn(&mut Ui)>,
     /// O fonte foi salvo pelo editor (Ctrl+S, o botão): a IDE salva junto o form dele, se
-    /// alterado (como o Delphi salva a unit e o form; conferência de 08/11).
+    /// alterado (conferência de 08/11).
     pub saved: Box<dyn Fn(&mut Ui, &Path)>,
 }
 
@@ -171,7 +171,7 @@ pub fn close_embedded(ui: &mut Ui, file: &Path) {
 
 /// Salva os fontes alterados de todos os editores (o embutido e as janelas de código). Antes de
 /// compilar, executar, depurar e publicar: a compilação lê o disco, e o código alterado no editor
-/// ficava de fora (o app rodava com o código velho; conferência de 08/11, como o Delphi salva).
+/// ficava de fora (o app rodava com o código velho; conferência de 08/11).
 pub fn save_all(ui: &mut Ui) -> usize {
     // O campo do Object Inspector em edição grava antes (o form entra junto na compilação).
     crate::inspector::commit_pending(ui);
@@ -633,8 +633,8 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
         ui.control_mut(form).unwrap().set_align(Align::Client);
     }
 
-    // Arquivo: Salvar (Ctrl+S) e Fechar arquivo (Ctrl+F4) valem para a aba ativa. Embutido
-    // (como no Delphi) não há barra de menu nem botão Salvar: os mesmos itens ficam no menu do
+    // Arquivo: Salvar (Ctrl+S) e Fechar arquivo (Ctrl+F4) valem para a aba ativa. Embutido,
+    // não há barra de menu nem botão Salvar: os mesmos itens ficam no menu do
     // botão direito, com os atalhos valendo do mesmo jeito, e o Salvar é o da IDE.
     let menu = if embedded { ui.add(PopupMenu::default(), form) } else { ui.add(MainMenu::default(), form) };
     if embedded {
@@ -672,7 +672,7 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
         toggle_bottom(ui, Bottom::Problems);
     });
     let server = ui.add(Label::new(""), bar);
-    // O rótulo recebe o mouse (o `Label` não recebe, como o do Delphi): senão a dica com o
+    // O rótulo recebe o mouse (o `Label` não recebe): senão a dica com o
     // detalhe do servidor nunca aparecia (roteiro 58).
     ui.control_mut(server).unwrap().set_align(Align::Right).set_width(280.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_hit_test(true);
     let _ = ui.set_prop(server, "h_align", "trailing");
@@ -683,7 +683,7 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
 
     // As abas, uma por arquivo (como as do navegador): o × fecha (avisando da alteração não
     // salva), o "+" abre outro fonte, arrastar troca a ordem. Embutido, as abas são as da
-    // IDE (form e código juntos, como no Delphi: `panels::tabs`) e esta faixa fica escondida.
+    // IDE (form e código juntos: `panels::tabs`) e esta faixa fica escondida.
     let mut strip = TabStrip::new();
     strip.auto_close = false;
     let tab_bar = ui.add(strip, form);
@@ -1251,7 +1251,7 @@ fn relative(root: Option<&Path>, file: &Path) -> String {
     rel.to_string_lossy().replace('\\', "/")
 }
 
-/// Abrir fonte (Ctrl+F12, o "View Unit" do Delphi): a lista dos fontes do projeto com um
+/// Abrir fonte (Ctrl+F12): a lista dos fontes do projeto com um
 /// filtro; OK (ou Enter) abre na janela de código.
 pub fn open_source_dialog(ui: &mut Ui) {
     use crate::dialogs::{edit, field, new_dialog, run, text_of};
@@ -1297,7 +1297,7 @@ pub fn open_source_dialog(ui: &mut Ui) {
     ui.set_focus(filter);
 }
 
-/// A caixa da condição do ponto de parada (como o "Breakpoint Properties" do Delphi).
+/// A caixa da condição do ponto de parada.
 fn condition_dialog(ui: &mut Ui, h: Rc<Hooks>, file: PathBuf, line: usize) {
     use aylis_controls::Edit;
     let (cond, hits) = (h.condition)(&file, line);
@@ -1491,7 +1491,7 @@ fn create_menus(ui: &mut Ui, menu: ComponentId, embedded: bool) {
     });
     add_menu_item(ui, nav, "Símbolo no projeto…", "Ctrl+T", project_symbols_dialog);
     menu_separator(ui, nav);
-    // Embutido na IDE, o F12 volta ao form (como no Delphi) e a definição fica no Alt+F12 (e
+    // Embutido na IDE, o F12 volta ao form e a definição fica no Alt+F12 (e
     // no Ctrl+clique).
     if embedded {
         add_menu_item(ui, nav, "Ir para o Design", "F12", |ui| {
@@ -1563,7 +1563,7 @@ fn create_menus(ui: &mut Ui, menu: ComponentId, embedded: bool) {
     menu_separator(ui, view);
     add_menu_item(ui, view, "Aumentar a fonte", "Ctrl+=", |ui| zoom(ui, 1.0));
     add_menu_item(ui, view, "Diminuir a fonte", "Ctrl+-", |ui| zoom(ui, -1.0));
-    // (Ctrl+0 é o marcador 0, como no Delphi.)
+    // (Ctrl+0 é o marcador 0.)
     add_menu_item(ui, view, "Fonte padrão", "Ctrl+Alt+0", |ui| zoom(ui, 0.0));
     menu_separator(ui, view);
     add_menu_item(ui, view, "Marcadores…", "Ctrl+Alt+B", bookmarks_list);

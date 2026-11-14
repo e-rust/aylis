@@ -461,11 +461,12 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
     Ok(written)
 }
 
-/// Os parâmetros do método de um handler em Pascal: os eventos que perguntam com `var`, como
-/// no Delphi (o cliente lê o que o handler mudou e responde à tela); os outros, o comum.
+/// Os parâmetros do método de um handler em Pascal: os eventos que perguntam com `var`
+/// (o cliente lê o que o handler mudou e responde à tela); os outros, o comum.
 fn pascal_params(form: &str, handler: &str) -> &'static str {
     match crate::codegen::question_event(form, handler).as_deref() {
         Some("on_close_query") => "Sender: TAylisComponent; var CanClose: Boolean",
+        Some("on_back") => "Sender: TAylisComponent; var Handled: Boolean",
         Some("on_key_down") => "Sender: TAylisComponent; var Key: string; Event: TJSONObject",
         Some("on_key_press") => "Sender: TAylisComponent; var Key: string",
         Some("on_drag_start") => "Sender: TAylisComponent; var Data, Caption: string",

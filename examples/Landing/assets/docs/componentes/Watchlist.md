@@ -12,7 +12,7 @@ Lista de ativos: ativo, último preço e variação; a célula pisca verde na al
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `decimals` | Casas decimais | inteiro |  |
+| `decimals` | Casas decimais | inteiro | Casas decimais dos preços. |
 
 ### Dados
 

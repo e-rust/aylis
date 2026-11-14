@@ -1,6 +1,6 @@
 //! Trabalho em segundo plano ligado a um dono (um componente ou um form): quando o dono é
 //! liberado (o form fechou), o resultado é descartado, em vez de rodar sobre um form que não
-//! existe mais (o Access Violation clássico do `TThread.Queue` do Delphi com o form fechado).
+//! existe mais (o acesso à memória de um form já fechado).
 //!
 //! - [`Poster::post_to`]: de outra thread, roda na thread da tela, se o dono ainda existe;
 //! - [`Ui::background`]: o trabalho numa thread e o fim na tela (o jeito documentado; na web,
@@ -60,7 +60,7 @@ impl Wake for TaskWaker {
 
 impl Ui {
     /// Roda `work` numa thread e, no fim, `done` na tela com o resultado, se `owner` ainda
-    /// existe (o `TTask.Run` com o `TThread.Queue` do Delphi, sem o Access Violation do form
+    /// existe (sem acessar o form
     /// fechado). Na web, onde o wasm não cria threads, `work` roda na thread da tela: funciona,
     /// mas a tela espera durante um cálculo pesado (uma espera de rede vai pelo
     /// [`spawn_local`](Self::spawn_local)).

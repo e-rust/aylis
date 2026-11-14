@@ -93,17 +93,22 @@ impl BandKind {
     }
 }
 
-/// A página do relatório (como o `TfrxReport`/`TQuickRep`). Tamanho em pontos (1/72"):
+/// A página do relatório. Tamanho em pontos (1/72"):
 /// A4 = 595 × 842; `landscape` deita a página. As bandas ficam dentro dela, de cima para
 /// baixo, na largura da área útil (a página menos as margens).
 pub struct Report {
     pub base: ControlBase,
+    /// O `DataSource` dos registros: a banda de detalhe se repete uma vez por registro.
     pub data_source: Option<ComponentId>,
     /// O nome do documento (no PDF e na fila da impressora).
     pub title: String,
+    /// Largura da página em pontos (1/72"; A4 = 595).
     pub page_width: f32,
+    /// Altura da página em pontos (1/72"; A4 = 842).
     pub page_height: f32,
+    /// Deita a página (troca a largura pela altura).
     pub landscape: bool,
+    /// A margem dos quatro lados da página, em pontos.
     pub margin: f32,
     /// Quem gera o PDF (um provedor de PDF, item 25); sem ele, o PDF do próprio Aylis.
     pub provider: Option<ComponentId>,
@@ -214,11 +219,18 @@ fn refresh_previews(ui: &mut Ui, report: ComponentId) {
 /// pelo `master_source`); nos textos delas, um campo que o detalhe não tem vem do mestre.
 pub struct ReportBand {
     pub base: ControlBase,
+    /// O papel da banda: título, cabeçalho e rodapé de página ou de grupo, detalhe,
+    /// sumário ou as do sub-detalhe.
     pub kind: BandKind,
+    /// Nos cabeçalhos e rodapés de grupo: o campo que forma o grupo (um grupo novo quando o
+    /// valor muda).
     pub group_field: String,
+    /// O grupo começa numa página nova.
     pub new_page: bool,
     /// Fundo da banda (sem cor: transparente).
     pub fill: Option<Color>,
+    /// Nas bandas de sub-detalhe: o `DataSource` do detalhe (ligado ao do relatório pelo
+    /// `master_source`).
     pub data_source: Option<ComponentId>,
 }
 
@@ -835,8 +847,11 @@ enum Tool {
 /// [`ReportPreview::refresh`].
 pub struct ReportPreview {
     pub base: ControlBase,
+    /// O `Report` mostrado.
     pub report: Option<ComponentId>,
+    /// A página mostrada, a partir de 0.
     pub page: i64,
+    /// A escala da página (1 = tamanho real); 0: a página inteira na largura.
     pub zoom: f32,
     /// Mostra a barra de botões.
     pub toolbar: bool,

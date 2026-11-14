@@ -206,11 +206,18 @@ const FIBO: [f64; 6] = [0.0, 0.236, 0.382, 0.5, 0.618, 1.0];
 /// candle sob o mouse.
 pub struct CandleChart {
     pub base: ControlBase,
+    /// Os candles, um por linha: `tempo;abertura;máxima;mínima;fechamento;volume`.
     pub data: String,
+    /// Os indicadores sobre o preço, separados por `;`: `"sma:20;ema:9;bollinger:20"`.
     pub indicators: String,
+    /// O painel de baixo: `none`, `volume`, `rsi` ou `macd`.
     pub lower: LowerPanel,
+    /// Mostra o volume por faixa de preço, em barras da direita para dentro.
     pub volume_profile: bool,
+    /// O que arrastar faz: `pan` (anda no tempo), `trend` (desenha uma linha de tendência) ou
+    /// `fibonacci` (desenha uma retração).
     pub draw_mode: DrawMode,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     candles: Vec<Candle>,
     /// Candles à vista e quantos do fim estão escondidos à direita.
@@ -632,8 +639,11 @@ pub struct OrderBook {
     pub base: ControlBase,
     /// `"38.50:1200;38.49:800"` (preço:quantidade).
     pub bids: String,
+    /// As ofertas de venda, no mesmo formato das `bids` (preço:quantidade).
     pub asks: String,
+    /// Quantos preços aparecem de cada lado.
     pub levels: u32,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     rows: RefCell<Vec<(RectF, f64)>>,
     pressed: Option<PointF>,
@@ -764,8 +774,11 @@ impl Component for OrderBook {
 /// acumuladas (vermelho, à direita), em degraus; o cursor mostra preço e acumulado.
 pub struct DepthChart {
     pub base: ControlBase,
+    /// As ofertas de compra: `"38.50:1200;38.49:800"` (preço:quantidade).
     pub bids: String,
+    /// As ofertas de venda, no mesmo formato (preço:quantidade).
     pub asks: String,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     mouse: Cell<Option<PointF>>,
 }
@@ -856,8 +869,11 @@ impl Component for DepthChart {
 /// segundo; para enquanto o mouse está em cima.
 pub struct TickerTape {
     pub base: ControlBase,
+    /// As cotações, separadas por `;`: `"PETR4:38.50:1.2"` (ativo:preço:variação %).
     pub items: String,
+    /// A velocidade da rolagem, em pontos por segundo.
     pub speed: f32,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     paused_at: Cell<Option<f64>>,
     shift: Cell<f64>,
@@ -974,6 +990,7 @@ pub struct Watchlist {
     pub base: ControlBase,
     /// `"PETR4;VALE3;ITUB4"` (os preços chegam por `update`).
     pub symbols: String,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     quotes: Vec<Quote>,
     selected: Option<usize>,
@@ -1137,8 +1154,11 @@ pub struct Trade {
 /// na venda, em negrito a partir de `big_size`. [`TimeAndSales::add`] acrescenta.
 pub struct TimeAndSales {
     pub base: ControlBase,
+    /// Quantos negócios a lista guarda; os mais velhos saem.
     pub max_rows: u32,
+    /// A partir desta quantidade o negócio aparece em negrito.
     pub big_size: f64,
+    /// Casas decimais dos preços.
     pub decimals: u32,
     trades: std::collections::VecDeque<Trade>,
 }

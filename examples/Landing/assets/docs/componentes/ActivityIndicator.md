@@ -12,13 +12,13 @@ Indicador de atividade girando. Só anima com `active`. `kind` escolhe o desenho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |  |
+| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` | O desenho: o anel (o padrão) ou um dos outros spinners (`dots`, `bars`, `audio`, `ios`...). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Gira e aparece; desligado, não desenha nada. |
 
 ## Em código
 

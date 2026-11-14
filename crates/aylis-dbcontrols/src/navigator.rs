@@ -64,11 +64,12 @@ struct NavState {
     read_only: bool,
 }
 
-/// Navegador (como o `TDBNavigator`): primeiro, anterior, próximo, último, incluir,
+/// Navegador: primeiro, anterior, próximo, último, incluir,
 /// excluir, editar, gravar e cancelar. Os botões se habilitam conforme o estado do
 /// dataset. Erros (por exemplo um campo obrigatório no `post`) disparam `on_error`.
 pub struct DataNavigator {
     pub base: ControlBase,
+    /// O `DataSource` do dataset que os botões movem e editam.
     pub data_source: Option<ComponentId>,
     state: NavState,
     hovered: Option<usize>,
@@ -208,7 +209,7 @@ impl Component for DataNavigator {
         if let Some(i) = self.pressed.take() {
             let id = ctx.id;
             let button = NavButton::ALL[i];
-            // O `before_action` (o `BeforeAction` do Delphi) pergunta antes, e passa pelos
+            // O `before_action` pergunta antes, e passa pelos
             // `EventInterceptor`: recusado, o botão não age. Sem ninguém para perguntar, age já.
             if ctx.ui.has_handler(id, "before_action") || ctx.ui.is_intercepted(id, "before_action") {
                 ctx.ui.poster().post(move |ui| ask_before_action(ui, id, button));

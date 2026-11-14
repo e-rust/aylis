@@ -110,10 +110,13 @@ fn prop_table(props: &[&PropInfo], docs: &std::collections::HashMap<String, Stri
 const EVENT_NOTES: &[(&str, &str)] = &[
     ("on_click", "o clique (ou Enter e Espaço com o foco)"),
     ("on_dbl_click", "o duplo clique"),
-    ("on_change", "o valor mudou (pelo usuário ou pelo código, como na VCL)"),
+    ("on_change", "o valor mudou (pelo usuário ou pelo código)"),
     ("on_show", "o form abriu"),
     ("on_close", "o form fechou"),
     ("on_close_query", "o form vai fechar: `Err` recusa (o X não fecha)"),
+    ("on_swipe", "o dedo deslizou rápido para um lado (`direction`: `left`, `right`, `up` ou `down`) sem ter rolado nada nesse eixo; sobe para os pais até um tratar"),
+    ("on_swipe_action", "o toque numa ação da linha deslizada (`swipe_actions`): o item (`index`) e a ação (`action`)"),
+    ("on_back", "a tecla Voltar do celular, no form do topo: responda `handled` (ou `Err`) quando o app tratar (voltar a tela de dentro); sem isso, o de sempre"),
     ("on_create", "o componente foi criado (o DataModule, ao abrir o app)"),
     ("on_timer", "a cada `interval` ms, com `enabled`"),
     ("on_resize", "o tamanho mudou"),
@@ -461,20 +464,7 @@ mod counter_button;
 /// tipo dela no código, achado pela lista de classes da fachada (`Image` é o `ImageView`).
 /// Fica só o texto: os links viram nome e as comparações com outras bibliotecas saem.
 fn source_descriptions(root: &Path) -> std::collections::HashMap<String, String> {
-    let facade = std::fs::read_to_string(root.join("crates/aylis/src/lib.rs")).unwrap_or_default();
-    // Classe → (crate, tipo): `Ellipse: aylis_controls::shapes::Ellipse => ...` dá `aylis-controls` e `Ellipse`.
-    let mut types: Vec<(String, String, String)> = Vec::new();
-    for line in facade.lines() {
-        let line = line.trim();
-        let line = if line.starts_with("#[") { line.split_once("] ").map_or(line, |(_, r)| r) } else { line };
-        if let Some((class, rest)) = line.split_once(": ").filter(|(c, r)| c.chars().all(char::is_alphanumeric) && r.contains(" => \"")) {
-            let path = rest.split(" => ").next().unwrap_or_default();
-            types.push((class.to_string(), path.split("::").next().unwrap_or_default().replace('_', "-"), path.rsplit("::").next().unwrap_or(path).to_string()));
-        } else if let Some(path) = line.split_once("register_class::<").map(|(_, r)| r.split('>').next().unwrap_or_default()) {
-            let ty = path.rsplit("::").next().unwrap_or(path).to_string();
-            types.push((ty.clone(), path.split("::").next().unwrap_or_default().replace('_', "-"), ty));
-        }
-    }
+    let types = facade_types(root);
     // (crate, tipo) → comentário, de todos os fontes dos crates.
     let mut docs: std::collections::HashMap<(String, String), String> = std::collections::HashMap::new();
     let mut stack = vec![root.join("crates")];
@@ -532,6 +522,55 @@ fn source_descriptions(root: &Path) -> std::collections::HashMap<String, String>
         .collect()
 }
 
+/// Classe → (crate, tipo), pela lista de classes da fachada: `Ellipse:
+/// aylis_controls::shapes::Ellipse => ...` dá `aylis-controls` e `Ellipse`.
+fn facade_types(root: &Path) -> Vec<(String, String, String)> {
+    let facade = std::fs::read_to_string(root.join("crates/aylis/src/lib.rs")).unwrap_or_default();
+    let mut types: Vec<(String, String, String)> = Vec::new();
+    for line in facade.lines() {
+        let line = line.trim();
+        let line = if line.starts_with("#[") { line.split_once("] ").map_or(line, |(_, r)| r) } else { line };
+        if let Some((class, rest)) = line.split_once(": ").filter(|(c, r)| c.chars().all(char::is_alphanumeric) && r.contains(" => \"")) {
+            let path = rest.split(" => ").next().unwrap_or_default();
+            types.push((class.to_string(), path.split("::").next().unwrap_or_default().replace('_', "-"), path.rsplit("::").next().unwrap_or(path).to_string()));
+        } else if let Some(path) = line.split_once("register_class::<").map(|(_, r)| r.split('>').next().unwrap_or_default()) {
+            let ty = path.rsplit("::").next().unwrap_or(path).to_string();
+            types.push((ty.clone(), path.split("::").next().unwrap_or_default().replace('_', "-"), ty));
+        }
+    }
+    types
+}
+
+/// As propriedades sem campo do mesmo nome: (tipo, propriedade) ← (tipo, campo) de onde vem o
+/// texto. As cores, a fonte, o arrasto e os textos raros do `ControlBase` ficam em estruturas
+/// próprias, e o `translate` (traduzir os textos) é o campo `translatable`.
+const PROP_FIELDS: &[(&str, &str, &str, &str)] = &[
+    ("ControlBase", "fill", "ColorOverride", "fill"),
+    ("ControlBase", "border_color", "ColorOverride", "border"),
+    ("ControlBase", "text_color", "ColorOverride", "text"),
+    ("ControlBase", "accent_color", "ColorOverride", "accent"),
+    ("ControlBase", "success_color", "ColorOverride", "success"),
+    ("ControlBase", "warning_color", "ColorOverride", "warning"),
+    ("ControlBase", "danger_color", "ColorOverride", "danger"),
+    ("ControlBase", "font_family", "FontOverride", "family"),
+    ("ControlBase", "font_size", "FontOverride", "size"),
+    ("ControlBase", "font_weight", "FontOverride", "weight"),
+    ("ControlBase", "font_italic", "FontOverride", "italic"),
+    ("ControlBase", "font_underline", "FontOverride", "underline"),
+    ("ControlBase", "font_strikeout", "FontOverride", "strikeout"),
+    ("ControlBase", "drag_data", "DragDecl", "data"),
+    ("ControlBase", "drag_label", "DragDecl", "label"),
+    ("ControlBase", "drag_image", "DragDecl", "image"),
+    ("ControlBase", "drop_types", "DragDecl", "drop_types"),
+    ("ControlBase", "tag_string", "RareTexts", "tag_string"),
+    ("ControlBase", "accessible_name", "RareTexts", "accessible_name"),
+    ("ControlBase", "translate_x", "ControlBase", "translate"),
+    ("ControlBase", "translate_y", "ControlBase", "translate"),
+    ("ControlBase", "translate", "ControlBase", "translatable"),
+    ("Field", "type", "Field", "field_type"),
+    ("ClientDataSet", "active", "ClientDataSet", "wants_open"),
+];
+
 /// O que cada propriedade faz: o primeiro parágrafo do comentário `///` do campo, no tipo de
 /// cada camada da classe (o `Panel` herda o `radius` do `Rectangle`) e no `ControlBase`. É o texto
 /// da coluna "O que faz" das páginas e do `component_docs` do MCP (decidido com o autor em 11/11:
@@ -539,6 +578,10 @@ fn source_descriptions(root: &Path) -> std::collections::HashMap<String, String>
 /// essencial, para não pesar no contexto).
 pub fn source_field_docs(root: &Path) -> std::collections::HashMap<String, std::collections::HashMap<String, String>> {
     let mut out: std::collections::HashMap<String, std::collections::HashMap<String, String>> = std::collections::HashMap::new();
+    // Tipo → tipo de onde vêm os campos: a classe da fachada com outro nome (`Image` é o
+    // `ImageView`), o tipo que só embrulha outro (`FloatAnimation(pub PropertyAnimation)`) e o
+    // feito por macro (`rotating!(Motor, ...)`, com o `pub struct $name {` dentro dela).
+    let mut aliases: Vec<(String, String)> = facade_types(root).into_iter().filter(|(class, _, ty)| class != ty).map(|(class, _, ty)| (class, ty)).collect();
     let mut stack = vec![root.join("crates")];
     while let Some(dir) = stack.pop() {
         let Ok(entries) = std::fs::read_dir(&dir) else { continue };
@@ -556,12 +599,33 @@ pub fn source_field_docs(root: &Path) -> std::collections::HashMap<String, std::
             let Ok(text) = std::fs::read_to_string(&path) else { continue };
             let lines: Vec<&str> = text.lines().collect();
             let mut i = 0;
+            // As macros deste arquivo que declaram um tipo (`pub struct $name {`).
+            let mut macro_name = String::new();
+            let mut struct_macros: Vec<String> = Vec::new();
             while i < lines.len() {
-                let Some(rest) = lines[i].strip_prefix("pub struct ").filter(|r| r.trim_end().ends_with('{')) else {
+                if let Some(m) = lines[i].strip_prefix("macro_rules! ") {
+                    macro_name = m.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect();
+                }
+                if let Some((ty, inner)) = lines[i].strip_prefix("pub struct ").and_then(|r| r.trim_end().strip_suffix(");")).and_then(|r| r.split_once("(pub ")) {
+                    aliases.push((ty.to_string(), inner.rsplit("::").next().unwrap_or(inner).to_string()));
+                }
+                if let Some((m, args)) = lines[i].split_once("!(").filter(|(m, _)| struct_macros.iter().any(|s| s == m)) {
+                    aliases.push((args.split(',').next().unwrap_or_default().trim().to_string(), format!("{m}!")));
+                }
+                // O tipo público, o de macro (pelo nome dela) e os textos raros do `ControlBase`
+                // (privados, citados no `PROP_FIELDS`).
+                let declared = lines[i]
+                    .strip_prefix("pub struct ")
+                    .map(|r| r.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect::<String>())
+                    .or_else(|| lines[i].trim_start().strip_prefix("pub struct $").filter(|_| !macro_name.is_empty()).map(|_| format!("{macro_name}!")))
+                    .or_else(|| lines[i].strip_prefix("struct RareTexts").map(|_| "RareTexts".to_string()));
+                let Some(name) = declared.filter(|_| lines[i].trim_end().ends_with('{')) else {
                     i += 1;
                     continue;
                 };
-                let name: String = rest.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect();
+                if name.ends_with('!') {
+                    struct_macros.push(macro_name.clone());
+                }
                 let fields = out.entry(name).or_default();
                 let mut doc: Vec<&str> = Vec::new();
                 i += 1;
@@ -588,6 +652,16 @@ pub fn source_field_docs(root: &Path) -> std::collections::HashMap<String, std::
             }
         }
     }
+    for (alias, target) in aliases {
+        if let Some(fields) = out.get(&target).cloned() {
+            out.entry(alias).or_default().extend(fields);
+        }
+    }
+    for (ty, prop, from, field) in PROP_FIELDS {
+        if let Some(doc) = out.get(*from).and_then(|f| f.get(*field)).cloned() {
+            out.entry(ty.to_string()).or_default().insert(prop.to_string(), doc);
+        }
+    }
     out
 }
 
@@ -605,7 +679,7 @@ fn prop_docs_of(field_docs: &std::collections::HashMap<String, std::collections:
 }
 
 /// O comentário do código como texto da página: `[`X`](link)` e `[`X`]` viram `X`, os parênteses
-/// que comparam com o Delphi/FMX (`(como o `TTreeView`)`) e o "Veja o módulo" saem.
+/// que comparam com outra ferramenta (`(como o `TTreeView`)`) e o "Veja o módulo" saem.
 fn clean_description(text: &str) -> String {
     let mut out = String::new();
     let mut rest = text;

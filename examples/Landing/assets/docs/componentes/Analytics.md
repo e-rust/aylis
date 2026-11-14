@@ -10,9 +10,10 @@ Métricas de uso somadas entre as sessões (cliques, telas, erros).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Mede: ligado (o padrão), começa sozinho ao entrar na tela; desligar para de medir. |
 | `file` | Arquivo | texto | O arquivo; vazio: `<pasta do app>/analytics.json`. |
-| `app_name` | Nome do aplicativo | texto |  |
+| `app_name` | Nome do aplicativo | texto | O nome do app (a pasta do arquivo); vazio: o título do form principal. |
+| `performance` | Mede o desempenho (handlers e quadros) | lógico | Mede também o tempo dos handlers e os quadros lentos (desligado por padrão). |
 
 ## Em código
 

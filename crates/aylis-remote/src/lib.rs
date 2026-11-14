@@ -29,9 +29,9 @@
 //! | `locale` | `locale: "pt-BR"/"en-US"` | — |
 //! | `data` | `target` (ClientDataSet), `op`, ... (veja abaixo) | depende |
 //! | `batch` | `commands: [..]` | lista de resultados |
-//! | `create_form` | `name`, `new`? | cria um form do projeto (como `Application.CreateForm`); se já existe, devolve o mesmo (com `new: true`, mais uma instância, outra janela): `{id, name}` |
+//! | `create_form` | `name`, `new`? | cria um form do projeto; se já existe, devolve o mesmo (com `new: true`, mais uma instância, outra janela): `{id, name}` |
 //! | `show` | `target` (form) | abre numa janela (como `Show`) |
-//! | `show_modal` | `target` (form), `handler`?, `wait`? | abre como modal; ao fechar, o `handler` recebe o evento `on_modal_result` com o resultado (`"ok"`, `"cancel"`...); com `wait: true`, a resposta (o resultado) só sai quando o form fecha, e o cliente trata os eventos enquanto espera (o `ShowModal` do Delphi) |
+//! | `show_modal` | `target` (form), `handler`?, `wait`? | abre como modal; ao fechar, o `handler` recebe o evento `on_modal_result` com o resultado (`"ok"`, `"cancel"`...); com `wait: true`, a resposta (o resultado) só sai quando o form fecha, e o cliente trata os eventos enquanto espera |
 //! | `close` | `target`? | fecha o form (passa pelo `on_close_query`; devolve se fechou); sem `target`, encerra o aplicativo |
 //! | `modal_result` | `target` (form), `result` | define o resultado (num modal, fecha) |
 //! | `tree` | `target` (opcional) | árvore de componentes (id, nome, classe, caminho, filhos) |
@@ -46,7 +46,7 @@
 //! | `hello` | `protocol`, `client`?, `update_url`? | a **primeira** mensagem do backend: a versão do protocolo ([`PROTOCOL_VERSION`]); a tela devolve `{protocol, capabilities}` ou recusa, dizendo qual lado atualizar (e, na tela antiga, "há uma versão nova do aplicativo" com o `update_url`). Antes dela, todo comando é recusado |
 //! | `exception` | `message`, `path`?, `handler`? | um handler do backend falhou: a tela mostra o erro (a caixa do aylis ou o `on_exception` da aplicação), como um erro do próprio app |
 //! | `components` | `target` (o form) | os componentes da instância do form: `[{"name", "id", "class"}]` (as classes de form dos clientes se montam com eles) |
-//! | `wake` | — | devolve o evento `{"event": "__post"}`: o `Post` de outra thread do backend acorda o laço dele, parado lendo a entrada (o `TThread.Queue` do Delphi) |
+//! | `wake` | — | devolve o evento `{"event": "__post"}`: o `Post` de outra thread do backend acorda o laço dele, parado lendo a entrada |
 //! | `done` | `seq` | o handler do evento `seq` terminou (o cliente manda sozinho; a tela deixa de mostrar o backend ocupado). Só vale para o cliente que anuncia `"features": ["done"]` no `hello` |
 //! | `answer` | `ask`, `values`? ou `error`? | a resposta de um evento-pergunta (o evento veio com `ask`): `values` com os campos respondidos (`can_close`, `key`, `key_char`, `data`, `label`, `accept`) ou `error` para recusar (a mensagem vai para a tela) |
 //!
@@ -420,7 +420,7 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             let id = target(ui, obj)?;
             Ok(Value::Bool(ui.set_focus(id)))
         }
-        // O controle com foco no form (o nome; `null` sem foco), como o `ActiveControl`.
+        // O controle com foco no form (o nome; `null` sem foco).
         "focused" => {
             let form = target(ui, obj)?;
             let root = ui.root_of(form);
@@ -450,7 +450,7 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             ui.text_input(root, string(obj, "text")?);
             Ok(Value::Null)
         }
-        // Próximo / anterior na ordem do Tab, como o `SelectNext` do Delphi.
+        // Próximo / anterior na ordem do Tab.
         "focus_next" | "focus_prev" => {
             let form = target(ui, obj)?;
             let root = ui.root_of(form);
@@ -509,7 +509,7 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         "show_modal" => {
             let id = target(ui, obj)?;
             let handler = obj.get("handler").and_then(Value::as_str).map(str::to_string);
-            // `wait`: a resposta só sai quando o form fecha (o `ShowModal` que espera, como no Delphi).
+            // `wait`: a resposta só sai quando o form fecha.
             let reply = if obj.get("wait").and_then(Value::as_bool) == Some(true) { defer_reply(ui) } else { None };
             // Aberto pelo pedido que roda: o backend espera o usuário (não está travado).
             let waiting = ui.backend_busy();
@@ -917,7 +917,7 @@ fn data(ui: &mut Ui, obj: &Map<String, Value>) -> Result<Value, String> {
             }
             Ok(Value::Null)
         }
-        // Como o `ApplyUpdates` do Delphi: responde quando tudo foi gravado, com o número de
+        // Responde quando tudo foi gravado, com o número de
         // registros que não foram (o `on_apply_updates` remoto é pergunta: espera a resposta).
         "apply" => {
             let result = ds.apply_updates();
@@ -1102,6 +1102,10 @@ fn args_to_json(ui: &Ui, args: &EventArgs) -> Value {
             "phase": match g.phase { aylis_core::GesturePhase::Begin => "begin", aylis_core::GesturePhase::Update => "update", aylis_core::GesturePhase::End => "end" },
             "x": g.center.x, "y": g.center.y, "scale": g.scale, "delta_scale": g.delta_scale,
             "rotation": g.rotation, "delta_rotation": g.delta_rotation, "pan_x": g.pan.x, "pan_y": g.pan.y,
+        }),
+        EventArgs::Swipe(s) => json!({
+            "direction": s.direction.name(), "x": s.start.x, "y": s.start.y,
+            "dx": s.distance.x, "dy": s.distance.y, "vx": s.velocity.x, "vy": s.velocity.y,
         }),
         EventArgs::Key(k) => json!({
             "key": key_name(k.key),

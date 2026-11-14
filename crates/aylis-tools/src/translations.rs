@@ -9,6 +9,11 @@
 //! A tabela tem uma linha por texto: o português (a chave) e as traduções separadas por
 //! tabulação, na ordem de [`LANGUAGES`]. Os catálogos JSON são a fonte (o antigo
 //! `scripts/ide_idiomas.py` saiu): uma linha nova na tabela vira uma chave em cada um.
+//!
+//! Os literais que parecem texto de tela mas não são (dados de exemplo, nomes próprios e de
+//! fonte, o que vai para o agente do MCP, textos de teste) ficam em
+//! `resources/locales/untranslated.txt`, um por linha, e saem da lista (decidido em 14/11:
+//! assim a lista vazia quer dizer que nada falta, e o teste confere).
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -156,9 +161,19 @@ fn ide(root: &Path) -> PathBuf {
     root.join("crates/aylis-ide")
 }
 
-/// Os textos da IDE que faltam no catálogo inglês (o de referência), em ordem.
+/// Os textos da IDE que faltam no catálogo inglês (o de referência), em ordem, menos os da
+/// lista de não traduzir.
 pub fn missing(root: &Path) -> Vec<String> {
-    scan(root, is_screen_text)
+    let skip = untranslated(root);
+    scan(root, is_screen_text).into_iter().filter(|s| !skip.contains(s)).collect()
+}
+
+/// Os literais que não são texto de tela (`resources/locales/untranslated.txt`).
+pub fn untranslated(root: &Path) -> BTreeSet<String> {
+    std::fs::read_to_string(ide(root).join("resources/locales/untranslated.txt"))
+        // Um texto com quebra de linha vai com `\n` escrito.
+        .map(|t| t.lines().filter(|l| !l.trim().is_empty() && !l.starts_with('#')).map(|l| l.replace("\\n", "\n")).collect())
+        .unwrap_or_default()
 }
 
 /// Os modelos de mensagem com valores (`"Form {} criado"`) que faltam no catálogo inglês.
@@ -224,6 +239,20 @@ pub fn apply(root: &Path, table: &str) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Nenhum texto de tela da IDE sem tradução (decidido em 14/11): um texto novo entra no
+    /// catálogo (`aylis-tool translations --apply`) ou, se não é de tela, na lista de não traduzir.
+    #[test]
+    fn no_screen_text_of_the_ide_lacks_a_translation() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let missing = missing(&root);
+        assert!(
+            missing.is_empty(),
+            "{} textos sem tradução (aylis-tool translations; os que não são de tela vão para resources/locales/untranslated.txt):\n{}",
+            missing.len(),
+            missing.join("\n")
+        );
+    }
 
     #[test]
     fn literals_and_screen_texts() {

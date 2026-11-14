@@ -73,8 +73,8 @@ fn the_examples_reach_components_by_typed_access_not_by_name() {
         let Ok(text) = std::fs::read_to_string(&file) else { continue };
         for (i, line) in text.lines().enumerate() {
             let code = line.trim_start();
-            // O registro da classe do form em Pascal (`RegisterForm(TFrmX, 'frmX', ...)`, como o
-            // `RegisterClass` do Delphi) dá o nome ao form; não procura componente.
+            // O registro da classe do form em Pascal (`RegisterForm(TFrmX, 'frmX', ...)`)
+            // dá o nome ao form; não procura componente.
             if code.starts_with("//") || code.starts_with('#') || code.starts_with('{') || code.starts_with("///") || code.starts_with("/*") || code.starts_with('*') || code.starts_with("RegisterForm(") {
                 continue;
             }

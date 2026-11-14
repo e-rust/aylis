@@ -1,5 +1,5 @@
 //! O relatório do Tabernáculo (11/11): o arquivo solto (R04: F01, F02, F04), os atalhos do
-//! menu de contexto como no Delphi (J01) e o padding do Label (C05).
+//! menu de contexto (J01) e o padding do Label (C05).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -63,7 +63,7 @@ fn the_drop_zone_filter_rejects_with_an_event_and_reports_only_new_files() {
 }
 
 /// J01: os atalhos de um PopupMenu valem só com ele ligado (`popup_menu`) ao controle com o
-/// foco ou a um pai dele, como o `IsMenuKey` do VCL.
+/// foco ou a um pai dele.
 #[test]
 fn popup_menu_shortcuts_follow_the_focused_control() {
     let mut ui = Ui::new();

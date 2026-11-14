@@ -29,10 +29,16 @@ pub struct PushNotifications {
     pub active: bool,
     /// Com o app aberto, a mensagem com título também vira notificação do sistema.
     pub show_in_foreground: bool,
+    /// Android (FCM): o número do remetente do projeto Firebase (`project_number` do
+    /// `google-services.json`).
     pub sender_id: String,
+    /// Android (FCM): o id do projeto Firebase (`project_id` do `google-services.json`).
     pub project_id: String,
+    /// Android (FCM): o id do app no Firebase (`mobilesdk_app_id` do `google-services.json`).
     pub app_id: String,
+    /// Android (FCM): a chave da API (`current_key` do `google-services.json`).
     pub api_key: String,
+    /// Navegador (Web Push): a chave pública VAPID do servidor do app.
     pub vapid_key: String,
     token: String,
     provider: String,

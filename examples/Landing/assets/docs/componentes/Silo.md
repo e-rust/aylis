@@ -12,14 +12,14 @@ Silo: o corpo com o funil embaixo e o nível do material (`value`, %).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `material` | Material | cor |  |
+| `material` | Material | cor | A cor do material. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `value` | Valor | número |  |
-| `alarm` | Alarme | lógico |  |
+| `value` | Valor | número | O nível do material, de 0 a 100 (%). |
+| `alarm` | Alarme | lógico | Em alarme: o contorno vermelho pisca. |
 
 ## Em código
 

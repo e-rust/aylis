@@ -12,12 +12,12 @@ Imagem SVG desenhada como vetor. `source` é o arquivo no projeto (`assets/image
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `source` | Origem | texto |  |
-| `color` | Cor | cor |  |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
-| `highlight` | Destacar | texto |  |
-| `highlight_color` | Cor de destaque da área | cor |  |
-| `zoom_to` | Aproximar até | texto |  |
+| `source` | Origem | texto | O arquivo SVG no projeto (`assets/images/logo.svg`). |
+| `color` | Cor | cor | A cor do `currentColor` do SVG; sem cor, a cor de texto do tema. |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a imagem ocupa o controle: caber inteira, cobrir, esticar... |
+| `highlight` | Destacar | texto | Os `id` dos elementos pintados com `highlight_color`, separados por `;`; vazio: nenhum. |
+| `highlight_color` | Cor de destaque da área | cor | A cor dos elementos do `highlight`; sem cor, a cor de destaque do tema. |
+| `zoom_to` | Aproximar até | texto | O `id` do elemento cuja área é mostrada (o município dentro do mapa); vazio: o SVG inteiro. |
 
 ## Em código
 

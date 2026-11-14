@@ -1,4 +1,4 @@
-//! Editar → Ordem de tabulação… (como o "Tab Order" do Delphi, mas para o form inteiro):
+//! Editar → Ordem de tabulação… (para o form inteiro):
 //! a lista dos controles que recebem o foco, na ordem do Tab, de qualquer nível (um campo
 //! num painel, outro num grupo). ↑/↓ mudam a ordem; "Começar por este" marca o primeiro
 //! foco ao abrir o form (`active_control`, o ★). OK grava `tab_order` e `active_control`.

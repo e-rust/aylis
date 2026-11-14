@@ -12,10 +12,10 @@ Arco (só o traço) da elipse do controle, de `start_angle` a `end_angle`.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
-| `start_angle` | Ângulo inicial | ângulo (graus) |  |
-| `end_angle` | Ângulo final | ângulo (graus) |  |
+| `stroke` | Cor do traço | cor | A cor do arco; vazio: a cor do texto do tema. |
+| `stroke_width` | Largura do traço | número | A espessura do arco, em pontos (o traço fica todo dentro do controle). |
+| `start_angle` | Ângulo inicial | ângulo (graus) | Onde o arco começa, em graus (0 = em cima, sentido horário). |
+| `end_angle` | Ângulo final | ângulo (graus) | Onde o arco termina, em graus (0 = em cima, sentido horário). |
 
 ## Em código
 

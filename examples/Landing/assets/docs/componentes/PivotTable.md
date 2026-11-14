@@ -12,18 +12,18 @@ Tabela dinâmica (pivot): agrupa os registros de `data` (texto com cabeçalho, c
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `decimals` | Casas decimais | inteiro |  |
-| `totals` | Totais | lógico |  |
+| `decimals` | Casas decimais | inteiro | Casas decimais das células. |
+| `totals` | Totais | lógico | Mostra a linha e a coluna de totais. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data` | Dados | texto |  |
-| `rows_field` | Campo das linhas | texto |  |
-| `columns_field` | Campo das colunas | texto |  |
-| `values_field` | Campo dos valores | texto |  |
-| `aggregate` | Agregação | um de: `sum`, `count`, `average`, `min`, `max` |  |
+| `data` | Dados | texto | Os registros: a primeira linha com os nomes dos campos e uma linha por registro, campos separados por `;`. |
+| `rows_field` | Campo das linhas | texto | O campo cujos valores viram as linhas. |
+| `columns_field` | Campo das colunas | texto | O campo cujos valores viram as colunas. |
+| `values_field` | Campo dos valores | texto | O campo numérico juntado em cada célula. |
+| `aggregate` | Agregação | um de: `sum`, `count`, `average`, `min`, `max` | Como juntar os valores de cada célula: `sum`, `count`, `average`, `min` ou `max`. |
 
 ## Eventos
 

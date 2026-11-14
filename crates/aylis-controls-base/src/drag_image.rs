@@ -25,15 +25,17 @@ pub struct DragImage {
     /// O controle cujo desenho vai junto (vazio: o próprio controle arrastado, quando não
     /// há imagem).
     pub control: Option<ComponentId>,
-    /// Tamanho na tela, em pontos; 0 = automático (160 × 90 numa imagem, o tamanho do
+    /// Largura na tela, em pontos; 0 = automática (160 × 90 numa imagem, o tamanho do
     /// controle num desenho).
     pub width: f32,
+    /// Altura na tela, em pontos; 0 = automática, como a `width`.
     pub height: f32,
     /// 0..1.
     pub opacity: f32,
-    /// O ponto da imagem (em pontos) que fica no cursor; negativo = o padrão (no meio, um
-    /// pouco acima: como o Explorer).
+    /// O ponto da imagem (em pontos) que fica no cursor, na horizontal; negativo = o padrão
+    /// (no meio, um pouco acima: como o Explorer).
     pub hot_x: f32,
+    /// O mesmo ponto, na vertical; negativo = o padrão.
     pub hot_y: f32,
     /// Imagem definida por código: tem prioridade sobre o resto.
     picture: Option<Image>,

@@ -104,9 +104,13 @@ fn drop_into(ctx: &mut EventCtx<'_>, files: &mut String, filter: &str, multiple:
 /// "×" limpa. Também aceita arquivos soltos sobre ele.
 pub struct FileInput {
     pub base: ControlBase,
+    /// Os caminhos escolhidos, separados por `;`; vazio: nenhum.
     pub files: String,
+    /// Os tipos aceitos, como no `OpenDialog` (`Imagens|*.png;*.jpg|Todos|*.*`); vazio: todos.
     pub filter: String,
+    /// Aceita vários arquivos (senão, o novo troca o anterior).
     pub multiple: bool,
+    /// O texto apagado mostrado sem arquivo escolhido.
     pub placeholder: String,
     clear: Cell<RectF>,
 }
@@ -189,9 +193,13 @@ impl Component for FileInput {
 /// lista do que foi escolhido, cada um com "×".
 pub struct FileDropZone {
     pub base: ControlBase,
+    /// Os caminhos escolhidos, separados por `;`; vazio: nenhum.
     pub files: String,
+    /// Os tipos aceitos, como no `OpenDialog` (`Imagens|*.png;*.jpg|Todos|*.*`); vazio: todos.
     pub filter: String,
+    /// Aceita vários arquivos (senão, o novo troca o anterior).
     pub multiple: bool,
+    /// O texto no meio da área, ao lado do ícone de envio.
     pub title: String,
     removes: RefCell<Vec<(RectF, String)>>,
     /// Arquivos do sistema passando por cima (o destaque e o `on_file_enter`).

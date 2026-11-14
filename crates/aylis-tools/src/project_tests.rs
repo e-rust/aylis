@@ -7,13 +7,19 @@
 //! - Go: `go test -v ./...`;
 //! - TypeScript: `bun test` ou `node --test`; C#: `dotnet test` (sem o resultado por teste, só
 //!   se passou);
-//! - Java, C++ e Free Pascal não têm executor de testes padrão: o erro diz.
+//! - Java, C++ e Free Pascal (decidido em 14/11): os testes da pasta `tests/` com o executor
+//!   mínimo do cliente de cada um (`dev.aylis.TestRunner` com `@Test`, o `aylis_test.hpp` com
+//!   `AYLIS_TEST`, o FPCUnit ouvido pela unit `aylistest`), que imprime uma linha por teste
+//!   (`AYLIS_TEST ok|FAIL nome [mensagem]`); o Java usa o JUnit quando o projeto o tem
+//!   (`tests/lib/junit-platform-console-standalone*.jar`). Compilados como o app, em
+//!   `<projeto>/.aylis/tests`.
 
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use aylis_project::{Language, Project};
 
-use crate::process::{self, Level};
+use crate::process::{self, Level, run_tool};
 use crate::{Control, Event, LineKind, Sink};
 
 /// Como um teste terminou.
@@ -96,7 +102,15 @@ pub fn run(project: &Project, control: &Control, sink: Sink) -> Result<TestRepor
             }
         }
         language => {
-            let (mut command, shown) = command_for(language)?;
+            let mut junit_reports = None;
+            let (mut command, shown) = match language {
+                Language::Java | Language::Cpp | Language::Pascal => {
+                    let (command, shown, reports) = minimal(project, control, sink)?;
+                    junit_reports = reports;
+                    (command, shown)
+                }
+                _ => command_for(language)?,
+            };
             report.command = shown;
             command.current_dir(&dir);
             let code = process::run_lines(&mut command, control, |line, _| {
@@ -104,6 +118,9 @@ pub fn run(project: &Project, control: &Control, sink: Sink) -> Result<TestRepor
                 lines.push(line);
             })?;
             report.success = code == Some(0);
+            if let Some(reports) = junit_reports {
+                lines.extend(junit_lines(&reports));
+            }
         }
     }
     let (cases, failures) = parse(project.language, &lines);
@@ -111,6 +128,184 @@ pub fn run(project: &Project, control: &Control, sink: Sink) -> Result<TestRepor
     report.failures = failures;
     report.last_lines = lines.iter().rev().take(20).rev().cloned().collect();
     Ok(report)
+}
+
+/// Compila os testes de `tests/` de um projeto Java, C++ ou Free Pascal com o executor mínimo
+/// do cliente (veja o módulo) e devolve o comando que os roda, como ele aparece e, com o JUnit,
+/// a pasta dos relatórios em XML (lidos depois de rodar, [`junit_lines`]).
+fn minimal(project: &Project, control: &Control, sink: Sink) -> Result<(Command, String, Option<PathBuf>), String> {
+    use crate::hostlang::files;
+    let language = project.language;
+    let dir = project.code_dir();
+    let tests = dir.join("tests");
+    let ext = match language {
+        Language::Java => "java",
+        Language::Cpp => "cpp",
+        _ => "pas",
+    };
+    let mut sources = Vec::new();
+    files(&tests, ext, &mut sources);
+    if sources.is_empty() {
+        return Err(format!("sem testes em {} (arquivos .{ext}; veja docs/testes-do-projeto.md)", tests.display()));
+    }
+    let tc = crate::hostlang::find(language)?;
+    let out = project.dir().join(".aylis").join("tests").join(language.folder());
+    std::fs::create_dir_all(&out).map_err(|e| format!("{}: {e}", out.display()))?;
+    let clients = PathBuf::from(aylis_project::codegen::aylis_root()).join("clients");
+    let s = |p: &Path| p.display().to_string();
+    sink(Event::Step(format!("Compilando os testes de {} ({})…", project.name, language.name())));
+    match language {
+        Language::Java => {
+            let mut all = Vec::new();
+            files(&dir.join("src"), "java", &mut all);
+            files(&clients.join("java/dev/aylis"), "java", &mut all);
+            all.extend(sources);
+            let classes = out.join("classes");
+            let _ = std::fs::remove_dir_all(&classes);
+            std::fs::create_dir_all(&classes).map_err(|e| e.to_string())?;
+            let junit = junit_jar(&tests);
+            let mut c = Command::new(&tc.program);
+            c.current_dir(&dir).args(["-encoding", "UTF-8", "-g"]);
+            if let Some(jar) = &junit {
+                c.arg("-cp").arg(jar);
+            }
+            c.arg("-d").arg(&classes).args(&all);
+            run_tool(&mut c, control, sink, LineKind::Tool)?;
+            let java = tc.extra.clone().unwrap_or_else(|| PathBuf::from("java"));
+            let mut run = Command::new(&java);
+            Ok(match junit {
+                Some(jar) => {
+                    let reports = out.join("reports");
+                    let _ = std::fs::remove_dir_all(&reports);
+                    run.arg("-jar").arg(&jar).args(["execute", "--disable-banner", "--details=none", "--scan-class-path", "--class-path"]).arg(&classes).arg("--reports-dir").arg(&reports);
+                    (run, format!("{} -jar {} execute --scan-class-path", s(&java), s(&jar)), Some(reports))
+                }
+                None => {
+                    run.arg("-cp").arg(&classes).arg("dev.aylis.TestRunner").arg(&classes);
+                    (run, format!("{} -cp {} dev.aylis.TestRunner", s(&java), s(&classes)), None)
+                }
+            })
+        }
+        Language::Cpp => {
+            let program = out.join(crate::env::exe("tests"));
+            let main = out.join("aylis_tests_main.cpp");
+            std::fs::write(&main, "// Gerado pelo Aylis: o main dos testes (veja clients/cpp/aylis_test.hpp).\n#define AYLIS_TEST_MAIN\n#include \"aylis_test.hpp\"\n").map_err(|e| e.to_string())?;
+            // Os forms (sem o `main.cpp` do app, que tem o próprio `main`) e os testes.
+            let mut all = vec![main];
+            files(&dir.join("src/forms"), "cpp", &mut all);
+            all.extend(sources);
+            let includes = [clients.join("cpp"), dir.join("src")];
+            if tc.program.extension().is_some_and(|e| e.eq_ignore_ascii_case("bat")) {
+                // Visual C++: um .bat que prepara o ambiente e chama o cl, como o build.
+                let objs = out.join("obj");
+                std::fs::create_dir_all(&objs).map_err(|e| e.to_string())?;
+                let bat_path = |p: &Path| p.display().to_string().replace('%', "%%");
+                let list: Vec<String> = all.iter().map(|p| format!("\"{}\"", bat_path(p))).collect();
+                let inc: Vec<String> = includes.iter().map(|p| format!("/I\"{}\"", bat_path(p))).collect();
+                let script = format!(
+                    "@call \"{}\" >nul\r\ncl /nologo /std:c++17 /EHsc /utf-8 /Od {} {} /Fe:\"{}\" /Fo:\"{}/\"\r\n",
+                    bat_path(&tc.program),
+                    inc.join(" "),
+                    list.join(" "),
+                    bat_path(&program),
+                    bat_path(&objs)
+                );
+                let bat = out.join("compilar-testes.bat");
+                std::fs::write(&bat, script).map_err(|e| e.to_string())?;
+                // lint-allow: cmd-shell (o .bat é nosso: chama o vcvars do MSVC antes do cl)
+                run_tool(Command::new("cmd").current_dir(&dir).arg("/C").arg(&bat), control, sink, LineKind::Tool)?;
+            } else {
+                let mut c = Command::new(&tc.program);
+                c.current_dir(&dir).arg("-std=c++17").arg("-g");
+                for i in &includes {
+                    c.arg(format!("-I{}", i.display()));
+                }
+                c.args(&all).arg("-o").arg(&program);
+                run_tool(&mut c, control, sink, LineKind::Tool)?;
+            }
+            Ok((Command::new(&program), s(&program), None))
+        }
+        _ => {
+            // O programa que chama o executor, com as units dos testes no `uses`.
+            let units: Vec<String> = sources.iter().filter_map(|p| p.file_stem().map(|s| s.to_string_lossy().to_string())).collect();
+            let program = out.join("aylistests.lpr");
+            let text = format!(
+                "{{ Gerado pelo Aylis: roda os testes de tests/ (veja clients/pascal/aylistest.pas). }}\nprogram aylistests;\n\n{{$mode objfpc}}{{$H+}}\n\nuses\n  aylistest, {};\n\nbegin\n  RunAll;\nend.\n",
+                units.join(", ")
+            );
+            std::fs::write(&program, text).map_err(|e| e.to_string())?;
+            let unit_dir = out.join("units");
+            std::fs::create_dir_all(&unit_dir).map_err(|e| e.to_string())?;
+            let mut c = Command::new(&tc.program);
+            c.current_dir(&dir).arg("-Mobjfpc");
+            if cfg!(windows) {
+                c.arg("-Px86_64");
+            }
+            if let Some(u) = &tc.extra {
+                c.arg(format!("-Fu{}", u.join("*").display())).arg(format!("-Fu{}", u.join("rtl").display()));
+            }
+            // O FPCUnit: o `fpc.cfg` de uma instalação de 32 bits não aponta as units do alvo de
+            // 64 (o `-Px86_64`), então a pasta dele vai na linha de comando.
+            let target = if cfg!(windows) { "x86_64-win64" } else { "x86_64-linux" };
+            let fpcunit = tc.extra.clone().or_else(|| Some(tc.program.parent()?.parent()?.parent()?.join("units").join(target))).map(|u| u.join("fcl-fpcunit"));
+            if let Some(dir) = fpcunit.filter(|d| d.is_dir()) {
+                c.arg(format!("-Fu{}", dir.display()));
+            }
+            c.arg("-gw3").arg("-Fusrc").arg("-Fusrc/forms").arg("-Futests").arg(format!("-Fu{}", clients.join("pascal").display()));
+            c.arg(format!("-FU{}", unit_dir.display())).arg(format!("-FE{}", out.display())).arg(&program);
+            run_tool(&mut c, control, sink, LineKind::Tool)?;
+            let exe = out.join(crate::env::exe("aylistests"));
+            Ok((Command::new(&exe), s(&exe), None))
+        }
+    }
+}
+
+/// O JUnit do projeto (o `junit-platform-console-standalone*.jar` em `tests/lib`), se houver.
+fn junit_jar(tests: &Path) -> Option<PathBuf> {
+    std::fs::read_dir(tests.join("lib")).ok()?.flatten().map(|e| e.path()).find(|p| {
+        let name = p.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
+        name.starts_with("junit-platform-console-standalone") && name.ends_with(".jar")
+    })
+}
+
+/// Os relatórios em XML do JUnit (`TEST-*.xml`, o formato do Ant) como as linhas do executor
+/// mínimo, para um analisador só.
+fn junit_lines(reports: &Path) -> Vec<String> {
+    let mut lines = Vec::new();
+    let Ok(entries) = std::fs::read_dir(reports) else { return lines };
+    for path in entries.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "xml")) {
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            lines.extend(junit_xml_lines(&text));
+        }
+    }
+    lines
+}
+
+fn junit_xml_lines(text: &str) -> Vec<String> {
+    fn attr(tag: &str, name: &str) -> String {
+        let key = format!(" {name}=\"");
+        tag.find(&key)
+            .and_then(|i| tag[i + key.len()..].split('"').next())
+            .map(|v| v.replace("&quot;", "\"").replace("&lt;", "<").replace("&gt;", ">").replace("&apos;", "'").replace("&amp;", "&"))
+            .unwrap_or_default()
+    }
+    let mut lines = Vec::new();
+    for chunk in text.split("<testcase").skip(1) {
+        let head = chunk.split('>').next().unwrap_or_default();
+        let name = format!("{}.{}", attr(head, "classname"), attr(head, "name").trim_end_matches("()"));
+        // O caso vai até o fim dele (`/>` no próprio cabeçalho, ou `</testcase>`).
+        let body = if head.ends_with('/') { "" } else { chunk.split("</testcase>").next().unwrap_or_default() };
+        let line = if let Some(at) = body.find("<failure").or_else(|| body.find("<error")) {
+            let message = attr(body[at..].split('>').next().unwrap_or_default(), "message").replace(['\r', '\n'], " ");
+            format!("AYLIS_TEST FAIL {name} {message}")
+        } else if body.contains("<skipped") {
+            format!("AYLIS_TEST skip {name}")
+        } else {
+            format!("AYLIS_TEST ok {name}")
+        };
+        lines.push(line);
+    }
+    lines
 }
 
 /// O comando de teste de uma linguagem (menos Rust) e como ele aparece.
@@ -151,6 +346,7 @@ pub fn parse(language: Language, lines: &[String]) -> (Vec<TestCase>, Vec<(Strin
         Language::Rust => parse_rust(lines),
         Language::Python => parse_python(lines),
         Language::Go => parse_go(lines),
+        Language::Java | Language::Cpp | Language::Pascal => parse_aylis(lines),
         _ => (Vec::new(), Vec::new()),
     }
 }
@@ -225,6 +421,28 @@ fn parse_python(lines: &[String]) -> (Vec<TestCase>, Vec<(String, String)>) {
     (cases, failures)
 }
 
+/// A linha do executor mínimo (Java, C++, Pascal): `AYLIS_TEST ok|FAIL|skip nome [mensagem]`.
+fn parse_aylis(lines: &[String]) -> (Vec<TestCase>, Vec<(String, String)>) {
+    let mut cases = Vec::new();
+    let mut failures = Vec::new();
+    for line in lines {
+        let Some(rest) = line.trim().strip_prefix("AYLIS_TEST ") else { continue };
+        let mut parts = rest.splitn(3, ' ');
+        let (Some(result), Some(name)) = (parts.next(), parts.next()) else { continue };
+        let outcome = match result {
+            "ok" => Outcome::Passed,
+            "FAIL" => Outcome::Failed,
+            "skip" => Outcome::Ignored,
+            _ => continue,
+        };
+        if outcome == Outcome::Failed {
+            failures.push((name.to_string(), parts.next().unwrap_or_default().trim().to_string()));
+        }
+        cases.push(TestCase { name: name.to_string(), outcome });
+    }
+    (cases, failures)
+}
+
 /// `--- PASS|FAIL|SKIP: TestX (0.00s)`; a falha leva as linhas do teste (`x_test.go:12: ...`).
 fn parse_go(lines: &[String]) -> (Vec<TestCase>, Vec<(String, String)>) {
     let mut cases = Vec::new();
@@ -286,6 +504,48 @@ mod tests {
         assert_eq!(failures.len(), 1);
         assert_eq!(failures[0].0, "test_divide (test_calc.Calc.test_divide)");
         assert!(failures[0].1.contains("AssertionError: 2 != 3"), "{:?}", failures[0]);
+    }
+
+    #[test]
+    fn the_minimal_runner_and_junit_xml_give_each_test() {
+        let out = lines("Compilando...
+AYLIS_TEST ok forms.MotorTest.soma
+AYLIS_TEST FAIL forms.MotorTest.divide esperado 2, veio 3
+AYLIS_TEST skip TTestMotor.Lento
+AYLIS_TEST_DONE 1 ok, 1 falharam");
+        let (cases, failures) = parse(Language::Java, &out);
+        assert_eq!(cases.iter().map(|c| c.outcome).collect::<Vec<_>>(), [Outcome::Passed, Outcome::Failed, Outcome::Ignored]);
+        assert_eq!(failures, [("forms.MotorTest.divide".to_string(), "esperado 2, veio 3".to_string())]);
+        // O relatório do JUnit (o formato do Ant) vira as mesmas linhas.
+        let xml = r#"<?xml version="1.0"?><testsuite name="JUnit Jupiter"><testcase name="soma()" classname="MotorTest" time="0"/><testcase name="divide()" classname="MotorTest" time="0"><failure message="expected: &lt;2&gt; but was: &lt;3&gt;" type="org.opentest4j.AssertionFailedError">pilha</failure></testcase><testcase name="lento()" classname="MotorTest"><skipped/></testcase></testsuite>"#;
+        assert_eq!(junit_xml_lines(xml), ["AYLIS_TEST ok MotorTest.soma", "AYLIS_TEST FAIL MotorTest.divide expected: <2> but was: <3>", "AYLIS_TEST skip MotorTest.lento"]);
+    }
+
+    /// Os testes da Calculadora em Java, C++ e Free Pascal (`examples/Calculadora/<linguagem>/tests`)
+    /// pelo executor mínimo; a linguagem sem compilador na máquina é pulada com aviso.
+    #[test]
+    fn java_cpp_and_pascal_run_the_project_tests() {
+        let root = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../..")).canonicalize().unwrap();
+        let root = PathBuf::from(root.display().to_string().trim_start_matches(r"\\?\"));
+        for language in [Language::Java, Language::Cpp, Language::Pascal] {
+            if let Err(e) = crate::hostlang::find(language) {
+                eprintln!("{}: pulado ({e})", language.name());
+                continue;
+            }
+            let mut project = Project::open(root.join("examples/Calculadora/Calculadora.aylisproj")).unwrap();
+            project.language = language;
+            let mut output = Vec::new();
+            let report = run(&project, &Control::new(), &mut |e| {
+                if let Event::Line(line, _) = e {
+                    output.push(line);
+                }
+            })
+            .unwrap_or_else(|e| panic!("{}: {e}", language.name()));
+            let passed = report.count(Outcome::Passed);
+            assert!(report.success && passed == 2 && report.count(Outcome::Failed) == 0, "{}: {passed} passaram, {:?}
+{}", language.name(), report.failures, output.join("
+"));
+        }
     }
 
     #[test]

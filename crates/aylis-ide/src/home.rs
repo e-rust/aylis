@@ -133,7 +133,7 @@ pub fn sync(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let show = visible(state) && !code;
     // "Design | Código" só onde há o editor de código (a lite do navegador não tem).
     let code_tab = crate::lite::can(crate::lite::Capability::Code);
-    // As abas ficam em cima do designer e do código (forms e código juntos, como no Delphi).
+    // As abas ficam em cima do designer e do código (forms e código juntos).
     let views = [(ids.surface, !show && !code), (ids.tabs, !show), (ids.code_host, code), (ids.view_bar, !show && code_tab)];
     for (id, on) in views {
         if ui.control(id).is_some_and(|c| c.visible() != on) {

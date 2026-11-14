@@ -12,14 +12,14 @@ Gráfico de profundidade: compras acumuladas (verde, à esquerda do meio) e vend
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `decimals` | Casas decimais | inteiro |  |
+| `decimals` | Casas decimais | inteiro | Casas decimais dos preços. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `bids` | Ofertas de compra | texto |  |
-| `asks` | Ofertas de venda | texto |  |
+| `bids` | Ofertas de compra | texto | As ofertas de compra: `"38.50:1200;38.49:800"` (preço:quantidade). |
+| `asks` | Ofertas de venda | texto | As ofertas de venda, no mesmo formato (preço:quantidade). |
 
 ## Em código
 

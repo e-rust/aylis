@@ -12,26 +12,26 @@ Segmentador de filtro (o "slicer" dos painéis): os valores como botões; marcar
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
+| `title` | Título | texto | O título, no topo. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `multi` | Várias escolhas | lógico |  |
+| `multi` | Várias escolhas | lógico | Deixa marcar vários valores; desligado, marcar um desmarca o outro. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `selected` | Escolhidos | texto |  |
+| `items` | Itens | texto | Os valores que viram botões, separados por `;`. |
+| `selected` | Escolhidos | texto | Os valores marcados, separados por `;`; vazio: todos (sem filtro). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

@@ -12,15 +12,15 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `kind` | Tipo | um de: `line`, `bar`, `area`, `pie`, `donut`, `sparkline`, `heatmap`, `scatter`, `stacked_bar`, `waterfall`, `funnel`, `treemap`, `radar`, `horizontal_bar`, `bubble`, `polar_area`, `stacked_line`, `stacked_area`, `mixed`, `sankey`, `waffle` |  |
-| `title` | Título | texto |  |
-| `legend` | Legenda | lógico |  |
+| `kind` | Tipo | um de: `line`, `bar`, `area`, `pie`, `donut`, `sparkline`, `heatmap`, `scatter`, `stacked_bar`, `waterfall`, `funnel`, `treemap`, `radar`, `horizontal_bar`, `bubble`, `polar_area`, `stacked_line`, `stacked_area`, `mixed`, `sankey`, `waffle` | O tipo do gráfico: barras, linhas, área, pizza, rosca, dispersão... |
+| `title` | Título | texto | O título em cima do gráfico; vazio: sem título. |
+| `legend` | Legenda | lógico | Mostra a legenda com o nome de cada série. |
 | `stepped` | Em degraus | lógico | Linhas em degraus. |
 | `tension` | Curvatura | número | Linhas suavizadas (0 = retas; até 1), sem passar dos pontos (monotônica). |
 | `value_format` | Formato dos números | texto | Números dos eixos e das dicas: vazio ou `short` (60k, 1.2M), `full` (60.000, com o separador do idioma) ou `percent` (60%). |
 | `label_angle` | Ângulo dos rótulos | número | Ângulo dos rótulos do eixo X, em graus (45: inclinados, para nomes longos). |
 | `title_align` | Alinhamento do título | texto | Onde fica o título: `left`, `center` ou `right`. |
-| `title_bold` | Título em negrito | lógico |  |
+| `title_bold` | Título em negrito | lógico | O título em negrito. |
 | `area_opacity` | Opacidade da área | número | Opacidade do preenchimento das áreas (0 a 1). |
 | `legend_position` | Posição da legenda | texto | Onde fica a legenda: `top_right`, `top_left`, `top` ou `bottom`. |
 | `stacked` | Empilhado | lógico | Barras deitadas empilhadas (com o tipo `horizontal_bar`). |
@@ -39,22 +39,22 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data_source` | Fonte de dados | componente |  |
-| `label_field` | Campo dos rótulos | texto |  |
-| `value_fields` | Campos dos valores | texto |  |
-| `labels` | Rótulos | texto |  |
-| `series` | Séries | texto |  |
+| `data_source` | Fonte de dados | componente | O `DataSource` de onde vêm os registros (um ponto por registro). |
+| `label_field` | Campo dos rótulos | texto | O campo com o rótulo de cada ponto (o eixo X); vazio: sem rótulos. |
+| `value_fields` | Campos dos valores | texto | Os campos com os valores, separados por `;` (`Vendas;Custos`): uma série por campo. |
+| `labels` | Rótulos | texto | Os rótulos do eixo X (ou das fatias), separados por `;` (`Jan;Fev;Mar`). |
+| `series` | Séries | texto | As séries, separadas por `\|`: `Nome=10,20,30`, com opções entre colchetes (`Custos[line;right;#EF4444]=5,8,9`). |
 | `json` | Dados (JSON) | texto | Os dados no formato do Chart.js (vazio: `labels` e `series`). |
 | `clicked_series` | Série clicada | inteiro | O último ponto clicado (série e índice; -1 = nenhum). |
-| `clicked_index` | Item clicado | inteiro |  |
+| `clicked_index` | Item clicado | inteiro | O índice do último ponto clicado na série (-1 = nenhum). |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `auto_scale` | Escala automática | lógico | Eixo Y automático; sem ele, de `y_min` a `y_max`. |
-| `y_min` | Mínimo do eixo Y | número |  |
-| `y_max` | Máximo do eixo Y | número |  |
+| `y_min` | Mínimo do eixo Y | número | O começo do eixo Y quando o `auto_scale` está desligado. |
+| `y_max` | Máximo do eixo Y | número | O fim do eixo Y quando o `auto_scale` está desligado. |
 | `log_scale` | Escala logarítmica | lógico | Escala logarítmica no eixo Y. |
 | `reverse` | Invertido | lógico | Eixo Y invertido (o menor em cima). |
 | `time_axis` | Eixo de tempo | lógico | Os rótulos são datas (`2026-10-27`, `2026-10-27 14:30`): o eixo X é de tempo. |

@@ -27,8 +27,11 @@ pub struct TitleBar {
     pub base: ControlBase,
     /// Vazio: o `caption` do form.
     pub caption: String,
+    /// Mostra o botão minimizar.
     pub show_minimize: bool,
+    /// Mostra o botão maximizar/restaurar.
     pub show_maximize: bool,
+    /// Mostra o botão fechar.
     pub show_close: bool,
     hover: Cell<Option<Part>>,
     pressed: Cell<Option<Part>>,

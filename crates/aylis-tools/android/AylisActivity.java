@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.os.Build;
@@ -2818,28 +2819,39 @@ public class AylisActivity extends NativeActivity {
     }
 
     /**
-     * Pinta as barras de status e de navegação com a cor do app; light = fundo claro
-     * (ícones escuros).
+     * As barras do sistema (o SystemBars do Aylis): a de status com statusColor e a de
+     * navegação com navColor; light* = fundo claro (ícones escuros); show* = aparece (escondida,
+     * volta deslizando da borda, por um tempo).
      */
-    public void setSystemBars(final int color, final boolean light) {
+    public void setSystemBars(final int statusColor, final int navColor, final boolean lightStatus, final boolean lightNav,
+            final boolean showStatus, final boolean showNav) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Window w = getWindow();
                 w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                w.setStatusBarColor(color);
-                w.setNavigationBarColor(color);
+                w.setStatusBarColor(statusColor);
+                w.setNavigationBarColor(navColor);
                 if (Build.VERSION.SDK_INT >= 30) {
                     WindowInsetsController c = w.getInsetsController();
                     if (c != null) {
-                        int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                        c.setSystemBarsAppearance(light ? mask : 0, mask);
+                        int appearance = (lightStatus ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0)
+                                | (lightNav ? WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS : 0);
+                        c.setSystemBarsAppearance(appearance,
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                        c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                        if (showStatus) c.show(WindowInsets.Type.statusBars()); else c.hide(WindowInsets.Type.statusBars());
+                        if (showNav) c.show(WindowInsets.Type.navigationBars()); else c.hide(WindowInsets.Type.navigationBars());
                     }
                 } else {
                     View d = w.getDecorView();
-                    int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
                     int v = d.getSystemUiVisibility();
-                    d.setSystemUiVisibility(light ? (v | flags) : (v & ~flags));
+                    v = lightStatus ? (v | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) : (v & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    v = lightNav ? (v | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR) : (v & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+                    int hide = (showStatus ? 0 : View.SYSTEM_UI_FLAG_FULLSCREEN) | (showNav ? 0 : View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+                    v = (v & ~(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)) | hide
+                            | (hide != 0 ? View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY : 0);
+                    d.setSystemUiVisibility(v);
                 }
             }
         });

@@ -10,8 +10,8 @@ Um servidor de blocos de mapa (o único caminho para o `MapView` trocar de servi
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `url` | Endereço (URL) | texto |  |
-| `attribution` | Atribuição | texto |  |
+| `url` | Endereço (URL) | texto | O endereço dos blocos, com `{z}`, `{x}` e `{y}` (e `{s}`, trocado por `a`, `b` ou `c`). |
+| `attribution` | Atribuição | texto | O crédito que a licença do servidor pede, mostrado no canto do mapa. |
 
 ## Em código
 

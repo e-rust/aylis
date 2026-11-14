@@ -1,4 +1,4 @@
-//! [`DataGrid`]: grade de registros virtualizada (como o `TDBGrid`).
+//! [`DataGrid`]: grade de registros virtualizada.
 
 use std::any::Any;
 use std::collections::BTreeSet;
@@ -185,7 +185,7 @@ enum Drag {
 /// Quanto o mouse anda num título antes de virar arrasto da coluna.
 const MOVE_THRESHOLD: f32 = 5.0;
 
-/// Grade de registros (como o `TDBGrid`).
+/// Grade de registros.
 ///
 /// - **virtualizada**: só as linhas visíveis são lidas e pintadas, então o custo não
 ///   depende do total de registros;
@@ -215,24 +215,38 @@ const MOVE_THRESHOLD: f32 = 5.0;
 /// - `cursor_color`: a cor da borda da célula atual (vazia = a cor de destaque do tema).
 pub struct DataGrid {
     pub base: ControlBase,
+    /// O `DataSource` de onde vêm os registros.
     pub data_source: Option<ComponentId>,
     /// Campos a mostrar, separados por `;`, cada um com a largura opcional depois de `:`
     /// (`"sigla:44;nome:170;regiao"`). Vazio = todos os campos visíveis.
     pub columns: String,
+    /// A altura de cada linha, em pontos.
     pub row_height: f32,
+    /// Só leitura: as células não editam (mesmo com o dataset editável).
     pub read_only: bool,
+    /// O clique no título ordena pela coluna (de novo: decrescente; na terceira, volta à ordem
+    /// do dataset); Ctrl+clique junta colunas à ordem.
     pub sortable: bool,
     /// Arrastar o título muda a ordem das colunas (as fixas trocam só entre si). A nova
     /// ordem chega no `on_column_moved`, no formato de `columns` (com as larguras).
     pub column_move: bool,
+    /// Quantas colunas da esquerda ficam paradas ao rolar para os lados (0: nenhuma).
     pub fixed_columns: u32,
+    /// Uma linha embaixo do título para filtrar cada coluna (Enter aplica; vira o `filter` do
+    /// dataset).
     pub filter_row: bool,
+    /// Seleciona várias linhas: Ctrl+clique marca e desmarca, Shift+clique estende, Ctrl+A
+    /// seleciona tudo.
     pub multi_select: bool,
+    /// O rodapé com totais: `"valor=sum;id=count"` (sum, avg, min, max, count), sobre os
+    /// registros carregados. Vazio: sem rodapé.
     pub footer: String,
+    /// Digitar procura na coluna atual o primeiro texto que começa com o digitado (em vez de
+    /// editar a célula).
     pub incremental_search: bool,
     /// A borda da célula atual; `None` usa a cor de destaque (`primary`) do tema.
     pub cursor_color: Option<Color>,
-    /// A coluna da esquerda com a seta do registro atual (o indicador do `TDBGrid`); sem ela, a
+    /// A coluna da esquerda com a seta do registro atual; sem ela, a
     /// grade começa nos dados (relatório do InsightDB, 11/11).
     pub indicator: bool,
     /// O fundo destacado na linha do registro atual; sem ele, só a seleção e o passar do mouse.
@@ -277,13 +291,15 @@ pub struct DataGrid {
     /// As fontes da última pintura (o texto das células e o do cabeçalho), para medir no
     /// ajuste da largura da coluna.
     text_style: std::cell::RefCell<Option<(aylis_core::TextStyle, aylis_core::TextStyle)>>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for DataGrid {
     fn default() -> Self {
         let mut base = ControlBase::new(480.0, 300.0);
         base.set_can_focus(true).set_clip_children(true);
-        Self {
+        Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             data_source: None,
             columns: String::new(),
@@ -697,7 +713,7 @@ impl DataGrid {
         self.col = self.col.min(self.cols.len().saturating_sub(1));
     }
 
-    /// Pintura personalizada da linha e das células, como o `OnDrawColumnCell` do Delphi:
+    /// Pintura personalizada da linha e das células:
     /// para cada linha visível, `paint` é chamado uma vez para a linha inteira
     /// (`column = None`) e uma vez por coluna, com os dados da linha; devolve o estilo
     /// (fundo, cor, negrito, texto trocado) ou uma pintura livre. Chamado ao preparar as
@@ -1244,6 +1260,7 @@ impl Component for DataGrid {
     }
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         data_source: Option<ComponentId> => "Data",
         columns: String => "Data",
         row_height: f32 => "Appearance",
@@ -1689,7 +1706,7 @@ impl Component for DataGrid {
         ctx.set_handled();
     }
 
-    /// Começar a digitar abre o editor com a tecla digitada (como na VCL), ou, com
+    /// Começar a digitar abre o editor com a tecla digitada, ou, com
     /// `incremental_search`, procura na coluna atual.
     fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {
         if self.editor.is_some() || self.filter_editor.is_some() {

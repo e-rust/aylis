@@ -1,4 +1,4 @@
-//! Memo: texto de várias linhas (como o `TMemo`).
+//! Memo: texto de várias linhas.
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -11,7 +11,7 @@ use aylis_core::{
 use crate::leaf_control;
 use crate::syntax::{self, Span};
 
-/// Texto de várias linhas (como o `TMemo`).
+/// Texto de várias linhas.
 ///
 /// - Enter quebra a linha (Tab continua passando o foco, como o `WantTabs = False`);
 /// - setas, Home/End (da linha; com Ctrl, do texto), PageUp/PageDown, Ctrl+A/C/X/V;
@@ -19,7 +19,7 @@ use crate::syntax::{self, Span};
 /// - a roda (e o dedo) rola; `on_change` a cada alteração; `on_caret_move` quando o
 ///   cursor anda (teclado ou mouse).
 ///
-/// Texto (como o `TextSettings` do FMX): `wrap` quebra as linhas longas na largura do
+/// Texto: `wrap` quebra as linhas longas na largura do
 /// campo (também durante a edição: setas, Home/End e o mouse seguem as linhas quebradas);
 /// sem `wrap`, o texto rola na horizontal e, fora da edição, `trimming` põe "…" nas linhas
 /// que não cabem. `h_align` alinha cada linha; o `justify` (com `wrap`, fora da edição)
@@ -35,11 +35,14 @@ use crate::syntax::{self, Span};
 /// calha dispara `on_gutter_click` com a linha (a partir de 1).
 pub struct Memo {
     pub base: ControlBase,
+    /// O texto todo, com as linhas separadas por quebra de linha.
     pub text: String,
+    /// O texto apagado que aparece com o campo vazio.
     pub placeholder: String,
     /// A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de
     /// um painel ou numa tabela). Ligada por padrão.
     pub border: bool,
+    /// Só leitura: dá para selecionar e copiar, mas não editar.
     pub read_only: bool,
     /// Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui,
     /// a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução.
@@ -50,14 +53,17 @@ pub struct Memo {
     /// e se só os liberados valem (`allowed_chars = "0-9"` com `only_allowed`: só números).
     /// Faixas como `a-z`; `-` é o hífen. Vale para o digitado e o colado.
     pub allowed_chars: String,
+    /// Os caracteres que não entram (faixas como em `allowed_chars`).
     pub blocked_chars: String,
+    /// Só entram os caracteres de `allowed_chars`.
     pub only_allowed: bool,
     /// Trocas do que o teclado produz: pares "digitado, entregue" (`",."` troca a vírgula por
     /// ponto), ao digitar e ao colar; vale também o de um contêiner (veja o `Form`).
     pub char_map: String,
-    /// Maiúsculas ou minúsculas no valor (o `CharCase` do Delphi): ao digitar, ao colar e quando
+    /// Maiúsculas ou minúsculas no valor: ao digitar, ao colar e quando
     /// o código grava o `text`. Ligado a um campo, manda o `char_case` do campo.
     pub char_case: aylis_core::CharCase,
+    /// O alinhamento do texto na linha (esquerda, centro, direita).
     pub h_align: TextAlign,
     /// Quebra automática de linha.
     pub wrap: bool,
@@ -65,10 +71,12 @@ pub struct Memo {
     pub trimming: Trimming,
     /// Linguagem do realce (vazio = texto comum).
     pub syntax: String,
+    /// Mostra o número de cada linha à esquerda.
     pub line_numbers: bool,
+    /// O Tab entra no texto (senão, passa o foco para o próximo controle).
     pub want_tabs: bool,
     /// Quantas linhas cada dente da roda do mouse rola (o touchpad acompanha o dedo). Com o
-    /// Ctrl, cada dente rola uma página, como no Delphi.
+    /// Ctrl, cada dente rola uma página.
     pub wheel_lines: u32,
     /// Sublinha as palavras erradas; o clique direito numa delas mostra as correções.
     pub spellcheck: bool,
@@ -81,7 +89,9 @@ pub struct Memo {
     pub keyboard_suggestions: bool,
     /// Cor do cursor; vazio: a cor do texto.
     pub caret_color: Option<aylis_core::Color>,
+    /// A largura do cursor, em pontos.
     pub caret_width: f32,
+    /// O formato do cursor: barra, bloco ou sublinhado.
     pub caret_style: crate::CaretStyle,
     /// Intervalo de piscar (ms); 0: não pisca.
     pub caret_blink: u32,
@@ -99,12 +109,16 @@ pub struct Memo {
     /// linhas).
     bookmarks: Vec<marks::Bookmark>,
     marks_text: String,
+    /// A chave do texto que os marcadores acompanham (cada edição daqui os anda direto; outra
+    /// chave: o texto mudou por fora e eles se acertam comparando com `marks_text`).
+    marks_key: Cell<u64>,
     /// Largura da calha na última pintura (para o clique).
     gutter_width: Cell<f32>,
     /// Realce já calculado: (hash do texto, linguagem, trechos de cada linha).
     highlight: RefCell<Option<(u64, String, Rc<Vec<Vec<Span>>>)>>,
-    /// O realce por gramática TextMate, refeito só a partir da linha mudada.
-    textmate: RefCell<crate::textmate::LineCache>,
+    /// O realce retomado da linha editada (veja `memo_highlight.rs`), pela chave do texto que
+    /// ele acompanha.
+    incremental: RefCell<(u64, highlight::Highlight)>,
     /// O realce por gramática ainda não chegou ao fim do texto (pede outro quadro).
     highlight_pending: std::cell::Cell<bool>,
     caret: usize,
@@ -141,23 +155,23 @@ pub struct Memo {
     /// Arrastando o polegar de uma barra: se é a horizontal e onde ele foi pego (a
     /// distância do começo dele).
     bar_grab: Option<(bool, f32)>,
-    /// A largura da linha mais larga, guardada pelo resumo do texto (medir tudo a cada
-    /// pintura sairia caro num arquivo grande).
-    widest: Cell<(u64, f32)>,
+    /// A largura da linha mais larga, guardada pela fonte e pela chave do texto (medir tudo a
+    /// cada pintura sairia caro num arquivo grande), e as linhas editadas desde então (medidas
+    /// na próxima pintura: a mais larga só cresce até o texto ser trocado).
+    widest: RefCell<(u64, u64, f32, Vec<usize>)>,
     /// O começo de cada linha do texto (em caracteres e em bytes), pelo hash do texto: a
     /// pintura acha a posição de um caractere sem contar o texto desde o começo.
     line_table: RefCell<(u64, Rc<Vec<(usize, usize)>>)>,
-    /// As linhas visuais já montadas, pela chave do texto, das dobras e da largura (montar
-    /// as milhares de um fonte a cada quadro e a cada evento da roda pesava).
-    rows_cache: RefCell<(u64, Rc<Vec<Row>>)>,
+    /// As linhas visuais já montadas, pela chave do texto e pela das dobras e da largura
+    /// (montar as milhares de um fonte a cada quadro e a cada evento da roda pesava). Uma
+    /// edição troca só as da linha editada (sem quebra automática nem dobras).
+    rows_cache: RefCell<(u64, u64, Rc<Vec<Row>>)>,
     /// Muda a cada edição do texto (a chave dos caches, sem passar o texto inteiro por um
     /// hash a cada quadro: num fonte de um milhão de linhas, isso sozinho levava dezenas de ms).
     text_rev: Cell<u64>,
     /// O par do colchete do cursor, pela chave do texto e pela posição (achar o par pode
     /// andar o arquivo inteiro: uma vez por mudança, não a cada quadro).
     bracket_cache: Cell<Option<(u64, usize, Option<(usize, usize)>)>>,
-    /// O realce sem gramática de um texto grande, feito aos poucos (pela chave do texto).
-    progressive: RefCell<Option<(u64, syntax::Progressive)>>,
     /// A tabela do quadro sendo pintado (só durante a pintura: o texto não muda nela).
     painting: RefCell<Option<Rc<Vec<(usize, usize)>>>>,
     /// Os traços do minimapa já calculados (relativos ao canto da faixa), pela chave do texto,
@@ -181,10 +195,13 @@ pub struct Memo {
     minimap_drag: bool,
     /// Os cursores além do principal (âncora, cursor), como no VS Code.
     extra: Vec<(usize, usize)>,
-    // O desfazer: os estados de antes e o último tipo de mudança (para juntar digitações).
-    undo_stack: Vec<code::Snapshot>,
-    redo_stack: Vec<code::Snapshot>,
+    // O desfazer: as diferenças de cada passo, o último tipo de mudança (para juntar
+    // digitações) e a chave do texto depois da última edição guardada (outra chave: o texto
+    // mudou por fora, e as posições guardadas não valem mais).
+    undo_stack: Vec<code::Step>,
+    redo_stack: Vec<code::Step>,
     last_edit: Option<(code::EditKind, f64, usize)>,
+    history_key: u64,
     // A lista de sugestões: todas, as que casam com o digitado, onde começa a palavra, a
     // marcada, a primeira à vista e o retângulo da última pintura (para o clique).
     suggestions: Vec<code::Suggestion>,
@@ -202,17 +219,19 @@ pub struct Memo {
     /// A palavra (o começo dela) sob o mouse, para avisar só quando muda.
     hover_word: Option<usize>,
     /// Com Ctrl sobre um nome (código): o trecho sublinhado, com o cursor de mãozinha, que o
-    /// Ctrl+clique leva à declaração (como no VS Code e no Delphi).
+    /// Ctrl+clique leva à declaração (como no VS Code).
     link: Option<(usize, usize)>,
     /// Onde o mouse está (local), para o sublinhado aparecer ao apertar o Ctrl parado.
     pointer_at: Option<PointF>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for Memo {
     fn default() -> Self {
         let mut base = ControlBase::new(240.0, 120.0);
         base.set_can_focus(true).set_cursor(CursorShape::Text);
-        Self {
+        Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             text: String::new(),
             placeholder: String::new(),
@@ -244,11 +263,12 @@ impl Default for Memo {
             completion: String::new(),
             spell_menu: None,
             highlight: RefCell::new(None),
-            textmate: RefCell::default(),
+            incremental: RefCell::default(),
             highlight_pending: std::cell::Cell::new(false),
             breakpoints: Vec::new(),
             bookmarks: Vec::new(),
             marks_text: String::new(),
+            marks_key: Cell::new(0),
             exec_line: None,
             exec_note: String::new(),
             gutter_width: Cell::new(0.0),
@@ -262,12 +282,11 @@ impl Default for Memo {
             bar: Cell::new(None),
             hbar: Cell::new(None),
             bar_grab: None,
-            widest: Cell::new((0, 0.0)),
+            widest: RefCell::new((0, 0, 0.0, Vec::new())),
             line_table: RefCell::new((0, Rc::new(Vec::new()))),
-            rows_cache: RefCell::new((0, Rc::new(Vec::new()))),
+            rows_cache: RefCell::new((0, 0, Rc::new(Vec::new()))),
             text_rev: Cell::new(0),
             bracket_cache: Cell::new(None),
-            progressive: RefCell::new(None),
             painting: RefCell::new(None),
             minimap_strokes: RefCell::new((0, Rc::new(Vec::new()))),
             bar_hover: Cell::new(false),
@@ -290,6 +309,7 @@ impl Default for Memo {
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
             last_edit: None,
+            history_key: 0,
             suggestions: Vec::new(),
             suggest_shown: Vec::new(),
             suggest_start: 0,
@@ -373,7 +393,7 @@ impl Memo {
         Self { text: text.into(), ..Default::default() }
     }
 
-    /// Até onde a rolagem vertical vai. No editor de código, como no Delphi, até a última
+    /// Até onde a rolagem vertical vai. No editor de código, até a última
     /// linha ficar no alto (quando o texto passa da altura); no `Memo` comum, até ela
     /// aparecer embaixo. Em pixels inteiros, como a rolagem copiada (o deslize arredonda):
     /// um fim fracionário arredondado para cima voltava meio pixel na pintura.
@@ -422,11 +442,9 @@ impl Memo {
 
     /// Acrescenta uma linha no fim (como o `Lines.Add`).
     pub fn add_line(&mut self, line: &str) {
-        if !self.text.is_empty() {
-            self.text.push('\n');
-        }
-        self.text.push_str(line);
-        self.text_changed();
+        let end = self.len();
+        let piece = if self.text.is_empty() { line.to_string() } else { format!("\n{line}") };
+        self.splice(end, end, &piece);
         let end = self.len();
         self.caret = end;
         self.anchor = end;
@@ -539,23 +557,31 @@ impl Memo {
     fn rows(&self, width: f32, measure: &mut dyn FnMut(&str) -> f32) -> Rc<Vec<Row>> {
         // Guardadas: só o texto, as dobras e (com a quebra automática) a largura e a fonte
         // mudam as linhas visuais.
-        let wraps = self.wrap && self.syntax.is_empty() && width > 0.0;
-        let key = {
-            use std::hash::{Hash, Hasher};
-            let mut h = std::collections::hash_map::DefaultHasher::new();
-            (self.text_key(), self.folding, &*self.folds.borrow(), wraps).hash(&mut h);
-            if wraps {
-                let style = self.text_style.borrow();
-                (width.to_bits(), style.font.size.to_bits(), &style.font.family, style.font.weight as u16).hash(&mut h);
+        let text = self.text_key();
+        let params = self.rows_params(width);
+        {
+            let (t, p, rows) = &*self.rows_cache.borrow();
+            if *t == text && *p == params {
+                return rows.clone();
             }
-            h.finish()
-        };
-        if let Some(rows) = (self.rows_cache.borrow().0 == key).then(|| self.rows_cache.borrow().1.clone()) {
-            return rows;
         }
         let rows = Rc::new(self.build_rows(width, measure));
-        *self.rows_cache.borrow_mut() = (key, rows.clone());
+        *self.rows_cache.borrow_mut() = (text, params, rows.clone());
         rows
+    }
+
+    /// A chave do que, além do texto, muda as linhas visuais: as dobras e (com a quebra
+    /// automática) a largura e a fonte.
+    fn rows_params(&self, width: f32) -> u64 {
+        use std::hash::{Hash, Hasher};
+        let wraps = self.wrap && self.syntax.is_empty() && width > 0.0;
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (self.folding, &*self.folds.borrow(), wraps).hash(&mut h);
+        if wraps {
+            let style = self.text_style.borrow();
+            (width.to_bits(), style.font.size.to_bits(), &style.font.family, style.font.weight as u16).hash(&mut h);
+        }
+        h.finish()
     }
 
     fn build_rows(&self, width: f32, measure: &mut dyn FnMut(&str) -> f32) -> Vec<Row> {
@@ -600,37 +626,30 @@ impl Memo {
                 return spans.clone();
             }
         }
-        let spans = match crate::textmate::grammar_for(&self.syntax) {
-            Some(grammar) => {
-                // Solta o realce anterior: o cache edita os trechos no lugar.
-                self.highlight.borrow_mut().take();
-                let (spans, done) = self.textmate.borrow_mut().update(&grammar, &self.text, Some(std::time::Duration::from_millis(Self::HIGHLIGHT_BUDGET_MS)));
-                // Arquivo grande: o resto vem nos próximos quadros.
-                self.highlight_pending.set(!done);
-                if !done {
-                    return spans;
-                }
-                spans
-            }
-            None if self.text.len() <= Self::PROGRESSIVE_FROM => Rc::new(syntax::highlight(&self.syntax, &self.text)),
-            // Grande: aos poucos, alguns ms por quadro (de uma vez, um fonte de um milhão de
-            // linhas travava mais de um segundo ao abrir).
-            None => {
-                let mut slot = self.progressive.borrow_mut();
-                if slot.as_ref().is_none_or(|(k, _)| *k != key) {
-                    *slot = Some((key, syntax::Progressive::new(&self.syntax)));
-                }
-                let (_, progressive) = slot.as_mut().expect("posto acima");
-                let (spans, done) = progressive.advance(&self.text, std::time::Duration::from_millis(Self::HIGHLIGHT_BUDGET_MS));
-                self.highlight_pending.set(!done);
-                if !done {
-                    return spans;
-                }
-                *slot = None;
-                spans
-            }
+        // Solta o realce anterior: o realce incremental edita os trechos no lugar.
+        self.highlight.borrow_mut().take();
+        let table = self.lines_of(key);
+        let mut slot = self.incremental.borrow_mut();
+        // O texto mudou por fora (ou a linguagem): começa do zero. As edições daqui acertam o
+        // realce na hora (veja `splice`) e ele continua da linha editada.
+        if slot.0 != key || !slot.1.is_for(&self.syntax) || slot.1.lines() != table.len() {
+            *slot = (key, highlight::Highlight::start(&self.syntax, table.len()));
+        }
+        // Pela gramática ou num texto grande, alguns ms por quadro (de uma vez, um fonte de um
+        // milhão de linhas travava mais de um segundo ao abrir); o resto vem nos próximos.
+        let grammar = matches!(slot.1, highlight::Highlight::Grammar { .. });
+        let budget = (grammar || self.text.len() > Self::PROGRESSIVE_FROM).then(|| std::time::Duration::from_millis(Self::HIGHLIGHT_BUDGET_MS));
+        let text = self.text.as_str();
+        let line = |i: usize| {
+            let a = table[i].1;
+            let b = table.get(i + 1).map_or(text.len(), |next| next.1 - 1);
+            &text[a..b]
         };
-        *self.highlight.borrow_mut() = Some((key, self.syntax.clone(), spans.clone()));
+        let (spans, done) = slot.1.resume(line, budget);
+        self.highlight_pending.set(!done);
+        if done {
+            *self.highlight.borrow_mut() = Some((key, self.syntax.clone(), spans.clone()));
+        }
         spans
     }
 
@@ -644,7 +663,7 @@ impl Memo {
     /// bloco).
     fn newline_with_indent(&self) -> String {
         let start = self.line_start(self.caret);
-        let before: String = self.text.chars().skip(start).take(self.caret - start).collect();
+        let before = self.slice(start, self.caret).to_string();
         let mut indent: String = before.chars().take_while(|c| *c == ' ' || *c == '\t').collect();
         let opens = match crate::textmate::language_config(&self.syntax).and_then(|c| c.increase_indent.clone()) {
             Some(pattern) => pattern.is_match(&before),
@@ -659,7 +678,7 @@ impl Memo {
     /// Shift+Tab: tira até 4 espaços do começo da linha do cursor.
     fn unindent(&mut self) -> bool {
         let start = self.line_start(self.caret);
-        let spaces = self.text.chars().skip(start).take(4).take_while(|c| *c == ' ').count();
+        let spaces = self.text[self.byte_at(start)..].chars().take(4).take_while(|c| *c == ' ').count();
         if spaces == 0 {
             return false;
         }
@@ -680,7 +699,8 @@ impl Memo {
     /// A linha visual do índice: a última que começa nele ou antes (numa quebra
     /// automática, o cursor fica no começo da linha de baixo).
     fn row_of(rows: &[Row], index: usize) -> usize {
-        rows.iter().rposition(|r| r.start <= index).unwrap_or(0)
+        // Em ordem pelo começo: busca binária (andar a lista toda pesava num fonte enorme).
+        rows.partition_point(|r| r.start <= index).saturating_sub(1)
     }
 
     /// Deslocamento horizontal de uma linha pelo alinhamento.
@@ -704,12 +724,127 @@ impl Memo {
         if start >= end || self.read_only {
             return false;
         }
-        let (a, b) = (self.byte_at(start), self.byte_at(end));
-        self.text.replace_range(a..b, "");
-        self.text_changed();
+        self.splice(start, end, "");
         self.caret = start;
         self.anchor = start;
         true
+    }
+
+    /// Troca os caracteres `start..end` por `new` (o caminho de toda mudança do texto feita
+    /// aqui dentro) e guarda a diferença no passo do desfazer em andamento.
+    pub(super) fn splice(&mut self, start: usize, end: usize, new: &str) {
+        let before = self.text_key();
+        let (at, removed) = self.splice_raw(start, end, new);
+        self.record(before, at, removed, new);
+    }
+
+    /// Troca os caracteres `start..end` por `new` sem passar pelo desfazer; devolve onde
+    /// começou e o que saiu. O que depende do texto é acertado só da linha editada em
+    /// diante (a tabela das linhas, as linhas visuais, o realce, a linha mais larga e os
+    /// marcadores): as linhas de depois só andam. Num fonte de um milhão de linhas, refazer
+    /// tudo isso a cada tecla levava centenas de ms.
+    pub(super) fn splice_raw(&mut self, start: usize, end: usize, new: &str) -> (usize, String) {
+        let len = self.len();
+        let (start, end) = (start.min(len), end.min(len));
+        let end = end.max(start);
+        let old_key = self.text_key();
+        let table = self.lines_of(old_key);
+        let old_lines = table.len();
+        let (a, b) = (byte_in(&self.text, &table, start), byte_in(&self.text, &table, end));
+        let line_of = |c: usize| table.partition_point(|&(s, _)| s <= c).saturating_sub(1);
+        let (la, lb) = (line_of(start), line_of(end));
+        let line_end = |i: usize| table.get(i + 1).map_or(self.text.len(), |next| next.1 - 1);
+        let new_nl = new.bytes().filter(|&c| c == b'\n').count();
+        // As linhas de antes do trecho (os marcadores comparam com as de depois).
+        let marks = !self.bookmarks.is_empty() && self.marks_key.get() == old_key && new_nl != lb - la;
+        let old_local = marks.then(|| self.text[table[la].1..line_end(lb)].to_string());
+        drop(table);
+        let removed = self.text[a..b].to_string();
+        let removed_chars = end - start;
+        self.text.replace_range(a..b, new);
+        self.text_changed();
+        let new_key = self.text_key();
+        let dc = new.chars().count() as isize - removed_chars as isize;
+        let db = new.len() as isize - (b - a) as isize;
+        let dl = new_nl as isize - (lb - la) as isize;
+        let shift = |v: usize, d: isize| (v as isize + d) as usize;
+        // A tabela das linhas: as quebras do trecho saem, as do novo entram, as de depois andam.
+        let table = {
+            let mut slot = self.line_table.borrow_mut();
+            let t = Rc::make_mut(&mut slot.1);
+            let (mut c, mut bytes) = (start, a);
+            let mut breaks = Vec::with_capacity(new_nl);
+            for ch in new.chars() {
+                c += 1;
+                bytes += ch.len_utf8();
+                if ch == '\n' {
+                    breaks.push((c, bytes));
+                }
+            }
+            t.splice(la + 1..lb + 1, breaks);
+            for e in &mut t[la + 1 + new_nl..] {
+                *e = (shift(e.0, dc), shift(e.1, db));
+            }
+            slot.0 = new_key;
+            slot.1.clone()
+        };
+        let new_len = table.last().map_or(0, |&(c, b)| c + self.text[b..].chars().count());
+        // As linhas visuais (uma por linha do texto: sem quebra automática nem dobras).
+        {
+            let mut slot = self.rows_cache.borrow_mut();
+            let plain = !(self.wrap && self.syntax.is_empty()) && self.folds.borrow().is_empty();
+            if slot.0 == old_key && plain && slot.2.len() == old_lines {
+                let rows = Rc::make_mut(&mut slot.2);
+                let fresh = (la..=la + new_nl).map(|line| {
+                    let start = table[line].0;
+                    let end = table.get(line + 1).map_or(new_len, |next| next.0 - 1);
+                    Row { start, end, line, folded: false }
+                });
+                rows.splice(la..=lb, fresh);
+                for r in &mut rows[la + 1 + new_nl..] {
+                    r.start = shift(r.start, dc);
+                    r.end = shift(r.end, dc);
+                    r.line = shift(r.line, dl);
+                }
+                slot.0 = new_key;
+            }
+        }
+        // O realce continua da linha editada.
+        self.highlight.borrow_mut().take();
+        {
+            let mut slot = self.incremental.borrow_mut();
+            if slot.0 == old_key && slot.1.lines() == old_lines {
+                slot.1.edit(la, lb + 1, new_nl + 1);
+                slot.0 = new_key;
+            }
+        }
+        // A linha mais larga: as editadas são medidas na próxima pintura.
+        {
+            let mut w = self.widest.borrow_mut();
+            if w.1 == old_key && w.3.len() < 64 {
+                for p in &mut w.3 {
+                    *p = if *p > lb { shift(*p, dl) } else { (*p).min(la) };
+                }
+                w.3.extend(la..=la + new_nl);
+                w.3.sort_unstable();
+                w.3.dedup();
+                w.1 = new_key;
+            }
+        }
+        // Os marcadores: comparam só as linhas do trecho, pelas pontas.
+        if let Some(old_local) = old_local {
+            let new_local = &self.text[table[la].1..table.get(la + new_nl + 1).map_or(self.text.len(), |next| next.1 - 1)];
+            let (old_l, new_l): (Vec<&str>, Vec<&str>) = (old_local.split('\n').collect(), new_local.split('\n').collect());
+            let prefix = old_l.iter().zip(&new_l).take_while(|(x, y)| x == y).count();
+            let max_suffix = old_l.len().min(new_l.len()) - prefix;
+            let suffix = old_l.iter().rev().zip(new_l.iter().rev()).take(max_suffix).take_while(|(x, y)| x == y).count();
+            self.move_marks(la + prefix, lb + 1 - suffix, la + new_l.len() - suffix, table.len());
+        }
+        if !self.bookmarks.is_empty() && self.marks_key.get() == old_key {
+            self.marks_text.replace_range(a..b, new);
+            self.marks_key.set(new_key);
+        }
+        (start, removed)
     }
 
     fn delete_selection(&mut self) -> bool {
@@ -728,9 +863,7 @@ impl Memo {
         if piece.is_empty() {
             return deleted;
         }
-        let at = self.byte_at(self.caret);
-        self.text.insert_str(at, &piece);
-        self.text_changed();
+        self.splice(self.caret, self.caret, &piece);
         self.caret += piece.chars().count();
         self.anchor = self.caret;
         true
@@ -746,7 +879,7 @@ impl Memo {
     /// A palavra sob o cursor (vazia fora de uma palavra).
     pub fn word_at_caret(&self) -> String {
         let (a, b) = self.word_bounds(self.caret);
-        self.text.chars().skip(a).take(b.saturating_sub(a)).collect()
+        self.slice(a, b.max(a)).to_string()
     }
 
     /// A palavra em volta de `index`. Só olha a vizinhança (a pintura chama a cada quadro: copiar
@@ -760,28 +893,37 @@ impl Memo {
         (index - before, index + after)
     }
 
+    /// O começo da palavra antes de `from` (andando só por perto: copiar o texto inteiro para
+    /// isso pesava num fonte enorme).
     fn prev_word(&self, from: usize) -> usize {
-        let chars: Vec<char> = self.text.chars().collect();
-        let mut i = from.min(chars.len());
-        while i > 0 && chars[i - 1].is_whitespace() {
-            i -= 1;
+        let from = from.min(self.len());
+        let mut back = self.text[..self.byte_at(from)].chars().rev().peekable();
+        let mut n = 0;
+        while back.next_if(|c| c.is_whitespace()).is_some() {
+            n += 1;
         }
-        while i > 0 && !chars[i - 1].is_whitespace() {
-            i -= 1;
+        while back.next_if(|c| !c.is_whitespace()).is_some() {
+            n += 1;
         }
-        i
+        from - n
     }
 
     fn next_word(&self, from: usize) -> usize {
-        let chars: Vec<char> = self.text.chars().collect();
-        let mut i = from.min(chars.len());
-        while i < chars.len() && !chars[i].is_whitespace() {
-            i += 1;
+        let from = from.min(self.len());
+        let mut ahead = self.text[self.byte_at(from)..].chars().peekable();
+        let mut n = 0;
+        while ahead.next_if(|c| !c.is_whitespace()).is_some() {
+            n += 1;
         }
-        while i < chars.len() && chars[i].is_whitespace() {
-            i += 1;
+        while ahead.next_if(|c| c.is_whitespace()).is_some() {
+            n += 1;
         }
-        i
+        from + n
+    }
+
+    /// O caractere `index` (pela tabela das linhas: sem contar o texto desde o começo).
+    fn char_at(&self, index: usize) -> Option<char> {
+        self.text[self.byte_at(index)..].chars().next()
     }
 
     /// O caractere de `row` mais perto de `x` (pixels a partir do começo do texto da linha).
@@ -791,7 +933,7 @@ impl Memo {
         let width = |n: usize| ctx.ui.measure_text(&expand_tabs(&line[..byte_index(&line, n)]), &style).width;
         // Numa quebra automática, o fim da linha é o começo da de baixo: fica antes.
         let count = line.chars().count();
-        let count = if self.wrap && count > 0 && row.end < self.len() && !self.text.chars().nth(row.end).is_some_and(|c| c == '\n') {
+        let count = if self.wrap && count > 0 && row.end < self.len() && !self.char_at(row.end).is_some_and(|c| c == '\n') {
             count.saturating_sub(1).max(line.trim_end().chars().count())
         } else {
             count
@@ -873,14 +1015,14 @@ impl Memo {
             self.misspelled.clear();
         }
         // No fim de uma palavra (o que vem depois não é letra), sem seleção.
-        let next = self.text.chars().nth(caret);
+        let next = self.char_at(caret);
         if self.autocomplete && typing && !self.has_selection() && next.is_none_or(|c| !aylis_core::textassist::is_word_char(c)) {
-            let before: String = self.text.chars().take(caret).collect();
-            let typed = aylis_core::textassist::word_before(&before).to_string();
+            let before = &self.text[..self.byte_at(caret)];
+            let typed = aylis_core::textassist::word_before(before).to_string();
             if typed.chars().count() >= 2 {
                 let lower = typed.to_lowercase();
                 let best = engine
-                    .complete(&before, &self.language)
+                    .complete(before, &self.language)
                     .into_iter()
                     .find(|w| w.chars().count() > typed.chars().count() && w.to_lowercase().starts_with(&lower));
                 if let Some(word) = best {
@@ -892,12 +1034,12 @@ impl Memo {
 
     /// Seleciona de `start` a `end` (em caracteres; iguais: só o cursor).
     pub fn select(&mut self, start: usize, end: usize) {
-        let len = self.text.chars().count();
+        let len = self.len();
         self.anchor = start.min(len);
         self.caret = end.min(len);
     }
 
-    /// Onde a seleção começa (em caracteres), como o `SelStart`.
+    /// Onde a seleção começa (em caracteres).
     pub fn sel_start(&self) -> usize {
         self.selection().0
     }
@@ -920,7 +1062,7 @@ impl Memo {
         self.selected_text().to_string()
     }
 
-    /// Troca a seleção (ou insere no cursor), como o `SelText`; vale com `read_only`.
+    /// Troca a seleção (ou insere no cursor); vale com `read_only`.
     pub fn set_sel_text(&mut self, text: String) {
         let read_only = std::mem::replace(&mut self.read_only, false);
         self.insert(&text);
@@ -955,18 +1097,16 @@ impl Memo {
 
     /// Põe o cursor na linha e coluna (a partir de 1; além do fim, no fim).
     pub fn go_to(&mut self, line: usize, column: usize) {
-        let mut index = 0;
-        for (i, l) in self.text.split('\n').enumerate() {
-            let n = l.chars().count();
-            if i + 1 == line.max(1) {
-                index += (column.max(1) - 1).min(n);
-                self.select(index, index);
-                return;
-            }
-            index += n + 1;
-        }
-        let end = self.text.chars().count();
-        self.select(end, end);
+        // Pela tabela das linhas (sem andar o texto até a linha).
+        let table = self.lines_of(self.text_key());
+        let len = self.len();
+        let Some(&(start, _)) = table.get(line.max(1) - 1) else {
+            self.select(len, len);
+            return;
+        };
+        let end = table.get(line.max(1)).map_or(len, |next| next.0 - 1);
+        let index = start + (column.max(1) - 1).min(end - start);
+        self.select(index, index);
     }
 
     /// As palavras marcadas como erradas (trechos em caracteres).
@@ -981,12 +1121,10 @@ impl Memo {
 
     /// Troca os caracteres `start..end` por `text` (a correção escolhida no menu).
     fn replace_chars(&mut self, start: usize, end: usize, text: &str) {
-        let (a, b) = (self.byte_at(start), self.byte_at(end));
-        if a > b {
+        if start > end {
             return;
         }
-        self.text.replace_range(a..b, text);
-        self.text_changed();
+        self.splice(start, end, text);
         let caret = start + text.chars().count();
         self.caret = caret;
         self.anchor = caret;
@@ -1039,7 +1177,7 @@ impl Memo {
     /// Põe o cursor no começo da linha `line` (a partir de 0) do texto; a próxima pintura
     /// rola até ela (mesmo sem o foco).
     pub fn go_to_line(&mut self, line: usize) {
-        let index = self.text.split('\n').take(line).map(|l| l.chars().count() + 1).sum::<usize>().min(self.len());
+        let index = self.lines_of(self.text_key()).get(line).map_or(self.len(), |&(c, _)| c);
         self.caret = index;
         self.anchor = index;
         self.goal_x = None;
@@ -1064,6 +1202,7 @@ impl Component for Memo {
     }
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         text: String => "Data",
         placeholder: String => "Appearance",
         border: bool => "Appearance",
@@ -1194,7 +1333,7 @@ impl Component for Memo {
                 } else {
                     // Numa quebra automática, o fim fica antes do espaço da quebra.
                     let line = self.slice(row.start, row.end);
-                    let wrapped = row.end < self.len() && self.text.chars().nth(row.end) != Some('\n');
+                    let wrapped = row.end < self.len() && self.char_at(row.end) != Some('\n');
                     if wrapped { row.start + line.trim_end().chars().count() } else { row.end }
                 };
                 self.move_to(to, shift);
@@ -1303,7 +1442,7 @@ impl Component for Memo {
             let index = self.index_at(ctx, event.position);
             if let Some((start, end)) = self.misspelled.iter().copied().find(|&(s, e)| s <= index && index <= e) {
                 let id = ctx.id;
-                let word: String = self.text.chars().skip(start).take(end - start).collect();
+                let word = self.slice(start, end.max(start)).to_string();
                 let replace = move |ui: &mut aylis_core::Ui, choice: &str| {
                     let text = match ui.get_mut::<Memo>(id) {
                         Some(memo) => {
@@ -1381,12 +1520,11 @@ impl Component for Memo {
             return;
         }
         self.extra.clear();
-        // Ctrl+clique numa palavra: `on_word_click` com ela (a IDE vai para a declaração,
-        // como o Ctrl+clique do Delphi).
+        // Ctrl+clique numa palavra: `on_word_click` com ela (a IDE vai para a declaração).
         if event.click_count == 1 && (event.modifiers.ctrl || event.modifiers.meta) {
             self.move_to(index, false);
             let (a, b) = self.word_bounds(index);
-            let word: String = self.text.chars().skip(a).take(b - a).collect();
+            let word = self.slice(a, b).to_string();
             if !word.trim().is_empty() {
                 ctx.fire("on_word_click", EventArgs::Text(word));
             }
@@ -1402,17 +1540,10 @@ impl Component for Memo {
             }
             n if n >= 3 => {
                 // a linha do texto inteira (de Enter a Enter)
-                let chars: Vec<char> = self.text.chars().collect();
-                let mut a = index.min(chars.len());
-                while a > 0 && chars[a - 1] != '\n' {
-                    a -= 1;
-                }
-                let mut b = index.min(chars.len());
-                while b < chars.len() && chars[b] != '\n' {
-                    b += 1;
-                }
-                self.anchor = a;
-                self.caret = b;
+                let table = self.lines_of(self.text_key());
+                let line = self.line_of(index);
+                self.anchor = table[line].0;
+                self.caret = table.get(line + 1).map_or(self.len(), |next| next.0 - 1);
             }
             _ => {
                 self.move_to(index, event.modifiers.shift);
@@ -1499,7 +1630,7 @@ impl Component for Memo {
         let total = rows as f32 * lh;
         let max = self.scroll_max(total, self.text_height.get(), lh);
         let mut s = self.scroll.get();
-        // Ctrl + roda: uma página por dente (a altura à vista menos uma linha), como no Delphi.
+        // Ctrl + roda: uma página por dente (a altura à vista menos uma linha).
         let lines = if event.modifiers.ctrl { (self.visible_lines.get() as f32 - 1.0).max(1.0) } else { self.wheel_lines.max(1) as f32 };
         let dy = if event.touch { event.delta.y } else { event.delta.y.signum() * lh * lines };
         // Roda com dentes e o deslize ligado: desliza até lá, quadro a quadro (os dentes
@@ -1658,8 +1789,8 @@ impl Memo {
         if (focused && moved) || reveal {
             // O cursor andou: a rolagem vai atrás dele (um deslize da roda em andamento para).
             self.glide.set(None);
-            // Ir para uma linha fora da vista (o depurador parou nela): fica no meio, como
-            // no Delphi, e não colada na borda.
+            // Ir para uma linha fora da vista (o depurador parou nela): fica no meio,
+            // e não colada na borda.
             if reveal && (caret_y < scroll.y || caret_y + lh > scroll.y + inner.height) {
                 scroll.y = (caret_y - (inner.height - lh) / 2.0).max(0.0);
             } else if caret_y < scroll.y {
@@ -1683,22 +1814,31 @@ impl Memo {
         } else {
             use std::hash::{Hash, Hasher};
             let mut h = std::collections::hash_map::DefaultHasher::new();
-            key.hash(&mut h);
             style.font.size.to_bits().hash(&mut h);
             style.font.family.hash(&mut h);
-            let key = h.finish();
-            match self.widest.get() {
-                (k, w) if k == key => w,
-                _ => {
-                    // Mede só as linhas mais compridas em caracteres (medir as milhares de um
-                    // fonte a cada tecla era o que mais pesava): a mais larga está entre elas.
-                    let mut longest: Vec<&Row> = rows.iter().collect();
-                    longest.sort_by_key(|r| std::cmp::Reverse(r.end - r.start));
-                    let w = longest.iter().take(8).map(|r| width_of(canvas, r.start, r.end)).fold(0.0f32, f32::max);
-                    self.widest.set((key, w));
-                    w
+            let font = h.finish();
+            let mut cached = self.widest.borrow_mut();
+            if cached.0 != font || cached.1 != key {
+                // Mede só as linhas mais compridas em caracteres (medir as milhares de um
+                // fonte a cada tecla era o que mais pesava): a mais larga está entre elas.
+                let mut longest: Vec<&Row> = rows.iter().collect();
+                let top = longest.len().min(8);
+                if top > 0 {
+                    longest.select_nth_unstable_by_key(top - 1, |r| std::cmp::Reverse(r.end - r.start));
+                }
+                let w = longest[..top].iter().map(|r| width_of(canvas, r.start, r.end)).fold(0.0f32, f32::max);
+                *cached = (font, key, w, Vec::new());
+            } else if !cached.3.is_empty() {
+                // Editou: só as linhas editadas (pela tabela das linhas).
+                let table = self.lines_of(key);
+                let len = self.len();
+                let lines = std::mem::take(&mut cached.3);
+                for line in lines.into_iter().filter(|&l| l < table.len()) {
+                    let end = table.get(line + 1).map_or(len, |next| next.0 - 1);
+                    cached.2 = cached.2.max(width_of(canvas, table[line].0, end));
                 }
             }
+            cached.2
         };
         // Fora da edição com "…" no fim das linhas longas, não há o que rolar de lado.
         let trimmed = !focused && self.trimming != Trimming::None;
@@ -1806,7 +1946,8 @@ impl Memo {
             if line.is_empty() {
                 continue;
             }
-            if let Some(line_spans) = spans.as_ref().and_then(|s| s.get(row.line)) {
+            // Linha sem trechos: o realce ainda não chegou nela (vai na cor do texto).
+            if let Some(line_spans) = spans.as_ref().and_then(|s| s.get(row.line)).filter(|s| !s.is_empty()) {
                 // Cada trecho na sua cor. A posição soma as larguras já medidas (o pedaço entre
                 // um trecho e o próximo, e o próprio trecho), em vez de medir o começo da linha
                 // de novo a cada trecho.
@@ -1830,7 +1971,7 @@ impl Memo {
                     canvas.draw_text(&piece, RectF::new(x + px, y, pw + 8.0, lh), &ts);
                     px += pw;
                 }
-            } else if let Some(words) = (justify && row.end < self.len() && self.text.chars().nth(row.end) != Some('\n'))
+            } else if let Some(words) = (justify && row.end < self.len() && self.char_at(row.end) != Some('\n'))
                 .then(|| aylis_core::text::justify_line(&line, inner.width, &mut |s: &str| canvas.measure_text(s, &text_style).width))
                 .flatten()
             {
@@ -2016,6 +2157,8 @@ const BAR_WIDTH: f32 = 12.0;
 mod code;
 #[path = "memo_editor.rs"]
 mod editor;
+#[path = "memo_highlight.rs"]
+mod highlight;
 #[path = "memo_marks.rs"]
 pub(crate) mod marks;
 pub use marks::Bookmark;
@@ -2034,5 +2177,159 @@ impl Memo {
             map: self.char_map.clone(),
             case: self.char_case,
         }
+    }
+}
+
+#[cfg(test)]
+mod splice_tests {
+    use super::*;
+
+    fn memo(text: &str) -> Memo {
+        let mut m = Memo::default();
+        m.text = text.to_string();
+        m
+    }
+
+    /// A tabela, as linhas visuais e o realce feitos do zero para o texto de agora.
+    fn rebuilt(m: &Memo) -> (Vec<(usize, usize)>, Vec<Row>, Vec<Vec<Span>>) {
+        let fresh = Memo { syntax: m.syntax.clone(), ..memo(&m.text) };
+        let table = fresh.lines_of(fresh.text_key()).as_ref().clone();
+        let rows = fresh.rows(0.0, &mut |_| 0.0).as_ref().clone();
+        (table, rows, syntax::highlight(&m.syntax, &m.text))
+    }
+
+    /// O que a pintura usa, acertado pelas edições (sem refazer do zero).
+    fn current(m: &Memo) -> (Vec<(usize, usize)>, Vec<Row>, Vec<Vec<Span>>) {
+        let key = m.text_key();
+        let table = m.lines_of(key).as_ref().clone();
+        let rows = m.rows(0.0, &mut |_| 0.0).as_ref().clone();
+        (table, rows, m.spans_keyed(key).as_ref().clone())
+    }
+
+    #[test]
+    fn the_line_table_rows_and_highlight_follow_each_edit() {
+        let mut m = memo(&(0..300).map(|i| if i % 9 == 0 { format!("/* bloco {i}") } else if i % 9 == 4 { "fim */ let s = \"á\";".to_string() } else { format!("let x{i} = {i};") }).collect::<Vec<_>>().join("\n"));
+        m.syntax = "rust".into();
+        let _ = current(&m);
+        // Um gerador simples (sempre a mesma sequência).
+        let mut seed = 7u64;
+        let mut next = |n: usize| {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            (seed >> 33) as usize % n.max(1)
+        };
+        let pieces = ["x", "\n", "a\nb\n", "/*", "*/", "\"", "", "çã\né", "\n\n\n"];
+        for round in 0..400 {
+            let len = m.len();
+            let start = next(len + 1);
+            let end = (start + next(40)).min(len);
+            let piece = pieces[next(pieces.len())];
+            let key = m.text_key();
+            m.splice(start, end, piece);
+            assert_ne!(m.text_key(), key);
+            // Acertados pela edição, não refeitos.
+            assert_eq!(m.line_table.borrow().0, m.text_key());
+            assert_eq!(m.rows_cache.borrow().0, m.text_key());
+            assert_eq!(m.incremental.borrow().0, m.text_key());
+            // Só de vez em quando realça (várias edições seguidas, sem pintar entre elas).
+            if round % 3 == 0 {
+                assert_eq!(current(&m), rebuilt(&m), "depois da edição {round}");
+            }
+        }
+        assert_eq!(current(&m), rebuilt(&m));
+        // Tirar e pôr todas as linhas.
+        let len = m.len();
+        m.splice(0, len, "");
+        assert_eq!(current(&m), rebuilt(&m));
+        m.splice(0, 0, "a\n\nb\n");
+        assert_eq!(current(&m), rebuilt(&m));
+    }
+
+    #[test]
+    fn undo_and_redo_keep_only_the_difference() {
+        // Um texto grande: o desfazer guarda só os trechos trocados, não cópias dele.
+        let big = "let x = 1;\n".repeat(50_000);
+        let mut m = memo(&big);
+        for i in 0..100 {
+            m.begin_edit(code::EditKind::Other, i as f64 * 10.0);
+            m.select(1000 * i, 1000 * i + 3);
+            if i % 2 == 0 {
+                m.insert("novo\ntexto");
+            } else {
+                m.delete_selection();
+            }
+            m.end_edit();
+        }
+        assert!(m.history_bytes() < 2_000, "o desfazer guarda {} bytes", m.history_bytes());
+        while m.undo() {}
+        assert_eq!(m.text, big);
+        while m.redo() {}
+        let redone = m.text.clone();
+        while m.undo() {}
+        assert_eq!(m.text, big);
+        assert_ne!(redone, big);
+    }
+
+    #[test]
+    fn undo_with_several_cursors_and_merged_typing() {
+        let mut m = memo("um\ndois\ntres");
+        m.code_editing = true;
+        m.select(2, 2);
+        m.add_cursor(7, 7);
+        m.add_cursor(12, 12);
+        // Duas digitações seguidas viram um passo; o Enter, outro.
+        for (i, text) in ["x", "y", "\n"].iter().enumerate() {
+            let kind = if *text == "\n" { code::EditKind::Other } else { code::EditKind::Typing };
+            m.begin_edit(kind, i as f64 * 0.1);
+            m.edit_all(|m| {
+                m.delete_selection();
+                m.insert(text);
+            });
+            m.end_edit();
+        }
+        assert_eq!(m.text, "umxy\n\ndoisxy\n\ntresxy\n");
+        assert_eq!(m.undo_stack.len(), 2);
+        assert!(m.undo());
+        assert_eq!(m.text, "umxy\ndoisxy\ntresxy");
+        assert!(m.undo());
+        assert_eq!(m.text, "um\ndois\ntres");
+        assert!(!m.undo());
+        assert!(m.redo());
+        assert_eq!(m.text, "umxy\ndoisxy\ntresxy");
+        assert!(m.redo());
+        assert_eq!(m.text, "umxy\n\ndoisxy\n\ntresxy\n");
+        // A tabela das linhas e as linhas visuais seguem o desfazer.
+        assert!(m.undo());
+        assert_eq!(current(&m).0, rebuilt(&m).0);
+        assert_eq!(current(&m).1, rebuilt(&m).1);
+    }
+
+    #[test]
+    fn a_text_changed_from_outside_drops_the_history() {
+        let mut m = memo("abc");
+        m.begin_edit(code::EditKind::Other, 0.0);
+        m.select(3, 3);
+        m.insert("d");
+        m.end_edit();
+        // O app troca o campo direto: as posições guardadas não valem mais.
+        m.text = "outro texto bem diferente".into();
+        assert!(!m.undo());
+        assert_eq!(m.text, "outro texto bem diferente");
+    }
+
+    #[test]
+    fn bookmarks_follow_lines_inserted_above_them() {
+        let mut m = memo("a\nb\nc\nd");
+        m.set_bookmarks(vec![marks::Bookmark { line: 1, number: Some(1) }, marks::Bookmark { line: 3, number: None }]);
+        // Enter no começo da linha "b": o marcador vai com ela.
+        m.select(2, 2);
+        m.insert("\n");
+        m.shift_bookmarks();
+        assert_eq!(m.bookmarks().iter().map(|b| b.line).collect::<Vec<_>>(), vec![2, 4]);
+        // Apagar as linhas "b" e "c": o de baixo sobe; o da linha apagada fica no começo do
+        // trecho (como na comparação do texto inteiro).
+        m.splice(3, 7, "");
+        m.shift_bookmarks();
+        assert_eq!(m.text, "a\n\nd");
+        assert_eq!(m.bookmarks().iter().map(|b| b.line).collect::<Vec<_>>(), vec![2, 2]);
     }
 }

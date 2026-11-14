@@ -17,13 +17,16 @@ use aylis_core::{Component, ComponentId, EventArgs, EventCtx, MethodInfo, PropVa
 /// | Plataforma | Registro | Com o app aberto |
 /// |---|---|---|
 /// | Windows | em execução, no registro do usuário (`HKCU\Software\Classes`) | chega no app aberto |
+/// | Linux | em execução, num `.desktop` do usuário (`xdg-mime`), e no `.deb` da publicação | chega no app aberto (com `XDG_RUNTIME_DIR`) |
 /// | Android | na publicação (os `deep_links` do projeto) | chega no app aberto |
-/// | macOS, iOS, Linux, navegador | na publicação (ainda não) | — |
+/// | macOS, iOS | na publicação (ainda não) | — |
+/// | Navegador | não existe: o app web recebe pelo endereço da página | — |
 pub struct UrlScheme {
     /// O prefixo, sem `://` (`meuapp`): letras, números, `+`, `-` e `.`.
     pub scheme: String,
     /// O nome que o sistema mostra ao perguntar com que app abrir.
     pub description: String,
+    /// Registra o `scheme` no sistema e passa a receber os links dele no `on_link`.
     pub active: bool,
     /// Trazer a janela do form para a frente quando um link chega com o app aberto.
     pub bring_to_front: bool,

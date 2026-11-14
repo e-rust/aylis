@@ -32,7 +32,10 @@ use aylis_core::{Component, ComponentId, EventArgs, EventCtx, MethodInfo, PropVa
 /// ```
 #[derive(Default)]
 pub struct Permissions {
+    /// As permissões que o app usa, separadas por `;` (`camera;location`): a publicação as
+    /// declara e o `request_all` pede todas.
     pub permissions: String,
+    /// Por que o app usa cada uma (o iOS mostra ao pedir): `camera=Para a foto do perfil;...`.
     pub reasons: String,
 }
 
@@ -120,7 +123,9 @@ impl Component for Permissions {
 /// `on_cancel`. Com `allow_device_credential`, o PIN ou o padrão do aparelho também valem.
 #[derive(Default)]
 pub struct Biometrics {
+    /// O texto que a verificação do sistema mostra (por que o app pede a biometria).
     pub reason: String,
+    /// O PIN, o padrão ou a senha do aparelho também valem, além da biometria.
     pub allow_device_credential: bool,
 }
 

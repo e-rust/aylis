@@ -18,7 +18,7 @@ Mostra os quadros por segundo (o `Ui::fps`), onde o app quiser. O aylis só dese
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `live` | Ao vivo | lógico |  |
+| `live` | Ao vivo | lógico | Atualiza o número duas vezes por segundo, mesmo sem nada mudando (o que já são 2 quadros por segundo); desligado, só quando a tela é repintada. |
 
 ## Em código
 

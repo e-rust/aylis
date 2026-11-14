@@ -10,7 +10,7 @@ Lê e grava tags NFC (NDEF): `active` lê enquanto o app está aberto; cada tag 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Lê as tags encostadas enquanto o app está aberto (cada uma chega no `on_tag`). |
 
 ## Eventos
 

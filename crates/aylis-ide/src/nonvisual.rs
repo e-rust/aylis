@@ -14,7 +14,7 @@ use crate::widgets::{caption, clear, muted};
 
 /// (classe, ícone, descrição) dos não visuais do aylis.
 const INFO: &[(&str, &str, &str)] = &[
-    ("Timer", "clock", "Dispara on_timer a cada intervalo (como o TTimer)."),
+    ("Timer", "clock", "Dispara on_timer a cada intervalo."),
     ("EventInterceptor", "filter", "Recebe num lugar só os eventos de todos os componentes do form ou da aplicação, e pode cancelar."),
     ("PopupMenu", "menu", "Menu de contexto: abre no clique direito do controle que o usa em popup_menu."),
     ("MenuItem", "dot", "Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu."),
@@ -28,7 +28,7 @@ const INFO: &[(&str, &str, &str)] = &[
     ("Taskbar", "window", "Progresso, selo e botões no ícone do app na barra de tarefas."),
     ("EventRecorder", "record", "Grava tudo o que o usuário faz num .aylisrec (a IDE abre e mostra)."),
     ("Analytics", "grid", "Métricas de uso somadas entre as sessões (cliques, telas, erros)."),
-    ("ClientDataSet", "list", "Tabela de dados em memória (como o TClientDataSet): campos, registros, filtros."),
+    ("ClientDataSet", "list", "Tabela de dados em memória: campos, registros, filtros."),
     ("Field", "edit", "Um campo do ClientDataSet: nome, tipo, tamanho, rótulo, máscara."),
     ("Column", "grid", "Uma coluna do DataGrid: campo, título, largura, alinhamento, cores."),
     ("DataSource", "link", "Liga um ClientDataSet aos controles de dados (DataGrid, \"Ligar a campo…\"...)."),

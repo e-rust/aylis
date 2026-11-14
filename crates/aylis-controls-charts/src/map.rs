@@ -1,5 +1,5 @@
 //! MapView: mapa de blocos (o OpenStreetMap por padrão, ou outro servidor de tiles no mesmo
-//! formato), como o `TMapView` do FMX. Arrastar move, a roda e a pinça dão zoom (no ponto
+//! formato). Arrastar move, a roda e a pinça dão zoom (no ponto
 //! do mouse ou entre os dedos), duplo clique aproxima. Marcadores com rótulo.
 //!
 //! Os blocos vêm pelo [`HttpService`](aylis_core::platform::HttpService) da plataforma e
@@ -60,7 +60,9 @@ struct Tiles {
 /// Mapa interativo de blocos.
 pub struct MapView {
     pub base: ControlBase,
+    /// A latitude do centro do mapa, em graus (negativa ao sul).
     pub latitude: f64,
+    /// A longitude do centro do mapa, em graus (negativa a oeste).
     pub longitude: f64,
     /// 1 (o mundo) a 19 (a rua); pode ser fracionário.
     pub zoom: f64,

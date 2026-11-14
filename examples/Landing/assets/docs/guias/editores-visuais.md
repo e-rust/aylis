@@ -75,7 +75,7 @@ Para os editores terem o que editar:
 | Onde | Propriedade | Tipo |
 |---|---|---|
 | Todo controle | `rotation` (gira em torno do centro) | `Angle` |
-| Todo controle | `shadow` (vale no lugar da sombra do estilo, como o `TShadowEffect`) | `Shadow` |
+| Todo controle | `shadow` (vale no lugar da sombra do estilo) | `Shadow` |
 | `Rectangle` | `fill2` (com ela, o fundo vira gradiente de `fill` a `fill2`) e `gradient_angle` | `Color`, `Angle` |
 | `FloatAnimation`, `ColorAnimation` | `delay` (espera antes de começar; só na ida) | `Duration` |
 | `FloatAnimation`, `ColorAnimation` | `duration` | `Duration` |

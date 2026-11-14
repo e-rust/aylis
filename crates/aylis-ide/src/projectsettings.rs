@@ -1,6 +1,6 @@
 //! Projeto → Opções do projeto: o que é do projeto e muda pouco (geral, aparência, fontes,
-//! ícone do app, Android, memória, DataModules usados, traduções, confiança) numa janela só,
-//! como as "Project Options" do Delphi: as seções numa lista à esquerda e a escolhida à
+//! ícone do app, Android, memória, DataModules usados, traduções, confiança) numa janela só:
+//! as seções numa lista à esquerda e a escolhida à
 //! direita. O menu fica com o que se usa no dia a dia.
 
 use std::cell::{Cell, RefCell};

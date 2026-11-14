@@ -118,8 +118,8 @@ impl Ui {
         self.questions.stack.last().is_some_and(|f| f.deferred.is_none())
     }
 
-    /// Dentro de um evento-pergunta: recusa (como a exceção no `BeforePost` do Delphi). A
-    /// mensagem vai para a tela; vazia, recusa calado (o `CanClose := False`).
+    /// Dentro de um evento-pergunta: recusa. A
+    /// mensagem vai para a tela; vazia, recusa calado.
     pub fn refuse(&mut self, message: impl Into<String>) {
         if let Some(frame) = self.questions.stack.last_mut() {
             frame.refused = Some(message.into());
@@ -201,6 +201,31 @@ impl Ui {
         self.answer(token, answer);
     }
 
+    /// A tecla Voltar do celular (decidido em 14/11; o RTSPlayer troca de tela por frames e a
+    /// tecla tirava o app da frente): pergunta ao `on_back` do form do topo. Respondido
+    /// `handled` (ou recusado), o app tratou e nada mais acontece; senão, `default` faz o de
+    /// sempre (a plataforma: cancelar o modal, fechar o form aberto, o principal para segundo
+    /// plano). Com o backend em outra linguagem, a resposta chega depois e o `default` espera.
+    pub fn back_pressed(&mut self, default: impl FnOnce(&mut Ui) + 'static) {
+        let Some(form) = self.open_forms().last().copied() else {
+            default(self);
+            return;
+        };
+        let handled = |answer: &Answer| answer.is_refused() || answer.flag("handled", false);
+        match self.ask(form, "on_back", &EventArgs::None) {
+            Asked::Answered(answer) => {
+                if !handled(&answer) {
+                    default(self);
+                }
+            }
+            Asked::Deferred(token) => self.on_answer(token, move |ui, answer| {
+                if !handled(&answer) {
+                    default(ui);
+                }
+            }),
+        }
+    }
+
     /// As perguntas que esperam resposta (para a tela saber que o backend está devendo).
     pub fn questions_waiting(&self) -> usize {
         self.questions.waiting.len()
@@ -218,6 +243,8 @@ impl Ui {
 /// gera o esqueleto com a assinatura certa). Sem campos: só aceitar ou recusar.
 pub const QUESTION_EVENTS: &[(&str, &[&str])] = &[
     ("on_close_query", &["can_close"]),
+    // A tecla Voltar do celular: `handled` diz que o app tratou (voltou a tela de dentro).
+    ("on_back", &["handled"]),
     ("before_post", &[]),
     ("before_delete", &[]),
     ("on_validate", &[]),

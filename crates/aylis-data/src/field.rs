@@ -1,5 +1,5 @@
-//! [`Field`]: a definição de uma coluna do dataset (como o `TField` persistente do
-//! editor de campos do Delphi). É um componente filho do `ClientDataSet`, então aparece
+//! [`Field`]: a definição de uma coluna do dataset.
+//! É um componente filho do `ClientDataSet`, então aparece
 //! no arquivo de layout e no designer.
 
 use std::cell::RefCell;
@@ -72,7 +72,7 @@ impl PropEnum for FieldType {
     }
 }
 
-/// De onde vem o valor do campo (como o `FieldKind`).
+/// De onde vem o valor do campo.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum FieldKind {
     /// Dado do registro (vem do backend e volta no delta).
@@ -133,6 +133,8 @@ pub type CalculateFn = dyn Fn(&dyn Fn(&str) -> Value) -> Value;
 pub struct Field {
     /// Nome da coluna. Vazio = usa o nome do componente.
     pub field_name: String,
+    /// O tipo do valor: `string`, `memo`, `integer`, `float`, `currency`, `boolean`, `date`,
+    /// `time`, `datetime`, `blob`, `auto_inc` ou `timestamp`.
     pub field_type: FieldType,
     /// Tamanho máximo (texto). 0 = sem limite.
     pub size: usize,
@@ -142,23 +144,34 @@ pub struct Field {
     /// backend ou de uma expressão, e ao mostrar): metade para cima (o padrão), bancário,
     /// truncar ou para cima.
     pub rounding: Rounding,
+    /// O título do campo nas grades e nos rótulos; vazio: o nome do campo.
     pub display_label: String,
     /// Largura sugerida para grids, em unidades lógicas. 0 = automática.
     pub display_width: f32,
+    /// Como o valor aparece (`R$ #,##0.00`, `dd/mm/yyyy`); vazio: o padrão do tipo e do idioma.
     pub display_format: String,
+    /// Como um número aparece durante a edição; vazio: o `display_format`.
     pub edit_format: String,
     /// `None` = conforme o tipo (números à direita).
     pub alignment: Option<TextAlign>,
+    /// Não aceita gravar o registro com o campo vazio.
     pub required: bool,
+    /// Os controles ligados mostram, mas não deixam editar.
     pub read_only: bool,
+    /// Aparece nas grades; desligado, a coluna some (o valor continua no registro).
     pub visible: bool,
+    /// O menor valor aceito (números); vazio: sem limite.
     pub min: Option<f64>,
+    /// O maior valor aceito (números); vazio: sem limite.
     pub max: Option<f64>,
     /// Valor inicial de registros novos, em texto (lido com as regras do tipo).
     pub default_value: String,
     /// Textos para verdadeiro;falso (campos lógicos), como `DisplayValues`.
     pub display_values: String,
+    /// Maiúsculas (`upper`) ou minúsculas (`lower`) forçadas no valor; `normal`: como digitado.
     pub char_case: CharCase,
+    /// De onde vem o valor: `data` (do registro), `calculated` (a `expression`) ou `lookup`
+    /// (procurado em outro dataset).
     pub kind: FieldKind,
     /// Campo calculado: a expressão (`quantidade * preco`, ver [`crate::expr`]).
     pub expression: String,
@@ -598,7 +611,7 @@ impl Field {
     }
 
     /// Restrições do valor (tamanho, mínimo, máximo e `on_validate`). `required` é
-    /// conferido no `post`, como na VCL.
+    /// conferido no `post`.
     pub fn check(&self, value: &Value) -> std::result::Result<(), String> {
         let caption = self.caption();
         if let Value::String(s) = value {

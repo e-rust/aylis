@@ -128,7 +128,7 @@ impl DesignSurface {
     }
 
     /// Retângulo do form → coordenadas da superfície, com o zoom `z`.
-    /// A rolagem pela roda, como no designer do Delphi: só no eixo em que o form (com o que
+    /// A rolagem pela roda: só no eixo em que o form (com o que
     /// passou da borda dele) não cabe na área, e sem deixar ele sair dela. Cabendo, fica
     /// onde está.
     fn clamp_origin(&mut self, before: PointF) {
@@ -553,7 +553,7 @@ impl Component for DesignSurface {
         if self.no_form() {
             return;
         }
-        // Como no Delphi (pedido do autor em 08/11): a seta e o Ctrl+seta movem 1 px,
+        // Pedido do autor em 08/11: a seta e o Ctrl+seta movem 1 px,
         // Ctrl+Shift+seta move 8 px, Shift+seta muda o tamanho 1 px; Alt+↑/↓ muda a ordem entre os
         // irmãos. Valem para todos os escolhidos.
         let ctrl = event.modifiers.ctrl || event.modifiers.meta;
@@ -738,7 +738,7 @@ impl Component for DesignSurface {
                     canvas.stroke_rect(square, 1.0, &Stroke::new(primary, 1.2));
                 }
             } else {
-                // Grupo: cantos pequenos, como no Delphi.
+                // Grupo: cantos pequenos.
                 for h in [Handle::TopLeft, Handle::TopRight, Handle::BottomRight, Handle::BottomLeft] {
                     let c = self.handle_point(doc, id, r, h, zoom);
                     canvas.fill_rect(RectF::new(c.x - 2.5, c.y - 2.5, 5.0, 5.0), 0.0, &Brush::Solid(theme.color("text_muted")));

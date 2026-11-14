@@ -112,7 +112,7 @@ fn number_box_steps_clamps_and_reads_the_locale() {
     assert_eq!((nb.value, nb.edit.text.as_str()), (7.3, "7,3"), "letras são ignoradas; arredonda para 1 casa");
     ui.set_prop(n, "value", 50.0).unwrap();
     assert_eq!(ui.get::<NumberBox>(n).unwrap().value, 10.0, "limitado ao máximo");
-    // O valor mudado pelo código também avisa (como na VCL), com o que ficou.
+    // O valor mudado pelo código também avisa, com o que ficou.
     assert_eq!(log.borrow().len(), 3);
     assert_eq!(NumberBox::parse("1.234,5"), Some(1234.5));
     assert_eq!(NumberBox::parse("1,234.5"), Some(1234.5));
@@ -233,7 +233,7 @@ fn tree_view_reads_levels_and_expands() {
     assert_eq!(*log.borrow(), ["Brasil", "Brasil/São Paulo", "Brasil"]);
 }
 
-/// O `full_expand` (o `FullExpand` do Delphi) dispara o `on_expand` de cada nó, um por vez:
+/// O `full_expand` dispara o `on_expand` de cada nó, um por vez:
 /// o carregamento sob demanda funciona, e os filhos novos também são abertos.
 #[test]
 fn full_expand_fires_on_expand_for_every_node_and_loads_on_demand() {
@@ -665,7 +665,7 @@ fn menu_reports_the_clicked_item_and_auto_checks() {
     let (mut ui, f) = setup();
     ui.show(f).unwrap();
     let menu = ui.add(PopupMenu::default(), f);
-    // Ligado ao form: os atalhos valem como no Delphi (J01 do Tabernáculo).
+    // Ligado ao form: os atalhos valem (J01 do Tabernáculo).
     ui.set_prop(f, "popup_menu", PropValue::Component(Some(menu))).unwrap();
     let bold = ui.add(MenuItem::new("Negrito").with_shortcut("Ctrl+B"), menu);
     ui.set_name(bold, "miNegrito").unwrap();

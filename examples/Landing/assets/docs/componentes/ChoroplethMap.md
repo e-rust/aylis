@@ -12,17 +12,17 @@ Mapa coroplético: as regiões de um GeoJSON (`geojson`: o texto ou um arquivo/a
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `low_color` | Cor do menor valor | cor |  |
-| `high_color` | Cor do maior valor | cor |  |
-| `decimals` | Casas decimais | inteiro |  |
+| `low_color` | Cor do menor valor | cor | A cor do menor valor; vazio: a cor primária do tema, clara. |
+| `high_color` | Cor do maior valor | cor | A cor do maior valor; vazio: a cor primária do tema. |
+| `decimals` | Casas decimais | inteiro | Casas decimais do valor mostrado ao passar o mouse. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `geojson` | Mapa (GeoJSON) | texto |  |
-| `name_property` | Propriedade do nome | texto |  |
-| `values` | Valores | texto |  |
+| `geojson` | Mapa (GeoJSON) | texto | As regiões em GeoJSON: o texto ou o caminho de um arquivo/asset. |
+| `name_property` | Propriedade do nome | texto | A propriedade do GeoJSON com o nome de cada região (sem ela, a `name`). |
+| `values` | Valores | texto | O valor de cada região pelo nome: `"SP=10;RJ=5"`. |
 
 ## Eventos
 

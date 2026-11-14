@@ -1,6 +1,6 @@
 # ClientDataSet
 
-Tabela de dados em memória (como o TClientDataSet): campos, registros, filtros.
+Tabela de dados em memória: campos, registros, filtros.
 
 **Paleta:** Data · **componente não visual**
 
@@ -11,14 +11,14 @@ Tabela de dados em memória (como o TClientDataSet): campos, registros, filtros.
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `key_fields` | Campos chave | texto | Campos-chave separados por `;` (identificam o registro no delta). |
-| `apply_mode` | Modo de aplicar | um de: `cached`, `on_post` |  |
-| `read_only` | Somente leitura | lógico |  |
-| `active` | Ativo | lógico |  |
+| `apply_mode` | Modo de aplicar | um de: `cached`, `on_post` | Quando o delta vai para o backend: `cached` (acumula até o `apply_updates`) ou `on_post` (cada gravação ou exclusão envia na hora). |
+| `read_only` | Somente leitura | lógico | Só leitura: os registros não podem ser incluídos, alterados nem excluídos. |
+| `active` | Ativo | lógico | Aberto: os campos e os registros ficam disponíveis; desligar fecha. Ligado pela propriedade `active`, a abertura acontece no próximo acesso por `data_set(...)`. |
 | `filter` | Filtro | texto | Expressão de filtro (`cidade = 'São Paulo' and limite > 1000`, ver `crate::expr`); vale com `filtered` ligado. |
-| `filtered` | Filtrado | lógico |  |
-| `index_field_names` | Campos do índice | texto | Ordem dos registros: campos separados por `;`, com `desc` opcional (`cidade;limite desc`), como o `IndexFieldNames`. |
-| `indexes` | Índices | texto | Índices com nome (como o `IndexDefs`): `porNome=nome\|porValor=valor desc;nome`. |
-| `index_name` | Nome do índice | texto | O índice de `indexes` em uso (como o `IndexName`); vale no lugar de `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome. |
+| `filtered` | Filtrado | lógico | Aplica o `filter`: só os registros que passam nele aparecem (os outros continuam no delta). |
+| `index_field_names` | Campos do índice | texto | Ordem dos registros: campos separados por `;`, com `desc` opcional (`cidade;limite desc`). |
+| `indexes` | Índices | texto | Índices com nome: `porNome=nome\|porValor=valor desc;nome`. |
+| `index_name` | Nome do índice | texto | O índice de `indexes` em uso; vale no lugar de `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome. |
 | `params` | Parâmetros | texto | Valores dos parâmetros do filtro (`:minimo`): `minimo=100;cidade=São Paulo`. Por código, `DataSet::set_param`(crate::DataSet::set_param) aceita qualquer valor. |
 | `status_filter` | Filtro de situação | texto | Só os registros nestas situações: `unmodified;modified;inserted` (vazio = todos), como o `StatusFilter`. |
 | `master_source` | Fonte mestre | componente | Master-detail: o `DataSource` do dataset mestre. |

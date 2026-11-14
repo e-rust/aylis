@@ -30,7 +30,7 @@ impl PropEnum for ComboArrow {
 use crate::leaf_control;
 
 const ROW: f32 = 28.0;
-/// As opções à vista na lista aberta, sem `drop_down_count` (o `DropDownCount` do Delphi).
+/// As opções à vista na lista aberta, sem `drop_down_count`.
 const DEFAULT_ROWS: i64 = 10;
 /// A largura da barra de rolagem da lista aberta.
 const BAR: f32 = 6.0;
@@ -39,7 +39,7 @@ const EDGE: f32 = 4.0;
 /// O lugar da seta, à direita do texto.
 pub const ARROW_ROOM: f32 = 18.0;
 
-/// Lista suspensa (como o `TComboBox` com `Style = csDropDownList`).
+/// Lista suspensa.
 ///
 /// - `items`: opções separadas por `;` (ou pela API, [`ComboBox::set_items`]);
 /// - `item_index`: opção escolhida (-1 = nenhuma); `on_change` dispara ao mudar;
@@ -48,12 +48,14 @@ pub const ARROW_ROOM: f32 = 18.0;
 ///   rola (roda, dedo, a barra à direita) e, sem lugar no form, encolhe para caber.
 /// - `values`: o código de cada opção (separados por `;`, como `items`); `value` lê e escolhe
 ///   pelo código (sem `values`, pelo texto). Ligado a um dataset, `items` e `values` vêm da
-///   lista e `value` grava o código (o `TDBLookupComboBox`).
+///   lista e `value` grava o código.
 pub struct ComboBox {
     pub base: ControlBase,
+    /// As opções da lista, separadas por `;`.
     pub items: String,
     /// O código de cada opção (`;`); vazio: o código é o próprio texto.
     pub values: String,
+    /// A opção escolhida, a partir de 0; -1: nenhuma.
     pub item_index: i64,
     /// Alinhamento do texto escolhido.
     pub h_align: TextAlign,
@@ -69,7 +71,7 @@ pub struct ComboBox {
     pub groups: String,
     /// As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem.
     pub disabled_items: String,
-    /// Quantas linhas a lista aberta mostra de uma vez (o `DropDownCount` do Delphi; mínimo 1).
+    /// Quantas linhas a lista aberta mostra de uma vez (mínimo 1).
     /// Com mais opções, ela rola; sem lugar no form, mostra menos.
     pub drop_down_count: i64,
     popup: Option<ComponentId>,
@@ -201,9 +203,11 @@ impl ComboBox {
         let selected = rows.iter().position(|r| r.item.is_some_and(|i| i as i64 == self.item_index));
         let root = ctx.ui.root_of(ctx.id);
         let rect = ctx.ui.to_form(ctx.id, self.base.bounds());
-        let root_height = ctx.ui.bounds(root).map_or(f32::MAX, |b| b.height);
+        // O form ou, com ele em vários monitores, o pedaço em que a lista abre.
+        let area = ctx.ui.popup_area(root, PointF::new(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0));
         let wanted = count.min(self.drop_down_count.max(1) as usize);
-        let (top, visible) = drop_place(rect, root_height, wanted);
+        let (top, visible) = drop_place(rect.offset(0.0, -area.y), area.height, wanted);
+        let top = top + area.y;
         let height = popup_height(visible);
         let popup = ComboPopup {
             base: ControlBase::new(rect.width, height),

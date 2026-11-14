@@ -10,17 +10,22 @@ use crate::{Edit, leaf_control};
 /// Largura da área das setas do NumberBox.
 const SPIN: f32 = 22.0;
 
-/// Campo numérico com setas (como o `TNumberBox`/`TSpinBox` do FMX).
+/// Campo numérico com setas.
 ///
 /// - `value` entre `min` e `max`, com `decimals` casas (no formato do idioma: `1234,5`);
 /// - setas, roda do mouse (com o foco), ↑/↓ e PageUp/PageDown somam `increment`;
 /// - o texto digitado vale ao sair do campo ou com Enter; `on_change` traz o valor.
 pub struct NumberBox {
     pub edit: Edit,
+    /// O valor, sempre entre `min` e `max`.
     pub value: f64,
+    /// O menor valor aceito.
     pub min: f64,
+    /// O maior valor aceito.
     pub max: f64,
+    /// Quanto as setas, a roda e ↑/↓ somam ou tiram.
     pub increment: f64,
+    /// Casas decimais mostradas (0: inteiro).
     pub decimals: u32,
     /// Separador decimal do idioma (lido do `Ui` no primeiro layout).
     separator: char,
@@ -213,12 +218,15 @@ impl Component for NumberBox {
 
 // ---------------------------------------------------------------------------
 
-/// Controle deslizante (como o `TTrackBar`): arraste o polegar, clique no trilho, use as
+/// Controle deslizante: arraste o polegar, clique no trilho, use as
 /// setas, Home/End e PageUp/PageDown. `on_change` traz o valor (também durante o arrasto).
 pub struct TrackBar {
     pub base: ControlBase,
+    /// O valor, a posição do polegar entre `min` e `max`.
     pub value: f64,
+    /// O valor da ponta esquerda (ou de baixo, na vertical).
     pub min: f64,
+    /// O valor da ponta direita (ou de cima, na vertical).
     pub max: f64,
     /// Passo (0 = contínuo).
     pub frequency: f64,

@@ -1079,6 +1079,8 @@ pub fn tick(ui: &mut Ui, state: &Shared, ids: &Ids) {
         crate::panels::messages(ui, state, ids);
         ui.request_repaint();
     }
+    // Os handlers que rodaram pela primeira vez: a cobertura de handlers.
+    crate::coverage::collect(state);
     let progress = {
         let mut st = state.borrow_mut();
         match st.job.as_ref().filter(|j| j.built.is_none()) {

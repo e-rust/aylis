@@ -12,28 +12,28 @@ Etiqueta compacta (o `v-chip`): texto, ícone opcional, marcável (`checkable`) 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `icon` | Ícone | texto |  |
+| `text` | Texto | texto | O texto da etiqueta. |
+| `icon` | Ícone | texto | Ícone pelo nome, antes do texto; vazio: sem ícone. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `closable` | Pode fechar | lógico |  |
-| `checkable` | Marcável | lógico |  |
+| `closable` | Pode fechar | lógico | Mostra o "×" de fechar, que dispara o `on_close`. |
+| `checkable` | Marcável | lógico | Cada clique alterna o `checked` (e dispara o `on_change`). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `checked` | Marcado | lógico |  |
+| `checked` | Marcado | lógico | Marcado, com `checkable`. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
 | `on_close` | o form fechou | — |  |
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

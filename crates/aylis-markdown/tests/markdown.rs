@@ -20,7 +20,7 @@ Veja a [documentação](https://aylis.dev/docs) e ~~o jeito antigo~~.
   1. Windows (WebView2)
   2. Navegador (iframe)
 
-> Dica: no FMX seria um `TWebBrowser`; aqui é o `WebView`.
+> Dica: no Windows, o `WebView` usa o `WebView2`.
 
 | Componente | Crate | Tamanho |
 |:-----------|:-----:|--------:|

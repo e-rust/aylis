@@ -37,32 +37,34 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.2.1", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.3.0", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.2.1", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.3.0", path = "../aylis-d2d", optional = true }
 # A área de transferência do Windows: texto, HTML, imagem e os formatos do app gravados de uma
 # vez (o arboard grava um só; o clipboard-win já vinha com ele).
 clipboard-win = { version = "5", optional = true }
 # A operação assíncrona do WinRT (a mesma versão que o windows 0.61 usa).
 windows-future = "0.3"
+# A lista de arquivos do compartilhar (`share_windows.rs`; a mesma versão que o windows 0.62 usa).
+windows-collections = "0.3"
 # Notificações do Windows (toast): WinRT e o registro do AppUserModelID.
 windows = { version = "0.62", features = [
     "Data_Xml_Dom", "UI_Notifications", "Foundation", "Win32_System_Registry", "Win32_Foundation", "Win32_Security",
     "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_UI_WindowsAndMessaging", "Win32_System_Com",
     "Win32_System_Com_StructuredStorage", "Win32_System_Variant", "Win32_Storage_EnhancedStorage", "Win32_Graphics_Gdi",
     # Correção e previsão de texto do sistema (o motor nativo dos campos de texto).
-    "Win32_Globalization", "Data_Text", "Foundation_Collections",
+    "Win32_Globalization", "Data_Text", "Foundation_Collections", "ApplicationModel_DataTransfer", "Storage", "Storage_Streams",
     # Impressão: o diálogo do sistema e o documento na impressora.
     "Win32_UI_Controls_Dialogs", "Win32_Storage_Xps",
     # Windows Hello (o componente Biometrics).
@@ -160,7 +162,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.2.1", path = "../aylis-web" }
+aylis-web = { version = "0.3.0", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"
@@ -216,6 +218,10 @@ required-features = ["cpu"]
 
 [[example]]
 name = "gpu_monitor"
+required-features = ["gpu"]
+
+[[example]]
+name = "span_monitors"
 required-features = ["gpu"]
 
 [[example]]

@@ -10,20 +10,20 @@ Uma banda do relatório: um contêiner com o tipo dela. `group_field`, nos cabe�
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `kind` | Tipo | um de: `title`, `page_header`, `group_header`, `detail`, `group_footer`, `summary`, `page_footer`, `sub_header`, `sub_detail`, `sub_footer` |  |
+| `kind` | Tipo | um de: `title`, `page_header`, `group_header`, `detail`, `group_footer`, `summary`, `page_footer`, `sub_header`, `sub_detail`, `sub_footer` | O papel da banda: título, cabeçalho e rodapé de página ou de grupo, detalhe, sumário ou as do sub-detalhe. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `new_page` | Nova página | lógico |  |
+| `new_page` | Nova página | lógico | O grupo começa numa página nova. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `group_field` | Campo de grupo | texto |  |
-| `data_source` | Fonte de dados | componente |  |
+| `group_field` | Campo de grupo | texto | Nos cabeçalhos e rodapés de grupo: o campo que forma o grupo (um grupo novo quando o valor muda). |
+| `data_source` | Fonte de dados | componente | Nas bandas de sub-detalhe: o `DataSource` do detalhe (ligado ao do relatório pelo `master_source`). |
 
 ## Em código
 

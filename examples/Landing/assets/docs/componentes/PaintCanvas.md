@@ -14,21 +14,21 @@ Uma imagem para desenhar com o mouse (o Paint).
 |---|---|---|---|
 | `color` | Cor | cor | Cor 1 (botão esquerdo). |
 | `back_color` | Cor de fundo | cor | Cor 2 (botão direito, borracha e preenchimento das formas). |
-| `zoom` | Zoom | número |  |
+| `zoom` | Zoom | número | O aumento da imagem na tela (1 = tamanho real; de 0,1 a 16). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select` |  |
-| `brush_size` | Tamanho do pincel | inteiro |  |
+| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select` | A ferramenta do mouse: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill` (balde), `picker` (conta-gotas) ou `select`. |
+| `brush_size` | Tamanho do pincel | inteiro | A espessura do traço, em pixels da imagem (1 a 64). |
 | `filled` | Preenchido | lógico | Retângulo e elipse preenchidos com `back_color`. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_pick` | — | — |  |
 | `on_cursor` | — | — |  |
 

@@ -76,7 +76,7 @@ pub fn angle_editor(ui: &mut Ui, title: &str, initial: f64, on_ok: impl FnOnce(&
     }
     ui.on(dial, "on_change", move |ui, _, args| {
         if let EventArgs::Value(v) = args {
-            // Sem disparar o `on_change` do campo (o valor pelo código avisa, como na VCL): senão o
+            // Sem disparar o `on_change` do campo (o valor pelo código avisa): senão o
             // texto digitado voltava reescrito ("400" virava "40").
             let _ = ui.set_prop_quiet(value, "text", number(v.to_f64().unwrap_or(0.0)));
         }
@@ -101,7 +101,7 @@ pub fn angle_editor(ui: &mut Ui, title: &str, initial: f64, on_ok: impl FnOnce(&
 // Fonte
 // ---------------------------------------------------------------------------
 
-/// Uma fonte escolhida no editor (o `Font` do Delphi): família (vazia = a do pai ou do
+/// Uma fonte escolhida no editor: família (vazia = a do pai ou do
 /// tema), tamanho (`None` = o herdado), peso (`default` = o herdado), itálico, sublinhado
 /// e tachado.
 #[derive(Clone, Debug, PartialEq)]

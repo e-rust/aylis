@@ -1,5 +1,4 @@
-//! Rodar código na thread da interface a partir de outra thread (como o `TThread.Queue`
-//! do Delphi).
+//! Rodar código na thread da interface a partir de outra thread.
 //!
 //! ```
 //! # use aylis_core::Ui;

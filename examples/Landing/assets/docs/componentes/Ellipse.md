@@ -12,8 +12,8 @@ Elipse que ocupa o controle.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
+| `stroke` | Cor do traço | cor | A cor da borda; vazio: sem borda. |
+| `stroke_width` | Largura do traço | número | A espessura da borda, em pontos; 0: sem borda. |
 
 ## Em código
 

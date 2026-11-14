@@ -83,6 +83,100 @@ impl Recording {
         let blocks = self.blocks.iter().map(|b| b.start + b.duration).fold(0.0, f64::max);
         self.memory.last().map_or(blocks, |m| blocks.max(m.0))
     }
+
+    /// O formato próprio ("Salvar rastro…" em `.aylisprof`): o mesmo JSON do `profile_take`,
+    /// com a marca do formato; [`Recording::parse`] reabre.
+    pub fn to_json(&self) -> Value {
+        let mut samples: Vec<Value> = self.memory.iter().map(|(t, v)| json!(["memória", t, v])).collect();
+        if let Some((count, bytes)) = self.images {
+            let t = self.end();
+            samples.push(json!(["imagens no cache", t, count]));
+            samples.push(json!(["memória das imagens", t, bytes]));
+        }
+        json!({
+            "aylis_profile": 1,
+            "spans": self.blocks.iter().map(|b| json!([b.lane.name(), b.name, b.start, b.duration, b.depth, b.thread])).collect::<Vec<_>>(),
+            "samples": samples,
+            "stacks": self.stacks.iter().map(|s| json!([0.0, s])).collect::<Vec<_>>(),
+            "dropped": self.dropped,
+        })
+    }
+
+    /// Reabre um rastro salvo no formato próprio.
+    pub fn parse(text: &str) -> Result<Recording, String> {
+        let value: Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).map_err(|e| format!("rastro inválido: {e}"))?;
+        if value.get("aylis_profile").is_none() {
+            return Err("não é um rastro do Profiler do Aylis (.aylisprof)".into());
+        }
+        let mut rec = Recording::default();
+        rec.add(&value);
+        Ok(rec)
+    }
+
+    /// O formato de eventos do Chrome (`traceEvents`), que o Perfetto (ui.perfetto.dev) e o
+    /// `chrome://tracing` abrem: cada bloco é um evento completo (`X`) com o começo e a duração
+    /// em microssegundos, a faixa como categoria e a thread do app; a memória, um contador (`C`).
+    pub fn chrome_trace(&self) -> Value {
+        let us = |s: f64| (s * 1_000_000.0 * 1000.0).round() / 1000.0;
+        let mut events = vec![json!({ "name": "process_name", "ph": "M", "pid": 1, "tid": 0, "args": { "name": "app" } })];
+        let mut threads: Vec<u32> = self.blocks.iter().map(|b| b.thread).collect();
+        threads.sort_unstable();
+        threads.dedup();
+        for t in threads {
+            let name = if t == 0 { "interface".to_string() } else { format!("thread {t}") };
+            events.push(json!({ "name": "thread_name", "ph": "M", "pid": 1, "tid": t, "args": { "name": name } }));
+        }
+        for b in &self.blocks {
+            events.push(json!({ "name": b.name, "cat": b.lane.name(), "ph": "X", "ts": us(b.start), "dur": us(b.duration), "pid": 1, "tid": b.thread }));
+        }
+        for (t, bytes) in &self.memory {
+            events.push(json!({ "name": "memória", "ph": "C", "ts": us(*t), "pid": 1, "tid": 0, "args": { "MB": (bytes / 1_048_576.0 * 100.0).round() / 100.0 } }));
+        }
+        json!({ "traceEvents": events, "displayTimeUnit": "ms", "otherData": { "source": "Aylis Profiler", "dropped": self.dropped } })
+    }
+
+    /// O resumo para quem não vê a tela (o `profile` do MCP): os handlers e os quadros mais
+    /// lentos, o que mais tomou tempo e a memória, sem o rastro inteiro.
+    pub fn summary(&self, top: usize) -> Value {
+        let rows = aggregate(&self.blocks);
+        let row = |r: &Row| {
+            json!({ "lane": r.lane.name(), "name": r.name, "calls": r.calls, "total_ms": round_ms(r.total), "own_ms": round_ms(r.own), "average_ms": round_ms(r.average()), "max_ms": round_ms(r.max) })
+        };
+        let mut handlers: Vec<&Row> = rows.iter().filter(|r| r.lane == Lane::Handler || r.lane == Lane::Event).collect();
+        handlers.sort_by(|a, b| b.max.total_cmp(&a.max).then(b.total.total_cmp(&a.total)));
+        // Um quadro: a pintura de cada vez (com o layout e a GPU em faixas à parte).
+        let mut frames: Vec<&Block> = self.blocks.iter().filter(|b| b.lane == Lane::Paint && b.depth == 0).collect();
+        let slow = frames.iter().filter(|b| b.duration > 1.0 / 60.0).count();
+        frames.sort_by(|a, b| b.duration.total_cmp(&a.duration));
+        let peak = self.memory.iter().map(|m| m.1).fold(0.0, f64::max);
+        json!({
+            "seconds": (self.end() * 1000.0).round() / 1000.0,
+            "blocks": self.blocks.len(),
+            "dropped": self.dropped,
+            "slowest_handlers": handlers.iter().take(top).map(|r| row(r)).collect::<Vec<_>>(),
+            "frames": { "count": frames.len(), "over_16_7_ms": slow, "slowest": frames.iter().take(top).map(|b| json!({ "name": b.name, "at_s": (b.start * 1000.0).round() / 1000.0, "ms": round_ms(b.duration) })).collect::<Vec<_>>() },
+            "most_time": rows.iter().take(top).map(row).collect::<Vec<_>>(),
+            "memory_mb": { "last": self.memory.last().map(|m| (m.1 / 1_048_576.0 * 10.0).round() / 10.0), "peak": (peak > 0.0).then(|| (peak / 1_048_576.0 * 10.0).round() / 10.0) },
+            "stack_samples": self.stacks.len(),
+        })
+    }
+}
+
+/// Segundos em milissegundos, com três casas.
+fn round_ms(seconds: f64) -> f64 {
+    (seconds * 1_000_000.0).round() / 1000.0
+}
+
+/// A extensão do rastro no formato próprio.
+pub const TRACE_EXTENSION: &str = "aylisprof";
+
+/// Grava o rastro: `.json` no formato de eventos do Chrome (Perfetto); outra extensão, no
+/// formato próprio, que o "Abrir rastro…" reabre.
+pub fn save_trace(rec: &Recording, path: &std::path::Path) -> Result<(), String> {
+    let chrome = path.extension().is_some_and(|e| e.eq_ignore_ascii_case("json"));
+    let value = if chrome { rec.chrome_trace() } else { rec.to_json() };
+    let text = serde_json::to_string(&value).map_err(|e| e.to_string())?;
+    std::fs::write(path, text).map_err(|e| format!("não consegui gravar {}: {e}", path.display()))
 }
 
 /// Uma linha da tabela de métodos.
@@ -437,11 +531,12 @@ impl Component for MethodTable {
             ctx.repaint();
             return;
         }
-        if event.click_count >= 2 {
-            let index = ((p.y - ROW + self.scroll.get()) / ROW).floor() as usize;
-            if let Some(row) = self.shown.borrow().get(index) {
-                ctx.fire("on_open", EventArgs::Text(row.name.clone()));
-            }
+        let index = ((p.y - ROW + self.scroll.get()) / ROW).floor() as usize;
+        let Some(row) = self.shown.borrow().get(index).cloned() else { return };
+        // Um clique diz onde o handler está; dois abrem o código.
+        let event_name = if event.click_count >= 2 { "on_open" } else { "on_select" };
+        if row.lane == Lane::Handler || event.click_count >= 2 {
+            ctx.fire(event_name, EventArgs::Text(row.name));
         }
     }
 
@@ -524,6 +619,11 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     ui.control_mut(clear).unwrap().set_align(Align::Left).set_width(90.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_style("flat");
     let all = ui.add(Button::new("Ver tudo"), top);
     ui.control_mut(all).unwrap().set_align(Align::Left).set_width(90.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_style("flat");
+    // O rastro em arquivo: o formato próprio (reabre aqui) ou o de eventos do Chrome (Perfetto).
+    let save = ui.add(Button::new("Salvar rastro…"), top);
+    ui.control_mut(save).unwrap().set_align(Align::Left).set_width(130.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_style("flat");
+    let load = ui.add(Button::new("Abrir rastro…"), top);
+    ui.control_mut(load).unwrap().set_align(Align::Left).set_width(120.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_style("flat");
     let close_b = ui.add(Button::new("Fechar"), top);
     ui.control_mut(close_b).unwrap().set_align(Align::Right).set_width(90.0).set_style("flat");
     let _ = ui.set_prop(close_b, "modal_result", "ok");
@@ -630,6 +730,71 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             let _ = ui.set_prop(status, "text", text);
         });
     }
+    {
+        let (state, view) = (state.clone(), view.clone());
+        ui.on(table, "on_select", move |ui, _, args| {
+            let EventArgs::Text(name) = args else { return };
+            let status = view.borrow().status;
+            let text = match handler_place(&state, name) {
+                Ok(place) => ui.tr("{0}: {1} (duplo clique abre)").replace("{0}", name).replace("{1}", &place),
+                Err(e) => format!("⚠ {e}"),
+            };
+            let _ = ui.set_prop(status, "text", text);
+        });
+    }
+    {
+        let (state, view) = (state.clone(), view.clone());
+        ui.on_click(save, move |_, _| {
+            let (state2, view) = (state.clone(), view.clone());
+            let start = state.borrow().project.as_ref().map(|p| p.dir());
+            crate::actions::spawn(&state, async move {
+                let mut dialog = crate::files::AsyncFileDialog::new()
+                    .add_filter("Rastro do Aylis", &[TRACE_EXTENSION])
+                    .add_filter("Eventos do Chrome (Perfetto)", &["json"])
+                    .set_file_name(format!("rastro.{TRACE_EXTENSION}"));
+                if let Some(dir) = start {
+                    dialog = dialog.set_directory(dir);
+                }
+                let Some(file) = dialog.save_file().await else { return };
+                let path = file.path().to_path_buf();
+                state2.borrow_mut().after_task = Some(Box::new(move |ui: &mut Ui| {
+                    let result = save_trace(&view.borrow().data.borrow(), &path);
+                    let status = view.borrow().status;
+                    let text = match result {
+                        Ok(()) => ui.tr("Rastro salvo em {0}").replace("{0}", &path.display().to_string()),
+                        Err(e) => format!("⚠ {e}"),
+                    };
+                    let _ = ui.set_prop(status, "text", text);
+                }));
+            });
+        });
+    }
+    {
+        let (state, view) = (state.clone(), view.clone());
+        ui.on_click(load, move |_, _| {
+            let (state2, view) = (state.clone(), view.clone());
+            crate::actions::spawn(&state, async move {
+                let Some(file) = crate::files::AsyncFileDialog::new().add_filter("Rastro do Aylis", &[TRACE_EXTENSION]).pick_file().await else { return };
+                let path = file.path().to_path_buf();
+                state2.borrow_mut().after_task = Some(Box::new(move |ui: &mut Ui| {
+                    let read = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display())).and_then(|t| Recording::parse(&t));
+                    match read {
+                        Ok(rec) => {
+                            if view.borrow().recording {
+                                return;
+                            }
+                            *view.borrow().data.borrow_mut() = rec;
+                            show(ui, &view);
+                        }
+                        Err(e) => {
+                            let status = view.borrow().status;
+                            let _ = ui.set_prop(status, "text", format!("⚠ {e}"));
+                        }
+                    }
+                }));
+            });
+        });
+    }
     let (state2, ids2, view2) = (state.clone(), *ids, view.clone());
     crate::lang::translate(ui);
     let _ = ui.show_modal(form, move |ui, _| {
@@ -670,12 +835,20 @@ fn show(ui: &mut Ui, view: &Rc<RefCell<View>>) {
     ui.request_repaint();
 }
 
-/// Abre o código de um handler (`frmClientes.btn_salvar_click`) no projeto aberto.
+/// Abre o código de um handler (`frmClientes.btn_salvar_click`) no projeto aberto, na linha dele.
 fn open_handler(ui: &mut Ui, state: &Shared, name: &str) -> Result<(), String> {
     let (form, handler) = name.split_once('.').ok_or("só os handlers (form.método) levam ao código")?;
-    let project = state.borrow().project.clone().ok_or("nenhum projeto aberto")?;
-    let (file, line) = aylis_project::sync::handler_location(&project, project.language, form, handler).ok_or_else(|| format!("não achei {handler} no código de {form}"))?;
-    crate::codewindow::open(ui, &file, line).map(|_| ())
+    crate::coverage::open_handler(ui, state, form, handler)
+}
+
+/// Onde está o handler (`frmClientes.btn_salvar_click`): `forms/clientes.rs:42`, relativo à
+/// pasta do código.
+pub fn handler_place(state: &Shared, name: &str) -> Result<String, String> {
+    let (form, handler) = name.split_once('.').ok_or("só os handlers (form.método) levam ao código")?;
+    let (file, line) = crate::coverage::handler_place(state, form, handler)?;
+    let base = state.borrow().project.as_ref().map(|p| p.code_dir());
+    let shown = base.and_then(|b| file.strip_prefix(&b).ok().map(|p| p.display().to_string().replace('\\', "/"))).unwrap_or_else(|| file.display().to_string());
+    Ok(format!("{shown}:{line}"))
 }
 
 #[cfg(test)]
@@ -713,6 +886,67 @@ mod tests {
         assert_eq!(rec.images, Some((12.0, 2097152.0)), "as imagens do cache, na última amostra");
         assert_eq!(rec.dropped, 3);
         assert_eq!(rec.end(), 0.75);
+    }
+
+    fn sample() -> Recording {
+        let mut rec = Recording::default();
+        rec.add(&json!({
+            "spans": [
+                ["handler", "frmPrincipal.btnSalvar_click", 0.1, 0.040, 0, 0],
+                ["handler", "frmPrincipal.btnSalvar_click", 0.3, 0.010, 0, 0],
+                ["handler", "frmPrincipal.edtNome_change", 0.5, 0.001, 0, 0],
+                ["paint", "pintura frmPrincipal · 800×600", 0.2, 0.025, 0, 0],
+                ["paint", "pintura frmPrincipal · 10×10", 0.6, 0.002, 0, 0],
+                ["data", "consulta", 0.7, 0.003, 0, 2]
+            ],
+            "samples": [["memória", 0.2, 10485760.0], ["memória", 0.7, 20971520.0]],
+            "stacks": [[0.1, ["main", "salvar"]]],
+            "dropped": 1
+        }));
+        rec
+    }
+
+    /// 3a: o rastro salvo no formato de eventos do Chrome (abre no Perfetto) e no próprio, que
+    /// reabre igual.
+    #[test]
+    fn the_trace_saves_as_chrome_events_and_reopens() {
+        let rec = sample();
+        let chrome = rec.chrome_trace();
+        let events = chrome["traceEvents"].as_array().unwrap();
+        let salvar = events.iter().find(|e| e["ph"] == "X" && e["name"] == "frmPrincipal.btnSalvar_click").unwrap();
+        assert_eq!(salvar["ts"], 100000.0, "microssegundos");
+        assert_eq!(salvar["dur"], 40000.0);
+        assert_eq!(salvar["cat"], "handler");
+        assert!(events.iter().any(|e| e["ph"] == "M" && e["tid"] == 2), "o nome da outra thread");
+        assert_eq!(events.iter().filter(|e| e["ph"] == "C").count(), 2, "a memória como contador");
+        let again = Recording::parse(&rec.to_json().to_string()).unwrap();
+        assert_eq!(again.blocks, rec.blocks);
+        assert_eq!(again.memory, rec.memory);
+        assert_eq!(again.stacks, rec.stacks);
+        assert_eq!(again.dropped, 1);
+        assert!(Recording::parse("{\"traceEvents\": []}").is_err(), "o do Chrome não reabre como próprio");
+        let dir = std::env::temp_dir().join(format!("aylis-rastro-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        save_trace(&rec, &dir.join("r.json")).unwrap();
+        save_trace(&rec, &dir.join("r.aylisprof")).unwrap();
+        let read = |n: &str| serde_json::from_str::<Value>(&std::fs::read_to_string(dir.join(n)).unwrap()).unwrap();
+        assert!(read("r.json")["traceEvents"].is_array());
+        assert_eq!(read("r.aylisprof")["aylis_profile"], 1);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 2b: o resumo do `profile` do MCP traz os handlers e os quadros mais lentos.
+    #[test]
+    fn the_summary_has_the_slowest_handlers_and_frames() {
+        let s = sample().summary(5);
+        assert_eq!(s["slowest_handlers"][0]["name"], "frmPrincipal.btnSalvar_click");
+        assert_eq!(s["slowest_handlers"][0]["calls"], 2);
+        assert_eq!(s["slowest_handlers"][0]["max_ms"], 40.0);
+        assert_eq!(s["frames"]["count"], 2);
+        assert_eq!(s["frames"]["over_16_7_ms"], 1);
+        assert_eq!(s["frames"]["slowest"][0]["ms"], 25.0);
+        assert_eq!(s["memory_mb"]["peak"], 20.0);
+        assert_eq!(s["dropped"], 1);
     }
 }
 

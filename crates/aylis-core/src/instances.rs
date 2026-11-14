@@ -1,4 +1,4 @@
-//! Forms com instância (como um `TForm` do Delphi): cada form aberto tem a struct dele, com
+//! Forms com instância: cada form aberto tem a struct dele, com
 //! os componentes já resolvidos e o estado do usuário, e os handlers recebem essa struct. Um
 //! form aberto duas vezes (duas janelas de cliente, um frame embutido duas vezes) tem duas
 //! instâncias, e cada handler fala com a sua.
@@ -73,8 +73,7 @@ impl Ui {
 
     /// Monta a instância do form `form` recém-criado, se a classe dele foi registrada. `Err`
     /// diz o que não bate entre o form e o código (um componente que sumiu ou mudou de
-    /// classe): quem criou não deve abrir o form, como o Delphi não abre um form cujo
-    /// `.dfm` não bate com a classe.
+    /// classe): quem criou não deve abrir o form.
     pub fn bind_form(&mut self, form: ComponentId) -> Result<(), String> {
         let Some(class) = self.name(form).map(str::to_string) else { return Ok(()) };
         let Some(bind) = self.instances.binders.get(&class.to_ascii_lowercase()).cloned() else { return Ok(()) };
@@ -236,8 +235,8 @@ pub fn form_handler<T: 'static, R: HandlerResult + 'static>(method: fn(&mut T, &
 }
 
 /// O que um handler devolve: nada, ou `Result<(), String>` nos eventos-pergunta (o
-/// `before_post`, o `on_close_query`): o `Err` recusa, com a mensagem na tela, como a
-/// exceção no handler do Delphi (e o `?` repassa).
+/// `before_post`, o `on_close_query`): o `Err` recusa, com a mensagem na tela
+/// (e o `?` repassa).
 pub trait HandlerResult {
     fn finish(self, ui: &mut Ui);
 }

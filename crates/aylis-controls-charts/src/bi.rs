@@ -51,16 +51,23 @@ fn card(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, r: RectF) {
 /// quando melhora, ▼ vermelho quando piora; `higher_is_better` decide) e a tendência.
 pub struct KpiCard {
     pub base: ControlBase,
+    /// O nome do indicador, no topo do cartão.
     pub title: String,
+    /// O valor atual, em letras grandes.
     pub value: f64,
     /// O valor do período anterior (para a variação); 0: sem variação.
     pub previous: f64,
+    /// O texto antes do valor (`R$`).
     pub prefix: String,
+    /// O texto depois do valor (`%`, `kg`).
     pub suffix: String,
+    /// Casas decimais do valor.
     pub decimals: u32,
+    /// Subir é bom (▲ verde); desligado, subir é ruim (custos, reclamações) e fica vermelho.
     pub higher_is_better: bool,
     /// A tendência, `"10,12,9,15"` (vírgula ou `;`): uma linha embaixo.
     pub trend: String,
+    /// O texto ao lado da variação ("vs. mês anterior").
     pub subtitle: String,
 }
 
@@ -220,12 +227,20 @@ pub struct PivotResult {
 /// `on_cell_click` com `"linha\tcoluna"` (o detalhamento, drill-down).
 pub struct PivotTable {
     pub base: ControlBase,
+    /// Os registros: a primeira linha com os nomes dos campos e uma linha por registro, campos
+    /// separados por `;`.
     pub data: String,
+    /// O campo cujos valores viram as linhas.
     pub rows_field: String,
+    /// O campo cujos valores viram as colunas.
     pub columns_field: String,
+    /// O campo numérico juntado em cada célula.
     pub values_field: String,
+    /// Como juntar os valores de cada célula: `sum`, `count`, `average`, `min` ou `max`.
     pub aggregate: Aggregate,
+    /// Casas decimais das células.
     pub decimals: u32,
+    /// Mostra a linha e a coluna de totais.
     pub totals: bool,
     result: PivotResult,
     hovered: Cell<Option<(usize, usize)>>,
@@ -449,9 +464,13 @@ impl Component for PivotTable {
 /// `selected` = `"Sul;Sudeste"` (vazio: todos). `on_change` traz a seleção.
 pub struct Slicer {
     pub base: ControlBase,
+    /// O título, no topo.
     pub title: String,
+    /// Os valores que viram botões, separados por `;`.
     pub items: String,
+    /// Os valores marcados, separados por `;`; vazio: todos (sem filtro).
     pub selected: String,
+    /// Deixa marcar vários valores; desligado, marcar um desmarca o outro.
     pub multi: bool,
     rects: RefCell<Vec<RectF>>,
     clear_rect: Cell<Option<RectF>>,
@@ -618,11 +637,17 @@ fn parse_geojson(text: &str, name_property: &str) -> Vec<Region> {
 /// `name_property`). Passar o mouse mostra a região e o valor; clique: `on_region_click`.
 pub struct ChoroplethMap {
     pub base: ControlBase,
+    /// As regiões em GeoJSON: o texto ou o caminho de um arquivo/asset.
     pub geojson: String,
+    /// A propriedade do GeoJSON com o nome de cada região (sem ela, a `name`).
     pub name_property: String,
+    /// O valor de cada região pelo nome: `"SP=10;RJ=5"`.
     pub values: String,
+    /// A cor do menor valor; vazio: a cor primária do tema, clara.
     pub low_color: Option<Color>,
+    /// A cor do maior valor; vazio: a cor primária do tema.
     pub high_color: Option<Color>,
+    /// Casas decimais do valor mostrado ao passar o mouse.
     pub decimals: u32,
     regions: RefCell<Option<(String, Vec<Region>)>>,
     /// Os caminhos desenhados (para o clique acertar a região).

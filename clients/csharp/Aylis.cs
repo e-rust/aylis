@@ -49,7 +49,7 @@ public class AylisComponent(Aylis aylis, long id, string name)
     public void SetFocus() => Aylis.Send("focus", new() { ["target"] = Id });
 }
 
-/// <summary>A base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua
+/// <summary>A base dos forms: cada form aberto na tela tem a sua
 /// instância (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao
 /// abrir. A classe gerada de cada form monta os componentes em <c>Bind</c>.</summary>
 public class AylisForm(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
@@ -117,8 +117,7 @@ public class Aylis
         return instance;
     }
 
-    /// <summary>Cria o form na tela e devolve a instância dele (como o Application.CreateForm
-    /// do Delphi); <c>another</c>: mais uma janela do mesmo form.</summary>
+    /// <summary>Cria o form na tela e devolve a instância dele; <c>another</c>: mais uma janela do mesmo form.</summary>
     public AylisForm? CreateForm(string form, bool another = false)
     {
         var created = Call("create_form", new() { ["name"] = form, ["new"] = another });
@@ -284,7 +283,7 @@ public class Aylis
         return value is null ? null : decimal.Parse(value is JsonValue v && v.TryGetValue<string>(out var s) ? s : value.ToJsonString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Caixa de mensagem que espera, como o <c>MessageDlg</c> do Delphi: devolve o botão
+    /// <summary>Caixa de mensagem que espera: devolve o botão
     /// (<c>"yes"</c>, <c>"no"</c>, <c>"ok"</c>...). Enquanto espera, os eventos continuam rodando.</summary>
     public string MessageDlg(string text, string kind = "information", params string[] buttons)
     {
@@ -293,7 +292,7 @@ public class Aylis
         return WaitFor("message_dlg", new() { ["text"] = text, ["kind"] = kind, ["buttons"] = list });
     }
 
-    /// <summary>Abre o form como modal e espera ele fechar, como o <c>ShowModal</c> do Delphi: devolve o
+    /// <summary>Abre o form como modal e espera ele fechar: devolve o
     /// resultado (<c>"ok"</c>, <c>"cancel"</c>...).</summary>
     public string ShowModal(AylisForm form) => WaitFor("show_modal", new() { ["target"] = form.Id });
 
@@ -301,7 +300,7 @@ public class Aylis
     {
         fields["wait"] = true;
         waiting++;
-        // Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro Call esperava) roda já.
+        // O que chegou antes (enquanto outro Call esperava) roda já.
         for (var n = queued.Count; n > 0; n--)
         {
             var m = queued.Dequeue();
@@ -369,7 +368,7 @@ public class Aylis
 
     /// <summary>Roda o handler do evento. Um evento que pergunta (com <c>ask</c>) recebe a resposta
     /// quando o handler termina: o <c>ev.Reply</c> ou, com exceção, a recusa com a mensagem (a tela
-    /// mostra), como no BeforePost do Delphi.</summary>
+    /// mostra).</summary>
     private void HandleEvent(JsonObject message)
     {
         // Forms liberados na tela: as instâncias saem e os PostTo deles não rodam.
@@ -404,7 +403,7 @@ public class Aylis
             else
             {
                 Log("erro no handler", ev.Handler, e.Message);
-                // A tela mostra o erro ao usuário (como o Application.HandleException do Delphi).
+                // A tela mostra o erro ao usuário.
                 Send("exception", new() { ["message"] = e.Message, ["path"] = ev.Form, ["handler"] = ev.Handler });
             }
         }

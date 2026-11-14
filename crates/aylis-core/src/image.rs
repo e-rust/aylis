@@ -121,7 +121,7 @@ impl PartialEq for Image {
     }
 }
 
-/// Como uma imagem ocupa o retângulo de destino (como o `WrapMode` do `TImage`).
+/// Como uma imagem ocupa o retângulo de destino.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ImageFit {
     /// Inteira, mantendo a proporção (pode sobrar espaço).

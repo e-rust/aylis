@@ -66,7 +66,7 @@ fn enter_works_as_tab_but_the_memo_keeps_it() {
     ui.set_focus(b);
     ui.key_down(form, with(Key::Enter, Modifiers { shift: true, ..Default::default() }));
     assert_eq!(ui.focused(form), Some(memo), "Shift+Enter volta");
-    // Pelo código, como o SelectNext do Delphi.
+    // Pelo código.
     ui.set_focus(a);
     assert!(ui.focus_next(form, true));
     assert_eq!(ui.focused(form), Some(memo));
@@ -146,7 +146,7 @@ fn button_setup() -> (Ui, ComponentId, ComponentId, Rc<Cell<u32>>) {
     (ui, form, button, clicks)
 }
 
-/// Como no `TButton` da VCL: o Enter clica ao apertar e, seguro, repete o clique (a
+/// O Enter clica ao apertar e, seguro, repete o clique (a
 /// repetição do teclado); com `repeat_enter` desligado, só o primeiro.
 #[test]
 fn holding_enter_on_a_button_repeats_the_click() {

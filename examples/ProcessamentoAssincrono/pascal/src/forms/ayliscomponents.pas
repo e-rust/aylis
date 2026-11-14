@@ -302,6 +302,8 @@ type
     procedure SetRememberPlacement(Value: Boolean);
     function GetGpu: string;
     procedure SetGpu(Value: string);
+    function GetSpanMonitors: Boolean;
+    procedure SetSpanMonitors(Value: Boolean);
     function GetActivateOnShow: Boolean;
     procedure SetActivateOnShow(Value: Boolean);
     function GetCloseAction: string;
@@ -470,6 +472,7 @@ type
     property Monitor: Int64 read GetMonitor write SetMonitor;
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
+    property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
     property CloseAction: string read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
@@ -1009,12 +1012,12 @@ type
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    { O Button deste form com o nome (nil se não há). }
     function FindButton(const Nome: string): TButton;
     { O Button que disparou o evento (nil se não é um Button deste form). }
     function SenderAsButton(Sender: TAylisComponent): TButton; overload;
     function SenderAsButton(Event: TJSONObject): TButton; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
@@ -1031,17 +1034,17 @@ type
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    { O Button deste form com o nome (nil se não há). }
     function FindButton(const Nome: string): TButton;
     { O Button que disparou o evento (nil se não é um Button deste form). }
     function SenderAsButton(Sender: TAylisComponent): TButton; overload;
     function SenderAsButton(Event: TJSONObject): TButton; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
     function SenderAsLabel(Event: TJSONObject): TLabel; overload;
-    { O ProgressBar deste form com o nome, como o FindComponent (nil se não há). }
+    { O ProgressBar deste form com o nome (nil se não há). }
     function FindProgressBar(const Nome: string): TProgressBar;
     { O ProgressBar que disparou o evento (nil se não é um ProgressBar deste form). }
     function SenderAsProgressBar(Sender: TAylisComponent): TProgressBar; overload;
@@ -2071,6 +2074,16 @@ end;
 procedure TForm.SetGpu(Value: string);
 begin
   SetProp('gpu', TJSONString.Create(Value));
+end;
+
+function TForm.GetSpanMonitors: Boolean;
+begin
+  Result := GetProp('span_monitors').AsBoolean;
+end;
+
+procedure TForm.SetSpanMonitors(Value: Boolean);
+begin
+  SetProp('span_monitors', TJSONBoolean.Create(Value));
 end;
 
 function TForm.GetActivateOnShow: Boolean;

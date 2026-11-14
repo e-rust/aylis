@@ -1,5 +1,5 @@
 //! [`CropBox`]: a área de recorte por cima de uma imagem ou de um vídeo, com as alças
-//! nos cantos e nas bordas (o `TSelection` do FMX, no jeito de um editor de vídeo).
+//! nos cantos e nas bordas (no jeito de um editor de vídeo).
 
 use std::cell::Cell;
 
@@ -61,17 +61,29 @@ struct Drag {
 ///   num clique sem arrastar no miolo (o play/pausa de uma prévia, por exemplo).
 pub struct CropBox {
     pub base: ControlBase,
+    /// Largura da imagem de origem, em pixels (o controle cobre a imagem inteira e escala).
     pub source_width: f32,
+    /// Altura da imagem de origem, em pixels.
     pub source_height: f32,
+    /// Esquerda da seleção, em pixels da origem.
     pub sel_x: f32,
+    /// Topo da seleção, em pixels da origem.
     pub sel_y: f32,
+    /// Largura da seleção, em pixels da origem.
     pub sel_width: f32,
+    /// Altura da seleção, em pixels da origem.
     pub sel_height: f32,
+    /// O menor lado que a seleção pode ter, em pixels da origem.
     pub min_size: f32,
+    /// Arredonda posição e tamanho para múltiplos dele (2 = pares, o que os codificadores
+    /// de vídeo pedem); 0 ou 1: só para o pixel inteiro.
     pub snap: f32,
+    /// Texto no meio da seleção enquanto arrasta; vazio: "largura×altura".
     pub caption: String,
     /// A cor de fora da seleção.
     pub shade: Color,
+    /// O visual de editor web: terços sempre à vista, alças brancas por fora da moldura e o
+    /// tamanho em cima (desenha um pouco fora do controle: deixe uns 10 px de margem).
     pub framed: bool,
     drag: Option<Drag>,
     dragging: Cell<bool>,

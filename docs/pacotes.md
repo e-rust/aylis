@@ -1,8 +1,8 @@
 # Pacotes de ferramentas
 
-Decidido com o autor em 12/11/2026 ("no delphi a instalação da IDE é diferente, nele eu instalo
-a IDE e depois instalo os pacotes que vou usar [...] baixando conforme necessário ou pegando os
-instaladores do lado do instalador se tiver"). Este documento é o desenho que as partes seguem.
+Decidido com o autor em 12/11/2026: instala-se a IDE e, depois, os pacotes que vão ser usados,
+baixados conforme a necessidade ou tirados da pasta ao lado do instalador. Este documento é o
+desenho que as partes seguem.
 
 ## O que é um pacote
 
@@ -53,6 +53,28 @@ pasta de pacotes uma vez, numa máquina com internet, com `aylis-tool packages p
 `pacotes.json` com os nomes), e a sobe no Drive, num servidor ou ao lado do instalador.
 
 O download respeita o proxy do sistema e tem prazo; um erro diz qual arquivo, de onde e por quê.
+
+**Pacote feito pelo Aylis.** O que não tem origem oficial leva, no lugar da `url`, o comando que
+o gera (`"built": "aylis-tool skia-android"`): o `pack` o leva do cache, e o `packages update`
+o pula (o comando grava o hash). São dois:
+
+- o `skia-android-armv7`: o Skia do Android de 32 bits, que o projeto do Skia não publica pronto
+  (o publicar com `armeabi-v7a` o instala);
+- o `fpc`: o Free Pascal 3.2.2 do Windows, que só tem instalador (Inno Setup). `aylis-tool
+  fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe` confere o
+  SHA-256 do instalador oficial (SourceForge), tira os arquivos com o
+  [innoextract](https://constexpr.org/innoextract/) sem executar o instalador e monta o zip com o
+  compilador, as mensagens e as units de 64 bits.
+
+Quem distribui roda o comando, depois o `pack`, e sobe o arquivo com os outros.
+
+**O WiX** é o pacote `wix`: o `.nupkg` da ferramenta do .NET, extraído, roda com `dotnet wix.dll`
+(o .NET do pacote `dotnet` ou o instalado). A verificação de ambiente instala o pacote, sem o
+`dotnet tool install`, que baixaria do nuget.org.
+
+**Linux e macOS:** o `android-sdk` e o `dotnet` têm os arquivos das duas (macOS só em ARM), e o
+`android-ndk` só o de Linux: o do macOS sai só em `.dmg`, que o Aylis não extrai (instale pelo
+Android Studio).
 
 ## Onde aparecem
 

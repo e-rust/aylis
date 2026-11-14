@@ -10,13 +10,13 @@ A bateria: `level` (0 a 100) e `charging`. Sempre medindo (a cada `interval`, 5 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `interval` | Intervalo | número |  |
+| `interval` | Intervalo | número | De quanto em quanto tempo lê a bateria, em segundos. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

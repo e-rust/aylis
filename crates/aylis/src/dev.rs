@@ -200,9 +200,43 @@ static TRACE_OUT: std::sync::Mutex<Option<std::sync::mpsc::Sender<String>>> = st
 
 #[cfg(not(target_arch = "wasm32"))]
 fn send_trace(line: String) {
+    push(json!({ "trace": line }).to_string());
+}
+
+/// Uma mensagem que vai à IDE sem pedido (o rastro, os handlers que rodaram). Antes de o canal
+/// abrir, espera na fila e vai quando ele abrir.
+#[cfg(not(target_arch = "wasm32"))]
+fn push(text: String) {
     if let Some(tx) = TRACE_OUT.lock().ok().and_then(|t| t.clone()) {
-        let _ = tx.send(json!({ "trace": line }).to_string());
+        let _ = tx.send(text);
     }
+}
+
+/// O nome com que um handler é avisado: `frmClientes.btnSalvar_click`, pelo form de quem
+/// disparou (o nome da classe do form, como o Profiler mostra); sem form, só o handler.
+fn handler_key(ui: &Ui, component: ComponentId, handler: &str) -> String {
+    let form = ui.form_of(component);
+    match ui.form_class(form).or_else(|| ui.name(form)).filter(|f| !f.is_empty()) {
+        Some(form) => format!("{form}.{handler}"),
+        None => handler.to_string(),
+    }
+}
+
+/// A cobertura de handlers (4b): o primeiro disparo de cada handler com nome vai à IDE
+/// (`{"handler": "frmX.btnSalvar_click"}`), que soma entre as execuções. Um aviso por handler
+/// por execução: o custo é o de uma consulta num conjunto por evento.
+fn watch_handlers(ui: &mut Ui) {
+    let mut seen = std::collections::HashSet::new();
+    ui.add_observer(move |ui, activity| {
+        let aylis_core::activity::Activity::Event { component, handler, .. } = activity else { return };
+        if handler.is_empty() {
+            return;
+        }
+        let key = handler_key(ui, *component, handler);
+        if seen.insert(key.clone()) {
+            push(json!({ "handler": key }).to_string());
+        }
+    });
 }
 
 /// Conecta na IDE e passa a atender os comandos dela (numa thread; sem a IDE, tenta de novo
@@ -222,6 +256,7 @@ pub(crate) fn connect(ui: &Ui, mut target: Target, mix: BTreeMap<String, String>
     if let Ok(mut t) = TRACE_OUT.lock() {
         *t = Some(trace_tx);
     }
+    poster.post(watch_handlers);
     aylis_devlink::client::run(
         target,
         hello(ui),
@@ -274,10 +309,27 @@ fn send_trace(line: String) {
     web_send(&json!({ "trace": line }).to_string());
 }
 
+#[cfg(target_arch = "wasm32")]
+thread_local! {
+    /// O que foi avisado antes de o canal abrir (os handlers que rodaram): vai quando abrir.
+    static PENDING: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Uma mensagem que vai à IDE sem pedido; antes de o canal abrir, espera.
+#[cfg(target_arch = "wasm32")]
+fn push(text: String) {
+    if WEB.with(|w| w.borrow().session.is_some()) {
+        web_send(&text);
+    } else {
+        PENDING.with(|p| p.borrow_mut().push(text));
+    }
+}
+
 /// No navegador: o WebSocket da página, aberto já com o laço de eventos rodando; quando cai
 /// (ou a IDE não está aberta), tenta de novo depois de uns segundos.
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn connect(ui: &Ui, target: Target, mix: BTreeMap<String, String>) {
+    ui.poster().post(watch_handlers);
     ui.poster().post(move |ui| open_socket(ui, target, mix));
 }
 
@@ -308,6 +360,14 @@ fn open_socket(ui: &Ui, target: Target, mix: BTreeMap<String, String>) {
             let mut w = w.borrow_mut();
             if let Some(init) = w.init.take() {
                 w.session = init.finish(&frame).ok();
+                // O que esperava o canal abrir.
+                if let (Some(socket), Some(session)) = (w.socket.clone(), w.session.as_mut()) {
+                    for text in PENDING.with(|p| std::mem::take(&mut *p.borrow_mut())) {
+                        for f in session.seal(&text).unwrap_or_default() {
+                            let _ = socket.send_with_u8_array(&f);
+                        }
+                    }
+                }
                 return None;
             }
             w.session.as_mut().and_then(|s| s.open(&frame).ok().flatten())

@@ -10,11 +10,11 @@ Dispara uma ação quando chega uma mensagem do push que casa com o filtro.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
-| `source` | Origem | componente |  |
-| `filter` | Filtro | texto |  |
-| `action` | Ação | componente |  |
-| `replace_default` | Substituir a notificação comum | lógico |  |
+| `active` | Ativo | lógico | A regra vale; desligada, as mensagens passam sem disparar a ação. |
+| `source` | Origem | componente | O `PushNotifications` de onde vêm as mensagens. |
+| `filter` | Filtro | texto | As condições sobre os dados, separadas por `;` (`kind=call`, `kind!=chat`, `caller`: a chave existe); vazio aceita todas. |
+| `action` | Ação | componente | O componente executado quando a mensagem casa (qualquer um com o método `execute(dados)`: o `WakeAppAction`, o `NotifyAction` ou um do app). |
+| `replace_default` | Substituir a notificação comum | lógico | A notificação comum da mensagem não aparece: a ação cuida dela. |
 
 ## Eventos
 

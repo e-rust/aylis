@@ -12,28 +12,28 @@ O envio de arquivos (`QUploader`): o cabeçalho com o título, o "+" (escolher, 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
+| `title` | Título | texto | O título do cabeçalho. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `filter` | Filtro | texto |  |
-| `multiple` | Vários | lógico |  |
+| `filter` | Filtro | texto | Os tipos aceitos no "+", como no diálogo de abrir (`Imagens\|*.png;*.jpg`); vazio: todos. |
+| `multiple` | Vários | lógico | Deixa escolher vários arquivos de uma vez. |
 | `auto_upload` | Envia sozinho | lógico | Envia assim que os arquivos são escolhidos. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `files` | Arquivos | texto |  |
-| `progress` | Progresso | texto |  |
+| `files` | Arquivos | texto | Os caminhos dos arquivos escolhidos, separados por `;` (vazio: nenhum). |
+| `progress` | Progresso | texto | O andamento de cada arquivo, de 0 a 1, separados por `;` na ordem dos `files` (`0.5;1`). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_upload` | — | — |  |
 
 ## Em código

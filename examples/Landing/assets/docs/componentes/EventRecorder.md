@@ -10,7 +10,7 @@ Grava tudo o que o usuário faz num .aylisrec (a IDE abre e mostra).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Grava: ligado, começa sozinho ao entrar na tela; desligar para a gravação. |
 | `folder` | Pasta | texto | Pasta das gravações; vazio: `<pasta do app>/recordings` (`app_data_dir`). |
 | `app_name` | Nome do aplicativo | texto | O nome do app (pasta e cabeçalho); vazio: o título do form principal. |
 | `pointer_moves` | Movimentos do mouse | lógico | Grava o movimento do ponteiro (muitas linhas); os arrastos sempre entram. |

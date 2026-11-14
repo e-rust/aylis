@@ -86,6 +86,9 @@ pub struct FileSpec {
     pub extract: bool,
     /// O nome com que fica copiado, se não for extraído (`bundletool.jar`).
     pub save_as: Option<String>,
+    /// Sem URL oficial: o arquivo é feito pelo Aylis com este comando (`aylis-tool
+    /// skia-android`) e vem só das pastas de pacotes e dos espelhos.
+    pub built: Option<String>,
 }
 
 impl FileSpec {
@@ -348,7 +351,8 @@ fn parse_file(f: &Value) -> Result<FileSpec, String> {
         return Err(format!("{name}: save_as inválido"));
     }
     let extract = f["extract"].as_bool().unwrap_or_else(|| archive_kind(&name).is_some());
-    Ok(FileSpec { name, size: f["size"].as_u64().unwrap_or(0), sha256, url, strip: f["strip"].as_u64().unwrap_or(0) as usize, prefix, into, extract, save_as })
+    let built = f["built"].as_str().map(str::to_string);
+    Ok(FileSpec { name, size: f["size"].as_u64().unwrap_or(0), sha256, url, strip: f["strip"].as_u64().unwrap_or(0) as usize, prefix, into, extract, save_as, built })
 }
 
 /// Um nome de arquivo sem pasta, sem `..` e sem nada estranho (`+` vale: `jdk-17.0.21+9`).

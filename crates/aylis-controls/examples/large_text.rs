@@ -3,9 +3,11 @@
 //! (Skia na CPU, sem janela): rolar e navegar não podem depender do tamanho do arquivo.
 //!
 //! ```text
-//! cargo run --release -p aylis-controls --example large_text [linhas]
+//! cargo run --release -p aylis-controls --example large_text [linhas] [alterações]
 //! ```
 
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use aylis_core::*;
@@ -83,10 +85,13 @@ fn main() {
     ui.pointer_up(form, PointerEvent { position: PointF::new(mx, r.bottom() - 5.0), ..Default::default() });
     let top = ui.get_prop(memo, "caret_line").ok();
     println!("minimapa: evento {:.2} ms, quadro {:.2} ms, linha do cursor {top:?}", ev / (steps + 1) as f64, pt / (steps + 1) as f64);
-    // Digitar no meio do texto.
+    // Digitar no meio do texto (o cursor na linha do meio).
     ui.pointer_down(form, PointerEvent { position: PointF::new(r.x + 400.0, r.y + 200.0), ..Default::default() });
     ui.pointer_up(form, PointerEvent { position: PointF::new(r.x + 400.0, r.y + 200.0), ..Default::default() });
-    frame(&mut ui);
+    ui.set_prop(memo, "caret_line", (wanted / 2).max(1) as f64).unwrap();
+    for _ in 0..200 {
+        frame(&mut ui);
+    }
     let (mut ev, mut pt) = (0.0, 0.0);
     for _ in 0..20 {
         let t = Instant::now();
@@ -95,4 +100,64 @@ fn main() {
         pt += frame(&mut ui);
     }
     println!("digitar: evento {:.2} ms, quadro {:.2} ms", ev / 20.0, pt / 20.0);
+    // `edits` alterações separadas (100; o segundo argumento muda: o desfazer antigo copiava o
+    // texto inteiro em cada uma). O tempo anda 2 s entre elas: cada uma vira um passo do
+    // desfazer; "b" e Enter alternados; a memória viva antes e depois.
+    let edits: usize = std::env::args().nth(2).and_then(|n| n.parse().ok()).unwrap_or(100);
+    let (mut ev, mut pt) = (0.0, 0.0);
+    let mut before = 0;
+    // As duas primeiras não contam: as listas de uma posição por linha (a tabela das linhas,
+    // as linhas visuais, o realce) crescem pelo dobro na primeira linha a mais, e essa folga
+    // não é do desfazer.
+    for i in 0..edits + 2 {
+        if i == 2 {
+            before = ALLOCATED.load(Ordering::Relaxed);
+            (ev, pt) = (0.0, 0.0);
+        }
+        ui.set_time(1000.0 + i as f64 * 2.0);
+        let t = Instant::now();
+        if i % 2 == 0 {
+            ui.text_input(form, "b");
+        } else {
+            ui.key_down(form, KeyEvent { key: Key::Enter, ..Default::default() });
+        }
+        ev += t.elapsed().as_secs_f64() * 1000.0;
+        pt += frame(&mut ui);
+    }
+    let grew = ALLOCATED.load(Ordering::Relaxed).saturating_sub(before);
+    println!("{edits} alterações: evento {:.2} ms, quadro {:.2} ms; memória a mais {:.1} KB", ev / edits as f64, pt / edits as f64, grew as f64 / 1e3);
+    // Desfazer as medidas.
+    let t = Instant::now();
+    for _ in 0..edits {
+        ui.key_down(form, KeyEvent { key: Key::Char('z'), modifiers: Modifiers { ctrl: true, ..Default::default() }, ..Default::default() });
+    }
+    println!("desfazer: {:.2} ms por passo", t.elapsed().as_secs_f64() * 1000.0 / edits as f64);
 }
+
+/// Conta os bytes alocados agora (a memória do desfazer sai da diferença).
+struct Counting;
+
+static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
+
+// SAFETY: repassa ao alocador do sistema, só contando os bytes.
+unsafe impl GlobalAlloc for Counting {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        ALLOCATED.fetch_add(layout.size(), Ordering::Relaxed);
+        // SAFETY: o mesmo contrato do `alloc` de quem chamou.
+        unsafe { System.alloc(layout) }
+    }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        ALLOCATED.fetch_sub(layout.size(), Ordering::Relaxed);
+        // SAFETY: o mesmo contrato do `dealloc` de quem chamou.
+        unsafe { System.dealloc(ptr, layout) }
+    }
+    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+        ALLOCATED.fetch_add(new_size, Ordering::Relaxed);
+        ALLOCATED.fetch_sub(layout.size(), Ordering::Relaxed);
+        // SAFETY: o mesmo contrato do `realloc` de quem chamou.
+        unsafe { System.realloc(ptr, layout, new_size) }
+    }
+}
+
+#[global_allocator]
+static GLOBAL: Counting = Counting;

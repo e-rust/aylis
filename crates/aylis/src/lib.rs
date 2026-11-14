@@ -227,6 +227,7 @@ pub mod classes {
         Biometrics: aylis_controls::Biometrics => "System",
         AppLink: aylis_controls::AppLink => "System",
         UrlScheme: aylis_controls::UrlScheme => "System",
+        SystemBars: aylis_controls::SystemBars => "Device",
         Location: aylis_controls::Location => "Device",
         Battery: aylis_controls::Battery => "Device",
         Network: aylis_controls::Network => "Device",
@@ -477,7 +478,7 @@ pub struct EmbeddedProject {
     pub dev: &'static str,
 }
 
-/// O aplicativo de um projeto (como o `Application` do Delphi): abre o `.aylisproj`,
+/// O aplicativo de um projeto: abre o `.aylisproj`,
 /// registra todas as classes, aplica tema e idioma, liga os arquivos do projeto (assets) e
 /// cria os forms marcados como "criar no início". Os outros forms são criados com
 /// `ui.create_form("frmClientes")`.

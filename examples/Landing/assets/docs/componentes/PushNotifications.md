@@ -12,11 +12,11 @@ Notificações push: com `active`, registra quando o form abre (pede a permissã
 |---|---|---|---|
 | `active` | Ativo | lógico | Registrar quando o form abrir. |
 | `show_in_foreground` | Mostrar com o app aberto | lógico | Com o app aberto, a mensagem com título também vira notificação do sistema. |
-| `sender_id` | ID do remetente (FCM) | texto |  |
-| `project_id` | ID do projeto (FCM) | texto |  |
-| `app_id` | ID do aplicativo | texto |  |
-| `api_key` | Chave da API | texto |  |
-| `vapid_key` | Chave VAPID (Web Push) | texto |  |
+| `sender_id` | ID do remetente (FCM) | texto | Android (FCM): o número do remetente do projeto Firebase (`project_number` do `google-services.json`). |
+| `project_id` | ID do projeto (FCM) | texto | Android (FCM): o id do projeto Firebase (`project_id` do `google-services.json`). |
+| `app_id` | ID do aplicativo | texto | Android (FCM): o id do app no Firebase (`mobilesdk_app_id` do `google-services.json`). |
+| `api_key` | Chave da API | texto | Android (FCM): a chave da API (`current_key` do `google-services.json`). |
+| `vapid_key` | Chave VAPID (Web Push) | texto | Navegador (Web Push): a chave pública VAPID do servidor do app. |
 
 ## Eventos
 

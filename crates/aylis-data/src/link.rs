@@ -1,4 +1,4 @@
-//! [`FieldLink`]: o que um controle ligado a um campo precisa (como o `TFieldDataLink`).
+//! [`FieldLink`]: o que um controle ligado a um campo precisa.
 
 use aylis_core::{ComponentId, Ui};
 
@@ -66,7 +66,7 @@ impl FieldLink {
         v.is_active() && !read_only && !field_read_only && (v.state().is_editing() || auto_edit)
     }
 
-    /// Coloca o dataset em edição se ainda não estiver (como o `DataLink.Edit`).
+    /// Coloca o dataset em edição se ainda não estiver.
     pub fn begin_edit(&self, ui: &mut Ui) -> DataResult {
         let ds = self.data_set(ui).ok_or("controle sem dataset")?;
         let mut ds = data_set(ui, ds);

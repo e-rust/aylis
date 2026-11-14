@@ -12,18 +12,18 @@ Texto com efeitos animados (entrada, saída, contínuos), por letra, palavra ou 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |  |
-| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `text` | Texto | texto | O texto animado (as quebras de linha valem). |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` | O alinhamento do texto na horizontal. |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` | O alinhamento do texto na vertical. |
 | `wrap` | Quebra de linha | lógico | Quebra as linhas na largura do controle (as quebras do texto sempre valem). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `effects` | Efeitos | texto |  |
+| `effects` | Efeitos | texto | Os efeitos, separados por `;`: o nome e os parâmetros (`fade by=letter duration=500; wave amplitude=6 after`). Vazio: o texto parado. |
 | `autoplay` | Toca sozinho | lógico | Começa a animar quando aparece. |
-| `looping` | Repetindo | lógico |  |
+| `looping` | Repetindo | lógico | Repete a animação ao terminar, depois de `loop_delay`. |
 | `loop_delay` | Pausa entre repetições | número | Espera entre uma volta e outra (ms). |
 
 ## Eventos

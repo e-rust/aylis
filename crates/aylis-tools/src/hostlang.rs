@@ -151,7 +151,7 @@ fn fpc_default() -> Option<PathBuf> {
 }
 
 /// Todos os arquivos com a extensão debaixo de `dir`.
-fn files(dir: &Path, ext: &str, out: &mut Vec<PathBuf>) {
+pub(crate) fn files(dir: &Path, ext: &str, out: &mut Vec<PathBuf>) {
     let Ok(entries) = std::fs::read_dir(dir) else { return };
     for e in entries.flatten() {
         let p = e.path();
@@ -235,6 +235,7 @@ pub fn build(project: &Project, tc: &Toolchain, out: &Path, release: bool, contr
                 );
                 let bat = out.join("compilar.bat");
                 std::fs::write(&bat, script).map_err(|e| e.to_string())?;
+                // lint-allow: cmd-shell (o .bat é nosso: chama o vcvars do MSVC antes do cl)
                 run_tool(Command::new("cmd").current_dir(&dir).arg("/C").arg(&bat), control, sink, LineKind::Tool)?;
             } else {
                 let mut c = Command::new(&tc.program);

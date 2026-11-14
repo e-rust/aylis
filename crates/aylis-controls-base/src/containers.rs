@@ -28,7 +28,7 @@ impl aylis_core::PropEnum for SmoothScroll {
     }
 }
 
-/// Área com rolagem vertical (como o `TVertScrollBox`). Os filhos usam o layout normal
+/// Área com rolagem vertical. Os filhos usam o layout normal
 /// (por exemplo `align: top`, empilhados); o que passar da altura rola com a roda do
 /// mouse ou arrastando a barra. `on_scroll` avisa quando o usuário rola (roda, dedo, barra),
 /// com a posição nova; o que o código posiciona não avisa. `scroll_position` lê e grava a
@@ -36,16 +36,18 @@ impl aylis_core::PropEnum for SmoothScroll {
 /// `visible_components(lista, inteiros)` diz quais filhos da lista estão à vista (os caminhos,
 /// separados por `;`; em Rust, `ScrollBox::visible_children`).
 ///
-/// Com `horizontal` rola para os lados (o `THorzScrollBox`, o `v-slide-group`): filhos
+/// Com `horizontal` rola para os lados: filhos
 /// com `align: left` lado a lado; a roda comum também rola para os lados.
 ///
 /// A roda anda `wheel_step` pontos por dente (0 = o do app) e desliza conforme `smooth`.
 pub struct ScrollBox {
     pub base: ControlBase,
+    /// Rola para os lados em vez de para baixo (filhos com `align: left`, lado a lado).
     pub horizontal: bool,
     /// Puxar para baixo no topo atualiza (o `v-pull-to-refresh`): dispara `on_refresh` e
     /// mostra o indicador enquanto `refreshing` estiver ligado (quem atualiza desliga).
     pub pull_to_refresh: bool,
+    /// Mostra o indicador de atualização no topo; quem atualiza desliga ao terminar.
     pub refreshing: bool,
     /// Pontos por dente da roda (0 = o do app, [`Ui::scroll_options`](aylis_core::Ui::scroll_options)).
     pub wheel_step: f32,
@@ -67,19 +69,26 @@ pub struct ScrollBox {
     end_fired_at: Option<f32>,
     /// Os caracteres dos campos dentro da caixa (veja o `Form`).
     pub allowed_chars: String,
+    /// Os caracteres que os campos de dentro não aceitam (digitados ou colados); faixas como
+    /// `a-z`. Vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` entram nos campos de dentro.
     pub only_allowed: bool,
+    /// O filtro de caracteres da caixa manda nos campos de dentro (sem ele, o do campo decide
+    /// primeiro).
     pub chars_override: bool,
     /// Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a
     /// mesma herança dos filtros.
     pub char_map: String,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for ScrollBox {
     fn default() -> Self {
         let mut base = ControlBase::new(200.0, 200.0);
         base.set_clip_children(true).set_padding([0.0, 0.0, BAR + 2.0, 0.0]);
-        Self { base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, gutter: true, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new() }
+        Self { overscroll: aylis_core::Overscroll::Auto, base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, gutter: true, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new() }
     }
 }
 
@@ -264,6 +273,7 @@ impl Component for ScrollBox {
     leaf_control!("ScrollBox");
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         horizontal: bool => "Behavior",
         pull_to_refresh: bool => "Behavior",
         refreshing: bool => "Behavior",
@@ -481,7 +491,7 @@ impl Component for ScrollBox {
 
 // ---------------------------------------------------------------------------
 
-/// Divisória arrastável (como o `TSplitter`): redimensiona o controle encaixado antes
+/// Divisória arrastável: redimensiona o controle encaixado antes
 /// dela com o mesmo alinhamento (`left`, `right`, `top` ou `bottom`).
 pub struct Splitter {
     pub base: ControlBase,

@@ -12,16 +12,16 @@ A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `dense` | Compacto | lógico |  |
-| `striped` | Listrado | lógico |  |
-| `separator` | Separadores | um de: `horizontal`, `vertical`, `cell`, `none` |  |
+| `dense` | Compacto | lógico | Linhas mais baixas (28 pontos em vez de 44). |
+| `striped` | Listrado | lógico | Alterna o fundo das linhas (zebrado). |
+| `separator` | Separadores | um de: `horizontal`, `vertical`, `cell`, `none` | As linhas de separação: horizontais, verticais, em volta de cada célula ou nenhuma. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `columns` | Colunas | texto |  |
-| `rows` | Linhas | texto |  |
+| `columns` | Colunas | texto | Os títulos das colunas, separados por `;` (`Nome;Idade;Cidade`). |
+| `rows` | Linhas | texto | As linhas da tabela, uma por linha de texto, com as células separadas por `;`. |
 
 ## Em código
 

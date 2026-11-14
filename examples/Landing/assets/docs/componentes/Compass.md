@@ -10,14 +10,14 @@ A bússola: `heading` em graus (0 = norte, 90 = leste).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
-| `interval` | Intervalo | número |  |
+| `active` | Ativo | lógico | Lê a bússola; desligado, para. |
+| `interval` | Intervalo | número | De quanto em quanto tempo lê, em segundos. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

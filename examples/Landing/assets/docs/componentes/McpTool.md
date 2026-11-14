@@ -10,11 +10,11 @@ Uma ferramenta do app para o agente (filha de um `McpServer`). `tool_name` é o 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tool_name` | Nome da ferramenta | texto |  |
-| `description` | Descrição | texto |  |
-| `params` | Parâmetros | texto |  |
-| `read_only` | Somente leitura | lógico |  |
-| `enabled` | Habilitado | lógico |  |
+| `tool_name` | Nome da ferramenta | texto | O nome que o agente chama; vazio: o nome do componente. |
+| `description` | Descrição | texto | O que a ferramenta faz e quando usar (o agente lê para escolher). |
+| `params` | Parâmetros | texto | Os parâmetros: um JSON Schema, só as propriedades ou a forma curta `cliente: string, quantidade: integer, obs?: string` (`?`: opcional); vazio: nenhum. |
+| `read_only` | Somente leitura | lógico | Avisa o agente que a ferramenta só lê, não muda nada. |
+| `enabled` | Habilitado | lógico | Oferecida ao agente; desligada, ele não a vê. |
 
 ## Eventos
 

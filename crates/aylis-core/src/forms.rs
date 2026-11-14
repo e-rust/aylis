@@ -1,5 +1,5 @@
-//! Forms abertos como janelas: `show`, `show_modal`, `close` e `ModalResult`, como no
-//! Delphi (`Show`, `ShowModal`, `Close`, `OnCloseQuery`, `OnClose`).
+//! Forms abertos como janelas: `show`, `show_modal`, `close` e `ModalResult`, com
+//! a pergunta antes de fechar (`on_close_query`) e o aviso ao fechar (`on_close`).
 //!
 //! O core só mantém a lista de forms abertos (na ordem em que estão empilhados) e as
 //! regras; a plataforma abre e fecha as janelas de verdade para acompanhar essa lista
@@ -35,8 +35,8 @@ use crate::prop::{PropEnum, PropValue};
 use crate::ui::Ui;
 
 /// Onde a janela de um form fica na tela, em pixels físicos: posição do canto, tamanho da
-/// área interna e se está maximizada (o `Left`, `Top`, `Width`, `Height` e `WindowState`
-/// de um form do Delphi). A plataforma atualiza quando a janela é movida ou muda de
+/// área interna e se está maximizada.
+/// A plataforma atualiza quando a janela é movida ou muda de
 /// tamanho; maximizada, guarda a posição e o tamanho de antes (para voltar a eles). Para
 /// reabrir onde estava, o app guarda isto e devolve com [`Ui::set_window_placement`]
 /// antes do `show`.
@@ -77,7 +77,7 @@ impl Ui {
     }
 }
 
-/// Resultado de um form modal (como o `TModalResult`).
+/// Resultado de um form modal.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ModalResult {
     #[default]
@@ -131,8 +131,8 @@ pub(crate) struct OpenForm {
 }
 
 impl Ui {
-    /// Cria o form `name` pela fábrica de forms do aplicativo (como o
-    /// `Application.CreateForm` do Delphi). Se já existe um form raiz com esse nome, devolve
+    /// Cria o form `name` pela fábrica de forms do aplicativo.
+    /// Se já existe um form raiz com esse nome, devolve
     /// ele. O form é criado fechado: abra com [`show`](Self::show) ou
     /// [`show_modal`](Self::show_modal).
     pub fn create_form(&mut self, name: &str) -> Result<ComponentId> {
@@ -150,7 +150,7 @@ impl Ui {
     }
 
     /// Cria mais uma instância do form `name`, mesmo que ele já exista (duas janelas de
-    /// cliente, como dois `TFrmCliente.Create` no Delphi): cada uma com a sua instância e os
+    /// cliente): cada uma com a sua instância e os
     /// handlers falando com ela. O form é criado fechado.
     ///
     /// A segunda ganha um nome livre (`frmCliente2`, como o frame repetido): os caminhos
@@ -253,7 +253,7 @@ impl Ui {
             self.start_transition(None, Some(form), kind, crate::transition::TRANSITION_MS, false);
         }
         self.report(&crate::activity::Activity::FormShown { form, modal });
-        // O primeiro foco (o `ActiveControl` do form), antes do on_show (que pode trocar).
+        // O primeiro foco (o `active_control` do form), antes do on_show (que pode trocar).
         if let Ok(crate::prop::PropValue::Component(Some(first))) = self.get_prop(form, "active_control") {
             self.set_focus(first);
         }
@@ -379,14 +379,14 @@ impl Ui {
         Ok(())
     }
 
-    /// Chamado de dentro de um `on_close_query`: o form continua aberto (como
-    /// `CanClose := False`).
+    /// Chamado de dentro de um `on_close_query`: o form continua
+    /// aberto.
     pub fn cancel_close(&mut self) {
         self.refuse("");
     }
 
-    /// A resposta do `on_close_query`: recusado (com a mensagem na caixa de erro, como a
-    /// exceção no `OnCloseQuery` do Delphi) ou `can_close` falso mantém o form aberto.
+    /// A resposta do `on_close_query`: recusado (com a mensagem na caixa de
+    /// erro) ou `can_close` falso mantém o form aberto.
     fn close_answer(&mut self, form: ComponentId, answer: &crate::question::Answer) -> bool {
         match answer {
             crate::question::Answer::Refused(message) => {
@@ -429,9 +429,9 @@ impl Ui {
         self.questions.terminate = Some(std::rc::Rc::new(f));
     }
 
-    /// Define o resultado do form (como `ModalResult := mrOk`). Num form modal, um valor
+    /// Define o resultado do form. Num form modal, um valor
     /// diferente de `None` fecha o form. De dentro de um evento (um botão com
-    /// `modal_result`, um handler), o form fecha quando o evento termina, como no Delphi:
+    /// `modal_result`, um handler), o form fecha quando o evento termina:
     /// até lá um handler ainda pode voltar o resultado para `None` e cancelar.
     pub fn set_modal_result(&mut self, form: ComponentId, result: ModalResult) {
         let Some(open) = self.open_forms.iter_mut().find(|f| f.form == form) else { return };

@@ -1,5 +1,5 @@
 //! Realce de código para o [`Memo`](crate::Memo) (`syntax`): Rust, Python, JSON, Pascal
-//! (Free Pascal e Delphi), TypeScript e JavaScript, C#, Java, Go e C/C++.
+//! (Free Pascal e Object Pascal), TypeScript e JavaScript, C#, Java, Go e C/C++.
 //!
 //! Lê o texto todo de uma vez e devolve, para cada linha, os trechos com o tipo de cada um.
 //! Comentários de bloco e textos de várias linhas continuam na linha de baixo. Não é um
@@ -307,8 +307,9 @@ fn def_of(name: &str) -> Option<&'static Def> {
 pub const LANGUAGES: [&str; 9] = ["rust", "python", "json", "pascal", "typescript", "csharp", "java", "go", "cpp"];
 
 /// O que continua de uma linha para a outra.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Carry {
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) enum Carry {
+    #[default]
     None,
     /// Comentário de bloco (qual, e a profundidade nos que aninham).
     Block(usize, u32),
@@ -324,6 +325,25 @@ pub fn highlight(language: &str, text: &str) -> Vec<Vec<Span>> {
     };
     let mut carry = Carry::None;
     text.split('\n').map(|line| line_spans(def, line, &mut carry)).collect()
+}
+
+/// O realce embutido de uma linguagem, uma linha por vez: o editor guarda o [`Carry`] do
+/// começo de cada linha e, depois de uma edição, retoma da linha editada.
+#[derive(Clone, Copy)]
+pub(crate) struct LineHighlighter(Option<&'static Def>);
+
+impl LineHighlighter {
+    pub(crate) fn new(language: &str) -> Self {
+        Self(def_of(language))
+    }
+
+    /// Os trechos de `line` (sem o `\n`) a partir do que veio da anterior.
+    pub(crate) fn line(&self, line: &str, carry: &mut Carry) -> Vec<Span> {
+        match self.0 {
+            Some(def) => line_spans(def, line, carry),
+            None => vec![Span { start: 0, end: line.chars().count(), kind: TokenKind::Plain, scope: 0 }],
+        }
+    }
 }
 
 /// Os trechos de cada linha como o editor de código faz: pela gramática TextMate da linguagem,

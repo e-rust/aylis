@@ -89,12 +89,18 @@ pub fn parse_events(text: &str) -> Vec<CalendarEvent> {
 /// horário vazio clicado na semana ou no dia).
 pub struct EventCalendar {
     pub base: ControlBase,
+    /// A vista: `month` (o mês), `week` (a semana com as horas) ou `day` (um dia).
     pub view: CalendarView,
+    /// O dia de referência (ISO, `2026-10-25`): o mês, a semana ou o dia mostrado. Vazio = hoje.
     pub date: String,
     /// Mês mostrado (`2026-10`): o mesmo que `date` no dia 1 (mantido para compatibilidade).
     pub month: String,
+    /// Os eventos, separados por `;`: `2026-10-25|Reunião|success` (o dia todo) ou
+    /// `2026-10-25 14:00-15:30|Reunião|success` (com horário; a cor é opcional).
     pub events: String,
+    /// A primeira hora mostrada nas vistas de semana e de dia (0 a 23).
     pub start_hour: u32,
+    /// A hora em que as vistas de semana e de dia terminam (até 24).
     pub end_hour: u32,
     hits: RefCell<Vec<(RectF, String, &'static str)>>,
 }
@@ -452,8 +458,11 @@ fn now_minutes() -> u32 {
 /// (atalho e ícone opcionais).
 pub struct CommandPalette {
     pub base: ControlBase,
+    /// Os comandos, separados por `;`, cada um `nome|atalho|ícone` (atalho e ícone opcionais).
     pub items: String,
+    /// O texto digitado na busca: a lista mostra só os comandos que o contêm. Vazio: todos.
     pub query: String,
+    /// O texto apagado da busca vazia.
     pub placeholder: String,
     active: usize,
     rows: RefCell<Vec<(RectF, usize)>>,

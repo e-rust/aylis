@@ -22,14 +22,17 @@ use aylis_core::{
 pub use layout::{EditorCode, Heading, Item, Layout, Palette, Sep, TextPos, slug};
 pub use parse::{Block, Inline, parse};
 
-/// Texto em Markdown (o `TLabel` com texto rico).
+/// Texto em Markdown (um rótulo com texto rico).
 ///
 /// - `text`: o Markdown; ou `source`, um arquivo do projeto (`assets/docs/ajuda.md`);
 /// - `on_link`: clique num link (o endereço em `EventArgs::Text`);
 /// - rola sozinho quando o texto passa da altura (roda do mouse).
 pub struct Markdown {
     pub base: ControlBase,
+    /// O texto em Markdown; vale quando `source` está vazio.
     pub text: String,
+    /// Um arquivo do projeto com o Markdown (`assets/docs/ajuda.md`); vence o `text`. Vazio:
+    /// mostra o `text`.
     pub source: String,
     /// Tamanho da fonte do corpo (0 = o do tema).
     pub font_size: f32,

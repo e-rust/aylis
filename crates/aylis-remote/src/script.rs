@@ -109,7 +109,7 @@ fn step(ui: &mut Ui, form: ComponentId, step: &Value) -> Result<(), String> {
         ui.set_time(now);
         ui.run_timers();
     } else if let Some(name) = s("locate") {
-        // O registro escolhido na grade (o `Locate` do Delphi): o dataset vai até ele.
+        // O registro escolhido na grade: o dataset vai até ele.
         let id = find(ui, name)?;
         let field = s("field").ok_or("falta \"field\"")?;
         let json = step.get("value").cloned().unwrap_or(Value::Null);
@@ -273,7 +273,93 @@ pub fn write_state(state: &Value, output: Option<&std::path::Path>) -> Result<()
 pub fn run_in_process(ui: &mut Ui, form: ComponentId, script: &Value, output: Option<&std::path::Path>) -> Result<(), String> {
     let _ = ui.show(form);
     ui.process_events();
-    play(ui, form, script, &mut |_| {})?;
+    let times = play_profiled(ui, form, script, &mut |_| {})?;
     let st = state(ui, script);
-    write_state(&st, output)
+    write_state(&st, output)?;
+    finish_profile(script, times.as_ref(), output)
+}
+
+// ---------------------------------------------------------------------------
+// O rastro no teste (item 38, 3b): `"profile": true` no roteiro mede os handlers enquanto ele
+// toca e grava os tempos ao lado do estado (`estado.handlers.json`); com um limite, o handler
+// que passar dele reprova o roteiro.
+//
+// ```json
+// {"profile": {"max_handler_ms": 100}, "steps": [...]}
+// {"profile": {"max_handler_ms": {"frmCalculadora.btnIgualClick": 20, "*": 100}}, "steps": [...]}
+// ```
+
+/// O roteiro pede o rastro.
+pub fn wants_profile(script: &Value) -> bool {
+    script.get("profile").is_some_and(|p| !p.is_null() && *p != Value::Bool(false))
+}
+
+/// Toca os passos ([`play`]) e, se o roteiro pede o rastro, devolve os tempos de cada handler
+/// ([`handler_times`]).
+pub fn play_profiled(ui: &mut Ui, form: ComponentId, script: &Value, pump: &mut dyn FnMut(&mut Ui)) -> Result<Option<Value>, String> {
+    if !wants_profile(script) {
+        return play(ui, form, script, pump).map(|_| None);
+    }
+    aylis_core::profile::start();
+    let played = play(ui, form, script, pump);
+    aylis_core::profile::stop();
+    let (spans, _, _) = aylis_core::profile::take();
+    played?;
+    Ok(Some(handler_times(&spans)))
+}
+
+/// Os tempos por handler (`Form.handler`): vezes, média, p95, máximo e total, em ms.
+pub fn handler_times(spans: &[aylis_core::profile::Span]) -> Value {
+    let mut by_name: std::collections::BTreeMap<&str, Vec<f64>> = std::collections::BTreeMap::new();
+    for s in spans.iter().filter(|s| s.lane == aylis_core::profile::Lane::Handler) {
+        by_name.entry(&s.name).or_default().push(s.duration * 1000.0);
+    }
+    let round = |v: f64| (v * 1000.0).round() / 1000.0;
+    let handlers: serde_json::Map<String, Value> = by_name
+        .into_iter()
+        .map(|(name, mut ms)| {
+            ms.sort_by(f64::total_cmp);
+            let total: f64 = ms.iter().sum();
+            let p95 = ms[((ms.len() as f64 * 0.95).ceil() as usize).clamp(1, ms.len()) - 1];
+            let entry = json!({ "count": ms.len(), "mean_ms": round(total / ms.len() as f64), "p95_ms": round(p95), "max_ms": round(ms[ms.len() - 1]), "total_ms": round(total) });
+            (name.to_string(), entry)
+        })
+        .collect();
+    json!({ "handlers": handlers })
+}
+
+/// Os handlers acima do limite do roteiro (`"max_handler_ms"`: um número para todos, ou por
+/// handler com `"*"` para os outros), um por linha.
+pub fn over_limit(script: &Value, times: &Value) -> Vec<String> {
+    let limit = &script["profile"]["max_handler_ms"];
+    let limit_of = |name: &str| limit.as_f64().or_else(|| limit.get(name).and_then(Value::as_f64)).or_else(|| limit.get("*").and_then(Value::as_f64));
+    let Some(handlers) = times["handlers"].as_object() else { return Vec::new() };
+    handlers
+        .iter()
+        .filter_map(|(name, t)| {
+            let (max, ms) = (limit_of(name)?, t["max_ms"].as_f64()?);
+            (ms > max).then(|| format!("{name} levou {ms:.1} ms (o limite é {max} ms)"))
+        })
+        .collect()
+}
+
+/// Onde os tempos vão: ao lado do estado (`estado.json` → `estado.handlers.json`).
+pub fn handler_times_path(output: &std::path::Path) -> std::path::PathBuf {
+    output.with_extension("handlers.json")
+}
+
+/// Depois do estado gravado: grava os tempos (com `output`; sem ele, no stderr) e reprova o
+/// handler acima do limite.
+pub fn finish_profile(script: &Value, times: Option<&Value>, output: Option<&std::path::Path>) -> Result<(), String> {
+    let Some(times) = times else { return Ok(()) };
+    let text = serde_json::to_string_pretty(times).unwrap_or_default();
+    match output {
+        Some(path) => {
+            let file = handler_times_path(path);
+            std::fs::write(&file, text).map_err(|e| format!("{}: {e}", file.display()))?;
+        }
+        None => eprintln!("{text}"),
+    }
+    let over = over_limit(script, times);
+    if over.is_empty() { Ok(()) } else { Err(format!("handler acima do limite do roteiro:\n{}", over.join("\n"))) }
 }

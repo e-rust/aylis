@@ -47,6 +47,8 @@ sysinfo = { version = "0.38", default-features = false, features = ["system"] }
 tungstenite = "0.26"
 # O `aylis-tool check <projeto>` carrega os forms com todas as classes registradas.
 aylis-remote = { path = "../aylis-remote" }
+# O `recording-to-test`: a gravação de uso (`Recording`) vira roteiro de teste.
+aylis-controls = { path = "../aylis-controls" }
 # O `aylis-tool build` e o `check` carregam os forms com as mesmas classes do designer da IDE,
 # o Model3D inclusive (fora do registro remoto, que também roda no navegador).
 aylis-3d = { path = "../aylis-3d" }

@@ -10,14 +10,14 @@ Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
-| `text` | Texto | texto |  |
-| `image` | Imagem | texto |  |
-| `channel` | Canal | texto |  |
-| `channel_name` | Nome do canal | texto |  |
-| `priority` | Prioridade | um de: `low`, `default`, `high` |  |
-| `buttons` | Botões | texto |  |
-| `open_buttons` | Botões que abrem o app | texto |  |
+| `title` | Título | texto | O título da notificação; `{chave}` vira o valor da chave nos dados. |
+| `text` | Texto | texto | O texto da notificação; `{chave}` vira o valor da chave nos dados. |
+| `image` | Imagem | texto | A imagem grande: um asset, um arquivo ou, no Android, um endereço `https`; vazio: sem imagem. |
+| `channel` | Canal | texto | O canal do Android (o usuário configura som e destaque por canal). |
+| `channel_name` | Nome do canal | texto | O nome do canal que o usuário vê nas configurações do Android. |
+| `priority` | Prioridade | um de: `low`, `default`, `high` | `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som). |
+| `buttons` | Botões | texto | Os botões da notificação: `id:Texto;...`; o toque chega em `on_button` com o id. |
+| `open_buttons` | Botões que abrem o app | texto | Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. |
 
 ## Eventos
 

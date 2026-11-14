@@ -12,13 +12,13 @@ Trilha de navegação ("Início › Vídeos › 2026"): cada parte é clicável 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
+| `items` | Itens | texto | As partes da trilha, separadas por `;`; a última é a atual. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

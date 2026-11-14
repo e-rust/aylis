@@ -1,5 +1,5 @@
 //! [`VirtualList`]: lista de itens desenhados com um modelo seu (como o `RecyclerView` do
-//! Android ou o `TDBCtrlGrid` do Delphi). Só existem as linhas visíveis (e mais duas): ao
+//! Android). Só existem as linhas visíveis (e mais duas): ao
 //! rolar, as que saem por um lado são reaproveitadas para os itens que entram pelo outro,
 //! então uma lista de um milhão de itens custa o mesmo que uma de vinte.
 //!
@@ -61,9 +61,11 @@ pub struct VirtualList {
     pub base: ControlBase,
     /// Quantos itens (com uma fonte, vem dela).
     pub item_count: i64,
+    /// A altura de cada item, em pontos (na vertical).
     pub item_height: f32,
     /// Na horizontal: a largura de cada item.
     pub item_width: f32,
+    /// Para onde a lista rola: `vertical` (um embaixo do outro) ou `horizontal` (lado a lado).
     pub orientation: ListOrientation,
     /// Grade: quantos itens lado a lado (na horizontal, um embaixo do outro). 1 = lista.
     pub columns: i64,
@@ -86,13 +88,25 @@ pub struct VirtualList {
     source: Option<Box<dyn RowSource>>,
     /// `on_load_more` já avisou com esta quantidade.
     load_more_at: Option<usize>,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
+    /// As ações que aparecem ao deslizar uma linha para a esquerda com o dedo
+    /// (`Arquivar;Excluir`; vazio: sem). O toque numa dispara `on_swipe_action`.
+    pub swipe_actions: String,
+    /// A linha deslizada agora: (item, quanto andou para a esquerda, negativo).
+    swiped: std::cell::Cell<Option<(usize, f32)>>,
+    /// O dedo está arrastando a linha (até o `touch_end`).
+    row_drag: std::cell::Cell<bool>,
 }
+
+/// A largura de cada ação revelada ao deslizar a linha.
+const SWIPE_ACTION_WIDTH: f32 = 80.0;
 
 impl Default for VirtualList {
     fn default() -> Self {
         let mut base = ControlBase::new(320.0, 400.0);
         base.set_clip_children(true);
-        Self {
+        Self { swipe_actions: String::new(), swiped: std::cell::Cell::new(None), row_drag: std::cell::Cell::new(false), overscroll: aylis_core::Overscroll::Auto,
             base,
             item_count: 0,
             item_height: 64.0,
@@ -197,6 +211,34 @@ impl VirtualList {
 
     /// Troca a fonte (para componentes que embrulham a lista, como a `DataRepeater`):
     /// as linhas são preenchidas de novo no próximo [`resync`](Self::resync).
+    /// As ações do deslizar (`swipe_actions`), na ordem.
+    fn actions(&self) -> Vec<&str> {
+        self.swipe_actions.split(';').map(str::trim).filter(|a| !a.is_empty()).collect()
+    }
+
+    /// Põe cada linha no deslocamento dela: a deslizada, onde o dedo deixou; as outras (e as
+    /// recicladas), no lugar.
+    fn apply_swipe(&self, ctx: &mut EventCtx<'_>) {
+        let swiped = self.swiped.get();
+        for &(row, index) in self.pool.borrow().iter() {
+            let want = match (swiped, index) {
+                (Some((i, x)), Some(index)) if i == index => x,
+                _ => 0.0,
+            };
+            if ctx.ui.control(row).is_some_and(|cb| cb.translate().x != want) {
+                // Como as animações de lugar: só o lugar muda (o desenho de dentro continua).
+                let _ = ctx.ui.set_prop(row, "translate_x", want as f64);
+            }
+        }
+    }
+
+    /// O retângulo da faixa das ações da linha `index` (nas coordenadas da lista).
+    fn actions_band(&self, index: usize, count: usize, width: f32) -> RectF {
+        let total = SWIPE_ACTION_WIDTH * self.actions().len() as f32;
+        let line = index / self.lanes();
+        RectF::new(width - total, self.line_start(line, count) - self.offset, total, self.line_size(line))
+    }
+
     pub fn set_row_source(&mut self, source: Option<Box<dyn RowSource>>) {
         self.source = source;
         self.load_more_at = None;
@@ -400,6 +442,8 @@ impl VirtualList {
             self.load_more_at = Some(count);
             ctx.fire("on_load_more", EventArgs::Value(PropValue::Int(count as i64)));
         }
+        // A linha deslizada segue o item quando as linhas são recicladas.
+        self.apply_swipe(ctx);
         ctx.ui.invalidate();
     }
 
@@ -443,6 +487,7 @@ impl Component for VirtualList {
     leaf_control!("VirtualList");
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         item_count: i64 => "Behavior",
         item_height: f32 => "Appearance",
         item_width: f32 => "Appearance",
@@ -450,8 +495,9 @@ impl Component for VirtualList {
         columns: i64 => "Layout",
         sizes: String => "Appearance",
         item_form: String => "Behavior",
-        bindings: String => "Behavior";
-        events: on_bind, on_load_more
+        bindings: String => "Behavior",
+        swipe_actions: String => "Behavior";
+        events: on_bind, on_load_more, on_swipe_action
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
@@ -521,6 +567,35 @@ impl Component for VirtualList {
     }
 
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &WheelEvent) {
+        // O dedo para os lados numa lista vertical com `swipe_actions`: arrasta a linha tocada
+        // (decidido em 14/11); o `touch_end` deixa aberta ou fecha.
+        let actions = self.actions().len();
+        if actions > 0 && event.touch && !self.horizontal() && self.lanes() == 1 {
+            let sideways = event.delta.x != 0.0 && event.delta.x.abs() > event.delta.y.abs() * 1.5;
+            if self.row_drag.get() || sideways {
+                let count = self.count(ctx.ui);
+                let index = match (self.row_drag.get(), self.swiped.get()) {
+                    (true, Some((i, _))) => i,
+                    _ => self.line_at(event.position.y + self.offset, count),
+                };
+                if index < count {
+                    let total = SWIPE_ACTION_WIDTH * actions as f32;
+                    let before = self.swiped.get().filter(|(i, _)| *i == index).map_or(0.0, |(_, x)| x);
+                    self.swiped.set(Some((index, (before + event.delta.x).clamp(-total, 0.0))));
+                    self.row_drag.set(true);
+                    self.apply_swipe(ctx);
+                    ctx.repaint();
+                    ctx.set_handled();
+                    return;
+                }
+            }
+        }
+        // Rolar fecha a linha aberta.
+        if self.swiped.get().is_some() && !self.row_drag.get() && event.delta.y != 0.0 {
+            self.swiped.set(None);
+            self.apply_swipe(ctx);
+            ctx.repaint();
+        }
         let max = self.max_offset(self.count(ctx.ui));
         // Na horizontal, a roda comum (vertical) também anda.
         let delta = if self.horizontal() && event.delta.x != 0.0 { event.delta.x } else { event.delta.y };
@@ -531,6 +606,56 @@ impl Component for VirtualList {
         self.offset = target;
         self.sync(ctx);
         ctx.set_handled();
+    }
+
+    fn touch_end(&mut self, ctx: &mut EventCtx<'_>) {
+        if !self.row_drag.replace(false) {
+            return;
+        }
+        // Passou da metade das ações: fica aberta; senão, fecha.
+        let total = SWIPE_ACTION_WIDTH * self.actions().len() as f32;
+        self.swiped.set(self.swiped.get().filter(|(_, x)| *x < -total / 2.0).map(|(i, _)| (i, -total)));
+        self.apply_swipe(ctx);
+        ctx.repaint();
+    }
+
+    // O toque numa ação revelada (a faixa à direita da linha deslizada, que a linha descobriu):
+    // `on_swipe_action` com o item e a ação; qualquer toque na lista fecha a linha.
+    fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::PointerEvent) {
+        let Some((index, x)) = self.swiped.get() else { return };
+        let actions: Vec<String> = self.actions().iter().map(|a| a.to_string()).collect();
+        let band = self.actions_band(index, self.count(ctx.ui), self.base.bounds().width);
+        self.swiped.set(None);
+        self.apply_swipe(ctx);
+        ctx.repaint();
+        if x >= 0.0 || !band.contains(event.position) {
+            return;
+        }
+        let hit = ((event.position.x - band.x) / SWIPE_ACTION_WIDTH) as usize;
+        if let Some(action) = actions.get(hit) {
+            let args = serde_json::json!({ "index": index, "action": action }).to_string();
+            ctx.fire("on_swipe_action", EventArgs::Text(args));
+        }
+        ctx.set_handled();
+    }
+
+    // As ações por baixo da linha deslizada (a linha anda para a esquerda e as descobre).
+    fn paint(&self, canvas: &mut dyn aylis_core::Canvas, ctx: &aylis_core::PaintCtx<'_>) {
+        let Some((index, x)) = self.swiped.get().filter(|(_, x)| *x < 0.0) else { return };
+        let _ = x;
+        let actions = self.actions();
+        let band = self.actions_band(index, self.known_count.get(), ctx.rect.width);
+        let mut style = ctx.text_style();
+        style.color = ctx.theme.color("on_primary");
+        style.h_align = aylis_core::TextAlign::Center;
+        style.v_align = aylis_core::TextAlign::Center;
+        for (k, action) in actions.iter().enumerate() {
+            let r = RectF::new(band.x + k as f32 * SWIPE_ACTION_WIDTH, band.y, SWIPE_ACTION_WIDTH, band.height);
+            // A última (a de mais efeito, como excluir) na cor de erro; as outras, na principal.
+            let color = if k + 1 == actions.len() { ctx.theme.color("error") } else { ctx.theme.color("primary") };
+            canvas.fill_rect(r, 0.0, &aylis_core::Brush::Solid(color));
+            canvas.draw_text(action, r, &style);
+        }
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn std::any::Any) {

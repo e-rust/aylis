@@ -10,16 +10,16 @@ Recebe num lugar só os eventos de todos os componentes do form ou da aplicaçã
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `scope` | Alcance | um de: `form`, `application` |  |
-| `events` | Eventos | texto |  |
-| `classes` | Classes | texto |  |
-| `enabled` | Habilitado | lógico |  |
+| `scope` | Alcance | um de: `form`, `application` | Onde vale: `form` (só os componentes do form dele) ou `application` (todos os forms). |
+| `events` | Eventos | texto | Os eventos interceptados, separados por `;` (`on_click;on_change`); vazio: todos, menos os contínuos (como mover o mouse). |
+| `classes` | Classes | texto | As classes interceptadas, separadas por `;` (`Button;Edit`); vazio: todas. |
+| `enabled` | Habilitado | lógico | Intercepta; desligado, os eventos passam direto. |
 
 ### Outros
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tag` | Marca (número) | inteiro |  |
+| `tag` | Marca (número) | inteiro | Um número livre para o código (não muda nada). |
 
 ## Eventos
 

@@ -1,5 +1,4 @@
-//! DataGrid com 1 milhão de pedidos, buscados do "backend" sob demanda em pacotes (como o
-//! `FetchOptions.Mode = fmOnDemand` do FireDAC).
+//! DataGrid com 1 milhão de pedidos, buscados do "backend" sob demanda em pacotes.
 //!
 //! ```text
 //! cargo run --release -p aylis-platform-winit --example grid

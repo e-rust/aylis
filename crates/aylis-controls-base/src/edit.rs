@@ -1,4 +1,4 @@
-//! Campo de texto de uma linha (como o `TEdit`).
+//! Campo de texto de uma linha.
 
 use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
@@ -12,7 +12,7 @@ use aylis_core::messages::{t, tf};
 
 use crate::leaf_control;
 
-/// Campo de texto de uma linha (como o `TEdit`).
+/// Campo de texto de uma linha.
 ///
 /// - mouse: clique posiciona o cursor, arrastar seleciona, duplo clique seleciona a
 ///   palavra, triplo clique seleciona tudo;
@@ -20,9 +20,9 @@ use crate::leaf_control;
 ///   Backspace/Delete (com Ctrl apagam a palavra), Ctrl+A/C/X/V;
 /// - `on_change` dispara a cada alteração do texto pelo usuário.
 ///
-/// Ao receber o foco, seleciona tudo (como o `AutoSelect` do Delphi).
+/// Ao receber o foco, seleciona tudo.
 ///
-/// Texto (como o `TextSettings` do FMX): `h_align` e `v_align` posicionam o texto;
+/// Texto: `h_align` e `v_align` posicionam o texto;
 /// fora da edição, `wrap` quebra em várias linhas (se o campo for alto) e `trimming`
 /// põe "…" no que não couber (por caractere, por palavra ou nenhum). Editando, o texto
 /// fica numa linha e rola com o cursor.
@@ -38,7 +38,9 @@ use crate::leaf_control;
 /// [`validate_form`]). Ajuda, erro e contador ocupam os 18 pontos de baixo do controle.
 pub struct Edit {
     pub base: ControlBase,
+    /// O texto do campo (com a `mask`, já formatado).
     pub text: String,
+    /// Texto apagado mostrado enquanto o campo está vazio.
     pub placeholder: String,
     /// A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de
     /// um painel ou numa tabela). Ligada por padrão.
@@ -49,37 +51,54 @@ pub struct Edit {
     /// e se só os liberados valem (`allowed_chars = "0-9"` com `only_allowed`: só números).
     /// Faixas como `a-z`; `-` é o hífen. Vale para o digitado e o colado.
     pub allowed_chars: String,
+    /// Os caracteres recusados ao digitar e ao colar (faixas como `a-z`); vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` valem; o resto é recusado.
     pub only_allowed: bool,
     /// Trocas do que o teclado produz: pares "digitado, entregue" (`",."` troca a vírgula por
     /// ponto), ao digitar e ao colar; vale também o de um contêiner (veja o `Form`).
     pub char_map: String,
-    /// Maiúsculas ou minúsculas no valor (o `CharCase` do Delphi): ao digitar, ao colar e quando
+    /// Maiúsculas ou minúsculas no valor: ao digitar, ao colar e quando
     /// o código grava o `text`. Ligado a um campo, manda o `char_case` do campo.
     pub char_case: aylis_core::CharCase,
+    /// Mostra e deixa selecionar e copiar, mas não deixa editar.
     pub read_only: bool,
     /// Mostra `•` no lugar dos caracteres e bloqueia copiar/recortar.
     pub password: bool,
     /// Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui,
     /// a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução.
     pub sensitive: bool,
-    /// Ganhar o foco seleciona o texto todo (o `AutoSelect` do Delphi, ligado por padrão).
+    /// Ganhar o foco seleciona o texto todo (ligado por padrão).
     pub auto_select: bool,
+    /// Posição do texto na largura: começo, centro ou fim.
     pub h_align: TextAlign,
+    /// Posição do texto na altura: em cima, no meio ou embaixo.
     pub v_align: TextAlign,
     /// Quebra automática de linha (fora da edição).
     pub wrap: bool,
     /// Reticências quando o texto não cabe (fora da edição).
     pub trimming: Trimming,
+    /// Ícone à esquerda do texto (a lupa da busca); vazio: nenhum.
     pub icon: String,
+    /// Um "×" à direita que apaga o texto (só aparece com texto).
     pub clear_button: bool,
+    /// Rótulo do campo, que sobe para a borda com foco ou com texto; vazio: sem rótulo.
     pub label: String,
+    /// Texto de ajuda embaixo do campo (o `error` aparece no lugar dele quando há).
     pub helper: String,
+    /// Mensagem de erro embaixo do campo, com a borda vermelha; vazio: sem erro.
     pub error: String,
+    /// Mostra o contador de caracteres embaixo (`3/20` com `max_length`).
     pub counter: bool,
+    /// Texto fixo antes do valor (`R$`), fora do que é editado.
     pub prefix: String,
+    /// Texto fixo depois do valor (`kg`), fora do que é editado.
     pub suffix: String,
+    /// Máscara de digitação: `#` dígito, `A` letra, `X` letra ou dígito, o resto entra
+    /// sozinho (`(##) #####-####`); vazio: livre.
     pub mask: String,
+    /// Regras conferidas ao sair do campo e por `validate_form`, separadas por `;`
+    /// (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma.
     pub rules: String,
     /// Sublinha as palavras erradas (o motor de texto da plataforma ou o do app); o clique
     /// direito numa delas mostra as correções.
@@ -96,6 +115,7 @@ pub struct Edit {
     pub caret_color: Option<Color>,
     /// Largura do cursor (linha) ou altura (sublinhado), em pontos.
     pub caret_width: f32,
+    /// Forma do cursor: linha, bloco ou sublinhado.
     pub caret_style: CaretStyle,
     /// Intervalo de piscar (ms, o ciclo inteiro); 0: não pisca.
     pub caret_blink: u32,
@@ -528,7 +548,7 @@ impl Edit {
         ctx.repaint();
     }
 
-    /// Onde a seleção começa (em caracteres), como o `SelStart`. Gravar põe o cursor ali,
+    /// Onde a seleção começa (em caracteres). Gravar põe o cursor ali,
     /// sem seleção.
     pub fn sel_start(&self) -> usize {
         self.selection().0
@@ -540,7 +560,7 @@ impl Edit {
         self.anchor = at;
     }
 
-    /// Quantos caracteres estão selecionados, como o `SelLength`. Gravar seleciona a
+    /// Quantos caracteres estão selecionados. Gravar seleciona a
     /// partir do `sel_start`.
     pub fn sel_length(&self) -> usize {
         let (a, b) = self.selection();
@@ -553,7 +573,7 @@ impl Edit {
         self.caret = (start + length).min(self.len());
     }
 
-    /// O texto selecionado, como o `SelText`. Gravar troca a seleção (ou insere no
+    /// O texto selecionado. Gravar troca a seleção (ou insere no
     /// cursor) e dispara `on_change`; vale mesmo com `read_only` (só o usuário é barrado).
     pub fn sel_text(&self) -> String {
         self.selected_text().to_string()

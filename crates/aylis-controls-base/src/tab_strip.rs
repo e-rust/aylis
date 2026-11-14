@@ -93,6 +93,7 @@ struct Hits {
 pub struct TabStrip {
     pub base: ControlBase,
     tabs: Vec<Tab>,
+    /// A aba ativa, a partir de 0; -1: nenhuma.
     pub tab_index: i64,
     /// O × em cada aba.
     pub closable: bool,

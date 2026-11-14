@@ -12,14 +12,14 @@ Avatares empilhados (o `v-avatar-group`): as iniciais de `names` (separados por 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `max` | Máximo | inteiro |  |
-| `size` | Tamanho | número |  |
+| `max` | Máximo | inteiro | Quantos avatares aparecem; os que passarem viram o "+N" no último. |
+| `size` | Tamanho | número | O diâmetro de cada avatar, em pontos. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `names` | Nomes | texto |  |
+| `names` | Nomes | texto | Os nomes das pessoas, separados por `;`: cada avatar mostra as iniciais. |
 
 ## Em código
 

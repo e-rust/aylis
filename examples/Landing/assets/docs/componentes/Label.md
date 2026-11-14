@@ -12,9 +12,9 @@ Texto fixo na tela: um título, uma legenda, a explicação de um campo. Quebra 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` |  |
-| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` |  |
+| `text` | Texto | texto | O texto mostrado. |
+| `h_align` | Alinhamento horizontal | um de: `leading`, `center`, `trailing`, `justify` | Alinhamento horizontal do texto: começo, centro ou fim. |
+| `v_align` | Alinhamento vertical | um de: `leading`, `center`, `trailing`, `justify` | Alinhamento vertical do texto: em cima, no meio ou embaixo. |
 | `wrap` | Quebra de linha | lógico | Quebra automática de linha. |
 | `trimming` | Reticências | um de: `none`, `character`, `word` | Reticências quando não couber: por caractere, por palavra ou nenhuma. |
 | `bold` | Negrito | lógico | Negrito (atalho do `font_weight` = `bold`; a fonte em si é a do `ControlBase`: `font_family`, `font_size`...). |
@@ -32,7 +32,7 @@ Texto fixo na tela: um título, uma legenda, a explicação de um campo. Quebra 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `focus_control` | Controle do foco | componente | O campo que recebe o foco no Alt+letra do `&` do texto (o `FocusControl` do Delphi). |
+| `focus_control` | Controle do foco | componente | O campo que recebe o foco no Alt+letra do `&` do texto. |
 
 ## Em código
 

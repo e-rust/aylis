@@ -1,5 +1,5 @@
 //! A automação OLE do Windows (o [`OleService`] do `OleObject`): `IDispatch` pelo nome, como o
-//! VBA e o `Variant` do Delphi.
+//! VBA.
 //!
 //! Os objetos vivem numa thread só deles, com o COM em apartamento de thread única (o que o
 //! Office espera). A tela manda o pedido e espera a resposta pelo canal, sem processar

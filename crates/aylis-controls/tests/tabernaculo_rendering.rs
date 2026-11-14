@@ -130,8 +130,8 @@ fn a_fill_turned_translucent_repaints_what_is_behind() {
     }
 }
 
-/// C24: a opacidade do contêiner desce aos filhos (uma camada com o grupo inteiro, como o
-/// `Opacity` do FMX): o filho preto num painel a 0,5 sai cinza, e onde dois filhos se cobrem
+/// C24: a opacidade do contêiner desce aos filhos (uma camada com o grupo
+/// inteiro): o filho preto num painel a 0,5 sai cinza, e onde dois filhos se cobrem
 /// não escurece mais (a camada é composta uma vez só).
 #[test]
 fn a_container_opacity_applies_to_its_children_as_a_group() {

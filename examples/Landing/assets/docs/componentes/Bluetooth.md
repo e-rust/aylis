@@ -10,8 +10,8 @@ Bluetooth: BLE e o clássico num componente só.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `service_filter` | Filtro de serviços | texto |  |
-| `name_filter` | Filtro de nome | texto |  |
+| `service_filter` | Filtro de serviços | texto | A procura só acha os aparelhos com estes serviços (uuids separados por `;`, aceita a forma curta como `180D`); vazio: todos. |
+| `name_filter` | Filtro de nome | texto | A procura só acha os aparelhos com este trecho no nome; vazio: todos. |
 
 ## Eventos
 

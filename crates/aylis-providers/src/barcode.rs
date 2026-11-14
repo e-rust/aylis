@@ -14,8 +14,13 @@ use crate::barcodes::BuiltinBarcodes;
 /// tema escuro (o leitor precisa do contraste), e `fill` e `text_color` trocam as duas cores.
 pub struct Barcode {
     pub base: ControlBase,
+    /// O dado codificado (no relatório, um campo entre colchetes vira o valor de cada
+    /// registro).
     pub text: String,
+    /// O formato: `code128`, `ean13`, `ean8`, `upca`, `code39`, `itf` ou `qr`.
     pub format: String,
+    /// O provedor que gera o código (um formato que o Aylis não tem vem de outro); vazio: o
+    /// do Aylis.
     pub provider: Option<ComponentId>,
     /// O texto legível embaixo das barras (nos códigos de barras; o QR não tem).
     pub show_text: bool,

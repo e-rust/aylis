@@ -14,6 +14,12 @@ Lista de mensagens de uma conversa (como um app de chat): bolhas à direita para
 |---|---|---|---|
 | `show_authors` | Mostra os autores | lógico | Nome e avatar dos outros (conversa em grupo). |
 
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
+
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |

@@ -20,7 +20,7 @@ Uma coluna do DataGrid: campo, título, largura, alinhamento, cores.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `visible` | Visível | lógico |  |
+| `visible` | Visível | lógico | A coluna aparece na grade; escondida, sai dela (o campo continua no dataset). |
 | `read_only` | Somente leitura | lógico | Não edita nesta coluna, mesmo com a grade editável. |
 
 ### Dados

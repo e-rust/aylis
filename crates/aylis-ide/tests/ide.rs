@@ -215,7 +215,7 @@ fn multi_selection_aligns_and_moves_together() {
 fn the_window_and_the_panels_come_back_where_they_were() {
     let mut ide = app::build(shared(Document::new()));
     ide.ui.layout();
-    // Como no Delphi: o Object Inspector à esquerda, a paleta à direita.
+    // O Object Inspector à esquerda, a paleta à direita.
     let left = ide.ui.parent(ide.ids.inspector).unwrap();
     let right = ide.ui.parent(ide.ids.palette).unwrap();
     ide.ui.control_mut(left).unwrap().set_width(300.0);
@@ -1157,7 +1157,7 @@ fn code_opens_inside_the_ide_and_tabs_move_to_another_window() {
     let visible = |ui: &Ui, id| ui.control(id).unwrap().visible();
     assert!(visible(&ide.ui, ide.ids.code_host) && !visible(&ide.ui, ide.ids.surface), "código no lugar do designer");
     assert_eq!(aylis_ide::codewindow::code_form(&ide.ui), Some(ide.form), "embutido na janela da IDE");
-    // F12 no código volta ao Design (como no Delphi); de novo no designer, volta ao código.
+    // F12 no código volta ao Design; de novo no designer, volta ao código.
     let (modifiers, key) = aylis_core::parse_shortcut("F12").unwrap();
     ide.ui.key_down(ide.form, KeyEvent { key, modifiers, repeat: false });
     app::refresh(&mut ide.ui, &state, &ide.ids);
@@ -1190,7 +1190,7 @@ fn code_opens_inside_the_ide_and_tabs_move_to_another_window() {
 /// Toda propriedade que o Object Inspector mostra tem um nome legível
 /// (`resources/locales/properties.tsv`), traduzido nos idiomas da IDE.
 #[test]
-fn forms_and_code_share_one_tab_strip_like_delphi() {
+fn forms_and_code_share_one_tab_strip() {
     let base = temp("abas_unificadas");
     let project = aylis_project::create(&base, "Agenda", aylis_project::Language::Rust).unwrap();
     aylis_project::codegen::generate(&project).unwrap();

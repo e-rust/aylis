@@ -12,35 +12,35 @@ Gaveta de navegação: fica à esquerda (`align` Left), aberta ou fechada (`open
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto |  |
-| `icons` | Ícones | texto |  |
+| `title` | Título | texto | O título no topo da gaveta aberta; vazio: sem título. |
+| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem, separados por `;`. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `open` | Aberto | lógico |  |
-| `rail` | Só ícones | lógico |  |
+| `open` | Aberto | lógico | Aberta (na largura `drawer_width`); fechada some ou, com `rail`, fica só com os ícones. |
+| `rail` | Só ícones | lógico | Fechada, mostra a faixa estreita só com os ícones (na largura `rail_width`) em vez de sumir. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | Os destinos da lista, separados por `;`. |
+| `item_index` | Item escolhido | inteiro | O destino escolhido (a partir de 0); -1: nenhum. |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `drawer_width` | Largura da gaveta | número |  |
-| `rail_width` | Largura só com ícones | número |  |
+| `drawer_width` | Largura da gaveta | número | A largura aberta, em pontos. |
+| `rail_width` | Largura só com ícones | número | A largura fechada em modo `rail`, em pontos. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

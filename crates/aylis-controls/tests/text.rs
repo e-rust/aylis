@@ -86,7 +86,7 @@ fn memo_marks_words_on_any_line_and_completes_mid_text() {
 }
 
 #[test]
-fn selection_and_caret_by_property_like_delphi() {
+fn selection_and_caret_by_property() {
     let mut ui = Ui::new();
     aylis_controls::register(&mut ui);
     let f = ui.add_root(Form::new("teste", 500.0, 300.0));

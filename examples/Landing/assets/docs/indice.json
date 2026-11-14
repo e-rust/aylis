@@ -101,6 +101,10 @@
           "arquivo": "guias/tempo-de-execucao.md"
         },
         {
+          "titulo": "Testes do projeto",
+          "arquivo": "guias/testes-do-projeto.md"
+        },
+        {
           "titulo": "Threads e a interface",
           "arquivo": "guias/threads.md"
         },
@@ -1115,6 +1119,10 @@
         {
           "titulo": "Screen",
           "arquivo": "componentes/Screen.md"
+        },
+        {
+          "titulo": "SystemBars",
+          "arquivo": "componentes/SystemBars.md"
         },
         {
           "titulo": "Vibration",

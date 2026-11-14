@@ -12,10 +12,10 @@ Fatia de pizza da elipse do controle, de `start_angle` a `end_angle` (graus; 0 =
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `stroke` | Cor do traço | cor |  |
-| `stroke_width` | Largura do traço | número |  |
-| `start_angle` | Ângulo inicial | ângulo (graus) |  |
-| `end_angle` | Ângulo final | ângulo (graus) |  |
+| `stroke` | Cor do traço | cor | A cor da borda; vazio: sem borda. |
+| `stroke_width` | Largura do traço | número | A espessura da borda, em pontos; 0: sem borda. |
+| `start_angle` | Ângulo inicial | ângulo (graus) | Onde a fatia começa, em graus (0 = em cima, sentido horário). |
+| `end_angle` | Ângulo final | ângulo (graus) | Onde a fatia termina, em graus (0 = em cima, sentido horário). |
 
 ## Em código
 

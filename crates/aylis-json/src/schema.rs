@@ -267,12 +267,12 @@ pub fn catalog(ui: &Ui) -> String {
                 (format!("{}({})", m.name, args.join(",")), format!("invoke:{}", m.returns.map_or("void", method_kind)))
             })
             .collect();
-        // Quem recebe foco: `set_focus()` (o `SetFocus`).
+        // Quem recebe foco: `set_focus()`.
         if instance.control().is_some_and(|cb| cb.can_focus()) {
             methods.push(("set_focus()".into(), "focus:void".into()));
         }
         let commands: &[(&str, &str)] = match class.name {
-            // O foco do form: quem tem (o `ActiveControl`) e o próximo/anterior do Tab.
+            // O foco do form: quem tem e o próximo/anterior do Tab.
             "Form" => &[("show()", "show:void"), ("close()", "close:bool"), ("focused()", "focused:string"), ("focus_next()", "focus_next:void"), ("focus_prev()", "focus_prev:void")],
             "OpenDialog" | "SaveDialog" => &[("execute()", "execute:void")],
             "VideoPlayer" | "MediaPlayer" => &[

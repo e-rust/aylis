@@ -189,6 +189,12 @@ fn system_rust_has(targets: &[&str]) -> Option<String> {
     targets.iter().all(|t| rustlib.join(t).is_dir()).then(|| rustlib.display().to_string())
 }
 
+/// O Rust em uso (o `rustc` do `PATH`, do sistema ou do pacote) tem a biblioteca padrão de
+/// `triple`.
+pub fn rust_has_target(triple: &str) -> bool {
+    output("rustc", &["--print", "sysroot"]).is_some_and(|s| PathBuf::from(s.trim()).join("lib").join("rustlib").join(triple).is_dir())
+}
+
 /// Onde a máquina já tem, fora dos pacotes do Aylis, o que o pacote `name` traria (a
 /// verificação de ambiente aceita a do sistema; o pacote só entra onde ela falta). Pode rodar
 /// processos (o `rustc`, o `python`): chame fora da thread da interface.
@@ -790,12 +796,10 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                     Some(p) => Check::ok(t, "WiX (instalador .msi)", p.display().to_string()),
                     None => {
                         let check = Check::warning(t, "WiX (instalador .msi)", "não instalado (só para o instalador)");
-                        match (crate::dap::tools_dir(), which("dotnet")) {
-                            (Some(dir), Some(_)) => check.fix(Fix::new(
-                                "Instala o WiX 5 (dotnet tool) na pasta de ferramentas do Aylis",
-                                &["dotnet", "tool", "install", "wix", "--version", "5.0.2", "--tool-path", &dir.join("wix").display().to_string()],
-                            )),
-                            _ => check.help("Precisa do .NET SDK (dotnet.microsoft.com); depois: dotnet tool install --global wix --version 5.0.2"),
+                        // O pacote, das origens configuradas (nunca o nuget.org direto).
+                        match Fix::download("wix") {
+                            Some(fix) => check.fix(fix),
+                            None => check.help("Instale o pacote wix em Ferramentas → Pacotes de ferramentas (precisa do .NET)"),
                         }
                     }
                 });

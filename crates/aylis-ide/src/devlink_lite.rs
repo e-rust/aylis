@@ -56,6 +56,10 @@ impl DevServer {
         Vec::new()
     }
 
+    pub fn take_handlers(&self) -> Vec<String> {
+        Vec::new()
+    }
+
     pub fn call(&self, _command: Value) -> Result<Value, String> {
         Err(NO_APP.into())
     }

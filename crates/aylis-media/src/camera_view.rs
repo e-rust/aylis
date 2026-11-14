@@ -22,13 +22,24 @@ use crate::video::{Frame, Frames};
 /// (V4L2) e no navegador (o ideal do `getUserMedia`); flash, no celular e no navegador que deixa.
 pub struct CameraView {
     pub base: ControlBase,
+    /// Qual câmera: vazio, a primeira; `front` ou `back`, a da tela ou a de trás (celular); ou
+    /// o `id` de uma da lista de `cameras()`.
     pub camera: String,
+    /// Liga a câmera e mostra a imagem ao vivo; desligado, a câmera fecha.
     pub active: bool,
+    /// Espelha a imagem na horizontal (a frontal costuma parecer mais natural assim).
     pub mirror: bool,
+    /// Como a imagem ocupa o controle: `contain` (inteira), `cover` (cobre, cortando as
+    /// bordas), `stretch`, `center` ou `original`.
     pub fit: ImageFit,
+    /// O raio dos cantos arredondados, em pontos (0: retos).
     pub radius: f32,
+    /// O tamanho pedido: `low` (até 640x480), `medium` (até 1280x960), `high` (até
+    /// 1920x1440) ou `max` (o maior do aparelho).
     pub quality: CameraQuality,
+    /// Um tamanho exato (`1920x1080`), se a câmera tiver; vazio: vale a `quality`.
     pub resolution: String,
+    /// Acende o flash como lanterna (onde houver: veja `has_flash`).
     pub torch: bool,
     /// O que a câmera aberta oferece (a thread da câmera preenche ao abrir).
     caps: Arc<Mutex<Option<CameraCaps>>>,

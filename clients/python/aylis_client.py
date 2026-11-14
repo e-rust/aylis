@@ -19,8 +19,7 @@ O aylis-host inicia este processo e conversa por stdin/stdout: uma mensagem JSON
 
 Threads: os handlers rodam na thread principal (a do `run`). De outra thread (uma consulta
 demorada ao banco, um timer), use `aylis.send(...)` (só envia, é seguro) ou
-`aylis.post(funcao)`, que roda `funcao()` na thread principal (como o `TThread.Queue` do
-Delphi). `aylis.call(...)` só na thread principal: ele lê as respostas, e duas threads lendo
+`aylis.post(funcao)`, que roda `funcao()` na thread principal. `aylis.call(...)` só na thread principal: ele lê as respostas, e duas threads lendo
 roubariam as mensagens uma da outra.
 
 Por WebSocket (o backend em outra máquina): o backend espera a tela conectar,
@@ -246,7 +245,7 @@ class AylisComponent:
 
 
 class AylisForm(AylisComponent):
-    """A base dos forms (como o TForm do Delphi): cada form aberto na tela tem a sua instância
+    """A base dos forms: cada form aberto na tela tem a sua instância
     (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao abrir. A
     classe gerada de cada form monta os componentes em bind."""
 
@@ -430,8 +429,7 @@ class Aylis:
 
     def _wait_call(self, cmd, **fields):
         self._waiting += 1
-        # Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro call
-        # esperava) roda já.
+        # O que chegou antes (enquanto outro call esperava) roda já.
         queued, self._queued = self._queued, []
         for message in queued:
             event = message.get("event")
@@ -449,7 +447,7 @@ class Aylis:
             self._waiting -= 1
 
     def create_form(self, name):
-        """Cria um form do projeto (como Application.CreateForm); se já existe, devolve o mesmo."""
+        """Cria um form do projeto; se já existe, devolve o mesmo."""
         return self.call("create_form", name=name)
 
     def show(self, form):
@@ -458,7 +456,7 @@ class Aylis:
 
     def show_modal(self, form, on_close=None):
         """Abre o form como modal. Sem on_close, espera ele fechar e devolve o resultado
-        ("ok", "cancel"...), como o ShowModal do Delphi (os eventos continuam rodando). Com
+        ("ok", "cancel"...), e os eventos continuam rodando. Com
         on_close, não bloqueia: on_close(result) recebe o resultado."""
         if on_close is None:
             return self._wait_call("show_modal", target=form)
@@ -502,7 +500,7 @@ class Aylis:
     def message_dlg(self, text, kind="information", buttons=("ok",), on_close=None):
         """Caixa de mensagem (como o MessageDlg). kind: information, warning, error,
         confirmation; buttons: "ok", "cancel", "yes", "no"... Sem on_close, espera e devolve o
-        botão ("yes"), como o MessageDlg do Delphi (os eventos continuam rodando). Com
+        botão ("yes"), e os eventos continuam rodando. Com
         on_close, não bloqueia: on_close(result) recebe o botão escolhido."""
         if on_close is None:
             return self._wait_call("message_dlg", text=text, kind=kind, buttons=list(buttons))
@@ -569,8 +567,7 @@ class Aylis:
         return instance
 
     def create_form(self, form, another=False):
-        """Cria o form na tela e devolve a instância dele (como o Application.CreateForm do
-        Delphi); another: mais uma janela do mesmo form."""
+        """Cria o form na tela e devolve a instância dele; another: mais uma janela do mesmo form."""
         created = self.call("create_form", name=form, new=another)
         return self.form_instance(form, created["id"])
 
@@ -636,7 +633,7 @@ class Aylis:
                 self.send("answer", ask=ask, error=str(exc))
             else:
                 log("erro no handler", message.get("handler"), "->", repr(exc))
-                # A tela mostra o erro ao usuário (como o Application.HandleException do Delphi).
+                # A tela mostra o erro ao usuário.
                 self.send("exception", message=str(exc), path=form or "", handler=name or "")
         finally:
             self._running -= 1

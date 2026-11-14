@@ -12,7 +12,7 @@ Navegador: primeiro, anterior, próximo, último, incluir, excluir, editar, grav
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data_source` | Fonte de dados | componente |  |
+| `data_source` | Fonte de dados | componente | O `DataSource` do dataset que os botões movem e editam. |
 
 ## Eventos
 

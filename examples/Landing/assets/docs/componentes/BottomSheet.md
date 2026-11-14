@@ -12,14 +12,14 @@ Folha que sobe do rodapé (o `v-bottom-sheet`, a "sheet" do iOS): um contêiner 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `open` | Aberto | lógico |  |
-| `detents` | Alturas de parada | texto |  |
+| `open` | Aberto | lógico | Aberta (aparece); fechada, some. |
+| `detents` | Alturas de parada | texto | As alturas de encaixe ao arrastar a alça, separadas por `;`: até 1 é fração do pai (`0.4;0.9`), acima são pontos. Vazio: a alça não muda a altura. |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `sheet_height` | Altura da folha | número |  |
+| `sheet_height` | Altura da folha | número | A altura da folha aberta, em pontos. |
 
 ## Eventos
 

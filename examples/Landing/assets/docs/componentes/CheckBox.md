@@ -12,20 +12,20 @@ Caixa de marcação para uma opção de sim ou não ("Lembrar de mim"), com o te
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O texto ao lado da caixinha. |
 | `box_size` | Tamanho da caixa | número | Lado da caixinha (0 = o do visual do tema). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `checked` | Marcado | lógico |  |
+| `checked` | Marcado | lógico | Marcada. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

@@ -4,13 +4,13 @@
 //! caixa de marcação, lista... — são o controle comum com "Ligar a campo…", veja
 //! `aylis_data::binding`):
 //!
-//! | Controle | Equivalente | O que faz |
-//! |---|---|---|
-//! | [`DataGrid`] | `TDBGrid` | grade do dataset (ordena pelo título, colunas fixas, linha de filtro) |
-//! | [`DataNavigator`] | `TDBNavigator` | os botões de navegar e editar |
-//! | [`DataRepeater`] | `TDBCtrlGrid` | repete um modelo por registro, com rolagem virtual |
-//! | [`DBImage`] | `TDBImage` | a imagem de um campo |
-//! | [`DBChart`] | `TDBChart` | gráfico das séries do dataset |
+//! | Controle | O que faz |
+//! |---|---|
+//! | [`DataGrid`] | grade do dataset (ordena pelo título, colunas fixas, linha de filtro) |
+//! | [`DataNavigator`] | os botões de navegar e editar |
+//! | [`DataRepeater`] | repete um modelo por registro, com rolagem virtual |
+//! | [`DBImage`] | a imagem de um campo |
+//! | [`DBChart`] | gráfico das séries do dataset |
 //!
 //! E os relatórios ([`Report`], [`ReportBand`], [`ReportPreview`]).
 

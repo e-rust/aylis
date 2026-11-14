@@ -235,14 +235,20 @@ struct Layout {
 /// o módulo para a lista de efeitos.
 pub struct AnimatedText {
     pub base: ControlBase,
+    /// O texto animado (as quebras de linha valem).
     pub text: String,
+    /// Os efeitos, separados por `;`: o nome e os parâmetros (`fade by=letter duration=500;
+    /// wave amplitude=6 after`). Vazio: o texto parado.
     pub effects: String,
     /// Começa a animar quando aparece.
     pub autoplay: bool,
+    /// Repete a animação ao terminar, depois de `loop_delay`.
     pub looping: bool,
     /// Espera entre uma volta e outra (ms).
     pub loop_delay: f32,
+    /// O alinhamento do texto na horizontal.
     pub h_align: TextAlign,
+    /// O alinhamento do texto na vertical.
     pub v_align: TextAlign,
     /// Quebra as linhas na largura do controle (as quebras do texto sempre valem).
     pub wrap: bool,

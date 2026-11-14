@@ -12,21 +12,21 @@ Grupo de opções exclusivas com título e moldura. `items` separados por `;`, `
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `caption` | Título | texto |  |
-| `columns` | Colunas | inteiro |  |
+| `caption` | Título | texto | O título na moldura. |
+| `columns` | Colunas | inteiro | Em quantas colunas as opções se distribuem. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
-| `item_index` | Item escolhido | inteiro |  |
+| `items` | Itens | texto | As opções, separadas por `;`. |
+| `item_index` | Item escolhido | inteiro | A opção escolhida, a partir de 0; -1: nenhuma. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

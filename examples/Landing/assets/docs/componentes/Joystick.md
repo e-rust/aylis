@@ -12,14 +12,14 @@ Alavanca analógica na tela (jogos no celular, controle de câmera): arrastar o 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `dead_zone` | Zona morta | número |  |
-| `spring` | Volta ao centro | lógico |  |
+| `dead_zone` | Zona morta | número | A zona morta, de 0 a 1: movimentos menores que ela dão 0 (o tremor do dedo). |
+| `spring` | Volta ao centro | lógico | Ao soltar, o botão volta ao centro. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_release` | — | — |  |
 
 ## Em código

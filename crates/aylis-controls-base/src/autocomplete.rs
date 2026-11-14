@@ -22,8 +22,11 @@ struct Suggested(usize);
 /// `on_select` quando um item é escolhido.
 pub struct AutoComplete {
     pub base: Edit,
+    /// As opções sugeridas, separadas por `;`; a lista mostra as que contêm o digitado.
     pub items: String,
+    /// Quantas linhas a lista de sugestões mostra de uma vez (as outras rolam; mínimo 1).
     pub max_rows: u32,
+    /// Só aceita um dos itens: o texto que não for um deles é apagado ao sair do campo.
     pub strict: bool,
     popup: Option<ComponentId>,
     matches: Vec<String>,

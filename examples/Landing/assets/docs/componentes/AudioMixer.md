@@ -10,10 +10,10 @@ Mistura microfones, o som das saídas e players: volume, mudo, panorâmica; grav
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `sources` | Fontes | texto |  |
-| `output` | Saída | texto |  |
-| `active` | Ativo | lógico |  |
-| `keep_samples` | Guardar amostras | lógico |  |
+| `sources` | Fontes | texto | As fontes, separadas por `\|`, cada uma com `;volume=`, `;pan=` e `;mute` opcionais (`micVoz;volume=1.2\|device:loopback:Alto-falantes;volume=0.4\|mpFundo;pan=0.5`). |
+| `output` | Saída | texto | As saídas que tocam a mistura (como no `MediaPlayer`); vazio: não toca em lugar nenhum. |
+| `active` | Ativo | lógico | Liga a mistura (abre as fontes e as saídas); desligado, tudo fecha. |
+| `keep_samples` | Guardar amostras | lógico | Guarda as amostras da mistura (até 5 s) para o código ler com `take_samples`. |
 
 ## Eventos
 

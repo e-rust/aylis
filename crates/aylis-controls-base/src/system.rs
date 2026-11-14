@@ -12,8 +12,8 @@ use crate::{Button, Form, Label, Layout, ScrollBox, leaf_control};
 // ---------------------------------------------------------------------------
 // Timer
 
-/// Dispara `on_timer` a cada `interval` milissegundos enquanto `enabled` (como o
-/// `TTimer`). Não visual. Parado, não gasta nada: a plataforma dorme até o próximo tique.
+/// Dispara `on_timer` a cada `interval` milissegundos enquanto `enabled`.
+/// Não visual. Parado, não gasta nada: a plataforma dorme até o próximo tique.
 ///
 /// `precision` diz quanto pode atrasar: `normal` (o relógio do sistema; no Windows, degraus
 /// de ~15,6 ms), `high` (~1 ms) ou `exact` (abaixo de 0,1 ms, esperando ativo no fim).
@@ -21,9 +21,15 @@ use crate::{Button, Form, Label, Layout, ScrollBox, leaf_control};
 /// ocupado); o `on_timer` continua chegando na tela. `drift` é quanto o último disparo
 /// atrasou, em milissegundos.
 pub struct Timer {
+    /// O intervalo entre os disparos do `on_timer`, em milissegundos.
     pub interval: u32,
+    /// Contando; desligado, parado e sem gastar nada.
     pub enabled: bool,
+    /// Quanto o disparo pode atrasar: `normal` (o relógio do sistema, ~15,6 ms no Windows),
+    /// `high` (~1 ms) ou `exact` (abaixo de 0,1 ms, gastando CPU no fim da espera).
     pub precision: TimerPrecision,
+    /// Conta numa thread própria, sem depender do laço da tela estar livre; o `on_timer`
+    /// continua chegando na tela.
     pub background: bool,
     /// Dispara uma vez e se desliga (`enabled` volta a `false`); ligar de novo conta outra vez.
     pub one_shot: bool,
@@ -128,6 +134,7 @@ impl Component for Timer {
 /// (desligado, o laço dorme; começa desligado). O relatório do Tabernáculo, P05.
 #[derive(Default)]
 pub struct FrameTimer {
+    /// Dispara o `on_frame` a cada quadro; desligado (o começo), o laço dorme.
     pub enabled: bool,
     last: Option<f64>,
 }
@@ -172,14 +179,14 @@ impl Component for FrameTimer {
 // ---------------------------------------------------------------------------
 // DataModule
 
-/// Um contêiner só de componentes não visuais e da regra de negócio, fora da tela (como o
-/// `TDataModule` do Delphi): conexões, ClientDataSets, Timers, diálogos... É uma raiz
+/// Um contêiner só de componentes não visuais e da regra de negócio, fora da tela:
+/// conexões, ClientDataSets, Timers, diálogos... É uma raiz
 /// como um form, mas nunca abre janela. Os forms que usam um DataModule o declaram em
 /// `"uses"` no layout e falam com os componentes dele pelo caminho (`dmDados.cdsClientes`);
 /// o aplicativo cria os DataModules antes dos forms. `on_create` dispara depois de carregado.
 #[derive(Default)]
 pub struct DataModule {
-    /// Um número livre para o código (como o `Tag` do Delphi).
+    /// Um número livre para o código.
     pub tag: i64,
 }
 
@@ -197,13 +204,14 @@ impl Component for DataModule {
 // ---------------------------------------------------------------------------
 // ApplicationEvents
 
-/// Os eventos da aplicação inteira (como o `TApplicationEvents` do Delphi), num componente
+/// Os eventos da aplicação inteira, num componente
 /// não visual de qualquer form: `on_key_down` e `on_key_press` recebem as teclas antes de todos
 /// (antes do form com `key_preview` e do controle com foco; engolir ou trocar a tecla vale
 /// como lá), e `on_exception` recebe todo erro de handler e de componente: com ele ligado, a
 /// caixa de erro padrão não aparece.
 #[derive(Default)]
 pub struct ApplicationEvents {
+    /// Um número livre para o código (não muda nada).
     pub tag: i64,
 }
 
@@ -243,15 +251,21 @@ impl PropEnum for InterceptScope {
 
 /// Recebe num lugar só os eventos de qualquer componente do form (ou da aplicação, com
 /// `scope = application`), antes do handler: `on_intercept` traz o form, o componente, o
-/// evento, os argumentos e o handler ligado, e pode cancelar (`ui.cancel_event()`, o
-/// `Cancel := True`, ou a exceção com mensagem); `after_intercept` roda depois do handler.
+/// evento, os argumentos e o handler ligado, e pode cancelar (`ui.cancel_event()`
+/// ou a exceção com mensagem); `after_intercept` roda depois do handler.
 /// `events` e `classes` filtram (nomes separados por `;`; vazio = todos, menos os contínuos,
 /// como mover o mouse). Veja `aylis_core` (`intercept.rs`) para a ordem e o backend remoto.
 pub struct EventInterceptor {
+    /// Onde vale: `form` (só os componentes do form dele) ou `application` (todos os forms).
     pub scope: InterceptScope,
+    /// Os eventos interceptados, separados por `;` (`on_click;on_change`); vazio: todos, menos
+    /// os contínuos (como mover o mouse).
     pub events: String,
+    /// As classes interceptadas, separadas por `;` (`Button;Edit`); vazio: todas.
     pub classes: String,
+    /// Intercepta; desligado, os eventos passam direto.
     pub enabled: bool,
+    /// Um número livre para o código (não muda nada).
     pub tag: i64,
 }
 
@@ -310,6 +324,8 @@ impl PropEnum for BusyAction {
 pub struct BusyWatcher {
     /// Quanto esperar antes de mostrar, em milissegundos.
     pub delay: i64,
+    /// O que mostrar enquanto espera: `default` (o cursor de espera e, depois de uns 3 s, o
+    /// indicador), `form` (o `busy_form`) ou `none` (nada visível).
     pub action: BusyAction,
     /// O form mostrado com `action = form`.
     pub busy_form: Option<ComponentId>,
@@ -343,7 +359,7 @@ impl Component for BusyWatcher {
 // ---------------------------------------------------------------------------
 // OpenDialog / SaveDialog
 
-/// Lê o filtro no formato do Delphi: `Imagens|*.png;*.jpg|Todos|*.*`. O `*.*` (ou `*`) vira a
+/// Lê o filtro (pares de descrição e padrões, separados por `|`): `Imagens|*.png;*.jpg|Todos|*.*`. O `*.*` (ou `*`) vira a
 /// extensão `"*"`: todos os arquivos.
 pub fn parse_filter(filter: &str) -> Vec<(String, Vec<String>)> {
     let parts: Vec<&str> = filter.split('|').collect();
@@ -363,7 +379,7 @@ pub fn parse_filter(filter: &str) -> Vec<(String, Vec<String>)> {
         .collect()
 }
 
-/// Diálogo de abrir arquivo do sistema (como o `TOpenDialog`). Assíncrono:
+/// Diálogo de abrir arquivo do sistema. Assíncrono:
 /// [`OpenDialog::execute`] abre e, ao escolher, grava `file_name` e dispara `on_select`
 /// (com o caminho; com `multiple`, os caminhos separados por `;`). Cancelar dispara
 /// `on_cancel`. Em toda plataforma: o diálogo do sistema no desktop, o seletor do navegador,
@@ -371,16 +387,21 @@ pub fn parse_filter(filter: &str) -> Vec<(String, Vec<String>)> {
 /// [`aylis_core::files`] (no navegador o arquivo fica na memória; salvar baixa).
 #[derive(Default)]
 pub struct OpenDialog {
+    /// O título do diálogo; vazio: o do sistema.
     pub title: String,
     /// `Imagens|*.png;*.jpg|Todos|*.*`
     pub filter: String,
+    /// A pasta em que o diálogo abre; vazio: a que o sistema escolher.
     pub initial_dir: String,
+    /// O arquivo escolhido (com `multiple`, os caminhos separados por `;`); antes de abrir, o
+    /// nome sugerido.
     pub file_name: String,
+    /// Deixa escolher vários arquivos de uma vez.
     pub multiple: bool,
 }
 
 
-/// Diálogo de salvar arquivo do sistema (como o `TSaveDialog`). Igual ao [`OpenDialog`].
+/// Diálogo de salvar arquivo do sistema. Igual ao [`OpenDialog`].
 #[derive(Default)]
 pub struct SaveDialog {
     pub dialog: OpenDialog,
@@ -492,14 +513,17 @@ impl PropEnum for DlgKind {
     }
 }
 
-/// Caixa de mensagem como componente (como o `TTaskDialog`): fica no form com o texto, o
+/// Caixa de mensagem como componente: fica no form com o texto, o
 /// tipo e os botões definidos no Object Inspector, e abre com [`MessageDialog::execute`].
 /// Feita com o próprio aylis (igual no desktop, no celular e no navegador). Ao fechar,
 /// dispara `on_close` com o botão escolhido (`"yes"`, `"no"`, `"ok"`, `"cancel"`...).
 pub struct MessageDialog {
     /// Título da janela; vazio: o do tipo ("Confirmação", "Aviso"...).
     pub title: String,
+    /// A mensagem.
     pub text: String,
+    /// O tipo, que dá o ícone e o título padrão: `information`, `warning`, `error` ou
+    /// `confirmation`.
     pub kind: DlgKind,
     /// Os botões, na ordem em que aparecem: `"yes,no"`, `"ok,cancel"`, `"yes,no,cancel"`...
     pub buttons: String,
@@ -562,7 +586,7 @@ impl Component for MessageDialog {
     }
 }
 
-/// Uma caixa de mensagem (como o `MessageDlg`), feita com o próprio aylis: funciona igual
+/// Uma caixa de mensagem feita com o próprio aylis: funciona igual
 /// no desktop, no celular e no navegador. Não bloqueia: `on_close` recebe o botão
 /// escolhido (Esc = `Cancel`, ou `No` se não houver Cancelar).
 ///
@@ -710,7 +734,7 @@ fn footer_metrics(theme: &aylis_core::Theme) -> (f32, aylis_core::Bounds) {
     (look.gap.unwrap_or(FOOTER_GAP).max(0.0), look.padding)
 }
 
-/// Mensagem simples com OK (como o `ShowMessage`).
+/// Mensagem simples com OK.
 pub fn show_message(ui: &mut Ui, text: &str) -> ComponentId {
     message_dlg(ui, text, DlgKind::Information, &[ModalResult::Ok], |_, _| {})
 }
@@ -846,14 +870,18 @@ impl Component for Toast {
 /// No Android: canal, prioridade, botões (`on_action`), toque (`on_click`), progresso,
 /// fixa, imagem grande e até um form inteiro desenhado como imagem (`form`).
 pub struct Notification {
+    /// O título da notificação.
     pub title: String,
+    /// O texto da notificação, embaixo do título.
     pub text: String,
     /// Imagem (PNG) ao lado do texto, opcional: arquivo ou asset do projeto.
     pub image: String,
     /// Um form inteiro desenhado como a imagem grande da notificação (o nome dele; criado
     /// se preciso), no tamanho `form_width` x `form_height`.
     pub form: String,
+    /// A largura com que o `form` é desenhado na imagem, em pontos.
     pub form_width: f32,
+    /// A altura com que o `form` é desenhado na imagem, em pontos.
     pub form_height: f32,
     /// O nome do app na notificação (vazio: o título do form principal).
     pub app_name: String,
@@ -863,7 +891,9 @@ pub struct Notification {
     pub notification_id: u32,
     /// Canal do Android (o usuário configura som e destaque por canal).
     pub channel: String,
+    /// O nome do canal que o usuário vê nas configurações do Android.
     pub channel_name: String,
+    /// `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som).
     pub priority: NotificationPriority,
     /// Botões: `"responder:Responder;arquivar:Arquivar"` (identificador:texto); o toque
     /// chega em `on_action` com o identificador.

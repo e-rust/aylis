@@ -12,13 +12,13 @@ A edição no lugar (`QPopupEdit`): mostra o `text` (como um rótulo com um láp
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `placeholder` | Texto de exemplo | texto |  |
+| `placeholder` | Texto de exemplo | texto | O texto apagado que aparece com o `text` vazio. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O texto mostrado e editado; gravado ao confirmar a edição. |
 
 ## Eventos
 

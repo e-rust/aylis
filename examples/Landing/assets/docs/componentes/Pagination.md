@@ -12,20 +12,20 @@ Paginação (o `v-pagination`): `page` de 1 a `length`, com no máximo `total_vi
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `total_visible` | Páginas visíveis | inteiro |  |
+| `total_visible` | Páginas visíveis | inteiro | Quantos botões de página aparecem no máximo; o resto vira "…". |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `page` | Página | inteiro |  |
-| `length` | Comprimento | inteiro |  |
+| `page` | Página | inteiro | A página atual, de 1 a `length`. |
+| `length` | Comprimento | inteiro | Quantas páginas há. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

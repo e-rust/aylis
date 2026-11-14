@@ -1,5 +1,5 @@
-//! Um erro num handler ou num componente não derruba o app: vira uma exceção tratada (o
-//! `Application.HandleException` do Delphi), e o resto continua.
+//! Um erro num handler ou num componente não derruba o app: vira uma exceção
+//! tratada, e o resto continua.
 
 mod common;
 

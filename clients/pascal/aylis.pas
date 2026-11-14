@@ -15,7 +15,7 @@
   Trabalho pesado vai para uma thread própria (TThread). De lá, Send pode (gravar
   propriedades, mostrar progresso: a escrita tem trava); Call não (a resposta chega pela
   mesma leitura da thread dos handlers). Para voltar à thread dos handlers no fim (fechar o
-  form de progresso, ler a tela), use Post, como o TThread.Queue do Delphi:
+  form de progresso, ler a tela), use Post:
 
     Aylis.Post(@Self.Terminou); }
 unit aylis;
@@ -71,9 +71,11 @@ type
     (Event: event, handler, form, sender, args). }
   TAylisFormEvent = procedure(Sender: TAylisComponent; Event: TJSONObject) of object;
 
-  { Os eventos que perguntam (a tela espera a resposta), com var como no Delphi; os outros
+  { Os eventos que perguntam (a tela espera a resposta), com var; os outros
     (before_post, before_delete, on_validate) são TAylisFormEvent e recusam com raise. }
   TAylisCloseQueryEvent = procedure(Sender: TAylisComponent; var CanClose: Boolean) of object;
+  { A tecla Voltar do celular (on_back): Handled := True quando o app tratou. }
+  TAylisBackEvent = procedure(Sender: TAylisComponent; var Handled: Boolean) of object;
   { Key é o nome da tecla ('a', 'enter', 'f2'); Key := '' engole (o Key := 0). }
   TAylisKeyEvent = procedure(Sender: TAylisComponent; var Key: string; Event: TJSONObject) of object;
   { Key é o caractere digitado; Key := '' engole, Key := '.' troca. }
@@ -84,7 +86,7 @@ type
     handler do evento interceptado; Cancel := True faz o handler dele não rodar. }
   TAylisInterceptEvent = procedure(Sender: TAylisComponent; Info: TJSONObject; var Cancel: Boolean) of object;
 
-  { A base dos forms, como o TForm do Delphi: cada form aberto na tela tem a sua instância
+  { A base dos forms: cada form aberto na tela tem a sua instância
     (duas janelas do mesmo form, duas instâncias), com os componentes como campos published
     (a classe base gerada de cada form declara e monta) e o estado do usuário em campos
     private. Os handlers são métodos published, achados pelo nome do layout. }
@@ -159,11 +161,11 @@ type
     procedure ProfileEnd;
     { Envia um comando e espera o resultado. Só da thread dos handlers. }
     function Call(const Cmd: string; Fields: TJSONObject = nil): TJSONData;
-    { Roda Job na thread dos handlers, de qualquer thread (o TThread.Queue do Delphi): a
+    { Roda Job na thread dos handlers, de qualquer thread: a
       tela devolve um eco que acorda o Loop, e Job roda na vez dele, entre os eventos. }
     procedure Post(Job: TAylisProc); overload;
     { Como o Post, ligado a um form: se o form foi liberado até lá (a janela fechou e saiu),
-      o Job não roda (no Delphi, o TThread.Queue com o form já liberado dá Access Violation). }
+      o Job não roda (rodar com o form já liberado daria Access Violation). }
     procedure PostTo(Owner: TAylisForm; Job: TAylisProc);
     { Dentro de um evento-pergunta (o evento veio com "ask"): um campo da resposta (can_close,
       key, data, label, accept), que o cliente manda quando o handler termina. Os handlers
@@ -172,21 +174,20 @@ type
     procedure Reply(const Name, Value: string); overload;
     { Handler pelo nome usado no layout ('frmClientes.nome': só daquele form). }
     procedure OnEvent(const Name: string; Handler: TAylisHandler);
-    { Cria o form na tela e devolve a instância dele (como o Application.CreateForm do
-      Delphi); Another: mais uma janela do mesmo form, mesmo que ele já exista. }
+    { Cria o form na tela e devolve a instância dele; Another: mais uma janela do mesmo form, mesmo que ele já exista. }
     function CreateForm(const Form: string; Another: Boolean = False): TAylisForm; overload;
-    { O mesmo pela classe do form (`Aylis.CreateForm(TFrmProgresso)`), como o
-      Application.CreateForm do Delphi: sem o nome em texto no código. }
+    { O mesmo pela classe do form (`Aylis.CreateForm(TFrmProgresso)`): sem o nome em texto
+      no código. }
     function CreateForm(FormClass: TAylisFormClass; Another: Boolean = False): TAylisForm; overload;
-    { O valor de um campo decimal (Currency, BCD) no tipo exato, como o AsCurrency e o AsBCD do
-      Delphi: o protocolo manda o texto, e ele nunca passa por Double. Nulo: 0. }
+    { O valor de um campo decimal (Currency, BCD) no tipo exato:
+      o protocolo manda o texto, e ele nunca passa por Double. Nulo: 0. }
     function FieldAsCurrency(const DataSet, Field: string): Currency;
     function FieldAsBCD(const DataSet, Field: string): TBCD;
-    { Caixa de mensagem que espera, como o MessageDlg do Delphi: devolve o botão ('yes', 'no',
+    { Caixa de mensagem que espera: devolve o botão ('yes', 'no',
       'ok'...). Kind: information, warning, error, confirmation. Enquanto espera, os eventos
       continuam rodando (os Post também). }
     function MessageDlg(const Text: string; const Kind: string; const Buttons: array of string): string;
-    { Abre o form como modal e espera ele fechar, como o ShowModal do Delphi: devolve o
+    { Abre o form como modal e espera ele fechar: devolve o
       resultado ('ok', 'cancel'...). }
     function ShowModal(Form: TAylisForm): string;
     { Abre o form e trata os eventos até a tela fechar. }
@@ -349,8 +350,8 @@ const
 function AylisDeltaSelftest: string;
 
 { Registra a classe de um form (na initialization da unit dele): cada form com esse nome
-  aberto na tela vira uma instância dela. Global, se dado, aponta para a primeira (o
-  frmClientes do Delphi). }
+  aberto na tela vira uma instância dela. Global, se dado, aponta para a primeira (a
+  variável global do form, como frmClientes). }
 procedure RegisterForm(AClass: TAylisFormClass; const Name: string; Global: PPointer = nil);
 
 implementation
@@ -1129,12 +1130,12 @@ begin
   CallFormMethod(Method, Sender, Msg);
 end;
 
-{ Chama o método do form com a assinatura do evento: os que perguntam com var, como no
-  Delphi (o que o handler mudar vira a resposta); os outros com (Sender, Event). }
+{ Chama o método do form com a assinatura do evento: os que perguntam com var
+  (o que o handler mudar vira a resposta); os outros com (Sender, Event). }
 procedure TAylis.CallFormMethod(Method: TMethod; Sender: TAylisComponent; Msg: TJSONObject);
 var
   Kind, Key, Original, Data, Caption: string;
-  CanClose, Accept, Cancel: Boolean;
+  CanClose, Accept, Cancel, Handled: Boolean;
   Args: TJSONData;
 begin
   Kind := Msg.Get('event', '');
@@ -1152,6 +1153,13 @@ begin
     TAylisCloseQueryEvent(Method)(Sender, CanClose);
     if not CanClose then
       Reply('can_close', False);
+  end
+  else if Kind = 'on_back' then
+  begin
+    Handled := False;
+    TAylisBackEvent(Method)(Sender, Handled);
+    if Handled then
+      Reply('handled', True);
   end
   else if Kind = 'on_key_down' then
   begin
@@ -1254,8 +1262,8 @@ begin
   Fields.Add('wait', True);
   Inc(FWaiting);
   try
-    { Como o laço do ShowModal do Delphi: o que chegou antes (enquanto outro Call esperava)
-      roda já, sem esperar o diálogo fechar. }
+    { O que chegou antes (enquanto outro Call esperava) roda já, sem esperar o diálogo
+      fechar. }
     for I := 1 to FQueued.Count do
       HandleNested(TJSONObject(FQueued.Pop));
     Got := Call(Cmd, Fields);
@@ -1572,7 +1580,7 @@ begin
     Fields.Add('form', Form);
   Call('run', Fields);
   { A instância do form principal já existe antes do primeiro evento (o código pode usar a
-    variável global dele, como no Delphi). }
+    variável global dele). }
   if Form <> '' then
   begin
     Found := Call('find', TJSONObject.Create(['name', Form]));
@@ -1631,7 +1639,7 @@ end;
 
 { Roda o handler do evento. Um evento-pergunta (com "ask") recebe a resposta quando o
   handler termina: os campos gravados (Reply, os var) ou, com exceção, a recusa com a
-  mensagem (a tela mostra), como no BeforePost do Delphi. }
+  mensagem (a tela mostra). }
 { Os forms liberados na tela: as instâncias saem (a variável global que apontava para uma
   passa a nil) e os PostTo com eles como dono não rodam mais. }
 procedure TAylis.FormsFreed(Msg: TJSONObject);
@@ -1738,7 +1746,7 @@ begin
         else
         begin
           AylisLog('erro no handler ' + Name + ': ' + E.Message);
-          { A tela mostra o erro ao usuário (como o Application.HandleException do Delphi):
+          { A tela mostra o erro ao usuário:
             sem isto, o clique em Salvar falharia sem ninguém saber. }
           Send('exception', TJSONObject.Create(['message', E.Message, 'path', Form, 'handler', Name]));
         end;

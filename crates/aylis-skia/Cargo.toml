@@ -14,5 +14,5 @@ default = []
 gl = ["skia-safe/gl"]
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
 skia-safe = { version = "0.153", features = ["textlayout", "embed-icudtl"] }

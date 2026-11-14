@@ -34,19 +34,28 @@ fn indicator(ctx: &PaintCtx<'_>) -> (Color, Color) {
 // NavigationDrawer
 // ===========================================================================
 
-/// Gaveta de navegação (o `v-navigation-drawer`, o `TMultiView` do FMX): fica à esquerda
+/// Gaveta de navegação: fica à esquerda
 /// (`align` Left), aberta ou fechada (`open`); fechada em modo `rail` mostra só os ícones.
 /// Com `items`/`icons` desenha a lista de destinos (`item_index`, `on_change`); também
 /// aceita controles dentro.
 pub struct NavigationDrawer {
     pub base: ControlBase,
+    /// Aberta (na largura `drawer_width`); fechada some ou, com `rail`, fica só com os ícones.
     pub open: bool,
+    /// Fechada, mostra a faixa estreita só com os ícones (na largura `rail_width`) em vez de
+    /// sumir.
     pub rail: bool,
+    /// A largura aberta, em pontos.
     pub drawer_width: f32,
+    /// A largura fechada em modo `rail`, em pontos.
     pub rail_width: f32,
+    /// O título no topo da gaveta aberta; vazio: sem título.
     pub title: String,
+    /// Os destinos da lista, separados por `;`.
     pub items: String,
+    /// Os ícones dos destinos, na mesma ordem, separados por `;`.
     pub icons: String,
+    /// O destino escolhido (a partir de 0); -1: nenhum.
     pub item_index: i64,
     rows: RefCell<Vec<RectF>>,
 }
@@ -92,10 +101,36 @@ impl NavigationDrawer {
             self.apply_width();
         }
     }
+
+    /// Abre ou fecha pelo dedo (decidido em 14/11), como o `toggle`.
+    fn set_open_by_swipe(&mut self, ctx: &mut EventCtx<'_>, open: bool) {
+        if self.open != open {
+            self.open = open;
+            self.apply_width();
+            ctx.invalidate();
+        }
+        ctx.set_handled();
+    }
 }
 
 impl Component for NavigationDrawer {
     leaf_control!("NavigationDrawer");
+
+    // O deslizar para a esquerda em cima dela fecha; da borda esquerda do form, abre.
+    fn swipe(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::SwipeEvent) {
+        if event.direction == aylis_core::SwipeDirection::Left && self.open {
+            self.set_open_by_swipe(ctx, false);
+        }
+    }
+
+    fn edge_swipe(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::SwipeEvent) -> bool {
+        // A borda esquerda do form, com ela fechada (no form, `event.start`).
+        if event.direction != aylis_core::SwipeDirection::Right || self.open || event.start.x > 32.0 {
+            return false;
+        }
+        self.set_open_by_swipe(ctx, true);
+        true
+    }
 
     properties! {
         open: bool => "Behavior",
@@ -174,8 +209,11 @@ impl Component for NavigationDrawer {
 /// 3): 3 a 5 destinos com ícone e nome; o escolhido ganha a pílula atrás do ícone.
 pub struct BottomNavigation {
     pub base: ControlBase,
+    /// Os nomes dos destinos, separados por `;`.
     pub items: String,
+    /// Os ícones dos destinos, na mesma ordem, separados por `;`.
     pub icons: String,
+    /// O destino escolhido (a partir de 0).
     pub item_index: i64,
 }
 
@@ -322,8 +360,12 @@ impl BottomNavigation {
 /// (`on_close`). Coloque os controles dentro.
 pub struct BottomSheet {
     pub base: ControlBase,
+    /// Aberta (aparece); fechada, some.
     pub open: bool,
+    /// A altura da folha aberta, em pontos.
     pub sheet_height: f32,
+    /// As alturas de encaixe ao arrastar a alça, separadas por `;`: até 1 é fração do pai
+    /// (`0.4;0.9`), acima são pontos. Vazio: a alça não muda a altura.
     pub detents: String,
     drag: Cell<Option<(f32, f32)>>,
 }
@@ -438,9 +480,14 @@ impl Component for BottomSheet {
 /// (`show_arrows`), bolinhas embaixo e arrastar para os lados. `on_change`.
 pub struct Carousel {
     pub base: ControlBase,
+    /// O slide mostrado (a partir de 0, na ordem dos filhos).
     pub index: i64,
+    /// Passa para o próximo sozinho a cada tantos ms; 0 = parado.
     pub interval: u32,
+    /// Mostra as setas de anterior e próximo nas laterais.
     pub show_arrows: bool,
+    /// Depois do último volta ao primeiro (e antes do primeiro, o último); desligado, para
+    /// nas pontas.
     pub cycle: bool,
     drag: Cell<Option<f32>>,
 }
@@ -492,6 +539,19 @@ impl Carousel {
 
 impl Component for Carousel {
     leaf_control!("Carousel");
+
+    // No toque, o arrasto vira rolagem e o soltar não chega aqui: o deslizar do núcleo troca
+    // de item (o mouse continua pelo `pointer_up`).
+    fn swipe(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::SwipeEvent) {
+        let step = match event.direction {
+            aylis_core::SwipeDirection::Left => 1,
+            aylis_core::SwipeDirection::Right => -1,
+            _ => return,
+        };
+        let i = self.index + step;
+        self.show(ctx, i);
+        ctx.set_handled();
+    }
 
     properties! {
         index: i64 => "Data",
@@ -592,9 +652,14 @@ impl Component for Carousel {
 /// `on_item` com o índice da ação. O controle ocupa a altura toda das ações.
 pub struct SpeedDial {
     pub base: ControlBase,
+    /// O ícone do botão principal.
     pub icon: String,
+    /// Os ícones das ações, separados por `;` (uma ação para cada).
     pub icons: String,
+    /// Os nomes das ações ao lado dos ícones, na mesma ordem, separados por `;`; vazio: só os
+    /// ícones.
     pub labels: String,
+    /// Aberto: as ações aparecem acima do botão principal.
     pub open: bool,
     hits: RefCell<Vec<RectF>>,
 }
@@ -727,8 +792,11 @@ impl SpeedDial {
 /// sobrepostas; passando de `max`, o último mostra "+N".
 pub struct AvatarGroup {
     pub base: ControlBase,
+    /// Os nomes das pessoas, separados por `;`: cada avatar mostra as iniciais.
     pub names: String,
+    /// Quantos avatares aparecem; os que passarem viram o "+N" no último.
     pub max: u32,
+    /// O diâmetro de cada avatar, em pontos.
     pub size: f32,
 }
 

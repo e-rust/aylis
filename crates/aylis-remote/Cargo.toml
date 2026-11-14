@@ -9,17 +9,17 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
-aylis-json = { version = "0.2.1", path = "../aylis-json" }
-aylis-data = { version = "0.2.1", path = "../aylis-data" }
-aylis-controls = { version = "0.2.1", path = "../aylis-controls" }
-aylis-dbcontrols = { version = "0.2.1", path = "../aylis-dbcontrols" }
-aylis-providers = { version = "0.2.1", path = "../aylis-providers" }
-aylis-media = { version = "0.2.1", path = "../aylis-media" }
-aylis-vector = { version = "0.2.1", path = "../aylis-vector" }
-aylis-markdown = { version = "0.2.1", path = "../aylis-markdown" }
-aylis-webview = { version = "0.2.1", path = "../aylis-webview" }
-aylis-project = { version = "0.2.1", path = "../aylis-project" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
+aylis-json = { version = "0.3.0", path = "../aylis-json" }
+aylis-data = { version = "0.3.0", path = "../aylis-data" }
+aylis-controls = { version = "0.3.0", path = "../aylis-controls" }
+aylis-dbcontrols = { version = "0.3.0", path = "../aylis-dbcontrols" }
+aylis-providers = { version = "0.3.0", path = "../aylis-providers" }
+aylis-media = { version = "0.3.0", path = "../aylis-media" }
+aylis-vector = { version = "0.3.0", path = "../aylis-vector" }
+aylis-markdown = { version = "0.3.0", path = "../aylis-markdown" }
+aylis-webview = { version = "0.3.0", path = "../aylis-webview" }
+aylis-project = { version = "0.3.0", path = "../aylis-project" }
 serde_json = { version = "1", features = ["preserve_order"] }
 # A compactação entre a ponte e a tela (Rust puro: vale no navegador também).
 miniz_oxide = "0.8"

@@ -99,6 +99,7 @@ clientes:
 | `on_gpu_change` | evento | A janela trocou de placa; o argumento (`Text`) é o nome da placa nova |
 | `gpu_adapter()` | método → texto | A placa em que a janela desenha agora (vazio: não se sabe) |
 | `gpu_adapters()` | método → texto | As placas da máquina, separadas por `;` |
+| `span_monitors` | propriedade (bool) | O form maior que um monitor vira uma janela por monitor (veja abaixo) |
 
 No núcleo, `Ui::form_gpu`, `Ui::set_form_gpu`, `Ui::gpu_adapters` e `Ui::set_gpu_adapters`
 guardam o que a plataforma informa (o `on_gpu_change` sai do `set_form_gpu` quando a placa
@@ -187,16 +188,91 @@ disparou); e sem o feedback do compositor, a troca pelo monitor não foi exercit
 pedem um Linux de verdade com duas placas e o GNOME ou o KDE no Wayland
 ([testes em dispositivos](testes-em-dispositivos.md)).
 
-## O que não entrou: um form ocupando vários monitores
+## Um form ocupando vários monitores (`span_monitors`)
 
-Foi discutido e não está neste patch. Com seis monitores em duas placas, o jeito certo é uma
-janela por monitor (cada uma na placa do seu monitor), todas com a principal como dona
-(`win32::set_owner`, que já existe), para a barra de tarefas e o Alt+Tab mostrarem uma só. Uma
-janela gigante cobrindo todos os monitores volta a ter a cópia entre as placas.
+Decidido em 14/11. Com seis monitores em duas placas, uma janela gigante cobrindo todos volta a
+ter a cópia entre as placas. Por isso, com a propriedade `span_monitors` do form ligada
+(categoria Layout, desligada por padrão), o form maior que um monitor vira **uma janela por
+monitor**, cada uma na placa do seu, todas com a principal como dona (a barra de tarefas e o
+Alt+Tab mostram uma só). Com `window_state = full_screen`, o form cobre todos os monitores (um
+telão). Desligada, nada muda.
 
-O trabalho maior está no `Ui`, que hoje supõe um form numa janela: pintar cada pedaço com o
-deslocamento da sua janela, levar mouse e toque ao form com as coordenadas certas, o foco, e
-popups e menus que cruzam monitores. Estimativa: de uma a três semanas.
+O `Ui` continua com um form só. As peças:
+
+| Onde | O que faz |
+|---|---|
+| `aylis_core::span` | `split(form, monitores)`: o retângulo do form na tela (pixels físicos) dividido pelos monitores, um pedaço por monitor que ele toca, de cima para baixo e da esquerda para a direita; a parte fora de todos não aparece e um monitor espelhado não ganha outra janela. `Piece::to_form` leva um ponto da janela ao form (a origem do pedaço mais o ponto, na escala); `largest` escolhe o pedaço da janela principal |
+| `Ui::set_form_pieces` / `form_pieces` | A plataforma diz os pedaços (nas coordenadas do form) |
+| `Ui::paint_piece(form, canvas, pedaço, áreas, início)` | Pinta só o pedaço, com o canvas andando `-pedaço.x, -pedaço.y`; só os controles que tocam o pedaço (ou as áreas mudadas nele) são pintados. Os pedidos de quadro (o cursor piscando, uma animação) dos pedaços do mesmo quadro se somam |
+| `Ui::popup_area(form, ponto)` | Onde um menu ou uma lista que nasce no ponto pode ficar: o form ou o pedaço que contém o ponto. O `PopupMenu`/`MainMenu`, o `ComboBox`, o `DateEdit`, o `TimeEdit`, o `DateRangeEdit` e o `Popover` usam: abrem dentro do monitor em que nascem, sem ficar partidos entre duas janelas |
+| `crates/aylis-platform-winit/src/span.rs` | As janelas: abre as extras (sem moldura, fora da barra de tarefas, com a principal como dona, na placa do monitor delas), refaz os pedaços e volta a uma janela |
+
+Na plataforma (Windows):
+
+- **Abrir:** a janela abre como sempre; na volta seguinte do laço, se o form (o tamanho dele na
+  escala do monitor, a partir do canto da janela) passa de um monitor, a principal perde a
+  moldura e fica com o pedaço maior, e as outras abrem. O form fica do tamanho de todos os
+  pedaços juntos.
+- **Placa:** com a regra `gpu` vazia (a do projeto, automática), cada janela segue a placa do
+  monitor dela (`monitor`); com uma placa pedida no form, todas ficam nela.
+- **Pintura:** um quadro do form pinta todos os pedaços juntos, com um `take_frame` só: cada
+  janela pinta a parte das áreas mudadas que cai nela (as cópias da rolagem viram área, porque
+  a origem pode estar em outra janela); um pedaço sem nada mudado não pinta. O sistema pedindo
+  uma janela (apareceu, mudou de placa) pinta só ela, inteira.
+- **Entrada:** o mouse, o toque e a roda de cada janela vão ao form com a origem do pedaço; o
+  mouse preso numa janela durante um arrasto, já sobre a vizinha, continua certo (a coordenada
+  passa da borda). O mouse passando de um pedaço para o outro não sai do form (o
+  `pointer_leave` só quando sai de todos), e o foco passando de um para o outro não dispara o
+  `on_deactivate`/`on_activate`. O teclado vai ao form, de qualquer janela.
+- **Escala:** todos os pedaços desenham com a escala do monitor da janela principal (num monitor
+  com outra escala, o form aparece com a da principal, sem mudar de tamanho no meio). A
+  sugestão de tamanho do sistema ao passar para um monitor de outra escala é recusada.
+- **Mudanças:** desligar a propriedade com o app aberto volta a uma janela (com a moldura do
+  `border_style` e o lugar do form); `width`/`height`, `move_to_monitor`, a posição pelo
+  código, a tela cheia, o zoom e os monitores mudando (ligado, desligado, outra resolução)
+  refazem os pedaços. Maximizar, arrastar e redimensionar pela borda não valem para um form em
+  pedaços.
+- **Diagnóstico:** `AYLIS_SPAN_SPLIT=N` conta cada monitor como N, lado a lado, para ver o
+  caminho inteiro numa máquina com um monitor só (todas as janelas na mesma placa).
+
+O que não está coberto:
+
+- **Linux e macOS:** a propriedade não tem efeito (o form fica numa janela). Falta conferir as
+  janelas sem moldura posicionadas em cada monitor e a dona (no X11, `WM_TRANSIENT_FOR`; no
+  Wayland o app nem escolhe onde a janela fica, então o caminho seria o compositor; no macOS, as
+  janelas filhas do `NSWindow`). A pintura, a entrada e os menus são do núcleo e já valem.
+- **O leitor de tela** só vê a janela principal (a árvore vai com as coordenadas dela), e os
+  navegadores embutidos (`WebView`) ficam na principal.
+- **O `remember_placement`** não guarda um form em pedaços (a posição guardada seria a de um
+  pedaço).
+- **Uma janela de arrasto (a aba que vira janela) solta sobre outro form** continua certa, mas
+  um arrasto de um form para outro form em pedaços usa a janela sob o mouse com a origem dela.
+- **Monitores que se sobrepõem em parte** (raro) dão janelas sobrepostas, com o mesmo desenho.
+
+### Como conferir
+
+Sem vários monitores (testes):
+
+- `cargo test -p aylis-core --lib span` e `--test span`: a divisão (dois monitores, o da
+  esquerda com `x` negativo, o telão 2×3 com um sétimo e o vão, o espelhado), o ponto da janela
+  no form, o menu no pedaço e a pintura de um pedaço só com os controles dele.
+- `cargo test -p aylis-controls --test span_monitors`: cada pedaço pintado com o deslocamento
+  (`Ui::paint_piece`) sai igual ao recorte da pintura do form inteiro, inteiro e por parte (o
+  mouse em cima e um deslocamento de cada controle registrado), no Skia e no Direct2D, a 100%
+  e a 150% (as divisas em pixel quebrado no form); o clique dado na janela da direita chega ao
+  botão do form; a lista do `ComboBox` no fim do monitor de cima abre para cima, dentro dele.
+  O Direct2D sai igual até a borda; no Skia, um desenho cortado pela borda da janela passa por
+  outro caminho de rasterização (como na pintura por parte, mas sem a margem), e a beirada
+  anti-aliasing de um arco cortado pela divisa muda até 65 tons: o teste aceita 96 no Skia
+  (resto de verdade muda mais de 200).
+- `AYLIS_SPAN_SPLIT=2 cargo run -p aylis-platform-winit --example span_monitors --features d2d
+  -- --auto` (com `AYLIS_RENDERER=gpu`, o Skia na GPU; `--full`, o telão): duas janelas de
+  verdade, o clique mandado a cada uma chega ao botão dela, e desligar e religar a propriedade
+  volta a uma janela e refaz os pedaços. Conferido em 14/11 num monitor 3840 × 2160 a 150%, no
+  Direct2D e no Skia GPU; com `AYLIS_SNAPSHOT`, as imagens de cada janela saem com o pedaço
+  certo.
+
+Com vários monitores, à mão: [testes em dispositivos](testes-em-dispositivos.md).
 
 ## Como testar
 

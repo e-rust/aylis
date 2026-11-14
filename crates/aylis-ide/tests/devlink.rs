@@ -115,6 +115,40 @@ fn an_app_with_another_secret_is_not_accepted() {
     assert!(!ask(&mut ui, move || s.wait(Duration::from_secs(2))), "sem o segredo do projeto, não conecta");
 }
 
+/// A cobertura de handlers (4b): o primeiro disparo de cada handler com nome chega à IDE
+/// sozinho (sem rastro ligado), uma vez por execução, com o form na frente.
+#[test]
+fn the_handlers_that_ran_arrive_through_the_channel() {
+    let _one = ONE_APP.lock().unwrap_or_else(|e| e.into_inner());
+    let (server, target) = server();
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let form = aylis_json::load(&mut ui, r#"{"root": {"class": "Form", "name": "frmB", "children": [{"class": "Button", "name": "btnSalvar", "on_click": "btnSalvar_click"}]}}"#, None).unwrap();
+    ui.show(form).unwrap();
+    aylis::dev_connect(&ui, target);
+    let s = server.clone();
+    assert!(ask(&mut ui, move || s.wait(Duration::from_secs(10))));
+    let button = ui.find_path("frmB.btnSalvar").unwrap();
+    for _ in 0..3 {
+        ui.fire(button, "on_click", &aylis_core::EventArgs::default());
+    }
+    let s = server.clone();
+    let handlers = ask(&mut ui, move || {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let mut all = Vec::new();
+        while all.is_empty() && Instant::now() < deadline {
+            all.extend(s.take_handlers());
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        // Mais um pouco: os outros dois disparos não repetem.
+        std::thread::sleep(Duration::from_millis(500));
+        all.extend(s.take_handlers());
+        all
+    });
+    assert_eq!(handlers, ["frmB.btnSalvar_click"]);
+    assert!(server.take_traces().is_empty(), "sem rastro ligado, nada no rastro");
+}
+
 #[test]
 fn the_event_trace_arrives_through_the_channel() {
     let _one = ONE_APP.lock().unwrap_or_else(|e| e.into_inner());

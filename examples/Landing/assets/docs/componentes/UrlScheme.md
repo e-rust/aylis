@@ -12,7 +12,7 @@ Um prefixo de URL próprio (meuapp://) que abre o app e entrega o endereço no o
 |---|---|---|---|
 | `scheme` | Prefixo de URL | texto | O prefixo, sem `://` (`meuapp`): letras, números, `+`, `-` e `.`. |
 | `description` | Descrição | texto | O nome que o sistema mostra ao perguntar com que app abrir. |
-| `active` | Ativo | lógico |  |
+| `active` | Ativo | lógico | Registra o `scheme` no sistema e passa a receber os links dele no `on_link`. |
 | `bring_to_front` | Trazer a janela para a frente | lógico | Trazer a janela do form para a frente quando um link chega com o app aberto. |
 
 ## Eventos

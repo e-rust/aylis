@@ -74,7 +74,7 @@ pub struct PropInfo {
     /// Agrupamento no Object Inspector ("Layout", "Appearance", "Events"...).
     pub category: &'static str,
     pub read_only: bool,
-    /// Só em execução (como o `SelStart` do Delphi): lida e gravada pelo código e pelo
+    /// Só em execução: lida e gravada pelo código e pelo
     /// protocolo, mas não vai para o JSON do form, não é copiada ao duplicar e não aparece
     /// no Object Inspector.
     pub runtime: bool,

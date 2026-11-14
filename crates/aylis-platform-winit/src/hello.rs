@@ -14,7 +14,7 @@ pub(crate) struct WindowsHello;
 
 /// A janela ativa desta thread (a da interface) ou, sem ela, a primeira visível dela; em
 /// último caso a que está em primeiro plano.
-fn app_window() -> HWND {
+pub(crate) fn app_window() -> HWND {
     unsafe extern "system" fn first_visible(hwnd: HWND, found: LPARAM) -> BOOL {
         // SAFETY: `found` aponta para o HWND da função abaixo, vivo durante a enumeração.
         unsafe {

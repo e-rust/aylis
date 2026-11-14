@@ -12,7 +12,7 @@ Um pedaço de tela reaproveitável (um form dentro de outro), com os seus própr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `form` | Form | texto |  |
+| `form` | Form | texto | O nome do form do projeto mostrado aqui (`pkg:Nome` para o de um pacote); vazio: nada. |
 | `values` | Valores | texto | Num frame de pacote (`form = "pkg:Nome"`): os valores das propriedades expostas pelo pacote, em JSON (`{"valor": 42}`). |
 
 ## Em código

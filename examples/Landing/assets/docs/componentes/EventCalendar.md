@@ -12,17 +12,17 @@ Calendário de eventos (o `v-calendar`): vista de mês, semana ou dia (`view`). 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `view` | Visão | um de: `month`, `week`, `day` |  |
-| `start_hour` | Hora inicial | inteiro |  |
-| `end_hour` | Hora final | inteiro |  |
+| `view` | Visão | um de: `month`, `week`, `day` | A vista: `month` (o mês), `week` (a semana com as horas) ou `day` (um dia). |
+| `start_hour` | Hora inicial | inteiro | A primeira hora mostrada nas vistas de semana e de dia (0 a 23). |
+| `end_hour` | Hora final | inteiro | A hora em que as vistas de semana e de dia terminam (até 24). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `date` | Data | texto |  |
+| `date` | Data | texto | O dia de referência (ISO, `2026-10-25`): o mês, a semana ou o dia mostrado. Vazio = hoje. |
 | `month` | Mês | texto | Mês mostrado (`2026-10`): o mesmo que `date` no dia 1 (mantido para compatibilidade). |
-| `events` | Eventos | texto |  |
+| `events` | Eventos | texto | Os eventos, separados por `;`: `2026-10-25\|Reunião\|success` (o dia todo) ou `2026-10-25 14:00-15:30\|Reunião\|success` (com horário; a cor é opcional). |
 
 ## Eventos
 

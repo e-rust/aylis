@@ -24,7 +24,7 @@ pub fn load(ui: &mut Ui, json: &str, parent: Option<ComponentId>) -> Result<Comp
 
 /// Como [`load`], a partir de um valor já lido (por exemplo vindo do protocolo).
 ///
-/// Carregar não dispara o `on_change` dos valores (como o `.dfm` na VCL).
+/// Carregar não dispara o `on_change` dos valores.
 pub fn load_value(ui: &mut Ui, document: &Value, parent: Option<ComponentId>) -> Result<ComponentId> {
     ui.without_change_events(|ui| load_document(ui, document, parent))
 }
@@ -146,7 +146,7 @@ impl Loader<'_> {
             }
         }
 
-        // Os limites antes do resto (como o `Loaded` do Delphi): o `value` de um NumberBox ou de
+        // Os limites antes do resto: o `value` de um NumberBox ou de
         // uma TrackBar, gravado antes do `max` na ordem da classe, não é cortado pelo máximo
         // padrão ao abrir (o 10.000.000 virava 1000).
         // O `translate` também vem antes: desligado, os textos não são traduzidos ao carregar.
@@ -224,8 +224,7 @@ impl Loader<'_> {
         self.ui.set_prop(id, key, prop).map_err(|e| fail(strip_property(e)))
     }
 
-    /// Resolve as referências por nome depois que tudo existe (como o
-    /// `GlobalFixupReferences` do Delphi).
+    /// Resolve as referências por nome depois que tudo existe.
     pub(crate) fn fixup(&mut self) -> Result<()> {
         for (id, property, target, path) in std::mem::take(&mut self.deferred) {
             if let Err(e) = self.ui.set_prop(id, &property, target.as_str()) {

@@ -1,4 +1,4 @@
-//! Serviços de plataforma (como as interfaces `IFMX*Service` do FMX).
+//! Serviços de plataforma: os traits que cada sistema implementa.
 //!
 //! O core só conhece estes traits. Cada plataforma (Windows, Linux, web, Android, iOS)
 //! fornece as implementações num crate próprio e as entrega ao [`Ui`](crate::Ui) em
@@ -186,7 +186,7 @@ pub trait TextInputService {
     fn set_ime_rect(&mut self, rect: RectF);
 }
 
-/// Formatos regionais (como o `FormatSettings`).
+/// Formatos regionais.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LocaleInfo {
     pub decimal_separator: char,
@@ -555,14 +555,14 @@ pub trait LinkService {
         let _ = data;
         done(Err(format!("pedir a outro app não existe aqui ({action})")));
     }
-    /// Se registra prefixos em execução (o Windows); nas outras plataformas, quem registra é a
-    /// publicação, e o `UrlScheme` só recebe.
+    /// Se registra prefixos em execução (o Windows e o Linux); nas outras plataformas, quem
+    /// registra é a publicação, e o `UrlScheme` só recebe.
     fn can_register_schemes(&self) -> bool {
         false
     }
     /// Registra o prefixo (`meuapp`, já conferido por [`check_scheme`]) para abrir este app:
     /// `meuapp://...` chamado por qualquer programa abre o app com o endereço (o componente
-    /// `UrlScheme`). Onde só a publicação registra (macOS, iOS, Linux, Android), `Err`.
+    /// `UrlScheme`). Onde só a publicação registra (macOS, iOS, Android), `Err`.
     fn register_scheme(&mut self, scheme: &str, description: &str) -> Result<(), String> {
         let _ = description;
         Err(format!("registrar o prefixo {scheme}:// em execução não existe aqui (vai na publicação)"))

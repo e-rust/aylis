@@ -18,10 +18,10 @@ Código de barras ou QR Code: o dado em `text` (no relatório, um campo entre co
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `format` | Formato | texto |  |
+| `text` | Texto | texto | O dado codificado (no relatório, um campo entre colchetes vira o valor de cada registro). |
+| `format` | Formato | texto | O formato: `code128`, `ean13`, `ean8`, `upca`, `code39`, `itf` ou `qr`. |
 | `error_correction` | Correção de erros | um de: `low`, `medium`, `quartile`, `high` | A correção de erro do QR Code (`low`, `medium`, `quartile`, `high`: L, M, Q e H), que vai para o provedor; os códigos de barras não têm. |
-| `provider` | Provedor | componente |  |
+| `provider` | Provedor | componente | O provedor que gera o código (um formato que o Aylis não tem vem de outro); vazio: o do Aylis. |
 
 ## Em código
 

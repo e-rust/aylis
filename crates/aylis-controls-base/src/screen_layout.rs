@@ -33,6 +33,7 @@ pub struct ScreenItem {
 /// ([`ScreenLayout::set_screens`]); as prévias, com [`ScreenLayout::set_image`].
 pub struct ScreenLayout {
     pub base: ControlBase,
+    /// Travado: o clique não marca nem desmarca as telas (durante a gravação).
     pub locked: bool,
     screens: Vec<ScreenItem>,
     hovered: Cell<Option<usize>>,

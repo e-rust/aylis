@@ -621,7 +621,7 @@ fn a_button_with_modal_result_closes_the_modal_form_after_on_click() {
     let r = result.clone();
     ui.show_modal(dialog, move |_, res| *r.borrow_mut() = Some(res)).unwrap();
 
-    // 1º clique: o on_click recusa (como "ModalResult := mrNone" no Delphi)
+    // 1º clique: o on_click recusa
     let refuse = Rc::new(RefCell::new(true));
     let flag = refuse.clone();
     ui.on_click(ok, move |ui, sender| {
@@ -907,7 +907,7 @@ fn a_button_can_have_its_own_fill_border_and_text_colors() {
 }
 
 #[test]
-fn the_font_comes_from_the_parent_like_delphi_parent_font() {
+fn the_font_comes_from_the_parent() {
     let mut ui = Ui::new();
     let f = form(&mut ui);
     ui.set_prop(f, "font_family", "Georgia").unwrap();

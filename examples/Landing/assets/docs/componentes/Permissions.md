@@ -10,8 +10,8 @@ Consulta e pede as permissões do aparelho (câmera, microfone, localização, n
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `permissions` | Permissões | texto |  |
-| `reasons` | Motivos | texto |  |
+| `permissions` | Permissões | texto | As permissões que o app usa, separadas por `;` (`camera;location`): a publicação as declara e o `request_all` pede todas. |
+| `reasons` | Motivos | texto | Por que o app usa cada uma (o iOS mostra ao pedir): `camera=Para a foto do perfil;...`. |
 
 ## Eventos
 

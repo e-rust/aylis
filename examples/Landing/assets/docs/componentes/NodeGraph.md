@@ -12,7 +12,7 @@ Editor de nós ligados por cabos: fluxos, roteamento de áudio, automações. Ar
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `show_grid` | Mostra a grade | lógico |  |
+| `show_grid` | Mostra a grade | lógico | Pinta a grade de pontos no fundo. |
 
 ### Comportamento
 

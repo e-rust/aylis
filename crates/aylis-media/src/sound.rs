@@ -25,6 +25,7 @@ use crate::output::{MIX_CHANNELS, MIX_RATE, OutputDevice, OutputSpec, Sink, Sink
 /// Para tocar numa delas, ponha o nome no `output` do [`MediaPlayer`](crate::MediaPlayer),
 /// do [`VideoPlayer`](crate::VideoPlayer) ou do [`Sound`].
 pub struct AudioOutput {
+    /// Confere as saídas a cada 2 s e avisa no `on_devices_changed` quando uma entra ou sai.
     pub watch: bool,
     list: RefCell<Option<Vec<OutputDevice>>>,
     busy: Arc<AtomicBool>,
@@ -112,6 +113,7 @@ impl Component for AudioOutput {
 pub struct Sound {
     /// Arquivo do aplicativo (`assets/audio/clique.wav`) ou caminho no disco.
     pub file: String,
+    /// O volume, de 0 (mudo) a 1 (o máximo).
     pub volume: f32,
     /// As saídas (como no [`MediaPlayer`](crate::MediaPlayer)).
     pub output: String,
@@ -313,9 +315,14 @@ struct MixShared {
 /// `sources`: veja [`parse_sources`]. `output` vazio: não toca em lugar nenhum (o mixer
 /// costuma ir para arquivo ou para o código); a padrão é o nome dela ou `default`.
 pub struct AudioMixer {
+    /// As fontes, separadas por `|`, cada uma com `;volume=`, `;pan=` e `;mute` opcionais
+    /// (`micVoz;volume=1.2|device:loopback:Alto-falantes;volume=0.4|mpFundo;pan=0.5`).
     pub sources: String,
+    /// As saídas que tocam a mistura (como no `MediaPlayer`); vazio: não toca em lugar nenhum.
     pub output: String,
+    /// Liga a mistura (abre as fontes e as saídas); desligado, tudo fecha.
     pub active: bool,
+    /// Guarda as amostras da mistura (até 5 s) para o código ler com `take_samples`.
     pub keep_samples: bool,
     shared: Option<Arc<MixShared>>,
     /// As entradas que o mixer abriu ele mesmo (`device:`): vivem enquanto ele estiver ligado.

@@ -12,8 +12,8 @@ Válvula (gaveta): os dois triângulos e o atuador; verde aberta, cinza fechada,
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `state` | Estado | um de: `open`, `closed`, `transit` |  |
-| `alarm` | Alarme | lógico |  |
+| `state` | Estado | um de: `open`, `closed`, `transit` | Aberta (verde), fechada (cinza) ou em trânsito (amarela). |
+| `alarm` | Alarme | lógico | Em alarme: a válvula fica vermelha e o contorno pisca. |
 
 ## Em código
 

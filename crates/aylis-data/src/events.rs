@@ -1,5 +1,5 @@
 //! Ajudas para os handlers por nome dos eventos de texto do [`Field`] (o código gerado
-//! pela IDE recebe `ui, sender, args`): `on_get_text` e `on_set_text` como no Delphi.
+//! pela IDE recebe `ui, sender, args`): `on_get_text` e `on_set_text`.
 //!
 //! ```ignore
 //! pub fn field1_get_text(ui: &mut Ui, sender: ComponentId, args: &EventArgs) {

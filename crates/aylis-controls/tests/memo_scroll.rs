@@ -189,7 +189,7 @@ fn the_code_editor_scrolls_until_the_last_line_is_at_the_top() {
         ui.wheel(form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -100.0), lines: true, ..Default::default() });
         let _ = first_line(&mut ui, form);
     }
-    assert_eq!(first_line(&mut ui, form), "linha 40", "a última linha no alto, como no Delphi");
+    assert_eq!(first_line(&mut ui, form), "linha 40", "a última linha no alto");
 }
 
 #[test]

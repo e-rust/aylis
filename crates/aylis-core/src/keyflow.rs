@@ -1,15 +1,15 @@
-//! O caminho de uma tecla (item 3.6 dos ajustes), como no Delphi:
+//! O caminho de uma tecla (item 3.6 dos ajustes):
 //!
-//! - `on_key_down`: a aplicação (o `ApplicationEvents`, como o `TApplicationEvents`) → o
-//!   form, se ele tem `key_preview` (o `KeyPreview`) → o controle com foco → os pais, até
+//! - `on_key_down`: a aplicação (o `ApplicationEvents`) → o
+//!   form, se ele tem `key_preview` → o controle com foco → os pais, até
 //!   alguém tratar; depois o Tab, os atalhos e as letras com `&`;
 //! - um caractere digitado: `char_map` → `char_case` → filtros (`allowed_chars`...) →
 //!   `on_key_press` (aplicação, form com `key_preview`, controle; vê o caractere já
 //!   trocado, pode trocar de novo ou engolir) → o controle.
 //!
 //! `on_key_down` e `on_key_press` são eventos-pergunta (veja `question.rs`): em Rust o handler
-//! engole a tecla na hora ([`Ui::suppress_key`], o `Key := 0`) ou troca o caractere
-//! ([`Ui::replace_key_char`], o `Key := '.'`); ligados a um handler remoto, a tecla espera a
+//! engole a tecla na hora ([`Ui::suppress_key`]) ou troca o caractere
+//! ([`Ui::replace_key_char`]); ligados a um handler remoto, a tecla espera a
 //! resposta, e as que chegam nesse meio-tempo ficam numa fila do form, em ordem, sem se
 //! perder. Quem não liga o evento não paga nada.
 
@@ -39,7 +39,7 @@ enum Stage {
 }
 
 impl Ui {
-    /// Dentro de um `on_key_down` ou `on_key_press`: engole a tecla (o `Key := 0` do Delphi).
+    /// Dentro de um `on_key_down` ou `on_key_press`: engole a tecla.
     pub fn suppress_key(&mut self) {
         self.reply("key", "");
     }

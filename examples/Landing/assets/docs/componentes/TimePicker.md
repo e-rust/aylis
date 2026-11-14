@@ -18,13 +18,13 @@ Seletor de hora com relógio. `time` é `14:30`; `on_change` a cada mudança.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `time` | Hora | texto |  |
+| `time` | Hora | texto | A hora escolhida, `HH:MM` (`14:30`), de 00:00 a 23:59. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

@@ -1,6 +1,6 @@
 { O fechamento do mês: o trabalho pesado numa TThread própria e o ciclo dele (começar,
   cancelar, terminar). A thread grava o andamento direto na tela (Send tem trava) e volta à
-  thread dos handlers no fim pelo Post, como o TThread.Queue do Delphi. }
+  thread dos handlers no fim pelo Post. }
 unit fechamento;
 
 {$mode objfpc}{$H+}
@@ -42,7 +42,7 @@ type
     procedure Terminou;
   public
     { Começa a thread e abre o frmProgresso como modal: o ShowModal espera ele fechar (pelo
-      fim do trabalho ou pelo X), como no Delphi; enquanto isso, o Cancelar e o Post da thread
+      fim do trabalho ou pelo X); enquanto isso, o Cancelar e o Post da thread
       rodam. }
     procedure Iniciar(Aylis: TAylis);
     { Pede para a thread parar (ela para na próxima nota). }
@@ -100,7 +100,7 @@ procedure TControle.Iniciar(Aylis: TAylis);
 begin
   FAylis := Aylis;
   FConcluido := False;
-  // Como o Application.CreateForm: cria o form do projeto (o mesmo, se já existe) e a
+  // Cria o form do projeto (o mesmo, se já existe) e a
   // instância dele (a variável frmProgresso passa a apontar para ela).
   Aylis.CreateForm(TFrmProgresso);
   frmProgresso.pbProgresso.Value := 0;

@@ -47,6 +47,8 @@
     procedure SetRememberPlacement(Value: Boolean);
     function GetGpu: string;
     procedure SetGpu(Value: string);
+    function GetSpanMonitors: Boolean;
+    procedure SetSpanMonitors(Value: Boolean);
     function GetActivateOnShow: Boolean;
     procedure SetActivateOnShow(Value: Boolean);
     function GetCloseAction: string;
@@ -215,6 +217,7 @@
     property Monitor: Int64 read GetMonitor write SetMonitor;
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
+    property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
     property CloseAction: string read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
@@ -515,6 +518,16 @@ end;
 procedure TForm.SetGpu(Value: string);
 begin
   SetProp('gpu', TJSONString.Create(Value));
+end;
+
+function TForm.GetSpanMonitors: Boolean;
+begin
+  Result := GetProp('span_monitors').AsBoolean;
+end;
+
+procedure TForm.SetSpanMonitors(Value: Boolean);
+begin
+  SetProp('span_monitors', TJSONBoolean.Create(Value));
 end;
 
 function TForm.GetActivateOnShow: Boolean;

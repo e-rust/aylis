@@ -12,24 +12,24 @@ Cano preso a dois componentes (`from`/`to` e o lado de cada um): segue os dois e
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `flow_color` | Cor do fluxo | cor |  |
-| `thickness` | Espessura | número |  |
+| `flow_color` | Cor do fluxo | cor | A cor do produto que corre no cano. |
+| `thickness` | Espessura | número | A grossura do cano, em pontos (mínimo 2). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `from` | De | componente |  |
-| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |  |
-| `to` | Para | componente |  |
-| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |  |
+| `from` | De | componente | O componente onde o cano começa (vazio: um cano reto no próprio retângulo). |
+| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` | O lado do componente de origem onde o cano se prende. |
+| `to` | Para | componente | O componente onde o cano termina (vazio: um cano reto no próprio retângulo). |
+| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` | O lado do componente de destino onde o cano se prende. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `running` | Ligado | lógico |  |
-| `alarm` | Alarme | lógico |  |
+| `running` | Ligado | lógico | Mostra o fluxo andando dentro do cano. |
+| `alarm` | Alarme | lógico | Em alarme: o fluxo fica na cor de perigo. |
 
 ## Em código
 

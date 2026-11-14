@@ -1,4 +1,4 @@
-//! Motor de alinhamento (o `AlignObjects` do FMX).
+//! Motor de alinhamento.
 //!
 //! Para cada controle, de cima para baixo na árvore:
 //! 1. a área livre começa como o retângulo do controle menos o `padding`;
@@ -52,8 +52,8 @@ impl Ui {
         if self.layout_dirty {
             self.layout();
         } else if !self.dirty_forms.is_empty() {
-            // Só os forms que mudaram (como o `AlignControls` da VCL, que refaz o pai do
-            // controle e não a aplicação inteira).
+            // Só os forms que mudaram (refaz o pai do
+            // controle, e não a aplicação inteira).
             let _profile = crate::profile::scope(crate::profile::Lane::Layout, || "layout de form".into());
             if !self.views.is_empty() {
                 self.apply_views();
@@ -374,7 +374,7 @@ impl Ui {
 
     /// A altura que o form pede com o `auto_size` ligado (a soma dos encaixados em cima e
     /// embaixo, o que a grade ou o fluxo montam, o padding), na largura dele; `None` sem o
-    /// `auto_size`. A plataforma ajusta a janela a ela (o `AutoSize` do form do Delphi).
+    /// `auto_size`. A plataforma ajusta a janela a ela.
     pub fn auto_form_height(&self, form: ComponentId) -> Option<f32> {
         let cb = self.cb(form).filter(|cb| cb.auto_size() && self.parent(form).is_none())?;
         let h = self.auto_height_of(form, cb.width())?;
@@ -463,8 +463,8 @@ fn dock(cb: &mut ControlBase, area: &mut RectF) {
             let (x, w) = band(cb, area);
             let h = ratio_height(cb, w);
             cb.bounds = RectF::new(x, area.y + m.top, w, h);
-            // Continua empilhando além da borda (o que passar fica fora da área, como no
-            // FMX; um ScrollBox rola até lá).
+            // Continua empilhando além da borda (o que passar fica fora da área;
+            // um ScrollBox rola até lá).
             let used = h + m.vertical();
             area.y += used;
             area.height = (area.height - used).max(0.0);

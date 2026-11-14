@@ -12,11 +12,11 @@ Modelo 3D (glTF 2.0 / GLB) com esqueleto, morph targets e animação.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `animation` | Animação | texto |  |
-| `playing` | Tocando | lógico |  |
-| `looping` | Repetindo | lógico |  |
-| `speed` | Velocidade | número |  |
-| `crossfade` | Transição suave | duração (ms) |  |
+| `animation` | Animação | texto | O nome do clipe de animação tocando; vazio: o primeiro do arquivo. |
+| `playing` | Tocando | lógico | A animação anda; desligado, o modelo fica na pose atual. |
+| `looping` | Repetindo | lógico | O clipe recomeça ao chegar ao fim; desligado, toca uma vez e fica na última pose. |
+| `speed` | Velocidade | número | Velocidade da animação (1 = normal, 2 = o dobro). |
+| `crossfade` | Transição suave | duração (ms) | Duração da transição ao trocar de clipe, em ms; 0: troca seca. |
 | `auto_rotate` | Gira sozinho | número | Giro contínuo, em graus por segundo. |
 
 ### Aparência
@@ -26,7 +26,7 @@ Modelo 3D (glTF 2.0 / GLB) com esqueleto, morph targets e animação.
 | `file_lights` | Luzes do arquivo | lógico | Usar as luzes do arquivo, quando houver. |
 | `shadows` | Sombras | lógico | Sombra da primeira luz direcional. |
 | `ray_traced` | Traçado de raios | lógico | Traçado de raios (onde a placa traça). |
-| `background` | Fundo | cor |  |
+| `background` | Fundo | cor | A cor do fundo; sem cor, transparente (o que está atrás aparece). |
 | `resolution` | Resolução do 3D | número | Em quantos pixels por ponto o 3D é desenhado (a imagem é ampliada para o controle). 0 = automático: a densidade da tela, mas no celular no máximo `AUTO_RESOLUTION` (as telas de 2,5 a 3,5 px/ponto deixam a GPU do celular abaixo de 60 quadros/s, e num 3D de luz suave a diferença quase não se vê). Mais alto: mais nítido e mais pesado. |
 
 ### Comportamento
@@ -39,15 +39,15 @@ Modelo 3D (glTF 2.0 / GLB) com esqueleto, morph targets e animação.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `source` | Origem | texto |  |
+| `source` | Origem | texto | O arquivo do modelo (`.glb`, glTF 2.0) no projeto. |
 
 ### Posição e tamanho
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `yaw` | Giro horizontal | ângulo (graus) |  |
-| `pitch` | Inclinação | ângulo (graus) |  |
-| `zoom` | Zoom | número |  |
+| `yaw` | Giro horizontal | ângulo (graus) | Giro da câmera em volta do modelo, na horizontal, em graus. |
+| `pitch` | Inclinação | ângulo (graus) | Inclinação da câmera, olhando de cima ou de baixo, em graus. |
+| `zoom` | Zoom | número | Aproximação da câmera (1 = o modelo inteiro na vista; maior aproxima), de 0,2 a 8. |
 | `model_rotation` | Rotação do modelo | ângulo (graus) | Giro do modelo em graus. |
 | `camera` | Câmera | texto | Câmera do arquivo pelo nome (vazio = a órbita). |
 

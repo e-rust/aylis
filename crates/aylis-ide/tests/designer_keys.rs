@@ -1,4 +1,4 @@
-//! O designer pelo teclado, como no Delphi (pedido do autor em 08/11): Shift+seta muda o
+//! O designer pelo teclado (pedido do autor em 08/11): Shift+seta muda o
 //! tamanho dos escolhidos, as setas os movem.
 
 use aylis_core::PointF;

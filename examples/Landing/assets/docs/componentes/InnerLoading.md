@@ -12,8 +12,8 @@ O carregando por cima (`QInnerLoading`): cobre o contêiner onde está (ocupa a 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` |  |
-| `label` | Rótulo | texto |  |
+| `kind` | Tipo | um de: `ring`, `dots`, `bars`, `audio`, `ball`, `oval`, `puff`, `grid`, `ios`, `pie`, `tail`, `hourglass`, `rings`, `orbit` | O desenho do spinner (anel, pontos, barras...). |
+| `label` | Rótulo | texto | O texto embaixo do spinner (`Carregando...`); vazio: só o spinner. |
 | `size` | Tamanho | número | O tamanho do spinner. |
 | `dim` | Escurecer | número | A opacidade do véu (0 = só o spinner). |
 
@@ -21,7 +21,7 @@ O carregando por cima (`QInnerLoading`): cobre o contêiner onde está (ocupa a 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `showing` | Mostrando | lógico |  |
+| `showing` | Mostrando | lógico | Mostra o véu e o spinner e bloqueia os cliques; desligado, some e deixa os cliques passarem. |
 
 ## Em código
 

@@ -885,7 +885,7 @@ fn project_nodes(
             v.data = format!("variant:{}|{variant}", form.name);
             node.children.push(v);
         }
-        // O form com a unit dele (o código) e o JSON (o visual), como no Delphi.
+        // O form com a unit dele (o código) e o JSON (o visual).
         if let Some(unit) = scan.units.get(&form.name) {
             let mut u = TreeNode::new(unit.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default());
             u.data = format!("file:{}", unit.display());
@@ -1018,7 +1018,7 @@ thread_local! {
     static ORDER: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
-/// As abas em cima do designer e do código, juntas como no Delphi: cada form aberto é uma
+/// As abas em cima do designer e do código, juntas: cada form aberto é uma
 /// aba só (o "Design | Código" embaixo alterna entre o form e o código dele), e os outros
 /// arquivos de código abertos vêm depois, cada um na sua. É a `TabStrip` (as abas do
 /// navegador): arrastar troca a ordem, com as vizinhas deslizando; o × e o clique do meio

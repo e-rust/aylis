@@ -12,19 +12,19 @@ Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` =
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `decimals` | Casas decimais | inteiro |  |
+| `decimals` | Casas decimais | inteiro | Casas decimais dos preços. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `speed` | Velocidade | número |  |
+| `speed` | Velocidade | número | A velocidade da rolagem, em pontos por segundo. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto |  |
+| `items` | Itens | texto | As cotações, separadas por `;`: `"PETR4:38.50:1.2"` (ativo:preço:variação %). |
 
 ## Em código
 

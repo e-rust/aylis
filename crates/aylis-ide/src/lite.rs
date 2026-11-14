@@ -44,7 +44,7 @@ pub fn needs(item: &str) -> Option<Capability> {
         "Gerar código" | "Abrir código do form" | "Abrir fonte…" | "Novo fonte…" | "Pendências entre linguagens…" | "Pesquisar no projeto…" | "Depurar no aparelho" => Code,
         "Pacotes de componentes" | "Pacotes…" | "Instalar pacote…" | "Criar pacote deste form…" => Packages,
         "Executar" | "Executar sem depurar" | "Compilar e executar em release" | "Compilar" | "Compilar em release" | "Parar" | "Inspetor do app em execução…"
-        | "Profiler…" | "Rastro de eventos" | "Servidor MCP para agentes de IA (liga/desliga)" | "Verificar ambiente…" | "Configurar linguagens…" | "Pacotes de ferramentas…" => Build,
+        | "Profiler…" | "Cobertura de handlers…" | "Rastro de eventos" | "Servidor MCP para agentes de IA (liga/desliga)" | "Verificar ambiente…" | "Configurar linguagens…" | "Pacotes de ferramentas…" => Build,
         "Depurar na IDE" | "Próxima linha" | "Entrar na função" | "Sair da função" => Debug,
         "Publicar…" => Publish,
         _ => return None,

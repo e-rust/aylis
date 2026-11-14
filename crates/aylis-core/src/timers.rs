@@ -1,4 +1,4 @@
-//! Timers (o `TTimer`) e o toque longo.
+//! Timers e o toque longo.
 //!
 //! Um componente com [`Component::timer_interval`] recebe o evento `on_timer` a cada
 //! intervalo. O `Ui` confere o intervalo quando o componente é criado e quando uma

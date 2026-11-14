@@ -14,7 +14,7 @@
 //! se ele não acha o símbolo), as ocorrências por texto (a palavra inteira), com o aviso. Nos
 //! forms, pelo JSON (não é código).
 //!
-//! Com o servidor de linguagem, a troca é direta, como no Delphi (decidido pelo autor em 08/11,
+//! Com o servidor de linguagem, a troca é direta (decidido pelo autor em 08/11,
 //! no lugar da prévia a cada renomear): a situação diz quantas, e o Ctrl+Z desfaz nos arquivos
 //! abertos e nos forms. Só por texto (sem o servidor pronto), a prévia abre: a janela da
 //! pesquisa com cada ocorrência marcada, e o "Substituir" aplica as marcadas. O código gerado
@@ -277,7 +277,7 @@ fn show(ui: &mut Ui, state: &Shared, pending: Pending, note: Option<&str>) {
         state.borrow_mut().status = format!("Renomeado {} {old} → {new} (o servidor de linguagem não achou usos no código)", what(kind));
         return;
     }
-    // Com o servidor de linguagem (só o que é de fato aquele símbolo), troca direto, como o Delphi
+    // Com o servidor de linguagem (só o que é de fato aquele símbolo), troca direto
     // (pedido do autor em 08/11: confirmar a cada renomear incomodava); o Ctrl+Z desfaz nos
     // abertos. Só por texto (sem o servidor), a mesma palavra num comentário ou noutro escopo
     // também casaria: aí a prévia continua.

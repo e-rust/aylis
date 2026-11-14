@@ -287,13 +287,21 @@ impl Component for Card {
 /// raio); `show_value` escreve o valor no meio, com `suffix` (`%`, `°C`).
 pub struct Knob {
     pub base: ControlBase,
+    /// O valor escolhido, entre `min` e `max`.
     pub value: f32,
+    /// O valor do começo do arco.
     pub min: f32,
+    /// O valor do fim do arco.
     pub max: f32,
+    /// O passo do valor ao arrastar, na roda e nas setas (0: de 1 em 1).
     pub step: f32,
+    /// A grossura do arco, de 0 a 1 do raio.
     pub thickness: f32,
+    /// Escreve o valor no meio do círculo.
     pub show_value: bool,
+    /// O texto depois do valor escrito no meio (`%`, `°C`).
     pub suffix: String,
+    /// Só mostra: o mouse, a roda e as setas não mudam o valor.
     pub read_only: bool,
     dragging: Cell<bool>,
 }
@@ -429,8 +437,11 @@ impl Component for Knob {
 /// não aparece nem atrapalha.
 pub struct InnerLoading {
     pub base: ControlBase,
+    /// Mostra o véu e o spinner e bloqueia os cliques; desligado, some e deixa os cliques passarem.
     pub showing: bool,
+    /// O desenho do spinner (anel, pontos, barras...).
     pub kind: SpinnerKind,
+    /// O texto embaixo do spinner (`Carregando...`); vazio: só o spinner.
     pub label: String,
     /// O tamanho do spinner.
     pub size: f32,
@@ -524,10 +535,15 @@ impl PropEnum for TableSeparator {
 /// as linhas de separação. Para dados de banco, use o `DataGrid`.
 pub struct MarkupTable {
     pub base: ControlBase,
+    /// Os títulos das colunas, separados por `;` (`Nome;Idade;Cidade`).
     pub columns: String,
+    /// As linhas da tabela, uma por linha de texto, com as células separadas por `;`.
     pub rows: String,
+    /// Linhas mais baixas (28 pontos em vez de 44).
     pub dense: bool,
+    /// Alterna o fundo das linhas (zebrado).
     pub striped: bool,
+    /// As linhas de separação: horizontais, verticais, em volta de cada célula ou nenhuma.
     pub separator: TableSeparator,
 }
 
@@ -630,14 +646,23 @@ impl Component for MarkupTable {
 /// depois de um terço, dispara `on_left` ou `on_right` e volta.
 pub struct SlideItem {
     pub base: ControlBase,
+    /// O texto principal da linha.
     pub text: String,
+    /// A segunda linha, menor e apagada; vazio: só o `text`, centrado.
     pub detail: String,
+    /// O ícone à esquerda da linha (vazio: sem ícone).
     pub icon: String,
+    /// O texto da ação que aparece ao puxar para a direita.
     pub left_text: String,
+    /// O ícone da ação da esquerda; com ele e o `left_text` vazios, não puxa para a direita.
     pub left_icon: String,
+    /// O fundo da ação da esquerda; vazio: a cor de sucesso do tema.
     pub left_color: Option<Color>,
+    /// O texto da ação que aparece ao puxar para a esquerda.
     pub right_text: String,
+    /// O ícone da ação da direita; com ele e o `right_text` vazios, não puxa para a esquerda.
     pub right_icon: String,
+    /// O fundo da ação da direita; vazio: a cor de perigo do tema.
     pub right_color: Option<Color>,
     /// Onde o arrasto começou (x) e o quanto andou.
     drag: Cell<Option<f32>>,
@@ -783,7 +808,9 @@ impl Component for SlideItem {
 /// colocados dentro dele (um título, um botão).
 pub struct Parallax {
     pub base: ControlBase,
+    /// A imagem do fundo (um arquivo do app); vazio: um degradê da cor de destaque.
     pub image: String,
+    /// Quanto a imagem se desloca com a rolagem, de 0 (parada com o componente) a 1.
     pub speed: f32,
     loaded: RefCell<Option<(String, Option<Image>)>>,
 }
@@ -852,10 +879,15 @@ impl Component for Parallax {
 /// andamento em `progress` (uma fração de 0 a 1 por arquivo, `0.5;1`).
 pub struct Uploader {
     pub base: ControlBase,
+    /// O título do cabeçalho.
     pub title: String,
+    /// Os caminhos dos arquivos escolhidos, separados por `;` (vazio: nenhum).
     pub files: String,
+    /// O andamento de cada arquivo, de 0 a 1, separados por `;` na ordem dos `files` (`0.5;1`).
     pub progress: String,
+    /// Os tipos aceitos no "+", como no diálogo de abrir (`Imagens|*.png;*.jpg`); vazio: todos.
     pub filter: String,
+    /// Deixa escolher vários arquivos de uma vez.
     pub multiple: bool,
     /// Envia assim que os arquivos são escolhidos.
     pub auto_upload: bool,
@@ -1048,7 +1080,9 @@ fn file_size_bytes(b: u64) -> String {
 /// com o texto novo; Esc desiste. Bom para tabelas e fichas editáveis.
 pub struct PopupEdit {
     pub base: ControlBase,
+    /// O texto mostrado e editado; gravado ao confirmar a edição.
     pub text: String,
+    /// O texto apagado que aparece com o `text` vazio.
     pub placeholder: String,
     editor: Cell<Option<ComponentId>>,
 }
@@ -1181,10 +1215,15 @@ impl PropEnum for OptionKind {
 /// em `selected`, separados por `;`). `inline` põe lado a lado. `on_change` a cada mudança.
 pub struct OptionGroup {
     pub base: ControlBase,
+    /// As opções, separadas por `;` (`Pequeno;Médio;Grande`).
     pub items: String,
+    /// Botões de rádio (uma escolha), caixas de marcar ou interruptores (várias).
     pub kind: OptionKind,
+    /// A opção escolhida no modo rádio (0 = a primeira; -1 = nenhuma).
     pub item_index: i64,
+    /// As opções marcadas nas caixas e interruptores: os textos, separados por `;`.
     pub selected: String,
+    /// As opções lado a lado em vez de uma embaixo da outra.
     pub inline: bool,
     rows: RefCell<Vec<RectF>>,
     focus: Cell<usize>,
@@ -1374,6 +1413,7 @@ impl Component for OptionGroup {
 /// desligando, completa e some.
 pub struct AjaxBar {
     pub base: ControlBase,
+    /// Ligado: a barra aparece e anda devagar; desligado: completa e some.
     pub active: bool,
     /// Quando ligou (e, ao desligar, quando desligou), na escala de tempo da pintura.
     started: Cell<Option<f64>>,
@@ -1452,10 +1492,15 @@ impl Component for AjaxBar {
 /// na cor primária (a mensagem de quem usa o app). Para a conversa toda, o `ChatView`.
 pub struct ChatBubble {
     pub base: ControlBase,
+    /// O nome de quem escreveu, em cima do balão (e as iniciais do avatar).
     pub author: String,
+    /// A mensagem (pode ter várias linhas).
     pub text: String,
+    /// A hora embaixo do balão (`há 2 minutos`, `14:05`); vazio: sem hora.
     pub stamp: String,
+    /// Mensagem de quem usa o app: o balão à direita, na cor primária.
     pub sent: bool,
+    /// A foto ao lado do balão (um arquivo do app); vazio: as iniciais do `author`.
     pub avatar: String,
     loaded: RefCell<Option<(String, Option<Image>)>>,
 }

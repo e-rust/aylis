@@ -28,7 +28,7 @@ begin
   if Controle.Ativo then
     Exit;
   lblStatus.Text := 'Fechando...';
-  { O ShowModal dentro do Iniciar espera o modal fechar (como no Delphi): aqui, o trabalho
+  { O ShowModal dentro do Iniciar espera o modal fechar: aqui, o trabalho
     já acabou ou foi cancelado. }
   Controle.Iniciar(Aylis);
   lblStatus.Text := Controle.Encerrar;

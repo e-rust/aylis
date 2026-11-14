@@ -2,44 +2,45 @@
 //!
 //! Controles padrão do aylis:
 //!
-//! | Controle | Equivalente no Delphi |
+//! | Controle | O que é |
 //! |---|---|
-//! | [`Form`] | `TForm` |
-//! | [`Layout`] | `TLayout` |
-//! | [`Rectangle`] | `TRectangle` |
-//! | [`Panel`] | `TPanel` |
-//! | [`Label`] | `TLabel` |
-//! | [`Button`] | `TButton` |
-//! | [`CheckBox`] | `TCheckBox` |
-//! | [`RadioButton`] | `TRadioButton` |
-//! | [`Switch`] | `TSwitch` |
-//! | [`ProgressBar`] | `TProgressBar` |
-//! | [`Edit`] | `TEdit` |
-//! | [`ComboBox`] | `TComboBox` |
-//! | [`ScrollBox`] | `TVertScrollBox` |
-//! | [`Splitter`] | `TSplitter` |
-//! | [`ImageView`] (classe `Image`) | `TImage` |
-//! | [`MainMenu`], [`PopupMenu`], [`MenuItem`] | `TMainMenu`, `TPopupMenu`, `TMenuItem` |
-//! | [`Memo`] | `TMemo` |
-//! | [`CodeEditor`] | `TSynEdit` (o editor de código) |
-//! | [`NumberBox`] | `TNumberBox` / `TSpinBox` |
-//! | [`TrackBar`] | `TTrackBar` |
-//! | [`DateEdit`], [`TimeEdit`], [`Calendar`] | `TDateEdit`, `TTimeEdit`, `TCalendar` |
-//! | [`ListBox`], [`RadioGroup`] | `TListBox`, `TRadioGroup` |
-//! | [`ListView`], [`TreeView`] | `TListView`, `TTreeView` (virtualizados) |
-//! | [`TabControl`], [`TabItem`] | `TTabControl`, `TTabItem` |
-//! | [`GroupBox`], [`Expander`] | `TGroupBox`, `TExpander` |
-//! | [`StatusBar`], [`ToolBar`] | `TStatusBar`, `TToolBar` |
-//! | [`Timer`] | `TTimer` |
-//! | [`DragImage`] | `TDragObject.GetDragImages` / `TCustomImageList` do arrasto: a imagem junto do cursor |
-//! | [`OpenDialog`], [`SaveDialog`] | `TOpenDialog`, `TSaveDialog` (assíncronos; desktop, navegador, Android e iOS: leia e grave com `aylis_core::files`) |
-//! | [`Clipboard`] | `TClipboard` / `IFMXClipboardService` (texto, HTML, imagem e os formatos do app; no Rust, `aylis_core::clipboard`) |
+//! | [`Form`] | a janela |
+//! | [`Layout`] | contêiner invisível, só para o layout |
+//! | [`Rectangle`] | retângulo |
+//! | [`Panel`] | painel |
+//! | [`Label`] | texto |
+//! | [`Button`] | botão |
+//! | [`CheckBox`] | caixa de marcação |
+//! | [`RadioButton`] | opção exclusiva |
+//! | [`Switch`] | chave liga/desliga |
+//! | [`ProgressBar`] | barra de progresso |
+//! | [`Edit`] | campo de texto de uma linha |
+//! | [`ComboBox`] | lista suspensa |
+//! | [`ScrollBox`] | área com rolagem |
+//! | [`Splitter`] | divisória arrastável |
+//! | [`ImageView`] (classe `Image`) | imagem |
+//! | [`MainMenu`], [`PopupMenu`], [`MenuItem`] | barra de menu, menu de contexto e item de menu |
+//! | [`Memo`] | texto de várias linhas |
+//! | [`CodeEditor`] | o editor de código |
+//! | [`NumberBox`] | campo numérico com setas |
+//! | [`TrackBar`] | controle deslizante |
+//! | [`DateEdit`], [`TimeEdit`], [`Calendar`] | campo de data, campo de hora e calendário |
+//! | [`ListBox`], [`RadioGroup`] | lista de opções e grupo de opções exclusivas |
+//! | [`ListView`], [`TreeView`] | lista de itens e árvore (virtualizadas) |
+//! | [`TabControl`], [`TabItem`] | abas e a página de cada uma |
+//! | [`GroupBox`], [`Expander`] | moldura com título e seção que abre e fecha |
+//! | [`StatusBar`], [`ToolBar`] | barra de status e barra de ferramentas |
+//! | [`Timer`] | dispara um evento a cada intervalo |
+//! | [`DragImage`] | a imagem junto do cursor no arrasto |
+//! | [`OpenDialog`], [`SaveDialog`] | os diálogos de abrir e salvar arquivo (assíncronos; desktop, navegador, Android e iOS: leia e grave com `aylis_core::files`) |
+//! | [`Clipboard`] | a área de transferência (texto, HTML, imagem e os formatos do app; no Rust, `aylis_core::clipboard`) |
 //! | [`Permissions`], [`Biometrics`] | consultar e pedir permissões; digital, rosto, Windows Hello |
 //! | [`AppLink`] | abrir endereços e outros apps, compartilhar, receber links e o que foi compartilhado |
 //! | [`UrlScheme`] | um prefixo de URL próprio (`meuapp://`) que abre o app e entrega o endereço no `on_link` |
+//! | [`SystemBars`] | a cor da barra de status e da de navegação do celular, a cor dos ícones e esconder as barras |
 //! | [`AnimatedText`] | texto com efeitos de entrada, saída e contínuos (apresentações) |
-//! | [`MessageDialog`], [`message_dlg`], [`show_message`], [`toast`] | `TTaskDialog`, `MessageDlg`, `ShowMessage`, toast do Android |
-//! | [`Chart`] | `TChart` (linhas, barras, área, pizza) |
+//! | [`MessageDialog`], [`message_dlg`], [`show_message`], [`toast`] | caixas de mensagem e o aviso rápido (o toast do Android) |
+//! | [`Chart`] | gráfico (linhas, barras, área, pizza) |
 //!
 //! Toda a aparência vem do tema (estilo com o nome da classe); propriedades da instância
 //! como `fill` ou `color`, quando definidas, ganham do tema.
@@ -63,7 +64,7 @@ pub use aylis_controls_charts::{
 pub use aylis_controls_device::{
     AppLink, BackgroundService, Battery, Biometrics, Bluetooth, Nfc, parse_hex, Compass, Gamepad, LightSensor, Location, LockScreen, MotionSensor, Network, Permissions, Phone, ProximitySensor,
     PushNotifications, PushTrigger, WakeAppAction, NotifyAction, Ringtone,
-    Screen, UrlScheme, Vibration,
+    Screen, SystemBars, UrlScheme, Vibration,
 };
 pub use aylis_controls_editors::{AngleDial, AnimatedText, Bitmap, EasingEditor, PaintCanvas, PaintTool, ShadowEditor, TimingEditor};
 pub use aylis_controls_industrial::{
@@ -77,7 +78,7 @@ use aylis_core::{ColorAnimation, FloatAnimation, Ui};
 /// por nome.
 pub fn register(ui: &mut Ui) {
     // Um erro num handler ou num componente aparece na caixa de mensagem do aylis, e o app
-    // segue (como o `Application.HandleException` do Delphi). Em desenvolvimento, com onde.
+    // segue. Em desenvolvimento, com onde.
     ui.set_exception_display(|ui, e| {
         let text = if cfg!(debug_assertions) { e.to_string() } else { e.message.clone() };
         message_dlg(ui, &text, DlgKind::Error, &[aylis_core::ModalResult::Ok], |_, _| {});
@@ -165,6 +166,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<Biometrics>("System");
     ui.register_class::<AppLink>("System");
     ui.register_class::<UrlScheme>("System");
+    ui.register_class::<SystemBars>("Device");
     ui.register_class::<Location>("Device");
     ui.register_class::<Battery>("Device");
     ui.register_class::<Network>("Device");

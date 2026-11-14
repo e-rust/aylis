@@ -28,7 +28,10 @@ use aylis_core::{Component, EventArgs, EventCtx, MethodInfo, PropValue, Ui, prop
 /// `available` é falso.
 #[derive(Default)]
 pub struct Bluetooth {
+    /// A procura só acha os aparelhos com estes serviços (uuids separados por `;`, aceita a
+    /// forma curta como `180D`); vazio: todos.
     pub service_filter: String,
+    /// A procura só acha os aparelhos com este trecho no nome; vazio: todos.
     pub name_filter: String,
     available: bool,
     scanning: bool,

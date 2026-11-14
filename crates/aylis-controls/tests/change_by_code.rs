@@ -1,4 +1,4 @@
-//! Mudar o valor de um controle pelo código dispara o `on_change`, como na VCL (decidido pelo
+//! Mudar o valor de um controle pelo código dispara o `on_change` (decidido pelo
 //! autor na conferência de 08/11): o `set_prop`, o acesso tipado e o protocolo. Com o mesmo
 //! argumento que o controle manda quando o usuário muda; só se o valor mudou; e não no
 //! designer nem ao carregar.
@@ -100,7 +100,7 @@ fn the_designer_does_not_fire() {
 #[test]
 fn a_handler_that_changes_its_own_value_stops() {
     let (mut ui, form) = setup();
-    // Como na VCL, o handler que muda o próprio valor dispara de novo: o que converge para.
+    // O handler que muda o próprio valor dispara de novo: o que converge para.
     let edit = ui.add(Edit::new(""), form);
     let count = Rc::new(RefCell::new(0));
     let c = count.clone();

@@ -9,6 +9,6 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
 # O PaintCanvas abre e grava PNG, JPEG e BMP.
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }

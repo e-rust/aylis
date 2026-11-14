@@ -12,13 +12,13 @@ As telas na posição real (como o "Configurações de vídeo" do sistema), esca
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `locked` | Travado | lógico |  |
+| `locked` | Travado | lógico | Travado: o clique não marca nem desmarca as telas (durante a gravação). |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

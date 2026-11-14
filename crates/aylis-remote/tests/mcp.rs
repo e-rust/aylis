@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::rc::Rc;
 
-use aylis_core::{Answer, PropValue, Ui};
+use aylis_core::{Answer, EventArgs, PropValue, Ui};
 use aylis_remote::mcp::{McpServer, McpTool};
 use serde_json::{Value, json};
 
@@ -170,6 +170,48 @@ fn the_screen_tools_use_the_components() {
     assert!(error);
 }
 
+/// O `ui_click` com as opções do mouse de verdade (Ctrl, botão) e o `ui_drag` entre dois
+/// controles, como o `app_command` da IDE (decidido em 14/11); o arrastar também passa pelo
+/// alcance do servidor.
+#[test]
+fn the_agent_clicks_with_modifiers_and_drags() {
+    let mut ui = app(json!({ "forms": "frmLoja" }));
+    let btn = ui.find("btnSalvar").unwrap();
+    let pressed: Rc<std::cell::RefCell<Vec<(bool, bool)>>> = Rc::default();
+    let p = pressed.clone();
+    ui.on(btn, "on_pointer_down", move |_, _, args| {
+        if let EventArgs::Pointer(e) = args {
+            p.borrow_mut().push((e.modifiers.ctrl, e.button == aylis_core::PointerButton::Secondary));
+        }
+    });
+    // A soltura vai a quem capturou o toque (o botão), no lugar do outro controle.
+    let released: Rc<std::cell::RefCell<Vec<f32>>> = Rc::default();
+    let r = released.clone();
+    ui.on(btn, "on_pointer_up", move |_, _, args| {
+        if let EventArgs::Pointer(e) = args {
+            r.borrow_mut().push(e.position.y);
+        }
+    });
+    let port = start(&mut ui);
+
+    let list = names(&rpc(&mut ui, port, "tools/list", json!({})));
+    assert!(list.contains(&"ui_drag".to_string()), "{list:?}");
+    assert!(!call(&mut ui, port, "ui_click", json!({ "target": "btnSalvar", "modifiers": "Ctrl" })).0);
+    assert!(!call(&mut ui, port, "ui_click", json!({ "target": "btnSalvar", "button": "right" })).0);
+    assert_eq!(*pressed.borrow(), vec![(true, false), (false, true)]);
+
+    // Do botão ao campo: solta sobre o campo.
+    let (error, text) = call(&mut ui, port, "ui_drag", json!({ "from": "btnSalvar", "to": "edtNome", "steps": 4 }));
+    assert!(!error, "{text}");
+    let edt = ui.find("edtNome").unwrap();
+    let below = ui.absolute_rect(edt).unwrap().y - ui.absolute_rect(btn).unwrap().y;
+    let last = *released.borrow().last().unwrap();
+    assert!((last - (below + ui.absolute_rect(edt).unwrap().height / 2.0)).abs() < 1.0, "soltou no meio do campo: {last} (o campo a {below})");
+    // Fora dos forms do servidor, recusa.
+    let (error, text) = call(&mut ui, port, "ui_drag", json!({ "from": "btnSalvar", "to": "frmSecreto.lblSenha" }));
+    assert!(error && text.contains("frmSecreto"), "{text}");
+}
+
 #[test]
 fn read_only_and_forms_limit_the_agent() {
     let mut ui = app(json!({ "read_only": true, "forms": "frmLoja" }));
@@ -177,6 +219,7 @@ fn read_only_and_forms_limit_the_agent() {
     let list = names(&rpc(&mut ui, port, "tools/list", json!({})));
     assert!(list.contains(&"ui_get".to_string()) && list.contains(&"ui_data".to_string()));
     assert!(!list.contains(&"ui_set".to_string()) && !list.contains(&"ui_click".to_string()), "{list:?}");
+    assert!(!list.contains(&"ui_drag".to_string()), "{list:?}");
 
     let (error, text) = call(&mut ui, port, "ui_set", json!({ "target": "edtNome", "prop": "text", "value": "x" }));
     assert!(error, "{text}");

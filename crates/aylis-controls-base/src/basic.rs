@@ -26,7 +26,7 @@ impl PropEnum for IconPosition {
 
 use crate::leaf_control;
 
-/// Onde a janela do form abre (como o `Position` do `TForm`).
+/// Onde a janela do form abre.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum FormPosition {
     /// No centro do form dono (o que estava ativo) ou, sem dono, da tela.
@@ -56,8 +56,8 @@ impl PropEnum for FormPosition {
     }
 }
 
-/// Como a janela do form fica (como o `WindowState` do `TForm`, mais a tela cheia do
-/// `FullScreen` do FMX). Vale ao abrir e, com o app rodando, quando muda.
+/// Como a janela do form fica, inclusive em tela
+/// cheia. Vale ao abrir e, com o app rodando, quando muda.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum WindowState {
     #[default]
@@ -78,7 +78,7 @@ impl PropEnum for WindowState {
     }
 }
 
-/// Borda da janela (como o `BorderStyle` do `TForm`).
+/// Borda da janela.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum BorderStyle {
     /// Redimensionável, com maximizar.
@@ -128,15 +128,20 @@ impl PropEnum for BorderStyle {
     }
 }
 
-/// Janela (como o `TForm`). Pinta o fundo com o estilo `Form` do tema.
+/// Janela. Pinta o fundo com o estilo `Form` do tema.
 ///
 /// Abrir e fechar: [`Ui::show`](aylis_core::Ui::show), [`Ui::show_modal`](aylis_core::Ui::show_modal)
 /// e [`Ui::close`](aylis_core::Ui::close). Um form também pode ser embutido em outro
-/// (`ui.set_parent(form, Some(painel))`, como `Form2.Parent := Panel1`).
+/// (`ui.set_parent(form, Some(painel))`).
 pub struct Form {
     pub base: ControlBase,
+    /// O título da janela (na barra de título e na barra de tarefas).
     pub caption: String,
+    /// Onde a janela abre: no centro do dono ou da tela, em `left`/`top`, onde o sistema
+    /// escolher ou num canto do monitor.
     pub position: FormPosition,
+    /// A borda da janela: redimensionável, de tamanho fixo, sem borda nem título (`none`) ou
+    /// sem a barra do sistema, para uma `TitleBar` própria (`custom`).
     pub border_style: BorderStyle,
     /// Os cantos da janela (Windows 11 e macOS; nas outras, sem efeito): útil com a barra de
     /// título própria (`border_style = custom`), que fica com os cantos de uma janela comum.
@@ -154,18 +159,18 @@ pub struct Form {
     /// `project`: o padrão do projeto (`image_cache.auto_layers`); `on`/`off` trocam só neste
     /// form. O `cache_layer` pedido num controle vale sempre.
     pub layer_cache: LayerCaching,
-    /// Sempre por cima das outras janelas (o `FormStyle := fsStayOnTop`).
+    /// Sempre por cima das outras janelas.
     pub topmost: bool,
     /// Aparece na barra de tarefas (desligue para menus e janelas de ferramenta).
     pub show_in_taskbar: bool,
-    /// O controle que recebe o foco quando o form abre (como o `ActiveControl`).
+    /// O controle que recebe o foco quando o form abre.
     pub active_control: Option<ComponentId>,
     /// A ordem do Tab no form inteiro: nomes separados por `;` (`edtNome;edtEmail;btnSalvar`).
     /// Pula entre níveis (de um campo num painel para outro num grupo); os controles fora
     /// da lista vêm depois, na ordem natural. Vazio: a ordem natural (a da árvore).
     pub tab_order: String,
     /// As teclas que fazem o papel do Tab (`"Enter"`, `"Enter;Down"`), como o Enter que pula
-    /// de campo nos sistemas em Delphi. O controle que usa a tecla (o Enter num Memo) fica
+    /// de campo nos sistemas de cadastro. O controle que usa a tecla (o Enter num Memo) fica
     /// com ela.
     pub tab_keys: String,
     /// As que fazem o papel do Shift+Tab (`"Shift+Enter;Up"`).
@@ -173,14 +178,18 @@ pub struct Form {
     /// Os caracteres liberados, bloqueados e só os liberados, para todos os campos do form
     /// (o campo decide primeiro; `chars_override` faz o form mandar). Faixas: `0-9`, `a-z`.
     pub allowed_chars: String,
+    /// Os caracteres que os campos do form não aceitam (digitados ou colados); faixas como
+    /// `a-z`. Vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` entram nos campos do form.
     pub only_allowed: bool,
+    /// O filtro de caracteres do form manda nos campos de dentro (sem ele, o do campo decide
+    /// primeiro).
     pub chars_override: bool,
     /// Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a
     /// mesma herança dos filtros.
     pub char_map: String,
-    /// O form recebe as teclas antes do controle com foco (`on_key_down` e `on_key_press`), como
-    /// o `KeyPreview` do Delphi.
+    /// O form recebe as teclas antes do controle com foco (`on_key_down` e `on_key_press`).
     pub key_preview: bool,
     /// O zoom deste form (1 = normal), vezes o do app ([`Ui::set_zoom`]): tudo nele fica
     /// maior ou menor e o layout se refaz no espaço da janela.
@@ -194,10 +203,15 @@ pub struct Form {
     /// A placa de vídeo da janela (vazio: a do projeto): `monitor` troca para a placa do
     /// monitor em que ela está (Windows e Linux com Wayland); `alto-desempenho`, `economia` ou parte do nome fixam uma.
     pub gpu: String,
+    /// O form maior que um monitor vira uma janela por monitor, cada uma na placa de vídeo do
+    /// seu (Windows; nas outras, sem efeito). Sem isso, com monitores em placas diferentes, o
+    /// sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`,
+    /// o form cobre todos os monitores (um telão).
+    pub span_monitors: bool,
     /// Mostrar a janela dá o foco a ela (desligado: aparece sem tirar o foco de quem tem, como
     /// uma projeção que não deve roubar o teclado do console).
     pub activate_on_show: bool,
-    /// O que fechar faz com o form (o `Action` do `OnClose` do Delphi): esconde (pode abrir
+    /// O que fechar faz com o form: esconde (pode abrir
     /// de novo) ou libera (some da memória, depois de fechar).
     pub close_action: CloseAction,
     /// Quadros por segundo da janela (0 = a taxa do monitor dela). Um telão de 60 Hz ao lado
@@ -232,7 +246,7 @@ impl Default for Form {
 }
 
 impl Form {
-    /// A largura da área cliente (o `ClientWidth` do Delphi): no Aylis, o `width` do form já é
+    /// A largura da área cliente: no Aylis, o `width` do form já é
     /// a área de dentro, sem a moldura e a barra de título do sistema.
     pub fn client_width(&self) -> f32 {
         self.base.width()
@@ -243,7 +257,7 @@ impl Form {
         self.base.set_size(width.max(0.0), height);
     }
 
-    /// A altura da área cliente (o `ClientHeight`), sem a barra de título.
+    /// A altura da área cliente, sem a barra de título.
     pub fn client_height(&self) -> f32 {
         self.base.height()
     }
@@ -281,6 +295,7 @@ impl Form {
             monitor: -1,
             remember_placement: false,
             gpu: String::new(),
+            span_monitors: false,
             activate_on_show: true,
             close_action: CloseAction::Hide,
             frame_rate: 0.0,
@@ -325,10 +340,11 @@ impl Component for Form {
         monitor: i64 => "Layout",
         remember_placement: bool => "Behavior",
         gpu: String => "Behavior",
+        span_monitors: bool => "Layout",
         activate_on_show: bool => "Behavior",
         close_action: CloseAction => "Behavior",
         frame_rate: f32 => "Behavior";
-        events: on_show, on_window_created, on_close, on_close_query, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change;
+        events: on_show, on_window_created, on_close, on_close_query, on_back, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change;
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -365,6 +381,9 @@ impl Component for Form {
         // Com o app rodando, a janela segue (no designer não há janela).
         if name == "gpu" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
+        }
+        if name == "span_monitors" && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateSpan);
         }
         // `topmost` com a janela aberta: antes só valia na criação (RTSPlayer, 13/11, item 4).
         if name == "topmost" && !ctx.ui.design_mode() {
@@ -410,13 +429,17 @@ pub fn window_state_commands(state: WindowState) -> Vec<aylis_core::WindowComman
 
 // ---------------------------------------------------------------------------
 
-/// Contêiner invisível, só para organizar o layout (como o `TLayout`).
+/// Contêiner invisível, só para organizar o layout.
 pub struct Layout {
     pub base: ControlBase,
     /// Os caracteres dos campos dentro do layout (veja o `Form`).
     pub allowed_chars: String,
+    /// Os caracteres que os campos de dentro não aceitam (digitados ou colados); vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` entram nos campos de dentro.
     pub only_allowed: bool,
+    /// O filtro de caracteres do layout manda nos campos de dentro (sem ele, o do campo decide
+    /// primeiro).
     pub chars_override: bool,
     /// Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a
     /// mesma herança dos filtros.
@@ -457,7 +480,7 @@ impl Component for Layout {
 
 // ---------------------------------------------------------------------------
 
-/// Um form do projeto dentro de outro (como o `TFrame` do Delphi): `form` é o nome dele.
+/// Um form do projeto dentro de outro: `form` é o nome dele.
 /// Cada parte da tela fica no seu arquivo, desenhada e editada à parte, e o form que usa
 /// só reserva o lugar. Ao carregar o projeto, a fábrica de forms cria o form do frame e o
 /// põe aqui, ocupando a área toda (o fundo dele fica transparente, se ele não tiver um);
@@ -466,6 +489,7 @@ impl Component for Layout {
 /// desse form.
 pub struct Frame {
     pub base: ControlBase,
+    /// O nome do form do projeto mostrado aqui (`pkg:Nome` para o de um pacote); vazio: nada.
     pub form: String,
     /// Num frame de pacote (`form = "pkg:Nome"`): os valores das propriedades expostas pelo
     /// pacote, em JSON (`{"valor": 42}`).
@@ -512,7 +536,7 @@ impl Component for Frame {
 
 // ---------------------------------------------------------------------------
 
-/// Retângulo (como o `TRectangle`). Cada propriedade vazia (`Null`) usa o valor do tema.
+/// Retângulo. Cada propriedade vazia (`Null`) usa o valor do tema.
 #[derive(Default)]
 pub struct Rectangle {
     pub base: ControlBase,
@@ -527,7 +551,9 @@ pub struct Rectangle {
     pub gradient_angle: f32,
     /// Gradiente radial: `fill` no centro até `fill2` na borda (o menor raio do retângulo).
     pub gradient_radial: bool,
+    /// Cor da borda; vazio: a do tema.
     pub stroke: Option<Color>,
+    /// Espessura da borda, em pontos (0 = sem borda); vazio: a do tema.
     pub stroke_width: Option<f32>,
     /// Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema.
     pub radius: Option<Bounds>,
@@ -677,8 +703,12 @@ pub struct Panel {
     pub base: Rectangle,
     /// Os caracteres dos campos dentro do painel (veja o `Form`).
     pub allowed_chars: String,
+    /// Os caracteres que os campos de dentro não aceitam (digitados ou colados); vazio: nenhum.
     pub blocked_chars: String,
+    /// Só os caracteres de `allowed_chars` entram nos campos de dentro.
     pub only_allowed: bool,
+    /// O filtro de caracteres do painel manda nos campos de dentro (sem ele, o do campo decide
+    /// primeiro).
     pub chars_override: bool,
     /// Trocas do que o teclado produz nos campos de dentro (`",."`: vírgula por ponto), com a
     /// mesma herança dos filtros.
@@ -727,11 +757,14 @@ impl Component for Panel {
 
 // ---------------------------------------------------------------------------
 
-/// Texto (como o `TLabel`).
+/// Texto.
 pub struct Label {
     pub base: ControlBase,
+    /// O texto mostrado.
     pub text: String,
+    /// Alinhamento horizontal do texto: começo, centro ou fim.
     pub h_align: TextAlign,
+    /// Alinhamento vertical do texto: em cima, no meio ou embaixo.
     pub v_align: TextAlign,
     /// Quebra automática de linha.
     pub wrap: bool,
@@ -745,7 +778,7 @@ pub struct Label {
     /// Trecho a destacar (o `v-highlight`): cada ocorrência, sem diferenciar maiúsculas e
     /// acentos, ganha o fundo marcado (cor `highlight` do tema, ou `warning` clara).
     pub highlight: String,
-    /// O campo que recebe o foco no Alt+letra do `&` do texto (o `FocusControl` do Delphi).
+    /// O campo que recebe o foco no Alt+letra do `&` do texto.
     pub focus_control: Option<ComponentId>,
     /// O texto traz marcas simples no meio, que viram estilo em vez de aparecer (os textos com
     /// HTML simples de um app web): `<b>` negrito, `<sb>` seminegrito, `<i>` itálico, `<u>`
@@ -1339,47 +1372,52 @@ fn paint_highlighted(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, text: &str, qu
 
 // ---------------------------------------------------------------------------
 
-/// Botão (como o `TButton`).
+/// Botão.
 ///
 /// Toda a aparência vem do estilo `Button` do tema, incluindo os estados hover, pressed,
 /// focused e disabled e a transição entre eles. A variante (`style`) escolhe outro
 /// visual: `"danger"`, `"flat"`...
 ///
-/// Clica com o mouse (soltando sobre o botão), com Enter ou com Espaço quando tem foco. Como
-/// no `TButton` da VCL, o Enter clica ao apertar e, seguro, repete o clique (`repeat_enter`);
+/// Clica com o mouse (soltando sobre o botão), com Enter ou com Espaço quando tem foco. O
+/// Enter clica ao apertar e, seguro, repete o clique (`repeat_enter`);
 /// o Espaço afunda o botão e clica ao soltar.
 ///
 /// `icon` põe um ícone (pelo nome: os do aylis, como `"play"`, ou os registrados com
 /// `Ui::register_icon`) ao lado do texto, ou sozinho se o texto for vazio. Com
-/// `checkable`, cada clique alterna `checked` (como o `StaysPressed` do FMX): o tema pinta
+/// `checkable`, cada clique alterna `checked`: o tema pinta
 /// o estado `checked` e `checked_icon` troca o ícone (mudo/som, fixar/soltar).
 pub struct Button {
     pub base: ControlBase,
+    /// O texto do botão; `&` antes de uma letra faz dela o atalho com Alt. Vazio: só o ícone.
     pub text: String,
-    /// Num form modal, clicar fecha o form com este resultado (como o `ModalResult` do
-    /// `TButton`): `ok` num "Confirmar", `cancel` num "Cancelar".
+    /// Num form modal, clicar fecha o form com este resultado:
+    /// `ok` num "Confirmar", `cancel` num "Cancelar".
     pub modal_result: ModalResult,
+    /// Ícone pelo nome (`"play"` ou um registrado com `Ui::register_icon`); vazio: sem ícone.
     pub icon: String,
     /// Ícone quando marcado (vazio = o mesmo `icon`).
     pub checked_icon: String,
+    /// Onde fica o ícone em relação ao texto: à esquerda, à direita ou em cima.
     pub icon_position: IconPosition,
     /// Tamanho do ícone; 0 = pelo tamanho da fonte (ou do botão, sem texto).
     pub icon_size: f32,
+    /// Cada clique alterna o `checked` (um botão de ligar e desligar).
     pub checkable: bool,
+    /// Marcado (afundado), com `checkable`; o tema pinta o estado `checked`.
     pub checked: bool,
-    /// O Enter seguro repete o clique (a repetição do teclado), como na VCL. Desligado, só o
+    /// O Enter seguro repete o clique (a repetição do teclado). Desligado, só o
     /// primeiro Enter clica.
     pub repeat_enter: bool,
-    /// O botão padrão do form (o `Default` do `TButton`): o Enter que nenhum controle usou o
+    /// O botão padrão do form: o Enter que nenhum controle usou o
     /// clica.
     pub default_button: bool,
-    /// O botão de cancelar do form (o `Cancel` do `TButton`): o Esc que nenhum controle usou o
+    /// O botão de cancelar do form: o Esc que nenhum controle usou o
     /// clica.
     pub cancel_button: bool,
     /// Onde ficam o texto e o ícone: no centro (o padrão), à esquerda ou à direita (o item de um
     /// menu lateral, a linha de uma lista de botões).
     pub h_align: TextAlign,
-    /// Grupo exclusivo (o `GroupIndex` do `TSpeedButton`): entre os botões `checkable` do mesmo
+    /// Grupo exclusivo: entre os botões `checkable` do mesmo
     /// pai com o mesmo número (> 0), marcar um desmarca os outros, e clicar no marcado não
     /// desmarca (a aba de uma barra, o modo de uma ferramenta). 0 = sem grupo.
     pub group_index: u32,
@@ -1501,7 +1539,7 @@ impl Component for Button {
         }
         ctx.fire("on_click", EventArgs::None);
         if self.modal_result != ModalResult::None {
-            // O form fecha depois do on_click (que ainda pode cancelar), como no Delphi.
+            // O form fecha depois do on_click (que ainda pode cancelar).
             let form = ctx.ui.form_of(ctx.id);
             ctx.ui.set_modal_result(form, self.modal_result);
         }
@@ -1643,13 +1681,17 @@ impl Component for Button {
 
 // ---------------------------------------------------------------------------
 
-/// Barra de progresso (como o `TProgressBar`). O trilho usa o `fill` do tema e a barra,
+/// Barra de progresso. O trilho usa o `fill` do tema e a barra,
 /// o token `primary` (ou `color`, se definido).
 pub struct ProgressBar {
     pub base: ControlBase,
+    /// O valor atual, entre `min` e `max`: quanto da barra fica preenchido.
     pub value: f32,
+    /// O valor da barra vazia.
     pub min: f32,
+    /// O valor da barra cheia.
     pub max: f32,
+    /// Cor da barra; vazio: o token `primary` do tema.
     pub color: Option<Color>,
 }
 

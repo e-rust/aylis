@@ -10,14 +10,14 @@ A localização (GPS, rede): latitude, longitude, precisão (m), altitude e velo
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `active` | Ativo | lógico |  |
-| `interval` | Intervalo | número |  |
+| `active` | Ativo | lógico | Mede a localização (a primeira vez pede a permissão); desligado, para. |
+| `interval` | Intervalo | número | De quanto em quanto tempo mede, em segundos. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 
 ## Em código
 

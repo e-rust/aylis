@@ -9,9 +9,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.2.1", path = "../aylis-core" }
-aylis-controls = { version = "0.2.1", path = "../aylis-controls" }
-aylis-data = { version = "0.2.1", path = "../aylis-data" }
+aylis-core = { version = "0.3.0", path = "../aylis-core" }
+aylis-controls = { version = "0.3.0", path = "../aylis-controls" }
+aylis-data = { version = "0.3.0", path = "../aylis-data" }
 # As imagens dos relatórios (PNG, JPEG) viram pixels para o PDF e a impressora.
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 

@@ -53,8 +53,14 @@ impl Wake for Wakeup {
 pub fn pump(state: Shared, ids: Rc<Ids>, waker: aylis_platform_winit::Waker) -> aylis_platform_winit::Pump {
     let aylis_waker = waker.clone();
     let waker = std::task::Waker::from(Arc::new(Wakeup(waker)));
-    state.borrow_mut().waker = Some(waker.clone());
     state.borrow_mut().output_waker = Some(aylis_waker);
+    pump_with(state, ids, waker)
+}
+
+/// A mesma bomba sem a janela (`aylis-ide --headless`, [`crate::headless`]): quem chama a roda
+/// em laço, e `waker` acorda esse laço quando uma tarefa anda.
+pub fn pump_with(state: Shared, ids: Rc<Ids>, waker: std::task::Waker) -> aylis_platform_winit::Pump {
+    state.borrow_mut().waker = Some(waker.clone());
     // O refresh refaz os painéis da IDE: com um trabalho mandando linhas (compilar, o app
     // rodando), uma vez por linha deixava a IDE presa nele (a rolagem engasgava). No
     // máximo a cada REFRESH_EVERY; o que chega no meio espera a próxima.
@@ -790,39 +796,39 @@ pub fn new_data_module(ui: &mut Ui, state: &Shared, ids: &Ids) {
         .find(|n| !existing.iter().any(|e| e.eq_ignore_ascii_case(n)))
         .unwrap_or_default();
     let (state2, ids) = (state.clone(), *ids);
-    dialogs::input_text(
+    // O nome e a pasta dentro de forms/, como no "Novo form" (decidido em 14/11: o DataModule
+    // nascia sempre na raiz; o `new_form` do MCP já aceitava a pasta).
+    let d = dialogs::new_dialog(ui, "Novo DataModule", 460.0, 190.0);
+    let line = dialogs::field(ui, d.body, "Nome do DataModule");
+    let name_edit = dialogs::edit(ui, line, &suggestion);
+    let line = dialogs::field(ui, d.body, "Pasta em forms");
+    let folder_edit = dialogs::edit(ui, line, "");
+    let _ = ui.set_prop(folder_edit, "placeholder", "vazio: a raiz de forms (ex.: dados)");
+    dialogs::run(
         ui,
-        "Novo DataModule",
-        "Nome do DataModule",
-        &suggestion,
-        move |name| {
-            if !aylis_project::is_identifier(name) {
+        d,
+        move |ui| {
+            let name = dialogs::text_of(ui, name_edit);
+            if !aylis_project::is_identifier(&name) {
                 return Err("use letras, números e _ (começando com letra)".into());
             }
-            if existing.iter().any(|e| e.eq_ignore_ascii_case(name)) {
+            if existing.iter().any(|e| e.eq_ignore_ascii_case(&name)) {
                 return Err(format!("o projeto já tem um form ou DataModule '{name}'"));
             }
-            Ok(())
+            form_file_in(&dialogs::text_of(ui, folder_edit), &name).map(|_| ())
         },
-        move |ui, name| {
-            let result = {
-                let mut st = state2.borrow_mut();
-                // O projeto pode ter sido fechado com o diálogo aberto (na IDE ou pelo MCP).
-                match st.project.as_mut() {
-                    Some(project) => project.add_data_module(&name).and_then(|_| project.save()),
-                    None => Err("o projeto foi fechado".into()),
-                }
+        move |ui| {
+            let (name, folder) = (dialogs::text_of(ui, name_edit), dialogs::text_of(ui, folder_edit));
+            // O projeto pode ter sido fechado com o diálogo aberto (na IDE ou pelo MCP).
+            let status = match create_form(&state2, &name, true, &folder) {
+                Ok(file) => format!("DataModule {name} criado ({file})"),
+                Err(e) => format!("⚠ {e}"),
             };
-            match result {
-                Ok(()) => {
-                    open_project_form(&state2, &name);
-                    state2.borrow_mut().status = format!("DataModule {name} criado");
-                }
-                Err(e) => state2.borrow_mut().status = format!("⚠ {e}"),
-            }
+            state2.borrow_mut().status = status;
             refresh(ui, &state2, &ids);
         },
     );
+    ui.set_focus(name_edit);
 }
 
 /// Os DataModules que o form aberto pode usar e os que ele usa. `Err`: a mensagem para o
@@ -1499,7 +1505,7 @@ pub fn open_recent(ui: &mut Ui, state: &Shared, ids: &Ids, path: &Path) {
 
 /// Salva a aba ativa (pergunta o arquivo se for nova).
 /// Arquivo → Salvar (e o botão): no código embutido salva o arquivo da aba ativa (e o form,
-/// se ele também mudou, como o Delphi salva a unit e o form juntos); no designer, o form.
+/// se ele também mudou: o código e o form são salvos juntos); no designer, o form.
 pub fn save_current(ui: &mut Ui, state: &Shared, _ids: &Ids) {
     crate::inspector::commit_pending(ui);
     if state.borrow().code_view && crate::codewindow::embedded_has_tabs(ui) {
@@ -1758,10 +1764,10 @@ pub fn set_dark(state: &Shared, dark: bool) {
     }
 }
 
-/// O evento padrão do componente (o do duplo clique, como no Delphi): o que a classe
+/// O evento padrão do componente (o do duplo clique): o que a classe
 /// declara ([`aylis_core::Component::default_event`]); senão um evento próprio dela, na
 /// ordem `on_change`, `on_timer`, `on_select`, `on_close`; senão o `on_click`. No form, o
-/// `on_show` (o `FormShow`).
+/// `on_show`.
 pub fn default_event_name(doc: &Document, id: ComponentId) -> Option<String> {
     let has = |name: &str| doc.ui.prop_info(id, name).is_some();
     if id == doc.root {
@@ -1825,7 +1831,7 @@ pub fn default_event(state: &Shared) -> Option<String> {
     ensure_handler(state, id, &event)
 }
 
-/// Duplo clique no designer (como no Delphi): o editor do componente, se a classe tiver
+/// Duplo clique no designer: o editor do componente, se a classe tiver
 /// (campos do ClientDataSet, testar o MessageDialog); senão o handler do evento padrão,
 /// criado se preciso, aberto no código.
 pub fn designer_dbl_click(ui: &mut Ui, state: &Shared, ids: &Ids) {
@@ -1996,7 +2002,7 @@ pub fn generate_code_command(state: &Shared) {
 
 /// Abre o código do form (F12), no handler `handler` se informado.
 /// Abre o código do form na janela de código da IDE (no handler, se dado).
-/// O arquivo de código do form `doc` (a unit dele, como no Delphi): o fonte do form no
+/// O arquivo de código do form `doc` (a unit dele): o fonte do form no
 /// projeto, ou o `<form>_handlers.rs` ao lado do form solto. `None`: form ainda sem arquivo.
 pub fn code_file_of(st: &crate::state::State, doc: &Document) -> Option<PathBuf> {
     match &st.project {
@@ -2084,8 +2090,8 @@ pub fn open_code(ui: &mut Ui, state: &Shared, handler: Option<&str>) {
                 Some(text[..at].matches('\n').count() + 1)
             }
         })
-        // Sem handler, o F12 volta ao código onde ele estava (o cursor, a seleção e a rolagem,
-        // como no Delphi; ia ao topo do arquivo, conferência de 08/11); a primeira vez, no topo.
+        // Sem handler, o F12 volta ao código onde ele estava (o cursor, a seleção e a rolagem;
+        // ia ao topo do arquivo, conferência de 08/11); a primeira vez, no topo.
         .unwrap_or(if handler.is_none() && crate::codewindow::text_of(ui, &file).is_some() { 0 } else { 1 });
     drop(st);
     let status = match crate::codewindow::open(ui, &file, line) {

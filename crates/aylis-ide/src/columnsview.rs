@@ -1,4 +1,4 @@
-//! A janela de colunas do DataGrid (como o editor de colunas do Delphi): fica aberta ao lado
+//! A janela de colunas do DataGrid: fica aberta ao lado
 //! da IDE, lista as colunas (componentes `Column` filhos da grade) na ordem e, ao clicar
 //! numa, seleciona-a — o Object Inspector mostra o campo, o título, a largura, o
 //! alinhamento, as cores. Adicionar, todos os campos, excluir, subir e descer.

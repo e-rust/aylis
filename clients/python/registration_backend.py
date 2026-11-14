@@ -80,7 +80,7 @@ def status(texto):
 
 # ----- regras de negócio do backend -----
 
-# Pergunta antes de gravar o registro (como o BeforePost do Delphi): a tela espera a
+# Pergunta antes de gravar o registro: a tela espera a
 # resposta, e o data post do backend só volta depois dela. raise recusa, com a mensagem.
 @aylis.on("antes_de_gravar")
 def antes_de_gravar(event):

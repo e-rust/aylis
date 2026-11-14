@@ -1,0 +1,4 @@
+{
+  "note": "Cobertura de linhas por crate (cargo llvm-cov), por plataforma da CI. Cair mais de 1 ponto reprova; aylis-tool coverage-check --update regrava.",
+  "platforms": {}
+}

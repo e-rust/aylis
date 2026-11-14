@@ -1,5 +1,5 @@
-//! Pelo protocolo (conferência de 08/11): o `set` de um valor dispara o `on_change` (como
-//! na VCL), o `load` e o `create` não; e a segunda janela do mesmo form ganha outro nome.
+//! Pelo protocolo (conferência de 08/11): o `set` de um valor dispara o `on_change`,
+//! o `load` e o `create` não; e a segunda janela do mesmo form ganha outro nome.
 
 use std::cell::RefCell;
 use std::rc::Rc;

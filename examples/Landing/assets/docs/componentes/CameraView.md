@@ -12,19 +12,19 @@ A câmera ao vivo. `active` liga; `camera` escolhe (vazio: a primeira; `front` o
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `mirror` | Espelhado | lógico |  |
-| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` |  |
-| `radius` | Raio dos cantos | número |  |
+| `mirror` | Espelhado | lógico | Espelha a imagem na horizontal (a frontal costuma parecer mais natural assim). |
+| `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a imagem ocupa o controle: `contain` (inteira), `cover` (cobre, cortando as bordas), `stretch`, `center` ou `original`. |
+| `radius` | Raio dos cantos | número | O raio dos cantos arredondados, em pontos (0: retos). |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `camera` | Câmera | texto |  |
-| `active` | Ativo | lógico |  |
-| `quality` | Qualidade | um de: `low`, `medium`, `high`, `max` |  |
-| `resolution` | Resolução do 3D | texto |  |
-| `torch` | Lanterna (flash aceso) | lógico |  |
+| `camera` | Câmera | texto | Qual câmera: vazio, a primeira; `front` ou `back`, a da tela ou a de trás (celular); ou o `id` de uma da lista de `cameras()`. |
+| `active` | Ativo | lógico | Liga a câmera e mostra a imagem ao vivo; desligado, a câmera fecha. |
+| `quality` | Qualidade | um de: `low`, `medium`, `high`, `max` | O tamanho pedido: `low` (até 640x480), `medium` (até 1280x960), `high` (até 1920x1440) ou `max` (o maior do aparelho). |
+| `resolution` | Resolução do 3D | texto | Um tamanho exato (`1920x1080`), se a câmera tiver; vazio: vale a `quality`. |
+| `torch` | Lanterna (flash aceso) | lógico | Acende o flash como lanterna (onde houver: veja `has_flash`). |
 
 ## Eventos
 

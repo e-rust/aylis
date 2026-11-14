@@ -12,22 +12,22 @@ Fio elétrico preso a dois componentes (como o `Pipe`, fino); `energized` o pint
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `color` | Cor | cor |  |
+| `color` | Cor | cor | A cor do fio desenergizado. |
 
 ### Comportamento
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `from` | De | componente |  |
-| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` |  |
-| `to` | Para | componente |  |
-| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` |  |
+| `from` | De | componente | O componente onde o fio começa (vazio: um fio reto no próprio retângulo). |
+| `from_port` | Lado de saída | um de: `left`, `right`, `top`, `bottom` | O lado do componente de origem onde o fio se prende. |
+| `to` | Para | componente | O componente onde o fio termina (vazio: um fio reto no próprio retângulo). |
+| `to_port` | Lado de chegada | um de: `left`, `right`, `top`, `bottom` | O lado do componente de destino onde o fio se prende. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `energized` | Energizado | lógico |  |
+| `energized` | Energizado | lógico | Energizado: o fio fica laranja, no lugar da `color`. |
 
 ## Em código
 

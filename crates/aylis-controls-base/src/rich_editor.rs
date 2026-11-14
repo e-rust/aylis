@@ -782,9 +782,14 @@ type Snapshot = (Doc, usize, usize);
 /// o link.
 pub struct RichEditor {
     pub base: ControlBase,
+    /// O conteúdo em HTML (lido e escrito; muda a cada edição).
     pub html: String,
+    /// Os botões da barra, separados por `;` (`|` é um separador): `bold`, `italic`, `h1`,
+    /// `link`, `undo`... Vazio esconde a barra.
     pub toolbar: String,
+    /// O texto apagado mostrado com o conteúdo vazio.
     pub placeholder: String,
+    /// Só leitura: dá para selecionar e copiar, mas não editar.
     pub read_only: bool,
     doc: Doc,
     caret: usize,
@@ -813,13 +818,15 @@ pub struct RichEditor {
     /// O menu do botão `size` (criado na primeira vez).
     size_menu: Option<ComponentId>,
     blink_start: f64,
+    /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
+    pub overscroll: aylis_core::Overscroll,
 }
 
 impl Default for RichEditor {
     fn default() -> Self {
         let mut base = ControlBase::new(460.0, 240.0);
         base.set_can_focus(true).set_cursor(CursorShape::Text);
-        Self {
+        Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             html: String::new(),
             toolbar: DEFAULT_TOOLBAR.into(),
@@ -1588,6 +1595,7 @@ impl Component for RichEditor {
     }
 
     properties! {
+        overscroll: aylis_core::Overscroll => "Behavior",
         html: String => "Data",
         toolbar: String => "Appearance",
         placeholder: String => "Appearance",

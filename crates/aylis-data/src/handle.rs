@@ -13,7 +13,7 @@
 //! ```
 //!
 //! Cada operação que muda dados, estado ou posição avisa os controles ligados (por um
-//! `DataSource`) com uma [`DataMessage`] — é o papel do `TDataLink` da VCL.
+//! `DataSource`) com uma [`DataMessage`].
 
 use aylis_core::messages::{t, tf};
 use aylis_core::{Answer, Asked, ComponentId, EventArgs, PropValue, Ui};
@@ -47,7 +47,7 @@ pub struct RowInfo<'a> {
     pub error: Option<&'a str>,
     /// É o registro atual.
     pub current: bool,
-    /// Identificador do registro (o marcador, como o `Bookmark` do Delphi): não muda com
+    /// Identificador do registro (o marcador): não muda com
     /// a ordem nem com o filtro. `None` no registro novo.
     pub id: Option<u64>,
 }
@@ -199,13 +199,13 @@ impl<'a> DataView<'a> {
         }
     }
 
-    /// Como o `Bof` do Delphi: verdadeiro depois de `first` ou de tentar voltar antes do
+    /// Verdadeiro depois de `first` ou de tentar voltar antes do
     /// primeiro registro.
     pub fn bof(&self) -> bool {
         self.cds().map_or(true, |c| c.bof || c.rows.is_empty())
     }
 
-    /// Como o `Eof` do Delphi: verdadeiro depois de `last` ou de tentar avançar além do
+    /// Verdadeiro depois de `last` ou de tentar avançar além do
     /// último registro (então `while !eof { ...; next }` passa por todos).
     pub fn eof(&self) -> bool {
         self.cds().map_or(true, |c| c.eof || c.rows.is_empty())
@@ -249,8 +249,8 @@ impl<'a> DataView<'a> {
         Ok(cds.current().map(|v| cell_value(self.ui, &cds.columns, &v, i, 0)).unwrap_or_default())
     }
 
-    /// Procura o registro com `key_fields` = `keys` e devolve o `result_field` dele
-    /// (como o `Lookup` do Delphi). `None` se não achar.
+    /// Procura o registro com `key_fields` = `keys` e devolve o `result_field` dele.
+    /// `None` se não achar.
     pub fn lookup(&self, key_fields: &str, keys: &[Value], result_field: &str) -> Option<Value> {
         self.lookup_at(key_fields, keys, result_field, 0)
     }
@@ -325,7 +325,7 @@ impl<'a> DataView<'a> {
         self.cds().is_ok_and(|c| c.has_more)
     }
 
-    /// A situação do registro atual (como o `UpdateStatus`): inalterado, alterado ou
+    /// A situação do registro atual: inalterado, alterado ou
     /// incluído desde a carga (ou desde o último `apply_updates`). Durante uma inclusão,
     /// `Inserted`.
     pub fn update_status(&self) -> Option<RowStatus> {
@@ -605,7 +605,7 @@ impl DataSet<'_> {
                 return;
             }
         }
-        // Só os ligados (os `TDataLink` do Delphi), pelo índice de referências do `Ui`: antes,
+        // Só os ligados, pelo índice de referências do `Ui`: antes,
         // cada registro que mudava percorria o app inteiro duas vezes.
         let ui: &Ui = self.ui;
         let sources: Vec<ComponentId> = ui
@@ -719,7 +719,7 @@ impl DataSet<'_> {
         self.view().cds().map(|c| c.partial_notice.clone()).unwrap_or_default()
     }
 
-    /// Usa um índice de `indexes` pelo nome (como o `IndexName`); vazio volta ao
+    /// Usa um índice de `indexes` pelo nome; vazio volta ao
     /// `index_field_names`.
     pub fn set_index_name(&mut self, name: &str) -> DataResult {
         let cds = self.cds_mut()?;
@@ -758,7 +758,7 @@ impl DataSet<'_> {
         self.refilter()
     }
 
-    /// Desfaz as alterações do registro atual ainda não aplicadas (como o `RevertRecord`):
+    /// Desfaz as alterações do registro atual ainda não aplicadas:
     /// o alterado volta aos valores originais; o incluído sai. Em edição, cancela.
     pub fn revert_record(&mut self) -> DataResult {
         self.ensure_active()?;
@@ -806,7 +806,7 @@ impl DataSet<'_> {
         Ok(true)
     }
 
-    /// Filtro em Rust (como o `OnFilterRecord`), somado ao `filter`: `get("cidade")` lê
+    /// Filtro em Rust, somado ao `filter`: `get("cidade")` lê
     /// um campo do registro.
     pub fn on_filter_record(&mut self, f: impl Fn(&dyn Fn(&str) -> Value) -> bool + 'static) -> DataResult {
         self.cds_mut()?.hooks.filter_record = Some(Box::new(f));
@@ -1100,7 +1100,7 @@ impl DataSet<'_> {
     /// O `before_post` ou o `before_delete` por nome (eventos-pergunta): `Ok(true)` segue
     /// agora; `Ok(false)` o backend responde depois (o registro fica como está e a operação
     /// roda de novo com a resposta, sem perguntar outra vez); recusado, é o erro, com a
-    /// mensagem na tela (como a exceção no `BeforePost` do Delphi).
+    /// mensagem na tela.
     fn ask_before(&mut self, what: Asking) -> DataResult<bool> {
         let cds = self.cds_mut()?;
         if cds.answered == Some(what) {
@@ -1183,8 +1183,7 @@ impl DataSet<'_> {
 
     // ----- abrir e fechar -----
 
-    /// Abre o dataset: as colunas são os componentes `Field` filhos (como os campos
-    /// persistentes do Delphi).
+    /// Abre o dataset: as colunas são os componentes `Field` filhos.
     pub fn open(&mut self) -> DataResult {
         if self.is_active() {
             return Ok(());
@@ -1457,7 +1456,7 @@ impl DataSet<'_> {
         Ok(())
     }
 
-    // É o `Next` do Delphi (move o cursor), não um iterador.
+    // Move o cursor: não é um iterador.
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> DataResult {
         let at_last = self.view().at_last();
@@ -1875,7 +1874,7 @@ impl DataSet<'_> {
         let text = field.text_of(&value, false, &self.ui.locale());
         let json = crate::json::value_to_json(&value);
         // O `on_validate` por nome é pergunta: recusado na hora (o `Err` do handler em Rust),
-        // o valor não entra e o foco fica no campo, como o `OnValidate` do Delphi; o backend
+        // o valor não entra e o foco fica no campo; o backend
         // remoto responde depois (o valor entra, e a recusa marca o campo, como o
         // `field_error`; um `post` espera a resposta).
         let mut validating = None;
@@ -2029,8 +2028,8 @@ impl DataSet<'_> {
         }
     }
 
-    /// Os registros que o último `apply_updates` não gravou (o `ApplyUpdates` do Delphi devolve
-    /// esse número); `usize::MAX` se a gravação inteira foi recusada.
+    /// Os registros que o último `apply_updates` não gravou ;
+    /// `usize::MAX` se a gravação inteira foi recusada.
     pub fn apply_errors(&self) -> usize {
         self.view().cds().map_or(0, |c| c.apply_errors)
     }

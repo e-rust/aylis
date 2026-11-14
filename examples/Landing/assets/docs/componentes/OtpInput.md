@@ -12,21 +12,21 @@ Código de verificação (o `v-otp-input`): `length` caixas de um caractere. `te
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `length` | Comprimento | inteiro |  |
-| `digits` | Só números | lógico |  |
-| `password` | Senha (esconde o texto) | lógico |  |
+| `length` | Comprimento | inteiro | Quantas caixas (caracteres) o código tem. |
+| `digits` | Só números | lógico | Só aceita números. |
+| `password` | Senha (esconde o texto) | lógico | Mostra `•` no lugar dos caracteres. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
+| `text` | Texto | texto | O código digitado até agora. |
 
 ## Eventos
 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
-| `on_change` | o valor mudou (pelo usuário ou pelo código, como na VCL) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
 | `on_complete` | — | — |  |
 
 ## Em código

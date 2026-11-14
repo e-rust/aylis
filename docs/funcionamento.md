@@ -79,7 +79,7 @@ renderizador. O Paint de `examples` usa.
 Cada controle tem `align` (`top`, `bottom`, `left`, `right`,
 `client`, `center`, `contents`...), `margins`, `padding` e `anchors`. O `Ui` refaz o
 layout quando algo muda (tamanho, visibilidade, alinhamento) e avisa o controle com
-`resized` (o `OnResize`).
+`resized`.
 
 **Da direita para a esquerda (árabe, hebraico, persa, urdu).** `ui.set_right_to_left(true)`
 espelha a tela: o que está alinhado à esquerda vai para a
@@ -215,8 +215,8 @@ app.
 
 Feitas com o próprio Aylis (iguais no desktop, no celular e no navegador; nada da caixa do
 sistema). Pelo código, `message_dlg(ui, texto, DlgKind::Confirmation, &[Yes, No], |ui, r| ...)`
-e `show_message` (como o `MessageDlg` e o `ShowMessage`). Como componente, o
-`MessageDialog` (paleta "System", como o `TTaskDialog`): fica no form com `title` (vazio:
+e `show_message`. Como componente, o
+`MessageDialog` (paleta "System"): fica no form com `title` (vazio:
 o do tipo), `text`, `kind` (information, warning, error, confirmation) e `buttons` na ordem
 em que aparecem (`"yes,no,cancel"`); `MessageDialog::execute(ui, id)` abre e `on_close`
 recebe o botão (`"yes"`, `"no"`...). `execute_then` também entrega a resposta a uma
@@ -725,7 +725,7 @@ Sankey e waffle.
   `TDBChart`.
 - Exemplo: `cargo run -p aylis-platform-winit --example charts --features cpu`.
 
-**Relatório de bandas** (paleta "Reports"), como o QuickReport/FastReport:
+**Relatório de bandas** (paleta "Reports"):
 - `Report` é a página (`page_width`, `page_height`, `landscape`, `margin`; A4 por padrão)
   ligada a um `DataSource`; dentro dele, `ReportBand`s com `kind` = `title`,
   `page_header`, `group_header` (com `group_field`), `detail` (uma por registro),
@@ -908,11 +908,11 @@ deles: `NumberBox`, `AutoComplete`, os campos de data) têm a
 propriedade `border`: desligada, some o contorno e o traço do foco (o campo dentro de um
 painel ou de uma tabela).
 
-**A fonte de qualquer controle**, como o `Font` do `TControl`, fica no `ControlBase`
+**A fonte de qualquer controle** fica no `ControlBase`
 (`FontOverride`):
 - `font_family`, `font_size` e `font_weight` (`default`, `thin` ... `bold`, `black`).
 - `font_italic`, `font_underline` e `font_strikeout`.
-- **Herança, como o `ParentFont`:** o que não tem valor vem do pai, então a fonte posta no
+- **Herança:** o que não tem valor vem do pai, então a fonte posta no
   form vale para tudo dentro dele. A pintura passa a fonte combinada para os filhos.
 - **No Object Inspector:** ficam na categoria Font. O "…" do `font_family` abre o editor,
   com as fontes do projeto primeiro, depois as instaladas no sistema
@@ -1073,7 +1073,7 @@ Um projeto é uma pasta:
 ```
 Vendas/
   Vendas.aylisproj      nome, form principal, tema, idioma, opções de publicação
-  forms/*.json         os forms (como os .dfm)
+  forms/*.json         os forms
   themes/*.json        temas
   assets/              imagens, sons, vídeos, fontes
   locales/*.json       traduções
@@ -1280,8 +1280,8 @@ clicado em `EventArgs::Value(Component)`.
   que usa a tecla fica com ela: o Enter de um Memo continua sendo nova linha, as setas de
   um campo andam no texto (`Component::captures_key`).
 - **Pelo código**, em todas as linguagens: `frmX.edtNome.SetFocus`, `frmX.Focused` (o nome
-  do controle com foco, como o `ActiveControl`), `frmX.FocusNext` e `frmX.FocusPrev` (o
-  `SelectNext`). No protocolo: `focus`, `focused`, `focus_next`, `focus_prev`, e `key`
+  do controle com foco), `frmX.FocusNext` e `frmX.FocusPrev` (o próximo
+  e o anterior na ordem do Tab). No protocolo: `focus`, `focused`, `focus_next`, `focus_prev`, e `key`
   (`{"cmd":"key","target":"frmX","key":"Shift+Tab"}`) e `type` (`{"cmd":"type",...,"text":"abc"}`)
   simulam o teclado.
 

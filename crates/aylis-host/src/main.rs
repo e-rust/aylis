@@ -381,9 +381,11 @@ fn scripted(mut ui: Ui, form: ComponentId, lines: transport::Incoming, out: &Out
             break;
         }
     };
-    aylis_remote::script::play(&mut ui, form, &script, &mut pump)?;
+    // Com `"profile"` no roteiro, os tempos dos handlers (veja `aylis_remote::script::play_profiled`).
+    let times = aylis_remote::script::play_profiled(&mut ui, form, &script, &mut pump)?;
     let state = aylis_remote::script::state(&mut ui, &script);
     aylis_remote::script::write_state(&state, output.as_deref())?;
+    aylis_remote::script::finish_profile(&script, times.as_ref(), output.as_deref())?;
     if let Some(path) = output {
         let png = path.with_extension("png");
         let (w, h) = ui.control(form).map_or((800.0, 600.0), |cb| (cb.width(), cb.height()));

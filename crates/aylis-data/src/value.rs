@@ -4,7 +4,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-/// Valor de um campo. `Null` é explícito (como o `IsNull` do `TField`).
+/// Valor de um campo. `Null` é explícito.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub enum Value {
     #[default]
@@ -12,7 +12,7 @@ pub enum Value {
     Bool(bool),
     Int(i64),
     Float(f64),
-    /// Ponto fixo exato (dinheiro), como o `Currency`/BCD do Delphi.
+    /// Ponto fixo exato (dinheiro).
     Decimal(Decimal),
     String(String),
     Date(Date),
@@ -279,7 +279,7 @@ impl Decimal {
         }
     }
 
-    /// Arredonda para `scale` casas do jeito `mode` (o `RoundTo` do Delphi, com o modo).
+    /// Arredonda para `scale` casas do jeito `mode`.
     pub fn round(&self, scale: u8, mode: Rounding) -> Option<Decimal> {
         self.checked_rescale(scale, mode)
     }
@@ -317,8 +317,8 @@ impl Decimal {
         Some(Decimal { mantissa: div_round(n, d, mode)?, scale })
     }
 
-    /// As casas da divisão quando ninguém diz quantas: as do maior dos dois mais 4, como o
-    /// `Currency` do Delphi (100,00 / 3 = 33,333333).
+    /// As casas da divisão quando ninguém diz quantas: as do maior dos dois mais 4
+    /// (100,00 / 3 = 33,333333).
     pub fn default_div_scale(&self, other: &Decimal) -> u8 {
         (self.scale.max(other.scale) + 4).min(MAX_SCALE)
     }
@@ -348,10 +348,10 @@ pub const MAX_SCALE: u8 = 28;
 /// Como arredondar ao cortar casas.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Rounding {
-    /// Metade para longe do zero: 2,345 → 2,35 (o `SimpleRoundTo` do Delphi). O padrão.
+    /// Metade para longe do zero: 2,345 → 2,35. O padrão.
     #[default]
     HalfUp,
-    /// Metade para o par, o "bancário": 2,345 → 2,34 e 2,355 → 2,36 (o `Round` do Delphi).
+    /// Metade para o par, o "bancário": 2,345 → 2,34 e 2,355 → 2,36.
     HalfEven,
     /// Corta as casas: 2,349 → 2,34 (o `Trunc`).
     Truncate,
@@ -400,7 +400,7 @@ fn div_round(n: i128, d: i128, mode: Rounding) -> Option<i128> {
     if bump { q.checked_add(away) } else { Some(q) }
 }
 
-/// Os operadores, como o `Currency` do Delphi. Estouro entra em pânico (como os inteiros);
+/// Os operadores. Estouro entra em pânico (como os inteiros);
 /// para tratar, os `checked_*`. A divisão usa [`Decimal::default_div_scale`] e arredonda
 /// metade para cima; dividir por zero entra em pânico.
 impl std::ops::Add for Decimal {
@@ -541,7 +541,7 @@ impl Date {
         Date::new(i32::try_from(y).ok()?, m, d)
     }
 
-    /// Hoje, no horário local (o `Date` do Delphi): em Brasília, às 22h ainda é hoje.
+    /// Hoje, no horário local: em Brasília, às 22h ainda é hoje.
     pub fn today() -> Date {
         DateTime::now().date
     }
@@ -687,7 +687,7 @@ impl DateTime {
         DateTime::from_unix(utc + aylis_core::platform::local_offset(utc), millisecond)
     }
 
-    /// Agora, no horário local (o `Now` do Delphi).
+    /// Agora, no horário local.
     pub fn now() -> DateTime {
         let since = web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).unwrap_or_default();
         DateTime::from_unix_local(since.as_secs() as i64, since.subsec_millis() as u16).expect("o relógio do sistema dá uma data válida")

@@ -318,6 +318,12 @@ impl Ui {
     /// pintados (60 barras espalhadas numa tela gigante não pintam tudo o que fica entre elas).
     /// Quem chama recorta o canvas na união delas.
     pub fn paint_regions(&mut self, root: ComponentId, canvas: &mut dyn Canvas, areas: &[RectF]) {
+        self.paint_regions_in(root, canvas, areas, areas.is_empty());
+    }
+
+    /// [`Ui::paint_regions`]; `whole`: a pintura vale pelo quadro inteiro (as camadas guardadas
+    /// são refeitas), mesmo com áreas (o primeiro pedaço de um form em vários monitores).
+    pub(crate) fn paint_regions_in(&mut self, root: ComponentId, canvas: &mut dyn Canvas, areas: &[RectF], whole: bool) {
         let area = areas.iter().copied().reduce(|a, b| a.union(b));
         let _profile = crate::profile::scope(crate::profile::Lane::Paint, || format!("pintura {}", self.path_of(root)));
         self.update_layout();
@@ -325,7 +331,7 @@ impl Ui {
         self.wake_at.set(None);
         let mut classes = Vec::new();
         self.overlays.borrow_mut().clear();
-        if area.is_none() {
+        if whole {
             self.overlay_users.borrow_mut().clear();
             // Pintura inteira: não se sabe o que mudou desde a última, as camadas são refeitas.
             self.layer_epoch.set(self.layer_epoch.get() + 1);
@@ -388,6 +394,9 @@ impl Ui {
             canvas.translate(at.x - origin.x, at.y - origin.y);
             page.replay(canvas);
             canvas.restore();
+        }
+        if let Some((strip, color)) = self.status_strip(root) {
+            canvas.fill_rect(strip, 0.0, &crate::Brush::Solid(color));
         }
         self.paint_drag(root, canvas);
         self.paint_hint(root, canvas);
@@ -615,7 +624,7 @@ impl Ui {
         } else {
             visual.borrow_mut().update(state, target, self.time)
         };
-        // A fonte do controle por cima da herdada (o `ParentFont`): vale para ele e os filhos.
+        // A fonte do controle por cima da herdada: vale para ele e os filhos.
         let font = if cb.font.is_empty() { parent_font.clone() } else { cb.font.over(parent_font) };
         if !font.is_empty() {
             font.apply(&mut style.font);
@@ -629,7 +638,7 @@ impl Ui {
             style.font.family = self.resolve_font(&style.font.family);
         }
         // Nos controles sem fundo (Label, CheckBox, Gauge...), o `fill` próprio vira o fundo do
-        // controle inteiro, pintado aqui (como o `Color` do Delphi).
+        // controle inteiro, pintado aqui.
         let paint_fill = colors.fill.is_some() && component.transparent_background();
         if let Some(fill) = colors.fill {
             // Num controle de clicar, o fundo próprio ainda reage ao mouse: clareia (fundo
@@ -896,7 +905,11 @@ impl Ui {
             && ((cb.clip_children() && (self.animates_placement(id) || (behind_mover && self.backdrop_worth(id, entry.visual.borrow().version)))) || self.in_transition(id));
         // Com mistura, o desenho depende do que está por baixo: não vira imagem guardada.
         let blend = cb.blend_mode();
-        let cached = !flip && blend == crate::BlendMode::Normal && (cb.cache_layer() || automatic);
+        // O fim da rolagem (`overscroll.rs`): o conteúdo estica ou passa da ponta, recortado no
+        // contêiner (sem camada guardada enquanto isso); o brilho vai por cima do conteúdo.
+        let pulled = self.overscroll_pull(id).and_then(|p| self.overscroll_of(id).map(|s| (p, s)));
+        let shifts = pulled.is_some_and(|(_, s)| matches!(s, crate::Overscroll::Stretch | crate::Overscroll::Bounce));
+        let cached = !flip && !shifts && blend == crate::BlendMode::Normal && (cb.cache_layer() || automatic);
 
         canvas.save();
         let shift = cb.translate();
@@ -918,6 +931,11 @@ impl Ui {
         }
         if scale != 1.0 {
             canvas.scale(scale, scale);
+        }
+        if let Some((p, style)) = pulled.filter(|_| shifts) {
+            canvas.save();
+            canvas.clip_rect(ctx.rect);
+            overscroll_shift(canvas, ctx.rect, p, style);
         }
         let layer = opacity < 1.0 || blend != crate::BlendMode::Normal;
         if blend != crate::BlendMode::Normal {
@@ -1032,6 +1050,12 @@ impl Ui {
         if layer {
             canvas.restore();
         }
+        if shifts {
+            canvas.restore();
+        }
+        if let Some((p, crate::Overscroll::Glow)) = pulled {
+            overscroll_glow(canvas, ctx.rect, p, self.theme.color("primary"));
+        }
         canvas.restore();
         let ink = std::mem::replace(&mut *self.ink.borrow_mut(), outer_ink);
         let mut visual = entry.visual.borrow_mut();
@@ -1131,6 +1155,43 @@ impl Ui {
 }
 
 /// O retângulo de um controle no pai, com o deslocamento (`translate`).
+/// O conteúdo de um contêiner puxado além da ponta (`p`, o puxão): a mola o desloca; o
+/// esticar o amplia a partir da borda do lado puxado (`overscroll.rs`).
+fn overscroll_shift(canvas: &mut dyn Canvas, rect: RectF, p: PointF, style: crate::Overscroll) {
+    if style == crate::Overscroll::Bounce {
+        canvas.translate(p.x, p.y);
+        return;
+    }
+    let sx = 1.0 + p.x.abs() / rect.width.max(1.0);
+    let sy = 1.0 + p.y.abs() / rect.height.max(1.0);
+    // A borda puxada fica no lugar; o resto estica para dentro.
+    let ax = if p.x > 0.0 { rect.x } else { rect.right() };
+    let ay = if p.y > 0.0 { rect.y } else { rect.bottom() };
+    canvas.translate(ax, ay);
+    canvas.scale(sx, sy);
+    canvas.translate(-ax, -ay);
+}
+
+/// O brilho em meia-lua na borda puxada, mais forte quanto mais puxado (`overscroll.rs`).
+fn overscroll_glow(canvas: &mut dyn Canvas, rect: RectF, p: PointF, color: crate::Color) {
+    canvas.save();
+    canvas.clip_rect(rect);
+    let tint = |k: f32| crate::Color::rgba(color.r, color.g, color.b, (40.0 + 90.0 * k).min(255.0) as u8);
+    if p.y != 0.0 {
+        let k = (p.y.abs() / (rect.height * 0.2).max(1.0)).min(1.0);
+        let depth = (rect.width * 0.25).min(rect.height * 0.5) * (0.3 + 0.7 * k);
+        let y = if p.y > 0.0 { rect.y - depth } else { rect.bottom() - depth };
+        canvas.fill_ellipse(RectF::new(rect.x - rect.width * 0.25, y, rect.width * 1.5, depth * 2.0), &crate::Brush::Solid(tint(k)));
+    }
+    if p.x != 0.0 {
+        let k = (p.x.abs() / (rect.width * 0.2).max(1.0)).min(1.0);
+        let depth = (rect.height * 0.25).min(rect.width * 0.5) * (0.3 + 0.7 * k);
+        let x = if p.x > 0.0 { rect.x - depth } else { rect.right() - depth };
+        canvas.fill_ellipse(RectF::new(x, rect.y - rect.height * 0.25, depth * 2.0, rect.height * 1.5), &crate::Brush::Solid(tint(k)));
+    }
+    canvas.restore();
+}
+
 fn place_of(cb: &crate::component::ControlBase) -> RectF {
     let b = cb.bounds();
     let t = cb.translate();

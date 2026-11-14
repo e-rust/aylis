@@ -20,8 +20,8 @@ Mostra texto em Markdown com as cores e fontes do tema: títulos, listas, tabela
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `text` | Texto | texto |  |
-| `source` | Origem | texto |  |
+| `text` | Texto | texto | O texto em Markdown; vale quando `source` está vazio. |
+| `source` | Origem | texto | Um arquivo do projeto com o Markdown (`assets/docs/ajuda.md`); vence o `text`. Vazio: mostra o `text`. |
 | `anchor` | Âncora | texto | O título para onde rolar: o identificador (`gravar-no-banco`, com ou sem `#`) ou o texto dele (o "Nesta página" de uma documentação, um link `pagina.md#secao`). |
 | `highlight` | Destacar | texto | O texto a destacar na página (sem diferença de maiúsculas), como o achado de uma busca: cada ocorrência ganha um fundo, e a página rola até a primeira. |
 

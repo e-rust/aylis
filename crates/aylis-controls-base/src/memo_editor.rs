@@ -230,7 +230,7 @@ impl Memo {
         }
         self.sync_folds();
         let lines = self.lines();
-        let line = self.text.chars().take(index).filter(|c| *c == '\n').count();
+        let line = self.line_of(index);
         let hiding: Vec<usize> = self.folds.borrow().iter().filter(|(l, _)| fold_end(&lines, *l).is_some_and(|e| line > *l && line <= e)).map(|(l, _)| *l).collect();
         drop(lines);
         if !hiding.is_empty() {
@@ -273,7 +273,7 @@ impl Memo {
     /// Mais um cursor (com seleção, se `anchor != caret`); ele vira o principal, como no
     /// Alt+clique do VS Code.
     pub fn add_cursor(&mut self, anchor: usize, caret: usize) {
-        let len = self.text.chars().count();
+        let len = self.len();
         let (anchor, caret) = (anchor.min(len), caret.min(len));
         if (anchor, caret) == (self.anchor, self.caret) || self.extra.contains(&(anchor, caret)) {
             return;
@@ -326,9 +326,9 @@ impl Memo {
         for (i, &(a, c)) in all.iter().enumerate().rev() {
             self.anchor = a;
             self.caret = c;
-            let before = self.text.chars().count() as isize;
+            let before = self.len() as isize;
             f(self);
-            let delta = self.text.chars().count() as isize - before;
+            let delta = self.len() as isize - before;
             results[i] = (self.anchor, self.caret, delta);
         }
         let mut shift = 0isize;
@@ -483,11 +483,11 @@ impl Memo {
             }
             Key::Delete if !self.read_only => {
                 edit(self, super::code::EditKind::Deleting);
-                let len = self.text.chars().count();
+                let len = self.len();
                 self.edit_all(|m| {
                     if m.has_selection() {
                         m.delete_selection();
-                    } else if m.caret < len.min(m.text.chars().count()) {
+                    } else if m.caret < len.min(m.len()) {
                         m.delete_range(m.caret, m.caret + 1);
                     }
                 });
