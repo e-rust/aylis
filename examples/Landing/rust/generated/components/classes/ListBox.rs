@@ -12,6 +12,12 @@ impl Handle for ListBox {
 }
 
 impl ListBox {
+    pub fn overscroll(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "overscroll"))
+    }
+    pub fn set_overscroll(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "overscroll", Into::<String>::into(value))
+    }
     pub fn items(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "items"))
     }

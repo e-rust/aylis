@@ -150,6 +150,12 @@ impl Form {
     pub fn set_gpu(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "gpu", Into::<String>::into(value))
     }
+    pub fn span_monitors(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "span_monitors").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_span_monitors(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "span_monitors", value)
+    }
     pub fn activate_on_show(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "activate_on_show").and_then(|v| v.to_bool().ok()).unwrap_or_default()
     }
@@ -581,7 +587,7 @@ impl Form {
     pub fn close(self, ui: &mut Ui) -> bool {
         ui.close(self.id)
     }
-    /// O nome do controle com foco (vazio sem foco), como o `ActiveControl`.
+    /// O nome do controle com foco (vazio sem foco).
     pub fn focused(self, ui: &Ui) -> String {
         ui.focused(ui.root_of(self.id)).and_then(|f| ui.name(f)).unwrap_or_default().to_string()
     }

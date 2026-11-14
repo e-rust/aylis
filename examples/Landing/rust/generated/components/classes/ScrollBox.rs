@@ -12,6 +12,12 @@ impl Handle for ScrollBox {
 }
 
 impl ScrollBox {
+    pub fn overscroll(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "overscroll"))
+    }
+    pub fn set_overscroll(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "overscroll", Into::<String>::into(value))
+    }
     pub fn horizontal(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "horizontal").and_then(|v| v.to_bool().ok()).unwrap_or_default()
     }
