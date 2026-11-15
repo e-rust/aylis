@@ -107,9 +107,25 @@ impl Ui {
         PointF::new((size.width * MAX_FRACTION).max(24.0), (size.height * MAX_FRACTION).max(24.0))
     }
 
+    /// Em que eixos (horizontal, vertical) `host` puxa: só onde ele rola
+    /// ([`Component::scroll_axes`](crate::Component::scroll_axes)), como no Android (a lista
+    /// vertical estica só em cima e embaixo). Quem não diz os eixos puxa nos dois.
+    fn pull_axes(&self, host: ComponentId) -> (bool, bool) {
+        match self.component(host).map(|c| c.scroll_axes()) {
+            Some((false, false)) | None => (true, true),
+            Some(axes) => axes,
+        }
+    }
+
     /// O dedo arrastou `delta` em `host` com o conteúdo na ponta: o puxão cresce, com mais
-    /// resistência perto do máximo (só no eixo em que o dedo mais andou).
+    /// resistência perto do máximo (só no eixo em que o dedo mais andou, e se `host` rola
+    /// nesse eixo: o arrasto de lado numa lista vertical não estica nada).
     pub(crate) fn overscroll_drag(&mut self, host: ComponentId, delta: PointF) {
+        let (h, v) = self.pull_axes(host);
+        let vertical = delta.y.abs() >= delta.x.abs();
+        if (vertical && !v) || (!vertical && !h) {
+            return;
+        }
         let limit = self.pull_limit(host);
         let now = self.time;
         let mut pulls = self.pulls.borrow_mut();
@@ -118,7 +134,7 @@ impl Ui {
             let room = (1.0 - amount.abs() / max).max(0.0);
             (amount + d * RESISTANCE * room).clamp(-max, max)
         };
-        if delta.y.abs() >= delta.x.abs() {
+        if vertical {
             p.amount.y = grow(p.amount.y, delta.y, limit.y);
         } else {
             p.amount.x = grow(p.amount.x, delta.x, limit.x);
@@ -170,6 +186,11 @@ impl Ui {
 
     /// A inércia bateu na ponta de `host` com `velocity` (pontos/s): um impulso que volta.
     pub(crate) fn overscroll_absorb(&mut self, host: ComponentId, velocity: PointF) {
+        let (h, v) = self.pull_axes(host);
+        let velocity = PointF::new(if h { velocity.x } else { 0.0 }, if v { velocity.y } else { 0.0 });
+        if velocity == PointF::ZERO {
+            return;
+        }
         let limit = self.pull_limit(host);
         let now = self.time;
         let amount = PointF::new((velocity.x * ABSORB).clamp(-limit.x * 0.5, limit.x * 0.5), (velocity.y * ABSORB).clamp(-limit.y * 0.5, limit.y * 0.5));

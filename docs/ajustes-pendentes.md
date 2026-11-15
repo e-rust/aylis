@@ -390,6 +390,16 @@ Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 
   plataforma escolhe o padrão (Android 12 ou mais: esticar; antes: brilho na cor `primary` do
   tema; iOS: mola; desktop: nada); a animação só roda enquanto volta. Teste
   `the_end_of_scroll_effect_paints_by_parts_and_goes_back` (`partial_paint`).
+  Defeito relatado pelo RTSPlayer em 15/11 (Motorola Edge 30 Neo, `stretch`) e corrigido: na
+  grade de câmeras (um `DataRepeater` que só rola na vertical), o arrasto de lado esticava o
+  conteúdo na horizontal, porque o puxão ia ao eixo em que o dedo mais andou sem saber se o
+  contêiner rola nele. Agora o puxão e o impulso da inércia só valem nos eixos do
+  `Component::scroll_axes` do contêiner (como no Android: a lista vertical estica só em cima e
+  embaixo); quem não diz os eixos puxa nos dois. Ganharam `scroll_axes`: `ListBox`, `TreeView`,
+  `ChatView` e `RichEditor` (vertical), `Memo` (vertical e, com a barra horizontal, de lado) e
+  `DataGrid` (os dois); o `ScrollBox` e a `VirtualList` já tinham. Testes em
+  `crates/aylis-controls/tests/overscroll_axes.rs` (falham sem a correção). Falta conferir no
+  celular (o mesmo item do roteiro do efeito).
 
 - [ ] A orientação da tela no celular (pergunta do autor em 14/11: "preciso saber se tem alguma
   configuração facilitada para controlar a rotação de tela do projeto e formulários quando

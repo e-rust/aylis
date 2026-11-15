@@ -1243,6 +1243,11 @@ impl DataGrid {
 }
 
 impl Component for DataGrid {
+    /// As linhas na vertical e as colunas de lado.
+    fn scroll_axes(&self) -> (bool, bool) {
+        (true, true)
+    }
+
     fn drag_item(&self, ui: &Ui) -> Option<(String, String)> {
         self.current_key(ui)
     }

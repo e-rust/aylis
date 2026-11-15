@@ -1577,6 +1577,11 @@ impl RichEditor {
 }
 
 impl Component for RichEditor {
+    /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
+    fn scroll_axes(&self) -> (bool, bool) {
+        (false, true)
+    }
+
     leaf_control!("RichEditor");
 
     // Sem estilo próprio no tema, fica com o do Memo (o fundo, a borda e o foco de campo).

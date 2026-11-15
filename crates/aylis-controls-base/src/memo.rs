@@ -1433,6 +1433,12 @@ impl Memo {
 }
 
 impl Component for Memo {
+    /// Na vertical e, sem `wrap` e com linha maior que a área (a barra horizontal), também
+    /// de lado.
+    fn scroll_axes(&self) -> (bool, bool) {
+        (self.hbar.get().is_some(), true)
+    }
+
     leaf_control!("Memo");
 
     fn accepts_text(&self) -> bool {

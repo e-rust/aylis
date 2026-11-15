@@ -341,6 +341,11 @@ impl ListBox {
 }
 
 impl Component for ListBox {
+    /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
+    fn scroll_axes(&self) -> (bool, bool) {
+        (false, true)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(if self.multi_select { self.selected_texts().join(";") } else { self.text().to_string() }))
@@ -1243,6 +1248,11 @@ fn self_node_mut<'a>(nodes: &'a mut [TreeNode], path: &[usize]) -> Option<&'a mu
 }
 
 impl Component for TreeView {
+    /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
+    fn scroll_axes(&self) -> (bool, bool) {
+        (false, true)
+    }
+
     leaf_control!("TreeView");
 
     properties! {

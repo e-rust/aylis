@@ -252,6 +252,11 @@ impl ChatView {
 }
 
 impl Component for ChatView {
+    /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
+    fn scroll_axes(&self) -> (bool, bool) {
+        (false, true)
+    }
+
     leaf_control!("ChatView");
 
     properties! {
