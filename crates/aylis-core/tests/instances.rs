@@ -175,3 +175,42 @@ fn repeated_frames_get_free_names_and_their_own_instances() {
     assert_eq!(ui.form_instance::<FrmPedido>(rows[1]).unwrap().clicks, 1);
     assert_eq!(ui.form_instance::<FrmPedido>(rows[0]).unwrap().clicks, 0);
 }
+
+/// O form do RTSPlayer (14/11): o `on_back` volta do player chamando o próprio form por dentro
+/// (ocupado com o handler) e responde `handled`. A chamada de dentro espera o handler acabar,
+/// mas não leva a pergunta junto: a resposta é a do handler, e o app não vai para segundo plano.
+struct FrmPlayer {
+    screens: Vec<String>,
+}
+
+impl FrmPlayer {
+    fn bind(_ui: &mut Ui, _root: ComponentId) -> std::result::Result<Box<dyn std::any::Any>, String> {
+        Ok(Box::new(FrmPlayer { screens: vec!["player".into()] }))
+    }
+
+    fn voltar(&mut self, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
+        // O caminho de volta do player passa pelo próprio form (como `self.mostrar_lista()`).
+        ui.with_form::<FrmPlayer>(sender, |me, _| me.screens.push("lista".into()));
+        ui.reply("handled", true);
+    }
+}
+
+#[test]
+fn a_call_to_the_same_form_inside_on_back_does_not_take_the_question() {
+    let mut ui = Ui::new();
+    ui.register_form_class("frmPlayer", FrmPlayer::bind);
+    let form = ui.add_root(boxy(300.0, 200.0));
+    ui.set_name(form, "frmPlayer").unwrap();
+    ui.bind_form(form).unwrap();
+    // Como o código gerado: o handler roda na instância do form, pelo `with_form`.
+    ui.on(form, "on_back", |ui, sender, args| {
+        let args = args.clone();
+        ui.with_form::<FrmPlayer>(sender, move |me, ui| me.voltar(ui, sender, &args));
+    });
+    ui.show(form).unwrap();
+    let background = std::rc::Rc::new(std::cell::Cell::new(0));
+    let b = background.clone();
+    ui.back_pressed(move |_| b.set(b.get() + 1));
+    assert_eq!(background.get(), 0, "o handler respondeu handled: o app não vai para segundo plano");
+    assert_eq!(ui.form_instance::<FrmPlayer>(form).unwrap().screens, ["player", "lista"], "a troca de tela rodou depois do handler");
+}

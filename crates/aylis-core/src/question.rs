@@ -73,6 +73,9 @@ struct Frame {
     refused: Option<String>,
     values: Vec<(String, PropValue)>,
     deferred: Option<u64>,
+    /// O handler da pergunta já foi despachado (o primeiro `with_form` dela): um `with_form`
+    /// de dentro do handler, adiado por achar o form ocupado, não leva a pergunta junto.
+    claimed: bool,
 }
 
 #[derive(Default)]
@@ -110,6 +113,21 @@ impl Ui {
     /// A pergunta em andamento é a do evento `event` de `id` (e ainda não foi adiada).
     pub(crate) fn question_is_for(&self, id: ComponentId, event: &str) -> bool {
         self.questions.stack.last().is_some_and(|f| f.deferred.is_none() && f.target.as_ref().is_some_and(|(i, e)| *i == id && e == event))
+    }
+
+    /// O despacho do handler da pergunta em andamento: `true` só na primeira vez (o
+    /// `with_form` que roda o handler dela); as chamadas de dentro do handler recebem `false`.
+    /// Sem isso, o `with_form` que o handler do `on_back` fazia no próprio form (ocupado) era
+    /// adiado levando a pergunta, e a resposta `handled` do handler se perdia (relatado pelo
+    /// RTSPlayer em 14/11: voltar do player trocava a tela e mandava o app para segundo plano).
+    pub(crate) fn claim_question(&mut self) -> bool {
+        match self.questions.stack.last_mut() {
+            Some(f) if f.deferred.is_none() && !f.claimed => {
+                f.claimed = true;
+                true
+            }
+            _ => false,
+        }
     }
 
     /// `true` dentro do handler de um evento-pergunta (o receptor remoto manda o evento com o

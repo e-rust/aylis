@@ -21,6 +21,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 |---|---|---|---|
 | `transition` | Transição | um de: `none`, `fade`, `slide_left`, `slide_right`, `slide_up`, `slide_down` | Celular e navegador (os forms se empilham): como o form entra ao abrir e sai ao fechar (`slide_left` como uma tela nova do Android/iOS, `slide_up` como uma folha, `fade`). No desktop cada form é uma janela e isto não vale. |
 | `layer_cache` | Camadas automáticas | um de: `project`, `on`, `off` | As camadas automáticas neste form: as páginas de uma transição e o contêiner que recorta os filhos com o lugar ou a transparência animando viram uma imagem guardada, que anda sem repintar os filhos (mais rápido, e a memória das imagens enquanto andam). `project`: o padrão do projeto (`image_cache.auto_layers`); `on`/`off` trocam só neste form. O `cache_layer` pedido num controle vale sempre. |
+| `frame_reuse_kb` | Reaproveitar quadros até (KB) | inteiro | Até quantos KB um quadro de câmera ou de vídeo reaproveita o bitmap do quadro anterior na placa nesta janela, em vez de criar outro. `-1` (o padrão): o do projeto (`image_cache.frame_reuse_kb`, que o `RenderSettings` troca em execução); `0`: sempre cria; acima de 32768, ajustado. Vale no Direct2D (Windows), no quadro seguinte à troca; no Skia e no navegador, sem efeito (eles não reaproveitam). |
 | `topmost` | Sempre na frente | lógico | Sempre por cima das outras janelas. |
 | `show_in_taskbar` | Na barra de tarefas | lógico | Aparece na barra de tarefas (desligue para menus e janelas de ferramenta). |
 | `active_control` | Controle ativo | componente | O controle que recebe o foco quando o form abre. |
@@ -28,6 +29,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `remember_placement` | Lembrar a posição | lógico | Lembra onde a janela estava (o monitor, a posição, o tamanho e se estava maximizada) e reabre igual, num arquivo do app; se aquele monitor sumiu, abre como se não houvesse. |
 | `gpu` | Placa de vídeo | texto | A placa de vídeo da janela (vazio: a do projeto): `monitor` troca para a placa do monitor em que ela está (Windows e Linux com Wayland); `alto-desempenho`, `economia` ou parte do nome fixam uma. |
 | `activate_on_show` | Ativar ao mostrar | lógico | Mostrar a janela dá o foco a ela (desligado: aparece sem tirar o foco de quem tem, como uma projeção que não deve roubar o teclado do console). |
+| `force_foreground` | Forçar a frente ao mostrar | lógico | Mostrar ou trazer para a frente toma o foco mesmo quando o app não recebeu a última entrada (Windows): o form aberto por um atalho global, de um timer ou da bandeja. O Windows só deixa ir para a frente quem recebeu o último clique ou tecla; sem isto, a janela aparece atrás, com o botão piscando, e o teclado (o Esc) vai para o app de trás. Nas outras plataformas, sem efeito (o pedido normal de foco). |
 | `close_action` | Ao fechar | um de: `hide`, `free` | O que fechar faz com o form: esconde (pode abrir de novo) ou libera (some da memória, depois de fechar). |
 | `frame_rate` | Quadros por segundo | número | Quadros por segundo da janela (0 = a taxa do monitor dela). Um telão de 60 Hz ao lado de um monitor de 144 Hz não precisa acompanhar o mais rápido. |
 
@@ -52,6 +54,8 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `window_state` | Estado da janela | um de: `normal`, `maximized`, `minimized`, `full_screen` | Normal, maximizada, minimizada ou em tela cheia (`full_screen`). No celular e no navegador o form já ocupa a tela toda. |
 | `monitor` | Retorno | inteiro | Em que monitor a janela abre (o índice do `Screen`; -1 = o do dono ou o principal). Com `position = designed`, o `left`/`top` contam do canto dele. |
 | `span_monitors` | Ocupar vários monitores | lógico | O form maior que um monitor vira uma janela por monitor, cada uma na placa de vídeo do seu (Windows; nas outras, sem efeito). Sem isso, com monitores em placas diferentes, o sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`, o form cobre todos os monitores (um telão). |
+| `physical_pixels` | Pixels físicos | lógico | 1 unidade do form = 1 pixel físico da tela, sem a escala do monitor nem o zoom, em todas as janelas dele (num form em vários monitores, em todos os pedaços, mesmo com escalas diferentes). Um clique no pixel (x, y) chega como (x, y) do form (a partir do canto dele; com `full_screen` e `span_monitors`, do retângulo de todos os monitores), e uma imagem do tamanho do form em pixels (o print da tela) bate pixel a pixel. Mudar com a janela aberta não a move: o form passa a ter o tamanho dela na escala nova. |
+| `orientation` | Orientação | um de: `project`, `any`, `portrait`, `landscape`, `sensor_portrait`, `sensor_landscape` | Celular: a orientação da tela enquanto este form está à frente (`project`: a do projeto). Fechá-lo devolve a do form de baixo; mudar com o app aberto gira na hora. No desktop e no navegador, sem efeito. |
 
 ## Eventos
 

@@ -108,6 +108,10 @@ fn parse_args() -> Result<Args, Error> {
             }
             "--png" => args.png = Some(it.next().ok_or("informe o arquivo depois de --png")?),
             "--dev" => args.dev = true,
+            // A porta do canal da IDE (lida pelo canal de desenvolvimento do aylis, `aylis::dev`).
+            "--aylis-dev-port" => {
+                it.next().ok_or("informe a porta depois de --aylis-dev-port")?;
+            }
             "--sessions" => args.sessions = true,
             "--project" => args.project = Some(it.next().ok_or("informe o .aylisproj depois de --project")?),
             "--connect" => args.connect = Some(it.next().ok_or("informe a URL depois de --connect (ws://...)")?),

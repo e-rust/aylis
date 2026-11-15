@@ -16,9 +16,11 @@ gl = ["wgpu/gles"]
 fbx = ["dep:ufbx"]
 # As variáveis de diagnóstico (AYLIS_3D_TRACE, AYLIS_3D_DEBUG, AYLIS_DXC...): o app com `dev`.
 diagnostics = []
+# Também no build release (as medições do Aylis); o app nunca liga.
+release-diagnostics = ["diagnostics"]
 
 [dependencies]
-aylis-core = { version = "0.3.0", path = "../aylis-core" }
+aylis-core = { version = "0.4.0", path = "../aylis-core" }
 # Cada plataforma leva só o backend dela (o resto entra nas seções abaixo).
 wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "wgsl"] }
 gltf = { version = "1.4", default-features = false, features = ["import", "utils", "names", "KHR_lights_punctual", "KHR_texture_transform", "extensions"] }

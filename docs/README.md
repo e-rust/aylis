@@ -16,8 +16,10 @@ iOS e no navegador.
 | [Notificações push](push.md) | o `PushNotifications`: registrar o aparelho (FCM, APNs, Web Push, WNS, UnifiedPush), receber as mensagens e o que o servidor manda |
 | [O app como servidor MCP](mcp.md) | deixar um agente de IA usar o app pelos componentes, sem depender da tela (`McpServer`, `McpTool`) |
 | [Carregamento e app enxuto](carregamento.md) | entender como o projeto vira executável e por que o app final só leva os componentes que usa |
+| [Publicar no Windows](publicar-windows.md) | pôr empresa e versão no `.exe`, assinar o executável e o instalador (certificado OV/EV ou Trusted Signing) e reduzir os alertas do SmartScreen e dos antivírus |
 | [Quanto cada componente custa](medidas.md) | saber quanto cada componente acrescenta ao executável e à memória RAM |
 | [Temas de plataforma e aparência](temas.md) | usar o visual do Material, do iOS e do Windows; misturar temas; ver quem usa qual tema |
+| [Vídeo e pintura](video-e-pintura.md) | tudo o que se configura na pintura e no vídeo (projeto, propriedades e variáveis de ambiente) e como medir na sua máquina (`AYLIS_BENCH`, `aylis-tool bench-frames`) |
 | [Renderizadores no Windows](renderizadores.md) | comparar Skia (CPU e GPU) com Direct2D: tamanho do executável, velocidade e memória |
 | [Material 3 e iOS 26 (Liquid Glass)](material3-ios.md) | usar os componentes dos catálogos do Material 3 e da Apple, e o vidro (desfoque do fundo) |
 | [Componentes do Vuetify no Aylis](vuetify.md) | achar o equivalente de cada componente do Vuetify (e os 29 acrescentados para cobrir a lista) |

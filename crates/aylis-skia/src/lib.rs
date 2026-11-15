@@ -56,31 +56,47 @@ fn sync_fonts(fonts: &FontCollection, sync: &FontSync) {
     shared.clear_caches();
 }
 
-/// Imagens de arquivo já decodificadas, até o limite `files` do projeto (as RGBA, como
-/// quadros de vídeo, não entram: o Skia as usa direto dos pixels).
+/// Imagens de arquivo já decodificadas, até o limite `files` do projeto, e as em pixels
+/// (RGBA/BGRA: um print, um quadro de vídeo) já copiadas para o Skia, até o `pixels_mb`.
 struct ImageCache {
     decoded: aylis_core::ImageCache<Option<sk::Image>>,
+    /// As imagens em pixels: antes, cada pintura copiava os pixels todos para um `sk::Data`
+    /// novo (um print 4K, 33 MB por quadro: ~6 ms de um arrasto que repinta 0,01% da tela,
+    /// `medicoes/drag_4k.json`). Guardada, a cópia é uma por imagem (o quadro de vídeo, que
+    /// aparece uma vez, custa o mesmo de antes e sai quando o app solta), e o Skia na GPU sobe
+    /// a textura uma vez em vez de a cada quadro.
+    pixels: aylis_core::ImageCache<Option<sk::Image>>,
 }
 
 impl Default for ImageCache {
     fn default() -> Self {
-        Self { decoded: aylis_core::ImageCache::named("Skia · arquivos decodificados") }
+        Self { decoded: aylis_core::ImageCache::named("Skia · arquivos decodificados"), pixels: aylis_core::ImageCache::named("Skia · imagens em pixels") }
     }
 }
 
 impl ImageCache {
+    /// A imagem em pixels, copiada uma vez (veja [`ImageCache::pixels`]).
+    fn pixels(&mut self, image: &Image, info: &sk::ImageInfo, pixels: &[u8], width: u32) -> Option<sk::Image> {
+        if let Some(cached) = self.pixels.get(image) {
+            return cached.clone();
+        }
+        let made = sk::images::raster_from_data(info, sk::Data::new_copy(pixels), width as usize * 4);
+        self.pixels.insert(image, made.clone(), pixels.len(), usize::MAX, aylis_core::image_cache::limits().pixels_bytes());
+        made
+    }
+
     fn get(&mut self, image: &Image) -> Option<sk::Image> {
         match image.source() {
             ImageSource::Rgba { width, height, pixels } => {
                 let info = rgba_info(*width, *height).with_alpha_type(sk::AlphaType::Unpremul);
-                sk::images::raster_from_data(&info, sk::Data::new_copy(pixels), *width as usize * 4)
+                self.pixels(image, &info, pixels, *width)
             }
             ImageSource::Bgra { width, height, pixels } => {
                 // O contrato do tipo: opaco ou já pré-multiplicado, como o Direct2D usa (antes o
                 // Skia tratava como não pré-multiplicado, e o semitransparente saía diferente; o
                 // relatório do Tabernáculo, T08).
                 let info = sk::ImageInfo::new((*width as i32, *height as i32), sk::ColorType::BGRA8888, sk::AlphaType::Premul, None);
-                sk::images::raster_from_data(&info, sk::Data::new_copy(pixels), *width as usize * 4)
+                self.pixels(image, &info, pixels, *width)
             }
             ImageSource::Encoded(bytes) => {
                 if let Some(cached) = self.decoded.get(image) {

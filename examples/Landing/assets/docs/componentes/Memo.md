@@ -14,6 +14,7 @@ Campo de texto de várias linhas: observações, descrições, código. Rola, qu
 |---|---|---|---|
 | `placeholder` | Texto de exemplo | texto | O texto apagado que aparece com o campo vazio. |
 | `border` | Borda | lógico | A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de um painel ou numa tabela). Ligada por padrão. |
+| `plain` | Só o texto | lógico | Só o texto: sem o fundo do tema (um `fill` próprio ainda vale), sem a borda, sem o padding e sem as barras de rolagem. Com o `auto_size`, a anotação sobre uma imagem. |
 
 ### Comportamento
 
@@ -29,6 +30,7 @@ Campo de texto de várias linhas: observações, descrições, código. Rola, qu
 | `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita (Tab ou seta para a direita aceita). |
 | `language` | Idioma | texto | Idioma da correção e das sugestões; vazio: o do sistema. |
 | `keyboard_suggestions` | Sugestões do teclado | lógico | Celular: a faixa de sugestões e a correção automática do teclado do sistema (desligue em códigos, logins, identificadores). |
+| `text_menu` | Menu de texto | lógico | O menu de texto padrão (Recortar, Copiar, Colar, Selecionar tudo) no botão direito e no toque longo, que no toque seleciona a palavra (com as alças para ajustar). Só abre quando nem o campo nem um pai tem `popup_menu`. Ligado por padrão. |
 
 ### Cursor
 

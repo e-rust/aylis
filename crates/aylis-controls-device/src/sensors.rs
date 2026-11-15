@@ -884,7 +884,9 @@ impl Component for Gamepad {
 /// atualização e modos de vídeo), `monitor(i)`, `refresh_rate(i)` e `form_monitor(form)` (em
 /// qual está a janela do form); `on_change` quando um monitor entra, sai ou muda de
 /// resolução. Em Rust, também direto: `ui.monitors()` e `ui.form_monitor(form)`. Para abrir
-/// num monitor, o `monitor` do form; para mudar, o `move_to_monitor` dele.
+/// num monitor, o `monitor` do form; para mudar, o `move_to_monitor` dele. No celular,
+/// `orientation()` (a orientação pedida agora) e `set_orientation(nome)` (a do app todo, a do
+/// projeto em execução; cada form pode ter a sua pela propriedade `orientation`).
 #[derive(Default)]
 pub struct Screen {
     version: Option<u64>,
@@ -922,6 +924,8 @@ impl Component for Screen {
             MethodInfo::new("monitor", &[PropKind::Int], Some(PropKind::String)).params(&["index"]),
             MethodInfo::new("refresh_rate", &[PropKind::Int], Some(PropKind::Float)).params(&["index"]),
             MethodInfo::new("form_monitor", &[PropKind::String], Some(PropKind::Int)).params(&["form"]),
+            MethodInfo::new("orientation", &[], Some(PropKind::String)),
+            MethodInfo::new("set_orientation", &[PropKind::String], None).params(&["orientation"]),
         ];
         METHODS
     }
@@ -939,6 +943,16 @@ impl Component for Screen {
                 let name = args.first().and_then(|v| v.to_str().ok()).unwrap_or_default();
                 let form = ctx.ui.find_path(name);
                 PropValue::Int(form.and_then(|f| ctx.ui.form_monitor(f)).map_or(-1, |i| i as i64))
+            }
+            // A orientação pedida agora (a do form à frente ou a do app) e a do app todo, que
+            // vale nos forms com `orientation = project` (a do projeto, em execução).
+            "orientation" => PropValue::String(aylis_core::PropEnum::name(ctx.ui.requested_orientation()).to_string()),
+            "set_orientation" => {
+                let name = args.first().and_then(|v| v.to_str().ok()).unwrap_or_default();
+                let orientation = aylis_core::ScreenOrientation::parse(name)
+                    .ok_or_else(|| format!("orientação '{name}' não existe (any, portrait, landscape, sensor_portrait, sensor_landscape)"))?;
+                ctx.ui.set_app_orientation(orientation);
+                PropValue::Null
             }
             _ => return Err(format!("Screen não tem o método '{method}'")),
         })

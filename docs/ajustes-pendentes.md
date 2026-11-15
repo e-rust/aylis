@@ -13,6 +13,295 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 14/11/2026: o lint dos não visuais e a porta do canal da IDE**
+
+- O `aylis-tool lint` cobrava conteúdo de exemplo também dos componentes não visuais, contra a
+  regra de 14/11 (não visual fica sem exemplo na galeria). Agora a regra `class-without-sample`
+  pula os não visuais (a classe que não cria controle, como no designer); 45 linhas saíram da
+  base (`resources/lint-baseline.tsv`), nenhuma entrou.
+- A porta do canal da IDE, quando a padrão está ocupada, chegava ao app pela variável
+  `AYLIS_DEV_PORT`, lida também em release. Decidido pelo autor em 14/11: argumento de linha de
+  comando e a variável removida. A IDE passa `--aylis-dev-port N` (no app em Rust, no fim; no
+  `aylis-host`, antes do `--`, que o aceita e ignora); o app só lê com a feature `dev`. No Android
+  continua o `adb reverse`. Um app em Rust que interpreta os próprios argumentos precisa ignorar
+  esse (só aparece quando a porta padrão está ocupada).
+
+**Pedido do NoOBS (14/11/2026): o editor de print como form do Aylis**
+
+O editor de print do NoOBS (Print Screen → área → anotar → copiar/salvar) é hoje uma janela Win32
+própria (GDI/GDI+); a ideia é refazê-lo como form do Aylis, com o texto das anotações no `Memo`.
+Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 6 se der):
+
+- [ ] 1. Um form sem borda, sempre na frente e sem botão na barra de tarefas, cobrindo o
+  retângulo virtual de todos os monitores (inclusive com origem negativa), visível em até
+  ~100 ms do `show()`, criado e destruído a cada print, com 1 pixel do form = 1 pixel físico
+  mesmo com escalas diferentes por monitor. Procede: o `span_monitors` abre as janelas dos
+  outros monitores na volta seguinte do laço e todas na escala do principal; não há modo de
+  pixel físico. Espera o fim da orientação da tela (mexe na mesma plataforma).
+  Feito em 14/11 (falta o autor conferir, roteiro 159; o caso real com dois monitores de escalas
+  diferentes, em [testes em dispositivos](testes-em-dispositivos.md)):
+  - a propriedade nova `physical_pixels` do `Form` ("Pixels físicos", Layout, desligada): 1
+    unidade = 1 pixel físico em todas as janelas do form (nos pedaços também, seja qual for a
+    escala de cada monitor), sem a escala do monitor nem o zoom (`Ui::form_zoom` dá 1); o clique
+    no pixel (x, y) da tela chega como (x, y) do form (com `full_screen` e `span_monitors`, do
+    retângulo virtual, inclusive com origem negativa), e a imagem do tamanho do form em pixels
+    bate pixel a pixel. Alterável em execução (`WindowCommand::UpdateScale`): a janela fica onde
+    está e o form passa a ter o tamanho dela na escala nova. Desligada, nada muda.
+    `Ui::physical_pixels` e `aylis_core::span::pixel_scale` no núcleo;
+  - abrir na hora: o form que já nasce em vários monitores (`span_monitors` com `full_screen`,
+    ou o lugar de abrir passando de um monitor) abre todas as janelas no primeiro `show()` — a
+    principal nasce no pedaço dela, sem moldura e escondida, as outras logo depois, e todas
+    aparecem juntas (antes a principal aparecia num monitor só, com moldura, e virava pedaço
+    depois);
+  - no Direct2D, as janelas da mesma placa dividem o dispositivo do Direct3D 11 e do Direct2D
+    (`D2dRenderer::shared_device`; criar um custava ~30 ms por janela), e a janela que fecha
+    solta na hora a swap chain e as imagens dela (`Flush` e `Trim`);
+  - o resto já havia: `border_style = none`, `topmost`, `show_in_taskbar = false` (as janelas
+    dos outros monitores nunca aparecem na barra), `force_foreground`, `close_action = free`; o
+    `free` agora também esquece os pedaços do form;
+  - medido (`print_overlay`, release, `AYLIS_SPAN_SPLIT=2` num 3840 × 2160 a 150%, 20 ciclos,
+    `medicoes/print_overlay.json`), do `show()` até a pintura de todo o form: com a imagem da
+    tela, 291 → 76 ms de mediana (o primeiro ciclo, frio, 291 → 139 ms; antes no modo lógico com
+    RGBA, depois em pixels físicos com o print em BGRA; com RGBA, 118 ms, a conversão da imagem
+    nova); sem imagem, 166 → 71 ms. Fechar e liberar 20 vezes deixa as mesmas janelas (4 → 4) e
+    a memória estável ciclo a ciclo (~200–250 MB depois do primeiro, antes ~320 MB);
+  - testes: `in_physical_pixels_a_screen_pixel_is_the_same_pixel_of_the_virtual_rect` e
+    `the_virtual_rect_with_a_monitor_above_and_to_the_left` (`aylis-core`, `span.rs`);
+    `in_physical_pixels_each_piece_shows_the_print_pixel_by_pixel` (Skia e Direct2D, 0 pixels
+    diferentes) e `the_print_form_opened_and_freed_twenty_times_leaves_nothing_behind`
+    (`crates/aylis-controls/tests/span_monitors.rs`); os exemplos `print_overlay` e
+    `span_monitors --auto` (liga e desliga o `physical_pixels` com o app aberto).
+  - A receita do NoOBS (o form do print):
+    `{"class": "Form", "border_style": "none", "window_state": "full_screen", "span_monitors": true,
+    "physical_pixels": true, "topmost": true, "show_in_taskbar": false, "force_foreground": true,
+    "key_preview": true, "close_action": "free", "children": [{"class": "Image", "align": "client",
+    "fit": "stretch"}]}`, com o print no `Image` por `set_picture(Image::bgra(...))` (o tamanho
+    do retângulo virtual em pixels).
+- [ ] 2. `Memo` e `Edit` que crescem com o texto (`auto_width`/`auto_height`, várias linhas, sem
+  quebra nem rolagem) e um modo "só texto" (sem borda, padding, rolagem nem fundo). Procede: não
+  há `auto_size` neles. Espera o fim do menu de texto do Edit e do Memo.
+  Feito em 14/11 (falta o autor conferir, roteiro 157), com o mecanismo do Label e do Button (o
+  `auto_size` do `ControlBase` e o `auto_width`/`auto_height` do controle, no layout do núcleo):
+  - `Memo` com `auto_size`: a largura é a linha mais larga mais o lugar do cursor e o padding, a
+    altura é o número de linhas vezes a altura da linha; cresce para a direita e para baixo a
+    partir do `left`/`top` (Shift+Enter quebra a linha) e encolhe ao apagar; `min_*`/`max_*`
+    limitam (passou do máximo, rola); com `wrap`, a largura fica e só a altura acompanha. A
+    largura de cada linha é guardada e só as linhas editadas são medidas de novo (o `splice` as
+    marca); a mais larga só é procurada de novo quando a que era a mais larga mudou. Sem o
+    `auto_size`, nada muda. O `large_text` em release, antes → depois: 8085 linhas, digitar
+    0,25 → 0,11 ms de evento e 7,75 → 3,77 ms de quadro, 100 alterações 0,30 → 0,12 ms e
+    7,52 → 2,85 ms; 1 milhão de linhas, digitar 27,3 → 24,8 ms e 5,95 → 5,76 ms, 100 alterações
+    33,5 → 25,6 ms e 4,83 → 4,85 ms, desfazer 37,7 → 31,4 ms (sem piora; a diferença é ruído
+    da máquina, com outras sessões compilando);
+  - `Edit` com `auto_size`: a largura do texto (ou do placeholder), do ícone, do "×", do
+    prefixo e do sufixo, mais o lugar do cursor e o padding; a altura, uma linha;
+  - a propriedade nova `plain` ("Só o texto") no `Memo` e no `Edit`: sem o fundo do tema (um
+    `fill` próprio ainda vale), sem borda, sem padding e (no Memo) sem as barras de rolagem; o
+    recorte do texto não passa da caixa. A receita da anotação: `auto_size: true, plain: true`
+    no `left`/`top` do clique (o exemplo `annotation` do `aylis-platform-winit`);
+  - testes `an_auto_sized_memo_follows_the_text` e `an_auto_sized_edit_follows_the_text`
+    (`crates/aylis-controls/tests/plain_text.rs`).
+- [ ] 3. O `Memo` transparente sobre uma imagem: o fundo aparece, a seleção translúcida, o cursor
+  visível em qualquer fundo, o mesmo antialiasing na tela e na exportação, com um teste de
+  imagem. A conferir junto do item 2.
+  Feito em 14/11 (falta o autor conferir, roteiro 157). O teste
+  `a_plain_memo_over_a_picture_in_skia`/`_in_direct2d` (`tests/plain_text.rs`) pinta um Memo
+  `plain` com `auto_size`, com texto selecionado, sobre uma imagem com uma metade escura e uma
+  clara, e compara com `crates/aylis-controls/tests/visual/plain_memo-{skia,d2d}-windows.png`
+  (a mesma tolerância do teste visual da IDE; `AYLIS_UPDATE_VISUAL=1` regrava). Confere também:
+  o print intacto dentro da caixa onde não há letra; a seleção igual à mistura da cor do tema
+  com o print; a tela (o quadro da janela) e a exportação com os mesmos pixels. O que achou e
+  foi corrigido:
+  - o cursor tinha a cor do texto e sumia no fundo escuro (10 tons de contraste): sem fundo
+    (`plain` ou `fill` com menos de metade de opacidade), ele ganha um contorno por baixo na cor
+    do tema (`background` ou `text`, a que mais se afasta da do cursor), também no bloco e no
+    sublinhado;
+  - os temas de seleção opaca (Windows 7, Win32, Windows 10) cobriam a imagem e pintavam o texto
+    selecionado de branco (`selection_text`): sem fundo, a seleção fica com 40% e o texto na cor
+    dele;
+  - o antialiasing já era o mesmo (tons de cinza no Direct2D na janela e fora dela; o Skia pinta
+    a tela e o PNG pelo mesmo caminho): o teste agora garante.
+- [ ] 4. `Ui::render_rgba` de um retângulo do form, sem PNG no meio, com os mesmos pixels da
+  tela. Procede (há `render_png`, `snapshot` e o `render_rgba` do modo sem janela, da tela toda).
+  Feito em 14/11 (falta o autor conferir, roteiro 158):
+  - `Ui::render_rgba(id, rect, scale) -> Option<(largura, altura, pixels)>`: o retângulo `rect`
+    (nas coordenadas do controle) em RGBA, `ceil(rect * scale)` pixels, pelo desenho fora da tela
+    da plataforma (`OffscreenService::render_rgba`, novo, no Skia e no Direct2D), sem PNG. Num
+    form, é o caminho da janela quando repinta uma área (`paint_regions`: só o que toca o
+    retângulo, com o fundo do tema e o que fica por cima); num controle de dentro, como o
+    `snapshot` (fundo transparente). Pinta 16 pixels a mais em volta e corta: o Skia refaz a
+    curva cortada pela borda da imagem, e a beirada mudava (9 pixels numa faixa de 1 pixel que
+    cortava uma elipse, antes da moldura). Mesmo com ela, uma curva cortada na vertical ainda
+    muda até 5 tons na beirada no Skia (ele subdivide o resto da curva de outro jeito; é o mesmo
+    efeito da pintura por parte da janela no Skia); no Direct2D, igual pixel por pixel;
+  - pelo nome: o método `render_rgba(x, y, width, height, scale)` do Form (no catálogo e nos 7
+    clientes), atendido pelo `Ui::invoke` (dentro do `invoke` do form, ele sairia sem o próprio
+    fundo), devolve os pixels em base64 (`aylis_core::image::encode_base64`). Pelo protocolo, a
+    resposta passa do limite de 1 MB do `aylis-host` acima de ~440 × 440: recorte grande vai em
+    faixas (ou pelo Rust, direto);
+  - testes `a_rectangle_of_the_form_comes_out_like_the_same_piece_of_the_whole_in_skia` e
+    `_in_direct2d` (`crates/aylis-controls/tests/render_rgba.rs`): um form com imagem de fundo,
+    anotações num `on_paint` (seleção, traço, elipse) e um Memo; sete recortes (a seleção, o Memo
+    cortado, um canto, faixas de 1 a 7 pixels que cortam as curvas), em escala 1 e 2, saem
+    iguais pixel por pixel ao mesmo pedaço do form inteiro no Direct2D e, no Skia, com até 8
+    tons na beirada das curvas cortadas; o `invoke` devolve os mesmos bytes.
+- [ ] 5. O arrasto num form 4K com imagem de fundo abaixo de ~5 ms por quadro, repintando só o
+  que muda. Em parte: o limite de um quadro por atualização do monitor já existe (`frame_rate`
+  ou a taxa do monitor); falta medir o `on_paint` sem cache.
+  Medido e otimizado em 14/11 (falta o autor conferir, roteiro 158). A medida:
+  `cargo run --release -p aylis-platform-winit --example drag_4k --features d2d` (form 3840 ×
+  2160, imagem de fundo RGBA 4K, um `on_paint` com a seleção que anda e um traço que cresce, e o
+  lápis do `PaintCanvas` numa imagem 4K; Skia na CPU e Direct2D com a swap chain; confere a
+  imagem por partes com a inteira). Números em `medicoes/drag_4k.json` (ms por quadro, mediana):
+  - o que estava lento: o Skia copiava os pixels de uma imagem RGBA (33 MB no print) a cada
+    pintura, mesmo de 0,01% da tela (~6 ms fixos); o `PaintCanvas` repintava o controle todo a
+    cada movimento do mouse;
+  - o que mudou: o Skia guarda a imagem em pixels já copiada (`aylis-skia`, `ImageCache::pixels`,
+    até o `pixels_mb` do `image_cache`; sai quando o app solta a imagem, e o quadro de vídeo, que
+    aparece uma vez, custa a mesma cópia de antes); o `PaintCanvas` avisa só o pedaço novo do
+    traço e onde a seleção arrastada estava e ficou (`ctx.repaint_part`);
+  - Skia na CPU, antes → depois: seleção por parte 6,94 → 0,74; traço por parte 5,65 → 0,07;
+    `PaintCanvas` 45,5 → 0,11 (área 100% → 0,9%). Avisando o controle todo (`ui.damage`), a tela
+    4K inteira continua ~33 ms no Skia na CPU: o editor tem de avisar por parte
+    (`ui.damage_part`, como no exemplo: as faixas das bordas da seleção, o último pedaço do
+    traço). Direct2D (o padrão no Windows): tudo abaixo de 1 ms do processo, antes e depois;
+  - teste `drawing_and_dragging_a_selection_in_a_paint_canvas_repaint_only_what_changed`
+    (`partial_paint.rs`): o traço e a seleção arrastada repintam só um pedaço, igual à pintura
+    inteira.
+- [ ] 6. Trazer o form para a frente quando outro app está à frente (o Windows recusa o
+  `SetForegroundWindow` depois do atalho global; o NoOBS usa `AttachThreadInput`). Procede: não
+  existe.
+  Feito em 14/11 (falta o autor conferir, roteiro 158): a propriedade `force_foreground` do Form
+  (rótulo "Forçar a frente ao mostrar"; padrão desligada). Ao abrir, ao `Show` e ao trazer para a
+  frente, no Windows, a janela vem pelo caminho do NoOBS (`win32::force_foreground`: liga por um
+  instante a entrada desta thread à da janela em primeiro plano com `AttachThreadInput`, depois
+  `BringWindowToTop` + `SetForegroundWindow` + `SetFocus`, e desliga); sem ela, e nas outras
+  plataformas, o `focus_window` do winit (que tenta com um Alt sintético, o que um hook de
+  teclado engole). A decisão é do núcleo (`Ui::forces_foreground`; nunca no designer), com o
+  teste `only_a_form_with_force_foreground_takes_the_forced_path` (`tests/render_rgba.rs`). O
+  exemplo `foreground` (`aylis-platform-winit`) abre um form por um timer, 5 s depois, e diz se
+  ele ficou em primeiro plano; aqui, sem ninguém usando a máquina, o Windows deixou ir para a
+  frente com e sem a propriedade (passado o `ForegroundLockTimeout` sem entrada, ele libera), e
+  o caso de verdade (outro app recebendo cliques) fica com o autor.
+
+**Pedidos de 14/11/2026 (de outra sessão): o ponteiro do clique, a câmera no Direct2D e os executáveis marcados pelo antivírus**
+
+- [ ] O antivírus corporativo (Cortex XDR da Palo Alto) e o SmartScreen marcavam como suspeitos
+  os executáveis gerados pelo Aylis: o `.exe` do app só tinha o ícone, sem dados de versão, e nada
+  era assinado. Feito em 14/11 (falta o autor conferir com um certificado de verdade; guia em
+  [publicar-windows.md](publicar-windows.md)):
+  - o `aylis-build` grava o `RT_VERSION` (VS_VERSIONINFO, StringFileInfo `041604B0` ou
+    `040904B0`, VarFileInfo) no mesmo `.res` do ícone, escrito à mão como ele
+    (`aylis_build::VersionInfo`, `add_version`, `read_version_data`), com a empresa
+    (`publish.publisher`), o produto, a versão e o nome do `.exe` publicado; a IDE também leva os
+    dados dela. Teste que liga um `.exe` com o `.res` e lê pelo Windows
+    (`windows_reads_the_version_of_a_linked_exe`);
+  - a publicação do Windows assina o `.exe` (antes do instalador) e o instalador (`.msi`, NSIS,
+    Inno) com o `signtool` e carimbo de tempo SHA-256 (`aylis_tools::codesign`); o certificado
+    vem das Opções da IDE → Assinatura (`tools.json`: a impressão digital, um `.pfx` com a senha
+    só em `AYLIS_SIGN_PASSWORD`, ou o Azure Trusted Signing por `/dlib` e `/dmd`); sem
+    certificado, um aviso e segue. No projeto, só o `publish.windows.skip_signing` (Opções do
+    projeto → Windows); numa publicação, `--no-sign` no `aylis-tool publish` e `sign: false` no
+    MCP. A verificação de ambiente ganhou o item "Assinatura de código";
+  - as páginas da Landing regravadas com o guia novo.
+
+- [ ] O `on_click` chegava sem o ponteiro (onde, com que botão e teclas). Feito em 14/11 (falta o
+  autor conferir num app e num backend de outra linguagem), sem mudar o argumento dos handlers:
+  `Ui::click_pointer()` (`ClickPointer`: a posição no controle e no form, o botão, as teclas, os
+  cliques e se veio do mouse, do toque ou da caneta) vale durante o handler do `on_click`; `None`
+  no clique do teclado e no do código. No protocolo, o evento leva `pointer` (`x`, `y`, `form_x`,
+  `form_y`, `button`, `modifiers`, `kind`, `clicks`), e os 7 clientes o expõem (`ev.pointer`,
+  `ev.Pointer`, `AylisPointer` no Pascal...). Testes `the_mouse_click_brings_the_pointer`,
+  `the_keyboard_and_code_clicks_have_no_pointer` e `the_mouse_click_event_brings_the_pointer`.
+- O `on_change` "atrasado": conferido em 14/11, não há atraso no código (a fila é entregue logo
+  depois de cada tecla ou clique, e o `on_change` do Edit sai na hora pelo protocolo); só os
+  controles de arrastar (`TrackBar`, `Slider`...) juntam os valores enquanto o backend trata o
+  anterior, de propósito. Espera a outra sessão dizer o controle e o caso.
+- [ ] O Direct2D criava um bitmap novo na placa a cada quadro de câmera ou de vídeo. Feito em
+  14/11: o bitmap de um quadro já solto, do mesmo tamanho, recebe os pixels do novo
+  (`CopyFromMemory`), só para quadros de até 1 MB (cerca de 640 × 400): medido
+  (`medicoes/d2d_frames.json`, `crates/aylis-d2d/examples/camera_frames.rs`), 36 câmeras de
+  320 × 180 caem de 7,3 para 1,7 ms por quadro e 16 de 480 × 270 de 2,5 para 1,6 ms; acima de
+  1 MB copiar custava mais que criar (uma de 1920 × 1080: 0,9 contra 1,4 ms), então segue criando.
+  O "um post por quadro" não procedia: a câmera e o vídeo já deixam no máximo um aviso pendente
+  (`notify_frame`).
+  Configurável (pedido do autor em 14/11: "essas configurações de vídeo e pintura sejam
+  acessíveis para o programador poder testar no seu próprio ambiente"): o `frame_reuse_kb` do
+  `image_cache` no projeto (Opções do projeto → Memória → Reaproveitar quadros; `0` desliga), o
+  `AYLIS_FRAME_REUSE_KB` no desenvolvimento, e o `aylis-tool bench-frames`, que mede na placa da
+  máquina com e sem e sugere o valor. O guia `docs/video-e-pintura.md` junta o que se configura
+  de pintura e vídeo (projeto, form, componentes e variáveis) e como medir. A regra, confirmada
+  pelo autor em 14/11: o projeto configura o app todo, o form configura o form, e a variável de
+  ambiente só vale no desenvolvimento.
+  Feito em 14/11 também (falta o autor conferir, roteiro 153), pelo pedido "em tempo de execução
+  as configurações devem estar disponíveis para serem alteradas":
+  - o componente `RenderSettings` (não visual, System, `aylis-controls-base`), com `pixels_mb`,
+    `files`, `layers_mb`, `auto_layers` e `frame_reuse_kb` computadas sobre os valores do
+    processo: ler diz o que vale, trocar vale no app inteiro no quadro seguinte (o
+    `LayerCache::get` solta o excedente quando o limite baixa; `auto_layers` repinta). Fora da
+    faixa, ajustado (como o `ImageCacheLimits::clamped`). Não gravadas no form (são de
+    execução): a configuração de uma vez é a do projeto. No designer, a troca fica só no
+    componente, sem mexer na IDE. Sem exemplo na galeria, como os outros não visuais; a página
+    tem o texto de `docs/componentes/RenderSettings.md`;
+  - a propriedade `frame_reuse_kb` do Form (`-1`, o padrão: o do projeto; `0`: sempre cria;
+    acima de 32768, ajustado), gravada no form. A plataforma passa o valor do form ao alvo do
+    Direct2D da janela a cada quadro (`Ui::form_frame_reuse_kb`,
+    `HwndTarget::set_frame_reuse_kb`), e o d2d decide em três níveis
+    (`image_cache::frame_reuse_limit`: o `AYLIS_FRAME_REUSE_KB` só em debug, o form, o app). No
+    Skia e no navegador, sem efeito (não reaproveitam);
+  - testes em `crates/aylis-controls/tests/render_settings.rs` e em
+    `crates/aylis-core/tests/image_cache.rs`.
+  - conferido com o `camera_frames` (36 câmeras de 320 × 180, 300 quadros, release), que ganhou
+    o 6º argumento, o limite do form: o do app em `0` cria 10800 bitmaps (7,0 ms por quadro), em
+    `1024` cria 72 (1,8 ms); o do form ganha do app (app `1024` e form `0`: 10800, 7,6 ms; app `0`
+    e form `1024`: 72, 2,0 ms).
+- O teste `aylis-ide --test mcp` falha cerca de uma vez em três com os quatro casos em paralelo
+  (`ConnectionReset` ao ler a resposta, `tests/mcp.rs:36`); um caso por vez passa. Já falhava
+  antes de 14/11 (na rodada da 0.3.0): para a sessão do MCP da IDE investigar.
+- [ ] O menu de texto dos campos no celular (relatado por outra sessão em 14/11: "No Motorola
+  Edge 30 Neo (Android 14), ao cadastrar um servidor, o toque longo sobre o texto de um Edit não
+  abre o menu de texto que todo campo do Android tem (Recortar, Copiar, Colar, Selecionar tudo),
+  nem seleciona a palavra. Não há como colar a senha ou o endereço vindos de outro app"). Feito em
+  14/11 (falta o autor conferir no celular, roteiro 156):
+  - no núcleo, o gancho `Component::context_menu(ctx, at, touch) -> bool` (padrão: o do `inner`,
+    senão `false`). O `open_popup_menu` (botão direito) e o toque longo procuram primeiro o
+    `popup_menu` do controle e dos pais (o do app vence, como antes) e, sem nenhum, chamam o
+    gancho do controle tocado e dos pais. O toque longo que abre um menu é dono do soltar do dedo:
+    o controle não ganha o foco (o foco fechava o menu, que abria e sumia num `Edit` com
+    `popup_menu`) nem o item embaixo do dedo é escolhido (`Press::menu`);
+  - no `Edit` e no `Memo` (e em quem os usa por dentro pelo `inner`: `NumberBox`, `DateEdit`,
+    `TimeEdit`, `DateTimeEdit`, `AutoComplete`, `CodeEditor`, o `CellEditor` dos dados), o menu de texto
+    (`crates/aylis-controls-base/src/text_menu.rs`): Recortar, Copiar, Colar e Selecionar tudo
+    (`aylis_core::messages::t`, com inglês e espanhol; os textos já estavam nas 11 línguas da IDE).
+    Recortar e Copiar desligados sem seleção; com `read_only`, só Copiar e Selecionar tudo; na
+    senha, sem Copiar e Recortar. Cada item manda ao campo a tecla do atalho (Ctrl+X/C/V/A): o
+    `on_change`, o `on_paste`, o desfazer, o `max_length`, os caracteres e a máscara são os do
+    teclado. Sobre uma palavra errada (`spellcheck`), as correções vêm em cima, um divisor e os
+    itens de texto (antes o menu das correções abria no apertar do botão direito e, com um
+    `popup_menu`, abriam os dois);
+  - a propriedade `text_menu` (padrão ligada, Comportamento) no `Edit` e no `Memo` desliga o menu;
+    o rótulo nas 12 línguas em `properties.tsv` e o catálogo regravado;
+  - o toque longo seleciona a palavra sob o dedo e o menu abre embaixo da linha; com o menu aberto
+    (ele tem o foco), a seleção continua à vista e, ao escolher ou fechar, o foco volta ao campo com
+    a mesma seleção (o `auto_select` não seleciona tudo de novo);
+  - as alças da seleção feita pelo toque: uma bolinha com um traço embaixo de cada ponta, na cor
+    `primary` do tema, desenhadas por cima do form (`PaintCtx::overlay`: saem da caixa do campo).
+    Arrastar uma alça muda aquela ponta (sem cruzar a outra); durante o arrasto o
+    `pan_on_touch` do campo fica desligado (não rola o form). O campo recebe o dedo nas alças pelo
+    `hit_slop`/`contains_point`. Com o mouse, não há alças; o teclado, o clique e o digitar as
+    tiram (Ctrl+A e Ctrl+C não);
+  - testes em `crates/aylis-controls/tests/text_menu.rs` (toque longo, botão direito, cada item
+    com a área de transferência falsa, `on_change`/`on_paste`/desfazer, `read_only`, senha, o
+    `popup_menu` do app vencendo, `text_menu` desligado, arrastar as alças, o Memo e o NumberBox);
+    o teste da ortografia (`tests/text.rs`) passou a soltar o botão direito.
+  Ficou de fora: Colar fica sempre ligado com a área de transferência da plataforma (saber se há
+  texto exige ler o texto: no Android 12+ isso mostra o aviso "colado da área de transferência" e
+  no navegador pede permissão; sem plataforma, vale a cópia do processo); a alça única do cursor
+  depois de um toque (opcional no pedido); a barra flutuante do Android (o menu é o `PopupMenu`
+  do Aylis); o `RichEditor` não ganhou o menu. Um controle irmão desenhado depois do campo, embaixo
+  dele, fica com o toque na área das alças. Com as alças à vista, o campo é pintado com o form
+  inteiro (o `overlay` não tem área própria), só enquanto a seleção do toque existe.
+
 **Pedidos de 14/11/2026: a barra de status, a tecla Voltar, os gestos e o fim da rolagem no celular**
 
 - [ ] Um componente para mudar a cor da barra de status do Android e do iOS (pedido do autor em
@@ -54,6 +343,13 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   (uma pergunta, `handled`), que o form do topo recebe primeiro (`Ui::back_pressed`); sem
   tratar, o comportamento de antes. Também no Pascal (`var Handled`) e nos outros clientes pelo
   nome; `GENERATOR_VERSION` 12. Teste `the_back_key_asks_the_top_form_first`.
+  Defeito achado pelo RTSPlayer em 14/11 e corrigido: voltar do player trocava a tela e também
+  mandava o app para segundo plano. O handler do `on_back` chamava o próprio form por dentro
+  (`with_form`, ocupado com o handler); o Aylis adiava essa chamada levando a pergunta junto, e a
+  resposta `handled` do handler se perdia. Agora só o despacho do handler da pergunta pode levá-la
+  (`Ui::claim_question`); a chamada de dentro só espera. Teste
+  `a_call_to_the_same_form_inside_on_back_does_not_take_the_question` (falha com o código antigo).
+  O contorno do RTSPlayer (responder na hora e trocar a tela por `ui.poster().post`) pode sair.
 
 - [ ] Os gestos do celular que faltam (pergunta do autor em 14/11: "se ja tem componente que
   suporte os gestos dos smartphones"). Já existem: em todo controle o `on_long_press`, o
@@ -94,6 +390,38 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   plataforma escolhe o padrão (Android 12 ou mais: esticar; antes: brilho na cor `primary` do
   tema; iOS: mola; desktop: nada); a animação só roda enquanto volta. Teste
   `the_end_of_scroll_effect_paints_by_parts_and_goes_back` (`partial_paint`).
+
+- [ ] A orientação da tela no celular (pergunta do autor em 14/11: "preciso saber se tem alguma
+  configuração facilitada para controlar a rotação de tela do projeto e formulários quando
+  estão no smartphone"). Havia só o `publish.android.orientation` (o manifesto do Android, fixo);
+  nada no iOS, no form nem em execução. Aprovado pelo autor em 14/11: os três níveis, no Android
+  e no iOS. Feito em 14/11 (falta o autor conferir no celular e no iPhone, roteiro 155):
+  - **projeto:** o `orientation` do `.aylisproj` (`any`/vazio, `portrait`, `landscape`,
+    `sensor_portrait`, `sensor_landscape`; `aylis_core::ScreenOrientation`), em Opções do
+    projeto → Geral → *Orientação da tela*. Vai para o `android:screenOrientation` e para o
+    `UISupportedInterfaceOrientations` (e `~ipad`, com `UIRequiresFullScreen` quando não são
+    todas) do `Info.plist`, somado às orientações próprias dos forms. Substituiu o
+    `publish.android.orientation`: um `.aylisproj` com a chave antiga é lido sem erro, mas ela é
+    ignorada (o app volta a girar) e some no próximo salvar; refaça a escolha nas Opções (na
+    0.x não há conversão);
+  - **form:** a propriedade `orientation` do Form (`aylis_core::FormOrientation`, padrão
+    `project`); o form à frente manda, e fechá-lo devolve a do de baixo ou a do projeto;
+  - **em execução:** a propriedade do form gira na hora; o app todo pelo `set_orientation` do
+    `Screen` (e `orientation()`), em todas as linguagens; em Rust, `Ui::set_app_orientation` e
+    `Ui::requested_orientation`. O núcleo calcula o pedido (`aylis_core::orientation`) e a
+    plataforma aplica quando muda: Android pelo `Activity.setRequestedOrientation` (JNI, sem
+    mexer na `AylisActivity.java`), iOS pelo `set_valid_orientations` do winit (não compilado
+    aqui: precisa de Mac); desktop e navegador sem efeito (no navegador o `screen.orientation.lock`
+    só vale em tela cheia: ficou de fora);
+  - **desenvolvimento:** `AYLIS_ORIENTATION` (ou `debug.aylis.orientation` no Android), pelo
+    `diagnostic_setting`: só em debug, por cima do projeto e dos forms;
+  - `GENERATOR_VERSION` 13, catálogo regravado. Ficou de fora o designer mostrar o aparelho
+    deitado pelo form (o aparelho é do projeto e o designer grava a escolha no `device`).
+  Testes: `crates/aylis-controls/tests/orientation.rs` (4) e, no `aylis-tools`,
+  `the_project_orientation_goes_to_the_android_manifest` e
+  `the_project_and_form_orientations_go_to_the_ios_plist`. Atenção no iOS: uma orientação pedida
+  só pelo código, que nem o projeto nem um form declaram, não está no `Info.plist`, e o iOS
+  recusa (pode encerrar o app); por isso o publicar soma as dos forms.
 
 **Defeitos relatados por outras sessões (13/11/2026)**
 
@@ -216,7 +544,7 @@ Lote 1, os defeitos (feito em 11/11; testes `aylis-controls/tests/tabernaculo.rs
 - I01: a IDE pega o `CARGO_HOME` e o `RUSTUP_HOME` do usuário (registro). I02: a verificação
   mostra o erro do cargo. I03: com o rustup já instalado, o "Corrigir" instala o toolchain por
   ele. I04: a porta do canal ocupada, a IDE abre na próxima livre e avisa o app
-  (`AYLIS_DEV_PORT`; no Android, o `adb reverse`).
+  (o argumento `--aylis-dev-port`; no Android, o `adb reverse`).
 - W01: o WebView só pega o foco ao nascer se for o primeiro da ordem de tabulação do form.
 - W05 e W06: o VideoPlayer e o MediaPlayer abrem em segundo plano (`on_ready`, `on_error`); o
   `play` antes de abrir toca quando ficar pronto.

@@ -1,0 +1,45 @@
+{
+  "descricao": "O arrasto num form 3840 × 2160 com uma imagem de fundo RGBA do tamanho da tela (o editor de print do NoOBS, item 5 do pedido de 14/11/2026): crates/aylis-platform-winit/examples/drag_4k.rs, release, 120 quadros por cenário, sem janela no Skia (o buffer de 4K da janela na CPU, sem a apresentação) e com uma janela escondida e a swap chain da placa no Direct2D (sem esperar o monitor). Tempos em ms por quadro (mediana e p95) da pintura e da apresentação; no Direct2D, o tempo do processo (a placa trabalha em paralelo e, se não desse conta, o Present seguraria). area_pct = média da fração da tela repintada (no paintcanvas, o primeiro quadro, o clique, é inteiro: ~0,83 dos 0,855%). A imagem por partes é conferida com a pintura inteira no Skia (0 pixels diferentes em todos). Medido em 14/11/2026, rodadas alternadas antes e depois na mesma máquina (a do autor, com outras sessões compilando: a 2ª rodada saiu mais lenta nas duas versões; vale a 1ª).",
+  "cenarios": {
+    "selecao_inteiro": "o retângulo de seleção anda 9 × 5 px por quadro (escurecido em volta, contorno, 8 alças) num on_paint; o app avisa com ui.damage (o controle todo)",
+    "selecao_parte": "o mesmo, avisando com ui.damage_part só as faixas das bordas de antes e de agora (o miolo não muda)",
+    "traco_inteiro": "um traço à mão livre cresce ~10 px por quadro no mesmo on_paint; ui.damage",
+    "traco_parte": "o mesmo, com ui.damage_part do último pedaço do traço",
+    "paintcanvas": "o lápis do PaintCanvas numa imagem 4K, pelo mouse (pointer_down e pointer_move)"
+  },
+  "antes": {
+    "o_que": "o Skia copiava os pixels de uma imagem RGBA/BGRA (33 MB no print 4K) a cada pintura, mesmo de 0,01% da tela; o PaintCanvas repintava o controle inteiro a cada movimento",
+    "skia_cpu": [
+      { "cenario": "selecao_inteiro", "quadro_p50_ms": 37.82, "quadro_p95_ms": 48.08, "area_pct": 100.0 },
+      { "cenario": "selecao_parte", "quadro_p50_ms": 6.94, "quadro_p95_ms": 7.52, "area_pct": 2.438 },
+      { "cenario": "traco_inteiro", "quadro_p50_ms": 37.71, "quadro_p95_ms": 43.54, "area_pct": 100.0 },
+      { "cenario": "traco_parte", "quadro_p50_ms": 5.65, "quadro_p95_ms": 6.13, "area_pct": 0.006 },
+      { "cenario": "paintcanvas", "quadro_p50_ms": 45.52, "quadro_p95_ms": 78.56, "area_pct": 100.0 }
+    ],
+    "direct2d": [
+      { "cenario": "selecao_inteiro", "quadro_p50_ms": 0.44, "quadro_p95_ms": 0.68, "area_pct": 100.0 },
+      { "cenario": "selecao_parte", "quadro_p50_ms": 0.64, "quadro_p95_ms": 0.87, "area_pct": 2.438 },
+      { "cenario": "traco_inteiro", "quadro_p50_ms": 0.48, "quadro_p95_ms": 0.71, "area_pct": 100.0 },
+      { "cenario": "traco_parte", "quadro_p50_ms": 0.41, "quadro_p95_ms": 0.59, "area_pct": 0.006 },
+      { "cenario": "paintcanvas", "quadro_p50_ms": 1.01, "quadro_p95_ms": 1.53, "area_pct": 100.0 }
+    ]
+  },
+  "depois": {
+    "o_que": "o Skia guarda a imagem em pixels já copiada (uma cópia por imagem, até o pixels_mb do image_cache); o PaintCanvas repinta só o pedaço novo do traço e onde a seleção arrastada estava e ficou",
+    "skia_cpu": [
+      { "cenario": "selecao_inteiro", "quadro_p50_ms": 33.48, "quadro_p95_ms": 40.12, "area_pct": 100.0 },
+      { "cenario": "selecao_parte", "quadro_p50_ms": 0.74, "quadro_p95_ms": 0.86, "area_pct": 2.438 },
+      { "cenario": "traco_inteiro", "quadro_p50_ms": 32.29, "quadro_p95_ms": 37.9, "area_pct": 100.0 },
+      { "cenario": "traco_parte", "quadro_p50_ms": 0.07, "quadro_p95_ms": 0.13, "area_pct": 0.006 },
+      { "cenario": "paintcanvas", "quadro_p50_ms": 0.11, "quadro_p95_ms": 0.23, "area_pct": 0.855 }
+    ],
+    "direct2d": [
+      { "cenario": "selecao_inteiro", "quadro_p50_ms": 0.46, "quadro_p95_ms": 0.69, "area_pct": 100.0 },
+      { "cenario": "selecao_parte", "quadro_p50_ms": 0.61, "quadro_p95_ms": 0.81, "area_pct": 2.438 },
+      { "cenario": "traco_inteiro", "quadro_p50_ms": 0.44, "quadro_p95_ms": 0.65, "area_pct": 100.0 },
+      { "cenario": "traco_parte", "quadro_p50_ms": 0.35, "quadro_p95_ms": 0.55, "area_pct": 0.006 },
+      { "cenario": "paintcanvas", "quadro_p50_ms": 0.61, "quadro_p95_ms": 0.96, "area_pct": 0.855 }
+    ]
+  },
+  "conclusao": "Abaixo de 5 ms por quadro quando o app avisa só o que mudou (ui.damage_part, ou ctx.repaint_part no componente): no Skia na CPU, de 6–7 ms para 0,07–0,74 ms; o PaintCanvas, de 45 para 0,11 ms. Avisando o controle todo (ui.damage) num form 4K, o Skia na CPU repinta a tela inteira (~33 ms; a imagem de fundo e o escurecido em 8 milhões de pixels) e não cabe em 5 ms: o editor tem de avisar por parte. No Direct2D (o padrão no Windows), todos ficam abaixo de 1 ms do processo."
+}

@@ -15,6 +15,19 @@ import * as readline from "node:readline";
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
+/** O ponteiro de um `on_click` (o campo `pointer` do evento). */
+export interface ClickPointer {
+  x: number;
+  y: number;
+  form_x: number;
+  form_y: number;
+  button: "primary" | "secondary" | "middle" | "back" | "forward";
+  /** As teclas apertadas: `ctrl`, `shift`, `alt`, `meta`. */
+  modifiers: string[];
+  kind: "mouse" | "touch" | "pen";
+  clicks: number;
+}
+
 export interface AylisEvent {
   event: string;
   handler: string;
@@ -23,6 +36,12 @@ export interface AylisEvent {
   args: Json;
   /** Dados extras de alguns eventos (a URL de quem mandou, no `on_message` do WebView). */
   info?: Record<string, string>;
+  /**
+   * No `on_click` do mouse, do toque ou da caneta: onde (`x`/`y` no componente, `form_x`/`form_y`
+   * no form), com que botão e com que teclas. Ausente no clique do teclado ou do código.
+   * `if (ev.pointer?.modifiers.includes("ctrl")) ...`
+   */
+  pointer?: ClickPointer;
   /**
    * Num evento que pergunta (`on_close_query`, `before_post`, `on_key_down`...), o número da
    * pergunta: a tela espera a resposta, que o cliente manda quando o handler termina.

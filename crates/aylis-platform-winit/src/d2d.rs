@@ -27,6 +27,12 @@ impl D2dBackend {
         Ok(self.target.follow_monitor(renderer, force)?)
     }
 
+    /// O `frame_reuse_kb` próprio do form da janela (`None`: o do projeto), passado a cada
+    /// quadro: trocar a propriedade em execução vale no quadro seguinte.
+    pub(crate) fn set_frame_reuse_kb(&mut self, kb: Option<u32>) {
+        self.target.set_frame_reuse_kb(kb);
+    }
+
     /// A regra de placa do form mudou (`Ok(true)`: trocou de placa).
     pub(crate) fn set_choice(&mut self, renderer: &D2dRenderer, choice: aylis_core::gpu::GpuChoice) -> Result<bool, Error> {
         Ok(self.target.set_choice(renderer, choice)?)

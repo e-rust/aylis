@@ -2,7 +2,8 @@
 //! projetos confiáveis, onde está cada compilador e ferramenta (uma aba por linguagem: vazio é
 //! o automático, o PATH e as pastas padrão), o editor externo e o MCP (o servidor, o token e a
 //! configuração do Claude Code e do Claude Desktop) e as origens dos pacotes de ferramentas
-//! (as pastas e os espelhos, com o "Testar as origens"). Vale no Windows, no macOS e no Linux.
+//! (as pastas e os espelhos, com o "Testar as origens") e, no Windows, o certificado da
+//! assinatura de código. Vale no Windows, no macOS e no Linux.
 
 use std::path::{Path, PathBuf};
 
@@ -24,8 +25,17 @@ const TOOL_TABS: &[(&str, &[&str])] = &[
     ("C++", &["vcvars", "gxx"]),
     ("Pascal", &["fpc", "fpc_units"]),
     ("Publicação", &["makensis", "bundletool", "wix"]),
+    (SIGNING_TAB, &["sign_thumbprint", "signtool", "sign_pfx", "sign_dlib", "sign_dmd", "sign_timestamp_url"]),
     ("Editor externo", &["vscode"]),
 ];
+
+/// A aba da assinatura de código (só no Windows; `aylis_tools::codesign`).
+pub const SIGNING_TAB: &str = "Assinatura";
+
+/// As chaves que são texto (sem "Procurar…" nem o que está em uso).
+fn is_text_key(key: &str) -> bool {
+    matches!(key, "sign_thumbprint" | "sign_timestamp_url")
+}
 
 /// O que está em uso para a chave (o caminho escolhido ou o achado no PATH e nas pastas
 /// padrão).
@@ -44,6 +54,8 @@ fn in_use(key: &str) -> Option<PathBuf> {
         "bundletool" => aylis_tools::publish::bundletool(),
         "wix" => aylis_tools::publish::wix(),
         "vscode" => aylis_tools::shell::vscode(),
+        "signtool" => aylis_tools::codesign::signtool(),
+        "sign_pfx" | "sign_dlib" | "sign_dmd" => aylis_tools::settings::tool(key),
         _ => None,
     }
 }
@@ -70,8 +82,10 @@ fn tool_row(ui: &mut Ui, state: &Shared, page: ComponentId, key: &'static str) -
     ui.control_mut(browse).unwrap().set_align(Align::Right).set_width(110.0).set_margins([8.0, 0.0, 0.0, 0.0]).set_style("flat");
     let edit = ui.add(Edit::new(aylis_tools::settings::tool_text(key)), line);
     ui.control_mut(edit).unwrap().set_align(Align::Client);
-    let _ = ui.set_prop(edit, "placeholder", ui.tr("automático (PATH e pastas padrão)"));
-    let used = label(ui, page, &in_use_text(ui, key), Align::Top, 22.0);
+    // Os arquivos da assinatura (o .pfx, os da nuvem) não têm automático: vazio é não usar.
+    let optional_file = matches!(key, "sign_pfx" | "sign_dlib" | "sign_dmd");
+    let _ = ui.set_prop(edit, "placeholder", ui.tr(if optional_file { "nenhum" } else { "automático (PATH e pastas padrão)" }));
+    let used = label(ui, page, &if optional_file { String::new() } else { in_use_text(ui, key) }, Align::Top, if optional_file { 0.0 } else { 22.0 });
     muted(ui, used);
     let state2 = state.clone();
     ui.on_click(browse, move |_, _| {
@@ -86,6 +100,21 @@ fn tool_row(ui: &mut Ui, state: &Shared, page: ComponentId, key: &'static str) -
         });
     });
     (edit, used)
+}
+
+/// Uma linha de texto (a impressão digital, o carimbo de tempo): o nome e o valor, com a
+/// orientação no lugar do vazio.
+fn text_row(ui: &mut Ui, page: ComponentId, key: &'static str) -> (ComponentId, ComponentId) {
+    let title = caption(ui, page, describe(key));
+    ui.control_mut(title).unwrap().set_margins([0.0, 10.0, 0.0, 2.0]);
+    let edit = ui.add(Edit::new(aylis_tools::settings::tool_text(key)), page);
+    ui.control_mut(edit).unwrap().set_align(Align::Top).set_height(32.0);
+    let placeholder = match key {
+        "sign_thumbprint" => ui.tr("certmgr.msc → Pessoal → Certificados → Detalhes → Impressão digital"),
+        _ => aylis_tools::codesign::DEFAULT_TIMESTAMP.to_string(),
+    };
+    let _ = ui.set_prop(edit, "placeholder", placeholder);
+    (edit, title)
 }
 
 /// Os campos da pasta de compilação: a pasta, se vale para todo o Rust da máquina e os dias do
@@ -405,15 +434,32 @@ pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
 
     // Uma aba por linguagem (e a das ferramentas de publicação e o editor externo).
     let mut fields: Vec<(&'static str, ComponentId, ComponentId)> = Vec::new();
+    let mut titles = vec!["Geral"];
     for (title, keys) in TOOL_TABS {
+        // A assinatura de código só existe na publicação do Windows.
+        if *title == SIGNING_TAB && !cfg!(windows) {
+            continue;
+        }
+        titles.push(*title);
         let page = TabControl::add_tab(ui, tabs, title);
         ui.control_mut(page).unwrap().set_padding(12.0);
         for key in keys.iter() {
             if *key == "vcvars" && !cfg!(windows) {
                 continue;
             }
-            let (edit, used) = tool_row(ui, state, page, key);
+            let (edit, used) = if is_text_key(key) { text_row(ui, page, key) } else { tool_row(ui, state, page, key) };
             fields.push((key, edit, used));
+        }
+        if *title == SIGNING_TAB {
+            let about = label(
+                ui,
+                page,
+                "Vale a primeira origem preenchida. O certificado fica nesta máquina, nunca no projeto; sem ele, a publicação avisa e sai sem assinatura.",
+                Align::Top,
+                40.0,
+            );
+            let _ = ui.set_prop(about, "wrap", true);
+            muted(ui, about);
         }
     }
     // Rust e Python: o que está em uso (instalados pelo Configurar linguagens).
@@ -484,7 +530,7 @@ pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
     ui.control_mut(packages_page).unwrap().set_padding(12.0);
     let sources = package_sources(ui, state, packages_page);
 
-    let titles = ["Geral"].into_iter().chain(TOOL_TABS.iter().map(|(t, _)| *t)).chain(["Rust e Python", "MCP", PACKAGES_TAB]);
+    titles.extend(["Rust e Python", "MCP", PACKAGES_TAB]);
     TabControl::select(ui, tabs, titles.into_iter().position(|t| t == tab).unwrap_or(0));
     crate::lang::translate(ui);
     let (state2, ids2) = (state.clone(), *ids);

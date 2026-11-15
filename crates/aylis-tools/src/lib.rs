@@ -44,6 +44,7 @@ pub mod build;
 pub mod build_index;
 pub mod cargo_config;
 pub mod cleanup;
+pub mod codesign;
 pub mod coverage;
 pub mod process;
 pub mod project_tests;
@@ -55,6 +56,7 @@ pub mod testdocs;
 pub mod emoji;
 pub mod handler_times;
 pub mod bench;
+pub mod bench_frames;
 pub mod report;
 pub mod run;
 pub mod serve;
@@ -269,9 +271,8 @@ pub fn location_in(line: &str, base: &Path) -> Option<Location> {
 
 /// Nome de arquivo seguro para o nome do aplicativo (`Vendas: 2024` → `Vendas 2024`).
 pub fn file_name(name: &str) -> String {
-    let clean: String = name.chars().filter(|c| !r#"<>:"/\|?*"#.contains(*c) && !c.is_control()).collect();
-    let clean = clean.trim().trim_end_matches('.').to_string();
-    if clean.is_empty() { "app".into() } else { clean }
+    // O mesmo do `aylis-build`: o `OriginalFilename` gravado no .exe tem de bater com o nome publicado.
+    aylis_build::file_name(name)
 }
 
 /// Copia uma pasta inteira (cria o destino).

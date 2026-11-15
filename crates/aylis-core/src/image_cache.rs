@@ -70,6 +70,46 @@ static FILES: AtomicU32 = AtomicU32::new(ImageCacheLimits::DEFAULT.files);
 static LAYERS_MB: AtomicU32 = AtomicU32::new(ImageCacheLimits::DEFAULT.layers_mb);
 static AUTO_LAYERS: AtomicBool = AtomicBool::new(true);
 
+/// Até quantos KB um quadro de câmera ou de vídeo (pixels novos a cada quadro) reaproveita o
+/// bitmap do quadro anterior na placa, em vez de criar outro (o `frame_reuse_kb` do
+/// `image_cache`). Medido em 14/11 no Direct2D (`medicoes/d2d_frames.json`): abaixo de ~1 MB
+/// reaproveitar é mais rápido (36 câmeras de 320 × 180: de 7,3 para 1,7 ms por quadro); acima,
+/// copiar num bitmap grande custa mais que criar outro. `0` desliga.
+pub const DEFAULT_FRAME_REUSE_KB: u32 = 1024;
+/// A faixa aceita de [`frame_reuse_kb`] (até um quadro 4K, ~32 MB).
+pub const FRAME_REUSE_KB_RANGE: (u32, u32) = (0, 32 * 1024);
+
+static FRAME_REUSE_KB: AtomicU32 = AtomicU32::new(DEFAULT_FRAME_REUSE_KB);
+
+/// Veja [`DEFAULT_FRAME_REUSE_KB`].
+pub fn frame_reuse_kb() -> u32 {
+    FRAME_REUSE_KB.load(Ordering::Relaxed)
+}
+
+/// Troca o limite (o projeto faz isso ao abrir); fora da faixa, ajustado.
+pub fn set_frame_reuse_kb(kb: u32) {
+    FRAME_REUSE_KB.store(kb.clamp(FRAME_REUSE_KB_RANGE.0, FRAME_REUSE_KB_RANGE.1), Ordering::Relaxed);
+}
+
+/// O valor da propriedade `frame_reuse_kb` do form como limite próprio: negativo é "o do
+/// projeto" (`None`); fora da faixa, ajustado.
+pub fn form_frame_reuse(value: i64) -> Option<u32> {
+    (value >= 0).then(|| value.min(FRAME_REUSE_KB_RANGE.1 as i64) as u32)
+}
+
+/// O limite que vale numa janela, em três níveis: o forçado no diagnóstico
+/// (`AYLIS_FRAME_REUSE_KB`, só em depuração), o do form (`frame_reuse_kb` ≥ 0) e o do
+/// projeto ([`frame_reuse_kb`], que o `RenderSettings` troca em execução).
+pub fn frame_reuse_limit(forced: Option<u32>, form: Option<u32>) -> u32 {
+    forced.or(form).unwrap_or_else(frame_reuse_kb)
+}
+
+/// Se um quadro de `width × height` (4 bytes por pixel) reaproveita o bitmap do anterior com o
+/// limite `kb`.
+pub fn reuses_frame(width: u32, height: u32, kb: u32) -> bool {
+    kb > 0 && (width as u64) * (height as u64) * 4 <= kb as u64 * 1024
+}
+
 /// Os limites em vigor.
 pub fn limits() -> ImageCacheLimits {
     ImageCacheLimits { pixels_mb: PIXELS_MB.load(Ordering::Relaxed), files: FILES.load(Ordering::Relaxed), layers_mb: LAYERS_MB.load(Ordering::Relaxed) }
@@ -178,8 +218,20 @@ impl<T> LayerCache<T> {
         bytes > 0 && bytes <= limits().layers_bytes()
     }
 
-    /// A camada pela chave completa, marcada como usada agora.
+    /// A camada pela chave completa, marcada como usada agora. Se o limite baixou em execução
+    /// (o `layers_mb` do `RenderSettings`), o excedente sai aqui, as usadas há mais tempo
+    /// primeiro (a pedida também, se não couber: quem chama desenha de novo).
     pub fn get(&mut self, key: u64) -> Option<&T> {
+        let max = limits().layers_bytes();
+        if self.bytes > max {
+            while self.bytes > max {
+                let Some(oldest) = self.entries.iter().min_by_key(|(_, e)| e.used).map(|(k, _)| *k) else { break };
+                if let Some(e) = self.entries.remove(&oldest) {
+                    self.bytes -= e.bytes;
+                }
+            }
+            self.publish();
+        }
         self.clock += 1;
         let clock = self.clock;
         self.entries.get_mut(&key).map(|e| {
@@ -355,6 +407,21 @@ impl<T> ImageCache<T> {
         self.publish();
     }
 
+    /// Como [`forget_dropped`](Self::forget_dropped), devolvendo os valores das imagens
+    /// soltas: o renderizador reaproveita o bitmap de um quadro de câmera no quadro seguinte.
+    pub fn drain_dropped(&mut self) -> Vec<T> {
+        let dead: Vec<u64> = self.entries.iter().filter(|(_, e)| !e.image.is_alive()).map(|(id, _)| *id).collect();
+        let mut out = Vec::with_capacity(dead.len());
+        for id in dead {
+            if let Some(e) = self.entries.remove(&id) {
+                self.bytes -= e.bytes;
+                out.push(e.value);
+            }
+        }
+        self.publish();
+        out
+    }
+
     /// Solta o que é de imagens que o app já soltou.
     pub fn forget_dropped(&mut self) {
         let mut freed = 0;
@@ -386,5 +453,25 @@ impl<T> ImageCache<T> {
     /// A soma dos `bytes` guardados.
     pub fn bytes(&self) -> usize {
         self.bytes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// O quadro solto sai com o valor (o bitmap que o renderizador reaproveita), e o vivo fica.
+    #[test]
+    fn the_dropped_frames_come_back_with_their_values() {
+        let mut cache: ImageCache<&str> = ImageCache::default();
+        let alive = Image::bgra(2, 2, vec![0; 16]);
+        let dropped = Image::bgra(2, 2, vec![1; 16]);
+        cache.insert(&alive, "vivo", 16, usize::MAX, usize::MAX);
+        cache.insert(&dropped, "solto", 16, usize::MAX, usize::MAX);
+        drop(dropped);
+        assert_eq!(cache.drain_dropped(), vec!["solto"]);
+        assert_eq!((cache.len(), cache.bytes()), (1, 16));
+        assert!(cache.drain_dropped().is_empty());
+        assert_eq!(cache.get(&alive), Some(&"vivo"));
     }
 }

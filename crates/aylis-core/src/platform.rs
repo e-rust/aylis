@@ -786,6 +786,14 @@ pub trait OffscreenService {
     /// `width` x `height` em unidades lógicas, multiplicadas por `scale` em pixels.
     fn render_png(&self, width: u32, height: u32, scale: f32, background: crate::Color, paint: &mut dyn FnMut(&mut dyn crate::Canvas)) -> Option<Vec<u8>>;
 
+    /// Os pixels RGBA (4 bytes por pixel, linha a linha, sem pré-multiplicar) de `width` x
+    /// `height` **pixels**, com `scale` pixels por unidade no canvas: o mesmo desenho do
+    /// `render_png`, sem codificar (o recorte de um print, `Ui::render_rgba`). `None`: o
+    /// serviço não sabe.
+    fn render_rgba(&self, _width: u32, _height: u32, _scale: f32, _background: crate::Color, _paint: &mut dyn FnMut(&mut dyn crate::Canvas)) -> Option<Vec<u8>> {
+        None
+    }
+
     /// Os pixels RGBA (opacos) de `width` x `height` (em pixels, escala 1): inteiro, ou só
     /// `area` repintada por cima de `previous` (do mesmo tamanho), o mesmo caminho da janela
     /// quando repinta por parte. A conferência da pintura por parte dos componentes usa

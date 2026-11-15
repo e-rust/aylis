@@ -64,6 +64,7 @@ fn each_class_function_registers_its_class() {
         ("DragImage", aylis::classes::DragImage),
         ("ApplicationEvents", aylis::classes::ApplicationEvents),
         ("EventInterceptor", aylis::classes::EventInterceptor),
+        ("RenderSettings", aylis::classes::RenderSettings),
         ("BusyWatcher", aylis::classes::BusyWatcher),
         ("OpenDialog", aylis::classes::OpenDialog),
         ("SaveDialog", aylis::classes::SaveDialog),

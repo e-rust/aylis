@@ -160,6 +160,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<DragImage>("System");
     ui.register_class::<ApplicationEvents>("System");
     ui.register_class::<EventInterceptor>("System");
+    ui.register_class::<RenderSettings>("System");
     ui.register_class::<BusyWatcher>("System");
     ui.register_class::<OpenDialog>("System");
     ui.register_class::<Permissions>("System");

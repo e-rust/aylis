@@ -128,6 +128,38 @@ fn the_layer_cache_keeps_the_byte_limit_and_forgets_by_owner() {
     image_cache::set_limits(ImageCacheLimits::DEFAULT);
 }
 
+/// O limite das camadas baixou em execução (o `RenderSettings`): o excedente sai no próximo
+/// uso, as usadas há mais tempo primeiro.
+#[test]
+fn a_lower_layer_limit_drops_the_excess_on_the_next_use() {
+    let _turn = LIMITS.lock().unwrap_or_else(|e| e.into_inner());
+    use aylis_core::LayerCache;
+    let mb = 1 << 20;
+    image_cache::set_limits(ImageCacheLimits { layers_mb: 10, ..ImageCacheLimits::DEFAULT });
+    let mut cache: LayerCache<&str> = LayerCache::default();
+    cache.insert(1, 100, "velha", 4 * mb);
+    cache.insert(2, 200, "nova", 4 * mb);
+    image_cache::set_limits(ImageCacheLimits { layers_mb: 5, ..ImageCacheLimits::DEFAULT });
+    assert_eq!(cache.get(200), Some(&"nova"));
+    assert_eq!((cache.len(), cache.bytes()), (1, 4 * mb));
+    image_cache::set_limits(ImageCacheLimits { layers_mb: 0, ..ImageCacheLimits::DEFAULT });
+    assert_eq!(cache.get(200), None, "nenhuma cabe mais");
+    assert!(cache.is_empty());
+    image_cache::set_limits(ImageCacheLimits::DEFAULT);
+}
+
+/// O valor da propriedade `frame_reuse_kb` do form e os três níveis do limite.
+#[test]
+fn the_frame_reuse_limit_has_three_levels() {
+    use aylis_core::image_cache::{FRAME_REUSE_KB_RANGE, form_frame_reuse, frame_reuse_limit};
+    assert_eq!(form_frame_reuse(-1), None);
+    assert_eq!(form_frame_reuse(0), Some(0));
+    assert_eq!(form_frame_reuse(i64::MAX), Some(FRAME_REUSE_KB_RANGE.1));
+    assert_eq!(frame_reuse_limit(Some(1), Some(2)), 1);
+    assert_eq!(frame_reuse_limit(None, Some(2)), 2);
+    assert_eq!(frame_reuse_limit(None, None), image_cache::frame_reuse_kb());
+}
+
 #[test]
 fn named_caches_show_up_in_the_memory_panel() {
     let (a, b) = (pixels(1), pixels(2));

@@ -1,4 +1,4 @@
-//! Projeto → Opções do projeto → Android: o que vai no manifesto (versão, SDK, orientação, tela, permissões,
+//! Projeto → Opções do projeto → Android: o que vai no manifesto (versão, SDK, tela, permissões,
 //! recursos e links que abrem o app) e o manifesto final como sai no publicar. As permissões
 //! que os componentes pedem aparecem com o motivo e não saem; as que a Play Store restringe
 //! têm aviso. O XML a mais fica em `android/manifest-extra.xml` (mesclado e conferido).
@@ -10,13 +10,11 @@ use aylis_tools::env::ANDROID_ALL_ABIS;
 use aylis_tools::publish::{ANDROID_MANIFEST_EXTRA, ANDROID_RESTRICTED, android_manifest_preview, android_required_permissions};
 
 use crate::app::{Ids, refresh};
-use crate::dialogs::{self, combo, edit, field, text_of};
+use crate::dialogs::{self, edit, field, text_of};
 use crate::state::Shared;
 use crate::widgets::{label, muted};
 
 const ARMV7: &str = "armeabi-v7a";
-
-const ORIENTATIONS: [&str; 6] = ["(gira com o aparelho)", "portrait", "landscape", "sensorPortrait", "sensorLandscape", "fullSensor"];
 
 fn check(ui: &mut Ui, parent: ComponentId, text: &str, on: bool) -> ComponentId {
     let c = ui.add(CheckBox::new(text), parent);
@@ -54,9 +52,11 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let _ = ui.set_prop(min_sdk, "placeholder", "26");
     let target_sdk = edit(ui, line, &if a.target_sdk == 0 { String::new() } else { a.target_sdk.to_string() });
     let _ = ui.set_prop(target_sdk, "placeholder", "34");
+    // A orientação vale para o Android e o iOS: fica em Opções do projeto → Geral (14/11).
     let line = field(ui, d.body, "Orientação");
-    let current = if a.orientation.is_empty() { ORIENTATIONS[0] } else { &a.orientation };
-    let orientation = combo(ui, line, &ORIENTATIONS, current);
+    let moved = ui.tr("(em Opções do projeto → Geral: vale também no iOS)");
+    let o = label(ui, line, &moved, Align::Client, 0.0);
+    muted(ui, o);
     let line = field(ui, d.body, "Tela");
     let fullscreen = check(ui, line, "Tela cheia", a.fullscreen);
     let line = field(ui, d.body, "");
@@ -93,7 +93,6 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
 
     let abis = a.abis.clone();
     let read = move |ui: &Ui| -> Result<AndroidOptions, String> {
-        let orientation = dialogs::combo_text(ui, orientation);
         let features = list(&text_of(ui, features))
             .into_iter()
             .map(|f| match f.strip_suffix(":opcional") {
@@ -105,7 +104,6 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             version_code: number(&text_of(ui, version_code))?,
             min_sdk: number(&text_of(ui, min_sdk))?,
             target_sdk: number(&text_of(ui, target_sdk))?,
-            orientation: if orientation == ORIENTATIONS[0] { String::new() } else { orientation },
             fullscreen: checked(ui, fullscreen),
             keep_screen_on: checked(ui, keep_on),
             tablet_only: checked(ui, tablet),

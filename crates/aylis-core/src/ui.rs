@@ -153,7 +153,14 @@ pub struct Ui {
     pub(crate) binding_refresh: Option<crate::bindings::BindingSink>,
     /// As vistas por largura de cada form (veja `views.rs`).
     pub(crate) views: HashMap<ComponentId, crate::views::ViewState>,
-    pending: Vec<(ComponentId, String, EventArgs)>,
+    /// Os eventos agendados; o `on_click` que saiu de um mouse ou toque leva o ponteiro (o
+    /// controle onde o botão foi solto e o ponteiro nele), que vale quando o handler roda.
+    pending: Vec<(ComponentId, String, EventArgs, Option<(ComponentId, crate::ClickPointer)>)>,
+    /// O ponteiro que está virando clique (do `pointer_up` do controle até o `click` dele): o
+    /// `on_click` agendado nesse meio o leva (veja [`Ui::click_pointer`]).
+    pub(crate) click_source: Option<(ComponentId, crate::ClickPointer)>,
+    /// O ponteiro do `on_click` cujo handler roda agora.
+    click_pointer: Option<crate::ClickPointer>,
     /// O último evento entregue e quantas vezes seguidas (para avisar de um possível laço).
     repeat: Option<(ComponentId, String, usize)>,
     /// Compartilhado (`Arc`): o tema padrão é o mesmo em todos os `Ui` (cada tema tem ~0,2 MB,
@@ -400,6 +407,8 @@ impl Ui {
             binding_refresh: None,
             views: HashMap::new(),
             pending: Vec::new(),
+            click_source: None,
+            click_pointer: None,
             repeat: None,
             theme: shared_theme(false),
             themes: vec![shared_theme(false), shared_theme(true)],
@@ -744,7 +753,7 @@ impl Ui {
             slot.generation = slot.generation.wrapping_add(1);
             self.free_slots.push(d.index);
         }
-        self.pending.retain(|(sender, _, _)| !gone(sender));
+        self.pending.retain(|(sender, _, _, _)| !gone(sender));
         self.color_names.retain(|(c, _), _| !gone(c));
         self.drop_tasks_of(&doomed);
         self.forget_instances(&doomed);
@@ -1657,14 +1666,28 @@ impl Ui {
         }
     }
 
-    /// O zoom em que o form `form` aparece: o do app vezes o `zoom` do form.
+    /// O zoom em que o form `form` aparece: o do app vezes o `zoom` do form. Num form em pixels
+    /// físicos ([`Ui::physical_pixels`]), sempre 1: lá 1 unidade é 1 pixel da tela.
     pub fn form_zoom(&self, form: ComponentId) -> f32 {
+        if self.physical_pixels(form) {
+            return 1.0;
+        }
         let own = match self.get_prop(form, "zoom") {
             Ok(PropValue::Float(z)) if z > 0.0 => z as f32,
             Ok(PropValue::Int(z)) if z > 0 => z as f32,
             _ => 1.0,
         };
         (self.zoom * own).clamp(0.25, 5.0)
+    }
+
+    /// O limite próprio do form `form` para reaproveitar os bitmaps dos quadros de vídeo (a
+    /// propriedade `frame_reuse_kb`; `None`: o do projeto). A plataforma passa ao alvo do
+    /// Direct2D da janela a cada quadro.
+    pub fn form_frame_reuse_kb(&self, form: ComponentId) -> Option<u32> {
+        match self.get_prop(form, "frame_reuse_kb") {
+            Ok(PropValue::Int(kb)) => crate::image_cache::form_frame_reuse(kb),
+            _ => None,
+        }
     }
 
     /// Avisa a plataforma que um zoom mudou (o `zoom` de um form chama isto).
@@ -2294,7 +2317,36 @@ impl Ui {
 
     /// Agenda um evento para ser entregue em [`process_events`](Self::process_events).
     pub fn queue_event(&mut self, id: ComponentId, event: &str, args: EventArgs) {
-        self.pending.push((id, event.to_string(), args));
+        // O clique do mouse ou do toque leva o ponteiro junto: o handler roda depois.
+        let pointer = if event == "on_click" { self.click_source } else { None };
+        self.pending.push((id, event.to_string(), args, pointer));
+    }
+
+    /// O ponteiro do clique cujo `on_click` está sendo tratado: onde (no controle e no form),
+    /// com que botão, com que teclas modificadoras e se foi mouse, toque ou caneta. `None`
+    /// quando o clique veio do teclado (Enter, Espaço, Alt+letra, o botão padrão do form), do
+    /// código ([`Ui::click`]) ou fora do handler de um `on_click`. O argumento do `on_click`
+    /// continua o mesmo; o ponteiro se pergunta aqui.
+    pub fn click_pointer(&self) -> Option<crate::ClickPointer> {
+        self.click_pointer
+    }
+
+    /// Roda `f` com `pointer` como o ponteiro do clique (o evento adiado por um
+    /// `EventInterceptor` que volta com a resposta).
+    pub(crate) fn with_click_pointer<R>(&mut self, pointer: Option<crate::ClickPointer>, f: impl FnOnce(&mut Ui) -> R) -> R {
+        let saved = (std::mem::replace(&mut self.click_pointer, pointer), self.click_source.take());
+        let result = f(self);
+        (self.click_pointer, self.click_source) = saved;
+        result
+    }
+
+    /// O ponteiro do clique agendado, nas coordenadas do controle `id` que o dispara (o
+    /// controle onde o botão foi solto, ou um pai ou filho dele que dispara o `on_click`).
+    fn click_pointer_for(&self, id: ComponentId, (target, pointer): (ComponentId, crate::ClickPointer)) -> crate::ClickPointer {
+        if id == target {
+            return pointer;
+        }
+        crate::ClickPointer { position: self.local_point(id, pointer.form_position), ..pointer }
     }
 
     /// Entrega os eventos agendados (inclusive os agendados pelos próprios handlers), até
@@ -2305,9 +2357,12 @@ impl Ui {
         let mut delivered = 0;
         while !self.pending.is_empty() {
             let mut batch = std::mem::take(&mut self.pending).into_iter();
-            for (id, event, args) in batch.by_ref() {
+            for (id, event, args, source) in batch.by_ref() {
                 self.count_repeat(id, &event);
-                self.fire(id, &event, &args);
+                // O ponteiro do clique vale só durante o handler deste evento (e o que ele
+                // chamar); um clique agendado pelo handler não herda o ponteiro de fora.
+                let pointer = source.filter(|_| self.contains(id)).map(|s| self.click_pointer_for(id, s));
+                self.with_click_pointer(pointer, |ui| ui.fire(id, &event, &args));
                 delivered += 1;
                 if delivered >= EVENTS_PER_ROUND {
                     break;
@@ -2411,6 +2466,11 @@ impl Ui {
         if let Some(error) = self.busy_error(id) {
             self.report_busy(&error);
             return Err(error.to_string());
+        }
+        // O desenho de uma área (o Form declara em `methods`): é o `Ui` que pinta, com o
+        // componente no lugar (dentro do `invoke` dele, o form sairia sem o próprio fundo).
+        if method == "render_rgba" {
+            return self.invoke_render_rgba(id, args);
         }
         let args = self.component_args(id, method, args);
         self.with_component(id, |c, ctx| c.invoke(ctx, method, &args)).unwrap_or_else(|| Err(Error::InvalidId.to_string()))
@@ -2589,9 +2649,13 @@ impl Ui {
         })
     }
 
-    /// Simula um clique (como `Button1.Click`).
+    /// Simula um clique (como `Button1.Click`). O clique pelo código não tem ponteiro
+    /// ([`Ui::click_pointer`] é `None` no `on_click`).
     pub fn click(&mut self, id: ComponentId) -> bool {
-        self.with_component(id, |c, ctx| c.click(ctx)).is_some()
+        let source = self.click_source.take();
+        let clicked = self.with_component(id, |c, ctx| c.click(ctx)).is_some();
+        self.click_source = source;
+        clicked
     }
 
     // =====================================================================

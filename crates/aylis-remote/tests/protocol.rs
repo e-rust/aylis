@@ -493,6 +493,30 @@ fn click_with_modifiers_uses_the_real_mouse() {
     assert!(e.contains("lateral"), "{e}");
 }
 
+/// O `on_click` do mouse leva o `pointer` (onde, o botão e as teclas); o do código, não. O
+/// `args` continua `null` nos dois.
+#[test]
+fn the_mouse_click_event_brings_the_pointer() {
+    let mut ui = ui();
+    let events = capture(&mut ui);
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "Frm", "width": 400, "height": 300, "children": [
+        { "class": "Button", "name": "btnOk", "text": "OK", "align": "client", "margins": [10, 20, 0, 0], "on_click": "ok_click" }
+    ] } }));
+    run(&mut ui, json!({ "cmd": "click", "target": "btnOk", "x": 30, "y": 15, "modifiers": ["ctrl", "alt"] }));
+    run(&mut ui, json!({ "cmd": "click", "target": "btnOk" }));
+    let events = events.borrow();
+    let clicks: Vec<&Value> = events.iter().filter(|e| e["event"] == "on_click").collect();
+    assert_eq!(clicks.len(), 2, "{events:?}");
+    let pointer = &clicks[0]["pointer"];
+    assert_eq!(clicks[0]["args"], Value::Null);
+    assert_eq!((pointer["x"].as_f64(), pointer["y"].as_f64()), (Some(30.0), Some(15.0)), "{pointer}");
+    assert_eq!((pointer["form_x"].as_f64(), pointer["form_y"].as_f64()), (Some(40.0), Some(35.0)), "{pointer}");
+    assert_eq!(pointer["button"], "primary");
+    assert_eq!(pointer["modifiers"], json!(["ctrl", "alt"]));
+    assert_eq!(pointer["kind"], "mouse");
+    assert!(clicks[1].get("pointer").is_none(), "o clique pelo código vem sem ponteiro: {}", clicks[1]);
+}
+
 /// `drag` arrasta de um componente a outro: o arrastar e soltar do Aylis recebe o que o
 /// origem declarou, e as teclas seguradas vão junto.
 #[test]

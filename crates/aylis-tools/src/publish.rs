@@ -2,7 +2,7 @@
 //!
 //! | Plataforma | Rust | Python |
 //! |---|---|---|
-//! | Windows/Linux/macOS | um executável só (forms e assets embutidos; ícone no .exe) | pasta com o `aylis-host`, o projeto e um atalho (precisa do Python na máquina) |
+//! | Windows/Linux/macOS | um executável só (forms e assets embutidos; ícone e dados de versão no .exe; no Windows, assinado se houver certificado, veja `codesign`) | pasta com o `aylis-host`, o projeto e um atalho (precisa do Python na máquina) |
 //! | Android | APK assinado (arm64 + x86_64) | — |
 //! | Navegador | pasta com `index.html` e o `.wasm` (sirva com qualquer servidor) | — |
 //! | iOS | `.app` para o simulador (num Mac) | — |
@@ -45,11 +45,14 @@ pub struct Options {
     /// O crate compilado no lugar do projeto (o app casca dos projetos em outras
     /// linguagens, no celular e no navegador).
     pub crate_dir: Option<PathBuf>,
+    /// Windows: não assinar nesta publicação, mesmo com certificado na máquina
+    /// ([`crate::codesign`]).
+    pub unsigned: bool,
 }
 
 impl Options {
     pub fn new(target: Target) -> Self {
-        Self { target, out_dir: None, debug: false, abis: Vec::new(), aylis_host: None, features: Vec::new(), android_bundle: false, installer: false, signing: None, crate_dir: None }
+        Self { target, out_dir: None, debug: false, abis: Vec::new(), aylis_host: None, features: Vec::new(), android_bundle: false, installer: false, signing: None, crate_dir: None, unsigned: false }
     }
 }
 
@@ -242,6 +245,14 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
     if cfg!(windows) {
         extra.extend(win_installer::copy_extra_files(project, out, sink)?);
     }
+    // A assinatura (Authenticode) com o certificado da máquina: o `.exe` antes de entrar no
+    // instalador, e o instalador depois. Sem certificado, um aviso só; o Executar não assina.
+    let signing = if cfg!(windows) && !options.debug {
+        crate::codesign::plan(options.unsigned || project.publish.windows.skip_signing, crate::codesign::Config::from_settings())
+    } else {
+        crate::codesign::Plan::Skip
+    };
+    crate::codesign::apply(&signing, std::slice::from_ref(&dest), true, control, sink)?;
     if options.installer && cfg!(windows) {
         // O tipo de instalador do projeto (`publish.windows.installer`): o `.msi` é o padrão.
         let main = match project.publish.windows.kind() {
@@ -249,6 +260,7 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
             aylis_project::WindowsInstaller::Nsis => win_installer::nsis(project, &dest, &extra, out, control, sink)?,
             aylis_project::WindowsInstaller::Inno => win_installer::inno(project, &dest, &extra, out, control, sink)?,
         };
+        crate::codesign::apply(&signing, std::slice::from_ref(&main), false, control, sink)?;
         return Ok(Published { main, dir: out.to_path_buf() });
     }
     Ok(Published { main: dest, dir: out.to_path_buf() })
@@ -1048,6 +1060,83 @@ pub const ANDROID_RESTRICTED: [&str; 12] = [
 pub const ANDROID_MANIFEST_EXTRA: &str = "android/manifest-extra.xml";
 
 /// O manifesto final do Android (o mesmo do publicar), para a aba Android mostrar.
+/// O `android:screenOrientation` da orientação do projeto (`None`: gira com o aparelho, sem o
+/// atributo).
+pub fn android_screen_orientation(orientation: aylis_core::ScreenOrientation) -> Option<&'static str> {
+    use aylis_core::ScreenOrientation as O;
+    match orientation {
+        O::Any => None,
+        O::Portrait => Some("portrait"),
+        O::Landscape => Some("landscape"),
+        O::SensorPortrait => Some("sensorPortrait"),
+        O::SensorLandscape => Some("sensorLandscape"),
+    }
+}
+
+/// As orientações do iOS (`UIInterfaceOrientation...`) de uma orientação do Aylis, no iPhone
+/// (`ipad` falso) ou no iPad. "Deitado num sentido" é o `LandscapeRight` (o botão de início à
+/// direita, como o `landscape` do Android).
+fn ios_orientations(orientation: aylis_core::ScreenOrientation, ipad: bool) -> &'static [&'static str] {
+    use aylis_core::ScreenOrientation as O;
+    const PORTRAIT: &str = "UIInterfaceOrientationPortrait";
+    const UPSIDE_DOWN: &str = "UIInterfaceOrientationPortraitUpsideDown";
+    const LEFT: &str = "UIInterfaceOrientationLandscapeLeft";
+    const RIGHT: &str = "UIInterfaceOrientationLandscapeRight";
+    match (orientation, ipad) {
+        // O iPhone não usa o de cabeça para baixo (os com entalhe nem deixam); o iPad, todos.
+        (O::Any, false) => &[PORTRAIT, LEFT, RIGHT],
+        (O::Any, true) => &[PORTRAIT, UPSIDE_DOWN, LEFT, RIGHT],
+        (O::Portrait, _) => &[PORTRAIT],
+        (O::SensorPortrait, _) => &[PORTRAIT, UPSIDE_DOWN],
+        (O::Landscape, _) => &[RIGHT],
+        (O::SensorLandscape, _) => &[LEFT, RIGHT],
+    }
+}
+
+/// As chaves de orientação do `Info.plist`: as do projeto somadas às dos forms com orientação
+/// própria (o iOS só gira para as que o `Info.plist` declara, e um form deitado num app em pé
+/// precisa da dele lá); a primeira é a do projeto, com que o app abre. No iPad, sem todas as
+/// orientações, o app pede a tela inteira (`UIRequiresFullScreen`, sem dividir a tela).
+pub fn ios_orientation_plist(project: aylis_core::ScreenOrientation, forms: &[aylis_core::ScreenOrientation]) -> String {
+    let list = |ipad: bool| {
+        let mut out: Vec<&str> = Vec::new();
+        for o in std::iter::once(&project).chain(forms) {
+            for name in ios_orientations(*o, ipad) {
+                if !out.contains(name) {
+                    out.push(name);
+                }
+            }
+        }
+        out
+    };
+    let array = |names: &[&str]| names.iter().map(|n| format!("<string>{n}</string>")).collect::<String>();
+    let (phone, pad) = (list(false), list(true));
+    let mut out = format!("  <key>UISupportedInterfaceOrientations</key><array>{}</array>\n", array(&phone));
+    out.push_str(&format!("  <key>UISupportedInterfaceOrientations~ipad</key><array>{}</array>\n", array(&pad)));
+    if pad.len() < 4 {
+        out.push_str("  <key>UIRequiresFullScreen</key><true/>\n");
+    }
+    out
+}
+
+/// As orientações próprias dos forms do projeto (a propriedade `orientation` da raiz de cada
+/// um; `project` não conta), sem repetir.
+pub fn form_orientations(project: &Project) -> Vec<aylis_core::ScreenOrientation> {
+    let mut out = Vec::new();
+    for entry in &project.forms {
+        let Ok(text) = std::fs::read_to_string(project.file(&entry.file)) else { continue };
+        let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) else { continue };
+        let own = json["root"]["orientation"]
+            .as_str()
+            .and_then(<aylis_core::FormOrientation as aylis_core::PropEnum>::from_name)
+            .and_then(aylis_core::FormOrientation::own);
+        if let Some(o) = own.filter(|o| !out.contains(o)) {
+            out.push(o);
+        }
+    }
+    out
+}
+
 pub fn android_manifest_preview(project: &Project) -> Result<String, String> {
     let has_icon = !project.publish.icon.is_empty();
     android_manifest(project, &project.lib_name(), has_icon)
@@ -1088,7 +1177,7 @@ fn android_manifest(project: &Project, package: &str, icon: bool) -> Result<Stri
     }
     let icon = if icon { "\n        android:icon=\"@mipmap/ic_launcher\"" } else { "" };
     let theme = if a.fullscreen { "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" } else { "@android:style/Theme.DeviceDefault.NoActionBar" };
-    let orientation = if a.orientation.is_empty() { String::new() } else { format!("\n            android:screenOrientation=\"{}\"", xml_escape(&a.orientation)) };
+    let orientation = android_screen_orientation(project.orientation()).map_or(String::new(), |o| format!("\n            android:screenOrientation=\"{o}\""));
     let keep_on = if a.keep_screen_on { "\n            android:keepScreenOn=\"true\"" } else { "" };
     // O AppLink: compartilhar arquivos (o provedor deles) e, com o `on_shared` num form, o app
     // na lista de compartilhar dos outros.
@@ -1878,12 +1967,13 @@ fn ios(project: &Project, options: &Options, out: &Path, control: &Control, sink
   <key>LSRequiresIPhoneOS</key><true/>
   <key>UILaunchScreen</key><dict/>
   <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
-{usage}</dict>
+{orientation}{usage}</dict>
 </plist>
 "#,
         id = project.identifier(),
         name = xml_escape(project.app_name()),
         version = project.version(),
+        orientation = ios_orientation_plist(project.orientation(), &form_orientations(project)),
         usage = ios_usage_plist(&device_needs(&project.dir().join("forms")), aylis_build::used_classes(&project.dir().join("forms")).iter().any(|c| c == "SaveDialog"))
             + if push { "  <key>UIBackgroundModes</key><array><string>remote-notification</string></array>\n" } else { "" },
     );
@@ -2026,6 +2116,69 @@ mod tests {
         let _ = std::fs::remove_file(&file);
     }
 
+    /// A orientação do projeto (14/11) no manifesto do Android, com cada valor; `any` (ou vazio)
+    /// sai sem o atributo.
+    #[test]
+    fn the_project_orientation_goes_to_the_android_manifest() {
+        let base = std::env::temp_dir().join(format!("aylis_orientation_android_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let mut project = aylis_project::create(&base, "Gira", Language::Rust).unwrap();
+        for (value, attribute) in [
+            ("", None),
+            ("any", None),
+            ("portrait", Some("portrait")),
+            ("landscape", Some("landscape")),
+            ("sensor_portrait", Some("sensorPortrait")),
+            ("sensor_landscape", Some("sensorLandscape")),
+        ] {
+            project.orientation = value.into();
+            let manifest = android_manifest_preview(&project).unwrap();
+            match attribute {
+                Some(a) => assert!(manifest.contains(&format!("android:screenOrientation=\"{a}\"")), "{value}: {manifest}"),
+                None => assert!(!manifest.contains("screenOrientation"), "{value}: {manifest}"),
+            }
+        }
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// O `Info.plist` do iOS: as orientações do projeto e as dos forms com orientação própria
+    /// (o iOS só gira para as declaradas), no iPhone e no iPad.
+    #[test]
+    fn the_project_and_form_orientations_go_to_the_ios_plist() {
+        use aylis_core::ScreenOrientation as O;
+        let keys = |plist: &str, key: &str| -> Vec<String> {
+            let start = plist.find(&format!("<key>{key}</key><array>")).unwrap_or_else(|| panic!("sem {key}: {plist}")) + key.len() + 18;
+            let end = start + plist[start..].find("</array>").unwrap();
+            plist[start..end].split("</string>").filter_map(|s| s.strip_prefix("<string>UIInterfaceOrientation")).map(str::to_string).collect()
+        };
+        let phone = |p: &str| keys(p, "UISupportedInterfaceOrientations");
+        let pad = |p: &str| keys(p, "UISupportedInterfaceOrientations~ipad");
+        let plist = ios_orientation_plist(O::Any, &[]);
+        assert_eq!(phone(&plist), ["Portrait", "LandscapeLeft", "LandscapeRight"]);
+        assert_eq!(pad(&plist), ["Portrait", "PortraitUpsideDown", "LandscapeLeft", "LandscapeRight"]);
+        assert!(!plist.contains("UIRequiresFullScreen"), "com todas, o iPad divide a tela");
+        let plist = ios_orientation_plist(O::Portrait, &[]);
+        assert_eq!((phone(&plist), pad(&plist)), (vec!["Portrait".to_string()], vec!["Portrait".to_string()]));
+        assert!(plist.contains("<key>UIRequiresFullScreen</key><true/>"));
+        assert_eq!(phone(&ios_orientation_plist(O::Landscape, &[])), ["LandscapeRight"]);
+        assert_eq!(phone(&ios_orientation_plist(O::SensorPortrait, &[])), ["Portrait", "PortraitUpsideDown"]);
+        assert_eq!(phone(&ios_orientation_plist(O::SensorLandscape, &[])), ["LandscapeLeft", "LandscapeRight"]);
+        // Um app em pé com um form deitado: o do projeto primeiro, o do form junto.
+        assert_eq!(phone(&ios_orientation_plist(O::Portrait, &[O::SensorLandscape])), ["Portrait", "LandscapeLeft", "LandscapeRight"]);
+
+        // As orientações próprias vêm dos forms (o `project` não conta).
+        let base = std::env::temp_dir().join(format!("aylis_orientation_ios_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let mut project = aylis_project::create(&base, "Video", Language::Rust).unwrap();
+        project.add_form("frmVideo", "Vídeo").unwrap();
+        let entry = project.forms.iter().find(|f| f.name == "frmVideo").unwrap().file.clone();
+        std::fs::write(project.file(&entry), r#"{ "aylis": 1, "root": { "class": "Form", "name": "frmVideo", "orientation": "sensor_landscape" } }"#).unwrap();
+        assert_eq!(form_orientations(&project), [O::SensorLandscape]);
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
     /// O pacote com hífen (o RTSPlayer, item 24): o Android carrega a biblioteca que o cargo
     /// gravou, `librtsplayer_app.so`, e não `librtsplayer-app.so`.
     #[test]
@@ -2061,7 +2214,7 @@ mod tests {
         let needs = device_needs(&dir);
         project.publish.android.permissions = vec!["CALL_PHONE".into(), "android.permission.CAMERA".into()];
         project.publish.android.deep_links = vec!["https://loja.com/pedido".into(), "fotos://".into()];
-        project.publish.android.orientation = "portrait".into();
+        project.orientation = "portrait".into();
         std::fs::create_dir_all(project.dir().join("android")).unwrap();
         std::fs::write(project.file(ANDROID_MANIFEST_EXTRA), r#"<manifest xmlns:android="http://schemas.android.com/apk/res/android"><queries><package android:name="com.whatsapp" /></queries><application><meta-data android:name="x" android:value="1" /></application></manifest>"#).unwrap();
         let manifest = android_manifest(&project, "fotos", true).unwrap();

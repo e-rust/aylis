@@ -207,7 +207,7 @@ pub struct Project {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limits: Option<LimitSettings>,
     /// O cache de imagens prontas dos renderizadores: `{ "pixels_mb": 96, "files": 256,
-    /// "layers_mb": 128, "auto_layers": true }`. O que o app solta sai sozinho; os limites só
+    /// "layers_mb": 128, "auto_layers": true, "frame_reuse_kb": 1024 }`. O que o app solta sai sozinho; os limites só
     /// contam para o que ele ainda segura. Passar deles não erra a tela, só refaz (decodifica,
     /// reenvia à placa, repinta) a imagem usada há mais tempo quando ela voltar. As camadas
     /// automáticas (`auto_layers`) valem em todos os forms, salvo o `layer_cache` de um form.
@@ -265,6 +265,13 @@ pub struct Project {
     /// aparelho. O modelo Smartphone já vem com um (decidido pelo autor em 08/11).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub device: String,
+    /// A orientação da tela no celular, para o app todo (os nomes de
+    /// [`aylis_core::ScreenOrientation`]: `portrait`, `landscape`, `sensor_portrait`,
+    /// `sensor_landscape`; vazio ou `any`: gira com o aparelho). Vai para o manifesto do Android
+    /// e para o `Info.plist` do iOS, e o app começa com ela; cada form pode ter a sua (a
+    /// propriedade `orientation`). Substituiu o `publish.android.orientation` (14/11).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub orientation: String,
     /// Onde o `.aylisproj` está (não vai para o arquivo).
     #[serde(skip)]
     pub path: PathBuf,
@@ -322,6 +329,10 @@ pub struct ImageCacheSettings {
     /// forms; cada form pode trocar pela propriedade `layer_cache`.
     #[serde(default = "ImageCacheSettings::default_auto_layers")]
     pub auto_layers: bool,
+    /// Até quantos KB um quadro de câmera ou de vídeo reaproveita o bitmap do anterior na placa
+    /// (`0` desliga); veja [`aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB`].
+    #[serde(default = "ImageCacheSettings::default_frame_reuse_kb")]
+    pub frame_reuse_kb: u32,
 }
 
 impl ImageCacheSettings {
@@ -337,6 +348,9 @@ impl ImageCacheSettings {
     fn default_auto_layers() -> bool {
         true
     }
+    fn default_frame_reuse_kb() -> u32 {
+        aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB
+    }
 
     pub fn limits(&self) -> aylis_core::ImageCacheLimits {
         aylis_core::ImageCacheLimits { pixels_mb: self.pixels_mb, files: self.files, layers_mb: self.layers_mb }
@@ -346,7 +360,7 @@ impl ImageCacheSettings {
 impl Default for ImageCacheSettings {
     fn default() -> Self {
         let d = aylis_core::ImageCacheLimits::DEFAULT;
-        Self { pixels_mb: d.pixels_mb, files: d.files, layers_mb: d.layers_mb, auto_layers: true }
+        Self { pixels_mb: d.pixels_mb, files: d.files, layers_mb: d.layers_mb, auto_layers: true, frame_reuse_kb: aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB }
     }
 }
 
@@ -435,6 +449,11 @@ impl BuildShell {
 }
 
 impl Project {
+    /// A orientação da tela do app (o `orientation`; um nome desconhecido gira com o aparelho).
+    pub fn orientation(&self) -> aylis_core::ScreenOrientation {
+        aylis_core::ScreenOrientation::parse(&self.orientation).unwrap_or_default()
+    }
+
     /// Os comandos antes e depois da compilação, para mostrar (o "Confiar neste projeto?").
     pub fn build_commands(&self) -> Vec<String> {
         let list = |when: &str, cmds: &[BuildCommand]| cmds.iter().map(|c| format!("{when} ({}): {}", c.shell.name(), c.command)).collect::<Vec<_>>();
@@ -490,9 +509,8 @@ pub struct AndroidOptions {
     pub min_sdk: u32,
     #[serde(skip_serializing_if = "is_zero")]
     pub target_sdk: u32,
-    /// `portrait`, `landscape`, `sensorPortrait`...; vazio: gira com o aparelho.
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub orientation: String,
+    // A orientação saiu daqui (era `orientation`, só do Android) para o `orientation` do
+    // projeto, que vale no Android e no iOS (14/11).
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub fullscreen: bool,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
@@ -626,6 +644,10 @@ pub struct WindowsOptions {
     /// (`{localappdata}\App`, com os marcadores do `install_dir`). Vazio: não pergunta.
     #[serde(skip_serializing_if = "String::is_empty")]
     pub data_dir: String,
+    /// Não assinar o `.exe` e o instalador ao publicar, mesmo com certificado configurado na
+    /// máquina (Opções da IDE → Assinatura). O certificado nunca fica no projeto.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub skip_signing: bool,
 }
 
 /// O tipo de instalador do Windows ([`WindowsOptions::installer`]).
@@ -1232,6 +1254,7 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         dev_address: String::new(),
         platforms: Vec::new(),
         device: String::new(),
+        orientation: String::new(),
         path: dir.join(format!("{name}.{EXTENSION}")),
     };
     project.add_form("frmPrincipal", name)?;
@@ -1849,10 +1872,13 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
     let image_cache = project.image_cache.unwrap_or_default();
     aylis_core::image_cache::set_limits(image_cache.limits());
     aylis_core::image_cache::set_auto_layers(image_cache.auto_layers);
+    aylis_core::image_cache::set_frame_reuse_kb(image_cache.frame_reuse_kb);
     if let Some(z) = project.zoom {
         ui.set_zoom(z.value);
         ui.set_zoom_keys(z.keys);
     }
+    // A orientação do app no celular (cada form pode ter a sua).
+    ui.set_app_orientation(project.orientation());
     ui.set_theme(theme);
     // O idioma: `AYLIS_LANG` (para testar) ou o do projeto.
     let language = std::env::var("AYLIS_LANG").unwrap_or_else(|_| project.locale.clone());

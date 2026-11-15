@@ -25,7 +25,10 @@ pub(crate) fn diagnostic(line: &str) {
 pub(crate) fn diagnostic_setting(name: &str) -> Option<String> {
     // Só com a feature `diagnostics` (a `dev` do app liga), como na plataforma: o app
     // publicado não muda de comportamento por variável de ambiente nem propriedade.
-    if !cfg!(feature = "diagnostics") {
+    // Em release, nunca (decidido pelo autor em 14/11): o app configura pelo projeto, pelo form
+    // e em execução; a variável é só do desenvolvimento. As medições do próprio Aylis ligam a
+    // `release-diagnostics`.
+    if !cfg!(feature = "diagnostics") || (!cfg!(debug_assertions) && !cfg!(feature = "release-diagnostics")) {
         return None;
     }
     if let Ok(v) = std::env::var(name) {

@@ -34,8 +34,8 @@ pub struct Options {
     /// com a área segura e a barra de status dele (`AYLIS_DEVICE`).
     pub frame: Option<String>,
     /// A porta em que o canal de desenvolvimento da IDE ouve, quando não é a do projeto (a
-    /// padrão estava ocupada): o app no desktop recebe em `AYLIS_DEV_PORT`, o do Android pelo
-    /// `adb reverse`.
+    /// padrão estava ocupada): o app no desktop recebe pelo argumento `--aylis-dev-port`
+    /// ([`DEV_PORT_ARG`]), o do Android pelo `adb reverse`.
     pub dev_port: Option<u16>,
 }
 
@@ -52,6 +52,15 @@ fn has_dev(project: &Project) -> bool {
 
 /// A linha que vai no stdin do app de desenvolvimento: o alvo do canal (`dev`, só no
 /// aylis-host; o app em Rust já leva o dele embutido) e o roteiro de teste, se houver.
+/// O argumento com a porta do canal da IDE (o app só lê com a feature `dev`; nunca por variável
+/// de ambiente, decidido pelo autor em 14/11).
+pub const DEV_PORT_ARG: &str = "--aylis-dev-port";
+
+/// `--aylis-dev-port N`, quando a IDE ouve noutra porta que não a do projeto.
+fn dev_port_args(options: &Options) -> Vec<String> {
+    options.dev_port.map(|p| vec![DEV_PORT_ARG.to_string(), p.to_string()]).unwrap_or_default()
+}
+
 fn start_line(dev: Option<Value>, options: &Options) -> Option<String> {
     let mut line = serde_json::Map::new();
     if let Some(dev) = dev {
@@ -316,7 +325,7 @@ fn desktop_rust(project: &Project, options: &Options, control: &Control, sink: S
     let exe = build_desktop(project, options.release, control, sink)?;
     sink(Event::Step(format!("Executando {}…", project.name)));
     let mut command = Command::new(exe);
-    command.current_dir(project.dir()).env("RUST_BACKTRACE", "1");
+    command.current_dir(project.dir()).env("RUST_BACKTRACE", "1").args(dev_port_args(options));
     frame_env(&mut command, options);
     watch_with(&mut command, start_line(None, options).as_deref(), control, sink)
 }
@@ -339,7 +348,7 @@ fn desktop_python(project: &Project, options: &Options, control: &Control, sink:
     if line.is_some() {
         command.arg("--dev");
     }
-    command.arg("--project").arg(&project.path).args(&args).current_dir(project.code_dir());
+    command.args(dev_port_args(options)).arg("--project").arg(&project.path).args(&args).current_dir(project.code_dir());
     frame_env(&mut command, options);
     watch_with(&mut command, line.as_deref(), control, sink)
 }
@@ -380,7 +389,7 @@ fn desktop_host(project: &Project, options: &Options, control: &Control, sink: S
     if line.is_some() {
         command.arg("--dev");
     }
-    command.arg("--project").arg(&project.path).arg("--").args(&backend).current_dir(project.code_dir());
+    command.args(dev_port_args(options)).arg("--project").arg(&project.path).arg("--").args(&backend).current_dir(project.code_dir());
     if options.ide_debug {
         command.env("AYLIS_DEBUG_PID", "1");
     }
@@ -388,14 +397,11 @@ fn desktop_host(project: &Project, options: &Options, control: &Control, sink: S
     watch_with(&mut command, line.as_deref(), control, sink)
 }
 
-/// O aparelho do designer: a janela abre do tamanho dele (só com o `dev`, o canal da IDE).
-/// As variáveis do app de desktop: o aparelho do designer e a porta do canal da IDE.
+/// O aparelho do designer: a janela abre do tamanho dele (`AYLIS_DEVICE`, lido só em debug, pelo
+/// diagnóstico do app de desenvolvimento).
 fn frame_env(command: &mut Command, options: &Options) {
     if let Some(frame) = options.frame.as_deref().filter(|f| !f.is_empty()) {
         command.env("AYLIS_DEVICE", frame);
-    }
-    if let Some(port) = options.dev_port {
-        command.env("AYLIS_DEV_PORT", port.to_string());
     }
 }
 

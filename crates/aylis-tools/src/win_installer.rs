@@ -60,13 +60,7 @@ pub(super) fn copy_extra_files(project: &Project, out: &Path, sink: Sink) -> Res
 
 /// A versão com 4 partes numéricas (`0.52.7-beta` → `0.52.7.0`), como os dados de versão pedem.
 pub(super) fn version4(version: &str) -> String {
-    let mut parts: Vec<u32> = version
-        .split('.')
-        .take(4)
-        .map(|p| p.chars().take_while(char::is_ascii_digit).collect::<String>().parse::<u32>().unwrap_or(0).min(65535))
-        .collect();
-    parts.resize(4, 0);
-    parts.iter().map(u32::to_string).collect::<Vec<_>>().join(".")
+    aylis_build::version4(version)
 }
 
 /// Os marcadores de pasta do projeto (`{localappdata}`...) com as variáveis de cada instalador.

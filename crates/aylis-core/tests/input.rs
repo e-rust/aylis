@@ -165,6 +165,68 @@ fn pointer_positions_are_local_to_the_control() {
     assert_eq!(*seen.borrow(), Some(PointF::new(30.0, 40.0)));
 }
 
+/// Guarda o `Ui::click_pointer` visto no `on_click` de `id` (`Some(None)`: clicou sem ponteiro).
+fn watch_click_pointer(ui: &mut Ui, id: ComponentId) -> Rc<RefCell<Option<Option<ClickPointer>>>> {
+    let seen = Rc::new(RefCell::new(None));
+    let s = seen.clone();
+    ui.on(id, "on_click", move |ui, _, args| {
+        assert_eq!(*args, EventArgs::None, "o argumento do on_click não muda");
+        *s.borrow_mut() = Some(ui.click_pointer());
+    });
+    seen
+}
+
+#[test]
+fn the_mouse_click_brings_the_pointer() {
+    let (mut ui, form, _a, b, _log) = setup();
+    let seen = watch_click_pointer(&mut ui, b);
+    let modifiers = Modifiers { ctrl: true, shift: true, ..Default::default() };
+    let press = PointerEvent { position: PointF::new(130.0, 40.0), modifiers, click_count: 1, ..Default::default() };
+    ui.pointer_down(form, press);
+    ui.pointer_up(form, press);
+    let pointer = seen.borrow_mut().take().expect("clicou").expect("veio do mouse");
+    assert_eq!(pointer.position, PointF::new(30.0, 40.0));
+    assert_eq!(pointer.form_position, PointF::new(130.0, 40.0));
+    assert_eq!(pointer.button, PointerButton::Primary);
+    assert_eq!(pointer.modifiers, modifiers);
+    assert_eq!(pointer.kind, PointerKind::Mouse);
+    assert_eq!(pointer.click_count, 1);
+    // Fora do handler, não há clique sendo entregue.
+    assert_eq!(ui.click_pointer(), None);
+
+    // O toque também.
+    let touch = PointerEvent { position: PointF::new(150.0, 20.0), kind: PointerKind::Touch, pointer_id: 7, click_count: 1, ..Default::default() };
+    ui.pointer_down(form, touch);
+    ui.pointer_up(form, touch);
+    let pointer = seen.borrow_mut().take().expect("tocou").expect("veio do toque");
+    assert_eq!(pointer.kind, PointerKind::Touch);
+    assert_eq!(pointer.position, PointF::new(50.0, 20.0));
+}
+
+#[test]
+fn the_keyboard_and_code_clicks_have_no_pointer() {
+    let (mut ui, form, a, _b, _log) = setup();
+    let seen = watch_click_pointer(&mut ui, a);
+    ui.set_focus(a);
+    ui.key_down(form, KeyEvent { key: Key::Enter, ..Default::default() });
+    assert_eq!(seen.borrow_mut().take(), Some(None), "o Enter clica, sem ponteiro");
+
+    ui.click(a);
+    assert_eq!(seen.borrow_mut().take(), Some(None), "o clique pelo código não tem ponteiro");
+
+    // Um clique pelo código de dentro do on_click do mouse não herda o ponteiro de fora.
+    let (mut ui, form, a, b, _log) = setup();
+    let inner = watch_click_pointer(&mut ui, a);
+    ui.on(b, "on_click", move |ui, _, _| {
+        assert!(ui.click_pointer().is_some());
+        ui.click(a);
+        assert!(ui.click_pointer().is_some(), "o de fora volta depois");
+    });
+    ui.pointer_down(form, at(150.0, 10.0));
+    ui.pointer_up(form, at(150.0, 10.0));
+    assert_eq!(inner.borrow_mut().take(), Some(None));
+}
+
 #[test]
 fn double_click_depends_on_time() {
     let (mut ui, form, _a, _b, log) = setup();

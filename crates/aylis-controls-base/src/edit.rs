@@ -5,7 +5,7 @@ use std::cell::{Cell, RefCell};
 
 use aylis_core::{
     Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent,
-    PaintCtx, PointF, PointerButton, PointerEvent, RectF, Stroke, TextAlign, TextStyle, Trimming, Ui, properties,
+    PaintCtx, PointF, PointerButton, PointerEvent, PointerKind, RectF, Stroke, TextAlign, TextStyle, Trimming, Ui, properties,
 };
 
 use aylis_core::messages::{t, tf};
@@ -30,6 +30,11 @@ use crate::leaf_control;
 /// `icon` mostra um ícone à esquerda (a lupa da busca) e `clear_button` um "×" à direita
 /// que apaga o texto (só aparece com texto).
 ///
+/// Com o `auto_size` (do `ControlBase`), o campo fica da largura do texto enquanto se digita
+/// (`min_width`/`max_width` limitam); com `plain`, é só o texto (sem fundo, borda nem
+/// padding), como a anotação sobre uma imagem. Sem fundo, a seleção fica translúcida e o
+/// cursor ganha um contorno na cor do fundo do tema (aparece sobre qualquer cor).
+///
 /// Como o `v-text-field` do Vuetify: `label` (rótulo que sobe para a borda com foco ou
 /// texto), `helper` (ajuda embaixo), `error` (mensagem de erro, borda vermelha),
 /// `counter` (`3/20` embaixo), `prefix`/`suffix` (`R$`, `kg`), `mask` (`#` dígito,
@@ -45,6 +50,9 @@ pub struct Edit {
     /// A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de
     /// um painel ou numa tabela). Ligada por padrão.
     pub border: bool,
+    /// Só o texto: sem o fundo do tema (um `fill` próprio ainda vale), sem a borda e sem o
+    /// padding. Com o `auto_size`, o campo é só as letras e cresce para a direita.
+    pub plain: bool,
     /// Limite de caracteres; 0 = sem limite.
     pub max_length: usize,
     /// Os caracteres liberados (vencem um bloqueio do form ou de um painel), os bloqueados
@@ -111,6 +119,10 @@ pub struct Edit {
     /// Celular: a faixa de sugestões e a correção automática do teclado do sistema
     /// (desligue em códigos, logins, identificadores).
     pub keyboard_suggestions: bool,
+    /// O menu de texto padrão (Recortar, Copiar, Colar, Selecionar tudo) no botão direito e no
+    /// toque longo, que no toque seleciona a palavra (com as alças para ajustar). Só abre
+    /// quando nem o campo nem um pai tem `popup_menu`. Ligado por padrão.
+    pub text_menu: bool,
     /// Cor do cursor; vazio: a cor do texto.
     pub caret_color: Option<Color>,
     /// Largura do cursor (linha) ou altura (sublinhado), em pontos.
@@ -125,8 +137,19 @@ pub struct Edit {
     misspelled: Vec<(usize, usize)>,
     /// O resto da palavra sugerida (aparece depois do cursor).
     completion: String,
-    /// O menu das correções (filho do próprio Edit, criado no primeiro clique direito).
+    /// O menu de texto e das correções (filho do próprio Edit, criado na primeira vez).
     spell_menu: Option<ComponentId>,
+    /// O menu de texto está aberto (ele tem o foco): a seleção continua à vista, e o foco que
+    /// volta ao campo não seleciona tudo.
+    menu_open: bool,
+    /// A seleção veio do toque longo: as alças aparecem nas pontas.
+    touch_select: bool,
+    /// Arrastando uma alça: se é a do começo e o `pan_on_touch` de antes.
+    handle_drag: Option<(bool, bool)>,
+    /// As áreas de toque das alças na última pintura (local).
+    handles: Cell<Option<(RectF, RectF)>>,
+    /// O pé da linha do texto na última pintura (as alças e o menu do toque ficam embaixo).
+    line_bottom: Cell<f32>,
     /// Onde ficou o "×" na última pintura (local).
     clear_rect: Cell<Option<RectF>>,
     /// Desfazer e refazer do que o usuário digitou (Ctrl+Z, Ctrl+Y): (texto, cursor, âncora).
@@ -163,6 +186,7 @@ impl Default for Edit {
             text: String::new(),
             placeholder: String::new(),
             border: true,
+            plain: false,
             max_length: 0,
             allowed_chars: String::new(),
             blocked_chars: String::new(),
@@ -191,6 +215,7 @@ impl Default for Edit {
             autocomplete: false,
             language: String::new(),
             keyboard_suggestions: true,
+            text_menu: true,
             caret_color: None,
             caret_width: 1.5,
             caret_style: CaretStyle::Line,
@@ -199,6 +224,11 @@ impl Default for Edit {
             misspelled: Vec::new(),
             completion: String::new(),
             spell_menu: None,
+            menu_open: false,
+            touch_select: false,
+            handle_drag: None,
+            handles: Cell::new(None),
+            line_bottom: Cell::new(0.0),
             clear_rect: Cell::new(None),
             undo: Vec::new(),
             redo: Vec::new(),
@@ -441,6 +471,10 @@ impl Edit {
             self.error = self.validate().unwrap_or_default();
         }
         self.assist(ctx.ui, true);
+        // Crescendo com o texto: o layout mede de novo antes da próxima pintura.
+        if self.base.auto_size() {
+            ctx.invalidate();
+        }
         if self.silent {
             return;
         }
@@ -505,18 +539,21 @@ impl Edit {
         self.misspelled.iter().copied().find(|&(s, e)| s <= at && at <= e)
     }
 
-    /// O clique direito numa palavra errada: as correções e "Adicionar ao dicionário".
-    fn spelling_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, (start, end): (usize, usize)) {
+    /// O menu sobre uma palavra errada: as correções e "Adicionar ao dicionário".
+    fn spelling_items(&self, ctx: &mut EventCtx<'_>, menu: ComponentId, (start, end): (usize, usize)) {
         let id = ctx.id;
         let word = self.text[start..end].to_string();
         let replace = move |ui: &mut Ui, choice: &str| {
-            let text = match ui.get_mut::<Edit>(id) {
+            let (text, grows) = match ui.get_mut::<Edit>(id) {
                 Some(edit) => {
                     edit.replace_range(start, end, choice);
-                    edit.text.clone()
+                    (edit.text.clone(), edit.base.auto_size())
                 }
                 None => return,
             };
+            if grows {
+                ui.invalidate_form(id);
+            }
             ui.fire(id, "on_change", &EventArgs::Value(text.into()));
         };
         let learned = move |ui: &mut Ui| {
@@ -524,7 +561,73 @@ impl Edit {
                 edit.misspelled.retain(|&r| r != (start, end));
             }
         };
-        spelling_menu(ctx, &mut self.spell_menu, at, &word, &self.language, replace, learned);
+        add_spelling_items(ctx, menu, &word, &self.language, replace, learned);
+    }
+
+    /// A palavra (até o espaço) em volta do caractere `index`: o duplo clique e o toque longo.
+    fn word_range(&self, index: usize) -> (usize, usize) {
+        let start = self.prev_word((index + 1).min(self.len()));
+        let chars: Vec<char> = self.text.chars().collect();
+        let mut end = start;
+        while end < chars.len() && !chars[end].is_whitespace() {
+            end += 1;
+        }
+        (start, end)
+    }
+
+    /// O menu de texto (com as correções em cima, sobre uma palavra errada). No toque, a
+    /// palavra sob o dedo é selecionada, com as alças, e o menu abre embaixo delas.
+    fn open_text_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, touch: bool) -> bool {
+        if !self.text_menu {
+            return false;
+        }
+        self.completion.clear();
+        self.dragging = false;
+        let index = self.index_at(ctx, at.x);
+        if touch && !self.text.is_empty() {
+            let (start, end) = self.word_range(index);
+            self.select(start, end);
+        }
+        self.touch_select = touch && self.has_selection();
+        let menu = crate::text_menu::menu_slot(ctx, &mut self.spell_menu);
+        if self.spellcheck
+            && let Some(range) = self.misspelled_at(index)
+        {
+            self.spelling_items(ctx, menu, range);
+            ctx.ui.add(crate::MenuItem::new("-"), menu);
+        }
+        let what = crate::text_menu::TextMenu { selected: self.has_selection(), has_text: !self.text.is_empty(), read_only: self.read_only, password: self.password };
+        crate::text_menu::add_text_items(ctx.ui, menu, ctx.id, what, Self::menu_closed);
+        // No toque, embaixo das alças (o dedo não cobre o menu nem o texto); no mouse, no clique.
+        let at = if touch {
+            let x = if self.has_selection() { self.x_of(ctx, self.selection().0) } else { at.x };
+            PointF::new(x, self.line_bottom.get() + crate::text_menu::BELOW_HANDLES)
+        } else {
+            at
+        };
+        self.menu_open = true;
+        crate::text_menu::popup(ctx, menu, at, Self::menu_closed);
+        ctx.repaint();
+        true
+    }
+
+    /// O menu de texto fechou: sem o foco, a seleção some (como ao sair do campo).
+    fn menu_closed(ui: &mut Ui, id: ComponentId) {
+        let focused = ui.focused(ui.root_of(id)) == Some(id);
+        if let Some(edit) = ui.get_mut::<Edit>(id) {
+            edit.menu_open = false;
+            if !focused {
+                edit.anchor = edit.caret;
+                edit.touch_select = false;
+            }
+        }
+    }
+
+    /// Onde fica (x local) o começo do caractere `n`, como na última pintura.
+    fn x_of(&self, ctx: &EventCtx<'_>, n: usize) -> f32 {
+        let style = self.text_style.borrow().clone();
+        let display = self.display();
+        self.text_left.get() - self.scroll.get() + ctx.ui.measure_text(&display[..byte_index(&display, n)], &style).width
     }
 
     /// Troca o trecho `start..end` (bytes) por `text` (a correção escolhida no menu).
@@ -599,31 +702,18 @@ impl Edit {
     }
 }
 
-/// O menu de correções de uma palavra errada (Edit e Memo): as sugestões do motor de
-/// texto, um divisor e "Adicionar ao dicionário". `replace` troca a palavra pela escolhida;
-/// `learned` tira o sublinhado. O menu é filho do campo (some junto com ele) e é refeito a
-/// cada clique; `at` é a posição local do clique.
-pub(crate) fn spelling_menu(
+/// As correções de uma palavra errada no menu do campo (Edit e Memo): as sugestões do motor
+/// de texto, um divisor e "Adicionar ao dicionário" (o menu de texto vem depois delas).
+/// `replace` troca a palavra pela escolhida; `learned` tira o sublinhado.
+pub(crate) fn add_spelling_items(
     ctx: &mut EventCtx<'_>,
-    slot: &mut Option<ComponentId>,
-    at: PointF,
+    menu: ComponentId,
     word: &str,
     language: &str,
     replace: impl Fn(&mut Ui, &str) + Clone + 'static,
     learned: impl Fn(&mut Ui) + 'static,
 ) {
     let suggestions = ctx.ui.services_mut().text_assist.as_mut().map(|e| e.suggest(word, language)).unwrap_or_default();
-    let id = ctx.id;
-    let menu = match slot.filter(|&m| ctx.ui.contains(m)) {
-        Some(m) => m,
-        None => {
-            let m = ctx.ui.add(crate::PopupMenu::default(), id);
-            *slot = Some(m);
-            m
-        }
-    };
-    let children = ctx.ui.children(menu).to_vec();
-    ctx.ui.free_many(&children);
     if suggestions.is_empty() {
         let none = ctx.ui.add(crate::MenuItem::new(t("(sem sugestões)")), menu);
         let _ = ctx.ui.set_prop(none, "enabled", false);
@@ -646,8 +736,6 @@ pub(crate) fn spelling_menu(
         learned(ui);
         ui.request_repaint();
     });
-    let origin = ctx.ui.absolute_rect(id).map_or(PointF::ZERO, |r| r.origin());
-    crate::PopupMenu::popup(ctx.ui, menu, PointF::new(origin.x + at.x, origin.y + at.y));
 }
 
 /// Formato do cursor de texto.
@@ -674,21 +762,61 @@ impl aylis_core::PropEnum for CaretStyle {
 
 /// Desenha o cursor em `x` (o começo do caractere), na faixa `y..y + height`; `char_w` é a
 /// largura do caractere sob ele (bloco e sublinhado).
+/// `halo`: um contorno por baixo (o campo sem fundo, sobre uma imagem: veja [`caret_halo`]).
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn draw_caret(canvas: &mut dyn Canvas, style: CaretStyle, x: f32, y: f32, height: f32, char_w: f32, width: f32, color: Color) {
+pub(crate) fn draw_caret(canvas: &mut dyn Canvas, style: CaretStyle, x: f32, y: f32, height: f32, char_w: f32, width: f32, color: Color, halo: Option<Color>) {
     match style {
         CaretStyle::Line => {
             let x = x.round() + 0.5;
+            if let Some(h) = halo {
+                canvas.draw_line(PointF::new(x, y - 1.0), PointF::new(x, y + height + 1.0), &Stroke::new(h, width.max(0.5) + 2.0));
+            }
             canvas.draw_line(PointF::new(x, y), PointF::new(x, y + height), &Stroke::new(color, width.max(0.5)));
         }
         CaretStyle::Block => {
-            canvas.fill_rect(RectF::new(x, y, char_w.max(2.0), height), 1.0, &Brush::Solid(color.with_opacity(0.45)));
+            let r = RectF::new(x, y, char_w.max(2.0), height);
+            if let Some(h) = halo {
+                canvas.stroke_rect(r.inflate(0.5), 1.0, &Stroke::new(h, 1.0));
+            }
+            canvas.fill_rect(r, 1.0, &Brush::Solid(color.with_opacity(0.45)));
         }
         CaretStyle::Underline => {
             let h = width.max(1.0);
-            canvas.fill_rect(RectF::new(x, y + height - h, char_w.max(2.0), h), 0.0, &Brush::Solid(color));
+            let r = RectF::new(x, y + height - h, char_w.max(2.0), h);
+            if let Some(c) = halo {
+                canvas.fill_rect(r.inflate(1.0), 0.0, &Brush::Solid(c));
+            }
+            canvas.fill_rect(r, 0.0, &Brush::Solid(color));
         }
     }
+}
+
+/// O lugar do cursor depois da última letra, no `auto_size` do Edit e do Memo (a largura
+/// dele e um pixel): a caixa medida cabe o texto e o cursor no fim, sem rolar.
+pub(crate) fn caret_room(caret_width: f32) -> f32 {
+    caret_width.max(0.5).ceil() + 1.0
+}
+
+/// O fundo deixa ver o que está atrás (o `plain` do Edit e do Memo, um `fill`
+/// transparente): a seleção e o cursor se ajustam para aparecer sobre qualquer cor.
+pub(crate) fn see_through(fill: Color) -> bool {
+    fill.a < 128
+}
+
+/// A cor da seleção: a do tema, translúcida sobre um fundo que deixa ver o que está atrás
+/// (os temas clássicos têm a seleção opaca, que cobriria a imagem).
+pub(crate) fn selection_color(selection: Color, see_through: bool) -> Color {
+    if see_through && selection.a > 160 { selection.with_opacity(0.4) } else { selection }
+}
+
+/// O contorno do cursor sem fundo: a cor do fundo do tema ou a do texto, a que mais se
+/// afasta da do cursor (o cursor escuro ganha a borda clara, e o contrário), meio
+/// translúcida. Assim ele aparece sobre o claro e sobre o escuro.
+pub(crate) fn caret_halo(theme: &aylis_core::Theme, caret: Color) -> Color {
+    let luma = |c: Color| 0.2126 * c.r as f32 + 0.7152 * c.g as f32 + 0.0722 * c.b as f32;
+    let (back, text) = (theme.color("background"), theme.color("text"));
+    let far = if (luma(back) - luma(caret)).abs() >= (luma(text) - luma(caret)).abs() { back } else { text };
+    far.with_opacity(0.85)
 }
 
 /// O sublinhado ondulado das palavras erradas, de `x1` a `x2` na altura `y`.
@@ -721,10 +849,70 @@ impl Component for Edit {
         !event.modifiers.ctrl && matches!(event.key, Key::Left | Key::Right | Key::Home | Key::End | Key::Backspace | Key::Delete)
     }
 
+    fn context_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, touch: bool) -> bool {
+        self.open_text_menu(ctx, at, touch)
+    }
+
+    // As alças da seleção pelo toque ficam embaixo do texto, fora do campo: o dedo as pega.
+    fn hit_slop(&self) -> f32 {
+        if self.handles.get().is_some() { crate::text_menu::HANDLE_REACH } else { 0.0 }
+    }
+
+    fn contains_point(&self, local: PointF, size: aylis_core::SizeF) -> bool {
+        let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < size.width && local.y < size.height;
+        inside || crate::text_menu::handle_at(self.handles.get(), local).is_some()
+    }
+
+    /// `auto_size`: o texto (ou, vazio, o placeholder), o ícone, o "×", o prefixo e o
+    /// sufixo, o lugar do cursor e o padding; o campo acompanha o que se digita. Sem o
+    /// `auto_size`, a largura desenhada.
+    fn auto_width(&self, ui: &Ui, id: ComponentId) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
+        let measure = |s: &str| ui.measure_text(s, &style).width;
+        let display = self.display();
+        let shown: &str = if !self.text.is_empty() {
+            &display
+        } else if self.placeholder.is_empty() {
+            &self.label
+        } else {
+            &self.placeholder
+        };
+        let mut width = measure(shown);
+        let icon_side = (style.font.size * 1.15).round();
+        if !self.icon.is_empty() {
+            width += icon_side + 6.0;
+        }
+        if self.clear_button && !self.read_only {
+            width += (icon_side * 0.85).round() + 4.0;
+        }
+        for piece in [&self.prefix, &self.suffix] {
+            if !piece.is_empty() {
+                width += measure(piece) + 4.0;
+            }
+        }
+        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
+        Some((width + self.right_inset + caret_room(self.caret_width) + pad.horizontal()).ceil())
+    }
+
+    /// `auto_size`: uma linha e o padding (mais a ajuda, o erro e o contador embaixo).
+    fn auto_height(&self, ui: &Ui, id: ComponentId, _width: f32) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let font = ui.font_of(id);
+        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
+        let below = !self.helper.is_empty() || !self.error.is_empty() || self.counter;
+        Some((font.size * 1.45).ceil() + pad.vertical() + if below { BELOW } else { 0.0 })
+    }
+
     properties! {
         text: String => "Data",
         placeholder: String => "Appearance",
         border: bool => "Appearance",
+        plain: bool => "Appearance",
         max_length: usize => "Behavior",
         allowed_chars: String => "Keyboard",
         blocked_chars: String => "Keyboard",
@@ -753,6 +941,7 @@ impl Component for Edit {
         autocomplete: bool => "Behavior",
         language: String => "Behavior",
         keyboard_suggestions: bool => "Behavior",
+        text_menu: bool => "Behavior",
         caret_color: Option<Color> => "Caret",
         caret_width: f32 => "Caret",
         caret_style: CaretStyle => "Caret",
@@ -766,6 +955,11 @@ impl Component for Edit {
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         self.start_history();
+        // Do teclado (o físico ou o do menu): as alças do toque saem, menos no Ctrl+A e no
+        // Ctrl+C (a seleção continua a mesma).
+        if !(matches!(event.key, Key::Char('a' | 'c')) && (event.modifiers.ctrl || event.modifiers.meta)) {
+            self.touch_select = false;
+        }
         let shift = event.modifiers.shift;
         let ctrl = event.modifiers.ctrl || event.modifiers.meta;
         // A palavra sugerida: Tab ou seta para a direita aceita, Esc dispensa.
@@ -858,6 +1052,7 @@ impl Component for Edit {
 
     fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {
         self.start_history();
+        self.touch_select = false;
         if self.insert(text) {
             self.changed(ctx);
         }
@@ -866,17 +1061,22 @@ impl Component for Edit {
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
-        if event.button == PointerButton::Secondary && self.spellcheck {
-            let index = self.index_at(ctx, event.position.x);
-            if let Some(range) = self.misspelled_at(index) {
-                self.spelling_menu(ctx, event.position, range);
-                ctx.set_handled();
-            }
-            return;
-        }
         if event.button != PointerButton::Primary {
             return;
         }
+        // O dedo numa alça: arrasta aquela ponta da seleção (sem rolar o que está em volta).
+        if event.kind == PointerKind::Touch
+            && let Some(start) = crate::text_menu::handle_at(self.handles.get(), event.position)
+        {
+            let (a, b) = self.selection();
+            (self.anchor, self.caret) = if start { (b, a) } else { (a, b) };
+            let pan = self.base.pan_on_touch();
+            self.base.set_pan_on_touch(false);
+            self.handle_drag = Some((start, pan));
+            ctx.set_handled();
+            return;
+        }
+        self.touch_select = false;
         self.completion.clear();
         if self.clear_rect.get().is_some_and(|r| r.inflate(4.0).contains(event.position)) {
             self.text.clear();
@@ -889,12 +1089,7 @@ impl Component for Edit {
         let index = self.index_at(ctx, event.position.x);
         match event.click_count {
             2 => {
-                let start = self.prev_word((index + 1).min(self.len()));
-                let mut end = start;
-                let chars: Vec<char> = self.text.chars().collect();
-                while end < chars.len() && !chars[end].is_whitespace() {
-                    end += 1;
-                }
+                let (start, end) = self.word_range(index);
                 self.select(start, end);
             }
             n if n >= 3 => self.select_all(),
@@ -907,6 +1102,12 @@ impl Component for Edit {
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some((start, _)) = self.handle_drag {
+            let index = self.index_at(ctx, event.position.x);
+            self.caret = crate::text_menu::drag_handle(self.anchor, index, start, self.len());
+            self.activity(ctx);
+            return;
+        }
         if self.dragging {
             let index = self.index_at(ctx, event.position.x);
             self.move_to(index, true);
@@ -916,11 +1117,15 @@ impl Component for Edit {
 
     fn pointer_up(&mut self, _ctx: &mut EventCtx<'_>, _event: &PointerEvent) {
         self.dragging = false;
+        if let Some((_, pan)) = self.handle_drag.take() {
+            self.base.set_pan_on_touch(pan);
+        }
     }
 
     fn focus_enter(&mut self, ctx: &mut EventCtx<'_>) {
-        // Sem `auto_select`, o cursor fica onde estava (o relatório do Tabernáculo, C36).
-        if self.auto_select {
+        // Sem `auto_select`, o cursor fica onde estava (o relatório do Tabernáculo, C36). Voltando
+        // do menu de texto, a seleção é a de antes dele.
+        if self.auto_select && !self.menu_open {
             self.select_all();
         }
         self.activity(ctx);
@@ -956,16 +1161,33 @@ impl Component for Edit {
 
     fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
         self.completion.clear();
+        self.dragging = false;
+        ctx.repaint();
+        // O foco foi para o menu de texto: a seleção fica (o item age sobre ela).
+        if self.menu_open {
+            return;
+        }
         if !self.rules.is_empty() {
             self.error = self.validate().unwrap_or_default();
         }
         self.anchor = self.caret;
-        self.dragging = false;
-        ctx.repaint();
+        self.touch_select = false;
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        let s = ctx.style;
+        // Só o texto: sem o fundo do tema (o `fill` próprio vale), a borda e o padding.
+        let plain_style;
+        let s = if self.plain {
+            let mut st = ctx.style.clone();
+            st.fill = ctx.colors.fill.unwrap_or(Color::TRANSPARENT);
+            st.border_width = 0.0;
+            st.padding = aylis_core::Bounds::default();
+            plain_style = st;
+            &plain_style
+        } else {
+            ctx.style
+        };
+        let see_through = see_through(s.fill);
         let danger = ctx.theme.color("danger");
         // Ajuda, erro e contador ficam embaixo da caixa.
         let below = !self.helper.is_empty() || !self.error.is_empty() || self.counter;
@@ -989,7 +1211,7 @@ impl Component for Edit {
             }
             canvas.stroke_rect(boxr, s.radius, &stroke);
         }
-        if self.border {
+        if self.border && !self.plain {
             crate::looks::paint_field_underline_in(canvas, ctx, boxr);
         }
         if below {
@@ -1075,7 +1297,9 @@ impl Component for Edit {
             }
         }
         *self.text_style.borrow_mut() = style.clone();
-        let focused = ctx.state.focused;
+        // Com o menu de texto aberto (ele tem o foco), o campo continua como na edição: a
+        // seleção à vista, sem o cursor.
+        let focused = ctx.state.focused || self.menu_open;
         let display = self.display();
         let width_of = |canvas: &mut dyn Canvas, n: usize| {
             canvas.measure_text(&display[..byte_index(&display, n)], &style).width
@@ -1120,13 +1344,16 @@ impl Component for Edit {
         };
 
         canvas.save();
-        canvas.clip_rect(inner.inflate(1.0));
+        // Sem padding (`plain`), o recorte não passa da caixa (a pintura por parte não
+        // repintaria o que saiu dela).
+        let clip = inner.inflate(1.0);
+        canvas.clip_rect(if self.plain { clip.intersect(boxr).unwrap_or(inner) } else { clip });
         let mut selected_rect = None;
         if focused && self.has_selection() {
             let (start, end) = self.selection();
             let (x1, x2) = (width_of(canvas, start), width_of(canvas, end));
             let rect = RectF::new(origin + x1, line_y + 1.0, x2 - x1, (line_height - 2.0).max(0.0));
-            canvas.fill_rect(rect, s.radius.min(2.0), &Brush::Solid(ctx.theme.color("selection")));
+            canvas.fill_rect(rect, s.radius.min(2.0), &Brush::Solid(selection_color(ctx.theme.color("selection"), see_through)));
             selected_rect = Some(rect);
         }
         let mut shown = style.clone();
@@ -1148,7 +1375,7 @@ impl Component for Edit {
             canvas.draw_text(&display, RectF::new(origin, inner.y, total + 8.0, inner.height), &shown);
             // Tema com a cor do texto selecionado (o branco sobre o azul do Win32): o trecho
             // selecionado de novo, nessa cor.
-            if let (Some(rect), Some(&color)) = (selected_rect, ctx.theme.colors.get("selection_text")) {
+            if let (Some(rect), Some(&color)) = (selected_rect.filter(|_| !see_through), ctx.theme.colors.get("selection_text")) {
                 canvas.save();
                 canvas.clip_rect(rect);
                 let mut sel = shown.clone();
@@ -1177,7 +1404,7 @@ impl Component for Edit {
                 draw_wave(canvas, x1, x2, y, &wave);
             }
         }
-        if focused && !ctx.state.disabled {
+        if ctx.state.focused && !ctx.state.disabled {
             // O cursor pisca (`caret_blink`); entre uma troca e outra a plataforma pode dormir.
             let blink = f64::from(self.caret_blink) / 1000.0;
             let phase = if blink > 0.0 { (ctx.time - self.blink_start).rem_euclid(blink) } else { 0.0 };
@@ -1187,7 +1414,8 @@ impl Component for Edit {
                 let next_char = display.chars().nth(self.caret).filter(|c| !c.is_whitespace()).map(|c| c.to_string());
                 let char_w = next_char.map_or(style.font.size * 0.55, |c| canvas.measure_text(&c, &style).width);
                 let color = self.caret_color.unwrap_or(style.color);
-                draw_caret(canvas, self.caret_style, origin + caret_x, line_y + 2.0, line_height - 4.0, char_w, self.caret_width, color);
+                let halo = see_through.then(|| caret_halo(ctx.theme, color));
+                draw_caret(canvas, self.caret_style, origin + caret_x, line_y + 2.0, line_height - 4.0, char_w, self.caret_width, color, halo);
             }
             if blink > 0.0 {
                 let next = if visible { blink / 2.0 - phase } else { blink - phase };
@@ -1195,6 +1423,23 @@ impl Component for Edit {
             }
         }
         canvas.restore();
+        // As alças da seleção feita pelo toque, embaixo das pontas. Ficam fora do campo: por
+        // cima de tudo do form (o vizinho de baixo não as cobre).
+        let bottom = line_y + line_height;
+        self.line_bottom.set(bottom);
+        let handles = (focused && self.touch_select && self.has_selection() && !ctx.state.disabled).then(|| {
+            let (start, end) = self.selection();
+            let clamp = |x: f32| x.clamp(inner.x, inner.right());
+            (clamp(origin + width_of(canvas, start)), clamp(origin + width_of(canvas, end)))
+        });
+        self.handles.set(handles.map(|(x1, x2)| crate::text_menu::handle_rects(x1, bottom, x2, bottom)));
+        if let Some((x1, x2)) = handles {
+            let color = ctx.theme.color("primary");
+            ctx.overlay(move |c| {
+                crate::text_menu::draw_handle(c, x1, bottom, color);
+                crate::text_menu::draw_handle(c, x2, bottom, color);
+            });
+        }
     }
 }
 

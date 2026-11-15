@@ -14,6 +14,7 @@ Campo de dia e hora juntos: `date_time` é `2026-11-12T14:30` (ISO, sem fuso), e
 |---|---|---|---|
 | `placeholder` | Texto de exemplo | texto | Texto apagado mostrado enquanto o campo está vazio. |
 | `border` | Borda | lógico | A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de um painel ou numa tabela). Ligada por padrão. |
+| `plain` | Só o texto | lógico | Só o texto: sem o fundo do tema (um `fill` próprio ainda vale), sem a borda e sem o padding. Com o `auto_size`, o campo é só as letras e cresce para a direita. |
 | `icon` | Ícone | texto | Ícone à esquerda do texto (a lupa da busca); vazio: nenhum. |
 | `label` | Rótulo | texto | Rótulo do campo, que sobe para a borda com foco ou com texto; vazio: sem rótulo. |
 | `helper` | Texto de ajuda | texto | Texto de ajuda embaixo do campo (o `error` aparece no lugar dele quando há). |
@@ -38,6 +39,7 @@ Campo de dia e hora juntos: `date_time` é `2026-11-12T14:30` (ISO, sem fuso), e
 | `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita: o resto aparece apagado depois do cursor e o Tab (ou a seta para a direita) aceita. |
 | `language` | Idioma | texto | Idioma da correção e das sugestões (`"pt-BR"`); vazio: o do sistema. |
 | `keyboard_suggestions` | Sugestões do teclado | lógico | Celular: a faixa de sugestões e a correção automática do teclado do sistema (desligue em códigos, logins, identificadores). |
+| `text_menu` | Menu de texto | lógico | O menu de texto padrão (Recortar, Copiar, Colar, Selecionar tudo) no botão direito e no toque longo, que no toque seleciona a palavra (com as alças para ajustar). Só abre quando nem o campo nem um pai tem `popup_menu`. Ligado por padrão. |
 
 ### Cursor
 

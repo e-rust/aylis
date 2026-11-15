@@ -1,0 +1,13 @@
+{
+  "_": "Quadros de câmera e de vídeo (pixels BGRA novos a cada quadro) no Direct2D, numa janela escondida com a swap chain (crates/aylis-d2d/examples/camera_frames.rs, release, 600 quadros, a tela de 1920x1080 dividida entre as câmeras). 'criar' é um bitmap novo na placa a cada quadro (como era); 'reaproveitar' copia os pixels (CopyFromMemory) no bitmap de um quadro já solto do mesmo tamanho. Medido em 14/11/2026, rodadas alternadas na mesma compilação, máquina sem compilações; ms por quadro (a mediana de 4 a 6 rodadas). Daí a regra: reaproveitar só quadros de até 1 MB (reuses_frame).",
+  "machine": "Windows 11, a placa da máquina do autor",
+  "cases": [
+    { "cameras": 1, "size": "1920x1080", "create_ms": 0.92, "reuse_ms": 1.45, "bitmaps_create": 600, "bitmaps_reuse": 2 },
+    { "cameras": 1, "size": "1280x720", "create_ms": 0.56, "reuse_ms": 0.74 },
+    { "cameras": 4, "size": "960x540", "create_ms": 1.50, "reuse_ms": 1.70 },
+    { "cameras": 9, "size": "640x360", "create_ms": 1.81, "reuse_ms": 1.73, "bitmaps_create": 5400, "bitmaps_reuse": 18 },
+    { "cameras": 16, "size": "480x270", "create_ms": 2.46, "reuse_ms": 1.62, "bitmaps_create": 9600, "bitmaps_reuse": 32 },
+    { "cameras": 36, "size": "320x180", "create_ms": 7.26, "reuse_ms": 1.69, "bitmaps_create": 21600, "bitmaps_reuse": 72 }
+  ],
+  "rule": "reaproveita quando largura * altura * 4 <= 1 MiB; acima disso, cria (o CopyFromMemory num bitmap grande custa mais)"
+}

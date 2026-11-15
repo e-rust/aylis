@@ -30,6 +30,8 @@ desktop = [
     # driver da AMD (atio6axx.dll, conferência de 08/11).
     "aylis-platform-winit/d2d",
     "aylis-platform-winit/diagnostics",
+    # A IDE é ferramenta do Aylis: as medições dela (em release) leem as variáveis.
+    "aylis-platform-winit/release-diagnostics",
 ]
 
 [dependencies]
@@ -51,7 +53,7 @@ aylis-vector = { path = "../aylis-vector" }
 aylis-markdown = { path = "../aylis-markdown" }
 # No desktop ("gl", pela feature `desktop`) a IDE desenha com o Skia no OpenGL e o Model3D
 # do designer entra na textura dele, sem cópia pela CPU.
-aylis-3d = { path = "../aylis-3d", features = ["diagnostics"] }
+aylis-3d = { path = "../aylis-3d", features = ["diagnostics", "release-diagnostics"] }
 # O conteúdo de exemplo dos componentes na galeria (o mesmo das demonstrações da documentação).
 aylis = { path = "../aylis", default-features = false, features = ["data", "3d"] }
 # Os vetores do lingote da abertura (o modelo do aylis-3d usa os tipos do glam).

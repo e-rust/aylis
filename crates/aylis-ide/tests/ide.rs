@@ -1681,7 +1681,7 @@ fn project_memory_saves_the_image_cache_limits() {
     let mut ide = app::build(state.clone());
     ide.ui.show(ide.form).unwrap();
     actions::open_project(&mut ide.ui, &state, &ide.ids, &project.path);
-    let set = |ide: &mut aylis_ide::app::Ide, values: [&str; 3]| {
+    let set = |ide: &mut aylis_ide::app::Ide, values: [&str; 4]| {
         actions::project_memory(&mut ide.ui, &state, &ide.ids);
         let dialog = *ide.ui.open_forms().last().unwrap();
         assert!(ide.ui.get::<Form>(dialog).is_some_and(|f| f.caption.contains("Memória")));
@@ -1695,23 +1695,26 @@ fn project_memory_saves_the_image_cache_limits() {
             std::fs::write(PathBuf::from(dir).join("memoria.png"), png).unwrap();
         }
         let edits: Vec<ComponentId> = descendants(&ide.ui, dialog).into_iter().filter(|&id| ide.ui.get::<Edit>(id).is_some()).collect();
-        assert_eq!(edits.len(), 3, "pixels, arquivos e camadas");
+        assert_eq!(edits.len(), 4, "pixels, arquivos, camadas e quadros");
         for (edit, value) in edits.iter().zip(values) {
             ide.ui.get_mut::<Edit>(*edit).unwrap().text = value.into();
         }
         ide.ui.set_modal_result(dialog, ModalResult::Ok);
         dialog
     };
-    let dialog = set(&mut ide, ["4", "256", "128"]);
+    let dialog = set(&mut ide, ["4", "256", "128", "1024"]);
     assert!(ide.ui.is_open(dialog), "4 MB está abaixo da faixa: o diálogo continua aberto");
     ide.ui.set_modal_result(dialog, ModalResult::Cancel);
-    let dialog = set(&mut ide, ["96", "256", "5000"]);
+    let dialog = set(&mut ide, ["96", "256", "5000", "1024"]);
     assert!(ide.ui.is_open(dialog), "5000 MB de camadas passa da faixa: o diálogo continua aberto");
     ide.ui.set_modal_result(dialog, ModalResult::Cancel);
-    set(&mut ide, ["200", "1000", "64"]);
+    let dialog = set(&mut ide, ["96", "256", "128", "99999"]);
+    assert!(ide.ui.is_open(dialog), "99999 KB de quadros passa da faixa: o diálogo continua aberto");
+    ide.ui.set_modal_result(dialog, ModalResult::Cancel);
+    set(&mut ide, ["200", "1000", "64", "512"]);
     let saved = aylis_project::Project::open(&project.path).unwrap();
-    assert_eq!(saved.image_cache, Some(aylis_project::ImageCacheSettings { pixels_mb: 200, files: 1000, layers_mb: 64, auto_layers: true }));
-    set(&mut ide, ["96", "256", "128"]);
+    assert_eq!(saved.image_cache, Some(aylis_project::ImageCacheSettings { pixels_mb: 200, files: 1000, layers_mb: 64, auto_layers: true, frame_reuse_kb: 512 }));
+    set(&mut ide, ["96", "256", "128", "1024"]);
     assert_eq!(aylis_project::Project::open(&project.path).unwrap().image_cache, None, "no padrão, a chave sai do .aylisproj");
     aylis_tools::trust::forget_dir(&project.dir());
 }
@@ -1960,4 +1963,30 @@ fn the_selection_area_picks_what_fits_inside_a_wider_bar() {
     // Só a borda do painel, longe do botão de dentro: o painel.
     let found = names(doc.components_in(aylis_core::RectF::new(10.0, 170.0, 30.0, 20.0)));
     assert_eq!(found, ["pnlCaixa"]);
+}
+
+/// Ajuda → Sobre o Aylis: o logo da IDE à esquerda (a imagem do `.ico` da janela) e a versão em
+/// destaque. Com `AYLIS_WIZARD=pasta`, grava `sobre.png` para conferir.
+#[test]
+fn the_about_dialog_shows_the_logo_and_the_version() {
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    ide.ui.show(ide.form).unwrap();
+    aylis_ide::dialogs::about(&mut ide.ui);
+    let dialog = *ide.ui.open_forms().last().unwrap();
+    assert!(ide.ui.get::<Form>(dialog).is_some_and(|f| f.caption.contains("Sobre")));
+    let all = descendants(&ide.ui, dialog);
+    let logo = all.iter().copied().find(|&id| ide.ui.get::<aylis_controls::ImageView>(id).is_some()).expect("o logo");
+    assert!(ide.ui.get::<aylis_controls::ImageView>(logo).unwrap().picture().is_some(), "o logo tem a imagem do .ico");
+    let version = format!("Versão {}", env!("CARGO_PKG_VERSION"));
+    assert!(all.iter().any(|&id| ide.ui.get::<aylis_controls::Label>(id).is_some_and(|l| l.text == version)), "a versão em destaque");
+    if let Some(dir) = std::env::var_os("AYLIS_WIZARD") {
+        let renderer = aylis_skia::SkiaRenderer::new();
+        ide.ui.services_mut().text = Some(Box::new(renderer.text_service()));
+        ide.ui.layout();
+        let (w, h) = ide.ui.control(dialog).map_or((540.0, 290.0), |c| (c.width(), c.height()));
+        let background = ide.ui.theme().color("background");
+        let png = renderer.render_png(w as u32, h as u32, 1.0, background, |c| ide.ui.paint(dialog, c)).unwrap();
+        std::fs::write(PathBuf::from(dir).join("sobre.png"), png).unwrap();
+    }
 }

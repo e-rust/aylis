@@ -146,6 +146,8 @@ impl Ui {
     /// rodando, `f` espera ele terminar (e roda logo depois). Devolve se achou a instância.
     pub fn with_form<T: 'static>(&mut self, sender: ComponentId, f: impl FnOnce(&mut T, &mut Ui) + 'static) -> bool {
         let Some(form) = self.instance_of::<T>(sender) else { return false };
+        // Só o despacho do handler da pergunta pode levá-la junto, se tiver de esperar.
+        let claims = self.claim_question();
         let busy = matches!(self.instances.slots.get(&form).map(|s| &s.state), Some(State::Busy(_)));
         let path = if busy && cfg!(debug_assertions) { self.path_of(sender) } else { String::new() };
         let slot = self.instances.slots.get_mut(&form).expect("achado acima");
@@ -162,7 +164,7 @@ impl Ui {
                 slot.state = State::Busy(Vec::new());
                 // Um evento-pergunta (o `before_post` de um `post` dentro do handler) também
                 // espera: quem perguntou recebe a resposta quando ele rodar.
-                let token = if self.asking() { self.defer_question() } else { 0 };
+                let token = if claims { self.defer_question() } else { 0 };
                 waiting.push(Box::new(move |ui: &mut Ui| {
                     if token == 0 {
                         ui.with_form::<T>(sender, f);

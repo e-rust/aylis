@@ -81,6 +81,10 @@
           "arquivo": "guias/pacotes.md"
         },
         {
+          "titulo": "Publicar no Windows: dados de versão e assinatura de código",
+          "arquivo": "guias/publicar-windows.md"
+        },
+        {
           "titulo": "Notificações push (`PushNotifications`)",
           "arquivo": "guias/push.md"
         },
@@ -107,6 +111,10 @@
         {
           "titulo": "Threads e a interface",
           "arquivo": "guias/threads.md"
+        },
+        {
+          "titulo": "Vídeo e pintura: o que se configura e como medir",
+          "arquivo": "guias/video-e-pintura.md"
         },
         {
           "titulo": "Componentes do Vuetify no Aylis",
@@ -621,6 +629,10 @@
         {
           "titulo": "Permissions",
           "arquivo": "componentes/Permissions.md"
+        },
+        {
+          "titulo": "RenderSettings",
+          "arquivo": "componentes/RenderSettings.md"
         },
         {
           "titulo": "SaveDialog",

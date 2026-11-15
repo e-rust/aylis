@@ -178,6 +178,8 @@ impl Ui {
                     let outer = if self.question_is_for(id, event) { Some(self.defer_question()) } else { None };
                     let modal = self.hold_modal_result(id, event);
                     let (event, args, chain) = (event.to_string(), args.clone(), chain.to_vec());
+                    // O ponteiro do clique volta com a resposta: o handler roda depois.
+                    let pointer = self.click_pointer();
                     self.on_answer(token, move |ui, answer| {
                         if let Some(message) = cancelled(&answer) {
                             ui.event_cancelled(interceptor, id, &event, message, outer);
@@ -186,14 +188,14 @@ impl Ui {
                         if let Some(result) = modal {
                             ui.set_modal_result(ui.form_of(id), result);
                         }
-                        match outer {
+                        ui.with_click_pointer(pointer, |ui| match outer {
                             Some(token) => ui.answering(token, |ui| {
                                 ui.intercept_from(id, &event, &args, &chain, i + 1);
                             }),
                             None => {
                                 ui.intercept_from(id, &event, &args, &chain, i + 1);
                             }
-                        }
+                        });
                     });
                     return true;
                 }

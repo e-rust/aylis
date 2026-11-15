@@ -2,7 +2,7 @@
 //! `.exe` do NSIS ou do Inno Setup) e o que vai nele: os arquivos ao lado do executável, a
 //! pasta de instalação, iniciar com o Windows, atalho na área de trabalho, abrir como
 //! administrador (só a escolha, no registro), fechar o app aberto,
-//! abrir no fim e a pasta de dados que o desinstalar oferece apagar.
+//! abrir no fim, a pasta de dados que o desinstalar oferece apagar e se assina ao publicar.
 
 use aylis_controls::CheckBox;
 use aylis_core::{Align, ComponentId, PropValue, Ui};
@@ -55,7 +55,7 @@ fn offer_value(label: &str) -> String {
 pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else { return };
     let w = project.publish.windows.clone();
-    let d = dialogs::new_dialog(ui, "Windows", 680.0, 720.0);
+    let d = dialogs::new_dialog(ui, "Windows", 680.0, 760.0);
     let line = field(ui, d.body, "Instalador");
     let current = match w.kind() {
         aylis_project::WindowsInstaller::Msi => INSTALLERS[0],
@@ -101,6 +101,9 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let line = field(ui, d.body, "");
     let marks = label(ui, line, "Nas pastas: {localappdata}, {appdata}, {programfiles} e {documents}.", Align::Client, 0.0);
     muted(ui, marks);
+    let line = field(ui, d.body, "");
+    let sign = check(ui, line, "Assinar o executável e o instalador ao publicar", !w.skip_signing);
+    let _ = ui.set_prop(sign, "hint", "Com o certificado das Opções da IDE (Assinatura); sem certificado, a publicação só avisa");
 
     let read = move |ui: &Ui| -> WindowsOptions {
         let kind = dialogs::combo_text(ui, installer);
@@ -116,6 +119,7 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             close_running: checked(ui, close_running),
             run_after_install: checked(ui, run_after),
             data_dir: text_of(ui, data_dir).trim().to_string(),
+            skip_signing: !checked(ui, sign),
         }
     };
     let (state, ids) = (state.clone(), *ids);

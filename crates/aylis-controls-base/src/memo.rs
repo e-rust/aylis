@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use aylis_core::{
     Brush, Canvas, Component, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent, PaintCtx, PointF,
-    PointerButton, PointerEvent, RectF, Stroke, TextAlign, TextStyle, Trimming, WheelEvent, properties,
+    PointerButton, PointerEvent, PointerKind, RectF, Stroke, TextAlign, TextStyle, Trimming, WheelEvent, properties,
 };
 
 use crate::leaf_control;
@@ -33,6 +33,24 @@ use crate::syntax::{self, Span};
 /// Para um depurador: [`Memo::set_breakpoints`] desenha os pontos de parada na calha dos
 /// números, [`Memo::set_exec_line`] destaca a linha onde o programa parou, e um clique na
 /// calha dispara `on_gutter_click` com a linha (a partir de 1).
+///
+/// Crescer com o texto: com o `auto_size` (do `ControlBase`), a caixa fica do tamanho do
+/// texto enquanto se digita (a linha mais larga e o número de linhas, mais o padding), sem
+/// quebra automática nem rolagem; com `wrap`, a largura fica e só a altura acompanha. O
+/// `min_width`/`max_width`/`min_height`/`max_height` limitam (passou do máximo, rola). Só a
+/// linha editada é medida de novo a cada tecla.
+///
+/// Só o texto (a anotação sobre uma imagem, o pedido do NoOBS): `plain` tira o fundo, a
+/// borda, o padding e as barras de rolagem; com `auto_size`, a caixa é só as letras e cresce
+/// para a direita e para baixo a partir de onde foi criada:
+///
+/// ```json
+/// {"class": "Memo", "name": "memNota", "left": 120, "top": 80, "auto_size": true, "plain": true}
+/// ```
+///
+/// Sem fundo (o `plain`, ou um `fill` transparente), a seleção fica translúcida (o que está
+/// atrás aparece) e o cursor ganha um contorno na cor do fundo do tema, para aparecer sobre
+/// qualquer cor.
 pub struct Memo {
     pub base: ControlBase,
     /// O texto todo, com as linhas separadas por quebra de linha.
@@ -42,6 +60,9 @@ pub struct Memo {
     /// A borda da caixa (desligada: só o texto, sem o contorno nem o traço do foco; dentro de
     /// um painel ou numa tabela). Ligada por padrão.
     pub border: bool,
+    /// Só o texto: sem o fundo do tema (um `fill` próprio ainda vale), sem a borda, sem o
+    /// padding e sem as barras de rolagem. Com o `auto_size`, a anotação sobre uma imagem.
+    pub plain: bool,
     /// Só leitura: dá para selecionar e copiar, mas não editar.
     pub read_only: bool,
     /// Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui,
@@ -87,6 +108,10 @@ pub struct Memo {
     /// Celular: a faixa de sugestões e a correção automática do teclado do sistema
     /// (desligue em códigos, logins, identificadores).
     pub keyboard_suggestions: bool,
+    /// O menu de texto padrão (Recortar, Copiar, Colar, Selecionar tudo) no botão direito e no
+    /// toque longo, que no toque seleciona a palavra (com as alças para ajustar). Só abre
+    /// quando nem o campo nem um pai tem `popup_menu`. Ligado por padrão.
+    pub text_menu: bool,
     /// Cor do cursor; vazio: a cor do texto.
     pub caret_color: Option<aylis_core::Color>,
     /// A largura do cursor, em pontos.
@@ -99,7 +124,16 @@ pub struct Memo {
     misspelled: Vec<(usize, usize)>,
     /// O resto da palavra sugerida (depois do cursor).
     completion: String,
+    /// O menu de texto e das correções (filho do próprio Memo, criado na primeira vez).
     spell_menu: Option<aylis_core::ComponentId>,
+    /// O menu de texto está aberto (ele tem o foco): a seleção continua à vista.
+    menu_open: bool,
+    /// A seleção veio do toque longo: as alças aparecem nas pontas.
+    touch_select: bool,
+    /// Arrastando uma alça: se é a do começo e o `pan_on_touch` de antes.
+    handle_drag: Option<(bool, bool)>,
+    /// As áreas de toque das alças na última pintura (local).
+    handles: Cell<Option<(RectF, RectF)>>,
     /// Linhas com ponto de parada (a partir de 1) e a linha onde o programa parou.
     breakpoints: Vec<usize>,
     exec_line: Option<usize>,
@@ -159,6 +193,8 @@ pub struct Memo {
     /// cada pintura sairia caro num arquivo grande), e as linhas editadas desde então (medidas
     /// na próxima pintura: a mais larga só cresce até o texto ser trocado).
     widest: RefCell<(u64, u64, f32, Vec<usize>)>,
+    /// O `auto_size`: a largura de cada linha, exata (a caixa também encolhe ao apagar).
+    auto_widths: RefCell<AutoWidths>,
     /// O começo de cada linha do texto (em caracteres e em bytes), pelo hash do texto: a
     /// pintura acha a posição de um caractere sem contar o texto desde o começo.
     line_table: RefCell<(u64, Rc<Vec<(usize, usize)>>)>,
@@ -236,6 +272,7 @@ impl Default for Memo {
             text: String::new(),
             placeholder: String::new(),
             border: true,
+            plain: false,
             read_only: false,
             sensitive: false,
             max_length: 0,
@@ -255,6 +292,7 @@ impl Default for Memo {
             autocomplete: false,
             language: String::new(),
             keyboard_suggestions: true,
+            text_menu: true,
             caret_color: None,
             caret_width: 1.5,
             caret_style: crate::CaretStyle::Line,
@@ -262,6 +300,10 @@ impl Default for Memo {
             misspelled: Vec::new(),
             completion: String::new(),
             spell_menu: None,
+            menu_open: false,
+            touch_select: false,
+            handle_drag: None,
+            handles: Cell::new(None),
             highlight: RefCell::new(None),
             incremental: RefCell::default(),
             highlight_pending: std::cell::Cell::new(false),
@@ -283,6 +325,7 @@ impl Default for Memo {
             hbar: Cell::new(None),
             bar_grab: None,
             widest: RefCell::new((0, 0, 0.0, Vec::new())),
+            auto_widths: RefCell::default(),
             line_table: RefCell::new((0, Rc::new(Vec::new()))),
             rows_cache: RefCell::new((0, 0, Rc::new(Vec::new()))),
             text_rev: Cell::new(0),
@@ -357,6 +400,30 @@ struct Row {
     line: usize,
     /// Abre um bloco dobrado (o `⋯` no fim).
     folded: bool,
+}
+
+/// As larguras das linhas para o `auto_size`, pela chave do texto e da fonte: cada edição
+/// marca só as linhas editadas (medidas na próxima vez), e a mais larga só é procurada de
+/// novo quando a que era a mais larga mudou.
+#[derive(Default)]
+struct AutoWidths {
+    text: u64,
+    font: u64,
+    widths: Vec<f32>,
+    /// As linhas a medir (editadas desde a última medida).
+    pending: Vec<usize>,
+    /// A mais larga das medidas (`None`: procurar de novo).
+    widest: Option<f32>,
+}
+
+use crate::edit::caret_room;
+
+/// A chave da fonte (as larguras medidas valem para ela).
+fn font_key(style: &TextStyle) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    (style.font.size.to_bits(), &style.font.family, style.font.weight as u16, style.font.italic).hash(&mut h);
+    h.finish()
 }
 
 impl Memo {
@@ -696,6 +763,77 @@ impl Memo {
         self.rows(self.text_width.get(), &mut measure)
     }
 
+    /// A altura de uma linha na fonte `size` (a mesma conta da pintura e do `auto_size`).
+    fn line_height_for(size: f32) -> f32 {
+        (size * 1.45).round().max(10.0)
+    }
+
+    /// O padding da caixa: o do estilo, ou nenhum com o `plain`.
+    fn chrome_padding(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> aylis_core::Bounds {
+        if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) }
+    }
+
+    /// O estilo do texto como a pintura usa (a monoespaçada do tema no código), para o
+    /// `auto_size` medir fora da pintura.
+    fn measure_style(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> TextStyle {
+        let mut font = ui.font_of(id);
+        if !self.syntax.is_empty() {
+            if let Some(mono) = ui.theme_of(id).fonts.get("mono") {
+                font.family = mono.family.clone();
+            }
+        }
+        TextStyle { font, ..Default::default() }
+    }
+
+    /// A largura da linha mais larga (`auto_size`), exata e incremental: só as linhas
+    /// editadas desde a última vez são medidas, e a mais larga só é procurada de novo nas
+    /// larguras guardadas quando a que era a mais larga mudou (apagar encolhe a caixa).
+    fn auto_widest(&self, font: u64, measure: &mut dyn FnMut(&str) -> f32) -> f32 {
+        let key = self.text_key();
+        let table = self.lines_of(key);
+        let text = self.text.as_str();
+        let line = |i: usize| {
+            let a = table[i].1;
+            let b = table.get(i + 1).map_or(text.len(), |next| next.1 - 1);
+            &text[a..b]
+        };
+        let mut aw = self.auto_widths.borrow_mut();
+        if aw.text != key || aw.font != font || aw.widths.len() != table.len() {
+            let widths: Vec<f32> = (0..table.len()).map(|i| measure(&expand_tabs(line(i)))).collect();
+            let widest = widths.iter().copied().fold(0.0f32, f32::max);
+            *aw = AutoWidths { text: key, font, widths, pending: Vec::new(), widest: Some(widest) };
+            return widest;
+        }
+        let mut fresh = 0.0f32;
+        for i in std::mem::take(&mut aw.pending).into_iter().filter(|&i| i < table.len()) {
+            let w = measure(&expand_tabs(line(i)));
+            aw.widths[i] = w;
+            fresh = fresh.max(w);
+        }
+        let widest = match aw.widest {
+            Some(w) => w.max(fresh),
+            None => aw.widths.iter().copied().fold(0.0f32, f32::max),
+        };
+        aw.widest = Some(widest);
+        widest
+    }
+
+    /// A largura que o texto pede no `auto_size` (sem a quebra automática): a linha mais
+    /// larga (ou o placeholder, vazio), a calha dos números, o lugar do cursor e o padding.
+    fn content_width(&self, style: &TextStyle, measure: &mut dyn FnMut(&str) -> f32) -> f32 {
+        let mut widest = self.auto_widest(font_key(style), measure);
+        if self.text.is_empty() && !self.placeholder.is_empty() {
+            widest = widest.max(measure(&self.placeholder));
+        }
+        let gutter = if self.line_numbers {
+            let digits = self.lines_of(self.text_key()).len().to_string().len().max(2);
+            measure(&"0".repeat(digits)) + 18.0
+        } else {
+            0.0
+        };
+        widest + gutter + caret_room(self.caret_width)
+    }
+
     /// A linha visual do índice: a última que começa nele ou antes (numa quebra
     /// automática, o cursor fica no começo da linha de baixo).
     fn row_of(rows: &[Row], index: usize) -> usize {
@@ -829,6 +967,25 @@ impl Memo {
                 w.3.sort_unstable();
                 w.3.dedup();
                 w.1 = new_key;
+            }
+        }
+        // As larguras do `auto_size`: as linhas editadas saem (medidas na próxima vez); se a
+        // mais larga estava entre elas, ela é procurada de novo (o texto pode ter encolhido).
+        {
+            let mut aw = self.auto_widths.borrow_mut();
+            if aw.text == old_key && aw.widths.len() == old_lines && aw.pending.len() < 64 {
+                let lost = aw.widths[la..=lb].iter().copied().fold(0.0f32, f32::max);
+                if aw.widest.is_some_and(|w| lost >= w) {
+                    aw.widest = None;
+                }
+                aw.widths.splice(la..=lb, std::iter::repeat_n(0.0, new_nl + 1));
+                for p in &mut aw.pending {
+                    *p = if *p > lb { shift(*p, dl) } else { (*p).min(la) };
+                }
+                aw.pending.extend(la..=la + new_nl);
+                aw.pending.sort_unstable();
+                aw.pending.dedup();
+                aw.text = new_key;
             }
         }
         // Os marcadores: comparam só as linhas do trecho, pelas pontas.
@@ -991,6 +1148,10 @@ impl Memo {
         self.tip = None;
         self.shift_bookmarks();
         self.assist(ctx.ui, true);
+        // Crescendo com o texto: o layout mede de novo antes da próxima pintura.
+        if self.base.auto_size() {
+            ctx.invalidate();
+        }
         ctx.fire("on_change", EventArgs::Value(self.text.clone().into()));
     }
 
@@ -1131,6 +1292,90 @@ impl Memo {
         self.misspelled.retain(|&(s, _)| s < start);
     }
 
+    /// O menu sobre uma palavra errada: as correções e "Adicionar ao dicionário".
+    fn spelling_items(&self, ctx: &mut EventCtx<'_>, menu: aylis_core::ComponentId, (start, end): (usize, usize)) {
+        let id = ctx.id;
+        let word = self.slice(start, end.max(start)).to_string();
+        let replace = move |ui: &mut aylis_core::Ui, choice: &str| {
+            let (text, grows) = match ui.get_mut::<Memo>(id) {
+                Some(memo) => {
+                    memo.replace_chars(start, end, choice);
+                    (memo.text.clone(), memo.base.auto_size())
+                }
+                None => return,
+            };
+            if grows {
+                ui.invalidate_form(id);
+            }
+            ui.fire(id, "on_change", &EventArgs::Value(text.into()));
+        };
+        let learned = move |ui: &mut aylis_core::Ui| {
+            if let Some(memo) = ui.get_mut::<Memo>(id) {
+                memo.misspelled.retain(|&r| r != (start, end));
+            }
+        };
+        crate::edit::add_spelling_items(ctx, menu, &word, &self.language, replace, learned);
+    }
+
+    /// O menu de texto (com as correções em cima, sobre uma palavra errada). No toque, a
+    /// palavra sob o dedo é selecionada, com as alças, e o menu abre embaixo da linha.
+    fn open_text_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, touch: bool) -> bool {
+        if !self.text_menu {
+            return false;
+        }
+        // Na calha dos números e nas barras de rolagem, não.
+        if at.x < self.origin.get().x || self.bar_at(at).is_some() {
+            return false;
+        }
+        self.completion.clear();
+        self.dragging = false;
+        self.hide_suggestions();
+        let index = self.index_at(ctx, at);
+        if touch && !self.text.is_empty() {
+            let (a, b) = self.word_bounds(index);
+            self.extra.clear();
+            self.select(a, b);
+        }
+        self.touch_select = touch && self.has_selection();
+        let menu = crate::text_menu::menu_slot(ctx, &mut self.spell_menu);
+        if self.spellcheck
+            && let Some(range) = self.misspelled.iter().copied().find(|&(s, e)| s <= index && index <= e)
+        {
+            self.spelling_items(ctx, menu, range);
+            ctx.ui.add(crate::MenuItem::new("-"), menu);
+        }
+        let what = crate::text_menu::TextMenu { selected: self.has_selection(), has_text: !self.text.is_empty(), read_only: self.read_only, password: false };
+        crate::text_menu::add_text_items(ctx.ui, menu, ctx.id, what, Self::menu_closed);
+        // No toque, embaixo da linha da ponta de baixo da seleção (com as alças); no mouse, no
+        // clique.
+        let at = if touch {
+            let lh = self.line_height.get();
+            let origin = self.origin.get();
+            let scroll = self.scroll.get();
+            let rows = self.rows_ui(ctx);
+            let r = Self::row_of(&rows, self.selection().1);
+            let bottom = origin.y + (r + 1) as f32 * lh - scroll.y;
+            PointF::new(at.x, bottom + crate::text_menu::BELOW_HANDLES)
+        } else {
+            at
+        };
+        self.menu_open = true;
+        crate::text_menu::popup(ctx, menu, at, Self::menu_closed);
+        ctx.repaint();
+        true
+    }
+
+    /// O menu de texto fechou: sem o foco, as alças somem.
+    fn menu_closed(ui: &mut aylis_core::Ui, id: aylis_core::ComponentId) {
+        let focused = ui.focused(ui.root_of(id)) == Some(id);
+        if let Some(memo) = ui.get_mut::<Memo>(id) {
+            memo.menu_open = false;
+            if !focused {
+                memo.touch_select = false;
+            }
+        }
+    }
+
     fn activity(&mut self, ctx: &mut EventCtx<'_>) {
         // O cursor foi parar dentro de um bloco dobrado: ele abre.
         self.reveal_cursors();
@@ -1201,11 +1446,57 @@ impl Component for Memo {
                 || (event.key == Key::Tab && self.want_tabs))
     }
 
+    fn context_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, touch: bool) -> bool {
+        self.open_text_menu(ctx, at, touch)
+    }
+
+    // As alças da seleção pelo toque podem passar da borda de baixo: o dedo as pega.
+    fn hit_slop(&self) -> f32 {
+        if self.handles.get().is_some() { crate::text_menu::HANDLE_REACH } else { 0.0 }
+    }
+
+    fn contains_point(&self, local: PointF, size: aylis_core::SizeF) -> bool {
+        let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < size.width && local.y < size.height;
+        inside || crate::text_menu::handle_at(self.handles.get(), local).is_some()
+    }
+
+    /// `auto_size` (sem `wrap`): a linha mais larga, o lugar do cursor e o padding. Sem o
+    /// `auto_size`, a largura desenhada (o tamanho preferido não muda nos Memos de sempre).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
+        if !self.base.auto_size() || self.wrap {
+            return None;
+        }
+        let style = self.measure_style(ui, id);
+        let mut measure = |s: &str| ui.measure_text(s, &style).width;
+        let width = self.content_width(&style, &mut measure);
+        Some((width + self.chrome_padding(ui, id).horizontal()).ceil())
+    }
+
+    /// `auto_size`: as linhas (as quebradas na largura, com `wrap`) vezes a altura da linha,
+    /// mais o padding.
+    fn auto_height(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId, width: f32) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let style = self.measure_style(ui, id);
+        let pad = self.chrome_padding(ui, id);
+        let rows = if self.wrap && self.syntax.is_empty() {
+            let mut measure = |s: &str| ui.measure_text(s, &style).width;
+            // A mesma largura em que a pintura quebra as linhas.
+            let inner = (width - pad.horizontal()).max(1.0);
+            self.build_rows(inner, &mut measure).len()
+        } else {
+            self.lines_of(self.text_key()).len()
+        };
+        Some(rows.max(1) as f32 * Self::line_height_for(style.font.size) + pad.vertical())
+    }
+
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         text: String => "Data",
         placeholder: String => "Appearance",
         border: bool => "Appearance",
+        plain: bool => "Appearance",
         read_only: bool => "Behavior",
         sensitive: bool => "Behavior",
         max_length: usize => "Behavior",
@@ -1225,6 +1516,7 @@ impl Component for Memo {
         autocomplete: bool => "Behavior",
         language: String => "Behavior",
         keyboard_suggestions: bool => "Behavior",
+        text_menu: bool => "Behavior",
         caret_color: Option<aylis_core::Color> => "Caret",
         caret_width: f32 => "Caret",
         caret_style: crate::CaretStyle => "Caret",
@@ -1239,6 +1531,11 @@ impl Component for Memo {
     }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
+        // Do teclado (o físico ou o do menu): as alças do toque saem, menos no Ctrl+A e no
+        // Ctrl+C (a seleção continua a mesma).
+        if !(matches!(event.key, Key::Char('a' | 'c')) && (event.modifiers.ctrl || event.modifiers.meta)) {
+            self.touch_select = false;
+        }
         // Ctrl apertado com o mouse parado sobre um nome: a mãozinha aparece já.
         if matches!(event.key, Key::Control | Key::Meta) {
             self.update_link(ctx, true);
@@ -1409,6 +1706,7 @@ impl Component for Memo {
 
     fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {
         self.goal_x = None;
+        self.touch_select = false;
         if self.code_editing && self.multi_text(ctx, text) {
             return;
         }
@@ -1438,35 +1736,22 @@ impl Component for Memo {
             return;
         }
         self.tip = None;
-        if event.button == PointerButton::Secondary && self.spellcheck {
-            let index = self.index_at(ctx, event.position);
-            if let Some((start, end)) = self.misspelled.iter().copied().find(|&(s, e)| s <= index && index <= e) {
-                let id = ctx.id;
-                let word = self.slice(start, end.max(start)).to_string();
-                let replace = move |ui: &mut aylis_core::Ui, choice: &str| {
-                    let text = match ui.get_mut::<Memo>(id) {
-                        Some(memo) => {
-                            memo.replace_chars(start, end, choice);
-                            memo.text.clone()
-                        }
-                        None => return,
-                    };
-                    ui.fire(id, "on_change", &EventArgs::Value(text.into()));
-                };
-                let learned = move |ui: &mut aylis_core::Ui| {
-                    if let Some(memo) = ui.get_mut::<Memo>(id) {
-                        memo.misspelled.retain(|&r| r != (start, end));
-                    }
-                };
-                let language = self.language.clone();
-                crate::edit::spelling_menu(ctx, &mut self.spell_menu, event.position, &word, &language, replace, learned);
-                ctx.set_handled();
-            }
-            return;
-        }
         if event.button != PointerButton::Primary {
             return;
         }
+        // O dedo numa alça: arrasta aquela ponta da seleção (sem rolar o texto).
+        if event.kind == PointerKind::Touch
+            && let Some(start) = crate::text_menu::handle_at(self.handles.get(), event.position)
+        {
+            let (a, b) = self.selection();
+            (self.anchor, self.caret) = if start { (b, a) } else { (a, b) };
+            let pan = self.base.pan_on_touch();
+            self.base.set_pan_on_touch(false);
+            self.handle_drag = Some((start, pan));
+            ctx.set_handled();
+            return;
+        }
+        self.touch_select = false;
         // A barra de rolagem: pegar o polegar (ou clicar no trilho, que leva o polegar até
         // ali) rola sem mexer no cursor.
         if let Some(horizontal) = self.bar_at(event.position) {
@@ -1554,6 +1839,14 @@ impl Component for Memo {
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some((start, _)) = self.handle_drag {
+            // O dedo fica na bolinha, embaixo da linha: a ponta é a da linha de cima dele.
+            let lh = self.line_height.get();
+            let index = self.index_at(ctx, PointF::new(event.position.x, event.position.y - lh));
+            self.caret = crate::text_menu::drag_handle(self.anchor, index, start, self.len());
+            self.activity(ctx);
+            return;
+        }
         if self.minimap_drag {
             self.minimap_scroll(event.position);
             ctx.repaint();
@@ -1589,6 +1882,9 @@ impl Component for Memo {
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, _event: &PointerEvent) {
         self.dragging = false;
+        if let Some((_, pan)) = self.handle_drag.take() {
+            self.base.set_pan_on_touch(pan);
+        }
         self.minimap_drag = false;
         if self.bar_grab.take().is_some() {
             ctx.repaint();
@@ -1702,6 +1998,9 @@ impl Component for Memo {
     fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
         self.dragging = false;
         self.completion.clear();
+        if !self.menu_open {
+            self.touch_select = false;
+        }
         ctx.repaint();
     }
 
@@ -1716,10 +2015,22 @@ impl Component for Memo {
 
 impl Memo {
     fn paint_text(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, key: u64) {
-        let s = ctx.style;
+        // Só o texto: sem o fundo do tema (o `fill` próprio vale), a borda e o padding.
+        let plain_style;
+        let s = if self.plain {
+            let mut st = ctx.style.clone();
+            st.fill = ctx.colors.fill.unwrap_or(aylis_core::Color::TRANSPARENT);
+            st.border_width = 0.0;
+            st.padding = aylis_core::Bounds::default();
+            plain_style = st;
+            &plain_style
+        } else {
+            ctx.style
+        };
         // O tema de cores do código, quando escolhido, manda no fundo e nas cores do texto.
         let ct = if self.code_editing { syntax::code_theme(&self.color_theme) } else { None };
-        canvas.fill_rect(ctx.rect, s.radius, &Brush::Solid(ct.map_or(s.fill, |t| t.background())));
+        let fill = ct.map_or(s.fill, |t| t.background());
+        canvas.fill_rect(ctx.rect, s.radius, &Brush::Solid(fill));
         if self.border && s.border_width > 0.0 && !s.border_color.is_transparent() {
             canvas.stroke_rect(ctx.rect, s.radius, &Stroke::new(s.border_color, s.border_width));
         }
@@ -1728,7 +2039,10 @@ impl Memo {
         if let Some(t) = ct {
             style.color = t.foreground();
         }
-        let selection = ct.map_or_else(|| ctx.theme.color("selection"), |t| t.selection());
+        // Sem fundo (o `plain`, um `fill` transparente), o que está atrás aparece: a seleção
+        // fica translúcida e o cursor ganha o contorno (veja `crate::edit::see_through`).
+        let see_through = crate::edit::see_through(fill);
+        let selection = crate::edit::selection_color(ct.map_or_else(|| ctx.theme.color("selection"), |t| t.selection()), see_through);
         let code = !self.syntax.is_empty();
         if code {
             if let Some(mono) = ctx.theme.fonts.get("mono") {
@@ -1758,7 +2072,7 @@ impl Memo {
             self.minimap_rect.set(None);
         }
         *self.text_style.borrow_mut() = style.clone();
-        let lh = (style.font.size * 1.45).round().max(10.0);
+        let lh = Self::line_height_for(style.font.size);
         self.line_height.set(lh);
         // Com quebra, a barrinha de rolagem tem lugar: o texto quebra antes dela.
         self.text_width.set(inner.width.max(1.0));
@@ -1808,8 +2122,14 @@ impl Memo {
         } else if !focused && !self.wrap && self.trimming != Trimming::None {
             scroll.x = 0.0; // fora da edição, as linhas longas terminam em "…"
         }
-        // A linha mais larga (sem quebra automática): até onde a rolagem de lado vai.
-        let widest = if self.wrap {
+        // Crescendo com o texto (sem quebra): a caixa tem a largura medida, e a rolagem de lado
+        // só existe se o `max_width` a cortou. A mesma conta do `auto_width` (exata: apagar
+        // encolhe), com o lugar do cursor no lugar da folga de 8.
+        let grows = self.base.auto_size() && !self.wrap;
+        let widest = if grows {
+            let mut measure = |t: &str| canvas.measure_text(t, &style).width;
+            self.auto_widest(font_key(&style), &mut measure) + caret_room(self.caret_width) - 8.0
+        } else if self.wrap {
             0.0
         } else {
             use std::hash::{Hash, Hasher};
@@ -1848,7 +2168,10 @@ impl Memo {
         self.scroll.set(scroll);
 
         canvas.save();
-        canvas.clip_rect(inner.inflate(1.0));
+        // Sem padding (`plain`), a folga de um pixel do recorte não passa da caixa: o que
+        // sai dela não seria repintado (a pintura por parte deixaria resto).
+        let clip = inner.inflate(1.0);
+        canvas.clip_rect(if self.plain { clip.intersect(ctx.rect).unwrap_or(inner) } else { clip });
         let first = (scroll.y / lh) as usize;
         let (sel_a, sel_b) = self.selection();
         let mut text_style = style.clone();
@@ -1906,7 +2229,8 @@ impl Memo {
             let row_width = width_of(canvas, row.start, row.end);
             let x = inner.x - scroll.x + self.shift(row_width);
             let mut selected_rect = None;
-            if focused && self.has_selection() && sel_b > row.start && sel_a <= row.end {
+            // Com o menu de texto aberto (ele tem o foco), a seleção continua à vista.
+            if (focused || self.menu_open) && self.has_selection() && sel_b > row.start && sel_a <= row.end {
                 let from = width_of(canvas, row.start, sel_a.max(row.start));
                 let to_index = sel_b.min(row.end);
                 let mut to = width_of(canvas, row.start, to_index);
@@ -1989,8 +2313,9 @@ impl Memo {
                 canvas.draw_text(&line, RectF::new(x, y, row_width + 8.0, lh), &text_style);
             }
             // Tema com a cor do texto selecionado (o branco sobre o azul do Win32): o trecho
-            // selecionado da linha de novo, nessa cor.
-            if let (Some(rect), Some(&color)) = (selected_rect.filter(|_| ct.is_none()), ctx.theme.colors.get("selection_text")) {
+            // selecionado da linha de novo, nessa cor. Sem fundo, a seleção é translúcida e o
+            // texto fica na cor dele (o branco sumiria numa imagem clara).
+            if let (Some(rect), Some(&color)) = (selected_rect.filter(|_| ct.is_none() && !see_through), ctx.theme.colors.get("selection_text")) {
                 canvas.save();
                 canvas.clip_rect(rect);
                 let mut ts = text_style.clone();
@@ -2027,14 +2352,15 @@ impl Memo {
                 let next_char = self.slice(self.caret, self.caret + 1).chars().next().filter(|c| !c.is_whitespace()).map(|c| c.to_string());
                 let char_w = next_char.map_or(style.font.size * 0.55, |c| canvas.measure_text(&c, &text_style).width);
                 let color = self.caret_color.or(ct.map(|t| t.cursor())).unwrap_or(style.color);
-                crate::edit::draw_caret(canvas, self.caret_style, x, y + 3.0, lh - 6.0, char_w, self.caret_width, color);
+                let halo = see_through.then(|| crate::edit::caret_halo(ctx.theme, color));
+                crate::edit::draw_caret(canvas, self.caret_style, x, y + 3.0, lh - 6.0, char_w, self.caret_width, color, halo);
                 // Os outros cursores.
                 for &(_, ec) in &self.extra {
                     let r = Self::row_of(&rows, ec);
                     let row = rows[r];
                     let ex = inner.x - scroll.x + width_of(canvas, row.start, ec.max(row.start).min(row.end)) + self.shift(width_of(canvas, row.start, row.end));
                     let ey = inner.y + r as f32 * lh - scroll.y;
-                    crate::edit::draw_caret(canvas, self.caret_style, ex, ey + 3.0, lh - 6.0, char_w, self.caret_width, color);
+                    crate::edit::draw_caret(canvas, self.caret_style, ex, ey + 3.0, lh - 6.0, char_w, self.caret_width, color, halo);
                 }
             }
             if blink > 0.0 {
@@ -2042,6 +2368,42 @@ impl Memo {
             }
         }
         canvas.restore();
+        // As alças da seleção feita pelo toque, embaixo das pontas (só as que estão à vista).
+        // Podem passar da borda: por cima de tudo do form (o vizinho de baixo não as cobre).
+        let handles = ((focused || self.menu_open) && self.touch_select && self.has_selection() && !ctx.state.disabled)
+            .then(|| {
+                let mut at = |i: usize| {
+                    let r = Self::row_of(&rows, i);
+                    let row = rows[r];
+                    let x = inner.x - scroll.x + width_of(canvas, row.start, i.max(row.start).min(row.end)) + self.shift(width_of(canvas, row.start, row.end));
+                    let bottom = inner.y + (r + 1) as f32 * lh - scroll.y;
+                    let shown = bottom > inner.y && bottom <= inner.bottom() + 1.0 && x >= inner.x - 1.0 && x <= inner.right() + 1.0;
+                    (x, bottom, shown)
+                };
+                (at(sel_a), at(sel_b))
+            })
+            .filter(|(a, b)| a.2 || b.2);
+        self.handles.set(handles.map(|(a, b)| {
+            let (mut start, mut end) = crate::text_menu::handle_rects(a.0, a.1, b.0, b.1);
+            // A que está fora da vista não pega o dedo.
+            if !a.2 {
+                start = RectF::default();
+            }
+            if !b.2 {
+                end = RectF::default();
+            }
+            (start, end)
+        }));
+        if let Some((a, b)) = handles {
+            let color = ctx.theme.color("primary");
+            ctx.overlay(move |c| {
+                for (x, bottom, shown) in [a, b] {
+                    if shown {
+                        crate::text_menu::draw_handle(c, x, bottom, color);
+                    }
+                }
+            });
+        }
         // A lista de sugestões, a ajuda dos parâmetros e a dica, por cima do texto.
         let caret_screen = PointF::new(inner.x - scroll.x + caret_x, inner.y + caret_y - scroll.y);
         let tip_at = self.tip.as_ref().map(|&(_, at)| {
@@ -2111,7 +2473,8 @@ impl Memo {
         // E a horizontal embaixo, quando há linha mais larga que o editor.
         let total = rows.len() as f32 * lh;
         let max = self.scroll_max(total, inner.height, lh);
-        let (has_v, has_h) = (max > 0.5, hmax > 0.5);
+        // Só o texto (`plain`): sem as barras (a roda e o cursor ainda rolam).
+        let (has_v, has_h) = (max > 0.5 && !self.plain, hmax > 0.5 && !self.plain);
         let active = self.bar_grab.is_some() || self.bar_hover.get();
         let track_fill = Brush::Solid(ctx.theme.color("text").with_opacity(0.05));
         let thumb_fill = Brush::Solid(ctx.theme.color("text_muted").with_opacity(if active { 0.7 } else { 0.4 }));

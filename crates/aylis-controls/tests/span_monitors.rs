@@ -289,3 +289,124 @@ fn a_combo_list_opens_inside_its_piece() {
     let r = ui.absolute_rect(popup).unwrap();
     assert!(r.y >= top.y && r.bottom() <= top.bottom(), "a lista ficou no monitor de cima: {r:?} em {top:?}");
 }
+
+/// O print do NoOBS em pixels físicos (`physical_pixels`): um monitor a 100% à esquerda do
+/// principal (a 150%), o form cobrindo o retângulo virtual (origem negativa) com a imagem da
+/// tela no fundo. Cada pedaço, pintado com 1 unidade = 1 pixel (nem a escala do monitor nem o
+/// zoom valem), sai igual ao recorte da imagem no lugar dele, pixel a pixel, e o clique no pixel
+/// (x, y) da tela chega ao form como (x, y) do retângulo virtual.
+#[test]
+fn in_physical_pixels_each_piece_shows_the_print_pixel_by_pixel() {
+    let left = ScreenRect::new(-300, 40, 300, 200);
+    let main = ScreenRect::new(0, 0, 500, 300);
+    let all = ScreenRect::bounding(&[main, left]).unwrap();
+    assert_eq!(all, ScreenRect::new(-300, 0, 800, 300));
+    let (w, h) = (all.width, all.height);
+    // O "print": cada pixel com uma cor própria (o canto de cada monitor é fácil de achar).
+    let pixel = |x: u32, y: u32| -> [u8; 3] { [(x % 256) as u8, (y % 256) as u8, ((x / 256) * 60 + (y / 256) * 120) as u8] };
+    let rgba: Vec<u8> = (0..h).flat_map(|y| (0..w).flat_map(move |x| { let [r, g, b] = pixel(x, y); [r, g, b, 255] })).collect();
+
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let form = ui.create("Form", None).unwrap();
+    for (prop, value) in [("physical_pixels", PropValue::Bool(true)), ("zoom", 2.0.into()), ("width", (w as f64).into()), ("height", (h as f64).into())] {
+        ui.set_prop(form, prop, value).unwrap();
+    }
+    ui.show(form).unwrap();
+    let image = ui.create("Image", Some(form)).unwrap();
+    ui.set_prop(image, "align", "client").unwrap();
+    ui.set_prop(image, "fit", "stretch").unwrap();
+    ui.get_mut::<aylis_controls::ImageView>(image).unwrap().set_picture(Some(Image::rgba(w, h, rgba)));
+    let clicks = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+    let seen = clicks.clone();
+    ui.on(image, "on_pointer_down", move |ui, sender, args| {
+        if let EventArgs::Pointer(e) = args {
+            let at = ui.absolute_rect(sender).unwrap();
+            seen.borrow_mut().push(PointF::new(at.x + e.position.x, at.y + e.position.y));
+        }
+    });
+    ui.layout();
+    assert!(ui.physical_pixels(image), "vale para os controles do form");
+    assert_eq!(ui.form_zoom(form), 1.0, "o zoom não vale em pixels físicos");
+    let scale = span::pixel_scale(ui.physical_pixels(form), 1.5, ui.form_zoom(form) as f64);
+    assert_eq!(scale, 1.0);
+
+    let pieces = span::split(all, &[main, left]);
+    assert_eq!(pieces.len(), 2);
+    ui.set_form_pieces(form, pieces.iter().map(|p| p.rect_in_form(scale)).collect());
+    let mut painters: Vec<(&str, Box<dyn Painter>)> = vec![("Skia", Box::new(aylis_skia::SkiaRenderer::new()))];
+    #[cfg(windows)]
+    painters.push(("Direct2D", Box::new(aylis_d2d::D2dRenderer::new().expect("Direct2D"))));
+    for (name, painter) in &painters {
+        for (k, piece) in pieces.iter().enumerate() {
+            let rect = piece.rect_in_form(scale);
+            let got = painter.render(piece.screen.width, piece.screen.height, scale as f32, None, &mut |c| ui.paint_piece(form, c, rect, None, k == 0));
+            let mut wrong = 0;
+            let mut first = None;
+            for y in 0..piece.screen.height {
+                for x in 0..piece.screen.width {
+                    let [r, g, b] = pixel(x + piece.origin_x as u32, y + piece.origin_y as u32);
+                    let want = (r as u32) << 16 | (g as u32) << 8 | b as u32;
+                    if got[(y * piece.screen.width + x) as usize] != want {
+                        wrong += 1;
+                        first.get_or_insert((x, y));
+                    }
+                }
+            }
+            assert_eq!(wrong, 0, "{name}, pedaço {k} ({:?}): {wrong} pixels diferentes da imagem, o primeiro em {first:?}", piece.screen);
+        }
+    }
+
+    // O clique no pixel da tela, dado na janela do pedaço em que ele cai.
+    let event = |position| PointerEvent { position, button: PointerButton::Primary, ..Default::default() };
+    for (sx, sy) in [(-300, 40), (-1, 239), (-150, 100), (0, 0), (499, 299), (321, 123)] {
+        let p = pieces.iter().find(|p| sx >= p.screen.x && (sx as i64) < p.screen.right() && sy >= p.screen.y && (sy as i64) < p.screen.bottom()).unwrap();
+        let at = p.to_form((sx - p.screen.x) as f64, (sy - p.screen.y) as f64, scale);
+        ui.pointer_down(form, event(at));
+        ui.pointer_up(form, event(at));
+        assert_eq!(clicks.borrow().last().copied(), Some(PointF::new((sx - all.x) as f32, (sy - all.y) as f32)), "pixel ({sx}, {sy}) da tela");
+    }
+}
+
+/// O print abre e fecha a cada Print Screen: criado, mostrado, fechado (`close_action = free`)
+/// e liberado 20 vezes, não fica nada para trás (nem o form, nem os componentes, nem os
+/// pedaços). As janelas e a memória do processo, com a plataforma: o exemplo `print_overlay`.
+#[test]
+fn the_print_form_opened_and_freed_twenty_times_leaves_nothing_behind() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let main = ui.create("Form", None).unwrap();
+    ui.show(main).unwrap();
+    let before = ui.components().count();
+    let mut time = 0.0;
+    for _ in 0..20 {
+        let form = ui.create("Form", None).unwrap();
+        for (prop, value) in [
+            ("border_style", PropValue::from("none")),
+            ("window_state", "full_screen".into()),
+            ("span_monitors", true.into()),
+            ("physical_pixels", true.into()),
+            ("topmost", true.into()),
+            ("show_in_taskbar", false.into()),
+            ("force_foreground", true.into()),
+            ("close_action", "free".into()),
+        ] {
+            ui.set_prop(form, prop, value).unwrap();
+        }
+        let image = ui.create("Image", Some(form)).unwrap();
+        ui.set_prop(image, "align", "client").unwrap();
+        ui.get_mut::<aylis_controls::ImageView>(image).unwrap().set_picture(Some(Image::rgba(64, 32, vec![255; 64 * 32 * 4])));
+        ui.show(form).unwrap();
+        ui.set_form_pieces(form, vec![RectF::new(0.0, 0.0, 32.0, 32.0), RectF::new(32.0, 0.0, 32.0, 32.0)]);
+        ui.layout();
+        assert!(ui.close(form));
+        // O `free` vem num timer de 0 ms, como na plataforma.
+        time += 0.05;
+        ui.set_time(time);
+        ui.run_timers();
+        assert!(!ui.contains(form), "o form foi liberado");
+        assert!(ui.form_pieces(form).is_empty());
+    }
+    assert_eq!(ui.components().count(), before, "nenhum componente ficou para trás");
+    assert_eq!(ui.open_forms(), vec![main]);
+}

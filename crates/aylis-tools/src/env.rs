@@ -803,6 +803,18 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                         }
                     }
                 });
+                // A assinatura de código (o signtool e o certificado das Opções): sem ela, o
+                // SmartScreen e os antivírus corporativos desconfiam do executável publicado.
+                if let Some(bin) = crate::codesign::windows_kits_bin() {
+                    crate::env_cache::note_path(&bin);
+                }
+                // Só se a senha existe, nunca o valor (a verificação é guardada em disco).
+                crate::env_cache::note_input("sign_password", Some(std::env::var_os(crate::codesign::PASSWORD_ENV).is_some().to_string()));
+                out.push(match crate::codesign::environment() {
+                    Ok(detail) => Check::ok(t, "Assinatura de código", detail),
+                    Err(missing) => Check::warning(t, "Assinatura de código", missing)
+                        .help("Configure o certificado em Ferramentas → Opções → Assinatura; o signtool vem com o Windows SDK (docs/publicar-windows.md)"),
+                });
                 out.push(match msvc_linker() {
                     Some(v) => Check::ok(t, "Linker do Visual C++ (MSVC)", v),
                     None => Check::missing(t, "Linker do Visual C++ (MSVC)", "não encontrado (o Rust no Windows usa o link.exe)").fix(crate::setup::msvc()),

@@ -41,8 +41,48 @@ public class Aylis {
      * (engolir a tecla) ou outro caractere (trocar), {@code "data"}/{@code "label"} (o arrasto),
      * {@code "accept"} (soltar aqui). Recusar com mensagem ({@code before_post}):
      * {@code throw new AylisException("Informe o CPF")}. O cliente responde quando o handler termina.
+     *
+     * <p>{@code pointer}: no {@code on_click} do mouse, do toque ou da caneta, onde, com que botão e
+     * com que teclas ({@code if (ev.pointer() != null && ev.pointer().ctrl()) ...}); {@code null} no
+     * clique do teclado ou do código.
      */
-    public record Event(String event, String handler, String form, Map<String, Object> sender, Object args, Map<String, Object> info, Long ask, Map<String, Object> reply) {}
+    public record Event(String event, String handler, String form, Map<String, Object> sender, Object args, Map<String, Object> info, Long ask, Map<String, Object> reply, Pointer pointer) {
+        /** Sem o ponteiro (o construtor de antes). */
+        public Event(String event, String handler, String form, Map<String, Object> sender, Object args, Map<String, Object> info, Long ask, Map<String, Object> reply) {
+            this(event, handler, form, sender, args, info, ask, reply, null);
+        }
+    }
+
+    /**
+     * O ponteiro de um {@code on_click} (o campo {@code pointer} do evento): {@code x}/{@code y} no
+     * componente, {@code formX}/{@code formY} no form, {@code button} ({@code primary},
+     * {@code secondary}, {@code middle}...), as teclas apertadas ({@code ctrl}, {@code shift},
+     * {@code alt}, {@code meta}) e {@code kind} ({@code mouse}, {@code touch}, {@code pen}).
+     */
+    public record Pointer(double x, double y, double formX, double formY, String button, List<String> modifiers, String kind, int clicks) {
+        public boolean ctrl() { return modifiers.contains("ctrl"); }
+        public boolean shift() { return modifiers.contains("shift"); }
+        public boolean alt() { return modifiers.contains("alt"); }
+        public boolean meta() { return modifiers.contains("meta"); }
+
+        static Pointer from(Object value) {
+            if (!(value instanceof Map<?, ?> p)) {
+                return null;
+            }
+            List<String> modifiers = new ArrayList<>();
+            if (p.get("modifiers") instanceof List<?> list) {
+                for (Object m : list) {
+                    modifiers.add(String.valueOf(m));
+                }
+            }
+            return new Pointer(num(p.get("x")), num(p.get("y")), num(p.get("form_x")), num(p.get("form_y")),
+                    String.valueOf(p.get("button")), List.copyOf(modifiers), String.valueOf(p.get("kind")), (int) num(p.get("clicks")));
+        }
+
+        private static double num(Object value) {
+            return value instanceof Number n ? n.doubleValue() : 0;
+        }
+    }
 
     public static final class AylisException extends RuntimeException {
         public AylisException(String message) {
@@ -444,7 +484,8 @@ public class Aylis {
         Long ask = m.get("ask") instanceof Number n ? n.longValue() : null;
         Event ev = new Event(String.valueOf(m.get("event")), String.valueOf(m.get("handler")), String.valueOf(m.get("form")),
                 m.get("sender") instanceof Map ? (Map<String, Object>) m.get("sender") : Map.of(), m.get("args"),
-                m.get("info") instanceof Map ? (Map<String, Object>) m.get("info") : Map.of(), ask, new LinkedHashMap<>());
+                m.get("info") instanceof Map ? (Map<String, Object>) m.get("info") : Map.of(), ask, new LinkedHashMap<>(),
+                Pointer.from(m.get("pointer")));
         Consumer<Event> h = handlers.getOrDefault(ev.form() + "." + ev.handler(), handlers.get(ev.handler()));
         running++;
         try {

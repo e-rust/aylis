@@ -608,6 +608,8 @@ fn run_on(
         system_bars: None,
         #[cfg(any(target_os = "ios", web))]
         system_bars_applied: 0,
+        #[cfg(mobile)]
+        orientation_applied: None,
         tapped: false,
         started_once: false,
         #[cfg(windows)]
@@ -816,6 +818,15 @@ fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Renderer) {
     aylis_core::system_bars::set_available(true);
     #[cfg(target_os = "ios")]
     ui.set_paints_status_strip(true);
+    // A orientação para testar no desenvolvimento (`AYLIS_ORIENTATION`, ou `adb shell setprop
+    // debug.aylis.orientation landscape`), por cima do projeto e dos forms; só em debug.
+    #[cfg(mobile)]
+    if let Some(value) = diag::diagnostic_setting("AYLIS_ORIENTATION") {
+        match aylis_core::ScreenOrientation::parse(&value) {
+            Some(o) => ui.set_orientation_override(Some(o)),
+            None => diag::diagnostic(&format!("aylis: AYLIS_ORIENTATION '{value}' não existe (any, portrait, landscape, sensor_portrait, sensor_landscape)")),
+        }
+    }
     let poster = ui.poster();
     let services = ui.services_mut();
     #[cfg(native_skia)]
@@ -1002,6 +1013,10 @@ impl aylis_core::platform::OffscreenService for SkiaOffscreen {
         aylis_skia::SkiaRenderer::new().render_png(w, h, scale, background, |canvas| paint(canvas))
     }
 
+    fn render_rgba(&self, width: u32, height: u32, scale: f32, background: aylis_core::Color, paint: &mut dyn FnMut(&mut dyn aylis_core::Canvas)) -> Option<Vec<u8>> {
+        aylis_skia::SkiaRenderer::new().render_rgba(width, height, scale, background, |canvas| paint(canvas))
+    }
+
     fn render_area_rgba(
         &self,
         width: u32,
@@ -1036,6 +1051,10 @@ impl aylis_core::platform::OffscreenService for D2dOffscreen {
         aylis_d2d::encode_png(&rgba, w, h)
     }
 
+    fn render_rgba(&self, width: u32, height: u32, scale: f32, background: aylis_core::Color, paint: &mut dyn FnMut(&mut dyn aylis_core::Canvas)) -> Option<Vec<u8>> {
+        aylis_d2d::D2dRenderer::new().ok()?.render_rgba(width, height, scale, background, |canvas| paint(canvas))
+    }
+
     fn render_area_rgba(
         &self,
         width: u32,
@@ -1046,6 +1065,19 @@ impl aylis_core::platform::OffscreenService for D2dOffscreen {
     ) -> Option<Vec<u8>> {
         aylis_d2d::D2dRenderer::new().ok()?.render_area_rgba(width, height, 1.0, background, over, |canvas| paint(canvas))
     }
+}
+
+/// Traz a janela do form para a frente com o foco: pelo caminho forçado no Windows quando o
+/// form pede (`force_foreground`, [`Ui::forces_foreground`]: o processo sem a última entrada,
+/// como o form aberto por um atalho global); senão, e nas outras plataformas, o pedido do winit.
+fn bring_to_front(ui: &Ui, form: ComponentId, window: &Window) {
+    #[cfg(windows)]
+    if ui.forces_foreground(form) {
+        win32::force_foreground(window);
+        return;
+    }
+    let _ = (ui, form);
+    window.focus_window();
 }
 
 #[cfg(web)]
@@ -1244,6 +1276,9 @@ struct App {
     system_bars: Option<(aylis_core::Color, aylis_core::Color, bool, bool, bool, bool)>,
     #[cfg(any(target_os = "ios", web))]
     system_bars_applied: u64,
+    /// Celular: a orientação já pedida ao sistema (`Ui::requested_orientation`).
+    #[cfg(mobile)]
+    orientation_applied: Option<aylis_core::ScreenOrientation>,
     /// Houve um toque: se o foco está num campo, pede o teclado de novo (o usuário pode
     /// tê-lo fechado com o "voltar" sem o campo perder o foco).
     tapped: bool,
@@ -1336,7 +1371,7 @@ impl App {
         if SINGLE_SURFACE || w.span.is_some() || w.window.is_maximized() || self.enum_prop(w.form, "border_style") != "custom" {
             return None;
         }
-        let size = w.window.inner_size().to_logical::<f32>(w.window.scale_factor() * self.ui.form_zoom(w.form) as f64);
+        let size = w.window.inner_size().to_logical::<f32>(self.system_scale(index) * self.ui.form_zoom(w.form) as f64);
         const EDGE: f32 = 6.0;
         let (left, right) = (p.x < EDGE, p.x > size.width - EDGE);
         let (top, bottom) = (p.y < EDGE, p.y > size.height - EDGE);
@@ -1367,6 +1402,17 @@ impl App {
             // O form em vários monitores (ou que pode virar): o lugar, o tamanho e a tela cheia
             // refazem os pedaços (`span.rs`).
             if self.span_command(form, command) {
+                continue;
+            }
+            // `physical_pixels` mudou (numa janela só; os pedaços se refazem no `span_command`):
+            // a janela fica onde está e o form passa a ter o tamanho dela na escala nova.
+            if command == WindowCommand::UpdateScale {
+                let indices: Vec<usize> = (0..self.windows.len()).filter(|&i| self.windows[i].form == form).collect();
+                for index in indices {
+                    self.sync_form_size(index);
+                    self.windows[index].limits = [-1.0; 4];
+                    self.windows[index].window.request_redraw();
+                }
                 continue;
             }
             let Some(w) = self.window_of(form) else { continue };
@@ -1409,7 +1455,7 @@ impl App {
                     window.set_minimized(false);
                     #[cfg(windows)]
                     win32::set_shown(window, true);
-                    window.focus_window();
+                    bring_to_front(&self.ui, form, window);
                 }
                 WindowCommand::SetFullscreen(on) => {
                     #[cfg(windows)]
@@ -1450,9 +1496,11 @@ impl App {
                     if let Some(cb) = self.ui.control(form).filter(|_| !SINGLE_SURFACE) {
                         let zoom = self.ui.form_zoom(form) as f64;
                         let want = LogicalSize::new(cb.width() as f64 * zoom, cb.height() as f64 * zoom);
-                        let now = window.inner_size().to_logical::<f64>(window.scale_factor());
+                        // Em pixels físicos (`physical_pixels`), a unidade é o pixel.
+                        let scale = if self.ui.physical_pixels(form) { 1.0 } else { window.scale_factor() };
+                        let now = window.inner_size().to_logical::<f64>(scale);
                         if (now.width - want.width).abs() > 0.5 || (now.height - want.height).abs() > 0.5 {
-                            let _ = window.request_inner_size(want);
+                            let _ = window.request_inner_size(want.to_physical::<u32>(scale));
                         }
                     }
                 }
@@ -1461,7 +1509,7 @@ impl App {
                 WindowCommand::UpdateCorners => win32::set_window_corners(window, self.corner_preference(form)),
                 #[cfg(not(windows))]
                 WindowCommand::UpdateCorners => {}
-                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan => {}
+                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale => {}
             }
         }
     }
@@ -1474,7 +1522,8 @@ impl App {
         use aylis_core::PointerButton;
         for (form, kind, x, y) in win32::take_caption_input() {
             let Some(w) = self.window_of(form) else { continue };
-            let p = winit::dpi::PhysicalPosition::new(f64::from(x), f64::from(y)).to_logical::<f32>(w.window.scale_factor());
+            let scale = if self.ui.physical_pixels(form) { 1.0 } else { w.window.scale_factor() };
+            let p = winit::dpi::PhysicalPosition::new(f64::from(x), f64::from(y)).to_logical::<f32>(scale);
             let at = |button| PointerEvent { position: PointF::new(p.x, p.y), button, kind: PointerKind::Mouse, modifiers: self.modifiers, ..Default::default() };
             match kind {
                 win32::CaptionInput::Move => self.ui.pointer_move(form, at(Default::default())),
@@ -1488,7 +1537,8 @@ impl App {
         }
         // Um form em vários monitores não maximiza (e a janela principal não começa no canto dele).
         for w in self.windows.iter().filter(|w| !w.is_extra()) {
-            let scale = w.window.scale_factor() as f32 * self.ui.form_zoom(w.form);
+            let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
+            let scale = system as f32 * self.ui.form_zoom(w.form);
             let rect = self.ui.maximize_button(w.form).filter(|_| w.span.is_none()).map(|r| {
                 ((r.x * scale).round() as i32, (r.y * scale).round() as i32, (r.right() * scale).round() as i32, (r.bottom() * scale).round() as i32)
             });
@@ -1884,6 +1934,47 @@ impl App {
         }
     }
 
+    /// Celular: a orientação pedida (a do form à frente, a do app ou a do `AYLIS_ORIENTATION`),
+    /// só quando muda. Android: `Activity.setRequestedOrientation` (vale com qualquer Activity);
+    /// iOS: as orientações válidas da janela (o iOS só gira para as que o `Info.plist` declara).
+    #[cfg(mobile)]
+    fn sync_orientation(&mut self) {
+        let wanted = self.ui.requested_orientation();
+        if self.orientation_applied == Some(wanted) {
+            return;
+        }
+        #[cfg(target_os = "android")]
+        {
+            // As constantes do `ActivityInfo.SCREEN_ORIENTATION_*`.
+            use aylis_core::ScreenOrientation as O;
+            let code = match wanted {
+                O::Any => -1,
+                O::Landscape => 0,
+                O::Portrait => 1,
+                O::SensorLandscape => 6,
+                O::SensorPortrait => 7,
+            };
+            if android_jni::set_requested_orientation(code) {
+                self.orientation_applied = Some(wanted);
+            }
+        }
+        #[cfg(target_os = "ios")]
+        {
+            use winit::platform::ios::{ValidOrientations, WindowExtIOS};
+            let valid = if wanted.is_portrait() {
+                ValidOrientations::Portrait
+            } else if wanted.is_landscape() {
+                ValidOrientations::Landscape
+            } else {
+                ValidOrientations::LandscapeAndPortrait
+            };
+            for w in &self.windows {
+                w.window.set_valid_orientations(valid);
+            }
+            self.orientation_applied = Some(wanted);
+        }
+    }
+
     /// Navegador: a cor da barra de status vai para a `theme-color` da página (a barra do
     /// navegador no celular).
     #[cfg(web)]
@@ -2042,9 +2133,12 @@ impl App {
         let (width, height) = self.ui.control(form).map_or((640.0, 480.0), |cb| (cb.width(), cb.height()));
         // Com zoom, a janela cresce junto: o form aparece com o tamanho de projeto.
         let zoom = self.ui.form_zoom(form) as f64;
+        // Em pixels físicos (`physical_pixels`), o tamanho do form já é em pixels.
+        let physical = self.ui.physical_pixels(form);
+        let size: winit::dpi::Size = if physical { PhysicalSize::new(width as f64, height as f64).into() } else { LogicalSize::new(width as f64 * zoom, height as f64 * zoom).into() };
         let mut attributes = Window::default_attributes()
             .with_title(self.title(form))
-            .with_inner_size(LogicalSize::new(width as f64 * zoom, height as f64 * zoom))
+            .with_inner_size(size)
             // A barra de título do sistema clara ou escura como o tema (no Windows, pelo DWM;
             // o relatório do Tabernáculo, J04).
             .with_theme(Some(if self.ui.theme().dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
@@ -2126,7 +2220,7 @@ impl App {
                 let monitor = chosen.clone().or_else(|| event_loop.primary_monitor());
                 monitor.map(|m| {
                     let (origin, size) = self.work_rect(&m);
-                    let scale = m.scale_factor();
+                    let scale = if physical { 1.0 } else { m.scale_factor() };
                     let (w, h) = ((width as f64 * scale) as i32, (height as f64 * scale) as i32);
                     let x = if corner.ends_with("left") { origin.x } else { origin.x + size.width as i32 - w };
                     let y = if corner.starts_with("top") { origin.y } else { origin.y + size.height as i32 - h };
@@ -2148,7 +2242,7 @@ impl App {
                     Some(o) => o.outer_position().ok().map(|p| (p, o.outer_size())),
                     None => chosen.clone().or_else(|| event_loop.primary_monitor()).map(|m| self.work_rect(&m)),
                 };
-                let scale = chosen.clone().or_else(|| event_loop.primary_monitor()).map_or(1.0, |m| m.scale_factor());
+                let scale = if physical { 1.0 } else { chosen.clone().or_else(|| event_loop.primary_monitor()).map_or(1.0, |m| m.scale_factor()) };
                 area.map(|(origin, size)| {
                     let w = (width as f64 * scale) as i32;
                     let h = (height as f64 * scale) as i32;
@@ -2233,8 +2327,11 @@ impl App {
     fn open_window(&mut self, event_loop: &ActiveEventLoop, form: ComponentId) -> Result<(), Error> {
         #[cfg(not(any(web, mobile)))]
         self.restore_remembered(form);
-        #[cfg_attr(not(windows), allow(unused_mut))]
         let mut attributes = self.attributes(event_loop, form);
+        // O form que já nasce em vários monitores (`span_monitors`): a janela principal nasce
+        // no pedaço dela, sem moldura e escondida; as outras abrem logo depois dela, e todas
+        // aparecem juntas (`span.rs`).
+        let spanned = self.plan_span(form, &mut attributes);
         // Windows: a tela cheia vem depois de a janela e o alvo de desenho existirem. Nascida em
         // tela cheia, sem dona e por cima de tudo, a swap chain é recusada (DXGI_ERROR_INVALID_CALL)
         // e a janela não abre (o relatório do Tabernáculo, R01; na 0.1.0 caía no dxgi.dll).
@@ -2290,7 +2387,7 @@ impl App {
         #[cfg(not(web))]
         let access = accessible.then(|| {
             let adapter = access::Adapter::new(event_loop, &window, self.ui.poster());
-            if !hidden {
+            if !hidden && !spanned {
                 window.set_visible(true);
             }
             adapter
@@ -2341,11 +2438,20 @@ impl App {
             focused: false,
             hovered: false,
         });
-        // O form em vários monitores vira as janelas por monitor na próxima volta do laço.
-        if matches!(self.ui.get_prop(form, "span_monitors"), Ok(PropValue::Bool(true))) {
+        let index = self.windows.len() - 1;
+        if spanned {
+            // As outras janelas abrem já, e todas aparecem juntas.
+            #[cfg(not(web))]
+            let show = !hidden;
+            #[cfg(web)]
+            let show = true;
+            self.open_span(event_loop, form, show);
+        } else if matches!(self.ui.get_prop(form, "span_monitors"), Ok(PropValue::Bool(true))) {
+            // O form que pode virar pedaços (o lugar dele só se sabe com a janela aberta):
+            // confere nesta mesma volta do laço, depois de abrir os forms.
             self.span_checks.push(form);
         }
-        self.sync_form_size(self.windows.len() - 1);
+        self.sync_form_size(index);
         // A janela existe (com o alvo de desenho e, no Windows, o HWND em
         // `aylis::platform::win::hwnd`): o `on_show` vem antes dela, então quem precisa da
         // janela (a barra de título, a posição) usa este (o relatório do Tabernáculo, R03).
@@ -2516,10 +2622,15 @@ impl App {
                 for (w, limits) in self.windows.iter_mut().zip(limits).filter(|(w, _)| w.span.is_none()) {
                     if w.limits != limits {
                         let [min_w, min_h, max_w, max_h] = limits;
-                        w.window.set_min_inner_size((min_w > 0.0 || min_h > 0.0).then(|| LogicalSize::new(min_w, min_h)));
+                        // Em pixels físicos (`physical_pixels`), os limites são pixels.
+                        let physical = self.ui.physical_pixels(w.form);
+                        let size = |w: f64, h: f64| -> winit::dpi::Size {
+                            if physical { PhysicalSize::new(w, h).into() } else { LogicalSize::new(w, h).into() }
+                        };
+                        w.window.set_min_inner_size((min_w > 0.0 || min_h > 0.0).then(|| size(min_w, min_h)));
                         // Sem máximo num dos lados: grande o bastante para qualquer tela.
                         let open = |v: f64| if v > 0.0 { v } else { 100_000.0 };
-                        w.window.set_max_inner_size((max_w > 0.0 || max_h > 0.0).then(|| LogicalSize::new(open(max_w), open(max_h))));
+                        w.window.set_max_inner_size((max_w > 0.0 || max_h > 0.0).then(|| size(open(max_w), open(max_h))));
                         w.limits = limits;
                     }
                 }
@@ -2529,10 +2640,12 @@ impl App {
             if !SINGLE_SURFACE {
                 for w in self.windows.iter().filter(|w| w.span.is_none()) {
                     let Some(want) = self.ui.auto_form_height(w.form) else { continue };
-                    let zoom = w.window.scale_factor() * self.ui.form_zoom(w.form) as f64;
+                    let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
+                    let zoom = system * self.ui.form_zoom(w.form) as f64;
                     let size = w.window.inner_size().to_logical::<f64>(zoom);
                     if (size.height - want as f64).abs() > 0.5 {
-                        let _ = w.window.request_inner_size(LogicalSize::new(size.width * self.ui.form_zoom(w.form) as f64, want as f64 * self.ui.form_zoom(w.form) as f64));
+                        let wanted = LogicalSize::new(size.width * self.ui.form_zoom(w.form) as f64, want as f64 * self.ui.form_zoom(w.form) as f64);
+                        let _ = w.window.request_inner_size(wanted.to_physical::<u32>(system));
                     }
                 }
             }
@@ -2558,7 +2671,7 @@ impl App {
         }
         if let Some(form) = self.ui.take_activation() {
             if let Some(w) = self.window_of(form) {
-                w.window.focus_window();
+                bring_to_front(&self.ui, form, &w.window);
             }
         }
     }
@@ -2708,6 +2821,13 @@ impl App {
         }
     }
 
+    /// A escala do sistema na janela `index` (pixels por ponto, sem o zoom): a do monitor ou,
+    /// num form em pixels físicos (`physical_pixels`), 1.
+    pub(crate) fn system_scale(&self, index: usize) -> f64 {
+        let w = &self.windows[index];
+        if self.ui.physical_pixels(w.form) { 1.0 } else { draw_scale(&w.window) }
+    }
+
     fn sync_form_size(&mut self, index: usize) {
         let Some(w) = self.windows.get(index) else { return };
         #[cfg(native_gpu)]
@@ -2719,7 +2839,7 @@ impl App {
         // Num form em vários monitores, o tamanho é o do form inteiro (todos os pedaços).
         let logical = match self.span_size(form).filter(|_| w.span.is_some()) {
             Some((width, height)) => LogicalSize::new(width, height),
-            None => surface_size(&w.window).to_logical::<f64>(draw_scale(&w.window) * self.ui.form_zoom(form) as f64),
+            None => surface_size(&w.window).to_logical::<f64>(self.system_scale(index) * self.ui.form_zoom(form) as f64),
         };
         if let Some(cb) = self.ui.control_mut(form) {
             cb.set_size(logical.width as f32, logical.height as f32);
@@ -2774,7 +2894,7 @@ impl App {
             return Ok(()); // janela minimizada
         };
         let size = (width, height);
-        let scale = draw_scale(&w.window) as f32 * self.ui.form_zoom(w.form);
+        let scale = self.system_scale(index) as f32 * self.ui.form_zoom(w.form);
         self.update_safe_area(index);
         self.ui.set_time(self.started.elapsed().as_secs_f64());
         self.ui.tick();
@@ -2833,7 +2953,11 @@ impl App {
             #[cfg(native_gpu)]
             Backend::Gpu(gpu) => gpu.draw(&self.renderer.skia, size, scale, background, gpu_parts, |c, area| paint_stack(ui, under, form, c, area), capture)?,
             #[cfg(native_d2d)]
-            Backend::D2d(d2d) => d2d.draw(&self.renderer.d2d, size, scale, background, parts, |c, area| paint_stack(ui, under, form, c, area), capture)?,
+            Backend::D2d(d2d) => {
+                // O `frame_reuse_kb` do form desta janela (ou o do projeto), lido a cada quadro.
+                d2d.set_frame_reuse_kb(ui.form_frame_reuse_kb(form));
+                d2d.draw(&self.renderer.d2d, size, scale, background, parts, |c, area| paint_stack(ui, under, form, c, area), capture)?
+            }
             #[cfg(web)]
             Backend::Web(web) => {
                 let _ = capture;
@@ -3157,6 +3281,15 @@ impl ApplicationHandler for App {
                 self.follow_monitor(index, false);
                 self.windows[index].window.request_redraw();
             }
+            // Um form em pixels físicos (`physical_pixels`) num monitor de outra escala: a janela
+            // fica com os mesmos pixels (o form não muda de tamanho), em vez do que o sistema
+            // sugere.
+            WindowEvent::ScaleFactorChanged { mut inner_size_writer, .. } if self.ui.physical_pixels(self.windows[index].form) => {
+                let _ = inner_size_writer.request_inner_size(self.windows[index].window.inner_size());
+                self.sync_form_size(index);
+                self.follow_monitor(index, false);
+                self.windows[index].window.request_redraw();
+            }
             WindowEvent::Resized(_) if self.is_extra(index) => {
                 self.follow_monitor(index, false);
                 self.windows[index].window.request_redraw();
@@ -3189,10 +3322,13 @@ impl ApplicationHandler for App {
                 }
                 #[cfg(any(target_os = "android", target_os = "ios", web))]
                 self.sync_system_bars();
+                #[cfg(mobile)]
+                self.sync_orientation();
                 // A tela mudou: o leitor de tela recebe a árvore nova (só se estiver ativo).
                 #[cfg(not(web))]
                 if let Some(w) = self.windows.get_mut(index) {
-                    let (form, scale) = (w.form, w.window.scale_factor() * self.ui.form_zoom(w.form) as f64);
+                    let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
+                    let (form, scale) = (w.form, system * self.ui.form_zoom(w.form) as f64);
                     let ui = &self.ui;
                     if let Some(access) = w.access.as_mut() {
                         access.update_if_active(|| access::tree(ui, form, scale));

@@ -53,6 +53,13 @@ pub(crate) fn android_logger() {
     }
 }
 
+/// Se as configurações de diagnóstico leem o ambiente: só com a feature `diagnostics` (a `dev`
+/// do app liga) e, em release, só com a `release-diagnostics` (as medições do próprio Aylis e a
+/// IDE; o app nunca a liga).
+pub(crate) const fn reads_environment(debug: bool, diagnostics: bool, release_diagnostics: bool) -> bool {
+    diagnostics && (debug || release_diagnostics)
+}
+
 /// Uma configuração de diagnóstico: a variável de ambiente `name` e, no Android (onde o app
 /// não recebe variáveis), a propriedade do sistema `debug.aylis.<nome sem AYLIS_, minúsculo>`
 /// (`adb shell setprop debug.aylis.bench 300`).
@@ -60,7 +67,10 @@ pub(crate) fn android_logger() {
 pub(crate) fn diagnostic_setting(name: &str) -> Option<String> {
     // Só com a feature `diagnostics` (a `dev` do app liga; os exemplos e testes do aylis também):
     // o app publicado não muda de comportamento por variável de ambiente.
-    if !cfg!(feature = "diagnostics") {
+    // Em release, nunca (decidido pelo autor em 14/11): o app configura pelo projeto, pelo form
+    // e em execução; a variável é só do desenvolvimento. As medições do próprio Aylis ligam a
+    // `release-diagnostics`.
+    if !reads_environment(cfg!(debug_assertions), cfg!(feature = "diagnostics"), cfg!(feature = "release-diagnostics")) {
         return None;
     }
     if let Ok(v) = std::env::var(name) {
@@ -134,5 +144,19 @@ pub(crate) fn local_offset(utc: i64) -> i64 {
     {
         let _ = utc;
         0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// O app em release nunca lê variável de ambiente, mesmo com a `dev` (decidido em 14/11).
+    #[test]
+    fn release_apps_never_read_the_environment() {
+        use super::reads_environment;
+        assert!(reads_environment(true, true, false), "debug com a dev: lê");
+        assert!(!reads_environment(false, true, false), "release com a dev: não lê");
+        assert!(!reads_environment(true, false, false), "sem a dev: não lê");
+        assert!(!reads_environment(false, false, false));
+        assert!(reads_environment(false, true, true), "as medições do Aylis em release: lê");
     }
 }

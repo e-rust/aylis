@@ -299,6 +299,13 @@ pub(crate) fn set_system_bars(status: u32, navigation: u32, light_status: bool, 
     .is_some()
 }
 
+/// Pede a orientação da tela (`ActivityInfo.SCREEN_ORIENTATION_*`: -1 gira com o aparelho, 0
+/// deitado, 1 em pé, 6 e 7 deitado e em pé nos dois sentidos). Método da própria `Activity`:
+/// vale também sem a `AylisActivity`, e por cima do `screenOrientation` do manifesto.
+pub(crate) fn set_requested_orientation(code: i32) -> bool {
+    with_env(|env, activity| env.call_method(activity, "setRequestedOrientation", "(I)V", &[JValue::Int(code)]).map(|_| ())).is_some()
+}
+
 /// "Voltar" no form principal: o app vai para segundo plano, como os apps do Android 12
 /// em diante (a Activity continua viva e volta como estava).
 pub(crate) fn move_task_to_back() -> bool {

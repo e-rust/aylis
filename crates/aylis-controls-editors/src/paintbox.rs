@@ -522,6 +522,13 @@ impl PaintCanvas {
         (p.x / z, p.y / z)
     }
 
+    /// Onde os pixels `(x, y, largura, altura)` da imagem aparecem no controle (com o zoom),
+    /// com folga para o contorno tracejado da seleção.
+    fn image_area(&self, (x, y, w, h): (i32, i32, i32, i32)) -> RectF {
+        let z = self.zoom.clamp(0.1, 16.0);
+        RectF::new(x as f32 * z, y as f32 * z, w as f32 * z, h as f32 * z).inflate(2.0)
+    }
+
     fn shape(&mut self, bitmap: &mut Bitmap, button: PointerButton, a: (i32, i32), b: (i32, i32)) {
         let (fore, back) = self.colors(button);
         let fill = self.filled.then_some(back);
@@ -936,16 +943,34 @@ impl Component for PaintCanvas {
         ctx.fire("on_cursor", EventArgs::Text(format!("{}, {}", p.0, p.1)));
         let Some((button, start, _)) = self.drag else { return };
         if self.tool == PaintTool::Select {
+            // Arrastando a seleção solta: só onde ela estava e onde ficou (numa imagem 4K, a
+            // tela inteira a cada movimento custava ~35 ms no Skia, `medicoes/drag_4k.json`).
             if let (Some(g), Some(sel)) = (self.grab, &mut self.selection) {
+                let before = (sel.x, sel.y, sel.w, sel.h);
                 sel.x = p.0 - g.0;
                 sel.y = p.1 - g.1;
+                let after = (sel.x, sel.y, sel.w, sel.h);
+                self.drag = Some((button, start, p));
+                ctx.repaint_part(self.image_area(before).union(self.image_area(after)));
+                return;
             }
             self.drag = Some((button, start, p));
         } else if self.tool.is_shape() {
             self.drag = Some((button, start, p));
         } else {
-            self.stroke_to(button, self.to_image_f(e.position));
+            // Mão livre: o pedaço novo do traço fica entre os pontos guardados e o novo (a
+            // curva passa dentro deles), com a espessura do pincel em volta.
+            let to = self.to_image_f(e.position);
+            let (mut x0, mut y0, mut x1, mut y1) = (to.0, to.1, to.0, to.1);
+            for &(x, y) in &self.stroke {
+                (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
+            }
+            self.stroke_to(button, to);
             self.drag = Some((button, start, p));
+            let r = self.size() * 2 + 4;
+            let (ax, ay) = (x0.floor() as i32 - r, y0.floor() as i32 - r);
+            ctx.repaint_part(self.image_area((ax, ay, x1.ceil() as i32 + r - ax + 1, y1.ceil() as i32 + r - ay + 1)));
+            return;
         }
         ctx.repaint();
     }

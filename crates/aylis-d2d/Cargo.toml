@@ -11,9 +11,11 @@ rust-version.workspace = true
 [features]
 # As variáveis de diagnóstico (AYLIS_D2D_TARGET, AYLIS_D2D_DEBUG): a plataforma liga com a dela.
 diagnostics = []
+# Também no build release (as medições do Aylis); o app nunca liga.
+release-diagnostics = ["diagnostics"]
 
 [dependencies]
-aylis-core = { version = "0.3.0", path = "../aylis-core" }
+aylis-core = { version = "0.4.0", path = "../aylis-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows-numerics = { version = "0.3", default-features = false }
@@ -34,3 +36,7 @@ windows = { version = "0.62", features = [
     "Win32_Graphics_Imaging",
     "Win32_System_Com",
 ] }
+
+# O exemplo camera_frames abre uma janela escondida para medir com a swap chain.
+[target.'cfg(windows)'.dev-dependencies]
+windows = { version = "0.62", features = ["Win32_UI_WindowsAndMessaging"] }

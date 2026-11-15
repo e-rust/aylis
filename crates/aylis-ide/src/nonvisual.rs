@@ -15,6 +15,7 @@ use crate::widgets::{caption, clear, muted};
 /// (classe, ícone, descrição) dos não visuais do aylis.
 const INFO: &[(&str, &str, &str)] = &[
     ("Timer", "clock", "Dispara on_timer a cada intervalo."),
+    ("RenderSettings", "image", "Lê e troca em execução as configurações de pintura do app (cache de imagens, camadas, quadros de vídeo)."),
     ("EventInterceptor", "filter", "Recebe num lugar só os eventos de todos os componentes do form ou da aplicação, e pode cancelar."),
     ("PopupMenu", "menu", "Menu de contexto: abre no clique direito do controle que o usa em popup_menu."),
     ("MenuItem", "dot", "Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu."),

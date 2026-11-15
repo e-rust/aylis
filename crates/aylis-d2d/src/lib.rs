@@ -290,6 +290,20 @@ pub struct D2dRenderer {
     geometries: RefCell<HashMap<u64, ID2D1PathGeometry>>,
     /// Imagens de arquivo decodificadas (`None`: não deu para decodificar).
     decoded: RefCell<ImageCache<Option<Decoded>>>,
+    /// Os dispositivos do Direct3D 11 e do Direct2D já criados, um por placa pedida: cada
+    /// janela nova na mesma placa usa o mesmo (criar um custa ~30 ms; o form em vários monitores
+    /// abre uma janela por monitor, e o print do NoOBS precisa aparecer em ~100 ms). Cada janela
+    /// continua com o próprio contexto do Direct2D e a própria swap chain.
+    devices: RefCell<Vec<SharedDevice>>,
+}
+
+/// Um dispositivo do Direct3D 11 (com o do Direct2D por cima) para as janelas de uma placa.
+struct SharedDevice {
+    /// A placa pedida (o LUID; `None`: a padrão do sistema).
+    key: Option<i64>,
+    device: ID3D11Device,
+    context: ID3D11DeviceContext,
+    d2d: ID2D1Device,
 }
 
 /// A placa pedida por `choice` para a janela `hwnd` (`None`: a padrão do sistema). Com
@@ -352,6 +366,15 @@ fn is_software(d: &DXGI_ADAPTER_DESC1) -> bool {
 }
 
 /// As placas de vídeo da máquina, pelo nome, sem o renderizador por software do Windows.
+/// Quantos bitmaps de pixels crus (quadros de câmera e de vídeo) foram criados na placa.
+static PIXEL_BITMAPS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Diagnóstico: quantos bitmaps de quadros (BGRA) o Direct2D criou na placa até agora. Com o
+/// quadro anterior reaproveitado, fica em um por câmera, e não um por quadro.
+pub fn pixel_bitmaps_created() -> u64 {
+    PIXEL_BITMAPS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn adapters() -> Vec<String> {
     // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
     unsafe {
@@ -395,6 +418,7 @@ impl D2dRenderer {
                 strokes: RefCell::default(),
                 geometries: RefCell::default(),
                 decoded: RefCell::new(ImageCache::named("Direct2D · arquivos decodificados")),
+                devices: RefCell::default(),
             })
         }
     }
@@ -510,13 +534,22 @@ impl D2dRenderer {
         Ok(HwndTarget { kind: Kind::Hwnd(target), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, monitor })
     }
 
-    /// Direct3D 11 + swap chain "flip" + contexto do Direct2D numa janela.
-    fn swap_chain(&self, hwnd: isize, width: u32, height: u32, chosen: Option<IDXGIAdapter>) -> Result<Swap, Error> {
+    /// O dispositivo da placa `chosen` (`None`: a padrão): o já criado, se ainda vale (não foi
+    /// perdido), ou um novo, que fica guardado para as próximas janelas.
+    fn shared_device(&self, chosen: Option<&IDXGIAdapter>) -> Result<(ID3D11Device, ID3D11DeviceContext, ID2D1Device), Error> {
+        let key = chosen.and_then(luid_of);
+        let mut devices = self.devices.borrow_mut();
+        // SAFETY: só pergunta ao dispositivo se ele foi perdido.
+        devices.retain(|d| unsafe { d.device.GetDeviceRemovedReason() }.is_ok());
+        if let Some(d) = devices.iter().find(|d| d.key == key && (chosen.is_none() || key.is_some())) {
+            return Ok((d.device.clone(), d.context.clone(), d.d2d.clone()));
+        }
+        // SAFETY: chamadas COM do Direct3D e do Direct2D; os ponteiros de saída são locais.
         unsafe {
             let mut device = None;
             let mut context = None;
             D3D11CreateDevice(
-                chosen.as_ref(),
+                chosen,
                 if chosen.is_some() { D3D_DRIVER_TYPE_UNKNOWN } else { D3D_DRIVER_TYPE_HARDWARE },
                 HMODULE::default(),
                 D3D11_CREATE_DEVICE_BGRA_SUPPORT,
@@ -529,7 +562,21 @@ impl D2dRenderer {
             let device: ID3D11Device = device.ok_or_else(|| Error::from(windows::Win32::Foundation::E_FAIL))?;
             let context: ID3D11DeviceContext = context.ok_or_else(|| Error::from(windows::Win32::Foundation::E_FAIL))?;
             let dxgi: IDXGIDevice = device.cast()?;
-            let dc = self.factory1.CreateDevice(&dxgi)?.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
+            let d2d = self.factory1.CreateDevice(&dxgi)?;
+            // Uma placa sem LUID (não deveria acontecer) não entra no guardado.
+            if chosen.is_none() || key.is_some() {
+                devices.push(SharedDevice { key, device: device.clone(), context: context.clone(), d2d: d2d.clone() });
+            }
+            Ok((device, context, d2d))
+        }
+    }
+
+    /// Direct3D 11 + swap chain "flip" + contexto do Direct2D numa janela.
+    fn swap_chain(&self, hwnd: isize, width: u32, height: u32, chosen: Option<IDXGIAdapter>) -> Result<Swap, Error> {
+        let (device, context, d2d) = self.shared_device(chosen.as_ref())?;
+        unsafe {
+            let dxgi: IDXGIDevice = device.cast()?;
+            let dc = d2d.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
             let adapter = dxgi.GetAdapter()?;
             let adapter_desc = adapter.GetDesc()?;
             let factory: IDXGIFactory2 = adapter.GetParent()?;
@@ -999,6 +1046,14 @@ pub struct DeviceCache {
     sweeps: RefCell<HashMap<Vec<u64>, ID2D1Bitmap>>,
     /// Desenhos guardados como imagem ([`Canvas::begin_cached`]), pela chave e pelo tamanho.
     layers: aylis_core::LayerCache<ID2D1Bitmap>,
+    /// Os bitmaps dos quadros que o app soltou, com quantas pinturas têm de reserva: o quadro
+    /// novo de uma câmera, do mesmo tamanho, copia os pixels num deles em vez de criar outro na
+    /// placa. Só os soltos há uma pintura ou mais (o da pintura anterior a placa ainda pode
+    /// estar lendo, e copiar nele faria a CPU esperar); o que passar de duas sai.
+    spare_frames: Vec<(ID2D1Bitmap, u32, u32, u8)>,
+    /// O `frame_reuse_kb` próprio do form desta janela ([`HwndTarget::set_frame_reuse_kb`]);
+    /// `None`: o do projeto.
+    frame_reuse: Option<u32>,
 }
 
 impl Default for DeviceCache {
@@ -1010,6 +1065,8 @@ impl Default for DeviceCache {
             shadows: RefCell::default(),
             sweeps: RefCell::default(),
             layers: aylis_core::LayerCache::named("Direct2D · camadas guardadas"),
+            spare_frames: Vec::new(),
+            frame_reuse: None,
         }
     }
 }
@@ -1018,9 +1075,35 @@ impl DeviceCache {
     /// Solta os bitmaps das imagens que o app já soltou: ninguém mais pede aquele id (uma
     /// prévia trocada a cada meio segundo enchia a placa até o teto).
     fn forget_dropped(&mut self) {
-        self.frames.forget_dropped();
+        // Os de reserva envelhecem uma pintura (os de mais de duas saem); os soltos agora entram.
+        self.spare_frames.retain_mut(|s| {
+            s.3 += 1;
+            s.3 <= 2
+        });
+        let small = self.frames.drain_dropped().into_iter().filter(|(_, w, h)| reuses_frame(*w, *h, self.frame_reuse));
+        self.spare_frames.extend(small.map(|(b, w, h)| (b, w, h, 0)));
         self.bitmaps.forget_dropped();
     }
+
+    /// Um bitmap de reserva de `w × h` (de um quadro já solto).
+    fn take_spare(&mut self, w: u32, h: u32) -> Option<ID2D1Bitmap> {
+        if !reuses_frame(w, h, self.frame_reuse) {
+            return None;
+        }
+        let at = self.spare_frames.iter().position(|(_, bw, bh, age)| (*bw, *bh) == (w, h) && *age >= 1)?;
+        Some(self.spare_frames.swap_remove(at).0)
+    }
+}
+
+/// Se o quadro de `w × h` reaproveita o bitmap do anterior, em três níveis
+/// ([`aylis_core::image_cache::frame_reuse_limit`]): no diagnóstico, `AYLIS_FRAME_REUSE_KB`
+/// (para medir outro limite na sua placa sem mexer no projeto; `0` desliga); o
+/// `frame_reuse_kb` do form da janela (`form`); o do projeto, que o `RenderSettings` troca em
+/// execução.
+fn reuses_frame(w: u32, h: u32, form: Option<u32>) -> bool {
+    static FORCED: std::sync::OnceLock<Option<u32>> = std::sync::OnceLock::new();
+    let forced = *FORCED.get_or_init(|| diagnostic("AYLIS_FRAME_REUSE_KB").and_then(|v| v.trim().parse().ok()));
+    aylis_core::image_cache::reuses_frame(w, h, aylis_core::image_cache::frame_reuse_limit(forced, form))
 }
 
 /// O alvo de desenho de uma janela.
@@ -1035,6 +1118,14 @@ pub struct HwndTarget {
     choice: aylis_core::gpu::GpuChoice,
     /// O monitor (`HMONITOR`) em que a janela estava ao conferir a placa pela última vez.
     monitor: isize,
+}
+
+/// A janela fechou: o dispositivo pode continuar com as outras janelas, então o alvo solta o que
+/// é dele na hora ([`HwndTarget::release`]).
+impl Drop for HwndTarget {
+    fn drop(&mut self) {
+        self.release();
+    }
 }
 
 impl HwndTarget {
@@ -1077,10 +1168,23 @@ impl HwndTarget {
     /// atuais: o Windows aceita uma swap chain "flip" e um alvo do DirectComposition por
     /// janela, e criar os novos com os antigos vivos falha (ou cai para o alvo antigo).
     fn rebuild(&mut self, renderer: &D2dRenderer, luid: Option<i64>) -> Result<(), Error> {
+        self.release();
+        let (width, height) = self.size;
+        *self = renderer.hwnd_target_on(self.hwnd, width, height, self.vsync, self.choice.clone(), luid)?;
+        Ok(())
+    }
+
+    /// Solta a swap chain, o alvo e os bitmaps do alvo, e o Direct3D executa as liberações
+    /// pendentes: sem o `Flush`, a swap chain antiga continua presa à janela e, com o dispositivo
+    /// dividido entre as janelas ([`D2dRenderer::shared_device`]), a memória da janela fechada
+    /// (os buffers e as imagens na placa) ficava presa até outro quadro.
+    fn release(&mut self) {
+        self.cache = DeviceCache::default();
         if let Kind::Swap(old) = std::mem::replace(&mut self.kind, Kind::Released) {
             let context = old.link.context4.clone();
+            let device: Option<IDXGIDevice3> = old.link.device.cast().ok();
             // SAFETY: o contexto do Direct2D solta o buffer de trás; o do Direct3D executa as
-            // liberações pendentes (sem o `Flush`, a swap chain antiga continua presa à janela).
+            // liberações pendentes.
             unsafe { old.dc.SetTarget(None::<&ID2D1Image>) };
             drop(old);
             if let Some(c) = context {
@@ -1089,10 +1193,19 @@ impl HwndTarget {
                     c.Flush();
                 }
             }
+            // O driver guarda a memória solta para reusar: devolve (a janela fechou; as outras
+            // do mesmo dispositivo continuam com a delas).
+            if let Some(d) = device {
+                // SAFETY: chamada COM sem argumentos, depois do `ClearState`.
+                unsafe { d.Trim() };
+            }
         }
-        let (width, height) = self.size;
-        *self = renderer.hwnd_target_on(self.hwnd, width, height, self.vsync, self.choice.clone(), luid)?;
-        Ok(())
+    }
+
+    /// O `frame_reuse_kb` próprio do form desta janela (`None`: o do projeto). A plataforma
+    /// passa a cada quadro; vale a partir do próximo quadro de vídeo.
+    pub fn set_frame_reuse_kb(&mut self, kb: Option<u32>) {
+        self.cache.frame_reuse = kb;
     }
 
     /// Troca a regra da placa (a propriedade `gpu` do form mudou) e recria o alvo se a placa
@@ -1658,6 +1771,15 @@ impl D2dCanvas<'_> {
         // Direct2D — sem passar pixel a pixel.
         if let ImageSource::Bgra { width, height, pixels } = image.source() {
             let (w, h) = (*width, *height);
+            // O quadro anterior (já solto pelo app) com o mesmo tamanho: copia os pixels nele em
+            // vez de criar outro bitmap na placa a cada quadro.
+            if let Some(bitmap) = self.cache.take_spare(w, h) {
+                // SAFETY: o bitmap é deste dispositivo e tem `w × h`; `pixels` tem `w * h * 4`.
+                if unsafe { bitmap.CopyFromMemory(None, pixels.as_ptr() as *const _, w * 4) }.is_ok() {
+                    self.remember_frame(image, &bitmap, w, h);
+                    return Some((bitmap, w, h));
+                }
+            }
             let props = D2D1_BITMAP_PROPERTIES {
                 pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
                 dpiX: 96.0,
@@ -1668,6 +1790,7 @@ impl D2dCanvas<'_> {
                     .CreateBitmap(D2D_SIZE_U { width: w, height: h }, Some(pixels.as_ptr() as *const _), w * 4, &props)
                     .ok()?
             };
+            PIXEL_BITMAPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             self.remember_frame(image, &bitmap, w, h);
             return Some((bitmap, w, h));
         }
@@ -1675,6 +1798,16 @@ impl D2dCanvas<'_> {
         let (w, h, pixels) = (decoded.0, decoded.1, &decoded.2);
         if let Some(b) = self.cache.bitmaps.get(image) {
             return Some((b.clone(), w, h));
+        }
+        // Pixels RGBA (um quadro de vídeo convertido): também reaproveita o do quadro anterior.
+        if !matches!(image.source(), ImageSource::Encoded(_)) {
+            if let Some(bitmap) = self.cache.take_spare(w, h) {
+                // SAFETY: o bitmap é deste dispositivo e tem `w × h`; `pixels` tem `w * h * 4`.
+                if unsafe { bitmap.CopyFromMemory(None, pixels.as_ptr() as *const _, w * 4) }.is_ok() {
+                    self.remember_frame(image, &bitmap, w, h);
+                    return Some((bitmap, w, h));
+                }
+            }
         }
         let props = D2D1_BITMAP_PROPERTIES {
             pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
@@ -2429,5 +2562,7 @@ fn color_at(stops: &[aylis_core::GradientStop], t: f32) -> Color {
 
 /// Uma variável de diagnóstico, só com a feature `diagnostics` (o app publicado não lê).
 fn diagnostic(name: &str) -> Option<String> {
-    if cfg!(feature = "diagnostics") { std::env::var(name).ok() } else { None }
+    // Só no desenvolvimento: em release, só com a `release-diagnostics` (as medições do Aylis).
+    let on = cfg!(feature = "diagnostics") && (cfg!(debug_assertions) || cfg!(feature = "release-diagnostics"));
+    if on { std::env::var(name).ok() } else { None }
 }

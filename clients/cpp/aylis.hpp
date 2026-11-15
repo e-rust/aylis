@@ -281,6 +281,37 @@ private:
     }
 };
 
+/// O ponteiro de um `on_click` (o campo `pointer` do evento): `x`/`y` no componente,
+/// `form_x`/`form_y` no form, `button` (`primary`, `secondary`, `middle`...), as teclas
+/// apertadas (`ctrl`, `shift`, `alt`, `meta`) e `kind` (`mouse`, `touch`, `pen`).
+struct Pointer {
+    double x = 0, y = 0, form_x = 0, form_y = 0;
+    std::string button, kind;
+    std::vector<std::string> modifiers;
+    int clicks = 0;
+
+    bool has(const std::string& modifier) const {
+        return std::find(modifiers.begin(), modifiers.end(), modifier) != modifiers.end();
+    }
+    bool ctrl() const { return has("ctrl"); }
+    bool shift() const { return has("shift"); }
+    bool alt() const { return has("alt"); }
+    bool meta() const { return has("meta"); }
+
+    static Pointer from(const Json& p) {
+        Pointer out;
+        out.x = p["x"].number();
+        out.y = p["y"].number();
+        out.form_x = p["form_x"].number();
+        out.form_y = p["form_y"].number();
+        out.button = p["button"].str();
+        out.kind = p["kind"].str();
+        for (const Json& m : p["modifiers"].items()) out.modifiers.push_back(m.str());
+        out.clicks = static_cast<int>(p["clicks"].number());
+        return out;
+    }
+};
+
 /// Um evento da tela.
 struct Event {
     std::string event, handler, form, sender_name, sender_class;
@@ -296,6 +327,11 @@ struct Event {
     /// arrasto), `accept` (soltar aqui). Recusar com mensagem (`before_post`):
     /// `throw std::runtime_error("Informe o CPF")`.
     mutable Json reply = Json::object();
+    /// No `on_click` do mouse, do toque ou da caneta, onde, com que botão e com que teclas
+    /// (`if (ev.has_pointer && ev.pointer.ctrl()) ...`); sem ele (`has_pointer` falso) no
+    /// clique do teclado ou do código.
+    bool has_pointer = false;
+    Pointer pointer;
 };
 
 class Error : public std::runtime_error {
@@ -563,6 +599,10 @@ public:
         }
         Event ev{m["event"].str(), m["handler"].str(), m["form"].str(), m["sender"]["name"].str(), m["sender"]["class"].str(), m["args"], m["info"]};
         if (m["ask"].kind() == Json::Kind::Number) ev.ask = static_cast<long long>(m["ask"].number());
+        if (m["pointer"].kind() == Json::Kind::Object) {
+            ev.has_pointer = true;
+            ev.pointer = Pointer::from(m["pointer"]);
+        }
         auto it = handlers_.find(ev.form + "." + ev.handler);
         if (it == handlers_.end()) it = handlers_.find(ev.handler);
         ++running_;

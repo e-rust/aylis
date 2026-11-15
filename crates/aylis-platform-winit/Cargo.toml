@@ -9,11 +9,16 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
-default = ["cpu", "gpu", "clipboard", "diagnostics"]
+# `release-diagnostics` vem no padrão só para os exemplos e as medições do próprio Aylis (o
+# app usa o `aylis` sem as features padrão deste crate: o `dev` liga só a `diagnostics`).
+default = ["cpu", "gpu", "clipboard", "diagnostics", "release-diagnostics"]
 # Diagnósticos por variável de ambiente (AYLIS_SNAPSHOT, AYLIS_BENCH, AYLIS_RENDERER, AYLIS_GPU...)
 # e, no Android, pelas propriedades debug.aylis.*: os exemplos e testes do aylis e o app com
 # a feature `dev`. O app publicado (o `aylis` sem `dev`) não lê nada disso.
 diagnostics = ["aylis-d2d?/diagnostics"]
+# As variáveis de diagnóstico também no build release (só as medições do Aylis e a IDE; nunca
+# o app: em release ele não lê variável de ambiente, decidido pelo autor em 14/11).
+release-diagnostics = ["diagnostics", "aylis-d2d?/release-diagnostics"]
 # Desktop: desenho na CPU, pixels mostrados com softbuffer.
 cpu = ["dep:softbuffer", "dep:aylis-skia"]
 # Desktop: desenho na GPU com OpenGL (glutin).
@@ -37,20 +42,20 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.3.0", path = "../aylis-core" }
+aylis-core = { version = "0.4.0", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.3.0", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.4.0", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.3.0", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.4.0", path = "../aylis-d2d", optional = true }
 # A área de transferência do Windows: texto, HTML, imagem e os formatos do app gravados de uma
 # vez (o arboard grava um só; o clipboard-win já vinha com ele).
 clipboard-win = { version = "5", optional = true }
@@ -162,7 +167,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.3.0", path = "../aylis-web" }
+aylis-web = { version = "0.4.0", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"
@@ -180,7 +185,7 @@ aylis-json = { path = "../aylis-json" }
 aylis-data = { path = "../aylis-data" }
 aylis-dbcontrols = { path = "../aylis-dbcontrols" }
 serde_json = "1"
-aylis-3d = { path = "../aylis-3d", features = ["gl", "diagnostics"] }
+aylis-3d = { path = "../aylis-3d", features = ["gl", "diagnostics", "release-diagnostics"] }
 aylis-docview = { path = "../aylis-docview" }
 wgpu = { version = "30", default-features = false, features = ["std", "wgsl", "dx12"] }
 glam = "0.34"
@@ -281,4 +286,19 @@ required-features = ["cpu"]
 
 [[example]]
 name = "colors"
+required-features = ["cpu"]
+
+# O arrasto num form 4K (o editor de print do NoOBS): Skia na CPU e Direct2D.
+[[example]]
+name = "drag_4k"
+required-features = ["cpu", "d2d"]
+
+# A anotação sobre um print (o editor do NoOBS): o Memo só texto que cresce ao digitar.
+[[example]]
+name = "annotation"
+required-features = ["cpu"]
+
+# O form aberto por um timer vem para a frente de outro app (`force_foreground`).
+[[example]]
+name = "foreground"
 required-features = ["cpu"]

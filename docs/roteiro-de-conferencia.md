@@ -388,6 +388,95 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
 149. **A documentação do site sem comparações com outros frameworks** (14/11). Na Landing publicada,
     as páginas dos componentes trazem o "O que faz" de toda propriedade, e nenhuma compara o Aylis com
     outro framework.
+150. **Dados de versão e assinatura no Windows** (14/11; detalhes nos pendentes e em
+    `docs/publicar-windows.md`). Publique um app (Executar → Publicar → Windows, com instalador) e
+    abra Propriedades → Detalhes do `.exe` em `dist/desktop`. *Esperado:* empresa, produto, versão
+    e nome original do projeto. Sem certificado: a publicação avisa uma vez "sai sem assinatura" e
+    termina. Com o certificado (Ferramentas → Opções → Assinatura, a impressão digital do
+    `certmgr.msc`): as mensagens mostram o `signtool` (com `*` no lugar de uma senha de `.pfx`), e
+    Propriedades → Assinaturas Digitais do `.exe` e do instalador mostram a empresa e o carimbo de
+    tempo; `signtool verify /pa /v <arquivo>` passa. Ferramentas → Verificar ambiente: o item
+    "Assinatura de código". Depois, o Cortex XDR e o SmartScreen com o app assinado.
+151. **O ponteiro no `on_click`** (14/11; detalhes nos pendentes). Num `on_click` de um Button, leia
+    `ui.click_pointer()`: clicando com o botão esquerdo e com Ctrl, vêm a posição, o botão e o
+    Ctrl; pelo Enter, `None`. No celular, `kind` é toque. Pelo `aylis-host`, um backend em Python
+    recebe `event["pointer"]` no clique do mouse e não no Enter.
+152. **Muitas câmeras no Direct2D** (14/11). No RTSPlayer com a grade de câmeras (ou
+    `cargo run --release -p aylis-d2d --example camera_frames 600 1920 1080 36`): o uso de CPU e a
+    fluidez com 16 ou mais câmeras, e a memória da placa estável com o tempo.
+153. **Configurações de pintura em execução e por form** (14/11; detalhes nos pendentes e em
+    `docs/video-e-pintura.md`). Num app com câmeras no Direct2D, ponha um `RenderSettings` (paleta
+    System) e, num botão, troque `frame_reuse_kb` para `0` e de volta para `1024`: o uso de CPU
+    muda na hora, sem reabrir. Num segundo form, `frame_reuse_kb = 0` no Object Inspector: só ele
+    deixa de reaproveitar. Troque `auto_layers` para falso e veja uma transição de abas sem a
+    camada; `layers_mb = 0` e as camadas somem no próximo quadro. No designer, trocar o
+    `RenderSettings` não muda nada na IDE, e as propriedades não aparecem no Object Inspector nem
+    no JSON do form.
+154. **A tela Sobre** (14/11). Ajuda → Sobre o Aylis: o logo da IDE à esquerda, ao lado "Aylis IDE" e
+    "Versão 0.3.0" em destaque, e a descrição embaixo; em English (Exibir → Idioma), o texto
+    traduzido.
+155. **A orientação da tela no celular** (14/11; detalhes nos pendentes e em
+    `docs/funcionamento.md`, "Orientação da tela"). Na IDE, Opções do projeto → Geral →
+    *Orientação da tela*: "Em pé" grava `"orientation": "portrait"` no `.aylisproj`, e Opções do
+    projeto → Android mostra que a orientação está em Geral; "Ver o manifesto final" traz
+    `android:screenOrientation="portrait"`. Execute no Android (emulador `aylis_pixel` ou celular):
+    girando o aparelho, o app fica em pé. Num segundo form com `orientation = sensor_landscape`
+    (Object Inspector, categoria Layout), aberto por um botão: a tela deita ao abrir e volta em pé
+    ao fechar (e com o Voltar). Num botão, `frmX.orientation = landscape` e depois `project`: gira
+    na hora e volta. `Screen.set_orientation("any")`: o app passa a girar com o aparelho. No app de
+    desenvolvimento, `adb shell setprop debug.aylis.orientation landscape` e reabrir: deitado,
+    mesmo com o projeto em pé; publicado em release, a propriedade não muda nada. No iPhone e no
+    iPad: veja `docs/testes-em-dispositivos.md`.
+156. **O menu de texto dos campos e as alças no celular** (14/11; detalhes nos pendentes). Num
+    form com um `Edit`, um `Edit` com `password`, um com `read_only` e um `Memo`, no Windows:
+    o botão direito no texto abre Recortar, Copiar, Colar e Selecionar tudo (Recortar e Copiar
+    apagados sem seleção; no `read_only`, só Copiar e Selecionar tudo; na senha, sem Copiar e
+    Recortar). Colar texto copiado de outro app; Ctrl+Z desfaz a colagem. Com um `popup_menu` no
+    form, abre o do app. No Android (emulador `aylis_pixel` e celular): segurar o dedo numa
+    palavra seleciona a palavra, aparecem as duas alças na cor de destaque e o menu embaixo; soltar
+    o dedo não fecha o menu; Colar traz a senha copiada de outro app (o gerenciador de senhas, o
+    navegador); arrastar as alças aumenta e diminui a seleção sem rolar a tela; tocar fora fecha o
+    menu e a seleção fica com as alças.
+157. **A anotação de texto sobre um print (Memo só texto que cresce)** (14/11; detalhes nos
+    pendentes, pedido do NoOBS, itens 2 e 3). `cargo run -p aylis-platform-winit --example
+    annotation --features cpu`: o "Clique no print para anotar" aparece só com as letras, sem
+    fundo, borda nem barra. Clique no print (na metade escura e na clara) e digite: a caixa nasce no
+    clique e cresce para a direita; Shift+Enter desce uma linha e ela cresce para baixo; Backspace
+    na linha mais larga encolhe. Selecione com o mouse: o destaque é translúcido (o print aparece
+    por baixo); o cursor aparece nos dois lados (o contorno claro no escuro). Repita no Direct2D:
+    `--features cpu,d2d` com `AYLIS_RENDERER=d2d`. Na IDE, num form, um `Memo` e um `Edit` com `auto_size` e
+    `plain` (rótulo "Só o texto" no Object Inspector): crescem enquanto se digita no app rodando.
+    As imagens de referência estão em `crates/aylis-controls/tests/visual/plain_memo-*.png`.
+158. **O recorte em RGBA, o arrasto a 4K e o form que vem para a frente** (14/11; detalhes nos
+    pendentes, pedido do NoOBS, itens 4, 5 e 6).
+    - Item 6: `cargo run -p aylis-platform-winit --example foreground --features cpu`; clique
+      noutro app (o navegador) e continue clicando nele: em 5 s o "Print" abre na frente, com o
+      cursor no campo (digite e o Esc fecha) e a linha `na frente: sim`. Repita com
+      `AYLIS_FORCE_FOREGROUND=0`: o form fica atrás, piscando na barra (se o Windows deixar ir
+      para a frente mesmo assim, foi porque a máquina estava parada). No NoOBS, com
+      `force_foreground: true` no form do print, abra pelo atalho global com outro app à frente:
+      o Esc fecha o print, e não o app de trás.
+    - Item 5: `cargo run --release -p aylis-platform-winit --example drag_4k --features d2d`:
+      as linhas `_parte` e `paintcanvas` abaixo de 5 ms nos dois renderizadores, e `pixels
+      diferentes da pintura inteira: 0`. No Paint da galeria (ou no NoOBS), com uma imagem
+      grande, o lápis e a seleção arrastada sem engasgar no Skia (`AYLIS_RENDERER=cpu`).
+    - Item 4: no NoOBS, copiar o recorte pelo `ui.render_rgba(form, rect, 1.0)`: a imagem colada
+      igual ao que estava na tela (as anotações e o Memo), sem a moldura nem um pixel deslocado.
+159. **O print sobre todos os monitores, em pixels físicos e aberto na hora** (14/11; detalhes nos
+    pendentes, pedido do NoOBS, item 1).
+    - `set AYLIS_SPAN_SPLIT=2` e `cargo run --release -p aylis-platform-winit --example
+      print_overlay --features d2d -- --auto`: o print cobre a tela inteira (as duas metades) 20
+      vezes seguidas, sem moldura, sem botão na barra de tarefas e sem aparecer antes num pedaço
+      só; no fim, `clique no pixel certo: sim`, as mesmas janelas antes e depois e a mediana de
+      abrir perto de 75 ms. Sem o `AYLIS_SPAN_SPLIT` (uma janela), o mesmo.
+    - `AYLIS_SPAN_SPLIT=2 cargo run -p aylis-platform-winit --example span_monitors --features d2d
+      -- --auto`: no fim, `em pixels físicos: form 1500 × 780` (a 150%) e de volta a 1000 × 520.
+    - Na IDE, num form, `physical_pixels` (rótulo "Pixels físicos", em Layout) no Object
+      Inspector; rodando, o form com 1 unidade = 1 pixel (um Label com `font_size` 12 sai menor
+      num monitor a 150%).
+    - No NoOBS, o form do print com a receita dos pendentes: abre pelo atalho em menos de ~100 ms,
+      a seleção bate com o print pixel a pixel; o caso de dois monitores de escalas diferentes está
+      em [testes em dispositivos](testes-em-dispositivos.md).
 
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a

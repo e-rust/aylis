@@ -91,6 +91,21 @@
 //! diferentes (`frmClientes.btn_salvar_click`). `form_id` é a instância dele: o mesmo form
 //! aberto duas vezes manda ids diferentes, e o cliente fala com a instância certa.
 //!
+//! O `on_click` que veio do mouse, do toque ou da caneta leva também `pointer` (o `args`
+//! continua o mesmo):
+//!
+//! ```json
+//! {"event": "on_click", ..., "args": null,
+//!  "pointer": {"x": 12.5, "y": 8, "form_x": 212.5, "form_y": 96, "button": "primary",
+//!              "modifiers": ["ctrl", "shift"], "kind": "mouse", "clicks": 1}}
+//! ```
+//!
+//! `x`/`y` são no componente que disparou e `form_x`/`form_y` no form; `button` é `primary`,
+//! `secondary`, `middle`, `back` ou `forward`; `modifiers`, as teclas apertadas (`ctrl`,
+//! `shift`, `alt`, `meta`); `kind`, `mouse`, `touch` ou `pen`. O clique do teclado (Enter,
+//! Espaço, Alt+letra, o botão padrão do form) e o do código (`click` sem `x`/`y`) vêm sem
+//! `pointer`. No Rust, o mesmo é [`Ui::click_pointer`](aylis_core::Ui::click_pointer).
+//!
 //! O delta de `on_apply_updates` chega em `args` já como objeto JSON.
 //!
 //! Cada evento leva `seq` (com o cliente que responde `done`); `{"event": "__freed", "forms":
@@ -1073,6 +1088,13 @@ pub fn event_to_json(ui: &Ui, sender: ComponentId, event: &str, handler: &str, a
         },
         "args": args_to_json(ui, args),
     });
+    // O clique do mouse ou do toque: onde, com que botão e com que teclas (sem mudar o `args`
+    // do `on_click`). Do teclado ou do código, não vem.
+    if event == "on_click"
+        && let Some(p) = ui.click_pointer()
+    {
+        message["pointer"] = pointer_to_json(&p);
+    }
     // Dados extras do evento (a URL de quem mandou, no `on_message` do WebView): só nos
     // eventos que têm, sem mudar o `args`.
     let info = ui.component(sender).map(|c| c.event_info(event)).unwrap_or_default();
@@ -1082,19 +1104,44 @@ pub fn event_to_json(ui: &Ui, sender: ComponentId, event: &str, handler: &str, a
     message
 }
 
+fn button_name(button: PointerButton) -> &'static str {
+    match button {
+        PointerButton::Primary => "primary",
+        PointerButton::Secondary => "secondary",
+        PointerButton::Middle => "middle",
+        PointerButton::Back => "back",
+        PointerButton::Forward => "forward",
+    }
+}
+
+/// O `pointer` do `on_click` (veja "Eventos" na documentação do crate).
+fn pointer_to_json(p: &aylis_core::ClickPointer) -> Value {
+    let m = p.modifiers;
+    let modifiers: Vec<&str> =
+        [(m.ctrl, "ctrl"), (m.shift, "shift"), (m.alt, "alt"), (m.meta, "meta")].into_iter().filter(|(on, _)| *on).map(|(_, n)| n).collect();
+    json!({
+        "x": p.position.x,
+        "y": p.position.y,
+        "form_x": p.form_position.x,
+        "form_y": p.form_position.y,
+        "button": button_name(p.button),
+        "modifiers": modifiers,
+        "kind": match p.kind {
+            aylis_core::PointerKind::Mouse => "mouse",
+            aylis_core::PointerKind::Touch => "touch",
+            aylis_core::PointerKind::Pen => "pen",
+        },
+        "clicks": p.click_count,
+    })
+}
+
 fn args_to_json(ui: &Ui, args: &EventArgs) -> Value {
     match args {
         EventArgs::None => Value::Null,
         EventArgs::Pointer(p) => json!({
             "x": p.position.x,
             "y": p.position.y,
-            "button": match p.button {
-                PointerButton::Primary => "primary",
-                PointerButton::Secondary => "secondary",
-                PointerButton::Middle => "middle",
-                PointerButton::Back => "back",
-                PointerButton::Forward => "forward",
-            },
+            "button": button_name(p.button),
             "clicks": p.click_count,
         }),
         EventArgs::Wheel(w) => json!({ "x": w.position.x, "y": w.position.y, "dx": w.delta.x, "dy": w.delta.y }),

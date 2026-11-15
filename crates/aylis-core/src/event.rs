@@ -51,6 +51,23 @@ pub struct PointerEvent {
     pub pointer_id: u64,
 }
 
+/// O ponteiro do clique que está sendo entregue ([`Ui::click_pointer`](crate::Ui::click_pointer)):
+/// o `on_click` não muda de argumento (os handlers das outras linguagens dependem dele), e
+/// quem quer saber onde, com que botão e com que teclas foi o clique pergunta ao `Ui`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ClickPointer {
+    /// Onde, nas coordenadas do controle que disparou o `on_click`.
+    pub position: PointF,
+    /// Onde, nas coordenadas do form.
+    pub form_position: PointF,
+    pub button: PointerButton,
+    pub modifiers: Modifiers,
+    /// Mouse, toque ou caneta (o clique do teclado ou do código não tem ponteiro).
+    pub kind: PointerKind,
+    /// 1 = clique simples, 2 = duplo...
+    pub click_count: u8,
+}
+
 /// Roda do mouse ou rolagem do touchpad.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WheelEvent {

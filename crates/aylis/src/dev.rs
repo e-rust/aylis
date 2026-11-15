@@ -239,13 +239,26 @@ fn watch_handlers(ui: &mut Ui) {
     });
 }
 
+/// A porta do `--aylis-dev-port N` da linha de comando, se a IDE passou.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn dev_port_arg(args: impl IntoIterator<Item = String>) -> Option<u16> {
+    let mut it = args.into_iter();
+    while let Some(arg) = it.next() {
+        if arg == "--aylis-dev-port" {
+            return it.next().and_then(|p| p.parse().ok());
+        }
+    }
+    None
+}
+
 /// Conecta na IDE e passa a atender os comandos dela (numa thread; sem a IDE, tenta de novo
 /// em silêncio).
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn connect(ui: &Ui, mut target: Target, mix: BTreeMap<String, String>) {
     use std::sync::mpsc;
-    // A IDE abriu o canal noutra porta (a do projeto estava ocupada): ela avisa aqui.
-    if let Some(port) = std::env::var("AYLIS_DEV_PORT").ok().and_then(|p| p.parse::<u16>().ok())
+    // A IDE abriu o canal noutra porta (a do projeto estava ocupada): ela avisa pelo argumento
+    // `--aylis-dev-port N` (nunca por variável de ambiente, decidido pelo autor em 14/11).
+    if let Some(port) = dev_port_arg(std::env::args())
         && let Some((host, _)) = target.address.rsplit_once(':')
     {
         target.address = format!("{host}:{port}");
@@ -402,5 +415,18 @@ fn retry(ui: &Ui, target: Target, mix: BTreeMap<String, String>) {
     let again = Closure::once_into_js(move || poster.post(move |ui| open_socket(ui, target, mix)));
     if let Some(w) = web_sys::window() {
         let _ = w.set_timeout_with_callback_and_timeout_and_arguments_0(again.unchecked_ref(), 3000);
+    }
+}
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod dev_port_tests {
+    /// A porta vem do argumento que a IDE passa; sem ele, nada (o app nunca lê variável).
+    #[test]
+    fn the_port_comes_from_the_argument() {
+        let args = |a: &[&str]| a.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(super::dev_port_arg(args(&["app.exe", "--aylis-dev-port", "7400"])), Some(7400));
+        assert_eq!(super::dev_port_arg(args(&["app.exe"])), None);
+        assert_eq!(super::dev_port_arg(args(&["app.exe", "--aylis-dev-port"])), None);
+        assert_eq!(super::dev_port_arg(args(&["app.exe", "--aylis-dev-port", "x"])), None);
     }
 }

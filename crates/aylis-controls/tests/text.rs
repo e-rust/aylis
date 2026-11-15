@@ -50,6 +50,7 @@ fn spellcheck_marks_words_and_the_menu_replaces() {
     // Clique direito em cima de "mudno": o menu de correções; escolher troca a palavra.
     let x = 10.0 + 8.0 + 6.0 * 7.7;
     ui.pointer_down(f, PointerEvent { position: PointF::new(x, 26.0), button: PointerButton::Secondary, click_count: 1, ..Default::default() });
+    ui.pointer_up(f, PointerEvent { position: PointF::new(x, 26.0), button: PointerButton::Secondary, click_count: 1, ..Default::default() });
     let item = ui.components().find(|&c| ui.get::<MenuItem>(c).is_some_and(|m| m.text == "mundo")).expect("a sugestão no menu");
     ui.click(item);
     ui.process_events();

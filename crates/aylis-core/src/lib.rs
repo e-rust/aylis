@@ -66,6 +66,7 @@ mod keyflow;
 mod layout;
 pub use layout::is_right_to_left_language;
 pub mod overscroll;
+pub mod orientation;
 pub mod system_bars;
 /// Um form em vários monitores (uma janela por monitor).
 pub mod span;
@@ -115,13 +116,14 @@ pub use error::{Error, Result};
 pub use ui::DesignChanged;
 pub use input::{DragEnd, DragVisual, HINT_DELAY, ScreenPointer};
 pub use event::{
-    EventArgs, EventCtx, GestureEvent, GesturePhase, Intercepted, Key, KeyEvent, Modifiers, PointerButton, PointerEvent, PointerKind,
+    ClickPointer, EventArgs, EventCtx, GestureEvent, GesturePhase, Intercepted, Key, KeyEvent, Modifiers, PointerButton, PointerEvent, PointerKind,
     PopupRequest, ScrollOptions, SwipeDirection, SwipeEvent, WHEEL_LINE, WheelEvent,
 };
 pub use forms::{ModalResult, WindowPlacement};
 pub use bindings::Binding;
 pub use timing::TimerPrecision;
 pub use overscroll::Overscroll;
+pub use orientation::{FormOrientation, ScreenOrientation};
 pub use system_bars::{BarIcons, SystemBarsStyle};
 pub use transition::{TRANSITION_MS, Transition};
 pub use taskbar::{JumpTask, TaskbarEvent, TaskbarProgress, TaskbarSpec, ThumbButton};

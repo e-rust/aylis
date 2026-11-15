@@ -9,7 +9,9 @@
 //!
 //! As chaves: `bun`, `node`, `dotnet`, `javac`, `java`, `go`, `vcvars` (o `vcvars64.bat` do
 //! Visual C++), `gxx`, `fpc`, `fpc_units` (a pasta das units), `makensis`, `bundletool`,
-//! `wix` e `vscode`. E a compilação dos projetos em Rust: `target_dir` (a pasta de
+//! `wix` e `vscode`. A assinatura de código ([`crate::codesign`]): `signtool`,
+//! `sign_thumbprint`, `sign_pfx`, `sign_dlib`, `sign_dmd` e `sign_timestamp_url` (a senha do
+//! `.pfx` nunca: só a variável `AYLIS_SIGN_PASSWORD`). E a compilação dos projetos em Rust: `target_dir` (a pasta de
 //! compilação de todos os projetos), `cleanup_project_days` e `cleanup_shared_days` (os dias
 //! da limpeza, veja [`crate::cleanup`]). E as origens dos pacotes de ferramentas
 //! ([`crate::toolpacks`]): `package_dirs` e `package_mirrors`, listas.
@@ -34,6 +36,13 @@ pub const TOOLS: &[(&str, &str)] = &[
     ("bundletool", "bundletool (Android)"),
     ("wix", "WiX (wix)"),
     ("vscode", "VS Code (code)"),
+    // A assinatura de código no Windows ([`crate::codesign`]); a senha do .pfx nunca fica aqui.
+    ("sign_thumbprint", "Impressão digital do certificado (repositório do Windows; o recomendado)"),
+    ("signtool", "signtool (Windows SDK)"),
+    ("sign_pfx", "Ou um arquivo .pfx (a senha vem da variável AYLIS_SIGN_PASSWORD)"),
+    ("sign_dlib", "Ou na nuvem: a DLL do Trusted Signing (/dlib)"),
+    ("sign_dmd", "Na nuvem: a conta e o perfil (/dmd, metadata.json)"),
+    ("sign_timestamp_url", "Servidor de carimbo de tempo"),
 ];
 
 /// O arquivo das ferramentas: `%USERPROFILE%\.aylis\tools.json` (`~/.aylis` fora do Windows,

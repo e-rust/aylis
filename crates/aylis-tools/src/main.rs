@@ -222,6 +222,32 @@ fn main() -> ExitCode {
             }
             None => Err("uso: aylis-tool bench <saída.json> [--compare base.json] [--renderers d2d,gpu]".into()),
         },
+        // Os quadros de câmera e vídeo no Direct2D, com e sem reaproveitar o bitmap: a sugestão
+        // do `frame_reuse_kb` para a placa desta máquina.
+        Some("bench-frames") => (|| -> Result<(), String> {
+            use aylis_tools::bench_frames;
+            if !cfg!(windows) {
+                return Err("bench-frames mede o Direct2D: só no Windows".into());
+            }
+            let num = |flag: &str, default: u32| value_of(&args, flag).and_then(|v| v.parse().ok()).unwrap_or(default);
+            let (frames, width, height) = (num("--frames", 600), num("--width", 1920), num("--height", 1080));
+            let cameras: Vec<u32> = value_of(&args, "--cameras").map_or_else(|| bench_frames::CAMERAS.to_vec(), |v| v.split(',').filter_map(|n| n.trim().parse().ok()).collect());
+            let exe = bench_frames::build(&aylis_tools::aylis_root(), &Control::new(), &mut print)?;
+            println!("{frames} quadros numa tela {width}x{height}, {} rodadas de cada (feche as compilações: a medida é de tempo)", bench_frames::ROUNDS);
+            let cases = bench_frames::measure(&exe, frames, width, height, &cameras, &mut |c| {
+                println!(
+                    "{:3} câmera(s) de {:4}x{:<4} ({:5} KB): criando {:7.3} ms  reaproveitando {:7.3} ms",
+                    c.cameras, c.width, c.height, c.frame_kb(), c.create_ms, c.reuse_ms
+                );
+            })?;
+            let kb = bench_frames::suggest(&cases);
+            println!("Sugestão para o projeto: \"image_cache\": {{\"frame_reuse_kb\": {kb}}} (Opções do projeto → Memória → Reaproveitar quadros; padrão {})", aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB);
+            if let Some(path) = value_of(&args, "--json") {
+                std::fs::write(&path, serde_json::to_string_pretty(&bench_frames::to_json(&cases, frames)).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{path}: {e}"))?;
+                println!("ok: {path}");
+            }
+            Ok(())
+        })(),
         // A pasta resources/: ícones, fontes e emojis animados livres, baixados.
         Some("resources") => {
             let root = aylis_tools::aylis_root().join("resources");
@@ -494,6 +520,8 @@ fn main() -> ExitCode {
             // Android vem do projeto, com as senhas de AYLIS_KEYSTORE_PASSWORD/AYLIS_KEY_PASSWORD.
             options.android_bundle = args.iter().any(|a| a == "--aab");
             options.installer = args.iter().any(|a| a == "--installer" || a == "--msi");
+            // --no-sign: não assina no Windows, mesmo com certificado nas Opções.
+            options.unsigned = args.iter().any(|a| a == "--no-sign");
             // --abis arm64-v8a,armeabi-v7a: as arquiteturas do Android (sem ele, as do projeto).
             options.abis = value_of(&args, "--abis").map(|f| f.split(',').map(|a| a.trim().to_string()).filter(|a| !a.is_empty()).collect()).unwrap_or_default();
             options.signing = publish::Signing::from_env(&project);
@@ -505,7 +533,7 @@ fn main() -> ExitCode {
             println!("pronto: {}", published.main.display());
             Ok(())
         }),
-        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--abis a,b] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
+        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--no-sign] [--abis a,b] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | bench-frames [--cameras 1,4,9,16,36] [--frames 600] [--width 1920 --height 1080] [--json saída.json] | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

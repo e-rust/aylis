@@ -18,6 +18,20 @@ pub const MAX_IMAGE_SIDE: u32 = 16_384;
 /// A maior área de uma imagem (100 megapixels, cerca de 400 MB em RGBA).
 pub const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 
+/// Os bytes em base64 (o alfabeto padrão, com `=`): os pixels que um método devolve pelo
+/// protocolo, que só leva texto (`render_rgba`).
+pub fn encode_base64(bytes: &[u8]) -> String {
+    const ABC: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let n = chunk.iter().enumerate().fold(0u32, |n, (i, b)| n | (*b as u32) << (16 - 8 * i));
+        for i in 0..4 {
+            out.push(if i <= chunk.len() { ABC[(n >> (18 - 6 * i) & 63) as usize] as char } else { '=' });
+        }
+    }
+    out
+}
+
 /// Os bytes RGBA de uma imagem `width × height`, sem estouro e dentro dos limites. Todo
 /// lugar que reserva memória para pixels passa por aqui: as dimensões vêm do próprio arquivo,
 /// e um PNG de 1 KB pode declarar 40.000 × 40.000.

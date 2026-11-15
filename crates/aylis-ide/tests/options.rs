@@ -24,6 +24,8 @@ fn the_options_screen_has_a_tab_per_language_and_mcp() {
     for wanted in ["Geral", "TypeScript", "C#", "Java", "Go", "C++", "Pascal", "Publicação", "Editor externo", "Rust e Python", "MCP", "Pacotes"] {
         assert!(tabs.iter().any(|t| t == wanted), "falta a aba {wanted}: {tabs:?}");
     }
+    // A assinatura de código, só no Windows (o certificado da máquina, nunca do projeto).
+    assert_eq!(tabs.iter().any(|t| t == options::SIGNING_TAB), cfg!(windows), "{tabs:?}");
     let buttons: Vec<String> = all.iter().filter_map(|&c| ui.get::<aylis_controls::Button>(c).map(|b| b.text.clone())).collect();
     assert!(buttons.iter().any(|b| b == "Configurar o Claude Code"), "{buttons:?}");
     assert!(buttons.iter().any(|b| b == "Gerar novo token"), "{buttons:?}");
@@ -34,7 +36,8 @@ fn the_options_screen_has_a_tab_per_language_and_mcp() {
     if let Ok(dir) = std::env::var("AYLIS_SHOTS") {
         let renderer = aylis_skia::SkiaRenderer::new();
         ui.services_mut().text = Some(Box::new(renderer.text_service()));
-        for (n, index) in [(0usize, "geral"), (7, "editor"), (9, "rust"), (10, "mcp")].map(|(i, n)| (i, n)) {
+        for (caption, index) in [("Geral", "geral"), ("Editor externo", "editor"), ("Rust e Python", "rust"), ("MCP", "mcp"), (options::SIGNING_TAB, "assinatura")] {
+            let Some(n) = tabs.iter().position(|t| t == caption) else { continue };
             let tab_control = all.iter().copied().find(|&c| ui.get::<aylis_controls::TabControl>(c).is_some()).unwrap();
             aylis_controls::TabControl::select(ui, tab_control, n);
             ui.layout();

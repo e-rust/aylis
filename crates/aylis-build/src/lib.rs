@@ -13,9 +13,9 @@
 //! 1. **Empacota o projeto** (`.aylisproj`, `forms/`, `themes/`, `assets/`, `locales/`) num arquivo que
 //!    o executável inclui (`aylis::include_project!()`). O app publicado é um arquivo só,
 //!    em qualquer plataforma (no Android e na web não há pasta do projeto para ler).
-//! 2. **No Windows, põe o ícone no .exe** (o `publish.icon` do `.aylisproj`, um PNG de até
-//!    256×256), sem precisar do `rc.exe`: o arquivo de recursos (`.res`) é escrito aqui
-//!    e entregue ao linker.
+//! 2. **No Windows, põe o ícone e os dados de versão no .exe** (o `publish.icon` do
+//!    `.aylisproj`; a empresa, o produto e a versão em [`VersionInfo`]), sem precisar do
+//!    `rc.exe`: o arquivo de recursos (`.res`) é escrito aqui e entregue ao linker.
 //! 3. **Registra só as classes usadas** (app enxuto): lê os forms, junta as classes que
 //!    aparecem neles e gera `aylis_classes.rs` em `OUT_DIR`, com uma função que registra
 //!    só essas classes (`aylis::classes::Button(ui)`...). O `include_project!()` liga essa
@@ -84,6 +84,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("DragImage", ""),
     ("ApplicationEvents", ""),
     ("EventInterceptor", ""),
+    ("RenderSettings", ""),
     ("BusyWatcher", ""),
     ("OpenDialog", ""),
     ("SaveDialog", ""),
@@ -453,6 +454,7 @@ pub fn project_at(dir: &Path) {
     let windows = std::env::var("CARGO_CFG_TARGET_OS").is_ok_and(|os| os == "windows");
     let msvc = std::env::var("CARGO_CFG_TARGET_ENV").is_ok_and(|env| env == "msvc");
     if windows && msvc {
+        let mut res = Vec::new();
         if let Some(icon) = icon_of(&project) {
             let png = dir.join(&icon);
             println!("cargo:rerun-if-changed={}", png.display());
@@ -460,19 +462,25 @@ pub fn project_at(dir: &Path) {
             // ele, o PNG direto (até 256×256).
             let generated = dir.join(APP_ICON);
             println!("cargo:rerun-if-changed={}", generated.display());
-            let res = match std::fs::read(&generated) {
+            let icon_res = match std::fs::read(&generated) {
                 Ok(ico) => ico_res(&ico),
                 Err(_) => std::fs::read(&png).map_err(|e| e.to_string()).and_then(|png| icon_res(&png)),
             };
-            match res {
-                Ok(res) => {
-                    let path = out.join("icon.res");
-                    std::fs::write(&path, res).expect("gravar icon.res");
-                    // O link.exe aceita .res direto (converte sozinho).
-                    println!("cargo:rustc-link-arg-bins={}", path.display());
-                }
+            match icon_res {
+                Ok(icon_res) => res = icon_res,
                 Err(e) => println!("cargo:warning=ícone {icon} ignorado: {e}"),
             }
+        }
+        // Os dados de versão (empresa, produto, versão): sem eles, o Cortex XDR, o Defender e
+        // o SmartScreen tratam o executável como de origem desconhecida com mais rigor.
+        if let Some(info) = VersionInfo::of_project(&project) {
+            add_version(&mut res, &info);
+        }
+        if !res.is_empty() {
+            let path = out.join("app.res");
+            std::fs::write(&path, res).expect("gravar app.res");
+            // O link.exe aceita .res direto (converte sozinho).
+            println!("cargo:rustc-link-arg-bins={}", path.display());
         }
     }
 }
@@ -844,6 +852,11 @@ pub fn ico_res(ico: &[u8]) -> Result<Vec<u8>, String> {
 
 /// Uma entrada do `.res` com tipo e nome numéricos.
 fn resource(out: &mut Vec<u8>, kind: u16, name: u16, flags: u16, data: &[u8]) {
+    resource_in(out, kind, name, flags, 0, data);
+}
+
+/// Como [`resource`], com o idioma (`0x0416`; 0 é o neutro).
+fn resource_in(out: &mut Vec<u8>, kind: u16, name: u16, flags: u16, language: u16, data: &[u8]) {
     out.extend_from_slice(&(data.len() as u32).to_le_bytes()); // DataSize
     out.extend_from_slice(&32u32.to_le_bytes()); // HeaderSize
     for id in [kind, name] {
@@ -852,13 +865,275 @@ fn resource(out: &mut Vec<u8>, kind: u16, name: u16, flags: u16, data: &[u8]) {
     }
     out.extend_from_slice(&0u32.to_le_bytes()); // DataVersion
     out.extend_from_slice(&flags.to_le_bytes()); // MemoryFlags
-    out.extend_from_slice(&0u16.to_le_bytes()); // LanguageId (neutro)
+    out.extend_from_slice(&language.to_le_bytes()); // LanguageId
     out.extend_from_slice(&0u32.to_le_bytes()); // Version
     out.extend_from_slice(&0u32.to_le_bytes()); // Characteristics
     out.extend_from_slice(data);
     while out.len() % 4 != 0 {
         out.push(0);
     }
+}
+
+/// As entradas de um `.res` com tipo e nome numéricos: (tipo, nome, idioma, dados). Para
+/// conferir o que [`icon_res`], [`ico_res`] e [`add_version`] gravam.
+pub fn res_entries(res: &[u8]) -> Result<Vec<(u16, u16, u16, &[u8])>, String> {
+    let bad = || "arquivo .res inválido".to_string();
+    let u16_at = |i: usize| res.get(i..i + 2).map(|b| u16::from_le_bytes([b[0], b[1]]));
+    let u32_at = |i: usize| res.get(i..i + 4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]));
+    let mut entries = Vec::new();
+    let mut at = 0;
+    while at < res.len() {
+        let size = u32_at(at).ok_or_else(bad)? as usize;
+        let header = u32_at(at + 4).ok_or_else(bad)? as usize;
+        if header != 32 || u16_at(at + 8) != Some(0xFFFF) || u16_at(at + 12) != Some(0xFFFF) {
+            return Err("entrada do .res com nome em texto (não esperada aqui)".into());
+        }
+        let kind = u16_at(at + 10).ok_or_else(bad)?;
+        let name = u16_at(at + 14).ok_or_else(bad)?;
+        let language = u16_at(at + 22).ok_or_else(bad)?;
+        let data = res.get(at + header..at + header + size).ok_or_else(bad)?;
+        entries.push((kind, name, language, data));
+        at += (header + size).next_multiple_of(4);
+    }
+    Ok(entries)
+}
+
+// ---------------------------------------------------------------------------
+// Dados de versão do Windows (VERSIONINFO)
+
+/// Os dados de versão do `.exe` (Propriedades → Detalhes no Explorer). Antivírus e o
+/// SmartScreen olham para eles: executável sem empresa nem produto parece mais suspeito.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct VersionInfo {
+    pub company: String,
+    pub description: String,
+    /// A versão como o projeto escreve (`1.2.0-beta`); vai assim nos textos e com 4 números
+    /// ([`version4`]) na parte fixa.
+    pub version: String,
+    pub product: String,
+    pub copyright: String,
+    /// O nome do `.exe` publicado (`Vendas.exe`).
+    pub original_filename: String,
+    pub internal_name: String,
+    /// O idioma dos textos: `0x0416` (português do Brasil) ou `0x0409` (inglês).
+    pub language: u16,
+}
+
+impl VersionInfo {
+    /// Do `.aylisproj` (o nome do app, a versão e o `publish.publisher`), como o instalador:
+    /// sem fabricante, o nome do app. `None` se o projeto não puder ser lido.
+    pub fn of_project(project: &Path) -> Option<VersionInfo> {
+        let text = std::fs::read_to_string(project).ok()?;
+        let value: serde_json::Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).ok()?;
+        Some(Self::of_value(&value))
+    }
+
+    /// Como [`VersionInfo::of_project`], do JSON já lido.
+    pub fn of_value(value: &serde_json::Value) -> VersionInfo {
+        let text = |v: &serde_json::Value| v.as_str().map(str::trim).filter(|s| !s.is_empty()).map(str::to_string);
+        let app = text(&value["publish"]["app_name"]).or_else(|| text(&value["name"])).unwrap_or_else(|| "app".into());
+        let version = text(&value["publish"]["version"]).unwrap_or_else(|| "1.0.0".into());
+        let company = text(&value["publish"]["publisher"]).unwrap_or_else(|| app.clone());
+        let locale = value["locale"].as_str().unwrap_or("");
+        let language = if locale.is_empty() || locale.to_ascii_lowercase().starts_with("pt") { 0x0416 } else { 0x0409 };
+        let exe = format!("{}.exe", file_name(&app));
+        VersionInfo {
+            copyright: format!("© {company}"),
+            company,
+            description: app.clone(),
+            version,
+            product: app,
+            original_filename: exe.clone(),
+            internal_name: exe,
+            language,
+        }
+    }
+
+    /// Os textos do StringFileInfo, na ordem gravada (os vazios ficam de fora).
+    pub fn strings(&self) -> Vec<(&'static str, &str)> {
+        [
+            ("CompanyName", self.company.as_str()),
+            ("FileDescription", &self.description),
+            ("FileVersion", &self.version),
+            ("InternalName", &self.internal_name),
+            ("LegalCopyright", &self.copyright),
+            ("OriginalFilename", &self.original_filename),
+            ("ProductName", &self.product),
+            ("ProductVersion", &self.version),
+        ]
+        .into_iter()
+        .filter(|(_, v)| !v.is_empty())
+        .collect()
+    }
+}
+
+/// Nome de arquivo seguro para o nome do aplicativo (`Vendas: 2024` → `Vendas 2024`): o do
+/// `.exe` publicado.
+pub fn file_name(name: &str) -> String {
+    let clean: String = name.chars().filter(|c| !r#"<>:"/\|?*"#.contains(*c) && !c.is_control()).collect();
+    let clean = clean.trim().trim_end_matches('.').to_string();
+    if clean.is_empty() { "app".into() } else { clean }
+}
+
+/// Os 4 números da versão (`0.52.7-beta` → `[0, 52, 7, 0]`), como os dados de versão pedem
+/// (cada um até 65535).
+pub fn version_numbers(version: &str) -> [u16; 4] {
+    let mut parts = [0u16; 4];
+    for (slot, p) in parts.iter_mut().zip(version.split('.')) {
+        *slot = p.chars().take_while(char::is_ascii_digit).collect::<String>().parse::<u32>().unwrap_or(0).min(65535) as u16;
+    }
+    parts
+}
+
+/// A versão com 4 partes numéricas (`0.52.7-beta` → `0.52.7.0`).
+pub fn version4(version: &str) -> String {
+    version_numbers(version).map(|n| n.to_string()).join(".")
+}
+
+/// Acrescenta o `RT_VERSION` 1 a um `.res` (o do ícone ou um vazio).
+pub fn add_version(res: &mut Vec<u8>, info: &VersionInfo) {
+    const RT_VERSION: u16 = 16;
+    if res.is_empty() {
+        resource(res, 0, 0, 0, &[]);
+    }
+    resource_in(res, RT_VERSION, 1, 0x0030, info.language, &version_data(info));
+}
+
+/// Um `.res` só com os dados de versão.
+pub fn version_res(info: &VersionInfo) -> Vec<u8> {
+    let mut res = Vec::new();
+    add_version(&mut res, info);
+    res
+}
+
+/// O texto em UTF-16 com o zero do fim.
+fn utf16z(text: &str) -> Vec<u8> {
+    text.encode_utf16().chain([0]).flat_map(u16::to_le_bytes).collect()
+}
+
+/// Um bloco do VERSIONINFO: `wLength`, `wValueLength`, `wType`, a chave, o valor e os filhos,
+/// cada parte começando em múltiplo de 4 (contado do início do bloco, que também está
+/// alinhado).
+fn version_block(key: &str, value: &[u8], value_len: u16, text: bool, children: &[Vec<u8>]) -> Vec<u8> {
+    let mut out = vec![0, 0];
+    out.extend_from_slice(&value_len.to_le_bytes());
+    out.extend_from_slice(&u16::from(text).to_le_bytes());
+    out.extend_from_slice(&utf16z(key));
+    let pad = |out: &mut Vec<u8>| out.resize(out.len().next_multiple_of(4), 0);
+    pad(&mut out);
+    out.extend_from_slice(value);
+    for child in children {
+        pad(&mut out);
+        out.extend_from_slice(child);
+    }
+    let len = out.len() as u16;
+    out[..2].copy_from_slice(&len.to_le_bytes());
+    out
+}
+
+/// Os dados do `RT_VERSION` (VS_VERSIONINFO com VS_FIXEDFILEINFO, StringFileInfo e
+/// VarFileInfo), como o `rc.exe` grava.
+pub fn version_data(info: &VersionInfo) -> Vec<u8> {
+    let [a, b, c, d] = version_numbers(&info.version).map(u32::from);
+    let mut fixed = Vec::with_capacity(52);
+    for n in [
+        0xFEEF04BD,      // dwSignature
+        0x0001_0000,     // dwStrucVersion
+        a << 16 | b,     // dwFileVersionMS
+        c << 16 | d,     // dwFileVersionLS
+        a << 16 | b,     // dwProductVersionMS
+        c << 16 | d,     // dwProductVersionLS
+        0x3F,            // dwFileFlagsMask
+        0,               // dwFileFlags
+        0x0004_0004,     // dwFileOS: VOS_NT_WINDOWS32
+        1,               // dwFileType: VFT_APP
+        0,               // dwFileSubtype
+        0,               // dwFileDateMS
+        0,               // dwFileDateLS
+    ] {
+        fixed.extend_from_slice(&u32::to_le_bytes(n));
+    }
+    const UNICODE: u16 = 1200; // a página de código dos textos (UTF-16)
+    let strings: Vec<Vec<u8>> = info
+        .strings()
+        .into_iter()
+        .map(|(key, value)| version_block(key, &utf16z(value), value.encode_utf16().count() as u16 + 1, true, &[]))
+        .collect();
+    let table = version_block(&format!("{:04X}{UNICODE:04X}", info.language), &[], 0, true, &strings);
+    let string_info = version_block("StringFileInfo", &[], 0, true, &[table]);
+    let mut translation = info.language.to_le_bytes().to_vec();
+    translation.extend_from_slice(&UNICODE.to_le_bytes());
+    let var = version_block("Translation", &translation, 4, false, &[]);
+    let var_info = version_block("VarFileInfo", &[], 0, true, &[var]);
+    version_block("VS_VERSION_INFO", &fixed, 52, false, &[string_info, var_info])
+}
+
+/// Lê os dados do `RT_VERSION`: a versão fixa (4 números) e os textos (chave, valor) de todas
+/// as tabelas. Para os testes e para conferir um `.exe` publicado.
+pub fn read_version_data(data: &[u8]) -> Result<([u16; 4], Vec<(String, String)>), String> {
+    let bad = || "VERSIONINFO inválido".to_string();
+    let u16_at = |d: &[u8], i: usize| d.get(i..i + 2).map(|b| u16::from_le_bytes([b[0], b[1]]));
+    // A chave de um bloco e onde começa o que vem depois dela (alinhado em 4).
+    fn key_of(block: &[u8]) -> Option<(String, usize)> {
+        let mut units = Vec::new();
+        let mut i = 6;
+        loop {
+            let u = u16::from_le_bytes([*block.get(i)?, *block.get(i + 1)?]);
+            i += 2;
+            if u == 0 {
+                break;
+            }
+            units.push(u);
+        }
+        Some((String::from_utf16_lossy(&units), i.next_multiple_of(4)))
+    }
+    let split = |d: &'_ [u8]| -> Option<Vec<std::ops::Range<usize>>> {
+        let mut out = Vec::new();
+        let mut at = 0;
+        while at + 6 <= d.len() {
+            let len = u16_at(d, at)? as usize;
+            if len == 0 {
+                break;
+            }
+            out.push(at..(at + len).min(d.len()));
+            at = (at + len).next_multiple_of(4);
+        }
+        Some(out)
+    };
+    let len = u16_at(data, 0).ok_or_else(bad)? as usize;
+    let root = data.get(..len).ok_or_else(bad)?;
+    let (key, at) = key_of(root).ok_or_else(bad)?;
+    if key != "VS_VERSION_INFO" || u16_at(root, 2) != Some(52) {
+        return Err(bad());
+    }
+    let fixed = root.get(at..at + 52).ok_or_else(bad)?;
+    let dword = |i: usize| u32::from_le_bytes([fixed[i], fixed[i + 1], fixed[i + 2], fixed[i + 3]]);
+    if dword(0) != 0xFEEF04BD {
+        return Err(bad());
+    }
+    let numbers = [(dword(8) >> 16) as u16, dword(8) as u16, (dword(12) >> 16) as u16, dword(12) as u16];
+    let mut strings = Vec::new();
+    let children = &root[(at + 52).next_multiple_of(4).min(root.len())..];
+    for r in split(children).ok_or_else(bad)? {
+        let block = &children[r];
+        let (key, at) = key_of(block).ok_or_else(bad)?;
+        if key != "StringFileInfo" {
+            continue;
+        }
+        let tables = &block[at.min(block.len())..];
+        for r in split(tables).ok_or_else(bad)? {
+            let table = &tables[r];
+            let (_, at) = key_of(table).ok_or_else(bad)?;
+            let items = &table[at.min(table.len())..];
+            for r in split(items).ok_or_else(bad)? {
+                let item = &items[r];
+                let (key, at) = key_of(item).ok_or_else(bad)?;
+                let units: Vec<u16> = item[at.min(item.len())..].chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).take_while(|&u| u != 0).collect();
+                strings.push((key, String::from_utf16_lossy(&units)));
+            }
+        }
+    }
+    Ok((numbers, strings))
 }
 
 /// As classes do `classes! { ... }` do crate `aylis` (o texto de `crates/aylis/src/lib.rs`) com a

@@ -61,7 +61,7 @@ impl DevServer {
         let local = matches!(host, "127.0.0.1" | "localhost" | "[::1]");
         let bind = if local { "127.0.0.1" } else { "0.0.0.0" };
         // A porta ocupada (outra IDE com outro projeto): a próxima livre, que o Executar avisa
-        // ao app (`AYLIS_DEV_PORT`; no Android, pelo `adb reverse`). Antes a segunda IDE não
+        // ao app (o argumento `--aylis-dev-port`; no Android, pelo `adb reverse`). Antes a segunda IDE não
         // executava (o relatório do Tabernáculo, I04). Só no endereço local: o da rede vai
         // embutido num celular sem cabo, que não teria como saber outra porta.
         let tries = if local { 50 } else { 1 };

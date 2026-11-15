@@ -49,7 +49,39 @@ type Event struct {
 	// "data"/"label" (o arrasto), "accept" (soltar aqui). Recusar com mensagem (before_post):
 	// panic("Informe o CPF").
 	Reply M `json:"-"`
+	// No on_click do mouse, do toque ou da caneta: onde, com que botão e com que teclas
+	// (if ev.Pointer != nil && ev.Pointer.Ctrl() { ... }); nil no clique do teclado ou do código.
+	Pointer *Pointer `json:"pointer"`
 }
+
+// Pointer é o ponteiro de um on_click: X/Y no componente, FormX/FormY no form, Button
+// ("primary", "secondary", "middle"...), as teclas apertadas ("ctrl", "shift", "alt", "meta")
+// e Kind ("mouse", "touch", "pen").
+type Pointer struct {
+	X         float64  `json:"x"`
+	Y         float64  `json:"y"`
+	FormX     float64  `json:"form_x"`
+	FormY     float64  `json:"form_y"`
+	Button    string   `json:"button"`
+	Modifiers []string `json:"modifiers"`
+	Kind      string   `json:"kind"`
+	Clicks    int      `json:"clicks"`
+}
+
+// Has diz se a tecla modificadora ("ctrl", "shift", "alt", "meta") estava apertada.
+func (p *Pointer) Has(modifier string) bool {
+	for _, m := range p.Modifiers {
+		if m == modifier {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Pointer) Ctrl() bool  { return p.Has("ctrl") }
+func (p *Pointer) Shift() bool { return p.Has("shift") }
+func (p *Pointer) Alt() bool   { return p.Has("alt") }
+func (p *Pointer) Meta() bool  { return p.Has("meta") }
 
 // Component é um componente de um form, pelo id dele na tela (resolvido quando a instância
 // do form é montada). Os tipos de cada componente vêm do components.go gerado.

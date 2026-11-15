@@ -6,7 +6,8 @@
 //! - `--full`: em tela cheia em todos os monitores (um telão).
 //! - `--auto`: confere sozinho e fecha: imprime os pedaços, no Windows manda um clique à
 //!   janela que está sob cada botão (pelas mensagens dela, sem mexer no mouse de verdade) e
-//!   desliga e religa a propriedade (volta a uma janela e vira pedaços de novo).
+//!   desliga e religa a propriedade (volta a uma janela e vira pedaços de novo) e liga e desliga
+//!   o `physical_pixels` (o form passa a ter o tamanho dos pedaços em pixels e volta).
 //!
 //! Numa máquina com um monitor só, `AYLIS_SPAN_SPLIT=2` conta o monitor como dois, lado a
 //! lado (o form no meio da tela passa da divisa). Com `AYLIS_SNAPSHOT=pasta`, cada janela grava
@@ -99,8 +100,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("desligado: {} pedaços, form {:.0} × {:.0}; religando", pieces.len(), size.0, size.1);
                 let _ = ui.set_prop(form, "span_monitors", true);
             }
+            // Os pixels físicos com o app aberto: os pedaços ficam onde estão, e o form passa a
+            // ter o tamanho deles em pixels (a 150%, 1000 × 520 vira 1500 × 780).
             7 => {
-                println!("fim: {} pedaços depois de religar, {} clique(s) nos botões", pieces.len(), clicks.get());
+                println!("{} pedaços depois de religar; physical_pixels ligado", pieces.len());
+                let _ = ui.set_prop(form, "physical_pixels", true);
+            }
+            8 => {
+                println!("em pixels físicos: form {:.0} × {:.0}, pedaços {pieces:?}; desligando", size.0, size.1);
+                let _ = ui.set_prop(form, "physical_pixels", false);
+            }
+            9 => {
+                println!("fim: form {:.0} × {:.0}, {} pedaços, {} clique(s) nos botões", size.0, size.1, pieces.len(), clicks.get());
                 ui.request_close();
             }
             _ => {}

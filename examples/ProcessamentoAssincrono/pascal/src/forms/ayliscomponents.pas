@@ -270,6 +270,8 @@ type
     procedure SetTransition(Value: string);
     function GetLayerCache: string;
     procedure SetLayerCache(Value: string);
+    function GetFrameReuseKb: Int64;
+    procedure SetFrameReuseKb(Value: Int64);
     function GetTopmost: Boolean;
     procedure SetTopmost(Value: Boolean);
     function GetShowInTaskbar: Boolean;
@@ -304,12 +306,18 @@ type
     procedure SetGpu(Value: string);
     function GetSpanMonitors: Boolean;
     procedure SetSpanMonitors(Value: Boolean);
+    function GetPhysicalPixels: Boolean;
+    procedure SetPhysicalPixels(Value: Boolean);
     function GetActivateOnShow: Boolean;
     procedure SetActivateOnShow(Value: Boolean);
+    function GetForceForeground: Boolean;
+    procedure SetForceForeground(Value: Boolean);
     function GetCloseAction: string;
     procedure SetCloseAction(Value: string);
     function GetFrameRate: Double;
     procedure SetFrameRate(Value: Double);
+    function GetOrientation: string;
+    procedure SetOrientation(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -446,6 +454,7 @@ type
     procedure MoveToMonitor(AMonitor: Int64);
     function GpuAdapter: string;
     function GpuAdapters: string;
+    function RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
     function Focused: string;
     procedure FocusNext;
     procedure FocusPrev;
@@ -456,6 +465,7 @@ type
     property WindowState: string read GetWindowState write SetWindowState;
     property Transition: string read GetTransition write SetTransition;
     property LayerCache: string read GetLayerCache write SetLayerCache;
+    property FrameReuseKb: Int64 read GetFrameReuseKb write SetFrameReuseKb;
     property Topmost: Boolean read GetTopmost write SetTopmost;
     property ShowInTaskbar: Boolean read GetShowInTaskbar write SetShowInTaskbar;
     property ActiveControl: string read GetActiveControl write SetActiveControl;
@@ -473,9 +483,12 @@ type
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
     property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
+    property PhysicalPixels: Boolean read GetPhysicalPixels write SetPhysicalPixels;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
+    property ForceForeground: Boolean read GetForceForeground write SetForceForeground;
     property CloseAction: string read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
+    property Orientation: string read GetOrientation write SetOrientation;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -1916,6 +1929,16 @@ begin
   SetProp('layer_cache', TJSONString.Create(Value));
 end;
 
+function TForm.GetFrameReuseKb: Int64;
+begin
+  Result := GetProp('frame_reuse_kb').AsInt64;
+end;
+
+procedure TForm.SetFrameReuseKb(Value: Int64);
+begin
+  SetProp('frame_reuse_kb', TJSONInt64Number.Create(Value));
+end;
+
 function TForm.GetTopmost: Boolean;
 begin
   Result := GetProp('topmost').AsBoolean;
@@ -2086,6 +2109,16 @@ begin
   SetProp('span_monitors', TJSONBoolean.Create(Value));
 end;
 
+function TForm.GetPhysicalPixels: Boolean;
+begin
+  Result := GetProp('physical_pixels').AsBoolean;
+end;
+
+procedure TForm.SetPhysicalPixels(Value: Boolean);
+begin
+  SetProp('physical_pixels', TJSONBoolean.Create(Value));
+end;
+
 function TForm.GetActivateOnShow: Boolean;
 begin
   Result := GetProp('activate_on_show').AsBoolean;
@@ -2094,6 +2127,16 @@ end;
 procedure TForm.SetActivateOnShow(Value: Boolean);
 begin
   SetProp('activate_on_show', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetForceForeground: Boolean;
+begin
+  Result := GetProp('force_foreground').AsBoolean;
+end;
+
+procedure TForm.SetForceForeground(Value: Boolean);
+begin
+  SetProp('force_foreground', TJSONBoolean.Create(Value));
 end;
 
 function TForm.GetCloseAction: string;
@@ -2114,6 +2157,16 @@ end;
 procedure TForm.SetFrameRate(Value: Double);
 begin
   SetProp('frame_rate', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetOrientation: string;
+begin
+  Result := AsText(GetProp('orientation'));
+end;
+
+procedure TForm.SetOrientation(Value: string);
+begin
+  SetProp('orientation', TJSONString.Create(Value));
 end;
 
 function TForm.GetClientWidth: Double;
@@ -2789,6 +2842,11 @@ end;
 function TForm.GpuAdapters: string;
 begin
   Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'gpu_adapters', 'args', TJSONArray.Create])));
+end;
+
+function TForm.RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
+begin
+  Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'render_rgba', 'args', TJSONArray.Create([AX, AY, AWidth, AHeight, AScale])])));
 end;
 
 function TForm.Focused: string;

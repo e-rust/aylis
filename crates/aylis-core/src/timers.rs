@@ -245,7 +245,11 @@ impl Ui {
             let local = self.local_point(target, position);
             let event = PointerEvent { position: local, kind: crate::event::PointerKind::Touch, ..Default::default() };
             self.fire(target, "on_long_press", &EventArgs::Pointer(event));
-            self.open_popup_menu(target, position);
+            // Abriu um menu: o soltar do dedo não dá o foco ao controle (fecharia o menu) nem
+            // escolhe o item que ficou embaixo dele.
+            if self.contains(target) && self.open_context_menu(target, position, true) {
+                self.mark_press_menu(root, target);
+            }
             self.request_repaint();
         }
         any

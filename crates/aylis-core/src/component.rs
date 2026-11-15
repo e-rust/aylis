@@ -276,6 +276,17 @@ pub trait Component: Any {
         }
     }
 
+    /// O menu de contexto próprio do controle (o de texto do `Edit` e do `Memo`: Recortar,
+    /// Copiar, Colar, Selecionar tudo). O `Ui` chama no botão direito e no toque longo
+    /// (`touch`), subindo do controle tocado pelos pais, só quando nem ele nem um pai tem
+    /// `popup_menu` (o menu do app vence). `at` é o ponto local. `true` se abriu um menu.
+    fn context_menu(&mut self, ctx: &mut EventCtx<'_>, at: PointF, touch: bool) -> bool {
+        match self.inner_mut() {
+            Some(inner) => inner.context_menu(ctx, at, touch),
+            None => false,
+        }
+    }
+
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         if let Some(inner) = self.inner_mut() {
             inner.key_down(ctx, event);

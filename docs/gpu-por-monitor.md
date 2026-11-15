@@ -209,10 +209,13 @@ O `Ui` continua com um form só. As peças:
 
 Na plataforma (Windows):
 
-- **Abrir:** a janela abre como sempre; na volta seguinte do laço, se o form (o tamanho dele na
-  escala do monitor, a partir do canto da janela) passa de um monitor, a principal perde a
-  moldura e fica com o pedaço maior, e as outras abrem. O form fica do tamanho de todos os
-  pedaços juntos.
+- **Abrir:** o form que já nasce em vários monitores (com `full_screen`, ou o lugar de abrir, o
+  tamanho dele na escala do monitor a partir do canto pedido, passando de um monitor) abre todas
+  as janelas no primeiro `show()`: a principal nasce no pedaço maior, sem moldura e escondida,
+  as outras abrem logo depois, e todas aparecem juntas (14/11, o print do NoOBS: antes a
+  principal aparecia num monitor só, com moldura, e virava pedaço depois). Sem lugar conhecido
+  (`position = default` sem monitor), a janela abre como sempre e, se passa de um monitor, vira
+  os pedaços na mesma volta do laço. O form fica do tamanho de todos os pedaços juntos.
 - **Placa:** com a regra `gpu` vazia (a do projeto, automática), cada janela segue a placa do
   monitor dela (`monitor`); com uma placa pedida no form, todas ficam nela.
 - **Pintura:** um quadro do form pinta todos os pedaços juntos, com um `take_frame` só: cada
@@ -226,7 +229,12 @@ Na plataforma (Windows):
   `on_deactivate`/`on_activate`. O teclado vai ao form, de qualquer janela.
 - **Escala:** todos os pedaços desenham com a escala do monitor da janela principal (num monitor
   com outra escala, o form aparece com a da principal, sem mudar de tamanho no meio). A
-  sugestão de tamanho do sistema ao passar para um monitor de outra escala é recusada.
+  sugestão de tamanho do sistema ao passar para um monitor de outra escala é recusada. Com
+  `physical_pixels` (abaixo), a escala é 1 em todos.
+- **Dispositivo (Direct2D):** as janelas da mesma placa dividem o dispositivo do Direct3D 11 e do
+  Direct2D (`D2dRenderer::shared_device`; criar um custava ~30 ms por janela), cada uma com o
+  próprio contexto e a própria swap chain; a janela que fecha solta na hora a swap chain e as
+  imagens dela (`Flush` e `Trim`). Um dispositivo perdido sai do guardado e a janela cria outro.
 - **Mudanças:** desligar a propriedade com o app aberto volta a uma janela (com a moldura do
   `border_style` e o lugar do form); `width`/`height`, `move_to_monitor`, a posição pelo
   código, a tela cheia, o zoom e os monitores mudando (ligado, desligado, outra resolução)
@@ -234,6 +242,39 @@ Na plataforma (Windows):
   pedaços.
 - **Diagnóstico:** `AYLIS_SPAN_SPLIT=N` conta cada monitor como N, lado a lado, para ver o
   caminho inteiro numa máquina com um monitor só (todas as janelas na mesma placa).
+
+### Em pixels físicos (`physical_pixels`)
+
+Decidido em 14/11 (o editor de print do NoOBS: a imagem de fundo é o print físico da tela, e a
+seleção tem de bater com ela). Com a propriedade `physical_pixels` do form (categoria Layout,
+desligada), **1 unidade do form = 1 pixel físico**, em todas as janelas dele, sem a escala do
+monitor nem o zoom (`Ui::form_zoom` dá 1):
+
+- num form em pedaços, todos desenham com a escala 1, mesmo com escalas diferentes por monitor
+  (`aylis_core::span::pixel_scale`); a entrada de cada janela chega ao form pela origem do pedaço
+  em pixels: o pixel (x, y) da tela vira (x − canto, y − canto) do form; com `full_screen` e
+  `span_monitors`, o canto é o do retângulo virtual (com um monitor à esquerda ou acima do
+  principal, a origem negativa);
+- numa janela só, o mesmo: o tamanho, os limites e o `auto_size` da janela em pixels, e um
+  monitor de outra escala não muda o tamanho dela;
+- mudar com o app aberto (`WindowCommand::UpdateScale`): a janela fica onde está (os pedaços
+  também) e o form passa a ter o tamanho dela na escala nova.
+
+O form do print, em JSON:
+
+```json
+{"aylis": 1, "root": {"class": "Form", "name": "frmPrint", "border_style": "none",
+  "window_state": "full_screen", "span_monitors": true, "physical_pixels": true,
+  "topmost": true, "show_in_taskbar": false, "force_foreground": true, "key_preview": true,
+  "close_action": "free",
+  "children": [{"class": "Image", "name": "imgFundo", "align": "client", "fit": "stretch"}]}}
+```
+
+com o print no `Image` (`set_picture(Image::bgra(largura, altura, pixels))`, do tamanho do
+retângulo virtual em pixels; em BGRA, como a captura vem, ele vai à placa sem conversão). Medido
+com o exemplo `print_overlay` (`medicoes/print_overlay.json`, `AYLIS_SPAN_SPLIT=2` num 3840 ×
+2160 a 150%, 20 ciclos de criar, mostrar, fechar e liberar): do `show()` até a pintura do form
+inteiro, 291 → 76 ms de mediana; fechar e liberar não deixa janelas e a memória fica estável.
 
 O que não está coberto:
 
@@ -256,7 +297,12 @@ Sem vários monitores (testes):
 - `cargo test -p aylis-core --lib span` e `--test span`: a divisão (dois monitores, o da
   esquerda com `x` negativo, o telão 2×3 com um sétimo e o vão, o espelhado), o ponto da janela
   no form, o menu no pedaço e a pintura de um pedaço só com os controles dele.
-- `cargo test -p aylis-controls --test span_monitors`: cada pedaço pintado com o deslocamento
+- `cargo test -p aylis-core --lib span`: também o retângulo virtual com um monitor à esquerda e
+  outro acima (origem negativa) e, em pixels físicos, o pixel da tela chegando ao form como o
+  mesmo pixel do retângulo virtual.
+- `cargo test -p aylis-controls --test span_monitors`: em pixels físicos, cada pedaço sai igual
+  ao recorte do print pixel a pixel (Skia e Direct2D) e o clique chega no pixel certo; o form
+  do print criado e liberado 20 vezes não deixa nada; e cada pedaço pintado com o deslocamento
   (`Ui::paint_piece`) sai igual ao recorte da pintura do form inteiro, inteiro e por parte (o
   mouse em cima e um deslocamento de cada controle registrado), no Skia e no Direct2D, a 100%
   e a 150% (as divisas em pixel quebrado no form); o clique dado na janela da direita chega ao

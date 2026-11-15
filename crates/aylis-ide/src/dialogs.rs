@@ -8,6 +8,7 @@ use aylis_controls::{
     Button, CheckBox, ColorPicker, ComboBox, Edit, Form, Label, Layout, ProgressBar, RadioButton, Rectangle, ScrollBox, Switch, TrackBar,
 };
 use aylis_core::{Align, Color, ComponentId, EventArgs, ModalResult, PropValue, Ui};
+use aylis_core::PropEnum as _;
 use aylis_core::gpu::GpuChoice;
 use aylis_core::ImageCacheLimits;
 use aylis_project::{ImageCacheSettings, Language, Platform, Project, RenderChoice, RenderOptions};
@@ -307,8 +308,12 @@ pub fn gpu_value(text: &str) -> String {
     }
 }
 
+/// As escolhas do combo "Orientação da tela", na ordem de [`aylis_core::ScreenOrientation`].
+pub const ORIENTATION_CHOICES: [&str; 5] =
+    ["Gira com o aparelho", "Em pé", "Deitado", "Em pé (os dois sentidos)", "Deitado (os dois sentidos)"];
+
 pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: impl FnOnce(&mut Ui, Project) + 'static) {
-    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1310.0);
+    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1346.0);
     let line = field(ui, d.body, "Nome");
     let name = edit(ui, line, &project.name);
     let line = field(ui, d.body, "Linguagem");
@@ -355,6 +360,11 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let line = field(ui, d.body, "Fuso horário");
     let time_zone = edit(ui, line, &project.time_zone);
     let _ = ui.set_prop(time_zone, "placeholder", "(o do aparelho)   ex.: America/Sao_Paulo");
+    // A orientação da tela no celular (o `orientation`): o Android e o iOS; cada form pode ter
+    // a sua (pedido do autor em 14/11).
+    let line = field(ui, d.body, "Orientação da tela");
+    let orientation = combo(ui, line, &ORIENTATION_CHOICES, ORIENTATION_CHOICES[project.orientation().index()]);
+    let _ = ui.set_prop(orientation, "hint", "Android e iOS. Cada form pode ter a sua (a propriedade orientation); no desktop e no navegador, sem efeito.");
     let render = render_section(ui, d.body, project.render());
     let text_modes = text_section(ui, d.body, project.text());
     // A placa de vídeo: as quatro escolhas fixas e as desta máquina pelo nome.
@@ -471,6 +481,11 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
             p.main_form = combo_text(ui, main);
             p.locale = combo_text(ui, locale);
             p.time_zone = text_of(ui, time_zone).trim().to_string();
+            let chosen = ui.get::<ComboBox>(orientation).map_or(0, |c| c.item_index.max(0) as usize);
+            p.orientation = match aylis_core::ScreenOrientation::from_index(chosen).unwrap_or_default() {
+                aylis_core::ScreenOrientation::Any => String::new(),
+                o => o.name().to_string(),
+            };
             p.render = Some(render_value(ui, &render));
             // Sem `text` no arquivo e nada mudado, continua sem (antes, aplicar gravava o padrão).
             let text = text_value(ui, &text_modes);
@@ -557,7 +572,7 @@ mod build_command_tests {
 /// com o que guarda, o que acontece ao passar dele e quando aumentar. `on_ok` recebe `None`
 /// quando todos ficam no padrão (o `.aylisproj` não grava a chave).
 pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui, Option<ImageCacheSettings>) + 'static) {
-    let d = new_dialog(ui, "Opções do projeto · Memória", 640.0, 600.0);
+    let d = new_dialog(ui, "Opções do projeto · Memória", 640.0, 700.0);
     let current = project.image_cache.unwrap_or_default();
     let defaults = ImageCacheLimits::DEFAULT;
     let intro = label(
@@ -611,6 +626,15 @@ pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui
         "MB",
         "O desenho de um controle com cache_layer, ou das páginas numa transição, guardado como imagem para andar e esmaecer sem repintar os filhos. Uma transição de aba em 4K usa ~66 MB enquanto anda; a imagem sai quando a transição acaba. Com 0, nada fica guardado e tudo é repintado a cada quadro.",
     );
+    let reuse = number(
+        ui,
+        d.body,
+        "Reaproveitar quadros",
+        current.frame_reuse_kb,
+        aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB,
+        "KB",
+        "Quadros de câmera e de vídeo até este tamanho copiam os pixels no bitmap do quadro anterior, na placa, em vez de criar outro a cada quadro (Direct2D). Ajuda com muitas câmeras pequenas; num quadro grande, copiar custa mais que criar. Com 0, sempre cria. Meça na sua placa com aylis-tool bench-frames.",
+    );
     let line = field(ui, d.body, "");
     let auto = ui.add(CheckBox::new("Camadas automáticas nas transições e animações"), line);
     ui.control_mut(auto).unwrap().set_align(Align::Client);
@@ -636,8 +660,13 @@ pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui
             }
             let (min_layers, max_layers) = ImageCacheLimits::LAYERS_MB_RANGE;
             match read(ui, layers, defaults.layers_mb) {
-                Some(v) if (min_layers..=max_layers).contains(&v) => Ok(()),
-                _ => Err(format!("camadas guardadas: de {} a {} MB", min_layers, max_layers)),
+                Some(v) if (min_layers..=max_layers).contains(&v) => {}
+                _ => return Err(format!("camadas guardadas: de {} a {} MB", min_layers, max_layers)),
+            }
+            let (min_kb, max_kb) = aylis_core::image_cache::FRAME_REUSE_KB_RANGE;
+            match read(ui, reuse, aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB) {
+                Some(v) if (min_kb..=max_kb).contains(&v) => Ok(()),
+                _ => Err(format!("reaproveitar quadros: de {} a {} KB", min_kb, max_kb)),
             }
         },
         move |ui| {
@@ -646,6 +675,7 @@ pub fn project_memory(ui: &mut Ui, project: &Project, on_ok: impl FnOnce(&mut Ui
                 files: read(ui, files, defaults.files).unwrap_or(defaults.files),
                 layers_mb: read(ui, layers, defaults.layers_mb).unwrap_or(defaults.layers_mb),
                 auto_layers: ui.get::<CheckBox>(auto).is_none_or(|c| c.checked),
+                frame_reuse_kb: read(ui, reuse, aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB).unwrap_or(aylis_core::image_cache::DEFAULT_FRAME_REUSE_KB),
             };
             on_ok(ui, (settings != ImageCacheSettings::default()).then_some(settings));
         },
@@ -1224,14 +1254,26 @@ pub fn fields_editor(ui: &mut Ui, title: &str, fields: Vec<FieldSpec>, types: &'
 
 /// Sobre o aylis.
 pub fn about(ui: &mut Ui) {
-    let d = new_dialog(ui, "Sobre o Aylis", 520.0, 270.0);
-    let t = label(ui, d.body, "Aylis IDE", Align::Top, 34.0);
-    let _ = ui.set_prop(t, "font_size", 22);
-    let text = format!(
-        "Interfaces visuais em Rust, com designer e desenho próprio igual em todas as plataformas.\nVersão {}.\nForms em JSON; eventos em Rust, Python, TypeScript, C#, Java, Go, C++ ou Pascal.",
-        env!("CARGO_PKG_VERSION")
-    );
-    let l = label(ui, d.body, &text, Align::Client, 0.0);
+    let d = new_dialog(ui, "Sobre o Aylis", 540.0, 290.0);
+    // O logo da IDE (a maior imagem do mesmo `.ico` da janela) à esquerda; ao lado, o nome e a
+    // versão em destaque.
+    let header = ui.add(Layout::default(), d.body);
+    ui.control_mut(header).unwrap().set_align(Align::Top).set_height(72.0).set_margins([0.0, 0.0, 0.0, 12.0]);
+    let logo = ui.add(aylis_controls::ImageView::new(""), header);
+    ui.control_mut(logo).unwrap().set_align(Align::Left).set_width(64.0).set_margins([0.0, 4.0, 16.0, 4.0]);
+    if let (Some(png), Some(view)) = (aylis_build::ico_largest_png(include_bytes!("../resources/aylis-ide.ico")), ui.get_mut::<aylis_controls::ImageView>(logo)) {
+        view.set_picture(Some(aylis_core::Image::encoded(png.to_vec())));
+    }
+    // O nome e a versão num bloco próprio, ao lado do logo (no mesmo pai, o alinhamento no topo
+    // tomaria a largura toda antes do logo).
+    let names = ui.add(Layout::default(), header);
+    ui.control_mut(names).unwrap().set_align(Align::Client);
+    let t = label(ui, names, "Aylis IDE", Align::Top, 38.0);
+    let _ = ui.set_prop(t, "font_size", 24);
+    let v = label(ui, names, &format!("Versão {}", env!("CARGO_PKG_VERSION")), Align::Top, 26.0);
+    let _ = ui.set_prop(v, "font_size", 15);
+    let text = "Interfaces visuais em Rust, com designer e desenho próprio igual em todas as plataformas.\nForms em JSON; eventos em Rust, Python, TypeScript, C#, Java, Go, C++ ou Pascal.";
+    let l = label(ui, d.body, text, Align::Client, 0.0);
     let _ = ui.set_prop(l, "wrap", true);
     muted(ui, l);
     // Só um botão: esconde o Cancelar.

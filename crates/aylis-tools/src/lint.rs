@@ -23,7 +23,8 @@
 //! - `class-not-listed`: classe que está numa lista e não na outra (`aylis_build::CLASSES` ×
 //!   `aylis::classes`; o registro em execução, `register_all`, já tem o teste
 //!   `crates/aylis/tests/classes.rs`);
-//! - `class-without-sample`: classe sem conteúdo de exemplo em `aylis::samples`;
+//! - `class-without-sample`: classe visual sem conteúdo de exemplo em `aylis::samples` (os não
+//!   visuais ficam sem exemplo, decidido em 14/11);
 //! - `untranslated-text`: texto de tela da IDE sem tradução ([`crate::translations::missing`]).
 //!
 //! Um achado de propósito se cala com um comentário `lint-allow: <regra>` na mesma linha ou na
@@ -535,7 +536,15 @@ fn classes(root: &Path, out: &mut Vec<Finding>) {
     }
     let samples_json = std::fs::read_to_string(root.join("crates/aylis/src/samples.json")).ok().and_then(|t| serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&t).ok()).unwrap_or_default();
     let samples_code = std::fs::read_to_string(root.join("crates/aylis/src/samples.rs")).unwrap_or_default();
+    // Os não visuais ficam sem exemplo (decidido pelo autor em 14/11: não há o que mostrar na
+    // galeria); visual é a classe que cria um controle, como no designer da IDE.
+    let mut ui = aylis_core::Ui::new();
+    aylis_controls::register(&mut ui);
+    let nonvisual = |name: &str| ui.registry().get(name).is_some_and(|c| (c.create)().control().is_none());
     for name in &listed {
+        if nonvisual(name) {
+            continue;
+        }
         if !samples_json.contains_key(*name) && !samples_code.contains(&format!("\"{name}\"")) {
             push(out, "crates/aylis/src/samples.json", 0, "class-without-sample", format!("`{name}` sem conteúdo de exemplo em aylis::samples"));
         }

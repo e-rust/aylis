@@ -357,6 +357,45 @@ pub(crate) fn set_shown(window: &winit::window::Window, shown: bool) {
     }
 }
 
+/// Traz a janela para a frente com o foco do teclado, mesmo quando o processo não recebeu a
+/// última entrada (a propriedade `force_foreground` do form).
+///
+/// A regra do Windows: o `SetForegroundWindow` só vale para o processo que recebeu o último
+/// evento de entrada (ou o que está em primeiro plano). O form aberto por um atalho global (o
+/// hook de teclado do app), por um timer ou pela notificação não recebeu: a janela aparece
+/// atrás, com o botão piscando, e o Esc vai para o app de trás. O `focus_window` do winit
+/// tenta com um Alt sintético (`SendInput`), que não passa quando a janela ainda não está
+/// marcada como visível para ele ou quando um hook de teclado engole a tecla. Aqui, o caminho
+/// do NoOBS (`RestoreFromTray`): ligar por um instante a entrada desta thread à da janela em
+/// primeiro plano (`AttachThreadInput`), quando o Windows já trata as duas como uma só, e então
+/// `BringWindowToTop` + `SetForegroundWindow` + `SetFocus`; a ligação é desfeita em seguida.
+/// Janela de um app com mais privilégio (administrador) continua na frente: o Windows não
+/// deixa ligar as entradas.
+pub(crate) fn force_foreground(window: &winit::window::Window) {
+    use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
+    use windows::Win32::UI::Input::KeyboardAndMouse::SetFocus;
+    use windows::Win32::UI::WindowsAndMessaging::{BringWindowToTop, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, SW_RESTORE, SetForegroundWindow, ShowWindow};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    // SAFETY: `hwnd` é a janela viva do form, nesta thread (a da interface); a outra só é lida
+    // (`GetForegroundWindow` pode ser nula ou de outro processo, e as chamadas aceitam), e a
+    // ligação das entradas é desfeita antes de sair.
+    unsafe {
+        if IsIconic(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_RESTORE);
+        }
+        let foreground = GetForegroundWindow();
+        let mine = GetCurrentThreadId();
+        let theirs = if foreground.is_invalid() || foreground == hwnd { 0 } else { GetWindowThreadProcessId(foreground, None) };
+        let attached = theirs != 0 && theirs != mine && AttachThreadInput(mine, theirs, true).as_bool();
+        let _ = BringWindowToTop(hwnd);
+        let _ = SetForegroundWindow(hwnd);
+        let _ = SetFocus(Some(hwnd));
+        if attached {
+            let _ = AttachThreadInput(mine, theirs, false);
+        }
+    }
+}
+
 /// Avisa o winit que a janela está à vista quando o app a mostrou pela API do Windows (o
 /// NoOBS, ao voltar da bandeja). Sem isso, o winit acha que ela está escondida e, ao trocar o
 /// estilo (a tela cheia), regrava sem o `WS_VISIBLE`: a janela sumia, até da barra de tarefas.

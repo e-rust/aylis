@@ -31,8 +31,11 @@ pub(crate) struct SpanForm {
     normal: ScreenRect,
     /// Pixels por unidade do form (a escala do monitor da janela principal ao virar pedaços;
     /// o zoom vem por cima). Todos os pedaços desenham com ela, para o form não mudar de
-    /// tamanho no meio (num monitor com outra escala, ele aparece com a da principal).
+    /// tamanho no meio (num monitor com outra escala, ele aparece com a da principal). Em
+    /// pixels físicos (`physical_pixels`), 1.
     scale: f64,
+    /// A escala acima é a dos pixels físicos (mudando a propriedade, ela é refeita).
+    physical: bool,
 }
 
 /// O pedaço que uma janela mostra.
@@ -54,7 +57,7 @@ impl App {
         let w = &self.windows[index];
         let base = match self.spans.get(&w.form).filter(|_| w.span.is_some()) {
             Some(s) => s.scale,
-            None => w.window.scale_factor(),
+            None => self.system_scale(index),
         };
         base * self.ui.form_zoom(w.form) as f64
     }
@@ -107,6 +110,15 @@ impl App {
         if command == WindowCommand::UpdateSpan {
             self.span_checks.push(form);
             return true;
+        }
+        // Os pixels físicos ligados ou desligados num form em pedaços: os pedaços se refazem com
+        // a escala nova (numa janela só, o `lib.rs` cuida).
+        if command == WindowCommand::UpdateScale {
+            if self.spans.contains_key(&form) {
+                self.span_checks.push(form);
+                return true;
+            }
+            return false;
         }
         if let WindowCommand::SetFullscreen(_) = command
             && (self.spans.contains_key(&form) || self.spans_full_screen(form))
@@ -196,14 +208,17 @@ impl App {
         }
         let monitors = self.monitor_rects();
         let full = self.enum_prop(form, "window_state") == "full_screen";
+        let physical = self.ui.physical_pixels(form);
         // O retângulo do form: o guardado ou, na primeira vez, o da janela (a área cliente,
-        // do tamanho do form).
+        // do tamanho do form). A escala: a guardada ou, com os pixels físicos mudados, a nova
+        // (1, ou a do monitor da principal).
         let (normal, scale) = match self.spans.get(&form) {
-            Some(s) => (s.normal, s.scale),
+            Some(s) if s.physical == physical => (s.normal, s.scale),
+            Some(s) => (s.normal, if physical { 1.0 } else { self.windows[main].window.scale_factor() }),
             None => {
                 let w = &self.windows[main].window;
                 let at = w.inner_position().unwrap_or_default();
-                let scale = w.scale_factor();
+                let scale = if physical { 1.0 } else { w.scale_factor() };
                 let zoom = self.ui.form_zoom(form) as f64;
                 let (width, height) = self.ui.control(form).map_or((640.0, 480.0), |cb| (cb.width() as f64, cb.height() as f64));
                 let size = PhysicalSize::new((width * scale * zoom).round().max(1.0) as u32, (height * scale * zoom).round().max(1.0) as u32);
@@ -221,8 +236,10 @@ impl App {
             }
             return Ok(());
         }
-        let first = !self.spans.contains_key(&form);
-        self.spans.insert(form, SpanForm { rect, normal, scale });
+        // A primeira vez da janela principal como pedaço (o form que já nasce em pedaços tem o
+        // `SpanForm` desde antes da janela, pelo `plan_span`).
+        let first = self.windows[main].span.is_none();
+        self.spans.insert(form, SpanForm { rect, normal, scale, physical });
         let chosen = span::largest(&pieces).unwrap_or(0);
         {
             let w = &mut self.windows[main];
@@ -263,6 +280,73 @@ impl App {
             self.sync_form_size(main);
         }
         Ok(())
+    }
+
+    /// Antes de abrir a janela principal de um form: se ele já nasce em vários monitores (o
+    /// `span_monitors` com a tela cheia ou o lugar de abrir passando de um monitor), a janela
+    /// nasce no pedaço maior, sem moldura e escondida, e o form fica com o retângulo dele. O
+    /// [`App::open_span`] abre as outras logo depois, e todas aparecem juntas: o form aparece
+    /// inteiro de uma vez, sem a janela de um monitor só antes (o print do NoOBS, aberto por um
+    /// atalho, precisa estar à vista em ~100 ms). `false`: abre como sempre (sem lugar
+    /// conhecido, ele confere depois, com a janela aberta).
+    pub(crate) fn plan_span(&mut self, form: ComponentId, attributes: &mut winit::window::WindowAttributes) -> bool {
+        if !self.wants_span(form) {
+            return false;
+        }
+        let monitors = self.monitor_rects();
+        if monitors.len() < 2 {
+            return false;
+        }
+        let physical = self.ui.physical_pixels(form);
+        // A escala: a do monitor onde a janela abriria (a do primeiro, sem lugar).
+        let at = match attributes.position {
+            Some(winit::dpi::Position::Physical(p)) => Some((p.x, p.y)),
+            _ => None,
+        };
+        let known = self.ui.monitors();
+        let monitor = at.and_then(|(x, y)| known.iter().find(|m| x >= m.x && y >= m.y && (x as i64) < m.x as i64 + m.width as i64 && (y as i64) < m.y as i64 + m.height as i64)).or(known.first());
+        let scale = if physical { 1.0 } else { monitor.map_or(1.0, |m| m.scale) };
+        let zoom = self.ui.form_zoom(form) as f64;
+        let (width, height) = self.ui.control(form).map_or((640.0, 480.0), |cb| (cb.width() as f64, cb.height() as f64));
+        let size = ((width * scale * zoom).round().max(1.0) as u32, (height * scale * zoom).round().max(1.0) as u32);
+        let full = self.enum_prop(form, "window_state") == "full_screen";
+        // Fora da tela cheia, o lugar do form; na tela cheia, o lugar para onde ele volta ao
+        // sair dela (sem lugar pedido, o meio do primeiro monitor).
+        let normal = match (at, monitor) {
+            (Some((x, y)), _) => ScreenRect::new(x, y, size.0, size.1),
+            (None, Some(m)) if full => ScreenRect::new(m.x + (m.width as i32 - size.0 as i32) / 2, m.y + (m.height as i32 - size.1 as i32) / 2, size.0, size.1),
+            _ => return false,
+        };
+        let rect = if full { ScreenRect::bounding(&monitors).unwrap_or(normal) } else { normal };
+        let pieces = span::split(rect, &monitors);
+        let Some(chosen) = span::largest(&pieces).filter(|_| pieces.len() >= 2) else { return false };
+        let screen = pieces[chosen].screen;
+        attributes.position = Some(PhysicalPosition::new(screen.x, screen.y).into());
+        attributes.inner_size = Some(PhysicalSize::new(screen.width, screen.height).into());
+        attributes.fullscreen = None;
+        attributes.maximized = false;
+        attributes.decorations = false;
+        attributes.resizable = false;
+        attributes.visible = false;
+        self.spans.insert(form, SpanForm { rect, normal, scale, physical });
+        true
+    }
+
+    /// Depois de abrir a janela principal de um form que nasce em pedaços ([`App::plan_span`]):
+    /// abre as outras e, com `show`, mostra todas juntas (a principal por último, com o foco).
+    pub(crate) fn open_span(&mut self, event_loop: &ActiveEventLoop, form: ComponentId, show: bool) {
+        if let Err(e) = self.respan(event_loop, form) {
+            aylis_core::stderr_line!("aylis: não deu para abrir o form em vários monitores ({e}); ele fica numa janela");
+            self.unspan(form);
+        }
+        if show {
+            for w in self.windows.iter().filter(|w| w.form == form && w.is_extra()) {
+                w.window.set_visible(true);
+            }
+            if let Some(main) = self.main_index(form) {
+                self.windows[main].window.set_visible(true);
+            }
+        }
     }
 
     /// Volta a uma janela: as extras fecham, a principal fica com a moldura e o lugar do form.
@@ -447,7 +531,10 @@ impl App {
                     gpu.draw(&self.renderer.skia, (width, height), scale, background, parts, |c, area| ui.paint_piece(form, c, rect, area, first), capture)?
                 }
                 #[cfg(native_d2d)]
-                Backend::D2d(d2d) => d2d.draw(&self.renderer.d2d, (width, height), scale, background, parts, |c, area| ui.paint_piece(form, c, rect, area, first), capture)?,
+                Backend::D2d(d2d) => {
+                    d2d.set_frame_reuse_kb(ui.form_frame_reuse_kb(form));
+                    d2d.draw(&self.renderer.d2d, (width, height), scale, background, parts, |c, area| ui.paint_piece(form, c, rect, area, first), capture)?
+                }
                 #[cfg(web)]
                 Backend::Web(web) => {
                     web.draw((width, height), scale, background, parts, |c, area| ui.paint_piece(form, c, rect, area, first))?;

@@ -27,11 +27,37 @@ public sealed record AylisEvent(string Event, string Handler, string Form, strin
     /// número da pergunta: a tela espera a resposta, que o cliente manda quando o handler termina.</summary>
     public long? Ask { get; init; }
 
+    /// <summary>No <c>on_click</c> do mouse, do toque ou da caneta: onde, com que botão e com que teclas
+    /// (<c>if (ev.Pointer is { Ctrl: true }) ...</c>); nulo no clique do teclado ou do código.</summary>
+    public AylisPointer? Pointer { get; init; }
+
     /// <summary>A resposta de um evento que pergunta, gravável pelo handler: <c>ev.Reply["can_close"] = false</c>
     /// (fechar), <c>ev.Reply["key"] = ""</c> (engolir a tecla), <c>ev.Reply["key"] = "."</c> (trocar o caractere),
     /// <c>data</c>/<c>label</c> (o arrasto), <c>accept</c> (soltar aqui). Recusar com mensagem
     /// (<c>before_post</c>): <c>throw new Exception("Informe o CPF")</c>.</summary>
     public JsonObject Reply { get; } = new();
+}
+
+/// <summary>O ponteiro de um <c>on_click</c> (o campo <c>pointer</c> do evento): <c>X</c>/<c>Y</c> no
+/// componente, <c>FormX</c>/<c>FormY</c> no form, <c>Button</c> (<c>primary</c>, <c>secondary</c>,
+/// <c>middle</c>...), as teclas apertadas (<c>ctrl</c>, <c>shift</c>, <c>alt</c>, <c>meta</c>) e
+/// <c>Kind</c> (<c>mouse</c>, <c>touch</c>, <c>pen</c>).</summary>
+public sealed record AylisPointer(double X, double Y, double FormX, double FormY, string Button, IReadOnlyList<string> Modifiers, string Kind, int Clicks)
+{
+    public bool Ctrl => Modifiers.Contains("ctrl");
+    public bool Shift => Modifiers.Contains("shift");
+    public bool Alt => Modifiers.Contains("alt");
+    public bool Meta => Modifiers.Contains("meta");
+
+    internal static AylisPointer? From(JsonNode? node)
+    {
+        if (node is not JsonObject p)
+            return null;
+        static double Num(JsonNode? n) => n is JsonValue v && v.TryGetValue<double>(out var d) ? d : 0;
+        var modifiers = (p["modifiers"] as JsonArray)?.Select(m => m?.ToString() ?? "").ToList() ?? [];
+        return new AylisPointer(Num(p["x"]), Num(p["y"]), Num(p["form_x"]), Num(p["form_y"]), p["button"]?.ToString() ?? "",
+            modifiers, p["kind"]?.ToString() ?? "", (int)Num(p["clicks"]));
+    }
 }
 
 /// <summary>Um componente de um form, pelo id dele na tela (resolvido quando a instância do form
@@ -382,7 +408,7 @@ public class Aylis
         var kind = message["event"]?.ToString() ?? "";
         long? ask = message["ask"] is JsonValue a && a.TryGetValue<long>(out var n) ? n : null;
         var ev = new AylisEvent(kind, message["handler"]?.ToString() ?? "", message["form"]?.ToString() ?? "",
-            message["sender"]?["name"]?.ToString() ?? "", message["sender"]?["class"]?.ToString() ?? "", message["args"], message["info"]) { Ask = ask };
+            message["sender"]?["name"]?.ToString() ?? "", message["sender"]?["class"]?.ToString() ?? "", message["args"], message["info"]) { Ask = ask, Pointer = AylisPointer.From(message["pointer"]) };
         running++;
         try
         {

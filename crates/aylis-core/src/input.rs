@@ -85,6 +85,9 @@ struct Press {
     touch: bool,
     /// Já disparou: o soltar não gera clique.
     fired: bool,
+    /// O toque longo abriu um menu: o soltar do dedo é dele (não dá o foco ao controle, que
+    /// fecharia o menu, nem escolhe o item que ficou embaixo do dedo).
+    menu: bool,
 }
 
 /// Rolagem por inércia depois de soltar o dedo.
@@ -665,7 +668,7 @@ impl Ui {
         state.last_click = Some((target, now, event.position, click_count));
         if event.button == PointerButton::Primary {
             state.captured = Some(target);
-            state.press = Some(Press { target, position: event.position, time: now, touch, fired: false });
+            state.press = Some(Press { target, position: event.position, time: now, touch, fired: false, menu: false });
         }
 
         if event.button == PointerButton::Primary {
@@ -784,7 +787,15 @@ impl Ui {
         if event.button == PointerButton::Primary && self.drag_drop(root) {
             return;
         }
-        let long_pressed = event.button == PointerButton::Primary && self.input_state(root).press.take().is_some_and(|p| p.fired);
+        let press = if event.button == PointerButton::Primary { self.input_state(root).press.take() } else { None };
+        let long_pressed = press.is_some_and(|p| p.fired);
+        // O toque longo abriu um menu: o dedo que sai é só o fim do toque.
+        if press.is_some_and(|p| p.menu) {
+            let state = self.input_state(root);
+            state.captured = None;
+            state.touch = None;
+            return;
+        }
         let captured = if event.button == PointerButton::Primary {
             self.input_state(root).captured.take()
         } else {
@@ -805,11 +816,23 @@ impl Ui {
         }
         let e = PointerEvent { position: self.local_point(target, event.position), ..event };
         self.fire(target, "on_pointer_up", &EventArgs::Pointer(e));
+        // O `on_click` que sair daqui (do `click` ou do próprio `pointer_up` do controle, como
+        // o do item de uma lista) leva o ponteiro: o handler pergunta com `Ui::click_pointer`.
+        let pointer = crate::ClickPointer {
+            position: e.position,
+            form_position: event.position,
+            button: event.button,
+            modifiers: event.modifiers,
+            kind: event.kind,
+            click_count: event.click_count,
+        };
+        let outer = self.click_source.replace((target, pointer));
         self.deliver(target, |c, ctx| c.pointer_up(ctx, &e));
 
         if event.button == PointerButton::Primary && hit == Some(target) && self.is_effectively_enabled(target) && !long_pressed {
-            self.click(target);
+            self.with_component(target, |c, ctx| c.click(ctx));
         }
+        self.click_source = outer;
         if event.button == PointerButton::Secondary && hit == Some(target) {
             self.open_popup_menu(target, event.position);
         }
@@ -1219,10 +1242,33 @@ impl Ui {
 
     /// Abre o menu de contexto do controle (ou do pai mais próximo que tenha um).
     pub fn open_popup_menu(&mut self, target: ComponentId, at: PointF) -> bool {
+        self.open_context_menu(target, at, false)
+    }
+
+    /// O toque longo em `target` abriu um menu (veja `Press::menu`): ele não fica pressionado.
+    pub(crate) fn mark_press_menu(&mut self, root: ComponentId, target: ComponentId) {
+        if let Some(p) = self.input_state(root).press.as_mut() {
+            p.menu = true;
+        }
+        self.set_state_flag(target, Trigger::Pressed, false);
+    }
+
+    /// O menu de contexto em `at` (no form): o `popup_menu` do controle ou do pai mais próximo
+    /// que tenha um e, sem nenhum, o menu próprio do controle ou de um pai
+    /// ([`Component::context_menu`], o de texto do `Edit`). `touch`: veio do toque longo.
+    pub(crate) fn open_context_menu(&mut self, target: ComponentId, at: PointF, touch: bool) -> bool {
         let mut current = Some(target);
         while let Some(c) = current {
             if let Some(menu) = self.cb(c).and_then(|cb| cb.popup_menu()).filter(|&m| self.contains(m)) {
                 return self.send_message(menu, &crate::event::PopupRequest { at, source: target });
+            }
+            current = self.parent(c);
+        }
+        let mut current = Some(target);
+        while let Some(c) = current {
+            let local = self.local_point(c, at);
+            if self.is_effectively_enabled(c) && self.with_component(c, |comp, ctx| comp.context_menu(ctx, local, touch)).unwrap_or(false) {
+                return true;
             }
             current = self.parent(c);
         }

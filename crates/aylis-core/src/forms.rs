@@ -515,6 +515,8 @@ impl Ui {
     /// Esquece forms liberados (chamado por `free`).
     pub(crate) fn forget_forms(&mut self, freed: &[ComponentId]) {
         self.open_forms.retain(|f| !freed.contains(&f.form));
+        // Os pedaços de um form em vários monitores (o print aberto e liberado a cada vez).
+        self.form_pieces.retain(|f, _| !freed.contains(f));
         if self.main_form.is_some_and(|m| freed.contains(&m)) {
             self.main_form = None;
         }

@@ -163,6 +163,9 @@ pub(crate) struct Visual {
 /// contas em `f32` (a área e a tinta vêm de caminhos diferentes).
 const SPILL_SLACK: f32 = 0.01;
 
+/// A moldura, em pixels, que o [`Ui::render_rgba`] pinta em volta do recorte e corta no fim.
+const RGBA_MARGIN: u32 = 16;
+
 /// Um contêiner atrás de quem anda, guardado como camada ([`Ui::backdrop_worth`]).
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Backdrop {
@@ -285,6 +288,83 @@ impl Ui {
             self.paint_node(id, canvas, enabled, &mut classes, &self.theme, &Default::default(), None);
         })?;
         Some(crate::Image::encoded(png))
+    }
+
+    /// O retângulo `rect` (nas coordenadas do controle `id`, em unidades lógicas) desenhado
+    /// como na tela, em pixels RGBA: (largura, altura, 4 bytes por pixel, linha a linha), com
+    /// `scale` pixels por unidade (a largura é `ceil(rect.width * scale)`). Sem PNG no meio: o
+    /// recorte de um editor de print vai direto para a área de transferência ou para o
+    /// arquivo (o pedido do NoOBS, item 4).
+    ///
+    /// Num form, é o mesmo caminho da janela quando repinta só uma área (`paint_regions`):
+    /// só os controles que tocam `rect` são pintados, com o fundo do tema e o que fica por
+    /// cima de tudo (menus, dicas); os pixels saem iguais aos do mesmo recorte da imagem
+    /// inteira (no Skia, a beirada de uma curva que o retângulo corta pode mudar uns poucos
+    /// tons, como na pintura por parte da janela). Num controle de dentro, como o [`snapshot`](Self::snapshot): ele e os filhos,
+    /// no fundo transparente. Não mexe na posição nem no tamanho de ninguém. `None`: sem o
+    /// desenho fora da tela, retângulo vazio ou grande demais.
+    pub fn render_rgba(&mut self, id: ComponentId, rect: RectF, scale: f32) -> Option<(u32, u32, Vec<u8>)> {
+        if !(scale > 0.0 && rect.width > 0.0 && rect.height > 0.0) {
+            return None;
+        }
+        let (w, h) = ((rect.width * scale).ceil() as u32, (rect.height * scale).ceil() as u32);
+        crate::image::checked_size(w, h).ok()?;
+        self.cb(id)?;
+        // Uma moldura de pixels em volta, cortada no fim: a curva que a borda da imagem corta
+        // é refeita pelo renderizador (o Skia troca o pedaço de fora por retas), e a beirada
+        // anti-aliasing perto do corte mudaria uns tons em relação à imagem inteira.
+        let (mw, mh) = (w + 2 * RGBA_MARGIN, h + 2 * RGBA_MARGIN);
+        crate::image::checked_size(mw, mh).ok()?;
+        let margin = RGBA_MARGIN as f32 / scale;
+        let service = self.services_mut().offscreen.take()?;
+        self.update_layout();
+        let rgba = if self.parent(id).is_none() {
+            let origin = self.cb(id).map(|cb| cb.bounds().origin()).unwrap_or_default();
+            let area = rect.offset(origin.x, origin.y);
+            let painted = RectF::new(area.x - margin, area.y - margin, area.width + 2.0 * margin, area.height + 2.0 * margin);
+            let background = self.theme().color("background");
+            // A pintura da área esquece o pedido de quadro pendente da janela: ele volta.
+            let pending = self.repaint_requested;
+            let out = service.render_rgba(mw, mh, scale, background, &mut |canvas| {
+                canvas.translate(-painted.x, -painted.y);
+                self.paint_regions_in(id, canvas, &[painted], true);
+            });
+            self.repaint_requested |= pending;
+            out
+        } else {
+            let place = {
+                let cb = self.cb(id)?;
+                let (b, t) = (cb.bounds(), cb.translate());
+                PointF::new(b.x + t.x + rect.x - margin, b.y + t.y + rect.y - margin)
+            };
+            let enabled = self.ancestors_enabled(id);
+            service.render_rgba(mw, mh, scale, crate::Color::TRANSPARENT, &mut |canvas| {
+                canvas.translate(-place.x, -place.y);
+                let mut classes = Vec::new();
+                self.paint_node(id, canvas, enabled, &mut classes, &self.theme, &Default::default(), None);
+            })
+        };
+        self.services_mut().offscreen = Some(service);
+        let rgba = rgba?;
+        let (row, stride, m) = (w as usize * 4, mw as usize * 4, RGBA_MARGIN as usize);
+        let pixels = (0..h as usize).flat_map(|y| {
+            let start = (y + m) * stride + m * 4;
+            rgba[start..start + row].iter().copied()
+        });
+        Some((w, h, pixels.collect()))
+    }
+
+    /// O método `render_rgba` do protocolo ([`Ui::invoke`]): `x, y, width, height[, scale]`
+    /// (unidades lógicas do controle; `scale` 1 se faltar) e os pixels em base64 (RGBA, linha
+    /// a linha, `ceil(width * scale)` por `ceil(height * scale)`).
+    pub(crate) fn invoke_render_rgba(&mut self, id: ComponentId, args: &[crate::PropValue]) -> std::result::Result<crate::PropValue, String> {
+        let number = |i: usize| args.get(i).and_then(|v| v.to_f64().ok()).map(|v| v as f32);
+        let (Some(x), Some(y), Some(width), Some(height)) = (number(0), number(1), number(2), number(3)) else {
+            return Err("render_rgba pede x, y, width, height e, se quiser, scale".into());
+        };
+        let scale = number(4).unwrap_or(1.0);
+        let (_, _, rgba) = self.render_rgba(id, RectF::new(x, y, width, height), scale).ok_or("render_rgba: sem desenho fora da tela, ou o retângulo vazio ou grande demais")?;
+        Ok(crate::PropValue::String(crate::image::encode_base64(&rgba)))
     }
 
     /// Os pais de `id` estão todos habilitados?

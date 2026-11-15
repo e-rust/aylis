@@ -17,6 +17,15 @@ O aylis-host inicia este processo e conversa por stdin/stdout: uma mensagem JSON
 
     aylis.run("FrmClientes")                # abre a janela e trata os eventos até fechar
 
+O evento é a mensagem JSON da tela, como dict. No `on_click` do mouse, do toque ou da caneta,
+`event.get("pointer")` diz onde, com que botão e com que teclas (`None` no clique do teclado ou
+do código): `{"x", "y"}` no componente, `{"form_x", "form_y"}` no form, `"button"` (`primary`,
+`secondary`, `middle`...), `"modifiers"` (`["ctrl", "shift"]`), `"kind"` (`mouse`, `touch`,
+`pen`) e `"clicks"`.
+
+    pointer = event.get("pointer")
+    if pointer and "ctrl" in pointer["modifiers"]: ...
+
 Threads: os handlers rodam na thread principal (a do `run`). De outra thread (uma consulta
 demorada ao banco, um timer), use `aylis.send(...)` (só envia, é seguro) ou
 `aylis.post(funcao)`, que roda `funcao()` na thread principal. `aylis.call(...)` só na thread principal: ele lê as respostas, e duas threads lendo

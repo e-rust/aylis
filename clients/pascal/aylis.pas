@@ -36,7 +36,8 @@ type
 
   TAylis = class;
 
-  { Handler de evento: Sender é o cliente; Event traz event, handler, form, sender, args. }
+  { Handler de evento: Sender é o cliente; Event traz event, handler, form, sender, args (e,
+    no on_click do mouse, pointer: veja AylisPointer). }
   TAylisHandler = procedure(Aylis: TAylis; Event: TJSONObject) of object;
 
   { Um trabalho para a thread dos handlers (Post). }
@@ -285,6 +286,23 @@ type
 
 { Escreve no console do aylis-host (o stdout é do protocolo). }
 procedure AylisLog(const Text: string);
+
+type
+  { O ponteiro de um on_click (o campo pointer do evento): X/Y no componente, FormX/FormY no
+    form, Button ('primary', 'secondary', 'middle'...), as teclas apertadas e Kind ('mouse',
+    'touch', 'pen'). }
+  TAylisPointer = record
+    X, Y, FormX, FormY: Double;
+    Button, Kind: string;
+    Ctrl, Shift, Alt, Meta: Boolean;
+    Clicks: Integer;
+  end;
+
+{ No on_click do mouse, do toque ou da caneta, preenche Info e devolve True; no clique do
+  teclado ou do código (o evento vem sem pointer), devolve False:
+
+    if AylisPointer(Event, P) and P.Ctrl then ... }
+function AylisPointer(Event: TJSONObject; out Info: TAylisPointer): Boolean;
 
 type
   TAylisChanges = array of TJSONObject;
@@ -734,6 +752,42 @@ procedure AylisLog(const Text: string);
 begin
   WriteLn(StdErr, '[backend] ', Text);
   Flush(StdErr);
+end;
+
+function AylisPointer(Event: TJSONObject; out Info: TAylisPointer): Boolean;
+var
+  P: TJSONData;
+  Modifiers: TJSONArray;
+  I: Integer;
+  Name: string;
+begin
+  Info := Default(TAylisPointer);
+  P := nil;
+  if Event <> nil then
+    P := Event.Find('pointer');
+  Result := P is TJSONObject;
+  if not Result then
+    Exit;
+  with TJSONObject(P) do
+  begin
+    Info.X := Get('x', 0.0);
+    Info.Y := Get('y', 0.0);
+    Info.FormX := Get('form_x', 0.0);
+    Info.FormY := Get('form_y', 0.0);
+    Info.Button := Get('button', '');
+    Info.Kind := Get('kind', '');
+    Info.Clicks := Get('clicks', 0);
+    Modifiers := Find('modifiers', jtArray) as TJSONArray;
+  end;
+  if Modifiers <> nil then
+    for I := 0 to Modifiers.Count - 1 do
+    begin
+      Name := Modifiers.Strings[I];
+      if Name = 'ctrl' then Info.Ctrl := True
+      else if Name = 'shift' then Info.Shift := True
+      else if Name = 'alt' then Info.Alt := True
+      else if Name = 'meta' then Info.Meta := True;
+    end;
 end;
 
 { ---------------------------------------------------------------------------

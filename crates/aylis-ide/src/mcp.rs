@@ -1773,7 +1773,9 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             // (`AYLIS_KEYSTORE_PASSWORD`), ou sai com a chave de depuração.
             let flag = |key: &str| args.get(key).and_then(Value::as_bool).unwrap_or(false);
             let abis = args.get("abis").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
-            let extras = crate::jobs::PublishExtras { bundle: flag("bundle"), installer: flag("installer"), key_password: None, abis };
+            // `sign` false: o Windows sai sem assinar desta vez (o certificado é o das Opções).
+            let unsigned = args.get("sign").and_then(Value::as_bool) == Some(false);
+            let extras = crate::jobs::PublishExtras { bundle: flag("bundle"), installer: flag("installer"), key_password: None, abis, unsigned };
             crate::jobs::publish_with(state, target, out_dir, extras);
             Ok(Value::String(state.borrow().status.clone()))
         }

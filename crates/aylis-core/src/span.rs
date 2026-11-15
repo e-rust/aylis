@@ -6,7 +6,9 @@
 //! - [`split`] divide o retângulo do form na tela pelos monitores (os pedaços);
 //! - cada janela pinta o seu pedaço com o deslocamento dele ([`Ui::paint_piece`]);
 //! - a entrada de uma janela vira um ponto do form ([`Piece::to_form`]);
-//! - os menus e as listas abrem dentro do pedaço em que nascem ([`Ui::popup_area`]).
+//! - os menus e as listas abrem dentro do pedaço em que nascem ([`Ui::popup_area`]);
+//! - em pixels físicos ([`Ui::physical_pixels`]), todos os pedaços com a escala 1
+//!   ([`pixel_scale`]): o pixel da tela é o mesmo pixel do form.
 //!
 //! Tudo aqui é puro (sem sistema): a plataforma passa os retângulos dos monitores e as
 //! janelas.
@@ -122,7 +124,23 @@ pub fn largest(pieces: &[Piece]) -> Option<usize> {
     }).map(|(i, _)| i)
 }
 
+/// Pixels físicos por unidade do form numa janela: `system`, a escala do monitor (no form em
+/// pedaços, a do monitor da janela principal), vezes o `zoom`; no form em pixels físicos
+/// ([`Ui::physical_pixels`]), 1, em todos os pedaços, seja qual for a escala de cada monitor.
+pub fn pixel_scale(physical: bool, system: f64, zoom: f64) -> f64 {
+    if physical { 1.0 } else { system * zoom }
+}
+
 impl Ui {
+    /// O form (ou o form de um controle) desenha em pixels físicos (a propriedade
+    /// `physical_pixels` do `Form`): 1 unidade = 1 pixel da tela, sem a escala do monitor nem o
+    /// zoom, em todos os pedaços. Um ponto do form é o mesmo pixel da tela a partir do canto
+    /// dele (no form que cobre todos os monitores, do retângulo virtual), e uma imagem do
+    /// tamanho do form em pixels (o print da tela) bate pixel a pixel.
+    pub fn physical_pixels(&self, form: ComponentId) -> bool {
+        matches!(self.get_prop(self.root_of(form), "physical_pixels"), Ok(crate::PropValue::Bool(true)))
+    }
+
     /// Os pedaços do form em janelas separadas (nas coordenadas dele): a plataforma informa
     /// quando o form ocupa vários monitores (`span_monitors`). Vazio: uma janela só.
     pub fn form_pieces(&self, form: ComponentId) -> &[RectF] {
@@ -256,5 +274,53 @@ mod tests {
         // O mouse preso na primeira durante um arrasto, já sobre a segunda (x além da largura).
         assert_eq!(pieces[0].to_form(450.0, 0.0, 1.5), pieces[1].to_form(30.0, 0.0, 1.5));
         assert_eq!(pieces[1].rect_in_form(1.5), RectF::new(280.0, 0.0, 580.0 / 1.5, 500.0 / 1.5));
+    }
+
+    /// O print do NoOBS: um monitor a 100% à esquerda do principal (4K a 150%), o form cobrindo
+    /// o retângulo virtual (-1920, 0, 5760, 2160) em pixels físicos. Cada pedaço fica com a
+    /// parte dele em pixels, e o pixel (x, y) da tela chega ao form como (x, y) do retângulo
+    /// virtual, nas duas janelas, mesmo com escalas diferentes.
+    #[test]
+    fn in_physical_pixels_a_screen_pixel_is_the_same_pixel_of_the_virtual_rect() {
+        let left = ScreenRect::new(-1920, 0, 1920, 1080);
+        let main = ScreenRect::new(0, 0, 3840, 2160);
+        let virtual_rect = ScreenRect::bounding(&[main, left]).unwrap();
+        assert_eq!(virtual_rect, ScreenRect::new(-1920, 0, 5760, 2160));
+        let pieces = split(virtual_rect, &[main, left]);
+        assert_eq!(pieces.len(), 2);
+        let scale = pixel_scale(true, 1.5, 2.0);
+        assert_eq!(scale, 1.0, "nem a escala do monitor nem o zoom");
+        // O da esquerda primeiro (x negativo), começando no canto do form.
+        assert_eq!((pieces[0].monitor, pieces[0].origin_x, pieces[0].origin_y), (1, 0, 0));
+        assert_eq!(pieces[0].rect_in_form(scale), RectF::new(0.0, 0.0, 1920.0, 1080.0));
+        assert_eq!(pieces[1].rect_in_form(scale), RectF::new(1920.0, 0.0, 3840.0, 2160.0));
+        assert_eq!(largest(&pieces), Some(1));
+        // O pixel da tela (sx, sy) cai na janela do pedaço em (sx - canto, sy - canto) e chega
+        // ao form como (sx - virtual.x, sy - virtual.y).
+        for (sx, sy) in [(-1920, 0), (-1, 1079), (-700, 333), (0, 0), (2500, 2000), (3839, 2159)] {
+            let p = pieces.iter().find(|p| sx >= p.screen.x && (sx as i64) < p.screen.right() && sy >= p.screen.y && (sy as i64) < p.screen.bottom()).unwrap();
+            let got = p.to_form((sx - p.screen.x) as f64, (sy - p.screen.y) as f64, scale);
+            assert_eq!(got, PointF::new((sx - virtual_rect.x) as f32, (sy - virtual_rect.y) as f32), "pixel ({sx}, {sy})");
+        }
+        // Fora do modo: os dois pedaços na escala do principal (150%), como antes.
+        let logical = pixel_scale(false, 1.5, 1.0);
+        assert_eq!(pieces[1].rect_in_form(logical), RectF::new(1280.0, 0.0, 2560.0, 1440.0));
+        assert_eq!(pieces[0].to_form(30.0, 15.0, logical), PointF::new(20.0, 10.0));
+    }
+
+    /// Um monitor acima e à esquerda do principal: a origem negativa nos dois eixos.
+    #[test]
+    fn the_virtual_rect_with_a_monitor_above_and_to_the_left() {
+        let main = ScreenRect::new(0, 0, 2560, 1440);
+        let above = ScreenRect::new(-1000, -1080, 1920, 1080);
+        let all = ScreenRect::bounding(&[main, above]).unwrap();
+        assert_eq!(all, ScreenRect::new(-1000, -1080, 3560, 2520));
+        let pieces = split(all, &[main, above]);
+        assert_eq!(pieces.iter().map(|p| (p.monitor, p.origin_x, p.origin_y)).collect::<Vec<_>>(), vec![(1, 0, 0), (0, 1000, 1080)]);
+        // O canto do principal na tela (0, 0) é o (1000, 1080) do form.
+        assert_eq!(pieces[1].to_form(0.0, 0.0, 1.0), PointF::new(1000.0, 1080.0));
+        // O vão (à direita do de cima, acima do principal) fica sem janela.
+        let covered: u64 = pieces.iter().map(|p| p.screen.width as u64 * p.screen.height as u64).sum();
+        assert_eq!(covered, 2560 * 1440 + 1920 * 1080);
     }
 }

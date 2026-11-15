@@ -1,6 +1,6 @@
 # Screen
 
-Os monitores, para todas as linguagens: `count()`, `primary()` (o índice do principal), `monitors()` (a lista em JSON: nome do aparelho, nome do sistema, principal, posição e tamanho, área útil sem a barra de tarefas, escala, taxa de atualização e modos de vídeo), `monitor(i)`, `refresh_rate(i)` e `form_monitor(form)` (em qual está a janela do form); `on_change` quando um monitor entra, sai ou muda de resolução. Em Rust, também direto: `ui.monitors()` e `ui.form_monitor(form)`. Para abrir num monitor, o `monitor` do form; para mudar, o `move_to_monitor` dele.
+Os monitores, para todas as linguagens: `count()`, `primary()` (o índice do principal), `monitors()` (a lista em JSON: nome do aparelho, nome do sistema, principal, posição e tamanho, área útil sem a barra de tarefas, escala, taxa de atualização e modos de vídeo), `monitor(i)`, `refresh_rate(i)` e `form_monitor(form)` (em qual está a janela do form); `on_change` quando um monitor entra, sai ou muda de resolução. Em Rust, também direto: `ui.monitors()` e `ui.form_monitor(form)`. Para abrir num monitor, o `monitor` do form; para mudar, o `move_to_monitor` dele. No celular, `orientation()` (a orientação pedida agora) e `set_orientation(nome)` (a do app todo, a do projeto em execução; cada form pode ter a sua pela propriedade `orientation`).
 
 **Paleta:** Device · **componente não visual**
 

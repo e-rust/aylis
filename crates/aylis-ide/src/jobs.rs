@@ -786,6 +786,8 @@ pub struct PublishExtras {
     pub key_password: Option<String>,
     /// Android: as arquiteturas desta publicação (vazio: as do projeto, `publish.android.abis`).
     pub abis: Vec<String>,
+    /// Windows: não assinar desta vez (o certificado é o das Opções da IDE).
+    pub unsigned: bool,
 }
 
 pub fn publish_with(state: &Shared, target: Target, out_dir: Option<PathBuf>, extras: PublishExtras) {
@@ -805,6 +807,7 @@ pub fn publish_with(state: &Shared, target: Target, out_dir: Option<PathBuf>, ex
         options.android_bundle = extras.bundle;
         options.installer = extras.installer;
         options.abis = extras.abis.clone();
+        options.unsigned = extras.unsigned;
         options.signing = match (&extras.key_password, project.publish.keystore.is_empty()) {
             (Some(p), false) => Some(publish::Signing {
                 keystore: project.file(&project.publish.keystore),

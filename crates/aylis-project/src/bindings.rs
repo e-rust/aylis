@@ -558,7 +558,8 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 10: o `generated/mod.rs` sem o `use form_handler` (G07) e o `main.rs` com o `_` (G06).
 /// 11: o `create_in` transparente sem `fill` próprio, como o Frame (G05).
 /// 12: o `on_back` do Pascal com `var Handled: Boolean` (14/11).
-const GENERATOR_VERSION: u32 = 12;
+/// 13: a `orientation` do Form e o `orientation`/`set_orientation` do Screen no catálogo (14/11).
+const GENERATOR_VERSION: u32 = 13;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";

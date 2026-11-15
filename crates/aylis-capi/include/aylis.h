@@ -18,6 +18,10 @@ typedef struct AylisCtx AylisCtx;
 
 /* Evento com handler por nome, em JSON:
  * {"event": "on_click", "handler": "...", "sender": {"id", "name", "class"}, "args": ...}
+ * O on_click do mouse, do toque ou da caneta traz também "pointer": {"x", "y" (no
+ * componente), "form_x", "form_y", "button" ("primary", "secondary"...), "modifiers"
+ * (["ctrl", "shift"...]), "kind" ("mouse", "touch", "pen"), "clicks"}; o do teclado ou do
+ * código vem sem ele.
  * Um evento disparado de dentro do callback (aylis_ctx_execute com "click") chega a ele na
  * hora. Trate as exceções (C++, Pascal) dentro do callback: uma que escape
  * encerra o processo. */

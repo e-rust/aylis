@@ -172,6 +172,43 @@ o mesmo vale para um form maior que a janela no desktop (a roda do mouse rola o 
 Um `ScrollBox` com `align = client` em volta dos campos continua sendo o jeito de ter uma
 área rolável fixa, com barra.
 
+### Orientação da tela
+
+No celular (Android e iOS), a tela pode ficar em pé, deitada ou girar com o aparelho, em três
+níveis:
+
+- **Projeto** (o app todo): Projeto → Opções do projeto → Geral → *Orientação da tela*, que
+  grava o `orientation` do `.aylisproj`: `any` (ou vazio: gira com o aparelho), `portrait`,
+  `landscape`, `sensor_portrait` e `sensor_landscape` (os dois sentidos). O publicar põe no
+  `android:screenOrientation` do manifesto e no `UISupportedInterfaceOrientations` (e no
+  `~ipad`) do `Info.plist`, e o app já abre assim.
+- **Form**: a propriedade `orientation` do Form (`project`, o padrão, usa a do projeto; ou uma
+  das cinco acima). Enquanto o form está à frente, vale a dele; fechá-lo devolve a do form de
+  baixo (ou a do projeto). Um player que só faz sentido deitado: `orientation =
+  sensor_landscape` no form do vídeo, e o resto do app em pé.
+- **Em execução**: mudar a propriedade do form gira na hora (`frmVideo.orientation`), em
+  qualquer linguagem; para o app todo, o `set_orientation("landscape")` do componente
+  `Screen` (o `orientation()` diz a pedida agora). Em Rust, também `ui.set_app_orientation` e
+  `ui.requested_orientation()`.
+
+No desenvolvimento, `AYLIS_ORIENTATION=landscape` (no Android, `adb shell setprop
+debug.aylis.orientation landscape`) passa por cima do projeto e dos forms, só no app compilado
+em debug pela IDE; o app em release nunca lê a variável.
+
+O que muda o layout é outra coisa: as vistas por largura (`views` do form, com `orientation`
+`portrait`/`landscape`) adaptam os controles à tela como ela está, e continuam valendo.
+
+Notas por plataforma:
+
+- **Android:** `Activity.setRequestedOrientation`, que vale por cima do manifesto. `any` respeita
+  a trava de rotação do sistema.
+- **iOS:** o iOS só gira para as orientações que o `Info.plist` declara. O publicar declara a do
+  projeto e as dos forms com orientação própria; uma orientação pedida só pelo código (que
+  nenhum form nem o projeto tem) precisa estar num deles. No iPad, sem todas as orientações, o
+  app pede a tela inteira (`UIRequiresFullScreen`).
+- **Desktop e navegador:** sem efeito (no navegador, travar a orientação só funciona em tela
+  cheia, e ficou de fora).
+
 ### Barra de título própria
 
 `border_style = custom` tira a barra do sistema (a janela continua redimensionável pelas

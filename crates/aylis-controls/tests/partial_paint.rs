@@ -807,3 +807,55 @@ fn the_end_of_scroll_effect_paints_by_parts_and_goes_back() {
         }
     }
 }
+
+/// O lápis e a seleção arrastada do `PaintCanvas` repintam só o pedaço do traço e onde a
+/// seleção estava e ficou (numa imagem 4K, a tela inteira custava ~35 ms por movimento no
+/// Skia, `medicoes/drag_4k.json`), e cada quadro por parte sai igual à pintura inteira.
+#[test]
+fn drawing_and_dragging_a_selection_in_a_paint_canvas_repaint_only_what_changed() {
+    let painter: Box<dyn Painter> = Box::new(aylis_skia::SkiaRenderer::new());
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    ui.services_mut().text = Some(painter.text_service());
+    let form = ui.create("Form", None).unwrap();
+    ui.set_prop(form, "width", W as f64).unwrap();
+    ui.set_prop(form, "height", H as f64).unwrap();
+    ui.show(form).unwrap();
+    let pc = ui.create("PaintCanvas", Some(form)).unwrap();
+    ui.invoke(pc, "new", &[PropValue::Int(1000), PropValue::Int(700)]).unwrap();
+    ui.set_prop(pc, "brush_size", 5).unwrap();
+    ui.set_time(1000.0);
+    ui.layout();
+    let mut screen = Screen { ui, form, painter };
+    let at = |x: f32, y: f32| PointerEvent { position: PointF::new(x, y), button: PointerButton::Primary, ..Default::default() };
+    let check = |screen: &mut Screen, previous: &mut Vec<u32>, label: &str, max: f32| {
+        let (partial, area) = screen.partial(previous).unwrap_or_else(|| panic!("{label}: repintou a janela inteira"));
+        assert!(area.width < max && area.height < max, "{label}: repintou demais: {area:?}");
+        let full = screen.full();
+        let _ = screen.ui.take_damage(form);
+        assert_eq!(differences(&partial, &full).0, 0, "{label}: a pintura por parte deixou resto");
+        *previous = full;
+    };
+    // Um traço com curvas, em passos de ~20 px.
+    screen.ui.pointer_down(form, at(100.0, 100.0));
+    let mut previous = screen.full();
+    let _ = screen.ui.take_damage(form);
+    for i in 1..12 {
+        let t = i as f32 * 0.35;
+        screen.ui.pointer_move(form, at(100.0 + i as f32 * 18.0, 100.0 + 60.0 * t.sin()));
+        check(&mut screen, &mut previous, &format!("traço {i}"), 120.0);
+    }
+    screen.ui.pointer_up(form, at(300.0, 120.0));
+    // Uma seleção sobre o traço, pega e arrastada.
+    screen.ui.set_prop(pc, "tool", "select").unwrap();
+    screen.ui.pointer_down(form, at(90.0, 40.0));
+    screen.ui.pointer_move(form, at(320.0, 200.0));
+    screen.ui.pointer_up(form, at(320.0, 200.0));
+    screen.ui.pointer_down(form, at(200.0, 120.0));
+    previous = screen.full();
+    let _ = screen.ui.take_damage(form);
+    for i in 1..6 {
+        screen.ui.pointer_move(form, at(200.0 + i as f32 * 15.0, 120.0 + i as f32 * 9.0));
+        check(&mut screen, &mut previous, &format!("seleção {i}"), 400.0);
+    }
+}

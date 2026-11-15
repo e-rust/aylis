@@ -159,6 +159,12 @@ pub struct Form {
     /// `project`: o padrão do projeto (`image_cache.auto_layers`); `on`/`off` trocam só neste
     /// form. O `cache_layer` pedido num controle vale sempre.
     pub layer_cache: LayerCaching,
+    /// Até quantos KB um quadro de câmera ou de vídeo reaproveita o bitmap do quadro anterior
+    /// na placa nesta janela, em vez de criar outro. `-1` (o padrão): o do projeto
+    /// (`image_cache.frame_reuse_kb`, que o `RenderSettings` troca em execução); `0`: sempre
+    /// cria; acima de 32768, ajustado. Vale no Direct2D (Windows), no quadro seguinte à troca;
+    /// no Skia e no navegador, sem efeito (eles não reaproveitam).
+    pub frame_reuse_kb: i64,
     /// Sempre por cima das outras janelas.
     pub topmost: bool,
     /// Aparece na barra de tarefas (desligue para menus e janelas de ferramenta).
@@ -208,15 +214,32 @@ pub struct Form {
     /// sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`,
     /// o form cobre todos os monitores (um telão).
     pub span_monitors: bool,
+    /// 1 unidade do form = 1 pixel físico da tela, sem a escala do monitor nem o zoom, em
+    /// todas as janelas dele (num form em vários monitores, em todos os pedaços, mesmo com
+    /// escalas diferentes). Um clique no pixel (x, y) chega como (x, y) do form (a partir do
+    /// canto dele; com `full_screen` e `span_monitors`, do retângulo de todos os monitores), e
+    /// uma imagem do tamanho do form em pixels (o print da tela) bate pixel a pixel. Mudar com
+    /// a janela aberta não a move: o form passa a ter o tamanho dela na escala nova.
+    pub physical_pixels: bool,
     /// Mostrar a janela dá o foco a ela (desligado: aparece sem tirar o foco de quem tem, como
     /// uma projeção que não deve roubar o teclado do console).
     pub activate_on_show: bool,
+    /// Mostrar ou trazer para a frente toma o foco mesmo quando o app não recebeu a última
+    /// entrada (Windows): o form aberto por um atalho global, de um timer ou da bandeja. O
+    /// Windows só deixa ir para a frente quem recebeu o último clique ou tecla; sem isto, a
+    /// janela aparece atrás, com o botão piscando, e o teclado (o Esc) vai para o app de trás.
+    /// Nas outras plataformas, sem efeito (o pedido normal de foco).
+    pub force_foreground: bool,
     /// O que fechar faz com o form: esconde (pode abrir
     /// de novo) ou libera (some da memória, depois de fechar).
     pub close_action: CloseAction,
     /// Quadros por segundo da janela (0 = a taxa do monitor dela). Um telão de 60 Hz ao lado
     /// de um monitor de 144 Hz não precisa acompanhar o mais rápido.
     pub frame_rate: f32,
+    /// Celular: a orientação da tela enquanto este form está à frente (`project`: a do
+    /// projeto). Fechá-lo devolve a do form de baixo; mudar com o app aberto gira na hora. No
+    /// desktop e no navegador, sem efeito.
+    pub orientation: aylis_core::FormOrientation,
 }
 
 /// O que fechar faz com o form (`close_action`).
@@ -279,6 +302,7 @@ impl Form {
             window_state: WindowState::Normal,
             transition: Transition::None,
             layer_cache: LayerCaching::Project,
+            frame_reuse_kb: -1,
             topmost: false,
             show_in_taskbar: true,
             active_control: None,
@@ -296,9 +320,12 @@ impl Form {
             remember_placement: false,
             gpu: String::new(),
             span_monitors: false,
+            physical_pixels: false,
             activate_on_show: true,
+            force_foreground: false,
             close_action: CloseAction::Hide,
             frame_rate: 0.0,
+            orientation: aylis_core::FormOrientation::Project,
         }
     }
 }
@@ -324,6 +351,7 @@ impl Component for Form {
         window_state: WindowState => "Layout",
         transition: Transition => "Behavior",
         layer_cache: LayerCaching => "Behavior",
+        frame_reuse_kb: i64 => "Behavior",
         topmost: bool => "Behavior",
         show_in_taskbar: bool => "Behavior",
         active_control: Option<ComponentId> => "Behavior",
@@ -341,9 +369,12 @@ impl Component for Form {
         remember_placement: bool => "Behavior",
         gpu: String => "Behavior",
         span_monitors: bool => "Layout",
+        physical_pixels: bool => "Layout",
         activate_on_show: bool => "Behavior",
+        force_foreground: bool => "Behavior",
         close_action: CloseAction => "Behavior",
-        frame_rate: f32 => "Behavior";
+        frame_rate: f32 => "Behavior",
+        orientation: aylis_core::FormOrientation => "Layout";
         events: on_show, on_window_created, on_close, on_close_query, on_back, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change;
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
@@ -354,6 +385,9 @@ impl Component for Form {
             MethodInfo::new("move_to_monitor", &[PropKind::Int], None).params(&["monitor"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
             MethodInfo::new("gpu_adapters", &[], Some(PropKind::String)),
+            // Atendido pelo `Ui::invoke` (o `Ui` pinta o form): os pixels RGBA em base64.
+            MethodInfo::new("render_rgba", &[PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float], Some(PropKind::String))
+                .params(&["x", "y", "width", "height", "scale"]),
         ];
         METHODS
     }
@@ -378,12 +412,20 @@ impl Component for Form {
         if name == "zoom" {
             ctx.ui.mark_zoom_changed();
         }
+        // A orientação com o app aberto: o pedido é calculado na hora, e a plataforma aplica no
+        // próximo quadro.
+        if name == "orientation" {
+            ctx.ui.request_repaint();
+        }
         // Com o app rodando, a janela segue (no designer não há janela).
         if name == "gpu" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
         }
         if name == "span_monitors" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateSpan);
+        }
+        if name == "physical_pixels" && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateScale);
         }
         // `topmost` com a janela aberta: antes só valia na criação (RTSPlayer, 13/11, item 4).
         if name == "topmost" && !ctx.ui.design_mode() {

@@ -58,6 +58,10 @@ pub enum WindowCommand {
     /// A propriedade `span_monitors` do form mudou: a janela confere se o form vira uma
     /// janela por monitor (veja [`crate::span`]).
     UpdateSpan,
+    /// A propriedade `physical_pixels` do form mudou: a janela (ou os pedaços dela) passa a
+    /// desenhar com 1 unidade = 1 pixel físico, ou volta à escala do monitor (veja
+    /// [`Ui::physical_pixels`]).
+    UpdateScale,
 }
 
 impl Ui {
@@ -70,6 +74,17 @@ impl Ui {
         }
         self.window_commands.push((form, command));
         self.request_repaint();
+    }
+
+    /// A janela do form (ou do form de um controle) vem para a frente pelo caminho forçado
+    /// (a propriedade `force_foreground`): no Windows, só o processo que recebeu a última
+    /// entrada pode pôr uma janela em primeiro plano, e o form aberto por um atalho global
+    /// (o hook de teclado), por um timer ou pela bandeja apareceria atrás, sem o teclado. A
+    /// plataforma usa ao mostrar ([`WindowCommand::Show`], ao abrir) e ao ativar. No designer,
+    /// nunca.
+    pub fn forces_foreground(&self, form: ComponentId) -> bool {
+        let form = self.root_of(form);
+        !self.design_mode() && matches!(self.get_prop(form, "force_foreground"), Ok(crate::PropValue::Bool(true)))
     }
 
     /// Os pedidos à janela desde a última vez (a plataforma chama a cada volta do laço).
