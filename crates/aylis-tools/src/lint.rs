@@ -538,9 +538,17 @@ fn classes(root: &Path, out: &mut Vec<Finding>) {
     let samples_code = std::fs::read_to_string(root.join("crates/aylis/src/samples.rs")).unwrap_or_default();
     // Os não visuais ficam sem exemplo (decidido pelo autor em 14/11: não há o que mostrar na
     // galeria); visual é a classe que cria um controle, como no designer da IDE.
-    let mut ui = aylis_core::Ui::new();
-    aylis_controls::register(&mut ui);
+    // O registro das classes é do desktop (no navegador, o lint não roda: não há disco).
+    #[cfg(not(target_arch = "wasm32"))]
+    let ui = {
+        let mut ui = aylis_core::Ui::new();
+        aylis_controls::register(&mut ui);
+        ui
+    };
+    #[cfg(not(target_arch = "wasm32"))]
     let nonvisual = |name: &str| ui.registry().get(name).is_some_and(|c| (c.create)().control().is_none());
+    #[cfg(target_arch = "wasm32")]
+    let nonvisual = |_: &str| false;
     for name in &listed {
         if nonvisual(name) {
             continue;
