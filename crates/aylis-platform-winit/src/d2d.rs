@@ -33,6 +33,11 @@ impl D2dBackend {
         self.target.set_frame_reuse_kb(kb);
     }
 
+    /// O modo de apresentar do form mudou (`Ok(true)`: recriou o alvo).
+    pub(crate) fn set_present(&mut self, renderer: &D2dRenderer, present: aylis_core::gpu::PresentMode) -> Result<bool, Error> {
+        Ok(self.target.set_present(renderer, present)?)
+    }
+
     /// A regra de placa do form mudou (`Ok(true)`: trocou de placa).
     pub(crate) fn set_choice(&mut self, renderer: &D2dRenderer, choice: aylis_core::gpu::GpuChoice) -> Result<bool, Error> {
         Ok(self.target.set_choice(renderer, choice)?)
@@ -46,6 +51,7 @@ pub(crate) fn create(
     renderer: &D2dRenderer,
     vsync: bool,
     gpu: aylis_core::gpu::GpuChoice,
+    present: aylis_core::gpu::PresentMode,
 ) -> Result<(Rc<Window>, D2dBackend), Error> {
     let window = event_loop.create_window(attributes)?;
     let RawWindowHandle::Win32(handle) = window.window_handle()?.as_raw() else {
@@ -53,7 +59,7 @@ pub(crate) fn create(
     };
     let size = window.inner_size();
     // Na placa que o form pede (com `monitor`, a do monitor em que a janela nasce).
-    let target = renderer.hwnd_target_for(handle.hwnd.get(), size.width, size.height, vsync, gpu)?;
+    let target = renderer.hwnd_target_with(handle.hwnd.get(), size.width, size.height, vsync, gpu, present)?;
     Ok((Rc::new(window), D2dBackend { target }))
 }
 

@@ -249,15 +249,15 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("DBImage", "dbcontrols"),
     ("DataRepeater", "dbcontrols"),
     ("DBChart", "dbcontrols"),
-    ("Report", "dbcontrols"),
+    ("Report", "pdf"),
     ("ReportBand", "dbcontrols"),
-    ("ReportPreview", "dbcontrols"),
+    ("ReportPreview", "pdf"),
     ("Barcode", "providers"),
     ("Export", "providers"),
     ("AylisBarcodeProvider", "providers"),
     ("CsvProvider", "providers"),
     ("XlsxProvider", "providers"),
-    ("AylisPdfProvider", "providers"),
+    ("KrillaPdfProvider", "pdf"),
     ("TileServerProvider", "providers"),
     ("OleObject", "providers"),
     ("WmiQuery", "providers"),
@@ -1193,7 +1193,7 @@ pub fn demo_classes_source(facade: &str, categories: &[&str]) -> String {
 /// A feature do `aylis-demos` que liga o que a classe pede no `aylis` (`None`: nenhuma).
 pub fn demo_feature(class: &str) -> Option<&'static str> {
     match CLASSES.iter().find(|(c, _)| *c == class).map_or("", |(_, f)| *f) {
-        "data" | "dbcontrols" | "providers" => Some("data"),
+        "data" | "dbcontrols" | "providers" | "pdf" => Some("data"),
         "media" => Some("media"),
         "vector" => Some("vector"),
         "markdown" => Some("markdown"),

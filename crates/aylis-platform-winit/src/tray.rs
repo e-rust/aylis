@@ -55,9 +55,11 @@ fn make_icon(spec: &TraySpec, frame: usize, scale: f32) -> Option<tray_icon::Ico
         Some(one) => crate::decode_rgba(&one),
         None => crate::decode_rgba(b),
     };
-    let (mut px, w, h) = spec.icons.get(frame).and_then(decode).unwrap_or_else(default_icon);
-    crate::badge::draw(&mut px, w, h, &spec.badge, spec.badge_color, 0.6);
-    tray_icon::Icon::from_rgba(px, w, h).ok()
+    let (px, w, h) = spec.icons.get(frame).and_then(decode).unwrap_or_else(default_icon);
+    // O quadrado do meio, como o ícone da janela e o `.ico`.
+    let (mut px, side) = crate::window_icon::square(&px, w, h);
+    crate::badge::draw(&mut px, side, side, &spec.badge, spec.badge_color, 0.6);
+    tray_icon::Icon::from_rgba(px, side, side).ok()
 }
 
 impl Trays {

@@ -783,9 +783,11 @@ Sankey e waffle.
   `ReportPreview` mostra as páginas (zoom, primeira, anterior, próxima, última, imprimir,
   PDF).
 - Pelo código: `Report::prepare` monta as páginas (`aylis_core::pages::PageSet`),
-  `Report::to_pdf` grava o PDF (escritor próprio, sem dependências) e `Report::print` usa
-  a impressora do sistema (o diálogo de impressão do Windows; nos outros, o PDF aberto no
-  visualizador).
+  `Report::to_pdf` faz o PDF pelo provedor de PDF (o ligado no `provider` do relatório, ou o
+  padrão, o `KrillaPdfProvider`, pelo krilla, com as fontes embutidas; o núcleo não escreve
+  PDF) e `Report::print` usa a impressora do sistema (o diálogo de impressão do Windows; nos
+  outros, o PDF aberto no visualizador). Na web não há fontes do sistema: o texto do PDF usa as
+  fontes do projeto (`assets/fonts`).
 - Exemplo: `cargo run -p aylis-platform-winit --example report --features cpu`. O projeto
   `examples/Relatorios` tem dois relatórios mestre-detalhe (pedidos com itens; vendas por
   vendedor com itens e parcelas).

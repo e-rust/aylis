@@ -183,7 +183,7 @@ fn each_class_function_registers_its_class() {
         ("AylisBarcodeProvider", aylis::classes::AylisBarcodeProvider),
         ("CsvProvider", aylis::classes::CsvProvider),
         ("XlsxProvider", aylis::classes::XlsxProvider),
-        ("AylisPdfProvider", aylis::classes::AylisPdfProvider),
+        ("KrillaPdfProvider", aylis::classes::KrillaPdfProvider),
         ("TileServerProvider", aylis::classes::TileServerProvider),
         ("OleObject", aylis::classes::OleObject),
         ("WmiQuery", aylis::classes::WmiQuery),

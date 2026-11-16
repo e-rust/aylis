@@ -435,7 +435,7 @@ impl App {
             }
         }
         #[cfg(not(web))]
-        let (window, backend) = crate::create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.piece_gpu(form, true))?;
+        let (window, backend) = crate::create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.piece_gpu(form, true), self.present_mode(form))?;
         #[cfg(web)]
         let (window, backend) = crate::create_backend(event_loop, attributes, self.options.renderer)?;
         window.request_redraw();

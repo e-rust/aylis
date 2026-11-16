@@ -154,10 +154,12 @@ fn each_record_gets_its_barcode_in_the_report_and_the_pdf_comes_from_the_provide
     let texts = pages.pages[0].texts();
     assert!(texts.contains(&"7891000100103") && texts.contains(&"7891000053508"), "cada registro com o seu código: {texts:?}");
     assert_eq!(ui.get_prop(code, "text").unwrap(), PropValue::String("[codigo]".into()), "o modelo volta depois");
-    let builtin = report::to_pdf(&mut ui, rep);
-    let pdf = ui.add(AylisPdfProvider, form);
+    // Sem provedor ligado vale o padrão (o krilla, que o `register` põe); ligado, o mesmo PDF.
+    let default = report::to_pdf(&mut ui, rep).unwrap();
+    assert!(default.starts_with(b"%PDF-"));
+    let pdf = ui.add(KrillaPdfProvider, form);
     ui.set_prop(rep, "provider", PropValue::Component(Some(pdf))).unwrap();
-    assert_eq!(report::to_pdf(&mut ui, rep), builtin, "o provedor do Aylis dá o mesmo PDF");
+    assert_eq!(report::to_pdf(&mut ui, rep).unwrap(), default, "o provedor ligado dá o mesmo PDF");
 }
 
 #[test]

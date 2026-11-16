@@ -461,6 +461,18 @@ pub trait BiometricService {
 /// (cancelado) ou o erro, de qualquer thread.
 pub trait PrintService {
     fn print(&mut self, title: &str, pages: crate::pages::PageSet, done: Box<dyn FnOnce(Result<bool, String>) + Send>);
+
+    /// A plataforma imprime pelo PDF (abre no visualizador do sistema), e não pelas páginas: o
+    /// `Report` monta o PDF pelo provedor e chama [`PrintService::print_pdf`].
+    fn wants_pdf(&self) -> bool {
+        false
+    }
+
+    /// Imprime um PDF pronto (só quando [`PrintService::wants_pdf`]).
+    fn print_pdf(&mut self, title: &str, pdf: Vec<u8>, done: Box<dyn FnOnce(Result<bool, String>) + Send>) {
+        let _ = (title, pdf);
+        done(Err("esta plataforma não imprime PDF".into()));
+    }
 }
 
 /// Baixar da internet (HTTP GET) sem travar a interface (os blocos do mapa, imagens de
@@ -854,6 +866,9 @@ pub struct Services {
     /// Controles de jogo (`Gamepad`).
     pub gamepads: Option<Box<dyn GamepadService>>,
     pub printer: Option<Box<dyn PrintService>>,
+    /// O PDF padrão (o `Report` sem provedor ligado, a impressão fora do Windows): o
+    /// `aylis-providers` põe o dele ao registrar as classes. Sem ele, exportar PDF é um erro.
+    pub pdf: Option<Box<dyn crate::providers::PdfProvider>>,
     /// Correção e sugestão de texto dos campos (`spellcheck`, `autocomplete`): o motor
     /// nativo da plataforma, ou outro que o app ponha no lugar ([`crate::textassist`]).
     pub text_assist: Option<Box<dyn crate::textassist::TextAssist>>,

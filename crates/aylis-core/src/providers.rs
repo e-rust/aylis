@@ -10,7 +10,7 @@
 //! [`BarcodeProvider`], [`ExportProvider`], [`PdfProvider`] e [`MapTileProvider`]. O
 //! componente provedor devolve o seu em [`Component::provided`](crate::Component::provided).
 
-use crate::pages::PageSet;
+use crate::pages::{Page, PageSet};
 use crate::ui::Ui;
 use crate::component::ComponentId;
 
@@ -138,19 +138,30 @@ pub trait ExportProvider {
 // ---------------------------------------------------------------------------
 // PDF
 
-/// Quem transforma as páginas gravadas (um relatório) em PDF.
+/// Quem transforma as páginas gravadas (um relatório) em PDF. O documento é montado página
+/// por página ([`PdfProvider::begin`]): um relatório enorme não precisa de todas as páginas na
+/// memória ao mesmo tempo. O padrão (sem provedor ligado no `Report`) é o de
+/// [`Services::pdf`](crate::Services::pdf), que o `aylis-providers` põe (o `KrillaPdfProvider`);
+/// o núcleo não escreve PDF (decidido pelo autor em 15/11).
 pub trait PdfProvider {
-    fn write(&self, pages: &PageSet) -> Result<Vec<u8>, String>;
+    /// Começa um documento com páginas de `width` × `height` pontos.
+    fn begin(&self, width: f32, height: f32) -> Result<Box<dyn PdfDocument>, String>;
+
+    /// O PDF de todas as páginas de uma vez.
+    fn write(&self, pages: &PageSet) -> Result<Vec<u8>, String> {
+        let mut doc = self.begin(pages.width, pages.height)?;
+        for page in &pages.pages {
+            doc.add_page(page)?;
+        }
+        doc.finish()
+    }
 }
 
-/// O PDF do próprio Aylis (as fontes padrão do PDF, sem biblioteca de fora): o padrão quando
-/// nenhum provedor está ligado.
-pub struct BuiltinPdf;
-
-impl PdfProvider for BuiltinPdf {
-    fn write(&self, pages: &PageSet) -> Result<Vec<u8>, String> {
-        Ok(pages.to_pdf())
-    }
+/// Um PDF sendo montado ([`PdfProvider::begin`]).
+pub trait PdfDocument {
+    fn add_page(&mut self, page: &Page) -> Result<(), String>;
+    /// Os bytes do arquivo.
+    fn finish(self: Box<Self>) -> Result<Vec<u8>, String>;
 }
 
 // ---------------------------------------------------------------------------

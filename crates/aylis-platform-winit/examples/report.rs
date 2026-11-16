@@ -17,6 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     aylis_controls::register(&mut ui);
     aylis_data::register(&mut ui);
     aylis_dbcontrols::register(&mut ui);
+    ui.services_mut().pdf = Some(Box::new(aylis_providers::KrillaPdf));
     let form = ui.add_root(Form::new("aylis — relatório", 900.0, 820.0));
     let cds = ui.add(ClientDataSet::new(), form);
     ui.add(Field::new("regiao", FieldType::String), cds);
@@ -79,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if let Some(path) = args.iter().position(|a| a == "--pdf").and_then(|i| args.get(i + 1)) {
         ui.layout();
-        std::fs::write(path, report::to_pdf(&mut ui, rep))?;
+        std::fs::write(path, report::to_pdf(&mut ui, rep)?)?;
         return Ok(());
     }
     let preview = ui.add(ReportPreview::new(rep), form);

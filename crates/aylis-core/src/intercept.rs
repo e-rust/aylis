@@ -96,7 +96,7 @@ impl Ui {
 
     /// Os interceptadores que valem para o evento `event` de `id`: os da aplicação, depois os
     /// do form; cada um com o filtro dele.
-    fn interceptors_for(&self, id: ComponentId, event: &str) -> Vec<ComponentId> {
+    pub(crate) fn interceptors_for(&self, id: ComponentId, event: &str) -> Vec<ComponentId> {
         if self.interceptors.running > 0 || OWN_EVENTS.contains(&event) {
             return Vec::new();
         }

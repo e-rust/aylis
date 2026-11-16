@@ -8,17 +8,33 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = ["pdf"]
+# O PDF pelo krilla (o `PdfProvider` padrão do `Report` e da impressão fora do Windows).
+pdf = ["dep:krilla", "dep:skrifa", "dep:fontdb"]
+
 [dependencies]
-aylis-core = { version = "0.4.1-beta.1", path = "../aylis-core" }
-aylis-data = { version = "0.4.1-beta.1", path = "../aylis-data" }
+aylis-core = { version = "0.5.0", path = "../aylis-core" }
+aylis-data = { version = "0.5.0", path = "../aylis-data" }
 # O QR Code do provedor padrão de códigos de barras (sem dependências).
 qrcode = { version = "0.14", default-features = false }
 # A planilha do XlsxProvider.
 rust_xlsxwriter = { version = "0.102", default-features = false }
 # As matrizes do OleObject (`get_values`/`set_values`).
 serde_json = "1"
+# O PDF dos relatórios (o `PdfProvider` padrão): o gerador do Typst, com as fontes embutidas em
+# subconjunto. Atrás da feature `pdf`: só o app que tem relatório ou imprime leva.
+krilla = { version = "0.8.2", optional = true, default-features = false, features = ["simple-text", "raster-images"] }
+# As medidas do texto para quebrar as linhas (o leitor de fontes que o krilla já usa).
+skrifa = { version = "0.42", optional = true }
+
+# As fontes do sistema para o PDF (fora da web, que não tem; lá valem as do projeto).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+fontdb = { version = "0.24", optional = true, default-features = false, features = ["std", "fs", "memmap"] }
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }
 aylis-dbcontrols = { path = "../aylis-dbcontrols" }
 zip = { version = "9", default-features = false, features = ["deflate"] }
+# Ler de volta o PDF do krilla nos testes (o texto desenhado de verdade).
+aylis-docview = { path = "../aylis-docview" }

@@ -749,26 +749,40 @@ fn decode_images(pages: &mut PageSet) {
     }
 }
 
-/// O PDF do relatório: pelo provedor de PDF ligado em `provider`, ou pelo do Aylis.
-pub fn to_pdf(ui: &mut Ui, report: ComponentId) -> Vec<u8> {
-    let mut pages = prepare(ui, report);
-    decode_images(&mut pages);
+/// Sem provedor de PDF: nem ligado no `provider` do relatório, nem o padrão da plataforma.
+const NO_PDF: &str = "sem provedor de PDF: ligue um no `provider` do Report (o KrillaPdfProvider) ou registre o aylis-providers com a feature `pdf`";
+
+/// Começa o PDF do relatório pelo provedor ligado em `provider`, ou pelo padrão
+/// (`Services::pdf`, que o `aylis-providers` põe). O núcleo não escreve PDF (15/11).
+fn begin_pdf(ui: &Ui, report: ComponentId, width: f32, height: f32) -> Result<Box<dyn aylis_core::providers::PdfDocument>, String> {
     let provider = ui.get::<Report>(report).and_then(|r| r.provider);
     match provider.and_then(|p| ui.provided(p)) {
-        Some(aylis_core::providers::Provided::Pdf(pdf)) => pdf.write(&pages).unwrap_or_else(|e| {
-            eprintln!("aylis: Report: o provedor de PDF falhou ({e}); usando o PDF do Aylis");
-            pages.to_pdf()
-        }),
-        _ => pages.to_pdf(),
+        Some(aylis_core::providers::Provided::Pdf(pdf)) => pdf.begin(width, height),
+        _ => ui.services().pdf.as_deref().ok_or_else(|| NO_PDF.to_string())?.begin(width, height),
     }
+}
+
+/// O PDF das páginas prontas, pelo provedor do relatório.
+fn pages_pdf(ui: &Ui, report: ComponentId, pages: &PageSet) -> Result<Vec<u8>, String> {
+    let mut doc = begin_pdf(ui, report, pages.width, pages.height)?;
+    for page in &pages.pages {
+        doc.add_page(page)?;
+    }
+    doc.finish()
+}
+
+/// O PDF do relatório: pelo provedor de PDF ligado em `provider`, ou pelo padrão.
+pub fn to_pdf(ui: &mut Ui, report: ComponentId) -> Result<Vec<u8>, String> {
+    let mut pages = prepare(ui, report);
+    decode_images(&mut pages);
+    pages_pdf(ui, report, &pages)
 }
 
 /// O PDF do relatório grande, gravado em `out` página por página: as páginas não ficam na
 /// memória (com um milhão de registros, o `to_pdf` guardaria todas). Com `[PAGES]` nos
-/// textos, monta duas vezes (a primeira só conta as páginas, como o FastReport). Usa o PDF
-/// do Aylis (um provedor de PDF recebe as páginas todas: use o `to_pdf`). Devolve quantas
-/// páginas gravou.
-pub fn write_pdf(ui: &mut Ui, report: ComponentId, out: impl std::io::Write) -> std::io::Result<usize> {
+/// textos, monta duas vezes (a primeira só conta as páginas). O provedor de PDF recebe uma
+/// página por vez. Devolve quantas páginas gravou.
+pub fn write_pdf(ui: &mut Ui, report: ComponentId, mut out: impl std::io::Write) -> std::io::Result<usize> {
     let (width, height) = ui.get::<Report>(report).map_or((595.0, 842.0), |r| r.page_size());
     let needs_total = descendants(ui, report).into_iter().any(|id| matches!(ui.get_prop(id, "text"), Ok(PropValue::String(t)) if t.to_uppercase().contains("[PAGES]")));
     PREPARING.with(|p| p.set(true));
@@ -778,16 +792,18 @@ pub fn write_pdf(ui: &mut Ui, report: ComponentId, out: impl std::io::Write) -> 
     } else {
         None
     };
-    let mut writer = aylis_core::pages::PdfWriter::new(out, width, height, None)?;
-    let mut failed = None;
+    let mut doc = begin_pdf(ui, report, width, height).map_err(std::io::Error::other)?;
+    let mut count = 0;
+    let mut failed: Option<String> = None;
     {
         let mut write = |page: Page| {
             // As imagens desta página viram pixels (como no `to_pdf`), uma página por vez.
             let mut one = PageSet { width, height, pages: vec![page] };
             decode_images(&mut one);
             if failed.is_none() {
-                if let Err(e) = writer.add_page(&one.pages[0]) {
-                    failed = Some(e);
+                match doc.add_page(&one.pages[0]) {
+                    Ok(()) => count += 1,
+                    Err(e) => failed = Some(e),
                 }
             }
         };
@@ -795,11 +811,10 @@ pub fn write_pdf(ui: &mut Ui, report: ComponentId, out: impl std::io::Write) -> 
     }
     PREPARING.with(|p| p.set(false));
     if let Some(e) = failed {
-        return Err(e);
+        return Err(std::io::Error::other(e));
     }
-    let pages = writer.pages();
-    writer.finish()?;
-    Ok(pages)
+    out.write_all(&doc.finish().map_err(std::io::Error::other)?)?;
+    Ok(count)
 }
 
 /// O componente e todos os de dentro.
@@ -818,6 +833,18 @@ pub fn print(ui: &mut Ui, report: ComponentId, done: impl FnOnce(Result<bool, St
     let mut pages = prepare(ui, report);
     decode_images(&mut pages);
     let title = ui.get::<Report>(report).map(|r| r.title.clone()).unwrap_or_default();
+    // A plataforma que imprime pelo PDF (abre no visualizador): o PDF pelo provedor.
+    if ui.services().printer.as_ref().is_some_and(|p| p.wants_pdf()) {
+        match pages_pdf(ui, report, &pages) {
+            Ok(pdf) => {
+                if let Some(p) = ui.services_mut().printer.as_mut() {
+                    p.print_pdf(&title, pdf, Box::new(done));
+                }
+            }
+            Err(e) => done(Err(e)),
+        }
+        return;
+    }
     match ui.services_mut().printer.as_mut() {
         Some(p) => p.print(&title, pages, Box::new(done)),
         None => done(Err("sem impressora nesta plataforma".into())),
@@ -930,8 +957,7 @@ impl ReportPreview {
                         Box::new(move |paths| {
                             let Some(path) = paths.into_iter().next() else { return };
                             poster.post(move |ui| {
-                                let pdf = to_pdf(ui, report);
-                                let result = std::fs::write(&path, pdf).map_err(|e| format!("{path}: {e}"));
+                                let result = to_pdf(ui, report).and_then(|pdf| std::fs::write(&path, pdf).map_err(|e| format!("{path}: {e}")));
                                 ui.fire(id, "on_export", &EventArgs::Text(result.map_or_else(|e| e, |_| path)));
                             });
                         }),

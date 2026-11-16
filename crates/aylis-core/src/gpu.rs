@@ -62,8 +62,8 @@ impl GpuChoice {
     }
 }
 
-/// Como o quadro desenhado chega à janela (no Windows, com o Direct2D; o `"present"` do
-/// `.aylisproj`).
+/// Como o quadro desenhado chega à janela (no Windows, com o Direct2D): o `"present"` do
+/// `.aylisproj` e a propriedade `present` do form ([`present_for`]).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum PresentMode {
     /// A swap chain ligada à janela, como nos jogos: em tela cheia o quadro vai direto ao
@@ -72,8 +72,15 @@ pub enum PresentMode {
     Window,
     /// DirectComposition: o quadro vai para uma camada que o compositor do Windows (DWM)
     /// junta à janela, como nos navegadores (sempre composto, sem tearing). Não tira o aviso
-    /// do Radeon Software em tela cheia (conferido em 04/11/2026).
+    /// do Radeon Software em tela cheia (conferido em 04/11/2026). O DWM ainda pode promover a
+    /// camada a um plano de overlay (MPO).
     Composition,
+    /// Sempre composta pelo DWM: a swap chain no modelo de cópia (*blit*), que nunca vai a um
+    /// plano de overlay (MPO) nem a *independent flip*, que são só do modelo *flip*. Para forms
+    /// em tela cheia que ficam por cima do resto (seleção de área, print, overlay): numa placa
+    /// AMD com MPO, o cursor desenhado no plano de overlay congelava sobre um form assim
+    /// (relatado pelo NoOBS em 15/11). Custa uma cópia a mais por quadro e não tem tearing.
+    Composed,
 }
 
 impl PresentMode {
@@ -81,6 +88,7 @@ impl PresentMode {
     pub fn parse(text: &str) -> PresentMode {
         match text.trim().to_lowercase().as_str() {
             "composition" | "composicao" | "composição" => PresentMode::Composition,
+            "composed" | "composto" => PresentMode::Composed,
             _ => PresentMode::Window,
         }
     }
@@ -90,20 +98,35 @@ impl PresentMode {
         match self {
             PresentMode::Window => "",
             PresentMode::Composition => "composition",
+            PresentMode::Composed => "composed",
         }
     }
 }
 
-static PRESENT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static PRESENT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 
 /// Grava o modo de apresentar (a plataforma faz isso ao abrir, com o do projeto).
 pub fn set_present(mode: PresentMode) {
-    PRESENT.store(mode == PresentMode::Composition, std::sync::atomic::Ordering::Relaxed);
+    let code = match mode {
+        PresentMode::Window => 0,
+        PresentMode::Composition => 1,
+        PresentMode::Composed => 2,
+    };
+    PRESENT.store(code, std::sync::atomic::Ordering::Relaxed);
 }
 
-/// O modo de apresentar em vigor.
+/// O modo de apresentar do projeto.
 pub fn present() -> PresentMode {
-    if PRESENT.load(std::sync::atomic::Ordering::Relaxed) { PresentMode::Composition } else { PresentMode::Window }
+    match PRESENT.load(std::sync::atomic::Ordering::Relaxed) {
+        1 => PresentMode::Composition,
+        2 => PresentMode::Composed,
+        _ => PresentMode::Window,
+    }
+}
+
+/// O modo de apresentar de um form: a propriedade `present` dele ou, vazia, o do projeto.
+pub fn present_for(form_text: &str) -> PresentMode {
+    if form_text.trim().is_empty() { present() } else { PresentMode::parse(form_text) }
 }
 
 static CHOICE: Mutex<GpuChoice> = Mutex::new(GpuChoice::Auto);

@@ -355,7 +355,7 @@ pub mod classes {
         #[cfg(feature = "providers")] AylisBarcodeProvider: aylis_providers::AylisBarcodeProvider => "Providers",
         #[cfg(feature = "providers")] CsvProvider: aylis_providers::CsvProvider => "Providers",
         #[cfg(feature = "providers")] XlsxProvider: aylis_providers::XlsxProvider => "Providers",
-        #[cfg(feature = "providers")] AylisPdfProvider: aylis_providers::AylisPdfProvider => "Providers",
+        #[cfg(feature = "pdf")] KrillaPdfProvider: aylis_providers::KrillaPdfProvider => "Providers",
         #[cfg(feature = "providers")] TileServerProvider: aylis_providers::TileServerProvider => "Providers",
         #[cfg(feature = "providers")] OleObject: aylis_providers::OleObject => "System",
         #[cfg(feature = "providers")] WmiQuery: aylis_providers::WmiQuery => "System",
@@ -536,6 +536,12 @@ impl Application {
     fn start_with(project: aylis_project::Project, files: aylis_project::Files, register: fn(&mut Ui)) -> Result<Self, Error> {
         let mut ui = Ui::new();
         register(&mut ui);
+        // O PDF do relatório sem provedor ligado e da impressão fora do Windows (o núcleo não
+        // escreve PDF): o registro enxuto pode não ter chamado o `aylis_providers::register`.
+        #[cfg(feature = "pdf")]
+        if ui.services().pdf.is_none() {
+            ui.services_mut().pdf = Some(Box::new(aylis_providers::KrillaPdf));
+        }
         time_zone::install(&project.time_zone);
         // Quem mede e desenha o texto nesta plataforma (o `text` do projeto, item 10).
         ui.set_text_mode(match project.text().current() {

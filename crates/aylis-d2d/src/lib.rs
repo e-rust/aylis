@@ -501,20 +501,27 @@ impl D2dRenderer {
     /// [`aylis_core::gpu::choice_for`]). Com `FollowMonitor`, [`HwndTarget::follow_monitor`]
     /// troca de placa quando a janela muda de monitor.
     pub fn hwnd_target_for(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice) -> Result<HwndTarget, Error> {
-        self.hwnd_target_on(hwnd, width, height, vsync, choice, None)
+        self.hwnd_target_on(hwnd, width, height, vsync, choice, aylis_core::gpu::present(), None)
+    }
+
+    /// Como [`D2dRenderer::hwnd_target_for`], com o modo de apresentar do form (a propriedade
+    /// `present`; veja [`aylis_core::gpu::present_for`]).
+    pub fn hwnd_target_with(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice, present: aylis_core::gpu::PresentMode) -> Result<HwndTarget, Error> {
+        self.hwnd_target_on(hwnd, width, height, vsync, choice, present, None)
     }
 
     /// O alvo na placa `luid` (a que a janela vai seguir) ou, sem ela, na que `choice` pede.
-    fn hwnd_target_on(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice, luid: Option<i64>) -> Result<HwndTarget, Error> {
+    #[allow(clippy::too_many_arguments)]
+    fn hwnd_target_on(&self, hwnd: isize, width: u32, height: u32, vsync: bool, choice: aylis_core::gpu::GpuChoice, present: aylis_core::gpu::PresentMode, luid: Option<i64>) -> Result<HwndTarget, Error> {
         let monitor = monitor_of(hwnd).0 as isize;
         if diagnostic("AYLIS_D2D_TARGET").is_none_or(|v| v != "hwnd") {
             let chosen = luid.and_then(|l| adapter_where(|d| desc_luid(d) == l)).or_else(|| adapter_for(&choice, hwnd));
-            let swap = self.swap_chain(hwnd, width, height, chosen);
+            let swap = self.swap_chain(hwnd, width, height, chosen, present);
             if diagnostic("AYLIS_D2D_DEBUG").is_some() {
                 aylis_core::stderr_line!("aylis-d2d: alvo {}", match &swap { Ok(_) => "swap chain".to_string(), Err(e) => format!("da janela ({e})") });
             }
             if let Ok(swap) = swap {
-                return Ok(HwndTarget { kind: Kind::Swap(Box::new(swap)), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, monitor });
+                return Ok(HwndTarget { kind: Kind::Swap(Box::new(swap)), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, present, monitor });
             }
         }
         let props = D2D1_RENDER_TARGET_PROPERTIES {
@@ -531,7 +538,7 @@ impl D2dRenderer {
             presentOptions: if vsync { D2D1_PRESENT_OPTIONS_NONE } else { D2D1_PRESENT_OPTIONS_IMMEDIATELY },
         };
         let target = unsafe { self.factory.CreateHwndRenderTarget(&props, &hwnd_props)? };
-        Ok(HwndTarget { kind: Kind::Hwnd(target), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, monitor })
+        Ok(HwndTarget { kind: Kind::Hwnd(target), hwnd, size: (width, height), vsync, cache: DeviceCache::default(), choice, present, monitor })
     }
 
     /// O dispositivo da placa `chosen` (`None`: a padrão): o já criado, se ainda vale (não foi
@@ -572,7 +579,7 @@ impl D2dRenderer {
     }
 
     /// Direct3D 11 + swap chain "flip" + contexto do Direct2D numa janela.
-    fn swap_chain(&self, hwnd: isize, width: u32, height: u32, chosen: Option<IDXGIAdapter>) -> Result<Swap, Error> {
+    fn swap_chain(&self, hwnd: isize, width: u32, height: u32, chosen: Option<IDXGIAdapter>, present: aylis_core::gpu::PresentMode) -> Result<Swap, Error> {
         let (device, context, d2d) = self.shared_device(chosen.as_ref())?;
         unsafe {
             let dxgi: IDXGIDevice = device.cast()?;
@@ -580,9 +587,12 @@ impl D2dRenderer {
             let adapter = dxgi.GetAdapter()?;
             let adapter_desc = adapter.GetDesc()?;
             let factory: IDXGIFactory2 = adapter.GetParent()?;
-            let compose = aylis_core::gpu::present() == aylis_core::gpu::PresentMode::Composition;
+            let compose = present == aylis_core::gpu::PresentMode::Composition;
+            // O modelo de cópia (*blit*): o DWM sempre compõe, sem MPO nem independent flip.
+            let blit = present == aylis_core::gpu::PresentMode::Composed;
             // Tearing só na swap chain da janela: a composição sempre espera o DWM.
             let tearing = !compose
+                && !blit
                 && factory.cast::<IDXGIFactory5>().is_ok_and(|f| {
                     let mut allow = 0i32;
                     f.CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &mut allow as *mut i32 as *mut _, 4).is_ok() && allow != 0
@@ -605,9 +615,21 @@ impl D2dRenderer {
             // DirectComposition: a swap chain sem janela vira o conteúdo de uma camada que o DWM
             // junta à janela (como os navegadores). Se não der, a swap chain da janela.
             let composed = if compose { compose_into(&factory, &device, &dxgi, hwnd, &desc).ok() } else { None };
-            let (swap, composition) = match composed {
-                Some((swap, layer)) => (swap, Some(layer)),
-                None => {
+            // No modelo de cópia, um buffer só (o quadro guardado vai inteiro para ele a cada
+            // apresentação); se a placa recusar, a swap chain da janela de sempre.
+            let copied = if blit {
+                let blit_desc = DXGI_SWAP_CHAIN_DESC1 { SwapEffect: DXGI_SWAP_EFFECT_SEQUENTIAL, BufferCount: 1, ..desc };
+                factory.CreateSwapChainForHwnd(&device, HWND(hwnd as *mut _), &blit_desc, None, None).ok()
+            } else {
+                None
+            };
+            let (swap, composition) = match (composed, copied) {
+                (Some((swap, layer)), _) => (swap, Some(layer)),
+                (None, Some(swap)) => {
+                    let _ = factory.MakeWindowAssociation(HWND(hwnd as *mut _), DXGI_MWA_NO_ALT_ENTER);
+                    (swap, None)
+                }
+                (None, None) => {
                     let swap = factory.CreateSwapChainForHwnd(&device, HWND(hwnd as *mut _), &desc, None, None)?;
                     let _ = factory.MakeWindowAssociation(HWND(hwnd as *mut _), DXGI_MWA_NO_ALT_ENTER);
                     (swap, None)
@@ -1116,6 +1138,8 @@ pub struct HwndTarget {
     cache: DeviceCache,
     /// A placa pedida (a do form ou a do projeto), para recriar na mesma regra.
     choice: aylis_core::gpu::GpuChoice,
+    /// O modo de apresentar (o do form ou o do projeto), para recriar no mesmo.
+    present: aylis_core::gpu::PresentMode,
     /// O monitor (`HMONITOR`) em que a janela estava ao conferir a placa pela última vez.
     monitor: isize,
 }
@@ -1170,7 +1194,7 @@ impl HwndTarget {
     fn rebuild(&mut self, renderer: &D2dRenderer, luid: Option<i64>) -> Result<(), Error> {
         self.release();
         let (width, height) = self.size;
-        *self = renderer.hwnd_target_on(self.hwnd, width, height, self.vsync, self.choice.clone(), luid)?;
+        *self = renderer.hwnd_target_on(self.hwnd, width, height, self.vsync, self.choice.clone(), self.present, luid)?;
         Ok(())
     }
 
@@ -1227,6 +1251,38 @@ impl HwndTarget {
         }
         self.rebuild(renderer, wanted)?;
         Ok(true)
+    }
+
+    /// O modo de apresentar do form mudou (a propriedade `present`): recria o alvo no modo novo
+    /// (`Ok(true)`: recriou).
+    pub fn set_present(&mut self, renderer: &D2dRenderer, present: aylis_core::gpu::PresentMode) -> Result<bool, Error> {
+        if present == self.present {
+            return Ok(false);
+        }
+        self.present = present;
+        let luid = match &self.kind {
+            Kind::Swap(s) => Some(s.link.luid),
+            Kind::Hwnd(_) | Kind::Released => None,
+        };
+        self.rebuild(renderer, luid)?;
+        Ok(true)
+    }
+
+    /// Como o último quadro chegou ao monitor, pelo DXGI (`GetFrameStatisticsMedia`):
+    /// `composed` (pelo DWM), `overlay` (num plano de overlay, o MPO), `none` (direto, o
+    /// independent flip) ou `failed`. `None`: ainda sem quadro, ou o sistema não diz.
+    pub fn presentation(&self) -> Option<&'static str> {
+        let Kind::Swap(s) = &self.kind else { return None };
+        let media: IDXGISwapChainMedia = s.swap.cast().ok()?;
+        let mut stats = DXGI_FRAME_STATISTICS_MEDIA::default();
+        // SAFETY: chamada COM que preenche a estrutura dada.
+        unsafe { media.GetFrameStatisticsMedia(&mut stats) }.ok()?;
+        Some(match stats.CompositionMode {
+            DXGI_FRAME_PRESENTATION_MODE_COMPOSED => "composed",
+            DXGI_FRAME_PRESENTATION_MODE_OVERLAY => "overlay",
+            DXGI_FRAME_PRESENTATION_MODE_NONE => "none",
+            _ => "failed",
+        })
     }
 
     /// A placa de vídeo em que desenha (no alvo antigo, `ID2D1HwndRenderTarget`, não se sabe).

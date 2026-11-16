@@ -16,7 +16,7 @@ path = "src/main.rs"
 # O aylis fica nesta pasta (a da instalação da IDE). As features (dados, mídia...) são
 # as que os forms usam; a IDE atualiza a lista a cada "Gerar código".
 [dependencies]
-aylis = { path = "../../../crates/aylis", default-features = false, features = ["data", "dbcontrols"] }
+aylis = { path = "../../../crates/aylis", default-features = false, features = ["data", "dbcontrols", "pdf"] }
 
 [features]
 # Ligada pela IDE ao executar: o canal cifrado com a IDE (inspetor, hot reload,

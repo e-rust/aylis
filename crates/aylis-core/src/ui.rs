@@ -2086,6 +2086,16 @@ impl Ui {
         self.entry(id).is_some_and(|e| e.events.iter().any(|(n, _)| n == event))
     }
 
+    /// Alguém recebe o evento `event` de `id`: o handler, um `EventInterceptor` ou a ligação a
+    /// dados (que grava de volta no `on_change`). Sem ninguém, o `fire` não faz nada, e quem
+    /// monta argumentos caros pode pular: o `on_change` do Memo copiava o texto inteiro a cada
+    /// tecla (~14 ms com 1 milhão de linhas) mesmo sem handler (decidido pelo autor em 15/11).
+    pub fn listens(&self, id: ComponentId, event: &str) -> bool {
+        self.has_handler(id, event)
+            || !self.interceptors_for(id, event).is_empty()
+            || (crate::bindings::CHANGE_EVENTS.contains(&event) && !self.bindings(id).is_empty() && !self.design_mode)
+    }
+
     /// Liga uma closure a um evento (`"on_click"`, `"on_resize"`...).
     pub fn on(
         &mut self,

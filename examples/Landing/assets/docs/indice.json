@@ -1035,12 +1035,12 @@
           "arquivo": "componentes/AylisBarcodeProvider.md"
         },
         {
-          "titulo": "AylisPdfProvider",
-          "arquivo": "componentes/AylisPdfProvider.md"
-        },
-        {
           "titulo": "CsvProvider",
           "arquivo": "componentes/CsvProvider.md"
+        },
+        {
+          "titulo": "KrillaPdfProvider",
+          "arquivo": "componentes/KrillaPdfProvider.md"
         },
         {
           "titulo": "TileServerProvider",

@@ -209,6 +209,10 @@ pub struct Form {
     /// A placa de vídeo da janela (vazio: a do projeto): `monitor` troca para a placa do
     /// monitor em que ela está (Windows e Linux com Wayland); `alto-desempenho`, `economia` ou parte do nome fixam uma.
     pub gpu: String,
+    /// Como o quadro chega à janela no Windows (vazio: o do projeto): `window`, `composition`
+    /// ou `composed`, sempre composta pelo DWM, fora do plano de overlay (o form em tela cheia
+    /// por cima do resto, onde o cursor congelava em placas com MPO).
+    pub present: String,
     /// O form maior que um monitor vira uma janela por monitor, cada uma na placa de vídeo do
     /// seu (Windows; nas outras, sem efeito). Sem isso, com monitores em placas diferentes, o
     /// sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`,
@@ -319,6 +323,7 @@ impl Form {
             monitor: -1,
             remember_placement: false,
             gpu: String::new(),
+            present: String::new(),
             span_monitors: false,
             physical_pixels: false,
             activate_on_show: true,
@@ -368,6 +373,7 @@ impl Component for Form {
         monitor: i64 => "Layout",
         remember_placement: bool => "Behavior",
         gpu: String => "Behavior",
+        present: String => "Behavior",
         span_monitors: bool => "Layout",
         physical_pixels: bool => "Layout",
         activate_on_show: bool => "Behavior",
@@ -418,7 +424,7 @@ impl Component for Form {
             ctx.ui.request_repaint();
         }
         // Com o app rodando, a janela segue (no designer não há janela).
-        if name == "gpu" && !ctx.ui.design_mode() {
+        if (name == "gpu" || name == "present") && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateGpu);
         }
         if name == "span_monitors" && !ctx.ui.design_mode() {

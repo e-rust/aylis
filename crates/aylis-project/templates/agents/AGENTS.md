@@ -38,17 +38,6 @@ pelo "Novo projeto" da IDE do Aylis; pode editar à vontade (a IDE não o refaz)
 
 Com o projeto aberto na IDE do Aylis, **não grave os arquivos do projeto direto** (forms, temas,
 `.aylisproj`, código): a IDE guarda o que está aberto na memória e perderia a mudança ao salvar.
-O `.mcp.json` desta pasta liga o agente à IDE (`aylis-tool mcp`): mude os forms com
-`set_property`, `add_component`, `set_layout`/`patch_layout` (o `class_info` diz as propriedades e
-os eventos de cada classe), o código com `read_code`/`edit_code`, e salve com `save`.
-
-## Rodar e testar
-
-- Pela IDE: F9 executa (no depurador, se houver ponto de parada), Ctrl+F9 compila. Pelo MCP:
-  `build`, `run_without_debug`, `test`, `check` (a verificação de antes de compilar),
-  `screenshot` (a foto de um form) e `app_command` (comanda o app em execução: clicar, digitar,
-  ler a árvore).
-- Pela linha de comando: `aylis-tool run {project_file}`.
-- Desempenho e uso: `profile` mede o app em execução (os handlers e os quadros mais lentos),
-  `recording` resume a última gravação de uso e `coverage` diz que handlers nenhum teste ou uso
-  executou.
+O `.mcp.json` desta pasta liga o agente à IDE (`aylis-tool mcp`), e as instruções do servidor
+dizem as ferramentas para mudar os forms e o código, compilar, testar e comandar o app.
+Sem a IDE: `aylis-tool run {project_file}` executa.

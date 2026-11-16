@@ -572,6 +572,7 @@ spring	Volta ao centro	Return to center	Vuelve al centro	Retour au centre	Zurüc
 max_width	Largura máxima	Max width	Ancho máximo	Largeur maximale	Maximale Breite	Максимальная ширина	最大宽度	最大幅	العرض الأقصى	সর্বোচ্চ প্রস্থ	अधिकतम चौड़ाई	Lebar maksimum
 remember_placement	Lembrar a posição	Remember placement	Recordar la posición	Mémoriser la position	Position merken	Запоминать положение	记住位置	位置を記憶	تذكر الموضع	অবস্থান মনে রাখুন	स्थिति याद रखें	Ingat posisi
 gpu	Placa de vídeo	Graphics card	Tarjeta gráfica	Carte graphique	Grafikkarte	Видеокарта	显卡	グラフィックカード	بطاقة الرسومات	গ্রাফিক্স কার্ড	ग्राफ़िक्स कार्ड	Kartu grafis
+present	Apresentação na tela	Screen presentation	Presentación en pantalla	Présentation à l'écran	Bildschirmdarstellung	Вывод на экран	屏幕呈现方式	画面への表示方式	العرض على الشاشة	স্ক্রিনে উপস্থাপন	स्क्रीन पर प्रस्तुति	Penyajian layar
 span_monitors	Ocupar vários monitores	Span monitors	Ocupar varios monitores	Couvrir plusieurs écrans	Über mehrere Monitore	Занимать несколько мониторов	跨多个显示器	複数のモニターにまたがる	الامتداد على عدة شاشات	একাধিক মনিটর জুড়ে	कई मॉनिटर पर फैलाएँ	Membentang di beberapa monitor
 wheel_lines	Linhas por rolagem	Lines per scroll	Líneas por desplazamiento	Lignes par défilement	Zeilen pro Bildlauf	Строк за прокрутку	每次滚动行数	スクロール行数	أسطر لكل تمرير	প্রতি স্ক্রলে লাইন	प्रति स्क्रॉल पंक्तियाँ	Baris per gulir
 char_map	Trocas de caracteres	Character map	Cambios de caracteres	Remplacement de caractères	Zeichenersetzung	Замена символов	字符替换	文字の置き換え	استبدال الأحرف	অক্ষর বদল	वर्ण बदलाव	Penggantian karakter
@@ -632,6 +633,7 @@ decimal_comma	Vírgula decimal	Decimal comma	Coma decimal	Virgule décimale	Dezi
 bom	Marca BOM (UTF-8)	BOM mark (UTF-8)	Marca BOM (UTF-8)	Marque BOM (UTF-8)	BOM-Markierung (UTF-8)	Метка BOM (UTF-8)	BOM 标记 (UTF-8)	BOM マーク (UTF-8)	علامة BOM (UTF-8)	BOM চিহ্ন (UTF-8)	BOM चिह्न (UTF-8)	Tanda BOM (UTF-8)
 header	Linha de títulos	Header row	Fila de títulos	Ligne d'en-tête	Kopfzeile	Строка заголовков	标题行	見出し行	صف العناوين	শিরোনামের সারি	शीर्षक पंक्ति	Baris judul
 captures_wheel	Segura a roda do mouse	Captures mouse wheel	Retiene la rueda del ratón	Garde la molette	Behält das Mausrad	Удерживает колесо мыши	独占鼠标滚轮	マウスホイールを保持	يحتفظ بعجلة الفأرة	মাউস হুইল ধরে রাখে	माउस व्हील रोकता है	Menahan roda mouse
+captures_gesture	Segura a pinça e o deslizar	Captures pinch and swipe	Retiene el pellizco y el deslizamiento	Garde le pincement et le balayage	Behält Pinch und Wischen	Удерживает щипок и свайп	独占捏合和滑动	ピンチとスワイプを保持	يحتفظ بالقرص والسحب	পিঞ্চ ও সোয়াইপ ধরে রাখে	पिंच और स्वाइप रोकता है	Menahan cubit dan geser
 value_format	Formato dos números	Number format	Formato de los números	Format des nombres	Zahlenformat	Формат чисел	数字格式	数値の書式	تنسيق الأرقام	সংখ্যার ফরম্যাট	संख्या प्रारूप	Format angka
 label_angle	Ângulo dos rótulos	Label angle	Ángulo de las etiquetas	Angle des étiquettes	Beschriftungswinkel	Угол подписей	标签角度	ラベルの角度	زاوية التسميات	লেবেলের কোণ	लेबल कोण	Sudut label
 title_align	Alinhamento do título	Title alignment	Alineación del título	Alignement du titre	Titelausrichtung	Выравнивание заголовка	标题对齐	タイトルの配置	محاذاة العنوان	শিরোনামের সারিবদ্ধতা	शीर्षक संरेखण	Perataan judul

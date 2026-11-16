@@ -11,7 +11,6 @@ class-without-sample	crates/aylis/src/samples.json#AutoComplete	1
 class-without-sample	crates/aylis/src/samples.json#Avatar	1
 class-without-sample	crates/aylis/src/samples.json#AvatarGroup	1
 class-without-sample	crates/aylis/src/samples.json#AylisBarcodeProvider	1
-class-without-sample	crates/aylis/src/samples.json#AylisPdfProvider	1
 class-without-sample	crates/aylis/src/samples.json#Badge	1
 class-without-sample	crates/aylis/src/samples.json#Banner	1
 class-without-sample	crates/aylis/src/samples.json#BottomNavigation	1
@@ -64,6 +63,7 @@ class-without-sample	crates/aylis/src/samples.json#Icon	1
 class-without-sample	crates/aylis/src/samples.json#Joystick	1
 class-without-sample	crates/aylis/src/samples.json#Knob	1
 class-without-sample	crates/aylis/src/samples.json#KpiCard	1
+class-without-sample	crates/aylis/src/samples.json#KrillaPdfProvider	1
 class-without-sample	crates/aylis/src/samples.json#LevelMeter	1
 class-without-sample	crates/aylis/src/samples.json#Line	1
 class-without-sample	crates/aylis/src/samples.json#LoadingIndicator	1

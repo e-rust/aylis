@@ -114,7 +114,7 @@ fn an_agent_measures_reads_the_recording_and_the_coverage() {
     assert!(s.contains("0 de 2 handlers rodaram") && s.contains("NÃO RODARAM (2)"), "Limpar recomeça: {s}");
     assert!(!call(ui, port, "dialog_click", json!({ "text": "Fechar" })).0);
     let (_, out) = call(ui, port, "coverage", json!({ "clear": true }));
-    assert!(out.contains("\"covered\": 0"), "{out}");
+    assert_eq!(serde_json::from_str::<Value>(&out).unwrap()["covered"], 0, "{out}");
 
     // recording: uma gravação dada, resumida.
     let file = base.join("uso.aylisrec");

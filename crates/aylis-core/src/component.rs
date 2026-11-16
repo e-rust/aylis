@@ -927,6 +927,9 @@ pub struct ControlBase {
     /// A roda do mouse em cima dele fica com ele (não rola os contêineres de fora), mesmo
     /// sem ele rolar: uma prévia que dá zoom com a roda, um mapa, um gráfico.
     captures_wheel: bool,
+    /// A pinça e o deslizar em cima dele ficam com ele: o `on_gesture`/`on_swipe` dele roda e
+    /// os pais não recebem (a linha do tempo que amplia dentro de um palco que também amplia).
+    captures_gesture: bool,
     /// Pode receber o foco do teclado (clique ou Tab).
     can_focus: bool,
     /// Pode ser arrastado (o `drag` diz o que vai junto).
@@ -1057,6 +1060,7 @@ impl ControlBase {
         PropInfo::new("inherit_state", PropKind::Bool, "Appearance"),
         PropInfo::new("translate", PropKind::Bool, "Behavior"),
         PropInfo::new("captures_wheel", PropKind::Bool, "Behavior"),
+        PropInfo::new("captures_gesture", PropKind::Bool, "Behavior"),
         PropInfo::new("can_focus", PropKind::Bool, "Behavior"),
         PropInfo::new("draggable", PropKind::Bool, "Behavior"),
         PropInfo::new("accepts_drops", PropKind::Bool, "Behavior"),
@@ -1148,6 +1152,7 @@ impl ControlBase {
             inherit_state: false,
             translatable: true,
             captures_wheel: false,
+            captures_gesture: false,
             can_focus: false,
             draggable: false,
             accepts_drops: false,
@@ -1309,6 +1314,10 @@ impl ControlBase {
 
     pub fn captures_wheel(&self) -> bool {
         self.captures_wheel
+    }
+
+    pub fn captures_gesture(&self) -> bool {
+        self.captures_gesture
     }
 
     /// Pode receber o foco do teclado (como `CanFocus`).
@@ -1818,6 +1827,11 @@ impl ControlBase {
         self
     }
 
+    pub fn set_captures_gesture(&mut self, v: bool) -> &mut Self {
+        self.captures_gesture = v;
+        self
+    }
+
     pub fn set_can_focus(&mut self, v: bool) -> &mut Self {
         self.can_focus = v;
         self
@@ -1912,6 +1926,7 @@ impl ControlBase {
             "inherit_state" => self.inherit_state.into(),
             "translate" => self.translatable.into(),
             "captures_wheel" => self.captures_wheel.into(),
+            "captures_gesture" => self.captures_gesture.into(),
             "can_focus" => self.can_focus.into(),
             "draggable" => self.draggable.into(),
             "accepts_drops" => self.accepts_drops.into(),
@@ -1982,6 +1997,7 @@ impl ControlBase {
             "inherit_state" => self.set_inherit_state(value.to_bool()?),
             "translate" => self.set_translatable(value.to_bool()?),
             "captures_wheel" => self.set_captures_wheel(value.to_bool()?),
+            "captures_gesture" => self.set_captures_gesture(value.to_bool()?),
             "can_focus" => self.set_can_focus(value.to_bool()?),
             "draggable" => self.set_draggable(value.to_bool()?),
             "accepts_drops" => self.set_accepts_drops(value.to_bool()?),

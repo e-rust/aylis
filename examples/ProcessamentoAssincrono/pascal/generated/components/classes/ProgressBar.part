@@ -39,6 +39,8 @@
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -157,6 +159,7 @@
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
@@ -397,6 +400,16 @@ end;
 procedure TProgressBar.SetCapturesWheel(Value: Boolean);
 begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TProgressBar.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TProgressBar.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
 end;
 
 function TProgressBar.GetCanFocus: Boolean;

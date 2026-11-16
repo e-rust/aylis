@@ -293,9 +293,16 @@ pub fn input_text(
 /// monitor" troca de placa quando a janela passa para um monitor da outra (Windows).
 pub const GPU_CHOICES: [&str; 4] = ["Automática (a do sistema)", "Alto desempenho (a dedicada)", "Economia de energia (a integrada)", "Seguir o monitor (a placa de cada tela)"];
 
-/// As escolhas do combo "Apresentação (Windows)": a swap chain da janela (o padrão) e o
-/// DirectComposition.
-pub const PRESENT_CHOICES: [&str; 2] = ["Janela (como os jogos)", "DirectComposition (como os navegadores)"];
+/// As escolhas do combo "Apresentação (Windows)": a swap chain da janela (o padrão), o
+/// DirectComposition e a sempre composta pelo DWM (fora do overlay), na ordem de
+/// [`present_modes`].
+pub const PRESENT_CHOICES: [&str; 3] = ["Janela (como os jogos)", "DirectComposition (como os navegadores)", "Sempre composta (fora do overlay)"];
+
+/// Os modos de apresentar na ordem do combo.
+fn present_modes() -> [aylis_core::gpu::PresentMode; 3] {
+    use aylis_core::gpu::PresentMode;
+    [PresentMode::Window, PresentMode::Composition, PresentMode::Composed]
+}
 
 /// O que vai para o `.aylisproj` (`"gpu"`) pelo texto do combo.
 pub fn gpu_value(text: &str) -> String {
@@ -388,7 +395,8 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     // Como o quadro chega à janela no Windows (o `"present"`): a swap chain da janela ou o
     // DirectComposition.
     let line = field(ui, d.body, "Apresentação (Windows)");
-    let present_now = PRESENT_CHOICES[usize::from(aylis_core::gpu::PresentMode::parse(&project.present) == aylis_core::gpu::PresentMode::Composition)];
+    let mode = aylis_core::gpu::PresentMode::parse(&project.present);
+    let present_now = PRESENT_CHOICES[present_modes().iter().position(|m| *m == mode).unwrap_or(0)];
     let present = combo(ui, line, &PRESENT_CHOICES, present_now);
     let _ = ui.set_prop(
         present,
@@ -495,9 +503,8 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
             let gpu_text = combo_text(ui, gpu);
             let gpu_text = GPU_CHOICES.iter().find(|c| ui.tr(c) == gpu_text).map_or(gpu_text, |c| c.to_string());
             p.gpu = gpu_value(&gpu_text);
-            p.present = if ui.get::<ComboBox>(present).is_some_and(|c| c.item_index == 1) { aylis_core::gpu::PresentMode::Composition } else { aylis_core::gpu::PresentMode::Window }
-                .name()
-                .to_string();
+            let index = ui.get::<ComboBox>(present).map_or(0, |c| c.item_index.max(0) as usize);
+            p.present = present_modes().get(index).copied().unwrap_or_default().name().to_string();
             p.output.dir = text_of(ui, out_dir).trim().to_string();
             p.output.name = text_of(ui, out_name).trim().trim_end_matches(".exe").to_string();
             p.output.bin = text_of(ui, out_bin).trim().to_string();

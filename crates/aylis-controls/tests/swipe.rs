@@ -238,3 +238,33 @@ fn a_list_row_slides_to_show_its_actions() {
     ui.process_events();
     assert_ne!(VirtualList::visible(&ui, list), before, "rolou");
 }
+
+/// `captures_gesture` (relatório do RTSPlayer, 15/11): a pinça na linha do tempo, dentro de um
+/// palco que também amplia, chamava os dois `on_gesture`. Com a propriedade na linha do tempo,
+/// o gesto e o deslizar param nela; sem ela, sobem como antes.
+#[test]
+fn captures_gesture_keeps_the_pinch_and_the_swipe_from_the_parents() {
+    let mut ui = setup();
+    let f = form(&mut ui);
+    let stage = ui.create("Panel", Some(f)).unwrap();
+    ui.set_prop(stage, "align", "client").unwrap();
+    let ruler = ui.create("Panel", Some(stage)).unwrap();
+    ui.set_prop(ruler, "align", "bottom").unwrap();
+    ui.set_prop(ruler, "height", 120.0).unwrap();
+    ui.layout();
+    let got: Rc<RefCell<Vec<&str>>> = Rc::default();
+    for (id, who) in [(stage, "palco"), (ruler, "régua")] {
+        let g = got.clone();
+        ui.on(id, "on_gesture", move |_, _, _| g.borrow_mut().push(who));
+        let g = got.clone();
+        ui.on(id, "on_swipe", move |_, _, _| g.borrow_mut().push(who));
+    }
+    let pinch = |ui: &mut Ui| ui.gesture(f, GestureEvent { phase: GesturePhase::Update, center: PointF::new(200.0, 540.0), scale: 2.0, delta_scale: 2.0, ..Default::default() });
+    pinch(&mut ui);
+    assert_eq!(*got.borrow(), ["régua", "palco"], "sem a propriedade, sobe");
+    got.borrow_mut().clear();
+    ui.set_prop(ruler, "captures_gesture", true).unwrap();
+    pinch(&mut ui);
+    swipe(&mut ui, f, (300.0, 540.0), (100.0, 545.0));
+    assert_eq!(*got.borrow(), ["régua", "régua"], "a pinça e o deslizar ficaram na régua");
+}

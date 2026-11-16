@@ -6,10 +6,10 @@ members = ["crates/aylis-core", "crates/aylis-controls", "crates/aylis-controls-
 exclude = ["examples/ERP/rust"]
 
 [workspace.package]
-version = "0.4.1-beta.1"
+version = "0.5.0"
 edition = "2024"
 license = "MIT"
-rust-version = "1.88"
+rust-version = "1.92"
 repository = "https://github.com/e-rust/aylis"
 
 # O código do aylis só com as linhas (backtrace com arquivo e linha, passo a passo por linha):

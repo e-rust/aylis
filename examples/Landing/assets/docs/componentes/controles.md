@@ -35,6 +35,7 @@ Todo controle visual (o que tem `ControlBase`) tem estas, além das próprias.
 | `clip_children` | Recorta o conteúdo | lógico | Corta o desenho dos filhos na borda dele. |
 | `translate` | Traduzir | lógico | Os textos dele passam pela tradução do app (o padrão). Desligado, ficam como estão e não entram na lista do que traduzir: um nome próprio, um código, um valor de exemplo (G19 do Tabernáculo). |
 | `captures_wheel` | Segura a roda do mouse | lógico | A roda do mouse em cima dele fica com ele (não rola os contêineres de fora), mesmo sem ele rolar: uma prévia que dá zoom com a roda, um mapa, um gráfico. |
+| `captures_gesture` | Segura a pinça e o deslizar | lógico | A pinça e o deslizar em cima dele ficam com ele: o `on_gesture`/`on_swipe` dele roda e os pais não recebem (a linha do tempo que amplia dentro de um palco que também amplia). |
 | `can_focus` | Recebe foco | lógico | Pode receber o foco do teclado (clique ou Tab). |
 | `draggable` | Arrastável | lógico | Pode ser arrastado (o `drag` diz o que vai junto). |
 | `accepts_drops` | Aceita soltar | lógico | Aceita o que é solto em cima dele (`on_drop`). |

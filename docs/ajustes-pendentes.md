@@ -13,6 +13,108 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 15/11/2026: o cursor parado sobre o form em tela cheia (MPO)**
+
+- [ ] Relatado pelo NoOBS em 15/11 (o editor do print em tela cheia, placa AMD com MPO: o cursor
+  congela; com o MPO desligado, não). Feito em 15 e 16/11 (falta o autor conferir o cursor no
+  NoOBS com `"present": "composed"` no form do print):
+  - o modo `composed` (`aylis_core::gpu::PresentMode::Composed`, `present_for`): no projeto
+    (`"present"` do `.aylisproj`, e o terceiro item do combo "Apresentação (Windows)" das Opções
+    do projeto, traduzido) e por form (a propriedade `present`, vazia: o do projeto), trocável
+    com a janela aberta (recria o alvo, `HwndTarget::set_present`);
+  - no Direct2D, a swap chain no modelo de cópia (`DXGI_SWAP_EFFECT_SEQUENTIAL`, um buffer): o
+    MPO e o independent flip são só do modelo flip, e o DWM compõe sempre. Se a placa recusar,
+    a swap chain da janela de sempre;
+  - `HwndTarget::presentation()` diz como o quadro chegou, e o exemplo `present_modes` do
+    `aylis-d2d` abre uma janela em tela cheia sem borda em cada modo. Medido nesta máquina (RX
+    9070 XT) em 16/11, 150 quadros: `window`, overlay em todos (o MPO do relato);
+    `composition`, composed em todos (o NoOBS relatou que nesse modo o cursor ainda travava);
+    `composed`, o DXGI não informa (a estatística só existe no modelo flip).
+  - Testes em `crates/aylis-d2d/tests/present.rs`; o catálogo, o rótulo e a documentação
+    refeitos.
+
+**Ajustes de 15/11/2026: o ícone da barra de título achatado**
+
+- [ ] Relatado em 15/11: o ícone da barra de título (e da barra de tarefas) usava o PNG do ícone
+  do app como está, e um de 1024 × 768 com margem transparente saía achatado (4:3 num quadrado)
+  e minúsculo em 16 px; o `.ico` já recortava o quadrado do meio. Feito em 15/11 (falta o autor
+  conferir na janela de um app): o ícone da janela e o da bandeja passam pelo mesmo recorte
+  (`window_icon::square` no `aylis-platform-winit`: o quadrado do meio, reduzido a no máximo
+  256 px pela média de cada área, pesada pelo alfa). Testes no próprio módulo.
+
+**Ajustes de 15/11/2026: o PDF pelo krilla**
+
+- [ ] Decidido pelo autor em 15/11: o núcleo deixa de escrever PDF (o escritor próprio só tinha
+  a Helvetica e o Latin-1: a fonte do relatório não aparecia, nem chinês, árabe ou emoji), e o
+  PDF passa a ser de uma biblioteca conhecida, pronta como provedor: "Sim, com o krilla" (o
+  gerador de PDF do Typst; MIT/Apache, sem `unsafe`). Feito em 15/11 (falta o autor conferir o
+  PDF de um relatório de verdade e a impressão no Linux):
+  - **Núcleo:** saíram o `PageSet::to_pdf`, o `PdfWriter` e o `BuiltinPdf`. O `PdfProvider`
+    monta o documento página por página (`begin` → `PdfDocument::add_page` → `finish`), e o
+    `Services::pdf` guarda o padrão. O `PrintService` ganhou `wants_pdf`/`print_pdf`: fora do
+    Windows a impressão é o PDF do provedor aberto no visualizador.
+  - **`aylis-providers`:** o `KrillaPdfProvider` (no lugar do `AylisPdfProvider`), atrás da
+    feature `pdf`. As fontes vão embutidas em subconjunto: as do projeto (`aylis_core::fonts`) e
+    as do sistema (pelo `fontdb`, fora da web); o caractere que a fonte não tem sai da primeira
+    fonte de reserva que o tenha. O texto é medido pelo `skrifa` (o que o krilla já usa) para
+    quebrar, alinhar (inclusive justificado) e pôr as reticências. Na web, só as fontes do
+    projeto.
+  - **Tamanho:** a fachada ganhou a feature `pdf`; o `aylis-build` liga quando o form tem
+    `Report`, `ReportPreview` ou o `KrillaPdfProvider`. A feature `providers` sozinha (código
+    de barras, exportação) não traz o krilla. Medido no exemplo `report` em release: 31,97 →
+    35,51 MB (+3,4 MB: o krilla, o `fontdb`, o `rustybuzz` e os leitores de PNG, JPEG, GIF e
+    WebP que o módulo de imagens dele pede), só no app que tem relatório. O Rust mínimo do
+    krilla é 1.92 (o do Aylis declara 1.88).
+  - **Memória do relatório enorme:** o escritor próprio gravava cada página direto no arquivo;
+    o krilla monta o documento inteiro na memória (já serializado e comprimido) e grava no fim.
+    O teste de memória do `write_pdf` passou a medir só o lado do Aylis (com um provedor de
+    teste que não guarda nada); a memória do krilla cresce com as páginas.
+  - Testes: `the_text_is_drawn_with_the_font_embedded` (`aylis-providers/tests/pdf.rs`: acento,
+    €, ✓ e chinês desenhados de volta pelo `aylis-docview`), os do `report` e dos provedores.
+
+**Ajustes de 15/11/2026: a pinça que sobe para os pais**
+
+- [ ] Relatado pelo RTSPlayer em 15/11 e aprovado pelo autor ("pode corrigir"): a pinça na linha
+  do tempo (`pnlRegua`, com `on_gesture`) dentro do palco (`pnlPalco`, também com `on_gesture`)
+  ampliava os dois, porque o gesto sobe pelos pais e o handler do app não tinha como parar a
+  subida. Feito em 15/11 (falta o autor conferir no celular): a propriedade `captures_gesture`
+  no `ControlBase`, como o `captures_wheel` da roda: o controle que a tem fica com a pinça e com
+  o deslizar (`on_swipe`), e os pais não recebem. Sem ida e volta ao backend (o `handled` como
+  pergunta faria a tela esperar o backend a cada passo da pinça). Teste
+  `captures_gesture_keeps_the_pinch_and_the_swipe_from_the_parents` (`swipe.rs`); rótulo nos 12
+  idiomas; catálogo refeito.
+
+**Ajustes de 15/11/2026: o MCP enxuto**
+
+- [ ] Pedido do autor em 15/11 ("validar a documentação do MCP [...] não podemos desperdiçar
+  token"), aprovado "Tudo". Feito em 15/11, medido pela ponte com o IBGE aberto (falta o autor
+  conferir numa conversa de verdade):
+  - **A lista de ferramentas** (vai em toda conversa): 60,7 → 42,5 mil caracteres. O argumento
+    `project` repetia 189 caracteres em 80 ferramentas (32% da lista); o `max_wait`, a espera de
+    45 s e a regra de não gravar direto se repetiam em várias descrições; o manual do
+    `app_command` (3,3 mil) passou a vir pelo `{"cmd":"help"}` (`APP_COMMAND_HELP`). O teste
+    `the_tool_list_stays_small` põe teto de 42 mil e diz as maiores quando passar.
+  - **As instruções** (3,5 → 3,0 mil) passaram a explicar a pasta do projeto (`.aylisproj`,
+    `forms/` e variantes, `themes/`, `assets/`, `locales/`, `<linguagem>/src` e `generated/`,
+    `code-sync.json`, `.aylis/`) e a citar toda ferramenta por grupo (teste
+    `the_instructions_name_every_tool`).
+  - **As respostas** saem em JSON compacto (o indentado gastava ~40%): o `get_layout` do IBGE,
+    36,2 → 15,3 mil. O `list_components` virou uma linha por componente, recuada pelo nível
+    (13,2 → 3,7 mil), e o pai de quem está debaixo de um componente sem nome deixou de sair
+    vazio. O `class_info` traz cada propriedade numa entrada `nome: "tipo"` e as comuns a todo
+    controle só pelo nome, em `common` (`inherited: true` traz com o tipo): o Button, 11,2 → 2,0
+    mil. Teste `the_component_tree_is_one_indented_line_per_component` (`mcp_tokens.rs`).
+  - **Corrigido:** as instruções mandavam chamar o `session_title` primeiro, com o `project`, e
+    a ponte recusava porque o projeto ainda não estava aberto. Agora o título espera o projeto
+    abrir e vai para a IDE dele (`Route::Hold`). A primeira versão da correção mandava o título
+    à IDE fixada da ponte e, como o Claude Desktop divide uma ponte entre conversas, o título da
+    conversa do RTSPlayer apareceu na IDE do Reflex (visto em 15/11); conferido depois com a
+    ponte aberta: o título pedido antes de abrir o IBGE apareceu só na IDE dele. A ponte que já
+    estava rodando com a versão errada (aberta às 17:30) só sai quando o Claude Desktop a
+    reiniciar.
+  - O `AGENTS.md` que o "Novo projeto" grava deixou de repetir as ferramentas do MCP (as
+    instruções do servidor já vão na conversa); ficou a regra de não gravar direto.
+
 **Ajustes de 14/11/2026: o lint dos não visuais e a porta do canal da IDE**
 
 - O `aylis-tool lint` cobrava conteúdo de exemplo também dos componentes não visuais, contra a
@@ -492,10 +594,9 @@ Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 
       pdf-textlayout`); com outras, a chave muda e o erro do publicar manda refazer. Subir o
       `skia-bindings` exige refazer o pacote: o teste `the_constants_follow_the_skia_bindings_in_use`
       falha até lá.
-    - [ ] **Falta o autor:** subir o arquivo (`%USERPROFILE%\.aylis\downloads\skia-binaries-...
-      .tar.gz`) para a pasta de pacotes e o espelho (`aylis-tool packages pack`); sem isso, outra
-      máquina não acha o pacote. E rodar num aparelho de 32 bits
-      ([testes-em-dispositivos.md](testes-em-dispositivos.md)).
+    - O arquivo (`%USERPROFILE%\.aylis\downloads\skia-binaries-...-armv7-linux-androideabi-...
+      .tar.gz`) já está no espelho do autor (o Drive; ele disse em 15/11). Falta rodar num
+      aparelho de 32 bits ([testes-em-dispositivos.md](testes-em-dispositivos.md)).
   - **8.** A ponte do MCP procura a IDE ao lado de si, depois na instalação para a qual o
     `<projeto>/.aylis/sdk` aponta e em `%LOCALAPPDATA%\Programs\aylis`; o erro diz onde procurou.
   - **9.** `max_wait` fica em no máximo 50 s (`MAX_WAIT`; antes aceitava 30 min, e a resposta se
@@ -978,211 +1079,8 @@ feito; teste `aylis-media/tests/repaint.rs`):
   fundo dessa camada, não com o da tela.
 
 Ficam para depois:
-- T06 (o provedor de PDF que embute as fontes), decidido pelo autor.
+- T06 (o provedor de PDF que embute as fontes): feito em 15/11 (veja "O PDF pelo krilla").
 - A pintura por parte no navegador (se o Canvas 2D tem o mesmo efeito do Skia na borda).
-
-**Compositor em outra thread (12/11/2026)**
-
-Pedido do autor: estudar um compositor como o do navegador e o Core Animation, em que as
-camadas já pintadas (lugar, transparência, recorte) são compostas e apresentadas por outra
-thread, e a animação de `translate_x`/`translate_y`/`opacity` segue lisa mesmo com a thread da
-interface ocupada. Aprovado só registrar e medir; a mudança de arquitetura espera o autor.
-
-Decidido pelo autor em 13/11 ("Medir e fundo"): a outra thread fica de fora por enquanto. A
-fazer, na mesma thread:
-- [x] Medir as transições no Direct2D com janela (o padrão no Windows; só a CPU foi medida).
-  Feito em 13/11: o exemplo `transitions` do `aylis-platform-winit` (a mesma tela
-  numa janela; o quadro é a pintura mais o mandar e o apresentar, pelo profiler;
-  `AYLIS_VSYNC=0`, novo, apresenta sem esperar o monitor; o terceiro argumento é o `zoom` do
-  form, `0.6667` no monitor 4K a 150% para valer em pixels). Os números em
-  `medicoes/transicoes.json` (`direct2d_janela`), RX 9070 XT:
-
-  | Cenário | 1920 × 1080: 1º quadro / p50 / p95 | > 16,7 ms | 3840 × 2160: 1º / p50 / p95 | > 16,7 ms |
-  |---|---|---|---|---|
-  | Aba deslizando | 6,8 / 0,5 / 3,1 ms | 1 de 229 | 47 / 1,6 / 24 ms | 18 de 157 |
-  | Aba esmaecendo | 7,0 / 0,7 / 1,2 ms | 0 de 233 | 34 / 2,5 / 3,6 ms | 9 de 204 |
-  | Painel animado | 8,6 / 7,0 / 10 ms | 0 de 198 | 35 / 32 / 36 ms | 60 de 60 |
-  | Painel com `cache_layer` | 10 / 5,8 / 12 ms | 0 de 177 | 23 / 15 / 27 ms | 44 de 105 |
-
-  O que mostrou: na GPU, compor as páginas guardadas quase não custa (p50 de 0,5 a 2,5 ms
-  até em 4K, contra 15 a 38 ms no Skia na CPU); o que passa do quadro é o primeiro (montar as
-  camadas: 34 a 47 ms em 4K, um tranco só) e o painel, que repinta a página de trás a cada
-  quadro (32 ms em 4K, todos acima). O passo seguinte é mesmo o fundo guardado.
-- [x] O fundo atrás de um painel que anda vira camada guardada (hoje ele repinta a página de
-  trás que descobre: 342 a 420 controles por quadro em 1080p). Feito em 13/11:
-  no `paint_node`, os filhos que ficam atrás do último irmão com o lugar ou a transparência
-  animando (`Ui::placement_movers`, lidos uma vez por pintura) e que recortam os filhos viram
-  camada automática enquanto ele anda (`layer_cache` do form ou do projeto); a área descoberta
-  sai da imagem, sem repintar os controles. Se o desenho de dentro do fundo muda mais de uma
-  vez durante o movimento (um medidor, um texto mudando), a camada seria remontada inteira a
-  cada quadro: ele volta a ser pintado por parte (`BACKDROP_BUILDS`). Quando o movimento para,
-  a imagem sai do renderizador (`forget_cached`) na pintura seguinte. Controles por quadro
-  (exatos): painel com `cache_layer` de 342 para 3 (1080p) e de 1329 para 3 (4K); painel sem
-  `cache_layer` de 420 para 185 e de 1488 para 692 (sobram os filhos do próprio painel: o
-  `Panel` não recorta os filhos, então ele mesmo não vira camada). Testes novos no
-  `partial_paint`: `a_sliding_panel_does_not_repaint_the_page_behind_it` (Skia e Direct2D, com
-  e sem `cache_layer`; falha sem a mudança) e
-  `a_backdrop_that_keeps_changing_is_painted_by_parts_again`. O `giant_screen`: áreas e
-  controles iguais à base, e passa nos tempos com a máquina livre.
-
-  Achado na medição com janela (e corrigido): na janela, todo quadro de um movimento perto da
-  borda do form virava pintura inteira (e a pintura inteira refaz todas as camadas). A área da
-  janela é cortada no form, e a sombra e o anel de foco de um controle na borda passam dele
-  (y = −2): a pintura achava que tinha desenhado fora da área (`spilled`) e pedia a janela
-  inteira no quadro seguinte. Com escala quebrada (150% com zoom 0,6667) também, por 0,0001 px
-  de arredondamento. Agora só conta a tinta dentro do form (`Ui::paint_form`), com folga de
-  0,01 (`SPILL_SLACK`). Sem janela não aparecia (lá a área não é cortada).
-
-  Medido com a CPU livre (`medicoes/transicoes.json`, `fundo_guardado`); p50 do quadro:
-
-  | Cenário | Sem janela (Skia CPU) 1080p / 4K | Direct2D na janela 1080p / 4K | Controles por quadro 1080p / 4K |
-  |---|---|---|---|
-  | Painel animado | 4,6 → 3,2 / 19,2 → 14,8 ms | 7,0 → 2,3 / 32 → 5,7 ms | 420 → 185 / 1488 → 692 |
-  | Painel com `cache_layer` | 4,7 → 2,3 / 21,5 → 12,6 ms | 5,8 → 0,5 / 15 → 0,6 ms | 342 → 3 / 1329 → 3 |
-
-  No Direct2D em 4K, os quadros acima de 16,7 ms caíram de 60 em 60 para 5 em 233 (painel
-  animado) e de 44 em 105 para 6 em 217 (com `cache_layer`); os que sobram são o primeiro de
-  cada movimento, que monta a camada (17 ms em 4K, contra 23 a 35 antes). O primeiro quadro sem
-  janela ficou mais caro (10 a 12 ms em 1080p, 42 a 49 ms em 4K na CPU): é a montagem da camada
-  da página inteira.
-- [x] Medir quanto os handlers de apps reais (NoOBS, Tabernáculo) seguram a interface durante
-  uma animação: só com isso a outra thread volta à mesa. Medido no NoOBS em 13/11 (o
-  Tabernáculo não está nesta máquina), com autorização do autor: o NoOBS de desenvolvimento em
-  release, pela IDE, o profiler pelo `app_command`, uma gravação de verdade (o vídeo e a
-  miniatura do cache apagados em seguida; o "Abrir como administrador" desligado só durante a
-  medição e religado). A onda do Gravar (`tmrRipple`) correu 162 ms, 23 quadros:
-  - o `record_click` (a partida da gravação) segurou a interface 2,3 ms no máximo, e cada
-    quadro da onda (`main_ripple_frame`) 0,11 ms; o motor de gravação roda fora da thread da
-    interface;
-  - intervalo entre quadros p50 6,7 ms, máximo 8,6 ms, nenhum acima de 16,7 ms; a pintura
-    p50 1,6 ms (máximo 4,1), 136 controles por quadro.
-
-  Conclusão: no NoOBS, nenhum handler segura a interface a ponto de travar uma animação; a
-  outra thread **não** volta à mesa por ele. Os números em `medicoes/transicoes.json`
-  (`noobs_gravar`). O profiler agora grava também a amostra "controles pintados" de cada
-  quadro.
-
-Como seria, sem quebrar nem piorar o que existe:
-- O `Ui` continua numa thread só (`Rc`/`RefCell`) e os controles e o `Canvas` não mudam: o
-  compositor recebe um retrato (as imagens das camadas e as curvas) e não encosta no `Ui`.
-- Só nos caminhos de GPU (a swap chain do Direct2D, o Skia GPU). O Skia na CPU e o navegador
-  ficam como estão (compor noutra thread na CPU é copiar a tela inteira por quadro).
-- O Direct2D hoje é `D2D1_FACTORY_TYPE_SINGLE_THREADED`: medir a fábrica multithread (trava em
-  cada chamada) ou compor direto no Direct3D/DirectComposition.
-- Textura só para a camada que anima ou tem `cache_layer`, liberada no fim (a IDE abre um `Ui`
-  por aba). Sem animação, a thread dorme.
-- O compositor só assume quando a interface atrasa um quadro, para não somar um quadro de
-  latência no dia a dia. O `partial_paint` e o `giant_screen` seguem valendo.
-- Ajuda só no que move ou esmaece desenho pronto (transições, animação de lugar e
-  transparência, o vídeo e o 3D já na GPU, a rolagem se um dia houver ladrilhos); mudança de
-  conteúdo (hover, texto, dados) segue na interface.
-
-Medição de 12/11 (exemplo `transitions` do `aylis-controls`, Skia na CPU, sem janela; os
-números em `medicoes/transicoes.json`): duas abas cheias de controles e um painel cheio
-deslizando por cima, 250 ms a 60 Hz.
-
-| Cenário | 1920 × 1080: quadro p50 / p95 | > 16,7 ms | 3840 × 2160: p50 / p95 | > 16,7 ms | Controles por quadro (1080p / 4K) |
-|---|---|---|---|---|---|
-| Aba deslizando | 5,9 / 6,7 ms | 0 de 136 | 26 / 29 ms | 136 de 136 | 394 / 1435 |
-| Aba esmaecendo | 13,6 / 16,3 ms | 5 de 136 | 65 / 167 ms | 136 de 136 | 680 / 2654 |
-| Painel animado | 4,9 / 5,3 ms | 0 de 136 | 50 / 73 ms | 136 de 136 | 420 / 1488 |
-| Painel com `cache_layer` | 5,3 / 6,1 ms | 0 de 136 | 29 / 56 ms | 134 de 136 | 342 / 1329 |
-
-O que a medição mostrou:
-- Hoje o problema não é a interface ocupada: é o próprio quadro. As transições de aba repintam
-  a tela inteira a cada quadro (área 100%) e pintam todos os controles das duas páginas; o
-  esmaecer pinta as duas por inteiro com camada de transparência e é o mais caro. Em 4K na CPU,
-  nada cabe em 16,7 ms.
-- O painel com `cache_layer` tem a imagem guardada, mas o que ele descobre ao andar (a página
-  de trás) é repintado: 342 controles por quadro em 1080p.
-- Logo, a maior parte do ganho vem de compor camadas guardadas **na mesma thread** (as duas
-  páginas da transição e o fundo atrás de quem anda, como imagens, sem repintar controles); a
-  outra thread é o passo seguinte, menor.
-- Faltavam a mesma medição no Direct2D com janela e quanto tempo os handlers de apps reais
-  seguram a interface: feitas em 13/11 (as caixas acima).
-- Os tempos em 4K variaram até 2x entre rodadas (outras sessões compilando); a área e os
-  controles são exatos.
-
-As transições com camada guardada (feito em 12/11; pedido do autor: "Sim, investigue"):
-- Por que a camada não valia: (1) o `tick_transitions` chamava `request_repaint` a cada quadro,
-  a janela inteira era repintada e a pintura inteira refaz as camadas (`layer_epoch`); (2) o
-  `apply_transition` mudava o `translate`/`opacity` pelo `control_mut`, que marca o desenho de
-  dentro (a versão da camada subia a cada quadro) e o layout do form; (3) a condição do
-  `cached` exigia `clip_children`, e o `TabItem` não recorta.
-- Agora (`aylis-core`: `transition.rs` e `paint.rs`): o `apply_transition` muda pelo `cb_mut` e
-  marca só o lugar (`damage_placement`), sem `request_repaint`; quem está em transição vai
-  para a camada guardada mesmo sem recortar os filhos (por 250 ms, o que passa da borda da
-  página fica de fora); e a camada guardada anda em pixels inteiros do dispositivo (a imagem
-  montada com a fração de um quadro, reposta arredondada noutro, saía meio pixel diferente da
-  pintura inteira: 32 pixels no primeiro quadro, achados pelo teste novo).
-- Teste `a_tab_transition_moves_the_pages_without_repainting_their_children` (`partial_paint`,
-  Skia e Direct2D, deslizar e esmaecer): os filhos não são repintados durante a transição e
-  cada quadro por parte sai igual à pintura inteira. Passam também o `partial_paint` inteiro,
-  os testes do `aylis-core`, `transitions`, `tab_pages`, `tab_strip`, `tab_strip_drag` e o
-  `cargo check` do `aylis-core` para wasm.
-- Medido com o exemplo `transitions` (antes e depois compilados e rodados alternados, a máquina
-  em 100% de CPU com outras sessões; tempos oscilaram até 2x entre rodadas, os controles são
-  exatos):
-
-| Cenário | Controles por quadro (1080p / 4K) | Quadro p50 1080p (melhor rodada) | Quadro p50 4K (melhor rodada) | 1º quadro 1080p |
-|---|---|---|---|---|
-| Aba deslizando | 394 → 4 / 1435 → 4 | 6,0 → 2,9 ms | 28 → 17 ms | 5 → 14 ms |
-| Aba esmaecendo | 680 → 4 / 2654 → 4 | 13,7 → 9,4 ms | 57 → 45 ms | 5 → 9 ms |
-| Painéis (não mudaram) | 420 e 342 | iguais | iguais | iguais |
-
-- O que piorou: o primeiro quadro, que monta as duas camadas de página inteira (em 1080p
-  ainda dentro de 16,7 ms; em 4K na CPU, de ~27 para 57 ms ou mais). E a memória: as duas
-  imagens (8 MB cada em 1080p, 33 MB em 4K) ficam no cache do renderizador depois da transição
-  até ele se limpar (16 imagens no Skia). Feito depois: soltas no fim da transição
-  (`Canvas::forget_cached`, veja abaixo).
-- O resto do quadro na CPU agora é compor duas imagens do tamanho da tela (largura de banda
-  da memória); na GPU (Direct2D na janela) fica perto de zero (medido em 13/11, acima).
-- O `giant_screen`: a área e os controles iguais à base; com a máquina livre, o teste passa
-  (em 12/11 à tarde, com a CPU em 100%, os dois lados ficaram uns 3x acima da base).
-- Os painéis animados por cima de uma página (`painel animado`, `painel cache_layer`) seguem
-  repintando a página de trás que descobrem (342 a 420 controles por quadro): o fundo como
-  camada foi feito em 13/11 (a 2ª caixa acima).
-
-As camadas guardadas soltas e configuráveis (feito em 12/11; pedido do autor: "pode
-fazer, mais esse comportamento de cache que faz com que armazene em memória eu preciso que fique
-configurável por projeto ou por formulário"):
-- Antes, cada renderizador guardava até 16 imagens e só limpava tudo ao chegar nas 16; as das
-  transições ficavam mortas lá (a chave muda a cada pintura inteira): até 16 páginas inteiras,
-  ~130 MB em 1080p e ~530 MB em 4K, por janela.
-- Agora os três (Skia, Direct2D, Canvas 2D) usam o mesmo `aylis_core::LayerCache`: limite em
-  megabytes (sai a usada há mais tempo; uma maior que o limite inteiro nem é montada) e no
-  painel de memória ("· camadas guardadas"). O núcleo solta a camada de um controle quando ela
-  deixa de valer (`Canvas::forget_cached`): a chave mudou, a transição acabou, o controle foi
-  liberado.
-- No projeto: `image_cache.layers_mb` (padrão 128, de 0 a 4096; 0 = nada guardado) e
-  `image_cache.auto_layers` (padrão ligado), em Projeto → Opções do projeto → Memória. No
-  form: a propriedade `layer_cache` (`project`, `on`, `off`), que troca as camadas automáticas
-  (transição e contêiner animando) só nele. O `cache_layer` pedido num controle vale sempre.
-- Testes: `the_transition_layers_leave_the_renderer_when_it_ends` e
-  `the_form_and_the_project_turn_the_automatic_layers_off` (`aylis-controls/tests/transitions.rs`;
-  o primeiro falha sem o soltar: ficavam 2 imagens),
-  `the_layer_cache_keeps_the_byte_limit_and_forgets_by_owner` (`aylis-core/tests/image_cache.rs`)
-  e o `project_memory_saves_the_image_cache_limits` da IDE com o campo novo. Passam o
-  `aylis-core`, o `aylis-project` e o `aylis-controls` inteiros, o `giant_screen` em release, o
-  `catalog` do `aylis-remote` e o `cargo check` para wasm do núcleo, dos controles, do
-  `aylis-web` e da IDE lite. Catálogo regravado (`update-catalog`), rótulo em
-  `properties.tsv`, os 4 textos novos da IDE traduzidos e a linha na página do `Form` da
-  Landing (à mão; depois regravada pelo `aylis-tool docs` nas releases de 13/11).
-- A falha na IDE que vinha de outra sessão (`every_inspector_property_has_a_readable_translated_name`,
-  sem rótulo para `bring_to_front`, `scheme` e `namespace`) está resolvida: os rótulos estão no
-  `properties.tsv`.
-- Medido com o exemplo `transitions` (agora com a coluna "guardado"), a máquina livre, o HEAD
-  contra o de agora (`medicoes/transicoes.json`):
-
-| Cenário | Quadro p50 1080p | Quadro p50 4K | Acima de 16,7 ms em 4K | 1º quadro 1080p / 4K | Guardado depois |
-|---|---|---|---|---|---|
-| Aba deslizando | 5,8 → 2,1 ms | 22,4 → 13,4 ms | 136 → 24 de 136 | 5,3 → 12,5 / 20,8 → 49,1 ms | 0 MB |
-| Aba esmaecendo | 13,0 → 7,7 ms | 52,3 → 33,9 ms | 136 → 136 | 4,5 → 6,9 / 21,9 → 30,9 ms | 0 MB |
-| Painel animado | 4,7 → 4,6 ms | 21,2 → 19,2 ms | 136 → 136 | igual | 0 MB |
-| Painel `cache_layer` | 4,8 → 4,7 ms | 24,4 → 21,5 ms | 125 → 113 | igual | 4 MB / 16 MB (a dele) |
-
-- Segue mais caro o primeiro quadro da transição (monta as duas camadas); quem preferir o
-  primeiro quadro ao resto desliga com `layer_cache = off` no form ou `auto_layers` no projeto.
 
 **Área de transferência central (12/11/2026)**
 
@@ -2716,9 +2614,14 @@ mudar a solução.
     muda a API. E o ganho medido é pequeno perto do resto: os ~3,5 ms do `String` com 1
     milhão de linhas, contra ~14 ms da cópia do `on_change`. Sem dependência nova (o `ropey`
     não entrou).
-  - Para o autor decidir: (a) o `on_change` sem a cópia quando ninguém escuta (precisa de uma
-    pergunta do `aylis-core`, "alguém trata este evento?", que veja também os
-    interceptadores); (b) o rope, trocando o campo `text` por um método (muda a API e a IDE).
+  - Decidido pelo autor em 15/11: (a), o `on_change` sem a cópia quando ninguém escuta; o rope
+    (trocar o campo `text` por um método) não se faz. Feito em 15/11: `Ui::listens(id, evento)`
+    (o handler, um interceptador ou a ligação a dados) e o Memo só monta o texto do `on_change`
+    quando alguém recebe. Teste `the_change_carries_the_text_only_when_someone_listens`
+    (`memo_scroll`). Medido com 1 milhão de linhas (`large_text`, release), por tecla: 27,6 →
+    19,5 ms (evento 11,5 + quadro 8,0); 100 alterações 16,5 ms cada; desfazer 23 → 9,8 ms por
+    passo. Na IDE o editor de código tem handler (manda o texto ao servidor de linguagem), então
+    lá a cópia continua.
 - [ ] 27. Tabela da documentação com o texto da primeira coluna por cima da segunda (achado na
   conferência do roteiro em 05/11, na Landing publicada para a web): na página "Fontes e
   ícones offline", os caminhos `resources/fonts/...` e `resources/icons/...` passam da

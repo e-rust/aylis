@@ -75,53 +75,88 @@ pub fn schema(ui: &Ui) -> Value {
 /// `invoke`. `None` se a classe não existe. É o `class_info` do MCP: sem ele, o agente tentava
 /// às cegas (`trimming: "ellipsis"`, `radius` num `Label`, `on_double_click`; relatório do
 /// RTSPlayer, 10/11).
-pub fn class_info(ui: &Ui, class: &str) -> Option<Value> {
+///
+/// Enxuto para o agente (15/11): cada propriedade numa entrada `nome: "tipo"` (o enum com os
+/// valores, `a | b | c`), e as propriedades e os eventos comuns a todo controle (posição,
+/// `align`, fonte, cores, `on_click`...) só pelo nome, em `common`: iguais em todas as classes,
+/// eram dois terços de cada resposta. `inherited` traz os comuns com o tipo, como os da classe.
+pub fn class_info(ui: &Ui, class: &str, inherited: bool) -> Option<Value> {
     let entry = ui.registry().iter().find(|c| c.name.eq_ignore_ascii_case(class))?;
     let instance = (entry.create)();
-    let mut properties = Vec::new();
+    let (common_props, common_events) = if inherited || instance.control().is_none() { (Vec::new(), Vec::new()) } else { common_members(ui) };
+    let mut properties = Map::new();
     let mut events = Vec::new();
     for info in prop_infos_of(instance.as_ref()) {
         if info.kind == PropKind::Event {
-            events.push(json!(info.name));
+            if !common_events.contains(&info.name) {
+                events.push(json!(info.name));
+            }
             continue;
         }
-        let mut p = Map::new();
-        p.insert("name".into(), json!(info.name));
-        p.insert("type".into(), json!(kind_label(info.kind)));
-        p.insert("category".into(), json!(info.category));
-        if let PropKind::Enum(names) | PropKind::Set(names) = info.kind {
-            p.insert("values".into(), json!(names));
+        if common_props.contains(&info.name) {
+            continue;
         }
-        if let Some(example) = kind_schema(info.kind).get("examples") {
-            p.insert("examples".into(), example.clone());
-        }
-        if let Some(hint) = TEXT_FORMATS.iter().find(|(name, _)| *name == info.name).map(|(_, h)| h) {
-            p.insert("format".into(), json!(hint));
-        }
+        let mut text = match TEXT_FORMATS.iter().find(|(name, _)| *name == info.name) {
+            Some((_, hint)) => format!("texto: {hint}"),
+            None => match info.kind {
+                PropKind::Enum(names) => names.join(" | "),
+                PropKind::Set(names) => format!("lista de: {}", names.join(", ")),
+                kind => kind_label(kind).to_string(),
+            },
+        };
         if info.read_only {
-            p.insert("read_only".into(), json!(true));
+            text.push_str(" (só leitura)");
         }
         if info.runtime {
-            p.insert("runtime_only".into(), json!(true));
+            text.push_str(" (só em execução)");
         }
-        properties.push(Value::Object(p));
+        properties.insert(info.name.to_string(), json!(text));
     }
     let methods: Vec<Value> = instance
         .methods()
         .iter()
         .map(|m| {
-            let args: Vec<Value> = m.args.iter().enumerate().map(|(i, k)| json!({ "name": m.params.get(i).copied().unwrap_or(""), "type": kind_label(*k) })).collect();
-            json!({ "name": m.name, "args": args, "returns": m.returns.map(kind_label) })
+            let args: Vec<String> = m.args.iter().enumerate().map(|(i, k)| format!("{}: {}", m.params.get(i).copied().unwrap_or("_"), kind_label(*k))).collect();
+            let returns = m.returns.map(|k| format!(" -> {}", kind_label(k))).unwrap_or_default();
+            json!(format!("{}({}){returns}", m.name, args.join(", ")))
         })
         .collect();
-    Some(json!({
-        "class": entry.name,
-        "category": entry.category,
-        "properties": properties,
-        "events": events,
-        "methods": methods,
-        "note": "no JSON: margins/padding como número, [h, v] ou [l, t, r, b]; \"margins.left\": 4 muda um lado; cores como \"#RRGGBB\", token do tema ou com opacidade (\"primary/15\", \"#2563EB/15\"); uma propriedade de aparência vazia (null no get_component, como stroke_width) usa o valor do estilo do tema, que pode ter borda (o Panel nos temas shadcn): ponha 0 para tirar",
-    }))
+    let mut out = Map::new();
+    out.insert("class".into(), json!(entry.name));
+    out.insert("category".into(), json!(entry.category));
+    out.insert("properties".into(), Value::Object(properties));
+    out.insert("events".into(), json!(events));
+    if !methods.is_empty() {
+        out.insert("methods".into(), json!(methods));
+    }
+    if !common_props.is_empty() {
+        out.insert("common".into(), json!({ "properties": common_props, "events": common_events, "note": "os de todo controle, só os nomes: inherited true traz os tipos" }));
+    }
+    out.insert(
+        "note".into(),
+        json!("margins/padding: número, [h, v] ou [l, t, r, b] (\"margins.left\": 4 muda um lado); cor: \"#RRGGBB\", token do tema (primary, text_muted) ou com opacidade (\"primary/15\"); aparência vazia (null) usa o estilo do tema, que pode ter borda: 0 tira"),
+    );
+    Some(Value::Object(out))
+}
+
+/// As propriedades e os eventos que todas as classes visuais têm (os do `ControlBase`), na ordem
+/// em que aparecem: a interseção do registro, e não uma lista escrita à mão, para acompanhar o
+/// que a base ganhar.
+fn common_members(ui: &Ui) -> (Vec<&'static str>, Vec<&'static str>) {
+    let mut common: Option<Vec<(&'static str, bool)>> = None;
+    for class in ui.registry().iter() {
+        let instance = (class.create)();
+        if instance.control().is_none() {
+            continue;
+        }
+        let names: Vec<(&'static str, bool)> = prop_infos_of(instance.as_ref()).iter().map(|i| (i.name, i.kind == PropKind::Event)).collect();
+        common = Some(match common {
+            None => names,
+            Some(before) => before.into_iter().filter(|n| names.contains(n)).collect(),
+        });
+    }
+    let all = common.unwrap_or_default();
+    (all.iter().filter(|(_, e)| !e).map(|(n, _)| *n).collect(), all.iter().filter(|(_, e)| *e).map(|(n, _)| *n).collect())
 }
 
 /// Como escrever as propriedades de texto com estrutura (o `class_info` mostra): o tipo diz só

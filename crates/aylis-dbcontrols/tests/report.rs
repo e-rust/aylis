@@ -85,6 +85,7 @@ fn report(n: usize) -> (Ui, ComponentId, ComponentId) {
     aylis_controls::register(&mut ui);
     aylis_data::register(&mut ui);
     aylis_dbcontrols::register(&mut ui);
+    ui.services_mut().pdf = Some(Box::new(aylis_providers::KrillaPdf));
     let form = ui.add_root(Form::new("relatório", 800.0, 600.0));
     let cds = ui.add(ClientDataSet::new(), form);
     ui.add(Field::new("regiao", FieldType::String), cds);
@@ -175,14 +176,14 @@ fn long_reports_break_pages_with_header_and_footer_on_each() {
 fn the_pdf_opens_with_every_page() {
     let (mut ui, rep, _) = report(30);
     let pages = report::prepare(&mut ui, rep).pages.len();
-    let pdf = report::to_pdf(&mut ui, rep);
-    assert!(pdf.starts_with(b"%PDF-1.4"));
+    let pdf = report::to_pdf(&mut ui, rep).unwrap();
+    assert!(pdf.starts_with(b"%PDF-"));
     let sizes = aylis_docview::pdf::page_sizes(&pdf).unwrap();
     assert_eq!(sizes.len(), pages);
     assert_eq!(sizes[0], (595.0, 842.0));
     // Deitada.
     ui.set_prop(rep, "landscape", true).unwrap();
-    let sizes = aylis_docview::pdf::page_sizes(&report::to_pdf(&mut ui, rep)).unwrap();
+    let sizes = aylis_docview::pdf::page_sizes(&report::to_pdf(&mut ui, rep).unwrap()).unwrap();
     assert_eq!(sizes[0], (842.0, 595.0));
 }
 
@@ -215,6 +216,7 @@ fn master_detail(items: &[i64]) -> (Ui, ComponentId, ComponentId) {
     aylis_controls::register(&mut ui);
     aylis_data::register(&mut ui);
     aylis_dbcontrols::register(&mut ui);
+    ui.services_mut().pdf = Some(Box::new(aylis_providers::KrillaPdf));
     let form = ui.add_root(Form::new("mestre-detalhe", 800.0, 600.0));
     let orders = ui.add(ClientDataSet::new(), form);
     ui.add(Field::new("numero", FieldType::Integer), orders);
@@ -335,16 +337,20 @@ fn sub_details_break_pages_and_the_preview_follows_the_detail() {
 #[test]
 fn a_big_report_is_written_page_by_page_with_the_same_pages() {
     let (mut ui, rep, _) = report(1500);
-    let whole = report::to_pdf(&mut ui, rep);
+    let whole = report::to_pdf(&mut ui, rep).unwrap();
     let pages = report::prepare(&mut ui, rep).pages.len();
     assert!(pages > 50, "páginas: {pages}");
     let mut streamed = Vec::new();
     let written = report::write_pdf(&mut ui, rep, &mut streamed).unwrap();
     assert_eq!(written, pages);
     assert_eq!(streamed, whole, "o mesmo PDF, byte a byte");
-    let text = String::from_utf8_lossy(&streamed);
-    assert!(text.contains(&format!("{pages} de {pages}")), "o [PAGES] da última página");
-    assert!(text.contains(&format!("/Count {pages}")));
+    assert_eq!(aylis_docview::pdf::page_sizes(&streamed).unwrap().len(), pages);
+    // O [PAGES] da última página: o provedor recebe as páginas com o total certo (o krilla
+    // grava o texto como glifos comprimidos, então os textos são lidos de um provedor de teste).
+    let texts = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+    ui.services_mut().pdf = Some(Box::new(Texts(texts.clone())));
+    report::write_pdf(&mut ui, rep, std::io::sink()).unwrap();
+    assert!(texts.borrow().last().is_some_and(|t: &String| t.contains(&format!("{pages} de {pages}"))), "o [PAGES] da última página");
     // A memória não cresce com os registros (conferência de 08/11: 30.000 registros deixavam
     // +1 MB e 300.000, +16 MB, nas marcas de repintura de cada rótulo e nos valores dos
     // totais juntados numa lista). Fica só o índice do PDF, uns 24 bytes por página.
@@ -367,10 +373,36 @@ fn a_huge_report_keeps_the_memory_flat() {
     assert!(peak < 1.0, "o pico: {peak:+.3} MB (só o índice do PDF cresce, ~24 bytes por página)");
 }
 
-/// A memória do `write_pdf` com `rows` registros (metade em cada região), gravando num
-/// destino que não guarda nada: (páginas, o que ficou vivo depois, o pico durante), em MB.
+/// Um provedor de PDF de teste que só guarda o texto de cada página (o `[PAGES]` e a memória do
+/// lado do Aylis, sem a do gerador de PDF).
+struct Texts(std::rc::Rc<std::cell::RefCell<Vec<String>>>);
+
+impl aylis_core::providers::PdfProvider for Texts {
+    fn begin(&self, _: f32, _: f32) -> Result<Box<dyn aylis_core::providers::PdfDocument>, String> {
+        Ok(Box::new(Texts(self.0.clone())))
+    }
+}
+
+impl aylis_core::providers::PdfDocument for Texts {
+    fn add_page(&mut self, page: &aylis_core::pages::Page) -> Result<(), String> {
+        let mut texts = self.0.borrow_mut();
+        // Só a última página fica (a memória medida não cresce com o teste).
+        texts.clear();
+        texts.push(page.texts().join(" "));
+        Ok(())
+    }
+
+    fn finish(self: Box<Self>) -> Result<Vec<u8>, String> {
+        Ok(Vec::new())
+    }
+}
+
+/// A memória do `write_pdf` com `rows` registros (metade em cada região), num provedor de PDF
+/// que não guarda nada (a memória do lado do Aylis; a do krilla cresce com as páginas, que ele
+/// monta inteiras antes de gravar): (páginas, o que ficou vivo depois, o pico durante), em MB.
 fn write_pdf_memory(rows: usize) -> (usize, f64, f64) {
     let (mut ui, rep, _) = report(rows / 2);
+    ui.services_mut().pdf = Some(Box::new(Texts(Default::default())));
     let mb = |b: isize| b as f64 / (1024.0 * 1024.0);
     let base = meter::start();
     let pages = report::write_pdf(&mut ui, rep, std::io::sink()).unwrap();

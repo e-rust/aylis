@@ -22,7 +22,7 @@ fn textos(pages: &PageSet) -> Vec<String> {
 fn salvar(ui: &mut Ui, nome: &str) {
     if let Ok(pasta) = std::env::var("AYLIS_REPORT_PDF") {
         let rep = ui.find_path(&format!("frmPrincipal.{nome}")).unwrap();
-        std::fs::write(std::path::Path::new(&pasta).join(format!("{nome}.pdf")), report::to_pdf(ui, rep)).unwrap();
+        std::fs::write(std::path::Path::new(&pasta).join(format!("{nome}.pdf")), report::to_pdf(ui, rep).unwrap()).unwrap();
     }
 }
 
@@ -76,6 +76,6 @@ fn vendas_por_vendedor_com_itens_e_parcelas() {
     assert!(t.iter().any(|s| s.starts_with("Pagamento em ")), "as parcelas");
     assert!(t.iter().any(|s| s.contains("ª · vence em ")), "as parcelas");
     assert!(!t.iter().any(|s| s.contains('[')), "sobrou um colchete: {:?}", t.iter().find(|s| s.contains('[')));
-    assert!(report::to_pdf(ui, rep).starts_with(b"%PDF"));
+    assert!(report::to_pdf(ui, rep).unwrap().starts_with(b"%PDF"));
     salvar(ui, "repVendedores");
 }

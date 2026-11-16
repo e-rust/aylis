@@ -236,3 +236,28 @@ fn dragging_the_minimap_to_the_bottom_reaches_the_last_line() {
     let shown: Vec<String> = canvas.ops.iter().filter_map(|op| if let Op::Text { text, .. } = op { text.starts_with("linha").then(|| text.clone()) } else { None }).collect();
     assert!(shown.iter().any(|t| t == "linha 20000"), "o fim não apareceu; à vista: {:?}", shown.first());
 }
+
+/// O `on_change` leva o texto inteiro: com handler ele chega com o texto novo; sem ninguém que
+/// receba (handler, interceptador ou ligação a dados), o Memo nem copia o texto (decidido pelo
+/// autor em 15/11: a cópia era o que mais custava por tecla num texto grande).
+#[test]
+fn the_change_carries_the_text_only_when_someone_listens() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let form = ui.add_root(Form::new("f", 400.0, 300.0));
+    let memo = ui.add(Memo::new("abc"), form);
+    ui.control_mut(memo).unwrap().set_rect(10.0, 10.0, 380.0, 280.0);
+    ui.layout();
+    ui.set_focus(memo);
+    assert!(!ui.listens(memo, "on_change"));
+    ui.text_input(form, "x");
+    ui.process_events();
+
+    let got = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+    let g = got.clone();
+    ui.on(memo, "on_change", move |_, _, args| g.borrow_mut().push(args.text().unwrap_or_default().to_string()));
+    assert!(ui.listens(memo, "on_change"));
+    ui.text_input(form, "y");
+    ui.process_events();
+    assert_eq!(got.borrow().last().map(String::as_str), Some("xyabc"), "{:?}", got.borrow());
+}

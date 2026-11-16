@@ -19,55 +19,50 @@ pub const DEFAULT_PORT: u16 = 7341;
 /// cliente (o chat do Claude Desktop, o Claude Code...) sem instalar nada além do servidor, e
 /// por isso o Aylis não tem plugin (decidido com o autor em 08/11).
 pub const INSTRUCTIONS: &str = "\
-IDE do Aylis: framework de interface com designer, forms em JSON e o código dos eventos numa \
-pasta por linguagem do projeto (<projeto>/rust, <projeto>/python...).
+IDE do Aylis: framework de interface com designer; os forms em JSON e o código dos eventos numa \
+das 8 linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java).
 
-Começo da conversa: chame session_title com um título curto do que ela vai fazer (aparece na \
-barra da janela da IDE, para o usuário saber quem está nela). A primeira chamada de ferramenta \
-abre a IDE, se ela não estiver aberta, e essa IDE fica ligada a esta conversa. Depois, \
-project_info; sem projeto, open_project (caminho do .aylisproj) ou new_project.
+O projeto (a pasta do .aylisproj):
+- <Nome>.aylisproj: a configuração (project_settings, set_project_setting);
+- forms/: um JSON por form ou DataModule, em subpastas se quiser; x.android.json é a variante de \
+uma plataforma;
+- themes/, assets/ (fonts, images, audio, video) e locales/: os temas, os arquivos e as \
+traduções do app;
+- <linguagem>/ (rust, python...): o código; src/ é do usuário e generated/ é da IDE (somente \
+leitura: generate_code refaz); code-sync.json diz o que falta portar entre as linguagens;
+- .aylis/: da IDE, não mexa.
 
-Projeto em toda chamada: passe `project` (o caminho do .aylisproj desta conversa) em todas as \
-ferramentas, session_title inclusive. É ele que leva a chamada à IDE certa: o cliente pode dividir \
-esta conexão entre conversas, cada uma no seu projeto e na sua IDE. Com mais de uma IDE aberta, a \
-chamada sem `project` é recusada; ide_list mostra as abertas.
+Começo: open_project (ou new_project), session_title com um título curto (aparece na janela da \
+IDE) e project_info. A primeira chamada abre a IDE, se preciso. Passe `project` (o .aylisproj) em \
+toda chamada: com mais de uma IDE aberta, sem ele a chamada é recusada (ide_list mostra as abertas; ide_select fixa uma).
 
-Regra principal: com o projeto aberto na IDE, NÃO grave nem edite os arquivos dele com as suas \
-ferramentas de arquivo (forms/*.json, temas, .aylisproj, código). A IDE guarda o que está aberto \
-na memória, não vê a mudança no disco e a perde ao salvar. Mude tudo por aqui:
-- código: read_code (o texto do editor, com o que não foi salvo) e edit_code (troca um trecho \
-exato; o usuário desfaz com Ctrl+Z); open_code abre um fonte;
-- forms: open_form, list_components, get_component, set_property, add_component, \
-delete_component, get_layout, set_layout e patch_layout (uma parte do form); class_info diz as \
-propriedades, os valores e os eventos de uma classe (consulte antes de montar um layout), e o \
-set_layout devolve todos os erros de uma vez (dry_run só confere);
-- salvar: save (com all, tudo o que mudou);
-- generated/ é somente leitura: generate_code refaz.
+Regra principal: com o projeto aberto, NÃO grave nem edite os arquivos dele com as suas \
+ferramentas de arquivo: a IDE guarda o que está aberto na memória e perderia a mudança ao salvar. \
+Mude tudo pelas ferramentas abaixo (cada descrição diz o resto).
+- forms: open_form, list_components, get_component, set_property, set_properties, add_component, \
+delete_component, move_component, get_layout, set_layout, patch_layout, new_form, new_frame, \
+move_form, remove_form, set_main_form, select, undo, redo, save, screenshot, designer_snapshot, \
+compare_image;
+- classes: list_classes, class_info (consulte antes de montar um layout), component_docs (o que \
+o tipo não explica), search_icons;
+- código: read_code, edit_code, open_code, sources, usages, generate_code, editor_*;
+- compilar e executar: check, build, run, run_without_debug, stop, output, test, publish, \
+targets, set_target. Chamada que passa de ~45 s volta \"ainda compilando\" ou in_progress: \
+build_wait ou task_status esperam o resto;
+- app em execução: app_command ({\"cmd\":\"help\"} lista os comandos), profile, recording, \
+coverage;
+- depurar: debug, breakpoint, breakpoint_condition, debug_command, debug_state, debug_variables, \
+debug_frame;
+- projeto: project_settings, set_project_setting, get_theme, set_theme, translations, \
+set_translations, set_app_icon, resolve_conflict, close_project;
+- o resto da IDE: ide_menus e menu, com os dialog_* para o diálogo que abrir; status.
 
-Compilar e executar: build compila e espera até 45 s; a resposta diz se compilou, com os erros \
-e as últimas linhas, ou \"ainda compilando\" (a primeira compilação leva minutos): chame build_wait \
-até vir o resultado. Corrija com edit_code e chame build de novo. run_without_debug executa, run \
-executa no depurador; os dois esperam a compilação do mesmo jeito e dizem se o app abriu (ou caiu \
-logo). output mostra as mensagens (a compilação e o programa, com o nível de cada linha) e status a \
-situação; uma chamada que passar de ~45 s responde in_progress com o número da tarefa, e task_status \
-traz o fim.Com o app aberto, app_command lê e mexe na tela dele ({\"cmd\": \"tree\"}, \
-{\"cmd\": \"click\", \"target\": \"btnSalvar\"}).
-
-Conferir e medir: check (antes de compilar), test (os testes do projeto), profile (os handlers e \
-os quadros mais lentos do app em execução), recording (a última gravação de uso, resumida) e \
-coverage (os handlers que nenhum uso ou teste disparou).
-
-Como o código do Aylis é escrito: componentes pelo acesso tipado (self.btnSalvar, \
-frmCliente.edtNome), nunca procurando pelo nome em texto (os tipos gerados, como Button e Label, \
-têm o nome dos controles do aylis::prelude: no código do form use os do acesso tipado e, se \
-precisar dos do prelude, pelo caminho, aylis::prelude::Label); handlers devolvem Result e a recusa é \
-um erro; mensagem ao usuário pelo MessageDialog do Aylis, nunca a caixa do sistema; nada de banco \
-na tela (o ClientDataSet guarda os dados e o delta, o backend aplica); thread volta à tela por \
-post/post_to (no navegador, aylis::background).
-
-O que não estiver nas ferramentas: ide_menus lista o que o usuário faz pelos menus; menu escolhe \
-um item e os dialog_* preenchem o diálogo que abrir. usages acha onde um componente, campo ou \
-handler é usado.";
+Código do Aylis: componentes pelo acesso tipado (self.btnSalvar, frmCliente.edtNome), nunca \
+procurando pelo nome em texto (os tipos gerados têm o nome dos controles do aylis::prelude: no \
+form use os do acesso tipado e os do prelude pelo caminho, aylis::prelude::Label); handlers \
+devolvem Result e a recusa é um erro; mensagem ao usuário pelo MessageDialog do Aylis, nunca a \
+caixa do sistema; nada de banco na tela (o ClientDataSet guarda os dados e o delta, o backend \
+aplica); thread volta à tela por post/post_to (no navegador, aylis::background).";
 
 /// A porta e o token do servidor.
 #[derive(Clone, Debug, PartialEq)]
@@ -174,6 +169,9 @@ pub fn bridge() -> Result<(), String> {
     // cada conversa trabalha numa IDE: nada aqui é "a IDE da sessão", e sim o de cada IDE.
     let mut titles: std::collections::HashMap<u32, String> = std::collections::HashMap::new();
     let mut told: Vec<u32> = Vec::new();
+    // Os títulos pedidos antes de o projeto abrir (o `project` como veio, o título): vão para a
+    // IDE do projeto quando o `open_project` ou o `new_project` acha ou abre a dele.
+    let mut pending_titles: Vec<(String, String)> = Vec::new();
     // O último projeto pedido (o `project` das chamadas): para achar a IDE instalada que ele usa.
     let mut last_project: Option<PathBuf> = None;
     for line in stdin.lock().lines() {
@@ -214,6 +212,19 @@ pub fn bridge() -> Result<(), String> {
             match route_call(&name, project.as_deref(), &ides) {
                 Route::Ide(pid) => pinned = Some(pid),
                 Route::Default => {}
+                Route::Hold => {
+                    // O título de um projeto ainda fechado espera o projeto abrir: ir para a IDE
+                    // fixada levava o título de uma conversa para a IDE de outra (a ponte é
+                    // dividida; visto em 15/11 com o Reflex e o RTSPlayer).
+                    let title = request["params"]["arguments"]["title"].as_str().unwrap_or_default().trim().to_string();
+                    let wanted = project.clone().unwrap_or_default();
+                    pending_titles.retain(|(p, _)| p != &wanted);
+                    pending_titles.push((wanted, title.clone()));
+                    let text = format!("Título guardado: \"{title}\" aparece na IDE do projeto quando ele abrir (open_project).");
+                    let reply = json!({ "jsonrpc": "2.0", "id": request["id"].clone(), "result": { "content": [{ "type": "text", "text": text }] } });
+                    writeln!(stdout, "{reply}").and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
+                    continue;
+                }
                 Route::Refuse(text) => {
                     let reply = json!({ "jsonrpc": "2.0", "id": request["id"].clone(), "result": { "content": [{ "type": "text", "text": text }], "isError": true } });
                     writeln!(stdout, "{reply}").and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
@@ -296,6 +307,16 @@ pub fn bridge() -> Result<(), String> {
         };
         let answered = !reply.contains("\"isError\":true") && !reply.contains("\"error\":");
         writeln!(stdout, "{}", reply.trim_end()).and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
+        // O projeto abriu: o título que esperava por ele vai para a IDE dele.
+        if answered && !pending_titles.is_empty() && (request["params"]["name"] == "open_project" || request["params"]["name"] == "new_project") {
+            if let Some(ide) = pinned.and_then(|pid| crate::instances::list().into_iter().find(|i| i.pid == pid)) {
+                if let Some(at) = pending_titles.iter().position(|(wanted, _)| project_matches(&ide, wanted)) {
+                    let (_, title) = pending_titles.remove(at);
+                    titles.insert(ide.pid, title);
+                    announce(&mut told, pinned, &session, &client, &titles);
+                }
+            }
+        }
         if offline && answered && request["method"] != "initialize" && request["method"] != "tools/list" && crate::instances::list().iter().any(|i| i.mcp_port.is_some()) {
             offline = false;
             writeln!(stdout, "{}", json!({ "jsonrpc": "2.0", "method": "notifications/tools/list_changed" })).and_then(|_| stdout.flush()).map_err(|e| e.to_string())?;
@@ -320,6 +341,8 @@ enum Route {
     Default,
     /// Recusada, com o motivo para o agente.
     Refuse(String),
+    /// O `session_title` de um projeto que nenhuma IDE tem ainda: o título espera o projeto abrir.
+    Hold,
 }
 
 /// A IDE de uma chamada (`name`) pelo `project` dela. Abrir e criar projeto escolhem a IDE pelo
@@ -335,6 +358,9 @@ fn route_call(name: &str, project: Option<&str>, ides: &[crate::instances::Insta
             let found: Vec<&crate::instances::Instance> = ides.iter().filter(|i| project_matches(i, wanted)).collect();
             match found.as_slice() {
                 [one] => Route::Ide(one.pid),
+                // O título pode vir antes do open_project: espera o projeto abrir (15/11). Não vai
+                // para a IDE fixada, que numa ponte dividida pode ser a de outra conversa.
+                [] if name == "session_title" => Route::Hold,
                 [] => Route::Refuse(format!("o projeto \"{wanted}\" não está aberto em nenhuma IDE do Aylis: abra com open_project (ide_list mostra as abertas)")),
                 _ => Route::Refuse(format!("mais de uma IDE aberta tem \"{wanted}\" no projeto: passe o caminho inteiro do .aylisproj")),
             }
@@ -669,7 +695,7 @@ fn unknown_arguments(name: &str, arguments: &Value) -> Option<String> {
 /// As ferramentas da própria ponte.
 fn own_tools() -> Value {
     json!([
-        { "name": "session_title", "description": "Dá um título a esta sessão (um resumo curto do que ela vai fazer), que aparece na barra da janela da IDE do Aylis ligada a ela. Chame no começo da conversa; abre a IDE se ela não estiver aberta.", "inputSchema": { "type": "object", "properties": { "title": { "type": "string", "description": "o título, curto (ex.: Tela de cadastro de clientes)" }, "project": project_property() }, "required": ["title"] } },
+        { "name": "session_title", "description": "Dá um título curto a esta conversa, mostrado na janela da IDE do Aylis ligada a ela.", "inputSchema": { "type": "object", "properties": { "title": { "type": "string", "description": "o título, curto (ex.: Tela de cadastro de clientes)" }, "project": project_property() }, "required": ["title"] } },
         { "name": "ide_list", "description": "Lista as IDEs do Aylis abertas (cada uma com o projeto dela) e qual está fixada nesta conversa.", "inputSchema": { "type": "object", "properties": {} } },
         { "name": "ide_select", "description": "Fixa nesta conversa a IDE do projeto informado (o caminho do .aylisproj ou parte do nome, como ide_list mostra), ou a do processo `pid` (duas IDEs com o mesmo projeto). As chamadas seguintes vão para ela.", "inputSchema": { "type": "object", "properties": { "project": { "type": "string", "description": "caminho ou parte do nome do projeto; vazio: a IDE sem projeto" }, "pid": { "type": "integer", "description": "o processo da IDE, como ide_list mostra (opcional)" } } } }
     ])
@@ -858,10 +884,33 @@ fn tool(name: &str, description: &str, mut properties: Value, required: &[&str])
     json!({ "name": name, "description": description, "inputSchema": { "type": "object", "properties": properties, "required": required } })
 }
 
-/// O esquema do argumento `project`.
-fn project_property() -> Value {
-    json!({ "type": "string", "description": "o projeto desta conversa: o caminho do .aylisproj (ou parte do nome, como ide_list mostra). Passe sempre: escolhe a IDE do projeto, e com mais de uma IDE aberta a chamada sem ele é recusada" })
+/// O `max_wait` das ferramentas que esperam (o prazo de uma chamada é ~50 s no cliente MCP).
+fn max_wait() -> Value {
+    json!({ "type": "integer", "description": "segundos de espera (padrão 45, até 50)" })
 }
+
+/// O esquema do argumento `project` (o porquê está nas instruções: aqui ele se repete em toda
+/// ferramenta, e cada palavra custa em todas).
+fn project_property() -> Value {
+    json!({ "type": "string", "description": "o .aylisproj desta conversa (ou parte do nome)" })
+}
+
+/// O manual do `app_command` (`{"cmd": "help"}`): na descrição da ferramenta ele ia em toda
+/// conversa (3,3 mil caracteres), e só quem usa o app em execução precisa.
+pub const APP_COMMAND_HELP: &str = "\
+- {\"cmd\":\"snapshot\"}: a imagem da janela, como imagem (com \"target\": só aquele componente; \"form\": outro form);\n\
+             - {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true}: a árvore (sem eles, inteira, que pode ser enorme; \"target\" começa num componente; cada nó traz `rect`, onde ficou depois do layout);\n\
+             - {\"cmd\":\"rect\",\"target\":\"pnlX\"}, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"get\",\"target\":\"edtNome\",\"prop\":\"text\"}: posição, propriedades, um valor;\n\
+             - {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{...}), {\"cmd\":\"focus\",...}, {\"cmd\":\"invoke\",\"target\":...,\"method\":...,\"args\":[]}, {\"cmd\":\"highlight\",\"target\":...};\n\
+             - {\"cmd\":\"click\",\"target\":\"btnSalvar\"}: o clique do componente; com \"modifiers\" (\"Ctrl+Shift\" ou [\"ctrl\",\"shift\"]; ctrl, shift, alt, meta), \"x\"/\"y\" (dentro do componente; padrão o meio), \"button\" (left, right, middle) ou \"double\":true, o mouse de verdade naquele ponto (Ctrl+clique e Shift+clique na lista, o menu do botão direito);\n\
+             - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click;\n\
+             - {\"cmd\":\"key\",\"target\":\"frmX\",\"key\":\"Ctrl+A\"} (\"Enter\", \"Shift+Tab\", \"Alt+S\"; \"modifiers\" soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}): a tecla no controle com foco do form; {\"cmd\":\"type\",\"target\":\"frmX\",\"text\":\"Ana\"}: o texto digitado nele;\n\
+             - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program);\n\
+             - {\"cmd\":\"profile\",\"on\":true} começa a medir e {\"cmd\":\"profile_take\"} devolve os blocos medidos, as amostras e a memória ({\"cmd\":\"profile\",\"on\":false} para);\n\
+             - {\"cmd\":\"reload\",\"kind\":\"form\"|\"theme\"|\"locale\",\"name\":\"frmX\",\"text\":\"...\"}: o hot reload (a IDE já manda ao salvar);\n\
+             - {\"cmd\":\"close\"}: fecha o app;\n\
+             - {\"cmd\":\"apps\"}: os apps conectados (respondido pela IDE).\n\
+             O target é o nome, o caminho (\"frmX.fraY.lblTotal\") ou o id; um nome que está em mais de um lugar é recusado com os caminhos. Com mais de um app conectado, `app` escolhe (o pid ou o nome do projeto, como `apps` lista); sem ele, o último que conectou.";
 
 /// As ferramentas que a IDE oferece. Ficam aqui, e não na IDE, para a ponte responder a lista
 /// inteira mesmo com a IDE fechada: o Claude Code não pede a lista de novo quando a IDE abre
@@ -871,7 +920,7 @@ pub fn ide_tools() -> Vec<Value> {
     vec![
         tool("project_info", "O projeto aberto: nome, linguagem, forms (principal, criados no início, DataModules, variantes, uses) e o form aberto.", json!({}), &[]),
         tool("open_form", "Abre um form (ou DataModule) do projeto no designer; `variant` abre a variante de uma plataforma (android, desktop...).", json!({ "name": s("nome do form"), "variant": s("variante, opcional") }), &["name"]),
-        tool("list_components", "A árvore de componentes do form aberto: nome, classe e pai.", json!({}), &[]),
+        tool("list_components", "A árvore de componentes do form aberto: uma linha por componente, `nome Classe`, recuada dois espaços por nível.", json!({}), &[]),
         tool("get_component", "As propriedades de um componente do form aberto (como no layout JSON). Vazio: o form.", json!({ "component": s("nome do componente") }), &[]),
         tool("set_properties", "Muda várias propriedades em vários componentes do form aberto numa chamada (cada propriedade, um passo do desfazer). `properties` é {\"propriedade\": valor}, com os valores como no set_property; sem `components`, o form.", json!({ "components": { "type": "array", "items": { "type": "string" }, "description": "nomes dos componentes" }, "properties": { "type": "object", "description": "propriedade → valor" } }), &["properties"]),
         tool("move_component", "Passa um componente para dentro de outro (o pai novo) no form aberto, opcionalmente na posição `index` entre os filhos (desfazível).", json!({ "component": s("nome do componente"), "parent": s("nome do pai novo (vazio: o form)"), "index": { "type": "integer", "description": "posição entre os filhos, opcional" } }), &["component"]),
@@ -881,7 +930,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool("get_layout", "O layout JSON inteiro do form aberto.", json!({}), &[]),
         tool(
             "set_layout",
-            "Troca o layout inteiro do form aberto pelo JSON dado (desfazível). Confere tudo antes e devolve todos os erros de uma vez (nada é trocado se houver erro); `dry_run` só confere. Um layout grande pode vir de um arquivo (`layout_file`) em vez do texto. Para mudar uma parte, `patch_layout`.",
+            "Troca o layout inteiro do form aberto (desfazível). Confere antes e devolve todos os erros de uma vez (nada muda se houver erro); `dry_run` só confere; `layout_file` lê de um arquivo. Para uma parte, patch_layout.",
             json!({ "layout": s("o documento JSON ({\"aylis\":1,\"root\":{...}})"), "layout_file": s("caminho de um arquivo com o documento, no lugar de `layout`"), "dry_run": { "type": "boolean", "description": "só conferir, sem trocar" } }),
             &[],
         ),
@@ -902,37 +951,37 @@ pub fn ide_tools() -> Vec<Value> {
         tool("designer_snapshot", "A imagem do form aberto no designer (como ficou, sem executar).", json!({}), &[]),
         tool(
             "compare_image",
-            "Compara a tela com uma imagem de referência (`reference`, um PNG: a tela antiga, um protótipo): o designer, ou o app em execução com `source: \"app\"`. Devolve quanto difere (%) e a imagem das diferenças em vermelho.",
+            "Compara a tela com um PNG de referência (a tela antiga, um protótipo): o designer, ou o app em execução com `source` app. Devolve quanto difere (%) e a imagem das diferenças.",
             json!({ "reference": s("caminho do PNG de referência"), "source": s("designer (padrão) ou app"), "form": s("com source app: outro form aberto, opcional") }),
             &["reference"],
         ),
         tool(
             "class_info",
-            "Tudo o que uma classe aceita: cada propriedade com o tipo, a categoria e os valores (de um enum: `trimming` → none, character, word), os eventos (`on_dbl_click`...) e os métodos. Consulte antes de montar um layout.",
-            json!({ "class": s("nome da classe (Button, Label, DataRepeater...)") }),
+            "O que uma classe aceita: as propriedades com o tipo (o enum com os valores), os eventos e os métodos; as comuns a todo controle (posição, align, fonte, cores, on_click...) vêm só pelo nome (`inherited` true: com o tipo). Consulte antes de montar um layout.",
+            json!({ "class": s("nome da classe (Button, Label, DataRepeater...)"), "inherited": { "type": "boolean", "description": "também as comuns a todo controle, com o tipo" } }),
             &["class"],
         ),
         tool("save", "Salva o form aberto (ou, com `all`, todos os forms e os fontes alterados nos editores).", json!({ "all": { "type": "boolean" } }), &[]),
         tool("generate_code", "Gera (ou atualiza) o código do projeto: handlers dos forms e Cargo.toml. Salva antes os forms abertos com alterações (como o Gerar código da IDE); um form novo ainda sem arquivo precisa do save antes.", json!({}), &[]),
         tool("open_project", "Abre um projeto (.aylisproj), como Arquivo → Abrir projeto.", json!({ "path": s("caminho do .aylisproj") }), &["path"]),
         tool("open_code", "Abre na janela de código (uma aba por arquivo) o código de um form (F12) ou um fonte qualquer (`file`), na linha dada.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "line": { "type": "integer" } }), &[]),
-        tool("read_code", "O texto de um fonte como está no editor da IDE (com o que ainda não foi salvo), ou do disco se não estiver aberto: o código de um form (`form`) ou um fonte (`file`, caminho ou relativo à pasta do código). `start_line`/`end_line` (a partir de 1) leem só um trecho. Leia por aqui, não pelo disco: o editor pode ter mudanças não salvas.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "start_line": { "type": "integer" }, "end_line": { "type": "integer" } }), &[]),
-        tool("edit_code", "Edita um fonte pelo editor da IDE (abre se preciso): troca `old` (o texto exato, com linhas em volta para ser único) por `new`, como uma edição do usuário: o Ctrl+Z desfaz, o servidor de linguagem fica sabendo e a aba fica alterada. `all` troca todas as vezes; `save` salva em seguida. Com `old` vazio e um `file` que ainda não existe (relativo à pasta do código, como `src/nucleo.rs`), cria o fonte com `new` (em Rust, declare depois o `mod` dele). Use sempre esta ferramenta para mudar código do projeto, nunca gravando o arquivo direto: a IDE com ele aberto não veria a mudança e a perderia ao salvar. O código gerado (`generated/`) é somente leitura, e os forms (.json) mudam por set_property/set_layout.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "old": s("o trecho exato a trocar"), "new": s("o texto novo"), "all": { "type": "boolean" }, "save": { "type": "boolean" } }), &["old", "new"]),
+        tool("read_code", "O texto de um fonte como está no editor da IDE (com o que não foi salvo), ou do disco se não estiver aberto: o código de um form (`form`) ou um fonte (`file`, caminho ou relativo à pasta do código); `start_line`/`end_line` (a partir de 1) leem só um trecho.", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "start_line": { "type": "integer" }, "end_line": { "type": "integer" } }), &[]),
+        tool("edit_code", "Edita um fonte pelo editor da IDE (abre se preciso), como o usuário (o Ctrl+Z desfaz, o servidor de linguagem fica sabendo): troca `old` (o texto exato, com linhas em volta para ser único) por `new`; `all` troca todas as vezes, `save` salva. Com `old` vazio e um `file` que ainda não existe (relativo à pasta do código, como `src/nucleo.rs`), cria o fonte (em Rust, declare depois o `mod`).", json!({ "form": s("nome do form (vazio: o aberto)"), "file": s("caminho de um fonte, opcional"), "old": s("o trecho exato a trocar"), "new": s("o texto novo"), "all": { "type": "boolean" }, "save": { "type": "boolean" } }), &["old", "new"]),
         tool("editor_type","Digita no editor de código ativo (como o teclado: pares que fecham, sugestões do servidor...).", json!({ "text": s("o texto") }), &["text"]),
         tool("editor_key", "Aperta uma tecla no editor de código (\"Ctrl+Space\", \"F12\", \"Alt+Down\", \"Ctrl+/\", \"Enter\", \"Escape\"...); os atalhos dos menus da janela também valem.", json!({ "key": s("a tecla") }), &["key"]),
         tool("editor_hover", "O mouse parado numa linha e coluna (a partir de 1) do editor ativo: pede a dica (o tipo, a documentação, o erro).", json!({ "line": { "type": "integer" }, "column": { "type": "integer" } }), &["line", "column"]),
         tool("editor_state", "O que o editor de código mostra: arquivo, cursor, linha, seleção, a lista de sugestões, a dica, a ajuda dos parâmetros, os erros, o painel de baixo e o servidor de linguagem.", json!({}), &[]),
-        tool("dialog_state", "O diálogo aberto por cima (Ir para a linha, Renomear, Abrir fonte, Novo projeto, a paleta de comandos...), só o que aparece: o título, os campos (`fields`), as escolhas (`combos`: o rótulo, o texto e o índice escolhidos e os itens), as listas (`lists`), as caixas (`checks`), os botões (`buttons`: `text`, `label` único quando há textos iguais, como \"Corrigir… — Android SDK (Android)\", `id`, `hint` e `enabled`) e os textos.", json!({}), &[]),
+        tool("dialog_state", "O diálogo aberto por cima da IDE, só o que aparece: o título, os campos (`fields`), as escolhas (`combos`), as listas (`lists`), as caixas (`checks`), os botões (`buttons`, com `label` único quando há textos iguais e `id`) e os textos.", json!({}), &[]),
         tool(
             "dialog_select",
-            "Escolhe um item de uma escolha (ComboBox) ou lista (ListBox) do diálogo aberto, como o usuário (o diálogo reage à troca): `item` é o texto do item ou o índice (a partir de 0); `list`, opcional, é o rótulo do campo (\"Modelo\", \"Linguagem\") ou o número `list` de `dialog_state` (sem ele: a primeira que tiver o item).",
+            "Escolhe um item de uma escolha ou lista do diálogo aberto, como o usuário: `item` é o texto ou o índice (a partir de 0); `list`, opcional, o rótulo do campo ou o número de dialog_state (sem ele: a primeira que tiver o item).",
             json!({ "item": { "description": "o texto do item ou o índice (número)" }, "list": { "description": "o rótulo do campo ou o número da lista, opcional" } }),
             &["item"],
         ),
         tool("dialog_type", "Digita no campo com foco do diálogo aberto.", json!({ "text": s("o texto") }), &["text"]),
         tool("dialog_check", "Marca ou desmarca uma caixa (CheckBox) do diálogo aberto, pelo texto dela.", json!({ "text": s("o texto da caixa"), "checked": { "type": "boolean" } }), &["text"]),
         tool("dialog_click", "Clica num botão do diálogo aberto, pelo texto dele (\"OK\", \"Instalar as marcadas\", \"Fechar\"...), pelo `label` ou pelo `id` que `dialog_state` dá. Com dois botões de mesmo texto, recusa e lista os `label`/`id` de cada um.", json!({ "text": s("o texto ou o label do botão"), "id": { "type": "integer", "description": "o id do botão (de dialog_state), no lugar de text" } }), &[]),
-        tool("menu", "Escolhe um item de menu da IDE (ou da janela de código), como o usuário: pelo caminho (\"Executar/Configurar linguagens…\", \"Arquivo/Salvar\"; o & e as reticências não importam), por um caminho de menu de contexto como `ide_menus` lista (\"Projeto › Novo form…\"; no Object Inspector, a propriedade no lugar de \"(propriedade)\": \"Object Inspector › caption › Ligar a campo…\") ou pelo `id` de `ide_menus`. Um caminho que vale para mais de um item é recusado com os candidatos (caminho e id).", json!({ "path": s("os textos separados por / (ou por ›, com o lugar na frente)"), "id": { "type": "integer", "description": "o id do item (de ide_menus), no lugar de path" } }), &[]),
+        tool("menu", "Escolhe um item de menu da IDE, como o usuário: pelo caminho (\"Arquivo/Salvar\"; & e reticências não importam), por um caminho de menu de contexto como ide_menus lista (\"Projeto › Novo form…\") ou pelo `id` de ide_menus. Um caminho ambíguo é recusado com os candidatos.", json!({ "path": s("os textos separados por / (ou por ›, com o lugar na frente)"), "id": { "type": "integer", "description": "o id do item (de ide_menus), no lugar de path" } }), &[]),
         tool("dialog_key", "Aperta uma tecla no diálogo aberto (\"Enter\" é o OK, \"Escape\" cancela, \"Down\" desce na lista...).", json!({ "key": s("a tecla") }), &["key"]),
         tool("sources", "Os fontes do projeto na linguagem ativa (os do Ctrl+F12).", json!({}), &[]),
         tool(
@@ -942,12 +991,12 @@ pub fn ide_tools() -> Vec<Value> {
             &[],
         ),
         tool("breakpoint", "Liga (`on` true, o padrão) ou desliga o ponto de parada de uma linha (a partir de 1), como o clique na calha ou F5. `file`: caminho do código ou nome do form.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "on": { "type": "boolean" } }), &["file", "line"]),
-        tool("run", "Executar (F9): com ponto de parada, executa no depurador; depurando, continua. Espera a compilação (até `max_wait` s, 45 por padrão) e responde com os erros dela, ou que o app está rodando (ou que abriu e caiu); compilando ainda, `build_wait` espera o resto. A saída aparece em `output`; a depuração, em `debug_state`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
-        tool("debug", "Depurar na IDE (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada. Espera a compilação como o `run`.", json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
+        tool("run", "Executar (F9): com ponto de parada, no depurador; depurando, continua. Espera a compilação como o `build` e diz se o app abriu (ou caiu logo).", json!({ "max_wait": max_wait() }), &[]),
+        tool("debug", "Depurar (Ctrl+F5): compila e executa no depurador mesmo sem ponto de parada. Espera como o `build`.", json!({ "max_wait": max_wait() }), &[]),
         tool(
             "build_wait",
-            "Espera a compilação em andamento (do `build` ou do `run` que respondeu \"ainda compilando\") até `max_wait` s (padrão 45) e devolve o resultado: se compilou, os erros e as últimas linhas, ou que o app está rodando. Sem nada em andamento, o resultado da última.",
-            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
+            "Espera a compilação em andamento (do build, run, debug ou publish que respondeu \"ainda compilando\") e devolve o resultado; sem nada em andamento, o da última.",
+            json!({ "max_wait": max_wait() }),
             &[],
         ),
         tool("debug_command", "Comando de depuração: continue (F9), step_over (F8), step_in (F7), step_out (Shift+F8), pause, stop (Ctrl+F2), ou run_to (F4) com `file` e `line`.", json!({ "command": s("continue | step_over | step_in | step_out | pause | stop | run_to"), "file": s("para run_to"), "line": { "type": "integer" } }), &["command"]),
@@ -955,14 +1004,14 @@ pub fn ide_tools() -> Vec<Value> {
         tool("status", "A linha de situação da IDE e as chamadas ainda em andamento (`tasks`, de ferramentas que passaram do prazo).", json!({}), &[]),
         tool(
             "task_status",
-            "O fim de uma chamada que respondeu `in_progress` (a IDE levou mais que o prazo de uma chamada, ~45 s, e seguiu trabalhando): espera até `max_wait` s (padrão 30) e devolve o resultado dela, ou que ainda está em andamento. Sem `task`, lista as chamadas em andamento e as terminadas que ninguém leu.",
-            json!({ "task": { "type": "integer", "description": "o número da tarefa (o `task` da resposta)" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 30, no máximo 50: o prazo do cliente MCP)" } }),
+            "O fim de uma chamada que respondeu `in_progress`: espera até `max_wait` e devolve o resultado, ou que ainda está em andamento. Sem `task`, lista as em andamento e as terminadas que ninguém leu.",
+            json!({ "task": { "type": "integer" }, "max_wait": max_wait() }),
             &[],
         ),
         tool("stop", "Para o programa em execução.", json!({}), &[]),
         tool(
             "output",
-            "As últimas linhas das mensagens, cada uma com a origem (`source`: build, a compilação e a geração; program, o app e o rastro de eventos) e o nível (`level`: error, warning, success, step, info, note). Por padrão, as da última execução (como o painel); `previous` traz também as de antes, das execuções e dos projetos anteriores (o histórico guarda as últimas 2000 linhas, e trocar de projeto não o limpa).",
+            "As últimas linhas das mensagens, cada uma com a origem (`source`: build ou program) e o nível (`level`). Por padrão, as da última execução; `previous`: também as de antes (o histórico guarda 2000 linhas).",
             json!({
                 "lines": { "type": "integer", "description": "quantas (padrão 50)" },
                 "source": { "type": "string", "enum": ["all", "build", "program"], "description": "de onde (padrão all)" },
@@ -972,14 +1021,14 @@ pub fn ide_tools() -> Vec<Value> {
             &[],
         ),
         tool("ide_menus", "Todos os itens dos menus da IDE (e da janela de código): o caminho e o `id` para `menu`, o atalho, se está habilitado e marcado. Os menus de contexto (clique direito) vêm uma vez só, com o lugar na frente (\"Object Inspector › (propriedade) › Ligar a campo…\") e `context` true. O que o usuário faz pelos menus, o agente faz com `menu` e os `dialog_*`.", json!({}), &[]),
-        tool("new_project", "Cria um projeto (como Arquivo → Novo projeto) e abre: `dir` é a pasta onde criar (a do projeto é criada dentro; com `here`, o projeto fica direto em `dir`, mesmo que ela já tenha outras coisas, como o app dentro de um repositório), `language` uma das linguagens (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java). Crie onde o projeto vai ficar: a confiança é pela pasta, e um projeto movido abre em modo restrito. Como o Novo projeto da IDE, grava o guia para agentes de IA (AGENTS.md da linguagem, um CLAUDE.md que aponta para ele e o .mcp.json com o aylis-tool mcp; os que já existem na pasta ficam), a não ser com `agent_guide` false.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" }, "agent_guide": { "type": "boolean", "description": "o guia para agentes de IA (padrão true)" } }), &["dir", "name"]),
+        tool("new_project", "Cria um projeto e abre: `dir` é onde criar (a pasta do projeto nasce dentro; `here`: direto em `dir`), `language` uma das 8 (padrão Rust). Crie onde ele vai ficar: a confiança é pela pasta. Grava o guia para agentes de IA (AGENTS.md, CLAUDE.md e .mcp.json; os que existem ficam), salvo com `agent_guide` false.", json!({ "dir": s("pasta onde criar"), "name": s("nome do projeto"), "language": s("linguagem (padrão Rust)"), "here": { "type": "boolean", "description": "o projeto direto em `dir` (sem a pasta com o nome)" }, "agent_guide": { "type": "boolean", "description": "o guia para agentes de IA (padrão true)" } }), &["dir", "name"]),
         tool("close_project", "Fecha o projeto (volta à tela inicial).", json!({}), &[]),
         tool("resolve_conflict", "Resolve um arquivo aberto na IDE que mudou no disco e também tem alterações não salvas (as outras ferramentas recusam com o diff até lá): `keep` \"disk\" recarrega do disco, \"ide\" fica com a da IDE.", json!({ "file": s("o arquivo (como veio no aviso, ou relativo ao projeto)"), "keep": { "type": "string", "enum": ["disk", "ide"] } }), &["file", "keep"]),
-        tool("new_form", "Cria um form no projeto aberto e abre no designer (`data_module` true: um DataModule), como Projeto → Novo form. `folder` é a subpasta de forms/ onde ele nasce (cadastros, painel/inicio; sem caminho absoluto nem ..); `file` escolhe o arquivo inteiro (forms/painel/inicio.json); sem eles, forms/ e o nome do arquivo sai do nome do form.", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" }, "folder": s("subpasta de forms/, opcional (cadastros)"), "file": s("arquivo do form, opcional (forms/painel/inicio.json)") }), &["name"]),
+        tool("new_form", "Cria um form (com `data_module`, um DataModule) e abre no designer. `folder`: subpasta de forms/ (cadastros); `file`: o arquivo inteiro (forms/painel/inicio.json); sem eles, forms/ com o nome do form.", json!({ "name": s("nome do form (frmClientes)"), "data_module": { "type": "boolean" }, "folder": s("subpasta de forms/, opcional (cadastros)"), "file": s("arquivo do form, opcional (forms/painel/inicio.json)") }), &["name"]),
         tool(
             "new_frame",
-            "Cria um frame: um form do projeto (como o new_form, com `folder`) com o fundo transparente (mostra o fundo de quem o põe) e, opcionalmente, do tamanho dado. Com `host`, também põe um Frame mostrando ele naquele form (dentro de `parent`, com `frame_name` e `align` opcionais), que fica aberto; sem `host`, o form do frame fica aberto para pôr os componentes.",
-            json!({ "name": s("nome do form do frame (fraCartao)"), "folder": s("subpasta de forms/, opcional"), "width": { "type": "number" }, "height": { "type": "number" }, "host": s("form onde pôr o Frame, opcional"), "parent": s("contêiner no host, opcional"), "frame_name": s("nome do Frame no host, opcional"), "align": s("align do Frame no host, opcional (top, client...)") }),
+            "Cria um frame: um form de fundo transparente (como o new_form, com `folder`), do tamanho dado se houver. Com `host`, põe também um Frame mostrando ele naquele form (`parent`, `frame_name` e `align` opcionais).",
+            json!({ "name": s("nome do form do frame (fraCartao)"), "folder": s("subpasta de forms/, opcional"), "width": { "type": "number" }, "height": { "type": "number" }, "host": s("form onde pôr o Frame, opcional"), "parent": s("opcional"), "frame_name": s("opcional"), "align": s("opcional") }),
             &["name"],
         ),
         tool("move_form", "Move ou renomeia o arquivo de um form (o JSON, as variantes e o fonte dele em cada linguagem; o módulo de código sai do nome do arquivo). A aba aberta passa a gravar no lugar novo, e o código é gerado de novo.", json!({ "name": s("nome do form"), "file": s("o arquivo novo, dentro de forms/ (forms/painel/inicio.json)") }), &["name", "file"]),
@@ -989,12 +1038,12 @@ pub fn ide_tools() -> Vec<Value> {
         tool("set_project_setting", "Muda uma chave da configuração do projeto (como Projeto → Opções) e salva. `key` com pontos para dentro (`output.dir`, `publish.version`); `value` é o JSON.", json!({ "key": s("a chave (output.dir, publish.app_name...)"), "value": { "description": "o valor JSON" } }), &["key", "value"]),
         tool("targets", "Os alvos (desktop, linux, android, web, ios) e o escolhido para Executar e Compilar.", json!({}), &[]),
         tool("set_target", "Escolhe o alvo do Executar (desktop, linux, android, web, ios).", json!({ "target": s("o alvo") }), &["target"]),
-        tool("build", "Compilar (Ctrl+F9): compila sem executar (`release` true: otimizado) e espera até `max_wait` s (padrão 45, dentro do prazo de um cliente MCP): a resposta diz se compilou, com os erros e as últimas linhas, ou \"ainda compilando\" (a primeira compilação de um projeto leva minutos): aí chame `build_wait`. `wait` false só começa.", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
-        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9); `release` true compila otimizado. Espera a compilação como o `run` e devolve os erros dela, ou que o app está rodando (ou que abriu e caiu).", json!({ "release": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }), &[]),
+        tool("build", "Compilar (Ctrl+F9), sem executar (`release` true: otimizado). Espera até `max_wait`: a resposta diz se compilou, com os erros e as últimas linhas, ou \"ainda compilando\" (a primeira compilação leva minutos): aí build_wait. `wait` false só começa.", json!({ "release": { "type": "boolean" }, "wait": { "type": "boolean" }, "max_wait": max_wait() }), &[]),
+        tool("run_without_debug", "Executar sem depurar (Ctrl+Shift+F9; `release` true: otimizado). Espera como o `build` e diz se o app abriu (ou caiu logo).", json!({ "release": { "type": "boolean" }, "max_wait": max_wait() }), &[]),
         tool(
             "publish",
-            "Publica para um alvo (desktop, linux, android, web, ios), como Executar → Publicar, e espera como o `build` (até `max_wait` s; depois, `build_wait`; `wait` false só começa). `bundle`: Android em AAB (Play Store) no lugar do APK; `installer`: o instalador do Windows (o tipo das Opções do projeto); `abis`: as arquiteturas do Android desta publicação (arm64-v8a, x86_64; armeabi-v7a ainda falha: o Skia não tem binário pronto para 32 bits; sem ele, as de `publish.android.abis` do projeto, e sem essas, arm64-v8a e x86_64). Nome, versão e identificador do app ficam em `publish.*` (set_project_setting); o ícone, em set_app_icon. A senha da chave do Android não passa pelo MCP: vem de AYLIS_KEYSTORE_PASSWORD (sem ela, a chave de depuração). No Windows, o .exe e o instalador saem assinados com o certificado das Opções da IDE (Assinatura), se houver; sem ele, a publicação avisa e sai sem assinatura; `sign` false não assina desta vez. O certificado e a senha do .pfx nunca passam pelo MCP.",
-            json!({ "target": s("o alvo (padrão: o escolhido)"), "out_dir": s("pasta de saída, opcional"), "bundle": { "type": "boolean" }, "installer": { "type": "boolean" }, "sign": { "type": "boolean", "description": "Windows: false publica sem assinar (padrão: assina se houver certificado nas Opções)" }, "abis": { "type": "array", "items": { "type": "string" }, "description": "Android: arm64-v8a, x86_64, armeabi-v7a (padrão: as do projeto)" }, "wait": { "type": "boolean" }, "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
+            "Publica para um alvo (desktop, linux, android, web, ios), como Executar → Publicar; espera como o `build`. `bundle`: AAB (Play Store); `installer`: o instalador do Windows; `sign` false: sem assinar. Nome, versão e identificador ficam em `publish.*` (set_project_setting). Certificados e senhas não passam pelo MCP (a chave do Android vem de AYLIS_KEYSTORE_PASSWORD).",
+            json!({ "target": s("o alvo (padrão: o escolhido)"), "out_dir": s("pasta de saída, opcional"), "bundle": { "type": "boolean" }, "installer": { "type": "boolean" }, "sign": { "type": "boolean" }, "abis": { "type": "array", "items": { "type": "string" }, "description": "Android: arm64-v8a, x86_64 (armeabi-v7a ainda falha)" }, "wait": { "type": "boolean" }, "max_wait": max_wait() }),
             &[],
         ),
         tool(
@@ -1005,7 +1054,7 @@ pub fn ide_tools() -> Vec<Value> {
         ),
         tool(
             "set_theme",
-            "Muda um token (`section` colors e `key` primary, radius e md...) ou um estilo (`section` styles e `key` Button.danger, com o objeto do estilo) no tema do projeto, como no arquivo de tema; `value` null tira a chave (volta a valer a da base). Com um tema da biblioteca, nasce um arquivo em themes/ partindo dele, e o projeto passa a usá-lo. Confere o tema antes de gravar; os forms abertos mostram o tema novo.",
+            "Muda um token (`section` colors, `key` primary...) ou um estilo (`section` styles, `key` Button.danger, com o objeto do estilo) no tema do projeto; `value` null tira a chave. Com um tema da biblioteca, nasce um arquivo em themes/ partindo dele. Confere antes de gravar; os forms abertos mostram o tema novo.",
             json!({ "section": s("colors, fonts, radius, spacing, durations, shadows, styles ou components"), "key": s("o token ou a classe do estilo"), "value": { "description": "o valor JSON (\"#RRGGBB\", número, objeto do estilo; null tira)" } }),
             &["section", "key", "value"],
         ),
@@ -1023,7 +1072,7 @@ pub fn ide_tools() -> Vec<Value> {
         ),
         tool(
             "set_app_icon",
-            "O ícone do app (como Opções do projeto → Ícone do app): `image` é um PNG de 256 px ou mais (ou SVG), relativo ao projeto ou um caminho completo (copiado para assets/images); `background` (#RRGGBB) é o fundo do ícone adaptativo do Android (vazio: a cor da borda da imagem). Gera já o .ico do Windows; as outras plataformas saem ao publicar. Devolve os avisos da imagem.",
+            "O ícone do app: `image` é um PNG de 256 px ou mais (ou SVG), copiado para assets/images; `background` (#RRGGBB), o fundo do ícone adaptativo do Android (vazio: a cor da borda). Gera o .ico do Windows; as outras plataformas saem ao publicar.",
             json!({ "image": s("a imagem do ícone"), "background": s("#RRGGBB, opcional") }),
             &["image"],
         ),
@@ -1035,25 +1084,25 @@ pub fn ide_tools() -> Vec<Value> {
         ),
         tool(
             "test",
-            "Roda os testes do projeto na ferramenta da linguagem (Rust: cargo test; Python: unittest; Go: go test; TypeScript: bun/node --test; C#: dotnet test) e devolve o resumo: quantos passaram e falharam, cada teste, o que os que falharam mostraram e os erros de compilação. Salva os fontes e gera o código antes. Espera até `max_wait` s (padrão 45); ainda rodando, chame de novo (espera a mesma rodada). No modo restrito, não roda.",
-            json!({ "max_wait": { "type": "integer", "description": "segundos de espera nesta chamada (padrão 45, no máximo 50: o prazo do cliente MCP)" } }),
+            "Roda os testes do projeto na ferramenta da linguagem e devolve o resumo: quantos passaram e falharam, cada teste, o que os que falharam mostraram e os erros de compilação. Salva os fontes e gera o código antes. Ainda rodando depois de `max_wait`, chame de novo (espera a mesma rodada). No modo restrito, não roda.",
+            json!({ "max_wait": max_wait() }),
             &[],
         ),
         tool(
             "screenshot",
-            "A foto de um form do projeto como o designer mostra (`form`; vazio: o aberto), sem abrir aba: o aberto sai com o que não foi salvo, o outro é lido do arquivo; `variant` é a de uma plataforma (android...). Com `source: \"app\"`, a janela do app em execução (`form`: outro form dele).",
+            "A imagem de um form como o designer mostra (`form`; vazio: o aberto, com o que não foi salvo), sem abrir aba; `variant`, a de uma plataforma. Com `source` app, a janela do app em execução.",
             json!({ "form": s("nome do form, opcional"), "variant": s("variante, opcional"), "source": s("designer (padrão) ou app") }),
             &[],
         ),
         tool(
             "profile",
-            "Mede o app em execução (o Profiler, pelo canal de desenvolvimento): `action` start começa a medir (do zero), take devolve o resumo do que foi medido desde o start e stop para e devolve o resumo. O resumo traz os handlers mais lentos (chamadas, total, próprio, média e máximo em ms), os quadros mais lentos (e quantos passaram de 16,7 ms), o que mais tomou tempo e a memória, não o rastro inteiro; `top` diz quantos de cada (padrão 10). `trace_file` grava também o rastro no formato de eventos do Chrome (.json, abre no Perfetto) ou no do Profiler (.aylisprof). Com o Profiler da IDE aberto ao mesmo tempo, cada um vê só o que pegou.",
-            json!({ "action": { "type": "string", "enum": ["start", "take", "stop"], "description": "start, take (padrão) ou stop" }, "top": { "type": "integer", "description": "quantos de cada lista (padrão 10)" }, "trace_file": s("onde gravar o rastro inteiro, opcional (.json: Chrome/Perfetto; .aylisprof: o do Profiler)"), "app": { "description": "o app (pid ou nome do projeto), como no app_command; padrão: o último que conectou" } }),
+            "Mede o app em execução: `action` start começa do zero, take devolve o resumo desde o start, stop para e devolve. O resumo: os handlers e os quadros mais lentos (`top` de cada, padrão 10), o que mais tomou tempo e a memória. `trace_file` grava o rastro inteiro (.json do Chrome/Perfetto ou .aylisprof).",
+            json!({ "action": { "type": "string", "enum": ["start", "take", "stop"], "description": "start, take (padrão) ou stop" }, "top": { "type": "integer" }, "trace_file": s("caminho .json ou .aylisprof, opcional"), "app": { "description": "pid ou projeto; padrão: o último que conectou" } }),
             &[],
         ),
         tool(
             "recording",
-            "Resume a gravação de uso mais recente (.aylisrec, a caixa-preta do EventRecorder): o app, quando, a duração, quantos acontecimentos de cada tipo, os erros com a mensagem, os componentes mais clicados, os handlers que rodaram, os forms abertos e os últimos acontecimentos. `source` app (padrão) procura as gravações do app do projeto (a pasta do EventRecorder dos forms, ou a padrão dele); ide, as da própria IDE. `file` lê uma gravação dada.",
+            "Resume a última gravação de uso (.aylisrec): quando, a duração, os acontecimentos por tipo, os erros, os componentes mais clicados, os handlers e os últimos acontecimentos (`last`, padrão 20). `source` app (padrão) ou ide; `file` lê uma gravação dada.",
             json!({ "source": { "type": "string", "enum": ["app", "ide"], "description": "de quem (padrão app)" }, "file": s("uma gravação .aylisrec, opcional"), "last": { "type": "integer", "description": "quantos dos últimos acontecimentos (padrão 20)" } }),
             &[],
         ),
@@ -1071,20 +1120,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool("breakpoint_condition", "Ponto de parada com condição (`condition`, uma expressão da linguagem) e/ou contagem de passagens (`hits`); vazias: um ponto comum.", json!({ "file": s("arquivo ou nome do form"), "line": { "type": "integer" }, "condition": s("expressão, opcional"), "hits": s("passagens, opcional") }), &["file", "line"]),
         tool(
             "app_command",
-            "Um comando para o app em execução, pelo canal de desenvolvimento (o app compilado pela IDE, com a feature `dev`, que o Executar liga; um app publicado não conecta). `command` é o comando do protocolo remoto do Aylis:\n\
-             - {\"cmd\":\"snapshot\"}: a imagem da janela, como imagem (com \"target\": só aquele componente; \"form\": outro form);\n\
-             - {\"cmd\":\"tree\",\"depth\":2,\"visible_only\":true}: a árvore (sem eles, inteira, que pode ser enorme; \"target\" começa num componente; cada nó traz `rect`, onde ficou depois do layout);\n\
-             - {\"cmd\":\"rect\",\"target\":\"pnlX\"}, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"get\",\"target\":\"edtNome\",\"prop\":\"text\"}: posição, propriedades, um valor;\n\
-             - {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{...}), {\"cmd\":\"focus\",...}, {\"cmd\":\"invoke\",\"target\":...,\"method\":...,\"args\":[]}, {\"cmd\":\"highlight\",\"target\":...};\n\
-             - {\"cmd\":\"click\",\"target\":\"btnSalvar\"}: o clique do componente; com \"modifiers\" (\"Ctrl+Shift\" ou [\"ctrl\",\"shift\"]; ctrl, shift, alt, meta), \"x\"/\"y\" (dentro do componente; padrão o meio), \"button\" (left, right, middle) ou \"double\":true, o mouse de verdade naquele ponto (Ctrl+clique e Shift+clique na lista, o menu do botão direito);\n\
-             - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click;\n\
-             - {\"cmd\":\"key\",\"target\":\"frmX\",\"key\":\"Ctrl+A\"} (\"Enter\", \"Shift+Tab\", \"Alt+S\"; \"modifiers\" soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}): a tecla no controle com foco do form; {\"cmd\":\"type\",\"target\":\"frmX\",\"text\":\"Ana\"}: o texto digitado nele;\n\
-             - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program);\n\
-             - {\"cmd\":\"profile\",\"on\":true} começa a medir e {\"cmd\":\"profile_take\"} devolve os blocos medidos, as amostras e a memória ({\"cmd\":\"profile\",\"on\":false} para);\n\
-             - {\"cmd\":\"reload\",\"kind\":\"form\"|\"theme\"|\"locale\",\"name\":\"frmX\",\"text\":\"...\"}: o hot reload (a IDE já manda ao salvar);\n\
-             - {\"cmd\":\"close\"}: fecha o app;\n\
-             - {\"cmd\":\"apps\"}: os apps conectados (respondido pela IDE).\n\
-             O target é o nome, o caminho (\"frmX.fraY.lblTotal\") ou o id; um nome que está em mais de um lugar é recusado com os caminhos. Com mais de um app conectado, `app` escolhe (o pid ou o nome do projeto, como `apps` lista); sem ele, o último que conectou.",
+            "Um comando para o app em execução, pelo canal de desenvolvimento (o app compilado pela IDE, com a feature `dev`; um app publicado não conecta). `command` é um comando do protocolo remoto: {\"cmd\":\"help\"} lista todos, com os argumentos. Os mais usados: tree (a árvore; passe depth e visible_only), snapshot (a imagem da janela), props, get, set, click, drag, key e type, com `target` (nome, caminho frmX.fraY.lblTotal ou id). Com mais de um app conectado, `app` escolhe (o pid ou o projeto; padrão: o último que conectou).",
             json!({ "command": { "type": "object", "description": "o comando" }, "app": { "description": "o app: o pid (número) ou o nome do projeto, como {\"cmd\":\"apps\"} lista; padrão: o último que conectou" } }),
             &["command"],
         ),
@@ -1263,6 +1299,33 @@ mod bridge_tests {
         // Abrir e criar projeto escolhem a IDE pelo caminho deles.
         assert_eq!(route_call("open_project", None, &ides), Route::Default);
         assert_eq!(route_call("new_project", None, &ides), Route::Default);
+        // O título pode vir antes de abrir o projeto (as instruções pediam assim e era recusado).
+        assert_eq!(route_call("session_title", Some("C:/apps/Novo/Novo.aylisproj"), &ides), Route::Hold);
+        assert!(matches!(route_call("project_info", Some("C:/apps/Novo/Novo.aylisproj"), &ides), Route::Refuse(_)));
+    }
+
+    /// As instruções citam toda ferramenta (os `editor_*` e `dialog_*` pelo prefixo): é por elas
+    /// que o agente sabe o que existe sem ler as 84 descrições.
+    #[test]
+    fn the_instructions_name_every_tool() {
+        let all: Vec<String> = ide_tools().iter().chain(own_tools().as_array().unwrap().iter()).map(|t| t["name"].as_str().unwrap().to_string()).collect();
+        for name in all {
+            let named = INSTRUCTIONS.contains(name.as_str()) || ["editor_", "dialog_"].iter().any(|p| name.starts_with(p) && INSTRUCTIONS.contains(&format!("{p}*")));
+            assert!(named, "as instruções não citam {name}");
+        }
+    }
+
+    /// O que vai em toda conversa tem teto (medido em 15/11: 60,7 mil caracteres antes do corte,
+    /// 40,5 mil depois). Passou: encurte as descrições ou mande o detalhe sob demanda, como o
+    /// manual do `app_command`.
+    #[test]
+    fn the_tool_list_stays_small() {
+        let tools: Vec<Value> = ide_tools().into_iter().chain(own_tools().as_array().unwrap().iter().cloned()).collect();
+        let size = serde_json::to_string(&tools).unwrap().chars().count();
+        let mut each: Vec<(usize, &str)> = tools.iter().map(|t| (t.to_string().chars().count(), t["name"].as_str().unwrap_or(""))).collect();
+        each.sort_unstable_by(|a, b| b.cmp(a));
+        assert!(size < 42_000, "a lista de ferramentas tem {size} caracteres; as maiores: {:?}", &each[..12]);
+        assert!(INSTRUCTIONS.chars().count() < 4_500, "as instruções têm {} caracteres", INSTRUCTIONS.chars().count());
     }
 
     /// Toda ferramenta da IDE (menos abrir e criar projeto) e o `session_title` aceitam o
@@ -1309,13 +1372,14 @@ mod argument_tests {
     fn the_tools_describe_what_they_take() {
         let tools = super::ide_tools();
         let tool = |name: &str| tools.iter().find(|t| t["name"] == name).unwrap_or_else(|| panic!("falta {name}")).clone();
+        // O manual dos comandos vem pelo `{"cmd": "help"}` (15/11); a descrição diz que ele existe.
         let app = tool("app_command");
         let text = app["description"].as_str().unwrap();
+        assert!(text.contains("\"cmd\":\"help\"") && text.contains("feature `dev`"), "{text}");
         for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
-            assert!(text.contains(&format!("\"cmd\":\"{cmd}\"")), "falta {cmd}");
+            assert!(super::APP_COMMAND_HELP.contains(&format!("\"cmd\":\"{cmd}\"")), "falta {cmd}");
         }
-        assert!(text.contains("feature `dev`"));
-        assert!(text.contains("\"modifiers\"") && text.contains("Ctrl+Shift"), "as teclas seguradas no clique e no arrasto");
+        assert!(super::APP_COMMAND_HELP.contains("\"modifiers\"") && super::APP_COMMAND_HELP.contains("Ctrl+Shift"), "as teclas seguradas no clique e no arrasto");
         assert_eq!(super::unknown_arguments("app_command", &json!({ "command": { "cmd": "tree" }, "app": 1234 })), None);
         assert_eq!(super::unknown_arguments("menu", &json!({ "id": 12 })), None);
         assert_eq!(super::unknown_arguments("dialog_click", &json!({ "id": 12 })), None);

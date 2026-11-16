@@ -73,6 +73,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -202,6 +204,7 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
@@ -304,6 +307,8 @@ type
     procedure SetRememberPlacement(Value: Boolean);
     function GetGpu: string;
     procedure SetGpu(Value: string);
+    function GetPresent: string;
+    procedure SetPresent(Value: string);
     function GetSpanMonitors: Boolean;
     procedure SetSpanMonitors(Value: Boolean);
     function GetPhysicalPixels: Boolean;
@@ -352,6 +357,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -482,6 +489,7 @@ type
     property Monitor: Int64 read GetMonitor write SetMonitor;
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
+    property Present: string read GetPresent write SetPresent;
     property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
     property PhysicalPixels: Boolean read GetPhysicalPixels write SetPhysicalPixels;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
@@ -506,6 +514,7 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
@@ -622,6 +631,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -754,6 +765,7 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
@@ -846,6 +858,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -964,6 +978,7 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
@@ -1362,6 +1377,16 @@ end;
 procedure TButton.SetCapturesWheel(Value: Boolean);
 begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TButton.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TButton.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
 end;
 
 function TButton.GetCanFocus: Boolean;
@@ -2099,6 +2124,16 @@ begin
   SetProp('gpu', TJSONString.Create(Value));
 end;
 
+function TForm.GetPresent: string;
+begin
+  Result := AsText(GetProp('present'));
+end;
+
+procedure TForm.SetPresent(Value: string);
+begin
+  SetProp('present', TJSONString.Create(Value));
+end;
+
 function TForm.GetSpanMonitors: Boolean;
 begin
   Result := GetProp('span_monitors').AsBoolean;
@@ -2337,6 +2372,16 @@ end;
 procedure TForm.SetCapturesWheel(Value: Boolean);
 begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TForm.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
 end;
 
 function TForm.GetCanFocus: Boolean;
@@ -3174,6 +3219,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TLabel.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TLabel.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TLabel.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -3862,6 +3917,16 @@ end;
 procedure TProgressBar.SetCapturesWheel(Value: Boolean);
 begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
+end;
+
+function TProgressBar.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TProgressBar.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
 end;
 
 function TProgressBar.GetCanFocus: Boolean;

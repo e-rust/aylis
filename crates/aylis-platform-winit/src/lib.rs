@@ -114,6 +114,8 @@ mod placements;
 mod android_gamepad;
 #[cfg(not(any(web, mobile)))]
 mod print;
+#[cfg(any(test, not(any(web, mobile))))]
+mod window_icon;
 #[cfg(windows)]
 mod notify;
 #[cfg(windows)]
@@ -587,7 +589,9 @@ fn run_on(
         .icon
         .as_deref()
         .and_then(decode_rgba)
-        .and_then(|(pixels, w, h)| winit::window::Icon::from_rgba(pixels, w, h).ok());
+        // O quadrado do meio, como o `.ico` (uma imagem larga não sai achatada).
+        .map(|(pixels, w, h)| window_icon::square(&pixels, w, h))
+        .and_then(|(pixels, side)| winit::window::Icon::from_rgba(pixels, side, side).ok());
     #[cfg(not(any(web, mobile)))]
     let options_placements = options.placements_dir.clone();
     let app = App {
@@ -2368,7 +2372,7 @@ impl App {
             _ => attributes,
         };
         #[cfg(not(web))]
-        let (window, backend) = create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.gpu_choice(form))?;
+        let (window, backend) = create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.gpu_choice(form), self.present_mode(form))?;
         #[cfg(web)]
         let (window, backend) = create_backend(event_loop, attributes, self.options.renderer)?;
         // Windows: as mensagens da janela passam pelos ganchos do app e pela barra de
@@ -2686,6 +2690,15 @@ impl App {
         event_loop.exit();
     }
 
+    /// O modo de apresentar do form: a propriedade `present` dele ou, vazia, o do projeto.
+    #[cfg_attr(web, allow(dead_code))]
+    fn present_mode(&self, form: ComponentId) -> aylis_core::gpu::PresentMode {
+        match self.ui.get_prop(form, "present") {
+            Ok(PropValue::String(text)) => aylis_core::gpu::present_for(&text),
+            _ => aylis_core::gpu::present(),
+        }
+    }
+
     /// A regra de placa de vídeo do form: a propriedade `gpu` dele ou, vazia, a do projeto.
     #[cfg_attr(web, allow(dead_code))]
     fn gpu_choice(&self, form: ComponentId) -> aylis_core::gpu::GpuChoice {
@@ -2737,8 +2750,23 @@ impl App {
         }
     }
 
-    /// A propriedade `gpu` do form mudou com o app rodando.
+    /// A propriedade `gpu` (ou a `present`) do form mudou com o app rodando.
     fn update_gpu(&mut self, form: ComponentId) {
+        #[cfg(native_d2d)]
+        {
+            let present = self.present_mode(form);
+            for index in 0..self.windows.len() {
+                if self.windows[index].form != form {
+                    continue;
+                }
+                let changed = match &mut self.windows[index].backend {
+                    Backend::D2d(d2d) => d2d.set_present(&self.renderer.d2d, present),
+                    #[allow(unreachable_patterns)]
+                    _ => continue,
+                };
+                self.after_gpu_change(index, changed);
+            }
+        }
         #[cfg(any(native_d2d, native_gpu))]
         {
             let choice = self.gpu_choice(form);
@@ -3145,15 +3173,16 @@ fn create_backend(
     renderer: Renderer,
     painters: &Painters,
     gpu: aylis_core::gpu::GpuChoice,
+    present: aylis_core::gpu::PresentMode,
 ) -> Result<(Rc<Window>, Backend), Error> {
-    let _ = (painters, &gpu);
+    let _ = (painters, &gpu, present);
     match renderer {
         #[cfg(native_d2d)]
         Renderer::D2d => {
             // `AYLIS_VSYNC=0`: sem esperar o monitor fora do `AYLIS_BENCH` também (o exemplo
             // `transitions`, que mede o custo de cada quadro de uma animação).
             let vsync = diag::diagnostic_setting("AYLIS_BENCH").is_none() && diag::diagnostic_setting("AYLIS_VSYNC").as_deref() != Some("0");
-            d2d::create(event_loop, attributes, &painters.d2d, vsync, gpu).map(|(w, b)| (w, Backend::D2d(b)))
+            d2d::create(event_loop, attributes, &painters.d2d, vsync, gpu, present).map(|(w, b)| (w, Backend::D2d(b)))
         }
         #[cfg(native_gpu)]
         Renderer::Gpu => gpu::create(event_loop, attributes, gpu).map(|(w, b)| (w, Backend::Gpu(b))),
@@ -3170,9 +3199,9 @@ fn create_backend(
         #[cfg(all(native_skia, not(all(native_gpu, native_cpu))))]
         Renderer::Auto => {
             #[cfg(native_gpu)]
-            return create_backend(event_loop, attributes, Renderer::Gpu, painters, gpu);
+            return create_backend(event_loop, attributes, Renderer::Gpu, painters, gpu, present);
             #[cfg(native_cpu)]
-            return create_backend(event_loop, attributes, Renderer::Cpu, painters, gpu);
+            return create_backend(event_loop, attributes, Renderer::Cpu, painters, gpu, present);
         }
         #[allow(unreachable_patterns)]
         other => Err(format!("renderizador {other} não incluído (veja as features do crate)").into()),

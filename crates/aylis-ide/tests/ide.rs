@@ -1344,12 +1344,18 @@ fn the_layout_check_lists_every_error_and_class_info_lists_the_values() {
     // O nome de sombra do tema vale no form.
     assert!(aylis_json::validate(&mut ui, r#"{"aylis": 1, "root": {"class": "Panel", "shadow": "md"}}"#).is_empty());
 
-    let label = aylis_json::class_info(&ui, "Label").unwrap();
-    let trimming = label["properties"].as_array().unwrap().iter().find(|p| p["name"] == "trimming").expect("trimming");
-    assert!(trimming["values"].as_array().unwrap().iter().any(|v| v == "word"), "{trimming}");
-    let button = aylis_json::class_info(&ui, "Button").unwrap();
-    assert!(button["events"].as_array().unwrap().iter().any(|e| e == "on_dbl_click"));
-    assert!(aylis_json::class_info(&ui, "NaoExiste").is_none());
+    let label = aylis_json::class_info(&ui, "Label", false).unwrap();
+    let trimming = label["properties"]["trimming"].as_str().expect("trimming");
+    assert!(trimming.split(" | ").any(|v| v == "word"), "{trimming}");
+    // Os comuns a todo controle vêm só pelo nome; com `inherited`, com o tipo, como os da classe.
+    let button = aylis_json::class_info(&ui, "Button", false).unwrap();
+    assert!(button["common"]["events"].as_array().unwrap().iter().any(|e| e == "on_dbl_click"), "{button}");
+    assert!(button["common"]["properties"].as_array().unwrap().iter().any(|p| p == "align"));
+    assert!(button["properties"].get("align").is_none() && button["properties"].get("modal_result").is_some(), "{button}");
+    let full = aylis_json::class_info(&ui, "Button", true).unwrap();
+    assert!(full["properties"]["align"].as_str().unwrap().contains("client") && full.get("common").is_none(), "{full}");
+    assert!(full["events"].as_array().unwrap().iter().any(|e| e == "on_dbl_click"));
+    assert!(aylis_json::class_info(&ui, "NaoExiste", false).is_none());
 }
 
 /// Um fonte novo na pasta do código (o arquivo por assunto; relatório do RTSPlayer, 10/11): só

@@ -76,6 +76,26 @@ Decididas com o autor (o porquê de cada uma está em
 [docs/historico-decisoes.md](docs/historico-decisoes.md)). Algo que precise sair delas não se
 faz por conta própria: vira pergunta ao autor e, aprovado, entra no histórico.
 
+### De quem é cada coisa
+
+A base para decidir onde entra uma melhoria (aprovada em 15/11):
+
+1. **Framework:** o que todo app refaria igual, ou o que o app não alcança (sistema, pixel,
+   entrada). Se dois apps já escreveram o mesmo contorno, é do framework.
+2. **App:** o que muda de app para app: regra de negócio, dados, fluxo entre telas, ligação
+   entre componentes e threads.
+3. **Mecanismo no framework, decisão no app:** o framework dá o recurso e um padrão sensato,
+   e o app decide por propriedade ou evento. O padrão segue a plataforma; o que muda a
+   aparência de forms existentes nasce desligado; o que mexe em segurança nasce fechado.
+4. **O componente cuida do próprio ciclo** (abrir, editar, desfazer, cancelar) e avisa o app
+   por evento só no que é decisão dele (aceitar, recusar, gravar).
+5. **Nada só da IDE:** toda capacidade existe primeiro no framework ou no `aylis-tool`, com
+   nome; a IDE e o MCP são a interface para ela.
+6. **A IDE não escreve lógica do app:** gera, verifica, compila e publica; o código do usuário
+   só ganha esqueleto.
+7. **O que não é do Aylis não se conserta por dentro** (WebView, outros programas, janelas que
+   não são do Aylis): vira limitação documentada.
+
 ### Arquitetura
 
 - **Núcleo sem sistema:** o `aylis-core` não importa `winit`, `skia`, `web-sys`, `windows` nem

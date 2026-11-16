@@ -1152,7 +1152,11 @@ impl Memo {
         if self.base.auto_size() {
             ctx.invalidate();
         }
-        ctx.fire("on_change", EventArgs::Value(self.text.clone().into()));
+        // O texto inteiro vai como valor: só se alguém recebe (com um texto grande, a cópia era
+        // o que mais custava por tecla).
+        if ctx.ui.listens(ctx.id, "on_change") {
+            ctx.fire("on_change", EventArgs::Value(self.text.clone().into()));
+        }
     }
 
     /// As palavras erradas e, no fim de uma palavra, o resto sugerido (como no Edit).
@@ -1297,17 +1301,20 @@ impl Memo {
         let id = ctx.id;
         let word = self.slice(start, end.max(start)).to_string();
         let replace = move |ui: &mut aylis_core::Ui, choice: &str| {
+            let listens = ui.listens(id, "on_change");
             let (text, grows) = match ui.get_mut::<Memo>(id) {
                 Some(memo) => {
                     memo.replace_chars(start, end, choice);
-                    (memo.text.clone(), memo.base.auto_size())
+                    (listens.then(|| memo.text.clone()), memo.base.auto_size())
                 }
                 None => return,
             };
             if grows {
                 ui.invalidate_form(id);
             }
-            ui.fire(id, "on_change", &EventArgs::Value(text.into()));
+            if let Some(text) = text {
+                ui.fire(id, "on_change", &EventArgs::Value(text.into()));
+            }
         };
         let learned = move |ui: &mut aylis_core::Ui| {
             if let Some(memo) = ui.get_mut::<Memo>(id) {

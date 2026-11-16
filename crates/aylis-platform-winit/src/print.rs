@@ -1,7 +1,7 @@
 //! Imprimir as páginas gravadas ([`aylis_core::pages`]). No Windows, o diálogo de impressão
 //! do sistema e o desenho pelo GDI na impressora escolhida (páginas, cópias e intervalo como
-//! o usuário pediu). Nos outros sistemas, o PDF numa pasta temporária, aberto no visualizador
-//! padrão (que imprime).
+//! o usuário pediu). Nos outros sistemas, o PDF (feito pelo provedor de PDF do app, o
+//! `KrillaPdfProvider`) numa pasta temporária, aberto no visualizador padrão (que imprime).
 
 use aylis_core::pages::PageSet;
 use aylis_core::platform::PrintService;
@@ -15,13 +15,30 @@ impl PrintService for SystemPrinter {
         // O diálogo é modal e a impressão demora: numa thread, sem travar a interface.
         std::thread::spawn(move || done(print_pages(&title, &pages)));
     }
+
+    /// Fora do Windows, a impressão é pelo PDF aberto no visualizador do sistema.
+    fn wants_pdf(&self) -> bool {
+        cfg!(not(windows))
+    }
+
+    #[cfg(not(windows))]
+    fn print_pdf(&mut self, title: &str, pdf: Vec<u8>, done: Box<dyn FnOnce(Result<bool, String>) + Send>) {
+        let title = title.to_string();
+        std::thread::spawn(move || done(open_pdf(&title, &pdf)));
+    }
+}
+
+/// Fora do Windows, as páginas chegam pelo PDF ([`SystemPrinter::print_pdf`]).
+#[cfg(not(windows))]
+fn print_pages(_title: &str, _pages: &PageSet) -> Result<bool, String> {
+    Err("fora do Windows a impressão é pelo PDF (o provedor de PDF do app)".into())
 }
 
 #[cfg(not(windows))]
-fn print_pages(title: &str, pages: &PageSet) -> Result<bool, String> {
+fn open_pdf(title: &str, pdf: &[u8]) -> Result<bool, String> {
     let name: String = title.chars().map(|c| if c.is_alphanumeric() { c } else { '_' }).collect();
     let path = std::env::temp_dir().join(format!("{}.pdf", if name.is_empty() { "relatorio".into() } else { name }));
-    std::fs::write(&path, pages.to_pdf()).map_err(|e| format!("{}: {e}", path.display()))?;
+    std::fs::write(&path, pdf).map_err(|e| format!("{}: {e}", path.display()))?;
     let opener = if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
     std::process::Command::new(opener).arg(&path).spawn().map_err(|e| format!("{opener}: {e}"))?;
     Ok(true)

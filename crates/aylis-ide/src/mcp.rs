@@ -18,7 +18,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 use std::time::Duration;
 
-use aylis_core::{Poster, Ui};
+use aylis_core::{ComponentId, Poster, Ui};
 use aylis_remote::mcp::http::{self, rpc_error as error};
 use serde_json::{Value, json};
 
@@ -130,10 +130,27 @@ pub(crate) fn on_ui<R: Send + 'static>(poster: &Poster, f: impl FnOnce(&mut Ui, 
         .map_err(|_| format!("a IDE não respondeu em {} s (ocupada; o pedido pode ainda ser feito): veja status", crate::mcp_tasks::DEADLINE.as_secs()))
 }
 
-/// O resultado do MCP de uma ferramenta.
+/// A árvore do `list_components`: uma linha por componente, `nome Classe`, recuada dois espaços
+/// por nível (o recuo diz o pai). Um objeto por componente custava três vezes mais, e o pai pelo
+/// nome saía vazio debaixo de um componente sem nome (o mesmo vazio do form).
+pub fn component_tree(ui: &Ui, tree: &[(ComponentId, usize)]) -> String {
+    let mut out = String::new();
+    for &(id, depth) in tree {
+        let name = ui.name(id).filter(|n| !n.is_empty()).unwrap_or("(sem nome)");
+        out.push_str(&"  ".repeat(depth));
+        out.push_str(name);
+        out.push(' ');
+        out.push_str(ui.class_name(id).unwrap_or_default());
+        out.push('\n');
+    }
+    out
+}
+
+/// O resultado do MCP de uma ferramenta. O JSON vai compacto: indentado, gastava ~40% a mais de
+/// tokens só em espaço (medido em 15/11: o `get_layout` do IBGE, 36 mil caracteres → 15 mil).
 fn tool_value(result: Result<Value, String>) -> Value {
     match result {
-        Ok(v) => text_result(if let Value::String(s) = &v { s.clone() } else { serde_json::to_string_pretty(&v).unwrap_or_default() }, false),
+        Ok(v) => text_result(if let Value::String(s) = &v { s.clone() } else { serde_json::to_string(&v).unwrap_or_default() }, false),
         Err(e) => text_result(e, true),
     }
 }
@@ -142,13 +159,18 @@ fn tool_value(result: Result<Value, String>) -> Value {
 /// que conectou), por esta thread (o app responde por outra: a chamada não prende a interface).
 /// `{"cmd": "apps"}` a IDE responde: os conectados.
 fn app_command(args: &Value, poster: &Poster) -> Value {
+    // O manual dos comandos, sob demanda (fora da descrição, que vai em toda conversa); vale
+    // também sem app conectado, para o agente preparar o que vai mandar.
+    if args.get("command").is_some_and(|c| c["cmd"] == "help") {
+        return text_result(aylis_tools::mcp::APP_COMMAND_HELP, false);
+    }
     let link = on_ui(poster, |_, state, _| state.borrow().dev.clone().filter(|d| d.connected()));
     let Ok(Some(dev)) = link else {
         return text_result("nenhum app em execução conectado (use run e espere abrir; o app precisa ter sido compilado pela IDE, com a feature `dev`)", true);
     };
     let command = args.get("command").cloned().unwrap_or(Value::Null);
     if command["cmd"] == "apps" {
-        return text_result(serde_json::to_string_pretty(&json!({ "apps": dev.apps_json() })).unwrap_or_default(), false);
+        return text_result(serde_json::to_string(&json!({ "apps": dev.apps_json() })).unwrap_or_default(), false);
     }
     let snapshot = command["cmd"] == "snapshot";
     app_reply(dev.call_app(args.get("app"), command), snapshot)
@@ -160,7 +182,7 @@ fn app_command(args: &Value, poster: &Poster) -> Value {
 fn app_reply(result: Result<Value, String>, snapshot: bool) -> Value {
     match result {
         Ok(Value::String(png)) if snapshot => json!({ "content": [{ "type": "image", "data": png, "mimeType": "image/png" }], "isError": false }),
-        Ok(v) => text_result(serde_json::to_string_pretty(&v).unwrap_or_default(), false),
+        Ok(v) => text_result(serde_json::to_string(&v).unwrap_or_default(), false),
         Err(e) => text_result(e, true),
     }
 }
@@ -369,7 +391,7 @@ fn run_tests(args: Value, poster: &Poster) -> Value {
         return text_result(format!("os testes de outro projeto ainda estão rodando ({}): chame test de novo depois", other.display()), true);
     }
     match crate::mcp_project::wait_tests(project, wait) {
-        Some(Ok(report)) => text_result(serde_json::to_string_pretty(&crate::mcp_project::report_json(&report)).unwrap_or_default(), !report.success),
+        Some(Ok(report)) => text_result(serde_json::to_string(&crate::mcp_project::report_json(&report)).unwrap_or_default(), !report.success),
         Some(Err(e)) => text_result(e, true),
         None => text_result(format!("{{\"running\": true, \"note\": \"os testes ainda estão rodando depois de {wait} s: chame test de novo para esperar o resultado (não começa outra rodada)\"}}"), false),
     }
@@ -521,7 +543,7 @@ fn job_summary(poster: &Poster) -> Value {
         (ok, json!({ "compiled": ok, "status": st.status, "errors": errors, "last_lines": last }))
     });
     match summary {
-        Ok((ok, v)) => text_result(serde_json::to_string_pretty(&v).unwrap_or_default(), !ok),
+        Ok((ok, v)) => text_result(serde_json::to_string(&v).unwrap_or_default(), !ok),
         Err(e) => text_result(e, true),
     }
 }
@@ -1126,20 +1148,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         }
         "list_components" => {
             let st = state.borrow();
-            let doc = &st.doc;
-            let list: Vec<Value> = doc
-                .tree()
-                .into_iter()
-                .map(|(id, depth)| {
-                    json!({
-                        "name": doc.ui.name(id).unwrap_or_default(),
-                        "class": doc.ui.class_name(id).unwrap_or_default(),
-                        "parent": doc.ui.parent(id).and_then(|p| doc.ui.name(p)).unwrap_or_default(),
-                        "depth": depth,
-                    })
-                })
-                .collect();
-            Ok(Value::Array(list))
+            Ok(Value::String(component_tree(&st.doc.ui, &st.doc.tree())))
         }
         "get_component" => {
             let id = component(state, arg(args, "component"))?;
@@ -1333,7 +1342,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         "class_info" => {
             let class = arg(args, "class");
             let st = state.borrow();
-            aylis_json::class_info(&st.doc.ui, class).ok_or_else(|| format!("não há a classe '{class}' (list_classes mostra as da paleta)"))
+            aylis_json::class_info(&st.doc.ui, class, args.get("inherited").and_then(Value::as_bool).unwrap_or(false)).ok_or_else(|| format!("não há a classe '{class}' (list_classes mostra as da paleta)"))
         }
         "list_classes" => {
             let st = state.borrow();

@@ -1456,6 +1456,12 @@ impl Ui {
             if self.deliver(id, |c, ctx| c.gesture(ctx, &e)) {
                 return true;
             }
+            // `captures_gesture`: o gesto fica com ele (o `on_gesture` dele fez o que queria), e
+            // os pais não recebem (relatório do RTSPlayer, 15/11: a pinça na linha do tempo
+            // ampliava também o palco em volta).
+            if self.cb(id).is_some_and(|cb| cb.captures_gesture()) {
+                return true;
+            }
             current = self.parent(id);
         }
         false
@@ -1523,6 +1529,10 @@ impl Ui {
             self.fire(id, "on_swipe", &EventArgs::Swipe(e));
             if self.deliver(id, |c, ctx| c.swipe(ctx, &e)) {
                 self.request_repaint();
+                return true;
+            }
+            // `captures_gesture` vale também para o deslizar.
+            if self.cb(id).is_some_and(|cb| cb.captures_gesture()) {
                 return true;
             }
             current = self.parent(id);
