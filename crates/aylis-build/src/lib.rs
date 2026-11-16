@@ -1193,7 +1193,9 @@ pub fn demo_classes_source(facade: &str, categories: &[&str]) -> String {
 /// A feature do `aylis-demos` que liga o que a classe pede no `aylis` (`None`: nenhuma).
 pub fn demo_feature(class: &str) -> Option<&'static str> {
     match CLASSES.iter().find(|(c, _)| *c == class).map_or("", |(_, f)| *f) {
-        "data" | "dbcontrols" | "providers" | "pdf" => Some("data"),
+        "data" | "dbcontrols" | "providers" => Some("data"),
+        // Só a família do relatório leva o krilla no wasm dela.
+        "pdf" => Some("pdf"),
         "media" => Some("media"),
         "vector" => Some("vector"),
         "markdown" => Some("markdown"),

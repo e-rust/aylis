@@ -14,6 +14,8 @@ crate-type = ["cdylib", "rlib"]
 # estas features ligam no `aylis` o que as classes dela pedem (`aylis-tool demos` escolhe).
 [features]
 data = ["aylis/data", "aylis/dbcontrols", "aylis/providers"]
+# O relatório e o provedor de PDF (o krilla): só na família deles.
+pdf = ["data", "aylis/pdf"]
 media = ["aylis/media"]
 vector = ["aylis/vector"]
 markdown = ["aylis/markdown"]
