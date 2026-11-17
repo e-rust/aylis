@@ -290,6 +290,22 @@ fn wanted(check: &Check, targets: &[Target]) -> bool {
     check.target == Target::Desktop || (check.status == Status::Missing && !(fix.interactive && !fix.fetch.as_deref().is_some_and(env::package_has_source)))
 }
 
+/// As plataformas de destino além do Windows que o assistente "Configurar linguagens" oferece:
+/// (a saída, o nome, o que vem junto). Instaladas pelo [`setup_targets`] em Rust.
+pub const TARGETS: &[(Target, &str, &str)] = &[
+    (Target::Android, "Android", "o alvo do Rust, o JDK, o Android SDK, o NDK e o cargo-ndk"),
+    (Target::Web, "Navegador (web)", "o alvo wasm do Rust e o wasm-bindgen"),
+];
+
+/// O que ainda falta para publicar para `target` (vazio: pronta).
+pub fn target_missing(target: Target) -> Vec<String> {
+    env::check(Language::Rust, &[target], None)
+        .into_iter()
+        .filter(|c| c.target == target && c.status == Status::Missing)
+        .map(|c| c.name.split(" (").next().unwrap_or(&c.name).to_string())
+        .collect()
+}
+
 /// O que ainda falta para a linguagem ficar completa no desktop (o depurador, o servidor de
 /// linguagem...), pelos nomes da verificação.
 pub fn missing(language: Language, aylis_host: Option<&Path>) -> Vec<String> {

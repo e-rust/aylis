@@ -1403,6 +1403,12 @@ impl App {
                 self.update_gpu(form);
                 continue;
             }
+            // Um `WindowSettings` mudou: todas as janelas (o do app vale para todas).
+            if command == WindowCommand::UpdateOptions {
+                #[cfg(not(any(web, mobile)))]
+                self.update_window_options();
+                continue;
+            }
             // O form em vários monitores (ou que pode virar): o lugar, o tamanho e a tela cheia
             // refazem os pedaços (`span.rs`).
             if self.span_command(form, command) {
@@ -1513,7 +1519,7 @@ impl App {
                 WindowCommand::UpdateCorners => win32::set_window_corners(window, self.corner_preference(form)),
                 #[cfg(not(windows))]
                 WindowCommand::UpdateCorners => {}
-                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale => {}
+                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale | WindowCommand::UpdateOptions => {}
             }
         }
     }
@@ -2347,8 +2353,12 @@ impl App {
         let accessible = setting("AYLIS_ACCESSIBILITY").as_deref() != Some("0");
         #[cfg(not(web))]
         let hidden = self.ui.take_start_hidden(form);
+        // Sem a animação do Windows (o `animation` do `WindowSettings`): a janela nasce
+        // escondida para o atributo valer já na primeira aparição.
         #[cfg(not(web))]
-        let attributes = if (accessible || hidden) && !cfg!(mobile) { attributes.with_visible(false) } else { attributes };
+        let animate = self.window_animation(form);
+        #[cfg(not(web))]
+        let attributes = if (accessible || hidden || !animate) && !cfg!(mobile) { attributes.with_visible(false) } else { attributes };
         // Windows: um form modal tem como dono a janela principal e fica sempre na frente
         // dela, mesmo aberto antes de ela aparecer (a pergunta de confiança ao abrir a IDE).
         // Um modal com a janela principal minimizada: ela volta antes (o modal bloqueia a
@@ -2381,6 +2391,12 @@ impl App {
         win32::attach(&window, form, &self.win_proxy);
         #[cfg(windows)]
         win32::set_window_corners(&window, self.corner_preference(form));
+        // O `WindowSettings` do form (ou do app), com a janela ainda escondida. Sem ele, a janela
+        // fica como o sistema a cria.
+        #[cfg(not(any(web, mobile)))]
+        if self.ui.window_settings_of(form).is_some() {
+            apply_window_options(&window, &self.ui.window_options(form));
+        }
         #[cfg(windows)]
         if let Some(fullscreen) = fullscreen_later.filter(|_| !self.spans_full_screen(form)) {
             window.set_fullscreen(Some(fullscreen));
@@ -2396,6 +2412,11 @@ impl App {
             }
             adapter
         });
+        // Sem o AccessKit, a janela escondida só pela falta de animação aparece agora.
+        #[cfg(not(web))]
+        if !accessible && !animate && !hidden && !spanned && !cfg!(mobile) {
+            window.set_visible(true);
+        }
         // Nas gravações de uso: qual renderizador cada janela usa (e a placa, no OpenGL e no
         // Direct2D).
         self.ui.set_platform_info("renderizador", backend.name());
@@ -2688,6 +2709,21 @@ impl App {
         self.placements.flush();
         event_loop.set_control_flow(ControlFlow::Poll);
         event_loop.exit();
+    }
+
+    /// A animação do sistema na janela do form (o `animation` do `WindowSettings`).
+    #[cfg_attr(any(web, mobile), allow(dead_code))]
+    fn window_animation(&self, form: ComponentId) -> bool {
+        self.ui.window_options(form).animation
+    }
+
+    /// Aplica a todas as janelas abertas as opções do `WindowSettings` delas (um componente
+    /// mudou em execução: o de um form ou o do app inteiro).
+    #[cfg(not(any(web, mobile)))]
+    fn update_window_options(&mut self) {
+        for w in &self.windows {
+            apply_window_options(&w.window, &self.ui.window_options(w.form));
+        }
     }
 
     /// O modo de apresentar do form: a propriedade `present` dele ou, vazia, o do projeto.
@@ -3162,6 +3198,44 @@ fn create_backend(
     _renderer: Renderer,
 ) -> Result<(Rc<Window>, Backend), Error> {
     web::create(event_loop, attributes).map(|(w, b)| (w, Backend::Web(b)))
+}
+
+/// Aplica numa janela as opções do `WindowSettings` ([`aylis_core::WindowOptions`]). O que o
+/// sistema não tem não faz nada (o winit ignora; o resto é só do Windows).
+#[cfg(not(any(web, mobile)))]
+pub(crate) fn apply_window_options(window: &Window, o: &aylis_core::WindowOptions) {
+    use winit::window::WindowButtons;
+    window.set_content_protected(o.capture_excluded);
+    let _ = window.set_cursor_hittest(!o.click_through);
+    let mut buttons = WindowButtons::CLOSE;
+    if o.minimize_button {
+        buttons |= WindowButtons::MINIMIZE;
+    }
+    if o.maximize_button {
+        buttons |= WindowButtons::MAXIMIZE;
+    }
+    window.set_enabled_buttons(buttons);
+    window.set_blur(o.blur);
+    #[cfg(windows)]
+    {
+        use aylis_core::WindowBackdrop;
+        use winit::platform::windows::{BackdropType, Color as WinColor, WindowExtWindows};
+        let color = |c: aylis_core::Color| WinColor::from_rgb(c.r, c.g, c.b);
+        window.set_system_backdrop(match o.backdrop {
+            WindowBackdrop::System => BackdropType::Auto,
+            WindowBackdrop::None => BackdropType::None,
+            WindowBackdrop::Mica => BackdropType::MainWindow,
+            WindowBackdrop::Acrylic => BackdropType::TransientWindow,
+            WindowBackdrop::Tabbed => BackdropType::TabbedWindow,
+        });
+        // Vazio é a cor do sistema: o `None` do winit tiraria a cor (a borda sumiria).
+        window.set_title_background_color(Some(o.title_color.map_or(WinColor::SYSTEM_DEFAULT, color)));
+        window.set_title_text_color(o.title_text_color.map_or(WinColor::SYSTEM_DEFAULT, color));
+        window.set_border_color(Some(o.border_color.map_or(WinColor::SYSTEM_DEFAULT, color)));
+        window.set_undecorated_shadow(o.shadow);
+        win32::set_window_animation(window, o.animation);
+        win32::set_window_ex_styles(window, o.no_activate, !o.alt_tab);
+    }
 }
 
 /// Cria a janela já com o backend pedido; no modo automático, cai para a CPU se a GPU

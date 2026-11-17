@@ -13,6 +13,93 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 16/11/2026: a roda do mouse no DataGrid dentro de uma ScrollBox**
+
+- [ ] Pergunta do autor em 16/11 (uma grade dentro de uma `ScrollBox`: a página parava de rolar
+  com o mouse sobre a grade) e pedido: "pode corrigir.. e garanta que a scroll horizontal
+  funcione por padrão segurando o shift.. mais nada pode impedir de alguem programar para que
+  funcione de formas diferentes". O `DataGrid` ficava com toda a roda, mesmo na última coluna,
+  na última linha ou sem nada para rolar; as listas já deixavam seguir. Feito em 16/11 (falta o
+  autor conferir num app): a grade só fica com a roda quando rola, e na ponta ela segue para o
+  contêiner de fora. As colunas rolam com o Shift (ou o touchpad de lado); o app escolhe pela
+  propriedade `horizontal_wheel` (`shift`, o padrão; `always`, a roda comum rola as colunas;
+  `none`, só o código), rola pelo código com `scroll_left` e `top_row` (só em execução), recebe
+  o `on_wheel` antes da grade e prende a roda com o `captures_wheel`. Testes em
+  `crates/aylis-dbcontrols/tests/grid_wheel.rs` (o primeiro falha com o código de antes);
+  rótulos nos 12 idiomas, catálogo e documentação refeitos.
+
+**Ajustes de 16/11/2026: o componente WindowSettings (a janela sem animação e o resto)**
+
+- [ ] Pedido do NoOBS em 16/11: o editor do print (`full_screen`, `topmost`, sem barra de
+  tarefas, `span_monitors`) aparecia com a animação do Windows abrindo e maximizando, e o app não
+  conseguia evitar (a janela ficava visível antes do `on_window_created`). E pedido do autor no
+  mesmo dia: "fazer todas" as configurações de janela que só alguns sistemas têm, "um componente
+  para controlar esse monte de coisas [...] ligar ele ao form e configurar nele.. ou configurar
+  de forma global ou programaticamente". Feito em 16/11 (falta o autor conferir no NoOBS e numa
+  janela de cada recurso):
+  - o componente não visual `WindowSettings` (System; Windows, macOS e Linux): no form, vale para
+    a janela dele; com `scope` = `app`, para as dos forms sem um próprio (num DataModule ou no
+    form principal); cada propriedade troca em execução (a janela recebe de novo,
+    `WindowCommand::UpdateOptions`), também pelo código e pelo protocolo. Sem o componente, a
+    janela fica como o sistema a cria;
+  - as propriedades: `animation` (o `DWMWA_TRANSITIONS_FORCEDISABLED`, posto com a janela ainda
+    escondida, e nos pedaços do `span_monitors`), `capture_excluded`, `click_through`,
+    `minimize_button`, `maximize_button`, `backdrop` (Mica, Acrylic, abas), `title_color`,
+    `title_text_color`, `border_color`, `shadow` (na janela sem borda), `blur`, `no_activate`
+    (`WS_EX_NOACTIVATE`) e `alt_tab` (`WS_EX_TOOLWINDOW`); onde o sistema não tem o recurso, não
+    faz nada;
+  - no núcleo, `Ui::window_settings_of` e `Ui::window_options` (`aylis_core::WindowOptions`), e a
+    plataforma aplica (`apply_window_options`). A `window_animation` que eu tinha posto no Form
+    antes saiu (não chegou a commit): foi para o componente, com o resto;
+  - testes `crates/aylis-controls/tests/window_settings.rs` e
+    `the_window_animation_is_turned_off_before_the_window_shows`; os rótulos nos 12 idiomas, o
+    catálogo, a documentação e os registros da classe. Não desliga sozinho nos forms em tela
+    cheia (o que muda a aparência de forms existentes nasce desligado). No NoOBS:
+    um `WindowSettings` no form do print com `animation` = `false`.
+
+**Ajustes de 16/11/2026: a escolha das linguagens e das plataformas na IDE**
+
+- [ ] Pedido do autor em 16/11 ("tem a primeira abertura do aylis depois da instalação fazer a
+  configuração de quais linguagens, LSP, compilador e ferramentas vai precisar? para não deixar
+  a seleção por conta do instalador do NSIS e centralizar em um só local?" — "Sim, centralizar").
+  Feito em 16/11 (falta o autor conferir numa máquina nova, roteiro 129):
+  - o instalador traz só a IDE e o Rust (obrigatório) e o atalho: saíram os grupos "Outras
+    linguagens" e "Plataformas de destino" e o `/LINGUAGENS=` e o `/PLATAFORMAS=` do modo
+    silencioso; fica o `/ESPELHO=`;
+  - o assistente "Configurar linguagens" ganhou as plataformas de destino (Android e navegador,
+    `aylis_tools::setup::TARGETS` e `target_missing`), com a situação de cada uma, e instala as
+    marcadas pelo mesmo `setup_targets` que o instalador usava;
+  - na primeira abertura da IDE nesta máquina, o assistente abre sozinho uma vez (marcado em
+    `tools.json`, `setup_wizard_shown`), estejam as linguagens instaladas ou não; depois, pelo
+    menu Ferramentas → Configurar linguagens.
+  - Achado no caminho e corrigido: na tabela de traduções, eu tinha posto as colunas na ordem
+    árabe, bengali, híndi (a ferramenta espera híndi, árabe, bengali), e os textos desses três
+    idiomas foram para os arquivos trocados (nos textos do assistente e no "Sempre composta
+    (fora do overlay)" da 0.5.0). Os mesmos sinais aparecem em textos de antes (desde o
+    primeiro commit público): 17 rodados entre os três e 140 do bengali que estão em híndi;
+    ficam para uma tarefa à parte.
+
+**Ajustes de 16/11/2026: o maximizar da barra do Windows e o instalador com o MCP em uso**
+
+- [ ] Achado em 16/11: na 0.5.0, o `rust-version` do workspace subiu para 1.92 (o krilla), mas o
+  `MIN_RUST` do `aylis-tools` (o mínimo do "Verificar ambiente") ficou em 1.88; o teste
+  `the_minimum_rust_is_the_workspace_one` pegou. Corrigido para 1.92. Na 0.5.0 publicada, um Rust
+  entre 1.88 e 1.91 passa na verificação e falha ao compilar um app com relatório (o pacote de
+  ferramentas instala o 1.99, então só afeta quem usa um Rust próprio mais velho).
+
+- [ ] Relatado pelo MD304V em 16/11: nas janelas com a barra de título do Windows (as de
+  configuração), o botão maximizar não fazia nada. O `win32.rs` engolia o clique no
+  `HTMAXBUTTON` de toda janela, achando que era o da barra própria do app. Feito em 16/11 (falta
+  o autor conferir no MD304V): o clique só é da barra própria na janela que registrou o botão
+  (`set_maximize_button`). Teste `the_maximize_click_is_only_taken_where_the_own_bar_has_the_button`.
+- [ ] Pedido do autor em 16/11: o instalador não instalava com o Claude usando o MCP (a ponte é
+  o `aylis-tool.exe` da instalação, preso). Feito em 16/11 (falta o autor conferir numa
+  instalação por cima com uma conversa ligada): antes de copiar cada executável (a IDE, o
+  `aylis-tool`, o `aylis-host`, o `aylis-migrate`), o instalador renomeia o que está lá para
+  `<nome>.antigo.exe` (o Windows deixa renomear o que está rodando) e o marca para sair no
+  próximo reinício; nenhum processo é encerrado, para não derrubar o MCP das conversas (o Claude
+  não religa o servidor sozinho). Teste `a_binary_in_use_is_renamed_before_the_copy`.
+
 **Ajustes de 15/11/2026: o cursor parado sobre o form em tela cheia (MPO)**
 
 - [ ] Relatado pelo NoOBS em 15/11 (o editor do print em tela cheia, placa AMD com MPO: o cursor
@@ -1012,8 +1099,8 @@ feito; teste `aylis-media/tests/repaint.rs`):
     que nessas saídas só roda o que falta de fato e nada que abra janela sem pacote) e
     `--utf16-output` (os acentos nos detalhes do instalador). O que não ficar pronto é dito no
     fim (código de saída 3), com o caminho para refazer na IDE.
-  - Silencioso: `/LINGUAGENS=python,go|all`, `/PLATAFORMAS=android,web|all` e `/ESPELHO=` (no
-    lugar do `/PACOTES=`). A pasta `pacotes` ao lado do instalador vale pela variável
+  - Silencioso: `/ESPELHO=` (no lugar do `/PACOTES=`; o `/LINGUAGENS=` e o `/PLATAFORMAS=`
+    saíram com a escolha, em 16/11: veja "a escolha das linguagens na IDE"). A pasta `pacotes` ao lado do instalador vale pela variável
     `AYLIS_PACKAGE_DIR` (sem ficar gravada nas Opções).
   - O espelho padrão: a pasta do Drive (`settings::DEFAULT_PACKAGE_MIRROR`) vale enquanto
     nada foi gravado em `package_mirrors`; apagada nas Opções, fica apagada (a lista vazia é

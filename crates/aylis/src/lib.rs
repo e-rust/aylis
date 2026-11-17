@@ -220,6 +220,7 @@ pub mod classes {
         ApplicationEvents: aylis_controls::ApplicationEvents => "System",
         EventInterceptor: aylis_controls::EventInterceptor => "System",
         RenderSettings: aylis_controls::RenderSettings => "System",
+        WindowSettings: aylis_controls::WindowSettings => "System",
         BusyWatcher: aylis_controls::BusyWatcher => "System",
         OpenDialog: aylis_controls::OpenDialog => "System",
         SaveDialog: aylis_controls::SaveDialog => "System",

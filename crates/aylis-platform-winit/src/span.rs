@@ -408,13 +408,16 @@ impl App {
     /// principal como dona e na placa do monitor dela.
     fn open_piece(&mut self, event_loop: &ActiveEventLoop, form: ComponentId, main: usize, piece: Piece) -> Result<(), Error> {
         let dark = self.ui.theme().dark;
+        // Sem a animação do Windows: o pedaço nasce escondido, recebe o atributo e aparece.
+        let animate = self.window_animation(form);
+        let show = self.windows[main].window.is_visible().unwrap_or(true);
         let mut attributes = Window::default_attributes()
             .with_title(self.title(form))
             .with_decorations(false)
             .with_resizable(false)
             .with_active(false)
             // Como a principal: escondida (o form aberto escondido), as extras também.
-            .with_visible(self.windows[main].window.is_visible().unwrap_or(true))
+            .with_visible(show && animate)
             .with_position(PhysicalPosition::new(piece.screen.x, piece.screen.y))
             .with_inner_size(PhysicalSize::new(piece.screen.width, piece.screen.height))
             .with_theme(Some(if dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
@@ -438,6 +441,14 @@ impl App {
         let (window, backend) = crate::create_backend(event_loop, attributes, self.options.renderer, &self.renderer, self.piece_gpu(form, true), self.present_mode(form))?;
         #[cfg(web)]
         let (window, backend) = crate::create_backend(event_loop, attributes, self.options.renderer)?;
+        // O `WindowSettings` do form vale nos pedaços também.
+        #[cfg(not(any(web, mobile)))]
+        if self.ui.window_settings_of(form).is_some() {
+            crate::apply_window_options(&window, &self.ui.window_options(form));
+        }
+        if !animate && show {
+            window.set_visible(true);
+        }
         window.request_redraw();
         self.windows.push(FormWindow {
             #[cfg(not(web))]

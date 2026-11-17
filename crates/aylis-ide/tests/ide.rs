@@ -1088,6 +1088,30 @@ fn the_new_texts_and_the_messages_with_values_are_translated() {
     assert_eq!(ide.ui.tr("Placa de vídeo"), "Placa de vídeo");
 }
 
+/// Nenhum texto do árabe, do bengali ou do híndi tem letras da escrita de um dos outros dois:
+/// uma tabela do `aylis-tool translations --apply` com as colunas ar, bn, hi fora da ordem
+/// (a ferramenta espera hi, ar, bn) já pôs o bengali no ar, o híndi no bn e o árabe no hi.
+/// O danda (`।`, `॥`) fica no bloco do devanágari, mas é a pontuação do bengali também.
+#[test]
+fn the_arabic_bengali_and_hindi_texts_use_their_own_script() {
+    let scripts = [("ar", 0x0600..=0x06FF), ("bn", 0x0980..=0x09FF), ("hi", 0x0900..=0x097F)];
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/locales");
+    let mut wrong = Vec::new();
+    for (code, _) in &scripts {
+        let text = std::fs::read_to_string(dir.join(format!("{code}.json"))).unwrap();
+        let table: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&text).unwrap();
+        for (key, value) in &table {
+            let value = value.as_str().unwrap_or_default();
+            for (other, range) in scripts.iter().filter(|(c, _)| c != code) {
+                if value.chars().any(|c| range.contains(&(c as u32)) && !matches!(c, '।' | '॥')) {
+                    wrong.push(format!("{code}.json tem letras de {other} em {key:?}: {value}"));
+                }
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{} textos na escrita de outro idioma:\n{}", wrong.len(), wrong.join("\n"));
+}
+
 /// Sem projeto, a IDE abre na tela inicial (os recentes), não num form vazio; escolher um
 /// componente na paleta vai para o designer.
 #[test]

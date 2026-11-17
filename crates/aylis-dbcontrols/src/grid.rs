@@ -185,6 +185,28 @@ enum Drag {
 /// Quanto o mouse anda num título antes de virar arrasto da coluna.
 const MOVE_THRESHOLD: f32 = 5.0;
 
+/// Quando a roda do mouse rola as colunas do [`DataGrid`] (`horizontal_wheel`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum HorizontalWheel {
+    /// Com o Shift (o padrão dos sistemas).
+    #[default]
+    Shift,
+    /// A roda comum rola as colunas (as linhas, só pelo teclado, pela barra ou pelo código).
+    Always,
+    /// Só o código rola as colunas (`scroll_left`).
+    None,
+}
+
+impl aylis_core::prop::PropEnum for HorizontalWheel {
+    const NAMES: &'static [&'static str] = &["shift", "always", "none"];
+    fn from_index(i: usize) -> Option<Self> {
+        [HorizontalWheel::Shift, HorizontalWheel::Always, HorizontalWheel::None].get(i).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 /// Grade de registros.
 ///
 /// - **virtualizada**: só as linhas visíveis são lidas e pintadas, então o custo não
@@ -251,6 +273,10 @@ pub struct DataGrid {
     pub indicator: bool,
     /// O fundo destacado na linha do registro atual; sem ele, só a seleção e o passar do mouse.
     pub highlight_current: bool,
+    /// Quando a roda do mouse rola as colunas: `shift` (com o Shift, o padrão dos sistemas),
+    /// `always` (a roda comum rola as colunas) ou `none` (só o código, pelo `scroll_left`). O
+    /// movimento de lado do touchpad sempre rola as colunas, menos em `none`.
+    pub horizontal_wheel: HorizontalWheel,
     /// A largura da coluna no começo do arraste do separador no designer.
     design_width: f32,
     /// A coluna que avisou a mudança (ocupada no `Ui` enquanto avisa).
@@ -315,6 +341,7 @@ impl Default for DataGrid {
             cursor_color: None,
             indicator: true,
             highlight_current: true,
+            horizontal_wheel: HorizontalWheel::Shift,
             design_width: 0.0,
             changing_column: None,
             selected: BTreeSet::new(),
@@ -1242,6 +1269,33 @@ impl DataGrid {
     }
 }
 
+/// A posição da rolagem pelo código (as propriedades `scroll_left` e `top_row`, só em
+/// execução): o app que quer rolar de outro jeito lê e muda.
+impl DataGrid {
+    /// Quanto as colunas estão roladas, em unidades (só em execução).
+    pub fn scroll_left(&self) -> f32 {
+        self.scroll_x
+    }
+
+    /// Rola as colunas pelo código (ajustado ao que existe).
+    pub fn set_scroll_left(&mut self, x: f32) {
+        self.scroll_x = x;
+        self.clamp_scroll_x();
+    }
+
+    /// A primeira linha que aparece (a partir de 0; só em execução).
+    pub fn top_row_index(&self) -> i64 {
+        self.top_row as i64
+    }
+
+    /// Rola as linhas pelo código: a linha `row` vira a primeira que aparece (ajustado ao que
+    /// existe).
+    pub fn set_top_row_index(&mut self, row: i64) {
+        let max = self.cache.count.saturating_sub(self.visible_rows());
+        self.top_row = row.clamp(0, max as i64) as usize;
+    }
+}
+
 impl Component for DataGrid {
     /// As linhas na vertical e as colunas de lado.
     fn scroll_axes(&self) -> (bool, bool) {
@@ -1279,14 +1333,17 @@ impl Component for DataGrid {
         incremental_search: bool => "Behavior",
         cursor_color: Option<Color> => "Appearance",
         indicator: bool => "Appearance",
-        highlight_current: bool => "Appearance";
+        highlight_current: bool => "Appearance",
+        horizontal_wheel: HorizontalWheel => "Behavior";
         events: on_error, on_title_click, on_selection_change, on_column_moved;
+        computed: scroll_left: f32 => scroll_left / set_scroll_left,
+            top_row: i64 => top_row_index / set_top_row_index;
         on_set: on_set
     }
 
     /// Colunas, rodapé e linha de filtro mudam o que é preparado (e quantas linhas cabem).
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source" | "indicator") {
+        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source" | "indicator" | "top_row" | "scroll_left") {
             if name == "data_source" {
                 self.cols.clear();
             }
@@ -1351,16 +1408,35 @@ impl Component for DataGrid {
         self.refresh(ctx);
     }
 
+    /// A roda rola as linhas; com o Shift (ou o touchpad de lado), as colunas
+    /// (`horizontal_wheel`). Só fica com a roda quando rolou: na ponta (a última coluna, a
+    /// última linha, ou sem nada para rolar), ela segue para o contêiner de fora, como nas
+    /// listas e no navegador (pedido do autor em 16/11; antes a grade engolia a roda e a
+    /// `ScrollBox` em volta parava). Quem quer que a grade segure sempre: `captures_wheel`.
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &WheelEvent) {
-        let horizontal = event.modifiers.shift || event.delta.x.abs() > event.delta.y.abs();
+        let sideways = event.delta.x.abs() > event.delta.y.abs();
+        let horizontal = match self.horizontal_wheel {
+            HorizontalWheel::Shift => event.modifiers.shift || sideways,
+            HorizontalWheel::Always => !event.touch || sideways,
+            HorizontalWheel::None => false,
+        };
         if horizontal {
             let delta = if event.delta.x != 0.0 { event.delta.x } else { event.delta.y };
+            let before = self.scroll_x;
             self.scroll_x -= delta;
             self.clamp_scroll_x();
+            if (self.scroll_x - before).abs() < 0.5 {
+                self.scroll_x = before;
+                return;
+            }
             if !self.close_editor(ctx, true) {
+                self.scroll_x = before;
                 return;
             }
             self.refresh(ctx);
+        } else if self.horizontal_wheel == HorizontalWheel::None && sideways {
+            // O de lado é só do código (`scroll_left`): segue para fora.
+            return;
         } else if event.touch {
             // Dedo: as linhas acompanham o dedo (uma a cada row_height arrastado).
             self.touch_rest -= event.delta.y;
@@ -1376,7 +1452,11 @@ impl Component for DataGrid {
         } else {
             // 40 unidades = uma "linha" da roda = 3 linhas do grid.
             let rows = (-event.delta.y / 40.0 * 3.0).round() as isize;
+            let before = self.top_row;
             self.scroll_rows(ctx, rows);
+            if self.top_row == before {
+                return;
+            }
         }
         ctx.set_handled();
     }

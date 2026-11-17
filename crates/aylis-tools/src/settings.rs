@@ -86,6 +86,10 @@ fn read() -> Map<String, Value> {
         .unwrap_or_default()
 }
 
+/// O assistente "Configurar linguagens" já abriu sozinho nesta máquina (a primeira abertura
+/// da IDE; não abre de novo).
+pub const SETUP_WIZARD_SHOWN: &str = "setup_wizard_shown";
+
 /// O caminho escolhido para a ferramenta `key`, se existir no disco.
 pub fn tool(key: &str) -> Option<PathBuf> {
     read().get(key).and_then(Value::as_str).filter(|s| !s.is_empty()).map(PathBuf::from).filter(|p| p.exists())

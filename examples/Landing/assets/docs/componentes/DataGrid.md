@@ -29,6 +29,7 @@ Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, ed
 | `filter_row` | Linha de filtro | lógico | Uma linha embaixo do título para filtrar cada coluna (Enter aplica; vira o `filter` do dataset). |
 | `multi_select` | Seleção múltipla | lógico | Seleciona várias linhas: Ctrl+clique marca e desmarca, Shift+clique estende, Ctrl+A seleciona tudo. |
 | `incremental_search` | Busca ao digitar | lógico | Digitar procura na coluna atual o primeiro texto que começa com o digitado (em vez de editar a célula). |
+| `horizontal_wheel` | Roda na horizontal | um de: `shift`, `always`, `none` | Quando a roda do mouse rola as colunas: `shift` (com o Shift, o padrão dos sistemas), `always` (a roda comum rola as colunas) ou `none` (só o código, pelo `scroll_left`). O movimento de lado do touchpad sempre rola as colunas, menos em `none`. |
 
 ### Dados
 

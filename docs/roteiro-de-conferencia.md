@@ -40,7 +40,8 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     forms, só com o principal aberto; abra o fonte do outro (pelo Pesquisar no projeto ou pela
     lista de arquivos) e clique em Design (ou F12). *Esperado:* abre o form desse fonte numa aba
     nova, e não o último design mostrado. (O mínimo do Rust no "Verificar ambiente" também passou
-    a 1.88, o `rust-version` dos crates: um Rust 1.86 ou 1.87 agora aparece como desatualizado.)
+    a 1.92 desde a 0.5.0, o `rust-version` dos crates: um Rust mais velho aparece como
+    desatualizado.)
 99. **O aviso de versão nova** (pedido de 10/11, como no NoOBS). Na IDE, Ajuda → Verificar
     atualizações. *Esperado:* "O Aylis está atualizado (versão 0.2.0-beta.1)." Ajuda → "Avisar de novas
     versões" vem marcado e desmarca/marca. Com uma release mais nova no GitHub, a IDE instalada
@@ -265,13 +266,15 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     "Próxima" ficam um embaixo do outro. Gire para paisagem ou abra no PC: o índice volta à
     esquerda, sem o ☰.
 
-129. **O instalador da IDE agrupado** (13/11; detalhes nos pendentes). Rode o
-    `aylis-ide-<versão>-setup.exe`: uma página de componentes só, com "Aylis IDE e Rust
-    (obrigatório)" cinza e marcado, "Outras linguagens" e "Plataformas de destino" abertos e
-    desmarcados, e o atalho. Marque Python e Android e instale: nos detalhes, "Configurando
-    Rust…", "Configurando Python…" e "Configurando Android…", com os acentos certos. Na IDE,
-    Ferramentas → Configurar linguagens mostra Rust e Python prontos, e a verificação de
-    ambiente do Android não tem falta (só o aparelho). Em Ferramentas → Opções → Pacotes, o
+129. **O instalador da IDE e a escolha na primeira abertura** (13 e 16/11; detalhes nos
+    pendentes). Rode o `aylis-ide-<versão>-setup.exe`: uma página de componentes só, com "Aylis
+    IDE e Rust (obrigatório)" cinza e marcado e o atalho, sem linguagens nem plataformas. Nos
+    detalhes, "Configurando Rust…", com os acentos certos. Abra a IDE: o "Configurar
+    linguagens" abre sozinho, com as linguagens e as "Plataformas de destino" (Android,
+    Navegador). Marque Python e Android e instale: o andamento mostra os dois, e no fim Rust e
+    Python aparecem prontos e o Android também. Feche e abra a IDE de novo: o assistente não
+    abre mais (fica em Ferramentas → Configurar linguagens). Com uma conversa do Claude ligada
+    ao MCP, rode o instalador de novo por cima: instala sem pedir para fechar nada. Em Ferramentas → Opções → Pacotes, o
     espelho é o link da sua pasta do Drive. Na pasta instalada
     (`%LOCALAPPDATA%\Programs\aylis\aylis`), não há `examples`, e um projeto novo em Rust
     compila. Pelo MCP, `component_docs` do Button responde.

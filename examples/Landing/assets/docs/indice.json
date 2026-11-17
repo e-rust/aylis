@@ -655,6 +655,10 @@
           "arquivo": "componentes/UrlScheme.md"
         },
         {
+          "titulo": "WindowSettings",
+          "arquivo": "componentes/WindowSettings.md"
+        },
+        {
           "titulo": "WmiQuery",
           "arquivo": "componentes/WmiQuery.md"
         }

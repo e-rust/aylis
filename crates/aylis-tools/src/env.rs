@@ -12,9 +12,9 @@ use crate::process::quiet;
 use crate::{Target, which};
 
 /// Versão mínima do Rust: o `rust-version` do workspace do Aylis (estava 1.86 com o
-/// workspace em 1.88, e o 1.87 passava na conferência e falhava no cargo). O teste
-/// `the_minimum_rust_is_the_workspace_one` confere.
-pub const MIN_RUST: (u32, u32) = (1, 88);
+/// workspace em 1.88, e o 1.87 passava na conferência e falhava no cargo; 1.92 desde a 0.5.0,
+/// o que o krilla do PDF pede). O teste `the_minimum_rust_is_the_workspace_one` confere.
+pub const MIN_RUST: (u32, u32) = (1, 92);
 
 #[cfg(test)]
 mod package_tests {

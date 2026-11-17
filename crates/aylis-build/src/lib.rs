@@ -85,6 +85,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("ApplicationEvents", ""),
     ("EventInterceptor", ""),
     ("RenderSettings", ""),
+    ("WindowSettings", ""),
     ("BusyWatcher", ""),
     ("OpenDialog", ""),
     ("SaveDialog", ""),
@@ -285,6 +286,7 @@ pub const CLASS_PLATFORMS: &[(&str, &[Platform])] = {
     use Platform::*;
     &[
         ("TrayIcon", &[Windows, MacOs, Linux]),
+        ("WindowSettings", &[Windows, MacOs, Linux]),
         ("Taskbar", &[Windows]),
         ("TitleBar", &[Windows, MacOs, Linux]),
         ("WebView", &[Windows, MacOs, Linux, Android, Ios]),

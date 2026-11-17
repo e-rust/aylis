@@ -112,7 +112,10 @@ pub struct State {
     /// Cada linguagem, se o compilador está instalado e o que ainda falta (o depurador, o
     /// servidor de linguagem...). Vazio: ainda não verificou.
     pub language_status: Vec<(aylis_project::Language, bool, Vec<String>)>,
-    /// A IDE acabou de abrir: se nenhuma linguagem estiver instalada, abre o assistente.
+    /// Cada plataforma de destino do assistente (`aylis_tools::setup::TARGETS`) e o que ainda
+    /// falta para publicar para ela (vazio: pronta). Vazio: ainda não verificou.
+    pub target_status: Vec<(aylis_tools::Target, Vec<String>)>,
+    /// A IDE acabou de abrir: na primeira vez nesta máquina, abre o assistente.
     pub wizard_on_start: bool,
     /// O canal de desenvolvimento: o app que a IDE executa conecta nele (desktop, celular,
     /// navegador); o inspetor, o hot reload, o rastro e o MCP passam por ele.
@@ -211,6 +214,7 @@ impl Default for State {
             toolpacks_pending: false,
             sources_view: None,
             language_status: Vec::new(),
+            target_status: Vec::new(),
             wizard_on_start: false,
             dev: None,
             mcp: None,

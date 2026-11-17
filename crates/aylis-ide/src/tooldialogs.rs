@@ -648,13 +648,17 @@ pub fn translations(ui: &mut Ui, state: &Shared, ids: &Ids) {
 pub struct LanguagesView {
     pub form: ComponentId,
     pub rows: Vec<(Language, ComponentId, ComponentId)>,
+    /// As plataformas de destino: (a saída, a caixa, a situação).
+    pub targets: Vec<(Target, ComponentId, ComponentId)>,
     pub log: ComponentId,
     pub install: ComponentId,
     pub progress: ComponentId,
 }
 
-/// A IDE abriu: confere as linguagens e, se nenhuma estiver instalada (instalação nova),
-/// abre o assistente. `AYLIS_IDE_NO_WIZARD` desliga (testes, MCP).
+/// A IDE abriu: confere as linguagens e as plataformas e, na primeira abertura nesta máquina,
+/// abre o assistente (uma vez só: `settings::SETUP_WIZARD_SHOWN`). É o lugar único de escolher
+/// o que instalar; o instalador traz só a IDE e o Rust (decidido em 16/11).
+/// `AYLIS_IDE_NO_WIZARD` desliga (testes, MCP).
 pub fn first_run(_ui: &Ui, state: &Shared, _ids: &Ids) {
     if std::env::var_os("AYLIS_IDE_NO_WIZARD").is_some() {
         return;
@@ -674,13 +678,13 @@ pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {
     if state.borrow().languages_view.is_some() {
         return;
     }
-    let form = ui.add_root(Form::new("Configurar linguagens", 720.0, 640.0));
+    let form = ui.add_root(Form::new("Configurar linguagens", 720.0, 760.0));
     let _ = ui.set_name(form, "frmLinguagens");
     let _ = ui.set_prop(form, "border_style", "single");
     ui.control_mut(form).unwrap().set_padding(16.0);
     let intro = ui.add(
         Label::new(
-            "Marque as linguagens que vai usar. A IDE instala tudo de cada uma: o compilador (ou o interpretador), o depurador e o servidor de linguagem do editor. No Windows vem pelo winget, sem perguntas; o Windows pode pedir a permissão de administrador.",
+            "Marque as linguagens e as plataformas que vai usar. A IDE instala tudo de cada uma: o compilador (ou o interpretador), o depurador e o servidor de linguagem do editor; para as plataformas, o que a publicação pede. Vem dos pacotes do Aylis ou do winget, sem perguntas; o Windows pode pedir a permissão de administrador. Volte aqui quando quiser, em Ferramentas → Configurar linguagens.",
         ),
         form,
     );
@@ -709,6 +713,20 @@ pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {
         muted(ui, status);
         rows.push((language, check, status));
     }
+    let targets_title = caption(ui, form, "Plataformas de destino");
+    ui.control_mut(targets_title).unwrap().set_margins([0.0, 8.0, 0.0, 4.0]);
+    let target_list = ui.add(Layout::default(), form);
+    ui.control_mut(target_list).unwrap().set_align(Align::Top).set_height(aylis_tools::setup::TARGETS.len() as f32 * 30.0 + 8.0);
+    let mut targets = Vec::new();
+    for (target, name, _) in aylis_tools::setup::TARGETS {
+        let line = ui.add(Layout::default(), target_list);
+        ui.control_mut(line).unwrap().set_align(Align::Top).set_height(30.0);
+        let check = ui.add(CheckBox::new(*name), line);
+        ui.control_mut(check).unwrap().set_align(Align::Left).set_width(200.0);
+        let status = label(ui, line, "verificando…", Align::Client, 0.0);
+        muted(ui, status);
+        targets.push((*target, check, status));
+    }
     let log_title = caption(ui, form, "Andamento");
     ui.control_mut(log_title).unwrap().set_margins([0.0, 8.0, 0.0, 4.0]);
     let log = ui.add(aylis_controls::Memo::new(""), form);
@@ -716,7 +734,7 @@ pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let _ = ui.set_prop(log, "read_only", true);
     let _ = ui.set_prop(log, "font_size", 12);
 
-    state.borrow_mut().languages_view = Some(LanguagesView { form, rows: rows.clone(), log, install, progress });
+    state.borrow_mut().languages_view = Some(LanguagesView { form, rows: rows.clone(), targets: targets.clone(), log, install, progress });
     {
         let state = state.clone();
         ui.on_click(install, move |ui, _| {
@@ -725,12 +743,17 @@ pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {
                 .filter(|(_, check, _)| ui.get_prop(*check, "checked").ok().and_then(|v| v.to_bool().ok()).unwrap_or(false))
                 .map(|(l, _, _)| *l)
                 .collect();
-            if chosen.is_empty() {
-                let _ = ui.set_prop(progress, "text", "Marque pelo menos uma linguagem.");
+            let chosen_targets: Vec<Target> = targets
+                .iter()
+                .filter(|(_, check, _)| ui.get_prop(*check, "checked").ok().and_then(|v| v.to_bool().ok()).unwrap_or(false))
+                .map(|(t, _, _)| *t)
+                .collect();
+            if chosen.is_empty() && chosen_targets.is_empty() {
+                let _ = ui.set_prop(progress, "text", "Marque pelo menos uma linguagem ou plataforma.");
                 return;
             }
             state.borrow_mut().setup_log.clear();
-            jobs::setup_languages(&state, chosen);
+            jobs::setup_languages(&state, chosen, chosen_targets);
             fill_languages(ui, &state);
         });
     }
@@ -751,9 +774,9 @@ pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {
 /// andamento.
 pub fn fill_languages(ui: &mut Ui, state: &Shared) {
     let Some(view) = state.borrow().languages_view.clone() else { return };
-    let (status, log, busy, last) = {
+    let (status, target_status, log, busy, last) = {
         let st = state.borrow();
-        (st.language_status.clone(), st.setup_log.join("\n"), st.env_job.as_ref().map(|j| j.title.clone()), st.env_log.clone())
+        (st.language_status.clone(), st.target_status.clone(), st.setup_log.join("\n"), st.env_job.as_ref().map(|j| j.title.clone()), st.env_log.clone())
     };
     let (ok, muted_color) = (ui.theme().color("success"), ui.theme().color("text_muted"));
     let warn = ui.theme().color("warning");
@@ -763,6 +786,15 @@ pub fn fill_languages(ui: &mut Ui, state: &Shared) {
             Some((_, true, missing)) if missing.is_empty() => ("✓ pronta".to_string(), ok),
             Some((_, true, missing)) => (format!("instalada; falta: {}", missing.join(", ")), warn),
             Some((_, false, _)) => ("não instalada".to_string(), muted_color),
+        };
+        let _ = ui.set_prop(*label, "text", text);
+        let _ = ui.set_prop(*label, "color", color);
+    }
+    for (target, _, label) in &view.targets {
+        let (text, color) = match target_status.iter().find(|(t, _)| t == target) {
+            None => ("verificando…".to_string(), muted_color),
+            Some((_, missing)) if missing.is_empty() => ("✓ pronta".to_string(), ok),
+            Some((_, missing)) => (format!("falta: {}", missing.join(", ")), muted_color),
         };
         let _ = ui.set_prop(*label, "text", text);
         let _ = ui.set_prop(*label, "color", color);

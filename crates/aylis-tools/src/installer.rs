@@ -1,28 +1,24 @@
 //! O instalador da IDE para Windows (`aylis-tool installer-ide`): compila em release, gera
 //! o script do NSIS e chama o `makensis`.
 //!
-//! Uma página de componentes, agrupada pelo que se programa e para onde se publica:
+//! A página de componentes tem só a IDE com o Rust (obrigatória) e o atalho:
 //!
 //! ```text
 //! Aylis IDE e Rust (obrigatório)   a IDE, o aylis-host, o aylis-tool, o código do Aylis (crates,
 //!                                  third_party: os projetos em Rust compilam contra ele), os
 //!                                  clientes das linguagens, a documentação; e o Rust configurado
-//! Outras linguagens                Python, TypeScript, C#, Java, Go, C++, Free Pascal (opcionais)
-//! Plataformas de destino           Android, Navegador (opcionais; o Windows já vem)
 //! Atalho na área de trabalho
 //! ```
 //!
-//! Sem o Rust o Aylis não funciona (a IDE, os componentes e a publicação passam por ele), e
-//! por isso ele não é opção. Uma linguagem ou uma plataforma marcada vem com tudo o que precisa
-//! para funcionar bem: no fim da instalação, o `aylis-tool` recém-instalado roda o
-//! `aylis-tool setup` dela ([`crate::setup`], o mesmo do "Configurar linguagens" da IDE), que
-//! instala o compilador ou o interpretador, o depurador e o servidor de linguagem (o Android: o
-//! JDK, o SDK, o NDK e o cargo-ndk; o navegador: o alvo wasm e o wasm-bindgen). Tudo vem dos
-//! pacotes de ferramentas (`docs/pacotes.md`), conferidos com o SHA-256, da pasta `pacotes` ao
-//! lado do instalador (o kit offline) ou do espelho padrão
-//! ([`crate::settings::DEFAULT_PACKAGE_MIRROR`]); o que não tem pacote vem pelo winget. A saída
-//! fica nos detalhes da instalação (`nsExec`, sem `cmd`). O que não se configurar é dito no
-//! fim, com o caminho para refazer (Ferramentas → Configurar linguagens), e a IDE fica.
+//! Sem o Rust o Aylis não funciona, e por isso ele não é opção: no fim da instalação, o
+//! `aylis-tool` recém-instalado roda o `aylis-tool setup rust` ([`crate::setup`]). As outras
+//! linguagens e as plataformas de destino (Android, navegador) se escolhem num lugar só, o
+//! assistente "Configurar linguagens" da IDE, que abre sozinho na primeira vez (decidido pelo
+//! autor em 16/11: "centralizar"). Tudo vem dos pacotes de ferramentas (`docs/pacotes.md`),
+//! conferidos com o SHA-256, da pasta `pacotes` ao lado do instalador (o kit offline) ou do
+//! espelho padrão ([`crate::settings::DEFAULT_PACKAGE_MIRROR`]); o que não tem pacote vem pelo
+//! winget. A saída fica nos detalhes da instalação (`nsExec`, sem `cmd`). Se o Rust não se
+//! configurar, isso é dito no fim, com o caminho para refazer, e a IDE fica.
 //!
 //! Os projetos de exemplo não vão (o repositório os guarda): o `Cargo.toml` instalado é o do
 //! workspace sem eles entre os membros. As páginas de referência dos componentes (as que o
@@ -33,15 +29,14 @@
 //! compilações dos projetos ficam fora da instalação (`crate::shared_target_dir`). A IDE acha
 //! a pasta `aylis\` sozinha, ao lado do executável (`aylis_project::codegen::aylis_root`).
 //!
-//! Em modo silencioso (ou para já abrir marcado):
+//! Em modo silencioso:
 //!
 //! ```text
-//! aylis-ide-<versão>-setup.exe /S /LINGUAGENS=python,go /PLATAFORMAS=android,web /ESPELHO=https://... /D=C:\pasta
+//! aylis-ide-<versão>-setup.exe /S /ESPELHO=https://... /D=C:\pasta
 //! ```
 //!
-//! `/LINGUAGENS=` e `/PLATAFORMAS=` aceitam os nomes separados por vírgula (sem espaços) ou
-//! `all`; `/ESPELHO=` acrescenta um espelho aos das Opções. O código de saída é 3 quando a IDE
-//! foi instalada e algo não se configurou. O desinstalador remove também os pacotes
+//! `/ESPELHO=` acrescenta um espelho aos das Opções. O código de saída é 3 quando a IDE foi
+//! instalada e o Rust não se configurou. O desinstalador remove também os pacotes
 //! (`%USERPROFILE%\.aylis\tools`), o cache deles (`downloads`) e o `environment.json`; as
 //! Opções (`tools.json`) ficam.
 //!
@@ -55,25 +50,12 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use aylis_project::Language;
-
 use crate::env::exe;
 use crate::toolpacks::Manifest;
 
 /// A plataforma do instalador (os pacotes do kit offline).
 const PLATFORM: &str = "windows-x86_64";
 
-/// As plataformas de destino além do Windows: (o `--target` do `aylis-tool setup`, o nome, o
-/// que vem junto).
-const TARGETS: &[(&str, &str, &str)] = &[
-    ("android", "Android", "Publicar e depurar no Android: o alvo do Rust, o JDK, o Android SDK, o NDK e o cargo-ndk."),
-    ("web", "Navegador (web)", "Publicar para o navegador (wasm): o alvo do Rust e o wasm-bindgen."),
-];
-
-/// As linguagens opcionais: todas menos o Rust (que sempre vem).
-fn languages() -> impl Iterator<Item = Language> {
-    Language::ALL.into_iter().filter(|l| *l != Language::Rust)
-}
 
 /// Os executáveis (o pacote do cargo e o nome do binário).
 const BINARIES: &[(&str, &str)] = &[("aylis-ide", "aylis-ide"), ("aylis-host", "aylis-host"), ("aylis-tools", "aylis-tool"), ("aylis-migrate", "aylis-migrate")];
@@ -246,46 +228,6 @@ fn offline_kit(out: &Path, names: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// Um texto entre aspas duplas no script do NSIS (`$` e `"` escapados, numa linha só).
-fn nsis_text(s: &str) -> String {
-    s.replace('$', "$$").replace('"', "$\\\"").replace(['\r', '\n'], " ")
-}
-
-/// As seções das linguagens e das plataformas, as descrições delas e o marcar pela linha de
-/// comando (`/LINGUAGENS=`, `/PLATAFORMAS=`).
-struct ChoiceScript {
-    languages: String,
-    targets: String,
-    descriptions: String,
-    from_parameters: String,
-}
-
-/// Uma seção opcional que roda o `aylis-tool setup` (`args`) no fim; `select` marca pelo nome
-/// na lista de `$R1` (`,nome,` ou `,all,`).
-fn setup_section(id: &str, label: &str, args: &str, name: &str, description: &str, out: &mut ChoiceScript, group: fn(&mut ChoiceScript) -> &mut String) {
-    group(out).push_str(&format!("Section /o \"{label}\" {id}\n  !insertmacro AylisSetup \"{args}\" \"{label}\"\nSectionEnd\n", label = nsis_text(label)));
-    out.descriptions.push_str(&format!("  !insertmacro MUI_DESCRIPTION_TEXT ${{{id}}} \"{}\"\n", nsis_text(description)));
-    out.from_parameters.push_str(&format!(
-        "  ${{StrStr}} $R2 \"$R1\" \",{name},\"\n  StrCmp $R2 \"\" 0 aylis_on_{id}\n  ${{StrStr}} $R2 \"$R1\" \",all,\"\n  StrCmp $R2 \"\" aylis_next_{id}\n  aylis_on_{id}:\n  !insertmacro SelectSection ${{{id}}}\n  aylis_next_{id}:\n"
-    ));
-}
-
-fn choice_script() -> ChoiceScript {
-    let mut out = ChoiceScript { languages: String::new(), targets: String::new(), descriptions: String::new(), from_parameters: String::new() };
-    out.from_parameters.push_str("  ClearErrors\n  ${GetOptions} $R0 \"/LINGUAGENS=\" $R1\n  StrCpy $R1 \",$R1,\"\n");
-    for language in languages() {
-        let folder = language.folder();
-        // O nome vai para a linha de comando: só os do Aylis.
-        assert!(aylis_project::is_identifier(folder), "{folder}");
-        let description = format!("Programar em {}: o compilador ou o interpretador, o depurador e o servidor de linguagem, instalados e configurados.", language.name());
-        setup_section(&format!("SecLang_{folder}"), language.name(), folder, folder, &description, &mut out, |o| &mut o.languages);
-    }
-    out.from_parameters.push_str("  ClearErrors\n  ${GetOptions} $R0 \"/PLATAFORMAS=\" $R1\n  StrCpy $R1 \",$R1,\"\n");
-    for (id, name, description) in TARGETS {
-        setup_section(&format!("SecTarget_{id}"), name, &format!("rust --target {id}"), id, description, &mut out, |o| &mut o.targets);
-    }
-    out
-}
 
 /// O `makensis`: o escolhido nas Opções da IDE, o `PATH` ou a pasta padrão do NSIS.
 pub fn makensis() -> Option<PathBuf> {
@@ -306,7 +248,22 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
     let skip: String = SKIP.iter().map(|s| format!("/x {s} ")).collect();
     let tree = |name: &str| format!("  File /r {skip}\"{}\"\n", p(&root.join(name)));
     let file = |name: &str| format!("  File \"{}\"\n", p(&root.join(name)));
-    let bins: String = BINARIES.iter().map(|(_, b)| format!("  File \"{}\"\n", p(&release.join(exe(b))))).collect();
+    // Um executável em uso (a ponte do MCP de uma conversa do Claude é um `aylis-tool`, e a IDE
+    // pode estar aberta) é renomeado antes da cópia: o Windows deixa renomear o que está rodando,
+    // a cópia nova entra no nome certo, quem estava rodando segue com o antigo até fechar, e o
+    // renomeado sai no próximo reinício. Encerrar o processo derrubaria o MCP da conversa no
+    // meio do trabalho (o Claude não religa o servidor sozinho; pedido do autor em 16/11).
+    let bins: String = BINARIES
+        .iter()
+        .map(|(_, b)| {
+            let old = format!("{b}.antigo.exe");
+            format!(
+                "  Delete \"$INSTDIR\\{old}\"\n  Rename \"$INSTDIR\\{name}\" \"$INSTDIR\\{old}\"\n  Delete /REBOOTOK \"$INSTDIR\\{old}\"\n  File \"{}\"\n",
+                p(&release.join(exe(b))),
+                name = exe(b)
+            )
+        })
+        .collect();
     // O código do Aylis (os projetos em Rust compilam contra ele), sem os exemplos: o
     // `Cargo.toml` é a cópia sem eles entre os membros. O `third_party` também: o cargo exige
     // as dependências por caminho mesmo de outro alvo (a cópia do `accesskit_android`).
@@ -322,12 +279,7 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
         p(&reference)
     );
     let file_icons: String = crate::icons::FILE_TYPES.iter().map(|(ext, _, _)| format!("  File \"{}\"\n", p(&icons.join(format!("{ext}.ico"))))).collect();
-    let choices = choice_script();
     TEMPLATE
-        .replace("@LANGUAGE_SECTIONS@", &choices.languages)
-        .replace("@TARGET_SECTIONS@", &choices.targets)
-        .replace("@CHOICE_DESCRIPTIONS@", &choices.descriptions)
-        .replace("@CHOICE_PARAMETERS@", &choices.from_parameters)
         .replace("@VERSION@", version)
         .replace("@ICON@", &p(&root.join("crates").join("aylis-ide").join("resources").join("aylis-ide.ico")))
         .replace("@SETUP@", &p(setup))
@@ -533,12 +485,6 @@ Section "-Rust"
   !insertmacro AylisSetup "rust" "Rust"
 SectionEnd
 
-SectionGroup /e "Outras linguagens" SecLanguages
-@LANGUAGE_SECTIONS@SectionGroupEnd
-
-SectionGroup /e "Plataformas de destino" SecTargets
-@TARGET_SECTIONS@SectionGroupEnd
-
 Section /o "Atalho na área de trabalho" SecDesktop
   CreateShortcut "$DESKTOP\Aylis IDE.lnk" "$INSTDIR\aylis-ide.exe"
 SectionEnd
@@ -575,8 +521,8 @@ Function AylisCheckMirror
   aylis_check_done:
 FunctionEnd
 
-; /LINGUAGENS=python,go, /PLATAFORMAS=android,web (ou all) e /ESPELHO=https://... na linha
-; de comando (o modo silencioso, /S, usa só eles). Sem eles, só o Rust.
+; /ESPELHO=https://... na linha de comando. As linguagens e as plataformas se escolhem na IDE
+; (o assistente "Configurar linguagens" abre sozinho na primeira vez).
 Function .onInit
   ${GetParameters} $R0
   ; O espelho à mão: o GetOptions corta o valor no primeiro "/" (o "https:" da URL). Vai do
@@ -600,14 +546,12 @@ Function .onInit
   StrCmp $R2 " " 0 +2
   StrCpy $Mirror $Mirror -1
   aylis_mirror_parsed:
-@CHOICE_PARAMETERS@FunctionEnd
+FunctionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecIde} "A IDE, o código do Aylis, a documentação e o Rust (o compilador, o Visual C++, o depurador e o servidor de linguagem): sem ele o Aylis não funciona."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecLanguages} "Programar os eventos em outras linguagens: cada uma marcada vem pronta para executar e depurar."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecTargets} "Publicar para outras plataformas além do Windows."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Um atalho da IDE na área de trabalho."
-@CHOICE_DESCRIPTIONS@!insertmacro MUI_FUNCTION_DESCRIPTION_END
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "Uninstall"
   ; Sem a linha de cada arquivo na lista (veja a seção IDE): com a pasta de compilação são
@@ -659,9 +603,10 @@ const README: &str = "Aylis IDE
                   linguagens, a documentação, as fontes e os ícones
 
 O Rust sempre se instala: sem ele o Aylis não funciona. As outras linguagens e as plataformas
-(Android, navegador) marcadas no instalador vêm prontas (o compilador ou o interpretador, o
-depurador e o servidor de linguagem); as que faltarem se configuram depois na IDE
-(Ferramentas -> Configurar linguagens) ou com: aylis-tool setup <linguagem>
+(Android, navegador) se escolhem na IDE: na primeira abertura, o assistente \"Configurar
+linguagens\" mostra o que está pronto e instala o que for marcado (o compilador ou o
+interpretador, o depurador e o servidor de linguagem); depois, em Ferramentas -> Configurar
+linguagens, ou com: aylis-tool setup <linguagem>
 
 As compilações ficam em %USERPROFILE%\\.aylis\\target (outra pasta nas Opções da IDE),
 compartilhadas entre os projetos; o que nenhum projeto usa mais sai sozinho (ou com
@@ -674,10 +619,9 @@ Pacotes de ferramentas
   pelo winget.
 
   Sem janelas (modo silencioso):
-    aylis-ide-<versão>-setup.exe /S /LINGUAGENS=python,go /PLATAFORMAS=android,web /D=C:\\pasta
-  Os nomes separados por vírgula, sem espaços, ou all (linguagens: python, typescript, csharp,
-  java, go, cpp, pascal; plataformas: android, web). /ESPELHO=https://... acrescenta um
-  espelho. Sai com o código 3 se a IDE foi instalada e algo não ficou pronto.
+    aylis-ide-<versão>-setup.exe /S /D=C:\\pasta
+  /ESPELHO=https://... acrescenta um espelho. Sai com o código 3 se a IDE foi instalada e o
+  Rust não ficou pronto.
 
   O kit offline (para distribuir tudo junto, numa pasta de rede ou num pendrive):
     aylis-tool installer-ide --with-packages rust,jdk      (ou all)
@@ -696,6 +640,19 @@ mod tests {
         let root = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
         let x = Path::new("x");
         script(root, x, x, x, x, x, "0.0.0")
+    }
+
+    /// O executável em uso (a ponte do MCP, a IDE aberta) é renomeado antes da cópia, e nenhum
+    /// processo é encerrado (pedido do autor em 16/11: instalar com o Claude usando o MCP).
+    #[test]
+    fn a_binary_in_use_is_renamed_before_the_copy() {
+        let script = generated_script();
+        let tool = exe("aylis-tool");
+        let rename = script.find(&format!("Rename \"$INSTDIR\\{tool}\" \"$INSTDIR\\aylis-tool.antigo.exe\"")).expect("o rename do aylis-tool");
+        let copy = script[rename..].find(&format!("\\{tool}\"")).expect("a cópia depois do rename");
+        assert!(copy > 0);
+        assert!(script.contains("Delete /REBOOTOK \"$INSTDIR\\aylis-ide.antigo.exe\""));
+        assert!(!script.to_lowercase().contains("taskkill"), "nenhum processo é encerrado");
     }
 
     /// Nenhum exemplo vai: o workspace instalado não os lista (o cargo recusaria), e o script
@@ -717,31 +674,23 @@ mod tests {
         assert!(!text.contains("SetOutPath \"$INSTDIR\\aylis\\examples\""));
     }
 
-    /// Uma página só: a IDE com o Rust (obrigatória), as outras linguagens e as plataformas
-    /// em grupos, desmarcadas, cada uma rodando o `aylis-tool setup` dela; o Rust sempre roda.
+    /// Uma página só, com a IDE e o Rust (obrigatória) e o atalho: as linguagens e as
+    /// plataformas se escolhem na IDE (decidido pelo autor em 16/11), e o Rust sempre roda.
     #[test]
-    fn the_page_groups_the_languages_and_the_platforms() {
+    fn the_page_has_only_the_ide_and_rust() {
         let text = generated_script();
-        assert!(!text.contains('@') || !text.lines().any(|l| l.contains("@LANGUAGE") || l.contains("@TARGET") || l.contains("@CHOICE") || l.contains("@CODE@")), "marcador sem trocar");
+        assert!(!text.lines().any(|l| l.contains("@LANGUAGE") || l.contains("@TARGET") || l.contains("@CHOICE") || l.contains("@CODE@")), "marcador sem trocar");
         assert_eq!(text.matches("!insertmacro MUI_PAGE_COMPONENTS").count(), 1, "uma página de componentes");
-        assert!(!text.contains("Page custom"), "sem a página do espelho");
         let ide = &text[text.find("Section \"Aylis IDE e Rust (obrigatório)\" SecIde").expect("a IDE com o Rust")..];
         assert!(ide[..ide.find("SectionEnd").unwrap()].contains("SectionIn RO"));
         assert!(text.contains("Section \"-Rust\"\n  !insertmacro AylisSetup \"rust\" \"Rust\""), "o Rust sempre");
-        let group = &text[text.find("SectionGroup /e \"Outras linguagens\"").unwrap()..];
-        let group = &group[..group.find("SectionGroupEnd").unwrap()];
-        for language in languages() {
-            assert!(group.contains(&format!("Section /o \"{}\" SecLang_{}\n  !insertmacro AylisSetup \"{}\"", nsis_text(language.name()), language.folder(), language.folder())), "{}", language.name());
+        for gone in ["Outras linguagens", "Plataformas de destino", "/LINGUAGENS=", "/PLATAFORMAS=", "SecLang_", "SecTarget_"] {
+            assert!(!text.contains(gone), "a escolha saiu do instalador: {gone}");
         }
-        assert!(!group.contains("\"Rust\""), "o Rust não é opção");
-        let targets = &text[text.find("SectionGroup /e \"Plataformas de destino\"").unwrap()..];
-        assert!(targets.contains("!insertmacro AylisSetup \"rust --target android\"") && targets.contains("!insertmacro AylisSetup \"rust --target web\""));
-        // A ordem: copiar, as origens, o Rust, as linguagens, as plataformas, o que falhou.
-        let order = ["SecIde", "Section \"-Origens\"", "Section \"-Rust\"", "\"Outras linguagens\"", "\"Plataformas de destino\"", "Section \"-O que não se configurou\""];
+        assert_eq!(text.matches("!insertmacro AylisSetup ").count(), 1, "só o Rust se configura aqui");
+        let order = ["SecIde", "Section \"-Origens\"", "Section \"-Rust\"", "Section \"-O que não se configurou\""];
         let at: Vec<usize> = order.iter().map(|o| text.find(o).unwrap_or_else(|| panic!("falta {o}"))).collect();
         assert!(at.windows(2).all(|w| w[0] < w[1]), "{at:?}");
-        // A linha de comando marca pelos nomes.
-        assert!(text.contains("\"/LINGUAGENS=\"") && text.contains("\"/PLATAFORMAS=\"") && text.contains("\",python,\"") && text.contains("\",android,\""));
         assert!(!text.contains("${GetOptions} $R0 \"/ESPELHO=\""), "o GetOptions cortaria a URL");
     }
 
@@ -794,10 +743,5 @@ mod tests {
         assert!(quiet < tools && tools < base && cache < base);
         assert!(!uninstall.contains("RMDir /r \"$PROFILE\\.aylis\"\n"), "nunca a pasta inteira");
         assert!(!uninstall.lines().any(|l| l.contains("tools.json") && !l.trim_start().starts_with(';')), "as Opções ficam");
-    }
-
-    #[test]
-    fn nsis_texts_are_escaped() {
-        assert_eq!(nsis_text("a \"b\" $c\nd"), "a $\\\"b$\\\" $$c d");
     }
 }

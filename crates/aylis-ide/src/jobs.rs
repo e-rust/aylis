@@ -101,6 +101,8 @@ pub enum Msg {
     /// Cada linguagem, se o compilador está instalado e o que falta (o assistente
     /// "Configurar linguagens").
     Languages(Vec<(Language, bool, Vec<String>)>),
+    /// Cada plataforma de destino e o que falta para ela (o mesmo assistente).
+    Targets(Vec<(Target, Vec<String>)>),
     /// Publicado: (arquivo principal, pasta).
     Published(PathBuf, PathBuf),
     /// A depuração começou: a sessão vai para o estado da IDE.
@@ -379,6 +381,10 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
                     st.language_status = list;
                     languages_checked = true;
                 }
+                Msg::Targets(list) => {
+                    st.target_status = list;
+                    languages_checked = true;
+                }
                 Msg::Debug(session) => {
                     drop(st);
                     crate::debugger::attach(state, *session);
@@ -447,13 +453,11 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
         crate::tooldialogs::fill_languages(ui, state);
     }
     if languages_checked {
-        // A IDE acabou de abrir e nenhuma linguagem está instalada: o assistente.
-        let open = {
-            let mut st = state.borrow_mut();
-            let first = std::mem::take(&mut st.wizard_on_start);
-            first && st.language_status.iter().all(|(_, ready, _)| !ready)
-        };
+        // A primeira abertura da IDE nesta máquina: o assistente, uma vez (a escolha das
+        // linguagens e das plataformas fica aqui, e não no instalador; decidido em 16/11).
+        let open = std::mem::take(&mut state.borrow_mut().wizard_on_start) && aylis_tools::settings::tool_text(aylis_tools::settings::SETUP_WIZARD_SHOWN).is_empty();
         if open {
+            let _ = aylis_tools::settings::set_tool(aylis_tools::settings::SETUP_WIZARD_SHOWN, Some("1"));
             crate::tooldialogs::languages(ui, state, ids);
         }
         crate::tooldialogs::fill_languages(ui, state);
@@ -869,14 +873,19 @@ pub fn check_languages(state: &Shared) {
             })
             .collect();
         sender.send(Msg::Languages(full));
+        // As plataformas de destino (o Android, o navegador): o que falta para publicar.
+        let targets = aylis_tools::setup::TARGETS.iter().map(|(t, _, _)| (*t, aylis_tools::setup::target_missing(*t))).collect();
+        sender.send(Msg::Targets(targets));
         Ok(String::new())
     });
 }
 
-/// Instala e configura as linguagens marcadas no assistente: o compilador, o depurador e o
-/// servidor de linguagem de cada uma, sem perguntas (`aylis_tools::setup`).
-pub fn setup_languages(state: &Shared, languages: Vec<Language>) {
-    let names: Vec<&str> = languages.iter().map(|l| l.name()).collect();
+/// Instala e configura o que foi marcado no assistente: o compilador, o depurador e o
+/// servidor de linguagem de cada linguagem, e o que cada plataforma de destino pede, sem
+/// perguntas (`aylis_tools::setup`).
+pub fn setup_languages(state: &Shared, languages: Vec<Language>, targets: Vec<Target>) {
+    let target_name = |t: Target| aylis_tools::setup::TARGETS.iter().find(|(x, _, _)| *x == t).map_or("?", |(_, n, _)| *n);
+    let names: Vec<&str> = languages.iter().map(|l| l.name()).chain(targets.iter().map(|t| target_name(*t))).collect();
     let title = format!("Configurando {}", names.join(", "));
     start(state, Slot::Environment, title, move |control, sender| {
         let mut pending = Vec::new();
@@ -892,6 +901,22 @@ pub fn setup_languages(state: &Shared, languages: Vec<Language>) {
             } else {
                 pending.push(language.name());
                 format!("✖ {}: ainda falta {}", language.name(), missing.join(", "))
+            };
+            sender.send(Msg::Event(Event::Line(line, LineKind::Tool)));
+        }
+        for target in targets {
+            let name = target_name(target);
+            sender.send(Msg::Event(Event::Step(format!("Configurando {name}"))));
+            aylis_tools::setup::setup_targets(Language::Rust, &[target], aylis_host().as_deref(), control, &mut |e| sender.send(Msg::Event(e)));
+            if control.is_cancelled() {
+                return Err(CANCELLED.into());
+            }
+            let missing = aylis_tools::setup::target_missing(target);
+            let line = if missing.is_empty() {
+                format!("✔ {name}: pronta")
+            } else {
+                pending.push(name);
+                format!("✖ {name}: ainda falta {}", missing.join(", "))
             };
             sender.send(Msg::Event(Event::Line(line, LineKind::Tool)));
         }

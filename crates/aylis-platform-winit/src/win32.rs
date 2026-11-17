@@ -136,7 +136,13 @@ fn client_point(hwnd: HWND, lparam: isize) -> (i32, i32) {
 /// O botão maximizar da barra própria, pelas mensagens da moldura. `Some`: o resultado (a
 /// mensagem para aqui); `None`: segue o caminho normal.
 fn caption_button(hwnd: HWND, form: u64, message: u32, wparam: usize, lparam: isize) -> Option<LRESULT> {
-    let push = |kind: CaptionInput, (x, y): (i32, i32)| {
+    // Só a janela que registrou o botão da barra própria: na que usa a barra do Windows, o
+    // `HTMAXBUTTON` é o botão dele, e o clique engolido aqui não maximizava (relatado pelo
+    // MD304V em 16/11: as janelas de configuração não maximizavam pelo botão).
+    if !MAXIMIZE_BUTTONS.with(|m| m.borrow().contains_key(&form)) {
+        return None;
+    }
+    let push =|kind: CaptionInput, (x, y): (i32, i32)| {
         CAPTION_INPUT.with(|c| c.borrow_mut().push((form, kind, x, y)));
         wake();
     };
@@ -476,6 +482,49 @@ pub(crate) fn set_window_corners(window: &winit::window::Window, preference: i32
     let _ = unsafe { DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, (&raw const value).cast(), size_of::<DWM_WINDOW_CORNER_PREFERENCE>() as u32) };
 }
 
+/// A animação do Windows ao abrir, minimizar e restaurar (`window_animation`):
+/// `DWMWA_TRANSITIONS_FORCEDISABLED`. Posta com a janela ainda escondida, a primeira aparição
+/// já vem sem animação (pedido do NoOBS em 16/11: o editor do print aparecia maximizando).
+pub(crate) fn set_window_animation(window: &winit::window::Window, animate: bool) {
+    if let Some(hwnd) = hwnd_of(window) {
+        let _ = set_hwnd_animation(hwnd, animate);
+    }
+}
+
+/// O [`set_window_animation`] num `HWND` (o teste usa uma janela comum).
+fn set_hwnd_animation(hwnd: HWND, animate: bool) -> windows::core::Result<()> {
+    use windows::core::BOOL;
+    use windows::Win32::Graphics::Dwm::{DWMWA_TRANSITIONS_FORCEDISABLED, DwmSetWindowAttribute};
+    let disabled = BOOL::from(!animate);
+    // SAFETY: `hwnd` é uma janela viva, e o ponteiro e o tamanho são os de `disabled`, que vive
+    // até o fim da chamada (o DWM copia o valor).
+    unsafe { DwmSetWindowAttribute(hwnd, DWMWA_TRANSITIONS_FORCEDISABLED, (&raw const disabled).cast(), size_of::<BOOL>() as u32) }
+}
+
+/// Os estilos estendidos do `WindowSettings`: `WS_EX_NOACTIVATE` (clicar não tira o foco de
+/// onde ele está) e `WS_EX_TOOLWINDOW` (fora do Alt+Tab e da barra de tarefas).
+pub(crate) fn set_window_ex_styles(window: &winit::window::Window, no_activate: bool, tool_window: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GWL_EXSTYLE, GetWindowLongPtrW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SetWindowLongPtrW, SetWindowPos, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    };
+    let Some(hwnd) = hwnd_of(window) else { return };
+    // SAFETY: `hwnd` é a janela viva do winit; só os bits deste componente mudam.
+    unsafe {
+        let before = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+        let mut style = before & !(WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0);
+        if no_activate {
+            style |= WS_EX_NOACTIVATE.0;
+        }
+        if tool_window {
+            style = (style | WS_EX_TOOLWINDOW.0) & !WS_EX_APPWINDOW.0;
+        }
+        if style != before {
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style as isize);
+            let _ = SetWindowPos(hwnd, None, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+    }
+}
+
 pub(crate) fn hwnd_of(window: &winit::window::Window) -> Option<HWND> {
     use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
     match window.window_handle().ok()?.as_raw() {
@@ -775,5 +824,43 @@ fn capture_client(raw: isize) -> Option<(u32, u32, Vec<u8>)> {
             px[3] = 255;
         }
         Some((w as u32, h as u32, pixels))
+    }
+}
+
+#[cfg(test)]
+mod caption_tests {
+    use super::*;
+
+    /// O clique no maximizar só é da barra própria na janela que registrou o botão; na que usa
+    /// a barra do Windows, segue para o Windows (antes era engolido e a janela não maximizava).
+    #[test]
+    fn the_maximize_click_is_only_taken_where_the_own_bar_has_the_button() {
+        let form = ComponentId::from_u64(987_654);
+        let click = |message: u32| caption_button(HWND(std::ptr::null_mut()), form.to_u64(), message, HTMAXBUTTON, 0);
+        assert!(click(WM_NCLBUTTONDOWN).is_none(), "a barra do Windows recebe o clique");
+        assert!(click(WM_NCLBUTTONUP).is_none());
+        set_maximize_button(form, Some((100, 0, 140, 32)));
+        assert!(click(WM_NCLBUTTONDOWN).is_some(), "a barra própria fica com o clique");
+        set_maximize_button(form, None);
+        assert!(click(WM_NCLBUTTONDOWN).is_none());
+        let _ = take_caption_input();
+    }
+
+    /// `window_animation: false`: o DWM aceita desligar a animação numa janela ainda escondida
+    /// (pedido do NoOBS em 16/11), e ligar de novo.
+    #[test]
+    fn the_window_animation_is_turned_off_before_the_window_shows() {
+        use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, DestroyWindow, IsWindowVisible, WINDOW_EX_STYLE, WS_POPUP};
+        use windows::core::w;
+        // SAFETY: uma janela escondida da classe pronta "STATIC", destruída no fim.
+        let hwnd = unsafe { CreateWindowExW(WINDOW_EX_STYLE(0), w!("STATIC"), w!(""), WS_POPUP, 0, 0, 200, 100, None, None, None, None) }.expect("janela");
+        // SAFETY: a janela criada acima.
+        assert!(!unsafe { IsWindowVisible(hwnd) }.as_bool(), "ainda escondida");
+        assert!(set_hwnd_animation(hwnd, false).is_ok(), "desligada antes de aparecer");
+        assert!(set_hwnd_animation(hwnd, true).is_ok());
+        // SAFETY: a janela criada acima.
+        unsafe {
+            let _ = DestroyWindow(hwnd);
+        }
     }
 }

@@ -128,7 +128,7 @@ pub use system_bars::{BarIcons, SystemBarsStyle};
 pub use transition::{TRANSITION_MS, Transition};
 pub use taskbar::{JumpTask, TaskbarEvent, TaskbarProgress, TaskbarSpec, ThumbButton};
 pub use tray::{TrayEvent, TrayEventKind, TraySpec};
-pub use window::{ResizeEdge, WindowCommand};
+pub use window::{ResizeEdge, WINDOW_SETTINGS_CLASS, WindowBackdrop, WindowCommand, WindowOptions};
 pub use geometry::{Bounds, PointF, RectF, SizeF};
 pub use icons::Icon;
 pub use keys::{CharCase, CharFilter, mnemonic, parse_shortcut, shortcut_matches, shortcut_text, strip_mnemonic};
