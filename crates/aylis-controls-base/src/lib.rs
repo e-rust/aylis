@@ -83,7 +83,7 @@ pub use toggles::{CheckBox, RadioButton, Switch};
 pub use chat::{ChatMessage, ChatView, MessageStatus, Waveform};
 pub use dates::{Calendar, DateEdit, DateTimeEdit, Day, TimeEdit, days_in_month};
 pub use popover::{Popover, PopoverPlacement};
-pub use lists::{ListBox, ListItem, ListView, RadioGroup, TreeNode, TreeView};
+pub use lists::{ListBox, ListItem, ListView, RadioGroup, TreeLeafLayout, TreeNode, TreeNodeRects, TreeView};
 pub use code_editor::CodeEditor;
 pub use tab_strip::{Tab, TabDrop, TabStrip};
 pub use memo::{Bookmark, Diagnostic, Memo, Suggestion, block_end};

@@ -968,11 +968,19 @@ pub struct TreeNode {
     pub expanded: bool,
     /// Valor livre (um id do banco, um caminho de arquivo).
     pub data: String,
+    /// Ícone à esquerda do texto (`"folder"`, `"pacote:nome"`). Com um ícone em qualquer nó, a
+    /// coluna do ícone vale para todos; onde fica o das folhas, `TreeView::leaf_layout`.
+    pub icon: String,
 }
 
 impl TreeNode {
     pub fn new(text: impl Into<String>) -> Self {
         Self { text: text.into(), ..Default::default() }
+    }
+
+    pub fn with_icon(mut self, icon: impl Into<String>) -> Self {
+        self.icon = icon.into();
+        self
     }
 
     pub fn with_children(mut self, children: Vec<TreeNode>) -> Self {
@@ -988,14 +996,14 @@ impl TreeNode {
 
 /// Árvore, virtualizada: só as linhas visíveis são pintadas.
 ///
-/// `items` no texto: um nó por item (`;`), com `>` na frente para cada nível:
-/// `Brasil;>São Paulo;>>Campinas;>Rio de Janeiro;Portugal`. Pela API,
+/// `items` no texto: um nó por item (`;`), com `>` na frente para cada nível e o ícone depois
+/// de `|`: `Brasil|flag;>São Paulo;>>Campinas;>Rio de Janeiro;Portugal`. Pela API,
 /// [`TreeView::set_nodes`]. Clique no triângulo (ou →/←, Enter) abre e fecha;
 /// `on_change` traz o caminho do nó (`Brasil/São Paulo`).
 pub struct TreeView {
     pub base: ControlBase,
-    /// Os nós, separados por `;`, com um `>` na frente por nível
-    /// (`Brasil;>São Paulo;>>Campinas;Portugal`).
+    /// Os nós, separados por `;`, com um `>` na frente por nível e o ícone depois de `|`
+    /// (`Brasil|flag;>São Paulo;>>Campinas;Portugal`).
     pub items: String,
     /// Altura de cada linha, em pontos.
     pub item_height: f32,
@@ -1010,15 +1018,68 @@ pub struct TreeView {
     context: Option<Vec<usize>>,
     /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
     pub overscroll: aylis_core::Overscroll,
+    /// Algum nó tem ícone (a coluna do ícone em todos), guardado a cada troca dos nós: a
+    /// pintura não percorre a árvore inteira.
+    icons: bool,
+    /// Onde ficam o ícone e o texto dos nós sem filhos (que não têm seta): `aligned` (o padrão:
+    /// o texto na coluna dos irmãos com filhos), `icon_in_arrow` (o ícone no lugar da seta, o
+    /// texto na coluna dos irmãos) ou `compact` (sem o espaço da seta: o ícone e o texto
+    /// começam no recuo do nível).
+    pub leaf_layout: TreeLeafLayout,
+    /// O recuo de cada nível, que é também a largura da seta, em pontos.
+    pub indent: f32,
+    /// O tamanho do ícone dos nós, em pontos.
+    pub icon_size: f32,
+    /// O espaço entre o ícone e o texto, em pontos.
+    pub icon_gap: f32,
 }
 
-const INDENT: f32 = 18.0;
+/// Onde ficam o ícone e o texto dos nós sem filhos do [`TreeView`] (`leaf_layout`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum TreeLeafLayout {
+    /// O espaço da seta fica vazio, e o ícone e o texto ficam nas colunas dos irmãos com filhos:
+    /// todo texto do mesmo nível começa no mesmo lugar.
+    #[default]
+    Aligned,
+    /// O ícone no lugar da seta; o texto na coluna dos irmãos com filhos.
+    IconInArrow,
+    /// Sem o espaço da seta: o ícone e o texto começam no recuo do nível (o texto das folhas
+    /// alinha entre si, antes do texto dos irmãos com filhos).
+    Compact,
+}
+
+impl aylis_core::prop::PropEnum for TreeLeafLayout {
+    const NAMES: &'static [&'static str] = &["aligned", "icon_in_arrow", "compact"];
+    fn from_index(i: usize) -> Option<Self> {
+        [TreeLeafLayout::Aligned, TreeLeafLayout::IconInArrow, TreeLeafLayout::Compact].get(i).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Onde um nó do TreeView é pintado, nas coordenadas do controle ([`TreeView::node_rects`]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct TreeNodeRects {
+    /// A linha inteira (o fundo do escolhido).
+    pub row: RectF,
+    /// A seta de abrir e fechar (existe mesmo sem filhos: é o recuo do nível).
+    pub arrow: RectF,
+    /// O ícone (no nó sem filhos, no lugar da seta); `None` quando a árvore não tem ícones.
+    pub icon: Option<RectF>,
+    /// O texto, até a borda direita.
+    pub text: RectF,
+}
+
+fn any_icon(nodes: &[TreeNode]) -> bool {
+    nodes.iter().any(|n| !n.icon.is_empty() || any_icon(&n.children))
+}
 
 impl Default for TreeView {
     fn default() -> Self {
         let mut base = ControlBase::new(240.0, 300.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { overscroll: aylis_core::Overscroll::Auto, base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None }
+        Self { overscroll: aylis_core::Overscroll::Auto, base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None, icons: false, leaf_layout: TreeLeafLayout::Aligned, indent: 18.0, icon_size: 16.0, icon_gap: 5.0 }
     }
 }
 
@@ -1032,10 +1093,12 @@ impl TreeView {
     pub fn set_nodes(&mut self, nodes: Vec<TreeNode>) {
         self.nodes = nodes;
         self.selected = None;
+        self.icons = any_icon(&self.nodes);
         let mut out = Vec::new();
         fn write(nodes: &[TreeNode], depth: usize, out: &mut Vec<String>) {
             for n in nodes {
-                out.push(format!("{}{}", ">".repeat(depth), n.text));
+                let icon = if n.icon.is_empty() { String::new() } else { format!("|{}", n.icon) };
+                out.push(format!("{}{}{icon}", ">".repeat(depth), n.text));
                 write(&n.children, depth + 1, out);
             }
         }
@@ -1079,7 +1142,55 @@ impl TreeView {
     pub fn set_children(&mut self, path: &[usize], children: Vec<TreeNode>) -> bool {
         let Some(n) = self.node_mut(path) else { return false };
         n.children = children;
+        self.icons = any_icon(&self.nodes);
         true
+    }
+
+    /// Onde o nó do caminho é pintado agora (a linha, a seta, o ícone e o texto), nas
+    /// coordenadas do controle e com a rolagem: para pôr algo ao lado do nó (um botão, um
+    /// popover) ou desenhar por cima. `None` se o nó não existe ou está dentro de um fechado.
+    /// Pode estar fora da parte visível; `row.y` diz onde.
+    pub fn node_rects(&self, path: &[usize]) -> Option<TreeNodeRects> {
+        let index = self.visible().iter().position(|v| v.path == path)?;
+        let width = self.base.bounds().width;
+        let y = 1.0 + index as f32 * self.row() - self.rows.offset.get();
+        let leaf = self.node(path).is_some_and(|n| n.children.is_empty());
+        Some(self.rects(1.0, y, width - 2.0, path.len() - 1, leaf))
+    }
+
+    /// O caminho de índices do nó pelo caminho de textos (`Brasil/São Paulo`, o do
+    /// `on_change`); o primeiro nó com o texto, em cada nível.
+    pub fn path_of(&self, text_path: &str) -> Option<Vec<usize>> {
+        let mut nodes = &self.nodes;
+        let mut path = Vec::new();
+        for part in text_path.split('/') {
+            let i = nodes.iter().position(|n| n.text == part)?;
+            path.push(i);
+            nodes = &nodes[i].children;
+        }
+        (!path.is_empty()).then_some(path)
+    }
+
+    /// As partes de uma linha a partir da área (`x`, largura) e do topo `y` da linha. A folha
+    /// (`leaf`, sem filhos nem seta) segue o `leaf_layout`.
+    fn rects(&self, x: f32, y: f32, width: f32, depth: usize, leaf: bool) -> TreeNodeRects {
+        let row = self.row();
+        let indent = self.indent.max(0.0);
+        let size = self.icon_size.max(0.0);
+        let line = RectF::new(x + 2.0, y, width - 4.0, row);
+        let arrow_x = x + 6.0 + depth as f32 * indent;
+        let arrow = RectF::new(arrow_x, y, indent, row);
+        let column = arrow_x + indent + 2.0;
+        let step = if self.icons { size + self.icon_gap.max(0.0) } else { 0.0 };
+        let icon_at = |ix: f32| RectF::new(ix, y + (row - size) / 2.0, size, size);
+        let (icon_x, text_x) = match (leaf, self.leaf_layout) {
+            (true, TreeLeafLayout::IconInArrow) => (arrow_x + (indent - size) / 2.0, column + step),
+            (true, TreeLeafLayout::Compact) => (arrow_x, arrow_x + step),
+            _ => (column, column + step),
+        };
+        let icon = self.icons.then(|| icon_at(icon_x));
+        let text = RectF::new(text_x, y, (line.right() - text_x - 4.0).max(0.0), row);
+        TreeNodeRects { row: line, arrow, icon, text }
     }
 
     /// O nó escolhido.
@@ -1143,7 +1254,10 @@ impl TreeView {
             let text = raw[depth..].trim().to_string();
             let depth = depth.min(stack.len());
             stack.truncate(depth);
-            let node = TreeNode::new(text);
+            let node = match text.rsplit_once('|') {
+                Some((t, icon)) => TreeNode::new(t.trim_end()).with_icon(icon.trim()),
+                None => TreeNode::new(text),
+            };
             let path = match stack.last().cloned() {
                 Some(parent) => {
                     let p = parent.clone();
@@ -1164,6 +1278,7 @@ impl TreeView {
         }
         self.nodes = roots;
         self.selected = None;
+        self.icons = any_icon(&self.nodes);
     }
 
     fn visible(&self) -> Vec<Visible> {
@@ -1258,20 +1373,44 @@ impl Component for TreeView {
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         items: String => "Data",
-        item_height: f32 => "Appearance";
+        item_height: f32 => "Appearance",
+        leaf_layout: TreeLeafLayout => "Appearance",
+        indent: f32 => "Appearance",
+        icon_size: f32 => "Appearance",
+        icon_gap: f32 => "Appearance";
         events: on_change, on_click, on_dbl_click, on_expand, on_collapse;
         on_set: sync
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
         use aylis_core::MethodInfo;
-        const METHODS: &[MethodInfo] = &[MethodInfo::new("full_expand", &[], None), MethodInfo::new("full_collapse", &[], None)];
+        use aylis_core::PropKind;
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("full_expand", &[], None),
+            MethodInfo::new("full_collapse", &[], None),
+            MethodInfo::new("item_rect", &[PropKind::String], Some(PropKind::Bounds)).params(&["path"]),
+            MethodInfo::new("item_text_rect", &[PropKind::String], Some(PropKind::Bounds)).params(&["path"]),
+        ];
         METHODS
     }
 
     // Para as outras linguagens (`invoke`): a árvore está emprestada aqui e cada nó dispara o
     // evento dele, então abre (ou fecha) logo depois, pela fila.
-    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+    // `item_rect(path)` e `item_text_rect(path)`: onde o nó (pelo caminho de textos do
+    // `on_change`) é pintado, em `Bounds` (left, top, right, bottom) nas coordenadas do
+    // controle; `Null` se ele não está à vista (não existe ou o pai está fechado).
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        if matches!(method, "item_rect" | "item_text_rect") {
+            let Some(aylis_core::PropValue::String(text_path)) = args.first() else { return Err(format!("{method}(path): falta o caminho do nó")) };
+            let rects = self.path_of(text_path).and_then(|p| self.node_rects(&p));
+            return Ok(match rects {
+                Some(r) => {
+                    let r = if method == "item_rect" { r.row } else { r.text };
+                    aylis_core::PropValue::Bounds(aylis_core::Bounds::new(r.x, r.y, r.right(), r.bottom()))
+                }
+                None => aylis_core::PropValue::Null,
+            });
+        }
         let open = match method {
             "full_expand" => true,
             "full_collapse" => false,
@@ -1331,9 +1470,9 @@ impl Component for TreeView {
         if event.position.y < 0.0 || index >= rows.len() {
             return;
         }
-        let toggle_x = 6.0 + rows[index].depth as f32 * INDENT;
+        let arrow = self.rects(1.0, 0.0, self.base.bounds().width - 2.0, rows[index].depth, false).arrow;
         let path = rows[index].path.clone();
-        let on_arrow = event.position.x >= toggle_x && event.position.x < toggle_x + INDENT;
+        let on_arrow = event.position.x >= arrow.x && event.position.x < arrow.right();
         if on_arrow || event.click_count == 2 {
             self.toggle(ctx, &path, None);
         }
@@ -1433,7 +1572,8 @@ impl Component for TreeView {
                 break;
             }
             let Some(node) = self.node(&r.path) else { continue };
-            let line = RectF::new(area.x + 2.0, y, area.width - 4.0, row);
+            let parts = self.rects(area.x, y, area.width, r.depth, node.children.is_empty());
+            let line = parts.row;
             let selected = self.selected.as_ref() == Some(&r.path);
             let mut style = text.clone();
             if selected {
@@ -1445,9 +1585,8 @@ impl Component for TreeView {
             } else if Some(i) == self.hovered {
                 canvas.fill_rect(line.inflate(-1.0), 4.0, &Brush::Solid(theme.color("hover_overlay")));
             }
-            let x = area.x + 6.0 + r.depth as f32 * INDENT;
             if !node.children.is_empty() {
-                let c = PointF::new(x + INDENT / 2.0, y + row / 2.0);
+                let c = PointF::new(parts.arrow.x + parts.arrow.width / 2.0, y + row / 2.0);
                 let a = if selected && ctx.state.focused { Stroke::new(theme.color("on_primary"), 1.5) } else { arrow.clone() };
                 if node.expanded {
                     canvas.draw_line(PointF::new(c.x - 4.0, c.y - 2.0), PointF::new(c.x, c.y + 2.5), &a);
@@ -1457,7 +1596,10 @@ impl Component for TreeView {
                     canvas.draw_line(PointF::new(c.x + 2.5, c.y), PointF::new(c.x - 2.0, c.y + 4.0), &a);
                 }
             }
-            canvas.draw_text(&node.text, RectF::new(x + INDENT + 2.0, y, line.right() - x - INDENT - 6.0, row), &style);
+            if let Some(icon) = parts.icon.filter(|_| !node.icon.is_empty()) {
+                ctx.draw_icon(canvas, &node.icon, icon, style.color);
+            }
+            canvas.draw_text(&node.text, parts.text, &style);
         }
         self.rows.paint_bar(canvas, ctx, area);
         canvas.restore();

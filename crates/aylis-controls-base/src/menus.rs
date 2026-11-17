@@ -8,6 +8,12 @@
 //!
 //! Enquanto um menu está aberto, uma camada transparente cobre o form: ela pinta os painéis,
 //! trata mouse e teclado (setas, Enter, Esc) e fecha tudo com um clique fora.
+//!
+//! O item com submenu também é clicável: o clique nele dispara o `on_click` (e o
+//! `on_item_click` do menu) e o submenu continua aberto. O que o item mostra
+//! além do texto vem de `content`: qualquer controle do form (um `Frame`, um `Layout` com
+//! botões), emprestado ao item enquanto o menu está aberto e devolvido ao fechar. `close()`
+//! fecha o menu pelo código (de um botão desse conteúdo, por exemplo).
 
 use std::any::Any;
 use std::cell::RefCell;
@@ -46,11 +52,16 @@ pub struct MenuItem {
     /// Título de uma seção do menu (a cabeça de um menu de contexto: o nome do item clicado):
     /// texto fraco em negrito, sem clique nem realce. O relatório do Tabernáculo, C15.
     pub header: bool,
+    /// Um controle do form mostrado no item enquanto o menu está aberto (botões de ativar e
+    /// desativar, um `Frame` desenhado à vontade): à frente do texto, no lado direito, ou no
+    /// item inteiro quando o texto está vazio. A linha cresce até a altura dele. Deixe-o
+    /// invisível no form: o menu o mostra ao abrir e o devolve como estava ao fechar.
+    pub content: Option<ComponentId>,
 }
 
 impl Default for MenuItem {
     fn default() -> Self {
-        Self { text: String::new(), shortcut: String::new(), enabled: true, checked: false, auto_check: false, icon: String::new(), visible: true, danger: false, header: false }
+        Self { text: String::new(), shortcut: String::new(), enabled: true, checked: false, auto_check: false, icon: String::new(), visible: true, danger: false, header: false, content: None }
     }
 }
 
@@ -83,7 +94,8 @@ impl Component for MenuItem {
         icon: String => "Appearance",
         visible: bool => "Behavior",
         danger: bool => "Appearance",
-        header: bool => "Appearance";
+        header: bool => "Appearance",
+        content: Option<ComponentId> => "Appearance";
         events: on_click
     }
 
@@ -131,6 +143,60 @@ fn item(ui: &Ui, id: ComponentId) -> Option<&MenuItem> {
 
 fn has_submenu(ui: &Ui, id: ComponentId) -> bool {
     !visible_items(ui, id).is_empty()
+}
+
+/// O controle do `content` do item, se existir (e não for um ancestral do próprio menu).
+fn content_of(ui: &Ui, id: ComponentId) -> Option<ComponentId> {
+    let c = item(ui, id)?.content?;
+    (ui.contains(c) && ui.control(c).is_some() && !is_inside(ui, id, c)).then_some(c)
+}
+
+/// `id` é `ancestor` ou está dentro dele.
+fn is_inside(ui: &Ui, id: ComponentId, ancestor: ComponentId) -> bool {
+    let mut current = Some(id);
+    while let Some(c) = current {
+        if c == ancestor {
+            return true;
+        }
+        current = ui.parent(c);
+    }
+    false
+}
+
+/// A altura da linha do item: a divisória, a linha comum ou a do conteúdo, se for maior.
+fn row_height(ui: &Ui, id: ComponentId) -> f32 {
+    if item(ui, id).is_some_and(MenuItem::is_separator) {
+        return SEPARATOR;
+    }
+    match content_of(ui, id).and_then(|c| ui.control(c)) {
+        Some(cb) => ROW.max(cb.height() + 6.0),
+        None => ROW,
+    }
+}
+
+/// Fecha o menu aberto de `menu` (o método `close`), devolvendo o conteúdo emprestado.
+fn close_menu(ui: &mut Ui, menu: ComponentId) {
+    let root = ui.root_of(menu);
+    let open: Vec<ComponentId> = ui.children(root).iter().copied().filter(|&c| ui.get::<MenuOverlay>(c).is_some_and(|o| o.owner == menu)).collect();
+    for overlay in open {
+        release(ui, overlay);
+        ui.free(overlay);
+        ui.send_message(menu, &MenuClosed(None));
+    }
+}
+
+const CLOSE_METHOD: &[aylis_core::MethodInfo] = &[aylis_core::MethodInfo::new("close", &[], None)];
+
+/// O `close()` dos menus: fecha depois do evento em curso (o menu pode estar no meio dele).
+fn invoke_close(ctx: &mut EventCtx<'_>, method: &str) -> Result<aylis_core::PropValue, String> {
+    match method {
+        "close" => {
+            let menu = ctx.id;
+            ctx.ui.poster().post(move |ui| close_menu(ui, menu));
+            Ok(aylis_core::PropValue::Null)
+        }
+        _ => Err(format!("método desconhecido: {method}")),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +276,12 @@ impl Component for MainMenu {
         let slots = self.slots.borrow().clone();
         let Some(index) = slots.iter().position(|(_, r)| r.contains(event.position)) else { return };
         self.open_index(ctx, index);
+        // O item da barra também é clicável (o pai do submenu).
+        let id = slots[index].0;
+        if item(ctx.ui, id).is_some_and(|it| it.enabled) {
+            ctx.ui.click(id);
+            notify_menu(ctx.ui, id);
+        }
         ctx.set_handled();
     }
 
@@ -240,6 +312,15 @@ impl Component for MainMenu {
         let Some(slot) = self.slots.borrow().iter().position(|(s, _)| *s == id) else { return false };
         self.open_index(ctx, slot);
         true
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        CLOSE_METHOD
+    }
+
+    /// `close()` fecha o menu aberto.
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        invoke_close(ctx, method)
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
@@ -276,6 +357,15 @@ impl Component for PopupMenu {
             aylis_core::PropInfo::new("on_close", aylis_core::PropKind::Event, "Events"),
         ];
         PROPS
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        CLOSE_METHOD
+    }
+
+    /// `close()` fecha o menu aberto.
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        invoke_close(ctx, method)
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
@@ -316,6 +406,93 @@ struct MenuOverlay {
     bar: Vec<(ComponentId, RectF)>,
     bar_index: usize,
     levels: Vec<Level>,
+    /// O `content` dos itens à vista, emprestado à camada (filho dela) enquanto o menu está
+    /// aberto, com o que é preciso para devolvê-lo como estava.
+    borrowed: Vec<Borrowed>,
+}
+
+struct Borrowed {
+    id: ComponentId,
+    parent: Option<ComponentId>,
+    index: usize,
+    rect: RectF,
+    align: aylis_core::Align,
+    visible: bool,
+}
+
+/// Devolve o conteúdo emprestado ao pai, à posição, ao alinhamento e à visibilidade de antes.
+fn give_back(ui: &mut Ui, b: Borrowed) {
+    if !ui.contains(b.id) {
+        return;
+    }
+    let parent = b.parent.filter(|&p| ui.contains(p));
+    let _ = ui.set_parent(b.id, parent);
+    if parent.is_some() {
+        let _ = ui.set_child_index(b.id, b.index);
+    }
+    if let Some(cb) = ui.control_mut(b.id) {
+        cb.set_rect(b.rect.x, b.rect.y, b.rect.width, b.rect.height);
+        cb.set_align(b.align);
+        cb.set_visible(b.visible);
+    }
+}
+
+/// Devolve tudo o que a camada `overlay` pegou emprestado (antes de liberá-la).
+fn release(ui: &mut Ui, overlay: ComponentId) {
+    let list = ui.get_mut::<MenuOverlay>(overlay).map(|o| std::mem::take(&mut o.borrowed)).unwrap_or_default();
+    for b in list {
+        give_back(ui, b);
+    }
+}
+
+/// Põe o `content` dos itens dos painéis abertos na camada `me`, cada um no lugar do seu
+/// item, e devolve o dos painéis que fecharam.
+fn sync_contents(ui: &mut Ui, me: ComponentId, levels: &[Level], borrowed: &mut Vec<Borrowed>) {
+    if !ui.contains(me) {
+        return;
+    }
+    let mut wanted: Vec<(ComponentId, RectF)> = Vec::new();
+    for level in levels {
+        for (i, row) in MenuOverlay::rows(ui, level) {
+            let id = level.items[i];
+            let Some(c) = content_of(ui, id).filter(|&c| !is_inside(ui, me, c)) else { continue };
+            let Some(it) = item(ui, id) else { continue };
+            let (w, h) = ui.control(c).map(|cb| (cb.width(), cb.height())).unwrap_or_default();
+            let rect = if it.text.is_empty() {
+                RectF::new(row.x + 4.0, row.y + (row.height - h) / 2.0, row.width - 8.0, h)
+            } else {
+                let right = row.right() - if has_submenu(ui, id) { 22.0 } else { 8.0 };
+                RectF::new(right - w, row.y + (row.height - h) / 2.0, w, h)
+            };
+            wanted.push((c, rect));
+        }
+    }
+    let mut kept = Vec::new();
+    for b in borrowed.drain(..) {
+        if wanted.iter().any(|(c, _)| *c == b.id) {
+            kept.push(b);
+        } else {
+            give_back(ui, b);
+        }
+    }
+    *borrowed = kept;
+    for (c, rect) in wanted {
+        if !borrowed.iter().any(|b| b.id == c) {
+            let parent = ui.parent(c);
+            let index = parent.and_then(|p| ui.children(p).iter().position(|&x| x == c)).unwrap_or(0);
+            let Some(cb) = ui.control(c) else { continue };
+            let saved = Borrowed { id: c, parent, index, rect: RectF::new(cb.left(), cb.top(), cb.width(), cb.height()), align: cb.align(), visible: cb.visible() };
+            if ui.set_parent(c, Some(me)).is_err() {
+                continue;
+            }
+            borrowed.push(saved);
+        }
+        if let Some(cb) = ui.control_mut(c) {
+            cb.set_align(aylis_core::Align::None);
+            cb.set_visible(true);
+            cb.set_rect(rect.x, rect.y, rect.width, rect.height);
+        }
+    }
 }
 
 fn open_overlay(ui: &mut Ui, owner: ComponentId, anchor: Anchor) {
@@ -323,10 +500,11 @@ fn open_overlay(ui: &mut Ui, owner: ComponentId, anchor: Anchor) {
     // Só um menu aberto por vez.
     let existing: Vec<ComponentId> = ui.children(root).iter().copied().filter(|&c| ui.class_name(c) == Some("MenuOverlay")).collect();
     for e in existing {
+        release(ui, e);
         ui.free(e);
     }
     let size = ui.bounds(root).map(|b| b.size()).unwrap_or_default();
-    let mut overlay = MenuOverlay { base: ControlBase::new(size.width, size.height), owner, bar: Vec::new(), bar_index: 0, levels: Vec::new() };
+    let mut overlay = MenuOverlay { base: ControlBase::new(size.width, size.height), owner, bar: Vec::new(), bar_index: 0, levels: Vec::new(), borrowed: Vec::new() };
     overlay.base.set_can_focus(true).set_tab_stop(false);
     let (parent, at) = match anchor {
         Anchor::Point(p) => (owner, p),
@@ -341,6 +519,15 @@ fn open_overlay(ui: &mut Ui, owner: ComponentId, anchor: Anchor) {
     let id = ui.add(overlay, root);
     if let Some(cb) = ui.control_mut(id) {
         cb.set_rect(0.0, 0.0, size.width, size.height);
+    }
+    // O conteúdo dos itens do primeiro painel.
+    if let Some(o) = ui.get_mut::<MenuOverlay>(id) {
+        let (levels, mut borrowed) = (std::mem::take(&mut o.levels), std::mem::take(&mut o.borrowed));
+        sync_contents(ui, id, &levels, &mut borrowed);
+        if let Some(o) = ui.get_mut::<MenuOverlay>(id) {
+            o.levels = levels;
+            o.borrowed = borrowed;
+        }
     }
     ui.set_focus(id);
 }
@@ -398,13 +585,19 @@ impl MenuOverlay {
         let mut height = PAD * 2.0;
         for &id in &items {
             let Some(it) = item(ui, id) else { continue };
+            height += row_height(ui, id);
             if it.is_separator() {
-                height += SEPARATOR;
                 continue;
             }
-            height += ROW;
             let text = ui.measure_text(&it.text, &style).width;
-            let shortcut = if it.shortcut.is_empty() { 0.0 } else { ui.measure_text(&it.shortcut, &style).width + 32.0 };
+            let content = content_of(ui, id).and_then(|c| ui.control(c)).map(|cb| cb.width());
+            // O conteúdo toma o lugar do atalho, à direita (e do texto, sem texto).
+            let shortcut = match content {
+                Some(w) if it.text.is_empty() => w + 8.0 - text_x,
+                Some(w) => w + 24.0 + if has_submenu(ui, id) { 14.0 } else { 0.0 },
+                None if it.shortcut.is_empty() => 0.0,
+                None => ui.measure_text(&it.shortcut, &style).width + 32.0,
+            };
             width = width.max(if look { text_x * 2.0 + text + shortcut + PAD * 2.0 } else { text + shortcut + 64.0 });
         }
         let mut x = at.x;
@@ -429,7 +622,7 @@ impl MenuOverlay {
         let mut y = level.rect.y + PAD;
         let mut out = Vec::new();
         for (i, &id) in level.items.iter().enumerate() {
-            let h = if item(ui, id).is_some_and(MenuItem::is_separator) { SEPARATOR } else { ROW };
+            let h = row_height(ui, id);
             out.push((i, RectF::new(level.rect.x + PAD, y, level.rect.width - PAD * 2.0, h)));
             y += h;
         }
@@ -460,21 +653,34 @@ impl MenuOverlay {
 
     fn close(&mut self, ctx: &mut EventCtx<'_>) {
         let owner = self.owner;
+        for b in std::mem::take(&mut self.borrowed) {
+            give_back(ctx.ui, b);
+        }
         ctx.ui.free(ctx.id);
         ctx.ui.send_message(owner, &MenuClosed(None));
     }
 
-    /// Escolhe o item: fecha o menu e dispara o `on_click` do item.
+    /// Escolhe o item: fecha o menu e dispara o `on_click` do item. No item com submenu, o
+    /// clique também chega ao app (`on_click`, `on_item_click`), mas o menu fica aberto com
+    /// o submenu à vista: fechar é decisão do app (`close()`).
     fn activate(&mut self, ctx: &mut EventCtx<'_>, id: ComponentId) {
-        if !Self::selectable(ctx.ui, id) || has_submenu(ctx.ui, id) {
+        if !Self::selectable(ctx.ui, id) {
             return;
         }
-        self.close(ctx);
+        if !has_submenu(ctx.ui, id) {
+            self.close(ctx);
+        }
         if let Some(it) = ctx.ui.get_mut::<MenuItem>(id).filter(|it| it.auto_check) {
             it.checked = !it.checked;
         }
         ctx.ui.click(id);
         notify_menu(ctx.ui, id);
+        ctx.repaint();
+    }
+
+    /// Depois de cada evento: o conteúdo dos itens segue os painéis abertos.
+    fn sync(&mut self, ctx: &mut EventCtx<'_>) {
+        sync_contents(ctx.ui, ctx.id, &self.levels, &mut self.borrowed);
     }
 
     fn switch_bar(&mut self, ctx: &mut EventCtx<'_>, index: usize) {
@@ -554,10 +760,9 @@ impl Component for MenuOverlay {
         }
         if has_submenu(ctx.ui, id) {
             self.hover(ctx.ui, level, Some(row));
-            ctx.repaint();
-        } else {
-            self.activate(ctx, id);
         }
+        self.activate(ctx, id);
+        self.sync(ctx);
         true
     }
 
@@ -570,6 +775,7 @@ impl Component for MenuOverlay {
         } else if let Some(index) = self.bar.iter().position(|(_, r)| r.contains(event.position)) {
             self.switch_bar(ctx, index);
         }
+        self.sync(ctx);
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -581,6 +787,7 @@ impl Component for MenuOverlay {
                 self.close(ctx);
             } else {
                 self.switch_bar(ctx, index);
+                self.sync(ctx);
             }
             return;
         }
@@ -591,7 +798,12 @@ impl Component for MenuOverlay {
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if let Some((level, Some(row))) = self.hit(ctx.ui, event.position) {
             let id = self.levels[level].items[row];
+            // O clique no pai chega sem o mouse ter passado antes (toque, automação): abre.
+            if Self::selectable(ctx.ui, id) && has_submenu(ctx.ui, id) && self.levels.len() == level + 1 {
+                self.hover(ctx.ui, level, Some(row));
+            }
             self.activate(ctx, id);
+            self.sync(ctx);
         }
     }
 
@@ -629,9 +841,8 @@ impl Component for MenuOverlay {
                     if has_submenu(ctx.ui, id) {
                         self.hover(ctx.ui, level, Some(h));
                         self.move_hover(ctx, 1);
-                    } else {
-                        self.activate(ctx, id);
                     }
+                    self.activate(ctx, id);
                 }
             }
             Key::Escape => {
@@ -644,9 +855,15 @@ impl Component for MenuOverlay {
             }
             _ => {}
         }
+        self.sync(ctx);
     }
 
     fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
+        // O foco foi para um controle do conteúdo de um item (um botão): o menu fica.
+        let root = ctx.ui.root_of(ctx.id);
+        if ctx.ui.focused(root).is_some_and(|f| is_inside(ctx.ui, f, ctx.id)) {
+            return;
+        }
         self.close(ctx);
     }
 
@@ -707,7 +924,7 @@ impl Component for MenuOverlay {
                 right.h_align = TextAlign::Trailing;
                 if has_submenu(ctx.ui, id) {
                     canvas.draw_text("›", RectF::new(row.x, row.y, row.width - 10.0, row.height), &right);
-                } else if !it.shortcut.is_empty() {
+                } else if !it.shortcut.is_empty() && content_of(ctx.ui, id).is_none() {
                     right.color = theme.color("text_muted");
                     canvas.draw_text(&it.shortcut, RectF::new(row.x, row.y, row.width - 12.0, row.height), &right);
                 }

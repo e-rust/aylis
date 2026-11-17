@@ -13,6 +13,64 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 17/11/2026: arrastar para uma janela do app que está por cima**
+
+- [ ] Relato vindo do MD304V em 17/11 (a janela da revisão por cima da parede: soltar uma
+  câmera na revisão caía na célula da parede embaixo e trocava as câmeras dela): o Aylis só
+  procurava outra janela do app quando o mouse saía da janela onde o arrasto começou. Feito
+  em 17/11 (`aylis-platform-winit`): durante um arrasto, a cada movimento a plataforma
+  pergunta ao Windows qual janela está à vista naquele ponto (`win32::top_level_at`,
+  `WindowFromPoint`); se é a de outro form do app, o destino é ela (acende ao passar, recebe o
+  soltar) e o form de baixo não recebe o movimento. A imagem do arrasto é transparente ao
+  mouse e não atrapalha. Fora do Windows continua como antes (o winit não diz a ordem das
+  janelas): vai para testes-em-dispositivos. Conferir no MD304V: arrastar da parede e da
+  lista lateral para a revisão.
+
+**Ajustes de 17/11/2026: ícones no TreeView e onde cada nó é pintado**
+
+- [ ] Sugestão do autor em 17/11: "a lista em árvore que não permite ter ícones nos itens sem
+  interferir no alinhamento do texto, e não informa onde um item é pintado a posição do item".
+  Feito em 17/11 (`lists.rs`): `TreeNode.icon` (`with_icon`) e, no `items`, `texto|ícone`
+  (como o `texto|detalhe` do ListView), com a coluna do ícone em todos os nós quando algum
+  tem ícone. Depois de duas idas e vindas sobre as folhas ("só o último nível que empurrou o
+  texto pra frente" e "rio de janeiro e minas ficaram desalinhados"), o autor pediu "o mais
+  personalizável possível": `leaf_layout` (`aligned`, o padrão: todo texto do mesmo nível
+  junto; `icon_in_arrow`: o ícone da folha no lugar da seta, o texto alinhado; `compact`:
+  sem o espaço da seta) e `indent`, `icon_size` e `icon_gap`. Sem ícone nenhum, o desenho é
+  o de antes. Onde cada nó
+  é pintado: `TreeView::node_rects(caminho)` (a linha, a seta, o ícone e o texto) e, para as
+  outras linguagens, `item_rect(path)` e `item_text_rect(path)` pelo caminho de textos do
+  `on_change`, em `Bounds` nas coordenadas do controle (`Null` com o nó escondido). A
+  amostra da galeria ganhou pastas. Teste `crates/aylis-controls/tests/tree_icons.rs`.
+  Mudança de comportamento: um `|` no texto de um nó do `items` passa a separar o ícone.
+
+**Ajustes de 17/11/2026: o piscar ao fechar uma janela**
+
+- [ ] Sugestão vinda do NoOBS em 17/11 (o editor de print piscava preto ou branco ao fechar):
+  "ao fechar uma janela, o Aylis solta a superfície de desenho antes de destruir a janela...
+  A correção de verdade é no próprio Aylis: esconder a janela antes de soltar a superfície,
+  em sync_windows". Feito em 17/11: o `sync_windows` esconde as janelas dos forms que
+  fecharam antes de soltar o `FormWindow`, e o mesmo vale para os pedaços extras de um form
+  em vários monitores (`span.rs`). Conferir no NoOBS, sem o contorno de esconder e fechar
+  50 ms depois no `close()` do `print_editor.rs` (que pode sair de lá).
+
+**Ajustes de 17/11/2026: o clique no item pai e o conteúdo próprio no item de menu**
+
+- [ ] Pedido do autor em 17/11: "Em um popup com submenu não tem como capturar o clique desse
+  menu pai, preciso que tenha.. um popup não esta aceitando mais botões dentro dele a frente
+  do texto, botões de ação como ativar ou desativar, com ícone e cor de fundo.. imagino uma
+  forma de colocar um frame dentro do item". Feito em 17/11 (`menus.rs`):
+  - o item com submenu recebe o clique (`on_click`, `on_item_click`), no painel e na barra
+    do `MainMenu`, e o menu fica aberto com o submenu; `close()` no `PopupMenu` e no
+    `MainMenu` fecha pelo código;
+  - `MenuItem.content`: um controle do form (Layout com botões, Frame) mostrado no item
+    enquanto o menu está aberto, à direita do texto ou no item inteiro sem texto; a linha
+    cresce até a altura dele; o menu o pega emprestado (filho da camada do menu) e devolve
+    pai, posição, alinhamento e visibilidade ao fechar; o foco num botão dele não fecha o menu.
+  Testes em `crates/aylis-controls/tests/menu_items.rs`. Conferir num app: um PopupMenu com um
+  item de `content` apontando para um Layout invisível com dois botões coloridos com ícone.
+  O que não é coberto: setas e Esc enquanto o foco está num botão do conteúdo vão para o botão.
+
 **Ajustes de 17/11/2026: o publicar das outras linguagens no desktop com dois executáveis**
 
 - [ ] Pedido do autor em 17/11, ao publicar um projeto em Free Pascal: "eu achava que ao

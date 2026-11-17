@@ -563,7 +563,7 @@ pela classe e pelas classes de base, então o `CellEditor` da grade é um campo 
 | `TabControl` | as abas (`Tab`) | troca a aba (`on_change`) |
 | `ListBox`, `ComboBox` | as linhas (`ListItem`) | escolhe (`on_change`; o ComboBox sem abrir a lista) |
 | `MainMenu` | os itens da barra (`MenuItem`) | abre o submenu |
-| menu aberto (`PopupMenu`, submenus) | os itens, sem as divisórias (`MenuItem`, `MenuItemCheck`) | com submenu, abre; senão, ativa (`on_click`, `auto_check`, `on_item_click`) |
+| menu aberto (`PopupMenu`, submenus) | os itens, sem as divisórias (`MenuItem`, `MenuItemCheck`) | com submenu, abre e avisa (`on_click`, `on_item_click`); senão, ativa (`on_click`, `auto_check`, `on_item_click`) |
 | `DataGrid` | cabeçalhos, linhas visíveis e as células delas (com linha e coluna) | cabeçalho ordena; linha ou célula vai ao registro |
 
 **Testes e o inspetor:**
@@ -1309,6 +1309,13 @@ funciona em todas.
 **Editor de menu:** itens, divisórias, ícone, marca (`checked`, `auto_check`), atalho e o
 `on_click` de cada item. O menu inteiro também tem `on_item_click`, que recebe o item
 clicado em `EventArgs::Value(Component)`.
+- **Item com submenu:** também recebe o clique (`on_click` e `on_item_click`), e o menu fica aberto com o submenu à vista; fechar é do app, com `close()` do
+  `PopupMenu` ou do `MainMenu`.
+- **Conteúdo no item** (`content`): um controle do form (um `Layout` com botões de ativar e
+  desativar, um `Frame` desenhado à vontade) aparece no item enquanto o menu está aberto: à
+  frente do texto, no lado direito, ou no item inteiro com o texto vazio, e a linha cresce
+  até a altura dele. Deixe o controle invisível no form; o menu o pega emprestado ao abrir e
+  devolve como estava ao fechar. Clicar num botão do conteúdo é do botão: o menu fica aberto.
 
 **Ordem de tabulação** (Editar → Ordem de tabulação…):
 - A lista de todos os controles focáveis do form, de qualquer nível, na ordem do Tab.

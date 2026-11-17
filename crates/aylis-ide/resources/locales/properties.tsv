@@ -719,3 +719,7 @@ text_menu	Menu de texto	Text menu	Menú de texto	Menu de texte	Textmenü	Мен�
 plain	Só o texto	Plain	Solo texto	Texte seul	Nur Text	Только текст	仅文本	テキストのみ	نص فقط	শুধু টেক্সট	केवल टेक्स्ट	Hanya teks
 force_foreground	Forçar a frente ao mostrar	Force to front on show	Forzar al frente al mostrar	Forcer au premier plan à l’affichage	Beim Anzeigen in den Vordergrund zwingen	Принудительно на передний план при показе	显示时强制置前	表示時に強制的に前面へ	فرض الظهور في المقدمة عند العرض	দেখানোর সময় জোর করে সামনে আনুন	दिखाते समय ज़बरदस्ती सामने लाएँ	Paksa ke depan saat tampil
 physical_pixels	Pixels físicos	Physical pixels	Píxeles físicos	Pixels physiques	Physische Pixel	Физические пиксели	物理像素	物理ピクセル	بكسلات فعلية	ভৌত পিক্সেল	भौतिक पिक्सेल	Piksel fisik
+content	Conteúdo	Content	Contenido	Contenu	Inhalt	Содержимое	内容	内容	المحتوى	বিষয়বস্তু	सामग्री	Konten
+leaf_layout	Layout das folhas	Leaf layout	Disposición de las hojas	Disposition des feuilles	Layout der Blätter	Расположение листьев	叶节点布局	葉ノードの配置	تخطيط الأوراق	পাতার বিন্যাস	पत्तियों का लेआउट	Tata letak daun
+indent	Recuo	Indent	Sangría	Retrait	Einzug	Отступ	缩进	インデント	الإزاحة	ইন্ডেন্ট	इंडेंट	Indentasi
+icon_gap	Espaço do ícone	Icon gap	Espacio del icono	Espace de l'icône	Symbolabstand	Отступ значка	图标间距	アイコンの間隔	مسافة الأيقونة	আইকনের ফাঁক	आइकन की दूरी	Jarak ikon

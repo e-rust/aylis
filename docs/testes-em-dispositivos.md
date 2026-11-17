@@ -160,3 +160,8 @@ campos).
   foto continua sem o que o navegador pinta.
 - O `auto_size` do form (L07) pede o tamanho à janela: conferir que no macOS e no Linux a janela
   acompanha.
+
+- **Arrastar para uma janela do app por cima de outra (macOS e Linux):** no Windows, o destino é
+  a janela à vista no ponto (17/11). Nos outros sistemas, o Aylis só procura outra janela quando
+  o mouse sai da janela de origem; conferir se uma janela pequena por cima de uma grande recebe
+  o soltar e, se não, achar a ordem das janelas em cada sistema.

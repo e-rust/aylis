@@ -272,11 +272,12 @@ fn fill(ui: &mut Ui, id: ComponentId, class: &str) {
             }
         }
         "TreeView" => {
-            // Com os nós abertos (no texto de `items` eles começam fechados).
-            let node = |text: &str, children: Vec<TreeNode>| TreeNode { text: text.into(), expanded: !children.is_empty(), children, data: String::new() };
+            // Com os nós abertos (no texto de `items` eles começam fechados). Pastas nos que têm
+            // filhos, casas no último nível, e dois sem ícone: o texto fica alinhado em todos.
+            let node = |text: &str, icon: &str, children: Vec<TreeNode>| TreeNode { text: text.into(), expanded: !children.is_empty(), children, icon: icon.into(), ..Default::default() };
             let nodes = vec![
-                node("Brasil", vec![node("São Paulo", vec![node("Campinas", vec![]), node("Santos", vec![])]), node("Rio de Janeiro", vec![]), node("Minas Gerais", vec![])]),
-                node("Portugal", vec![node("Lisboa", vec![]), node("Porto", vec![])]),
+                node("Brasil", "folder", vec![node("São Paulo", "folder", vec![node("Campinas", "home", vec![]), node("Santos", "home", vec![])]), node("Rio de Janeiro", "", vec![]), node("Minas Gerais", "", vec![])]),
+                node("Portugal", "folder", vec![node("Lisboa", "home", vec![]), node("Porto", "home", vec![])]),
             ];
             if let Some(tree) = ui.get_mut::<TreeView>(id) {
                 tree.set_nodes(nodes);

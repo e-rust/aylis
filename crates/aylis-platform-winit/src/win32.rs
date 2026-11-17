@@ -525,6 +525,21 @@ pub(crate) fn set_window_ex_styles(window: &winit::window::Window, no_activate: 
     }
 }
 
+/// A janela de nível de cima que está à vista no ponto da tela (em pixels), pela ordem real
+/// das janelas: a que o usuário vê ali, mesmo com outra embaixo. `None` fora de qualquer janela.
+pub(crate) fn top_level_at(x: i32, y: i32) -> Option<isize> {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::WindowsAndMessaging::{GA_ROOT, GetAncestor, WindowFromPoint};
+    // SAFETY: as duas chamadas só leem o estado das janelas; o HWND devolvido é só comparado.
+    let hwnd = unsafe { WindowFromPoint(POINT { x, y }) };
+    if hwnd.0.is_null() {
+        return None;
+    }
+    // SAFETY: idem; GetAncestor com um HWND que deixou de existir devolve nulo.
+    let root = unsafe { GetAncestor(hwnd, GA_ROOT) };
+    Some(if root.0.is_null() { hwnd.0 as isize } else { root.0 as isize })
+}
+
 pub(crate) fn hwnd_of(window: &winit::window::Window) -> Option<HWND> {
     use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
     match window.window_handle().ok()?.as_raw() {

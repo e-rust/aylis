@@ -13,6 +13,10 @@
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `item_height` | Altura do item | número | Altura de cada linha, em pontos. |
+| `leaf_layout` | Layout das folhas | um de: `aligned`, `icon_in_arrow`, `compact` | Onde ficam o ícone e o texto dos nós sem filhos (que não têm seta): `aligned` (o padrão: o texto na coluna dos irmãos com filhos), `icon_in_arrow` (o ícone no lugar da seta, o texto na coluna dos irmãos) ou `compact` (sem o espaço da seta: o ícone e o texto começam no recuo do nível). |
+| `indent` | Recuo | número | O recuo de cada nível, que é também a largura da seta, em pontos. |
+| `icon_size` | Tamanho do ícone | número | O tamanho do ícone dos nós, em pontos. |
+| `icon_gap` | Espaço do ícone | número | O espaço entre o ícone e o texto, em pontos. |
 
 ### Comportamento
 
@@ -24,7 +28,7 @@
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os nós, separados por `;`, com um `>` na frente por nível (`Brasil;>São Paulo;>>Campinas;Portugal`). |
+| `items` | Itens | texto | Os nós, separados por `;`, com um `>` na frente por nível e o ícone depois de `\|` (`Brasil\|flag;>São Paulo;>>Campinas;Portugal`). |
 
 ## Eventos
 

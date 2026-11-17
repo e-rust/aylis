@@ -269,6 +269,8 @@ impl App {
             }
         }
         for &i in extras.iter().skip(others.len()).rev() {
+            // Escondida antes de soltar, sem o quadro vazio na tela (como ao fechar).
+            self.windows[i].window.set_visible(false);
             self.windows.remove(i);
         }
         let zoom = self.ui.form_zoom(form) as f64;
@@ -351,6 +353,9 @@ impl App {
 
     /// Volta a uma janela: as extras fecham, a principal fica com a moldura e o lugar do form.
     pub(crate) fn unspan(&mut self, form: ComponentId) {
+        for w in self.windows.iter().filter(|w| w.form == form && w.is_extra()) {
+            w.window.set_visible(false);
+        }
         self.windows.retain(|w| !(w.form == form && w.is_extra()));
         self.ui.set_form_pieces(form, Vec::new());
         let Some(s) = self.spans.remove(&form) else { return };

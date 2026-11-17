@@ -150,10 +150,10 @@ impl FrmDocumentacao {
                         if aberta && pagina.arquivo == arquivo {
                             marcada = Some(vec![s, p]);
                         }
-                        TreeNode { text: pagina.titulo.clone(), children: Vec::new(), expanded: false, data: pagina.arquivo.clone() }
+                        TreeNode { text: pagina.titulo.clone(), children: Vec::new(), expanded: false, data: pagina.arquivo.clone(), ..Default::default() }
                     })
                     .collect();
-                TreeNode { text: nome.clone(), children: filhos, expanded: aberta, data: String::new() }
+                TreeNode { text: nome.clone(), children: filhos, expanded: aberta, ..Default::default() }
             })
             .collect();
         if let Some(tree) = ui.get_mut::<TreeView>(self.tvIndice.id) {

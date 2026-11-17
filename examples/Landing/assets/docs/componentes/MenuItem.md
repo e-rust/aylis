@@ -15,6 +15,7 @@ Item de um menu (texto, ícone, atalho, marca); dentro de outro vira submenu.
 | `icon` | Ícone | texto | Ícone à esquerda do texto (`"save"`, `"pacote:nome"`); marcado, aparece o ✓. |
 | `danger` | Perigoso | lógico | Ação destrutiva ("Excluir"): texto na cor `danger_text` (ou `danger`) do tema e, sob o mouse, fundo `danger` com texto branco. |
 | `header` | Linha de títulos | lógico | Título de uma seção do menu (a cabeça de um menu de contexto: o nome do item clicado): texto fraco em negrito, sem clique nem realce. O relatório do Tabernáculo, C15. |
+| `content` | Conteúdo | componente | Um controle do form mostrado no item enquanto o menu está aberto (botões de ativar e desativar, um `Frame` desenhado à vontade): à frente do texto, no lado direito, ou no item inteiro quando o texto está vazio. A linha cresce até a altura dele. Deixe-o invisível no form: o menu o mostra ao abrir e o devolve como estava ao fechar. |
 
 ### Comportamento
 

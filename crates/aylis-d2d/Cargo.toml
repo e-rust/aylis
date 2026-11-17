@@ -15,7 +15,7 @@ diagnostics = []
 release-diagnostics = ["diagnostics"]
 
 [dependencies]
-aylis-core = { version = "0.5.2", path = "../aylis-core" }
+aylis-core = { version = "0.6.0", path = "../aylis-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows-numerics = { version = "0.3", default-features = false }

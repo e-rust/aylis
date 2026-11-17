@@ -1586,10 +1586,33 @@ impl App {
         self.handle_input_for(index, event, form, scale)
     }
 
-    /// Durante um arrasto que começou em `form`, o mouse fora da janela dele: acha a outra
-    /// janela do app sob ele (pela posição na tela) e passa ao núcleo o form e o ponto nele.
+    /// Durante um arrasto, a janela do app que está por cima no ponto (pela ordem real das
+    /// janelas no Windows), quando é a de outro form: o destino está nela, mesmo com o mouse
+    /// ainda dentro da janela onde o arrasto começou (uma janela pequena por cima de uma
+    /// grande). `None`: a de cima é a do próprio form, de outro programa, ou não dá para saber
+    /// (fora do Windows).
     #[cfg(not(any(web, mobile)))]
-    fn drag_between_windows(&mut self, index: usize, form: ComponentId, position: winit::dpi::PhysicalPosition<f64>) {
+    fn drag_cover(&self, index: usize, position: winit::dpi::PhysicalPosition<f64>) -> Option<usize> {
+        #[cfg(windows)]
+        {
+            let w = &self.windows[index];
+            let origin = w.window.inner_position().ok()?;
+            let top = crate::win32::top_level_at((origin.x as f64 + position.x) as i32, (origin.y as f64 + position.y) as i32)?;
+            let i = self.windows.iter().position(|o| crate::win32::hwnd_of(&o.window).is_some_and(|h| h.0 as isize == top))?;
+            (self.windows[i].form != w.form && self.windows[i].window.is_minimized() != Some(true)).then_some(i)
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = (index, position);
+            None
+        }
+    }
+
+    /// Durante um arrasto que começou em `form`, o mouse fora da janela dele (ou dentro, mas
+    /// com a janela de outro form por cima: `cover`): acha a outra janela do app sob ele (pela
+    /// posição na tela) e passa ao núcleo o form e o ponto nele.
+    #[cfg(not(any(web, mobile)))]
+    fn drag_between_windows(&mut self, index: usize, form: ComponentId, position: winit::dpi::PhysicalPosition<f64>, cover: Option<usize>) {
         let w = &self.windows[index];
         let size = w.window.inner_size();
         let inside = match w.span {
@@ -1605,8 +1628,12 @@ impl App {
         let screen = (origin.x as f64 + position.x, origin.y as f64 + position.y);
         // Quem solta fora das janelas (a aba que vira janela) precisa saber onde.
         self.ui.set_screen_pointer(Some(aylis_core::ScreenPointer { x: screen.0 as i32, y: screen.1 as i32, scale: w.window.scale_factor() as f32 }));
-        let mut over = None;
-        if !inside {
+        let mut over = cover.and_then(|i| {
+            let at = self.windows[i].window.inner_position().ok()?;
+            let local = (screen.0 - at.x as f64, screen.1 - at.y as f64);
+            Some((self.windows[i].form, self.window_to_form(i, local.0, local.1, self.input_scale(i))))
+        });
+        if !inside && over.is_none() {
             for (i, other) in self.windows.iter().enumerate() {
                 if i == index || other.form == form || other.window.is_minimized() == Some(true) {
                     continue;
@@ -1649,7 +1676,16 @@ impl App {
                         None => input::cursor(w.cursor),
                     });
                 }
-                if edge.is_none() {
+                // Arrastando com a janela de outro form por cima deste ponto: o destino é ela, e
+                // o form de baixo não recebe o movimento (senão o soltar caía nele).
+                #[cfg(not(any(web, mobile)))]
+                let cover = if edge.is_none() && self.ui.dragging(form) { self.drag_cover(index, *position) } else { None };
+                #[cfg(any(web, mobile))]
+                let cover: Option<usize> = None;
+                if edge.is_none() && cover.is_some() {
+                    #[cfg(not(any(web, mobile)))]
+                    self.drag_between_windows(index, form, *position, cover);
+                } else if edge.is_none() {
                     // Os pontos por onde o mouse passou desde o último evento, antes deste.
                     #[cfg(windows)]
                     {
@@ -1664,7 +1700,7 @@ impl App {
                     // O arrasto saiu desta janela: o destino pode estar em outra janela do app.
                     #[cfg(not(any(web, mobile)))]
                     if self.ui.dragging(form) {
-                        self.drag_between_windows(index, form, *position);
+                        self.drag_between_windows(index, form, *position, None);
                     }
                 }
             }
@@ -2605,6 +2641,12 @@ impl App {
             #[cfg(windows)]
             if !closing.is_empty() {
                 self.reown_windows_of(&closing);
+            }
+            // Esconde antes de soltar: o FormWindow solta a superfície de desenho antes da
+            // janela, e por um quadro a janela ficava na tela sem nada desenhado (o piscar
+            // preto ou branco ao fechar, visto no editor de print do NoOBS).
+            for w in self.windows.iter().filter(|w| closing.contains(&w.form)) {
+                w.window.set_visible(false);
             }
             // Os pedaços extras antes da principal, que é a dona deles (o Windows destruiria
             // as extras junto com ela, por baixo do winit).
