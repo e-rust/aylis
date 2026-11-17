@@ -30,6 +30,30 @@ impl TreeView {
     pub fn set_item_height(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "item_height", value)
     }
+    pub fn leaf_layout(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "leaf_layout"))
+    }
+    pub fn set_leaf_layout(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "leaf_layout", Into::<String>::into(value))
+    }
+    pub fn indent(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "indent").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_indent(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "indent", value)
+    }
+    pub fn icon_size(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "icon_size").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_icon_size(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "icon_size", value)
+    }
+    pub fn icon_gap(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "icon_gap").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_icon_gap(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "icon_gap", value)
+    }
     pub fn left(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "left").and_then(|v| v.to_f64().ok()).unwrap_or_default()
     }
@@ -425,6 +449,14 @@ impl TreeView {
     }
     pub fn full_collapse(self, ui: &mut Ui) -> Result<(), String> {
         handles::try_call(ui, self.id, "full_collapse", &[]).map(|_| ())
+    }
+    pub fn item_rect(self, ui: &mut Ui, path: &str) -> Result<String, String> {
+        let v = handles::try_call(ui, self.id, "item_rect", &[PropValue::String(path.to_string())])?;
+        Ok(handles::text(ui, Some(v)))
+    }
+    pub fn item_text_rect(self, ui: &mut Ui, path: &str) -> Result<String, String> {
+        let v = handles::try_call(ui, self.id, "item_text_rect", &[PropValue::String(path.to_string())])?;
+        Ok(handles::text(ui, Some(v)))
     }
     pub fn set_focus(self, ui: &mut Ui) -> bool {
         ui.set_focus(self.id)
