@@ -1203,8 +1203,10 @@ Go, C++ ou Free Pascal (Projeto → Opções → Linguagem). O backend roda pelo
 como o Python: "Gerar código" cria um arquivo de eventos por form (o bloco de registro é
 refeito, as funções que você escreveu ficam), o registro de todos e o ponto de entrada; o
 F9 compila (`dotnet build`, `javac`, `go build`, `cl`/`g++`, `fpc`) em `.aylis/build` e
-executa; Publicar monta uma pasta com o aylis-host, o projeto, o backend compilado e um
-atalho; Depurar na IDE anexa o depurador da linguagem. O Verificar ambiente diz se o
+executa; Publicar monta uma pasta com dois programas: a tela (`<App>.exe`, uma casca em Rust
+com forms, temas, assets e traduções embutidos, que por isso pede o Rust para publicar) e o
+backend compilado em `backend/`, que a tela inicia e encerra (C#, Java, TypeScript e Python
+pedem o runtime na máquina de quem usa); Depurar na IDE anexa o depurador da linguagem. O Verificar ambiente diz se o
 compilador foi achado. Os clientes ficam em `clients/` (`clients/README.md`).
 
 **Configurar linguagens.** Ferramentas → Configurar linguagens… marca as linguagens e a IDE

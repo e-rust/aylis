@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "vide : la racine des forms (ex. : données)",
  "vazio: chave de depuração (não vale na Play Store)": "vide : clé de débogage (non valable sur le Play Store)",
  "versão no formato 1.0.0": "version au format 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "version au format 1.0.0 (ou 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} fichiers sur {1} pour cette plateforme",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{0} handlers sur {1} exécutés ({2} %), {3}",
  "{0}: {1} (duplo clique abre)": "{0} : {1} (double-clic pour ouvrir)",

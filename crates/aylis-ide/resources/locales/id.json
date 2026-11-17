@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "kosong: akar forms (mis.: data)",
  "vazio: chave de depuração (não vale na Play Store)": "kosong: kunci debug (tidak berlaku di Play Store)",
  "versão no formato 1.0.0": "versi dengan format 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "versi dalam format 1.0.0 (atau 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} dari {1} berkas untuk platform ini",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{0} dari {1} handler dijalankan ({2}%), {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (klik dua kali untuk membuka)",

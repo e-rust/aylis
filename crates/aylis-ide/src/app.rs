@@ -864,7 +864,7 @@ pub fn build(state: Shared) -> Ide {
     // A janela de código chama a depuração (pontos de parada, F7/F8/F9).
     {
         let (s1, s2, s3, s4, s5, s6) = (state.clone(), state.clone(), state.clone(), state.clone(), state.clone(), state.clone());
-        let (s7, s9) = (state.clone(), state.clone());
+        let (s7, s9, s11) = (state.clone(), state.clone(), state.clone());
         let (s10, view_ids) = (state.clone(), final_ids.clone());
         crate::codewindow::set_hooks(crate::codewindow::Hooks {
             toggle: Box::new(move |ui, file, line| crate::debugger::toggle_breakpoint(ui, &s1, file, line)),
@@ -877,6 +877,11 @@ pub fn build(state: Shared) -> Ide {
             sources: Box::new(move || match s7.borrow().project.as_ref() {
                 Some(p) => (Some(p.code_dir()), aylis_project::symbols::sources(p)),
                 None => (None, Vec::new()),
+            }),
+            // O form de cada fonte de form (o caminho sai da entrada, sem ler o disco).
+            source_forms: Box::new(move || match s11.borrow().project.as_ref() {
+                Some(p) => p.forms.iter().map(|e| (aylis_project::codegen::entry_source(p, e), e.name.clone())).collect(),
+                None => Vec::new(),
             }),
             // O servidor de linguagem (o editor avisa o que mudou e pede sugestões, dicas...).
             lsp: Box::new(move |ui, event| crate::intel::handle(ui, &s9, event)),

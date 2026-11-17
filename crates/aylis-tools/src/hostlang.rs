@@ -163,6 +163,10 @@ pub(crate) fn files(dir: &Path, ext: &str, out: &mut Vec<PathBuf>) {
     }
 }
 
+/// O que o [`build`] deixa em `out` só para compilar (as units do Free Pascal, os `.obj` e o
+/// `.bat` do Visual C++): o publicar tira da pasta do app.
+pub const INTERMEDIATES: &[&str] = &["units", "obj", "compilar.bat"];
+
 /// Compila o backend em `out` (TypeScript não compila) e devolve o comando que o
 /// aylis-host inicia, com caminhos relativos à pasta do projeto quando `relative`.
 pub fn build(project: &Project, tc: &Toolchain, out: &Path, release: bool, control: &Control, sink: Sink) -> Result<Vec<String>, String> {

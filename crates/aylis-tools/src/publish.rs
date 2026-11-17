@@ -1,8 +1,8 @@
 //! Publicar: o aplicativo final de cada plataforma, em `<projeto>/dist/<plataforma>/`.
 //!
-//! | Plataforma | Rust | Python |
+//! | Plataforma | Rust | Outras linguagens |
 //! |---|---|---|
-//! | Windows/Linux/macOS | um executável só (forms e assets embutidos; ícone e dados de versão no .exe; no Windows, assinado se houver certificado, veja `codesign`) | pasta com o `aylis-host`, o projeto e um atalho (precisa do Python na máquina) |
+//! | Windows/Linux/macOS | um executável só (forms e assets embutidos; ícone e dados de versão no .exe; no Windows, assinado se houver certificado, veja `codesign`) | uma pasta com dois programas: a tela (`<App>.exe`, com o projeto embutido) e o backend em `backend/` |
 //! | Android | APK assinado (arm64 + x86_64) | — |
 //! | Navegador | pasta com `index.html` e o `.wasm` (sirva com qualquer servidor) | — |
 //! | iOS | `.app` para o simulador (num Mac) | — |
@@ -188,8 +188,7 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
     std::fs::create_dir_all(&out).map_err(|e| format!("{}: {e}", out.display()))?;
     match (options.target, project.language) {
         (Target::Desktop, Language::Rust) => desktop_rust(project, options, &out, control, sink),
-        (Target::Desktop, Language::Python) => desktop_python(project, options, &out, sink),
-        (Target::Desktop, _) => desktop_host(project, options, &out, control, sink),
+        (Target::Desktop, _) => desktop_shell(project, options, &out, control, sink),
         (Target::Android, _) => android(project, options, &out, control, sink),
         (Target::Web, _) => web(project, options, &out, control, sink),
         (Target::Ios, _) => ios(project, options, &out, control, sink),
@@ -283,10 +282,9 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     sink(Event::Step("Montando o instalador (.msi)…".into()));
     let app = xml_escape(project.app_name());
     let publisher = xml_escape(if project.publish.publisher.is_empty() { project.app_name() } else { &project.publish.publisher });
-    // O MSI quer a versão com 4 partes, cada uma até 65535.
-    let mut parts: Vec<u32> = project.version().split('.').map(|p| p.parse::<u32>().unwrap_or(0).min(65535)).collect();
-    parts.resize(4, 0);
-    let version = parts.iter().map(u32::to_string).collect::<Vec<_>>().join(".");
+    // O MSI quer a versão com 4 partes, cada uma até 65535, só números: a de antes do `-`
+    // (a beta `1.2.0-beta.1` sai `1.2.0.0`, como a final).
+    let version = aylis_build::version4(project.version());
     let exe_name = exe_path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let upgrade = stable_guid(&project.identifier());
     // Os arquivos ao lado do executável (o compilador DXC do traçado de raios).
@@ -316,7 +314,7 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
         r#"<!-- Gerado pelo aylis (Publicar → Windows → instalador). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="{app}" Manufacturer="{publisher}" Version="{version}" UpgradeCode="{upgrade}" Scope="perMachine">
-    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova de {app} já está instalada." />
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Uma versão mais nova de {app} já está instalada." />
     <MediaTemplate EmbedCab="yes" />{icon}
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="{app}">
@@ -350,109 +348,107 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     Ok(msi)
 }
 
-fn desktop_python(project: &Project, options: &Options, out: &Path, sink: Sink) -> Result<Published, String> {
-    sink(Event::Step(format!("Montando {} (Python)…", project.name)));
-    let host = options.aylis_host.clone().filter(|h| h.is_file()).ok_or("aylis-host não encontrado (compile com: cargo build -p aylis-host --release)")?;
+/// Python, TypeScript, C#, Java, Go, C++ e Free Pascal: dois programas numa pasta. O
+/// `<App>.exe` é a tela, uma casca em Rust com forms, temas, assets e traduções embutidos
+/// (`aylis_project::codegen::local_shell`), que inicia o backend da pasta `backend/` (o
+/// programa da linguagem, compilado e otimizado; Python e TypeScript vão como fontes).
+fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
+    aylis_project::codegen::generate(project)?;
     let app = out.join(file_name(project.app_name()));
-    std::fs::create_dir_all(&app).map_err(|e| e.to_string())?;
-    let host_name = exe("aylis-host");
-    std::fs::copy(&host, app.join(&host_name)).map_err(|e| format!("aylis-host: {e}"))?;
-    let project_file = project.path.file_name().ok_or("nome do .aylisproj")?;
-    std::fs::copy(&project.path, app.join(project_file)).map_err(|e| e.to_string())?;
-    for sub in aylis_build::PACKED_DIRS {
-        let from = project.dir().join(sub);
-        if from.is_dir() {
-            copy_dir(&from, &app.join(sub))?;
+    let backend_dir = app.join("backend");
+    std::fs::create_dir_all(&backend_dir).map_err(|e| e.to_string())?;
+    // O backend: compilado na pasta (as linguagens compiladas) ou as fontes copiadas.
+    let (command, needs) = match project.language {
+        Language::Python => {
+            copy_dir(&project.code_dir().join("src"), &backend_dir)?;
+            remove_pycache(&backend_dir);
+            let python = if cfg!(windows) { "python" } else { "python3" };
+            (vec![python.to_string(), "backend/main.py".into()], "o Python 3.8+")
         }
-    }
-    // O código Python (da pasta da linguagem) vai para `src/` ao lado do projeto.
-    copy_dir(&project.code_dir().join("src"), &app.join("src"))?;
-    let _ = std::fs::remove_dir_all(app.join("src/__pycache__"));
-    let _ = std::fs::remove_dir_all(app.join("src/forms/__pycache__"));
-    let project_file = project_file.to_string_lossy();
-    let launcher = if cfg!(windows) {
-        let path = app.join(format!("{}.cmd", file_name(project.app_name())));
-        let text = format!(
-            "@echo off\r\nrem {} — precisa do Python 3.8+ instalado.\r\ncd /d \"%~dp0\"\r\nstart \"\" \"%~dp0{host_name}\" --project \"{project_file}\" -- python src\\main.py\r\n",
-            project.app_name()
-        );
-        std::fs::write(&path, text).map_err(|e| e.to_string())?;
-        path
-    } else {
-        let path = app.join(file_name(project.app_name()));
-        let text = format!("#!/bin/sh\n# {} — precisa do Python 3.8+ instalado.\ncd \"$(dirname \"$0\")\"\nexec ./{host_name} --project \"{project_file}\" -- python3 src/main.py\n", project.app_name());
-        std::fs::write(&path, text).map_err(|e| e.to_string())?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755));
+        language => {
+            let tc = crate::hostlang::find(language)?;
+            let built = crate::hostlang::build(project, &tc, &backend_dir, !options.debug, control, sink)?;
+            // O que só serviu para compilar (as units do Free Pascal, os .obj do Visual C++).
+            for name in crate::hostlang::INTERMEDIATES {
+                let path = backend_dir.join(name);
+                let _ = if path.is_dir() { std::fs::remove_dir_all(&path) } else { std::fs::remove_file(&path) };
+            }
+            let base = format!("{}{}", app.display(), std::path::MAIN_SEPARATOR);
+            let mut command: Vec<String> = built.iter().map(|a| a.replace(&base, "").replace('\\', "/")).collect();
+            // O runtime pelo nome (o da máquina de quem usa, no PATH), não pelo caminho desta.
+            let runtime = |p: &str| Path::new(p).file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| p.to_string());
+            let needs = match language {
+                Language::TypeScript => {
+                    copy_dir(&project.code_dir().join("src"), &backend_dir)?;
+                    command = command.iter().map(|a| if a == "src/main.ts" { "backend/main.ts".to_string() } else { a.clone() }).collect();
+                    command[0] = runtime(&command[0]);
+                    "o Bun ou o Node 22.6+"
+                }
+                Language::CSharp => {
+                    command[0] = runtime(&command[0]);
+                    "o .NET 8"
+                }
+                Language::Java => {
+                    command[0] = runtime(&command[0]);
+                    "o Java 17+"
+                }
+                _ => "",
+            };
+            (command, needs)
         }
-        path
     };
-    sink(Event::Line(format!("{} (abra este atalho; a máquina precisa do Python)", launcher.display()), LineKind::Tool));
-    Ok(Published { main: launcher, dir: app })
+    // A tela: a casca compilada como um app em Rust (ícone e versão no .exe).
+    let shell = aylis_project::codegen::local_shell(project, &command)?;
+    sink(Event::Step(format!("Compilando a tela de {} ({})…", project.name, if options.debug { "desenvolvimento" } else { "otimizado" })));
+    let mut args = vec!["build"];
+    if !options.debug {
+        args.push("--release");
+    }
+    let built = cargo("cargo", &args, &shell, &[], control, sink)?;
+    let exe_path = built
+        .artifacts
+        .iter()
+        .filter(|a| a.kinds.iter().any(|k| k == "bin"))
+        .find_map(|a| a.executable.clone())
+        .ok_or("o cargo não informou o executável")?;
+    let dest = app.join(format!("{}{}", file_name(project.app_name()), std::env::consts::EXE_SUFFIX));
+    std::fs::copy(&exe_path, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
+    ray_tracing_dlls(project, &app, sink)?;
+    if cfg!(windows) {
+        win_installer::copy_extra_files(project, &app, sink)?;
+    }
+    let signing = if cfg!(windows) && !options.debug {
+        crate::codesign::plan(options.unsigned || project.publish.windows.skip_signing, crate::codesign::Config::from_settings())
+    } else {
+        crate::codesign::Plan::Skip
+    };
+    let mut to_sign = vec![dest.clone()];
+    let backend_exe = backend_dir.join(exe("app"));
+    if backend_exe.is_file() {
+        to_sign.push(backend_exe);
+    }
+    crate::codesign::apply(&signing, &to_sign, true, control, sink)?;
+    let note = if needs.is_empty() { String::new() } else { format!("; a máquina precisa d{needs}") };
+    sink(Event::Line(format!("{} ({}{note})", dest.display(), size(&dest)), LineKind::Tool));
+    if options.installer {
+        sink(Event::Line(format!("O instalador ainda não sai para projetos em {}: distribua a pasta {}", project.language.name(), app.display()), LineKind::Tool));
+    }
+    Ok(Published { main: dest, dir: app })
 }
 
-/// TypeScript, C#, Java, Go, C++ e Free Pascal: o aylis-host, o projeto e o backend
-/// compilado (otimizado) numa pasta, com um atalho que abre tudo.
-fn desktop_host(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
-    let host = options.aylis_host.clone().filter(|h| h.is_file()).ok_or("aylis-host não encontrado (compile com: cargo build -p aylis-host --release)")?;
-    aylis_project::codegen::generate(project)?;
-    let tc = crate::hostlang::find(project.language)?;
-    let app = out.join(file_name(project.app_name()));
-    std::fs::create_dir_all(&app).map_err(|e| e.to_string())?;
-    let host_name = exe("aylis-host");
-    std::fs::copy(&host, app.join(&host_name)).map_err(|e| format!("aylis-host: {e}"))?;
-    let project_file = project.path.file_name().ok_or("nome do .aylisproj")?;
-    ray_tracing_dlls(project, &app, sink)?;
-    std::fs::copy(&project.path, app.join(project_file)).map_err(|e| e.to_string())?;
-    for sub in aylis_build::PACKED_DIRS {
-        let from = project.dir().join(sub);
-        if from.is_dir() {
-            copy_dir(&from, &app.join(sub))?;
+/// Tira as pastas `__pycache__` (o que o Python gerou ao rodar no desenvolvimento).
+fn remove_pycache(dir: &Path) {
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if entry.file_name() == "__pycache__" {
+                let _ = std::fs::remove_dir_all(&path);
+            } else {
+                remove_pycache(&path);
+            }
         }
     }
-    // TypeScript roda das fontes; as outras levam o backend compilado.
-    let backend_dir = app.join("backend");
-    let mut command = crate::hostlang::build(project, &tc, &backend_dir, true, control, sink)?;
-    if project.language == Language::TypeScript {
-        copy_dir(&project.code_dir().join("src"), &app.join("src"))?;
-        command[0] = tc.program.file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "bun".into());
-    }
-    // Caminhos relativos à pasta publicada.
-    let base = format!("{}{}", app.display(), std::path::MAIN_SEPARATOR);
-    let rel: Vec<String> = command.iter().map(|a| a.replace(&base, "")).collect();
-    let needs = match project.language {
-        Language::TypeScript => "o Bun ou o Node 22.6+",
-        Language::CSharp => "o .NET 8",
-        Language::Java => "o Java 17+",
-        _ => "",
-    };
-    let quoted: Vec<String> = rel.iter().map(|a| if a.contains(' ') { format!("\"{a}\"") } else { a.clone() }).collect();
-    let project_file = project_file.to_string_lossy();
-    let note = if needs.is_empty() { String::new() } else { format!(" — precisa d{needs} instalado") };
-    let launcher = if cfg!(windows) {
-        let path = app.join(format!("{}.cmd", file_name(project.app_name())));
-        let text = format!(
-            "@echo off\r\nrem {}{note}.\r\ncd /d \"%~dp0\"\r\nstart \"\" \"%~dp0{host_name}\" --project \"{project_file}\" -- {}\r\n",
-            project.app_name(),
-            quoted.join(" ")
-        );
-        std::fs::write(&path, text).map_err(|e| e.to_string())?;
-        path
-    } else {
-        let path = app.join(file_name(project.app_name()));
-        let text = format!("#!/bin/sh\n# {}{note}.\ncd \"$(dirname \"$0\")\"\nexec ./{host_name} --project \"{project_file}\" -- {}\n", project.app_name(), quoted.join(" "));
-        std::fs::write(&path, text).map_err(|e| e.to_string())?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755));
-        }
-        path
-    };
-    sink(Event::Line(format!("{} (abra este atalho)", launcher.display()), LineKind::Tool));
-    Ok(Published { main: launcher, dir: app })
 }
 
 // ---------------------------------------------------------------------------
@@ -1148,9 +1144,10 @@ fn android_manifest(project: &Project, package: &str, icon: bool) -> Result<Stri
     let version_code: u32 = if a.version_code > 0 {
         a.version_code
     } else {
-        // 1.2.3 → 10203
-        let mut parts = project.version().split('.').map(|p| p.parse::<u32>().unwrap_or(0));
-        let (x, y, z) = (parts.next().unwrap_or(1), parts.next().unwrap_or(0), parts.next().unwrap_or(0));
+        // 1.2.3 → 10203 (a parte numérica: a beta 1.2.3-beta.1 também; para mandar as betas à
+        // loja com códigos crescentes, `version_code` nas Opções do Android).
+        let [x, y, z, _] = aylis_build::version_numbers(project.version()).map(u32::from);
+        let x = if aylis_build::version_core(project.version()).is_empty() { 1 } else { x };
         (x * 10000 + y * 100 + z).max(1)
     };
     let (min_sdk, target_sdk) = (if a.min_sdk > 0 { a.min_sdk } else { 26 }, if a.target_sdk > 0 { a.target_sdk } else { 34 });
@@ -1972,7 +1969,8 @@ fn ios(project: &Project, options: &Options, out: &Path, control: &Control, sink
 "#,
         id = project.identifier(),
         name = xml_escape(project.app_name()),
-        version = project.version(),
+        // O iOS aceita só números na versão (a beta vai como a parte de antes do `-`).
+        version = aylis_build::version_core(project.version()),
         orientation = ios_orientation_plist(project.orientation(), &form_orientations(project)),
         usage = ios_usage_plist(&device_needs(&project.dir().join("forms")), aylis_build::used_classes(&project.dir().join("forms")).iter().any(|c| c == "SaveDialog"))
             + if push { "  <key>UIBackgroundModes</key><array><string>remote-notification</string></array>\n" } else { "" },

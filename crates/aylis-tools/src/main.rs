@@ -632,7 +632,7 @@ fn setup_run(args: &[String], utf16: bool, causes: &mut u8) -> Result<(), String
         // linguagem); nas outras saídas, só o que falta de fato (um aparelho conectado não).
         let gaps: Vec<_> = checks
             .iter()
-            .filter(|c| list.contains(&c.target) && !c.name.starts_with("WiX"))
+            .filter(|c| list.contains(&c.target) && !aylis_tools::setup::publishing_only(c))
             .filter(|c| c.status == Status::Missing || (c.target == Target::Desktop && c.status != Status::Ok))
             .collect();
         for c in &gaps {
@@ -844,7 +844,13 @@ fn check(args: &[String]) -> Result<(), String> {
     if let Some(file) = args.iter().find(|a| a.ends_with(".aylisproj")) {
         return check_project(std::path::Path::new(file), args.iter().any(|a| a == "--web"));
     }
-    let language = if args.iter().any(|a| a == "--python") { Language::Python } else { Language::Rust };
+    // `--language <nome>` (Rust, Python, Pascal, C++, Go, C#, TypeScript, Java); `--python`, o
+    // atalho de antes.
+    let language = match value_of(args, "--language") {
+        Some(name) => Language::from_name(&name).ok_or_else(|| format!("linguagem desconhecida: {name}"))?,
+        None if args.iter().any(|a| a == "--python") => Language::Python,
+        None => Language::Rust,
+    };
     let mut list = targets(args)?;
     if list.is_empty() {
         list = Target::ALL.to_vec();

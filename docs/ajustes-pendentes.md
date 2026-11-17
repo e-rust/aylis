@@ -13,6 +13,60 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 17/11/2026: o publicar das outras linguagens no desktop com dois executáveis**
+
+- [ ] Pedido do autor em 17/11, ao publicar um projeto em Free Pascal: "eu achava que ao
+  compilar ia sair no máximo 2 .exe na pasta, um só com a tela e tudo que precisa só pra ela
+  funcionar e outro do backend". Saíam o `aylis-host.exe` genérico (45 MB), os forms, temas,
+  assets, traduções e o `.aylisproj` soltos (com os comandos de antes e depois da compilação e
+  o caminho da chave do Android), o atalho `.cmd` e as units do Free Pascal (`.o`/`.ppu`).
+  Feito em 17/11 (falta o autor conferir publicando pela IDE): `publish::desktop_shell` monta
+  `<App>.exe` (a casca de `codegen::local_shell`, com o projeto embutido) e `backend/` (o
+  programa compilado, sem o que só serviu para compilar: `hostlang::INTERMEDIATES`). Conferido
+  com uma cópia do MeuProjeto (Pascal): `MeuProjeto.exe` (12,9 MB) e `backend\app.exe`; o
+  `window_created` do Pascal pôs o "0", três cliques pela automação do Windows levaram a "3", e
+  fechar a janela encerrou o backend. As outras seis linguagens não foram publicadas nesta
+  máquina. Teste `crates/aylis-project/tests/desktop_shell.rs`.
+- [ ] Falta: o instalador (`--installer`) dessas linguagens. Os três montadores (`.msi`, NSIS,
+  Inno) só levam arquivos soltos ao lado do `.exe`, e o backend fica numa pasta; hoje o
+  publicar avisa e entrega a pasta. Com o projeto em `"sdk": "crates.io"`, a casca só compila
+  depois da versão que publicar o `aylis::spawn_backend` (a 0.5.1 do crates.io não tem).
+
+**Ajustes de 17/11/2026: a versão com beta e o "falta: Assinatura de código"**
+
+- [ ] Relatado pelo autor em 17/11: "o numero de versão ao publicar um app não aceita
+  x.x.x-beta, no NoOBS eu uso esse formato". A tela das Opções do projeto só aceitava números,
+  e a publicação desmontava a versão pelos pontos (o `.msi` e o código de versão do Android
+  viam "0-beta" como 0, e o `version4` punha o número da beta como a quarta parte: a beta
+  `1.2.0.1` passava a final `1.2.0.0`). Feito em 17/11 (falta o autor conferir publicando o
+  NoOBS): `aylis_project::is_valid_version` aceita a pré-release e o build do versionamento
+  semântico (`1.2.0-beta.1`, `2.0.0-rc.2`, `1.0.0+42`); onde o sistema só aceita números (o
+  `.msi`, o iOS, os dados de versão do `.exe`), vai a parte de antes do `-`
+  (`aylis_build::version_core`); o nome do arquivo e o `versionName` do Android levam a versão
+  inteira. O `.msi` ganhou `AllowSameVersionUpgrades` (a final instala por cima da beta de
+  mesmo número). O código de versão do Android sai igual para a beta e a final: para mandar as
+  betas à loja, o `version_code` das Opções do Android. Testes em
+  `crates/aylis-project/tests/version.rs`.
+- [ ] Relatado pelo autor em 17/11: no "Configurar linguagens", todas ficavam "instalada; falta:
+  Assinatura de código", e o Rust não terminava sem erro, mesmo com tudo instalado. A
+  assinatura (0.4.0) é um aviso de algo só para publicar, mas o `setup` (o do instalador e o da
+  linha de comando) e a lista do assistente contavam os avisos do desktop como falta, com
+  exceção só do WiX: em qualquer máquina sem certificado, nenhuma linguagem ficava pronta, e o
+  instalador acusava erro no fim. Não tinha a ver com instalar por cima de outra versão. Feito
+  em 17/11: `setup::publishing_only` (o WiX e a assinatura) fica fora do que conta para a
+  linguagem ficar pronta, nos três lugares; conferido nesta máquina (`aylis-tool setup rust`:
+  de "não ficou pronta" para "pronta"). Teste
+  `publishing_only_items_do_not_keep_a_language_from_being_ready`. O `aylis-tool check` ganhou
+  `--language <nome>`.
+- [ ] Relato do autor em 17/11: "o 'fraGeneral' pesquisado tem no projeto e não aparece na tela
+  do Ctrl+F12, e essa tela não permite eu estar focado na pesquisa e apertar seta pra baixo".
+  O Abrir fonte filtrava só o caminho, e o fonte de um form leva o nome do arquivo dele
+  (`forms/settings/general.json` → `settings/general.rs`), não o nome do form. Feito em 17/11:
+  cada fonte de form mostra o form ao lado (`settings/general.rs — fraGeneral`), o filtro casa
+  pelo caminho ou pelo form, sem diferença de maiúsculas nem de `_`, e ↑/↓/PageUp/PageDown no
+  filtro andam na lista (Enter abre). Teste `the_filter_finds_the_source_by_the_form_name`.
+  Conferir na IDE com o NoOBS.
+
 **Ajustes de 16/11/2026: a roda do mouse no DataGrid dentro de uma ScrollBox**
 
 - [ ] Pergunta do autor em 16/11 (uma grade dentro de uma `ScrollBox`: a página parava de rolar

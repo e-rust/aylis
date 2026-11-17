@@ -977,11 +977,18 @@ pub fn file_name(name: &str) -> String {
     if clean.is_empty() { "app".into() } else { clean }
 }
 
-/// Os 4 números da versão (`0.52.7-beta` → `[0, 52, 7, 0]`), como os dados de versão pedem
-/// (cada um até 65535).
+/// A parte numérica da versão, sem a pré-release nem o build (`1.2.0-beta.1+42` → `1.2.0`):
+/// a que o Windows, o `.msi` e o iOS aceitam e comparam.
+pub fn version_core(version: &str) -> &str {
+    version.split(['-', '+']).next().unwrap_or("").trim()
+}
+
+/// Os 4 números da versão (`0.52.7-beta.1` → `[0, 52, 7, 0]`), como os dados de versão pedem
+/// (cada um até 65535). Só a parte de antes do `-`: o número da beta não pode entrar como a
+/// quarta parte, senão a beta (`1.2.0.1`) passaria a final (`1.2.0.0`).
 pub fn version_numbers(version: &str) -> [u16; 4] {
     let mut parts = [0u16; 4];
-    for (slot, p) in parts.iter_mut().zip(version.split('.')) {
+    for (slot, p) in parts.iter_mut().zip(version_core(version).split('.')) {
         *slot = p.chars().take_while(char::is_ascii_digit).collect::<String>().parse::<u32>().unwrap_or(0).min(65535) as u16;
     }
     parts

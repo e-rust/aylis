@@ -105,6 +105,107 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::connect_backend;
 
+/// O backend em outro processo na mesma máquina: o app publicado no desktop por um projeto
+/// em outra linguagem é a tela (este executável, com o projeto embutido) mais o programa da
+/// linguagem ao lado, que conversa por stdin/stdout como no `aylis-host`.
+#[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+mod local {
+    use std::io::{BufRead, BufReader, Write};
+    use std::path::Path;
+    use std::process::{Child, ChildStdin, Command, Stdio};
+    use std::sync::{Arc, Mutex};
+    use std::time::{Duration, Instant};
+
+    use aylis_core::Ui;
+    use serde_json::Value;
+
+    type Stdin = Arc<Mutex<Option<ChildStdin>>>;
+
+    fn write_line(stdin: &Stdin, text: &str) {
+        if let Ok(mut guard) = stdin.lock() {
+            if let Some(pipe) = guard.as_mut() {
+                // O backend pode ter terminado; nesse caso não há a quem avisar.
+                let _ = writeln!(pipe, "{text}").and_then(|_| pipe.flush());
+            }
+        }
+    }
+
+    /// O processo do backend. Ao sair de cena (o app fechou), o backend recebe
+    /// `{"event": "closed"}`, o stdin dele fecha e ele tem até 3 s para terminar sozinho.
+    pub struct BackendProcess {
+        child: Child,
+        stdin: Stdin,
+    }
+
+    impl Drop for BackendProcess {
+        fn drop(&mut self) {
+            write_line(&self.stdin, &serde_json::json!({ "event": "closed" }).to_string());
+            if let Ok(mut guard) = self.stdin.lock() {
+                guard.take();
+            }
+            let deadline = Instant::now() + Duration::from_secs(3);
+            while Instant::now() < deadline {
+                if let Ok(Some(_)) = self.child.try_wait() {
+                    return;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            let _ = self.child.kill();
+            let _ = self.child.wait();
+        }
+    }
+
+    /// Inicia o backend (`command`: o programa e os argumentos) na pasta `dir` e liga a tela a
+    /// ele. Um programa com caminho relativo é procurado em `dir` (`backend/app.exe`); um nome
+    /// solto (`dotnet`, `java`, `python`), no PATH. Se o backend terminar, o app fecha (como no
+    /// `aylis-host`). Guarde o resultado até o app fechar.
+    pub fn spawn_backend(ui: &mut Ui, command: &[&str], dir: &Path) -> Result<BackendProcess, String> {
+        let (program, args) = command.split_first().ok_or("backend: comando vazio")?;
+        let local = dir.join(program);
+        let mut c = if local.is_file() { Command::new(local) } else { Command::new(program) };
+        c.args(args).current_dir(dir).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit());
+        // O backend é um programa de console: sem isto, o app abriria uma janela preta junto.
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+            c.creation_flags(CREATE_NO_WINDOW);
+        }
+        let mut child = c.spawn().map_err(|e| format!("não consegui iniciar o backend '{program}': {e}"))?;
+        let stdout = child.stdout.take().ok_or("backend: sem stdout")?;
+        let stdin: Stdin = Arc::new(Mutex::new(child.stdin.take()));
+        let events = stdin.clone();
+        aylis_remote::forward_events(ui, move |_, event| write_line(&events, &event.to_string()));
+        let poster = ui.poster();
+        let replies = stdin.clone();
+        std::thread::Builder::new()
+            .name("aylis-backend".into())
+            .spawn(move || {
+                for line in BufReader::new(stdout).lines() {
+                    let Ok(line) = line else { break };
+                    if line.trim().is_empty() {
+                        continue;
+                    }
+                    let Ok(message) = serde_json::from_str::<Value>(&line) else { continue };
+                    let replies = replies.clone();
+                    poster.post(move |ui| {
+                        if let Some(reply) = super::handle(ui, &message) {
+                            write_line(&replies, &reply.to_string());
+                        }
+                        ui.process_events();
+                    });
+                }
+                // O backend terminou: o app fecha junto.
+                poster.post(|ui| ui.request_close());
+            })
+            .map_err(|e| e.to_string())?;
+        Ok(BackendProcess { child, stdin })
+    }
+}
+
+#[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+pub use local::{BackendProcess, spawn_backend};
+
 #[cfg(target_arch = "wasm32")]
 mod web {
     use std::cell::RefCell;

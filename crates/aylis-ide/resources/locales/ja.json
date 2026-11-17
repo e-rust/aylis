@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "空：フォームのルート（例：data）",
  "vazio: chave de depuração (não vale na Play Store)": "空欄：デバッグ用キー（Play ストアでは使えません）",
  "versão no formato 1.0.0": "バージョンは 1.0.0 の形式で",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "バージョンは 1.0.0 の形式（または 1.0.0-beta.1）",
  "{0} de {1} arquivos desta plataforma": "このプラットフォームの {1} 個中 {0} 個のファイル",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{1} 個中 {0} 個のハンドラーが実行済み ({2}%)、{3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (ダブルクリックで開く)",

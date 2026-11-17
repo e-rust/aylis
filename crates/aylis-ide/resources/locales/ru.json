@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "пусто: корень форм (напр.: data)",
  "vazio: chave de depuração (não vale na Play Store)": "пусто: отладочный ключ (не подходит для Play Store)",
  "versão no formato 1.0.0": "версия в формате 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "версия в формате 1.0.0 (или 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} из {1} файлов для этой платформы",
  "{0} de {1} handlers rodaram ({2}%), {3}": "выполнено {0} из {1} обработчиков ({2}%), {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (двойной щелчок открывает)",

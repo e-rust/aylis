@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "空：窗体根目录（例：data）",
  "vazio: chave de depuração (não vale na Play Store)": "留空：调试密钥（不能用于 Play 商店）",
  "versão no formato 1.0.0": "版本格式为 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "版本格式为 1.0.0（或 1.0.0-beta.1）",
  "{0} de {1} arquivos desta plataforma": "本平台 {1} 个文件中的 {0} 个",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{1} 个处理程序中已运行 {0} 个 ({2}%)，{3}",
  "{0}: {1} (duplo clique abre)": "{0}：{1}（双击打开）",

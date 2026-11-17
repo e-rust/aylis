@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "فارغ: جذر النماذج (مثال: data)",
  "vazio: chave de depuração (não vale na Play Store)": "فارغ: مفتاح التصحيح (غير صالح في متجر Play)",
  "versão no formato 1.0.0": "الإصدار بالصيغة 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "الإصدار بالصيغة 1.0.0 (أو 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} من {1} ملفات لهذه المنصة",
  "{0} de {1} handlers rodaram ({2}%), {3}": "نُفِّذ {0} من {1} معالجات ({2}%)، {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (النقر المزدوج يفتح)",

@@ -1634,6 +1634,75 @@ pub fn remote_shell(project: &Project, backend_url: &str) -> Result<PathBuf, Str
     Ok(shell)
 }
 
+/// O app casca de um projeto que não é em Rust, no desktop: um crate em `.aylis/shell-desktop`
+/// cujo executável é a tela, com forms, temas, assets e traduções embutidos, e que inicia o
+/// backend ao lado (`backend`: o programa e os argumentos, relativos à pasta do executável;
+/// veja `aylis::spawn_backend`). Devolve a pasta.
+pub fn local_shell(project: &Project, backend: &[String]) -> Result<PathBuf, String> {
+    let dir = project.dir();
+    let shell = dir.join(".aylis").join("shell-desktop");
+    std::fs::create_dir_all(shell.join("src")).map_err(|e| e.to_string())?;
+    let package = project.package_name();
+    let source = aylis_source(project, &shell);
+    let mut features = aylis_features(project);
+    if !features.contains(&"remote") {
+        features.push("remote");
+    }
+    let cargo = format!(
+        "# O app casca de {name} ({language}) no desktop: a tela com o projeto embutido, e o\n\
+         # backend ao lado. Gerado pelo aylis a cada publicação: não edite.\n\
+         [package]\nname = \"{package}\"\nversion = \"{version}\"\nedition = \"2024\"\npublish = false\n\n\
+         [[bin]]\nname = \"{package}\"\npath = \"src/main.rs\"\n\n\
+         [dependencies]\naylis = {{ {aylis}, default-features = false, features = {features} }}\n\n\
+         [build-dependencies]\naylis-build = {{ {build} }}\n\n\
+         # Fora de qualquer workspace.\n[workspace]\n\n{render}",
+        aylis = source.spec("aylis"),
+        build = source.spec("aylis-build"),
+        name = project.name,
+        language = project.language.name(),
+        version = project.version(),
+        features = features_list(&features),
+        render = render_block(project, &shell),
+    );
+    write(&shell.join("Cargo.toml"), &cargo)?;
+    let dir_text = dir.display().to_string().replace('\\', "/");
+    write(
+        &shell.join("build.rs"),
+        &format!("//! Embute o projeto (forms, temas, assets) da pasta dele. Gerado pelo aylis.\n\nfn main() {{\n    aylis_build::project_at(std::path::Path::new(\"{dir_text}\"));\n}}\n"),
+    )?;
+    // `{:?}` escreve cada parte como literal de texto do Rust (aspas e barras escapadas).
+    let command: Vec<String> = backend.iter().map(|a| format!("{a:?}")).collect();
+    write(
+        &shell.join("src/main.rs"),
+        &format!(
+            "//! {name}: a tela, com o projeto embutido, e o código ({language}) noutro processo, ao lado.\n\
+             //! Gerado pelo aylis.\n\
+             #![windows_subsystem = \"windows\"]\n\n\
+             /// O backend: o programa e os argumentos, relativos à pasta do executável.\n\
+             const BACKEND: &[&str] = &[{command}];\n\n\
+             fn main() -> Result<(), aylis::Error> {{\n    \
+             let mut app = aylis::Application::bundled(aylis::include_project!())?;\n    \
+             let exe = std::env::current_exe()?;\n    \
+             let dir = exe.parent().unwrap_or(std::path::Path::new(\".\"));\n    \
+             let backend = match aylis::spawn_backend(&mut app.ui, BACKEND, dir) {{\n        \
+             Ok(backend) => Some(backend),\n        \
+             Err(e) => {{\n            \
+             aylis::controls::toast(&mut app.ui, &e);\n            \
+             None\n        \
+             }}\n    \
+             }};\n    \
+             let result = app.run();\n    \
+             // Fechou: o backend recebe o aviso e termina.\n    \
+             drop(backend);\n    \
+             result\n}}\n",
+            name = project.name,
+            language = project.language.name(),
+            command = command.join(", "),
+        ),
+    )?;
+    Ok(shell)
+}
+
 fn python_project(project: &Project, forms: &[(String, String, Vec<String>)]) -> Result<Vec<PathBuf>, String> {
     let dir = project.code_dir();
     let mut written = Vec::new();

@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "খালি: ফর্মের রুট (যেমন: data)",
  "vazio: chave de depuração (não vale na Play Store)": "খালি: ডিবাগ কী (Play Store-এ বৈধ নয়)",
  "versão no formato 1.0.0": "সংস্করণ 1.0.0 বিন্যাসে",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "সংস্করণ 1.0.0 বিন্যাসে (অথবা 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "এই প্ল্যাটফর্মের {1}টির মধ্যে {0}টি ফাইল",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{1}টির মধ্যে {0}টি হ্যান্ডলার চলেছে ({2}%), {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (ডাবল ক্লিকে খোলে)",

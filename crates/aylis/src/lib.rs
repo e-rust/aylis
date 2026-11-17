@@ -440,6 +440,8 @@ pub fn dev_connect(ui: &Ui, target: aylis_devlink::Target) {
 mod backend;
 #[cfg(feature = "remote")]
 pub use backend::connect_backend;
+#[cfg(all(feature = "remote", not(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))))]
+pub use backend::{BackendProcess, spawn_backend};
 #[cfg(all(target_arch = "wasm32", feature = "remote"))]
 mod web_remote;
 #[cfg(all(target_arch = "wasm32", feature = "remote"))]

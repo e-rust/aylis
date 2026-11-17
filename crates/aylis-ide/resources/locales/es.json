@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "vacío: la raíz de forms (p. ej.: datos)",
  "vazio: chave de depuração (não vale na Play Store)": "vacío: clave de depuración (no vale en Play Store)",
  "versão no formato 1.0.0": "versión con el formato 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "versión en el formato 1.0.0 (o 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} de {1} archivos de esta plataforma",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{0} de {1} handlers se ejecutaron ({2}%), {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (doble clic abre)",

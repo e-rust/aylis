@@ -122,6 +122,9 @@ pub struct Hooks {
     /// Os fontes do projeto: a pasta do código e os arquivos (o painel da esquerda e o
     /// Ctrl+F12).
     pub sources: Box<dyn Fn() -> (Option<PathBuf>, Vec<PathBuf>)>,
+    /// O form de cada fonte de form (o fonte, o nome do form): o Ctrl+F12 acha `fraGeneral` no
+    /// `settings/general.rs`, cujo nome sai do arquivo do form e não do nome dele.
+    pub source_forms: Box<dyn Fn() -> Vec<(PathBuf, String)>>,
     /// O servidor de linguagem ([`crate::intel`]): o editor avisa o que mudou e pede.
     pub lsp: Box<dyn Fn(&mut Ui, LspEvent)>,
     /// Mostra o código embutido (`true`) ou volta ao designer (`false`) no centro da IDE.
@@ -1251,31 +1254,63 @@ fn relative(root: Option<&Path>, file: &Path) -> String {
     rel.to_string_lossy().replace('\\', "/")
 }
 
-/// Abrir fonte (Ctrl+F12): a lista dos fontes do projeto com um
-/// filtro; OK (ou Enter) abre na janela de código.
+/// Um fonte da lista do Ctrl+F12 casa com o filtro: pelo caminho ou pelo nome do form dele, sem
+/// diferença de maiúsculas e de `_` (`fraGeneral`, `fra_general` e `general` acham
+/// `settings/general.rs` do form `fraGeneral`).
+pub fn source_matches(path: &str, form: &str, query: &str) -> bool {
+    let plain = |s: &str| s.to_lowercase().replace('_', "");
+    let q = plain(query.trim());
+    q.is_empty() || plain(path).contains(&q) || plain(form).contains(&q)
+}
+
+/// Abrir fonte (Ctrl+F12): a lista dos fontes do projeto, com o form de cada fonte de form, e
+/// um filtro pelo caminho ou pelo nome do form; ↑/↓ no filtro andam na lista, e OK (ou Enter)
+/// abre na janela de código.
 pub fn open_source_dialog(ui: &mut Ui) {
     use crate::dialogs::{edit, field, new_dialog, run, text_of};
     let Some(h) = hooks() else { return };
     let (root, files) = (h.sources)();
+    let forms: std::collections::HashMap<PathBuf, String> = (h.source_forms)().into_iter().collect();
     let d = new_dialog(ui, "Abrir fonte", 560.0, 520.0);
     let line = field(ui, d.body, "Filtro");
     let filter = edit(ui, line, "");
     let list = ui.add(ListBox::default(), d.body);
     ui.control_mut(list).unwrap().set_align(Align::Client).set_margins([0.0, 8.0, 0.0, 0.0]);
-    let all: Vec<(String, PathBuf)> = files.iter().map(|f| (relative(root.as_deref(), f), f.clone())).collect();
+    // (o caminho, o form, o fonte); o texto da linha leva o form ao lado do caminho.
+    let all: Vec<(String, String, PathBuf)> = files.iter().map(|f| (relative(root.as_deref(), f), forms.get(f).cloned().unwrap_or_default(), f.clone())).collect();
     let shown: Rc<RefCell<Vec<PathBuf>>> = Rc::new(RefCell::new(Vec::new()));
     let fill = {
         let shown = shown.clone();
         move |ui: &mut Ui| {
-            let query = text_of(ui, filter).to_lowercase();
-            let rows: Vec<&(String, PathBuf)> = all.iter().filter(|(rel, _)| rel.to_lowercase().contains(&query)).collect();
-            *shown.borrow_mut() = rows.iter().map(|(_, f)| f.clone()).collect();
-            let _ = ui.set_prop(list, "items", rows.iter().map(|(rel, _)| rel.as_str()).collect::<Vec<_>>().join(";"));
+            let query = text_of(ui, filter);
+            let rows: Vec<&(String, String, PathBuf)> = all.iter().filter(|(rel, form, _)| source_matches(rel, form, &query)).collect();
+            *shown.borrow_mut() = rows.iter().map(|(_, _, f)| f.clone()).collect();
+            let text = |(rel, form, _): &&(String, String, PathBuf)| if form.is_empty() { rel.clone() } else { format!("{rel} — {form}") };
+            let _ = ui.set_prop(list, "items", rows.iter().map(text).collect::<Vec<_>>().join(";"));
             let _ = ui.set_prop(list, "item_index", if rows.is_empty() { -1i64 } else { 0 });
         }
     };
     fill(ui);
     ui.on(filter, "on_change", move |ui, _, _| fill(ui));
+    // ↑/↓ no filtro andam na lista (como no Ir para o símbolo e no VS Code).
+    {
+        let shown = shown.clone();
+        ui.on(filter, "on_key_down", move |ui, _, args| {
+            let aylis_core::EventArgs::Key(event) = args else { return };
+            let step = match event.key {
+                aylis_core::Key::Down => 1,
+                aylis_core::Key::Up => -1,
+                aylis_core::Key::PageDown => 10,
+                aylis_core::Key::PageUp => -10,
+                _ => return,
+            };
+            let count = shown.borrow().len() as i64;
+            let i = ui.get_prop(list, "item_index").ok().and_then(|v| v.to_i64().ok()).unwrap_or(-1);
+            if count > 0 {
+                let _ = ui.set_prop(list, "item_index", (i + step).clamp(0, count - 1));
+            }
+        });
+    }
     let pick = {
         let shown = shown.clone();
         move |ui: &Ui| {
@@ -2740,4 +2775,19 @@ fn is_generated(file: &Path, text: &str) -> bool {
     let in_generated_dir = file.components().any(|c| c.as_os_str() == "generated");
     let head: String = text.chars().take(600).collect();
     in_generated_dir || head.contains("\"Gerar código\": não edite")
+}
+
+#[cfg(test)]
+mod open_source_tests {
+    use super::source_matches;
+
+    #[test]
+    fn the_filter_finds_the_source_by_the_form_name() {
+        // O fonte do form `fraGeneral` é `settings/general.rs` (o nome sai do arquivo do form).
+        assert!(source_matches("src/forms/settings/general.rs", "fraGeneral", "fraGeneral"));
+        assert!(source_matches("src/forms/settings/general.rs", "fraGeneral", "fra_general"));
+        assert!(source_matches("src/forms/settings/general.rs", "fraGeneral", "SETTINGS/gen"));
+        assert!(source_matches("src/main.rs", "", ""));
+        assert!(!source_matches("src/main.rs", "", "fraGeneral"));
+    }
 }

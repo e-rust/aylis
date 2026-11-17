@@ -377,8 +377,8 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
         d,
         move |ui| {
             let v = text_of(ui, version);
-            if v.is_empty() || !v.split('.').all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit())) {
-                return Err("versão no formato 1.0.0".into());
+            if !aylis_project::is_valid_version(&v) {
+                return Err("versão no formato 1.0.0 (ou 1.0.0-beta.1)".into());
             }
             let id = text_of(ui, identifier);
             let valid_id = id.split('.').count() >= 2

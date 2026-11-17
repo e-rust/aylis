@@ -710,7 +710,7 @@ impl Project {
         if self.publish.app_name.is_empty() { &self.name } else { &self.publish.app_name }
     }
 
-    /// Versão do aplicativo publicado.
+    /// Versão do aplicativo publicado (`1.2.0`, `1.2.0-beta.1`; veja [`is_valid_version`]).
     pub fn version(&self) -> &str {
         if self.publish.version.is_empty() { "1.0.0" } else { &self.publish.version }
     }
@@ -1196,6 +1196,24 @@ pub fn is_identifier(name: &str) -> bool {
 /// Cria um projeto novo: a pasta `<local>/<nome>`, as subpastas, o `.aylisproj`, o form
 /// principal (`forms/principal.json`, `frmPrincipal`) e o código inicial na linguagem
 /// escolhida (na pasta dela, como `rust/`). A pasta não pode existir com arquivos dentro.
+/// Uma versão de app que a publicação aceita: números separados por ponto (`1.2.0`) e,
+/// opcional, a pré-release depois do `-` (`1.2.0-beta.1`, `2.0.0-rc.2`) e o build depois do
+/// `+`, com letras, números, `.` e `-`, como no versionamento semântico (pedido do autor em
+/// 17/11: o NoOBS usa `x.y.z-beta`). Onde o sistema só aceita números (o `.msi`, o iOS, os
+/// dados de versão do `.exe`), vai a parte de antes do `-`.
+pub fn is_valid_version(version: &str) -> bool {
+    let (rest, build) = match version.split_once('+') {
+        Some((r, b)) => (r, Some(b)),
+        None => (version, None),
+    };
+    let (core, pre) = match rest.split_once('-') {
+        Some((c, p)) => (c, Some(p)),
+        None => (rest, None),
+    };
+    let label = |s: &str| !s.is_empty() && s.split('.').all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'));
+    !core.is_empty() && core.split('.').count() <= 4 && core.split('.').all(|p| !p.is_empty() && p.len() <= 5 && p.chars().all(|c| c.is_ascii_digit())) && pre.is_none_or(label) && build.is_none_or(label)
+}
+
 /// O valor da chave `sdk` que usa o Aylis publicado no crates.io.
 pub const SDK_CRATES_IO: &str = "crates.io";
 

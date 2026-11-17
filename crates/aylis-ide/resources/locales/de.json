@@ -1243,6 +1243,7 @@
  "vazio: a raiz de forms (ex.: dados)": "leer: das Stammverzeichnis der Formulare (z. B.: daten)",
  "vazio: chave de depuração (não vale na Play Store)": "leer: Debug-Schlüssel (gilt nicht im Play Store)",
  "versão no formato 1.0.0": "Version im Format 1.0.0",
+ "versão no formato 1.0.0 (ou 1.0.0-beta.1)": "Version im Format 1.0.0 (oder 1.0.0-beta.1)",
  "{0} de {1} arquivos desta plataforma": "{0} von {1} Dateien für diese Plattform",
  "{0} de {1} handlers rodaram ({2}%), {3}": "{0} von {1} Handlern ausgeführt ({2} %), {3}",
  "{0}: {1} (duplo clique abre)": "{0}: {1} (Doppelklick öffnet)",

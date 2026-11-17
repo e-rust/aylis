@@ -84,6 +84,10 @@ mod min_rust_tests {
     }
 }
 
+/// O nome do item da assinatura de código na verificação (só para publicar: veja
+/// [`crate::setup::publishing_only`]).
+pub const SIGNING_CHECK: &str = "Assinatura de código";
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Status {
     Ok,
@@ -811,8 +815,8 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                 // Só se a senha existe, nunca o valor (a verificação é guardada em disco).
                 crate::env_cache::note_input("sign_password", Some(std::env::var_os(crate::codesign::PASSWORD_ENV).is_some().to_string()));
                 out.push(match crate::codesign::environment() {
-                    Ok(detail) => Check::ok(t, "Assinatura de código", detail),
-                    Err(missing) => Check::warning(t, "Assinatura de código", missing)
+                    Ok(detail) => Check::ok(t, SIGNING_CHECK, detail),
+                    Err(missing) => Check::warning(t, SIGNING_CHECK, missing)
                         .help("Configure o certificado em Ferramentas → Opções → Assinatura; o signtool vem com o Windows SDK (docs/publicar-windows.md)"),
                 });
                 out.push(match msvc_linker() {
@@ -857,6 +861,17 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
             });
         }
         other => desktop_host(out, other, aylis_host),
+    }
+    // Nas outras linguagens, o publicar compila a tela do app (uma casca em Rust com o projeto
+    // embutido; `publish::desktop_shell`): o Rust e, no Windows, o linker do MSVC.
+    if language != Language::Rust {
+        rust_items(out, t, rust.get());
+        if cfg!(windows) {
+            out.push(match msvc_linker() {
+                Some(v) => Check::ok(t, "Linker do Visual C++ (MSVC)", v),
+                None => Check::missing(t, "Linker do Visual C++ (MSVC)", "não encontrado (o Rust no Windows usa o link.exe)").fix(crate::setup::msvc()),
+            });
+        }
     }
     // O servidor de linguagem (sugestões, declaração, erros enquanto digita no editor).
     out.push(language_server(language));

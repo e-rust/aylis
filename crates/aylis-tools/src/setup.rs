@@ -278,13 +278,21 @@ pub fn language_ready(language: Language) -> bool {
     }
 }
 
+/// O que só serve para publicar (o WiX do instalador `.msi`, a assinatura de código): fica para
+/// o Verificar ambiente e não conta para a linguagem ficar pronta. Sem a assinatura, a
+/// publicação avisa e segue; contada como falta, nenhuma linguagem ficava pronta numa máquina
+/// sem certificado (relatado pelo autor em 17/11: "instalada; falta: Assinatura de código").
+pub fn publishing_only(check: &Check) -> bool {
+    check.name.starts_with("WiX") || check.name == env::SIGNING_CHECK
+}
+
 /// O que entra na configuração: o que falta para executar e depurar no desktop e o servidor
 /// de linguagem (o WiX é só para o instalador: fica para o Verificar ambiente). Nas outras
 /// saídas (o Android, a web), só o que falta de fato, e nada que abra uma janela (o emulador,
 /// o instalador do Android Studio) quando não há o pacote para pôr no lugar.
 fn wanted(check: &Check, targets: &[Target]) -> bool {
     let Some(fix) = check.fix.as_ref() else { return false };
-    if !targets.contains(&check.target) || check.status == Status::Ok || check.name.starts_with("WiX") {
+    if !targets.contains(&check.target) || check.status == Status::Ok || publishing_only(check) {
         return false;
     }
     check.target == Target::Desktop || (check.status == Status::Missing && !(fix.interactive && !fix.fetch.as_deref().is_some_and(env::package_has_source)))
@@ -311,7 +319,7 @@ pub fn target_missing(target: Target) -> Vec<String> {
 pub fn missing(language: Language, aylis_host: Option<&Path>) -> Vec<String> {
     env::check(language, &[Target::Desktop], aylis_host)
         .into_iter()
-        .filter(|c| c.status != Status::Ok && !c.name.starts_with("WiX"))
+        .filter(|c| c.status != Status::Ok && !publishing_only(c))
         .map(|c| c.name.split(" (").next().unwrap_or(&c.name).to_string())
         .collect()
 }
@@ -351,6 +359,18 @@ pub fn setup_targets(language: Language, targets: &[Target], aylis_host: Option<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A assinatura de código e o WiX são só para publicar: não contam para a linguagem ficar
+    /// pronta (sem certificado, nenhuma ficava pronta; relatado pelo autor em 17/11). O que
+    /// falta para depurar ou editar continua contando.
+    #[test]
+    fn publishing_only_items_do_not_keep_a_language_from_being_ready() {
+        let check = |name: &str, status| Check { target: Target::Desktop, name: name.into(), status, detail: String::new(), fix: None, help: None };
+        assert!(publishing_only(&check(env::SIGNING_CHECK, Status::Warning)));
+        assert!(publishing_only(&check("WiX (instalador .msi)", Status::Warning)));
+        assert!(!publishing_only(&check("CodeLLDB (depurar na IDE)", Status::Warning)));
+        assert!(!wanted(&check(env::SIGNING_CHECK, Status::Warning), &[Target::Desktop]));
+    }
 
     #[test]
     fn expands_environment_variables() {
