@@ -366,6 +366,9 @@ pub struct Ui {
     /// Os irmãos com o lugar animando na pintura de agora, com o pai de cada um: atrás deles
     /// fica o fundo que o movimento descobre (`paint_node`).
     pub(crate) movers: std::cell::RefCell<Vec<(ComponentId, ComponentId)>>,
+    /// Os controles pintados com o Reveal Highlight (o estilo com `reveal`) e o alcance da luz
+    /// de cada um: o mouse que anda repinta só a parte deles perto dele ([`Ui::reveal_moved`]).
+    pub(crate) reveal_ids: std::cell::RefCell<std::collections::HashMap<ComponentId, f32>>,
     /// O próximo `paint_node` é de um contêiner atrás de quem anda (o pai marca antes).
     pub(crate) backdrop_next: std::cell::Cell<bool>,
     /// Os contêineres que viraram camada guardada por estarem atrás de quem anda.
@@ -506,6 +509,7 @@ impl Ui {
             dead_layers: Default::default(),
             auto_layers: std::cell::Cell::new(true),
             movers: Default::default(),
+            reveal_ids: Default::default(),
             backdrop_next: Default::default(),
             backdrops: Default::default(),
             paint_count: Default::default(),

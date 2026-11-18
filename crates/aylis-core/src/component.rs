@@ -52,6 +52,73 @@ pub struct ControlState {
     pub disabled: bool,
 }
 
+/// A forma de um controle que não é um retângulo ([`Component::clip_shape`]).
+#[derive(Clone, Debug, PartialEq)]
+pub enum ClipShape {
+    /// O retângulo com os cantos deste raio.
+    RoundRect(f32),
+    /// O retângulo com um raio por canto, na ordem do CSS ([`crate::Path::corners`]: `left` =
+    /// cima-esquerda, `top` = cima-direita, `right` = baixo-direita, `bottom` = baixo-esquerda).
+    Corners(crate::Bounds),
+    /// A elipse inscrita no retângulo (um círculo, se ele é quadrado).
+    Ellipse,
+    /// Um contorno qualquer, esticado para o retângulo: os limites do caminho
+    /// ([`crate::Path::bounds`]) viram os do controle.
+    Path(std::sync::Arc<crate::Path>),
+}
+
+impl ClipShape {
+    /// O raio que vale como o de um retângulo arredondado (a sombra e o vidro): na elipse, o
+    /// do menor lado; com um raio por canto, o maior; no contorno, nenhum.
+    pub fn radius(&self, rect: crate::RectF) -> f32 {
+        let limit = rect.width.min(rect.height) / 2.0;
+        match self {
+            ClipShape::RoundRect(r) => r.clamp(0.0, limit),
+            ClipShape::Corners(c) => c.left.max(c.top).max(c.right).max(c.bottom).clamp(0.0, limit),
+            ClipShape::Ellipse => limit,
+            ClipShape::Path(_) => 0.0,
+        }
+    }
+
+    /// O contorno da forma em `rect` (a região da janela e o recorte do desfoque usam o mesmo).
+    pub fn outline(&self, rect: crate::RectF) -> crate::Path {
+        let mut path = crate::Path::new();
+        match self {
+            ClipShape::RoundRect(_) => {
+                path.rect(rect, self.radius(rect));
+            }
+            ClipShape::Corners(c) => path = crate::Path::corners(rect, *c),
+            ClipShape::Ellipse => {
+                path.ellipse(rect);
+            }
+            ClipShape::Path(p) => {
+                let b = p.bounds();
+                let sx = if b.width > 0.0 { rect.width / b.width } else { 1.0 };
+                let sy = if b.height > 0.0 { rect.height / b.height } else { 1.0 };
+                path = p.map_points(|q| crate::PointF::new(rect.x + (q.x - b.x) * sx, rect.y + (q.y - b.y) * sy));
+            }
+        }
+        path
+    }
+
+    /// Preenche a forma em `rect`.
+    pub fn fill(&self, canvas: &mut dyn crate::Canvas, rect: crate::RectF, brush: &crate::Brush) {
+        match self {
+            ClipShape::RoundRect(_) => canvas.fill_rect(rect, self.radius(rect), brush),
+            ClipShape::Ellipse => canvas.fill_ellipse(rect, brush),
+            _ => canvas.fill_path(&self.outline(rect), brush),
+        }
+    }
+
+    /// Recorta o que vem depois na forma em `rect` (com a borda suave).
+    pub fn clip(&self, canvas: &mut dyn crate::Canvas, rect: crate::RectF) {
+        match self {
+            ClipShape::RoundRect(_) => canvas.clip_round_rect(rect, self.radius(rect)),
+            _ => canvas.clip_path(&self.outline(rect), false),
+        }
+    }
+}
+
 /// Componente: a base de tudo que vive no [`Ui`](crate::Ui), visual ou não.
 ///
 /// Todos os métodos, exceto [`class_name`](Component::class_name), têm implementação
@@ -166,6 +233,13 @@ pub trait Component: Any {
     /// o cobre não pede quadros. Na dúvida, `false` (o padrão): só se perde a economia.
     fn opaque(&self, style: &crate::theme::ResolvedStyle) -> bool {
         self.inner().is_some_and(|i| i.opaque(style))
+    }
+
+    /// A forma do controle, quando não é o retângulo (o form redondo): o fundo, o vidro e os
+    /// filhos ficam dentro dela, com a borda suavizada. `None` (o padrão): o retângulo, com o
+    /// raio do estilo no fundo.
+    fn clip_shape(&self) -> Option<ClipShape> {
+        self.inner().and_then(|i| i.clip_shape())
     }
 
     /// Pinta por cima dos filhos (bordas, anel de foco...).

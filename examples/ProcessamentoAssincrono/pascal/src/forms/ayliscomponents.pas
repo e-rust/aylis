@@ -267,6 +267,16 @@ type
     procedure SetBorderStyle(Value: string);
     function GetWindowCorners: string;
     procedure SetWindowCorners(Value: string);
+    function GetTransparent: Boolean;
+    procedure SetTransparent(Value: Boolean);
+    function GetWindowShape: string;
+    procedure SetWindowShape(Value: string);
+    function GetShapeRadius: Double;
+    procedure SetShapeRadius(Value: Double);
+    function GetShapeRadii: string;
+    procedure SetShapeRadii(Value: string);
+    function GetShapePath: string;
+    procedure SetShapePath(Value: string);
     function GetWindowState: string;
     procedure SetWindowState(Value: string);
     function GetTransition: string;
@@ -469,6 +479,11 @@ type
     property Position: string read GetPosition write SetPosition;
     property BorderStyle: string read GetBorderStyle write SetBorderStyle;
     property WindowCorners: string read GetWindowCorners write SetWindowCorners;
+    property Transparent: Boolean read GetTransparent write SetTransparent;
+    property WindowShape: string read GetWindowShape write SetWindowShape;
+    property ShapeRadius: Double read GetShapeRadius write SetShapeRadius;
+    property ShapeRadii: string read GetShapeRadii write SetShapeRadii;
+    property ShapePath: string read GetShapePath write SetShapePath;
     property WindowState: string read GetWindowState write SetWindowState;
     property Transition: string read GetTransition write SetTransition;
     property LayerCache: string read GetLayerCache write SetLayerCache;
@@ -1922,6 +1937,56 @@ end;
 procedure TForm.SetWindowCorners(Value: string);
 begin
   SetProp('window_corners', TJSONString.Create(Value));
+end;
+
+function TForm.GetTransparent: Boolean;
+begin
+  Result := GetProp('transparent').AsBoolean;
+end;
+
+procedure TForm.SetTransparent(Value: Boolean);
+begin
+  SetProp('transparent', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetWindowShape: string;
+begin
+  Result := AsText(GetProp('window_shape'));
+end;
+
+procedure TForm.SetWindowShape(Value: string);
+begin
+  SetProp('window_shape', TJSONString.Create(Value));
+end;
+
+function TForm.GetShapeRadius: Double;
+begin
+  Result := GetProp('shape_radius').AsFloat;
+end;
+
+procedure TForm.SetShapeRadius(Value: Double);
+begin
+  SetProp('shape_radius', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetShapeRadii: string;
+begin
+  Result := AsText(GetProp('shape_radii'));
+end;
+
+procedure TForm.SetShapeRadii(Value: string);
+begin
+  SetProp('shape_radii', TJSONString.Create(Value));
+end;
+
+function TForm.GetShapePath: string;
+begin
+  Result := AsText(GetProp('shape_path'));
+end;
+
+procedure TForm.SetShapePath(Value: string);
+begin
+  SetProp('shape_path', TJSONString.Create(Value));
 end;
 
 function TForm.GetWindowState: string;

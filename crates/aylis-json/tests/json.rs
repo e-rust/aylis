@@ -435,3 +435,24 @@ fn the_style_gap_round_trips() {
     let again = aylis_json::load_theme(&aylis_json::save_theme(&theme)).unwrap();
     assert_eq!(again.resolve(&["SegmentedControl"], "", state).gap, Some(1.5));
 }
+
+/// O Reveal Highlight no tema: `reveal`, `reveal_color` e `reveal_radius` lidos, resolvidos e
+/// gravados de volta.
+#[test]
+fn reveal_in_the_theme() {
+    let theme = aylis_json::load_theme(
+        r##"{ "styles": { "Button": { "reveal": "both", "reveal_color": "#FFFFFF60", "reveal_radius": 120 },
+                          "Panel": { "reveal": "border" } } }"##,
+    )
+    .unwrap();
+    let button = theme.resolve(&["Button"], "", ControlState::default());
+    assert!(button.reveal.border && button.reveal.background);
+    assert_eq!(button.reveal.color, Color::rgba(255, 255, 255, 0x60));
+    assert_eq!(button.reveal.radius, 120.0);
+    let panel = theme.resolve(&["Panel"], "", ControlState::default());
+    assert!(panel.reveal.border && !panel.reveal.background);
+    assert_eq!(panel.reveal.radius, 96.0, "o alcance padrão");
+    assert!(!theme.resolve(&["Label"], "", ControlState::default()).reveal.on(), "sem reveal, desligado");
+    let back = aylis_json::load_theme(&aylis_json::save_theme(&theme)).unwrap();
+    assert_eq!(back.resolve(&["Button"], "", ControlState::default()).reveal, button.reveal);
+}

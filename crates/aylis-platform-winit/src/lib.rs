@@ -1515,8 +1515,19 @@ impl App {
                     }
                 }
                 // Os cantos (`window_corners`, ou a `border_style` que muda o padrão deles).
+                // A forma e a transparência também (`window_shape`, `shape_radius`, `transparent`).
                 #[cfg(windows)]
-                WindowCommand::UpdateCorners => win32::set_window_corners(window, self.corner_preference(form)),
+                WindowCommand::UpdateCorners => {
+                    win32::set_window_corners(window, self.corner_preference(form));
+                    window.set_transparent(self.see_through(form));
+                    if self.form_shape(form).is_some() {
+                        window.set_decorations(false);
+                    }
+                    if let Some(index) = self.windows.iter().position(|w| w.form == form) {
+                        self.apply_shape(index);
+                    }
+                    self.update_gpu(form);
+                }
                 #[cfg(not(windows))]
                 WindowCommand::UpdateCorners => {}
                 WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale | WindowCommand::UpdateOptions => {}
@@ -1561,7 +1572,59 @@ impl App {
     /// `none` (a tela de abertura, a projeção), o do sistema, que deixa retos.
     #[cfg(windows)]
     fn corner_preference(&self, form: ComponentId) -> i32 {
+        // Com forma própria, o DWM não arredonda por cima dela.
+        if self.form_shape(form).is_some() {
+            return 1;
+        }
         crate::corner_preference(&self.enum_prop(form, "window_corners"), &self.enum_prop(form, "border_style"))
+    }
+
+    /// A forma da janela do form (`window_shape`; `None`: o retângulo, ou a janela que não fica
+    /// transparente: [`Self::transparency_supported`]).
+    fn form_shape(&self, form: ComponentId) -> Option<aylis_core::ClipShape> {
+        if SINGLE_SURFACE || !self.transparency_supported() {
+            return None;
+        }
+        self.ui.component(form).and_then(|c| c.clip_shape())
+    }
+
+    /// A janela pode ter alfa por pixel: no celular e no navegador o form é a tela; no Windows,
+    /// só com o Direct2D (o Skia apresenta pelo OpenGL ou pelo GDI, sem o alfa da composição:
+    /// a janela fica opaca e retangular, e o form pinta a forma sobre a cor de fundo).
+    fn transparency_supported(&self) -> bool {
+        if SINGLE_SURFACE {
+            return false;
+        }
+        #[cfg(native_d2d)]
+        return self.options.renderer == Renderer::D2d;
+        #[cfg(all(windows, not(native_d2d)))]
+        return false;
+        #[cfg(not(windows))]
+        return true;
+    }
+
+    /// A janela do form deixa ver o que está atrás: `transparent` ou uma forma própria.
+    fn see_through(&self, form: ComponentId) -> bool {
+        self.transparency_supported() && (matches!(self.ui.get_prop(form, "transparent"), Ok(PropValue::Bool(true))) || self.form_shape(form).is_some())
+    }
+
+    /// A região da janela `index` na forma do form (Windows: os cliques fora dela vão para trás)
+    /// e o desfoque do `WindowSettings.blur`, recortado pela forma.
+    #[cfg(windows)]
+    fn apply_shape(&self, index: usize) {
+        if let Some(w) = self.windows.get(index) {
+            self.shape_window(&w.window, w.form);
+        }
+    }
+
+    #[cfg(windows)]
+    fn shape_window(&self, window: &Window, form: ComponentId) {
+        let scale = if self.ui.physical_pixels(form) { 1.0 } else { window.scale_factor() } * self.ui.form_zoom(form) as f64;
+        let shape = self.form_shape(form);
+        win32::set_window_shape(window, shape.clone(), scale);
+        // O winit não desfoca no Windows: pela composição (o vidro fosco do form transparente).
+        let blur = self.ui.window_settings_of(form).is_some() && self.ui.window_options(form).blur;
+        win32::set_window_blur(window, blur, shape, scale);
     }
 
     /// Trata um evento de entrada da janela `index`. Devolve `false` se não for de entrada.
@@ -2219,6 +2282,21 @@ impl App {
             "custom" => attributes = attributes.with_decorations(false).with_resizable(true),
             _ => {}
         }
+        // Transparente ou com forma (`transparent`, `window_shape`): o alfa por pixel; com forma,
+        // sem a moldura do sistema.
+        if self.see_through(form) {
+            attributes = attributes.with_transparent(true);
+            if self.form_shape(form).is_some() {
+                attributes = attributes.with_decorations(false).with_resizable(false);
+            }
+            // No Direct2D o quadro chega pela composição: sem a superfície do GDI, que apareceria
+            // por trás (o fundo branco e a barra de título do sistema) com o desfoque ligado.
+            #[cfg(native_d2d)]
+            {
+                use winit::platform::windows::WindowAttributesExtWindows;
+                attributes = attributes.with_no_redirection_bitmap(true);
+            }
+        }
         if SINGLE_SURFACE {
             return attributes;
         }
@@ -2427,6 +2505,8 @@ impl App {
         win32::attach(&window, form, &self.win_proxy);
         #[cfg(windows)]
         win32::set_window_corners(&window, self.corner_preference(form));
+        #[cfg(windows)]
+        self.shape_window(&window, form);
         // O `WindowSettings` do form (ou do app), com a janela ainda escondida. Sem ele, a janela
         // fica como o sistema a cria.
         #[cfg(not(any(web, mobile)))]
@@ -2765,12 +2845,17 @@ impl App {
     fn update_window_options(&mut self) {
         for w in &self.windows {
             apply_window_options(&w.window, &self.ui.window_options(w.form));
+            #[cfg(windows)]
+            self.shape_window(&w.window, w.form);
         }
     }
 
     /// O modo de apresentar do form: a propriedade `present` dele ou, vazia, o do projeto.
     #[cfg_attr(web, allow(dead_code))]
     fn present_mode(&self, form: ComponentId) -> aylis_core::gpu::PresentMode {
+        if self.see_through(form) {
+            return aylis_core::gpu::PresentMode::Transparent;
+        }
         match self.ui.get_prop(form, "present") {
             Ok(PropValue::String(text)) => aylis_core::gpu::present_for(&text),
             _ => aylis_core::gpu::present(),
@@ -3012,7 +3097,8 @@ impl App {
         // O que os relógios mudaram (o `set_timeout` do on_resize) assenta antes do quadro
         // (L02 do Tabernáculo): sem isso, um quadro saía com a largura de antes.
         self.ui.update_layout();
-        let background = self.ui.theme().color("background");
+        // A janela transparente começa de nada: o que o form não pinta deixa ver o que está atrás.
+        let background = if self.see_through(self.windows[index].form) { aylis_core::Color::TRANSPARENT } else { self.ui.theme().color("background") };
         let capture = self.snapshot_dir.is_some();
         let floating_mode = self.floating_mode();
         let w = &mut self.windows[index];
@@ -3450,6 +3536,8 @@ impl ApplicationHandler for App {
                 }
                 self.sync_form_size(index);
                 self.store_placement(index);
+                #[cfg(windows)]
+                self.apply_shape(index);
                 // Maximizar ou encaixar (Win+Shift+seta) também leva a outro monitor.
                 self.follow_monitor(index, false);
                 self.windows[index].window.request_redraw();

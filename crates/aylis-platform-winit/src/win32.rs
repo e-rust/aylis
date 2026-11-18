@@ -879,3 +879,277 @@ mod caption_tests {
         }
     }
 }
+
+/// A forma da janela (`window_shape`) como a região do Windows (`SetWindowRgn`): fora dela, os
+/// cliques vão para o que está atrás. A região é serrilhada, então fica um pixel maior que a
+/// forma: a borda suave quem desenha é o Aylis, com o alfa por pixel. `None` tira a região.
+/// `shape`: a elipse, ou o raio dos cantos em pixels.
+pub(crate) fn set_window_shape(window: &winit::window::Window, shape: Option<aylis_core::ClipShape>, scale: f64) {
+    use windows::Win32::Graphics::Gdi::{CreateEllipticRgn, CreateRoundRectRgn, HRGN, SetWindowRgn};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let size = window.outer_size();
+    let (w, h) = (size.width as i32, size.height as i32);
+    // SAFETY: `hwnd` é a janela viva do winit; a região criada passa a ser do sistema quando o
+    // `SetWindowRgn` dá certo (e a nula tira a região).
+    unsafe {
+        let region = match shape {
+            None => HRGN::default(),
+            Some(aylis_core::ClipShape::Ellipse) => CreateEllipticRgn(-1, -1, w + 1, h + 1),
+            Some(aylis_core::ClipShape::RoundRect(radius)) => {
+                let d = ((radius as f64 * scale * 2.0).round() as i32).clamp(0, w.min(h));
+                CreateRoundRectRgn(-1, -1, w + 2, h + 2, d + 2, d + 2)
+            }
+            // Um raio por canto ou um contorno: os polígonos do contorno, um pixel maiores.
+            Some(other) => polygon_region(&shape_outline(&other, (w as f32, h as f32), scale as f32)),
+        };
+        let _ = SetWindowRgn(hwnd, Some(region), true);
+    }
+}
+
+/// O contorno da forma em pixels da janela (`size`), com as medidas da forma em unidades do form
+/// vezes `scale`.
+fn shape_outline(shape: &aylis_core::ClipShape, (width, height): (f32, f32), scale: f32) -> aylis_core::Path {
+    let scale = scale.max(f32::EPSILON);
+    let rect = aylis_core::RectF::new(0.0, 0.0, width / scale, height / scale);
+    shape.outline(rect).map_points(|p| aylis_core::PointF::new(p.x * scale, p.y * scale))
+}
+
+/// A região de um contorno (as curvas em retas), dilatada em um pixel para cada lado: a região
+/// é serrilhada, e a borda suave quem pinta é o Aylis.
+///
+/// # Safety
+/// Cria objetos do GDI; quem recebe a região é dono dela.
+unsafe fn polygon_region(path: &aylis_core::Path) -> windows::Win32::Graphics::Gdi::HRGN {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::Graphics::Gdi::{ALTERNATE, CombineRgn, CreatePolyPolygonRgn, CreateRectRgn, DeleteObject, OffsetRgn, RGN_COPY, RGN_OR, WINDING};
+    let figures: Vec<Vec<POINT>> = path
+        .flatten(24)
+        .into_iter()
+        .filter(|(points, _)| points.len() >= 3)
+        .map(|(points, _)| points.iter().map(|p| POINT { x: p.x.round() as i32, y: p.y.round() as i32 }).collect())
+        .collect();
+    let points: Vec<POINT> = figures.iter().flatten().copied().collect();
+    let counts: Vec<i32> = figures.iter().map(|f| f.len() as i32).collect();
+    let mode = if path.even_odd { ALTERNATE } else { WINDING };
+    // SAFETY: os vetores vivem até o fim das chamadas; as regiões de passagem são apagadas.
+    unsafe {
+        if counts.is_empty() {
+            return CreateRectRgn(0, 0, 0, 0);
+        }
+        let base = CreatePolyPolygonRgn(points.as_ptr(), &counts, mode);
+        let grown = CreateRectRgn(0, 0, 0, 0);
+        let _ = CombineRgn(Some(grown), Some(base), None, RGN_COPY);
+        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+            let moved = CreateRectRgn(0, 0, 0, 0);
+            let _ = CombineRgn(Some(moved), Some(base), None, RGN_COPY);
+            let _ = OffsetRgn(moved, dx, dy);
+            let _ = CombineRgn(Some(grown), Some(grown), Some(moved), RGN_OR);
+            let _ = DeleteObject(moved.into());
+        }
+        let _ = DeleteObject(base.into());
+        grown
+    }
+}
+
+/// A geometria do Direct2D que a composição pede para um contorno (`CompositionPath`).
+#[windows_core::implement(windows::Graphics::IGeometrySource2D, windows::Win32::System::WinRT::Graphics::Direct2D::IGeometrySource2DInterop)]
+struct GeometrySource(windows::Win32::Graphics::Direct2D::ID2D1Geometry);
+
+impl windows::Graphics::IGeometrySource2D_Impl for GeometrySource_Impl {}
+
+impl windows::Win32::System::WinRT::Graphics::Direct2D::IGeometrySource2DInterop_Impl for GeometrySource_Impl {
+    fn GetGeometry(&self) -> windows::core::Result<windows::Win32::Graphics::Direct2D::ID2D1Geometry> {
+        Ok(self.0.clone())
+    }
+
+    fn TryGetGeometryUsingFactory(&self, _factory: windows_core::Ref<windows::Win32::Graphics::Direct2D::ID2D1Factory>) -> windows::core::Result<windows::Win32::Graphics::Direct2D::ID2D1Geometry> {
+        Err(windows::Win32::Foundation::E_NOTIMPL.into())
+    }
+}
+
+/// O contorno como geometria do Direct2D (as curvas em retas, como a região).
+fn path_geometry(path: &aylis_core::Path) -> Option<windows::Win32::Graphics::Direct2D::ID2D1Geometry> {
+    use windows::Win32::Graphics::Direct2D::Common::{D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, D2D1_FILL_MODE_ALTERNATE, D2D1_FILL_MODE_WINDING};
+    use windows::Win32::Graphics::Direct2D::{D2D1_FACTORY_TYPE_SINGLE_THREADED, D2D1CreateFactory, ID2D1Factory};
+    use windows::core::Interface;
+    // SAFETY: a fábrica e a geometria são objetos COM novos; os pontos vivem até o fim das chamadas.
+    unsafe {
+        let factory: ID2D1Factory = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, None).ok()?;
+        let geometry = factory.CreatePathGeometry().ok()?;
+        let sink = geometry.Open().ok()?;
+        sink.SetFillMode(if path.even_odd { D2D1_FILL_MODE_ALTERNATE } else { D2D1_FILL_MODE_WINDING });
+        for (points, _) in path.flatten(24).into_iter().filter(|(points, _)| points.len() >= 3) {
+            let points: Vec<windows_numerics::Vector2> = points.iter().map(|p| windows_numerics::Vector2 { X: p.x, Y: p.y }).collect();
+            sink.BeginFigure(points[0], D2D1_FIGURE_BEGIN_FILLED);
+            sink.AddLines(&points[1..]);
+            sink.EndFigure(D2D1_FIGURE_END_CLOSED);
+        }
+        sink.Close().ok()?;
+        geometry.cast().ok()
+    }
+}
+
+/// O `blur` do `WindowSettings` no Windows: o que está atrás da janela sai desfocado, sem cor
+/// (a cor é a do fundo do form, com alfa: o vidro fosco). O desfoque do sistema
+/// (`CreateHostBackdropBrush`) numa camada da composição por baixo do quadro, recortada pela
+/// forma do form (`shape`, em unidades do form vezes `scale`) com a borda suave. Sem a
+/// composição (Windows 10 antigo), a política de destaque, que desfoca o retângulo inteiro.
+pub(crate) fn set_window_blur(window: &winit::window::Window, blur: bool, shape: Option<aylis_core::ClipShape>, scale: f64) {
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let key = hwnd.0 as isize;
+    if !blur {
+        let had = HOST_BLURS.with(|b| b.borrow_mut().remove(&key).is_some());
+        if had {
+            set_host_backdrop(hwnd, false);
+        }
+        set_accent_blur(hwnd, false);
+        return;
+    }
+    let size = window.inner_size();
+    if host_blur(hwnd, (size.width as f32, size.height as f32), shape, scale as f32).is_none() {
+        set_accent_blur(hwnd, true);
+    }
+}
+
+/// A camada de desfoque de uma janela: o alvo da composição (por baixo do quadro), a camada e o
+/// compositor que a criou.
+struct HostBlur {
+    _target: windows::UI::Composition::Desktop::DesktopWindowTarget,
+    visual: windows::UI::Composition::SpriteVisual,
+    compositor: windows::UI::Composition::Compositor,
+}
+
+type CompositorSlot = Option<(Option<windows::System::DispatcherQueueController>, windows::UI::Composition::Compositor)>;
+
+thread_local! {
+    /// As camadas de desfoque pelas janelas (`HWND`).
+    static HOST_BLURS: std::cell::RefCell<std::collections::HashMap<isize, HostBlur>> = Default::default();
+    /// O compositor da thread da interface e a fila de mensagens que ele exige.
+    static COMPOSITOR: std::cell::RefCell<CompositorSlot> = const { std::cell::RefCell::new(None) };
+}
+
+fn compositor() -> Option<windows::UI::Composition::Compositor> {
+    use windows::Win32::System::WinRT::{CreateDispatcherQueueController, DQTAT_COM_NONE, DQTYPE_THREAD_CURRENT, DispatcherQueueOptions};
+    COMPOSITOR.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.is_none() {
+            // O compositor precisa de uma fila na thread; o winit não cria.
+            let queue = if windows::System::DispatcherQueue::GetForCurrentThread().is_ok() {
+                None
+            } else {
+                let options = DispatcherQueueOptions { dwSize: size_of::<DispatcherQueueOptions>() as u32, threadType: DQTYPE_THREAD_CURRENT, apartmentType: DQTAT_COM_NONE };
+                // SAFETY: as opções são válidas e a fila fica guardada nesta thread até o fim.
+                Some(unsafe { CreateDispatcherQueueController(options) }.ok()?)
+            };
+            *c = Some((queue, windows::UI::Composition::Compositor::new().ok()?));
+        }
+        c.as_ref().map(|(_, compositor)| compositor.clone())
+    })
+}
+
+/// O `DWMWA_USE_HOSTBACKDROPBRUSH`: o DWM entrega à janela o que está atrás dela, desfocado.
+fn set_host_backdrop(hwnd: HWND, on: bool) -> bool {
+    use windows::Win32::Graphics::Dwm::{DWMWA_USE_HOSTBACKDROPBRUSH, DwmSetWindowAttribute};
+    let value = windows::core::BOOL::from(on);
+    // SAFETY: `hwnd` é a janela viva; o ponteiro e o tamanho são os de `value`, copiado na chamada.
+    unsafe { DwmSetWindowAttribute(hwnd, DWMWA_USE_HOSTBACKDROPBRUSH, (&raw const value).cast(), size_of::<windows::core::BOOL>() as u32) }.is_ok()
+}
+
+/// Cria (na primeira vez) e ajusta ao tamanho e à forma a camada de desfoque da janela.
+fn host_blur(hwnd: HWND, (width, height): (f32, f32), shape: Option<aylis_core::ClipShape>, scale: f32) -> Option<()> {
+    use windows::Win32::System::WinRT::Composition::ICompositorDesktopInterop;
+    use windows::Win32::UI::WindowsAndMessaging::IsWindow;
+    use windows::core::Interface;
+    use windows_numerics::Vector2;
+    let key = hwnd.0 as isize;
+    HOST_BLURS.with(|blurs| {
+        let mut blurs = blurs.borrow_mut();
+        // As das janelas que já fecharam saem.
+        // SAFETY: `IsWindow` só consulta o identificador.
+        blurs.retain(|h, _| unsafe { IsWindow(Some(HWND(*h as *mut _))) }.as_bool());
+        if !blurs.contains_key(&key) {
+            let compositor = compositor()?;
+            if !set_host_backdrop(hwnd, true) {
+                return None;
+            }
+            let interop: ICompositorDesktopInterop = compositor.cast().ok()?;
+            // Por baixo (`false`): o quadro do Direct2D é o alvo de cima.
+            // SAFETY: `hwnd` é uma janela viva desta thread.
+            let target = unsafe { interop.CreateDesktopWindowTarget(hwnd, false) }.ok()?;
+            let visual = compositor.CreateSpriteVisual().ok()?;
+            visual.SetBrush(&compositor.CreateHostBackdropBrush().ok()?).ok()?;
+            target.SetRoot(&visual).ok()?;
+            blurs.insert(key, HostBlur { _target: target, visual, compositor });
+        }
+        let blur = blurs.get(&key)?;
+        let size = Vector2 { X: width, Y: height };
+        blur.visual.SetSize(size).ok()?;
+        let compositor = &blur.compositor;
+        let clip = match shape {
+            None => None,
+            Some(aylis_core::ClipShape::Ellipse) => {
+                let g = compositor.CreateEllipseGeometry().ok()?;
+                g.SetCenter(Vector2 { X: width / 2.0, Y: height / 2.0 }).ok()?;
+                g.SetRadius(Vector2 { X: width / 2.0, Y: height / 2.0 }).ok()?;
+                Some(compositor.CreateGeometricClipWithGeometry(&g).ok()?)
+            }
+            Some(s @ aylis_core::ClipShape::RoundRect(_)) => {
+                let r = s.radius(aylis_core::RectF::new(0.0, 0.0, width / scale, height / scale)) * scale;
+                let g = compositor.CreateRoundedRectangleGeometry().ok()?;
+                g.SetSize(size).ok()?;
+                g.SetCornerRadius(Vector2 { X: r, Y: r }).ok()?;
+                Some(compositor.CreateGeometricClipWithGeometry(&g).ok()?)
+            }
+            // Um raio por canto ou um contorno: a geometria do Direct2D do contorno.
+            Some(other) => {
+                let geometry = path_geometry(&shape_outline(&other, (width, height), scale))?;
+                let source: windows::Graphics::IGeometrySource2D = GeometrySource(geometry).into();
+                let path = windows::UI::Composition::CompositionPath::Create(&source).ok()?;
+                let g = compositor.CreatePathGeometryWithPath(&path).ok()?;
+                Some(compositor.CreateGeometricClipWithGeometry(&g).ok()?)
+            }
+        };
+        match clip {
+            Some(clip) => blur.visual.SetClip(&clip).ok()?,
+            None => blur.visual.SetClip(None::<&windows::UI::Composition::CompositionClip>).ok()?,
+        }
+        Some(())
+    })
+}
+
+/// O desfoque pela política de destaque da composição (`SetWindowCompositionAttribute` com
+/// `ACCENT_ENABLE_BLURBEHIND`): o retângulo inteiro da janela. Não é documentada: sem a função,
+/// não faz nada.
+fn set_accent_blur(hwnd: HWND, blur: bool) {
+    use windows::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
+    use windows::core::{s, w};
+    #[repr(C)]
+    struct AccentPolicy {
+        state: u32,
+        flags: u32,
+        gradient: u32,
+        animation: u32,
+    }
+    #[repr(C)]
+    struct CompositionData {
+        attribute: u32,
+        data: *mut std::ffi::c_void,
+        size: usize,
+    }
+    type SetAttribute = unsafe extern "system" fn(HWND, *mut CompositionData) -> i32;
+    // `ACCENT_ENABLE_BLURBEHIND` e `ACCENT_DISABLED`; `WCA_ACCENT_POLICY`.
+    const BLUR_BEHIND: u32 = 3;
+    const DISABLED: u32 = 0;
+    const ACCENT_POLICY: u32 = 19;
+    // SAFETY: a `user32.dll` já está carregada no processo (o winit a usa); a função achada tem a
+    // assinatura de `SetWindowCompositionAttribute`, e os dois structs vivem até o fim da
+    // chamada, que copia os valores.
+    unsafe {
+        let Ok(user32) = GetModuleHandleW(w!("user32.dll")) else { return };
+        let Some(proc) = GetProcAddress(user32, s!("SetWindowCompositionAttribute")) else { return };
+        let set: SetAttribute = std::mem::transmute::<unsafe extern "system" fn() -> isize, SetAttribute>(proc);
+        let mut accent = AccentPolicy { state: if blur { BLUR_BEHIND } else { DISABLED }, flags: 0, gradient: 0, animation: 0 };
+        let mut data = CompositionData { attribute: ACCENT_POLICY, data: (&raw mut accent).cast(), size: size_of::<AccentPolicy>() };
+        set(hwnd, &mut data);
+    }
+}

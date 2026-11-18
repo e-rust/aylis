@@ -90,7 +90,9 @@ fn default_gl(display: &glutin::display::Display, config: &Config, window: &Wind
 /// A janela e o OpenGL dela, na placa que `choice` pede (no Linux com Wayland; nas outras
 /// plataformas, a do processo).
 pub(crate) fn create(event_loop: &ActiveEventLoop, attributes: WindowAttributes, choice: aylis_core::gpu::GpuChoice) -> Result<(Rc<Window>, GpuBackend), Error> {
-    let template = ConfigTemplateBuilder::new().with_alpha_size(8);
+    // A janela transparente (`transparent`, `window_shape`) pede uma configuração com o alfa
+    // levado ao compositor.
+    let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(attributes.transparent);
     let (window, config) = DisplayBuilder::new()
         .with_window_attributes(Some(attributes))
         .build(event_loop, template, pick_config)?;

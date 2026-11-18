@@ -169,6 +169,29 @@ Para mudar só algumas cores (ou fontes, ou o estilo de algumas classes) de um t
 }
 ```
 
+## Reveal Highlight (a luz que segue o mouse)
+
+O efeito do Fluent: perto do mouse, a borda dos controles acende, e o fundo do controle sob
+ele também. É do estilo (pintado pelo Aylis, igual nos três renderizadores), e nasce
+desligado. Num estilo do tema:
+
+```json
+"styles": {
+  "Button": { "reveal": "both" },
+  "Panel.card": { "reveal": "border", "reveal_color": "#FFFFFF50", "reveal_radius": 120 }
+}
+```
+
+- `reveal`: `border` (a borda dos controles a até `reveal_radius` do mouse), `background` (o
+  fundo do controle sob o mouse), `both` ou `none`.
+- `reveal_color`: a cor no centro da luz (sem ela, o token `reveal` do tema; sem o token,
+  branca translúcida no tema escuro e escura translúcida no claro).
+- `reveal_radius`: até onde a luz alcança, em unidades lógicas (96).
+
+Sem mexer no tema, as variantes prontas `Button.reveal` (borda e fundo) e `Panel.reveal`
+(a borda) ligam o efeito num controle só: `style = reveal`. O mouse que anda repinta só a
+parte dos controles com Reveal que a luz alcança. Com o toque, não há luz.
+
 ## Cores do projeto e cores com nome
 
 As cores que o app usa ficam num lugar só, por nome, e qualquer propriedade de cor

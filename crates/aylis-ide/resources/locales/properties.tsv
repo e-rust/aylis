@@ -401,6 +401,9 @@ series	Séries	Series	Series	Séries	Datenreihen	Ряды данных	数据系
 shade	Sombreamento	Shade	Sombreado	Ombrage	Abdunklung	Затенение	遮罩色	シェード	التظليل	ছায়া রং	छाया रंग	Bayangan
 shadow	Sombra	Shadow	Sombra	Ombre	Schatten	Тень	阴影	影	الظل	ছায়া	छाया	Bayangan
 shadows	Sombras	Shadows	Sombras	Ombres	Schatten	Тени	阴影效果	影の描画	الظلال	ছায়াসমূহ	छायाएँ	Bayang-bayang
+shape_path	Contorno da forma	Shape path	Contorno de la forma	Contour de la forme	Formkontur	Контур формы	形状轮廓	形の輪郭	مسار الشكل	আকৃতির রেখা	आकृति की रूपरेखा	Jalur bentuk
+shape_radii	Raios dos cantos	Corner radii	Radios de las esquinas	Rayons des coins	Eckradien	Радиусы углов	各角半径	角ごとの半径	أنصاف أقطار الزوايا	কোণের ব্যাসার্ধ	कोनों की त्रिज्याएँ	Radius sudut
+shape_radius	Raio da forma	Shape radius	Radio de la forma	Rayon de la forme	Formradius	Радиус формы	形状圆角半径	形の半径	نصف قطر الشكل	আকৃতির ব্যাসার্ধ	आकृति की त्रिज्या	Radius bentuk
 sheet_height	Altura da folha	Sheet height	Altura de la hoja	Hauteur du panneau	Blatthöhe	Высота панели	面板高度	シートの高さ	ارتفاع اللوحة	শিটের উচ্চতা	शीट की ऊँचाई	Tinggi lembar
 sheet_width	Largura da folha	Sheet width	Ancho de la hoja	Largeur du panneau	Blattbreite	Ширина панели	面板宽度	シートの幅	عرض اللوحة	শিটের প্রস্থ	शीट की चौड़ाई	Lebar lembar
 shortcut	Atalho	Shortcut	Atajo	Raccourci	Tastenkürzel	Сочетание клавиш	快捷方式	ショートカット	الاختصار	শর্টকাট	शॉर्टकट	Pintasan
@@ -492,6 +495,7 @@ track_size	Espessura do trilho	Track size	Grosor de la pista	Épaisseur de la pi
 transition	Transição	Transition	Transición	Transition	Übergang	Переход	过渡	トランジション	الانتقال	রূপান্তর	संक्रमण	Transisi
 translate_x	Deslocar X	Translate X	Desplazar X	Translation X	Verschieben X	Сдвиг X	平移 X	移動 X	إزاحة X	X সরানো	X खिसकाएँ	Geser X
 translate_y	Deslocar Y	Translate Y	Desplazar Y	Translation Y	Verschieben Y	Сдвиг Y	平移 Y	移動 Y	إزاحة Y	Y সরানো	Y खिसकाएँ	Geser Y
+transparent	Transparente	Transparent	Transparente	Transparent	Transparent	Прозрачное	透明	透明	شفاف	স্বচ্ছ	पारदर्शी	Transparan
 trend	Tendência	Trend	Tendencia	Tendance	Trend	Тренд	趋势	傾向	الاتجاه العام	প্রবণতা	रुझान	Tren
 trigger	Gatilho	Trigger	Disparador	Déclencheur	Auslöser	Триггер	触发	トリガー	المُشغِّل	ট্রিগার	ट्रिगर	Pemicu
 trimming	Reticências	Trimming	Recorte	Troncature	Abschneiden	Обрезка текста	截断	省略	الاقتطاع	ছাঁটাই	काट-छाँट	Pemotongan
@@ -513,6 +517,7 @@ want_tabs	Aceita Tab	Want tabs	Acepta Tab	Accepte la tabulation	Tab erlauben	П�
 warning_color	Cor de atenção	Warning color	Color de advertencia	Couleur d'avertissement	Warnfarbe	Цвет предупреждения	警告色	警告の色	لون التحذير	সতর্কতার রং	चेतावनी का रंग	Warna peringatan
 wheel_step	Passo da roda	Wheel step	Paso de la rueda	Pas de la molette	Mausradschritt	Шаг колеса	滚轮步长	ホイールの移動量	خطوة العجلة	চাকার ধাপ	पहिए का चरण	Langkah roda
 width	Largura	Width	Ancho	Largeur	Breite	Ширина	宽度	幅	العرض	প্রস্থ	चौड़ाई	Lebar
+window_shape	Forma da janela	Window shape	Forma de la ventana	Forme de la fenêtre	Fensterform	Форма окна	窗口形状	ウィンドウの形	شكل النافذة	উইন্ডোর আকৃতি	विंडो का आकार	Bentuk jendela
 window_state	Estado da janela	Window state	Estado de la ventana	État de la fenêtre	Fensterzustand	Состояние окна	窗口状态	ウィンドウの状態	حالة النافذة	উইন্ডোর অবস্থা	विंडो की स्थिति	Status jendela
 wrap	Quebra de linha	Word wrap	Ajuste de línea	Retour à la ligne	Zeilenumbruch	Перенос строк	自动换行	折り返し	التفاف النص	লাইন মোড়ানো	पंक्ति लपेट	Bungkus kata
 x1	X1 da curva	Curve X1	X1 de la curva	X1 de la courbe	Kurve X1	X1 кривой	曲线 X1	曲線 X1	X1 للمنحنى	বক্ররেখার X1	वक्र X1	X1 kurva

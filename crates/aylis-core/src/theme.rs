@@ -85,6 +85,15 @@ pub struct StyleProps {
     /// Material do fundo: `glass` (Liquid Glass: desfoca o que está atrás, com brilho e
     /// borda de luz), `frosted` (vidro fosco, como o Acrylic) ou `none`.
     pub material: Option<String>,
+    /// O Reveal Highlight (o efeito do Fluent): uma luz que segue o mouse. `border` acende a
+    /// borda dos controles perto dele, `background` acende o fundo do controle sob ele, `both`
+    /// os dois, `none` desliga.
+    pub reveal: Option<String>,
+    /// A cor da luz do Reveal (sem ela: branca no tema escuro, escura no claro; o token
+    /// `reveal` do tema, se houver).
+    pub reveal_color: Option<ColorRef>,
+    /// Até onde a luz do Reveal alcança, em unidades lógicas (o padrão, 96).
+    pub reveal_radius: Option<f32>,
     /// Maiúsculas ou minúsculas no texto (`upper`, `lower`, `none`; o `text-transform` do CSS).
     pub text_case: Option<String>,
     /// Espaço a mais entre as letras, em pixels (o `letter-spacing` do CSS).
@@ -117,6 +126,27 @@ pub enum Material {
     Glass,
     /// Vidro fosco (Acrylic, materiais "regular" da Apple): desfoque forte, sem brilho.
     Frosted,
+}
+
+/// O Reveal Highlight já resolvido ([`StyleProps::reveal`]): o `Ui` pinta a luz centrada no
+/// mouse depois do controle.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Reveal {
+    /// Acende a borda quando o mouse está a até `radius` do controle.
+    pub border: bool,
+    /// Acende o fundo do controle sob o mouse.
+    pub background: bool,
+    /// A cor no centro da luz (some até a borda dela).
+    pub color: Color,
+    /// O alcance da luz, em unidades lógicas.
+    pub radius: f32,
+}
+
+impl Reveal {
+    /// Liga alguma das luzes.
+    pub fn on(&self) -> bool {
+        (self.border || self.background) && self.radius > 0.0 && self.color.a > 0
+    }
 }
 
 impl Material {
@@ -195,6 +225,12 @@ impl StyleProps {
         self
     }
 
+    /// `border`, `background`, `both` ou `none` (veja [`Reveal`]).
+    pub fn reveal(mut self, mode: &str) -> Self {
+        self.reveal = Some(mode.to_string());
+        self
+    }
+
     /// Copia para `self` tudo que está definido em `other`.
     pub fn merge(&mut self, other: &StyleProps) {
         if other.fill.is_some() {
@@ -229,6 +265,15 @@ impl StyleProps {
         }
         if other.material.is_some() {
             self.material.clone_from(&other.material);
+        }
+        if other.reveal.is_some() {
+            self.reveal.clone_from(&other.reveal);
+        }
+        if other.reveal_color.is_some() {
+            self.reveal_color.clone_from(&other.reveal_color);
+        }
+        if other.reveal_radius.is_some() {
+            self.reveal_radius = other.reveal_radius;
         }
         if other.text_case.is_some() {
             self.text_case.clone_from(&other.text_case);
@@ -329,6 +374,8 @@ pub struct ResolvedStyle {
     pub shadow: Option<Shadow>,
     /// Fundo desfocado (vidro), feito pelo `Ui` antes do controle.
     pub material: Material,
+    /// O Reveal Highlight, pintado pelo `Ui` depois do controle.
+    pub reveal: Reveal,
     /// Maiúsculas ou minúsculas no texto (os controles de texto aplicam ao desenhar).
     pub text_case: crate::text::TextCase,
     /// Espaço a mais entre as letras.
@@ -365,6 +412,7 @@ impl Default for ResolvedStyle {
             transition_ms: 0.0,
             shadow: None,
             material: Material::None,
+            reveal: Reveal::default(),
             text_case: crate::text::TextCase::None,
             letter_spacing: 0.0,
             border_sides: None,
@@ -400,6 +448,7 @@ impl ResolvedStyle {
                 _ => other.shadow,
             },
             material: other.material,
+            reveal: other.reveal,
             text_case: other.text_case,
             letter_spacing: mix(self.letter_spacing, other.letter_spacing),
             border_sides: other.border_sides,
@@ -921,6 +970,9 @@ impl Theme {
         self.set_style("Panel.filled", Style::new(StyleProps::new().fill("surface_2").border(Color::TRANSPARENT, 0.0).radius("lg").shadow("none")));
         self.set_style("Panel.outlined", Style::new(StyleProps::new().fill("surface").border("border", 1.0).radius("lg").shadow("none")));
         self.set_style("Panel.glass", Style::new(StyleProps::new().fill("glass_fill").border(Color::TRANSPARENT, 0.0).radius("lg").shadow("md").material("glass")));
+        // Reveal Highlight (a luz do Fluent que segue o mouse), por variante: `style = reveal`.
+        self.set_style("Button.reveal", Style::new(StyleProps::new().reveal("both")));
+        self.set_style("Panel.reveal", Style::new(StyleProps::new().border("border", 1.0).reveal("border")));
         self.set_style("ToolBar.floating", Style::new(StyleProps::new().fill("surface_2").border(Color::TRANSPARENT, 0.0).radius(999.0).shadow("md").padding(6.0)));
         // ----- Label -----
         self.set_style("Label.title", Style::new(StyleProps::new().font("title")));
@@ -1127,6 +1179,21 @@ impl Theme {
             transition_ms: acc.transition.as_ref().map_or(0.0, |m| Self::metric(&self.durations, m)),
             shadow: acc.shadow.as_deref().and_then(|t| self.shadows.get(t)).copied(),
             material: acc.material.as_deref().map_or(Material::None, Material::parse),
+            reveal: {
+                let (border, background) = match acc.reveal.as_deref() {
+                    Some("border") => (true, false),
+                    Some("background") => (false, true),
+                    Some("both") => (true, true),
+                    _ => (false, false),
+                };
+                let color = acc
+                    .reveal_color
+                    .as_ref()
+                    .map(|c| self.color_of(c))
+                    .or_else(|| self.colors.get("reveal").copied())
+                    .unwrap_or(if self.dark { Color::rgba(255, 255, 255, 90) } else { Color::rgba(0, 0, 0, 56) });
+                Reveal { border, background, color, radius: acc.reveal_radius.unwrap_or(96.0).max(0.0) }
+            },
             text_case: match acc.text_case.as_deref() {
                 Some("upper") => crate::text::TextCase::Upper,
                 Some("lower") => crate::text::TextCase::Lower,

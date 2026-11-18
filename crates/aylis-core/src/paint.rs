@@ -810,19 +810,72 @@ impl Ui {
     /// `paint` do componente (a pintura e o ensaio passam por aqui).
     fn paint_own(&self, canvas: &mut dyn Canvas, component: &dyn crate::Component, ctx: &PaintCtx<'_>, paint_fill: bool, shadow: Option<&crate::Shadow>) {
         let style = ctx.style;
+        // A forma própria (o form redondo) no lugar do raio do estilo.
+        let shape = component.clip_shape();
+        let radius = shape.as_ref().map_or(style.radius, |s| s.radius(ctx.rect));
         if let Some(shadow) = shadow.or(style.shadow.as_ref()) {
-            canvas.draw_shadow(ctx.rect, style.radius, shadow);
+            canvas.draw_shadow(ctx.rect, radius, shadow);
         }
         if let Some(fill) = ctx.colors.fill.filter(|_| paint_fill) {
-            canvas.fill_rect(ctx.rect, style.radius, &crate::Brush::Solid(fill));
+            match shape {
+                Some(s) => s.fill(canvas, ctx.rect, &crate::Brush::Solid(fill)),
+                None => canvas.fill_rect(ctx.rect, radius, &crate::Brush::Solid(fill)),
+            }
         }
         // Vidro: o que está atrás aparece desfocado (o controle pinta o fundo translúcido).
         if style.material != crate::theme::Material::None {
-            canvas.backdrop_blur(ctx.rect, style.radius, style.material.blur());
+            canvas.backdrop_blur(ctx.rect, radius, style.material.blur());
         }
         component.paint(canvas, ctx);
         if style.material == crate::theme::Material::Glass {
-            paint_glass_light(canvas, ctx.rect, style.radius, ctx.theme.dark);
+            paint_glass_light(canvas, ctx.rect, radius, ctx.theme.dark);
+        }
+    }
+
+    /// O Reveal Highlight do estilo ([`crate::theme::Reveal`]): uma luz radial centrada no
+    /// mouse, na borda (com o mouse a até `radius` do controle) e no fundo (com o mouse em cima
+    /// dele), por cima do que o controle pintou. Anota o controle para o mouse que anda repintar
+    /// só a parte dele perto da luz ([`Ui::reveal_moved`]).
+    fn paint_reveal(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, shape: Option<crate::ClipShape>) {
+        let reveal = ctx.style.reveal;
+        let id = ctx.id;
+        if !reveal.on() {
+            if !self.reveal_ids.borrow().is_empty() {
+                self.reveal_ids.borrow_mut().remove(&id);
+            }
+            return;
+        }
+        self.reveal_ids.borrow_mut().insert(id, reveal.radius);
+        let Some(at) = self.pointer_position(self.root_of(id)) else { return };
+        let p = self.local_point(id, at);
+        let rect = ctx.rect;
+        let dx = (rect.x - p.x).max(p.x - rect.right()).max(0.0);
+        let dy = (rect.y - p.y).max(p.y - rect.bottom()).max(0.0);
+        if dx.hypot(dy) >= reveal.radius {
+            return;
+        }
+        let light = |color: crate::Color| crate::Brush::Radial {
+            center: p,
+            radius: reveal.radius,
+            stops: vec![crate::canvas::GradientStop::new(0.0, color), crate::canvas::GradientStop::new(1.0, color.with_opacity(0.0))],
+        };
+        let radius = shape.as_ref().map_or(ctx.style.radius, |s| s.radius(rect));
+        if reveal.background && rect.contains(p) {
+            let brush = light(reveal.color.with_opacity(0.55));
+            match &shape {
+                Some(s) => s.fill(canvas, rect, &brush),
+                None => canvas.fill_rect(rect, radius, &brush),
+            }
+        }
+        if reveal.border {
+            let width = ctx.style.border_width.max(1.0);
+            let half = width / 2.0;
+            let inner = crate::RectF::new(rect.x + half, rect.y + half, (rect.width - width).max(0.0), (rect.height - width).max(0.0));
+            let stroke = crate::canvas::Stroke::new(light(reveal.color), width);
+            match &shape {
+                Some(s) => canvas.stroke_path(&s.outline(inner), &stroke),
+                None => canvas.stroke_rect(inner, (radius - half).max(0.0), &stroke),
+            }
         }
     }
 
@@ -841,15 +894,21 @@ impl Ui {
         flip: bool,
     ) {
         let style = ctx.style;
+        // A forma própria (o form redondo) no lugar do raio do estilo.
+        let shape = component.clip_shape();
+        let radius = shape.as_ref().map_or(style.radius, |s| s.radius(ctx.rect));
         if let Some(shadow) = shadow.or(style.shadow.as_ref()) {
-            canvas.draw_shadow(ctx.rect, style.radius, shadow);
+            canvas.draw_shadow(ctx.rect, radius, shadow);
         }
         if let Some(fill) = ctx.colors.fill.filter(|_| paint_fill) {
-            canvas.fill_rect(ctx.rect, style.radius, &crate::Brush::Solid(fill));
+            match shape {
+                Some(s) => s.fill(canvas, ctx.rect, &crate::Brush::Solid(fill)),
+                None => canvas.fill_rect(ctx.rect, radius, &crate::Brush::Solid(fill)),
+            }
         }
         // Vidro: o que está atrás aparece desfocado (o controle pinta o fundo translúcido).
         if style.material != crate::theme::Material::None {
-            canvas.backdrop_blur(ctx.rect, style.radius, style.material.blur());
+            canvas.backdrop_blur(ctx.rect, radius, style.material.blur());
         }
         if flip {
             canvas.save();
@@ -881,7 +940,7 @@ impl Ui {
             canvas.restore();
         }
         if style.material == crate::theme::Material::Glass {
-            paint_glass_light(canvas, ctx.rect, style.radius, ctx.theme.dark);
+            paint_glass_light(canvas, ctx.rect, radius, ctx.theme.dark);
         }
     }
 
@@ -1055,10 +1114,13 @@ impl Ui {
             } else {
                 self.paint_own_with_hook(canvas, id, entry, component, &ctx, paint_fill, cb.shadow().as_ref(), flip);
             }
+            self.paint_reveal(canvas, &ctx, component.clip_shape());
 
             // Um form rolado (o teclado aberto) não desenha por baixo das barras do sistema.
             let scrolled_form = cb.scroll_offset().y > 0.0 && self.parent(id).is_none();
-            let clip = cb.clip_children() || scrolled_form;
+            // Com forma própria, os filhos sempre ficam dentro dela.
+            let shape = component.clip_shape();
+            let clip = cb.clip_children() || scrolled_form || shape.is_some();
             if clip {
                 canvas.save();
                 let r = if scrolled_form {
@@ -1068,6 +1130,9 @@ impl Ui {
                     ctx.rect
                 };
                 canvas.clip_rect(r);
+                if let Some(s) = shape {
+                    s.clip(canvas, ctx.rect);
+                }
             }
             // A área visível nas coordenadas deste controle (recortada por ele, se ele recorta).
             // Girado, os filhos não são descartados (a conta seria a do retângulo girado).
@@ -1156,7 +1221,7 @@ impl Ui {
         visual.drawing = (traced && !cache_hit && !volatile && !self.paint_failed(id)).then(|| std::hash::Hasher::finish(&hasher));
         // Cobre o próprio retângulo: opaco ele mesmo, ou um filho do tamanho dele que cobre. Só
         // inteiro (sem transparência nem giro): por baixo, nada aparece.
-        let whole = opacity >= 1.0 && rotation == 0.0 && !flip && !self.paint_failed(id);
+        let whole = opacity >= 1.0 && rotation == 0.0 && !flip && !self.paint_failed(id) && component.clip_shape().is_none();
         drop(visual);
         let own = component.opaque(&style) || paint_fill && colors.fill.is_some_and(|f| f.a == 255) && style.radius <= 0.0;
         let by_child = || {

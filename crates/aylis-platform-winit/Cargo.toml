@@ -42,20 +42,20 @@ nfc = ["dep:pcsc"]
 bluetooth = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 [dependencies]
-aylis-core = { version = "0.6.0", path = "../aylis-core" }
+aylis-core = { version = "0.7.0", path = "../aylis-core" }
 winit = "0.30"
 web-time = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # A posição guardada dos forms (`remember_placement`).
 serde_json = "1"
-aylis-skia = { version = "0.6.0", path = "../aylis-skia", optional = true }
+aylis-skia = { version = "0.7.0", path = "../aylis-skia", optional = true }
 # HTTP (o HttpService: blocos do mapa, imagens de endereços), com rustls (sem OpenSSL).
 ureq = "3"
 softbuffer = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-aylis-d2d = { version = "0.6.0", path = "../aylis-d2d", optional = true }
+aylis-d2d = { version = "0.7.0", path = "../aylis-d2d", optional = true }
 # A área de transferência do Windows: texto, HTML, imagem e os formatos do app gravados de uma
 # vez (o arboard grava um só; o clipboard-win já vinha com ele).
 clipboard-win = { version = "5", optional = true }
@@ -93,7 +93,16 @@ windows = { version = "0.62", features = [
     "Win32_System_Ole",
     # O WMI pela API nativa (o `WmiQuery`): IWbemLocator, IWbemServices.
     "Win32_System_Wmi",
+    # O vidro fosco do form com forma (`WindowSettings.blur`): o fundo desfocado do sistema
+    # recortado pela forma, na composição do Windows.
+    "UI_Composition", "UI_Composition_Desktop", "Win32_System_WinRT_Composition", "System",
+    # O desfoque recortado por um contorno qualquer (`window_shape = path`): a geometria do
+    # Direct2D entregue à composição (`CompositionPath`).
+    "Graphics", "Win32_Graphics_Direct2D", "Win32_Graphics_Direct2D_Common", "Win32_System_WinRT_Graphics_Direct2D",
 ] }
+windows-numerics = "0.3"
+# O `#[implement]` do objeto COM que entrega a geometria à composição.
+windows-core = "0.62"
 
 [target.'cfg(any(windows, target_os = "macos", target_os = "linux", target_os = "ios"))'.dependencies]
 wry = { version = "0.57", optional = true }
@@ -167,7 +176,7 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSGeometry"] }
 
 # No navegador as features acima não se aplicam: desenha sempre com Canvas 2D.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-aylis-web = { version = "0.6.0", path = "../aylis-web" }
+aylis-web = { version = "0.7.0", path = "../aylis-web" }
 # A árvore de acessibilidade (vira elementos ARIA sobre o canvas).
 accesskit = "0.25"
 wasm-bindgen-futures = "0.4"
@@ -238,6 +247,14 @@ required-features = ["cpu", "tray"]
 [[example]]
 name = "titlebar"
 required-features = ["cpu"]
+
+[[example]]
+name = "shaped_forms"
+required-features = ["d2d"]
+
+[[example]]
+name = "reveal"
+required-features = ["d2d"]
 
 [[example]]
 name = "fps"

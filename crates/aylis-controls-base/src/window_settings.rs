@@ -56,7 +56,9 @@ pub struct WindowSettings {
     pub border_color: Option<Color>,
     /// A sombra do Windows na janela sem borda (`border_style` = `none`).
     pub shadow: bool,
-    /// O que está atrás da janela sai desfocado (macOS e Linux com KDE).
+    /// O que está atrás da janela sai desfocado (Windows, macOS e Linux com KDE). Com o form
+    /// transparente (`transparent`, `window_shape`) e o `fill` com alfa, é o vidro fosco; no
+    /// Windows, o desfoque segue a forma do form, com a borda suave.
     pub blur: bool,
     /// Clicar na janela não tira o foco de onde ele está (Windows): um teclado na tela, uma
     /// paleta flutuante.

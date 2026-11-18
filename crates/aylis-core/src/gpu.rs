@@ -81,6 +81,10 @@ pub enum PresentMode {
     /// AMD com MPO, o cursor desenhado no plano de overlay congelava sobre um form assim
     /// (relatado pelo NoOBS em 15/11). Custa uma cópia a mais por quadro e não tem tearing.
     Composed,
+    /// A composição (como `Composition`) com o alfa por pixel: a janela deixa ver o que está
+    /// atrás onde o quadro não é opaco. Vem do form transparente ou com forma
+    /// (`transparent`, `window_shape`), não do projeto.
+    Transparent,
 }
 
 impl PresentMode {
@@ -89,6 +93,7 @@ impl PresentMode {
         match text.trim().to_lowercase().as_str() {
             "composition" | "composicao" | "composição" => PresentMode::Composition,
             "composed" | "composto" => PresentMode::Composed,
+            "transparent" | "transparente" => PresentMode::Transparent,
             _ => PresentMode::Window,
         }
     }
@@ -99,6 +104,7 @@ impl PresentMode {
             PresentMode::Window => "",
             PresentMode::Composition => "composition",
             PresentMode::Composed => "composed",
+            PresentMode::Transparent => "transparent",
         }
     }
 }
@@ -111,6 +117,7 @@ pub fn set_present(mode: PresentMode) {
         PresentMode::Window => 0,
         PresentMode::Composition => 1,
         PresentMode::Composed => 2,
+        PresentMode::Transparent => 3,
     };
     PRESENT.store(code, std::sync::atomic::Ordering::Relaxed);
 }
@@ -120,6 +127,7 @@ pub fn present() -> PresentMode {
     match PRESENT.load(std::sync::atomic::Ordering::Relaxed) {
         1 => PresentMode::Composition,
         2 => PresentMode::Composed,
+        3 => PresentMode::Transparent,
         _ => PresentMode::Window,
     }
 }

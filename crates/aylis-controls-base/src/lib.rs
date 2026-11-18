@@ -63,7 +63,7 @@ mod widgets;
 
 pub use autocomplete::AutoComplete;
 pub use basic::{
-    BorderStyle, Button, CloseAction, Form, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
+    BorderStyle, Button, CloseAction, Form, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
     window_state_commands,
 };
 pub use chips::{Chip, ChipGroup, OtpInput, RangeSlider, Rating, SplitButton};

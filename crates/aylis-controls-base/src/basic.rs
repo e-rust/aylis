@@ -118,6 +118,30 @@ impl PropEnum for WindowCorners {
     }
 }
 
+/// A forma da janela do form (`window_shape`), recortada pelo Aylis com a borda suave.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WindowShape {
+    /// O retângulo (com os cantos de `window_corners`).
+    #[default]
+    Rectangle,
+    /// Os cantos arredondados com o raio `shape_radius`.
+    Rounded,
+    /// A elipse do tamanho do form (um círculo, se ele é quadrado).
+    Ellipse,
+    /// Um contorno qualquer (`shape_path`, como o `d` do SVG), esticado para o tamanho do form.
+    Path,
+}
+
+impl PropEnum for WindowShape {
+    const NAMES: &'static [&'static str] = &["rectangle", "rounded", "ellipse", "path"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Rectangle, Self::Rounded, Self::Ellipse, Self::Path].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 impl PropEnum for BorderStyle {
     const NAMES: &'static [&'static str] = &["sizeable", "single", "none", "custom"];
     fn from_index(index: usize) -> Option<Self> {
@@ -146,6 +170,33 @@ pub struct Form {
     /// Os cantos da janela (Windows 11 e macOS; nas outras, sem efeito): útil com a barra de
     /// título própria (`border_style = custom`), que fica com os cantos de uma janela comum.
     pub window_corners: WindowCorners,
+    /// A janela deixa ver o que está atrás onde o form não é opaco: o fundo com alfa (`fill`
+    /// `#RRGGBBAA`, a semitransparência), o que fica fora de `window_shape` e os pixels
+    /// transparentes da pintura. Com o `blur` do `WindowSettings`, o que está atrás sai
+    /// desfocado (o vidro fosco). Desligado (o padrão), a janela é opaca. Windows com o
+    /// Direct2D (o padrão), macOS e Linux com compositor; no Windows com o Skia, no celular e no
+    /// navegador, sem efeito (a janela fica opaca e retangular).
+    pub transparent: bool,
+    /// A forma da janela: o retângulo, os cantos arredondados (`rounded`, com `shape_radius` ou
+    /// um raio por canto em `shape_radii`), a elipse (`ellipse`: o form quadrado vira um círculo)
+    /// ou um contorno qualquer (`path`, com `shape_path`). A borda é suavizada (antialiasing),
+    /// os filhos ficam dentro dela e os cliques fora dela vão para o que está atrás. Fora do
+    /// retângulo, a janela fica transparente e sem a moldura do sistema (como `border_style =
+    /// none`, sem redimensionar pela borda), e o form aparece com a forma também no designer.
+    pub window_shape: WindowShape,
+    /// O raio dos cantos com `window_shape = rounded` (unidades do form).
+    pub shape_radius: f32,
+    /// Um raio por canto com `window_shape = rounded`, na ordem do CSS: cima-esquerda,
+    /// cima-direita, baixo-direita, baixo-esquerda (`"24,24,0,0"`: só os de cima). Todos zero (o
+    /// padrão): vale o `shape_radius`.
+    pub shape_radii: aylis_core::Bounds,
+    /// O contorno com `window_shape = path`, no formato do `d` do SVG (`M 100 0 L 200 100 L 100
+    /// 200 L 0 100 Z`: um losango). Os limites do contorno viram os do form: as coordenadas
+    /// podem estar em qualquer escala, e o contorno acompanha quando o form muda de tamanho.
+    /// Inválido ou vazio: o retângulo.
+    pub shape_path: String,
+    /// O `shape_path` já lido (o texto e o caminho), para não ler a cada pintura.
+    shape_cache: std::cell::RefCell<Option<(String, Option<std::sync::Arc<aylis_core::Path>>)>>,
     /// Normal, maximizada, minimizada ou em tela cheia (`full_screen`). No celular e no
     /// navegador o form já ocupa a tela toda.
     pub window_state: WindowState,
@@ -303,6 +354,12 @@ impl Form {
             position: FormPosition::default(),
             border_style: BorderStyle::default(),
             window_corners: WindowCorners::Default,
+            transparent: false,
+            window_shape: WindowShape::Rectangle,
+            shape_radius: 16.0,
+            shape_radii: aylis_core::Bounds::default(),
+            shape_path: String::new(),
+            shape_cache: Default::default(),
             window_state: WindowState::Normal,
             transition: Transition::None,
             layer_cache: LayerCaching::Project,
@@ -343,16 +400,39 @@ impl Component for Form {
 
     /// O fundo do form é um retângulo sólido: opaco se a cor é (embutido, fica transparente).
     fn opaque(&self, style: &aylis_core::ResolvedStyle) -> bool {
-        style.fill.a == 255
+        style.fill.a == 255 && self.window_shape == WindowShape::Rectangle
     }
 
     leaf_control!("Form");
+
+    fn clip_shape(&self) -> Option<aylis_core::ClipShape> {
+        use aylis_core::ClipShape;
+        match self.window_shape {
+            WindowShape::Rectangle => None,
+            WindowShape::Rounded if self.shape_radii != aylis_core::Bounds::default() => Some(ClipShape::Corners(self.shape_radii)),
+            WindowShape::Rounded => Some(ClipShape::RoundRect(self.shape_radius.max(0.0))),
+            WindowShape::Ellipse => Some(ClipShape::Ellipse),
+            WindowShape::Path => {
+                let mut cache = self.shape_cache.borrow_mut();
+                if cache.as_ref().is_none_or(|(text, _)| *text != self.shape_path) {
+                    let path = aylis_core::Path::from_svg(&self.shape_path).filter(|p| !p.is_empty()).map(std::sync::Arc::new);
+                    *cache = Some((self.shape_path.clone(), path));
+                }
+                cache.as_ref().and_then(|(_, p)| p.clone()).map(ClipShape::Path)
+            }
+        }
+    }
 
     properties! {
         caption: String => "Appearance",
         position: FormPosition => "Layout",
         border_style: BorderStyle => "Appearance",
         window_corners: WindowCorners => "Appearance",
+        transparent: bool => "Appearance",
+        window_shape: WindowShape => "Appearance",
+        shape_radius: f32 => "Appearance",
+        shape_radii: aylis_core::Bounds => "Appearance",
+        shape_path: String => "Appearance",
         window_state: WindowState => "Layout",
         transition: Transition => "Behavior",
         layer_cache: LayerCaching => "Behavior",
@@ -437,7 +517,7 @@ impl Component for Form {
         if name == "topmost" && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::SetTopmost(self.topmost));
         }
-        if matches!(name, "window_corners" | "border_style") && !ctx.ui.design_mode() {
+        if matches!(name, "window_corners" | "border_style" | "window_shape" | "shape_radius" | "shape_radii" | "shape_path" | "transparent") && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateCorners);
         }
         // O tamanho mudado pelo código com o app rodando: a janela acompanha, com a área
@@ -460,7 +540,13 @@ impl Component for Form {
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        canvas.fill_rect(ctx.rect, 0.0, &Brush::Solid(ctx.style.fill));
+        // Com forma (`window_shape`), só dentro dela: fora, a janela transparente mostra o que
+        // está atrás.
+        let brush = Brush::Solid(ctx.style.fill);
+        match self.clip_shape() {
+            Some(shape) => shape.fill(canvas, ctx.rect, &brush),
+            None => canvas.fill_rect(ctx.rect, 0.0, &brush),
+        }
     }
 }
 

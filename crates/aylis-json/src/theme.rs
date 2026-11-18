@@ -326,6 +326,9 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
             "opacity" => p.opacity = Some(v.as_f64().ok_or("\"opacity\" deve ser número")? as f32),
             "shadow" => p.shadow = Some(v.as_str().ok_or("\"shadow\" deve ser o nome de uma sombra do tema")?.to_string()),
             "material" => p.material = Some(v.as_str().ok_or("\"material\" deve ser glass, frosted ou none")?.to_string()),
+            "reveal" => p.reveal = Some(v.as_str().ok_or("\"reveal\" deve ser border, background, both ou none")?.to_string()),
+            "reveal_color" => p.reveal_color = Some(color_ref(v)?),
+            "reveal_radius" => p.reveal_radius = Some(v.as_f64().ok_or("\"reveal_radius\" deve ser número")? as f32),
             "text_case" => p.text_case = Some(v.as_str().ok_or("\"text_case\" deve ser upper, lower ou none")?.to_string()),
             "letter_spacing" => p.letter_spacing = Some(v.as_f64().ok_or("\"letter_spacing\" deve ser número")? as f32),
             "gap" => p.gap = Some(v.as_f64().ok_or("\"gap\" deve ser número (0 cola as partes)")? as f32),
@@ -439,6 +442,15 @@ fn props_value(p: &StyleProps) -> Map<String, Value> {
     }
     if let Some(m) = &p.material {
         map.insert("material".into(), Value::String(m.clone()));
+    }
+    if let Some(r) = &p.reveal {
+        map.insert("reveal".into(), Value::String(r.clone()));
+    }
+    if let Some(c) = &p.reveal_color {
+        map.insert("reveal_color".into(), color(c));
+    }
+    if let Some(r) = p.reveal_radius {
+        map.insert("reveal_radius".into(), number(r as f64));
     }
     if let Some(t) = &p.text_case {
         map.insert("text_case".into(), Value::String(t.clone()));

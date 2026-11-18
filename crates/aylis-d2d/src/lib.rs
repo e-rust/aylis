@@ -587,7 +587,10 @@ impl D2dRenderer {
             let adapter = dxgi.GetAdapter()?;
             let adapter_desc = adapter.GetDesc()?;
             let factory: IDXGIFactory2 = adapter.GetParent()?;
-            let compose = present == aylis_core::gpu::PresentMode::Composition;
+            // Transparente: a composição com o alfa por pixel (só a swap chain da composição
+            // aceita o alfa pré-multiplicado).
+            let transparent = present == aylis_core::gpu::PresentMode::Transparent;
+            let compose = present == aylis_core::gpu::PresentMode::Composition || transparent;
             // O modelo de cópia (*blit*): o DWM sempre compõe, sem MPO nem independent flip.
             let blit = present == aylis_core::gpu::PresentMode::Composed;
             // Tearing só na swap chain da janela: a composição sempre espera o DWM.
@@ -609,7 +612,7 @@ impl D2dRenderer {
                 BufferCount: 2,
                 Scaling: DXGI_SCALING_STRETCH,
                 SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
-                AlphaMode: DXGI_ALPHA_MODE_IGNORE,
+                AlphaMode: if transparent { DXGI_ALPHA_MODE_PREMULTIPLIED } else { DXGI_ALPHA_MODE_IGNORE },
                 Flags: flags,
             };
             // DirectComposition: a swap chain sem janela vira o conteúdo de uma camada que o DWM
@@ -617,6 +620,8 @@ impl D2dRenderer {
             let composed = if compose { compose_into(&factory, &device, &dxgi, hwnd, &desc).ok() } else { None };
             // No modelo de cópia, um buffer só (o quadro guardado vai inteiro para ele a cada
             // apresentação); se a placa recusar, a swap chain da janela de sempre.
+            // A swap chain da janela não aceita o alfa pré-multiplicado: sem a composição, opaca.
+            let desc = if composed.is_none() && transparent { DXGI_SWAP_CHAIN_DESC1 { AlphaMode: DXGI_ALPHA_MODE_IGNORE, ..desc } } else { desc };
             let copied = if blit {
                 let blit_desc = DXGI_SWAP_CHAIN_DESC1 { SwapEffect: DXGI_SWAP_EFFECT_SEQUENTIAL, BufferCount: 1, ..desc };
                 factory.CreateSwapChainForHwnd(&device, HWND(hwnd as *mut _), &blit_desc, None, None).ok()
@@ -845,8 +850,17 @@ impl D2dRenderer {
             if areas.len() > 1 {
                 brush.SetColor(&color(background));
                 target.SetTransform(&Matrix3x2::identity());
+                // Fundo com alfa (a janela transparente): o retângulo substitui o pixel, como o
+                // `Clear`, em vez de misturar com o quadro anterior.
+                let copy = (background.a < 255).then(|| target.cast::<ID2D1DeviceContext>().ok()).flatten();
+                if let Some(dc) = &copy {
+                    dc.SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
+                }
                 for a in areas {
                     target.FillRectangle(&pixels(a), &brush);
+                }
+                if let Some(dc) = &copy {
+                    dc.SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
                 }
                 target.SetTransform(&base);
             }

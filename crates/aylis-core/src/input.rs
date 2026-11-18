@@ -127,6 +127,8 @@ pub(crate) struct InputState {
     after_pinch: bool,
     /// Arrasto entre controles em andamento.
     pub(crate) drag: Option<Drag>,
+    /// Onde o mouse está no form (`None`: fora dele, ou o toque): a luz do Reveal Highlight.
+    pub(crate) pointer: Option<PointF>,
     /// Uma tecla espera a resposta do backend (`on_key_down`/`on_key_press` remotos): as que
     /// chegam ficam em `held`, em ordem (veja `keyflow.rs`).
     pub(crate) holding: bool,
@@ -455,6 +457,40 @@ impl Ui {
         CursorShape::Default
     }
 
+    /// Onde o mouse está no form `root` (`None`: fora dele, ou o toque).
+    pub fn pointer_position(&self, root: ComponentId) -> Option<PointF> {
+        self.input.get(&root).and_then(|s| s.pointer)
+    }
+
+    /// O mouse andou de `before` para `after` (coordenadas do form): os controles com o Reveal
+    /// Highlight perto de um dos dois pontos repintam só a parte que a luz alcança (a de antes
+    /// apaga, a de agora acende). O custo é o dos controles com Reveal pintados, não o do form.
+    pub(crate) fn reveal_moved(&mut self, root: ComponentId, before: Option<PointF>, after: Option<PointF>) {
+        if before == after || self.reveal_ids.borrow().is_empty() {
+            return;
+        }
+        let ids: Vec<(ComponentId, f32)> = self.reveal_ids.borrow().iter().map(|(id, r)| (*id, *r)).collect();
+        for (id, radius) in ids {
+            let Some(cb) = self.cb(id) else {
+                self.reveal_ids.borrow_mut().remove(&id);
+                continue;
+            };
+            let size = cb.inner_size();
+            if self.root_of(id) != root {
+                continue;
+            }
+            let rect = RectF::new(0.0, 0.0, size.width, size.height);
+            for p in [before, after].into_iter().flatten() {
+                let local = self.local_point(id, p);
+                let light = RectF::new(local.x - radius, local.y - radius, radius * 2.0, radius * 2.0);
+                let part = rect.inflate(2.0).intersect(light);
+                if let Some(part) = part.filter(|r| r.width > 0.0 && r.height > 0.0) {
+                    self.damage_part(id, part);
+                }
+            }
+        }
+    }
+
     /// O ponto `pos` (coordenadas do form) nas coordenadas do controle, desfazendo a
     /// posição e o giro de cada ancestral e do próprio controle.
     pub fn local_point(&self, id: ComponentId, pos: PointF) -> PointF {
@@ -553,6 +589,9 @@ impl Ui {
         let hit = self.enabled_hit(root, event.position);
         self.set_hover(root, hit);
         self.update_hint(root, hit, event.position, event.kind == PointerKind::Touch);
+        let at = (event.kind != PointerKind::Touch).then_some(event.position);
+        let before = std::mem::replace(&mut self.input_state(root).pointer, at);
+        self.reveal_moved(root, before, at);
         let target = self.input_state(root).captured.or(hit);
         if let Some(target) = target {
             let e = PointerEvent { position: self.local_point(target, event.position), ..event };
@@ -1278,6 +1317,8 @@ impl Ui {
     /// O ponteiro saiu da janela.
     pub fn pointer_leave(&mut self, root: ComponentId) {
         self.hide_hint(root);
+        let before = self.input_state(root).pointer.take();
+        self.reveal_moved(root, before, None);
         if self.input_state(root).captured.is_none() {
             self.set_hover(root, None);
         }

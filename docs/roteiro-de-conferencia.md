@@ -480,6 +480,23 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     - No NoOBS, o form do print com a receita dos pendentes: abre pelo atalho em menos de ~100 ms,
       a seleção bate com o print pixel a pixel; o caso de dois monitores de escalas diferentes está
       em [testes em dispositivos](testes-em-dispositivos.md).
+161. **Reveal Highlight** (18/11; detalhes nos pendentes). `cargo run -p aylis-platform-winit
+    --example reveal --features d2d`: passe o mouse pela grade de botões; o fundo do botão sob
+    ele acende com uma luz que segue o mouse, e as bordas dos vizinhos acendem do lado mais
+    perto; o painel em volta acende a borda quando o mouse chega perto dela. Tire o mouse da
+    janela: a luz some. Na IDE, num Button, `style` = `reveal`; num tema do projeto,
+    `"Button": { "reveal": "both" }` em `styles` liga em todos os botões.
+160. **Form transparente, redondo e com vidro fosco** (18/11; detalhes nos pendentes).
+    `cargo run -p aylis-platform-winit --example shaped_forms --features d2d`, com
+    `AYLIS_RENDERER=d2d`: o "Vidro fosco" com os cantos arredondados, o fundo branco translúcido
+    e o que está atrás desfocado (arraste-o por cima de um texto); o form redondo azul, sem
+    moldura, arrastado pelo fundo. As bordas sem serrilhado. Clique fora do círculo, dentro do
+    quadrado dele: o clique vai para a janela de trás. `--no-blur`: sem o desfoque, o fundo
+    só translúcido. Na IDE, num Form, `window_shape` = `ellipse` (rótulo "Forma da janela"): o
+    designer mostra o form redondo; `transparent` e `shape_radius` no Object Inspector. No
+    exemplo, a estrela (`window_shape = path`) translúcida com o desfoque e as pontas suaves, e
+    o vidro com o canto de baixo à esquerda quase reto (`shape_radii` = `32,32,32,4`). Na IDE,
+    `shape_path` com `M 5 0 L 10 5 L 5 10 L 0 5 Z`: o form vira um losango no designer.
 
 105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a

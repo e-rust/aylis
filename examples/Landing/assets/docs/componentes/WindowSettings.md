@@ -15,7 +15,7 @@ Configura a janela do form em que está (ou, com `scope` = `app`, as de todos os
 | `title_text_color` | Cor do texto do título | cor | A cor do texto da barra de título do sistema (Windows 11; vazio: a do sistema). |
 | `border_color` | Cor da borda | cor | A cor da borda da janela (Windows 11; vazio: a do sistema). |
 | `shadow` | Sombra | lógico | A sombra do Windows na janela sem borda (`border_style` = `none`). |
-| `blur` | Desfoque | lógico | O que está atrás da janela sai desfocado (macOS e Linux com KDE). |
+| `blur` | Desfoque | lógico | O que está atrás da janela sai desfocado (Windows, macOS e Linux com KDE). Com o form transparente (`transparent`, `window_shape`) e o `fill` com alfa, é o vidro fosco; no Windows, o desfoque segue a forma do form, com a borda suave. |
 
 ### Comportamento
 

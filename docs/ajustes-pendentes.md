@@ -13,6 +13,72 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 18/11/2026: Reveal Highlight nos estilos**
+
+- [ ] Pedido do autor em 18/11: "suporte ao efeito Reveal Highlight, não precisa ser nativo, só
+  que tenha nos componentes do estilo, permitindo habilitar". Feito em 18/11:
+  - Tema: `reveal` (`border`, `background`, `both`, `none`), `reveal_color` e `reveal_radius`
+    no estilo (`StyleProps`, lidos e gravados pelo `aylis-json`); resolvidos em
+    `ResolvedStyle::reveal` (`theme::Reveal`). A cor padrão: o token `reveal`, ou branca
+    translúcida no escuro e escura translúcida no claro. Nasce desligado; as variantes
+    `Button.reveal` e `Panel.reveal` do tema padrão ligam num controle (`style = reveal`).
+  - Núcleo: o `Ui` pinta a luz (um gradiente radial centrado no mouse) depois do controle: na
+    borda, com o mouse a até o alcance; no fundo, com o mouse em cima (segue a forma, com
+    `clip_shape`). O mouse do form fica no estado de entrada (`Ui::pointer_position`; o toque
+    não acende). O mouse que anda repinta só a parte dos controles com Reveal que a luz
+    alcança (`Ui::reveal_moved`, pela lista dos pintados com Reveal: o custo é o deles, não o
+    do form).
+  - Limitação: num controle guardado como camada (`cache_layer`), a luz fica na camada até
+    ela ser refeita.
+  - Conferido: os testes (`aylis-controls/tests/reveal_highlight.rs` no Skia e no Direct2D: a luz no
+    fundo e na borda perto do mouse, nada além do alcance, apagando ao sair; a repintura só
+    perto da luz; `aylis-json`: o tema lido e gravado) e a imagem de uma grade de botões no
+    tema escuro com o Direct2D. Não conferido com o mouse de verdade na tela (exemplo
+    `reveal`).
+
+**Ajustes de 18/11/2026: form transparente, com forma e vidro fosco**
+
+- [ ] Pedido do autor em 18/11: "formulário transparente com suporte a bordas arredondadas
+  personalizada, com antialiasing para permitir até formulários redondos, deve permitir semi
+  transparência no form também para permitir o efeito de vidro fosco". Feito em 18/11:
+  - Form: `transparent` (a janela deixa ver o que está atrás onde o form não é opaco: o `fill`
+    com alfa é a semitransparência), `window_shape` (`rectangle`, `rounded` com `shape_radius`,
+    `ellipse`) e `shape_radius`. Fora do retângulo a janela já fica transparente, sem a moldura
+    do sistema e sem redimensionar pela borda. Mudam com o app rodando (`UpdateCorners`).
+  - Núcleo: `Component::clip_shape` (`ClipShape::RoundRect`/`Ellipse`): o fundo, a sombra, o
+    vidro do tema e os filhos ficam dentro da forma, com a borda suave (`clip_round_rect`,
+    `clip_path`); um controle com forma não conta como cobrindo o retângulo. O designer mostra a
+    forma.
+  - Windows com o Direct2D: o modo de apresentar `PresentMode::Transparent` (a composição com
+    alfa pré-multiplicado) e a janela sem a superfície do GDI (`WS_EX_NOREDIRECTIONBITMAP`); o
+    fundo começa transparente. A região da janela (`SetWindowRgn`, 1 pixel maior que a forma)
+    faz os cliques fora da forma irem para o que está atrás. A pintura por parte com várias
+    áreas limpa com cópia (antes, o fundo com alfa se acumulava).
+  - Vidro fosco: o `blur` do `WindowSettings` passa a valer no Windows (o winit não faz nada lá):
+    o desfoque do sistema (`CreateHostBackdropBrush`, `DWMWA_USE_HOSTBACKDROPBRUSH`) numa camada
+    da composição do Windows por baixo do quadro, recortada pela forma com a borda suave. O
+    `backdrop = acrylic` não serve para janela com forma (o DWM desenha a barra de título por
+    cima e ignora a região), nem a política de destaque (`ACCENT_ENABLE_BLURBEHIND`, que fica só
+    de reserva, desfoca o retângulo inteiro).
+  - Limitações: no Windows com o Skia (OpenGL ou CPU), a janela fica opaca e retangular (o
+    conteúdo sumia e a barra do sistema aparecia), e o form pinta a forma sobre a cor de fundo.
+    macOS e Linux: `with_transparent` e a configuração do OpenGL com transparência, escritos e não
+    conferidos (testes-em-dispositivos). Celular e navegador: sem efeito.
+  - Forma personalizada (pedido em 18/11, depois da primeira entrega): `window_shape = path` com
+    o contorno em `shape_path` (o `d` do SVG, esticado para o form: os limites do contorno viram
+    os do form) e `shape_radii` (um raio por canto no `rounded`, na ordem do CSS). No núcleo,
+    `ClipShape::Corners` e `ClipShape::Path` (`ClipShape::outline` dá o contorno de qualquer
+    forma). No Windows, a região sai dos polígonos do contorno (dilatada em 1 pixel) e o
+    desfoque é recortado pela geometria do Direct2D do contorno (`CompositionPath` com um
+    `IGeometrySource2DInterop` próprio). Conferido na tela: uma estrela translúcida com o
+    desfoque, as pontas sem serrilhado, o clique fora da estrela indo para trás, e o vidro com
+    o canto de baixo à esquerda menor.
+  - Conferido na tela (Windows 11, Direct2D, exemplo `shaped_forms`): o vidro com 27% de branco
+    e o form redondo azul de trás desfocado, os cantos sem serrilhado na ampliação, e o clique
+    no centro do círculo indo para ele e fora do círculo para a janela de trás. Testes:
+    `aylis-controls/tests/window_shape.rs` (Skia e Direct2D: a elipse com o filho recortado e a
+    borda suave, os cantos, o alfa do fundo e o pedido à janela).
+
 **Ajustes de 17/11/2026: arrastar para uma janela do app que está por cima**
 
 - [ ] Relato vindo do MD304V em 17/11 (a janela da revisão por cima da parede: soltar uma
