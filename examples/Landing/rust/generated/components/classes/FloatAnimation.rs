@@ -11,6 +11,13 @@ impl Handle for FloatAnimation {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: FloatAnimation`): só um FloatAnimation.
+impl aylis::prelude::FromSender for FloatAnimation {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("FloatAnimation")).then_some(Self { id })
+    }
+}
+
 impl FloatAnimation {
     pub fn property(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "property"))
@@ -42,17 +49,17 @@ impl FloatAnimation {
     pub fn set_delay(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "delay", value)
     }
-    pub fn easing(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "easing"))
+    pub fn easing(self, ui: &Ui) -> aylis::prelude::Easing {
+        handles::read_easing(ui, self.id, "easing")
     }
-    pub fn set_easing(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "easing", Into::<String>::into(value))
+    pub fn set_easing(self, ui: &mut Ui, value: aylis::prelude::Easing) {
+        handles::write(ui, self.id, "easing", handles::easing_value(value))
     }
-    pub fn trigger(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "trigger"))
+    pub fn trigger(self, ui: &Ui) -> aylis::prelude::Trigger {
+        handles::read_enum::<aylis::prelude::Trigger>(ui, self.id, "trigger")
     }
-    pub fn set_trigger(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "trigger", Into::<String>::into(value))
+    pub fn set_trigger(self, ui: &mut Ui, value: aylis::prelude::Trigger) {
+        handles::write(ui, self.id, "trigger", PropValue::enum_value(value))
     }
     pub fn auto_reverse(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "auto_reverse").and_then(|v| v.to_bool().ok()).unwrap_or_default()
