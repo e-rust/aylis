@@ -15,7 +15,7 @@ Polígono regular de `sides` lados, ou os pontos de `points` (`"0.5,0 1,1 0,1"`,
 | `stroke` | Cor do traço | cor | A cor da borda; vazio: sem borda. |
 | `stroke_width` | Largura do traço | número | A espessura da borda, em pontos; 0: sem borda. |
 | `sides` | Lados | inteiro | Quantos lados tem o polígono regular (no mínimo 3); vale sem `points`. |
-| `points` | Pontos | texto | Os pontos da figura (`"0.5,0 1,1 0,1"`, de 0 a 1 na largura e na altura); vazio ou menos de três: o polígono regular de `sides` lados. |
+| `points` | Pontos | pontos `x,y` (separados por espaço) | Os pontos da figura (`"0.5,0 1,1 0,1"`, de 0 a 1 na largura e na altura); vazio ou menos de três: o polígono regular de `sides` lados. |
 
 ## Em código
 

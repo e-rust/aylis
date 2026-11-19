@@ -17,7 +17,7 @@ Barra do topo (a "top app bar" do Material 3, a "navigation bar" do iOS): títul
 | `size` | Tamanho | um de: `small`, `center`, `medium`, `large` | O tamanho: `small` e `center` numa linha, `medium` e `large` com o título grande embaixo. |
 | `nav_icon` | Ícone de navegação | texto | O ícone do botão de navegação à esquerda (`arrow-left`, `menu`); vazio: sem botão. |
 | `back_text` | Texto do voltar | texto | No iOS, o texto ao lado da seta de voltar (`Voltar`); vazio: só a seta. |
-| `actions` | Ações | texto | Os ícones das ações à direita, separados por `;` (`search;menu`); o clique dispara `on_action` com o índice. |
+| `actions` | Ações | lista de textos (separados por `;`) | Os ícones das ações à direita, separados por `;` (`search;menu`); o clique dispara `on_action` com o índice. |
 
 ## Eventos
 

@@ -12,12 +12,12 @@ use aylis_tools::{Control, hostlang};
 /// O corpo vazio que a IDE gera e o que o teste põe no lugar (fechar a tela).
 fn close_body(lang: Language) -> (&'static str, &'static str) {
     match lang {
-        Language::TypeScript => ("void aylis, ev;", "void ev; aylis.send(\"close\");"),
-        Language::CSharp => ("public static void ao_abrir(Aylis aylis, AylisEvent ev)\n    {\n", "public static void ao_abrir(Aylis aylis, AylisEvent ev)\n    {\n        aylis.Send(\"close\");\n"),
-        Language::Java => ("public static void ao_abrir(Aylis aylis, Aylis.Event ev) {\n", "public static void ao_abrir(Aylis aylis, Aylis.Event ev) {\n        aylis.send(\"close\");\n"),
-        Language::Go => ("ao_abrir(app *aylis.Aylis, ev aylis.Event) {\n", "ao_abrir(app *aylis.Aylis, ev aylis.Event) {\n\tapp.Send(\"close\", nil)\n"),
-        Language::Cpp => ("    (void)ev;\n", "    (void)ev;\n    app.send(\"close\");\n"),
-        Language::Pascal => ("Event: TJSONObject);\nbegin\n", "Event: TJSONObject);\nbegin\n  Aylis.Send('close');\n"),
+        Language::TypeScript => ("void aylis, sender;", "void sender; aylis.send(\"close\");"),
+        Language::CSharp => ("public static void ao_abrir(Aylis aylis, AylisUi.Form sender)\n    {\n", "public static void ao_abrir(Aylis aylis, AylisUi.Form sender)\n    {\n        aylis.Send(\"close\");\n"),
+        Language::Java => ("public static void ao_abrir(Aylis aylis, Components.Form sender) {\n", "public static void ao_abrir(Aylis aylis, Components.Form sender) {\n        aylis.send(\"close\");\n"),
+        Language::Go => ("ao_abrir(app *aylis.Aylis, sender aylisForm) {\n", "ao_abrir(app *aylis.Aylis, sender aylisForm) {\n\tapp.Send(\"close\", nil)\n"),
+        Language::Cpp => ("    (void)sender;\n", "    (void)sender;\n    app.send(\"close\");\n"),
+        Language::Pascal => ("Sender: TForm);\nbegin\n", "Sender: TForm);\nbegin\n  Aylis.Send('close');\n"),
         _ => unreachable!(),
     }
 }

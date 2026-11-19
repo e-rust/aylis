@@ -1,27 +1,33 @@
   { Um DataSource de um form. }
   TDataSource = class(TAylisComponent)
   private
-    function GetDataSet: string;
-    procedure SetDataSet(Value: string);
+    function GetDataSet: TAylisComponent;
+    procedure SetDataSet(Value: TAylisComponent);
     function GetAutoEdit: Boolean;
     procedure SetAutoEdit(Value: Boolean);
     function GetEnabled: Boolean;
     procedure SetEnabled(Value: Boolean);
+    function GetOnDataChange: string;
+    procedure SetOnDataChange(Value: string);
+    function GetOnStateChange: string;
+    procedure SetOnStateChange(Value: string);
   public
-    property DataSet: string read GetDataSet write SetDataSet;
+    property DataSet: TAylisComponent read GetDataSet write SetDataSet;
     property AutoEdit: Boolean read GetAutoEdit write SetAutoEdit;
     property Enabled: Boolean read GetEnabled write SetEnabled;
+    property OnDataChange: string read GetOnDataChange write SetOnDataChange;
+    property OnStateChange: string read GetOnStateChange write SetOnStateChange;
   end;
 
 
-function TDataSource.GetDataSet: string;
+function TDataSource.GetDataSet: TAylisComponent;
 begin
-  Result := AsText(GetProp('data_set'));
+  Result := GetRef('data_set');
 end;
 
-procedure TDataSource.SetDataSet(Value: string);
+procedure TDataSource.SetDataSet(Value: TAylisComponent);
 begin
-  SetProp('data_set', TJSONString.Create(Value));
+  SetRef('data_set', Value);
 end;
 
 function TDataSource.GetAutoEdit: Boolean;
@@ -42,5 +48,25 @@ end;
 procedure TDataSource.SetEnabled(Value: Boolean);
 begin
   SetProp('enabled', TJSONBoolean.Create(Value));
+end;
+
+function TDataSource.GetOnDataChange: string;
+begin
+  Result := AsText(GetProp('on_data_change'));
+end;
+
+procedure TDataSource.SetOnDataChange(Value: string);
+begin
+  SetProp('on_data_change', TJSONString.Create(Value));
+end;
+
+function TDataSource.GetOnStateChange: string;
+begin
+  Result := AsText(GetProp('on_state_change'));
+end;
+
+procedure TDataSource.SetOnStateChange(Value: string);
+begin
+  SetProp('on_state_change', TJSONString.Create(Value));
 end;
 

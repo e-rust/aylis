@@ -120,7 +120,7 @@ impl RowSource for Names {
 fn a_source_fills_the_bound_components() {
     let mut ui = Ui::new();
     let (_, list) = scene_with(&mut ui, 0, false);
-    ui.set_prop(list, "bindings", "lblTexto=nome").unwrap();
+    ui.set_prop(list, "item_bindings", r#"[{"component": "lblTexto", "field": "nome"}]"#).unwrap();
     VirtualList::set_source(&mut ui, list, Box::new(Names(vec!["Ana", "Bruno", "Carla"])));
     ui.layout();
     assert_eq!(shown(&ui, list), ["Ana", "Bruno", "Carla"]);

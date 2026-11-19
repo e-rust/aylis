@@ -7,5 +7,7 @@
         public string InitialDir { get => Text(GetProp("initial_dir")); set => SetProp("initial_dir", value); }
         public string FileName { get => Text(GetProp("file_name")); set => SetProp("file_name", value); }
         public bool Multiple { get => Bool(GetProp("multiple")); set => SetProp("multiple", value); }
+        public string OnSelect { get => Text(GetProp("on_select")); set => SetProp("on_select", value); }
+        public string OnCancel { get => Text(GetProp("on_cancel")); set => SetProp("on_cancel", value); }
         public void Execute() => Aylis.Send("execute", new JsonObject { ["target"] = Id });
     }

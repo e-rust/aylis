@@ -1,6 +1,6 @@
 # NotifyAction
 
-Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` e `image` (modelos: `{chave}` vira o valor nos dados; a imagem é um asset, um arquivo ou, no Android, um endereço `https`), no canal e com a prioridade escolhidos, e os botões (`buttons`, `id:Texto;...`; os de `open_buttons` abrem o app, `*`: todos). Eventos: `on_click` (o toque no corpo, com os dados) e `on_button` (o id do botão). `stop()` tira a notificação.
+Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` e `image` (modelos: `{chave}` vira o valor nos dados; a imagem é um asset, um arquivo ou, no Android, um endereço `https`), no canal e com a prioridade escolhidos, e os botões (`buttons`, a lista de `{"id", "text"}` em JSON; os de `open_buttons` abrem o app, `*`: todos). Eventos: `on_click` (o toque no corpo, com os dados) e `on_button` (o id do botão). `stop()` tira a notificação.
 
 **Paleta:** Device · **componente não visual**
 
@@ -16,8 +16,8 @@ Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` 
 | `channel` | Canal | texto | O canal do Android (o usuário configura som e destaque por canal). |
 | `channel_name` | Nome do canal | texto | O nome do canal que o usuário vê nas configurações do Android. |
 | `priority` | Prioridade | um de: `low`, `default`, `high` | `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som). |
-| `buttons` | Botões | texto | Os botões da notificação: `id:Texto;...`; o toque chega em `on_button` com o id. |
-| `open_buttons` | Botões que abrem o app | texto | Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. |
+| `buttons` | Botões | lista de `NotificationButton` | Os botões da notificação, em JSON (`NOTIFICATION_BUTTON`): `[{"id": "ver", "text": "Ver pedido {order}"}]`; o toque chega em `on_button` com o id. |
+| `open_buttons` | Botões que abrem o app | lista de textos (separados por `;`) | Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. |
 
 ## Eventos
 

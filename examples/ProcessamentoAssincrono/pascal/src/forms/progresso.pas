@@ -12,7 +12,7 @@ uses
 type
   TFrmProgresso = class(TFrmProgressoBase)
   published
-    procedure cancelar_click(Sender: TAylisComponent; Event: TJSONObject);
+    procedure cancelar_click(Sender: TButton);
     procedure form_close_query(Sender: TAylisComponent; var CanClose: Boolean);
   end;
 
@@ -25,7 +25,7 @@ uses
   fechamento;
 
 { Roda enquanto a thread trabalha: a thread dos handlers está livre. }
-procedure TFrmProgresso.cancelar_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmProgresso.cancelar_click(Sender: TButton);
 begin
   btnCancelar.Enabled := False;
   lblEtapa.Text := 'Cancelando...';

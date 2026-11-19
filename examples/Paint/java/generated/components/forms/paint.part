@@ -195,7 +195,7 @@
             dlgSalvar = resolve(list, "dlgSalvar", "SaveDialog", SaveDialog::new);
         }
 
-        /** O Button deste form com o nome (como o FindComponent). */
+        /** O Button deste form com o nome. */
         public Button findButton(String name) {
             return switch (name) {
                 case "btnSalvar" -> btnSalvar;
@@ -219,7 +219,7 @@
             return findButton(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O CheckBox deste form com o nome (como o FindComponent). */
+        /** O CheckBox deste form com o nome. */
         public CheckBox findCheckBox(String name) {
             return switch (name) {
                 case "chkPreencher" -> chkPreencher;
@@ -232,7 +232,7 @@
             return findCheckBox(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Circle deste form com o nome (como o FindComponent). */
+        /** O Circle deste form com o nome. */
         public Circle findCircle(String name) {
             return switch (name) {
                 case "btnCor1" -> btnCor1;
@@ -266,7 +266,7 @@
             return findCircle(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O ComboBox deste form com o nome (como o FindComponent). */
+        /** O ComboBox deste form com o nome. */
         public ComboBox findComboBox(String name) {
             return switch (name) {
                 case "cbEspessura" -> cbEspessura;
@@ -279,7 +279,7 @@
             return findComboBox(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Divider deste form com o nome (como o FindComponent). */
+        /** O Divider deste form com o nome. */
         public Divider findDivider(String name) {
             return switch (name) {
                 case "divTopo" -> divTopo;
@@ -297,7 +297,7 @@
             return findDivider(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O GridLayout deste form com o nome (como o FindComponent). */
+        /** O GridLayout deste form com o nome. */
         public GridLayout findGridLayout(String name) {
             return switch (name) {
                 case "grdFerramentas" -> grdFerramentas;
@@ -312,7 +312,7 @@
             return findGridLayout(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Label deste form com o nome (como o FindComponent). */
+        /** O Label deste form com o nome. */
         public Label findLabel(String name) {
             return switch (name) {
                 case "lblSelecaoGrupo" -> lblSelecaoGrupo;
@@ -333,7 +333,7 @@
             return findLabel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Layout deste form com o nome (como o FindComponent). */
+        /** O Layout deste form com o nome. */
         public Layout findLayout(String name) {
             return switch (name) {
                 case "lytTopo" -> lytTopo;
@@ -352,7 +352,7 @@
             return findLayout(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O MainMenu deste form com o nome (como o FindComponent). */
+        /** O MainMenu deste form com o nome. */
         public MainMenu findMainMenu(String name) {
             return switch (name) {
                 case "mnuPrincipal" -> mnuPrincipal;
@@ -365,7 +365,7 @@
             return findMainMenu(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O MenuItem deste form com o nome (como o FindComponent). */
+        /** O MenuItem deste form com o nome. */
         public MenuItem findMenuItem(String name) {
             return switch (name) {
                 case "mnuArquivo" -> mnuArquivo;
@@ -399,7 +399,7 @@
             return findMenuItem(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O OpenDialog deste form com o nome (como o FindComponent). */
+        /** O OpenDialog deste form com o nome. */
         public OpenDialog findOpenDialog(String name) {
             return switch (name) {
                 case "dlgAbrir" -> dlgAbrir;
@@ -412,7 +412,7 @@
             return findOpenDialog(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O PaintCanvas deste form com o nome (como o FindComponent). */
+        /** O PaintCanvas deste form com o nome. */
         public PaintCanvas findPaintCanvas(String name) {
             return switch (name) {
                 case "pcDesenho" -> pcDesenho;
@@ -425,7 +425,7 @@
             return findPaintCanvas(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Panel deste form com o nome (como o FindComponent). */
+        /** O Panel deste form com o nome. */
         public Panel findPanel(String name) {
             return switch (name) {
                 case "pnlFaixa" -> pnlFaixa;
@@ -438,7 +438,7 @@
             return findPanel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O SaveDialog deste form com o nome (como o FindComponent). */
+        /** O SaveDialog deste form com o nome. */
         public SaveDialog findSaveDialog(String name) {
             return switch (name) {
                 case "dlgSalvar" -> dlgSalvar;
@@ -451,7 +451,7 @@
             return findSaveDialog(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O ScrollBox deste form com o nome (como o FindComponent). */
+        /** O ScrollBox deste form com o nome. */
         public ScrollBox findScrollBox(String name) {
             return switch (name) {
                 case "sbxArea" -> sbxArea;
@@ -464,7 +464,7 @@
             return findScrollBox(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O StatusBar deste form com o nome (como o FindComponent). */
+        /** O StatusBar deste form com o nome. */
         public StatusBar findStatusBar(String name) {
             return switch (name) {
                 case "stbStatus" -> stbStatus;

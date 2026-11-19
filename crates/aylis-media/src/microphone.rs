@@ -129,8 +129,8 @@ impl Component for Microphone {
     properties! {
         device: String => "Behavior",
         active: bool => "Behavior",
-        monitor: String => "Behavior";
-        events: on_error
+        monitor: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior";
+        events: on_error: String
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

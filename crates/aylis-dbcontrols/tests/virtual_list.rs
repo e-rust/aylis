@@ -34,7 +34,7 @@ fn one_item_per_record_and_it_follows_the_data_set() {
     let name = ui.add(Label::new(""), template);
     ui.set_name(name, "lblNome").unwrap();
     ui.set_prop(list, "item_height", 60.0).unwrap();
-    ui.set_prop(list, "bindings", "lblNome=nome").unwrap();
+    ui.set_prop(list, "item_bindings", r#"[{"component": "lblNome", "field": "nome"}]"#).unwrap();
     ui.set_prop(list, "data_source", ds).unwrap();
     ui.layout();
 
@@ -70,7 +70,7 @@ fn the_bindings_fill_rows_loaded_from_json() {
             {"class": "Field", "name": "fldTitulo", "field_name": "titulo"}
         ]},
         {"class": "DataSource", "name": "dsLista", "data_set": "cdsLista"},
-        {"class": "DataRepeater", "name": "drLista", "data_source": "dsLista", "item_height": 80, "bindings": "lblNome=titulo", "align": "client", "children": [
+        {"class": "DataRepeater", "name": "drLista", "data_source": "dsLista", "item_height": 80, "item_bindings": [{"component": "lblNome", "field": "titulo"}], "align": "client", "children": [
             {"class": "Layout", "name": "linItem", "height": 80, "align": "top", "children": [
                 {"class": "Panel", "name": "crdItem", "height": 72, "align": "top", "children": [
                     {"class": "Label", "name": "lblNome", "text": "nome", "align": "top", "height": 24}
@@ -107,7 +107,7 @@ fn a_click_inside_a_row_reaches_the_form_and_knows_the_record() {
             {"class": "Field", "name": "fldAtivo", "field_name": "ativo"}
         ]},
         {"class": "DataSource", "name": "dsLista", "data_set": "cdsLista"},
-        {"class": "DataRepeater", "name": "drLista", "data_source": "dsLista", "item_height": 80, "bindings": "lblNome=titulo;btnLado.enabled=ativo", "align": "client", "children": [
+        {"class": "DataRepeater", "name": "drLista", "data_source": "dsLista", "item_height": 80, "item_bindings": [{"component": "lblNome", "field": "titulo"}, {"component": "btnLado", "property": "enabled", "field": "ativo"}], "align": "client", "children": [
             {"class": "Panel", "name": "crdItem", "height": 72, "align": "top", "children": [
                 {"class": "Label", "name": "lblNome", "text": "nome", "align": "top", "height": 24},
                 {"class": "Button", "name": "btnLado", "text": "ver", "align": "right", "width": 60, "on_click": "btnLado_click"}

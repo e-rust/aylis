@@ -9,16 +9,420 @@ unit ayliscomponents;
 interface
 
 uses
-  fpjson, aylis;
+  SysUtils, DateUtils, fpjson, jsonparser, aylis;
 
 type
+  TAylisDoubleArray = array of Double;
+  TAylisColorArray = array of TAylisColor;
+  { O intervalo de datas (o on_change do DateRangePicker); 0: sem a data. }
+  TAylisDateRange = record
+    StartDate, EndDate: TDateTime;
+  end;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TAlign = (None, Top, Bottom, Left, Right, MostTop, MostBottom, MostLeft, MostRight, Client, Contents, Center, VertCenter, HorzCenter, Horizontal, Vertical, Fit);
+  {$pop}
+  TAlignSet = set of TAlign;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TAnchor = (Left, Top, Right, Bottom);
+  {$pop}
+  TAnchorSet = set of TAnchor;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TApplyMode = (Cached, OnPost);
+  {$pop}
+  TApplyModeSet = set of TApplyMode;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TBlendMode = (Normal, Multiply, Screen, Overlay, Darken, Lighten, ColorDodge, ColorBurn, HardLight, SoftLight, Difference, Exclusion, Hue, Saturation, Color, Luminosity);
+  {$pop}
+  TBlendModeSet = set of TBlendMode;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TBorderStyle = (Sizeable, Single, None, Custom);
+  {$pop}
+  TBorderStyleSet = set of TBorderStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TCharCase = (Normal, Upper, Lower);
+  {$pop}
+  TCharCaseSet = set of TCharCase;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TChartKind = (Line, Bar, Area, Pie, Donut, Sparkline, Heatmap, Scatter, StackedBar, Waterfall, Funnel, Treemap, Radar, HorizontalBar, Bubble, PolarArea, StackedLine, StackedArea, Mixed, Sankey, Waffle);
+  {$pop}
+  TChartKindSet = set of TChartKind;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TChartSeriesFill = (None, Origin, Start, &End, Series);
+  {$pop}
+  TChartSeriesFillSet = set of TChartSeriesFill;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TChartSeriesKind = (Line, Bar, Area, Scatter);
+  {$pop}
+  TChartSeriesKindSet = set of TChartSeriesKind;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TChartSeriesPoint = (Circle, Square, Triangle, Diamond, Cross, None);
+  {$pop}
+  TChartSeriesPointSet = set of TChartSeriesPoint;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TCloseAction = (Hide, Free);
+  {$pop}
+  TCloseActionSet = set of TCloseAction;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TCursorShape = (Default, Pointer, Text, Wait, Crosshair, Move, NotAllowed, ResizeHorizontal, ResizeVertical, ResizeNeSw, ResizeNwSe, Grab, Grabbing, None);
+  {$pop}
+  TCursorShapeSet = set of TCursorShape;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TDBChartStyle = (Default);
+  {$pop}
+  TDBChartStyleSet = set of TDBChartStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TDataGridStyle = (Default);
+  {$pop}
+  TDataGridStyleSet = set of TDataGridStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFieldKind = (Data, Calculated, Lookup);
+  {$pop}
+  TFieldKindSet = set of TFieldKind;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFieldType = (&String, Memo, Integer, Float, Currency, Boolean, Date, Time, Datetime, Blob, AutoInc, Timestamp);
+  {$pop}
+  TFieldTypeSet = set of TFieldType;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFontWeight = (Default, Thin, Light, Normal, Medium, Semibold, Bold, Black);
+  {$pop}
+  TFontWeightSet = set of TFontWeight;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFormOrientation = (Project, Any, Portrait, Landscape, SensorPortrait, SensorLandscape);
+  {$pop}
+  TFormOrientationSet = set of TFormOrientation;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFormPosition = (Center, ScreenCenter, Designed, Default, TopLeft, TopRight, BottomLeft, BottomRight);
+  {$pop}
+  TFormPositionSet = set of TFormPosition;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFormPresent = (Project, Window, Composition, Composed);
+  {$pop}
+  TFormPresentSet = set of TFormPresent;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TFormStyle = (Default);
+  {$pop}
+  TFormStyleSet = set of TFormStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TGridTotalFunction = (Sum, Avg, Min, Max, Count);
+  {$pop}
+  TGridTotalFunctionSet = set of TGridTotalFunction;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TGroupBoxStyle = (Default);
+  {$pop}
+  TGroupBoxStyleSet = set of TGroupBoxStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  THorizontalWheel = (Shift, Always, None);
+  {$pop}
+  THorizontalWheelSet = set of THorizontalWheel;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TImageFit = (Contain, Cover, Stretch, Center, Original);
+  {$pop}
+  TImageFitSet = set of TImageFit;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TImageStyle = (Default);
+  {$pop}
+  TImageStyleSet = set of TImageStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TLabelStyle = (Default, Caption, Error, Heading, Kbd, Link, Mono, Muted, Title);
+  {$pop}
+  TLabelStyleSet = set of TLabelStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TLayerCaching = (Project, &On, Off);
+  {$pop}
+  TLayerCachingSet = set of TLayerCaching;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TLayoutStyle = (Default);
+  {$pop}
+  TLayoutStyleSet = set of TLayoutStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TLegendPosition = (TopRight, TopLeft, Top, Bottom);
+  {$pop}
+  TLegendPositionSet = set of TLegendPosition;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TOverscroll = (Auto, Glow, Stretch, Bounce, None);
+  {$pop}
+  TOverscrollSet = set of TOverscroll;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TPanelStyle = (Default, Appbar, Card, Filled, Flat, Glass, Outlined, Overlay, Reveal, Sidebar);
+  {$pop}
+  TPanelStyleSet = set of TPanelStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TRounding = (HalfUp, HalfEven, Truncate, Up);
+  {$pop}
+  TRoundingSet = set of TRounding;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TSelfAlign = (Stretch, Start, Center, &End);
+  {$pop}
+  TSelfAlignSet = set of TSelfAlign;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TSplitterStyle = (Default);
+  {$pop}
+  TSplitterStyleSet = set of TSplitterStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TSvgStyle = (Default);
+  {$pop}
+  TSvgStyleSet = set of TSvgStyle;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TTextAlign = (Leading, Center, Trailing, Justify);
+  {$pop}
+  TTextAlignSet = set of TTextAlign;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TTextCase = (None, Upper, Lower);
+  {$pop}
+  TTextCaseSet = set of TTextCase;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TThemeName = (Default, AylisLight, AylisDark, Material3Light, Material3Dark, Material2Light, Material2Dark, Android7Light, Android7Dark, IOS26Light, IOS26Dark, IOS13Light, IOS13Dark, IOS7Light, WinUI3Light, WinUI3Dark, Windows11Light, Windows11Dark, Windows10Light, Windows10Dark, Win32, Windows7, WindowsPhoneDark, WindowsPhoneLight, Vuetify3Light, Vuetify3Dark, Bootstrap5Light, Bootstrap5Dark, ShadcnUiLight, ShadcnUiDark, AntDesign5Light, AntDesign5Dark, ChakraUILight, ChakraUIDark, Quasar2Light, Quasar2Dark);
+  {$pop}
+  TThemeNameSet = set of TThemeName;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TTitleAlign = (Left, Center, Right);
+  {$pop}
+  TTitleAlignSet = set of TTitleAlign;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TTransition = (None, Fade, SlideLeft, SlideRight, SlideUp, SlideDown);
+  {$pop}
+  TTransitionSet = set of TTransition;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TTrimming = (None, Character, Word);
+  {$pop}
+  TTrimmingSet = set of TTrimming;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TValueFormat = (Short, Full, Percent);
+  {$pop}
+  TValueFormatSet = set of TValueFormat;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TWindowCorners = (Default, Round, Small, Square);
+  {$pop}
+  TWindowCornersSet = set of TWindowCorners;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TWindowShape = (Rectangle, Rounded, Ellipse, Path);
+  {$pop}
+  TWindowShapeSet = set of TWindowShape;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TWindowState = (Normal, Maximized, Minimized, FullScreen);
+  {$pop}
+  TWindowStateSet = set of TWindowState;
+
+  PChartSeries = ^TChartSeries;
+  PColumnSpec = ^TColumnSpec;
+  PFilterParam = ^TFilterParam;
+  PGestureEvent = ^TGestureEvent;
+  PGridTotal = ^TGridTotal;
+  PIndexDef = ^TIndexDef;
+  PKeyEvent = ^TKeyEvent;
+  PMasterField = ^TMasterField;
+  PPointerEvent = ^TPointerEvent;
+  PSwipeEvent = ^TSwipeEvent;
+  PWheelEvent = ^TWheelEvent;
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TChartSeries = record
+    Name: string;
+    Values: TAylisDoubleArray;
+    X: TAylisDoubleArray;
+    Radius: TAylisDoubleArray;
+    Kind: TChartSeriesKind;
+    RightAxis: Boolean;
+    Color: TAylisColor;
+    Width: Double;
+    Dash: TAylisDoubleArray;
+    Point: TChartSeriesPoint;
+    Fill: TChartSeriesFill;
+    FillSeries: Int64;
+    Hidden: Boolean;
+  end;
+  TChartSeriesArray = array of TChartSeries;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TColumnSpec = record
+    Field: string;
+    Title: string;
+    Width: Double;
+    ReadOnly: Boolean;
+    Color: TAylisColor;
+    TextColor: TAylisColor;
+  end;
+  TColumnSpecArray = array of TColumnSpec;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TFilterParam = record
+    Name: string;
+    Value: string;
+  end;
+  TFilterParamArray = array of TFilterParam;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TGestureEvent = record
+    Phase: string;
+    X: Double;
+    Y: Double;
+    Scale: Double;
+    DeltaScale: Double;
+    Rotation: Double;
+    DeltaRotation: Double;
+    PanX: Double;
+    PanY: Double;
+  end;
+  TGestureEventArray = array of TGestureEvent;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TGridTotal = record
+    Field: string;
+    &Function: TGridTotalFunction;
+  end;
+  TGridTotalArray = array of TGridTotal;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TIndexDef = record
+    Name: string;
+    Fields: string;
+  end;
+  TIndexDefArray = array of TIndexDef;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TKeyEvent = record
+    Key: string;
+    Ctrl: Boolean;
+    Shift: Boolean;
+    Alt: Boolean;
+  end;
+  TKeyEventArray = array of TKeyEvent;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TMasterField = record
+    Field: string;
+    MasterField: string;
+  end;
+  TMasterFieldArray = array of TMasterField;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TPointerEvent = record
+    X: Double;
+    Y: Double;
+    Button: string;
+    Clicks: Int64;
+  end;
+  TPointerEventArray = array of TPointerEvent;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TSwipeEvent = record
+    Direction: string;
+    X: Double;
+    Y: Double;
+    Dx: Double;
+    Dy: Double;
+    Vx: Double;
+    Vy: Double;
+  end;
+  TSwipeEventArray = array of TSwipeEvent;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TWheelEvent = record
+    X: Double;
+    Y: Double;
+    Dx: Double;
+    Dy: Double;
+  end;
+  TWheelEventArray = array of TWheelEvent;
+
   { Um ClientDataSet de um form. }
   TClientDataSet = class(TAylisComponent)
   private
     function GetKeyFields: string;
     procedure SetKeyFields(Value: string);
-    function GetApplyMode: string;
-    procedure SetApplyMode(Value: string);
+    function GetApplyMode: TApplyMode;
+    procedure SetApplyMode(Value: TApplyMode);
     function GetReadOnly: Boolean;
     procedure SetReadOnly(Value: Boolean);
     function GetActive: Boolean;
@@ -29,18 +433,18 @@ type
     procedure SetFiltered(Value: Boolean);
     function GetIndexFieldNames: string;
     procedure SetIndexFieldNames(Value: string);
-    function GetIndexes: string;
-    procedure SetIndexes(Value: string);
+    function GetIndexes: TIndexDefArray;
+    procedure SetIndexes(Value: TIndexDefArray);
     function GetIndexName: string;
     procedure SetIndexName(Value: string);
-    function GetParams: string;
-    procedure SetParams(Value: string);
+    function GetParams: TFilterParamArray;
+    procedure SetParams(Value: TFilterParamArray);
     function GetStatusFilter: string;
     procedure SetStatusFilter(Value: string);
-    function GetMasterSource: string;
-    procedure SetMasterSource(Value: string);
-    function GetMasterFields: string;
-    procedure SetMasterFields(Value: string);
+    function GetMasterSource: TAylisComponent;
+    procedure SetMasterSource(Value: TAylisComponent);
+    function GetMasterFields: TMasterFieldArray;
+    procedure SetMasterFields(Value: TMasterFieldArray);
     function GetApplySeparately: Boolean;
     procedure SetApplySeparately(Value: Boolean);
     function GetRecordTotal: Int64;
@@ -48,43 +452,67 @@ type
     function GetMaxRecords: Int64;
     procedure SetMaxRecords(Value: Int64);
     function GetPartialNotice: string;
+    function GetOnMasterChange: string;
+    procedure SetOnMasterChange(Value: string);
+    function GetAfterScroll: string;
+    procedure SetAfterScroll(Value: string);
+    function GetAfterPost: string;
+    procedure SetAfterPost(Value: string);
+    function GetOnStateChange: string;
+    procedure SetOnStateChange(Value: string);
+    function GetOnReconcileError: string;
+    procedure SetOnReconcileError(Value: string);
+    function GetOnError: string;
+    procedure SetOnError(Value: string);
+    function GetOnFetch: string;
+    procedure SetOnFetch(Value: string);
+    function GetOnServerQuery: string;
+    procedure SetOnServerQuery(Value: string);
   public
     property KeyFields: string read GetKeyFields write SetKeyFields;
-    property ApplyMode: string read GetApplyMode write SetApplyMode;
+    property ApplyMode: TApplyMode read GetApplyMode write SetApplyMode;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Active: Boolean read GetActive write SetActive;
     property Filter: string read GetFilter write SetFilter;
     property Filtered: Boolean read GetFiltered write SetFiltered;
     property IndexFieldNames: string read GetIndexFieldNames write SetIndexFieldNames;
-    property Indexes: string read GetIndexes write SetIndexes;
+    property Indexes: TIndexDefArray read GetIndexes write SetIndexes;
     property IndexName: string read GetIndexName write SetIndexName;
-    property Params: string read GetParams write SetParams;
+    property Params: TFilterParamArray read GetParams write SetParams;
     property StatusFilter: string read GetStatusFilter write SetStatusFilter;
-    property MasterSource: string read GetMasterSource write SetMasterSource;
-    property MasterFields: string read GetMasterFields write SetMasterFields;
+    property MasterSource: TAylisComponent read GetMasterSource write SetMasterSource;
+    property MasterFields: TMasterFieldArray read GetMasterFields write SetMasterFields;
     property ApplySeparately: Boolean read GetApplySeparately write SetApplySeparately;
     property RecordTotal: Int64 read GetRecordTotal write SetRecordTotal;
     property MaxRecords: Int64 read GetMaxRecords write SetMaxRecords;
     property PartialNotice: string read GetPartialNotice;
+    property OnMasterChange: string read GetOnMasterChange write SetOnMasterChange;
+    property AfterScroll: string read GetAfterScroll write SetAfterScroll;
+    property AfterPost: string read GetAfterPost write SetAfterPost;
+    property OnStateChange: string read GetOnStateChange write SetOnStateChange;
+    property OnReconcileError: string read GetOnReconcileError write SetOnReconcileError;
+    property OnError: string read GetOnError write SetOnError;
+    property OnFetch: string read GetOnFetch write SetOnFetch;
+    property OnServerQuery: string read GetOnServerQuery write SetOnServerQuery;
   end;
 
   { Um DBChart de um form. }
   TDBChart = class(TAylisComponent)
   private
-    function GetDataSource: string;
-    procedure SetDataSource(Value: string);
+    function GetDataSource: TAylisComponent;
+    procedure SetDataSource(Value: TAylisComponent);
     function GetLabelField: string;
     procedure SetLabelField(Value: string);
-    function GetValueFields: string;
-    procedure SetValueFields(Value: string);
-    function GetKind: string;
-    procedure SetKind(Value: string);
+    function GetValueFields: TStringArray;
+    procedure SetValueFields(Value: TStringArray);
+    function GetKind: TChartKind;
+    procedure SetKind(Value: TChartKind);
     function GetTitle: string;
     procedure SetTitle(Value: string);
-    function GetLabels: string;
-    procedure SetLabels(Value: string);
-    function GetSeries: string;
-    procedure SetSeries(Value: string);
+    function GetLabels: TStringArray;
+    procedure SetLabels(Value: TStringArray);
+    function GetSeries: TChartSeriesArray;
+    procedure SetSeries(Value: TChartSeriesArray);
     function GetJson: string;
     procedure SetJson(Value: string);
     function GetLegend: Boolean;
@@ -113,18 +541,18 @@ type
     procedure SetClickedSeries(Value: Int64);
     function GetClickedIndex: Int64;
     procedure SetClickedIndex(Value: Int64);
-    function GetValueFormat: string;
-    procedure SetValueFormat(Value: string);
+    function GetValueFormat: TValueFormat;
+    procedure SetValueFormat(Value: TValueFormat);
     function GetLabelAngle: Double;
     procedure SetLabelAngle(Value: Double);
-    function GetTitleAlign: string;
-    procedure SetTitleAlign(Value: string);
+    function GetTitleAlign: TTitleAlign;
+    procedure SetTitleAlign(Value: TTitleAlign);
     function GetTitleBold: Boolean;
     procedure SetTitleBold(Value: Boolean);
     function GetAreaOpacity: Double;
     procedure SetAreaOpacity(Value: Double);
-    function GetLegendPosition: string;
-    procedure SetLegendPosition(Value: string);
+    function GetLegendPosition: TLegendPosition;
+    procedure SetLegendPosition(Value: TLegendPosition);
     function GetStacked: Boolean;
     procedure SetStacked(Value: Boolean);
     function GetColors: string;
@@ -141,14 +569,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -163,6 +591,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -173,20 +603,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -201,8 +635,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -215,32 +649,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TDBChartStyle;
+    procedure SetStyle(Value: TDBChartStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -255,16 +689,54 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
-    property DataSource: string read GetDataSource write SetDataSource;
+    property DataSource: TAylisComponent read GetDataSource write SetDataSource;
     property LabelField: string read GetLabelField write SetLabelField;
-    property ValueFields: string read GetValueFields write SetValueFields;
-    property Kind: string read GetKind write SetKind;
+    property ValueFields: TStringArray read GetValueFields write SetValueFields;
+    property Kind: TChartKind read GetKind write SetKind;
     property Title: string read GetTitle write SetTitle;
-    property Labels: string read GetLabels write SetLabels;
-    property Series: string read GetSeries write SetSeries;
+    property Labels: TStringArray read GetLabels write SetLabels;
+    property Series: TChartSeriesArray read GetSeries write SetSeries;
     property Json: string read GetJson write SetJson;
     property Legend: Boolean read GetLegend write SetLegend;
     property Stepped: Boolean read GetStepped write SetStepped;
@@ -279,12 +751,12 @@ type
     property TimeAxis: Boolean read GetTimeAxis write SetTimeAxis;
     property ClickedSeries: Int64 read GetClickedSeries write SetClickedSeries;
     property ClickedIndex: Int64 read GetClickedIndex write SetClickedIndex;
-    property ValueFormat: string read GetValueFormat write SetValueFormat;
+    property ValueFormat: TValueFormat read GetValueFormat write SetValueFormat;
     property LabelAngle: Double read GetLabelAngle write SetLabelAngle;
-    property TitleAlign: string read GetTitleAlign write SetTitleAlign;
+    property TitleAlign: TTitleAlign read GetTitleAlign write SetTitleAlign;
     property TitleBold: Boolean read GetTitleBold write SetTitleBold;
     property AreaOpacity: Double read GetAreaOpacity write SetAreaOpacity;
-    property LegendPosition: string read GetLegendPosition write SetLegendPosition;
+    property LegendPosition: TLegendPosition read GetLegendPosition write SetLegendPosition;
     property Stacked: Boolean read GetStacked write SetStacked;
     property Colors: string read GetColors write SetColors;
     property CenterText: string read GetCenterText write SetCenterText;
@@ -293,10 +765,10 @@ type
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -304,18 +776,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -323,26 +798,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TDBChartStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -350,16 +825,37 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um DataGrid de um form. }
   TDataGrid = class(TAylisComponent)
   private
-    function GetDataSource: string;
-    procedure SetDataSource(Value: string);
-    function GetColumns: string;
-    procedure SetColumns(Value: string);
+    function GetOverscroll: TOverscroll;
+    procedure SetOverscroll(Value: TOverscroll);
+    function GetDataSource: TAylisComponent;
+    procedure SetDataSource(Value: TAylisComponent);
+    function GetColumns: TColumnSpecArray;
+    procedure SetColumns(Value: TColumnSpecArray);
     function GetRowHeight: Double;
     procedure SetRowHeight(Value: Double);
     function GetReadOnly: Boolean;
@@ -374,16 +870,30 @@ type
     procedure SetFilterRow(Value: Boolean);
     function GetMultiSelect: Boolean;
     procedure SetMultiSelect(Value: Boolean);
-    function GetFooter: string;
-    procedure SetFooter(Value: string);
+    function GetFooter: TGridTotalArray;
+    procedure SetFooter(Value: TGridTotalArray);
     function GetIncrementalSearch: Boolean;
     procedure SetIncrementalSearch(Value: Boolean);
-    function GetCursorColor: string;
-    procedure SetCursorColor(Value: string);
+    function GetCursorColor: TAylisColor;
+    procedure SetCursorColor(Value: TAylisColor);
     function GetIndicator: Boolean;
     procedure SetIndicator(Value: Boolean);
     function GetHighlightCurrent: Boolean;
     procedure SetHighlightCurrent(Value: Boolean);
+    function GetHorizontalWheel: THorizontalWheel;
+    procedure SetHorizontalWheel(Value: THorizontalWheel);
+    function GetOnError: string;
+    procedure SetOnError(Value: string);
+    function GetOnTitleClick: string;
+    procedure SetOnTitleClick(Value: string);
+    function GetOnSelectionChange: string;
+    procedure SetOnSelectionChange(Value: string);
+    function GetOnColumnMoved: string;
+    procedure SetOnColumnMoved(Value: string);
+    function GetScrollLeft: Double;
+    procedure SetScrollLeft(Value: Double);
+    function GetTopRow: Int64;
+    procedure SetTopRow(Value: Int64);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -392,14 +902,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -414,6 +924,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -424,20 +936,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -452,8 +968,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -466,32 +982,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TDataGridStyle;
+    procedure SetStyle(Value: TDataGridStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -506,12 +1022,51 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     procedure SetFocus;
-    property DataSource: string read GetDataSource write SetDataSource;
-    property Columns: string read GetColumns write SetColumns;
+    property Overscroll: TOverscroll read GetOverscroll write SetOverscroll;
+    property DataSource: TAylisComponent read GetDataSource write SetDataSource;
+    property Columns: TColumnSpecArray read GetColumns write SetColumns;
     property RowHeight: Double read GetRowHeight write SetRowHeight;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Sortable: Boolean read GetSortable write SetSortable;
@@ -519,19 +1074,26 @@ type
     property FixedColumns: Int64 read GetFixedColumns write SetFixedColumns;
     property FilterRow: Boolean read GetFilterRow write SetFilterRow;
     property MultiSelect: Boolean read GetMultiSelect write SetMultiSelect;
-    property Footer: string read GetFooter write SetFooter;
+    property Footer: TGridTotalArray read GetFooter write SetFooter;
     property IncrementalSearch: Boolean read GetIncrementalSearch write SetIncrementalSearch;
-    property CursorColor: string read GetCursorColor write SetCursorColor;
+    property CursorColor: TAylisColor read GetCursorColor write SetCursorColor;
     property Indicator: Boolean read GetIndicator write SetIndicator;
     property HighlightCurrent: Boolean read GetHighlightCurrent write SetHighlightCurrent;
+    property HorizontalWheel: THorizontalWheel read GetHorizontalWheel write SetHorizontalWheel;
+    property OnError: string read GetOnError write SetOnError;
+    property OnTitleClick: string read GetOnTitleClick write SetOnTitleClick;
+    property OnSelectionChange: string read GetOnSelectionChange write SetOnSelectionChange;
+    property OnColumnMoved: string read GetOnColumnMoved write SetOnColumnMoved;
+    property ScrollLeft: Double read GetScrollLeft write SetScrollLeft;
+    property TopRow: Int64 read GetTopRow write SetTopRow;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -539,18 +1101,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -558,26 +1123,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TDataGridStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -585,22 +1150,47 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um DataSource de um form. }
   TDataSource = class(TAylisComponent)
   private
-    function GetDataSet: string;
-    procedure SetDataSet(Value: string);
+    function GetDataSet: TAylisComponent;
+    procedure SetDataSet(Value: TAylisComponent);
     function GetAutoEdit: Boolean;
     procedure SetAutoEdit(Value: Boolean);
     function GetEnabled: Boolean;
     procedure SetEnabled(Value: Boolean);
+    function GetOnDataChange: string;
+    procedure SetOnDataChange(Value: string);
+    function GetOnStateChange: string;
+    procedure SetOnStateChange(Value: string);
   public
-    property DataSet: string read GetDataSet write SetDataSet;
+    property DataSet: TAylisComponent read GetDataSet write SetDataSet;
     property AutoEdit: Boolean read GetAutoEdit write SetAutoEdit;
     property Enabled: Boolean read GetEnabled write SetEnabled;
+    property OnDataChange: string read GetOnDataChange write SetOnDataChange;
+    property OnStateChange: string read GetOnStateChange write SetOnStateChange;
   end;
 
   { Um Field de um form. }
@@ -608,14 +1198,14 @@ type
   private
     function GetFieldName: string;
     procedure SetFieldName(Value: string);
-    function GetType: string;
-    procedure SetType(Value: string);
+    function GetType: TFieldType;
+    procedure SetType(Value: TFieldType);
     function GetSize: Int64;
     procedure SetSize(Value: Int64);
     function GetScale: Int64;
     procedure SetScale(Value: Int64);
-    function GetRounding: string;
-    procedure SetRounding(Value: string);
+    function GetRounding: TRounding;
+    procedure SetRounding(Value: TRounding);
     function GetDisplayLabel: string;
     procedure SetDisplayLabel(Value: string);
     function GetDisplayWidth: Double;
@@ -624,8 +1214,8 @@ type
     procedure SetDisplayFormat(Value: string);
     function GetEditFormat: string;
     procedure SetEditFormat(Value: string);
-    function GetAlignment: string;
-    procedure SetAlignment(Value: string);
+    function GetAlignment: TTextAlign;
+    procedure SetAlignment(Value: TTextAlign);
     function GetRequired: Boolean;
     procedure SetRequired(Value: Boolean);
     function GetReadOnly: Boolean;
@@ -640,35 +1230,41 @@ type
     procedure SetDefaultValue(Value: string);
     function GetDisplayValues: string;
     procedure SetDisplayValues(Value: string);
-    function GetCharCase: string;
-    procedure SetCharCase(Value: string);
+    function GetCharCase: TCharCase;
+    procedure SetCharCase(Value: TCharCase);
     function GetEditMask: string;
     procedure SetEditMask(Value: string);
     function GetSensitive: Boolean;
     procedure SetSensitive(Value: Boolean);
-    function GetKind: string;
-    procedure SetKind(Value: string);
+    function GetKind: TFieldKind;
+    procedure SetKind(Value: TFieldKind);
     function GetExpression: string;
     procedure SetExpression(Value: string);
-    function GetLookupDataSet: string;
-    procedure SetLookupDataSet(Value: string);
+    function GetLookupDataSet: TAylisComponent;
+    procedure SetLookupDataSet(Value: TAylisComponent);
     function GetKeyFields: string;
     procedure SetKeyFields(Value: string);
     function GetLookupKeyFields: string;
     procedure SetLookupKeyFields(Value: string);
     function GetLookupResultField: string;
     procedure SetLookupResultField(Value: string);
+    function GetOnChange: string;
+    procedure SetOnChange(Value: string);
+    function GetOnGetText: string;
+    procedure SetOnGetText(Value: string);
+    function GetOnSetText: string;
+    procedure SetOnSetText(Value: string);
   public
     property FieldName: string read GetFieldName write SetFieldName;
-    property &Type: string read GetType write SetType;
+    property &Type: TFieldType read GetType write SetType;
     property Size: Int64 read GetSize write SetSize;
     property Scale: Int64 read GetScale write SetScale;
-    property Rounding: string read GetRounding write SetRounding;
+    property Rounding: TRounding read GetRounding write SetRounding;
     property DisplayLabel: string read GetDisplayLabel write SetDisplayLabel;
     property DisplayWidth: Double read GetDisplayWidth write SetDisplayWidth;
     property DisplayFormat: string read GetDisplayFormat write SetDisplayFormat;
     property EditFormat: string read GetEditFormat write SetEditFormat;
-    property Alignment: string read GetAlignment write SetAlignment;
+    property Alignment: TTextAlign read GetAlignment write SetAlignment;
     property Required: Boolean read GetRequired write SetRequired;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Visible: Boolean read GetVisible write SetVisible;
@@ -676,15 +1272,18 @@ type
     property Max: Double read GetMax write SetMax;
     property DefaultValue: string read GetDefaultValue write SetDefaultValue;
     property DisplayValues: string read GetDisplayValues write SetDisplayValues;
-    property CharCase: string read GetCharCase write SetCharCase;
+    property CharCase: TCharCase read GetCharCase write SetCharCase;
     property EditMask: string read GetEditMask write SetEditMask;
     property Sensitive: Boolean read GetSensitive write SetSensitive;
-    property Kind: string read GetKind write SetKind;
+    property Kind: TFieldKind read GetKind write SetKind;
     property Expression: string read GetExpression write SetExpression;
-    property LookupDataSet: string read GetLookupDataSet write SetLookupDataSet;
+    property LookupDataSet: TAylisComponent read GetLookupDataSet write SetLookupDataSet;
     property KeyFields: string read GetKeyFields write SetKeyFields;
     property LookupKeyFields: string read GetLookupKeyFields write SetLookupKeyFields;
     property LookupResultField: string read GetLookupResultField write SetLookupResultField;
+    property OnChange: string read GetOnChange write SetOnChange;
+    property OnGetText: string read GetOnGetText write SetOnGetText;
+    property OnSetText: string read GetOnSetText write SetOnSetText;
   end;
 
   { Um Form de um form. }
@@ -692,22 +1291,38 @@ type
   private
     function GetCaption: string;
     procedure SetCaption(Value: string);
-    function GetPosition: string;
-    procedure SetPosition(Value: string);
-    function GetBorderStyle: string;
-    procedure SetBorderStyle(Value: string);
-    function GetWindowState: string;
-    procedure SetWindowState(Value: string);
-    function GetTransition: string;
-    procedure SetTransition(Value: string);
+    function GetPosition: TFormPosition;
+    procedure SetPosition(Value: TFormPosition);
+    function GetBorderStyle: TBorderStyle;
+    procedure SetBorderStyle(Value: TBorderStyle);
+    function GetWindowCorners: TWindowCorners;
+    procedure SetWindowCorners(Value: TWindowCorners);
+    function GetTransparent: Boolean;
+    procedure SetTransparent(Value: Boolean);
+    function GetWindowShape: TWindowShape;
+    procedure SetWindowShape(Value: TWindowShape);
+    function GetShapeRadius: Double;
+    procedure SetShapeRadius(Value: Double);
+    function GetShapeRadii: TAylisBounds;
+    procedure SetShapeRadii(Value: TAylisBounds);
+    function GetShapePath: string;
+    procedure SetShapePath(Value: string);
+    function GetWindowState: TWindowState;
+    procedure SetWindowState(Value: TWindowState);
+    function GetTransition: TTransition;
+    procedure SetTransition(Value: TTransition);
+    function GetLayerCache: TLayerCaching;
+    procedure SetLayerCache(Value: TLayerCaching);
+    function GetFrameReuseKb: Int64;
+    procedure SetFrameReuseKb(Value: Int64);
     function GetTopmost: Boolean;
     procedure SetTopmost(Value: Boolean);
     function GetShowInTaskbar: Boolean;
     procedure SetShowInTaskbar(Value: Boolean);
-    function GetActiveControl: string;
-    procedure SetActiveControl(Value: string);
-    function GetTabOrder: string;
-    procedure SetTabOrder(Value: string);
+    function GetActiveControl: TAylisComponent;
+    procedure SetActiveControl(Value: TAylisComponent);
+    function GetTabOrder: TStringArray;
+    procedure SetTabOrder(Value: TStringArray);
     function GetTabKeys: string;
     procedure SetTabKeys(Value: string);
     function GetBackTabKeys: string;
@@ -732,12 +1347,44 @@ type
     procedure SetRememberPlacement(Value: Boolean);
     function GetGpu: string;
     procedure SetGpu(Value: string);
+    function GetPresent: TFormPresent;
+    procedure SetPresent(Value: TFormPresent);
+    function GetSpanMonitors: Boolean;
+    procedure SetSpanMonitors(Value: Boolean);
+    function GetPhysicalPixels: Boolean;
+    procedure SetPhysicalPixels(Value: Boolean);
     function GetActivateOnShow: Boolean;
     procedure SetActivateOnShow(Value: Boolean);
-    function GetCloseAction: string;
-    procedure SetCloseAction(Value: string);
+    function GetForceForeground: Boolean;
+    procedure SetForceForeground(Value: Boolean);
+    function GetCloseAction: TCloseAction;
+    procedure SetCloseAction(Value: TCloseAction);
     function GetFrameRate: Double;
     procedure SetFrameRate(Value: Double);
+    function GetOrientation: TFormOrientation;
+    procedure SetOrientation(Value: TFormOrientation);
+    function GetOnShow: string;
+    procedure SetOnShow(Value: string);
+    function GetOnWindowCreated: string;
+    procedure SetOnWindowCreated(Value: string);
+    function GetOnClose: string;
+    procedure SetOnClose(Value: string);
+    function GetOnActivate: string;
+    procedure SetOnActivate(Value: string);
+    function GetOnDeactivate: string;
+    procedure SetOnDeactivate(Value: string);
+    function GetOnMinimize: string;
+    procedure SetOnMinimize(Value: string);
+    function GetOnRestore: string;
+    procedure SetOnRestore(Value: string);
+    function GetOnNavigate: string;
+    procedure SetOnNavigate(Value: string);
+    function GetOnGpuChange: string;
+    procedure SetOnGpuChange(Value: string);
+    function GetClientWidth: Double;
+    procedure SetClientWidth(Value: Double);
+    function GetClientHeight: Double;
+    procedure SetClientHeight(Value: Double);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -746,14 +1393,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -768,6 +1415,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -778,20 +1427,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -806,8 +1459,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -820,32 +1473,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TFormStyle;
+    procedure SetStyle(Value: TFormStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -860,24 +1513,71 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     procedure MoveToMonitor(AMonitor: Int64);
     function GpuAdapter: string;
-    function GpuAdapters: string;
+    function GpuAdapters: TStringArray;
+    function RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
     function Focused: string;
     procedure FocusNext;
     procedure FocusPrev;
     property Caption: string read GetCaption write SetCaption;
-    property Position: string read GetPosition write SetPosition;
-    property BorderStyle: string read GetBorderStyle write SetBorderStyle;
-    property WindowState: string read GetWindowState write SetWindowState;
-    property Transition: string read GetTransition write SetTransition;
+    property Position: TFormPosition read GetPosition write SetPosition;
+    property BorderStyle: TBorderStyle read GetBorderStyle write SetBorderStyle;
+    property WindowCorners: TWindowCorners read GetWindowCorners write SetWindowCorners;
+    property Transparent: Boolean read GetTransparent write SetTransparent;
+    property WindowShape: TWindowShape read GetWindowShape write SetWindowShape;
+    property ShapeRadius: Double read GetShapeRadius write SetShapeRadius;
+    property ShapeRadii: TAylisBounds read GetShapeRadii write SetShapeRadii;
+    property ShapePath: string read GetShapePath write SetShapePath;
+    property WindowState: TWindowState read GetWindowState write SetWindowState;
+    property Transition: TTransition read GetTransition write SetTransition;
+    property LayerCache: TLayerCaching read GetLayerCache write SetLayerCache;
+    property FrameReuseKb: Int64 read GetFrameReuseKb write SetFrameReuseKb;
     property Topmost: Boolean read GetTopmost write SetTopmost;
     property ShowInTaskbar: Boolean read GetShowInTaskbar write SetShowInTaskbar;
-    property ActiveControl: string read GetActiveControl write SetActiveControl;
-    property TabOrder: string read GetTabOrder write SetTabOrder;
+    property ActiveControl: TAylisComponent read GetActiveControl write SetActiveControl;
+    property TabOrder: TStringArray read GetTabOrder write SetTabOrder;
     property TabKeys: string read GetTabKeys write SetTabKeys;
     property BackTabKeys: string read GetBackTabKeys write SetBackTabKeys;
     property AllowedChars: string read GetAllowedChars write SetAllowedChars;
@@ -890,17 +1590,33 @@ type
     property Monitor: Int64 read GetMonitor write SetMonitor;
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
+    property Present: TFormPresent read GetPresent write SetPresent;
+    property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
+    property PhysicalPixels: Boolean read GetPhysicalPixels write SetPhysicalPixels;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
-    property CloseAction: string read GetCloseAction write SetCloseAction;
+    property ForceForeground: Boolean read GetForceForeground write SetForceForeground;
+    property CloseAction: TCloseAction read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
+    property Orientation: TFormOrientation read GetOrientation write SetOrientation;
+    property OnShow: string read GetOnShow write SetOnShow;
+    property OnWindowCreated: string read GetOnWindowCreated write SetOnWindowCreated;
+    property OnClose: string read GetOnClose write SetOnClose;
+    property OnActivate: string read GetOnActivate write SetOnActivate;
+    property OnDeactivate: string read GetOnDeactivate write SetOnDeactivate;
+    property OnMinimize: string read GetOnMinimize write SetOnMinimize;
+    property OnRestore: string read GetOnRestore write SetOnRestore;
+    property OnNavigate: string read GetOnNavigate write SetOnNavigate;
+    property OnGpuChange: string read GetOnGpuChange write SetOnGpuChange;
+    property ClientWidth: Double read GetClientWidth write SetClientWidth;
+    property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -908,18 +1624,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -927,26 +1646,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TFormStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -954,7 +1673,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um GroupBox de um form. }
@@ -980,14 +1718,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -1002,6 +1740,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -1012,20 +1752,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -1040,8 +1784,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -1054,32 +1798,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TGroupBoxStyle;
+    procedure SetStyle(Value: TGroupBoxStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -1094,8 +1838,46 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property Caption: string read GetCaption write SetCaption;
     property AllowedChars: string read GetAllowedChars write SetAllowedChars;
@@ -1107,10 +1889,10 @@ type
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -1118,18 +1900,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -1137,26 +1922,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TGroupBoxStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -1164,7 +1949,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Image de um form. }
@@ -1172,10 +1976,12 @@ type
   private
     function GetImage: string;
     procedure SetImage(Value: string);
-    function GetFit: string;
-    procedure SetFit(Value: string);
+    function GetFit: TImageFit;
+    procedure SetFit(Value: TImageFit);
     function GetRadius: Double;
     procedure SetRadius(Value: Double);
+    function GetZoomable: Boolean;
+    procedure SetZoomable(Value: Boolean);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -1184,14 +1990,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -1206,6 +2012,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -1216,20 +2024,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -1244,8 +2056,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -1258,32 +2070,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TImageStyle;
+    procedure SetStyle(Value: TImageStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -1298,20 +2110,59 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property Image: string read GetImage write SetImage;
-    property Fit: string read GetFit write SetFit;
+    property Fit: TImageFit read GetFit write SetFit;
     property Radius: Double read GetRadius write SetRadius;
+    property Zoomable: Boolean read GetZoomable write SetZoomable;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -1319,18 +2170,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -1338,26 +2192,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TImageStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -1365,7 +2219,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Label de um form. }
@@ -1373,36 +2246,36 @@ type
   private
     function GetText: string;
     procedure SetText(Value: string);
-    function GetHAlign: string;
-    procedure SetHAlign(Value: string);
-    function GetVAlign: string;
-    procedure SetVAlign(Value: string);
+    function GetHAlign: TTextAlign;
+    procedure SetHAlign(Value: TTextAlign);
+    function GetVAlign: TTextAlign;
+    procedure SetVAlign(Value: TTextAlign);
     function GetWrap: Boolean;
     procedure SetWrap(Value: Boolean);
-    function GetTrimming: string;
-    procedure SetTrimming(Value: string);
+    function GetTrimming: TTrimming;
+    procedure SetTrimming(Value: TTrimming);
     function GetBold: Boolean;
     procedure SetBold(Value: Boolean);
-    function GetColor: string;
-    procedure SetColor(Value: string);
+    function GetColor: TAylisColor;
+    procedure SetColor(Value: TAylisColor);
     function GetHighlight: string;
     procedure SetHighlight(Value: string);
     function GetLetterSpacing: Double;
     procedure SetLetterSpacing(Value: Double);
-    function GetTextCase: string;
-    procedure SetTextCase(Value: string);
+    function GetTextCase: TTextCase;
+    procedure SetTextCase(Value: TTextCase);
     function GetMarkup: Boolean;
     procedure SetMarkup(Value: Boolean);
-    function GetOutline: string;
-    procedure SetOutline(Value: string);
+    function GetOutline: TAylisColor;
+    procedure SetOutline(Value: TAylisColor);
     function GetOutlineWidth: Double;
     procedure SetOutlineWidth(Value: Double);
     function GetLineHeight: Double;
     procedure SetLineHeight(Value: Double);
-    function GetTextShadow: string;
-    procedure SetTextShadow(Value: string);
-    function GetFocusControl: string;
-    procedure SetFocusControl(Value: string);
+    function GetTextShadow: TAylisShadow;
+    procedure SetTextShadow(Value: TAylisShadow);
+    function GetFocusControl: TAylisComponent;
+    procedure SetFocusControl(Value: TAylisComponent);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -1411,14 +2284,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -1433,6 +2306,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -1443,20 +2318,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -1471,8 +2350,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -1485,32 +2364,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TLabelStyle;
+    procedure SetStyle(Value: TLabelStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -1525,35 +2404,73 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     function MinContentWidth: Double;
     function MaxContentWidth: Double;
     property Text: string read GetText write SetText;
-    property HAlign: string read GetHAlign write SetHAlign;
-    property VAlign: string read GetVAlign write SetVAlign;
+    property HAlign: TTextAlign read GetHAlign write SetHAlign;
+    property VAlign: TTextAlign read GetVAlign write SetVAlign;
     property Wrap: Boolean read GetWrap write SetWrap;
-    property Trimming: string read GetTrimming write SetTrimming;
+    property Trimming: TTrimming read GetTrimming write SetTrimming;
     property Bold: Boolean read GetBold write SetBold;
-    property Color: string read GetColor write SetColor;
+    property Color: TAylisColor read GetColor write SetColor;
     property Highlight: string read GetHighlight write SetHighlight;
     property LetterSpacing: Double read GetLetterSpacing write SetLetterSpacing;
-    property TextCase: string read GetTextCase write SetTextCase;
+    property TextCase: TTextCase read GetTextCase write SetTextCase;
     property Markup: Boolean read GetMarkup write SetMarkup;
-    property Outline: string read GetOutline write SetOutline;
+    property Outline: TAylisColor read GetOutline write SetOutline;
     property OutlineWidth: Double read GetOutlineWidth write SetOutlineWidth;
     property LineHeight: Double read GetLineHeight write SetLineHeight;
-    property TextShadow: string read GetTextShadow write SetTextShadow;
-    property FocusControl: string read GetFocusControl write SetFocusControl;
+    property TextShadow: TAylisShadow read GetTextShadow write SetTextShadow;
+    property FocusControl: TAylisComponent read GetFocusControl write SetFocusControl;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -1561,18 +2478,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -1580,26 +2500,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TLabelStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -1607,7 +2527,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Layout de um form. }
@@ -1633,14 +2572,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -1655,6 +2594,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -1665,20 +2606,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -1693,8 +2638,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -1707,32 +2652,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TLayoutStyle;
+    procedure SetStyle(Value: TLayoutStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -1747,8 +2692,46 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property AllowedChars: string read GetAllowedChars write SetAllowedChars;
     property BlockedChars: string read GetBlockedChars write SetBlockedChars;
@@ -1760,10 +2743,10 @@ type
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -1771,18 +2754,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -1790,26 +2776,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TLayoutStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -1817,7 +2803,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Panel de um form. }
@@ -1835,24 +2840,24 @@ type
     procedure SetCharMap(Value: string);
     function GetGap: Double;
     procedure SetGap(Value: Double);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetFill2: string;
-    procedure SetFill2(Value: string);
-    function GetFillMid: string;
-    procedure SetFillMid(Value: string);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetFill2: TAylisColor;
+    procedure SetFill2(Value: TAylisColor);
+    function GetFillMid: TAylisColor;
+    procedure SetFillMid(Value: TAylisColor);
     function GetFillMidAt: Double;
     procedure SetFillMidAt(Value: Double);
     function GetGradientAngle: Double;
     procedure SetGradientAngle(Value: Double);
     function GetGradientRadial: Boolean;
     procedure SetGradientRadial(Value: Boolean);
-    function GetStroke: string;
-    procedure SetStroke(Value: string);
+    function GetStroke: TAylisColor;
+    procedure SetStroke(Value: TAylisColor);
     function GetStrokeWidth: Double;
     procedure SetStrokeWidth(Value: Double);
-    function GetRadius: string;
-    procedure SetRadius(Value: string);
+    function GetRadius: TAylisBounds;
+    procedure SetRadius(Value: TAylisBounds);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -1861,14 +2866,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -1883,6 +2888,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -1893,20 +2900,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -1921,8 +2932,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -1935,30 +2946,30 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TPanelStyle;
+    procedure SetStyle(Value: TPanelStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -1973,8 +2984,46 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property AllowedChars: string read GetAllowedChars write SetAllowedChars;
     property BlockedChars: string read GetBlockedChars write SetBlockedChars;
@@ -1982,23 +3031,23 @@ type
     property CharsOverride: Boolean read GetCharsOverride write SetCharsOverride;
     property CharMap: string read GetCharMap write SetCharMap;
     property Gap: Double read GetGap write SetGap;
-    property Fill: string read GetFill write SetFill;
-    property Fill2: string read GetFill2 write SetFill2;
-    property FillMid: string read GetFillMid write SetFillMid;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property Fill2: TAylisColor read GetFill2 write SetFill2;
+    property FillMid: TAylisColor read GetFillMid write SetFillMid;
     property FillMidAt: Double read GetFillMidAt write SetFillMidAt;
     property GradientAngle: Double read GetGradientAngle write SetGradientAngle;
     property GradientRadial: Boolean read GetGradientRadial write SetGradientRadial;
-    property Stroke: string read GetStroke write SetStroke;
+    property Stroke: TAylisColor read GetStroke write SetStroke;
     property StrokeWidth: Double read GetStrokeWidth write SetStrokeWidth;
-    property Radius: string read GetRadius write SetRadius;
+    property Radius: TAylisBounds read GetRadius write SetRadius;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -2006,18 +3055,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -2025,25 +3077,25 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TPanelStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -2051,7 +3103,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Splitter de um form. }
@@ -2067,14 +3138,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -2089,6 +3160,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -2099,20 +3172,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -2127,8 +3204,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -2141,32 +3218,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TSplitterStyle;
+    procedure SetStyle(Value: TSplitterStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -2181,18 +3258,56 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property MinSize: Double read GetMinSize write SetMinSize;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -2200,18 +3315,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -2219,26 +3337,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TSplitterStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -2246,7 +3364,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { Um Svg de um form. }
@@ -2254,14 +3391,14 @@ type
   private
     function GetSource: string;
     procedure SetSource(Value: string);
-    function GetColor: string;
-    procedure SetColor(Value: string);
-    function GetFit: string;
-    procedure SetFit(Value: string);
-    function GetHighlight: string;
-    procedure SetHighlight(Value: string);
-    function GetHighlightColor: string;
-    procedure SetHighlightColor(Value: string);
+    function GetColor: TAylisColor;
+    procedure SetColor(Value: TAylisColor);
+    function GetFit: TImageFit;
+    procedure SetFit(Value: TImageFit);
+    function GetHighlight: TStringArray;
+    procedure SetHighlight(Value: TStringArray);
+    function GetHighlightColor: TAylisColor;
+    procedure SetHighlightColor(Value: TAylisColor);
     function GetZoomTo: string;
     procedure SetZoomTo(Value: string);
     function GetLeft: Double;
@@ -2272,14 +3409,14 @@ type
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -2294,6 +3431,8 @@ type
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -2304,20 +3443,24 @@ type
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -2332,8 +3475,8 @@ type
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -2346,32 +3489,32 @@ type
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TSvgStyle;
+    procedure SetStyle(Value: TSvgStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -2386,23 +3529,61 @@ type
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     property Source: string read GetSource write SetSource;
-    property Color: string read GetColor write SetColor;
-    property Fit: string read GetFit write SetFit;
-    property Highlight: string read GetHighlight write SetHighlight;
-    property HighlightColor: string read GetHighlightColor write SetHighlightColor;
+    property Color: TAylisColor read GetColor write SetColor;
+    property Fit: TImageFit read GetFit write SetFit;
+    property Highlight: TStringArray read GetHighlight write SetHighlight;
+    property HighlightColor: TAylisColor read GetHighlightColor write SetHighlightColor;
     property ZoomTo: string read GetZoomTo write SetZoomTo;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -2410,18 +3591,21 @@ type
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -2429,26 +3613,26 @@ type
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TSvgStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -2456,7 +3640,26 @@ type
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
   { O form frmIBGE: a classe base com os componentes. A do form (TFrmIBGE), com os
@@ -2563,67 +3766,306 @@ type
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O ClientDataSet deste form com o nome, como o FindComponent (nil se não há). }
+    { O ClientDataSet deste form com o nome (nil se não há). }
     function FindClientDataSet(const Nome: string): TClientDataSet;
     { O ClientDataSet que disparou o evento (nil se não é um ClientDataSet deste form). }
     function SenderAsClientDataSet(Sender: TAylisComponent): TClientDataSet; overload;
     function SenderAsClientDataSet(Event: TJSONObject): TClientDataSet; overload;
-    { O DBChart deste form com o nome, como o FindComponent (nil se não há). }
+    { O DBChart deste form com o nome (nil se não há). }
     function FindDBChart(const Nome: string): TDBChart;
     { O DBChart que disparou o evento (nil se não é um DBChart deste form). }
     function SenderAsDBChart(Sender: TAylisComponent): TDBChart; overload;
     function SenderAsDBChart(Event: TJSONObject): TDBChart; overload;
-    { O DataGrid deste form com o nome, como o FindComponent (nil se não há). }
+    { O DataGrid deste form com o nome (nil se não há). }
     function FindDataGrid(const Nome: string): TDataGrid;
     { O DataGrid que disparou o evento (nil se não é um DataGrid deste form). }
     function SenderAsDataGrid(Sender: TAylisComponent): TDataGrid; overload;
     function SenderAsDataGrid(Event: TJSONObject): TDataGrid; overload;
-    { O DataSource deste form com o nome, como o FindComponent (nil se não há). }
+    { O DataSource deste form com o nome (nil se não há). }
     function FindDataSource(const Nome: string): TDataSource;
     { O DataSource que disparou o evento (nil se não é um DataSource deste form). }
     function SenderAsDataSource(Sender: TAylisComponent): TDataSource; overload;
     function SenderAsDataSource(Event: TJSONObject): TDataSource; overload;
-    { O Field deste form com o nome, como o FindComponent (nil se não há). }
+    { O Field deste form com o nome (nil se não há). }
     function FindField(const Nome: string): TField;
     { O Field que disparou o evento (nil se não é um Field deste form). }
     function SenderAsField(Sender: TAylisComponent): TField; overload;
     function SenderAsField(Event: TJSONObject): TField; overload;
-    { O GroupBox deste form com o nome, como o FindComponent (nil se não há). }
+    { O GroupBox deste form com o nome (nil se não há). }
     function FindGroupBox(const Nome: string): TGroupBox;
     { O GroupBox que disparou o evento (nil se não é um GroupBox deste form). }
     function SenderAsGroupBox(Sender: TAylisComponent): TGroupBox; overload;
     function SenderAsGroupBox(Event: TJSONObject): TGroupBox; overload;
-    { O Image deste form com o nome, como o FindComponent (nil se não há). }
+    { O Image deste form com o nome (nil se não há). }
     function FindImage(const Nome: string): TImage;
     { O Image que disparou o evento (nil se não é um Image deste form). }
     function SenderAsImage(Sender: TAylisComponent): TImage; overload;
     function SenderAsImage(Event: TJSONObject): TImage; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
     function SenderAsLabel(Event: TJSONObject): TLabel; overload;
-    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    { O Layout deste form com o nome (nil se não há). }
     function FindLayout(const Nome: string): TLayout;
     { O Layout que disparou o evento (nil se não é um Layout deste form). }
     function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
     function SenderAsLayout(Event: TJSONObject): TLayout; overload;
-    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    { O Panel deste form com o nome (nil se não há). }
     function FindPanel(const Nome: string): TPanel;
     { O Panel que disparou o evento (nil se não é um Panel deste form). }
     function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
     function SenderAsPanel(Event: TJSONObject): TPanel; overload;
-    { O Splitter deste form com o nome, como o FindComponent (nil se não há). }
+    { O Splitter deste form com o nome (nil se não há). }
     function FindSplitter(const Nome: string): TSplitter;
     { O Splitter que disparou o evento (nil se não é um Splitter deste form). }
     function SenderAsSplitter(Sender: TAylisComponent): TSplitter; overload;
     function SenderAsSplitter(Event: TJSONObject): TSplitter; overload;
-    { O Svg deste form com o nome, como o FindComponent (nil se não há). }
+    { O Svg deste form com o nome (nil se não há). }
     function FindSvg(const Nome: string): TSvg;
     { O Svg que disparou o evento (nil se não é um Svg deste form). }
     function SenderAsSvg(Sender: TAylisComponent): TSvg; overload;
     function SenderAsSvg(Event: TJSONObject): TSvg; overload;
   end;
+
+function AsText(Data: TJSONData): string;
+function AsDate(Data: TJSONData): TDateTime;
+function AsTime(Data: TJSONData): TDateTime;
+function AsDateTime(Data: TJSONData): TDateTime;
+function AsList(Data: TJSONData): TStringArray;
+function AsNumbers(Data: TJSONData): TAylisDoubleArray;
+function AsColors(Data: TJSONData): TAylisColorArray;
+function AsDateRange(Data: TJSONData): TAylisDateRange;
+function AlignOf(Data: TJSONData): TAlign;
+function AlignSetOf(Data: TJSONData): TAlignSet;
+function AlignSetToJSON(const S: TAlignSet): TJSONData;
+function AnchorOf(Data: TJSONData): TAnchor;
+function AnchorSetOf(Data: TJSONData): TAnchorSet;
+function AnchorSetToJSON(const S: TAnchorSet): TJSONData;
+function ApplyModeOf(Data: TJSONData): TApplyMode;
+function ApplyModeSetOf(Data: TJSONData): TApplyModeSet;
+function ApplyModeSetToJSON(const S: TApplyModeSet): TJSONData;
+function BlendModeOf(Data: TJSONData): TBlendMode;
+function BlendModeSetOf(Data: TJSONData): TBlendModeSet;
+function BlendModeSetToJSON(const S: TBlendModeSet): TJSONData;
+function BorderStyleOf(Data: TJSONData): TBorderStyle;
+function BorderStyleSetOf(Data: TJSONData): TBorderStyleSet;
+function BorderStyleSetToJSON(const S: TBorderStyleSet): TJSONData;
+function CharCaseOf(Data: TJSONData): TCharCase;
+function CharCaseSetOf(Data: TJSONData): TCharCaseSet;
+function CharCaseSetToJSON(const S: TCharCaseSet): TJSONData;
+function ChartKindOf(Data: TJSONData): TChartKind;
+function ChartKindSetOf(Data: TJSONData): TChartKindSet;
+function ChartKindSetToJSON(const S: TChartKindSet): TJSONData;
+function ChartSeriesFillOf(Data: TJSONData): TChartSeriesFill;
+function ChartSeriesFillSetOf(Data: TJSONData): TChartSeriesFillSet;
+function ChartSeriesFillSetToJSON(const S: TChartSeriesFillSet): TJSONData;
+function ChartSeriesKindOf(Data: TJSONData): TChartSeriesKind;
+function ChartSeriesKindSetOf(Data: TJSONData): TChartSeriesKindSet;
+function ChartSeriesKindSetToJSON(const S: TChartSeriesKindSet): TJSONData;
+function ChartSeriesPointOf(Data: TJSONData): TChartSeriesPoint;
+function ChartSeriesPointSetOf(Data: TJSONData): TChartSeriesPointSet;
+function ChartSeriesPointSetToJSON(const S: TChartSeriesPointSet): TJSONData;
+function CloseActionOf(Data: TJSONData): TCloseAction;
+function CloseActionSetOf(Data: TJSONData): TCloseActionSet;
+function CloseActionSetToJSON(const S: TCloseActionSet): TJSONData;
+function CursorShapeOf(Data: TJSONData): TCursorShape;
+function CursorShapeSetOf(Data: TJSONData): TCursorShapeSet;
+function CursorShapeSetToJSON(const S: TCursorShapeSet): TJSONData;
+function DBChartStyleOf(Data: TJSONData): TDBChartStyle;
+function DBChartStyleSetOf(Data: TJSONData): TDBChartStyleSet;
+function DBChartStyleSetToJSON(const S: TDBChartStyleSet): TJSONData;
+function DataGridStyleOf(Data: TJSONData): TDataGridStyle;
+function DataGridStyleSetOf(Data: TJSONData): TDataGridStyleSet;
+function DataGridStyleSetToJSON(const S: TDataGridStyleSet): TJSONData;
+function FieldKindOf(Data: TJSONData): TFieldKind;
+function FieldKindSetOf(Data: TJSONData): TFieldKindSet;
+function FieldKindSetToJSON(const S: TFieldKindSet): TJSONData;
+function FieldTypeOf(Data: TJSONData): TFieldType;
+function FieldTypeSetOf(Data: TJSONData): TFieldTypeSet;
+function FieldTypeSetToJSON(const S: TFieldTypeSet): TJSONData;
+function FontWeightOf(Data: TJSONData): TFontWeight;
+function FontWeightSetOf(Data: TJSONData): TFontWeightSet;
+function FontWeightSetToJSON(const S: TFontWeightSet): TJSONData;
+function FormOrientationOf(Data: TJSONData): TFormOrientation;
+function FormOrientationSetOf(Data: TJSONData): TFormOrientationSet;
+function FormOrientationSetToJSON(const S: TFormOrientationSet): TJSONData;
+function FormPositionOf(Data: TJSONData): TFormPosition;
+function FormPositionSetOf(Data: TJSONData): TFormPositionSet;
+function FormPositionSetToJSON(const S: TFormPositionSet): TJSONData;
+function FormPresentOf(Data: TJSONData): TFormPresent;
+function FormPresentSetOf(Data: TJSONData): TFormPresentSet;
+function FormPresentSetToJSON(const S: TFormPresentSet): TJSONData;
+function FormStyleOf(Data: TJSONData): TFormStyle;
+function FormStyleSetOf(Data: TJSONData): TFormStyleSet;
+function FormStyleSetToJSON(const S: TFormStyleSet): TJSONData;
+function GridTotalFunctionOf(Data: TJSONData): TGridTotalFunction;
+function GridTotalFunctionSetOf(Data: TJSONData): TGridTotalFunctionSet;
+function GridTotalFunctionSetToJSON(const S: TGridTotalFunctionSet): TJSONData;
+function GroupBoxStyleOf(Data: TJSONData): TGroupBoxStyle;
+function GroupBoxStyleSetOf(Data: TJSONData): TGroupBoxStyleSet;
+function GroupBoxStyleSetToJSON(const S: TGroupBoxStyleSet): TJSONData;
+function HorizontalWheelOf(Data: TJSONData): THorizontalWheel;
+function HorizontalWheelSetOf(Data: TJSONData): THorizontalWheelSet;
+function HorizontalWheelSetToJSON(const S: THorizontalWheelSet): TJSONData;
+function ImageFitOf(Data: TJSONData): TImageFit;
+function ImageFitSetOf(Data: TJSONData): TImageFitSet;
+function ImageFitSetToJSON(const S: TImageFitSet): TJSONData;
+function ImageStyleOf(Data: TJSONData): TImageStyle;
+function ImageStyleSetOf(Data: TJSONData): TImageStyleSet;
+function ImageStyleSetToJSON(const S: TImageStyleSet): TJSONData;
+function LabelStyleOf(Data: TJSONData): TLabelStyle;
+function LabelStyleSetOf(Data: TJSONData): TLabelStyleSet;
+function LabelStyleSetToJSON(const S: TLabelStyleSet): TJSONData;
+function LayerCachingOf(Data: TJSONData): TLayerCaching;
+function LayerCachingSetOf(Data: TJSONData): TLayerCachingSet;
+function LayerCachingSetToJSON(const S: TLayerCachingSet): TJSONData;
+function LayoutStyleOf(Data: TJSONData): TLayoutStyle;
+function LayoutStyleSetOf(Data: TJSONData): TLayoutStyleSet;
+function LayoutStyleSetToJSON(const S: TLayoutStyleSet): TJSONData;
+function LegendPositionOf(Data: TJSONData): TLegendPosition;
+function LegendPositionSetOf(Data: TJSONData): TLegendPositionSet;
+function LegendPositionSetToJSON(const S: TLegendPositionSet): TJSONData;
+function OverscrollOf(Data: TJSONData): TOverscroll;
+function OverscrollSetOf(Data: TJSONData): TOverscrollSet;
+function OverscrollSetToJSON(const S: TOverscrollSet): TJSONData;
+function PanelStyleOf(Data: TJSONData): TPanelStyle;
+function PanelStyleSetOf(Data: TJSONData): TPanelStyleSet;
+function PanelStyleSetToJSON(const S: TPanelStyleSet): TJSONData;
+function RoundingOf(Data: TJSONData): TRounding;
+function RoundingSetOf(Data: TJSONData): TRoundingSet;
+function RoundingSetToJSON(const S: TRoundingSet): TJSONData;
+function SelfAlignOf(Data: TJSONData): TSelfAlign;
+function SelfAlignSetOf(Data: TJSONData): TSelfAlignSet;
+function SelfAlignSetToJSON(const S: TSelfAlignSet): TJSONData;
+function SplitterStyleOf(Data: TJSONData): TSplitterStyle;
+function SplitterStyleSetOf(Data: TJSONData): TSplitterStyleSet;
+function SplitterStyleSetToJSON(const S: TSplitterStyleSet): TJSONData;
+function SvgStyleOf(Data: TJSONData): TSvgStyle;
+function SvgStyleSetOf(Data: TJSONData): TSvgStyleSet;
+function SvgStyleSetToJSON(const S: TSvgStyleSet): TJSONData;
+function TextAlignOf(Data: TJSONData): TTextAlign;
+function TextAlignSetOf(Data: TJSONData): TTextAlignSet;
+function TextAlignSetToJSON(const S: TTextAlignSet): TJSONData;
+function TextCaseOf(Data: TJSONData): TTextCase;
+function TextCaseSetOf(Data: TJSONData): TTextCaseSet;
+function TextCaseSetToJSON(const S: TTextCaseSet): TJSONData;
+function ThemeNameOf(Data: TJSONData): TThemeName;
+function ThemeNameSetOf(Data: TJSONData): TThemeNameSet;
+function ThemeNameSetToJSON(const S: TThemeNameSet): TJSONData;
+function TitleAlignOf(Data: TJSONData): TTitleAlign;
+function TitleAlignSetOf(Data: TJSONData): TTitleAlignSet;
+function TitleAlignSetToJSON(const S: TTitleAlignSet): TJSONData;
+function TransitionOf(Data: TJSONData): TTransition;
+function TransitionSetOf(Data: TJSONData): TTransitionSet;
+function TransitionSetToJSON(const S: TTransitionSet): TJSONData;
+function TrimmingOf(Data: TJSONData): TTrimming;
+function TrimmingSetOf(Data: TJSONData): TTrimmingSet;
+function TrimmingSetToJSON(const S: TTrimmingSet): TJSONData;
+function ValueFormatOf(Data: TJSONData): TValueFormat;
+function ValueFormatSetOf(Data: TJSONData): TValueFormatSet;
+function ValueFormatSetToJSON(const S: TValueFormatSet): TJSONData;
+function WindowCornersOf(Data: TJSONData): TWindowCorners;
+function WindowCornersSetOf(Data: TJSONData): TWindowCornersSet;
+function WindowCornersSetToJSON(const S: TWindowCornersSet): TJSONData;
+function WindowShapeOf(Data: TJSONData): TWindowShape;
+function WindowShapeSetOf(Data: TJSONData): TWindowShapeSet;
+function WindowShapeSetToJSON(const S: TWindowShapeSet): TJSONData;
+function WindowStateOf(Data: TJSONData): TWindowState;
+function WindowStateSetOf(Data: TJSONData): TWindowStateSet;
+function WindowStateSetToJSON(const S: TWindowStateSet): TJSONData;
+function AylisJSONTexts(Data: TJSONData): TStringArray;
+function AylisJSONNumbers(Data: TJSONData): TAylisDoubleArray;
+function AylisTextsToJSON(const A: TStringArray): TJSONArray;
+function AylisNumbersToJSON(const A: TAylisDoubleArray): TJSONArray;
+function ChartSeriesFromJSON(Data: TJSONData): TChartSeries;
+function ChartSeriesListFromJSON(Data: TJSONData): TChartSeriesArray;
+function ChartSeriesFromText(Data: TJSONData): TChartSeries;
+function ChartSeriesListFromText(Data: TJSONData): TChartSeriesArray;
+function ChartSeriesToJSON(const R: TChartSeries): TJSONObject;
+function ChartSeriesListToJSON(const A: array of TChartSeries): TJSONArray;
+function ChartSeriesText(const R: TChartSeries): TJSONData;
+function ChartSeriesListText(const A: TChartSeriesArray): TJSONData;
+function ColumnSpecFromJSON(Data: TJSONData): TColumnSpec;
+function ColumnSpecListFromJSON(Data: TJSONData): TColumnSpecArray;
+function ColumnSpecFromText(Data: TJSONData): TColumnSpec;
+function ColumnSpecListFromText(Data: TJSONData): TColumnSpecArray;
+function ColumnSpecToJSON(const R: TColumnSpec): TJSONObject;
+function ColumnSpecListToJSON(const A: array of TColumnSpec): TJSONArray;
+function ColumnSpecText(const R: TColumnSpec): TJSONData;
+function ColumnSpecListText(const A: TColumnSpecArray): TJSONData;
+function FilterParamFromJSON(Data: TJSONData): TFilterParam;
+function FilterParamListFromJSON(Data: TJSONData): TFilterParamArray;
+function FilterParamFromText(Data: TJSONData): TFilterParam;
+function FilterParamListFromText(Data: TJSONData): TFilterParamArray;
+function FilterParamToJSON(const R: TFilterParam): TJSONObject;
+function FilterParamListToJSON(const A: array of TFilterParam): TJSONArray;
+function FilterParamText(const R: TFilterParam): TJSONData;
+function FilterParamListText(const A: TFilterParamArray): TJSONData;
+function GestureEventFromJSON(Data: TJSONData): TGestureEvent;
+function GestureEventListFromJSON(Data: TJSONData): TGestureEventArray;
+function GestureEventFromText(Data: TJSONData): TGestureEvent;
+function GestureEventListFromText(Data: TJSONData): TGestureEventArray;
+function GestureEventToJSON(const R: TGestureEvent): TJSONObject;
+function GestureEventListToJSON(const A: array of TGestureEvent): TJSONArray;
+function GestureEventText(const R: TGestureEvent): TJSONData;
+function GestureEventListText(const A: TGestureEventArray): TJSONData;
+function GridTotalFromJSON(Data: TJSONData): TGridTotal;
+function GridTotalListFromJSON(Data: TJSONData): TGridTotalArray;
+function GridTotalFromText(Data: TJSONData): TGridTotal;
+function GridTotalListFromText(Data: TJSONData): TGridTotalArray;
+function GridTotalToJSON(const R: TGridTotal): TJSONObject;
+function GridTotalListToJSON(const A: array of TGridTotal): TJSONArray;
+function GridTotalText(const R: TGridTotal): TJSONData;
+function GridTotalListText(const A: TGridTotalArray): TJSONData;
+function IndexDefFromJSON(Data: TJSONData): TIndexDef;
+function IndexDefListFromJSON(Data: TJSONData): TIndexDefArray;
+function IndexDefFromText(Data: TJSONData): TIndexDef;
+function IndexDefListFromText(Data: TJSONData): TIndexDefArray;
+function IndexDefToJSON(const R: TIndexDef): TJSONObject;
+function IndexDefListToJSON(const A: array of TIndexDef): TJSONArray;
+function IndexDefText(const R: TIndexDef): TJSONData;
+function IndexDefListText(const A: TIndexDefArray): TJSONData;
+function KeyEventFromJSON(Data: TJSONData): TKeyEvent;
+function KeyEventListFromJSON(Data: TJSONData): TKeyEventArray;
+function KeyEventFromText(Data: TJSONData): TKeyEvent;
+function KeyEventListFromText(Data: TJSONData): TKeyEventArray;
+function KeyEventToJSON(const R: TKeyEvent): TJSONObject;
+function KeyEventListToJSON(const A: array of TKeyEvent): TJSONArray;
+function KeyEventText(const R: TKeyEvent): TJSONData;
+function KeyEventListText(const A: TKeyEventArray): TJSONData;
+function MasterFieldFromJSON(Data: TJSONData): TMasterField;
+function MasterFieldListFromJSON(Data: TJSONData): TMasterFieldArray;
+function MasterFieldFromText(Data: TJSONData): TMasterField;
+function MasterFieldListFromText(Data: TJSONData): TMasterFieldArray;
+function MasterFieldToJSON(const R: TMasterField): TJSONObject;
+function MasterFieldListToJSON(const A: array of TMasterField): TJSONArray;
+function MasterFieldText(const R: TMasterField): TJSONData;
+function MasterFieldListText(const A: TMasterFieldArray): TJSONData;
+function PointerEventFromJSON(Data: TJSONData): TPointerEvent;
+function PointerEventListFromJSON(Data: TJSONData): TPointerEventArray;
+function PointerEventFromText(Data: TJSONData): TPointerEvent;
+function PointerEventListFromText(Data: TJSONData): TPointerEventArray;
+function PointerEventToJSON(const R: TPointerEvent): TJSONObject;
+function PointerEventListToJSON(const A: array of TPointerEvent): TJSONArray;
+function PointerEventText(const R: TPointerEvent): TJSONData;
+function PointerEventListText(const A: TPointerEventArray): TJSONData;
+function SwipeEventFromJSON(Data: TJSONData): TSwipeEvent;
+function SwipeEventListFromJSON(Data: TJSONData): TSwipeEventArray;
+function SwipeEventFromText(Data: TJSONData): TSwipeEvent;
+function SwipeEventListFromText(Data: TJSONData): TSwipeEventArray;
+function SwipeEventToJSON(const R: TSwipeEvent): TJSONObject;
+function SwipeEventListToJSON(const A: array of TSwipeEvent): TJSONArray;
+function SwipeEventText(const R: TSwipeEvent): TJSONData;
+function SwipeEventListText(const A: TSwipeEventArray): TJSONData;
+function WheelEventFromJSON(Data: TJSONData): TWheelEvent;
+function WheelEventListFromJSON(Data: TJSONData): TWheelEventArray;
+function WheelEventFromText(Data: TJSONData): TWheelEvent;
+function WheelEventListFromText(Data: TJSONData): TWheelEventArray;
+function WheelEventToJSON(const R: TWheelEvent): TJSONObject;
+function WheelEventListToJSON(const A: array of TWheelEvent): TJSONArray;
+function WheelEventText(const R: TWheelEvent): TJSONData;
+function WheelEventListText(const A: TWheelEventArray): TJSONData;
 
 implementation
 
@@ -2633,6 +4075,3097 @@ begin
     Result := ''
   else
     Result := Data.AsString;
+end;
+
+var
+  AylisFormat: TFormatSettings;
+
+function AsDate(Data: TJSONData): TDateTime;
+var
+  S: string;
+  Y, M, D: Integer;
+begin
+  Result := 0;
+  S := AsText(Data);
+  if (Length(S) >= 10) and TryStrToInt(Copy(S, 1, 4), Y) and TryStrToInt(Copy(S, 6, 2), M) and TryStrToInt(Copy(S, 9, 2), D) then
+    TryEncodeDate(Y, M, D, Result);
+end;
+
+function AsTime(Data: TJSONData): TDateTime;
+var
+  S: string;
+  H, M, Sec: Integer;
+begin
+  Result := -1;
+  S := AsText(Data);
+  Sec := 0;
+  if (Length(S) >= 5) and TryStrToInt(Copy(S, 1, 2), H) and TryStrToInt(Copy(S, 4, 2), M) and ((Length(S) < 8) or TryStrToInt(Copy(S, 7, 2), Sec)) then
+    if not TryEncodeTime(H, M, Sec, 0, Result) then
+      Result := -1;
+end;
+
+function AsDateTime(Data: TJSONData): TDateTime;
+var
+  S: string;
+  T: TJSONString;
+  Hora: TDateTime;
+begin
+  S := AsText(Data);
+  T := TJSONString.Create(Copy(S, 1, 10));
+  try
+    Result := AsDate(T);
+  finally
+    T.Free;
+  end;
+  if (Result <> 0) and (Length(S) > 11) then
+  begin
+    T := TJSONString.Create(Copy(S, 12, 8));
+    try
+      Hora := AsTime(T);
+    finally
+      T.Free;
+    end;
+    if Hora >= 0 then
+      Result := Result + Hora;
+  end;
+end;
+
+function DateText(D: TDateTime): TJSONData;
+begin
+  if D = 0 then
+    Result := TJSONString.Create('')
+  else
+    Result := TJSONString.Create(FormatDateTime('yyyy"-"mm"-"dd', D));
+end;
+
+function TimeText(T: TDateTime): TJSONData;
+begin
+  if T < 0 then
+    Result := TJSONString.Create('')
+  else if SecondOf(T) = 0 then
+    Result := TJSONString.Create(FormatDateTime('hh":"nn', T))
+  else
+    Result := TJSONString.Create(FormatDateTime('hh":"nn":"ss', T));
+end;
+
+function DateTimeText(D: TDateTime): TJSONData;
+begin
+  if D = 0 then
+    Result := TJSONString.Create('')
+  else if SecondOf(D) = 0 then
+    Result := TJSONString.Create(FormatDateTime('yyyy"-"mm"-"dd"T"hh":"nn', D))
+  else
+    Result := TJSONString.Create(FormatDateTime('yyyy"-"mm"-"dd"T"hh":"nn":"ss', D));
+end;
+
+function AsList(Data: TJSONData): TStringArray;
+var
+  Partes: TStringArray;
+  P: string;
+begin
+  Result := nil;
+  Partes := AsText(Data).Split(';');
+  for P in Partes do
+    if Trim(P) <> '' then
+      Insert(Trim(P), Result, Length(Result));
+end;
+
+function AsNumbers(Data: TJSONData): TAylisDoubleArray;
+var
+  P: string;
+  V: Double;
+begin
+  Result := nil;
+  for P in AsList(Data) do
+    if TryStrToFloat(P, V, AylisFormat) then
+      Insert(V, Result, Length(Result));
+end;
+
+function AsColors(Data: TJSONData): TAylisColorArray;
+var
+  P: string;
+begin
+  Result := nil;
+  for P in AsList(Data) do
+    if (P <> '') and (P[1] = '#') then
+      Insert(AylisColorHex(P), Result, Length(Result));
+end;
+
+function ListText(const A: TStringArray): TJSONData;
+begin
+  Result := TJSONString.Create(string.Join(';', A));
+end;
+
+function NumbersText(const A: TAylisDoubleArray): TJSONData;
+var
+  I: Integer;
+  S: string;
+begin
+  S := '';
+  for I := 0 to High(A) do
+  begin
+    if I > 0 then
+      S := S + ';';
+    S := S + FloatToStr(A[I], AylisFormat);
+  end;
+  Result := TJSONString.Create(S);
+end;
+
+function ColorsText(const A: TAylisColorArray): TJSONData;
+var
+  I: Integer;
+  S: string;
+  C: TJSONData;
+begin
+  S := '';
+  for I := 0 to High(A) do
+  begin
+    if I > 0 then
+      S := S + ';';
+    C := AylisColorToJSON(A[I]);
+    try
+      S := S + C.AsString;
+    finally
+      C.Free;
+    end;
+  end;
+  Result := TJSONString.Create(S);
+end;
+
+
+function AsDateRange(Data: TJSONData): TAylisDateRange;
+var
+  S: string;
+  I: Integer;
+  T: TJSONString;
+begin
+  S := AsText(Data);
+  I := Pos(';', S);
+  if I = 0 then
+    I := Length(S) + 1;
+  T := TJSONString.Create(Trim(Copy(S, 1, I - 1)));
+  try
+    Result.StartDate := AsDate(T);
+  finally
+    T.Free;
+  end;
+  T := TJSONString.Create(Trim(Copy(S, I + 1, MaxInt)));
+  try
+    Result.EndDate := AsDate(T);
+  finally
+    T.Free;
+  end;
+end;
+const
+  AlignNames: array[TAlign] of string = ('none', 'top', 'bottom', 'left', 'right', 'most_top', 'most_bottom', 'most_left', 'most_right', 'client', 'contents', 'center', 'vert_center', 'horz_center', 'horizontal', 'vertical', 'fit');
+
+function AlignOf(Data: TJSONData): TAlign;
+var
+  V: TAlign;
+begin
+  Result := Low(TAlign);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TAlign) to High(TAlign) do
+      if AlignNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function AlignSetOf(Data: TJSONData): TAlignSet;
+var
+  I: Integer;
+  V: TAlign;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TAlign) to High(TAlign) do
+      if AlignNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function AlignSetToJSON(const S: TAlignSet): TJSONData;
+var
+  V: TAlign;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TAlign) to High(TAlign) do
+    if V in S then
+      TJSONArray(Result).Add(AlignNames[V]);
+end;
+
+const
+  AnchorNames: array[TAnchor] of string = ('left', 'top', 'right', 'bottom');
+
+function AnchorOf(Data: TJSONData): TAnchor;
+var
+  V: TAnchor;
+begin
+  Result := Low(TAnchor);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TAnchor) to High(TAnchor) do
+      if AnchorNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function AnchorSetOf(Data: TJSONData): TAnchorSet;
+var
+  I: Integer;
+  V: TAnchor;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TAnchor) to High(TAnchor) do
+      if AnchorNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function AnchorSetToJSON(const S: TAnchorSet): TJSONData;
+var
+  V: TAnchor;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TAnchor) to High(TAnchor) do
+    if V in S then
+      TJSONArray(Result).Add(AnchorNames[V]);
+end;
+
+const
+  ApplyModeNames: array[TApplyMode] of string = ('cached', 'on_post');
+
+function ApplyModeOf(Data: TJSONData): TApplyMode;
+var
+  V: TApplyMode;
+begin
+  Result := Low(TApplyMode);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TApplyMode) to High(TApplyMode) do
+      if ApplyModeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ApplyModeSetOf(Data: TJSONData): TApplyModeSet;
+var
+  I: Integer;
+  V: TApplyMode;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TApplyMode) to High(TApplyMode) do
+      if ApplyModeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ApplyModeSetToJSON(const S: TApplyModeSet): TJSONData;
+var
+  V: TApplyMode;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TApplyMode) to High(TApplyMode) do
+    if V in S then
+      TJSONArray(Result).Add(ApplyModeNames[V]);
+end;
+
+const
+  BlendModeNames: array[TBlendMode] of string = ('normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color_dodge', 'color_burn', 'hard_light', 'soft_light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity');
+
+function BlendModeOf(Data: TJSONData): TBlendMode;
+var
+  V: TBlendMode;
+begin
+  Result := Low(TBlendMode);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TBlendMode) to High(TBlendMode) do
+      if BlendModeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function BlendModeSetOf(Data: TJSONData): TBlendModeSet;
+var
+  I: Integer;
+  V: TBlendMode;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TBlendMode) to High(TBlendMode) do
+      if BlendModeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function BlendModeSetToJSON(const S: TBlendModeSet): TJSONData;
+var
+  V: TBlendMode;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TBlendMode) to High(TBlendMode) do
+    if V in S then
+      TJSONArray(Result).Add(BlendModeNames[V]);
+end;
+
+const
+  BorderStyleNames: array[TBorderStyle] of string = ('sizeable', 'single', 'none', 'custom');
+
+function BorderStyleOf(Data: TJSONData): TBorderStyle;
+var
+  V: TBorderStyle;
+begin
+  Result := Low(TBorderStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TBorderStyle) to High(TBorderStyle) do
+      if BorderStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function BorderStyleSetOf(Data: TJSONData): TBorderStyleSet;
+var
+  I: Integer;
+  V: TBorderStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TBorderStyle) to High(TBorderStyle) do
+      if BorderStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function BorderStyleSetToJSON(const S: TBorderStyleSet): TJSONData;
+var
+  V: TBorderStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TBorderStyle) to High(TBorderStyle) do
+    if V in S then
+      TJSONArray(Result).Add(BorderStyleNames[V]);
+end;
+
+const
+  CharCaseNames: array[TCharCase] of string = ('normal', 'upper', 'lower');
+
+function CharCaseOf(Data: TJSONData): TCharCase;
+var
+  V: TCharCase;
+begin
+  Result := Low(TCharCase);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TCharCase) to High(TCharCase) do
+      if CharCaseNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function CharCaseSetOf(Data: TJSONData): TCharCaseSet;
+var
+  I: Integer;
+  V: TCharCase;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TCharCase) to High(TCharCase) do
+      if CharCaseNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function CharCaseSetToJSON(const S: TCharCaseSet): TJSONData;
+var
+  V: TCharCase;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TCharCase) to High(TCharCase) do
+    if V in S then
+      TJSONArray(Result).Add(CharCaseNames[V]);
+end;
+
+const
+  ChartKindNames: array[TChartKind] of string = ('line', 'bar', 'area', 'pie', 'donut', 'sparkline', 'heatmap', 'scatter', 'stacked_bar', 'waterfall', 'funnel', 'treemap', 'radar', 'horizontal_bar', 'bubble', 'polar_area', 'stacked_line', 'stacked_area', 'mixed', 'sankey', 'waffle');
+
+function ChartKindOf(Data: TJSONData): TChartKind;
+var
+  V: TChartKind;
+begin
+  Result := Low(TChartKind);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TChartKind) to High(TChartKind) do
+      if ChartKindNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ChartKindSetOf(Data: TJSONData): TChartKindSet;
+var
+  I: Integer;
+  V: TChartKind;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TChartKind) to High(TChartKind) do
+      if ChartKindNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ChartKindSetToJSON(const S: TChartKindSet): TJSONData;
+var
+  V: TChartKind;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TChartKind) to High(TChartKind) do
+    if V in S then
+      TJSONArray(Result).Add(ChartKindNames[V]);
+end;
+
+const
+  ChartSeriesFillNames: array[TChartSeriesFill] of string = ('none', 'origin', 'start', 'end', 'series');
+
+function ChartSeriesFillOf(Data: TJSONData): TChartSeriesFill;
+var
+  V: TChartSeriesFill;
+begin
+  Result := Low(TChartSeriesFill);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TChartSeriesFill) to High(TChartSeriesFill) do
+      if ChartSeriesFillNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ChartSeriesFillSetOf(Data: TJSONData): TChartSeriesFillSet;
+var
+  I: Integer;
+  V: TChartSeriesFill;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TChartSeriesFill) to High(TChartSeriesFill) do
+      if ChartSeriesFillNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ChartSeriesFillSetToJSON(const S: TChartSeriesFillSet): TJSONData;
+var
+  V: TChartSeriesFill;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TChartSeriesFill) to High(TChartSeriesFill) do
+    if V in S then
+      TJSONArray(Result).Add(ChartSeriesFillNames[V]);
+end;
+
+const
+  ChartSeriesKindNames: array[TChartSeriesKind] of string = ('line', 'bar', 'area', 'scatter');
+
+function ChartSeriesKindOf(Data: TJSONData): TChartSeriesKind;
+var
+  V: TChartSeriesKind;
+begin
+  Result := Low(TChartSeriesKind);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TChartSeriesKind) to High(TChartSeriesKind) do
+      if ChartSeriesKindNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ChartSeriesKindSetOf(Data: TJSONData): TChartSeriesKindSet;
+var
+  I: Integer;
+  V: TChartSeriesKind;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TChartSeriesKind) to High(TChartSeriesKind) do
+      if ChartSeriesKindNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ChartSeriesKindSetToJSON(const S: TChartSeriesKindSet): TJSONData;
+var
+  V: TChartSeriesKind;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TChartSeriesKind) to High(TChartSeriesKind) do
+    if V in S then
+      TJSONArray(Result).Add(ChartSeriesKindNames[V]);
+end;
+
+const
+  ChartSeriesPointNames: array[TChartSeriesPoint] of string = ('circle', 'square', 'triangle', 'diamond', 'cross', 'none');
+
+function ChartSeriesPointOf(Data: TJSONData): TChartSeriesPoint;
+var
+  V: TChartSeriesPoint;
+begin
+  Result := Low(TChartSeriesPoint);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TChartSeriesPoint) to High(TChartSeriesPoint) do
+      if ChartSeriesPointNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ChartSeriesPointSetOf(Data: TJSONData): TChartSeriesPointSet;
+var
+  I: Integer;
+  V: TChartSeriesPoint;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TChartSeriesPoint) to High(TChartSeriesPoint) do
+      if ChartSeriesPointNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ChartSeriesPointSetToJSON(const S: TChartSeriesPointSet): TJSONData;
+var
+  V: TChartSeriesPoint;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TChartSeriesPoint) to High(TChartSeriesPoint) do
+    if V in S then
+      TJSONArray(Result).Add(ChartSeriesPointNames[V]);
+end;
+
+const
+  CloseActionNames: array[TCloseAction] of string = ('hide', 'free');
+
+function CloseActionOf(Data: TJSONData): TCloseAction;
+var
+  V: TCloseAction;
+begin
+  Result := Low(TCloseAction);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TCloseAction) to High(TCloseAction) do
+      if CloseActionNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function CloseActionSetOf(Data: TJSONData): TCloseActionSet;
+var
+  I: Integer;
+  V: TCloseAction;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TCloseAction) to High(TCloseAction) do
+      if CloseActionNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function CloseActionSetToJSON(const S: TCloseActionSet): TJSONData;
+var
+  V: TCloseAction;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TCloseAction) to High(TCloseAction) do
+    if V in S then
+      TJSONArray(Result).Add(CloseActionNames[V]);
+end;
+
+const
+  CursorShapeNames: array[TCursorShape] of string = ('default', 'pointer', 'text', 'wait', 'crosshair', 'move', 'not_allowed', 'resize_horizontal', 'resize_vertical', 'resize_ne_sw', 'resize_nw_se', 'grab', 'grabbing', 'none');
+
+function CursorShapeOf(Data: TJSONData): TCursorShape;
+var
+  V: TCursorShape;
+begin
+  Result := Low(TCursorShape);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TCursorShape) to High(TCursorShape) do
+      if CursorShapeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function CursorShapeSetOf(Data: TJSONData): TCursorShapeSet;
+var
+  I: Integer;
+  V: TCursorShape;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TCursorShape) to High(TCursorShape) do
+      if CursorShapeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function CursorShapeSetToJSON(const S: TCursorShapeSet): TJSONData;
+var
+  V: TCursorShape;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TCursorShape) to High(TCursorShape) do
+    if V in S then
+      TJSONArray(Result).Add(CursorShapeNames[V]);
+end;
+
+const
+  DBChartStyleNames: array[TDBChartStyle] of string = ('');
+
+function DBChartStyleOf(Data: TJSONData): TDBChartStyle;
+var
+  V: TDBChartStyle;
+begin
+  Result := Low(TDBChartStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TDBChartStyle) to High(TDBChartStyle) do
+      if DBChartStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function DBChartStyleSetOf(Data: TJSONData): TDBChartStyleSet;
+var
+  I: Integer;
+  V: TDBChartStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TDBChartStyle) to High(TDBChartStyle) do
+      if DBChartStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function DBChartStyleSetToJSON(const S: TDBChartStyleSet): TJSONData;
+var
+  V: TDBChartStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TDBChartStyle) to High(TDBChartStyle) do
+    if V in S then
+      TJSONArray(Result).Add(DBChartStyleNames[V]);
+end;
+
+const
+  DataGridStyleNames: array[TDataGridStyle] of string = ('');
+
+function DataGridStyleOf(Data: TJSONData): TDataGridStyle;
+var
+  V: TDataGridStyle;
+begin
+  Result := Low(TDataGridStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TDataGridStyle) to High(TDataGridStyle) do
+      if DataGridStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function DataGridStyleSetOf(Data: TJSONData): TDataGridStyleSet;
+var
+  I: Integer;
+  V: TDataGridStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TDataGridStyle) to High(TDataGridStyle) do
+      if DataGridStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function DataGridStyleSetToJSON(const S: TDataGridStyleSet): TJSONData;
+var
+  V: TDataGridStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TDataGridStyle) to High(TDataGridStyle) do
+    if V in S then
+      TJSONArray(Result).Add(DataGridStyleNames[V]);
+end;
+
+const
+  FieldKindNames: array[TFieldKind] of string = ('data', 'calculated', 'lookup');
+
+function FieldKindOf(Data: TJSONData): TFieldKind;
+var
+  V: TFieldKind;
+begin
+  Result := Low(TFieldKind);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFieldKind) to High(TFieldKind) do
+      if FieldKindNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FieldKindSetOf(Data: TJSONData): TFieldKindSet;
+var
+  I: Integer;
+  V: TFieldKind;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFieldKind) to High(TFieldKind) do
+      if FieldKindNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FieldKindSetToJSON(const S: TFieldKindSet): TJSONData;
+var
+  V: TFieldKind;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFieldKind) to High(TFieldKind) do
+    if V in S then
+      TJSONArray(Result).Add(FieldKindNames[V]);
+end;
+
+const
+  FieldTypeNames: array[TFieldType] of string = ('string', 'memo', 'integer', 'float', 'currency', 'boolean', 'date', 'time', 'datetime', 'blob', 'auto_inc', 'timestamp');
+
+function FieldTypeOf(Data: TJSONData): TFieldType;
+var
+  V: TFieldType;
+begin
+  Result := Low(TFieldType);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFieldType) to High(TFieldType) do
+      if FieldTypeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FieldTypeSetOf(Data: TJSONData): TFieldTypeSet;
+var
+  I: Integer;
+  V: TFieldType;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFieldType) to High(TFieldType) do
+      if FieldTypeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FieldTypeSetToJSON(const S: TFieldTypeSet): TJSONData;
+var
+  V: TFieldType;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFieldType) to High(TFieldType) do
+    if V in S then
+      TJSONArray(Result).Add(FieldTypeNames[V]);
+end;
+
+const
+  FontWeightNames: array[TFontWeight] of string = ('default', 'thin', 'light', 'normal', 'medium', 'semibold', 'bold', 'black');
+
+function FontWeightOf(Data: TJSONData): TFontWeight;
+var
+  V: TFontWeight;
+begin
+  Result := Low(TFontWeight);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFontWeight) to High(TFontWeight) do
+      if FontWeightNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FontWeightSetOf(Data: TJSONData): TFontWeightSet;
+var
+  I: Integer;
+  V: TFontWeight;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFontWeight) to High(TFontWeight) do
+      if FontWeightNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FontWeightSetToJSON(const S: TFontWeightSet): TJSONData;
+var
+  V: TFontWeight;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFontWeight) to High(TFontWeight) do
+    if V in S then
+      TJSONArray(Result).Add(FontWeightNames[V]);
+end;
+
+const
+  FormOrientationNames: array[TFormOrientation] of string = ('project', 'any', 'portrait', 'landscape', 'sensor_portrait', 'sensor_landscape');
+
+function FormOrientationOf(Data: TJSONData): TFormOrientation;
+var
+  V: TFormOrientation;
+begin
+  Result := Low(TFormOrientation);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFormOrientation) to High(TFormOrientation) do
+      if FormOrientationNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FormOrientationSetOf(Data: TJSONData): TFormOrientationSet;
+var
+  I: Integer;
+  V: TFormOrientation;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFormOrientation) to High(TFormOrientation) do
+      if FormOrientationNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FormOrientationSetToJSON(const S: TFormOrientationSet): TJSONData;
+var
+  V: TFormOrientation;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFormOrientation) to High(TFormOrientation) do
+    if V in S then
+      TJSONArray(Result).Add(FormOrientationNames[V]);
+end;
+
+const
+  FormPositionNames: array[TFormPosition] of string = ('center', 'screen_center', 'designed', 'default', 'top_left', 'top_right', 'bottom_left', 'bottom_right');
+
+function FormPositionOf(Data: TJSONData): TFormPosition;
+var
+  V: TFormPosition;
+begin
+  Result := Low(TFormPosition);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFormPosition) to High(TFormPosition) do
+      if FormPositionNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FormPositionSetOf(Data: TJSONData): TFormPositionSet;
+var
+  I: Integer;
+  V: TFormPosition;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFormPosition) to High(TFormPosition) do
+      if FormPositionNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FormPositionSetToJSON(const S: TFormPositionSet): TJSONData;
+var
+  V: TFormPosition;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFormPosition) to High(TFormPosition) do
+    if V in S then
+      TJSONArray(Result).Add(FormPositionNames[V]);
+end;
+
+const
+  FormPresentNames: array[TFormPresent] of string = ('project', 'window', 'composition', 'composed');
+
+function FormPresentOf(Data: TJSONData): TFormPresent;
+var
+  V: TFormPresent;
+begin
+  Result := Low(TFormPresent);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFormPresent) to High(TFormPresent) do
+      if FormPresentNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FormPresentSetOf(Data: TJSONData): TFormPresentSet;
+var
+  I: Integer;
+  V: TFormPresent;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFormPresent) to High(TFormPresent) do
+      if FormPresentNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FormPresentSetToJSON(const S: TFormPresentSet): TJSONData;
+var
+  V: TFormPresent;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFormPresent) to High(TFormPresent) do
+    if V in S then
+      TJSONArray(Result).Add(FormPresentNames[V]);
+end;
+
+const
+  FormStyleNames: array[TFormStyle] of string = ('');
+
+function FormStyleOf(Data: TJSONData): TFormStyle;
+var
+  V: TFormStyle;
+begin
+  Result := Low(TFormStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFormStyle) to High(TFormStyle) do
+      if FormStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FormStyleSetOf(Data: TJSONData): TFormStyleSet;
+var
+  I: Integer;
+  V: TFormStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFormStyle) to High(TFormStyle) do
+      if FormStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FormStyleSetToJSON(const S: TFormStyleSet): TJSONData;
+var
+  V: TFormStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFormStyle) to High(TFormStyle) do
+    if V in S then
+      TJSONArray(Result).Add(FormStyleNames[V]);
+end;
+
+const
+  GridTotalFunctionNames: array[TGridTotalFunction] of string = ('sum', 'avg', 'min', 'max', 'count');
+
+function GridTotalFunctionOf(Data: TJSONData): TGridTotalFunction;
+var
+  V: TGridTotalFunction;
+begin
+  Result := Low(TGridTotalFunction);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TGridTotalFunction) to High(TGridTotalFunction) do
+      if GridTotalFunctionNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function GridTotalFunctionSetOf(Data: TJSONData): TGridTotalFunctionSet;
+var
+  I: Integer;
+  V: TGridTotalFunction;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TGridTotalFunction) to High(TGridTotalFunction) do
+      if GridTotalFunctionNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function GridTotalFunctionSetToJSON(const S: TGridTotalFunctionSet): TJSONData;
+var
+  V: TGridTotalFunction;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TGridTotalFunction) to High(TGridTotalFunction) do
+    if V in S then
+      TJSONArray(Result).Add(GridTotalFunctionNames[V]);
+end;
+
+const
+  GroupBoxStyleNames: array[TGroupBoxStyle] of string = ('');
+
+function GroupBoxStyleOf(Data: TJSONData): TGroupBoxStyle;
+var
+  V: TGroupBoxStyle;
+begin
+  Result := Low(TGroupBoxStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TGroupBoxStyle) to High(TGroupBoxStyle) do
+      if GroupBoxStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function GroupBoxStyleSetOf(Data: TJSONData): TGroupBoxStyleSet;
+var
+  I: Integer;
+  V: TGroupBoxStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TGroupBoxStyle) to High(TGroupBoxStyle) do
+      if GroupBoxStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function GroupBoxStyleSetToJSON(const S: TGroupBoxStyleSet): TJSONData;
+var
+  V: TGroupBoxStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TGroupBoxStyle) to High(TGroupBoxStyle) do
+    if V in S then
+      TJSONArray(Result).Add(GroupBoxStyleNames[V]);
+end;
+
+const
+  HorizontalWheelNames: array[THorizontalWheel] of string = ('shift', 'always', 'none');
+
+function HorizontalWheelOf(Data: TJSONData): THorizontalWheel;
+var
+  V: THorizontalWheel;
+begin
+  Result := Low(THorizontalWheel);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(THorizontalWheel) to High(THorizontalWheel) do
+      if HorizontalWheelNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function HorizontalWheelSetOf(Data: TJSONData): THorizontalWheelSet;
+var
+  I: Integer;
+  V: THorizontalWheel;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(THorizontalWheel) to High(THorizontalWheel) do
+      if HorizontalWheelNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function HorizontalWheelSetToJSON(const S: THorizontalWheelSet): TJSONData;
+var
+  V: THorizontalWheel;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(THorizontalWheel) to High(THorizontalWheel) do
+    if V in S then
+      TJSONArray(Result).Add(HorizontalWheelNames[V]);
+end;
+
+const
+  ImageFitNames: array[TImageFit] of string = ('contain', 'cover', 'stretch', 'center', 'original');
+
+function ImageFitOf(Data: TJSONData): TImageFit;
+var
+  V: TImageFit;
+begin
+  Result := Low(TImageFit);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TImageFit) to High(TImageFit) do
+      if ImageFitNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ImageFitSetOf(Data: TJSONData): TImageFitSet;
+var
+  I: Integer;
+  V: TImageFit;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TImageFit) to High(TImageFit) do
+      if ImageFitNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ImageFitSetToJSON(const S: TImageFitSet): TJSONData;
+var
+  V: TImageFit;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TImageFit) to High(TImageFit) do
+    if V in S then
+      TJSONArray(Result).Add(ImageFitNames[V]);
+end;
+
+const
+  ImageStyleNames: array[TImageStyle] of string = ('');
+
+function ImageStyleOf(Data: TJSONData): TImageStyle;
+var
+  V: TImageStyle;
+begin
+  Result := Low(TImageStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TImageStyle) to High(TImageStyle) do
+      if ImageStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ImageStyleSetOf(Data: TJSONData): TImageStyleSet;
+var
+  I: Integer;
+  V: TImageStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TImageStyle) to High(TImageStyle) do
+      if ImageStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ImageStyleSetToJSON(const S: TImageStyleSet): TJSONData;
+var
+  V: TImageStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TImageStyle) to High(TImageStyle) do
+    if V in S then
+      TJSONArray(Result).Add(ImageStyleNames[V]);
+end;
+
+const
+  LabelStyleNames: array[TLabelStyle] of string = ('', 'caption', 'error', 'heading', 'kbd', 'link', 'mono', 'muted', 'title');
+
+function LabelStyleOf(Data: TJSONData): TLabelStyle;
+var
+  V: TLabelStyle;
+begin
+  Result := Low(TLabelStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TLabelStyle) to High(TLabelStyle) do
+      if LabelStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function LabelStyleSetOf(Data: TJSONData): TLabelStyleSet;
+var
+  I: Integer;
+  V: TLabelStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TLabelStyle) to High(TLabelStyle) do
+      if LabelStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function LabelStyleSetToJSON(const S: TLabelStyleSet): TJSONData;
+var
+  V: TLabelStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TLabelStyle) to High(TLabelStyle) do
+    if V in S then
+      TJSONArray(Result).Add(LabelStyleNames[V]);
+end;
+
+const
+  LayerCachingNames: array[TLayerCaching] of string = ('project', 'on', 'off');
+
+function LayerCachingOf(Data: TJSONData): TLayerCaching;
+var
+  V: TLayerCaching;
+begin
+  Result := Low(TLayerCaching);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TLayerCaching) to High(TLayerCaching) do
+      if LayerCachingNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function LayerCachingSetOf(Data: TJSONData): TLayerCachingSet;
+var
+  I: Integer;
+  V: TLayerCaching;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TLayerCaching) to High(TLayerCaching) do
+      if LayerCachingNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function LayerCachingSetToJSON(const S: TLayerCachingSet): TJSONData;
+var
+  V: TLayerCaching;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TLayerCaching) to High(TLayerCaching) do
+    if V in S then
+      TJSONArray(Result).Add(LayerCachingNames[V]);
+end;
+
+const
+  LayoutStyleNames: array[TLayoutStyle] of string = ('');
+
+function LayoutStyleOf(Data: TJSONData): TLayoutStyle;
+var
+  V: TLayoutStyle;
+begin
+  Result := Low(TLayoutStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TLayoutStyle) to High(TLayoutStyle) do
+      if LayoutStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function LayoutStyleSetOf(Data: TJSONData): TLayoutStyleSet;
+var
+  I: Integer;
+  V: TLayoutStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TLayoutStyle) to High(TLayoutStyle) do
+      if LayoutStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function LayoutStyleSetToJSON(const S: TLayoutStyleSet): TJSONData;
+var
+  V: TLayoutStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TLayoutStyle) to High(TLayoutStyle) do
+    if V in S then
+      TJSONArray(Result).Add(LayoutStyleNames[V]);
+end;
+
+const
+  LegendPositionNames: array[TLegendPosition] of string = ('top_right', 'top_left', 'top', 'bottom');
+
+function LegendPositionOf(Data: TJSONData): TLegendPosition;
+var
+  V: TLegendPosition;
+begin
+  Result := Low(TLegendPosition);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TLegendPosition) to High(TLegendPosition) do
+      if LegendPositionNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function LegendPositionSetOf(Data: TJSONData): TLegendPositionSet;
+var
+  I: Integer;
+  V: TLegendPosition;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TLegendPosition) to High(TLegendPosition) do
+      if LegendPositionNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function LegendPositionSetToJSON(const S: TLegendPositionSet): TJSONData;
+var
+  V: TLegendPosition;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TLegendPosition) to High(TLegendPosition) do
+    if V in S then
+      TJSONArray(Result).Add(LegendPositionNames[V]);
+end;
+
+const
+  OverscrollNames: array[TOverscroll] of string = ('auto', 'glow', 'stretch', 'bounce', 'none');
+
+function OverscrollOf(Data: TJSONData): TOverscroll;
+var
+  V: TOverscroll;
+begin
+  Result := Low(TOverscroll);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TOverscroll) to High(TOverscroll) do
+      if OverscrollNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function OverscrollSetOf(Data: TJSONData): TOverscrollSet;
+var
+  I: Integer;
+  V: TOverscroll;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TOverscroll) to High(TOverscroll) do
+      if OverscrollNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function OverscrollSetToJSON(const S: TOverscrollSet): TJSONData;
+var
+  V: TOverscroll;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TOverscroll) to High(TOverscroll) do
+    if V in S then
+      TJSONArray(Result).Add(OverscrollNames[V]);
+end;
+
+const
+  PanelStyleNames: array[TPanelStyle] of string = ('', 'appbar', 'card', 'filled', 'flat', 'glass', 'outlined', 'overlay', 'reveal', 'sidebar');
+
+function PanelStyleOf(Data: TJSONData): TPanelStyle;
+var
+  V: TPanelStyle;
+begin
+  Result := Low(TPanelStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TPanelStyle) to High(TPanelStyle) do
+      if PanelStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function PanelStyleSetOf(Data: TJSONData): TPanelStyleSet;
+var
+  I: Integer;
+  V: TPanelStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TPanelStyle) to High(TPanelStyle) do
+      if PanelStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function PanelStyleSetToJSON(const S: TPanelStyleSet): TJSONData;
+var
+  V: TPanelStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TPanelStyle) to High(TPanelStyle) do
+    if V in S then
+      TJSONArray(Result).Add(PanelStyleNames[V]);
+end;
+
+const
+  RoundingNames: array[TRounding] of string = ('half_up', 'half_even', 'truncate', 'up');
+
+function RoundingOf(Data: TJSONData): TRounding;
+var
+  V: TRounding;
+begin
+  Result := Low(TRounding);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TRounding) to High(TRounding) do
+      if RoundingNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function RoundingSetOf(Data: TJSONData): TRoundingSet;
+var
+  I: Integer;
+  V: TRounding;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TRounding) to High(TRounding) do
+      if RoundingNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function RoundingSetToJSON(const S: TRoundingSet): TJSONData;
+var
+  V: TRounding;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TRounding) to High(TRounding) do
+    if V in S then
+      TJSONArray(Result).Add(RoundingNames[V]);
+end;
+
+const
+  SelfAlignNames: array[TSelfAlign] of string = ('stretch', 'start', 'center', 'end');
+
+function SelfAlignOf(Data: TJSONData): TSelfAlign;
+var
+  V: TSelfAlign;
+begin
+  Result := Low(TSelfAlign);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TSelfAlign) to High(TSelfAlign) do
+      if SelfAlignNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function SelfAlignSetOf(Data: TJSONData): TSelfAlignSet;
+var
+  I: Integer;
+  V: TSelfAlign;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TSelfAlign) to High(TSelfAlign) do
+      if SelfAlignNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function SelfAlignSetToJSON(const S: TSelfAlignSet): TJSONData;
+var
+  V: TSelfAlign;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TSelfAlign) to High(TSelfAlign) do
+    if V in S then
+      TJSONArray(Result).Add(SelfAlignNames[V]);
+end;
+
+const
+  SplitterStyleNames: array[TSplitterStyle] of string = ('');
+
+function SplitterStyleOf(Data: TJSONData): TSplitterStyle;
+var
+  V: TSplitterStyle;
+begin
+  Result := Low(TSplitterStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TSplitterStyle) to High(TSplitterStyle) do
+      if SplitterStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function SplitterStyleSetOf(Data: TJSONData): TSplitterStyleSet;
+var
+  I: Integer;
+  V: TSplitterStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TSplitterStyle) to High(TSplitterStyle) do
+      if SplitterStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function SplitterStyleSetToJSON(const S: TSplitterStyleSet): TJSONData;
+var
+  V: TSplitterStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TSplitterStyle) to High(TSplitterStyle) do
+    if V in S then
+      TJSONArray(Result).Add(SplitterStyleNames[V]);
+end;
+
+const
+  SvgStyleNames: array[TSvgStyle] of string = ('');
+
+function SvgStyleOf(Data: TJSONData): TSvgStyle;
+var
+  V: TSvgStyle;
+begin
+  Result := Low(TSvgStyle);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TSvgStyle) to High(TSvgStyle) do
+      if SvgStyleNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function SvgStyleSetOf(Data: TJSONData): TSvgStyleSet;
+var
+  I: Integer;
+  V: TSvgStyle;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TSvgStyle) to High(TSvgStyle) do
+      if SvgStyleNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function SvgStyleSetToJSON(const S: TSvgStyleSet): TJSONData;
+var
+  V: TSvgStyle;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TSvgStyle) to High(TSvgStyle) do
+    if V in S then
+      TJSONArray(Result).Add(SvgStyleNames[V]);
+end;
+
+const
+  TextAlignNames: array[TTextAlign] of string = ('leading', 'center', 'trailing', 'justify');
+
+function TextAlignOf(Data: TJSONData): TTextAlign;
+var
+  V: TTextAlign;
+begin
+  Result := Low(TTextAlign);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TTextAlign) to High(TTextAlign) do
+      if TextAlignNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function TextAlignSetOf(Data: TJSONData): TTextAlignSet;
+var
+  I: Integer;
+  V: TTextAlign;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TTextAlign) to High(TTextAlign) do
+      if TextAlignNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function TextAlignSetToJSON(const S: TTextAlignSet): TJSONData;
+var
+  V: TTextAlign;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TTextAlign) to High(TTextAlign) do
+    if V in S then
+      TJSONArray(Result).Add(TextAlignNames[V]);
+end;
+
+const
+  TextCaseNames: array[TTextCase] of string = ('none', 'upper', 'lower');
+
+function TextCaseOf(Data: TJSONData): TTextCase;
+var
+  V: TTextCase;
+begin
+  Result := Low(TTextCase);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TTextCase) to High(TTextCase) do
+      if TextCaseNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function TextCaseSetOf(Data: TJSONData): TTextCaseSet;
+var
+  I: Integer;
+  V: TTextCase;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TTextCase) to High(TTextCase) do
+      if TextCaseNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function TextCaseSetToJSON(const S: TTextCaseSet): TJSONData;
+var
+  V: TTextCase;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TTextCase) to High(TTextCase) do
+    if V in S then
+      TJSONArray(Result).Add(TextCaseNames[V]);
+end;
+
+const
+  ThemeNameNames: array[TThemeName] of string = ('', 'Aylis Light', 'Aylis Dark', 'Material 3 Light', 'Material 3 Dark', 'Material 2 Light', 'Material 2 Dark', 'Android 7 Light', 'Android 7 Dark', 'iOS 26 Light', 'iOS 26 Dark', 'iOS 13 Light', 'iOS 13 Dark', 'iOS 7 Light', 'WinUI 3 Light', 'WinUI 3 Dark', 'Windows 11 Light', 'Windows 11 Dark', 'Windows 10 Light', 'Windows 10 Dark', 'Win32', 'Windows 7', 'Windows Phone Dark', 'Windows Phone Light', 'Vuetify 3 Light', 'Vuetify 3 Dark', 'Bootstrap 5 Light', 'Bootstrap 5 Dark', 'shadcn/ui Light', 'shadcn/ui Dark', 'Ant Design 5 Light', 'Ant Design 5 Dark', 'Chakra UI Light', 'Chakra UI Dark', 'Quasar 2 Light', 'Quasar 2 Dark');
+
+function ThemeNameOf(Data: TJSONData): TThemeName;
+var
+  V: TThemeName;
+begin
+  Result := Low(TThemeName);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TThemeName) to High(TThemeName) do
+      if ThemeNameNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ThemeNameSetOf(Data: TJSONData): TThemeNameSet;
+var
+  I: Integer;
+  V: TThemeName;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TThemeName) to High(TThemeName) do
+      if ThemeNameNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ThemeNameSetToJSON(const S: TThemeNameSet): TJSONData;
+var
+  V: TThemeName;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TThemeName) to High(TThemeName) do
+    if V in S then
+      TJSONArray(Result).Add(ThemeNameNames[V]);
+end;
+
+const
+  TitleAlignNames: array[TTitleAlign] of string = ('left', 'center', 'right');
+
+function TitleAlignOf(Data: TJSONData): TTitleAlign;
+var
+  V: TTitleAlign;
+begin
+  Result := Low(TTitleAlign);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TTitleAlign) to High(TTitleAlign) do
+      if TitleAlignNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function TitleAlignSetOf(Data: TJSONData): TTitleAlignSet;
+var
+  I: Integer;
+  V: TTitleAlign;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TTitleAlign) to High(TTitleAlign) do
+      if TitleAlignNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function TitleAlignSetToJSON(const S: TTitleAlignSet): TJSONData;
+var
+  V: TTitleAlign;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TTitleAlign) to High(TTitleAlign) do
+    if V in S then
+      TJSONArray(Result).Add(TitleAlignNames[V]);
+end;
+
+const
+  TransitionNames: array[TTransition] of string = ('none', 'fade', 'slide_left', 'slide_right', 'slide_up', 'slide_down');
+
+function TransitionOf(Data: TJSONData): TTransition;
+var
+  V: TTransition;
+begin
+  Result := Low(TTransition);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TTransition) to High(TTransition) do
+      if TransitionNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function TransitionSetOf(Data: TJSONData): TTransitionSet;
+var
+  I: Integer;
+  V: TTransition;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TTransition) to High(TTransition) do
+      if TransitionNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function TransitionSetToJSON(const S: TTransitionSet): TJSONData;
+var
+  V: TTransition;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TTransition) to High(TTransition) do
+    if V in S then
+      TJSONArray(Result).Add(TransitionNames[V]);
+end;
+
+const
+  TrimmingNames: array[TTrimming] of string = ('none', 'character', 'word');
+
+function TrimmingOf(Data: TJSONData): TTrimming;
+var
+  V: TTrimming;
+begin
+  Result := Low(TTrimming);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TTrimming) to High(TTrimming) do
+      if TrimmingNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function TrimmingSetOf(Data: TJSONData): TTrimmingSet;
+var
+  I: Integer;
+  V: TTrimming;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TTrimming) to High(TTrimming) do
+      if TrimmingNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function TrimmingSetToJSON(const S: TTrimmingSet): TJSONData;
+var
+  V: TTrimming;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TTrimming) to High(TTrimming) do
+    if V in S then
+      TJSONArray(Result).Add(TrimmingNames[V]);
+end;
+
+const
+  ValueFormatNames: array[TValueFormat] of string = ('short', 'full', 'percent');
+
+function ValueFormatOf(Data: TJSONData): TValueFormat;
+var
+  V: TValueFormat;
+begin
+  Result := Low(TValueFormat);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TValueFormat) to High(TValueFormat) do
+      if ValueFormatNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function ValueFormatSetOf(Data: TJSONData): TValueFormatSet;
+var
+  I: Integer;
+  V: TValueFormat;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TValueFormat) to High(TValueFormat) do
+      if ValueFormatNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function ValueFormatSetToJSON(const S: TValueFormatSet): TJSONData;
+var
+  V: TValueFormat;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TValueFormat) to High(TValueFormat) do
+    if V in S then
+      TJSONArray(Result).Add(ValueFormatNames[V]);
+end;
+
+const
+  WindowCornersNames: array[TWindowCorners] of string = ('default', 'round', 'small', 'square');
+
+function WindowCornersOf(Data: TJSONData): TWindowCorners;
+var
+  V: TWindowCorners;
+begin
+  Result := Low(TWindowCorners);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TWindowCorners) to High(TWindowCorners) do
+      if WindowCornersNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function WindowCornersSetOf(Data: TJSONData): TWindowCornersSet;
+var
+  I: Integer;
+  V: TWindowCorners;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TWindowCorners) to High(TWindowCorners) do
+      if WindowCornersNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function WindowCornersSetToJSON(const S: TWindowCornersSet): TJSONData;
+var
+  V: TWindowCorners;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TWindowCorners) to High(TWindowCorners) do
+    if V in S then
+      TJSONArray(Result).Add(WindowCornersNames[V]);
+end;
+
+const
+  WindowShapeNames: array[TWindowShape] of string = ('rectangle', 'rounded', 'ellipse', 'path');
+
+function WindowShapeOf(Data: TJSONData): TWindowShape;
+var
+  V: TWindowShape;
+begin
+  Result := Low(TWindowShape);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TWindowShape) to High(TWindowShape) do
+      if WindowShapeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function WindowShapeSetOf(Data: TJSONData): TWindowShapeSet;
+var
+  I: Integer;
+  V: TWindowShape;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TWindowShape) to High(TWindowShape) do
+      if WindowShapeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function WindowShapeSetToJSON(const S: TWindowShapeSet): TJSONData;
+var
+  V: TWindowShape;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TWindowShape) to High(TWindowShape) do
+    if V in S then
+      TJSONArray(Result).Add(WindowShapeNames[V]);
+end;
+
+const
+  WindowStateNames: array[TWindowState] of string = ('normal', 'maximized', 'minimized', 'full_screen');
+
+function WindowStateOf(Data: TJSONData): TWindowState;
+var
+  V: TWindowState;
+begin
+  Result := Low(TWindowState);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TWindowState) to High(TWindowState) do
+      if WindowStateNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function WindowStateSetOf(Data: TJSONData): TWindowStateSet;
+var
+  I: Integer;
+  V: TWindowState;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TWindowState) to High(TWindowState) do
+      if WindowStateNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function WindowStateSetToJSON(const S: TWindowStateSet): TJSONData;
+var
+  V: TWindowState;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TWindowState) to High(TWindowState) do
+    if V in S then
+      TJSONArray(Result).Add(WindowStateNames[V]);
+end;
+
+function AylisJSONTexts(Data: TJSONData): TStringArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := AsText(Data.Items[I]);
+end;
+
+function AylisJSONNumbers(Data: TJSONData): TAylisDoubleArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := Data.Items[I].AsFloat;
+end;
+
+function AylisTextsToJSON(const A: TStringArray): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(A[I]);
+end;
+
+function AylisNumbersToJSON(const A: TAylisDoubleArray): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(A[I]);
+end;
+
+function ChartSeriesFromJSON(Data: TJSONData): TChartSeries;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TChartSeries);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Name := O.Get('name', '');
+  Result.Values := AylisJSONNumbers(O.Find('values'));
+  Result.X := AylisJSONNumbers(O.Find('x'));
+  Result.Radius := AylisJSONNumbers(O.Find('radius'));
+  Result.Kind := ChartSeriesKindOf(O.Find('kind'));
+  Result.RightAxis := O.Get('right_axis', False);
+  Result.Color := AylisColorFromJSON(O.Find('color'));
+  Result.Width := O.Get('width', Double(0));
+  Result.Dash := AylisJSONNumbers(O.Find('dash'));
+  Result.Point := ChartSeriesPointOf(O.Find('point'));
+  Result.Fill := ChartSeriesFillOf(O.Find('fill'));
+  Result.FillSeries := O.Get('fill_series', Int64(0));
+  Result.Hidden := O.Get('hidden', False);
+end;
+
+function ChartSeriesToJSON(const R: TChartSeries): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('name', R.Name);
+  Result.Add('values', AylisNumbersToJSON(R.Values));
+  Result.Add('x', AylisNumbersToJSON(R.X));
+  Result.Add('radius', AylisNumbersToJSON(R.Radius));
+  Result.Add('kind', ChartSeriesKindNames[R.Kind]);
+  Result.Add('right_axis', R.RightAxis);
+  Result.Add('color', AylisColorToJSON(R.Color));
+  Result.Add('width', R.Width);
+  Result.Add('dash', AylisNumbersToJSON(R.Dash));
+  Result.Add('point', ChartSeriesPointNames[R.Point]);
+  Result.Add('fill', ChartSeriesFillNames[R.Fill]);
+  Result.Add('fill_series', R.FillSeries);
+  Result.Add('hidden', R.Hidden);
+end;
+
+function ChartSeriesListFromJSON(Data: TJSONData): TChartSeriesArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := ChartSeriesFromJSON(Data.Items[I]);
+end;
+
+function ChartSeriesListToJSON(const A: array of TChartSeries): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(ChartSeriesToJSON(A[I]));
+end;
+
+function ChartSeriesText(const R: TChartSeries): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := ChartSeriesToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function ChartSeriesListText(const A: TChartSeriesArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := ChartSeriesListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function ChartSeriesFromText(Data: TJSONData): TChartSeries;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := ChartSeriesFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function ChartSeriesListFromText(Data: TJSONData): TChartSeriesArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := ChartSeriesListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function ColumnSpecFromJSON(Data: TJSONData): TColumnSpec;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TColumnSpec);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Field := O.Get('field', '');
+  Result.Title := O.Get('title', '');
+  Result.Width := O.Get('width', Double(0));
+  Result.ReadOnly := O.Get('read_only', False);
+  Result.Color := AylisColorFromJSON(O.Find('color'));
+  Result.TextColor := AylisColorFromJSON(O.Find('text_color'));
+end;
+
+function ColumnSpecToJSON(const R: TColumnSpec): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('field', R.Field);
+  Result.Add('title', R.Title);
+  Result.Add('width', R.Width);
+  Result.Add('read_only', R.ReadOnly);
+  Result.Add('color', AylisColorToJSON(R.Color));
+  Result.Add('text_color', AylisColorToJSON(R.TextColor));
+end;
+
+function ColumnSpecListFromJSON(Data: TJSONData): TColumnSpecArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := ColumnSpecFromJSON(Data.Items[I]);
+end;
+
+function ColumnSpecListToJSON(const A: array of TColumnSpec): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(ColumnSpecToJSON(A[I]));
+end;
+
+function ColumnSpecText(const R: TColumnSpec): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := ColumnSpecToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function ColumnSpecListText(const A: TColumnSpecArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := ColumnSpecListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function ColumnSpecFromText(Data: TJSONData): TColumnSpec;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := ColumnSpecFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function ColumnSpecListFromText(Data: TJSONData): TColumnSpecArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := ColumnSpecListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function FilterParamFromJSON(Data: TJSONData): TFilterParam;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TFilterParam);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Name := O.Get('name', '');
+  Result.Value := O.Get('value', '');
+end;
+
+function FilterParamToJSON(const R: TFilterParam): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('name', R.Name);
+  Result.Add('value', R.Value);
+end;
+
+function FilterParamListFromJSON(Data: TJSONData): TFilterParamArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := FilterParamFromJSON(Data.Items[I]);
+end;
+
+function FilterParamListToJSON(const A: array of TFilterParam): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(FilterParamToJSON(A[I]));
+end;
+
+function FilterParamText(const R: TFilterParam): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := FilterParamToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function FilterParamListText(const A: TFilterParamArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := FilterParamListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function FilterParamFromText(Data: TJSONData): TFilterParam;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := FilterParamFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function FilterParamListFromText(Data: TJSONData): TFilterParamArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := FilterParamListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function GestureEventFromJSON(Data: TJSONData): TGestureEvent;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TGestureEvent);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Phase := O.Get('phase', '');
+  Result.X := O.Get('x', Double(0));
+  Result.Y := O.Get('y', Double(0));
+  Result.Scale := O.Get('scale', Double(0));
+  Result.DeltaScale := O.Get('delta_scale', Double(0));
+  Result.Rotation := O.Get('rotation', Double(0));
+  Result.DeltaRotation := O.Get('delta_rotation', Double(0));
+  Result.PanX := O.Get('pan_x', Double(0));
+  Result.PanY := O.Get('pan_y', Double(0));
+end;
+
+function GestureEventToJSON(const R: TGestureEvent): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('phase', R.Phase);
+  Result.Add('x', R.X);
+  Result.Add('y', R.Y);
+  Result.Add('scale', R.Scale);
+  Result.Add('delta_scale', R.DeltaScale);
+  Result.Add('rotation', R.Rotation);
+  Result.Add('delta_rotation', R.DeltaRotation);
+  Result.Add('pan_x', R.PanX);
+  Result.Add('pan_y', R.PanY);
+end;
+
+function GestureEventListFromJSON(Data: TJSONData): TGestureEventArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := GestureEventFromJSON(Data.Items[I]);
+end;
+
+function GestureEventListToJSON(const A: array of TGestureEvent): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(GestureEventToJSON(A[I]));
+end;
+
+function GestureEventText(const R: TGestureEvent): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := GestureEventToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function GestureEventListText(const A: TGestureEventArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := GestureEventListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function GestureEventFromText(Data: TJSONData): TGestureEvent;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := GestureEventFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function GestureEventListFromText(Data: TJSONData): TGestureEventArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := GestureEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function GridTotalFromJSON(Data: TJSONData): TGridTotal;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TGridTotal);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Field := O.Get('field', '');
+  Result.&Function := GridTotalFunctionOf(O.Find('function'));
+end;
+
+function GridTotalToJSON(const R: TGridTotal): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('field', R.Field);
+  Result.Add('function', GridTotalFunctionNames[R.&Function]);
+end;
+
+function GridTotalListFromJSON(Data: TJSONData): TGridTotalArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := GridTotalFromJSON(Data.Items[I]);
+end;
+
+function GridTotalListToJSON(const A: array of TGridTotal): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(GridTotalToJSON(A[I]));
+end;
+
+function GridTotalText(const R: TGridTotal): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := GridTotalToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function GridTotalListText(const A: TGridTotalArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := GridTotalListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function GridTotalFromText(Data: TJSONData): TGridTotal;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := GridTotalFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function GridTotalListFromText(Data: TJSONData): TGridTotalArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := GridTotalListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function IndexDefFromJSON(Data: TJSONData): TIndexDef;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TIndexDef);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Name := O.Get('name', '');
+  Result.Fields := O.Get('fields', '');
+end;
+
+function IndexDefToJSON(const R: TIndexDef): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('name', R.Name);
+  Result.Add('fields', R.Fields);
+end;
+
+function IndexDefListFromJSON(Data: TJSONData): TIndexDefArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := IndexDefFromJSON(Data.Items[I]);
+end;
+
+function IndexDefListToJSON(const A: array of TIndexDef): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(IndexDefToJSON(A[I]));
+end;
+
+function IndexDefText(const R: TIndexDef): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := IndexDefToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function IndexDefListText(const A: TIndexDefArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := IndexDefListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function IndexDefFromText(Data: TJSONData): TIndexDef;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := IndexDefFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function IndexDefListFromText(Data: TJSONData): TIndexDefArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := IndexDefListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function KeyEventFromJSON(Data: TJSONData): TKeyEvent;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TKeyEvent);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Key := O.Get('key', '');
+  Result.Ctrl := O.Get('ctrl', False);
+  Result.Shift := O.Get('shift', False);
+  Result.Alt := O.Get('alt', False);
+end;
+
+function KeyEventToJSON(const R: TKeyEvent): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('key', R.Key);
+  Result.Add('ctrl', R.Ctrl);
+  Result.Add('shift', R.Shift);
+  Result.Add('alt', R.Alt);
+end;
+
+function KeyEventListFromJSON(Data: TJSONData): TKeyEventArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := KeyEventFromJSON(Data.Items[I]);
+end;
+
+function KeyEventListToJSON(const A: array of TKeyEvent): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(KeyEventToJSON(A[I]));
+end;
+
+function KeyEventText(const R: TKeyEvent): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := KeyEventToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function KeyEventListText(const A: TKeyEventArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := KeyEventListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function KeyEventFromText(Data: TJSONData): TKeyEvent;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := KeyEventFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function KeyEventListFromText(Data: TJSONData): TKeyEventArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := KeyEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function MasterFieldFromJSON(Data: TJSONData): TMasterField;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TMasterField);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Field := O.Get('field', '');
+  Result.MasterField := O.Get('master_field', '');
+end;
+
+function MasterFieldToJSON(const R: TMasterField): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('field', R.Field);
+  Result.Add('master_field', R.MasterField);
+end;
+
+function MasterFieldListFromJSON(Data: TJSONData): TMasterFieldArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := MasterFieldFromJSON(Data.Items[I]);
+end;
+
+function MasterFieldListToJSON(const A: array of TMasterField): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(MasterFieldToJSON(A[I]));
+end;
+
+function MasterFieldText(const R: TMasterField): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := MasterFieldToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function MasterFieldListText(const A: TMasterFieldArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := MasterFieldListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function MasterFieldFromText(Data: TJSONData): TMasterField;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := MasterFieldFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function MasterFieldListFromText(Data: TJSONData): TMasterFieldArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := MasterFieldListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function PointerEventFromJSON(Data: TJSONData): TPointerEvent;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TPointerEvent);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.X := O.Get('x', Double(0));
+  Result.Y := O.Get('y', Double(0));
+  Result.Button := O.Get('button', '');
+  Result.Clicks := O.Get('clicks', Int64(0));
+end;
+
+function PointerEventToJSON(const R: TPointerEvent): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('x', R.X);
+  Result.Add('y', R.Y);
+  Result.Add('button', R.Button);
+  Result.Add('clicks', R.Clicks);
+end;
+
+function PointerEventListFromJSON(Data: TJSONData): TPointerEventArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := PointerEventFromJSON(Data.Items[I]);
+end;
+
+function PointerEventListToJSON(const A: array of TPointerEvent): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(PointerEventToJSON(A[I]));
+end;
+
+function PointerEventText(const R: TPointerEvent): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := PointerEventToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function PointerEventListText(const A: TPointerEventArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := PointerEventListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function PointerEventFromText(Data: TJSONData): TPointerEvent;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := PointerEventFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function PointerEventListFromText(Data: TJSONData): TPointerEventArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := PointerEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function SwipeEventFromJSON(Data: TJSONData): TSwipeEvent;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TSwipeEvent);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Direction := O.Get('direction', '');
+  Result.X := O.Get('x', Double(0));
+  Result.Y := O.Get('y', Double(0));
+  Result.Dx := O.Get('dx', Double(0));
+  Result.Dy := O.Get('dy', Double(0));
+  Result.Vx := O.Get('vx', Double(0));
+  Result.Vy := O.Get('vy', Double(0));
+end;
+
+function SwipeEventToJSON(const R: TSwipeEvent): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('direction', R.Direction);
+  Result.Add('x', R.X);
+  Result.Add('y', R.Y);
+  Result.Add('dx', R.Dx);
+  Result.Add('dy', R.Dy);
+  Result.Add('vx', R.Vx);
+  Result.Add('vy', R.Vy);
+end;
+
+function SwipeEventListFromJSON(Data: TJSONData): TSwipeEventArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := SwipeEventFromJSON(Data.Items[I]);
+end;
+
+function SwipeEventListToJSON(const A: array of TSwipeEvent): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(SwipeEventToJSON(A[I]));
+end;
+
+function SwipeEventText(const R: TSwipeEvent): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := SwipeEventToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function SwipeEventListText(const A: TSwipeEventArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := SwipeEventListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function SwipeEventFromText(Data: TJSONData): TSwipeEvent;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := SwipeEventFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function SwipeEventListFromText(Data: TJSONData): TSwipeEventArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := SwipeEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function WheelEventFromJSON(Data: TJSONData): TWheelEvent;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TWheelEvent);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.X := O.Get('x', Double(0));
+  Result.Y := O.Get('y', Double(0));
+  Result.Dx := O.Get('dx', Double(0));
+  Result.Dy := O.Get('dy', Double(0));
+end;
+
+function WheelEventToJSON(const R: TWheelEvent): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('x', R.X);
+  Result.Add('y', R.Y);
+  Result.Add('dx', R.Dx);
+  Result.Add('dy', R.Dy);
+end;
+
+function WheelEventListFromJSON(Data: TJSONData): TWheelEventArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := WheelEventFromJSON(Data.Items[I]);
+end;
+
+function WheelEventListToJSON(const A: array of TWheelEvent): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(WheelEventToJSON(A[I]));
+end;
+
+function WheelEventText(const R: TWheelEvent): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := WheelEventToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function WheelEventListText(const A: TWheelEventArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := WheelEventListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function WheelEventFromText(Data: TJSONData): TWheelEvent;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := WheelEventFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function WheelEventListFromText(Data: TJSONData): TWheelEventArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := WheelEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
 end;
 
 function TClientDataSet.GetKeyFields: string;
@@ -2645,14 +7178,14 @@ begin
   SetProp('key_fields', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetApplyMode: string;
+function TClientDataSet.GetApplyMode: TApplyMode;
 begin
-  Result := AsText(GetProp('apply_mode'));
+  Result := ApplyModeOf(GetProp('apply_mode'));
 end;
 
-procedure TClientDataSet.SetApplyMode(Value: string);
+procedure TClientDataSet.SetApplyMode(Value: TApplyMode);
 begin
-  SetProp('apply_mode', TJSONString.Create(Value));
+  SetProp('apply_mode', TJSONString.Create(ApplyModeNames[Value]));
 end;
 
 function TClientDataSet.GetReadOnly: Boolean;
@@ -2705,14 +7238,14 @@ begin
   SetProp('index_field_names', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetIndexes: string;
+function TClientDataSet.GetIndexes: TIndexDefArray;
 begin
-  Result := AsText(GetProp('indexes'));
+  Result := IndexDefListFromText(GetProp('indexes'));
 end;
 
-procedure TClientDataSet.SetIndexes(Value: string);
+procedure TClientDataSet.SetIndexes(Value: TIndexDefArray);
 begin
-  SetProp('indexes', TJSONString.Create(Value));
+  SetProp('indexes', IndexDefListText(Value));
 end;
 
 function TClientDataSet.GetIndexName: string;
@@ -2725,14 +7258,14 @@ begin
   SetProp('index_name', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetParams: string;
+function TClientDataSet.GetParams: TFilterParamArray;
 begin
-  Result := AsText(GetProp('params'));
+  Result := FilterParamListFromText(GetProp('params'));
 end;
 
-procedure TClientDataSet.SetParams(Value: string);
+procedure TClientDataSet.SetParams(Value: TFilterParamArray);
 begin
-  SetProp('params', TJSONString.Create(Value));
+  SetProp('params', FilterParamListText(Value));
 end;
 
 function TClientDataSet.GetStatusFilter: string;
@@ -2745,24 +7278,24 @@ begin
   SetProp('status_filter', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetMasterSource: string;
+function TClientDataSet.GetMasterSource: TAylisComponent;
 begin
-  Result := AsText(GetProp('master_source'));
+  Result := GetRef('master_source');
 end;
 
-procedure TClientDataSet.SetMasterSource(Value: string);
+procedure TClientDataSet.SetMasterSource(Value: TAylisComponent);
 begin
-  SetProp('master_source', TJSONString.Create(Value));
+  SetRef('master_source', Value);
 end;
 
-function TClientDataSet.GetMasterFields: string;
+function TClientDataSet.GetMasterFields: TMasterFieldArray;
 begin
-  Result := AsText(GetProp('master_fields'));
+  Result := MasterFieldListFromText(GetProp('master_fields'));
 end;
 
-procedure TClientDataSet.SetMasterFields(Value: string);
+procedure TClientDataSet.SetMasterFields(Value: TMasterFieldArray);
 begin
-  SetProp('master_fields', TJSONString.Create(Value));
+  SetProp('master_fields', MasterFieldListText(Value));
 end;
 
 function TClientDataSet.GetApplySeparately: Boolean;
@@ -2800,14 +7333,94 @@ begin
   Result := AsText(GetProp('partial_notice'));
 end;
 
-function TDBChart.GetDataSource: string;
+function TClientDataSet.GetOnMasterChange: string;
 begin
-  Result := AsText(GetProp('data_source'));
+  Result := AsText(GetProp('on_master_change'));
 end;
 
-procedure TDBChart.SetDataSource(Value: string);
+procedure TClientDataSet.SetOnMasterChange(Value: string);
 begin
-  SetProp('data_source', TJSONString.Create(Value));
+  SetProp('on_master_change', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetAfterScroll: string;
+begin
+  Result := AsText(GetProp('after_scroll'));
+end;
+
+procedure TClientDataSet.SetAfterScroll(Value: string);
+begin
+  SetProp('after_scroll', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetAfterPost: string;
+begin
+  Result := AsText(GetProp('after_post'));
+end;
+
+procedure TClientDataSet.SetAfterPost(Value: string);
+begin
+  SetProp('after_post', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnStateChange: string;
+begin
+  Result := AsText(GetProp('on_state_change'));
+end;
+
+procedure TClientDataSet.SetOnStateChange(Value: string);
+begin
+  SetProp('on_state_change', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnReconcileError: string;
+begin
+  Result := AsText(GetProp('on_reconcile_error'));
+end;
+
+procedure TClientDataSet.SetOnReconcileError(Value: string);
+begin
+  SetProp('on_reconcile_error', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnError: string;
+begin
+  Result := AsText(GetProp('on_error'));
+end;
+
+procedure TClientDataSet.SetOnError(Value: string);
+begin
+  SetProp('on_error', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnFetch: string;
+begin
+  Result := AsText(GetProp('on_fetch'));
+end;
+
+procedure TClientDataSet.SetOnFetch(Value: string);
+begin
+  SetProp('on_fetch', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnServerQuery: string;
+begin
+  Result := AsText(GetProp('on_server_query'));
+end;
+
+procedure TClientDataSet.SetOnServerQuery(Value: string);
+begin
+  SetProp('on_server_query', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetDataSource: TAylisComponent;
+begin
+  Result := GetRef('data_source');
+end;
+
+procedure TDBChart.SetDataSource(Value: TAylisComponent);
+begin
+  SetRef('data_source', Value);
 end;
 
 function TDBChart.GetLabelField: string;
@@ -2820,24 +7433,24 @@ begin
   SetProp('label_field', TJSONString.Create(Value));
 end;
 
-function TDBChart.GetValueFields: string;
+function TDBChart.GetValueFields: TStringArray;
 begin
-  Result := AsText(GetProp('value_fields'));
+  Result := AsList(GetProp('value_fields'));
 end;
 
-procedure TDBChart.SetValueFields(Value: string);
+procedure TDBChart.SetValueFields(Value: TStringArray);
 begin
-  SetProp('value_fields', TJSONString.Create(Value));
+  SetProp('value_fields', ListText(Value));
 end;
 
-function TDBChart.GetKind: string;
+function TDBChart.GetKind: TChartKind;
 begin
-  Result := AsText(GetProp('kind'));
+  Result := ChartKindOf(GetProp('kind'));
 end;
 
-procedure TDBChart.SetKind(Value: string);
+procedure TDBChart.SetKind(Value: TChartKind);
 begin
-  SetProp('kind', TJSONString.Create(Value));
+  SetProp('kind', TJSONString.Create(ChartKindNames[Value]));
 end;
 
 function TDBChart.GetTitle: string;
@@ -2850,24 +7463,24 @@ begin
   SetProp('title', TJSONString.Create(Value));
 end;
 
-function TDBChart.GetLabels: string;
+function TDBChart.GetLabels: TStringArray;
 begin
-  Result := AsText(GetProp('labels'));
+  Result := AsList(GetProp('labels'));
 end;
 
-procedure TDBChart.SetLabels(Value: string);
+procedure TDBChart.SetLabels(Value: TStringArray);
 begin
-  SetProp('labels', TJSONString.Create(Value));
+  SetProp('labels', ListText(Value));
 end;
 
-function TDBChart.GetSeries: string;
+function TDBChart.GetSeries: TChartSeriesArray;
 begin
-  Result := AsText(GetProp('series'));
+  Result := ChartSeriesListFromText(GetProp('series'));
 end;
 
-procedure TDBChart.SetSeries(Value: string);
+procedure TDBChart.SetSeries(Value: TChartSeriesArray);
 begin
-  SetProp('series', TJSONString.Create(Value));
+  SetProp('series', ChartSeriesListText(Value));
 end;
 
 function TDBChart.GetJson: string;
@@ -3010,14 +7623,14 @@ begin
   SetProp('clicked_index', TJSONInt64Number.Create(Value));
 end;
 
-function TDBChart.GetValueFormat: string;
+function TDBChart.GetValueFormat: TValueFormat;
 begin
-  Result := AsText(GetProp('value_format'));
+  Result := ValueFormatOf(GetProp('value_format'));
 end;
 
-procedure TDBChart.SetValueFormat(Value: string);
+procedure TDBChart.SetValueFormat(Value: TValueFormat);
 begin
-  SetProp('value_format', TJSONString.Create(Value));
+  SetProp('value_format', TJSONString.Create(ValueFormatNames[Value]));
 end;
 
 function TDBChart.GetLabelAngle: Double;
@@ -3030,14 +7643,14 @@ begin
   SetProp('label_angle', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetTitleAlign: string;
+function TDBChart.GetTitleAlign: TTitleAlign;
 begin
-  Result := AsText(GetProp('title_align'));
+  Result := TitleAlignOf(GetProp('title_align'));
 end;
 
-procedure TDBChart.SetTitleAlign(Value: string);
+procedure TDBChart.SetTitleAlign(Value: TTitleAlign);
 begin
-  SetProp('title_align', TJSONString.Create(Value));
+  SetProp('title_align', TJSONString.Create(TitleAlignNames[Value]));
 end;
 
 function TDBChart.GetTitleBold: Boolean;
@@ -3060,14 +7673,14 @@ begin
   SetProp('area_opacity', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetLegendPosition: string;
+function TDBChart.GetLegendPosition: TLegendPosition;
 begin
-  Result := AsText(GetProp('legend_position'));
+  Result := LegendPositionOf(GetProp('legend_position'));
 end;
 
-procedure TDBChart.SetLegendPosition(Value: string);
+procedure TDBChart.SetLegendPosition(Value: TLegendPosition);
 begin
-  SetProp('legend_position', TJSONString.Create(Value));
+  SetProp('legend_position', TJSONString.Create(LegendPositionNames[Value]));
 end;
 
 function TDBChart.GetStacked: Boolean;
@@ -3150,44 +7763,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetAlign: string;
+function TDBChart.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TDBChart.SetAlign(Value: string);
+procedure TDBChart.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TDBChart.GetAnchors: string;
+function TDBChart.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TDBChart.SetAnchors(Value: string);
+procedure TDBChart.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TDBChart.GetMargins: string;
+function TDBChart.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TDBChart.SetMargins(Value: string);
+procedure TDBChart.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TDBChart.GetPadding: string;
+function TDBChart.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TDBChart.SetPadding(Value: string);
+procedure TDBChart.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TDBChart.GetVisible: Boolean;
@@ -3260,6 +7873,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TDBChart.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TDBChart.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TDBChart.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -3310,14 +7933,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TDBChart.GetDragImage: string;
+function TDBChart.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TDBChart.SetDragImage(Value: string);
+procedure TDBChart.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TDBChart.GetDropTypes: string;
@@ -3340,14 +7963,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TDBChart.GetCursor: string;
+function TDBChart.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TDBChart.SetCursor(Value: string);
+procedure TDBChart.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TDBChart.GetOpacity: Double;
@@ -3358,6 +7981,16 @@ end;
 procedure TDBChart.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TDBChart.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TDBChart.GetCacheLayer: Boolean;
@@ -3378,6 +8011,16 @@ end;
 procedure TDBChart.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TDBChart.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TDBChart.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TDBChart.GetTranslateX: Double;
@@ -3450,14 +8093,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetSelfAlign: string;
+function TDBChart.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TDBChart.SetSelfAlign(Value: string);
+procedure TDBChart.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TDBChart.GetAutoSize: Boolean;
@@ -3520,104 +8163,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetShadow: string;
+function TDBChart.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TDBChart.SetShadow(Value: string);
+procedure TDBChart.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TDBChart.GetStyle: string;
+function TDBChart.GetStyle: TDBChartStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := DBChartStyleOf(GetProp('style'));
 end;
 
-procedure TDBChart.SetStyle(Value: string);
+procedure TDBChart.SetStyle(Value: TDBChartStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(DBChartStyleNames[Value]));
 end;
 
-function TDBChart.GetTheme: string;
+function TDBChart.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TDBChart.SetTheme(Value: string);
+procedure TDBChart.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TDBChart.GetFill: string;
+function TDBChart.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TDBChart.SetFill(Value: string);
+procedure TDBChart.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetBorderColor: string;
+function TDBChart.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TDBChart.SetBorderColor(Value: string);
+procedure TDBChart.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetTextColor: string;
+function TDBChart.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TDBChart.SetTextColor(Value: string);
+procedure TDBChart.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetAccentColor: string;
+function TDBChart.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TDBChart.SetAccentColor(Value: string);
+procedure TDBChart.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetSuccessColor: string;
+function TDBChart.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TDBChart.SetSuccessColor(Value: string);
+procedure TDBChart.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetWarningColor: string;
+function TDBChart.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TDBChart.SetWarningColor(Value: string);
+procedure TDBChart.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TDBChart.GetDangerColor: string;
+function TDBChart.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TDBChart.SetDangerColor(Value: string);
+procedure TDBChart.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TDBChart.GetFontFamily: string;
@@ -3640,14 +8283,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TDBChart.GetFontWeight: string;
+function TDBChart.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TDBChart.SetFontWeight(Value: string);
+procedure TDBChart.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TDBChart.GetFontItalic: Boolean;
@@ -3720,34 +8363,234 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TDBChart.GetPopupMenu: string;
+function TDBChart.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TDBChart.SetPopupMenu(Value: string);
+procedure TDBChart.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
 end;
 
-function TDataGrid.GetDataSource: string;
+function TDBChart.GetOnClick: string;
 begin
-  Result := AsText(GetProp('data_source'));
+  Result := AsText(GetProp('on_click'));
 end;
 
-procedure TDataGrid.SetDataSource(Value: string);
+procedure TDBChart.SetOnClick(Value: string);
 begin
-  SetProp('data_source', TJSONString.Create(Value));
+  SetProp('on_click', TJSONString.Create(Value));
 end;
 
-function TDataGrid.GetColumns: string;
+function TDBChart.GetOnDblClick: string;
 begin
-  Result := AsText(GetProp('columns'));
+  Result := AsText(GetProp('on_dbl_click'));
 end;
 
-procedure TDataGrid.SetColumns(Value: string);
+procedure TDBChart.SetOnDblClick(Value: string);
 begin
-  SetProp('columns', TJSONString.Create(Value));
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TDBChart.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TDBChart.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TDBChart.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TDBChart.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TDBChart.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TDBChart.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TDBChart.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TDBChart.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TDBChart.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TDBChart.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TDBChart.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TDBChart.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TDBChart.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TDBChart.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TDBChart.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TDBChart.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TDBChart.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TDBChart.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOverscroll: TOverscroll;
+begin
+  Result := OverscrollOf(GetProp('overscroll'));
+end;
+
+procedure TDataGrid.SetOverscroll(Value: TOverscroll);
+begin
+  SetProp('overscroll', TJSONString.Create(OverscrollNames[Value]));
+end;
+
+function TDataGrid.GetDataSource: TAylisComponent;
+begin
+  Result := GetRef('data_source');
+end;
+
+procedure TDataGrid.SetDataSource(Value: TAylisComponent);
+begin
+  SetRef('data_source', Value);
+end;
+
+function TDataGrid.GetColumns: TColumnSpecArray;
+begin
+  Result := ColumnSpecListFromText(GetProp('columns'));
+end;
+
+procedure TDataGrid.SetColumns(Value: TColumnSpecArray);
+begin
+  SetProp('columns', ColumnSpecListText(Value));
 end;
 
 function TDataGrid.GetRowHeight: Double;
@@ -3820,14 +8663,14 @@ begin
   SetProp('multi_select', TJSONBoolean.Create(Value));
 end;
 
-function TDataGrid.GetFooter: string;
+function TDataGrid.GetFooter: TGridTotalArray;
 begin
-  Result := AsText(GetProp('footer'));
+  Result := GridTotalListFromText(GetProp('footer'));
 end;
 
-procedure TDataGrid.SetFooter(Value: string);
+procedure TDataGrid.SetFooter(Value: TGridTotalArray);
 begin
-  SetProp('footer', TJSONString.Create(Value));
+  SetProp('footer', GridTotalListText(Value));
 end;
 
 function TDataGrid.GetIncrementalSearch: Boolean;
@@ -3840,14 +8683,14 @@ begin
   SetProp('incremental_search', TJSONBoolean.Create(Value));
 end;
 
-function TDataGrid.GetCursorColor: string;
+function TDataGrid.GetCursorColor: TAylisColor;
 begin
-  Result := AsText(GetProp('cursor_color'));
+  Result := AylisColorFromJSON(GetProp('cursor_color'));
 end;
 
-procedure TDataGrid.SetCursorColor(Value: string);
+procedure TDataGrid.SetCursorColor(Value: TAylisColor);
 begin
-  SetProp('cursor_color', TJSONString.Create(Value));
+  SetProp('cursor_color', AylisColorToJSON(Value));
 end;
 
 function TDataGrid.GetIndicator: Boolean;
@@ -3868,6 +8711,76 @@ end;
 procedure TDataGrid.SetHighlightCurrent(Value: Boolean);
 begin
   SetProp('highlight_current', TJSONBoolean.Create(Value));
+end;
+
+function TDataGrid.GetHorizontalWheel: THorizontalWheel;
+begin
+  Result := HorizontalWheelOf(GetProp('horizontal_wheel'));
+end;
+
+procedure TDataGrid.SetHorizontalWheel(Value: THorizontalWheel);
+begin
+  SetProp('horizontal_wheel', TJSONString.Create(HorizontalWheelNames[Value]));
+end;
+
+function TDataGrid.GetOnError: string;
+begin
+  Result := AsText(GetProp('on_error'));
+end;
+
+procedure TDataGrid.SetOnError(Value: string);
+begin
+  SetProp('on_error', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnTitleClick: string;
+begin
+  Result := AsText(GetProp('on_title_click'));
+end;
+
+procedure TDataGrid.SetOnTitleClick(Value: string);
+begin
+  SetProp('on_title_click', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnSelectionChange: string;
+begin
+  Result := AsText(GetProp('on_selection_change'));
+end;
+
+procedure TDataGrid.SetOnSelectionChange(Value: string);
+begin
+  SetProp('on_selection_change', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnColumnMoved: string;
+begin
+  Result := AsText(GetProp('on_column_moved'));
+end;
+
+procedure TDataGrid.SetOnColumnMoved(Value: string);
+begin
+  SetProp('on_column_moved', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetScrollLeft: Double;
+begin
+  Result := GetProp('scroll_left').AsFloat;
+end;
+
+procedure TDataGrid.SetScrollLeft(Value: Double);
+begin
+  SetProp('scroll_left', TJSONFloatNumber.Create(Value));
+end;
+
+function TDataGrid.GetTopRow: Int64;
+begin
+  Result := GetProp('top_row').AsInt64;
+end;
+
+procedure TDataGrid.SetTopRow(Value: Int64);
+begin
+  SetProp('top_row', TJSONInt64Number.Create(Value));
 end;
 
 function TDataGrid.GetLeft: Double;
@@ -3910,44 +8823,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TDataGrid.GetAlign: string;
+function TDataGrid.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TDataGrid.SetAlign(Value: string);
+procedure TDataGrid.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TDataGrid.GetAnchors: string;
+function TDataGrid.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TDataGrid.SetAnchors(Value: string);
+procedure TDataGrid.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TDataGrid.GetMargins: string;
+function TDataGrid.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TDataGrid.SetMargins(Value: string);
+procedure TDataGrid.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TDataGrid.GetPadding: string;
+function TDataGrid.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TDataGrid.SetPadding(Value: string);
+procedure TDataGrid.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TDataGrid.GetVisible: Boolean;
@@ -4020,6 +8933,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TDataGrid.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TDataGrid.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TDataGrid.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -4070,14 +8993,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TDataGrid.GetDragImage: string;
+function TDataGrid.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TDataGrid.SetDragImage(Value: string);
+procedure TDataGrid.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TDataGrid.GetDropTypes: string;
@@ -4100,14 +9023,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TDataGrid.GetCursor: string;
+function TDataGrid.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TDataGrid.SetCursor(Value: string);
+procedure TDataGrid.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TDataGrid.GetOpacity: Double;
@@ -4118,6 +9041,16 @@ end;
 procedure TDataGrid.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TDataGrid.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TDataGrid.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TDataGrid.GetCacheLayer: Boolean;
@@ -4138,6 +9071,16 @@ end;
 procedure TDataGrid.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TDataGrid.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TDataGrid.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TDataGrid.GetTranslateX: Double;
@@ -4210,14 +9153,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TDataGrid.GetSelfAlign: string;
+function TDataGrid.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TDataGrid.SetSelfAlign(Value: string);
+procedure TDataGrid.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TDataGrid.GetAutoSize: Boolean;
@@ -4280,104 +9223,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TDataGrid.GetShadow: string;
+function TDataGrid.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TDataGrid.SetShadow(Value: string);
+procedure TDataGrid.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TDataGrid.GetStyle: string;
+function TDataGrid.GetStyle: TDataGridStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := DataGridStyleOf(GetProp('style'));
 end;
 
-procedure TDataGrid.SetStyle(Value: string);
+procedure TDataGrid.SetStyle(Value: TDataGridStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(DataGridStyleNames[Value]));
 end;
 
-function TDataGrid.GetTheme: string;
+function TDataGrid.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TDataGrid.SetTheme(Value: string);
+procedure TDataGrid.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TDataGrid.GetFill: string;
+function TDataGrid.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TDataGrid.SetFill(Value: string);
+procedure TDataGrid.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetBorderColor: string;
+function TDataGrid.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TDataGrid.SetBorderColor(Value: string);
+procedure TDataGrid.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetTextColor: string;
+function TDataGrid.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TDataGrid.SetTextColor(Value: string);
+procedure TDataGrid.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetAccentColor: string;
+function TDataGrid.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TDataGrid.SetAccentColor(Value: string);
+procedure TDataGrid.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetSuccessColor: string;
+function TDataGrid.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TDataGrid.SetSuccessColor(Value: string);
+procedure TDataGrid.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetWarningColor: string;
+function TDataGrid.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TDataGrid.SetWarningColor(Value: string);
+procedure TDataGrid.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TDataGrid.GetDangerColor: string;
+function TDataGrid.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TDataGrid.SetDangerColor(Value: string);
+procedure TDataGrid.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TDataGrid.GetFontFamily: string;
@@ -4400,14 +9343,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TDataGrid.GetFontWeight: string;
+function TDataGrid.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TDataGrid.SetFontWeight(Value: string);
+procedure TDataGrid.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TDataGrid.GetFontItalic: Boolean;
@@ -4480,14 +9423,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TDataGrid.GetPopupMenu: string;
+function TDataGrid.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TDataGrid.SetPopupMenu(Value: string);
+procedure TDataGrid.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TDataGrid.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TDataGrid.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TDataGrid.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TDataGrid.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TDataGrid.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TDataGrid.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TDataGrid.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TDataGrid.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TDataGrid.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TDataGrid.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TDataGrid.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TDataGrid.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TDataGrid.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TDataGrid.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TDataGrid.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TDataGrid.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TDataGrid.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TDataGrid.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TDataGrid.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TDataGrid.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TDataGrid.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 procedure TDataGrid.SetFocus;
@@ -4495,14 +9628,14 @@ begin
   Aylis.Send('focus', TJSONObject.Create(['target', Id]));
 end;
 
-function TDataSource.GetDataSet: string;
+function TDataSource.GetDataSet: TAylisComponent;
 begin
-  Result := AsText(GetProp('data_set'));
+  Result := GetRef('data_set');
 end;
 
-procedure TDataSource.SetDataSet(Value: string);
+procedure TDataSource.SetDataSet(Value: TAylisComponent);
 begin
-  SetProp('data_set', TJSONString.Create(Value));
+  SetRef('data_set', Value);
 end;
 
 function TDataSource.GetAutoEdit: Boolean;
@@ -4525,6 +9658,26 @@ begin
   SetProp('enabled', TJSONBoolean.Create(Value));
 end;
 
+function TDataSource.GetOnDataChange: string;
+begin
+  Result := AsText(GetProp('on_data_change'));
+end;
+
+procedure TDataSource.SetOnDataChange(Value: string);
+begin
+  SetProp('on_data_change', TJSONString.Create(Value));
+end;
+
+function TDataSource.GetOnStateChange: string;
+begin
+  Result := AsText(GetProp('on_state_change'));
+end;
+
+procedure TDataSource.SetOnStateChange(Value: string);
+begin
+  SetProp('on_state_change', TJSONString.Create(Value));
+end;
+
 function TField.GetFieldName: string;
 begin
   Result := AsText(GetProp('field_name'));
@@ -4535,14 +9688,14 @@ begin
   SetProp('field_name', TJSONString.Create(Value));
 end;
 
-function TField.GetType: string;
+function TField.GetType: TFieldType;
 begin
-  Result := AsText(GetProp('type'));
+  Result := FieldTypeOf(GetProp('type'));
 end;
 
-procedure TField.SetType(Value: string);
+procedure TField.SetType(Value: TFieldType);
 begin
-  SetProp('type', TJSONString.Create(Value));
+  SetProp('type', TJSONString.Create(FieldTypeNames[Value]));
 end;
 
 function TField.GetSize: Int64;
@@ -4565,14 +9718,14 @@ begin
   SetProp('scale', TJSONInt64Number.Create(Value));
 end;
 
-function TField.GetRounding: string;
+function TField.GetRounding: TRounding;
 begin
-  Result := AsText(GetProp('rounding'));
+  Result := RoundingOf(GetProp('rounding'));
 end;
 
-procedure TField.SetRounding(Value: string);
+procedure TField.SetRounding(Value: TRounding);
 begin
-  SetProp('rounding', TJSONString.Create(Value));
+  SetProp('rounding', TJSONString.Create(RoundingNames[Value]));
 end;
 
 function TField.GetDisplayLabel: string;
@@ -4615,14 +9768,14 @@ begin
   SetProp('edit_format', TJSONString.Create(Value));
 end;
 
-function TField.GetAlignment: string;
+function TField.GetAlignment: TTextAlign;
 begin
-  Result := AsText(GetProp('alignment'));
+  Result := TextAlignOf(GetProp('alignment'));
 end;
 
-procedure TField.SetAlignment(Value: string);
+procedure TField.SetAlignment(Value: TTextAlign);
 begin
-  SetProp('alignment', TJSONString.Create(Value));
+  SetProp('alignment', TJSONString.Create(TextAlignNames[Value]));
 end;
 
 function TField.GetRequired: Boolean;
@@ -4695,14 +9848,14 @@ begin
   SetProp('display_values', TJSONString.Create(Value));
 end;
 
-function TField.GetCharCase: string;
+function TField.GetCharCase: TCharCase;
 begin
-  Result := AsText(GetProp('char_case'));
+  Result := CharCaseOf(GetProp('char_case'));
 end;
 
-procedure TField.SetCharCase(Value: string);
+procedure TField.SetCharCase(Value: TCharCase);
 begin
-  SetProp('char_case', TJSONString.Create(Value));
+  SetProp('char_case', TJSONString.Create(CharCaseNames[Value]));
 end;
 
 function TField.GetEditMask: string;
@@ -4725,14 +9878,14 @@ begin
   SetProp('sensitive', TJSONBoolean.Create(Value));
 end;
 
-function TField.GetKind: string;
+function TField.GetKind: TFieldKind;
 begin
-  Result := AsText(GetProp('kind'));
+  Result := FieldKindOf(GetProp('kind'));
 end;
 
-procedure TField.SetKind(Value: string);
+procedure TField.SetKind(Value: TFieldKind);
 begin
-  SetProp('kind', TJSONString.Create(Value));
+  SetProp('kind', TJSONString.Create(FieldKindNames[Value]));
 end;
 
 function TField.GetExpression: string;
@@ -4745,14 +9898,14 @@ begin
   SetProp('expression', TJSONString.Create(Value));
 end;
 
-function TField.GetLookupDataSet: string;
+function TField.GetLookupDataSet: TAylisComponent;
 begin
-  Result := AsText(GetProp('lookup_data_set'));
+  Result := GetRef('lookup_data_set');
 end;
 
-procedure TField.SetLookupDataSet(Value: string);
+procedure TField.SetLookupDataSet(Value: TAylisComponent);
 begin
-  SetProp('lookup_data_set', TJSONString.Create(Value));
+  SetRef('lookup_data_set', Value);
 end;
 
 function TField.GetKeyFields: string;
@@ -4785,6 +9938,36 @@ begin
   SetProp('lookup_result_field', TJSONString.Create(Value));
 end;
 
+function TField.GetOnChange: string;
+begin
+  Result := AsText(GetProp('on_change'));
+end;
+
+procedure TField.SetOnChange(Value: string);
+begin
+  SetProp('on_change', TJSONString.Create(Value));
+end;
+
+function TField.GetOnGetText: string;
+begin
+  Result := AsText(GetProp('on_get_text'));
+end;
+
+procedure TField.SetOnGetText(Value: string);
+begin
+  SetProp('on_get_text', TJSONString.Create(Value));
+end;
+
+function TField.GetOnSetText: string;
+begin
+  Result := AsText(GetProp('on_set_text'));
+end;
+
+procedure TField.SetOnSetText(Value: string);
+begin
+  SetProp('on_set_text', TJSONString.Create(Value));
+end;
+
 function TForm.GetCaption: string;
 begin
   Result := AsText(GetProp('caption'));
@@ -4795,44 +9978,124 @@ begin
   SetProp('caption', TJSONString.Create(Value));
 end;
 
-function TForm.GetPosition: string;
+function TForm.GetPosition: TFormPosition;
 begin
-  Result := AsText(GetProp('position'));
+  Result := FormPositionOf(GetProp('position'));
 end;
 
-procedure TForm.SetPosition(Value: string);
+procedure TForm.SetPosition(Value: TFormPosition);
 begin
-  SetProp('position', TJSONString.Create(Value));
+  SetProp('position', TJSONString.Create(FormPositionNames[Value]));
 end;
 
-function TForm.GetBorderStyle: string;
+function TForm.GetBorderStyle: TBorderStyle;
 begin
-  Result := AsText(GetProp('border_style'));
+  Result := BorderStyleOf(GetProp('border_style'));
 end;
 
-procedure TForm.SetBorderStyle(Value: string);
+procedure TForm.SetBorderStyle(Value: TBorderStyle);
 begin
-  SetProp('border_style', TJSONString.Create(Value));
+  SetProp('border_style', TJSONString.Create(BorderStyleNames[Value]));
 end;
 
-function TForm.GetWindowState: string;
+function TForm.GetWindowCorners: TWindowCorners;
 begin
-  Result := AsText(GetProp('window_state'));
+  Result := WindowCornersOf(GetProp('window_corners'));
 end;
 
-procedure TForm.SetWindowState(Value: string);
+procedure TForm.SetWindowCorners(Value: TWindowCorners);
 begin
-  SetProp('window_state', TJSONString.Create(Value));
+  SetProp('window_corners', TJSONString.Create(WindowCornersNames[Value]));
 end;
 
-function TForm.GetTransition: string;
+function TForm.GetTransparent: Boolean;
 begin
-  Result := AsText(GetProp('transition'));
+  Result := GetProp('transparent').AsBoolean;
 end;
 
-procedure TForm.SetTransition(Value: string);
+procedure TForm.SetTransparent(Value: Boolean);
 begin
-  SetProp('transition', TJSONString.Create(Value));
+  SetProp('transparent', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetWindowShape: TWindowShape;
+begin
+  Result := WindowShapeOf(GetProp('window_shape'));
+end;
+
+procedure TForm.SetWindowShape(Value: TWindowShape);
+begin
+  SetProp('window_shape', TJSONString.Create(WindowShapeNames[Value]));
+end;
+
+function TForm.GetShapeRadius: Double;
+begin
+  Result := GetProp('shape_radius').AsFloat;
+end;
+
+procedure TForm.SetShapeRadius(Value: Double);
+begin
+  SetProp('shape_radius', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetShapeRadii: TAylisBounds;
+begin
+  Result := AylisBoundsFromJSON(GetProp('shape_radii'));
+end;
+
+procedure TForm.SetShapeRadii(Value: TAylisBounds);
+begin
+  SetProp('shape_radii', AylisBoundsToJSON(Value));
+end;
+
+function TForm.GetShapePath: string;
+begin
+  Result := AsText(GetProp('shape_path'));
+end;
+
+procedure TForm.SetShapePath(Value: string);
+begin
+  SetProp('shape_path', TJSONString.Create(Value));
+end;
+
+function TForm.GetWindowState: TWindowState;
+begin
+  Result := WindowStateOf(GetProp('window_state'));
+end;
+
+procedure TForm.SetWindowState(Value: TWindowState);
+begin
+  SetProp('window_state', TJSONString.Create(WindowStateNames[Value]));
+end;
+
+function TForm.GetTransition: TTransition;
+begin
+  Result := TransitionOf(GetProp('transition'));
+end;
+
+procedure TForm.SetTransition(Value: TTransition);
+begin
+  SetProp('transition', TJSONString.Create(TransitionNames[Value]));
+end;
+
+function TForm.GetLayerCache: TLayerCaching;
+begin
+  Result := LayerCachingOf(GetProp('layer_cache'));
+end;
+
+procedure TForm.SetLayerCache(Value: TLayerCaching);
+begin
+  SetProp('layer_cache', TJSONString.Create(LayerCachingNames[Value]));
+end;
+
+function TForm.GetFrameReuseKb: Int64;
+begin
+  Result := GetProp('frame_reuse_kb').AsInt64;
+end;
+
+procedure TForm.SetFrameReuseKb(Value: Int64);
+begin
+  SetProp('frame_reuse_kb', TJSONInt64Number.Create(Value));
 end;
 
 function TForm.GetTopmost: Boolean;
@@ -4855,24 +10118,24 @@ begin
   SetProp('show_in_taskbar', TJSONBoolean.Create(Value));
 end;
 
-function TForm.GetActiveControl: string;
+function TForm.GetActiveControl: TAylisComponent;
 begin
-  Result := AsText(GetProp('active_control'));
+  Result := GetRef('active_control');
 end;
 
-procedure TForm.SetActiveControl(Value: string);
+procedure TForm.SetActiveControl(Value: TAylisComponent);
 begin
-  SetProp('active_control', TJSONString.Create(Value));
+  SetRef('active_control', Value);
 end;
 
-function TForm.GetTabOrder: string;
+function TForm.GetTabOrder: TStringArray;
 begin
-  Result := AsText(GetProp('tab_order'));
+  Result := AsList(GetProp('tab_order'));
 end;
 
-procedure TForm.SetTabOrder(Value: string);
+procedure TForm.SetTabOrder(Value: TStringArray);
 begin
-  SetProp('tab_order', TJSONString.Create(Value));
+  SetProp('tab_order', ListText(Value));
 end;
 
 function TForm.GetTabKeys: string;
@@ -4995,6 +10258,36 @@ begin
   SetProp('gpu', TJSONString.Create(Value));
 end;
 
+function TForm.GetPresent: TFormPresent;
+begin
+  Result := FormPresentOf(GetProp('present'));
+end;
+
+procedure TForm.SetPresent(Value: TFormPresent);
+begin
+  SetProp('present', TJSONString.Create(FormPresentNames[Value]));
+end;
+
+function TForm.GetSpanMonitors: Boolean;
+begin
+  Result := GetProp('span_monitors').AsBoolean;
+end;
+
+procedure TForm.SetSpanMonitors(Value: Boolean);
+begin
+  SetProp('span_monitors', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetPhysicalPixels: Boolean;
+begin
+  Result := GetProp('physical_pixels').AsBoolean;
+end;
+
+procedure TForm.SetPhysicalPixels(Value: Boolean);
+begin
+  SetProp('physical_pixels', TJSONBoolean.Create(Value));
+end;
+
 function TForm.GetActivateOnShow: Boolean;
 begin
   Result := GetProp('activate_on_show').AsBoolean;
@@ -5005,14 +10298,24 @@ begin
   SetProp('activate_on_show', TJSONBoolean.Create(Value));
 end;
 
-function TForm.GetCloseAction: string;
+function TForm.GetForceForeground: Boolean;
 begin
-  Result := AsText(GetProp('close_action'));
+  Result := GetProp('force_foreground').AsBoolean;
 end;
 
-procedure TForm.SetCloseAction(Value: string);
+procedure TForm.SetForceForeground(Value: Boolean);
 begin
-  SetProp('close_action', TJSONString.Create(Value));
+  SetProp('force_foreground', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetCloseAction: TCloseAction;
+begin
+  Result := CloseActionOf(GetProp('close_action'));
+end;
+
+procedure TForm.SetCloseAction(Value: TCloseAction);
+begin
+  SetProp('close_action', TJSONString.Create(CloseActionNames[Value]));
 end;
 
 function TForm.GetFrameRate: Double;
@@ -5023,6 +10326,126 @@ end;
 procedure TForm.SetFrameRate(Value: Double);
 begin
   SetProp('frame_rate', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetOrientation: TFormOrientation;
+begin
+  Result := FormOrientationOf(GetProp('orientation'));
+end;
+
+procedure TForm.SetOrientation(Value: TFormOrientation);
+begin
+  SetProp('orientation', TJSONString.Create(FormOrientationNames[Value]));
+end;
+
+function TForm.GetOnShow: string;
+begin
+  Result := AsText(GetProp('on_show'));
+end;
+
+procedure TForm.SetOnShow(Value: string);
+begin
+  SetProp('on_show', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnWindowCreated: string;
+begin
+  Result := AsText(GetProp('on_window_created'));
+end;
+
+procedure TForm.SetOnWindowCreated(Value: string);
+begin
+  SetProp('on_window_created', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnClose: string;
+begin
+  Result := AsText(GetProp('on_close'));
+end;
+
+procedure TForm.SetOnClose(Value: string);
+begin
+  SetProp('on_close', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnActivate: string;
+begin
+  Result := AsText(GetProp('on_activate'));
+end;
+
+procedure TForm.SetOnActivate(Value: string);
+begin
+  SetProp('on_activate', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDeactivate: string;
+begin
+  Result := AsText(GetProp('on_deactivate'));
+end;
+
+procedure TForm.SetOnDeactivate(Value: string);
+begin
+  SetProp('on_deactivate', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnMinimize: string;
+begin
+  Result := AsText(GetProp('on_minimize'));
+end;
+
+procedure TForm.SetOnMinimize(Value: string);
+begin
+  SetProp('on_minimize', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnRestore: string;
+begin
+  Result := AsText(GetProp('on_restore'));
+end;
+
+procedure TForm.SetOnRestore(Value: string);
+begin
+  SetProp('on_restore', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnNavigate: string;
+begin
+  Result := AsText(GetProp('on_navigate'));
+end;
+
+procedure TForm.SetOnNavigate(Value: string);
+begin
+  SetProp('on_navigate', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnGpuChange: string;
+begin
+  Result := AsText(GetProp('on_gpu_change'));
+end;
+
+procedure TForm.SetOnGpuChange(Value: string);
+begin
+  SetProp('on_gpu_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetClientWidth: Double;
+begin
+  Result := GetProp('client_width').AsFloat;
+end;
+
+procedure TForm.SetClientWidth(Value: Double);
+begin
+  SetProp('client_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetClientHeight: Double;
+begin
+  Result := GetProp('client_height').AsFloat;
+end;
+
+procedure TForm.SetClientHeight(Value: Double);
+begin
+  SetProp('client_height', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetLeft: Double;
@@ -5065,44 +10488,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TForm.GetAlign: string;
+function TForm.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TForm.SetAlign(Value: string);
+procedure TForm.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TForm.GetAnchors: string;
+function TForm.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TForm.SetAnchors(Value: string);
+procedure TForm.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TForm.GetMargins: string;
+function TForm.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TForm.SetMargins(Value: string);
+procedure TForm.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TForm.GetPadding: string;
+function TForm.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TForm.SetPadding(Value: string);
+procedure TForm.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TForm.GetVisible: Boolean;
@@ -5175,6 +10598,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TForm.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TForm.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TForm.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -5225,14 +10658,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TForm.GetDragImage: string;
+function TForm.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TForm.SetDragImage(Value: string);
+procedure TForm.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TForm.GetDropTypes: string;
@@ -5255,14 +10688,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TForm.GetCursor: string;
+function TForm.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TForm.SetCursor(Value: string);
+procedure TForm.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TForm.GetOpacity: Double;
@@ -5273,6 +10706,16 @@ end;
 procedure TForm.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TForm.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TForm.GetCacheLayer: Boolean;
@@ -5293,6 +10736,16 @@ end;
 procedure TForm.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TForm.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetTranslateX: Double;
@@ -5365,14 +10818,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TForm.GetSelfAlign: string;
+function TForm.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TForm.SetSelfAlign(Value: string);
+procedure TForm.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TForm.GetAutoSize: Boolean;
@@ -5435,104 +10888,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TForm.GetShadow: string;
+function TForm.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TForm.SetShadow(Value: string);
+procedure TForm.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TForm.GetStyle: string;
+function TForm.GetStyle: TFormStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := FormStyleOf(GetProp('style'));
 end;
 
-procedure TForm.SetStyle(Value: string);
+procedure TForm.SetStyle(Value: TFormStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(FormStyleNames[Value]));
 end;
 
-function TForm.GetTheme: string;
+function TForm.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TForm.SetTheme(Value: string);
+procedure TForm.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TForm.GetFill: string;
+function TForm.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TForm.SetFill(Value: string);
+procedure TForm.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TForm.GetBorderColor: string;
+function TForm.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TForm.SetBorderColor(Value: string);
+procedure TForm.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TForm.GetTextColor: string;
+function TForm.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TForm.SetTextColor(Value: string);
+procedure TForm.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TForm.GetAccentColor: string;
+function TForm.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TForm.SetAccentColor(Value: string);
+procedure TForm.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TForm.GetSuccessColor: string;
+function TForm.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TForm.SetSuccessColor(Value: string);
+procedure TForm.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TForm.GetWarningColor: string;
+function TForm.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TForm.SetWarningColor(Value: string);
+procedure TForm.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TForm.GetDangerColor: string;
+function TForm.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TForm.SetDangerColor(Value: string);
+procedure TForm.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TForm.GetFontFamily: string;
@@ -5555,14 +11008,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TForm.GetFontWeight: string;
+function TForm.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TForm.SetFontWeight(Value: string);
+procedure TForm.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TForm.GetFontItalic: Boolean;
@@ -5635,14 +11088,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TForm.GetPopupMenu: string;
+function TForm.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TForm.SetPopupMenu(Value: string);
+procedure TForm.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TForm.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TForm.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TForm.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TForm.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TForm.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TForm.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TForm.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TForm.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TForm.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TForm.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TForm.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TForm.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TForm.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TForm.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TForm.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TForm.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TForm.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TForm.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TForm.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TForm.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 procedure TForm.MoveToMonitor(AMonitor: Int64);
@@ -5655,9 +11298,14 @@ begin
   Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'gpu_adapter', 'args', TJSONArray.Create])));
 end;
 
-function TForm.GpuAdapters: string;
+function TForm.GpuAdapters: TStringArray;
 begin
-  Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'gpu_adapters', 'args', TJSONArray.Create])));
+  Result := AsList(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'gpu_adapters', 'args', TJSONArray.Create])));
+end;
+
+function TForm.RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
+begin
+  Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'render_rgba', 'args', TJSONArray.Create([AX, AY, AWidth, AHeight, AScale])])));
 end;
 
 function TForm.Focused: string;
@@ -5775,44 +11423,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TGroupBox.GetAlign: string;
+function TGroupBox.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TGroupBox.SetAlign(Value: string);
+procedure TGroupBox.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TGroupBox.GetAnchors: string;
+function TGroupBox.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TGroupBox.SetAnchors(Value: string);
+procedure TGroupBox.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TGroupBox.GetMargins: string;
+function TGroupBox.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TGroupBox.SetMargins(Value: string);
+procedure TGroupBox.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TGroupBox.GetPadding: string;
+function TGroupBox.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TGroupBox.SetPadding(Value: string);
+procedure TGroupBox.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TGroupBox.GetVisible: Boolean;
@@ -5885,6 +11533,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TGroupBox.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TGroupBox.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TGroupBox.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -5935,14 +11593,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TGroupBox.GetDragImage: string;
+function TGroupBox.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TGroupBox.SetDragImage(Value: string);
+procedure TGroupBox.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TGroupBox.GetDropTypes: string;
@@ -5965,14 +11623,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TGroupBox.GetCursor: string;
+function TGroupBox.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TGroupBox.SetCursor(Value: string);
+procedure TGroupBox.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TGroupBox.GetOpacity: Double;
@@ -5983,6 +11641,16 @@ end;
 procedure TGroupBox.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TGroupBox.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TGroupBox.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TGroupBox.GetCacheLayer: Boolean;
@@ -6003,6 +11671,16 @@ end;
 procedure TGroupBox.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TGroupBox.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TGroupBox.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TGroupBox.GetTranslateX: Double;
@@ -6075,14 +11753,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TGroupBox.GetSelfAlign: string;
+function TGroupBox.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TGroupBox.SetSelfAlign(Value: string);
+procedure TGroupBox.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TGroupBox.GetAutoSize: Boolean;
@@ -6145,104 +11823,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TGroupBox.GetShadow: string;
+function TGroupBox.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TGroupBox.SetShadow(Value: string);
+procedure TGroupBox.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TGroupBox.GetStyle: string;
+function TGroupBox.GetStyle: TGroupBoxStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := GroupBoxStyleOf(GetProp('style'));
 end;
 
-procedure TGroupBox.SetStyle(Value: string);
+procedure TGroupBox.SetStyle(Value: TGroupBoxStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(GroupBoxStyleNames[Value]));
 end;
 
-function TGroupBox.GetTheme: string;
+function TGroupBox.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TGroupBox.SetTheme(Value: string);
+procedure TGroupBox.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TGroupBox.GetFill: string;
+function TGroupBox.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TGroupBox.SetFill(Value: string);
+procedure TGroupBox.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetBorderColor: string;
+function TGroupBox.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TGroupBox.SetBorderColor(Value: string);
+procedure TGroupBox.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetTextColor: string;
+function TGroupBox.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TGroupBox.SetTextColor(Value: string);
+procedure TGroupBox.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetAccentColor: string;
+function TGroupBox.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TGroupBox.SetAccentColor(Value: string);
+procedure TGroupBox.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetSuccessColor: string;
+function TGroupBox.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TGroupBox.SetSuccessColor(Value: string);
+procedure TGroupBox.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetWarningColor: string;
+function TGroupBox.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TGroupBox.SetWarningColor(Value: string);
+procedure TGroupBox.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TGroupBox.GetDangerColor: string;
+function TGroupBox.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TGroupBox.SetDangerColor(Value: string);
+procedure TGroupBox.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TGroupBox.GetFontFamily: string;
@@ -6265,14 +11943,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TGroupBox.GetFontWeight: string;
+function TGroupBox.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TGroupBox.SetFontWeight(Value: string);
+procedure TGroupBox.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TGroupBox.GetFontItalic: Boolean;
@@ -6345,14 +12023,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TGroupBox.GetPopupMenu: string;
+function TGroupBox.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TGroupBox.SetPopupMenu(Value: string);
+procedure TGroupBox.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TGroupBox.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TGroupBox.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TGroupBox.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TGroupBox.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TGroupBox.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TGroupBox.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TGroupBox.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TGroupBox.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TGroupBox.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TGroupBox.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TGroupBox.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TGroupBox.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TGroupBox.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TGroupBox.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TGroupBox.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TGroupBox.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TGroupBox.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TGroupBox.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TGroupBox.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TGroupBox.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TGroupBox.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TImage.GetImage: string;
@@ -6365,14 +12233,14 @@ begin
   SetProp('image', TJSONString.Create(Value));
 end;
 
-function TImage.GetFit: string;
+function TImage.GetFit: TImageFit;
 begin
-  Result := AsText(GetProp('fit'));
+  Result := ImageFitOf(GetProp('fit'));
 end;
 
-procedure TImage.SetFit(Value: string);
+procedure TImage.SetFit(Value: TImageFit);
 begin
-  SetProp('fit', TJSONString.Create(Value));
+  SetProp('fit', TJSONString.Create(ImageFitNames[Value]));
 end;
 
 function TImage.GetRadius: Double;
@@ -6383,6 +12251,16 @@ end;
 procedure TImage.SetRadius(Value: Double);
 begin
   SetProp('radius', TJSONFloatNumber.Create(Value));
+end;
+
+function TImage.GetZoomable: Boolean;
+begin
+  Result := GetProp('zoomable').AsBoolean;
+end;
+
+procedure TImage.SetZoomable(Value: Boolean);
+begin
+  SetProp('zoomable', TJSONBoolean.Create(Value));
 end;
 
 function TImage.GetLeft: Double;
@@ -6425,44 +12303,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TImage.GetAlign: string;
+function TImage.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TImage.SetAlign(Value: string);
+procedure TImage.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TImage.GetAnchors: string;
+function TImage.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TImage.SetAnchors(Value: string);
+procedure TImage.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TImage.GetMargins: string;
+function TImage.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TImage.SetMargins(Value: string);
+procedure TImage.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TImage.GetPadding: string;
+function TImage.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TImage.SetPadding(Value: string);
+procedure TImage.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TImage.GetVisible: Boolean;
@@ -6535,6 +12413,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TImage.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TImage.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TImage.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -6585,14 +12473,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TImage.GetDragImage: string;
+function TImage.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TImage.SetDragImage(Value: string);
+procedure TImage.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TImage.GetDropTypes: string;
@@ -6615,14 +12503,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TImage.GetCursor: string;
+function TImage.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TImage.SetCursor(Value: string);
+procedure TImage.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TImage.GetOpacity: Double;
@@ -6633,6 +12521,16 @@ end;
 procedure TImage.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TImage.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TImage.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TImage.GetCacheLayer: Boolean;
@@ -6653,6 +12551,16 @@ end;
 procedure TImage.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TImage.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TImage.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TImage.GetTranslateX: Double;
@@ -6725,14 +12633,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TImage.GetSelfAlign: string;
+function TImage.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TImage.SetSelfAlign(Value: string);
+procedure TImage.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TImage.GetAutoSize: Boolean;
@@ -6795,104 +12703,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TImage.GetShadow: string;
+function TImage.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TImage.SetShadow(Value: string);
+procedure TImage.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TImage.GetStyle: string;
+function TImage.GetStyle: TImageStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := ImageStyleOf(GetProp('style'));
 end;
 
-procedure TImage.SetStyle(Value: string);
+procedure TImage.SetStyle(Value: TImageStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(ImageStyleNames[Value]));
 end;
 
-function TImage.GetTheme: string;
+function TImage.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TImage.SetTheme(Value: string);
+procedure TImage.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TImage.GetFill: string;
+function TImage.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TImage.SetFill(Value: string);
+procedure TImage.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TImage.GetBorderColor: string;
+function TImage.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TImage.SetBorderColor(Value: string);
+procedure TImage.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TImage.GetTextColor: string;
+function TImage.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TImage.SetTextColor(Value: string);
+procedure TImage.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TImage.GetAccentColor: string;
+function TImage.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TImage.SetAccentColor(Value: string);
+procedure TImage.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TImage.GetSuccessColor: string;
+function TImage.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TImage.SetSuccessColor(Value: string);
+procedure TImage.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TImage.GetWarningColor: string;
+function TImage.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TImage.SetWarningColor(Value: string);
+procedure TImage.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TImage.GetDangerColor: string;
+function TImage.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TImage.SetDangerColor(Value: string);
+procedure TImage.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TImage.GetFontFamily: string;
@@ -6915,14 +12823,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TImage.GetFontWeight: string;
+function TImage.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TImage.SetFontWeight(Value: string);
+procedure TImage.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TImage.GetFontItalic: Boolean;
@@ -6995,14 +12903,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TImage.GetPopupMenu: string;
+function TImage.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TImage.SetPopupMenu(Value: string);
+procedure TImage.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TImage.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TImage.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TImage.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TImage.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TImage.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TImage.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TImage.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TImage.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TImage.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TImage.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TImage.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TImage.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TImage.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TImage.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TImage.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TImage.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TImage.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TImage.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TImage.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TImage.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TImage.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TLabel.GetText: string;
@@ -7015,24 +13113,24 @@ begin
   SetProp('text', TJSONString.Create(Value));
 end;
 
-function TLabel.GetHAlign: string;
+function TLabel.GetHAlign: TTextAlign;
 begin
-  Result := AsText(GetProp('h_align'));
+  Result := TextAlignOf(GetProp('h_align'));
 end;
 
-procedure TLabel.SetHAlign(Value: string);
+procedure TLabel.SetHAlign(Value: TTextAlign);
 begin
-  SetProp('h_align', TJSONString.Create(Value));
+  SetProp('h_align', TJSONString.Create(TextAlignNames[Value]));
 end;
 
-function TLabel.GetVAlign: string;
+function TLabel.GetVAlign: TTextAlign;
 begin
-  Result := AsText(GetProp('v_align'));
+  Result := TextAlignOf(GetProp('v_align'));
 end;
 
-procedure TLabel.SetVAlign(Value: string);
+procedure TLabel.SetVAlign(Value: TTextAlign);
 begin
-  SetProp('v_align', TJSONString.Create(Value));
+  SetProp('v_align', TJSONString.Create(TextAlignNames[Value]));
 end;
 
 function TLabel.GetWrap: Boolean;
@@ -7045,14 +13143,14 @@ begin
   SetProp('wrap', TJSONBoolean.Create(Value));
 end;
 
-function TLabel.GetTrimming: string;
+function TLabel.GetTrimming: TTrimming;
 begin
-  Result := AsText(GetProp('trimming'));
+  Result := TrimmingOf(GetProp('trimming'));
 end;
 
-procedure TLabel.SetTrimming(Value: string);
+procedure TLabel.SetTrimming(Value: TTrimming);
 begin
-  SetProp('trimming', TJSONString.Create(Value));
+  SetProp('trimming', TJSONString.Create(TrimmingNames[Value]));
 end;
 
 function TLabel.GetBold: Boolean;
@@ -7065,14 +13163,14 @@ begin
   SetProp('bold', TJSONBoolean.Create(Value));
 end;
 
-function TLabel.GetColor: string;
+function TLabel.GetColor: TAylisColor;
 begin
-  Result := AsText(GetProp('color'));
+  Result := AylisColorFromJSON(GetProp('color'));
 end;
 
-procedure TLabel.SetColor(Value: string);
+procedure TLabel.SetColor(Value: TAylisColor);
 begin
-  SetProp('color', TJSONString.Create(Value));
+  SetProp('color', AylisColorToJSON(Value));
 end;
 
 function TLabel.GetHighlight: string;
@@ -7095,14 +13193,14 @@ begin
   SetProp('letter_spacing', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetTextCase: string;
+function TLabel.GetTextCase: TTextCase;
 begin
-  Result := AsText(GetProp('text_case'));
+  Result := TextCaseOf(GetProp('text_case'));
 end;
 
-procedure TLabel.SetTextCase(Value: string);
+procedure TLabel.SetTextCase(Value: TTextCase);
 begin
-  SetProp('text_case', TJSONString.Create(Value));
+  SetProp('text_case', TJSONString.Create(TextCaseNames[Value]));
 end;
 
 function TLabel.GetMarkup: Boolean;
@@ -7115,14 +13213,14 @@ begin
   SetProp('markup', TJSONBoolean.Create(Value));
 end;
 
-function TLabel.GetOutline: string;
+function TLabel.GetOutline: TAylisColor;
 begin
-  Result := AsText(GetProp('outline'));
+  Result := AylisColorFromJSON(GetProp('outline'));
 end;
 
-procedure TLabel.SetOutline(Value: string);
+procedure TLabel.SetOutline(Value: TAylisColor);
 begin
-  SetProp('outline', TJSONString.Create(Value));
+  SetProp('outline', AylisColorToJSON(Value));
 end;
 
 function TLabel.GetOutlineWidth: Double;
@@ -7145,24 +13243,24 @@ begin
   SetProp('line_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetTextShadow: string;
+function TLabel.GetTextShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('text_shadow'));
+  Result := AylisShadowFromJSON(GetProp('text_shadow'));
 end;
 
-procedure TLabel.SetTextShadow(Value: string);
+procedure TLabel.SetTextShadow(Value: TAylisShadow);
 begin
-  SetProp('text_shadow', TJSONString.Create(Value));
+  SetProp('text_shadow', AylisShadowToJSON(Value));
 end;
 
-function TLabel.GetFocusControl: string;
+function TLabel.GetFocusControl: TAylisComponent;
 begin
-  Result := AsText(GetProp('focus_control'));
+  Result := GetRef('focus_control');
 end;
 
-procedure TLabel.SetFocusControl(Value: string);
+procedure TLabel.SetFocusControl(Value: TAylisComponent);
 begin
-  SetProp('focus_control', TJSONString.Create(Value));
+  SetRef('focus_control', Value);
 end;
 
 function TLabel.GetLeft: Double;
@@ -7205,44 +13303,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetAlign: string;
+function TLabel.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TLabel.SetAlign(Value: string);
+procedure TLabel.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TLabel.GetAnchors: string;
+function TLabel.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TLabel.SetAnchors(Value: string);
+procedure TLabel.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TLabel.GetMargins: string;
+function TLabel.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TLabel.SetMargins(Value: string);
+procedure TLabel.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TLabel.GetPadding: string;
+function TLabel.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TLabel.SetPadding(Value: string);
+procedure TLabel.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TLabel.GetVisible: Boolean;
@@ -7315,6 +13413,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TLabel.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TLabel.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TLabel.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -7365,14 +13473,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TLabel.GetDragImage: string;
+function TLabel.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TLabel.SetDragImage(Value: string);
+procedure TLabel.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TLabel.GetDropTypes: string;
@@ -7395,14 +13503,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TLabel.GetCursor: string;
+function TLabel.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TLabel.SetCursor(Value: string);
+procedure TLabel.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TLabel.GetOpacity: Double;
@@ -7413,6 +13521,16 @@ end;
 procedure TLabel.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TLabel.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TLabel.GetCacheLayer: Boolean;
@@ -7433,6 +13551,16 @@ end;
 procedure TLabel.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TLabel.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TLabel.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TLabel.GetTranslateX: Double;
@@ -7505,14 +13633,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetSelfAlign: string;
+function TLabel.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TLabel.SetSelfAlign(Value: string);
+procedure TLabel.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TLabel.GetAutoSize: Boolean;
@@ -7575,104 +13703,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetShadow: string;
+function TLabel.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TLabel.SetShadow(Value: string);
+procedure TLabel.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TLabel.GetStyle: string;
+function TLabel.GetStyle: TLabelStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := LabelStyleOf(GetProp('style'));
 end;
 
-procedure TLabel.SetStyle(Value: string);
+procedure TLabel.SetStyle(Value: TLabelStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(LabelStyleNames[Value]));
 end;
 
-function TLabel.GetTheme: string;
+function TLabel.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TLabel.SetTheme(Value: string);
+procedure TLabel.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TLabel.GetFill: string;
+function TLabel.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TLabel.SetFill(Value: string);
+procedure TLabel.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetBorderColor: string;
+function TLabel.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TLabel.SetBorderColor(Value: string);
+procedure TLabel.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetTextColor: string;
+function TLabel.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TLabel.SetTextColor(Value: string);
+procedure TLabel.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetAccentColor: string;
+function TLabel.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TLabel.SetAccentColor(Value: string);
+procedure TLabel.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetSuccessColor: string;
+function TLabel.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TLabel.SetSuccessColor(Value: string);
+procedure TLabel.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetWarningColor: string;
+function TLabel.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TLabel.SetWarningColor(Value: string);
+procedure TLabel.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TLabel.GetDangerColor: string;
+function TLabel.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TLabel.SetDangerColor(Value: string);
+procedure TLabel.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TLabel.GetFontFamily: string;
@@ -7695,14 +13823,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TLabel.GetFontWeight: string;
+function TLabel.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TLabel.SetFontWeight(Value: string);
+procedure TLabel.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TLabel.GetFontItalic: Boolean;
@@ -7775,14 +13903,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TLabel.GetPopupMenu: string;
+function TLabel.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TLabel.SetPopupMenu(Value: string);
+procedure TLabel.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TLabel.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TLabel.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TLabel.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TLabel.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TLabel.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TLabel.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TLabel.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TLabel.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TLabel.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TLabel.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TLabel.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TLabel.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TLabel.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TLabel.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TLabel.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TLabel.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TLabel.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TLabel.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TLabel.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TLabel.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TLabel.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TLabel.MinContentWidth: Double;
@@ -7895,44 +14213,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TLayout.GetAlign: string;
+function TLayout.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TLayout.SetAlign(Value: string);
+procedure TLayout.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TLayout.GetAnchors: string;
+function TLayout.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TLayout.SetAnchors(Value: string);
+procedure TLayout.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TLayout.GetMargins: string;
+function TLayout.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TLayout.SetMargins(Value: string);
+procedure TLayout.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TLayout.GetPadding: string;
+function TLayout.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TLayout.SetPadding(Value: string);
+procedure TLayout.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TLayout.GetVisible: Boolean;
@@ -8005,6 +14323,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TLayout.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TLayout.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TLayout.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -8055,14 +14383,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TLayout.GetDragImage: string;
+function TLayout.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TLayout.SetDragImage(Value: string);
+procedure TLayout.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TLayout.GetDropTypes: string;
@@ -8085,14 +14413,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TLayout.GetCursor: string;
+function TLayout.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TLayout.SetCursor(Value: string);
+procedure TLayout.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TLayout.GetOpacity: Double;
@@ -8103,6 +14431,16 @@ end;
 procedure TLayout.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TLayout.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TLayout.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TLayout.GetCacheLayer: Boolean;
@@ -8123,6 +14461,16 @@ end;
 procedure TLayout.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TLayout.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TLayout.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TLayout.GetTranslateX: Double;
@@ -8195,14 +14543,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TLayout.GetSelfAlign: string;
+function TLayout.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TLayout.SetSelfAlign(Value: string);
+procedure TLayout.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TLayout.GetAutoSize: Boolean;
@@ -8265,104 +14613,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TLayout.GetShadow: string;
+function TLayout.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TLayout.SetShadow(Value: string);
+procedure TLayout.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TLayout.GetStyle: string;
+function TLayout.GetStyle: TLayoutStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := LayoutStyleOf(GetProp('style'));
 end;
 
-procedure TLayout.SetStyle(Value: string);
+procedure TLayout.SetStyle(Value: TLayoutStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(LayoutStyleNames[Value]));
 end;
 
-function TLayout.GetTheme: string;
+function TLayout.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TLayout.SetTheme(Value: string);
+procedure TLayout.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TLayout.GetFill: string;
+function TLayout.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TLayout.SetFill(Value: string);
+procedure TLayout.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetBorderColor: string;
+function TLayout.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TLayout.SetBorderColor(Value: string);
+procedure TLayout.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetTextColor: string;
+function TLayout.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TLayout.SetTextColor(Value: string);
+procedure TLayout.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetAccentColor: string;
+function TLayout.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TLayout.SetAccentColor(Value: string);
+procedure TLayout.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetSuccessColor: string;
+function TLayout.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TLayout.SetSuccessColor(Value: string);
+procedure TLayout.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetWarningColor: string;
+function TLayout.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TLayout.SetWarningColor(Value: string);
+procedure TLayout.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TLayout.GetDangerColor: string;
+function TLayout.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TLayout.SetDangerColor(Value: string);
+procedure TLayout.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TLayout.GetFontFamily: string;
@@ -8385,14 +14733,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TLayout.GetFontWeight: string;
+function TLayout.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TLayout.SetFontWeight(Value: string);
+procedure TLayout.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TLayout.GetFontItalic: Boolean;
@@ -8465,14 +14813,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TLayout.GetPopupMenu: string;
+function TLayout.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TLayout.SetPopupMenu(Value: string);
+procedure TLayout.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TLayout.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TLayout.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TLayout.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TLayout.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TLayout.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TLayout.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TLayout.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TLayout.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TLayout.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TLayout.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TLayout.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TLayout.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TLayout.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TLayout.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TLayout.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TLayout.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TLayout.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TLayout.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TLayout.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TLayout.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TLayout.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TPanel.GetAllowedChars: string;
@@ -8535,34 +15073,34 @@ begin
   SetProp('gap', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetFill: string;
+function TPanel.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TPanel.SetFill(Value: string);
+procedure TPanel.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetFill2: string;
+function TPanel.GetFill2: TAylisColor;
 begin
-  Result := AsText(GetProp('fill2'));
+  Result := AylisColorFromJSON(GetProp('fill2'));
 end;
 
-procedure TPanel.SetFill2(Value: string);
+procedure TPanel.SetFill2(Value: TAylisColor);
 begin
-  SetProp('fill2', TJSONString.Create(Value));
+  SetProp('fill2', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetFillMid: string;
+function TPanel.GetFillMid: TAylisColor;
 begin
-  Result := AsText(GetProp('fill_mid'));
+  Result := AylisColorFromJSON(GetProp('fill_mid'));
 end;
 
-procedure TPanel.SetFillMid(Value: string);
+procedure TPanel.SetFillMid(Value: TAylisColor);
 begin
-  SetProp('fill_mid', TJSONString.Create(Value));
+  SetProp('fill_mid', AylisColorToJSON(Value));
 end;
 
 function TPanel.GetFillMidAt: Double;
@@ -8595,14 +15133,14 @@ begin
   SetProp('gradient_radial', TJSONBoolean.Create(Value));
 end;
 
-function TPanel.GetStroke: string;
+function TPanel.GetStroke: TAylisColor;
 begin
-  Result := AsText(GetProp('stroke'));
+  Result := AylisColorFromJSON(GetProp('stroke'));
 end;
 
-procedure TPanel.SetStroke(Value: string);
+procedure TPanel.SetStroke(Value: TAylisColor);
 begin
-  SetProp('stroke', TJSONString.Create(Value));
+  SetProp('stroke', AylisColorToJSON(Value));
 end;
 
 function TPanel.GetStrokeWidth: Double;
@@ -8615,14 +15153,14 @@ begin
   SetProp('stroke_width', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetRadius: string;
+function TPanel.GetRadius: TAylisBounds;
 begin
-  Result := AsText(GetProp('radius'));
+  Result := AylisBoundsFromJSON(GetProp('radius'));
 end;
 
-procedure TPanel.SetRadius(Value: string);
+procedure TPanel.SetRadius(Value: TAylisBounds);
 begin
-  SetProp('radius', TJSONString.Create(Value));
+  SetProp('radius', AylisBoundsToJSON(Value));
 end;
 
 function TPanel.GetLeft: Double;
@@ -8665,44 +15203,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetAlign: string;
+function TPanel.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TPanel.SetAlign(Value: string);
+procedure TPanel.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TPanel.GetAnchors: string;
+function TPanel.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TPanel.SetAnchors(Value: string);
+procedure TPanel.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TPanel.GetMargins: string;
+function TPanel.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TPanel.SetMargins(Value: string);
+procedure TPanel.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TPanel.GetPadding: string;
+function TPanel.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TPanel.SetPadding(Value: string);
+procedure TPanel.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TPanel.GetVisible: Boolean;
@@ -8775,6 +15313,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TPanel.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TPanel.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TPanel.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -8825,14 +15373,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TPanel.GetDragImage: string;
+function TPanel.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TPanel.SetDragImage(Value: string);
+procedure TPanel.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TPanel.GetDropTypes: string;
@@ -8855,14 +15403,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TPanel.GetCursor: string;
+function TPanel.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TPanel.SetCursor(Value: string);
+procedure TPanel.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TPanel.GetOpacity: Double;
@@ -8873,6 +15421,16 @@ end;
 procedure TPanel.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TPanel.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TPanel.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TPanel.GetCacheLayer: Boolean;
@@ -8893,6 +15451,16 @@ end;
 procedure TPanel.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TPanel.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TPanel.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TPanel.GetTranslateX: Double;
@@ -8965,14 +15533,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetSelfAlign: string;
+function TPanel.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TPanel.SetSelfAlign(Value: string);
+procedure TPanel.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TPanel.GetAutoSize: Boolean;
@@ -9035,94 +15603,94 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetShadow: string;
+function TPanel.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TPanel.SetShadow(Value: string);
+procedure TPanel.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TPanel.GetStyle: string;
+function TPanel.GetStyle: TPanelStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := PanelStyleOf(GetProp('style'));
 end;
 
-procedure TPanel.SetStyle(Value: string);
+procedure TPanel.SetStyle(Value: TPanelStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(PanelStyleNames[Value]));
 end;
 
-function TPanel.GetTheme: string;
+function TPanel.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TPanel.SetTheme(Value: string);
+procedure TPanel.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TPanel.GetBorderColor: string;
+function TPanel.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TPanel.SetBorderColor(Value: string);
+procedure TPanel.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetTextColor: string;
+function TPanel.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TPanel.SetTextColor(Value: string);
+procedure TPanel.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetAccentColor: string;
+function TPanel.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TPanel.SetAccentColor(Value: string);
+procedure TPanel.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetSuccessColor: string;
+function TPanel.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TPanel.SetSuccessColor(Value: string);
+procedure TPanel.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetWarningColor: string;
+function TPanel.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TPanel.SetWarningColor(Value: string);
+procedure TPanel.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TPanel.GetDangerColor: string;
+function TPanel.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TPanel.SetDangerColor(Value: string);
+procedure TPanel.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TPanel.GetFontFamily: string;
@@ -9145,14 +15713,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TPanel.GetFontWeight: string;
+function TPanel.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TPanel.SetFontWeight(Value: string);
+procedure TPanel.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TPanel.GetFontItalic: Boolean;
@@ -9225,14 +15793,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TPanel.GetPopupMenu: string;
+function TPanel.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TPanel.SetPopupMenu(Value: string);
+procedure TPanel.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TPanel.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TPanel.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TPanel.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TPanel.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TPanel.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TPanel.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TPanel.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TPanel.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TPanel.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TPanel.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TPanel.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TPanel.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TPanel.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TPanel.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TPanel.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TPanel.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TPanel.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TPanel.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TPanel.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TPanel.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TPanel.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TSplitter.GetMinSize: Double;
@@ -9285,44 +16043,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TSplitter.GetAlign: string;
+function TSplitter.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TSplitter.SetAlign(Value: string);
+procedure TSplitter.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TSplitter.GetAnchors: string;
+function TSplitter.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TSplitter.SetAnchors(Value: string);
+procedure TSplitter.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TSplitter.GetMargins: string;
+function TSplitter.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TSplitter.SetMargins(Value: string);
+procedure TSplitter.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TSplitter.GetPadding: string;
+function TSplitter.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TSplitter.SetPadding(Value: string);
+procedure TSplitter.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TSplitter.GetVisible: Boolean;
@@ -9395,6 +16153,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TSplitter.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TSplitter.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TSplitter.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -9445,14 +16213,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TSplitter.GetDragImage: string;
+function TSplitter.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TSplitter.SetDragImage(Value: string);
+procedure TSplitter.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TSplitter.GetDropTypes: string;
@@ -9475,14 +16243,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TSplitter.GetCursor: string;
+function TSplitter.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TSplitter.SetCursor(Value: string);
+procedure TSplitter.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TSplitter.GetOpacity: Double;
@@ -9493,6 +16261,16 @@ end;
 procedure TSplitter.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TSplitter.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TSplitter.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TSplitter.GetCacheLayer: Boolean;
@@ -9513,6 +16291,16 @@ end;
 procedure TSplitter.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TSplitter.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TSplitter.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TSplitter.GetTranslateX: Double;
@@ -9585,14 +16373,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TSplitter.GetSelfAlign: string;
+function TSplitter.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TSplitter.SetSelfAlign(Value: string);
+procedure TSplitter.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TSplitter.GetAutoSize: Boolean;
@@ -9655,104 +16443,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TSplitter.GetShadow: string;
+function TSplitter.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TSplitter.SetShadow(Value: string);
+procedure TSplitter.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TSplitter.GetStyle: string;
+function TSplitter.GetStyle: TSplitterStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := SplitterStyleOf(GetProp('style'));
 end;
 
-procedure TSplitter.SetStyle(Value: string);
+procedure TSplitter.SetStyle(Value: TSplitterStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(SplitterStyleNames[Value]));
 end;
 
-function TSplitter.GetTheme: string;
+function TSplitter.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TSplitter.SetTheme(Value: string);
+procedure TSplitter.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TSplitter.GetFill: string;
+function TSplitter.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TSplitter.SetFill(Value: string);
+procedure TSplitter.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetBorderColor: string;
+function TSplitter.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TSplitter.SetBorderColor(Value: string);
+procedure TSplitter.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetTextColor: string;
+function TSplitter.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TSplitter.SetTextColor(Value: string);
+procedure TSplitter.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetAccentColor: string;
+function TSplitter.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TSplitter.SetAccentColor(Value: string);
+procedure TSplitter.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetSuccessColor: string;
+function TSplitter.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TSplitter.SetSuccessColor(Value: string);
+procedure TSplitter.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetWarningColor: string;
+function TSplitter.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TSplitter.SetWarningColor(Value: string);
+procedure TSplitter.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TSplitter.GetDangerColor: string;
+function TSplitter.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TSplitter.SetDangerColor(Value: string);
+procedure TSplitter.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TSplitter.GetFontFamily: string;
@@ -9775,14 +16563,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TSplitter.GetFontWeight: string;
+function TSplitter.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TSplitter.SetFontWeight(Value: string);
+procedure TSplitter.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TSplitter.GetFontItalic: Boolean;
@@ -9855,14 +16643,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TSplitter.GetPopupMenu: string;
+function TSplitter.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TSplitter.SetPopupMenu(Value: string);
+procedure TSplitter.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TSplitter.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TSplitter.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TSplitter.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TSplitter.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TSplitter.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TSplitter.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TSplitter.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TSplitter.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TSplitter.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TSplitter.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TSplitter.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TSplitter.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TSplitter.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TSplitter.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TSplitter.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TSplitter.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TSplitter.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TSplitter.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TSplitter.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TSplitter.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TSplitter.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TSvg.GetSource: string;
@@ -9875,44 +16853,44 @@ begin
   SetProp('source', TJSONString.Create(Value));
 end;
 
-function TSvg.GetColor: string;
+function TSvg.GetColor: TAylisColor;
 begin
-  Result := AsText(GetProp('color'));
+  Result := AylisColorFromJSON(GetProp('color'));
 end;
 
-procedure TSvg.SetColor(Value: string);
+procedure TSvg.SetColor(Value: TAylisColor);
 begin
-  SetProp('color', TJSONString.Create(Value));
+  SetProp('color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetFit: string;
+function TSvg.GetFit: TImageFit;
 begin
-  Result := AsText(GetProp('fit'));
+  Result := ImageFitOf(GetProp('fit'));
 end;
 
-procedure TSvg.SetFit(Value: string);
+procedure TSvg.SetFit(Value: TImageFit);
 begin
-  SetProp('fit', TJSONString.Create(Value));
+  SetProp('fit', TJSONString.Create(ImageFitNames[Value]));
 end;
 
-function TSvg.GetHighlight: string;
+function TSvg.GetHighlight: TStringArray;
 begin
-  Result := AsText(GetProp('highlight'));
+  Result := AsList(GetProp('highlight'));
 end;
 
-procedure TSvg.SetHighlight(Value: string);
+procedure TSvg.SetHighlight(Value: TStringArray);
 begin
-  SetProp('highlight', TJSONString.Create(Value));
+  SetProp('highlight', ListText(Value));
 end;
 
-function TSvg.GetHighlightColor: string;
+function TSvg.GetHighlightColor: TAylisColor;
 begin
-  Result := AsText(GetProp('highlight_color'));
+  Result := AylisColorFromJSON(GetProp('highlight_color'));
 end;
 
-procedure TSvg.SetHighlightColor(Value: string);
+procedure TSvg.SetHighlightColor(Value: TAylisColor);
 begin
-  SetProp('highlight_color', TJSONString.Create(Value));
+  SetProp('highlight_color', AylisColorToJSON(Value));
 end;
 
 function TSvg.GetZoomTo: string;
@@ -9965,44 +16943,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TSvg.GetAlign: string;
+function TSvg.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TSvg.SetAlign(Value: string);
+procedure TSvg.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TSvg.GetAnchors: string;
+function TSvg.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TSvg.SetAnchors(Value: string);
+procedure TSvg.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TSvg.GetMargins: string;
+function TSvg.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TSvg.SetMargins(Value: string);
+procedure TSvg.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TSvg.GetPadding: string;
+function TSvg.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TSvg.SetPadding(Value: string);
+procedure TSvg.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TSvg.GetVisible: Boolean;
@@ -10075,6 +17053,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TSvg.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TSvg.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TSvg.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -10125,14 +17113,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TSvg.GetDragImage: string;
+function TSvg.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TSvg.SetDragImage(Value: string);
+procedure TSvg.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TSvg.GetDropTypes: string;
@@ -10155,14 +17143,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TSvg.GetCursor: string;
+function TSvg.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TSvg.SetCursor(Value: string);
+procedure TSvg.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TSvg.GetOpacity: Double;
@@ -10173,6 +17161,16 @@ end;
 procedure TSvg.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TSvg.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TSvg.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TSvg.GetCacheLayer: Boolean;
@@ -10193,6 +17191,16 @@ end;
 procedure TSvg.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TSvg.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TSvg.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TSvg.GetTranslateX: Double;
@@ -10265,14 +17273,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TSvg.GetSelfAlign: string;
+function TSvg.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TSvg.SetSelfAlign(Value: string);
+procedure TSvg.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TSvg.GetAutoSize: Boolean;
@@ -10335,104 +17343,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TSvg.GetShadow: string;
+function TSvg.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TSvg.SetShadow(Value: string);
+procedure TSvg.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TSvg.GetStyle: string;
+function TSvg.GetStyle: TSvgStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := SvgStyleOf(GetProp('style'));
 end;
 
-procedure TSvg.SetStyle(Value: string);
+procedure TSvg.SetStyle(Value: TSvgStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(SvgStyleNames[Value]));
 end;
 
-function TSvg.GetTheme: string;
+function TSvg.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TSvg.SetTheme(Value: string);
+procedure TSvg.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TSvg.GetFill: string;
+function TSvg.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TSvg.SetFill(Value: string);
+procedure TSvg.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetBorderColor: string;
+function TSvg.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TSvg.SetBorderColor(Value: string);
+procedure TSvg.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetTextColor: string;
+function TSvg.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TSvg.SetTextColor(Value: string);
+procedure TSvg.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetAccentColor: string;
+function TSvg.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TSvg.SetAccentColor(Value: string);
+procedure TSvg.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetSuccessColor: string;
+function TSvg.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TSvg.SetSuccessColor(Value: string);
+procedure TSvg.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetWarningColor: string;
+function TSvg.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TSvg.SetWarningColor(Value: string);
+procedure TSvg.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TSvg.GetDangerColor: string;
+function TSvg.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TSvg.SetDangerColor(Value: string);
+procedure TSvg.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TSvg.GetFontFamily: string;
@@ -10455,14 +17463,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TSvg.GetFontWeight: string;
+function TSvg.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TSvg.SetFontWeight(Value: string);
+procedure TSvg.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TSvg.GetFontItalic: Boolean;
@@ -10535,14 +17543,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TSvg.GetPopupMenu: string;
+function TSvg.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TSvg.SetPopupMenu(Value: string);
+procedure TSvg.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TSvg.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TSvg.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TSvg.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TSvg.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TSvg.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TSvg.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TSvg.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TSvg.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TSvg.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TSvg.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TSvg.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TSvg.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TSvg.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TSvg.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TSvg.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TSvg.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TSvg.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TSvg.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TSvg.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TSvg.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TSvg.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 procedure TFrmIBGEBase.BindComponents(List: TJSONArray);
@@ -11044,4 +18242,7 @@ begin
   Result := FindSvg(TJSONObject(Event.Find('sender')).Get('name', ''));
 end;
 
+initialization
+  AylisFormat := DefaultFormatSettings;
+  AylisFormat.DecimalSeparator := '.';
 end.

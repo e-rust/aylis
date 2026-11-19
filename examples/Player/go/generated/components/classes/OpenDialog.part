@@ -16,4 +16,10 @@ func (c aylisOpenDialog) SetFileName(v string) { c.Set("file_name", v) }
 
 func (c aylisOpenDialog) Multiple() bool { return asBool(c.Get("multiple")) }
 func (c aylisOpenDialog) SetMultiple(v bool) { c.Set("multiple", v) }
+
+func (c aylisOpenDialog) OnSelect() string { return asText(c.Get("on_select")) }
+func (c aylisOpenDialog) SetOnSelect(v string) { c.Set("on_select", v) }
+
+func (c aylisOpenDialog) OnCancel() string { return asText(c.Get("on_cancel")) }
+func (c aylisOpenDialog) SetOnCancel(v string) { c.Set("on_cancel", v) }
 func (c aylisOpenDialog) Execute() { c.App.Send("execute", aylis.M{"target": c.ID}) }

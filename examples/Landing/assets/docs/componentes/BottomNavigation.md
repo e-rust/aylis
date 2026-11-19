@@ -12,13 +12,13 @@ Barra de navegação do rodapé (o `v-bottom-navigation`, a "navigation bar" do 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem, separados por `;`. |
+| `icons` | Ícones | lista de textos (separados por `;`) | Os ícones dos destinos, na mesma ordem, separados por `;`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os nomes dos destinos, separados por `;`. |
+| `items` | Itens | lista de textos (separados por `;`) | Os nomes dos destinos, separados por `;`. |
 | `item_index` | Item escolhido | inteiro | O destino escolhido (a partir de 0). |
 
 ## Eventos
@@ -40,8 +40,8 @@ E o handler, um método do form (`self.BottomNavigation1` já é um `BottomNavig
 ```rust
 impl FrmPrincipal {
     pub fn bottom_navigation1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.BottomNavigation1.items(ui);
-        self.BottomNavigation1.set_items(ui, format!("{atual}!"));
+        let atual = self.BottomNavigation1.item_index(ui);
+        self.BottomNavigation1.set_item_index(ui, atual + 1);
     }
 }
 ```

@@ -109,9 +109,9 @@ impl Component for TimePicker {
     leaf_control!("TimePicker");
 
     properties! {
-        time: String => "Data",
+        time: String as Time => "Data",
         minutes_mode: bool => "Behavior";
-        events: on_change
+        events: on_change: Option<aylis_core::Time>
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

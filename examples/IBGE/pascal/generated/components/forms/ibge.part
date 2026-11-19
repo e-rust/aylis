@@ -102,62 +102,62 @@
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O ClientDataSet deste form com o nome, como o FindComponent (nil se não há). }
+    { O ClientDataSet deste form com o nome (nil se não há). }
     function FindClientDataSet(const Nome: string): TClientDataSet;
     { O ClientDataSet que disparou o evento (nil se não é um ClientDataSet deste form). }
     function SenderAsClientDataSet(Sender: TAylisComponent): TClientDataSet; overload;
     function SenderAsClientDataSet(Event: TJSONObject): TClientDataSet; overload;
-    { O DBChart deste form com o nome, como o FindComponent (nil se não há). }
+    { O DBChart deste form com o nome (nil se não há). }
     function FindDBChart(const Nome: string): TDBChart;
     { O DBChart que disparou o evento (nil se não é um DBChart deste form). }
     function SenderAsDBChart(Sender: TAylisComponent): TDBChart; overload;
     function SenderAsDBChart(Event: TJSONObject): TDBChart; overload;
-    { O DataGrid deste form com o nome, como o FindComponent (nil se não há). }
+    { O DataGrid deste form com o nome (nil se não há). }
     function FindDataGrid(const Nome: string): TDataGrid;
     { O DataGrid que disparou o evento (nil se não é um DataGrid deste form). }
     function SenderAsDataGrid(Sender: TAylisComponent): TDataGrid; overload;
     function SenderAsDataGrid(Event: TJSONObject): TDataGrid; overload;
-    { O DataSource deste form com o nome, como o FindComponent (nil se não há). }
+    { O DataSource deste form com o nome (nil se não há). }
     function FindDataSource(const Nome: string): TDataSource;
     { O DataSource que disparou o evento (nil se não é um DataSource deste form). }
     function SenderAsDataSource(Sender: TAylisComponent): TDataSource; overload;
     function SenderAsDataSource(Event: TJSONObject): TDataSource; overload;
-    { O Field deste form com o nome, como o FindComponent (nil se não há). }
+    { O Field deste form com o nome (nil se não há). }
     function FindField(const Nome: string): TField;
     { O Field que disparou o evento (nil se não é um Field deste form). }
     function SenderAsField(Sender: TAylisComponent): TField; overload;
     function SenderAsField(Event: TJSONObject): TField; overload;
-    { O GroupBox deste form com o nome, como o FindComponent (nil se não há). }
+    { O GroupBox deste form com o nome (nil se não há). }
     function FindGroupBox(const Nome: string): TGroupBox;
     { O GroupBox que disparou o evento (nil se não é um GroupBox deste form). }
     function SenderAsGroupBox(Sender: TAylisComponent): TGroupBox; overload;
     function SenderAsGroupBox(Event: TJSONObject): TGroupBox; overload;
-    { O Image deste form com o nome, como o FindComponent (nil se não há). }
+    { O Image deste form com o nome (nil se não há). }
     function FindImage(const Nome: string): TImage;
     { O Image que disparou o evento (nil se não é um Image deste form). }
     function SenderAsImage(Sender: TAylisComponent): TImage; overload;
     function SenderAsImage(Event: TJSONObject): TImage; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
     function SenderAsLabel(Event: TJSONObject): TLabel; overload;
-    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    { O Layout deste form com o nome (nil se não há). }
     function FindLayout(const Nome: string): TLayout;
     { O Layout que disparou o evento (nil se não é um Layout deste form). }
     function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
     function SenderAsLayout(Event: TJSONObject): TLayout; overload;
-    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    { O Panel deste form com o nome (nil se não há). }
     function FindPanel(const Nome: string): TPanel;
     { O Panel que disparou o evento (nil se não é um Panel deste form). }
     function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
     function SenderAsPanel(Event: TJSONObject): TPanel; overload;
-    { O Splitter deste form com o nome, como o FindComponent (nil se não há). }
+    { O Splitter deste form com o nome (nil se não há). }
     function FindSplitter(const Nome: string): TSplitter;
     { O Splitter que disparou o evento (nil se não é um Splitter deste form). }
     function SenderAsSplitter(Sender: TAylisComponent): TSplitter; overload;
     function SenderAsSplitter(Event: TJSONObject): TSplitter; overload;
-    { O Svg deste form com o nome, como o FindComponent (nil se não há). }
+    { O Svg deste form com o nome (nil se não há). }
     function FindSvg(const Nome: string): TSvg;
     { O Svg que disparou o evento (nil se não é um Svg deste form). }
     function SenderAsSvg(Sender: TAylisComponent): TSvg; overload;

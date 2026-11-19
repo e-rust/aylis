@@ -8,23 +8,23 @@
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
         public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
-        public string Fill { get => Text(GetProp("fill")); set => SetProp("fill", value); }
-        public string Fill2 { get => Text(GetProp("fill2")); set => SetProp("fill2", value); }
-        public string FillMid { get => Text(GetProp("fill_mid")); set => SetProp("fill_mid", value); }
+        public Color Fill { get => Color.FromJson(GetProp("fill")); set => SetProp("fill", value.ToJson()); }
+        public Color Fill2 { get => Color.FromJson(GetProp("fill2")); set => SetProp("fill2", value.ToJson()); }
+        public Color FillMid { get => Color.FromJson(GetProp("fill_mid")); set => SetProp("fill_mid", value.ToJson()); }
         public double FillMidAt { get => Number(GetProp("fill_mid_at")); set => SetProp("fill_mid_at", value); }
         public double GradientAngle { get => Number(GetProp("gradient_angle")); set => SetProp("gradient_angle", value); }
         public bool GradientRadial { get => Bool(GetProp("gradient_radial")); set => SetProp("gradient_radial", value); }
-        public string Stroke { get => Text(GetProp("stroke")); set => SetProp("stroke", value); }
+        public Color Stroke { get => Color.FromJson(GetProp("stroke")); set => SetProp("stroke", value.ToJson()); }
         public double StrokeWidth { get => Number(GetProp("stroke_width")); set => SetProp("stroke_width", value); }
-        public string Radius { get => Text(GetProp("radius")); set => SetProp("radius", value); }
+        public Bounds Radius { get => Bounds.FromJson(GetProp("radius")); set => SetProp("radius", value.ToJson()); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
         public double Width { get => Number(GetProp("width")); set => SetProp("width", value); }
         public double Height { get => Number(GetProp("height")); set => SetProp("height", value); }
-        public string Align { get => Text(GetProp("align")); set => SetProp("align", value); }
-        public string Anchors { get => Text(GetProp("anchors")); set => SetProp("anchors", value); }
-        public string Margins { get => Text(GetProp("margins")); set => SetProp("margins", value); }
-        public string Padding { get => Text(GetProp("padding")); set => SetProp("padding", value); }
+        public Align Align { get => EnumNames.Of<Align>(GetProp("align"), EnumNames.Align); set => SetProp("align", EnumNames.Align[(int)value]); }
+        public Anchor[] Anchors { get => EnumNames.SetOf<Anchor>(GetProp("anchors"), EnumNames.Anchor); set => SetProp("anchors", EnumNames.Names(value, EnumNames.Anchor)); }
+        public Bounds Margins { get => Bounds.FromJson(GetProp("margins")); set => SetProp("margins", value.ToJson()); }
+        public Bounds Padding { get => Bounds.FromJson(GetProp("padding")); set => SetProp("padding", value.ToJson()); }
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Enabled { get => Bool(GetProp("enabled")); set => SetProp("enabled", value); }
         public bool HitTest { get => Bool(GetProp("hit_test")); set => SetProp("hit_test", value); }
@@ -32,18 +32,21 @@
         public bool InheritState { get => Bool(GetProp("inherit_state")); set => SetProp("inherit_state", value); }
         public bool Translate { get => Bool(GetProp("translate")); set => SetProp("translate", value); }
         public bool CapturesWheel { get => Bool(GetProp("captures_wheel")); set => SetProp("captures_wheel", value); }
+        public bool CapturesGesture { get => Bool(GetProp("captures_gesture")); set => SetProp("captures_gesture", value); }
         public bool CanFocus { get => Bool(GetProp("can_focus")); set => SetProp("can_focus", value); }
         public bool Draggable { get => Bool(GetProp("draggable")); set => SetProp("draggable", value); }
         public bool AcceptsDrops { get => Bool(GetProp("accepts_drops")); set => SetProp("accepts_drops", value); }
         public string DragData { get => Text(GetProp("drag_data")); set => SetProp("drag_data", value); }
         public string DragLabel { get => Text(GetProp("drag_label")); set => SetProp("drag_label", value); }
-        public string DragImage { get => Text(GetProp("drag_image")); set => SetProp("drag_image", value); }
+        public AylisComponent? DragImage { get => GetRef("drag_image"); set => SetRef("drag_image", value); }
         public string DropTypes { get => Text(GetProp("drop_types")); set => SetProp("drop_types", value); }
         public bool TabStop { get => Bool(GetProp("tab_stop")); set => SetProp("tab_stop", value); }
-        public string Cursor { get => Text(GetProp("cursor")); set => SetProp("cursor", value); }
+        public CursorShape Cursor { get => EnumNames.Of<CursorShape>(GetProp("cursor"), EnumNames.CursorShape); set => SetProp("cursor", EnumNames.CursorShape[(int)value]); }
         public double Opacity { get => Number(GetProp("opacity")); set => SetProp("opacity", value); }
+        public BlendMode BlendMode { get => EnumNames.Of<BlendMode>(GetProp("blend_mode"), EnumNames.BlendMode); set => SetProp("blend_mode", EnumNames.BlendMode[(int)value]); }
         public bool CacheLayer { get => Bool(GetProp("cache_layer")); set => SetProp("cache_layer", value); }
         public double Rotation { get => Number(GetProp("rotation")); set => SetProp("rotation", value); }
+        public double Scale { get => Number(GetProp("scale")); set => SetProp("scale", value); }
         public double TranslateX { get => Number(GetProp("translate_x")); set => SetProp("translate_x", value); }
         public double TranslateY { get => Number(GetProp("translate_y")); set => SetProp("translate_y", value); }
         public double AspectRatio { get => Number(GetProp("aspect_ratio")); set => SetProp("aspect_ratio", value); }
@@ -51,25 +54,25 @@
         public double MinWidth { get => Number(GetProp("min_width")); set => SetProp("min_width", value); }
         public double MinHeight { get => Number(GetProp("min_height")); set => SetProp("min_height", value); }
         public double MaxHeight { get => Number(GetProp("max_height")); set => SetProp("max_height", value); }
-        public string SelfAlign { get => Text(GetProp("self_align")); set => SetProp("self_align", value); }
+        public SelfAlign SelfAlign { get => EnumNames.Of<SelfAlign>(GetProp("self_align"), EnumNames.SelfAlign); set => SetProp("self_align", EnumNames.SelfAlign[(int)value]); }
         public bool AutoSize { get => Bool(GetProp("auto_size")); set => SetProp("auto_size", value); }
         public long ColumnSpan { get => (long)Number(GetProp("column_span")); set => SetProp("column_span", value); }
         public long GridRow { get => (long)Number(GetProp("grid_row")); set => SetProp("grid_row", value); }
         public long GridColumn { get => (long)Number(GetProp("grid_column")); set => SetProp("grid_column", value); }
         public long RowSpan { get => (long)Number(GetProp("row_span")); set => SetProp("row_span", value); }
         public double Grow { get => Number(GetProp("grow")); set => SetProp("grow", value); }
-        public string Shadow { get => Text(GetProp("shadow")); set => SetProp("shadow", value); }
-        public string Style { get => Text(GetProp("style")); set => SetProp("style", value); }
-        public string Theme { get => Text(GetProp("theme")); set => SetProp("theme", value); }
-        public string BorderColor { get => Text(GetProp("border_color")); set => SetProp("border_color", value); }
-        public string TextColor { get => Text(GetProp("text_color")); set => SetProp("text_color", value); }
-        public string AccentColor { get => Text(GetProp("accent_color")); set => SetProp("accent_color", value); }
-        public string SuccessColor { get => Text(GetProp("success_color")); set => SetProp("success_color", value); }
-        public string WarningColor { get => Text(GetProp("warning_color")); set => SetProp("warning_color", value); }
-        public string DangerColor { get => Text(GetProp("danger_color")); set => SetProp("danger_color", value); }
+        public Shadow? Shadow { get => Shadow.FromJson(GetProp("shadow")); set => SetProp("shadow", (value?.ToJson() ?? "")); }
+        public PanelStyle Style { get => EnumNames.Of<PanelStyle>(GetProp("style"), EnumNames.PanelStyle); set => SetProp("style", EnumNames.PanelStyle[(int)value]); }
+        public ThemeName Theme { get => EnumNames.Of<ThemeName>(GetProp("theme"), EnumNames.ThemeName); set => SetProp("theme", EnumNames.ThemeName[(int)value]); }
+        public Color BorderColor { get => Color.FromJson(GetProp("border_color")); set => SetProp("border_color", value.ToJson()); }
+        public Color TextColor { get => Color.FromJson(GetProp("text_color")); set => SetProp("text_color", value.ToJson()); }
+        public Color AccentColor { get => Color.FromJson(GetProp("accent_color")); set => SetProp("accent_color", value.ToJson()); }
+        public Color SuccessColor { get => Color.FromJson(GetProp("success_color")); set => SetProp("success_color", value.ToJson()); }
+        public Color WarningColor { get => Color.FromJson(GetProp("warning_color")); set => SetProp("warning_color", value.ToJson()); }
+        public Color DangerColor { get => Color.FromJson(GetProp("danger_color")); set => SetProp("danger_color", value.ToJson()); }
         public string FontFamily { get => Text(GetProp("font_family")); set => SetProp("font_family", value); }
         public double FontSize { get => Number(GetProp("font_size")); set => SetProp("font_size", value); }
-        public string FontWeight { get => Text(GetProp("font_weight")); set => SetProp("font_weight", value); }
+        public FontWeight FontWeight { get => EnumNames.Of<FontWeight>(GetProp("font_weight"), EnumNames.FontWeight); set => SetProp("font_weight", EnumNames.FontWeight[(int)value]); }
         public bool FontItalic { get => Bool(GetProp("font_italic")); set => SetProp("font_italic", value); }
         public bool FontUnderline { get => Bool(GetProp("font_underline")); set => SetProp("font_underline", value); }
         public bool FontStrikeout { get => Bool(GetProp("font_strikeout")); set => SetProp("font_strikeout", value); }
@@ -77,5 +80,24 @@
         public long Tag { get => (long)Number(GetProp("tag")); set => SetProp("tag", value); }
         public string TagString { get => Text(GetProp("tag_string")); set => SetProp("tag_string", value); }
         public string AccessibleName { get => Text(GetProp("accessible_name")); set => SetProp("accessible_name", value); }
-        public string PopupMenu { get => Text(GetProp("popup_menu")); set => SetProp("popup_menu", value); }
+        public AylisComponent? PopupMenu { get => GetRef("popup_menu"); set => SetRef("popup_menu", value); }
+        public string OnClick { get => Text(GetProp("on_click")); set => SetProp("on_click", value); }
+        public string OnDblClick { get => Text(GetProp("on_dbl_click")); set => SetProp("on_dbl_click", value); }
+        public string OnLongPress { get => Text(GetProp("on_long_press")); set => SetProp("on_long_press", value); }
+        public string OnPointerDown { get => Text(GetProp("on_pointer_down")); set => SetProp("on_pointer_down", value); }
+        public string OnPointerUp { get => Text(GetProp("on_pointer_up")); set => SetProp("on_pointer_up", value); }
+        public string OnPointerMove { get => Text(GetProp("on_pointer_move")); set => SetProp("on_pointer_move", value); }
+        public string OnPointerEnter { get => Text(GetProp("on_pointer_enter")); set => SetProp("on_pointer_enter", value); }
+        public string OnPointerLeave { get => Text(GetProp("on_pointer_leave")); set => SetProp("on_pointer_leave", value); }
+        public string OnWheel { get => Text(GetProp("on_wheel")); set => SetProp("on_wheel", value); }
+        public string OnGesture { get => Text(GetProp("on_gesture")); set => SetProp("on_gesture", value); }
+        public string OnSwipe { get => Text(GetProp("on_swipe")); set => SetProp("on_swipe", value); }
+        public string OnKeyUp { get => Text(GetProp("on_key_up")); set => SetProp("on_key_up", value); }
+        public string OnEnter { get => Text(GetProp("on_enter")); set => SetProp("on_enter", value); }
+        public string OnExit { get => Text(GetProp("on_exit")); set => SetProp("on_exit", value); }
+        public string OnResize { get => Text(GetProp("on_resize")); set => SetProp("on_resize", value); }
+        public string OnDragMove { get => Text(GetProp("on_drag_move")); set => SetProp("on_drag_move", value); }
+        public string OnDragLeave { get => Text(GetProp("on_drag_leave")); set => SetProp("on_drag_leave", value); }
+        public string OnDragDrop { get => Text(GetProp("on_drag_drop")); set => SetProp("on_drag_drop", value); }
+        public string OnDragEnd { get => Text(GetProp("on_drag_end")); set => SetProp("on_drag_end", value); }
     }

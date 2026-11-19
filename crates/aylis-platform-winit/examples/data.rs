@@ -78,7 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.add(Field::new("total", FieldType::Currency).label("Total").calculated("qtd * preco").format("#,##0.00").width(100.0), orders);
     let ds_orders = ui.add(DataSource::new(orders), form);
     ui.set_prop(orders, "master_source", ds_customers)?;
-    ui.set_prop(orders, "master_fields", "cliente_id=id")?;
+    ui.set_prop(orders, "master_fields", r#"[{"field": "cliente_id", "master_field": "id"}]"#)?;
     let mut prows = Vec::new();
     for i in 0..40i64 {
         prows.push(vec![
@@ -99,11 +99,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.set_prop(grid, "fixed_columns", 1u32)?;
     ui.set_prop(grid, "multi_select", true)?;
     ui.set_prop(grid, "incremental_search", true)?;
-    ui.set_prop(grid, "footer", "id=count;limite=sum")?;
+    ui.set_prop(grid, "footer", r#"[{"field": "id", "function": "count"}, {"field": "limite", "function": "sum"}]"#)?;
     caption(&mut ui, form, "PEDIDOS DO CLIENTE (mestre-detalhe) — Produto é lookup, Total é calculado", 0.0, 372.0);
     let grid2 = ui.add(DataGrid::new(ds_orders), form);
     put(&mut ui, grid2, 0.0, 396.0, 760.0, 320.0);
-    ui.set_prop(grid2, "footer", "qtd=sum;total=sum")?;
+    ui.set_prop(grid2, "footer", r#"[{"field": "qtd", "function": "sum"}, {"field": "total", "function": "sum"}]"#)?;
 
     let x = 790.0;
     caption(&mut ui, form, "EDIÇÃO DO CLIENTE", x, 0.0);

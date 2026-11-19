@@ -11,7 +11,8 @@
 //! Visual C++), `gxx`, `fpc`, `fpc_units` (a pasta das units), `makensis`, `bundletool`,
 //! `wix` e `vscode`. A assinatura de código ([`crate::codesign`]): `signtool`,
 //! `sign_thumbprint`, `sign_pfx`, `sign_dlib`, `sign_dmd` e `sign_timestamp_url` (a senha do
-//! `.pfx` nunca: só a variável `AYLIS_SIGN_PASSWORD`). E a compilação dos projetos em Rust: `target_dir` (a pasta de
+//! `.pfx` nunca: só a variável `AYLIS_SIGN_PASSWORD`). O iPhone ([`crate::ios_device`]):
+//! `ios_profile` (o `.mobileprovision`) e `ios_sign_identity` (o certificado). E a compilação dos projetos em Rust: `target_dir` (a pasta de
 //! compilação de todos os projetos), `cleanup_project_days` e `cleanup_shared_days` (os dias
 //! da limpeza, veja [`crate::cleanup`]). E as origens dos pacotes de ferramentas
 //! ([`crate::toolpacks`]): `package_dirs` e `package_mirrors`, listas.

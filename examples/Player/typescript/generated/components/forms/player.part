@@ -107,7 +107,7 @@ export class FrmPlayerComponents extends Form {
         this.dlgAbrir = this.resolve(list, "dlgAbrir", "OpenDialog", OpenDialog);
         this.tmrPosicao = this.resolve(list, "tmrPosicao", "Timer", Timer);
     }
-    /** O Button deste form com o nome (como o FindComponent). */
+    /** O Button deste form com o nome. */
     findButton(name: string): Button | undefined {
         switch (name) {
             case "btnMudo": return this.btnMudo;
@@ -128,7 +128,7 @@ export class FrmPlayerComponents extends Form {
     senderAsButton(ev: AylisEvent): Button | undefined {
         return this.findButton(ev.sender.name);
     }
-    /** O Divider deste form com o nome (como o FindComponent). */
+    /** O Divider deste form com o nome. */
     findDivider(name: string): Divider | undefined {
         switch (name) {
             case "divNavegacao": return this.divNavegacao;
@@ -139,7 +139,7 @@ export class FrmPlayerComponents extends Form {
     senderAsDivider(ev: AylisEvent): Divider | undefined {
         return this.findDivider(ev.sender.name);
     }
-    /** O Icon deste form com o nome (como o FindComponent). */
+    /** O Icon deste form com o nome. */
     findIcon(name: string): Icon | undefined {
         switch (name) {
             case "icoCapa": return this.icoCapa;
@@ -150,7 +150,7 @@ export class FrmPlayerComponents extends Form {
     senderAsIcon(ev: AylisEvent): Icon | undefined {
         return this.findIcon(ev.sender.name);
     }
-    /** O Label deste form com o nome (como o FindComponent). */
+    /** O Label deste form com o nome. */
     findLabel(name: string): Label | undefined {
         switch (name) {
             case "lblTempo": return this.lblTempo;
@@ -165,7 +165,7 @@ export class FrmPlayerComponents extends Form {
     senderAsLabel(ev: AylisEvent): Label | undefined {
         return this.findLabel(ev.sender.name);
     }
-    /** O Layout deste form com o nome (como o FindComponent). */
+    /** O Layout deste form com o nome. */
     findLayout(name: string): Layout | undefined {
         switch (name) {
             case "lytBarra": return this.lytBarra;
@@ -183,7 +183,7 @@ export class FrmPlayerComponents extends Form {
     senderAsLayout(ev: AylisEvent): Layout | undefined {
         return this.findLayout(ev.sender.name);
     }
-    /** O ListView deste form com o nome (como o FindComponent). */
+    /** O ListView deste form com o nome. */
     findListView(name: string): ListView | undefined {
         switch (name) {
             case "lvFila": return this.lvFila;
@@ -194,7 +194,7 @@ export class FrmPlayerComponents extends Form {
     senderAsListView(ev: AylisEvent): ListView | undefined {
         return this.findListView(ev.sender.name);
     }
-    /** O MainMenu deste form com o nome (como o FindComponent). */
+    /** O MainMenu deste form com o nome. */
     findMainMenu(name: string): MainMenu | undefined {
         switch (name) {
             case "mnuPrincipal": return this.mnuPrincipal;
@@ -205,7 +205,7 @@ export class FrmPlayerComponents extends Form {
     senderAsMainMenu(ev: AylisEvent): MainMenu | undefined {
         return this.findMainMenu(ev.sender.name);
     }
-    /** O MenuItem deste form com o nome (como o FindComponent). */
+    /** O MenuItem deste form com o nome. */
     findMenuItem(name: string): MenuItem | undefined {
         switch (name) {
             case "mnuArquivo": return this.mnuArquivo;
@@ -231,7 +231,7 @@ export class FrmPlayerComponents extends Form {
     senderAsMenuItem(ev: AylisEvent): MenuItem | undefined {
         return this.findMenuItem(ev.sender.name);
     }
-    /** O OpenDialog deste form com o nome (como o FindComponent). */
+    /** O OpenDialog deste form com o nome. */
     findOpenDialog(name: string): OpenDialog | undefined {
         switch (name) {
             case "dlgAbrir": return this.dlgAbrir;
@@ -242,7 +242,7 @@ export class FrmPlayerComponents extends Form {
     senderAsOpenDialog(ev: AylisEvent): OpenDialog | undefined {
         return this.findOpenDialog(ev.sender.name);
     }
-    /** O Panel deste form com o nome (como o FindComponent). */
+    /** O Panel deste form com o nome. */
     findPanel(name: string): Panel | undefined {
         switch (name) {
             case "pnlControles": return this.pnlControles;
@@ -255,7 +255,7 @@ export class FrmPlayerComponents extends Form {
     senderAsPanel(ev: AylisEvent): Panel | undefined {
         return this.findPanel(ev.sender.name);
     }
-    /** O SeekBar deste form com o nome (como o FindComponent). */
+    /** O SeekBar deste form com o nome. */
     findSeekBar(name: string): SeekBar | undefined {
         switch (name) {
             case "sbPosicao": return this.sbPosicao;
@@ -266,7 +266,7 @@ export class FrmPlayerComponents extends Form {
     senderAsSeekBar(ev: AylisEvent): SeekBar | undefined {
         return this.findSeekBar(ev.sender.name);
     }
-    /** O Timer deste form com o nome (como o FindComponent). */
+    /** O Timer deste form com o nome. */
     findTimer(name: string): Timer | undefined {
         switch (name) {
             case "tmrPosicao": return this.tmrPosicao;
@@ -277,7 +277,7 @@ export class FrmPlayerComponents extends Form {
     senderAsTimer(ev: AylisEvent): Timer | undefined {
         return this.findTimer(ev.sender.name);
     }
-    /** O TrackBar deste form com o nome (como o FindComponent). */
+    /** O TrackBar deste form com o nome. */
     findTrackBar(name: string): TrackBar | undefined {
         switch (name) {
             case "tbVolume": return this.tbVolume;
@@ -288,7 +288,7 @@ export class FrmPlayerComponents extends Form {
     senderAsTrackBar(ev: AylisEvent): TrackBar | undefined {
         return this.findTrackBar(ev.sender.name);
     }
-    /** O VideoPlayer deste form com o nome (como o FindComponent). */
+    /** O VideoPlayer deste form com o nome. */
     findVideoPlayer(name: string): VideoPlayer | undefined {
         switch (name) {
             case "vpVideo": return this.vpVideo;

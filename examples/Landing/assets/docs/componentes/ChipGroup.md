@@ -25,8 +25,8 @@ Grupo de chips para escolher (o `v-chip-group`): uma opção ou várias (`multip
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | As opções, separadas por `;`: um chip para cada. |
-| `selected` | Escolhidos | texto | Os itens escolhidos, separados por `;`; vazio: nenhum. |
+| `items` | Itens | lista de textos (separados por `;`) | As opções, separadas por `;`: um chip para cada. |
+| `selected` | Escolhidos | lista de textos (separados por `;`) | Os itens escolhidos, separados por `;`; vazio: nenhum. |
 
 ## Eventos
 
@@ -47,8 +47,8 @@ E o handler, um método do form (`self.ChipGroup1` já é um `ChipGroup`):
 ```rust
 impl FrmPrincipal {
     pub fn chip_group1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.ChipGroup1.items(ui);
-        self.ChipGroup1.set_items(ui, format!("{atual}!"));
+        let atual = self.ChipGroup1.multiple(ui);
+        self.ChipGroup1.set_multiple(ui, !atual);
     }
 }
 ```

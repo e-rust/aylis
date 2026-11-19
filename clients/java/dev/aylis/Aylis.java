@@ -92,6 +92,190 @@ public class Aylis {
 
     /** Um componente de um form, pelo id dele na tela (resolvido quando a instância do form é
      *  montada). As classes de cada componente vêm do Components.java gerado. */
+    /** Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema ({@code Color.ofToken("primary")}),
+     *  que acompanha a troca de tema. */
+    public static final class Color {
+        public final int r, g, b, a;
+        public final String token;
+
+        public Color(int r, int g, int b, int a, String token) {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = a;
+            this.token = token;
+        }
+
+        public static Color rgb(int r, int g, int b) {
+            return new Color(r, g, b, 255, null);
+        }
+
+        public static Color rgba(int r, int g, int b, int a) {
+            return new Color(r, g, b, a, null);
+        }
+
+        /** {@code #RRGGBB}, {@code #RRGGBBAA} ou {@code #RGB}. */
+        public static Color hex(String text) {
+            String h = text.trim().replaceFirst("^#", "");
+            if (h.length() == 3) h = "" + h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+            if (!h.matches("[0-9a-fA-F]{6}([0-9a-fA-F]{2})?")) throw new AylisException("cor inválida: " + text + " (use #RRGGBB ou #RRGGBBAA)");
+            int a = h.length() == 8 ? Integer.parseInt(h.substring(6, 8), 16) : 255;
+            return new Color(Integer.parseInt(h.substring(0, 2), 16), Integer.parseInt(h.substring(2, 4), 16), Integer.parseInt(h.substring(4, 6), 16), a, null);
+        }
+
+        public static Color ofToken(String name) {
+            return new Color(0, 0, 0, 255, name.trim());
+        }
+
+        /** O valor da tela ({@code #RRGGBB[AA]} ou um nome). */
+        public static Color fromJson(Object v) {
+            if (!(v instanceof String s) || s.isEmpty()) return new Color(0, 0, 0, 255, null);
+            return s.startsWith("#") ? hex(s) : ofToken(s);
+        }
+
+        public String toJson() {
+            if (token != null) return token;
+            String h = String.format("#%02X%02X%02X", r, g, b);
+            return a == 255 ? h : h + String.format("%02X", a);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Color c && c.toJson().equals(toJson());
+        }
+
+        @Override
+        public int hashCode() {
+            return toJson().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return toJson();
+        }
+    }
+
+    /** Margens ({@code margins}, {@code padding}): esquerda, cima, direita e baixo. */
+    public record Bounds(double left, double top, double right, double bottom) {
+        public static Bounds all(double v) {
+            return new Bounds(v, v, v, v);
+        }
+
+        public static Bounds symmetric(double horizontal, double vertical) {
+            return new Bounds(horizontal, vertical, horizontal, vertical);
+        }
+
+        private static double num(Object v) {
+            return v instanceof Number n ? n.doubleValue() : 0;
+        }
+
+        /** O valor da tela: um número, {@code [h, v]}, {@code [l, t, r, b]} ou um objeto. */
+        public static Bounds fromJson(Object v) {
+            if (v instanceof Number n) return all(n.doubleValue());
+            if (v instanceof List<?> l && l.size() == 2) return symmetric(num(l.get(0)), num(l.get(1)));
+            if (v instanceof List<?> l && l.size() == 4) return new Bounds(num(l.get(0)), num(l.get(1)), num(l.get(2)), num(l.get(3)));
+            if (v instanceof Map<?, ?> m) return new Bounds(num(m.get("left")), num(m.get("top")), num(m.get("right")), num(m.get("bottom")));
+            return new Bounds(0, 0, 0, 0);
+        }
+
+        public List<Object> toJson() {
+            return List.of(left, top, right, bottom);
+        }
+    }
+
+    private static String num(double v) {
+        double r = Math.round(v * 1000) / 1000.0;
+        return r == Math.rint(r) ? String.valueOf((long) r) : String.valueOf(r);
+    }
+
+    /** Uma sombra: o deslocamento ({@code dx}, {@code dy}), o desfoque, o espalhamento e a cor (sem
+     *  cor, preto a 25%). {@code null} no acesso tipado é sem sombra. */
+    public record Shadow(double dx, double dy, double blur, double spread, Color color) {
+        /** {@code "dx dy desfoque [espalhamento] [#cor]"} (vazio ou inválido: null). */
+        public static Shadow fromJson(Object v) {
+            List<Double> numbers = new ArrayList<>();
+            Color color = null;
+            for (String token : String.valueOf(v == null ? "" : v).replace(',', ' ').trim().split("\\s+")) {
+                if (token.isEmpty()) continue;
+                try {
+                    numbers.add(Double.parseDouble(token.endsWith("px") ? token.substring(0, token.length() - 2) : token));
+                } catch (NumberFormatException e) {
+                    if (color != null || !token.startsWith("#")) return null;
+                    color = Color.hex(token);
+                }
+            }
+            if (numbers.size() < 2 || numbers.size() > 4) return null;
+            return new Shadow(numbers.get(0), numbers.get(1), numbers.size() > 2 ? numbers.get(2) : 0, numbers.size() > 3 ? numbers.get(3) : 0, color == null ? Color.rgba(0, 0, 0, 64) : color);
+        }
+
+        public String toJson() {
+            return num(dx) + " " + num(dy) + " " + num(blur) + (spread != 0 ? " " + num(spread) : "") + " " + color.toJson();
+        }
+    }
+
+    /** Uma curva de suavização: uma das prontas ({@code Easing.OUT_QUAD}) ou a Bézier cúbica
+     *  ({@code Easing.cubicBezier(0.2, 0, 0, 1)}), como o {@code cubic-bezier()} do CSS. */
+    public record Easing(String name, double[] bezier) {
+        public static final List<String> NAMES = List.of("linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back");
+        public static final Easing LINEAR = new Easing("linear", null), IN_QUAD = new Easing("in_quad", null), OUT_QUAD = new Easing("out_quad", null),
+                IN_OUT_QUAD = new Easing("in_out_quad", null), OUT_CUBIC = new Easing("out_cubic", null), IN_OUT_CUBIC = new Easing("in_out_cubic", null),
+                OUT_BACK = new Easing("out_back", null);
+
+        public static Easing cubicBezier(double x1, double y1, double x2, double y2) {
+            return new Easing("", new double[] {x1, y1, x2, y2});
+        }
+
+        public static Easing fromJson(Object v) {
+            String text = String.valueOf(v == null ? "" : v).trim();
+            if (text.startsWith("cubic-bezier(") && text.endsWith(")")) {
+                try {
+                    String[] p = text.substring(13, text.length() - 1).split(",");
+                    return cubicBezier(Double.parseDouble(p[0].trim()), Double.parseDouble(p[1].trim()), Double.parseDouble(p[2].trim()), Double.parseDouble(p[3].trim()));
+                } catch (RuntimeException e) {
+                    return LINEAR;
+                }
+            }
+            switch (text.toLowerCase()) {
+                case "ease": return cubicBezier(0.25, 0.1, 0.25, 1);
+                case "ease-in": return cubicBezier(0.42, 0, 1, 1);
+                case "ease-out": return cubicBezier(0, 0, 0.58, 1);
+                case "ease-in-out": return cubicBezier(0.42, 0, 0.58, 1);
+                default: break;
+            }
+            String plain = text.replace('-', '_').toLowerCase();
+            return NAMES.contains(plain) ? new Easing(plain, null) : LINEAR;
+        }
+
+        public String toJson() {
+            if (bezier == null) return name;
+            return "cubic-bezier(" + num(bezier[0]) + ", " + num(bezier[1]) + ", " + num(bezier[2]) + ", " + num(bezier[3]) + ")";
+        }
+    }
+
+    /** Um ponto ({@code x}, {@code y}). */
+    public record Point(double x, double y) {
+        /** {@code "0.5,0 1,1 0,1"} (os que não são pontos ficam de fora). */
+        public static List<Point> listFromJson(Object v) {
+            List<Point> out = new ArrayList<>();
+            for (String pair : String.valueOf(v == null ? "" : v).trim().split("\\s+")) {
+                String[] xy = pair.split(",");
+                if (xy.length != 2) continue;
+                try {
+                    out.add(new Point(Double.parseDouble(xy[0]), Double.parseDouble(xy[1])));
+                } catch (NumberFormatException e) {
+                    // o que não é ponto fica de fora
+                }
+            }
+            return out;
+        }
+
+        public static String listToJson(List<Point> points) {
+            List<String> out = new ArrayList<>();
+            for (Point p : points) out.add(num(p.x()) + "," + num(p.y()));
+            return String.join(" ", out);
+        }
+    }
+
     public static class AylisComponent {
         public final Aylis aylis;
         public final long id;
@@ -111,6 +295,21 @@ public class Aylis {
             Map<String, Object> props = new LinkedHashMap<>();
             props.put(prop, value);
             aylis.send("set", obj("target", id, "props", props));
+        }
+
+        /** A referência a outro componente ({@code popupMenu}, {@code dataSource}), ou null. */
+        protected AylisComponent getRef(String prop) {
+            return componentOf(aylis.call("get", obj("target", id, "prop", prop, "ref", true)));
+        }
+
+        protected void setRef(String prop, AylisComponent component) {
+            setProp(prop, component == null ? null : component.id);
+        }
+
+        /** O componente que a tela devolveu com {@code "ref": true} (o id e o nome), ou null. */
+        protected AylisComponent componentOf(Object info) {
+            if (!(info instanceof Map<?, ?> m) || !(m.get("id") instanceof Number n)) return null;
+            return new AylisComponent(aylis, n.longValue(), String.valueOf(m.get("name")));
         }
 
         public void setFocus() {

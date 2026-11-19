@@ -168,10 +168,10 @@ impl Component for AutoComplete {
     }
 
     properties! {
-        items: String => "Data",
+        items: String as List => "Data",
         max_rows: u32 => "Appearance",
         strict: bool => "Behavior";
-        events: on_select
+        events: on_select: String
     }
 
     fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {

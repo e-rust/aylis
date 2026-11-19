@@ -44,7 +44,9 @@ pub use format::to_form_text;
 pub use layout::{load, load_value, save, save_value, validate};
 pub use props::{prop_from_json, prop_to_json, set_props};
 pub use reload::{ReloadReport, reload};
-pub use schema::{catalog, class_info, schema};
+pub use schema::{catalog, catalog_enums_test, class_info, schema};
+/// O JSON (o acesso tipado gerado em Rust lê os registros com ele).
+pub use serde_json;
 pub use theme::{load_theme, save_theme, theme_from_value, theme_to_value};
 
 /// Versão do formato gravada em `"aylis"`.

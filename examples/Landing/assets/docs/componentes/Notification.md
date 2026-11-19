@@ -11,7 +11,7 @@ Notificação do sistema (Windows, Android), com ações e imagem.
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `image` | Imagem | texto | Imagem (PNG) ao lado do texto, opcional: arquivo ou asset do projeto. |
-| `form` | Form | texto | Um form inteiro desenhado como a imagem grande da notificação (o nome dele; criado se preciso), no tamanho `form_width` x `form_height`. |
+| `form` | Form | nome de um form do projeto | Um form inteiro desenhado como a imagem grande da notificação (o nome dele; criado se preciso), no tamanho `form_width` x `form_height`. |
 | `form_width` | Largura do form | número | A largura com que o `form` é desenhado na imagem, em pontos. |
 | `form_height` | Altura do form | número | A altura com que o `form` é desenhado na imagem, em pontos. |
 
@@ -27,7 +27,7 @@ Notificação do sistema (Windows, Android), com ações e imagem.
 | `channel` | Canal | texto | Canal do Android (o usuário configura som e destaque por canal). |
 | `channel_name` | Nome do canal | texto | O nome do canal que o usuário vê nas configurações do Android. |
 | `priority` | Prioridade | um de: `low`, `default`, `high` | `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som). |
-| `actions` | Ações | texto | Botões: `"responder:Responder;arquivar:Arquivar"` (identificador:texto); o toque chega em `on_action` com o identificador. |
+| `actions` | Ações | lista de `NotificationAction` | Botões, em JSON (o registro `NOTIFICATION_ACTION`): `[{"id": "responder", "text": "Responder"}]`; o toque chega em `on_action` com o `id`. |
 | `ongoing` | Em andamento | lógico | Fixa (o usuário não descarta), como um download em andamento. |
 | `progress` | Progresso | número | Barra de progresso de 0 a 1; negativo: sem barra. |
 | `full_screen` | Tela cheia | lógico | Android: abre o app por cima de tudo, até da tela de bloqueio (ligações, alarmes). |

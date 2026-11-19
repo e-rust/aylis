@@ -58,6 +58,62 @@ pub enum PropKind {
     /// Curva de suavização: um nome (`out_quad`, `ease-in`...) ou
     /// `cubic-bezier(x1, y1, x2, y2)` (valor `String`). Na IDE: o editor da curva.
     Easing,
+    /// Data do calendário em ISO (`2026-10-24`; valor `String`, vazio = nenhuma): o acesso
+    /// tipado usa a data de cada linguagem ([`crate::Date`] no Rust).
+    Date,
+    /// Hora `HH:MM` ou `HH:MM:SS` (valor `String`, vazio = nenhuma).
+    Time,
+    /// Dia e hora em ISO sem fuso (`2026-11-12T14:30`; valor `String`, vazio = nenhum).
+    DateTime,
+    /// Lista de textos separados por `;` (valor `String`): no acesso tipado, uma lista.
+    List,
+    /// Lista de números separados por `;` (`0.4;0.9`; valor `String`).
+    NumberList,
+    /// Lista de cores separadas por `;` (`#FF0000;#00AA00`; valor `String`).
+    ColorList,
+    /// Pontos `x,y` separados por espaço (`0.5,0 1,1 0,1`; valor `String`).
+    PointList,
+    /// Um registro (valor `String` com o JSON dele; no form, o objeto): o resultado de um método
+    /// com campos, como o `Screen.monitor`. Cada linguagem ganha um tipo com os campos
+    /// ([`RecordInfo`]).
+    Record(&'static RecordInfo),
+    /// Uma lista de registros (valor `String` com o JSON da lista; no form, a lista de objetos):
+    /// os itens do `ListView`, as colunas do `DataGrid`, os nós do `TreeView`...
+    RecordList(&'static RecordInfo),
+    /// O nome de uma variante do tema para a classe (o `style`: `primary`, `outline`...; valor
+    /// `String`, vazio = o estilo da classe). No acesso tipado, um enum por classe com as
+    /// variantes do Aylis e as dos temas do projeto.
+    StyleName,
+    /// O nome de um tema (os de plataforma do Aylis e os do projeto; valor `String`, vazio = o
+    /// do pai). No acesso tipado, um enum com eles.
+    ThemeName,
+    /// O nome de um form do projeto (valor `String`, vazio = nenhum). No acesso tipado, um enum
+    /// com os forms do projeto.
+    FormName,
+}
+
+/// Um registro do acesso tipado: o nome do tipo e os campos (no fio, um objeto JSON com os
+/// mesmos nomes). Os campos: `String`, `Int`, `Float`, `Bool`, `Color` (`"#RRGGBB"` ou um
+/// nome), `Date`/`DateTime` (ISO), `List` (lista de textos), `NumberList` (lista de números),
+/// `Record` e `RecordList` (outro registro, ou o mesmo: os filhos de um nó). Um registro que
+/// se contém é um `static` (`&TREE_NODE` dentro dele mesmo).
+pub struct RecordInfo {
+    pub name: &'static str,
+    pub fields: &'static [(&'static str, PropKind)],
+}
+
+/// Pelo nome: mostrar os campos entraria sem fim num registro que se contém.
+impl std::fmt::Debug for RecordInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "RecordInfo({})", self.name)
+    }
+}
+
+/// Pelo nome: comparar os campos entraria sem fim num registro que se contém.
+impl PartialEq for RecordInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
 }
 
 /// O tipo da propriedade: o do campo, ou o dado com `as` no [`properties!`].
@@ -78,11 +134,29 @@ pub struct PropInfo {
     /// protocolo, mas não vai para o JSON do form, não é copiada ao duplicar e não aparece
     /// no Object Inspector.
     pub runtime: bool,
+    /// O tipo Rust do valor (`WindowState`, `Align`), quando é um enum: o acesso tipado gerado
+    /// usa o nome no Rust e nas outras linguagens. Vazio nos outros.
+    pub rust_type: &'static str,
+    /// O que o evento leva (só nos eventos; veja [`crate::EventValue`]).
+    pub event_arg: crate::EventArg,
 }
 
 impl PropInfo {
     pub const fn new(name: &'static str, kind: PropKind, category: &'static str) -> Self {
-        Self { name, kind, category, read_only: false, runtime: false }
+        Self { name, kind, category, read_only: false, runtime: false, rust_type: "", event_arg: crate::EventArg::Unknown }
+    }
+
+    /// O tipo Rust do enum (veja [`PropInfo::rust_type`]): o último nome do caminho
+    /// (`crate::Align` → `Align`).
+    pub const fn rust_type(mut self, name: &'static str) -> Self {
+        self.rust_type = name;
+        self
+    }
+
+    /// O que o evento leva (`EventArg::None`: nada; veja [`crate::EventValue`]).
+    pub const fn event_arg(mut self, arg: crate::EventArg) -> Self {
+        self.event_arg = arg;
+        self
     }
 
     pub const fn read_only(mut self) -> Self {
@@ -559,20 +633,25 @@ impl<T: PropEnum> PropType for T {
 #[macro_export]
 macro_rules! properties {
     (
-        $( $field:ident : $ty:ty $( as $kind:ident )? => $category:literal ),* $(,)?
-        $( ; events: $( $event:ident ),* $(,)? )?
-        $( ; computed: $( $cname:ident : $cty:ty => $cget:ident / $cset:ident ),* $(,)? )?
+        $( $field:ident : $ty:ty $( as $kind:ident $( ( $karg:expr ) )? )? => $category:literal ),* $(,)?
+        $( ; events: $( $event:ident $( : $ety:ty )? ),* $(,)? )?
+        $( ; computed: $( $cname:ident : $cty:ty $( as $ckind:ident $( ( $ckarg:expr ) )? )? => $cget:ident / $cset:ident ),* $(,)? )?
         $( ; on_set: $hook:ident )?
     ) => {
         fn props(&self) -> &'static [$crate::PropInfo] {
             const PROPS: &[$crate::PropInfo] = &[
                 $( $crate::PropInfo::new(
                     stringify!($field),
-                    $crate::prop::kind_or(<$ty as $crate::prop::PropType>::KIND, &[$( $crate::PropKind::$kind )?]),
+                    $crate::prop::kind_or(<$ty as $crate::prop::PropType>::KIND, &[$( $crate::PropKind::$kind $( ($karg) )? )?]),
                     $category,
-                ), )*
-                $( $( $crate::PropInfo::new(stringify!($event), $crate::PropKind::Event, "Events"), )* )?
-                $( $( $crate::PropInfo::new(stringify!($cname), <$cty as $crate::prop::PropType>::KIND, "Runtime").runtime(), )* )?
+                ).rust_type(stringify!($ty)), )*
+                $( $( $crate::PropInfo::new(stringify!($event), $crate::PropKind::Event, "Events")
+                    $( .event_arg(<$ety as $crate::EventValue>::ARG).rust_type(stringify!($ety)) )?, )* )?
+                $( $( $crate::PropInfo::new(
+                    stringify!($cname),
+                    $crate::prop::kind_or(<$cty as $crate::prop::PropType>::KIND, &[$( $crate::PropKind::$ckind $( ($ckarg) )? )?]),
+                    "Runtime",
+                ).runtime().rust_type(stringify!($cty)), )* )?
             ];
             PROPS
         }

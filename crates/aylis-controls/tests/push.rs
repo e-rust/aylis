@@ -229,7 +229,7 @@ fn call_form(ui: &mut Ui) -> (ComponentId, ComponentId, ComponentId) {
     ui.set_prop(trigger, "filter", "kind=call").unwrap();
     ui.set_prop(wake, "title", "{caller}").unwrap();
     ui.set_prop(wake, "text", "Chamada de voz").unwrap();
-    ui.set_prop(wake, "buttons", "answer:Atender;reject:Recusar").unwrap();
+    ui.set_prop(wake, "buttons", r#"[{"id":"answer","text":"Atender"},{"id":"reject","text":"Recusar"}]"#).unwrap();
     (push, trigger, wake)
 }
 
@@ -336,7 +336,7 @@ fn the_platform_gets_the_rules_and_reports_back() {
     let form = ui.form_of(push);
     let notify = ui.create("NotifyAction", Some(form)).unwrap();
     ui.set_name(notify, "aviso").unwrap();
-    ui.set_prop(notify, "buttons", "ver:Ver pedido {order}").unwrap();
+    ui.set_prop(notify, "buttons", r#"[{"id":"ver","text":"Ver pedido {order}"}]"#).unwrap();
     ui.set_prop(notify, "priority", PropValue::Enum("high".into())).unwrap();
     ui.invoke(notify, "execute", &[PropValue::from(r#"{"order":"42"}"#)]).unwrap();
     let (spec, _) = actions.lock().unwrap().executed.last().cloned().unwrap();

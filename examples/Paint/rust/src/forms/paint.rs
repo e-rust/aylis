@@ -25,10 +25,6 @@ thread_local! {
     static ESTADO: RefCell<Estado> = const { RefCell::new(Estado { arquivo: String::new(), modificado: false, cor_ativa: 1, zoom: 100 }) };
 }
 
-fn texto(args: &EventArgs) -> String {
-    args.text().unwrap_or_default().to_string()
-}
-
 /// O nome do arquivo sem a pasta.
 fn nome_do_arquivo(caminho: &str) -> &str {
     caminho.rsplit(['\\', '/']).next().unwrap_or(caminho)
@@ -36,17 +32,17 @@ fn nome_do_arquivo(caminho: &str) -> &str {
 
 impl FrmPaint {
     /// Os botões de ferramenta e a ferramenta de cada um.
-    fn ferramentas(&self) -> [(Button, &'static str); 9] {
+    fn ferramentas(&self) -> [(Button, PaintTool); 9] {
         [
-            (self.btnSelecionar, "select"),
-            (self.btnLapis, "pencil"),
-            (self.btnPincel, "brush"),
-            (self.btnBorracha, "eraser"),
-            (self.btnBalde, "fill"),
-            (self.btnContaGotas, "picker"),
-            (self.btnLinha, "line"),
-            (self.btnRetangulo, "rectangle"),
-            (self.btnElipse, "ellipse"),
+            (self.btnSelecionar, PaintTool::Select),
+            (self.btnLapis, PaintTool::Pencil),
+            (self.btnPincel, PaintTool::Brush),
+            (self.btnBorracha, PaintTool::Eraser),
+            (self.btnBalde, PaintTool::Fill),
+            (self.btnContaGotas, PaintTool::Picker),
+            (self.btnLinha, PaintTool::Line),
+            (self.btnRetangulo, PaintTool::Rectangle),
+            (self.btnElipse, PaintTool::Ellipse),
         ]
     }
 
@@ -65,8 +61,8 @@ impl FrmPaint {
         self.btnDesfazer.set_enabled(ui, desfazer);
         self.mnuRefazer.set_enabled(ui, refazer);
         self.btnRefazer.set_enabled(ui, refazer);
-        let tamanho = self.pcDesenho.size(ui).unwrap_or_default();
-        self.lblTamanho.set_text(ui, format!("{tamanho}px"));
+        let tamanho = self.pcDesenho.size(ui).ok().flatten().map(|s| format!("{} × {}px", s.width, s.height)).unwrap_or_default();
+        self.lblTamanho.set_text(ui, tamanho);
     }
 
     fn marcar_modificado(&mut self, ui: &mut Ui) {
@@ -98,7 +94,7 @@ impl FrmPaint {
         }
     }
 
-    pub fn novo_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn novo_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.new(ui, 640, 400);
         ESTADO.with(|e| {
             let mut e = e.borrow_mut();
@@ -109,58 +105,59 @@ impl FrmPaint {
         self.atualizar_edicao(ui);
     }
 
-    pub fn abrir_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn abrir_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         self.dlgAbrir.execute(ui);
     }
 
-    pub fn salvar_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    pub fn salvar_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let arquivo = ESTADO.with(|e| e.borrow().arquivo.clone());
         if arquivo.is_empty() {
-            self.salvar_como_click(ui, sender, args);
+            // Sem arquivo ainda: o mesmo do "Salvar como".
+            self.dlgSalvar.execute(ui);
         } else {
             self.salvar_em(ui, &arquivo);
         }
     }
 
-    pub fn salvar_como_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn salvar_como_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         self.dlgSalvar.execute(ui);
     }
 
-    pub fn sair_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn sair_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         self.close(ui);
     }
 
-    pub fn desfazer_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn desfazer_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let _ = self.pcDesenho.undo(ui);
         self.marcar_modificado(ui);
     }
 
-    pub fn refazer_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn refazer_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let _ = self.pcDesenho.redo(ui);
         self.marcar_modificado(ui);
     }
 
-    pub fn limpar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn limpar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.clear(ui);
         self.marcar_modificado(ui);
     }
 
-    pub fn ampliar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn ampliar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let zoom = ESTADO.with(|e| e.borrow().zoom);
         self.aplicar_zoom(ui, (zoom * 2).min(800));
     }
 
-    pub fn reduzir_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn reduzir_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let zoom = ESTADO.with(|e| e.borrow().zoom);
         self.aplicar_zoom(ui, (zoom / 2).max(25));
     }
 
-    pub fn tamanho_real_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn tamanho_real_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         self.aplicar_zoom(ui, 100);
     }
 
-    pub fn ferramenta_click(&mut self, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
-        let Some((botao, ferramenta)) = self.ferramentas().into_iter().find(|(b, _)| b.id == sender) else { return };
+    pub fn ferramenta_click(&mut self, ui: &mut Ui, sender: Button) {
+        let Some((botao, ferramenta)) = self.ferramentas().into_iter().find(|(b, _)| *b == sender) else { return };
         self.pcDesenho.set_tool(ui, ferramenta);
         self.marcar_ferramenta(ui, botao);
     }
@@ -176,65 +173,63 @@ impl FrmPaint {
     fn marcar_cor(&mut self, ui: &mut Ui, cor: u8) {
         ESTADO.with(|e| e.borrow_mut().cor_ativa = cor);
         for (circulo, n) in [(self.btnCor1, 1), (self.btnCor2, 2)] {
-            circulo.set_stroke(ui, if n == cor { "#0067C0" } else { "#9A9A9A" });
+            circulo.set_stroke(ui, if n == cor { Color::rgb(0x00, 0x67, 0xC0) } else { Color::rgb(0x9A, 0x9A, 0x9A) });
             circulo.set_stroke_width(ui, if n == cor { 3.0 } else { 1.0 });
         }
     }
 
-    pub fn espessura_change(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
+    pub fn espessura_change(&mut self, ui: &mut Ui, _sender: crate::generated::ComboBox, value: String) {
         // "5 px" → 5
-        let t = texto(args);
-        if let Ok(n) = t.split(' ').next().unwrap_or_default().parse::<i64>() {
+        if let Ok(n) = value.split(' ').next().unwrap_or_default().parse::<i64>() {
             self.pcDesenho.set_brush_size(ui, n);
         }
     }
 
-    pub fn preencher_change(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        if let EventArgs::Value(PropValue::Bool(b)) = args {
-            self.pcDesenho.set_filled(ui, *b);
-        }
+    pub fn preencher_change(&mut self, ui: &mut Ui, _sender: crate::generated::CheckBox, value: bool) {
+        self.pcDesenho.set_filled(ui, value);
     }
 
-    pub fn cor1_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cor1_click(&mut self, ui: &mut Ui, _sender: crate::generated::Circle) {
         self.marcar_cor(ui, 1);
     }
 
-    pub fn cor2_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cor2_click(&mut self, ui: &mut Ui, _sender: crate::generated::Circle) {
         self.marcar_cor(ui, 2);
     }
 
-    pub fn paleta_click(&mut self, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
-        let Some(circulo) = self.sender_as_circle(ui, sender) else { return };
-        let cor = circulo.fill(ui);
+    pub fn paleta_click(&mut self, ui: &mut Ui, sender: crate::generated::Circle) {
+        let cor = sender.fill(ui);
         if ESTADO.with(|e| e.borrow().cor_ativa) == 1 {
-            self.pcDesenho.set_color(ui, cor.clone());
+            self.pcDesenho.set_color(ui, cor);
             self.btnCor1.set_fill(ui, cor);
         } else {
-            self.pcDesenho.set_back_color(ui, cor.clone());
+            self.pcDesenho.set_back_color(ui, cor);
             self.btnCor2.set_fill(ui, cor);
         }
     }
 
-    pub fn desenho_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn desenho_change(&mut self, ui: &mut Ui, _sender: crate::generated::PaintCanvas) {
         self.marcar_modificado(ui);
     }
 
-    pub fn desenho_pick(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
+    pub fn desenho_pick(&mut self, ui: &mut Ui, _sender: crate::generated::PaintCanvas, value: String) {
         // "#RRGGBB" (cor 1) ou "#RRGGBB2" (cor 2, o botão direito)
-        let t = texto(args);
-        match t.strip_suffix('2') {
-            Some(cor) => self.btnCor2.set_fill(ui, cor),
-            None => self.btnCor1.set_fill(ui, t),
+        let (botao, cor) = match value.strip_suffix('2') {
+            Some(cor) => (self.btnCor2, cor),
+            None => (self.btnCor1, value.as_str()),
+        };
+        if let Some(cor) = Color::from_hex(cor) {
+            botao.set_fill(ui, cor);
         }
     }
 
-    pub fn desenho_cursor(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        let t = texto(args);
-        self.lblPosicao.set_text(ui, if t.is_empty() { String::new() } else { format!("{t}px") });
+    pub fn desenho_cursor(&mut self, ui: &mut Ui, _sender: crate::generated::PaintCanvas, value: String) {
+        self.lblPosicao.set_text(ui, if value.is_empty() { String::new() } else { format!("{value}px") });
     }
 
-    pub fn abrir_select(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        let caminho = texto(args);
+    pub fn abrir_select(&mut self, ui: &mut Ui, _sender: crate::generated::OpenDialog, value: Vec<String>) {
+        // Um arquivo só: o primeiro da lista.
+        let caminho = value.into_iter().next().unwrap_or_default();
         match self.pcDesenho.open(ui, &caminho) {
             Ok(_) => {
                 ESTADO.with(|e| {
@@ -251,30 +246,30 @@ impl FrmPaint {
         }
     }
 
-    pub fn salvar_select(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.salvar_em(ui, &texto(args));
+    pub fn salvar_select(&mut self, ui: &mut Ui, _sender: crate::generated::SaveDialog, value: Vec<String>) {
+        self.salvar_em(ui, &value.into_iter().next().unwrap_or_default());
     }
 
-    pub fn recortar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn recortar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.cut(ui);
     }
 
-    pub fn copiar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn copiar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.copy(ui);
     }
 
-    pub fn colar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn colar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         // O que foi colado entra como seleção solta: a ferramenta passa a ser a seleção.
         if self.pcDesenho.paste(ui).unwrap_or(false) {
             self.marcar_ferramenta(ui, self.btnSelecionar);
         }
     }
 
-    pub fn excluir_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn excluir_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.delete(ui);
     }
 
-    pub fn selecionar_tudo_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn selecionar_tudo_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         let _ = self.pcDesenho.select_all(ui);
         self.marcar_ferramenta(ui, self.btnSelecionar);
     }

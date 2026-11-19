@@ -23,6 +23,72 @@ use aylis_core::{
 
 use crate::leaf_control;
 
+/// Onde fica a legenda.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum LegendPosition {
+    #[default]
+    TopRight,
+    TopLeft,
+    Top,
+    Bottom,
+}
+
+impl PropEnum for LegendPosition {
+    const NAMES: &'static [&'static str] = &["top_right", "top_left", "top", "bottom"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::TopRight, Self::TopLeft, Self::Top, Self::Bottom].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Onde fica o título.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TitleAlign {
+    #[default]
+    Left,
+    Center,
+    Right,
+}
+
+impl PropEnum for TitleAlign {
+    const NAMES: &'static [&'static str] = &["left", "center", "right"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Left, Self::Center, Self::Right].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Os números dos eixos e das dicas: `short` (60k, 1.2M), `full` (60.000, com o separador do
+/// idioma) ou `percent` (60%).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ValueFormat {
+    #[default]
+    Short,
+    Full,
+    Percent,
+}
+
+impl PropEnum for ValueFormat {
+    const NAMES: &'static [&'static str] = &["short", "full", "percent"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Short, Self::Full, Self::Percent].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+    /// Vazio é o `short` (o padrão de antes, quando era texto).
+    fn from_name(name: &str) -> Option<Self> {
+        if name.trim().is_empty() {
+            return Some(Self::Short);
+        }
+        Self::NAMES.iter().position(|n| n.eq_ignore_ascii_case(name.trim())).and_then(Self::from_index)
+    }
+}
+
 /// Tipo do gráfico.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ChartKind {
@@ -162,24 +228,19 @@ pub enum SeriesKind {
     Scatter,
 }
 
+impl PropEnum for SeriesKind {
+    const NAMES: &'static [&'static str] = &["line", "bar", "area", "scatter"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Line, Self::Bar, Self::Area, Self::Scatter].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 impl SeriesKind {
     fn parse(text: &str) -> Option<SeriesKind> {
-        Some(match text {
-            "line" => SeriesKind::Line,
-            "bar" => SeriesKind::Bar,
-            "area" => SeriesKind::Area,
-            "scatter" => SeriesKind::Scatter,
-            _ => return None,
-        })
-    }
-
-    fn name(self) -> &'static str {
-        match self {
-            SeriesKind::Line => "line",
-            SeriesKind::Bar => "bar",
-            SeriesKind::Area => "area",
-            SeriesKind::Scatter => "scatter",
-        }
+        Self::from_name(text.trim())
     }
 }
 
@@ -196,27 +257,96 @@ pub enum PointStyle {
     None,
 }
 
+impl PropEnum for PointStyle {
+    const NAMES: &'static [&'static str] = &["circle", "square", "triangle", "diamond", "cross", "none"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Circle, Self::Square, Self::Triangle, Self::Diamond, Self::Cross, Self::None].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 impl PointStyle {
+    /// Os nomes do Aylis e os do Chart.js (`rect`, `rectRot`, `crossRot`, `false`).
     fn parse(text: &str) -> Option<PointStyle> {
         Some(match text {
-            "circle" => PointStyle::Circle,
-            "square" | "rect" => PointStyle::Square,
-            "triangle" => PointStyle::Triangle,
-            "diamond" | "rectRot" => PointStyle::Diamond,
-            "cross" | "crossRot" => PointStyle::Cross,
-            "none" | "false" => PointStyle::None,
-            _ => return None,
+            "rect" => PointStyle::Square,
+            "rectRot" => PointStyle::Diamond,
+            "crossRot" => PointStyle::Cross,
+            "false" => PointStyle::None,
+            other => return Self::from_name(other.trim()),
         })
     }
+}
 
-    fn name(self) -> &'static str {
-        match self {
-            PointStyle::Circle => "circle",
-            PointStyle::Square => "square",
-            PointStyle::Triangle => "triangle",
-            PointStyle::Diamond => "diamond",
-            PointStyle::Cross => "cross",
-            PointStyle::None => "none",
+/// Até onde a área vai, no registro da série (`fill`; com `series`, o índice em
+/// `fill_series`).
+const FILL_NAMES: &[&str] = &["none", "origin", "start", "end", "series"];
+
+/// O registro de uma série do `Chart` (o `series`, em JSON). Os campos ausentes são o padrão:
+/// a cor da paleta, o eixo da esquerda, a espessura 2,5, a linha contínua, o ponto redondo.
+pub const CHART_SERIES: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "ChartSeries",
+    fields: &[
+        ("name", aylis_core::PropKind::String),
+        ("values", aylis_core::PropKind::NumberList),
+        ("x", aylis_core::PropKind::NumberList),
+        ("radius", aylis_core::PropKind::NumberList),
+        ("kind", aylis_core::PropKind::Enum(<SeriesKind as PropEnum>::NAMES)),
+        ("right_axis", aylis_core::PropKind::Bool),
+        ("color", aylis_core::PropKind::Color),
+        ("width", aylis_core::PropKind::Float),
+        ("dash", aylis_core::PropKind::NumberList),
+        ("point", aylis_core::PropKind::Enum(<PointStyle as PropEnum>::NAMES)),
+        ("fill", aylis_core::PropKind::Enum(FILL_NAMES)),
+        ("fill_series", aylis_core::PropKind::Int),
+        ("hidden", aylis_core::PropKind::Bool),
+    ],
+};
+
+/// Uma série como vem no JSON do `series` ([`CHART_SERIES`]).
+#[derive(Default, serde::Deserialize)]
+#[serde(default)]
+struct SeriesRecord {
+    name: String,
+    values: Vec<f64>,
+    x: Vec<f64>,
+    radius: Vec<f64>,
+    kind: String,
+    right_axis: bool,
+    color: String,
+    width: f64,
+    dash: Vec<f64>,
+    point: String,
+    fill: String,
+    fill_series: i64,
+    hidden: bool,
+}
+
+impl SeriesRecord {
+    fn into_series(self) -> Series {
+        let color = self.color.trim();
+        Series {
+            name: self.name,
+            values: self.values,
+            x: self.x,
+            radius: self.radius,
+            kind: SeriesKind::parse(&self.kind),
+            right_axis: self.right_axis,
+            color: Color::from_hex(color),
+            color_name: if color.starts_with('#') { String::new() } else { color.to_string() },
+            width: (self.width > 0.0).then_some(self.width as f32),
+            dash: self.dash.iter().map(|d| *d as f32).collect(),
+            point: PointStyle::parse(&self.point).unwrap_or_default(),
+            fill: match self.fill.trim() {
+                "origin" => SeriesFill::Origin,
+                "start" => SeriesFill::Start,
+                "end" => SeriesFill::End,
+                "series" => SeriesFill::Series(self.fill_series.max(0) as usize),
+                _ => SeriesFill::None,
+            },
+            hidden: self.hidden,
         }
     }
 }
@@ -266,8 +396,11 @@ impl SeriesFill {
 pub struct Series {
     pub name: String,
     pub values: Vec<f64>,
-    /// Cor fixa; `None` usa a paleta.
+    /// Cor fixa; `None` usa a paleta (ou `color_name`).
     pub color: Option<Color>,
+    /// A cor pelo nome do tema ou da paleta do projeto (`success`, `primary/60`), resolvida
+    /// na pintura; vale quando `color` é `None`.
+    pub color_name: String,
     /// No gráfico misto, o tipo desta série (`None`: linha).
     pub kind: Option<SeriesKind>,
     /// No eixo Y da direita.
@@ -342,60 +475,56 @@ impl Series {
         self
     }
 
-    /// As opções no texto (`[bar;right;#FF0000;width 3;dash 4 2;triangle;fill origin]`).
-    fn options_text(&self) -> String {
-        let mut o = Vec::new();
+    /// A série no JSON do `series` ([`CHART_SERIES`]), só com o que não é o padrão.
+    fn to_record(&self) -> serde_json::Value {
+        use serde_json::{Value, json};
+        let mut o = serde_json::Map::new();
+        o.insert("name".into(), json!(self.name));
+        o.insert("values".into(), json!(self.values));
+        if !self.x.is_empty() {
+            o.insert("x".into(), json!(self.x));
+        }
+        if !self.radius.is_empty() {
+            o.insert("radius".into(), json!(self.radius));
+        }
         if let Some(k) = self.kind {
-            o.push(k.name().to_string());
+            o.insert("kind".into(), json!(k.name()));
         }
         if self.right_axis {
-            o.push("right".into());
+            o.insert("right_axis".into(), Value::Bool(true));
         }
-        if self.hidden {
-            o.push("hidden".into());
-        }
-        if let Some(c) = self.color {
-            o.push(c.to_hex());
+        match self.color {
+            Some(c) => {
+                o.insert("color".into(), json!(c.to_hex()));
+            }
+            None if !self.color_name.is_empty() => {
+                o.insert("color".into(), json!(self.color_name));
+            }
+            None => {}
         }
         if let Some(w) = self.width {
-            o.push(format!("width {w}"));
+            o.insert("width".into(), json!(w));
         }
         if !self.dash.is_empty() {
-            o.push(format!("dash {}", self.dash.iter().map(f32::to_string).collect::<Vec<_>>().join(" ")));
+            o.insert("dash".into(), json!(self.dash));
         }
         if self.point != PointStyle::Circle {
-            o.push(self.point.name().into());
+            o.insert("point".into(), json!(self.point.name()));
         }
-        if self.fill != SeriesFill::None {
-            o.push(format!("fill {}", self.fill.text()));
+        match self.fill {
+            SeriesFill::None => {}
+            SeriesFill::Series(i) => {
+                o.insert("fill".into(), json!("series"));
+                o.insert("fill_series".into(), json!(i));
+            }
+            other => {
+                o.insert("fill".into(), json!(other.text()));
+            }
         }
-        if o.is_empty() { String::new() } else { format!("[{}]", o.join(";")) }
-    }
-
-    /// Lê uma opção do texto; `false` se não conhecer.
-    fn apply_option(&mut self, option: &str, own: usize) -> bool {
-        let option = option.trim();
-        let (word, rest) = option.split_once(' ').map_or((option, ""), |(w, r)| (w, r.trim()));
-        if let Some(k) = SeriesKind::parse(word) {
-            self.kind = Some(k);
-        } else if let Some(p) = PointStyle::parse(word) {
-            self.point = p;
-        } else if word == "right" {
-            self.right_axis = true;
-        } else if word == "hidden" {
-            self.hidden = true;
-        } else if word.starts_with('#') {
-            self.color = Color::from_hex(word);
-        } else if word == "width" {
-            self.width = rest.parse().ok();
-        } else if word == "dash" {
-            self.dash = rest.split_whitespace().filter_map(|d| d.parse().ok()).collect();
-        } else if word == "fill" {
-            self.fill = SeriesFill::parse(rest, own).unwrap_or_default();
-        } else {
-            return false;
+        if self.hidden {
+            o.insert("hidden".into(), Value::Bool(true));
         }
-        true
+        Value::Object(o)
     }
 }
 
@@ -446,10 +575,12 @@ impl Hit {
 
 /// Gráfico (como o do Chart.js): veja os tipos em [`ChartKind`].
 ///
-/// Pelo texto (JSON, Object Inspector): `labels` = `Jan;Fev;Mar`, `series` =
-/// `Vendas=10,20,30|Custos[line;right;#EF4444;dash 4 2]=5,8,9`; pontos `x:y` (dispersão) e
-/// `x:y:r` (bolhas). Ou `json`, no formato do Chart.js (`{"labels": [...], "datasets":
-/// [{"label": ..., "data": [...], "type": "bar", ...}]}`). Pelo código: [`Chart::set_data`].
+/// Pelas propriedades (JSON, Object Inspector): `labels` = `Jan;Fev;Mar` e `series` = a lista
+/// de séries ([`CHART_SERIES`]): `[{"name": "Vendas", "values": [10, 20, 30]}, {"name":
+/// "Custos", "values": [5, 8, 9], "kind": "line", "right_axis": true, "color": "#EF4444",
+/// "dash": [4, 2]}]`; na dispersão, o `x` de cada ponto, e nas bolhas, também o `radius`. Ou
+/// `json`, no formato do Chart.js (`{"labels": [...], "datasets": [{"label": ..., "data":
+/// [...], "type": "bar", ...}]}`). Pelo código: [`Chart::set_data`].
 pub struct Chart {
     pub base: ControlBase,
     /// O tipo do gráfico: barras, linhas, área, pizza, rosca, dispersão...
@@ -458,8 +589,8 @@ pub struct Chart {
     pub title: String,
     /// Os rótulos do eixo X (ou das fatias), separados por `;` (`Jan;Fev;Mar`).
     pub labels: String,
-    /// As séries, separadas por `|`: `Nome=10,20,30`, com opções entre colchetes
-    /// (`Custos[line;right;#EF4444]=5,8,9`).
+    /// As séries, em JSON ([`CHART_SERIES`]): `[{"name": "Custos", "values": [5, 8, 9],
+    /// "kind": "line", "right_axis": true, "color": "#EF4444"}]`.
     pub series: String,
     /// Os dados no formato do Chart.js (vazio: `labels` e `series`).
     pub json: String,
@@ -493,17 +624,17 @@ pub struct Chart {
     // desenho de antes.
     /// Números dos eixos e das dicas: vazio ou `short` (60k, 1.2M), `full` (60.000, com o
     /// separador do idioma) ou `percent` (60%).
-    pub value_format: String,
+    pub value_format: ValueFormat,
     /// Ângulo dos rótulos do eixo X, em graus (45: inclinados, para nomes longos).
     pub label_angle: f32,
     /// Onde fica o título: `left`, `center` ou `right`.
-    pub title_align: String,
+    pub title_align: TitleAlign,
     /// O título em negrito.
     pub title_bold: bool,
     /// Opacidade do preenchimento das áreas (0 a 1).
     pub area_opacity: f32,
     /// Onde fica a legenda: `top_right`, `top_left`, `top` ou `bottom`.
-    pub legend_position: String,
+    pub legend_position: LegendPosition,
     /// Barras deitadas empilhadas (com o tipo `horizontal_bar`).
     pub stacked: bool,
     /// As cores, em ordem (`#2563EB;#16A34A`): das séries e, na pizza e na rosca, das fatias (sem
@@ -541,7 +672,7 @@ impl Default for Chart {
             kind: ChartKind::Line,
             title: String::new(),
             labels: "Jan;Fev;Mar;Abr;Mai;Jun".into(),
-            series: "Vendas=12,19,15,24,28,33|Custos=8,11,10,14,15,18".into(),
+            series: r#"[{"name":"Vendas","values":[12,19,15,24,28,33]},{"name":"Custos","values":[8,11,10,14,15,18]}]"#.into(),
             json: String::new(),
             legend: true,
             stepped: false,
@@ -556,12 +687,12 @@ impl Default for Chart {
             time_axis: false,
             clicked_series: -1,
             clicked_index: -1,
-            value_format: String::new(),
+            value_format: ValueFormat::Short,
             label_angle: 0.0,
-            title_align: "left".into(),
+            title_align: TitleAlign::Left,
             title_bold: true,
             area_opacity: 0.22,
-            legend_position: "top_right".into(),
+            legend_position: LegendPosition::TopRight,
             stacked: false,
             colors: String::new(),
             center_text: String::new(),
@@ -661,8 +792,10 @@ impl Chart {
     }
 
     pub(crate) fn color(&self, ctx: &PaintCtx<'_>, index: usize) -> Color {
-        if let Some(c) = self.data.get(index).and_then(|s| s.color) {
-            return c;
+        if let Some(s) = self.data.get(index) {
+            if let Some(c) = s.color.or_else(|| (!s.color_name.is_empty()).then(|| ctx.theme.resolve_color(&s.color_name)).flatten()) {
+                return c;
+            }
         }
         self.palette_color(ctx, index)
     }
@@ -809,61 +942,14 @@ impl Chart {
     }
 }
 
-/// O texto das séries (o de `series`), com as opções de cada uma.
+/// O JSON do `series` ([`CHART_SERIES`]): uma lista de objetos, só com o que não é o padrão.
 fn series_text(series: &[Series]) -> String {
-    series
-        .iter()
-        .map(|s| {
-            let values: Vec<String> = s
-                .values
-                .iter()
-                .enumerate()
-                .map(|(i, v)| match (s.x.get(i), s.radius.get(i)) {
-                    (Some(x), Some(r)) => format!("{x}:{v}:{r}"),
-                    (Some(x), None) => format!("{x}:{v}"),
-                    _ => v.to_string(),
-                })
-                .collect();
-            format!("{}{}={}", s.name, s.options_text(), values.join(","))
-        })
-        .collect::<Vec<_>>()
-        .join("|")
+    serde_json::Value::Array(series.iter().map(Series::to_record).collect()).to_string()
 }
 
-/// Lê o texto de `series`: `Nome[opções]=v1,v2` (ou `x:y`, `x:y:r`), separadas por `|`.
+/// Lê o JSON do `series`; vazio ou inválido: nenhuma série.
 fn parse_series(text: &str) -> Vec<Series> {
-    text.split('|')
-        .filter(|s| !s.trim().is_empty())
-        .enumerate()
-        .map(|(own, s)| {
-            let (head, values) = s.split_once('=').unwrap_or(("", s));
-            let (name, options) = match head.split_once('[') {
-                Some((n, o)) => (n, o.trim_end().trim_end_matches(']')),
-                None => (head, ""),
-            };
-            let mut series = Series::new(name.trim(), Vec::new());
-            for o in options.split(';').filter(|o| !o.trim().is_empty()) {
-                series.apply_option(o, own);
-            }
-            for v in values.split(',') {
-                let parts: Vec<f64> = v.trim().replace(' ', "").split(':').filter_map(|p| p.parse().ok()).collect();
-                match parts.as_slice() {
-                    [y] => series.values.push(*y),
-                    [x, y] => {
-                        series.x.push(*x);
-                        series.values.push(*y);
-                    }
-                    [x, y, r, ..] => {
-                        series.x.push(*x);
-                        series.values.push(*y);
-                        series.radius.push(*r);
-                    }
-                    _ => {}
-                }
-            }
-            series
-        })
-        .collect()
+    crate::records::parse_list::<SeriesRecord>(text).into_iter().map(SeriesRecord::into_series).collect()
 }
 
 /// Os dados no formato do Chart.js: `labels` e `datasets` (com `label`, `data`, `type`,
@@ -997,8 +1083,8 @@ impl Component for Chart {
     properties! {
         kind: ChartKind => "Appearance",
         title: String => "Appearance",
-        labels: String => "Data",
-        series: String => "Data",
+        labels: String as List => "Data",
+        series: String as RecordList(&CHART_SERIES) => "Data",
         json: String => "Data",
         legend: bool => "Appearance",
         stepped: bool => "Appearance",
@@ -1013,12 +1099,12 @@ impl Component for Chart {
         time_axis: bool => "Layout",
         clicked_series: i64 => "Data",
         clicked_index: i64 => "Data",
-        value_format: String => "Appearance",
+        value_format: ValueFormat => "Appearance",
         label_angle: f32 => "Appearance",
-        title_align: String => "Appearance",
+        title_align: TitleAlign => "Appearance",
         title_bold: bool => "Appearance",
         area_opacity: f32 => "Appearance",
-        legend_position: String => "Appearance",
+        legend_position: LegendPosition => "Appearance",
         stacked: bool => "Appearance",
         colors: String => "Appearance",
         center_text: String => "Appearance",
@@ -1137,17 +1223,17 @@ impl Component for Chart {
             canvas.stroke_rect(r, s.radius, &Stroke::new(s.border_color, s.border_width));
         }
         let small = small_text(ctx);
-        set_format(&self.value_format, ctx);
+        set_format(self.value_format.name(), ctx);
         let mut top = r.y + 12.0;
         if !self.title.is_empty() {
             let mut t = ctx.text_style();
             if self.title_bold {
                 t.font.weight = FontWeight::Bold;
             }
-            t.h_align = match self.title_align.as_str() {
-                "center" => TextAlign::Center,
-                "right" => TextAlign::Trailing,
-                _ => TextAlign::Leading,
+            t.h_align = match self.title_align {
+                TitleAlign::Center => TextAlign::Center,
+                TitleAlign::Right => TextAlign::Trailing,
+                TitleAlign::Left => TextAlign::Leading,
             };
             canvas.draw_text(&self.title, RectF::new(r.x + 16.0, top, r.width - 32.0, 22.0), &t);
             top += 26.0;
@@ -1163,12 +1249,12 @@ impl Component for Chart {
             };
             let widths: Vec<f32> = items.iter().map(|(_, name, _)| canvas.measure_text(name, &small).width).collect();
             let total: f32 = widths.iter().map(|w| w + 30.0).sum::<f32>() - 14.0;
-            let position = self.legend_position.as_str();
-            let y = if position == "bottom" { r.bottom() - 26.0 } else { top };
+            let position = self.legend_position;
+            let y = if position == LegendPosition::Bottom { r.bottom() - 26.0 } else { top };
             let mut x = match position {
-                "top_left" => r.x + 16.0,
-                "top" | "bottom" => r.x + (r.width - total) / 2.0,
-                _ => r.right() - 16.0 - total,
+                LegendPosition::TopLeft => r.x + 16.0,
+                LegendPosition::Top | LegendPosition::Bottom => r.x + (r.width - total) / 2.0,
+                LegendPosition::TopRight => r.right() - 16.0 - total,
             };
             let mut hits = self.legend_hits.borrow_mut();
             for ((i, name, hidden), w) in items.iter().zip(widths) {
@@ -1186,7 +1272,7 @@ impl Component for Chart {
                 }
                 x += w + 14.0;
             }
-            if position == "bottom" {
+            if position == LegendPosition::Bottom {
                 bottom -= 24.0;
             } else {
                 top += 26.0;

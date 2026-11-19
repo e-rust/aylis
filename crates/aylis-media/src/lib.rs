@@ -83,11 +83,11 @@ mod web;
 
 pub use audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
 pub use components::{MediaPlayer, PlaybackQuality, VideoPlayer};
-pub use camera::{CameraFacing, CameraInfo, cameras, resolve_camera};
+pub use camera::{CameraFacing, CameraInfo, CameraQuality, cameras, resolve_camera};
 pub use camera_view::CameraView;
 pub use microphone::Microphone;
-pub use output::{OutputDevice, OutputSpec, Tap, format_outputs, output_devices, parse_outputs};
-pub use sound::{AudioMixer, AudioOutput, MixSource, Sound, parse_sources};
+pub use output::{OUTPUT_SPEC_RECORD, OutputDevice, OutputSpec, Tap, format_outputs, output_devices, parse_outputs};
+pub use sound::{AudioMixer, AudioOutput, MIX_SOURCE_RECORD, MixSource, Sound, parse_sources};
 pub use video::{Frame, FrameSink, GpuFrame, GpuFrameSource, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo, open_video, register_decoder};
 
 use aylis_core::Ui;

@@ -12,7 +12,7 @@ Exporta os registros de um `DataSource` (na ordem e com o filtro que a tela most
 |---|---|---|---|
 | `data_source` | Fonte de dados | componente | O `DataSource` dos registros exportados (na ordem e com o filtro da tela). |
 | `provider` | Provedor | componente | Quem grava o arquivo (um provedor de exportação); sem ele, CSV. |
-| `fields` | Campos | texto | Os campos, separados por `;` (vazio: os visíveis, na ordem do dataset). |
+| `fields` | Campos | lista de textos (separados por `;`) | Os campos, separados por `;` (vazio: os visíveis, na ordem do dataset). |
 | `sheet_name` | Nome da aba | texto | O nome da aba (onde o formato tem abas). |
 
 ## Em código
@@ -28,8 +28,8 @@ E o handler, um método do form (`self.Export1` já é um `Export`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Export1.fields(ui);
-        self.Export1.set_fields(ui, format!("{atual}!"));
+        let atual = self.Export1.sheet_name(ui);
+        self.Export1.set_sheet_name(ui, format!("{atual}!"));
     }
 }
 ```

@@ -479,11 +479,29 @@ fn web(project: &Project, _options: &Options, control: &Control, sink: Sink) -> 
     Ok("Servidor parado.".into())
 }
 
-fn ios(project: &Project, _options: &Options, control: &Control, sink: Sink) -> Result<String, String> {
+/// O iOS: no simulador aberto ou, com `device` (vazio: o único iPhone pareado), no iPhone
+/// pelo `devicectl` do Xcode, assinado com o certificado e o perfil da máquina.
+fn ios(project: &Project, options: &Options, control: &Control, sink: Sink) -> Result<String, String> {
     let mut publish = publish::Options::new(Target::Ios);
     publish.debug = true;
     if prepare_dev(project, sink) {
         publish.features.push("dev".into());
+    }
+    if let Some(wanted) = &options.device {
+        let device = crate::ios_device::choose_device(&crate::ios_device::devices()?, Some(wanted.as_str()))?;
+        sink(Event::Line(format!("Aparelho: {} ({})", device.name, device.udid), LineKind::Tool));
+        publish.ios_device = true;
+        publish.ios_udid = Some(device.udid.clone());
+        publish.out_dir = Some(run_dir(project, "ios-device"));
+        let app = publish::publish(project, &publish, control, sink)?.main;
+        sink(Event::Step(format!("Instalando no {}…", device.name)));
+        run_tool(Command::new("xcrun").args(["devicectl", "device", "install", "app", "--device", &device.id]).arg(&app), control, sink, LineKind::Tool)?;
+        sink(Event::Step(format!("Executando no {}…", device.name)));
+        return watch(
+            Command::new("xcrun").args(["devicectl", "device", "process", "launch", "--console", "--terminate-existing", "--device", &device.id, &project.identifier()]),
+            control,
+            sink,
+        );
     }
     publish.out_dir = Some(run_dir(project, "ios"));
     let app = publish::publish(project, &publish, control, sink)?.main;

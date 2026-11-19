@@ -14,7 +14,7 @@ fn spec_clicks_and_menu() {
     let mut tray = TrayIcon::default();
     tray.hint = "Meu app".into();
     tray.badge = "3".into();
-    tray.menu_items = "Abrir;-;Sair".into();
+    tray.menu_items = r#"[{"text":"Abrir"},{"separator":true},{"text":"Sair"}]"#.into();
     tray.menu_theme = "dark".into();
     let tray = ui.add(tray, form);
 

@@ -1,5 +1,5 @@
 //! Projeto → Opções do projeto: o que é do projeto e muda pouco (geral, aparência, fontes,
-//! ícone do app, Android, memória, DataModules usados, traduções, confiança) numa janela só:
+//! ícone do app, Android, Windows, o iPhone pelo GitHub, memória, DataModules usados, traduções, confiança) numa janela só:
 //! as seções numa lista à esquerda e a escolhida à
 //! direita. O menu fica com o que se usa no dia a dia.
 
@@ -26,7 +26,7 @@ enum Page {
 
 /// As seções: o título (também o texto que a IDE lite usa para saber se a seção vale lá),
 /// a descrição, o editor e como ele aparece.
-const SECTIONS: [(&str, &str, Open, Page); 10] = [
+const SECTIONS: [(&str, &str, Open, Page); 11] = [
     (
         "Geral",
         "Nome, linguagem, plataformas, form principal, idioma, fuso, renderizador e texto por plataforma, placa de vídeo e onde sai o executável.",
@@ -39,6 +39,7 @@ const SECTIONS: [(&str, &str, Open, Page); 10] = [
     ("Ícone do app", "O ícone de cada plataforma, gerado a partir de um PNG ou SVG.", crate::iconview::open, Page::Button("Escolher a imagem do ícone…")),
     ("Android", "Versões do SDK, orientação, tela cheia, permissões extras, links que abrem o app e o manifesto.", crate::androidview::open, Page::Embedded),
     ("Windows", "O instalador do Publicar (.msi, NSIS ou Inno Setup) e o que vai nele.", crate::windowsview::open, Page::Embedded),
+    ("iPhone (GitHub)", "Compilar o app de iOS numa máquina macOS do GitHub, sem Mac, e instalar em qualquer iPhone.", crate::iosview::open, Page::Embedded),
     (
         "Memória",
         "Quanto o app guarda de imagens prontas (vídeo, prévias, ícones, miniaturas) para não refazer a cada pintura.",

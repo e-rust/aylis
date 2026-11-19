@@ -45,6 +45,22 @@
             setProp("multiple", value);
         }
 
+        public String getOnSelect() {
+            return asText(getProp("on_select"));
+        }
+
+        public void setOnSelect(String value) {
+            setProp("on_select", value);
+        }
+
+        public String getOnCancel() {
+            return asText(getProp("on_cancel"));
+        }
+
+        public void setOnCancel(String value) {
+            setProp("on_cancel", value);
+        }
+
         public void execute() {
             aylis.send("execute", Aylis.obj("target", id));
         }

@@ -120,7 +120,7 @@ impl Component for Location {
     properties! {
         active: bool => "Behavior",
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: latitude: f64 => latitude / set_f, longitude: f64 => longitude / set_f, accuracy: f64 => accuracy / set_f,
             altitude: f64 => altitude / set_f, speed: f64 => speed / set_f, available: bool => available / set_b
     }
@@ -165,7 +165,7 @@ impl Component for Battery {
 
     properties! {
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: level: f64 => level / set_f, charging: bool => charging / set_b, available: bool => available / set_b
     }
 
@@ -216,7 +216,7 @@ impl Component for Network {
 
     properties! {
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: connected: bool => connected / set_b, kind: String => kind / set_s, available: bool => available / set_b
     }
 
@@ -265,7 +265,7 @@ impl Component for MotionSensor {
     properties! {
         active: bool => "Behavior",
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: x: f64 => x / set_f, y: f64 => y / set_f, z: f64 => z / set_f, available: bool => available / set_b
     }
 
@@ -308,7 +308,7 @@ impl Component for Compass {
     properties! {
         active: bool => "Behavior",
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: heading: f64 => heading / set_f, available: bool => available / set_b
     }
 
@@ -354,7 +354,7 @@ impl Component for ProximitySensor {
     properties! {
         active: bool => "Behavior",
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: near: bool => near / set_b, distance: f64 => distance / set_f, available: bool => available / set_b
     }
 
@@ -397,7 +397,7 @@ impl Component for LightSensor {
     properties! {
         active: bool => "Behavior",
         interval: f32 => "Behavior";
-        events: on_change;
+        events: on_change: ();
         computed: lux: f64 => lux / set_f, available: bool => available / set_b
     }
 
@@ -424,7 +424,7 @@ impl Component for Vibration {
 
     properties! {
         ;
-        events: on_error
+        events: on_error: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -501,7 +501,7 @@ impl Component for BackgroundService {
         text: String => "Behavior",
         kind: String => "Behavior",
         keep_alive: bool => "Behavior";
-        events: on_message, on_error
+        events: on_message: String, on_error: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -545,6 +545,54 @@ impl Component for BackgroundService {
             }
         }
     }
+}
+
+/// O tipo de uma chamada do histórico (o `kind` do [`CallRecord`]).
+const CALL_KINDS: &[&str] = &["incoming", "outgoing", "missed", "other"];
+
+/// O registro de uma chamada do histórico (o resultado do `Phone.history`).
+pub const CALL_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "CallRecord",
+    fields: &[("number", PropKind::String), ("kind", PropKind::Enum(CALL_KINDS)), ("date", PropKind::DateTime), ("duration", PropKind::Int)],
+};
+
+/// Uma chamada do histórico: o número, o tipo (`incoming`, `outgoing`, `missed` ou `other`),
+/// quando (no horário local) e quanto durou (segundos).
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct CallRecord {
+    pub number: String,
+    pub kind: String,
+    /// Dia e hora em ISO, sem fuso (`2026-11-19T14:30:00`).
+    pub date: String,
+    pub duration: i64,
+}
+
+/// O histórico como a plataforma dá (`número|tipo|quando em ms|segundos` por linha, o tipo em
+/// português: `recebida`, `feita`, `perdida`, `outra`) em JSON ([`CALL_RECORD`]).
+fn call_history_json(text: &str) -> String {
+    let calls: Vec<CallRecord> = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|line| {
+            let f: Vec<&str> = line.split('|').collect();
+            let kind = match f.get(1).map(|k| k.trim()) {
+                Some("recebida") => "incoming",
+                Some("feita") => "outgoing",
+                Some("perdida") => "missed",
+                _ => "other",
+            };
+            let ms = f.get(2).and_then(|v| v.trim().parse::<i64>().ok()).unwrap_or(0);
+            let date = aylis_core::DateTime::from_unix_local(ms.div_euclid(1000), ms.rem_euclid(1000) as u16).map(|d| d.to_string()).unwrap_or_default();
+            CallRecord {
+                number: f.first().map(|n| n.trim().to_string()).unwrap_or_default(),
+                kind: kind.into(),
+                date,
+                duration: f.get(3).and_then(|v| v.trim().parse().ok()).unwrap_or(0),
+            }
+        })
+        .collect();
+    serde_json::to_string(&calls).unwrap_or_default()
 }
 
 /// O telefone: `dial` (abre o discador com o número), `call` (liga direto; com
@@ -593,7 +641,7 @@ impl Component for Phone {
         watch_state: bool => "Behavior",
         direct_call: bool => "Behavior",
         dialer_app: bool => "Behavior";
-        events: on_call_state, on_error;
+        events: on_call_state: String, on_error: String;
         computed: state: String => state / set_s, number: String => number / set_s
     }
 
@@ -606,7 +654,7 @@ impl Component for Phone {
             MethodInfo::new("reject", &[], Some(Bool)),
             MethodInfo::new("hang_up", &[], Some(Bool)),
             MethodInfo::new("request_dialer", &[], Some(Bool)),
-            MethodInfo::new("history", &[Int], Some(String)).params(&["limit"]),
+            MethodInfo::new("history", &[Int], Some(PropKind::RecordList(&CALL_RECORD))).params(&["limit"]),
         ];
         METHODS
     }
@@ -622,7 +670,7 @@ impl Component for Phone {
             "reject" => Ok(PropValue::Bool(s.reject())),
             "hang_up" => Ok(PropValue::Bool(s.hang_up())),
             "request_dialer" => ok(s.request_dialer()),
-            "history" => s.history(args.first().and_then(|v| v.to_i64().ok()).unwrap_or(20).clamp(1, 500) as u32).map(PropValue::String),
+            "history" => s.history(args.first().and_then(|v| v.to_i64().ok()).unwrap_or(20).clamp(1, 500) as u32).map(|t| PropValue::String(call_history_json(&t))),
             _ => Err(format!("Phone não tem o método '{method}'")),
         }
     }
@@ -671,7 +719,7 @@ impl Component for LockScreen {
     properties! {
         show_when_locked: bool => "Behavior",
         turn_screen_on: bool => "Behavior";
-        events: on_error
+        events: on_error: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -837,7 +885,7 @@ impl Component for Gamepad {
         index: u32 => "Behavior",
         active: bool => "Behavior",
         dead_zone: f32 => "Behavior";
-        events: on_button_down, on_button_up, on_change, on_connect, on_disconnect;
+        events: on_button_down: String, on_button_up: String, on_change: (), on_connect: (), on_disconnect: ();
         computed: connected: bool => connected / set_b, device_name: String => device_name / set_s, count: u32 => count / set_u,
             left_x: f64 => left_x / set_f, left_y: f64 => left_y / set_f, right_x: f64 => right_x / set_f,
             right_y: f64 => right_y / set_f, left_trigger: f64 => left_trigger / set_f, right_trigger: f64 => right_trigger / set_f
@@ -901,7 +949,7 @@ impl Component for Screen {
 
     properties! {
         ;
-        events: on_change
+        events: on_change: ()
     }
 
     fn timer_interval(&self) -> Option<f64> {
@@ -920,12 +968,12 @@ impl Component for Screen {
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("count", &[], Some(PropKind::Int)),
             MethodInfo::new("primary", &[], Some(PropKind::Int)),
-            MethodInfo::new("monitors", &[], Some(PropKind::String)),
-            MethodInfo::new("monitor", &[PropKind::Int], Some(PropKind::String)).params(&["index"]),
+            MethodInfo::new("monitors", &[], Some(PropKind::RecordList(&aylis_core::monitors::MONITOR_RECORD))),
+            MethodInfo::new("monitor", &[PropKind::Int], Some(PropKind::Record(&aylis_core::monitors::MONITOR_RECORD))).params(&["index"]),
             MethodInfo::new("refresh_rate", &[PropKind::Int], Some(PropKind::Float)).params(&["index"]),
             MethodInfo::new("form_monitor", &[PropKind::String], Some(PropKind::Int)).params(&["form"]),
-            MethodInfo::new("orientation", &[], Some(PropKind::String)),
-            MethodInfo::new("set_orientation", &[PropKind::String], None).params(&["orientation"]),
+            MethodInfo::new("orientation", &[], Some(PropKind::Enum(<aylis_core::ScreenOrientation as aylis_core::PropEnum>::NAMES))).types(&[], "ScreenOrientation"),
+            MethodInfo::new("set_orientation", &[PropKind::Enum(<aylis_core::ScreenOrientation as aylis_core::PropEnum>::NAMES)], None).params(&["orientation"]).types(&["ScreenOrientation"], ""),
         ];
         METHODS
     }
@@ -956,5 +1004,21 @@ impl Component for Screen {
             }
             _ => return Err(format!("Screen não tem o método '{method}'")),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_call_history_becomes_records() {
+        // Sem a plataforma, o local é o UTC: 1.700.000.000.000 ms = 2023-11-14T22:13:20.
+        let json = call_history_json("+5511999|recebida|1700000000000|42\n123|perdida|0|0\n\n456|xyz|bad|\n");
+        let calls: Vec<CallRecord> = serde_json::from_str(&json).unwrap();
+        assert_eq!(calls.len(), 3);
+        assert_eq!(calls[0], CallRecord { number: "+5511999".into(), kind: "incoming".into(), date: "2023-11-14T22:13:20".into(), duration: 42 });
+        assert_eq!((calls[1].kind.as_str(), calls[2].kind.as_str(), calls[2].duration), ("missed", "other", 0));
+        assert_eq!(call_history_json(""), "[]");
     }
 }

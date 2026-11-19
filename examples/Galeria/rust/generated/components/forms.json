@@ -1,1 +1,1 @@
-{"principal":{"form":"frmPrincipal","handlers":["montar","filtrar"],"questions":[],"classes":["Form","Layout","Label","Edit","ScrollBox","FlowLayout"],"cited":[]}}
+{"principal":{"form":"frmPrincipal","handlers":["montar","filtrar"],"questions":[],"classes":["Form","Layout","Label","Edit","ScrollBox","FlowLayout"],"cited":[],"events":[["montar","Form","on_show"],["filtrar","Edit","on_change"]]}}

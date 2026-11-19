@@ -112,7 +112,7 @@ struct FrmPlayerComponents : Form {
         dlgAbrir = OpenDialog(resolve_(list, "dlgAbrir", "OpenDialog"));
         tmrPosicao = Timer(resolve_(list, "tmrPosicao", "Timer"));
     }
-    // O Button deste form com o nome (como o FindComponent; vazio se não há).
+    // O Button deste form com o nome (vazio se não há).
     Button find_button(const std::string& name) const {
         if (name == "btnMudo") return btnMudo;
         if (name == "btnEmbaralhar") return btnEmbaralhar;
@@ -129,21 +129,21 @@ struct FrmPlayerComponents : Form {
     }
     // O Button que disparou o evento.
     Button sender_as_button(const aylis::Event& ev) const { return find_button(ev.sender_name); }
-    // O Divider deste form com o nome (como o FindComponent; vazio se não há).
+    // O Divider deste form com o nome (vazio se não há).
     Divider find_divider(const std::string& name) const {
         if (name == "divNavegacao") return divNavegacao;
         return Divider();
     }
     // O Divider que disparou o evento.
     Divider sender_as_divider(const aylis::Event& ev) const { return find_divider(ev.sender_name); }
-    // O Icon deste form com o nome (como o FindComponent; vazio se não há).
+    // O Icon deste form com o nome (vazio se não há).
     Icon find_icon(const std::string& name) const {
         if (name == "icoCapa") return icoCapa;
         return Icon();
     }
     // O Icon que disparou o evento.
     Icon sender_as_icon(const aylis::Event& ev) const { return find_icon(ev.sender_name); }
-    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    // O Label deste form com o nome (vazio se não há).
     Label find_label(const std::string& name) const {
         if (name == "lblTempo") return lblTempo;
         if (name == "lblDuracao") return lblDuracao;
@@ -154,7 +154,7 @@ struct FrmPlayerComponents : Form {
     }
     // O Label que disparou o evento.
     Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
-    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    // O Layout deste form com o nome (vazio se não há).
     Layout find_layout(const std::string& name) const {
         if (name == "lytBarra") return lytBarra;
         if (name == "lytInfo") return lytInfo;
@@ -168,21 +168,21 @@ struct FrmPlayerComponents : Form {
     }
     // O Layout que disparou o evento.
     Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
-    // O ListView deste form com o nome (como o FindComponent; vazio se não há).
+    // O ListView deste form com o nome (vazio se não há).
     ListView find_list_view(const std::string& name) const {
         if (name == "lvFila") return lvFila;
         return ListView();
     }
     // O ListView que disparou o evento.
     ListView sender_as_list_view(const aylis::Event& ev) const { return find_list_view(ev.sender_name); }
-    // O MainMenu deste form com o nome (como o FindComponent; vazio se não há).
+    // O MainMenu deste form com o nome (vazio se não há).
     MainMenu find_main_menu(const std::string& name) const {
         if (name == "mnuPrincipal") return mnuPrincipal;
         return MainMenu();
     }
     // O MainMenu que disparou o evento.
     MainMenu sender_as_main_menu(const aylis::Event& ev) const { return find_main_menu(ev.sender_name); }
-    // O MenuItem deste form com o nome (como o FindComponent; vazio se não há).
+    // O MenuItem deste form com o nome (vazio se não há).
     MenuItem find_menu_item(const std::string& name) const {
         if (name == "mnuArquivo") return mnuArquivo;
         if (name == "mnuAbrir") return mnuAbrir;
@@ -204,14 +204,14 @@ struct FrmPlayerComponents : Form {
     }
     // O MenuItem que disparou o evento.
     MenuItem sender_as_menu_item(const aylis::Event& ev) const { return find_menu_item(ev.sender_name); }
-    // O OpenDialog deste form com o nome (como o FindComponent; vazio se não há).
+    // O OpenDialog deste form com o nome (vazio se não há).
     OpenDialog find_open_dialog(const std::string& name) const {
         if (name == "dlgAbrir") return dlgAbrir;
         return OpenDialog();
     }
     // O OpenDialog que disparou o evento.
     OpenDialog sender_as_open_dialog(const aylis::Event& ev) const { return find_open_dialog(ev.sender_name); }
-    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    // O Panel deste form com o nome (vazio se não há).
     Panel find_panel(const std::string& name) const {
         if (name == "pnlControles") return pnlControles;
         if (name == "pnlAgora") return pnlAgora;
@@ -220,28 +220,28 @@ struct FrmPlayerComponents : Form {
     }
     // O Panel que disparou o evento.
     Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
-    // O SeekBar deste form com o nome (como o FindComponent; vazio se não há).
+    // O SeekBar deste form com o nome (vazio se não há).
     SeekBar find_seek_bar(const std::string& name) const {
         if (name == "sbPosicao") return sbPosicao;
         return SeekBar();
     }
     // O SeekBar que disparou o evento.
     SeekBar sender_as_seek_bar(const aylis::Event& ev) const { return find_seek_bar(ev.sender_name); }
-    // O Timer deste form com o nome (como o FindComponent; vazio se não há).
+    // O Timer deste form com o nome (vazio se não há).
     Timer find_timer(const std::string& name) const {
         if (name == "tmrPosicao") return tmrPosicao;
         return Timer();
     }
     // O Timer que disparou o evento.
     Timer sender_as_timer(const aylis::Event& ev) const { return find_timer(ev.sender_name); }
-    // O TrackBar deste form com o nome (como o FindComponent; vazio se não há).
+    // O TrackBar deste form com o nome (vazio se não há).
     TrackBar find_track_bar(const std::string& name) const {
         if (name == "tbVolume") return tbVolume;
         return TrackBar();
     }
     // O TrackBar que disparou o evento.
     TrackBar sender_as_track_bar(const aylis::Event& ev) const { return find_track_bar(ev.sender_name); }
-    // O VideoPlayer deste form com o nome (como o FindComponent; vazio se não há).
+    // O VideoPlayer deste form com o nome (vazio se não há).
     VideoPlayer find_video_player(const std::string& name) const {
         if (name == "vpVideo") return vpVideo;
         return VideoPlayer();

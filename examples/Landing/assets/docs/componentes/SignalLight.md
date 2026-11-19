@@ -13,7 +13,7 @@ Sinaleiro (torre de luz): vermelho, amarelo e verde empilhados; `state` acende u
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `state` | Estado | um de: `off`, `green`, `yellow`, `red`, `blue`, `white` | A luz acesa (`off`: nenhuma); vale quando `lights` está vazio. |
-| `lights` | Luzes | texto | Várias luzes acesas ao mesmo tempo, separadas por `;` (`red;green`); vazio: vale o `state`. |
+| `lights` | Luzes | lista de textos (separados por `;`) | Várias luzes acesas ao mesmo tempo, separadas por `;` (`red;green`); vazio: vale o `state`. |
 | `blink` | Piscar | lógico | As luzes acesas piscam (duas vezes por segundo). |
 
 ## Em código
@@ -29,8 +29,8 @@ E o handler, um método do form (`self.SignalLight1` já é um `SignalLight`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.SignalLight1.lights(ui);
-        self.SignalLight1.set_lights(ui, format!("{atual}!"));
+        let atual = self.SignalLight1.blink(ui);
+        self.SignalLight1.set_blink(ui, !atual);
     }
 }
 ```

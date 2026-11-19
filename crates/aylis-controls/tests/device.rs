@@ -4,7 +4,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use aylis_controls::{AppLink, Biometrics, Form, Permissions};
+use aylis_controls::{AppLink, Biometrics, Form, PermissionResult, Permissions, SharedContent};
 use aylis_core::platform::{BiometricResult, BiometricService, Biometry, Incoming, LinkService, Permission, PermissionService, PermissionState, Sensor, SensorService};
 use aylis_core::*;
 
@@ -51,14 +51,14 @@ fn permissions_ask_the_platform_and_answer_in_on_result() {
     let form = ui.add_root(Form::new("t", 100.0, 100.0));
     let perm = ui.create("Permissions", Some(form)).unwrap();
     ui.set_prop(perm, "permissions", "camera;location;nada").unwrap();
-    ui.set_prop(perm, "reasons", "camera=Para a foto").unwrap();
+    ui.set_prop(perm, "reasons", r#"[{"permission":"camera","reason":"Para a foto"}]"#).unwrap();
     let log = record(&mut ui, perm, &["on_result"]);
 
     // Sem serviço (desktop): liberado.
     assert_eq!(Permissions::state(&ui, Permission::Camera), PermissionState::Granted);
     Permissions::request_all(&mut ui, perm);
     ui.process_posted();
-    assert_eq!(log.borrow().as_slice(), ["on_result:camera=granted;location=granted"]);
+    assert_eq!(log.borrow().as_slice(), [r#"on_result:{"answers":[{"permission":"camera","state":"granted"},{"permission":"location","state":"granted"}]}"#]);
 
     ui.services_mut().permissions = Some(Box::new(FakePermissions));
     assert_eq!(Permissions::state(&ui, Permission::Camera), PermissionState::Prompt);
@@ -68,7 +68,10 @@ fn permissions_ask_the_platform_and_answer_in_on_result() {
     ui.invoke(perm, "request", &[PropValue::from("camera;microphone")]).unwrap();
     ui.process_posted();
     ui.process_posted();
-    assert_eq!(log.borrow().last().unwrap(), "on_result:camera=granted;microphone=denied");
+    assert_eq!(log.borrow().last().unwrap(), r#"on_result:{"answers":[{"permission":"camera","state":"granted"},{"permission":"microphone","state":"denied"}]}"#);
+    // O handler tipado recebe o registro.
+    let result = <PermissionResult as EventValue>::from_args(&EventArgs::Text(log.borrow().last().unwrap()["on_result:".len()..].to_string())).unwrap();
+    assert_eq!((result.state(Permission::Camera), result.state(Permission::Microphone), result.all_granted()), (Some(PermissionState::Granted), Some(PermissionState::Denied), false));
     assert_eq!(ui.get::<Permissions>(perm).unwrap().reason(Permission::Camera), "Para a foto");
 }
 
@@ -154,7 +157,10 @@ fn app_link_asks_the_platform_and_delivers_what_arrives() {
     aylis_core::platform::push_incoming(Incoming::Shared("um texto".into()));
     ui.set_time(1.0);
     ui.run_timers();
-    assert_eq!(log.borrow().as_slice(), ["on_link:meuapp://pedido/42", "on_shared:um texto"]);
+    assert_eq!(log.borrow().as_slice(), ["on_link:meuapp://pedido/42", r#"on_shared:{"text":"um texto","files":[]}"#]);
+    // Os arquivos chegam como caminhos absolutos separados por `;`.
+    assert_eq!(SharedContent::from_platform("/data/a.png;/data/b.txt"), SharedContent { text: String::new(), files: vec!["/data/a.png".into(), "/data/b.txt".into()] });
+    assert_eq!(SharedContent::from_platform("veja /data/a.png").files.len(), 0);
 }
 
 /// Bateria a 42% carregando; a localização só mede ligada; vibra.

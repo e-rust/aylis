@@ -263,6 +263,8 @@ thread_local! {
     /// handler) → evento): o esqueleto sai com a assinatura certa (o `var` do Pascal, o `Result` do
     /// Rust).
     static QUESTIONS: std::cell::RefCell<std::collections::HashMap<(String, String), String>> = std::cell::RefCell::new(Default::default());
+    /// (form, handler) → a classe e o evento de cada ligação: a assinatura tipada.
+    static EVENTS: std::cell::RefCell<std::collections::HashMap<(String, String), Vec<(String, String)>>> = std::cell::RefCell::new(Default::default());
 }
 
 /// Os handlers ligados a eventos que perguntam (`on_close_query`, `before_post`...) no layout:
@@ -420,6 +422,10 @@ struct FormCode {
     /// `componente.evento` → handler, lido agora do form (não vai para o índice).
     #[serde(skip)]
     bindings: Vec<(String, String)>,
+    /// Cada handler com a classe e o evento de cada ligação (`btnSalvar_click` → `Button`,
+    /// `on_click`): a assinatura tipada sai daqui.
+    #[serde(default)]
+    events: Vec<(String, String, String)>,
 }
 
 fn forms_index(project: &Project) -> PathBuf {
@@ -445,6 +451,7 @@ fn read_form_code(project: &Project, entry: &crate::FormEntry, files: &mut crate
         }
         if let Ok(value) = serde_json::from_str::<Value>(layout.trim_start_matches('\u{feff}')) {
             classes_in(&value, &mut code.classes);
+            handler_events(value.get("root").unwrap_or(&value), &mut code.events);
             crate::sync::walk(value.get("root").unwrap_or(&value), &mut code.bindings, &mut Vec::new());
         }
         if let Some(cited) = code.cited.as_mut() {
@@ -456,6 +463,35 @@ fn read_form_code(project: &Project, entry: &crate::FormEntry, files: &mut crate
         }
     }
     Ok(code)
+}
+
+/// Os handlers do layout com a classe e o evento de cada ligação (handler, classe, evento).
+fn handler_events(node: &Value, out: &mut Vec<(String, String, String)>) {
+    let Some(obj) = node.as_object() else { return };
+    let class = obj.get("class").and_then(Value::as_str).unwrap_or_default();
+    let class = class.split('.').next().unwrap_or(class).to_string();
+    for (key, value) in obj {
+        if let (true, Some(handler)) = (is_event_key(key), value.as_str()) {
+            let item = (handler.to_string(), class.clone(), key.clone());
+            if !handler.is_empty() && !out.contains(&item) {
+                out.push(item);
+            }
+        }
+    }
+    for child in obj.get("children").and_then(Value::as_array).into_iter().flatten() {
+        handler_events(child, out);
+    }
+}
+
+/// A assinatura tipada do handler `handler` do form (`None`: a de sempre).
+pub(crate) fn handler_sig(form: &str, handler: &str) -> Option<crate::bindings::HandlerSig> {
+    handler_sig_for(Language::Rust, form, handler)
+}
+
+/// A assinatura tipada do handler na linguagem (`None`: a de sempre; veja
+/// [`crate::bindings::signature_for`]).
+pub(crate) fn handler_sig_for(language: Language, form: &str, handler: &str) -> Option<crate::bindings::HandlerSig> {
+    EVENTS.with(|e| e.borrow().get(&(form.to_string(), handler.to_string())).cloned()).and_then(|events| crate::bindings::signature_for(language, &events))
 }
 
 /// As classes do layout (a base: `Button.flat` é `Button`).
@@ -545,6 +581,16 @@ fn remember(code: &FormCode) {
             q.insert((code.form.clone(), h.clone()), e.clone());
         }
     });
+    EVENTS.with(|e| {
+        let mut e = e.borrow_mut();
+        let mut by_handler: std::collections::HashMap<String, Vec<(String, String)>> = Default::default();
+        for (h, class, event) in &code.events {
+            by_handler.entry(h.clone()).or_default().push((class.clone(), event.clone()));
+        }
+        for (h, events) in by_handler {
+            e.insert((code.form.clone(), h), events);
+        }
+    });
 }
 
 /// O código de uma linguagem, na pasta dela (`project.language`). Só os forms em `changed`
@@ -569,7 +615,8 @@ fn generate_language(project: &Project, changed: Option<&[String]>) -> Result<(V
         let in_changed = changed.is_none_or(|c| c.iter().any(|n| n.eq_ignore_ascii_case(&entry.name)));
         let unit_missing = units && !files.exists(&forms_dir.join(format!("{module}.{}", if project.language == Language::Rust { "rs" } else { "py" })));
         // Sem classes: a lista é de antes delas (todo form tem ao menos a da raiz).
-        let reread = in_changed || unit_missing || old.get(&module).is_none_or(|c| c.classes.is_empty() || c.cited.is_none());
+        // Sem os eventos dos handlers: a lista é de antes da assinatura tipada (18/11).
+        let reread = in_changed || unit_missing || old.get(&module).is_none_or(|c| c.classes.is_empty() || c.cited.is_none() || (c.events.is_empty() && !c.handlers.is_empty()));
         let code = if reread { read_form_code(project, entry, &mut files, &packs)? } else { old[&module].clone() };
         for c in code.cited.iter().flatten() {
             if !cited.contains(c) {
@@ -1749,10 +1796,21 @@ fn python_project(project: &Project, forms: &[(String, String, Vec<String>)]) ->
             None => text.push_str(&format!("from . import {m}\n")),
         }
     }
+    // Os conversores dos handlers tipados (o valor do evento já no tipo).
+    text.push_str("from .components import *  # noqa: F401,F403\nfrom .components import _enum, _date, _time, _datetime, _list, _numbers, _colors, _date_range, _record  # noqa: F401\n");
     text.push_str("\n\ndef register(aylis):\n");
     for (m, form, handlers) in forms {
+        let unit = project.form(form).map(|e| entry_source(project, e)).and_then(|p| read(&p)).unwrap_or_default();
         for h in handlers {
-            text.push_str(&format!("    aylis.on(\"{form}.{h}\")(lambda event: {m}.{h}(aylis, event))\n"));
+            // O handler tipado (`def h(aylis, sender: "Button")`) recebe quem disparou e o valor; o
+            // de antes, o evento inteiro.
+            match handler_sig_for(Language::Python, form, h).filter(|_| crate::bindings::is_typed_handler(Language::Python, &unit, h)) {
+                Some(sig) => {
+                    let call = crate::bindings::typed_call(Language::Python, &format!("{m}.{h}"), &format!("components.{form}"), "event", &sig);
+                    text.push_str(&format!("    aylis.on(\"{form}.{h}\")(lambda event: {call})\n"));
+                }
+                None => text.push_str(&format!("    aylis.on(\"{form}.{h}\")(lambda event: {m}.{h}(aylis, event))\n")),
+            }
         }
     }
     if forms.iter().all(|(_, _, h)| h.is_empty()) {
@@ -1956,6 +2014,12 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
             ));
             continue;
         }
+        // O evento declara o que leva: o handler já recebe quem disparou e o valor tipados.
+        if let Some(sig) = handler_sig(form, h) {
+            let values = if sig.arg == crate::bindings::EventKind::None { "ui, sender" } else { "ui, sender, value" };
+            stubs.push_str(&format!("\n    pub fn {h}(&mut self, {}) {{\n        let _ = ({values});\n    }}\n", crate::bindings::rust_handler_params(&sig)));
+            continue;
+        }
         stubs.push_str(&format!("\n    pub fn {h}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {{\n{}    }}\n", indent(rust_stub_body(h))));
     }
     // No fim do `impl` da struct do form; sem ele, um `impl` novo no fim do arquivo.
@@ -2152,7 +2216,10 @@ pub fn update_python(existing: Option<String>, handlers: &[String], form: &str) 
     });
     for h in handlers {
         if crate::sync::find_marker(Language::Python, &text, &format!("def {h}(")).is_none() {
-            text.push_str(&format!("\n\ndef {h}(aylis, event):\n    pass\n"));
+            match handler_sig_for(Language::Python, form, h) {
+                Some(sig) => text.push_str(&format!("\n\ndef {h}({}):\n    pass\n", crate::bindings::typed_params(Language::Python, &sig))),
+                None => text.push_str(&format!("\n\ndef {h}(aylis, event):\n    pass\n")),
+            }
         }
     }
     text

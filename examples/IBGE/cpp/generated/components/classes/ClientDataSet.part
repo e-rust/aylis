@@ -5,8 +5,8 @@ struct ClientDataSet : aylis::Component {
     explicit ClientDataSet(const aylis::Component& c) : aylis::Component(c) {}
     std::string key_fields() const { return get_prop_("key_fields").str(); }
     void set_key_fields(const std::string& v) const { set_prop_("key_fields", v); }
-    std::string apply_mode() const { return get_prop_("apply_mode").str(); }
-    void set_apply_mode(const std::string& v) const { set_prop_("apply_mode", v); }
+    ApplyMode apply_mode() const { return enum_of_<ApplyMode>(get_prop_("apply_mode"), ApplyMode_names); }
+    void set_apply_mode(ApplyMode v) const { set_prop_("apply_mode", aylis::Json(ApplyMode_names[static_cast<int>(v)])); }
     bool read_only() const { return get_prop_("read_only").boolean(); }
     void set_read_only(bool v) const { set_prop_("read_only", v); }
     bool active() const { return get_prop_("active").boolean(); }
@@ -17,18 +17,18 @@ struct ClientDataSet : aylis::Component {
     void set_filtered(bool v) const { set_prop_("filtered", v); }
     std::string index_field_names() const { return get_prop_("index_field_names").str(); }
     void set_index_field_names(const std::string& v) const { set_prop_("index_field_names", v); }
-    std::string indexes() const { return get_prop_("indexes").str(); }
-    void set_indexes(const std::string& v) const { set_prop_("indexes", v); }
+    std::vector<IndexDef> indexes() const { return IndexDef::list_from_text(get_prop_("indexes")); }
+    void set_indexes(const std::vector<IndexDef>& v) const { set_prop_("indexes", IndexDef::list_to_text(v)); }
     std::string index_name() const { return get_prop_("index_name").str(); }
     void set_index_name(const std::string& v) const { set_prop_("index_name", v); }
-    std::string params() const { return get_prop_("params").str(); }
-    void set_params(const std::string& v) const { set_prop_("params", v); }
+    std::vector<FilterParam> params() const { return FilterParam::list_from_text(get_prop_("params")); }
+    void set_params(const std::vector<FilterParam>& v) const { set_prop_("params", FilterParam::list_to_text(v)); }
     std::string status_filter() const { return get_prop_("status_filter").str(); }
     void set_status_filter(const std::string& v) const { set_prop_("status_filter", v); }
-    std::string master_source() const { return get_prop_("master_source").str(); }
-    void set_master_source(const std::string& v) const { set_prop_("master_source", v); }
-    std::string master_fields() const { return get_prop_("master_fields").str(); }
-    void set_master_fields(const std::string& v) const { set_prop_("master_fields", v); }
+    std::optional<aylis::Component> master_source() const { return get_ref_("master_source"); }
+    void set_master_source(const std::optional<aylis::Component>& v) const { set_ref_("master_source", v); }
+    std::vector<MasterField> master_fields() const { return MasterField::list_from_text(get_prop_("master_fields")); }
+    void set_master_fields(const std::vector<MasterField>& v) const { set_prop_("master_fields", MasterField::list_to_text(v)); }
     bool apply_separately() const { return get_prop_("apply_separately").boolean(); }
     void set_apply_separately(bool v) const { set_prop_("apply_separately", v); }
     long long record_total() const { return static_cast<long long>(get_prop_("record_total").number()); }
@@ -36,4 +36,20 @@ struct ClientDataSet : aylis::Component {
     long long max_records() const { return static_cast<long long>(get_prop_("max_records").number()); }
     void set_max_records(long long v) const { set_prop_("max_records", v); }
     std::string partial_notice() const { return get_prop_("partial_notice").str(); }
+    std::string on_master_change() const { return get_prop_("on_master_change").str(); }
+    void set_on_master_change(const std::string& v) const { set_prop_("on_master_change", v); }
+    std::string after_scroll() const { return get_prop_("after_scroll").str(); }
+    void set_after_scroll(const std::string& v) const { set_prop_("after_scroll", v); }
+    std::string after_post() const { return get_prop_("after_post").str(); }
+    void set_after_post(const std::string& v) const { set_prop_("after_post", v); }
+    std::string on_state_change() const { return get_prop_("on_state_change").str(); }
+    void set_on_state_change(const std::string& v) const { set_prop_("on_state_change", v); }
+    std::string on_reconcile_error() const { return get_prop_("on_reconcile_error").str(); }
+    void set_on_reconcile_error(const std::string& v) const { set_prop_("on_reconcile_error", v); }
+    std::string on_error() const { return get_prop_("on_error").str(); }
+    void set_on_error(const std::string& v) const { set_prop_("on_error", v); }
+    std::string on_fetch() const { return get_prop_("on_fetch").str(); }
+    void set_on_fetch(const std::string& v) const { set_prop_("on_fetch", v); }
+    std::string on_server_query() const { return get_prop_("on_server_query").str(); }
+    void set_on_server_query(const std::string& v) const { set_prop_("on_server_query", v); }
 };

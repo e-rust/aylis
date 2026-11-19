@@ -46,6 +46,130 @@ pub struct GridColumn {
     pub source: Option<ComponentId>,
 }
 
+/// O registro de uma coluna da lista `columns` (e do `on_column_moved`) no acesso tipado:
+/// `[{"field": "sigla", "width": 44}, {"field": "nome", "title": "Estado"}]`.
+pub const GRID_COLUMN_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "ColumnSpec",
+    fields: &[
+        ("field", aylis_core::PropKind::String),
+        ("title", aylis_core::PropKind::String),
+        ("width", aylis_core::PropKind::Float),
+        ("read_only", aylis_core::PropKind::Bool),
+        ("color", aylis_core::PropKind::Color),
+        ("text_color", aylis_core::PropKind::Color),
+    ],
+};
+
+/// O registro de um total do rodapé (`footer`): `[{"field": "valor", "function": "sum"}]`.
+pub const GRID_TOTAL_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "GridTotal",
+    fields: &[("field", aylis_core::PropKind::String), ("function", aylis_core::PropKind::Enum(&["sum", "avg", "min", "max", "count"]))],
+};
+
+/// Uma coluna da lista `columns` (o [`GRID_COLUMN_RECORD`]): o que não vier sai do `Field`.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ColumnSpec {
+    pub field: String,
+    /// Vazio: o `display_label` do campo.
+    pub title: String,
+    /// 0: a largura do campo.
+    pub width: f32,
+    pub read_only: bool,
+    pub color: Option<Color>,
+    pub text_color: Option<Color>,
+}
+
+impl ColumnSpec {
+    pub fn new(field: &str, width: f32) -> Self {
+        ColumnSpec { field: field.to_string(), width, ..Default::default() }
+    }
+
+    /// A lista `columns` lida do JSON; vazio, `[]` ou JSON inválido: nenhuma.
+    pub fn parse_list(text: &str) -> Vec<ColumnSpec> {
+        let Ok(serde_json::Value::Array(items)) = serde_json::from_str::<serde_json::Value>(text) else { return Vec::new() };
+        items
+            .iter()
+            .filter_map(|j| {
+                let field = j["field"].as_str()?.trim();
+                if field.is_empty() {
+                    return None;
+                }
+                let color = |k: &str| j[k].as_str().and_then(Color::from_hex);
+                Some(ColumnSpec {
+                    field: field.to_string(),
+                    title: j["title"].as_str().unwrap_or_default().to_string(),
+                    width: j["width"].as_f64().unwrap_or(0.0) as f32,
+                    read_only: j["read_only"].as_bool().unwrap_or(false),
+                    color: color("color"),
+                    text_color: color("text_color"),
+                })
+            })
+            .collect()
+    }
+
+    /// Em JSON, só com o que difere do padrão.
+    pub fn to_json(&self) -> serde_json::Value {
+        let mut o = serde_json::Map::new();
+        o.insert("field".into(), self.field.clone().into());
+        if !self.title.is_empty() {
+            o.insert("title".into(), self.title.clone().into());
+        }
+        if self.width > 0.0 {
+            // Inteira sem o `.0` (o form fica limpo).
+            let width = if self.width.fract() == 0.0 { serde_json::json!(self.width as i64) } else { serde_json::json!(self.width) };
+            o.insert("width".into(), width);
+        }
+        if self.read_only {
+            o.insert("read_only".into(), true.into());
+        }
+        for (k, c) in [("color", self.color), ("text_color", self.text_color)] {
+            if let Some(c) = c {
+                o.insert(k.into(), c.to_hex().into());
+            }
+        }
+        serde_json::Value::Object(o)
+    }
+
+    /// A lista em JSON (o texto da propriedade `columns`).
+    pub fn list_to_json(list: &[ColumnSpec]) -> String {
+        serde_json::Value::Array(list.iter().map(ColumnSpec::to_json).collect()).to_string()
+    }
+}
+
+/// O argumento do `on_column_moved`: as colunas na ordem nova, com as larguras (o mesmo
+/// formato da lista `columns`, para o app guardar).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ColumnLayout(pub Vec<ColumnSpec>);
+
+impl aylis_core::EventValue for ColumnLayout {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::RecordList(&GRID_COLUMN_RECORD));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        match args {
+            EventArgs::Text(t) | EventArgs::Value(aylis_core::PropValue::String(t)) => Some(ColumnLayout(ColumnSpec::parse_list(t))),
+            _ => None,
+        }
+    }
+}
+
+/// Um total do rodapé: o campo e a função (`sum`, `avg`, `min`, `max` ou `count`).
+#[derive(Clone, Debug, Default, PartialEq)]
+struct FooterTotal {
+    field: String,
+    function: String,
+}
+
+fn parse_footer(text: &str) -> Vec<FooterTotal> {
+    let Ok(serde_json::Value::Array(items)) = serde_json::from_str::<serde_json::Value>(text) else { return Vec::new() };
+    items
+        .iter()
+        .filter_map(|j| {
+            let field = j["field"].as_str()?.trim().to_string();
+            let function = j["function"].as_str()?.trim().to_ascii_lowercase();
+            (!field.is_empty() && !function.is_empty()).then_some(FooterTotal { field, function })
+        })
+        .collect()
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 struct CachedRow {
     texts: Vec<String>,
@@ -213,7 +337,7 @@ impl aylis_core::prop::PropEnum for HorizontalWheel {
 ///   depende do total de registros;
 /// - **busca sob demanda**: perto do fim dos registros carregados, pede o próximo pacote
 ///   ao backend (`ClientDataSet.on_fetch`);
-/// - colunas a partir dos campos visíveis (ou de `columns: "nome;email"`), com título,
+/// - colunas a partir dos campos visíveis (ou da lista `columns`, `[{"field": "nome"}]`), com título,
 ///   largura e alinhamento do `Field`; arraste a borda do cabeçalho para redimensionar;
 /// - teclado: setas, PageUp/PageDown, Ctrl+Home/End, Home/End (colunas), Insert,
 ///   Ctrl+Delete, Esc (cancela a edição);
@@ -230,7 +354,8 @@ impl aylis_core::prop::PropEnum for HorizontalWheel {
 ///   desmarca, Shift+clique e Shift+setas estendem, Ctrl+A seleciona tudo, Ctrl+Espaço
 ///   alterna a atual. A seleção guarda os registros ([`DataGrid::selected_ids`]), então
 ///   sobrevive à ordem e ao filtro; `on_selection_change` traz quantos são;
-/// - `footer`: rodapé com totais, `"valor=sum;id=count"` (sum, avg, min, max, count),
+/// - `footer`: rodapé com totais, `[{"field": "valor", "function": "sum"}]` (sum, avg, min,
+///   max, count),
 ///   sobre os registros carregados (com o filtro), no formato do campo;
 /// - `incremental_search`: digitar procura na coluna atual o primeiro texto que começa com
 ///   o que foi digitado (pausa de 1,5 s recomeça; Backspace apaga); Enter e F2 editam;
@@ -239,8 +364,10 @@ pub struct DataGrid {
     pub base: ControlBase,
     /// O `DataSource` de onde vêm os registros.
     pub data_source: Option<ComponentId>,
-    /// Campos a mostrar, separados por `;`, cada um com a largura opcional depois de `:`
-    /// (`"sigla:44;nome:170;regiao"`). Vazio = todos os campos visíveis.
+    /// As colunas a mostrar, na ordem: a lista de [`GRID_COLUMN_RECORD`] em JSON
+    /// (`[{"field": "sigla", "width": 44}, {"field": "nome", "width": 170}, {"field": "regiao"}]`;
+    /// no form, a lista de objetos). Vazio = todos os campos visíveis. Lida só quando muda
+    /// (as colunas ficam prontas até a próxima mudança).
     pub columns: String,
     /// A altura de cada linha, em pontos.
     pub row_height: f32,
@@ -250,7 +377,8 @@ pub struct DataGrid {
     /// do dataset); Ctrl+clique junta colunas à ordem.
     pub sortable: bool,
     /// Arrastar o título muda a ordem das colunas (as fixas trocam só entre si). A nova
-    /// ordem chega no `on_column_moved`, no formato de `columns` (com as larguras).
+    /// ordem chega no `on_column_moved` ([`ColumnLayout`]), no formato de `columns` (com as
+    /// larguras).
     pub column_move: bool,
     /// Quantas colunas da esquerda ficam paradas ao rolar para os lados (0: nenhuma).
     pub fixed_columns: u32,
@@ -260,8 +388,9 @@ pub struct DataGrid {
     /// Seleciona várias linhas: Ctrl+clique marca e desmarca, Shift+clique estende, Ctrl+A
     /// seleciona tudo.
     pub multi_select: bool,
-    /// O rodapé com totais: `"valor=sum;id=count"` (sum, avg, min, max, count), sobre os
-    /// registros carregados. Vazio: sem rodapé.
+    /// O rodapé com totais: a lista de [`GRID_TOTAL_RECORD`] em JSON
+    /// (`[{"field": "valor", "function": "sum"}, {"field": "id", "function": "count"}]`; sum,
+    /// avg, min, max, count), sobre os registros carregados. Vazio: sem rodapé.
     pub footer: String,
     /// Digitar procura na coluna atual o primeiro texto que começa com o digitado (em vez de
     /// editar a célula).
@@ -286,6 +415,11 @@ pub struct DataGrid {
     anchor: Option<u64>,
     /// Totais do rodapé por coluna (texto pronto); recalculados quando os dados mudam.
     totals: Vec<Option<String>>,
+    /// O `footer` lido (e o texto de onde veio): a geometria pergunta a cada quadro se há
+    /// rodapé, e o JSON só é lido de novo quando o texto muda.
+    footer_totals: std::cell::RefCell<(String, std::rc::Rc<Vec<FooterTotal>>)>,
+    /// A lista `columns` lida na última montagem das colunas (para regravar com as larguras).
+    specs: Vec<ColumnSpec>,
     totals_dirty: bool,
     /// O que foi digitado na busca incremental e quando.
     search: String,
@@ -347,6 +481,8 @@ impl Default for DataGrid {
             selected: BTreeSet::new(),
             anchor: None,
             totals: Vec::new(),
+            footer_totals: std::cell::RefCell::new((String::new(), std::rc::Rc::new(Vec::new()))),
+            specs: Vec::new(),
             totals_dirty: true,
             search: String::new(),
             search_time: f64::NEG_INFINITY,
@@ -484,9 +620,18 @@ impl DataGrid {
         HEADER + if self.filter_row { FILTER_ROW } else { 0.0 }
     }
 
+    /// Os totais do `footer` (lidos de novo só quando o texto muda).
+    fn footer_list(&self) -> std::rc::Rc<Vec<FooterTotal>> {
+        let mut cache = self.footer_totals.borrow_mut();
+        if cache.0 != self.footer {
+            *cache = (self.footer.clone(), std::rc::Rc::new(parse_footer(&self.footer)));
+        }
+        cache.1.clone()
+    }
+
     /// Altura do rodapé de totais (0 sem `footer`).
     fn footer_height(&self) -> f32 {
-        if self.footer.trim().is_empty() { 0.0 } else { FOOTER }
+        if self.footer_list().is_empty() { 0.0 } else { FOOTER }
     }
 
     /// Linhas inteiras que cabem (sem a barra horizontal, embaixo).
@@ -584,10 +729,22 @@ impl DataGrid {
         })
     }
 
-    /// Borda direita de coluna perto de `x` no cabeçalho (para redimensionar).
+    /// As colunas na ordem atual, com a largura de cada uma (o que mais a lista `columns`
+    /// dizia de cada coluna fica).
+    fn column_layout(&self) -> Vec<ColumnSpec> {
+        self.cols
+            .iter()
+            .map(|c| {
+                let mut spec = self.specs.iter().find(|s| s.field.eq_ignore_ascii_case(&c.field)).cloned().unwrap_or_else(|| ColumnSpec::new(&c.field, 0.0));
+                spec.width = c.width.round();
+                spec
+            })
+            .collect()
+    }
+
     /// O `columns` com a largura atual de cada coluna (o arraste do separador no designer).
     fn columns_with_widths(&self) -> String {
-        self.cols.iter().map(|c| format!("{}:{}", c.field, c.width.round())).collect::<Vec<_>>().join(";")
+        ColumnSpec::list_to_json(&self.column_layout())
     }
 
     /// Onde a coluna arrastada entra, como o espaço antes da coluna `gap` (`len`: no fim).
@@ -628,7 +785,8 @@ impl DataGrid {
             c => c,
         };
         self.refresh(ctx);
-        // A nova ordem (com as larguras), no formato de `columns`: o app pode guardar.
+        // A nova ordem (com as larguras), no formato de `columns` (o `ColumnLayout`): o app
+        // pode guardar.
         let layout = self.columns_with_widths();
         ctx.fire("on_column_moved", EventArgs::Text(layout));
     }
@@ -684,26 +842,21 @@ impl DataGrid {
                 _ => Some((c, ui.get::<Column>(c)?)),
             })
             .collect();
-        let specs: Vec<(String, Option<&Column>, Option<ComponentId>, Option<f32>)> = if !children.is_empty() {
+        // A lista `columns` é lida aqui, só quando as colunas são refeitas (não a cada quadro).
+        self.specs = ColumnSpec::parse_list(&self.columns);
+        let listed: Vec<ColumnSpec> = self.specs.clone();
+        let specs: Vec<(String, Option<&Column>, Option<ComponentId>, Option<&ColumnSpec>)> = if !children.is_empty() {
             children.into_iter().filter(|(_, c)| c.visible).map(|(id, c)| (c.field_name.clone(), Some(c), Some(id), None)).collect()
-        } else if self.columns.trim().is_empty() {
+        } else if listed.is_empty() {
             fields.iter().filter(|(_, f)| f.visible).map(|(n, _)| (n.clone(), None, None, None)).collect()
         } else {
-            self.columns
-                .split(';')
-                .map(str::trim)
-                .filter(|s| !s.is_empty())
-                .map(|s| match s.split_once(':') {
-                    Some((name, width)) => (name.trim().to_string(), None, None, width.trim().parse::<f32>().ok()),
-                    None => (s.to_string(), None, None, None),
-                })
-                .collect()
+            listed.iter().map(|s| (s.field.clone(), None, None, Some(s))).collect()
         };
         self.cols = specs
             .into_iter()
-            .filter_map(|(name, column, source, own_width)| {
+            .filter_map(|(name, column, source, spec)| {
                 let field = field(&name)?;
-                let own_width = own_width.or(column.map(|c| c.width).filter(|&w| w > 0.0));
+                let own_width = spec.map(|s| s.width).filter(|&w| w > 0.0).or(column.map(|c| c.width).filter(|&w| w > 0.0));
                 let width = if let Some(w) = own_width {
                     w.max(MIN_COLUMN)
                 } else if field.display_width > 0.0 {
@@ -723,16 +876,21 @@ impl DataGrid {
                 };
                 let check = field.field_type == FieldType::Boolean;
                 let align = column.and_then(|c| c.alignment).unwrap_or(if check { TextAlign::Center } else { field.alignment() });
-                let title = column.map(|c| c.title.as_str()).filter(|t| !t.is_empty()).unwrap_or(field.caption()).to_string();
+                let title = column
+                    .map(|c| c.title.as_str())
+                    .or(spec.map(|s| s.title.as_str()))
+                    .filter(|t| !t.is_empty())
+                    .map(str::to_string)
+                    .unwrap_or_else(|| field.caption().to_string());
                 Some(GridColumn {
                     field: name,
                     title,
                     width,
                     align,
                     check,
-                    read_only: column.is_some_and(|c| c.read_only),
-                    color: column.and_then(|c| c.color),
-                    text_color: column.and_then(|c| c.text_color),
+                    read_only: column.is_some_and(|c| c.read_only) || spec.is_some_and(|s| s.read_only),
+                    color: column.and_then(|c| c.color).or(spec.and_then(|s| s.color)),
+                    text_color: column.and_then(|c| c.text_color).or(spec.and_then(|s| s.text_color)),
                     source,
                 })
             })
@@ -874,12 +1032,12 @@ impl DataGrid {
         };
     }
 
-    /// Os totais do rodapé: `campo=sum|avg|min|max|count`, sobre os registros carregados.
+    /// Os totais do rodapé (`sum`, `avg`, `min`, `max`, `count` de cada campo), sobre os
+    /// registros carregados.
     fn compute_totals(&self, v: &DataView<'_>, locale: &aylis_core::platform::LocaleInfo) -> Vec<Option<String>> {
         let mut totals = vec![None; self.cols.len()];
-        for part in self.footer.split(';') {
-            let Some((name, kind)) = part.split_once('=') else { continue };
-            let (name, kind) = (name.trim(), kind.trim().to_ascii_lowercase());
+        for total in self.footer_list().iter() {
+            let (name, kind) = (total.field.as_str(), &total.function);
             let Some(col) = self.cols.iter().position(|c| c.field.eq_ignore_ascii_case(name)) else { continue };
             let Ok(field) = v.field(name) else { continue };
             let values: Vec<aylis_data::Value> = (0..v.record_count()).filter_map(|i| v.value_at(i, name).ok()).filter(|x| !x.is_null()).collect();
@@ -1321,7 +1479,7 @@ impl Component for DataGrid {
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         data_source: Option<ComponentId> => "Data",
-        columns: String => "Data",
+        columns: String as RecordList(&GRID_COLUMN_RECORD) => "Data",
         row_height: f32 => "Appearance",
         read_only: bool => "Behavior",
         sortable: bool => "Behavior",
@@ -1329,13 +1487,13 @@ impl Component for DataGrid {
         fixed_columns: u32 => "Appearance",
         filter_row: bool => "Behavior",
         multi_select: bool => "Behavior",
-        footer: String => "Data",
+        footer: String as RecordList(&GRID_TOTAL_RECORD) => "Data",
         incremental_search: bool => "Behavior",
         cursor_color: Option<Color> => "Appearance",
         indicator: bool => "Appearance",
         highlight_current: bool => "Appearance",
         horizontal_wheel: HorizontalWheel => "Behavior";
-        events: on_error, on_title_click, on_selection_change, on_column_moved;
+        events: on_error: String, on_title_click: String, on_selection_change: String, on_column_moved: ColumnLayout;
         computed: scroll_left: f32 => scroll_left / set_scroll_left,
             top_row: i64 => top_row_index / set_top_row_index;
         on_set: on_set

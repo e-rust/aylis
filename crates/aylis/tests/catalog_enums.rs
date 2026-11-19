@@ -1,0 +1,80 @@
+//! Os enums do catálogo (`resources/components.json`) existem no `aylis::prelude` com o nome
+//! que o catálogo dá: o acesso tipado gerado em Rust usa o tipo do framework. Gerado pelo
+//! `aylis-tool update-catalog`.
+
+#[test]
+fn the_catalog_enums_are_in_the_prelude() {
+    let _: Option<aylis::prelude::Aggregate> = None;
+    let _: Option<aylis::prelude::Align> = None;
+    let _: Option<aylis::prelude::Anchors> = None;
+    let _: Option<aylis::prelude::AppBarSize> = None;
+    let _: Option<aylis::prelude::ApplyMode> = None;
+    let _: Option<aylis::prelude::BadgeAnchor> = None;
+    let _: Option<aylis::prelude::BandKind> = None;
+    let _: Option<aylis::prelude::BarIcons> = None;
+    let _: Option<aylis::prelude::Biometry> = None;
+    let _: Option<aylis::prelude::BlendMode> = None;
+    let _: Option<aylis::prelude::BorderStyle> = None;
+    let _: Option<aylis::prelude::BusyAction> = None;
+    let _: Option<aylis::prelude::CalendarView> = None;
+    let _: Option<aylis::prelude::CameraQuality> = None;
+    let _: Option<aylis::prelude::CaretStyle> = None;
+    let _: Option<aylis::prelude::CharCase> = None;
+    let _: Option<aylis::prelude::ChartKind> = None;
+    let _: Option<aylis::prelude::CloseAction> = None;
+    let _: Option<aylis::prelude::ComboArrow> = None;
+    let _: Option<aylis::prelude::CursorShape> = None;
+    let _: Option<aylis::prelude::DlgKind> = None;
+    let _: Option<aylis::prelude::DrawMode> = None;
+    let _: Option<aylis::prelude::ErrorCorrection> = None;
+    let _: Option<aylis::prelude::FieldKind> = None;
+    let _: Option<aylis::prelude::FieldType> = None;
+    let _: Option<aylis::prelude::FormOrientation> = None;
+    let _: Option<aylis::prelude::FormPosition> = None;
+    let _: Option<aylis::prelude::FormPresent> = None;
+    let _: Option<aylis::prelude::HorizontalWheel> = None;
+    let _: Option<aylis::prelude::IconPosition> = None;
+    let _: Option<aylis::prelude::ImageFit> = None;
+    let _: Option<aylis::prelude::InterceptScope> = None;
+    let _: Option<aylis::prelude::LayerCaching> = None;
+    let _: Option<aylis::prelude::LegendPosition> = None;
+    let _: Option<aylis::prelude::LineDirection> = None;
+    let _: Option<aylis::prelude::ListOrientation> = None;
+    let _: Option<aylis::prelude::LowerPanel> = None;
+    let _: Option<aylis::prelude::ModalResult> = None;
+    let _: Option<aylis::prelude::NotificationPriority> = None;
+    let _: Option<aylis::prelude::OptionKind> = None;
+    let _: Option<aylis::prelude::Overscroll> = None;
+    let _: Option<aylis::prelude::PaintTool> = None;
+    let _: Option<aylis::prelude::Permission> = None;
+    let _: Option<aylis::prelude::PermissionState> = None;
+    let _: Option<aylis::prelude::PopoverPlacement> = None;
+    let _: Option<aylis::prelude::Port> = None;
+    let _: Option<aylis::prelude::Presence> = None;
+    let _: Option<aylis::prelude::Ringtone> = None;
+    let _: Option<aylis::prelude::Rounding> = None;
+    let _: Option<aylis::prelude::ScreenOrientation> = None;
+    let _: Option<aylis::prelude::SelfAlign> = None;
+    let _: Option<aylis::prelude::SignalState> = None;
+    let _: Option<aylis::prelude::SmoothScroll> = None;
+    let _: Option<aylis::prelude::SpinnerKind> = None;
+    let _: Option<aylis::prelude::Symbol> = None;
+    let _: Option<aylis::prelude::TabPosition> = None;
+    let _: Option<aylis::prelude::TableSeparator> = None;
+    let _: Option<aylis::prelude::TaskbarProgress> = None;
+    let _: Option<aylis::prelude::TextAlign> = None;
+    let _: Option<aylis::prelude::TextCase> = None;
+    let _: Option<aylis::prelude::TimerPrecision> = None;
+    let _: Option<aylis::prelude::TitleAlign> = None;
+    let _: Option<aylis::prelude::Transition> = None;
+    let _: Option<aylis::prelude::TreeLeafLayout> = None;
+    let _: Option<aylis::prelude::Trigger> = None;
+    let _: Option<aylis::prelude::Trimming> = None;
+    let _: Option<aylis::prelude::ValueFormat> = None;
+    let _: Option<aylis::prelude::ValveState> = None;
+    let _: Option<aylis::prelude::WindowBackdrop> = None;
+    let _: Option<aylis::prelude::WindowCorners> = None;
+    let _: Option<aylis::prelude::WindowSettingsScope> = None;
+    let _: Option<aylis::prelude::WindowShape> = None;
+    let _: Option<aylis::prelude::WindowState> = None;
+}

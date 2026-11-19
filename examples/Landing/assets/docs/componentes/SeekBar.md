@@ -21,7 +21,7 @@ Barra de reprodução de mídia: posição, trecho já carregado (`buffered`), m
 | `position` | Posição | número | Em segundos. |
 | `duration` | Duração | número | A duração da mídia, em segundos: o fim da barra. |
 | `buffered` | Carregado | número | Até onde a mídia já carregou, em segundos (o trecho mais claro); 0: nada. |
-| `markers` | Marcadores | texto | Marcas na barra, em segundos, separadas por `;` (`12.5;30`); vazio: nenhuma. |
+| `markers` | Marcadores | lista de números (separados por `;`) | Marcas na barra, em segundos, separadas por `;` (`12.5;30`); vazio: nenhuma. |
 
 ## Eventos
 

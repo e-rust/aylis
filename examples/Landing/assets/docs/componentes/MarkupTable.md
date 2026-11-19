@@ -2,7 +2,7 @@
 
 ![MarkupTable](img/MarkupTable.png)
 
-A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade`) e `rows` com uma linha por linha de texto (as células separadas por `;`). Os números ficam à direita. `dense` aperta as linhas, `striped` alterna o fundo e `separator` escolhe as linhas de separação. Para dados de banco, use o `DataGrid`.
+A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade`) e `rows` com as linhas, o registro `MARKUP_TABLE_ROW` (`{"cells": ["Café", "2", "12,50"}]`). Os números ficam à direita. `dense` aperta as linhas, `striped` alterna o fundo e `separator` escolhe as linhas de separação. Para dados de banco, use o `DataGrid`.
 
 **Paleta:** Quasar · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -20,8 +20,8 @@ A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `columns` | Colunas | texto | Os títulos das colunas, separados por `;` (`Nome;Idade;Cidade`). |
-| `rows` | Linhas | texto | As linhas da tabela, uma por linha de texto, com as células separadas por `;`. |
+| `columns` | Colunas | lista de textos (separados por `;`) | Os títulos das colunas, separados por `;` (`Nome;Idade;Cidade`). |
+| `rows` | Linhas | lista de `MarkupTableRow` | As linhas da tabela, em JSON: `[{"cells": ["Café", "2", "12,50"]}]`. |
 
 ## Em código
 
@@ -36,8 +36,8 @@ E o handler, um método do form (`self.MarkupTable1` já é um `MarkupTable`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.MarkupTable1.columns(ui);
-        self.MarkupTable1.set_columns(ui, format!("{atual}!"));
+        let atual = self.MarkupTable1.dense(ui);
+        self.MarkupTable1.set_dense(ui, !atual);
     }
 }
 ```

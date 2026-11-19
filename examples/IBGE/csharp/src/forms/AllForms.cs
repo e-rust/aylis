@@ -10,8 +10,8 @@ public static class AllForms
     public static void Register(Aylis aylis)
     {
         Components.RegisterClasses();
-        aylis.On("frmIBGE.form_show", ev => FrmIBGE.form_show(aylis, ev));
-        aylis.On("frmIBGE.estado_mudou", ev => FrmIBGE.estado_mudou(aylis, ev));
-        aylis.On("frmIBGE.municipio_mudou", ev => FrmIBGE.municipio_mudou(aylis, ev));
+        aylis.On("frmIBGE.form_show", ev => FrmIBGE.form_show(aylis, Components.frmIBGE));
+        aylis.On("frmIBGE.estado_mudou", ev => FrmIBGE.estado_mudou(aylis, Components.frmIBGE.SenderAsClientDataSet(ev)!));
+        aylis.On("frmIBGE.municipio_mudou", ev => FrmIBGE.municipio_mudou(aylis, Components.frmIBGE.SenderAsClientDataSet(ev)!));
     }
 }

@@ -340,7 +340,16 @@
                 "notification_id": 2,
                 "channel": "testes",
                 "channel_name": "Testes",
-                "actions": "sim:Sim;nao:Não",
+                "actions": [
+                  {
+                    "id": "sim",
+                    "text": "Sim"
+                  },
+                  {
+                    "id": "nao",
+                    "text": "Não"
+                  }
+                ],
                 "on_action": "not_acao"
               },
               {

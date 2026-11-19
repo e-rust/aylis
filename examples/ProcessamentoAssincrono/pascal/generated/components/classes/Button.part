@@ -7,28 +7,30 @@
     procedure SetIcon(Value: string);
     function GetCheckedIcon: string;
     procedure SetCheckedIcon(Value: string);
-    function GetIconPosition: string;
-    procedure SetIconPosition(Value: string);
+    function GetIconPosition: TIconPosition;
+    procedure SetIconPosition(Value: TIconPosition);
     function GetIconSize: Double;
     procedure SetIconSize(Value: Double);
     function GetCheckable: Boolean;
     procedure SetCheckable(Value: Boolean);
     function GetChecked: Boolean;
     procedure SetChecked(Value: Boolean);
-    function GetModalResult: string;
-    procedure SetModalResult(Value: string);
+    function GetModalResult: TModalResult;
+    procedure SetModalResult(Value: TModalResult);
     function GetRepeatEnter: Boolean;
     procedure SetRepeatEnter(Value: Boolean);
     function GetDefaultButton: Boolean;
     procedure SetDefaultButton(Value: Boolean);
     function GetCancelButton: Boolean;
     procedure SetCancelButton(Value: Boolean);
-    function GetHAlign: string;
-    procedure SetHAlign(Value: string);
+    function GetHAlign: TTextAlign;
+    procedure SetHAlign(Value: TTextAlign);
     function GetGroupIndex: Int64;
     procedure SetGroupIndex(Value: Int64);
-    function GetRadius: string;
-    procedure SetRadius(Value: string);
+    function GetRadius: TAylisBounds;
+    procedure SetRadius(Value: TAylisBounds);
+    function GetOnChange: string;
+    procedure SetOnChange(Value: string);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -37,14 +39,14 @@
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -71,18 +73,18 @@
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
-    function GetBlendMode: string;
-    procedure SetBlendMode(Value: string);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
@@ -103,8 +105,8 @@
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -117,32 +119,32 @@
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TButtonStyle;
+    procedure SetStyle(Value: TButtonStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -157,32 +159,71 @@
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     procedure SetFocus;
     property Text: string read GetText write SetText;
     property Icon: string read GetIcon write SetIcon;
     property CheckedIcon: string read GetCheckedIcon write SetCheckedIcon;
-    property IconPosition: string read GetIconPosition write SetIconPosition;
+    property IconPosition: TIconPosition read GetIconPosition write SetIconPosition;
     property IconSize: Double read GetIconSize write SetIconSize;
     property Checkable: Boolean read GetCheckable write SetCheckable;
     property Checked: Boolean read GetChecked write SetChecked;
-    property ModalResult: string read GetModalResult write SetModalResult;
+    property ModalResult: TModalResult read GetModalResult write SetModalResult;
     property RepeatEnter: Boolean read GetRepeatEnter write SetRepeatEnter;
     property DefaultButton: Boolean read GetDefaultButton write SetDefaultButton;
     property CancelButton: Boolean read GetCancelButton write SetCancelButton;
-    property HAlign: string read GetHAlign write SetHAlign;
+    property HAlign: TTextAlign read GetHAlign write SetHAlign;
     property GroupIndex: Int64 read GetGroupIndex write SetGroupIndex;
-    property Radius: string read GetRadius write SetRadius;
+    property Radius: TAylisBounds read GetRadius write SetRadius;
+    property OnChange: string read GetOnChange write SetOnChange;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -196,12 +237,12 @@
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
-    property BlendMode: string read GetBlendMode write SetBlendMode;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
     property Scale: Double read GetScale write SetScale;
@@ -212,26 +253,26 @@
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TButtonStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -239,7 +280,26 @@
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
 
@@ -273,14 +333,14 @@ begin
   SetProp('checked_icon', TJSONString.Create(Value));
 end;
 
-function TButton.GetIconPosition: string;
+function TButton.GetIconPosition: TIconPosition;
 begin
-  Result := AsText(GetProp('icon_position'));
+  Result := IconPositionOf(GetProp('icon_position'));
 end;
 
-procedure TButton.SetIconPosition(Value: string);
+procedure TButton.SetIconPosition(Value: TIconPosition);
 begin
-  SetProp('icon_position', TJSONString.Create(Value));
+  SetProp('icon_position', TJSONString.Create(IconPositionNames[Value]));
 end;
 
 function TButton.GetIconSize: Double;
@@ -313,14 +373,14 @@ begin
   SetProp('checked', TJSONBoolean.Create(Value));
 end;
 
-function TButton.GetModalResult: string;
+function TButton.GetModalResult: TModalResult;
 begin
-  Result := AsText(GetProp('modal_result'));
+  Result := ModalResultOf(GetProp('modal_result'));
 end;
 
-procedure TButton.SetModalResult(Value: string);
+procedure TButton.SetModalResult(Value: TModalResult);
 begin
-  SetProp('modal_result', TJSONString.Create(Value));
+  SetProp('modal_result', TJSONString.Create(ModalResultNames[Value]));
 end;
 
 function TButton.GetRepeatEnter: Boolean;
@@ -353,14 +413,14 @@ begin
   SetProp('cancel_button', TJSONBoolean.Create(Value));
 end;
 
-function TButton.GetHAlign: string;
+function TButton.GetHAlign: TTextAlign;
 begin
-  Result := AsText(GetProp('h_align'));
+  Result := TextAlignOf(GetProp('h_align'));
 end;
 
-procedure TButton.SetHAlign(Value: string);
+procedure TButton.SetHAlign(Value: TTextAlign);
 begin
-  SetProp('h_align', TJSONString.Create(Value));
+  SetProp('h_align', TJSONString.Create(TextAlignNames[Value]));
 end;
 
 function TButton.GetGroupIndex: Int64;
@@ -373,14 +433,24 @@ begin
   SetProp('group_index', TJSONInt64Number.Create(Value));
 end;
 
-function TButton.GetRadius: string;
+function TButton.GetRadius: TAylisBounds;
 begin
-  Result := AsText(GetProp('radius'));
+  Result := AylisBoundsFromJSON(GetProp('radius'));
 end;
 
-procedure TButton.SetRadius(Value: string);
+procedure TButton.SetRadius(Value: TAylisBounds);
 begin
-  SetProp('radius', TJSONString.Create(Value));
+  SetProp('radius', AylisBoundsToJSON(Value));
+end;
+
+function TButton.GetOnChange: string;
+begin
+  Result := AsText(GetProp('on_change'));
+end;
+
+procedure TButton.SetOnChange(Value: string);
+begin
+  SetProp('on_change', TJSONString.Create(Value));
 end;
 
 function TButton.GetLeft: Double;
@@ -423,44 +493,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TButton.GetAlign: string;
+function TButton.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TButton.SetAlign(Value: string);
+procedure TButton.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TButton.GetAnchors: string;
+function TButton.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TButton.SetAnchors(Value: string);
+procedure TButton.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TButton.GetMargins: string;
+function TButton.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TButton.SetMargins(Value: string);
+procedure TButton.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TButton.GetPadding: string;
+function TButton.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TButton.SetPadding(Value: string);
+procedure TButton.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TButton.GetVisible: Boolean;
@@ -593,14 +663,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TButton.GetDragImage: string;
+function TButton.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TButton.SetDragImage(Value: string);
+procedure TButton.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TButton.GetDropTypes: string;
@@ -623,14 +693,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TButton.GetCursor: string;
+function TButton.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TButton.SetCursor(Value: string);
+procedure TButton.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TButton.GetOpacity: Double;
@@ -643,14 +713,14 @@ begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
 end;
 
-function TButton.GetBlendMode: string;
+function TButton.GetBlendMode: TBlendMode;
 begin
-  Result := AsText(GetProp('blend_mode'));
+  Result := BlendModeOf(GetProp('blend_mode'));
 end;
 
-procedure TButton.SetBlendMode(Value: string);
+procedure TButton.SetBlendMode(Value: TBlendMode);
 begin
-  SetProp('blend_mode', TJSONString.Create(Value));
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TButton.GetCacheLayer: Boolean;
@@ -753,14 +823,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TButton.GetSelfAlign: string;
+function TButton.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TButton.SetSelfAlign(Value: string);
+procedure TButton.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TButton.GetAutoSize: Boolean;
@@ -823,104 +893,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TButton.GetShadow: string;
+function TButton.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TButton.SetShadow(Value: string);
+procedure TButton.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TButton.GetStyle: string;
+function TButton.GetStyle: TButtonStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := ButtonStyleOf(GetProp('style'));
 end;
 
-procedure TButton.SetStyle(Value: string);
+procedure TButton.SetStyle(Value: TButtonStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(ButtonStyleNames[Value]));
 end;
 
-function TButton.GetTheme: string;
+function TButton.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TButton.SetTheme(Value: string);
+procedure TButton.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TButton.GetFill: string;
+function TButton.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TButton.SetFill(Value: string);
+procedure TButton.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TButton.GetBorderColor: string;
+function TButton.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TButton.SetBorderColor(Value: string);
+procedure TButton.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TButton.GetTextColor: string;
+function TButton.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TButton.SetTextColor(Value: string);
+procedure TButton.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TButton.GetAccentColor: string;
+function TButton.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TButton.SetAccentColor(Value: string);
+procedure TButton.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TButton.GetSuccessColor: string;
+function TButton.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TButton.SetSuccessColor(Value: string);
+procedure TButton.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TButton.GetWarningColor: string;
+function TButton.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TButton.SetWarningColor(Value: string);
+procedure TButton.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TButton.GetDangerColor: string;
+function TButton.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TButton.SetDangerColor(Value: string);
+procedure TButton.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TButton.GetFontFamily: string;
@@ -943,14 +1013,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TButton.GetFontWeight: string;
+function TButton.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TButton.SetFontWeight(Value: string);
+procedure TButton.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TButton.GetFontItalic: Boolean;
@@ -1023,14 +1093,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TButton.GetPopupMenu: string;
+function TButton.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TButton.SetPopupMenu(Value: string);
+procedure TButton.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TButton.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TButton.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TButton.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TButton.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TButton.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TButton.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TButton.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TButton.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TButton.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TButton.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TButton.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TButton.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TButton.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TButton.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TButton.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TButton.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TButton.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TButton.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TButton.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TButton.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TButton.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 procedure TButton.SetFocus;

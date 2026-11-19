@@ -600,7 +600,7 @@ func init() {
 	}, func(form aylis.FormInstance) { frmIBGE = form.(*frmIBGEComponents) })
 }
 
-// FindClientDataSet é o ClientDataSet deste form com o nome (como o FindComponent).
+// FindClientDataSet é o ClientDataSet deste form com o nome.
 func (f *frmIBGEComponents) FindClientDataSet(name string) aylisClientDataSet {
 	switch name {
 	case "cdsEstados":
@@ -620,7 +620,7 @@ func (f *frmIBGEComponents) FindClientDataSet(name string) aylisClientDataSet {
 // SenderAsClientDataSet é o ClientDataSet que disparou o evento.
 func (f *frmIBGEComponents) SenderAsClientDataSet(ev aylis.Event) aylisClientDataSet { return f.FindClientDataSet(ev.Sender.Name) }
 
-// FindDBChart é o DBChart deste form com o nome (como o FindComponent).
+// FindDBChart é o DBChart deste form com o nome.
 func (f *frmIBGEComponents) FindDBChart(name string) aylisDBChart {
 	switch name {
 	case "dbcPopulacao":
@@ -636,7 +636,7 @@ func (f *frmIBGEComponents) FindDBChart(name string) aylisDBChart {
 // SenderAsDBChart é o DBChart que disparou o evento.
 func (f *frmIBGEComponents) SenderAsDBChart(ev aylis.Event) aylisDBChart { return f.FindDBChart(ev.Sender.Name) }
 
-// FindDataGrid é o DataGrid deste form com o nome (como o FindComponent).
+// FindDataGrid é o DataGrid deste form com o nome.
 func (f *frmIBGEComponents) FindDataGrid(name string) aylisDataGrid {
 	switch name {
 	case "grdEstados":
@@ -652,7 +652,7 @@ func (f *frmIBGEComponents) FindDataGrid(name string) aylisDataGrid {
 // SenderAsDataGrid é o DataGrid que disparou o evento.
 func (f *frmIBGEComponents) SenderAsDataGrid(ev aylis.Event) aylisDataGrid { return f.FindDataGrid(ev.Sender.Name) }
 
-// FindDataSource é o DataSource deste form com o nome (como o FindComponent).
+// FindDataSource é o DataSource deste form com o nome.
 func (f *frmIBGEComponents) FindDataSource(name string) aylisDataSource {
 	switch name {
 	case "dsEstados":
@@ -672,7 +672,7 @@ func (f *frmIBGEComponents) FindDataSource(name string) aylisDataSource {
 // SenderAsDataSource é o DataSource que disparou o evento.
 func (f *frmIBGEComponents) SenderAsDataSource(ev aylis.Event) aylisDataSource { return f.FindDataSource(ev.Sender.Name) }
 
-// FindField é o Field deste form com o nome (como o FindComponent).
+// FindField é o Field deste form com o nome.
 func (f *frmIBGEComponents) FindField(name string) aylisField {
 	switch name {
 	case "cdsEstadosId":
@@ -758,7 +758,7 @@ func (f *frmIBGEComponents) FindField(name string) aylisField {
 // SenderAsField é o Field que disparou o evento.
 func (f *frmIBGEComponents) SenderAsField(ev aylis.Event) aylisField { return f.FindField(ev.Sender.Name) }
 
-// FindGroupBox é o GroupBox deste form com o nome (como o FindComponent).
+// FindGroupBox é o GroupBox deste form com o nome.
 func (f *frmIBGEComponents) FindGroupBox(name string) aylisGroupBox {
 	switch name {
 	case "gbEstados":
@@ -774,7 +774,7 @@ func (f *frmIBGEComponents) FindGroupBox(name string) aylisGroupBox {
 // SenderAsGroupBox é o GroupBox que disparou o evento.
 func (f *frmIBGEComponents) SenderAsGroupBox(ev aylis.Event) aylisGroupBox { return f.FindGroupBox(ev.Sender.Name) }
 
-// FindImage é o Image deste form com o nome (como o FindComponent).
+// FindImage é o Image deste form com o nome.
 func (f *frmIBGEComponents) FindImage(name string) aylisImage {
 	switch name {
 	case "imgBandeiraEstado":
@@ -788,7 +788,7 @@ func (f *frmIBGEComponents) FindImage(name string) aylisImage {
 // SenderAsImage é o Image que disparou o evento.
 func (f *frmIBGEComponents) SenderAsImage(ev aylis.Event) aylisImage { return f.FindImage(ev.Sender.Name) }
 
-// FindLabel é o Label deste form com o nome (como o FindComponent).
+// FindLabel é o Label deste form com o nome.
 func (f *frmIBGEComponents) FindLabel(name string) aylisLabel {
 	switch name {
 	case "lblFonte":
@@ -848,7 +848,7 @@ func (f *frmIBGEComponents) FindLabel(name string) aylisLabel {
 // SenderAsLabel é o Label que disparou o evento.
 func (f *frmIBGEComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
 
-// FindLayout é o Layout deste form com o nome (como o FindComponent).
+// FindLayout é o Layout deste form com o nome.
 func (f *frmIBGEComponents) FindLayout(name string) aylisLayout {
 	switch name {
 	case "lytListas":
@@ -872,7 +872,7 @@ func (f *frmIBGEComponents) FindLayout(name string) aylisLayout {
 // SenderAsLayout é o Layout que disparou o evento.
 func (f *frmIBGEComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
 
-// FindPanel é o Panel deste form com o nome (como o FindComponent).
+// FindPanel é o Panel deste form com o nome.
 func (f *frmIBGEComponents) FindPanel(name string) aylisPanel {
 	switch name {
 	case "pnlEstado":
@@ -886,7 +886,7 @@ func (f *frmIBGEComponents) FindPanel(name string) aylisPanel {
 // SenderAsPanel é o Panel que disparou o evento.
 func (f *frmIBGEComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
 
-// FindSplitter é o Splitter deste form com o nome (como o FindComponent).
+// FindSplitter é o Splitter deste form com o nome.
 func (f *frmIBGEComponents) FindSplitter(name string) aylisSplitter {
 	switch name {
 	case "splListas":
@@ -898,7 +898,7 @@ func (f *frmIBGEComponents) FindSplitter(name string) aylisSplitter {
 // SenderAsSplitter é o Splitter que disparou o evento.
 func (f *frmIBGEComponents) SenderAsSplitter(ev aylis.Event) aylisSplitter { return f.FindSplitter(ev.Sender.Name) }
 
-// FindSvg é o Svg deste form com o nome (como o FindComponent).
+// FindSvg é o Svg deste form com o nome.
 func (f *frmIBGEComponents) FindSvg(name string) aylisSvg {
 	switch name {
 	case "svgBrasil":

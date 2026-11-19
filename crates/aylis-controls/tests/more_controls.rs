@@ -207,7 +207,7 @@ fn list_box_and_list_view_navigate() {
     assert_eq!(*log.borrow(), ["dois", "três"]);
 
     let v = ui.add(ListView::default(), f);
-    ui.set_prop(v, "items", "Maria|Cliente desde 2020;João;Ana|VIP").unwrap();
+    ui.set_prop(v, "items", r#"[{"title":"Maria","detail":"Cliente desde 2020"},{"title":"João"},{"title":"Ana","detail":"VIP"}]"#).unwrap();
     assert_eq!(ui.get::<ListView>(v).unwrap().item(0).unwrap().detail, "Cliente desde 2020");
     assert_eq!(ui.get::<ListView>(v).unwrap().count(), 3);
 }
@@ -217,7 +217,7 @@ fn tree_view_reads_levels_and_expands() {
     let (mut ui, f) = setup();
     let t = ui.add(TreeView::default(), f);
     place(&mut ui, t, 0.0, 0.0, 240.0, 300.0);
-    ui.set_prop(t, "items", "Brasil;>São Paulo;>>Campinas;>Rio;Portugal").unwrap();
+    ui.set_prop(t, "items", r#"[{"text":"Brasil","children":[{"text":"São Paulo","children":[{"text":"Campinas"}]},{"text":"Rio"}]},{"text":"Portugal"}]"#).unwrap();
     let tree = ui.get::<TreeView>(t).unwrap();
     assert_eq!(tree.nodes().len(), 2);
     assert_eq!(tree.nodes()[0].children[0].children[0].text, "Campinas");
@@ -241,7 +241,7 @@ fn full_expand_fires_on_expand_for_every_node_and_loads_on_demand() {
     let t = ui.add(TreeView::default(), f);
     place(&mut ui, t, 0.0, 0.0, 240.0, 300.0);
     // Cada nó começa com um filho provisório ("…"), trocado ao abrir.
-    ui.set_prop(t, "items", "Brasil;>…;Portugal;>…").unwrap();
+    ui.set_prop(t, "items", r#"[{"text":"Brasil","children":[{"text":"…"}]},{"text":"Portugal","children":[{"text":"…"}]}]"#).unwrap();
     let log = Rc::new(RefCell::new(Vec::new()));
     let l = log.clone();
     ui.on(t, "on_expand", move |ui, id, args| {
@@ -289,7 +289,7 @@ fn the_scroll_bar_of_a_long_tree_can_be_dragged() {
     let t = ui.add(TreeView::default(), f);
     place(&mut ui, t, 0.0, 0.0, 240.0, 300.0);
     let items: Vec<String> = (0..100).map(|i| format!("Item {i}")).collect();
-    ui.set_prop(t, "items", items.join(";")).unwrap();
+    ui.set_prop(t, "items", tree_items(&items)).unwrap();
     paint(&mut ui, f);
     // Pega a barra no alto e arrasta até embaixo (passando da lista: o arraste continua).
     ui.pointer_down(f, at(234.0, 12.0));
@@ -321,7 +321,7 @@ fn a_tree_that_shrinks_keeps_the_mouse_on_the_row_under_it() {
     let t = ui.add(TreeView::default(), f);
     place(&mut ui, t, 0.0, 0.0, 240.0, 300.0);
     let items: Vec<String> = (0..60).map(|i| format!("Item {i}")).collect();
-    ui.set_prop(t, "items", items.join(";")).unwrap();
+    ui.set_prop(t, "items", tree_items(&items)).unwrap();
     paint(&mut ui, f);
     // Rola até embaixo.
     for _ in 0..20 {
@@ -330,7 +330,7 @@ fn a_tree_that_shrinks_keeps_the_mouse_on_the_row_under_it() {
     paint(&mut ui, f);
     // A árvore encolhe para caber sem rolagem; a primeira linha à vista é a do topo.
     let few: Vec<String> = (0..5).map(|i| format!("Novo {i}")).collect();
-    ui.set_prop(t, "items", few.join(";")).unwrap();
+    ui.set_prop(t, "items", tree_items(&few)).unwrap();
     paint(&mut ui, f);
     ui.pointer_down(f, at(40.0, 10.0));
     ui.pointer_up(f, at(40.0, 10.0));
@@ -577,10 +577,10 @@ fn the_button_focus_ring_has_a_gap_in_every_theme() {
 }
 
 #[test]
-fn chart_reads_series_from_text() {
+fn chart_reads_series_from_records() {
     let (mut ui, f) = setup();
     let c = ui.add(Chart::default(), f);
-    ui.set_prop(c, "series", "A=1,2,3|B=4,5").unwrap();
+    ui.set_prop(c, "series", r#"[{"name":"A","values":[1,2,3]},{"name":"B","values":[4,5]}]"#).unwrap();
     ui.set_prop(c, "kind", "bar").unwrap();
     let chart = ui.get::<Chart>(c).unwrap();
     assert_eq!(chart.data().len(), 2);
@@ -713,4 +713,9 @@ fn joystick_follows_the_drag_and_springs_back() {
     ui.pointer_up(f, at(-200.0, 340.0));
     assert_eq!(value(&ui), (0.0, 0.0));
     assert_eq!(log.borrow().len(), 3);
+}
+
+/// Os nós de primeiro nível do `TreeView` em JSON, um por texto.
+fn tree_items(texts: &[String]) -> String {
+    serde_json::to_string(&texts.iter().map(|t| serde_json::json!({ "text": t })).collect::<Vec<_>>()).unwrap()
 }

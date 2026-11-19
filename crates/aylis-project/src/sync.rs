@@ -229,9 +229,20 @@ pub fn changed_since_record(project: &Project) -> Option<Vec<String>> {
 /// O texto que marca a definição de um handler no arquivo e o handler vazio que a geração
 /// cria, numa linguagem.
 fn stub(language: Language, module: &str, form: &str, handler: &str) -> (String, String) {
+    // O handler tipado (o evento declara o que leva), como a geração cria.
+    let sig = crate::codegen::handler_sig_for(language, form, handler);
     match language {
-        Language::Rust => (format!("fn {handler}("), format!("pub fn {handler}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {{\n{}}}\n", crate::codegen::rust_stub_body(handler))),
-        Language::Python => (format!("def {handler}("), format!("def {handler}(aylis, event):\n    pass\n")),
+        Language::Rust => match sig {
+            Some(sig) => {
+                let values = if sig.arg == crate::bindings::EventKind::None { "ui, sender" } else { "ui, sender, value" };
+                (format!("fn {handler}("), format!("pub fn {handler}(&mut self, {}) {{\n        let _ = ({values});\n    }}\n", crate::bindings::rust_handler_params(&sig)))
+            }
+            None => (format!("fn {handler}("), format!("pub fn {handler}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {{\n{}}}\n", crate::codegen::rust_stub_body(handler))),
+        },
+        Language::Python => match sig {
+            Some(sig) => (format!("def {handler}("), format!("def {handler}({}):\n    pass\n", crate::bindings::typed_params(Language::Python, &sig))),
+            None => (format!("def {handler}("), format!("def {handler}(aylis, event):\n    pass\n")),
+        },
         other => crate::hostlang::stub(other, module, form, handler),
     }
 }

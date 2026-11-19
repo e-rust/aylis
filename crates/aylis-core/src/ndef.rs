@@ -3,8 +3,9 @@
 //! leitores USB (PC/SC) entregam e recebem os bytes; o navegador (Web NFC) já entrega os
 //! registros prontos.
 //!
-//! No componente `Nfc`, os registros vão em texto, um por linha: `text:Olá`,
-//! `uri:https://aylis.dev`, `application/json:{"a":1}` (o tipo MIME antes dos dois pontos).
+//! No componente `Nfc`, os registros vão numa lista de `NfcRecord` em JSON:
+//! `[{"kind": "text", "value": "Olá"}, {"kind": "uri", "value": "https://aylis.dev"},
+//! {"kind": "mime", "mime": "application/json", "value": "{\"a\":1}"}]`.
 
 /// Um registro de uma mensagem NDEF.
 #[derive(Clone, Debug, PartialEq, Eq)]

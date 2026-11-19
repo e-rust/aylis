@@ -172,7 +172,7 @@ impl Component for DataNavigator {
 
     properties! {
         data_source: Option<ComponentId> => "Data";
-        events: before_action, on_error
+        events: before_action, on_error: String
     }
 
     fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {

@@ -725,6 +725,18 @@ impl PaintCanvas {
     }
 }
 
+/// O registro de um tamanho de imagem (o resultado do `PaintCanvas.size`).
+pub const IMAGE_SIZE: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "ImageSize", fields: &[("width", PropKind::Int), ("height", PropKind::Int)] };
+
+/// O tamanho da imagem, em pixels.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct ImageSize {
+    pub width: u32,
+    pub height: u32,
+}
+
 impl Component for PaintCanvas {
     crate::leaf_control!("PaintCanvas");
 
@@ -735,7 +747,7 @@ impl Component for PaintCanvas {
             MethodInfo::new("redo", &[], Some(Bool)),
             MethodInfo::new("can_undo", &[], Some(Bool)),
             MethodInfo::new("can_redo", &[], Some(Bool)),
-            MethodInfo::new("size", &[], Some(String)),
+            MethodInfo::new("size", &[], Some(PropKind::Record(&IMAGE_SIZE))),
             MethodInfo::new("checksum", &[], Some(String)),
             MethodInfo::new("clear", &[], Some(Bool)),
             MethodInfo::new("resize", &[Int, Int], Some(Bool)).params(&["width", "height"]),
@@ -760,7 +772,7 @@ impl Component for PaintCanvas {
         brush_size: i64 => "Behavior",
         filled: bool => "Behavior",
         zoom: f32 => "Appearance";
-        events: on_change, on_pick, on_cursor;
+        events: on_change: (), on_pick: String, on_cursor: String;
         on_set: after_set
     }
 
@@ -1029,7 +1041,10 @@ impl Component for PaintCanvas {
             "redo" => PropValue::Bool(self.redo()),
             "can_undo" => return Ok(PropValue::Bool(self.can_undo())),
             "can_redo" => return Ok(PropValue::Bool(self.can_redo())),
-            "size" => return Ok(PropValue::String(format!("{} × {}", self.bitmap.width, self.bitmap.height))),
+            "size" => {
+                let size = ImageSize { width: self.bitmap.width, height: self.bitmap.height };
+                return Ok(PropValue::String(serde_json::to_string(&size).unwrap_or_default()));
+            }
             // Um resumo dos pixels (FNV-1a): duas imagens iguais dão o mesmo texto.
             "checksum" => {
                 let b = self.composited();

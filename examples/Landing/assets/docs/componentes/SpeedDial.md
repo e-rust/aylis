@@ -13,8 +13,8 @@ Botão flutuante que abre ações (o `v-speed-dial`): o botão principal fica em
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `icon` | Ícone | texto | O ícone do botão principal. |
-| `icons` | Ícones | texto | Os ícones das ações, separados por `;` (uma ação para cada). |
-| `labels` | Rótulos | texto | Os nomes das ações ao lado dos ícones, na mesma ordem, separados por `;`; vazio: só os ícones. |
+| `icons` | Ícones | lista de textos (separados por `;`) | Os ícones das ações, separados por `;` (uma ação para cada). |
+| `labels` | Rótulos | lista de textos (separados por `;`) | Os nomes das ações ao lado dos ícones, na mesma ordem, separados por `;`; vazio: só os ícones. |
 
 ### Comportamento
 

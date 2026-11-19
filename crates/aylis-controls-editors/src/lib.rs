@@ -8,8 +8,8 @@ mod animated_text;
 mod editors;
 mod paintbox;
 
-pub use animated_text::AnimatedText;
+pub use animated_text::{AnimatedText, TEXT_EFFECT};
 pub use editors::{AngleDial, EasingEditor, ShadowEditor, TimingEditor};
-pub use paintbox::{Bitmap, PaintCanvas, PaintTool};
+pub use paintbox::{Bitmap, IMAGE_SIZE, ImageSize, PaintCanvas, PaintTool};
 
 pub(crate) use aylis_core::leaf_control;

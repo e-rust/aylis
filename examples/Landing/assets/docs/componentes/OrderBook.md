@@ -19,8 +19,8 @@ Livro de ofertas: as vendas (`asks`, do menor preço para cima) em cima, as comp
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `bids` | Ofertas de compra | texto | `"38.50:1200;38.49:800"` (preço:quantidade). |
-| `asks` | Ofertas de venda | texto | As ofertas de venda, no mesmo formato das `bids` (preço:quantidade). |
+| `bids` | Ofertas de compra | lista de `OrderLevel` | As ofertas de compra, em JSON (`ORDER_LEVEL`): `[{"price": 38.49, "quantity": 1200}]`. |
+| `asks` | Ofertas de venda | lista de `OrderLevel` | As ofertas de venda, no mesmo formato das `bids`. |
 
 ## Eventos
 
@@ -41,8 +41,8 @@ E o handler, um método do form (`self.OrderBook1` já é um `OrderBook`):
 ```rust
 impl FrmPrincipal {
     pub fn order_book1_price_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.OrderBook1.bids(ui);
-        self.OrderBook1.set_bids(ui, format!("{atual}!"));
+        let atual = self.OrderBook1.levels(ui);
+        self.OrderBook1.set_levels(ui, atual + 1);
     }
 }
 ```

@@ -18,4 +18,8 @@ fn the_components_catalog_matches_the_registry() {
     let value: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert_eq!(value["Panel"]["visible"], "bool");
     assert_eq!(value["Label"]["text"], "string");
+    // Os enums com o tipo Rust e os valores.
+    assert_eq!(value["Form"]["window_state"], "enum(WindowState:normal|maximized|minimized|full_screen)");
+    let enums = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../aylis/tests/catalog_enums.rs")).unwrap_or_default().replace("\r\n", "\n");
+    assert!(enums == aylis_json::catalog_enums_test(&ui), "crates/aylis/tests/catalog_enums.rs desatualizado: rode aylis-tool update-catalog");
 }

@@ -19,7 +19,7 @@ Avatares empilhados (o `v-avatar-group`): as iniciais de `names` (separados por 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `names` | Nomes | texto | Os nomes das pessoas, separados por `;`: cada avatar mostra as iniciais. |
+| `names` | Nomes | lista de textos (separados por `;`) | Os nomes das pessoas, separados por `;`: cada avatar mostra as iniciais. |
 
 ## Em código
 
@@ -34,8 +34,8 @@ E o handler, um método do form (`self.AvatarGroup1` já é um `AvatarGroup`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.AvatarGroup1.names(ui);
-        self.AvatarGroup1.set_names(ui, format!("{atual}!"));
+        let atual = self.AvatarGroup1.max(ui);
+        self.AvatarGroup1.set_max(ui, atual + 1);
     }
 }
 ```

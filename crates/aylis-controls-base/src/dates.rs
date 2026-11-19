@@ -272,12 +272,12 @@ impl Component for Calendar {
     leaf_control!("Calendar");
 
     properties! {
-        date: String => "Data",
+        date: String as Date => "Data",
         range: bool => "Behavior",
-        end_date: String => "Data",
+        end_date: String as Date => "Data",
         month_mode: bool => "Behavior",
         events: String => "Data";
-        events: on_change;
+        events: on_change: aylis_core::DateRange;
         on_set: sync
     }
 
@@ -614,8 +614,8 @@ impl Component for DateEdit {
     }
 
     properties! {
-        date: String => "Data";
-        events: on_change;
+        date: String as Date => "Data";
+        events: on_change: Option<aylis_core::Date>;
         on_set: after_set
     }
 
@@ -843,10 +843,10 @@ impl Component for TimeEdit {
     }
 
     properties! {
-        time: String => "Data",
+        time: String as Time => "Data",
         seconds: bool => "Appearance",
         increment: u32 => "Behavior";
-        events: on_change;
+        events: on_change: Option<aylis_core::Time>;
         on_set: after_set
     }
 
@@ -1079,9 +1079,9 @@ impl Component for DateTimeEdit {
     }
 
     properties! {
-        date_time: String => "Data",
+        date_time: String as DateTime => "Data",
         increment: u32 => "Behavior";
-        events: on_change;
+        events: on_change: Option<aylis_core::DateTime>;
         on_set: after_set
     }
 

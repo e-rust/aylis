@@ -66,7 +66,8 @@ std::string imagem(const std::string& caminho) {
 
 }  // namespace
 
-void form_show(aylis::Aylis& app, const aylis::Event& ev) {
+void form_show(aylis::Aylis& app, aylis_components::Form sender) {
+    (void)sender;
     aylis::Json estados = ler("estados.json");
     if (estados.is_null()) {
         frmIBGE.lblFonte.set_text("Faltam os dados: rode  aylis-tool ibge examples/IBGE/assets/dados");
@@ -79,11 +80,12 @@ void form_show(aylis::Aylis& app, const aylis::Event& ev) {
     carregar(app, frmIBGE.cdsDistritos, ler("distritos.json"));
     carregar(app, frmIBGE.cdsMunicipios, municipios);
     carregar(app, frmIBGE.cdsEstados, estados);
-    estado_mudou(app, ev);
+    estado_mudou(app, frmIBGE.cdsEstados);
 }
 
 // Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios.
-void estado_mudou(aylis::Aylis& app, const aylis::Event& ev) {
+void estado_mudou(aylis::Aylis& app, aylis_components::ClientDataSet sender) {
+    (void)sender;
     aylis::Json e = registro(app, frmIBGE.cdsEstados);
     if (e["id"].is_null()) return;
     long long uf = numero(e["id"]);
@@ -91,7 +93,7 @@ void estado_mudou(aylis::Aylis& app, const aylis::Event& ev) {
     frmIBGE.lblRegiao.set_text(e["sigla"].str() + " · Região " + e["regiao"].str());
     frmIBGE.imgBandeiraEstado.set_image(imagem(e["bandeira"].str()));
     frmIBGE.lblEstadoEstimativa.set_text("Estimativa de " + e["estimativa_ano"].str());
-    frmIBGE.svgBrasil.set_highlight("e" + std::to_string(uf));
+    frmIBGE.svgBrasil.set_highlight({"e" + std::to_string(uf)});
     std::string mapa = dados + "mapas/" + std::to_string(uf) + ".svg";
     frmIBGE.svgEstado.set_source(mapa);
     frmIBGE.svgMunicipio.set_source(mapa);
@@ -109,12 +111,12 @@ void estado_mudou(aylis::Aylis& app, const aylis::Event& ev) {
         maiores.push_back(aylis::Json{{"nome", (*do_estado[i])["nome"]}, {"habitantes", (*do_estado[i])["populacao"]}});
     }
     carregar(app, frmIBGE.cdsMaiores, aylis::Json::array(std::move(maiores)));
-    municipio_mudou(app, ev);
+    municipio_mudou(app, frmIBGE.cdsMunicipios);
 }
 
 // Outro município: a bandeira, o destaque nos mapas e a população ano a ano.
-void municipio_mudou(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void municipio_mudou(aylis::Aylis& app, aylis_components::ClientDataSet sender) {
+    (void)sender;
     aylis::Json m = registro(app, frmIBGE.cdsMunicipios);
     if (m["id"].is_null()) return;
     long long codigo = numero(m["id"]);
@@ -125,8 +127,8 @@ void municipio_mudou(aylis::Aylis& app, const aylis::Event& ev) {
     frmIBGE.lblSemBandeira.set_visible(bandeira.empty());
     frmIBGE.lblEstimativa.set_text("Estimativa de " + m["estimativa_ano"].str());
     std::string alvo = "m" + std::to_string(codigo);
-    frmIBGE.svgEstado.set_highlight(alvo);
-    frmIBGE.svgMunicipio.set_highlight(alvo);
+    frmIBGE.svgEstado.set_highlight({alvo});
+    frmIBGE.svgMunicipio.set_highlight({alvo});
     frmIBGE.svgMunicipio.set_zoom_to(alvo);
 
     std::vector<aylis::Json> linhas;

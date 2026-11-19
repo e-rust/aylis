@@ -4,44 +4,60 @@ class OpenDialog(AylisComponent):
     """Um OpenDialog de um form."""
 
     @property
-    def title(self):
+    def title(self) -> str:
         return self._get("title")
 
     @title.setter
-    def title(self, value):
+    def title(self, value: str) -> None:
         self._set("title", value)
 
     @property
-    def filter(self):
+    def filter(self) -> str:
         return self._get("filter")
 
     @filter.setter
-    def filter(self, value):
+    def filter(self, value: str) -> None:
         self._set("filter", value)
 
     @property
-    def initial_dir(self):
+    def initial_dir(self) -> str:
         return self._get("initial_dir")
 
     @initial_dir.setter
-    def initial_dir(self, value):
+    def initial_dir(self, value: str) -> None:
         self._set("initial_dir", value)
 
     @property
-    def file_name(self):
+    def file_name(self) -> str:
         return self._get("file_name")
 
     @file_name.setter
-    def file_name(self, value):
+    def file_name(self, value: str) -> None:
         self._set("file_name", value)
 
     @property
-    def multiple(self):
+    def multiple(self) -> bool:
         return self._get("multiple")
 
     @multiple.setter
-    def multiple(self, value):
+    def multiple(self, value: bool) -> None:
         self._set("multiple", value)
 
-    def execute(self):
+    @property
+    def on_select(self) -> str:
+        return self._get("on_select")
+
+    @on_select.setter
+    def on_select(self, value: str) -> None:
+        self._set("on_select", value)
+
+    @property
+    def on_cancel(self) -> str:
+        return self._get("on_cancel")
+
+    @on_cancel.setter
+    def on_cancel(self, value: str) -> None:
+        self._set("on_cancel", value)
+
+    def execute(self) -> None:
         self.aylis.send("execute", target=self.id)

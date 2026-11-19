@@ -185,7 +185,7 @@ fn master_detail() {
     ui.add(Field::new("cliente_id", FieldType::Integer), orders);
     ui.add(Field::new("valor", FieldType::Currency), orders);
     ui.set_prop(orders, "master_source", ds_master).unwrap();
-    ui.set_prop(orders, "master_fields", "cliente_id=id").unwrap();
+    ui.set_prop(orders, "master_fields", r#"[{"field": "cliente_id", "master_field": "id"}]"#).unwrap();
     let changes = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
     let c = changes.clone();
     ui.on(orders, "on_master_change", move |_, _, args| {
@@ -203,7 +203,11 @@ fn master_detail() {
     assert_eq!(view(&ui, orders).record_count(), 2, "pedidos da Maria (id 1)");
     data_set(&mut ui, master).locate("id", 3).unwrap();
     assert_eq!(view(&ui, orders).record_count(), 1, "pedidos da Ana");
-    assert_eq!(changes.borrow().last().map(String::as_str), Some(r#"{"cliente_id":3}"#));
+    assert_eq!(changes.borrow().last().map(String::as_str), Some(r#"{"values":[{"field":"cliente_id","value":"3"}]}"#));
+    // O handler tipado recebe o `MasterChange` já lido.
+    let last = EventArgs::Text(changes.borrow().last().cloned().unwrap());
+    let change = <MasterChange as aylis_core::EventValue>::from_args(&last).unwrap();
+    assert_eq!(change.get("cliente_id"), Some("3"));
     // incluir no detalhe já preenche a chave do mestre
     let mut ds = data_set(&mut ui, orders);
     ds.append().unwrap();

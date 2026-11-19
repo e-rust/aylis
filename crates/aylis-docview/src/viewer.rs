@@ -537,7 +537,7 @@ impl Component for DocViewer {
         sheet: i64 => "Behavior",
         max_document_size: i64 => "Behavior",
         max_pixels: i64 => "Behavior";
-        events: on_load, on_error, on_change
+        events: on_load: (), on_error: String, on_change: i64
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

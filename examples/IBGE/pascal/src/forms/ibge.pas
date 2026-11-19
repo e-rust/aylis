@@ -17,9 +17,9 @@ uses
 type
   TFrmIBGE = class(TFrmIBGEBase)
   published
-    procedure form_show(Sender: TAylisComponent; Event: TJSONObject);
-    procedure estado_mudou(Sender: TAylisComponent; Event: TJSONObject);
-    procedure municipio_mudou(Sender: TAylisComponent; Event: TJSONObject);
+    procedure form_show(Sender: TForm);
+    procedure estado_mudou(Sender: TClientDataSet);
+    procedure municipio_mudou(Sender: TClientDataSet);
   end;
 
 var
@@ -122,7 +122,7 @@ begin
     Result := Dados + Caminho;
 end;
 
-procedure TFrmIBGE.form_show(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmIBGE.form_show(Sender: TForm);
 var
   Estados, Lido: TJSONData;
 begin
@@ -143,11 +143,11 @@ begin
   Carregar(Aylis, frmIBGE.cdsDistritos, Ler('distritos.json'));
   Carregar(Aylis, frmIBGE.cdsMunicipios, Municipios.Clone);
   Carregar(Aylis, frmIBGE.cdsEstados, Estados);
-  estado_mudou(Self, Event);
+  estado_mudou(cdsEstados);
 end;
 
 { Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios. }
-procedure TFrmIBGE.estado_mudou(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmIBGE.estado_mudou(Sender: TClientDataSet);
 var
   E, M, T: TJSONObject;
   UF: Int64;
@@ -178,7 +178,7 @@ begin
   finally
     E.Free;
   end;
-  frmIBGE.svgBrasil.Highlight := 'e' + IntToStr(UF);
+  frmIBGE.svgBrasil.Highlight := ['e' + IntToStr(UF)];
   Mapa := Dados + 'mapas/' + IntToStr(UF) + '.svg';
   frmIBGE.svgEstado.Source := Mapa;
   frmIBGE.svgMunicipio.Source := Mapa;
@@ -211,11 +211,11 @@ begin
     Maiores.Add(T);
   end;
   Carregar(Aylis, frmIBGE.cdsMaiores, Maiores);
-  municipio_mudou(Self, Event);
+  municipio_mudou(cdsMunicipios);
 end;
 
 { Outro município: a bandeira, o destaque nos mapas e a população ano a ano. }
-procedure TFrmIBGE.municipio_mudou(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmIBGE.municipio_mudou(Sender: TClientDataSet);
 var
   M, Linha: TJSONObject;
   Codigo: Int64;
@@ -239,8 +239,8 @@ begin
     M.Free;
   end;
   Alvo := 'm' + IntToStr(Codigo);
-  svgEstado.Highlight := Alvo;
-  svgMunicipio.Highlight := Alvo;
+  svgEstado.Highlight := [Alvo];
+  svgMunicipio.Highlight := [Alvo];
   svgMunicipio.ZoomTo := Alvo;
 
   Linhas := TJSONArray.Create;

@@ -315,7 +315,7 @@ impl Component for Markdown {
         editor_look: bool => "Appearance",
         code_theme: String => "Appearance",
         code_language: String => "Appearance";
-        events: on_link;
+        events: on_link: String;
         on_set: sync
     }
 

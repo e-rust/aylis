@@ -67,7 +67,7 @@ impl Component for RecordButton {
         countdown: u32 => "Data",
         countdown_fraction: f32 => "Data",
         glow: bool => "Appearance";
-        events: on_click;
+        events: on_click: ();
         on_set: sync
     }
 

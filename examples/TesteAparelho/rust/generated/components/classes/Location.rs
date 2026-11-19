@@ -11,6 +11,13 @@ impl Handle for Location {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Location`): só um Location.
+impl aylis::prelude::FromSender for Location {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Location")).then_some(Self { id })
+    }
+}
+
 impl Location {
     pub fn active(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "active").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -23,6 +30,12 @@ impl Location {
     }
     pub fn set_interval(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "interval", value)
+    }
+    pub fn on_change(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_change"))
+    }
+    pub fn set_on_change(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_change", Into::<String>::into(value))
     }
     pub fn latitude(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "latitude").and_then(|v| v.to_f64().ok()).unwrap_or_default()

@@ -185,7 +185,7 @@ impl Component for WmiQuery {
         data_set: Option<ComponentId> => "Data",
         timeout: f64 => "Behavior",
         watch: bool => "Behavior";
-        events: on_done, on_event, on_error;
+        events: on_done: i64, on_event, on_error: String;
         computed: busy: bool => busy / set_b, row_count: i64 => row_count / set_i, result: String => result / set_s,
             last_event: String => last_event / set_s
     }

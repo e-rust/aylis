@@ -12,7 +12,7 @@ Chave seletora (`Man;0;Auto`): a manopla aponta para a posição escolhida; o cl
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `positions` | Posições | texto | As posições, separadas por `;` (`Man;0;Auto`), num arco da esquerda para a direita. |
+| `positions` | Posições | lista de textos (separados por `;`) | As posições, separadas por `;` (`Man;0;Auto`), num arco da esquerda para a direita. |
 | `item_index` | Item escolhido | inteiro | A posição escolhida (0 = a primeira); o clique passa para a próxima. |
 
 ## Eventos
@@ -34,8 +34,8 @@ E o handler, um método do form (`self.SelectorSwitch1` já é um `SelectorSwitc
 ```rust
 impl FrmPrincipal {
     pub fn selector_switch1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.SelectorSwitch1.positions(ui);
-        self.SelectorSwitch1.set_positions(ui, format!("{atual}!"));
+        let atual = self.SelectorSwitch1.item_index(ui);
+        self.SelectorSwitch1.set_item_index(ui, atual + 1);
     }
 }
 ```

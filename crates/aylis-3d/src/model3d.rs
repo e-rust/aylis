@@ -415,7 +415,7 @@ impl Component for Model3D {
         ray_traced: bool => "Appearance",
         background: Option<Color> => "Appearance",
         resolution: f32 => "Appearance";
-        events: on_clip_end
+        events: on_clip_end: String
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

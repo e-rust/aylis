@@ -12,13 +12,13 @@ Os anéis de atividade da Apple: até três valores (`values`, frações; passan
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `ring_colors` | Cores dos anéis | texto | As cores dos anéis, de fora para dentro, separadas por `;` (`#FF0000;#00AA00`); vazio: as da Apple. |
+| `ring_colors` | Cores dos anéis | lista de cores (separadas por `;`) | As cores dos anéis, de fora para dentro, separadas por `;` (`#FF0000;#00AA00`); vazio: as da Apple. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `values` | Valores | texto | Até três frações, de fora para dentro, separadas por `;` (`0.8;1.25;0.5`); passando de 1 dá outra volta. |
+| `values` | Valores | lista de números (separados por `;`) | Até três frações, de fora para dentro, separadas por `;` (`0.8;1.25;0.5`); passando de 1 dá outra volta. |
 
 ## Em código
 
@@ -33,8 +33,7 @@ E o handler, um método do form (`self.ActivityRings1` já é um `ActivityRings`
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.ActivityRings1.values(ui);
-        self.ActivityRings1.set_values(ui, format!("{atual}!"));
+        let _ = &self.ActivityRings1;
     }
 }
 ```

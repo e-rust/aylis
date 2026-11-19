@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         MediaPlayer::stop(ui, player);
         let _ = ui.set_prop(player, "output", outputs.clone());
         let text = match MediaPlayer::play(ui, player) {
-            Ok(()) if outputs.is_empty() => "Tocando na saída padrão.".to_string(),
+            Ok(()) if specs.is_empty() => "Tocando na saída padrão.".to_string(),
             Ok(()) => format!("Tocando em: {outputs}"),
             Err(e) => format!("Erro: {e}"),
         };

@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! aylis-tool check [--python] [--target desktop|android|web|ios]...
-//! aylis-tool run <projeto.aylisproj> [--target ...] [--language go]
+//! aylis-tool run <projeto.aylisproj> [--target ...] [--language go] [--device] [--serial s]
 //! aylis-tool publish <projeto.aylisproj> [--target ...] [--out pasta] [--debug] [--features a,b] [--abis arm64-v8a,armeabi-v7a]
 //! aylis-tool clean [--days 7] [--target pasta] [--project projeto.aylisproj]
 //! aylis-tool installer-ide [--out pasta] [--skip-build] [--with-packages nome,...|all]
@@ -400,6 +400,9 @@ fn main() -> ExitCode {
         Some("run") => with_project(&args[1..], |project, target, _| {
             let mut options = run::Options::new(target);
             options.aylis_host = aylis_host();
+            // --serial X: o aparelho (o número de série do Android, o UDID ou o nome do iPhone);
+            // --device no iOS: o iPhone conectado, no lugar do simulador.
+            options.device = value_of(&args, "--serial").or_else(|| (target == aylis_tools::Target::Ios && args.iter().any(|a| a == "--device")).then(String::new));
             let control = Control::new();
             let message = run::run(&project, &options, &control, &mut print)?;
             println!("{message}");
@@ -509,6 +512,23 @@ fn main() -> ExitCode {
             println!("chave criada: {path} (apelido {alias}); guarde o arquivo e a senha: a Play Store exige a mesma chave nas atualizações");
             Ok(())
         })(),
+        // O app de iOS compilado no GitHub Actions (sem Mac): aylis-tool ci-ios app.aylisproj
+        // [--signed]. Grava .github/workflows/ios-<app>.yml no repositório do projeto.
+        Some("ci-ios") => with_project(&args[1..], |project, _, _| {
+            let signed = args.iter().any(|a| a == "--signed");
+            let path = aylis_tools::github_ci::write_ios_workflow(&project, signed)?;
+            println!("workflow gravado: {}", path.display());
+            println!("mande para o GitHub e rode em Actions → o workflow → Run workflow; o .ipa fica nos Artifacts da execução");
+            if signed {
+                println!("os segredos do repositório (Settings → Secrets and variables → Actions):");
+                for (name, what) in aylis_tools::github_ci::SECRETS {
+                    println!("  {name}: {what}");
+                }
+            } else {
+                println!("o .ipa sai sem a assinatura da Apple: no Windows, o Sideloadly assina com um Apple ID e instala no iPhone");
+            }
+            Ok(())
+        }),
         Some("publish") => with_project(&args[1..], |project, target, out| {
             let mut options = publish::Options::new(target);
             options.out_dir = out;
@@ -520,8 +540,13 @@ fn main() -> ExitCode {
             // Android vem do projeto, com as senhas de AYLIS_KEYSTORE_PASSWORD/AYLIS_KEY_PASSWORD.
             options.android_bundle = args.iter().any(|a| a == "--aab");
             options.installer = args.iter().any(|a| a == "--installer" || a == "--msi");
-            // --no-sign: não assina no Windows, mesmo com certificado nas Opções.
+            // --no-sign: não assina no Windows, mesmo com certificado nas Opções; no iPhone
+            // (--target ios --device), o .ipa sem a assinatura da Apple, para o Sideloadly.
             options.unsigned = args.iter().any(|a| a == "--no-sign");
+            // --device: o iOS para o iPhone (o .app e o .ipa assinados com o certificado e o
+            // perfil da máquina), no lugar do simulador; --serial X: o UDID que o perfil tem de ter.
+            options.ios_device = args.iter().any(|a| a == "--device");
+            options.ios_udid = value_of(&args, "--serial");
             // --abis arm64-v8a,armeabi-v7a: as arquiteturas do Android (sem ele, as do projeto).
             options.abis = value_of(&args, "--abis").map(|f| f.split(',').map(|a| a.trim().to_string()).filter(|a| !a.is_empty()).collect()).unwrap_or_default();
             options.signing = publish::Signing::from_env(&project);
@@ -533,7 +558,7 @@ fn main() -> ExitCode {
             println!("pronto: {}", published.main.display());
             Ok(())
         }),
-        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--no-sign] [--abis a,b] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | bench-frames [--cameras 1,4,9,16,36] [--frames 600] [--width 1920 --height 1080] [--json saída.json] | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
+        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> [--target t] [--device] [--serial s] | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--no-sign] [--abis a,b] [--device] | ci-ios <projeto.aylisproj> [--signed] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | bench-frames [--cameras 1,4,9,16,36] [--frames 600] [--width 1920 --height 1080] [--json saída.json] | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

@@ -26,12 +26,6 @@ static int caracteres(const std::string& s) {
     return n;
 }
 
-static std::string juntar(const std::vector<std::string>& itens) {
-    std::string out;
-    for (size_t i = 0; i < itens.size(); i++) out += (i ? ";" : "") + itens[i];
-    return out;
-}
-
 // Põe o estado da calculadora na tela.
 static void atualizar(aylis::Aylis& app) {
     std::string visor = calc.visor();
@@ -44,12 +38,14 @@ static void atualizar(aylis::Aylis& app) {
     bool erro = calc.tem_erro();
     for (const auto* botao : SEM_ERRO) botao->set_enabled(!erro);
     for (const auto* botao : {&frmCalculadora.btnMC, &frmCalculadora.btnMR}) botao->set_enabled(!erro && !calc.memoria.empty());
-    std::vector<std::string> itens;
-    for (auto it = calc.historico.rbegin(); it != calc.historico.rend(); ++it) itens.push_back(motor::formatar(it->resultado) + "|" + it->expressao);
-    frmCalculadora.lvHistorico.set_items(itens.empty() ? std::string("Ainda não há histórico|") : juntar(itens));
+    std::vector<aylis_components::ListViewItem> itens;
+    for (auto it = calc.historico.rbegin(); it != calc.historico.rend(); ++it) itens.push_back({motor::formatar(it->resultado), it->expressao});
+    if (itens.empty()) itens.push_back({"Ainda não há histórico", ""});
+    frmCalculadora.lvHistorico.set_items(itens);
     itens.clear();
-    for (auto it = calc.memoria.rbegin(); it != calc.memoria.rend(); ++it) itens.push_back(motor::formatar(*it) + "|");
-    frmCalculadora.lvMemoria.set_items(itens.empty() ? std::string("Não há nada salvo na memória|") : juntar(itens));
+    for (auto it = calc.memoria.rbegin(); it != calc.memoria.rend(); ++it) itens.push_back({motor::formatar(*it), ""});
+    if (itens.empty()) itens.push_back({"Não há nada salvo na memória", ""});
+    frmCalculadora.lvMemoria.set_items(itens);
 }
 
 // Aperta um botão pelo texto dele.
@@ -57,46 +53,45 @@ static void apertar(aylis::Aylis& app, const std::string& texto) {
     if (calc.tecla(texto)) atualizar(app);
 }
 
-static int indice(const aylis::Event& ev) {
-    return ev.args.is_null() ? -1 : static_cast<int>(ev.args.number());
-}
-
 void form_key_down(aylis::Aylis& app, const aylis::Event& ev) {
     std::string botao = motor::botao_do_teclado(ev.args["key"].str(), ev.args["ctrl"].boolean(), ev.args["shift"].boolean());
-    if (botao == "historico") historico_click(app, ev);
+    if (botao == "historico") historico_click(app, frmCalculadora.btnHistorico);
     else if (!botao.empty()) apertar(app, botao);
 }
 
-void limpar_historico_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void limpar_historico_click(aylis::Aylis& app, aylis_components::Button sender) {
+    (void)sender;
     calc.historico.clear();
     atualizar(app);
 }
 
-void historico_item_click(aylis::Aylis& app, const aylis::Event& ev) {
+void historico_item_click(aylis::Aylis& app, aylis_components::ListView sender, long long value) {
+    (void)sender;
     // A lista mostra a conta mais nova em cima.
-    int i = indice(ev);
-    if (i >= 0 && i < static_cast<int>(calc.historico.size())) {
+    if (value >= 0 && value < static_cast<long long>(calc.historico.size())) {
+        size_t i = static_cast<size_t>(value);
         calc.usar(calc.historico[calc.historico.size() - 1 - i].resultado);
         atualizar(app);
     }
 }
 
-void memoria_item_click(aylis::Aylis& app, const aylis::Event& ev) {
-    int i = indice(ev);
-    if (i >= 0 && i < static_cast<int>(calc.memoria.size())) {
+void memoria_item_click(aylis::Aylis& app, aylis_components::ListView sender, long long value) {
+    (void)sender;
+    if (value >= 0 && value < static_cast<long long>(calc.memoria.size())) {
+        size_t i = static_cast<size_t>(value);
         calc.usar(calc.memoria[calc.memoria.size() - 1 - i]);
         atualizar(app);
     }
 }
 
-void historico_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void historico_click(aylis::Aylis& app, aylis_components::Button sender) {
+    (void)app;
+    (void)sender;
     frmCalculadora.pnlLateral.set_visible(!frmCalculadora.pnlLateral.visible());
 }
 
-void tecla_click(aylis::Aylis& app, const aylis::Event& ev) {
-    std::string texto = frmCalculadora.sender_as_button(ev).text();
+void tecla_click(aylis::Aylis& app, aylis_components::Button sender) {
+    std::string texto = sender.text();
     apertar(app, texto);
 }
 

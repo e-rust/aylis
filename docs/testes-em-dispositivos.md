@@ -8,15 +8,18 @@ nele ou foi conferido só nele. Ao testar um item, anote o resultado no
 ## Mac (macOS e iOS)
 
 Sem um Mac não dá para compilar o código Objective-C/Swift das dependências da Apple nem
-rodar no simulador do iOS. Para o iOS, o `build-ios.sh` monta o app.
+rodar no simulador do iOS. Para o iOS, o `aylis-tool` monta o app: `publish --target ios` (o
+simulador) ou `publish --target ios --device` (o iPhone: o `.app` e o `.ipa` assinados), e o
+`run --target ios [--device]` instala e abre.
 
 | O quê | Situação | Como conferir |
 |---|---|---|
 | Rodar no macOS (janela, renderizadores, teclado, mouse, touchpad) | compila no CI para macOS; nunca rodou | um exemplo qualquer, `cargo run --example components` |
 | Vídeo e áudio do AVFoundation depois da revisão de 31/10 (decodificador aberto na thread de vídeo, trilha lida do arquivo aos poucos, `cpal` 0.18, conferência do tamanho da linha) | só revisado; o `avf.rs` não compila fora do Mac | exemplo `Player` com um MP4 e um MP3 |
-| Rodar no iOS (janela, toque, teclado na tela) | compila para iOS; nunca rodou | `build-ios.sh` e o simulador |
+| Rodar no iOS (janela, toque, teclado na tela) | compila para iOS; nunca rodou | `aylis-tool run app.aylisproj --target ios` com o simulador aberto |
 | Teclado do iOS reduzindo a área segura (`UIKeyboardWillChangeFrameNotification`) | compila | um form com campos embaixo; o campo com foco sobe acima do teclado |
-| Ícone, nome e bundle id do app no `build-ios.sh` (`NAME`, `ICON`, `BUNDLE_ID`) | escrito | gerar o app e olhar a tela inicial |
+| Ícone, nome e bundle id do app de iOS (o ícone do projeto compilado pelo `actool` para o `Assets.car`, desde 18/11) | escrito; o `actool` nunca rodou | publicar e olhar a tela inicial do simulador e do iPhone |
+| O iPhone sem o Xcode no meio (18/11, `aylis_tools::ios_device`): `publish --target ios --device` compila para `aarch64-apple-ios`, acha o perfil de provisionamento nas pastas do Xcode (pelo bundle id, pelo aparelho e pela validade) e o certificado que ele aceita (pelo SHA-1), assina com os direitos tirados do perfil e grava o `.ipa`; `run --target ios --device` instala e abre pelo `xcrun devicectl` | a escolha do perfil e do certificado, os direitos, o `Info.plist` e o `.ipa` conferidos por teste no Windows; o `codesign`, o `actool` e o `devicectl` nunca rodaram | um Mac com o Xcode 15 ou mais novo e um iPhone com o Modo de Desenvolvedor: (1) com a conta gratuita, gerar o perfil por um projeto do Xcode com o mesmo bundle id; (2) `aylis-tool run app.aylisproj --target ios --device`; (3) conferir a mensagem de erro sem perfil, com o perfil vencido e com o iPhone fora do perfil; (4) instalar o `.ipa` pelo Apple Configurator |
 | 3D sem cópia no macOS (IOSurface) e no iOS (Skia Metal); Metal no iOS | escrito | exemplo `model3d`; conferir o FPS e o uso de CPU |
 | WebView no macOS e no iOS (wry) | escrito | exemplo `browser`: carregar, mensagem, `eval` |
 | Vídeo pela AVFoundation (macOS e iOS) | compila para iOS | um `VideoPlayer` com um MP4 |
@@ -107,7 +110,8 @@ Ainda falta um aparelho para:
 | O menu de texto dos campos e as alças da seleção no toque (14/11: o toque longo no `Edit`/`Memo` seleciona a palavra e abre Recortar, Copiar, Colar, Selecionar tudo; as alças arrastáveis) | conferidos por teste sem janela (toque simulado e área de transferência falsa); nunca rodou num aparelho | o roteiro 156 no Motorola Edge 30 Neo (Android 14, onde foi relatado), no ZenFone (Android 9) e no `aylis_pixel`: colar a senha e o endereço copiados de outro app, arrastar as alças, o tamanho das alças para o dedo |
 | Android de 32 bits (`armeabi-v7a`, 13/11: TV box, celular de entrada) | o APK com `lib/armeabi-v7a` sai (14/11, com o Skia compilado pelo Aylis, o pacote `skia-android-armv7`); o Aylis nunca rodou num aparelho de 32 bits | um TV box ou celular de entrada com Android de 32 bits, o app publicado com "Também 32 bits" |
 | Publicação: AAB na Play Store (teste interno) e o APK assinado instalado à mão | o AAB foi validado, mas não subiu para a loja | criar o teste interno na Play Console |
-| iOS no iPhone (tudo da seção Mac que vale para o iOS) | precisa de Mac e de um iPhone | o app do `build-ios.sh` instalado pelo Xcode |
+| O iPhone sem Mac (18/11): o `.ipa` sem assinatura (`publish --target ios --device --no-sign`) e o workflow do GitHub (`aylis-tool ci-ios`) | o workflow conferido por teste (os passos, os segredos, o YAML válido); nunca rodou no GitHub; o `.ipa` sem assinatura nunca passou pelo Sideloadly. A tela da IDE (Opções do projeto → iPhone (GitHub)) conferida por imagem; o copiar do `.p12` e do perfil, nunca com arquivos de verdade | depois de publicar a versão com o recurso: `aylis-tool ci-ios` num projeto num repositório do GitHub, Run workflow, baixar o `.ipa` dos Artifacts e instalar pelo Sideloadly no Windows num iPhone com a conta gratuita; depois, com `--signed` e os segredos de uma conta paga |
+| iOS no iPhone (tudo da seção Mac que vale para o iOS) | precisa de Mac e de um iPhone | `aylis-tool run app.aylisproj --target ios --device` |
 | A Landing publicada no celular (11/11): a rolagem acompanhando o dedo; o 3D da documentação pelo WebGL num navegador sem WebGPU | a rolagem sem layout por passo foi medida só sem janela; o WebGL, no Edge sem janela (SwiftShader) com o `navigator.gpu` escondido | o site republicado, no Safari de um iPhone antes do iOS 26 e no Chrome de um Android; a página do `Model3D` na documentação |
 
 ## PC com outro hardware ou periférico
@@ -119,6 +123,8 @@ Feito e testado por código, mas a máquina do autor não tem o hardware para co
 | Imprimir pela impressora do sistema (`Report::print`, diálogo do Windows e GDI) | testado só o PDF e a visualização; a impressão real não saiu no papel | exemplo `report`, botão Imprimir, escolher uma impressora |
 | O form transparente e com forma no Linux (18/11): `with_transparent` e o OpenGL com transparência, com um compositor (X11 com picom, Wayland); o desfoque só no KDE | escrito; não conferido | exemplo `shaped_forms` com `AYLIS_RENDERER=gpu` num Linux com compositor: fora da forma, o que está atrás |
 | Imprimir no Linux (PDF aberto pelo `xdg-open`) | só compilado | o mesmo exemplo no WSL ou num Linux |
+| A janela sem o branco da abertura no Linux e no macOS (19/11): nasce escondida e aparece com o primeiro quadro | escrito; conferido só no Windows | `cargo run -p aylis-platform-winit --example window_start --features gpu -- normal --stay`: a janela aparece já escura |
+| A tela cheia num segundo monitor (`monitor` do form com `window_state = full_screen`), de nascença e pedida depois (19/11) | a máquina do autor tem um monitor só | o exemplo `window_start full` com `monitor = 1` no form: cobre o segundo monitor inteiro |
 | Os pacotes de Linux (14/11): `android-sdk`, `android-ndk` e `dotnet` | os arquivos e os hashes conferidos aqui; nunca instalados num Linux | `aylis-tool packages install android-sdk android-ndk dotnet` num Linux; publicar um app para Android e compilar um projeto em C# |
 | `UrlScheme` no Linux (o `.desktop` do usuário com o `xdg-mime`, o socket que repassa o link à cópia aberta, o prefixo no `.desktop` do `.deb`) | o módulo conferido com o `rustc` para Linux e o `.deb` por teste; nunca rodou | exemplo `url_scheme` num Linux com desktop: `xdg-open meuapp://teste` com o app fechado e aberto; instalar o `.deb` de um app com `UrlScheme` ligado |
 | Vídeo pelo GStreamer depois da revisão de 31/10 (aberto na thread de vídeo, trilha lida aos poucos) e o `cpal` 0.18 (ALSA/PipeWire) | só revisado; não compilado para Linux nesta máquina | exemplo `Player` num Linux |

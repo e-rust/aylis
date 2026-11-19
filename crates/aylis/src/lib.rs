@@ -110,13 +110,14 @@ pub mod prelude {
     pub use aylis_core::*;
     #[cfg(feature = "data")]
     pub use aylis_data::{
-        ApplyResult, Change, ChangeKind, ClientDataSet, DataSet, DataSource, Date, DateTime, Decimal, Delta, Field, FieldType,
-        RowBatch, Time, Value as DataValue, data_set, view,
+        ApplyMode, ApplyResult, Change, ChangeKind, ClientDataSet, DataSet, DataSource, Date, DateTime, Decimal, Delta, Field, FieldKind, FieldType,
+        Rounding, RowBatch, Time, Value as DataValue, data_set, view,
+        FieldValue, GetTextRequest, MasterChange, ServerQuery, SetTextRequest,
     };
     #[cfg(feature = "dbcontrols")]
-    pub use aylis_dbcontrols::{Column, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, NavButton};
+    pub use aylis_dbcontrols::{BandKind, Column, ColumnLayout, ColumnSpec, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
     #[cfg(feature = "media")]
-    pub use aylis_media::{MediaPlayer, VideoPlayer};
+    pub use aylis_media::{CameraQuality, MediaPlayer, MixSource, OutputSpec, VideoPlayer};
     #[cfg(feature = "vector")]
     pub use aylis_vector::{Lottie, Svg};
     #[cfg(feature = "markdown")]

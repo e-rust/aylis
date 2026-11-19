@@ -55,7 +55,9 @@ fn letters_follow_the_effects_over_time() {
     aylis_controls::register(&mut ui);
     let form = ui.add_root(Form::new("t", 400.0, 200.0));
     // Por letra, 100 ms entre elas: "ab" -> a de 0 a 1 s, b de 0,1 a 1,1 s. Depois, um slide.
-    let text = ui.add(AnimatedText::new("ab", "fade duration=1000 stagger=100 easing=linear; slide dy=40 by=all duration=500 easing=linear after"), form);
+    let effects = r#"[{"effect": "fade", "duration": 1000, "stagger": 100, "easing": "linear"},
+        {"effect": "slide", "dy": 40, "by": "all", "duration": 500, "easing": "linear", "after": true}]"#;
+    let text = ui.add(AnimatedText::new("ab", effects), form);
     ui.control_mut(text).unwrap().set_rect(0.0, 0.0, 400.0, 100.0);
     let finished = Rc::new(RefCell::new(0));
     let f = finished.clone();

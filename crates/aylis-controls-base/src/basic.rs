@@ -2,7 +2,7 @@
 
 use aylis_core::{
     Bounds, Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent, LayerCaching,
-    GradientStop, ModalResult, PaintCtx, PointF, PropEnum, RectF, Stroke, TextAlign, TextCase, TextStyle, Transition, Trimming, properties,
+    FormPresent, GradientStop, ModalResult, PaintCtx, PointF, PropEnum, RectF, Stroke, TextAlign, TextCase, TextStyle, Transition, Trimming, properties,
 };
 
 /// Onde fica o ícone de um botão em relação ao texto.
@@ -260,10 +260,10 @@ pub struct Form {
     /// A placa de vídeo da janela (vazio: a do projeto): `monitor` troca para a placa do
     /// monitor em que ela está (Windows e Linux com Wayland); `alto-desempenho`, `economia` ou parte do nome fixam uma.
     pub gpu: String,
-    /// Como o quadro chega à janela no Windows (vazio: o do projeto): `window`, `composition`
+    /// Como o quadro chega à janela no Windows (`project`: o do projeto): `window`, `composition`
     /// ou `composed`, sempre composta pelo DWM, fora do plano de overlay (o form em tela cheia
     /// por cima do resto, onde o cursor congelava em placas com MPO).
-    pub present: String,
+    pub present: FormPresent,
     /// O form maior que um monitor vira uma janela por monitor, cada uma na placa de vídeo do
     /// seu (Windows; nas outras, sem efeito). Sem isso, com monitores em placas diferentes, o
     /// sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`,
@@ -380,7 +380,7 @@ impl Form {
             monitor: -1,
             remember_placement: false,
             gpu: String::new(),
-            present: String::new(),
+            present: FormPresent::Project,
             span_monitors: false,
             physical_pixels: false,
             activate_on_show: true,
@@ -440,7 +440,7 @@ impl Component for Form {
         topmost: bool => "Behavior",
         show_in_taskbar: bool => "Behavior",
         active_control: Option<ComponentId> => "Behavior",
-        tab_order: String => "Behavior",
+        tab_order: String as List => "Behavior",
         tab_keys: String => "Keyboard",
         back_tab_keys: String => "Keyboard",
         allowed_chars: String => "Keyboard",
@@ -453,7 +453,7 @@ impl Component for Form {
         monitor: i64 => "Layout",
         remember_placement: bool => "Behavior",
         gpu: String => "Behavior",
-        present: String => "Behavior",
+        present: FormPresent => "Behavior",
         span_monitors: bool => "Layout",
         physical_pixels: bool => "Layout",
         activate_on_show: bool => "Behavior",
@@ -461,7 +461,7 @@ impl Component for Form {
         close_action: CloseAction => "Behavior",
         frame_rate: f32 => "Behavior",
         orientation: aylis_core::FormOrientation => "Layout";
-        events: on_show, on_window_created, on_close, on_close_query, on_back, on_activate, on_deactivate, on_minimize, on_restore, on_navigate, on_gpu_change;
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String;
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -470,7 +470,7 @@ impl Component for Form {
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("move_to_monitor", &[PropKind::Int], None).params(&["monitor"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
-            MethodInfo::new("gpu_adapters", &[], Some(PropKind::String)),
+            MethodInfo::new("gpu_adapters", &[], Some(PropKind::List)),
             // Atendido pelo `Ui::invoke` (o `Ui` pinta o form): os pixels RGBA em base64.
             MethodInfo::new("render_rgba", &[PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float], Some(PropKind::String))
                 .params(&["x", "y", "width", "height", "scale"]),
@@ -651,7 +651,7 @@ impl Component for Frame {
     leaf_control!("Frame");
 
     properties! {
-        form: String => "Behavior",
+        form: String as FormName => "Behavior",
         values: String => "Behavior",
     }
 
@@ -1642,7 +1642,7 @@ impl Component for Button {
         h_align: TextAlign => "Appearance",
         group_index: u32 => "Behavior",
         radius: Option<Bounds> => "Appearance";
-        events: on_change;
+        events: on_change: bool;
         on_set: sync
     }
 

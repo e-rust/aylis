@@ -58,7 +58,7 @@ class FrmPlayerComponents(Form):
         self.tmrPosicao = self._resolve(components, "tmrPosicao", "Timer", Timer)
 
     def find_button(self, name):
-        """O Button deste form com o nome (como o FindComponent)."""
+        """O Button deste form com o nome."""
         if name == "btnMudo":
             return self.btnMudo
         if name == "btnEmbaralhar":
@@ -88,7 +88,7 @@ class FrmPlayerComponents(Form):
         return self.find_button(event["sender"]["name"])
 
     def find_divider(self, name):
-        """O Divider deste form com o nome (como o FindComponent)."""
+        """O Divider deste form com o nome."""
         if name == "divNavegacao":
             return self.divNavegacao
         return None
@@ -98,7 +98,7 @@ class FrmPlayerComponents(Form):
         return self.find_divider(event["sender"]["name"])
 
     def find_icon(self, name):
-        """O Icon deste form com o nome (como o FindComponent)."""
+        """O Icon deste form com o nome."""
         if name == "icoCapa":
             return self.icoCapa
         return None
@@ -108,7 +108,7 @@ class FrmPlayerComponents(Form):
         return self.find_icon(event["sender"]["name"])
 
     def find_label(self, name):
-        """O Label deste form com o nome (como o FindComponent)."""
+        """O Label deste form com o nome."""
         if name == "lblTempo":
             return self.lblTempo
         if name == "lblDuracao":
@@ -126,7 +126,7 @@ class FrmPlayerComponents(Form):
         return self.find_label(event["sender"]["name"])
 
     def find_layout(self, name):
-        """O Layout deste form com o nome (como o FindComponent)."""
+        """O Layout deste form com o nome."""
         if name == "lytBarra":
             return self.lytBarra
         if name == "lytInfo":
@@ -150,7 +150,7 @@ class FrmPlayerComponents(Form):
         return self.find_layout(event["sender"]["name"])
 
     def find_list_view(self, name):
-        """O ListView deste form com o nome (como o FindComponent)."""
+        """O ListView deste form com o nome."""
         if name == "lvFila":
             return self.lvFila
         return None
@@ -160,7 +160,7 @@ class FrmPlayerComponents(Form):
         return self.find_list_view(event["sender"]["name"])
 
     def find_main_menu(self, name):
-        """O MainMenu deste form com o nome (como o FindComponent)."""
+        """O MainMenu deste form com o nome."""
         if name == "mnuPrincipal":
             return self.mnuPrincipal
         return None
@@ -170,7 +170,7 @@ class FrmPlayerComponents(Form):
         return self.find_main_menu(event["sender"]["name"])
 
     def find_menu_item(self, name):
-        """O MenuItem deste form com o nome (como o FindComponent)."""
+        """O MenuItem deste form com o nome."""
         if name == "mnuArquivo":
             return self.mnuArquivo
         if name == "mnuAbrir":
@@ -210,7 +210,7 @@ class FrmPlayerComponents(Form):
         return self.find_menu_item(event["sender"]["name"])
 
     def find_open_dialog(self, name):
-        """O OpenDialog deste form com o nome (como o FindComponent)."""
+        """O OpenDialog deste form com o nome."""
         if name == "dlgAbrir":
             return self.dlgAbrir
         return None
@@ -220,7 +220,7 @@ class FrmPlayerComponents(Form):
         return self.find_open_dialog(event["sender"]["name"])
 
     def find_panel(self, name):
-        """O Panel deste form com o nome (como o FindComponent)."""
+        """O Panel deste form com o nome."""
         if name == "pnlControles":
             return self.pnlControles
         if name == "pnlAgora":
@@ -234,7 +234,7 @@ class FrmPlayerComponents(Form):
         return self.find_panel(event["sender"]["name"])
 
     def find_seek_bar(self, name):
-        """O SeekBar deste form com o nome (como o FindComponent)."""
+        """O SeekBar deste form com o nome."""
         if name == "sbPosicao":
             return self.sbPosicao
         return None
@@ -244,7 +244,7 @@ class FrmPlayerComponents(Form):
         return self.find_seek_bar(event["sender"]["name"])
 
     def find_timer(self, name):
-        """O Timer deste form com o nome (como o FindComponent)."""
+        """O Timer deste form com o nome."""
         if name == "tmrPosicao":
             return self.tmrPosicao
         return None
@@ -254,7 +254,7 @@ class FrmPlayerComponents(Form):
         return self.find_timer(event["sender"]["name"])
 
     def find_track_bar(self, name):
-        """O TrackBar deste form com o nome (como o FindComponent)."""
+        """O TrackBar deste form com o nome."""
         if name == "tbVolume":
             return self.tbVolume
         return None
@@ -264,7 +264,7 @@ class FrmPlayerComponents(Form):
         return self.find_track_bar(event["sender"]["name"])
 
     def find_video_player(self, name):
-        """O VideoPlayer deste form com o nome (como o FindComponent)."""
+        """O VideoPlayer deste form com o nome."""
         if name == "vpVideo":
             return self.vpVideo
         return None

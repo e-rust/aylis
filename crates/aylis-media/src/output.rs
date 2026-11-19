@@ -36,6 +36,14 @@ pub fn output_devices() -> Vec<OutputDevice> {
         .collect()
 }
 
+/// O registro de uma saída no acesso tipado (a lista do `output` dos players, do `Sound`, do
+/// `AudioMixer` e o `monitor` do `Microphone`): `[{"name": "Fone BT", "volume": 0.8,
+/// "delay_ms": 180}]`.
+pub const OUTPUT_SPEC_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "OutputSpec",
+    fields: &[("name", aylis_core::PropKind::String), ("volume", aylis_core::PropKind::Float), ("delay_ms", aylis_core::PropKind::Float)],
+};
+
 /// Uma saída escolhida, com o volume (0 a 2) e o atraso (ms) dela. Nome vazio: a padrão.
 #[derive(Clone, Debug, PartialEq)]
 pub struct OutputSpec {
@@ -50,26 +58,27 @@ impl OutputSpec {
     }
 }
 
-/// Lê a propriedade `output`: saídas separadas por `|`, cada uma `nome` seguido, se
-/// quiser, de `;volume=0.8;delay=120`. Vazio: só a saída padrão.
+/// Lê a propriedade `output`: a lista de [`OUTPUT_SPEC_RECORD`] em JSON, cada saída com o
+/// `volume` (sem ele, 1) e o `delay_ms` opcionais. Vazio, `[]` ou JSON inválido: só a saída
+/// padrão.
 ///
-/// `Alto-falantes|Fone BT;volume=0.8;delay=180`
+/// `[{"name": "Alto-falantes"}, {"name": "Fone BT", "volume": 0.8, "delay_ms": 180}]`
 pub fn parse_outputs(text: &str) -> Vec<OutputSpec> {
-    let mut specs: Vec<OutputSpec> = text
-        .split('|')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|entry| {
-            let mut parts = entry.split(';');
-            let mut spec = OutputSpec::new(parts.next().unwrap_or_default().trim());
-            for option in parts {
-                let (key, value) = option.split_once('=').unwrap_or((option, ""));
-                let value = value.trim().parse::<f32>().unwrap_or(f32::NAN);
-                match key.trim() {
-                    "volume" if value.is_finite() => spec.volume = value.clamp(0.0, 2.0),
-                    "delay" if value.is_finite() => spec.delay_ms = value.clamp(0.0, 5_000.0),
-                    _ => {}
-                }
+    let items = match serde_json::from_str::<serde_json::Value>(text) {
+        Ok(serde_json::Value::Array(items)) => items,
+        _ => Vec::new(),
+    };
+    let number = |j: &serde_json::Value| j.as_f64().map(|v| v as f32).filter(|v| v.is_finite());
+    let mut specs: Vec<OutputSpec> = items
+        .iter()
+        .filter(|j| j.is_object())
+        .map(|j| {
+            let mut spec = OutputSpec::new(j["name"].as_str().unwrap_or_default().trim());
+            if let Some(v) = number(&j["volume"]) {
+                spec.volume = v.clamp(0.0, 2.0);
+            }
+            if let Some(v) = number(&j["delay_ms"]) {
+                spec.delay_ms = v.clamp(0.0, 5_000.0);
             }
             spec
         })
@@ -84,22 +93,23 @@ pub fn parse_outputs(text: &str) -> Vec<OutputSpec> {
     specs
 }
 
-/// Escreve a lista no formato de [`parse_outputs`].
+/// Escreve a lista no formato de [`parse_outputs`] (só o que difere do padrão).
 pub fn format_outputs(specs: &[OutputSpec]) -> String {
-    specs
+    let items: Vec<serde_json::Value> = specs
         .iter()
         .map(|s| {
-            let mut entry = s.name.clone();
+            let mut o = serde_json::Map::new();
+            o.insert("name".into(), s.name.clone().into());
             if s.volume != 1.0 {
-                entry.push_str(&format!(";volume={}", s.volume));
+                o.insert("volume".into(), serde_json::json!(s.volume as f64));
             }
             if s.delay_ms != 0.0 {
-                entry.push_str(&format!(";delay={}", s.delay_ms));
+                o.insert("delay_ms".into(), serde_json::json!(s.delay_ms as f64));
             }
-            entry
+            serde_json::Value::Object(o)
         })
-        .collect::<Vec<_>>()
-        .join("|")
+        .collect();
+    serde_json::Value::Array(items).to_string()
 }
 
 /// A fila de uma saída aberta: quem toca põe amostras (no formato dela); o sistema tira.
@@ -316,15 +326,17 @@ mod tests {
 
     #[test]
     fn parses_outputs_with_volume_and_delay() {
-        let specs = parse_outputs("Alto-falantes | Fone BT;volume=0.8;delay=180|");
+        let specs = parse_outputs(r#"[{"name": "Alto-falantes"}, {"name": "Fone BT", "volume": 0.8, "delay_ms": 180}]"#);
         assert_eq!(specs.len(), 2);
         assert_eq!(specs[0], OutputSpec::new("Alto-falantes"));
         assert_eq!(specs[1].name, "Fone BT");
         assert_eq!(specs[1].volume, 0.8);
         assert_eq!(specs[1].delay_ms, 180.0);
-        assert_eq!(format_outputs(&specs), "Alto-falantes|Fone BT;volume=0.8;delay=180");
+        assert_eq!(parse_outputs(&format_outputs(&specs)), specs, "ida e volta");
         assert_eq!(parse_outputs(""), vec![OutputSpec::new("")]);
-        assert_eq!(parse_outputs("X;volume=9;delay=abc")[0].volume, 2.0);
+        assert_eq!(parse_outputs("[]"), vec![OutputSpec::new("")]);
+        assert_eq!(parse_outputs("Fone BT"), vec![OutputSpec::new("")], "JSON inválido: a padrão");
+        assert_eq!(parse_outputs(r#"[{"name": "X", "volume": 9, "delay_ms": "abc"}]"#)[0].volume, 2.0);
     }
 
     #[test]

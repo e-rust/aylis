@@ -18,7 +18,7 @@ Etapas de um processo (o `v-stepper`): `items` com os nomes, `step` a atual (0 �
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os nomes das etapas, separados por `;`. |
+| `items` | Itens | lista de textos (separados por `;`) | Os nomes das etapas, separados por `;`. |
 | `step` | Passo | inteiro | A etapa atual (0 é a primeira); as anteriores aparecem com ✓. |
 
 ## Eventos
@@ -40,8 +40,8 @@ E o handler, um método do form (`self.Stepper1` já é um `Stepper`):
 ```rust
 impl FrmPrincipal {
     pub fn stepper1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Stepper1.items(ui);
-        self.Stepper1.set_items(ui, format!("{atual}!"));
+        let atual = self.Stepper1.step(ui);
+        self.Stepper1.set_step(ui, atual + 1);
     }
 }
 ```

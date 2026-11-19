@@ -13,36 +13,100 @@
             setProp("caption", value);
         }
 
-        public String getPosition() {
-            return asText(getProp("position"));
+        public FormPosition getPosition() {
+            return FormPosition.of(getProp("position"));
         }
 
-        public void setPosition(String value) {
-            setProp("position", value);
+        public void setPosition(FormPosition value) {
+            setProp("position", value.value);
         }
 
-        public String getBorderStyle() {
-            return asText(getProp("border_style"));
+        public BorderStyle getBorderStyle() {
+            return BorderStyle.of(getProp("border_style"));
         }
 
-        public void setBorderStyle(String value) {
-            setProp("border_style", value);
+        public void setBorderStyle(BorderStyle value) {
+            setProp("border_style", value.value);
         }
 
-        public String getWindowState() {
-            return asText(getProp("window_state"));
+        public WindowCorners getWindowCorners() {
+            return WindowCorners.of(getProp("window_corners"));
         }
 
-        public void setWindowState(String value) {
-            setProp("window_state", value);
+        public void setWindowCorners(WindowCorners value) {
+            setProp("window_corners", value.value);
         }
 
-        public String getTransition() {
-            return asText(getProp("transition"));
+        public boolean isTransparent() {
+            return asBool(getProp("transparent"));
         }
 
-        public void setTransition(String value) {
-            setProp("transition", value);
+        public void setTransparent(boolean value) {
+            setProp("transparent", value);
+        }
+
+        public WindowShape getWindowShape() {
+            return WindowShape.of(getProp("window_shape"));
+        }
+
+        public void setWindowShape(WindowShape value) {
+            setProp("window_shape", value.value);
+        }
+
+        public double getShapeRadius() {
+            return asNumber(getProp("shape_radius"));
+        }
+
+        public void setShapeRadius(double value) {
+            setProp("shape_radius", value);
+        }
+
+        public Aylis.Bounds getShapeRadii() {
+            return Aylis.Bounds.fromJson(getProp("shape_radii"));
+        }
+
+        public void setShapeRadii(Aylis.Bounds value) {
+            setProp("shape_radii", value.toJson());
+        }
+
+        public String getShapePath() {
+            return asText(getProp("shape_path"));
+        }
+
+        public void setShapePath(String value) {
+            setProp("shape_path", value);
+        }
+
+        public WindowState getWindowState() {
+            return WindowState.of(getProp("window_state"));
+        }
+
+        public void setWindowState(WindowState value) {
+            setProp("window_state", value.value);
+        }
+
+        public Transition getTransition() {
+            return Transition.of(getProp("transition"));
+        }
+
+        public void setTransition(Transition value) {
+            setProp("transition", value.value);
+        }
+
+        public LayerCaching getLayerCache() {
+            return LayerCaching.of(getProp("layer_cache"));
+        }
+
+        public void setLayerCache(LayerCaching value) {
+            setProp("layer_cache", value.value);
+        }
+
+        public long getFrameReuseKb() {
+            return (long) asNumber(getProp("frame_reuse_kb"));
+        }
+
+        public void setFrameReuseKb(long value) {
+            setProp("frame_reuse_kb", value);
         }
 
         public boolean isTopmost() {
@@ -61,20 +125,20 @@
             setProp("show_in_taskbar", value);
         }
 
-        public String getActiveControl() {
-            return asText(getProp("active_control"));
+        public Aylis.AylisComponent getActiveControl() {
+            return getRef("active_control");
         }
 
-        public void setActiveControl(String value) {
-            setProp("active_control", value);
+        public void setActiveControl(Aylis.AylisComponent value) {
+            setRef("active_control", value);
         }
 
-        public String getTabOrder() {
-            return asText(getProp("tab_order"));
+        public java.util.List<String> getTabOrder() {
+            return asList(getProp("tab_order"));
         }
 
-        public void setTabOrder(String value) {
-            setProp("tab_order", value);
+        public void setTabOrder(java.util.List<String> value) {
+            setProp("tab_order", listText(value));
         }
 
         public String getTabKeys() {
@@ -173,6 +237,30 @@
             setProp("gpu", value);
         }
 
+        public FormPresent getPresent() {
+            return FormPresent.of(getProp("present"));
+        }
+
+        public void setPresent(FormPresent value) {
+            setProp("present", value.value);
+        }
+
+        public boolean isSpanMonitors() {
+            return asBool(getProp("span_monitors"));
+        }
+
+        public void setSpanMonitors(boolean value) {
+            setProp("span_monitors", value);
+        }
+
+        public boolean isPhysicalPixels() {
+            return asBool(getProp("physical_pixels"));
+        }
+
+        public void setPhysicalPixels(boolean value) {
+            setProp("physical_pixels", value);
+        }
+
         public boolean isActivateOnShow() {
             return asBool(getProp("activate_on_show"));
         }
@@ -181,12 +269,20 @@
             setProp("activate_on_show", value);
         }
 
-        public String getCloseAction() {
-            return asText(getProp("close_action"));
+        public boolean isForceForeground() {
+            return asBool(getProp("force_foreground"));
         }
 
-        public void setCloseAction(String value) {
-            setProp("close_action", value);
+        public void setForceForeground(boolean value) {
+            setProp("force_foreground", value);
+        }
+
+        public CloseAction getCloseAction() {
+            return CloseAction.of(getProp("close_action"));
+        }
+
+        public void setCloseAction(CloseAction value) {
+            setProp("close_action", value.value);
         }
 
         public double getFrameRate() {
@@ -195,6 +291,102 @@
 
         public void setFrameRate(double value) {
             setProp("frame_rate", value);
+        }
+
+        public FormOrientation getOrientation() {
+            return FormOrientation.of(getProp("orientation"));
+        }
+
+        public void setOrientation(FormOrientation value) {
+            setProp("orientation", value.value);
+        }
+
+        public String getOnShow() {
+            return asText(getProp("on_show"));
+        }
+
+        public void setOnShow(String value) {
+            setProp("on_show", value);
+        }
+
+        public String getOnWindowCreated() {
+            return asText(getProp("on_window_created"));
+        }
+
+        public void setOnWindowCreated(String value) {
+            setProp("on_window_created", value);
+        }
+
+        public String getOnClose() {
+            return asText(getProp("on_close"));
+        }
+
+        public void setOnClose(String value) {
+            setProp("on_close", value);
+        }
+
+        public String getOnActivate() {
+            return asText(getProp("on_activate"));
+        }
+
+        public void setOnActivate(String value) {
+            setProp("on_activate", value);
+        }
+
+        public String getOnDeactivate() {
+            return asText(getProp("on_deactivate"));
+        }
+
+        public void setOnDeactivate(String value) {
+            setProp("on_deactivate", value);
+        }
+
+        public String getOnMinimize() {
+            return asText(getProp("on_minimize"));
+        }
+
+        public void setOnMinimize(String value) {
+            setProp("on_minimize", value);
+        }
+
+        public String getOnRestore() {
+            return asText(getProp("on_restore"));
+        }
+
+        public void setOnRestore(String value) {
+            setProp("on_restore", value);
+        }
+
+        public String getOnNavigate() {
+            return asText(getProp("on_navigate"));
+        }
+
+        public void setOnNavigate(String value) {
+            setProp("on_navigate", value);
+        }
+
+        public String getOnGpuChange() {
+            return asText(getProp("on_gpu_change"));
+        }
+
+        public void setOnGpuChange(String value) {
+            setProp("on_gpu_change", value);
+        }
+
+        public double getClientWidth() {
+            return asNumber(getProp("client_width"));
+        }
+
+        public void setClientWidth(double value) {
+            setProp("client_width", value);
+        }
+
+        public double getClientHeight() {
+            return asNumber(getProp("client_height"));
+        }
+
+        public void setClientHeight(double value) {
+            setProp("client_height", value);
         }
 
         public double getLeft() {
@@ -229,36 +421,36 @@
             setProp("height", value);
         }
 
-        public String getAlign() {
-            return asText(getProp("align"));
+        public Align getAlign() {
+            return Align.of(getProp("align"));
         }
 
-        public void setAlign(String value) {
-            setProp("align", value);
+        public void setAlign(Align value) {
+            setProp("align", value.value);
         }
 
-        public String getAnchors() {
-            return asText(getProp("anchors"));
+        public java.util.List<Anchor> getAnchors() {
+            return Anchor.listOf(getProp("anchors"));
         }
 
-        public void setAnchors(String value) {
-            setProp("anchors", value);
+        public void setAnchors(java.util.List<Anchor> value) {
+            setProp("anchors", Anchor.names(value));
         }
 
-        public String getMargins() {
-            return asText(getProp("margins"));
+        public Aylis.Bounds getMargins() {
+            return Aylis.Bounds.fromJson(getProp("margins"));
         }
 
-        public void setMargins(String value) {
-            setProp("margins", value);
+        public void setMargins(Aylis.Bounds value) {
+            setProp("margins", value.toJson());
         }
 
-        public String getPadding() {
-            return asText(getProp("padding"));
+        public Aylis.Bounds getPadding() {
+            return Aylis.Bounds.fromJson(getProp("padding"));
         }
 
-        public void setPadding(String value) {
-            setProp("padding", value);
+        public void setPadding(Aylis.Bounds value) {
+            setProp("padding", value.toJson());
         }
 
         public boolean isVisible() {
@@ -317,6 +509,14 @@
             setProp("captures_wheel", value);
         }
 
+        public boolean isCapturesGesture() {
+            return asBool(getProp("captures_gesture"));
+        }
+
+        public void setCapturesGesture(boolean value) {
+            setProp("captures_gesture", value);
+        }
+
         public boolean isCanFocus() {
             return asBool(getProp("can_focus"));
         }
@@ -357,12 +557,12 @@
             setProp("drag_label", value);
         }
 
-        public String getDragImage() {
-            return asText(getProp("drag_image"));
+        public Aylis.AylisComponent getDragImage() {
+            return getRef("drag_image");
         }
 
-        public void setDragImage(String value) {
-            setProp("drag_image", value);
+        public void setDragImage(Aylis.AylisComponent value) {
+            setRef("drag_image", value);
         }
 
         public String getDropTypes() {
@@ -381,12 +581,12 @@
             setProp("tab_stop", value);
         }
 
-        public String getCursor() {
-            return asText(getProp("cursor"));
+        public CursorShape getCursor() {
+            return CursorShape.of(getProp("cursor"));
         }
 
-        public void setCursor(String value) {
-            setProp("cursor", value);
+        public void setCursor(CursorShape value) {
+            setProp("cursor", value.value);
         }
 
         public double getOpacity() {
@@ -395,6 +595,14 @@
 
         public void setOpacity(double value) {
             setProp("opacity", value);
+        }
+
+        public BlendMode getBlendMode() {
+            return BlendMode.of(getProp("blend_mode"));
+        }
+
+        public void setBlendMode(BlendMode value) {
+            setProp("blend_mode", value.value);
         }
 
         public boolean isCacheLayer() {
@@ -411,6 +619,14 @@
 
         public void setRotation(double value) {
             setProp("rotation", value);
+        }
+
+        public double getScale() {
+            return asNumber(getProp("scale"));
+        }
+
+        public void setScale(double value) {
+            setProp("scale", value);
         }
 
         public double getTranslateX() {
@@ -469,12 +685,12 @@
             setProp("max_height", value);
         }
 
-        public String getSelfAlign() {
-            return asText(getProp("self_align"));
+        public SelfAlign getSelfAlign() {
+            return SelfAlign.of(getProp("self_align"));
         }
 
-        public void setSelfAlign(String value) {
-            setProp("self_align", value);
+        public void setSelfAlign(SelfAlign value) {
+            setProp("self_align", value.value);
         }
 
         public boolean isAutoSize() {
@@ -525,84 +741,84 @@
             setProp("grow", value);
         }
 
-        public String getShadow() {
-            return asText(getProp("shadow"));
+        public Aylis.Shadow getShadow() {
+            return Aylis.Shadow.fromJson(getProp("shadow"));
         }
 
-        public void setShadow(String value) {
-            setProp("shadow", value);
+        public void setShadow(Aylis.Shadow value) {
+            setProp("shadow", (value == null ? "" : value.toJson()));
         }
 
-        public String getStyle() {
-            return asText(getProp("style"));
+        public FormStyle getStyle() {
+            return FormStyle.of(getProp("style"));
         }
 
-        public void setStyle(String value) {
-            setProp("style", value);
+        public void setStyle(FormStyle value) {
+            setProp("style", value.value);
         }
 
-        public String getTheme() {
-            return asText(getProp("theme"));
+        public ThemeName getTheme() {
+            return ThemeName.of(getProp("theme"));
         }
 
-        public void setTheme(String value) {
-            setProp("theme", value);
+        public void setTheme(ThemeName value) {
+            setProp("theme", value.value);
         }
 
-        public String getFill() {
-            return asText(getProp("fill"));
+        public Aylis.Color getFill() {
+            return Aylis.Color.fromJson(getProp("fill"));
         }
 
-        public void setFill(String value) {
-            setProp("fill", value);
+        public void setFill(Aylis.Color value) {
+            setProp("fill", value.toJson());
         }
 
-        public String getBorderColor() {
-            return asText(getProp("border_color"));
+        public Aylis.Color getBorderColor() {
+            return Aylis.Color.fromJson(getProp("border_color"));
         }
 
-        public void setBorderColor(String value) {
-            setProp("border_color", value);
+        public void setBorderColor(Aylis.Color value) {
+            setProp("border_color", value.toJson());
         }
 
-        public String getTextColor() {
-            return asText(getProp("text_color"));
+        public Aylis.Color getTextColor() {
+            return Aylis.Color.fromJson(getProp("text_color"));
         }
 
-        public void setTextColor(String value) {
-            setProp("text_color", value);
+        public void setTextColor(Aylis.Color value) {
+            setProp("text_color", value.toJson());
         }
 
-        public String getAccentColor() {
-            return asText(getProp("accent_color"));
+        public Aylis.Color getAccentColor() {
+            return Aylis.Color.fromJson(getProp("accent_color"));
         }
 
-        public void setAccentColor(String value) {
-            setProp("accent_color", value);
+        public void setAccentColor(Aylis.Color value) {
+            setProp("accent_color", value.toJson());
         }
 
-        public String getSuccessColor() {
-            return asText(getProp("success_color"));
+        public Aylis.Color getSuccessColor() {
+            return Aylis.Color.fromJson(getProp("success_color"));
         }
 
-        public void setSuccessColor(String value) {
-            setProp("success_color", value);
+        public void setSuccessColor(Aylis.Color value) {
+            setProp("success_color", value.toJson());
         }
 
-        public String getWarningColor() {
-            return asText(getProp("warning_color"));
+        public Aylis.Color getWarningColor() {
+            return Aylis.Color.fromJson(getProp("warning_color"));
         }
 
-        public void setWarningColor(String value) {
-            setProp("warning_color", value);
+        public void setWarningColor(Aylis.Color value) {
+            setProp("warning_color", value.toJson());
         }
 
-        public String getDangerColor() {
-            return asText(getProp("danger_color"));
+        public Aylis.Color getDangerColor() {
+            return Aylis.Color.fromJson(getProp("danger_color"));
         }
 
-        public void setDangerColor(String value) {
-            setProp("danger_color", value);
+        public void setDangerColor(Aylis.Color value) {
+            setProp("danger_color", value.toJson());
         }
 
         public String getFontFamily() {
@@ -621,12 +837,12 @@
             setProp("font_size", value);
         }
 
-        public String getFontWeight() {
-            return asText(getProp("font_weight"));
+        public FontWeight getFontWeight() {
+            return FontWeight.of(getProp("font_weight"));
         }
 
-        public void setFontWeight(String value) {
-            setProp("font_weight", value);
+        public void setFontWeight(FontWeight value) {
+            setProp("font_weight", value.value);
         }
 
         public boolean isFontItalic() {
@@ -685,12 +901,164 @@
             setProp("accessible_name", value);
         }
 
-        public String getPopupMenu() {
-            return asText(getProp("popup_menu"));
+        public Aylis.AylisComponent getPopupMenu() {
+            return getRef("popup_menu");
         }
 
-        public void setPopupMenu(String value) {
-            setProp("popup_menu", value);
+        public void setPopupMenu(Aylis.AylisComponent value) {
+            setRef("popup_menu", value);
+        }
+
+        public String getOnClick() {
+            return asText(getProp("on_click"));
+        }
+
+        public void setOnClick(String value) {
+            setProp("on_click", value);
+        }
+
+        public String getOnDblClick() {
+            return asText(getProp("on_dbl_click"));
+        }
+
+        public void setOnDblClick(String value) {
+            setProp("on_dbl_click", value);
+        }
+
+        public String getOnLongPress() {
+            return asText(getProp("on_long_press"));
+        }
+
+        public void setOnLongPress(String value) {
+            setProp("on_long_press", value);
+        }
+
+        public String getOnPointerDown() {
+            return asText(getProp("on_pointer_down"));
+        }
+
+        public void setOnPointerDown(String value) {
+            setProp("on_pointer_down", value);
+        }
+
+        public String getOnPointerUp() {
+            return asText(getProp("on_pointer_up"));
+        }
+
+        public void setOnPointerUp(String value) {
+            setProp("on_pointer_up", value);
+        }
+
+        public String getOnPointerMove() {
+            return asText(getProp("on_pointer_move"));
+        }
+
+        public void setOnPointerMove(String value) {
+            setProp("on_pointer_move", value);
+        }
+
+        public String getOnPointerEnter() {
+            return asText(getProp("on_pointer_enter"));
+        }
+
+        public void setOnPointerEnter(String value) {
+            setProp("on_pointer_enter", value);
+        }
+
+        public String getOnPointerLeave() {
+            return asText(getProp("on_pointer_leave"));
+        }
+
+        public void setOnPointerLeave(String value) {
+            setProp("on_pointer_leave", value);
+        }
+
+        public String getOnWheel() {
+            return asText(getProp("on_wheel"));
+        }
+
+        public void setOnWheel(String value) {
+            setProp("on_wheel", value);
+        }
+
+        public String getOnGesture() {
+            return asText(getProp("on_gesture"));
+        }
+
+        public void setOnGesture(String value) {
+            setProp("on_gesture", value);
+        }
+
+        public String getOnSwipe() {
+            return asText(getProp("on_swipe"));
+        }
+
+        public void setOnSwipe(String value) {
+            setProp("on_swipe", value);
+        }
+
+        public String getOnKeyUp() {
+            return asText(getProp("on_key_up"));
+        }
+
+        public void setOnKeyUp(String value) {
+            setProp("on_key_up", value);
+        }
+
+        public String getOnEnter() {
+            return asText(getProp("on_enter"));
+        }
+
+        public void setOnEnter(String value) {
+            setProp("on_enter", value);
+        }
+
+        public String getOnExit() {
+            return asText(getProp("on_exit"));
+        }
+
+        public void setOnExit(String value) {
+            setProp("on_exit", value);
+        }
+
+        public String getOnResize() {
+            return asText(getProp("on_resize"));
+        }
+
+        public void setOnResize(String value) {
+            setProp("on_resize", value);
+        }
+
+        public String getOnDragMove() {
+            return asText(getProp("on_drag_move"));
+        }
+
+        public void setOnDragMove(String value) {
+            setProp("on_drag_move", value);
+        }
+
+        public String getOnDragLeave() {
+            return asText(getProp("on_drag_leave"));
+        }
+
+        public void setOnDragLeave(String value) {
+            setProp("on_drag_leave", value);
+        }
+
+        public String getOnDragDrop() {
+            return asText(getProp("on_drag_drop"));
+        }
+
+        public void setOnDragDrop(String value) {
+            setProp("on_drag_drop", value);
+        }
+
+        public String getOnDragEnd() {
+            return asText(getProp("on_drag_end"));
+        }
+
+        public void setOnDragEnd(String value) {
+            setProp("on_drag_end", value);
         }
 
         public void moveToMonitor(long monitor) {
@@ -701,8 +1069,12 @@
             return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapter", "args", java.util.List.of())));
         }
 
-        public String gpuAdapters() {
-            return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapters", "args", java.util.List.of())));
+        public java.util.List<String> gpuAdapters() {
+            return asList(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapters", "args", java.util.List.of())));
+        }
+
+        public String renderRgba(double x, double y, double width, double height, double scale) {
+            return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "render_rgba", "args", java.util.List.of(x, y, width, height, scale))));
         }
 
         public String focused() {

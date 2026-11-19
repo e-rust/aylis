@@ -12,7 +12,7 @@ Trilha de navegação ("Início › Vídeos › 2026"): cada parte é clicável 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | As partes da trilha, separadas por `;`; a última é a atual. |
+| `items` | Itens | lista de textos (separados por `;`) | As partes da trilha, separadas por `;`; a última é a atual. |
 
 ## Eventos
 
@@ -33,8 +33,7 @@ E o handler, um método do form (`self.Breadcrumb1` já é um `Breadcrumb`):
 ```rust
 impl FrmPrincipal {
     pub fn breadcrumb1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Breadcrumb1.items(ui);
-        self.Breadcrumb1.set_items(ui, format!("{atual}!"));
+        let _ = &self.Breadcrumb1;
     }
 }
 ```

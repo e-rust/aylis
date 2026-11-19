@@ -136,8 +136,8 @@ impl Component for AppBar {
         size: AppBarSize => "Appearance",
         nav_icon: String => "Appearance",
         back_text: String => "Appearance",
-        actions: String => "Appearance";
-        events: on_nav, on_action
+        actions: String as List => "Appearance";
+        events: on_nav: (), on_action: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -307,11 +307,11 @@ impl Component for NavigationRail {
     leaf_control!("NavigationRail");
 
     properties! {
-        items: String => "Data",
-        icons: String => "Appearance",
+        items: String as List => "Data",
+        icons: String as List => "Appearance",
         item_index: i64 => "Data",
         fab_icon: String => "Appearance";
-        events: on_change, on_fab
+        events: on_change: i64, on_fab: ()
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -407,7 +407,7 @@ impl Component for SideSheet {
         title: String => "Appearance",
         open: bool => "Behavior",
         sheet_width: f32 => "Layout";
-        events: on_close;
+        events: on_close: ();
         on_set: sync
     }
 
@@ -473,7 +473,7 @@ impl Component for PageControl {
     properties! {
         count: i64 => "Data",
         index: i64 => "Data";
-        events: on_change
+        events: on_change: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -562,7 +562,7 @@ impl Component for UpDown {
         min: f64 => "Data",
         max: f64 => "Data",
         step: f64 => "Data";
-        events: on_change
+        events: on_change: f64
     }
 
     fn timer_interval(&self) -> Option<f64> {
@@ -695,7 +695,7 @@ impl Component for WheelPicker {
         items: String => "Data",
         item_index: i64 => "Data",
         row_height: f32 => "Appearance";
-        events: on_change;
+        events: on_change: String;
         on_set: sync
     }
 
@@ -845,12 +845,12 @@ impl Component for ButtonGroup {
     leaf_control!("ButtonGroup");
 
     properties! {
-        items: String => "Data",
-        icons: String => "Appearance",
-        selected: String => "Data",
+        items: String as List => "Data",
+        icons: String as List => "Appearance",
+        selected: String as List => "Data",
         multiple: bool => "Behavior",
         connected: bool => "Appearance";
-        events: on_change
+        events: on_change: String
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1087,8 +1087,8 @@ impl Component for ActivityRings {
     }
 
     properties! {
-        values: String => "Data",
-        ring_colors: String => "Appearance",
+        values: String as NumberList => "Data",
+        ring_colors: String as ColorList => "Appearance",
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {

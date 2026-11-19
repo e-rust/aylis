@@ -1659,7 +1659,7 @@ fn project_options_gather_what_rarely_changes() {
     // As seções numa lista à esquerda (abas laterais), não em botões.
     let nav = descendants(&ide.ui, hub).into_iter().find(|&id| ide.ui.get::<aylis_controls::ListBox>(id).is_some()).expect("a lista de seções");
     let items = ide.ui.get::<aylis_controls::ListBox>(nav).unwrap().items.clone();
-    let expected = ["Geral", "Aparência", "Fontes", "Ícone do app", "Android", "Windows", "Memória", "DataModules usados", "Traduções", "Confiar neste projeto"];
+    let expected = ["Geral", "Aparência", "Fontes", "Ícone do app", "Android", "Windows", "iPhone (GitHub)", "Memória", "DataModules usados", "Traduções", "Confiar neste projeto"];
     assert_eq!(items.split(';').collect::<Vec<_>>(), expected);
     let buttons: Vec<String> = descendants(&ide.ui, hub).iter().filter_map(|&id| ide.ui.get::<aylis_controls::Button>(id).map(|b| b.text.clone())).collect();
     assert!(!buttons.iter().any(|b| b == "Geral" || b == "Memória"), "sem um botão por seção: {buttons:?}");
@@ -1673,13 +1673,14 @@ fn project_options_gather_what_rarely_changes() {
         ide.ui.pointer_down(hub, e.clone());
         ide.ui.pointer_up(hub, e);
     };
-    pick(&mut ide, 6);
+    let memory = expected.iter().position(|s| *s == "Memória").unwrap();
+    pick(&mut ide, memory);
     snapshot(&mut ide, "opcoes_memoria.png");
     let pixels = edit_with(&ide.ui, "96").expect("a página Memória");
     // Um valor errado não deixa trocar de seção: fica nela, com o erro.
     ide.ui.get_mut::<Edit>(pixels).unwrap().text = "4".into();
     pick(&mut ide, 0);
-    assert_eq!(ide.ui.get::<aylis_controls::ListBox>(nav).unwrap().item_index, 6);
+    assert_eq!(ide.ui.get::<aylis_controls::ListBox>(nav).unwrap().item_index, memory as i64);
     let errors: Vec<String> = descendants(&ide.ui, hub).iter().filter_map(|&id| ide.ui.get::<aylis_controls::Label>(id).map(|l| l.text.clone())).collect();
     assert!(errors.iter().any(|t| t.contains("imagens em pixels")), "o erro aparece: {errors:?}");
     // Certo, trocar de seção grava a que estava aberta.

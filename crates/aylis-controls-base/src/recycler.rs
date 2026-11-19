@@ -6,7 +6,7 @@
 //! O modelo é o primeiro filho da lista (desenhado no próprio designer: um painel com
 //! imagem, textos, botões...) ou um form inteiro do projeto (`item_form`). Cada linha é
 //! uma cópia dele. Ao mostrar o item `i` numa linha, a lista preenche os componentes de
-//! `bindings` com os valores da fonte (se houver) e dispara `on_bind` com `i`: o handler
+//! `item_bindings` com os valores da fonte (se houver) e dispara `on_bind` com `i`: o handler
 //! acha a linha com [`VirtualList::item`] e preenche o resto. Perto do fim, `on_load_more`
 //! avisa (uma vez por tamanho) para a lista infinita: o handler busca mais e aumenta
 //! `item_count`.
@@ -56,6 +56,22 @@ impl PropEnum for ListOrientation {
 /// O tamanho de cada item, pelo código (variável).
 pub type Sizer = Box<dyn Fn(usize) -> f32>;
 
+/// Uma ligação do `item_bindings`: o componente do modelo, a propriedade (vazia: a principal) e
+/// o campo da fonte.
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+#[serde(default)]
+struct ItemBinding {
+    component: String,
+    property: String,
+    field: String,
+}
+
+/// O registro das ligações do `VirtualList.item_bindings`.
+pub const ITEM_BINDING: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "ItemBinding",
+    fields: &[("component", aylis_core::PropKind::String), ("property", aylis_core::PropKind::String), ("field", aylis_core::PropKind::String)],
+};
+
 /// Lista virtual com modelo de item e reciclagem.
 pub struct VirtualList {
     pub base: ControlBase,
@@ -74,8 +90,13 @@ pub struct VirtualList {
     pub sizes: String,
     /// Um form do projeto como modelo (vazio: o primeiro filho da lista).
     pub item_form: String,
-    /// `"lblNome=nome;imgFoto=foto"`: componente do modelo = campo da fonte.
-    pub bindings: String,
+    /// O que cada componente do modelo mostra da fonte: a lista de [`ITEM_BINDING`] em JSON
+    /// (`[{"component": "lblNome", "field": "nome"}, {"component": "pinEstado", "property":
+    /// "fill", "field": "cor"}]`). Sem `property`: o texto, a imagem, o valor ou a marca (a
+    /// primeira que o componente tiver).
+    pub item_bindings: String,
+    /// As ligações lidas de `item_bindings` (refeitas só quando o texto muda).
+    parsed_bindings: (String, Vec<ItemBinding>),
     sizer: Option<Sizer>,
     /// Começo de cada linha somado (com tamanhos variáveis), e para quantos itens.
     starts: RefCell<(usize, Vec<f32>)>,
@@ -115,7 +136,8 @@ impl Default for VirtualList {
             columns: 1,
             sizes: String::new(),
             item_form: String::new(),
-            bindings: String::new(),
+            item_bindings: String::new(),
+            parsed_bindings: (String::new(), Vec::new()),
             sizer: None,
             starts: RefCell::new((usize::MAX, Vec::new())),
             known_count: std::cell::Cell::new(0),
@@ -186,7 +208,7 @@ impl VirtualList {
         out
     }
 
-    /// Liga uma fonte de valores (os `bindings` e a quantidade vêm dela).
+    /// Liga uma fonte de valores (os `item_bindings` e a quantidade vêm dela).
     pub fn set_source(ui: &mut Ui, list: ComponentId, source: Box<dyn RowSource>) {
         if let Some(l) = ui.get_mut::<VirtualList>(list) {
             l.source = Some(source);
@@ -447,21 +469,25 @@ impl VirtualList {
         ctx.ui.invalidate();
     }
 
-    /// Preenche os componentes de `bindings` da linha com os valores do item. Cada par é
-    /// `componente=campo` (o texto, a imagem, o valor ou a marca: a primeira que o componente
-    /// tiver) ou `componente.propriedade=campo` (`pinEstado.fill=cor`, `secTitulo.visible=secao`):
-    /// o valor do campo, como texto, convertido para o tipo da propriedade.
-    fn bind(&self, ctx: &mut EventCtx<'_>, row: ComponentId, index: usize) {
+    /// As ligações de `item_bindings`, lidas de novo só quando o texto muda.
+    fn bindings(&mut self) -> &[ItemBinding] {
+        if self.parsed_bindings.0 != self.item_bindings {
+            self.parsed_bindings = (self.item_bindings.clone(), crate::records::parse_list(&self.item_bindings));
+        }
+        &self.parsed_bindings.1
+    }
+
+    /// Preenche os componentes de `item_bindings` da linha com os valores do item: a
+    /// propriedade dada (`fill`, `visible`...) ou, sem ela, o texto, a imagem, o valor ou a
+    /// marca (a primeira que o componente tiver); o valor do campo, como texto, convertido para
+    /// o tipo da propriedade.
+    fn bind(&mut self, ctx: &mut EventCtx<'_>, row: ComponentId, index: usize) {
+        let bindings = self.bindings().to_vec();
         let Some(source) = &self.source else { return };
-        for pair in self.bindings.split(';') {
-            let Some((target, field)) = pair.split_once('=') else { continue };
-            let (component, property) = match target.trim().split_once('.') {
-                Some((c, p)) => (c.trim(), Some(p.trim())),
-                None => (target.trim(), None),
-            };
-            let Some(target) = ctx.ui.find_in(row, component) else { continue };
-            let value = source.value(ctx.ui, index, field.trim()).unwrap_or_default();
-            let property = property.or_else(|| ["text", "source", "value", "checked"].into_iter().find(|p| ctx.ui.prop_info(target, p).is_some()));
+        for b in &bindings {
+            let Some(target) = ctx.ui.find_in(row, b.component.trim()) else { continue };
+            let value = source.value(ctx.ui, index, b.field.trim()).unwrap_or_default();
+            let property = Some(b.property.trim()).filter(|p| !p.is_empty()).or_else(|| ["text", "source", "value", "checked"].into_iter().find(|p| ctx.ui.prop_info(target, p).is_some()));
             let Some(property) = property else { continue };
             let typed = match ctx.ui.prop_info(target, property).map(|i| i.kind) {
                 Some(aylis_core::PropKind::Bool) => PropValue::Bool(matches!(value.trim().to_ascii_lowercase().as_str(), "true" | "1" | "sim" | "yes")),
@@ -493,11 +519,11 @@ impl Component for VirtualList {
         item_width: f32 => "Appearance",
         orientation: ListOrientation => "Layout",
         columns: i64 => "Layout",
-        sizes: String => "Appearance",
-        item_form: String => "Behavior",
-        bindings: String => "Behavior",
+        sizes: String as NumberList => "Appearance",
+        item_form: String as FormName => "Behavior",
+        item_bindings: String as RecordList(&ITEM_BINDING) => "Behavior",
         swipe_actions: String => "Behavior";
-        events: on_bind, on_load_more, on_swipe_action
+        events: on_bind: i64, on_load_more: i64, on_swipe_action: SwipeAction
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
@@ -633,7 +659,7 @@ impl Component for VirtualList {
         }
         let hit = ((event.position.x - band.x) / SWIPE_ACTION_WIDTH) as usize;
         if let Some(action) = actions.get(hit) {
-            let args = serde_json::json!({ "index": index, "action": action }).to_string();
+            let args = crate::records::to_json(&SwipeAction { index: index as i64, action: action.clone() });
             ctx.fire("on_swipe_action", EventArgs::Text(args));
         }
         ctx.set_handled();
@@ -700,5 +726,27 @@ impl Component for VirtualList {
                 })
                 .collect(),
         )
+    }
+}
+
+/// O toque numa ação da linha deslizada (o `on_swipe_action` da `VirtualList`): o item e o
+/// texto da ação (um dos `swipe_actions`).
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct SwipeAction {
+    pub index: i64,
+    pub action: String,
+}
+
+/// O registro do [`SwipeAction`] no acesso tipado.
+pub const SWIPE_ACTION: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "SwipeAction",
+    fields: &[("index", aylis_core::PropKind::Int), ("action", aylis_core::PropKind::String)],
+};
+
+impl aylis_core::EventValue for SwipeAction {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&SWIPE_ACTION));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        crate::records::from_event(args)
     }
 }

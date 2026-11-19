@@ -475,6 +475,7 @@ impl App {
             span: Some(SpanPiece { piece, main: false }),
             focused: false,
             hovered: false,
+            uncloak_after_draw: false,
         });
         Ok(())
     }

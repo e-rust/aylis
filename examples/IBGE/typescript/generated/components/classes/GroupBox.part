@@ -2,411 +2,543 @@
 /** Um GroupBox de um form. */
 export class GroupBox extends AylisComponent {
     get caption(): Promise<string> {
-        return this.getProp("caption");
+        return this.getProp("caption") as Promise<any>;
     }
     set caption(value: string) {
         this.setProp("caption", value);
     }
     get allowedChars(): Promise<string> {
-        return this.getProp("allowed_chars");
+        return this.getProp("allowed_chars") as Promise<any>;
     }
     set allowedChars(value: string) {
         this.setProp("allowed_chars", value);
     }
     get blockedChars(): Promise<string> {
-        return this.getProp("blocked_chars");
+        return this.getProp("blocked_chars") as Promise<any>;
     }
     set blockedChars(value: string) {
         this.setProp("blocked_chars", value);
     }
     get onlyAllowed(): Promise<boolean> {
-        return this.getProp("only_allowed");
+        return this.getProp("only_allowed") as Promise<any>;
     }
     set onlyAllowed(value: boolean) {
         this.setProp("only_allowed", value);
     }
     get charsOverride(): Promise<boolean> {
-        return this.getProp("chars_override");
+        return this.getProp("chars_override") as Promise<any>;
     }
     set charsOverride(value: boolean) {
         this.setProp("chars_override", value);
     }
     get charMap(): Promise<string> {
-        return this.getProp("char_map");
+        return this.getProp("char_map") as Promise<any>;
     }
     set charMap(value: string) {
         this.setProp("char_map", value);
     }
     get left(): Promise<number> {
-        return this.getProp("left");
+        return this.getProp("left") as Promise<any>;
     }
     set left(value: number) {
         this.setProp("left", value);
     }
     get top(): Promise<number> {
-        return this.getProp("top");
+        return this.getProp("top") as Promise<any>;
     }
     set top(value: number) {
         this.setProp("top", value);
     }
     get width(): Promise<number> {
-        return this.getProp("width");
+        return this.getProp("width") as Promise<any>;
     }
     set width(value: number) {
         this.setProp("width", value);
     }
     get height(): Promise<number> {
-        return this.getProp("height");
+        return this.getProp("height") as Promise<any>;
     }
     set height(value: number) {
         this.setProp("height", value);
     }
-    get align(): Promise<string> {
-        return this.getProp("align");
+    get align(): Promise<Align> {
+        return this.getProp("align") as Promise<any>;
     }
-    set align(value: string) {
+    set align(value: Align) {
         this.setProp("align", value);
     }
-    get anchors(): Promise<string> {
-        return this.getProp("anchors");
+    get anchors(): Promise<Anchor[]> {
+        return this.getProp("anchors").then((v) => (v ?? []) as any);
     }
-    set anchors(value: string) {
+    set anchors(value: Anchor[]) {
         this.setProp("anchors", value);
     }
-    get margins(): Promise<string> {
-        return this.getProp("margins");
+    get margins(): Promise<Bounds> {
+        return this.getProp("margins").then(Bounds.fromJson);
     }
-    set margins(value: string) {
-        this.setProp("margins", value);
+    set margins(value: Bounds) {
+        this.setProp("margins", value.toJson());
     }
-    get padding(): Promise<string> {
-        return this.getProp("padding");
+    get padding(): Promise<Bounds> {
+        return this.getProp("padding").then(Bounds.fromJson);
     }
-    set padding(value: string) {
-        this.setProp("padding", value);
+    set padding(value: Bounds) {
+        this.setProp("padding", value.toJson());
     }
     get visible(): Promise<boolean> {
-        return this.getProp("visible");
+        return this.getProp("visible") as Promise<any>;
     }
     set visible(value: boolean) {
         this.setProp("visible", value);
     }
     get enabled(): Promise<boolean> {
-        return this.getProp("enabled");
+        return this.getProp("enabled") as Promise<any>;
     }
     set enabled(value: boolean) {
         this.setProp("enabled", value);
     }
     get hitTest(): Promise<boolean> {
-        return this.getProp("hit_test");
+        return this.getProp("hit_test") as Promise<any>;
     }
     set hitTest(value: boolean) {
         this.setProp("hit_test", value);
     }
     get clipChildren(): Promise<boolean> {
-        return this.getProp("clip_children");
+        return this.getProp("clip_children") as Promise<any>;
     }
     set clipChildren(value: boolean) {
         this.setProp("clip_children", value);
     }
     get inheritState(): Promise<boolean> {
-        return this.getProp("inherit_state");
+        return this.getProp("inherit_state") as Promise<any>;
     }
     set inheritState(value: boolean) {
         this.setProp("inherit_state", value);
     }
     get translate(): Promise<boolean> {
-        return this.getProp("translate");
+        return this.getProp("translate") as Promise<any>;
     }
     set translate(value: boolean) {
         this.setProp("translate", value);
     }
     get capturesWheel(): Promise<boolean> {
-        return this.getProp("captures_wheel");
+        return this.getProp("captures_wheel") as Promise<any>;
     }
     set capturesWheel(value: boolean) {
         this.setProp("captures_wheel", value);
     }
+    get capturesGesture(): Promise<boolean> {
+        return this.getProp("captures_gesture") as Promise<any>;
+    }
+    set capturesGesture(value: boolean) {
+        this.setProp("captures_gesture", value);
+    }
     get canFocus(): Promise<boolean> {
-        return this.getProp("can_focus");
+        return this.getProp("can_focus") as Promise<any>;
     }
     set canFocus(value: boolean) {
         this.setProp("can_focus", value);
     }
     get draggable(): Promise<boolean> {
-        return this.getProp("draggable");
+        return this.getProp("draggable") as Promise<any>;
     }
     set draggable(value: boolean) {
         this.setProp("draggable", value);
     }
     get acceptsDrops(): Promise<boolean> {
-        return this.getProp("accepts_drops");
+        return this.getProp("accepts_drops") as Promise<any>;
     }
     set acceptsDrops(value: boolean) {
         this.setProp("accepts_drops", value);
     }
     get dragData(): Promise<string> {
-        return this.getProp("drag_data");
+        return this.getProp("drag_data") as Promise<any>;
     }
     set dragData(value: string) {
         this.setProp("drag_data", value);
     }
     get dragLabel(): Promise<string> {
-        return this.getProp("drag_label");
+        return this.getProp("drag_label") as Promise<any>;
     }
     set dragLabel(value: string) {
         this.setProp("drag_label", value);
     }
-    get dragImage(): Promise<string> {
-        return this.getProp("drag_image");
+    get dragImage(): Promise<AylisComponent | null> {
+        return this.getRef("drag_image");
     }
-    set dragImage(value: string) {
-        this.setProp("drag_image", value);
+    set dragImage(value: AylisComponent | null) {
+        this.setRef("drag_image", value);
     }
     get dropTypes(): Promise<string> {
-        return this.getProp("drop_types");
+        return this.getProp("drop_types") as Promise<any>;
     }
     set dropTypes(value: string) {
         this.setProp("drop_types", value);
     }
     get tabStop(): Promise<boolean> {
-        return this.getProp("tab_stop");
+        return this.getProp("tab_stop") as Promise<any>;
     }
     set tabStop(value: boolean) {
         this.setProp("tab_stop", value);
     }
-    get cursor(): Promise<string> {
-        return this.getProp("cursor");
+    get cursor(): Promise<CursorShape> {
+        return this.getProp("cursor") as Promise<any>;
     }
-    set cursor(value: string) {
+    set cursor(value: CursorShape) {
         this.setProp("cursor", value);
     }
     get opacity(): Promise<number> {
-        return this.getProp("opacity");
+        return this.getProp("opacity") as Promise<any>;
     }
     set opacity(value: number) {
         this.setProp("opacity", value);
     }
+    get blendMode(): Promise<BlendMode> {
+        return this.getProp("blend_mode") as Promise<any>;
+    }
+    set blendMode(value: BlendMode) {
+        this.setProp("blend_mode", value);
+    }
     get cacheLayer(): Promise<boolean> {
-        return this.getProp("cache_layer");
+        return this.getProp("cache_layer") as Promise<any>;
     }
     set cacheLayer(value: boolean) {
         this.setProp("cache_layer", value);
     }
     get rotation(): Promise<number> {
-        return this.getProp("rotation");
+        return this.getProp("rotation") as Promise<any>;
     }
     set rotation(value: number) {
         this.setProp("rotation", value);
     }
+    get scale(): Promise<number> {
+        return this.getProp("scale") as Promise<any>;
+    }
+    set scale(value: number) {
+        this.setProp("scale", value);
+    }
     get translateX(): Promise<number> {
-        return this.getProp("translate_x");
+        return this.getProp("translate_x") as Promise<any>;
     }
     set translateX(value: number) {
         this.setProp("translate_x", value);
     }
     get translateY(): Promise<number> {
-        return this.getProp("translate_y");
+        return this.getProp("translate_y") as Promise<any>;
     }
     set translateY(value: number) {
         this.setProp("translate_y", value);
     }
     get aspectRatio(): Promise<number> {
-        return this.getProp("aspect_ratio");
+        return this.getProp("aspect_ratio") as Promise<any>;
     }
     set aspectRatio(value: number) {
         this.setProp("aspect_ratio", value);
     }
     get maxWidth(): Promise<number> {
-        return this.getProp("max_width");
+        return this.getProp("max_width") as Promise<any>;
     }
     set maxWidth(value: number) {
         this.setProp("max_width", value);
     }
     get minWidth(): Promise<number> {
-        return this.getProp("min_width");
+        return this.getProp("min_width") as Promise<any>;
     }
     set minWidth(value: number) {
         this.setProp("min_width", value);
     }
     get minHeight(): Promise<number> {
-        return this.getProp("min_height");
+        return this.getProp("min_height") as Promise<any>;
     }
     set minHeight(value: number) {
         this.setProp("min_height", value);
     }
     get maxHeight(): Promise<number> {
-        return this.getProp("max_height");
+        return this.getProp("max_height") as Promise<any>;
     }
     set maxHeight(value: number) {
         this.setProp("max_height", value);
     }
-    get selfAlign(): Promise<string> {
-        return this.getProp("self_align");
+    get selfAlign(): Promise<SelfAlign> {
+        return this.getProp("self_align") as Promise<any>;
     }
-    set selfAlign(value: string) {
+    set selfAlign(value: SelfAlign) {
         this.setProp("self_align", value);
     }
     get autoSize(): Promise<boolean> {
-        return this.getProp("auto_size");
+        return this.getProp("auto_size") as Promise<any>;
     }
     set autoSize(value: boolean) {
         this.setProp("auto_size", value);
     }
     get columnSpan(): Promise<number> {
-        return this.getProp("column_span");
+        return this.getProp("column_span") as Promise<any>;
     }
     set columnSpan(value: number) {
         this.setProp("column_span", value);
     }
     get gridRow(): Promise<number> {
-        return this.getProp("grid_row");
+        return this.getProp("grid_row") as Promise<any>;
     }
     set gridRow(value: number) {
         this.setProp("grid_row", value);
     }
     get gridColumn(): Promise<number> {
-        return this.getProp("grid_column");
+        return this.getProp("grid_column") as Promise<any>;
     }
     set gridColumn(value: number) {
         this.setProp("grid_column", value);
     }
     get rowSpan(): Promise<number> {
-        return this.getProp("row_span");
+        return this.getProp("row_span") as Promise<any>;
     }
     set rowSpan(value: number) {
         this.setProp("row_span", value);
     }
     get grow(): Promise<number> {
-        return this.getProp("grow");
+        return this.getProp("grow") as Promise<any>;
     }
     set grow(value: number) {
         this.setProp("grow", value);
     }
-    get shadow(): Promise<string> {
-        return this.getProp("shadow");
+    get shadow(): Promise<Shadow | null> {
+        return this.getProp("shadow").then(Shadow.fromJson);
     }
-    set shadow(value: string) {
-        this.setProp("shadow", value);
+    set shadow(value: Shadow | null) {
+        this.setProp("shadow", (value ? value.toJson() : ""));
     }
-    get style(): Promise<string> {
-        return this.getProp("style");
+    get style(): Promise<GroupBoxStyle> {
+        return this.getProp("style") as Promise<any>;
     }
-    set style(value: string) {
+    set style(value: GroupBoxStyle) {
         this.setProp("style", value);
     }
-    get theme(): Promise<string> {
-        return this.getProp("theme");
+    get theme(): Promise<ThemeName> {
+        return this.getProp("theme") as Promise<any>;
     }
-    set theme(value: string) {
+    set theme(value: ThemeName) {
         this.setProp("theme", value);
     }
-    get fill(): Promise<string> {
-        return this.getProp("fill");
+    get fill(): Promise<Color> {
+        return this.getProp("fill").then(Color.fromJson);
     }
-    set fill(value: string) {
-        this.setProp("fill", value);
+    set fill(value: Color) {
+        this.setProp("fill", value.toJson());
     }
-    get borderColor(): Promise<string> {
-        return this.getProp("border_color");
+    get borderColor(): Promise<Color> {
+        return this.getProp("border_color").then(Color.fromJson);
     }
-    set borderColor(value: string) {
-        this.setProp("border_color", value);
+    set borderColor(value: Color) {
+        this.setProp("border_color", value.toJson());
     }
-    get textColor(): Promise<string> {
-        return this.getProp("text_color");
+    get textColor(): Promise<Color> {
+        return this.getProp("text_color").then(Color.fromJson);
     }
-    set textColor(value: string) {
-        this.setProp("text_color", value);
+    set textColor(value: Color) {
+        this.setProp("text_color", value.toJson());
     }
-    get accentColor(): Promise<string> {
-        return this.getProp("accent_color");
+    get accentColor(): Promise<Color> {
+        return this.getProp("accent_color").then(Color.fromJson);
     }
-    set accentColor(value: string) {
-        this.setProp("accent_color", value);
+    set accentColor(value: Color) {
+        this.setProp("accent_color", value.toJson());
     }
-    get successColor(): Promise<string> {
-        return this.getProp("success_color");
+    get successColor(): Promise<Color> {
+        return this.getProp("success_color").then(Color.fromJson);
     }
-    set successColor(value: string) {
-        this.setProp("success_color", value);
+    set successColor(value: Color) {
+        this.setProp("success_color", value.toJson());
     }
-    get warningColor(): Promise<string> {
-        return this.getProp("warning_color");
+    get warningColor(): Promise<Color> {
+        return this.getProp("warning_color").then(Color.fromJson);
     }
-    set warningColor(value: string) {
-        this.setProp("warning_color", value);
+    set warningColor(value: Color) {
+        this.setProp("warning_color", value.toJson());
     }
-    get dangerColor(): Promise<string> {
-        return this.getProp("danger_color");
+    get dangerColor(): Promise<Color> {
+        return this.getProp("danger_color").then(Color.fromJson);
     }
-    set dangerColor(value: string) {
-        this.setProp("danger_color", value);
+    set dangerColor(value: Color) {
+        this.setProp("danger_color", value.toJson());
     }
     get fontFamily(): Promise<string> {
-        return this.getProp("font_family");
+        return this.getProp("font_family") as Promise<any>;
     }
     set fontFamily(value: string) {
         this.setProp("font_family", value);
     }
     get fontSize(): Promise<number> {
-        return this.getProp("font_size");
+        return this.getProp("font_size") as Promise<any>;
     }
     set fontSize(value: number) {
         this.setProp("font_size", value);
     }
-    get fontWeight(): Promise<string> {
-        return this.getProp("font_weight");
+    get fontWeight(): Promise<FontWeight> {
+        return this.getProp("font_weight") as Promise<any>;
     }
-    set fontWeight(value: string) {
+    set fontWeight(value: FontWeight) {
         this.setProp("font_weight", value);
     }
     get fontItalic(): Promise<boolean> {
-        return this.getProp("font_italic");
+        return this.getProp("font_italic") as Promise<any>;
     }
     set fontItalic(value: boolean) {
         this.setProp("font_italic", value);
     }
     get fontUnderline(): Promise<boolean> {
-        return this.getProp("font_underline");
+        return this.getProp("font_underline") as Promise<any>;
     }
     set fontUnderline(value: boolean) {
         this.setProp("font_underline", value);
     }
     get fontStrikeout(): Promise<boolean> {
-        return this.getProp("font_strikeout");
+        return this.getProp("font_strikeout") as Promise<any>;
     }
     set fontStrikeout(value: boolean) {
         this.setProp("font_strikeout", value);
     }
     get hint(): Promise<string> {
-        return this.getProp("hint");
+        return this.getProp("hint") as Promise<any>;
     }
     set hint(value: string) {
         this.setProp("hint", value);
     }
     get tag(): Promise<number> {
-        return this.getProp("tag");
+        return this.getProp("tag") as Promise<any>;
     }
     set tag(value: number) {
         this.setProp("tag", value);
     }
     get tagString(): Promise<string> {
-        return this.getProp("tag_string");
+        return this.getProp("tag_string") as Promise<any>;
     }
     set tagString(value: string) {
         this.setProp("tag_string", value);
     }
     get accessibleName(): Promise<string> {
-        return this.getProp("accessible_name");
+        return this.getProp("accessible_name") as Promise<any>;
     }
     set accessibleName(value: string) {
         this.setProp("accessible_name", value);
     }
-    get popupMenu(): Promise<string> {
-        return this.getProp("popup_menu");
+    get popupMenu(): Promise<AylisComponent | null> {
+        return this.getRef("popup_menu");
     }
-    set popupMenu(value: string) {
-        this.setProp("popup_menu", value);
+    set popupMenu(value: AylisComponent | null) {
+        this.setRef("popup_menu", value);
+    }
+    get onClick(): Promise<string> {
+        return this.getProp("on_click") as Promise<any>;
+    }
+    set onClick(value: string) {
+        this.setProp("on_click", value);
+    }
+    get onDblClick(): Promise<string> {
+        return this.getProp("on_dbl_click") as Promise<any>;
+    }
+    set onDblClick(value: string) {
+        this.setProp("on_dbl_click", value);
+    }
+    get onLongPress(): Promise<string> {
+        return this.getProp("on_long_press") as Promise<any>;
+    }
+    set onLongPress(value: string) {
+        this.setProp("on_long_press", value);
+    }
+    get onPointerDown(): Promise<string> {
+        return this.getProp("on_pointer_down") as Promise<any>;
+    }
+    set onPointerDown(value: string) {
+        this.setProp("on_pointer_down", value);
+    }
+    get onPointerUp(): Promise<string> {
+        return this.getProp("on_pointer_up") as Promise<any>;
+    }
+    set onPointerUp(value: string) {
+        this.setProp("on_pointer_up", value);
+    }
+    get onPointerMove(): Promise<string> {
+        return this.getProp("on_pointer_move") as Promise<any>;
+    }
+    set onPointerMove(value: string) {
+        this.setProp("on_pointer_move", value);
+    }
+    get onPointerEnter(): Promise<string> {
+        return this.getProp("on_pointer_enter") as Promise<any>;
+    }
+    set onPointerEnter(value: string) {
+        this.setProp("on_pointer_enter", value);
+    }
+    get onPointerLeave(): Promise<string> {
+        return this.getProp("on_pointer_leave") as Promise<any>;
+    }
+    set onPointerLeave(value: string) {
+        this.setProp("on_pointer_leave", value);
+    }
+    get onWheel(): Promise<string> {
+        return this.getProp("on_wheel") as Promise<any>;
+    }
+    set onWheel(value: string) {
+        this.setProp("on_wheel", value);
+    }
+    get onGesture(): Promise<string> {
+        return this.getProp("on_gesture") as Promise<any>;
+    }
+    set onGesture(value: string) {
+        this.setProp("on_gesture", value);
+    }
+    get onSwipe(): Promise<string> {
+        return this.getProp("on_swipe") as Promise<any>;
+    }
+    set onSwipe(value: string) {
+        this.setProp("on_swipe", value);
+    }
+    get onKeyUp(): Promise<string> {
+        return this.getProp("on_key_up") as Promise<any>;
+    }
+    set onKeyUp(value: string) {
+        this.setProp("on_key_up", value);
+    }
+    get onEnter(): Promise<string> {
+        return this.getProp("on_enter") as Promise<any>;
+    }
+    set onEnter(value: string) {
+        this.setProp("on_enter", value);
+    }
+    get onExit(): Promise<string> {
+        return this.getProp("on_exit") as Promise<any>;
+    }
+    set onExit(value: string) {
+        this.setProp("on_exit", value);
+    }
+    get onResize(): Promise<string> {
+        return this.getProp("on_resize") as Promise<any>;
+    }
+    set onResize(value: string) {
+        this.setProp("on_resize", value);
+    }
+    get onDragMove(): Promise<string> {
+        return this.getProp("on_drag_move") as Promise<any>;
+    }
+    set onDragMove(value: string) {
+        this.setProp("on_drag_move", value);
+    }
+    get onDragLeave(): Promise<string> {
+        return this.getProp("on_drag_leave") as Promise<any>;
+    }
+    set onDragLeave(value: string) {
+        this.setProp("on_drag_leave", value);
+    }
+    get onDragDrop(): Promise<string> {
+        return this.getProp("on_drag_drop") as Promise<any>;
+    }
+    set onDragDrop(value: string) {
+        this.setProp("on_drag_drop", value);
+    }
+    get onDragEnd(): Promise<string> {
+        return this.getProp("on_drag_end") as Promise<any>;
+    }
+    set onDragEnd(value: string) {
+        this.setProp("on_drag_end", value);
     }
 }

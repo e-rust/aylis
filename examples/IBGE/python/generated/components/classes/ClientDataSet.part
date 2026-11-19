@@ -4,133 +4,197 @@ class ClientDataSet(AylisComponent):
     """Um ClientDataSet de um form."""
 
     @property
-    def key_fields(self):
+    def key_fields(self) -> str:
         return self._get("key_fields")
 
     @key_fields.setter
-    def key_fields(self, value):
+    def key_fields(self, value: str) -> None:
         self._set("key_fields", value)
 
     @property
-    def apply_mode(self):
-        return self._get("apply_mode")
+    def apply_mode(self) -> ApplyMode:
+        return _enum(ApplyMode, self._get("apply_mode"))
 
     @apply_mode.setter
-    def apply_mode(self, value):
-        self._set("apply_mode", value)
+    def apply_mode(self, value: ApplyMode) -> None:
+        self._set("apply_mode", value.value)
 
     @property
-    def read_only(self):
+    def read_only(self) -> bool:
         return self._get("read_only")
 
     @read_only.setter
-    def read_only(self, value):
+    def read_only(self, value: bool) -> None:
         self._set("read_only", value)
 
     @property
-    def active(self):
+    def active(self) -> bool:
         return self._get("active")
 
     @active.setter
-    def active(self, value):
+    def active(self, value: bool) -> None:
         self._set("active", value)
 
     @property
-    def filter(self):
+    def filter(self) -> str:
         return self._get("filter")
 
     @filter.setter
-    def filter(self, value):
+    def filter(self, value: str) -> None:
         self._set("filter", value)
 
     @property
-    def filtered(self):
+    def filtered(self) -> bool:
         return self._get("filtered")
 
     @filtered.setter
-    def filtered(self, value):
+    def filtered(self, value: bool) -> None:
         self._set("filtered", value)
 
     @property
-    def index_field_names(self):
+    def index_field_names(self) -> str:
         return self._get("index_field_names")
 
     @index_field_names.setter
-    def index_field_names(self, value):
+    def index_field_names(self, value: str) -> None:
         self._set("index_field_names", value)
 
     @property
-    def indexes(self):
-        return self._get("indexes")
+    def indexes(self) -> list[IndexDef]:
+        return _records(IndexDef, self._get("indexes"))
 
     @indexes.setter
-    def indexes(self, value):
-        self._set("indexes", value)
+    def indexes(self, value: list[IndexDef]) -> None:
+        self._set("indexes", _records_text(value))
 
     @property
-    def index_name(self):
+    def index_name(self) -> str:
         return self._get("index_name")
 
     @index_name.setter
-    def index_name(self, value):
+    def index_name(self, value: str) -> None:
         self._set("index_name", value)
 
     @property
-    def params(self):
-        return self._get("params")
+    def params(self) -> list[FilterParam]:
+        return _records(FilterParam, self._get("params"))
 
     @params.setter
-    def params(self, value):
-        self._set("params", value)
+    def params(self, value: list[FilterParam]) -> None:
+        self._set("params", _records_text(value))
 
     @property
-    def status_filter(self):
+    def status_filter(self) -> str:
         return self._get("status_filter")
 
     @status_filter.setter
-    def status_filter(self, value):
+    def status_filter(self, value: str) -> None:
         self._set("status_filter", value)
 
     @property
-    def master_source(self):
-        return self._get("master_source")
+    def master_source(self) -> AylisComponent | None:
+        return self._get_ref("master_source")
 
     @master_source.setter
-    def master_source(self, value):
-        self._set("master_source", value)
+    def master_source(self, value: AylisComponent | None) -> None:
+        self._set_ref("master_source", value)
 
     @property
-    def master_fields(self):
-        return self._get("master_fields")
+    def master_fields(self) -> list[MasterField]:
+        return _records(MasterField, self._get("master_fields"))
 
     @master_fields.setter
-    def master_fields(self, value):
-        self._set("master_fields", value)
+    def master_fields(self, value: list[MasterField]) -> None:
+        self._set("master_fields", _records_text(value))
 
     @property
-    def apply_separately(self):
+    def apply_separately(self) -> bool:
         return self._get("apply_separately")
 
     @apply_separately.setter
-    def apply_separately(self, value):
+    def apply_separately(self, value: bool) -> None:
         self._set("apply_separately", value)
 
     @property
-    def record_total(self):
+    def record_total(self) -> int:
         return self._get("record_total")
 
     @record_total.setter
-    def record_total(self, value):
+    def record_total(self, value: int) -> None:
         self._set("record_total", value)
 
     @property
-    def max_records(self):
+    def max_records(self) -> int:
         return self._get("max_records")
 
     @max_records.setter
-    def max_records(self, value):
+    def max_records(self, value: int) -> None:
         self._set("max_records", value)
 
     @property
-    def partial_notice(self):
+    def partial_notice(self) -> str:
         return self._get("partial_notice")
+
+    @property
+    def on_master_change(self) -> str:
+        return self._get("on_master_change")
+
+    @on_master_change.setter
+    def on_master_change(self, value: str) -> None:
+        self._set("on_master_change", value)
+
+    @property
+    def after_scroll(self) -> str:
+        return self._get("after_scroll")
+
+    @after_scroll.setter
+    def after_scroll(self, value: str) -> None:
+        self._set("after_scroll", value)
+
+    @property
+    def after_post(self) -> str:
+        return self._get("after_post")
+
+    @after_post.setter
+    def after_post(self, value: str) -> None:
+        self._set("after_post", value)
+
+    @property
+    def on_state_change(self) -> str:
+        return self._get("on_state_change")
+
+    @on_state_change.setter
+    def on_state_change(self, value: str) -> None:
+        self._set("on_state_change", value)
+
+    @property
+    def on_reconcile_error(self) -> str:
+        return self._get("on_reconcile_error")
+
+    @on_reconcile_error.setter
+    def on_reconcile_error(self, value: str) -> None:
+        self._set("on_reconcile_error", value)
+
+    @property
+    def on_error(self) -> str:
+        return self._get("on_error")
+
+    @on_error.setter
+    def on_error(self, value: str) -> None:
+        self._set("on_error", value)
+
+    @property
+    def on_fetch(self) -> str:
+        return self._get("on_fetch")
+
+    @on_fetch.setter
+    def on_fetch(self, value: str) -> None:
+        self._set("on_fetch", value)
+
+    @property
+    def on_server_query(self) -> str:
+        return self._get("on_server_query")
+
+    @on_server_query.setter
+    def on_server_query(self, value: str) -> None:
+        self._set("on_server_query", value)

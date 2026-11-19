@@ -276,7 +276,7 @@ fn insert_shows_the_new_row_and_header_drag_resizes() {
 #[test]
 fn columns_property_chooses_and_orders() {
     let mut s = setup(3);
-    s.ui.set_prop(s.grid, "columns", "valor;nome").unwrap();
+    s.ui.set_prop(s.grid, "columns", r#"[{"field": "valor"}, {"field": "nome"}]"#).unwrap();
     data_set(&mut s.ui, s.cds).refresh_links();
     let titles: Vec<String> = grid(&s).grid_columns().iter().map(|c| c.title.clone()).collect();
     assert_eq!(titles, ["Valor", "Nome"]);
@@ -397,8 +397,15 @@ fn title_x(s: &Setup, i: usize) -> f32 {
 fn dragging_a_title_moves_the_column() {
     let mut s = setup(5);
     let moved = Rc::new(Cell::new(false));
-    let flag = moved.clone();
-    s.ui.on(s.grid, "on_column_moved", move |_, _, _| flag.set(true));
+    let layout: Rc<std::cell::RefCell<Vec<String>>> = Rc::default();
+    let (flag, order) = (moved.clone(), layout.clone());
+    s.ui.on(s.grid, "on_column_moved", move |_, _, args| {
+        flag.set(true);
+        // O argumento é a lista de colunas (o `ColumnLayout`), com as larguras.
+        let columns = <aylis_dbcontrols::ColumnLayout as aylis_core::EventValue>::from_args(args).unwrap();
+        assert!(columns.0.iter().all(|c| c.width > 0.0));
+        *order.borrow_mut() = columns.0.into_iter().map(|c| c.field).collect();
+    });
     // Código vai para depois de Valor.
     let (from, to) = (title_x(&s, 0), title_x(&s, 2) + 30.0);
     s.ui.pointer_move(s.form, at(from, 16.0));
@@ -410,6 +417,7 @@ fn dragging_a_title_moves_the_column() {
     let titles: Vec<String> = grid(&s).grid_columns().iter().map(|c| c.title.clone()).collect();
     assert_eq!(titles, ["Nome", "Valor", "Código"]);
     assert!(moved.get(), "on_column_moved");
+    assert_eq!(*layout.borrow(), ["nome", "valor", "id"]);
     // Arrastar não ordena.
     assert_eq!(s.ui.get::<ClientDataSet>(s.cds).unwrap().effective_index().unwrap(), "");
     // Por código também.

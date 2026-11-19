@@ -12,7 +12,7 @@ O editor de texto rico (`QEditor`): o texto com formato e, em cima, a barra de f
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `toolbar` | Barra de ferramentas | texto | Os botões da barra, separados por `;` (`\|` é um separador): `bold`, `italic`, `h1`, `link`, `undo`... Vazio esconde a barra. |
+| `toolbar` | Barra de ferramentas | lista de textos (separados por `;`) | Os botões da barra, separados por `;` (`\|` é um separador): `bold`, `italic`, `h1`, `link`, `undo`... Vazio esconde a barra. |
 | `placeholder` | Texto de exemplo | texto | O texto apagado mostrado com o conteúdo vazio. |
 
 ### Comportamento

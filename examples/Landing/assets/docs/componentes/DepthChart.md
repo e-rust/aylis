@@ -18,8 +18,8 @@ Gráfico de profundidade: compras acumuladas (verde, à esquerda do meio) e vend
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `bids` | Ofertas de compra | texto | As ofertas de compra: `"38.50:1200;38.49:800"` (preço:quantidade). |
-| `asks` | Ofertas de venda | texto | As ofertas de venda, no mesmo formato (preço:quantidade). |
+| `bids` | Ofertas de compra | lista de `OrderLevel` | As ofertas de compra, em JSON (`ORDER_LEVEL`): `[{"price": 38.49, "quantity": 1200}]`. |
+| `asks` | Ofertas de venda | lista de `OrderLevel` | As ofertas de venda, no mesmo formato. |
 
 ## Em código
 
@@ -34,8 +34,8 @@ E o handler, um método do form (`self.DepthChart1` já é um `DepthChart`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.DepthChart1.bids(ui);
-        self.DepthChart1.set_bids(ui, format!("{atual}!"));
+        let atual = self.DepthChart1.decimals(ui);
+        self.DepthChart1.set_decimals(ui, atual + 1);
     }
 }
 ```

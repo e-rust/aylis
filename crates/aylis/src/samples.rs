@@ -272,7 +272,7 @@ fn fill(ui: &mut Ui, id: ComponentId, class: &str) {
             }
         }
         "TreeView" => {
-            // Com os nós abertos (no texto de `items` eles começam fechados). Pastas nos que têm
+            // Com os nós abertos (sem o `expanded` no JSON de `items`, eles começam fechados). Pastas nos que têm
             // filhos, casas no último nível, e dois sem ícone: o texto fica alinhado em todos.
             let node = |text: &str, icon: &str, children: Vec<TreeNode>| TreeNode { text: text.into(), expanded: !children.is_empty(), children, icon: icon.into(), ..Default::default() };
             let nodes = vec![

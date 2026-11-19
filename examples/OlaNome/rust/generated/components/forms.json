@@ -1,1 +1,1 @@
-{"principal":{"form":"frmPrincipal","handlers":["btn_saudar_click"],"questions":[],"classes":["Form","Label","Edit","Button"],"cited":[]}}
+{"principal":{"form":"frmPrincipal","handlers":["btn_saudar_click"],"questions":[],"classes":["Form","Label","Edit","Button"],"cited":[],"events":[["btn_saudar_click","Button","on_click"]]}}

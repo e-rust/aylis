@@ -206,7 +206,7 @@
             dbcEstados = Resolve(list, "dbcEstados", "DBChart", (i, d, n) => new DBChart(i, d, n));
         }
 
-        /// <summary>O ClientDataSet deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O ClientDataSet deste form com o nome.</summary>
         public ClientDataSet? FindClientDataSet(string name) => name switch
         {
             "cdsEstados" => cdsEstados,
@@ -220,7 +220,7 @@
         /// <summary>O ClientDataSet que disparou o evento.</summary>
         public ClientDataSet? SenderAsClientDataSet(AylisClient.AylisEvent ev) => FindClientDataSet(ev.SenderName);
 
-        /// <summary>O DBChart deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O DBChart deste form com o nome.</summary>
         public DBChart? FindDBChart(string name) => name switch
         {
             "dbcPopulacao" => dbcPopulacao,
@@ -232,7 +232,7 @@
         /// <summary>O DBChart que disparou o evento.</summary>
         public DBChart? SenderAsDBChart(AylisClient.AylisEvent ev) => FindDBChart(ev.SenderName);
 
-        /// <summary>O DataGrid deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O DataGrid deste form com o nome.</summary>
         public DataGrid? FindDataGrid(string name) => name switch
         {
             "grdEstados" => grdEstados,
@@ -244,7 +244,7 @@
         /// <summary>O DataGrid que disparou o evento.</summary>
         public DataGrid? SenderAsDataGrid(AylisClient.AylisEvent ev) => FindDataGrid(ev.SenderName);
 
-        /// <summary>O DataSource deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O DataSource deste form com o nome.</summary>
         public DataSource? FindDataSource(string name) => name switch
         {
             "dsEstados" => dsEstados,
@@ -258,7 +258,7 @@
         /// <summary>O DataSource que disparou o evento.</summary>
         public DataSource? SenderAsDataSource(AylisClient.AylisEvent ev) => FindDataSource(ev.SenderName);
 
-        /// <summary>O Field deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Field deste form com o nome.</summary>
         public Field? FindField(string name) => name switch
         {
             "cdsEstadosId" => cdsEstadosId,
@@ -305,7 +305,7 @@
         /// <summary>O Field que disparou o evento.</summary>
         public Field? SenderAsField(AylisClient.AylisEvent ev) => FindField(ev.SenderName);
 
-        /// <summary>O GroupBox deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O GroupBox deste form com o nome.</summary>
         public GroupBox? FindGroupBox(string name) => name switch
         {
             "gbEstados" => gbEstados,
@@ -317,7 +317,7 @@
         /// <summary>O GroupBox que disparou o evento.</summary>
         public GroupBox? SenderAsGroupBox(AylisClient.AylisEvent ev) => FindGroupBox(ev.SenderName);
 
-        /// <summary>O Image deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Image deste form com o nome.</summary>
         public Image? FindImage(string name) => name switch
         {
             "imgBandeiraEstado" => imgBandeiraEstado,
@@ -328,7 +328,7 @@
         /// <summary>O Image que disparou o evento.</summary>
         public Image? SenderAsImage(AylisClient.AylisEvent ev) => FindImage(ev.SenderName);
 
-        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Label deste form com o nome.</summary>
         public Label? FindLabel(string name) => name switch
         {
             "lblFonte" => lblFonte,
@@ -362,7 +362,7 @@
         /// <summary>O Label que disparou o evento.</summary>
         public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
 
-        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Layout deste form com o nome.</summary>
         public Layout? FindLayout(string name) => name switch
         {
             "lytListas" => lytListas,
@@ -378,7 +378,7 @@
         /// <summary>O Layout que disparou o evento.</summary>
         public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
 
-        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Panel deste form com o nome.</summary>
         public Panel? FindPanel(string name) => name switch
         {
             "pnlEstado" => pnlEstado,
@@ -389,7 +389,7 @@
         /// <summary>O Panel que disparou o evento.</summary>
         public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
 
-        /// <summary>O Splitter deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Splitter deste form com o nome.</summary>
         public Splitter? FindSplitter(string name) => name switch
         {
             "splListas" => splListas,
@@ -399,7 +399,7 @@
         /// <summary>O Splitter que disparou o evento.</summary>
         public Splitter? SenderAsSplitter(AylisClient.AylisEvent ev) => FindSplitter(ev.SenderName);
 
-        /// <summary>O Svg deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Svg deste form com o nome.</summary>
         public Svg? FindSvg(string name) => name switch
         {
             "svgBrasil" => svgBrasil,

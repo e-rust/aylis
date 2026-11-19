@@ -160,9 +160,10 @@ fn handlers_in(project: &Project, layouts: &[(&crate::FormEntry, serde_json::Val
 /// (`codegen::drop_unused_stubs`): fica o com código, que é o método morto (pergunta do autor em
 /// 11/11).
 fn dead_handlers(language: crate::Language, text: &str, bound: &[String]) -> Vec<String> {
-    let (prefix, signature) = match language {
-        crate::Language::Rust => ("pub fn ", "(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs)"),
-        crate::Language::Python => ("def ", "(aylis, event)"),
+    // O começo da assinatura de um handler: a de sempre e a tipada (`sender: Button`).
+    let (prefix, signatures): (&str, &[&str]) = match language {
+        crate::Language::Rust => ("pub fn ", &["(&mut self, ui: &mut Ui, sender: "]),
+        crate::Language::Python => ("def ", &["(aylis, event)", "(aylis, sender: "]),
         _ => return Vec::new(),
     };
     let mut out = Vec::new();
@@ -172,7 +173,7 @@ fn dead_handlers(language: crate::Language, text: &str, bound: &[String]) -> Vec
         from = start;
         let Some(open) = text[start..].find('(').map(|e| start + e) else { continue };
         let name = &text[start..open];
-        if !crate::is_identifier(name) || !text[open..].starts_with(signature) {
+        if !crate::is_identifier(name) || !signatures.iter().any(|s| text[open..].starts_with(s)) {
             continue;
         }
         if !bound.iter().any(|b| b == name) && text.matches(&format!("{name}(")).count() == 1 {
@@ -633,8 +634,10 @@ mod dead_handler_tests {
     #[test]
     fn handlers_no_event_calls_are_reported() {
         let sig = "(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs)";
-        let text = format!("impl F {{\n    pub fn btnA_click{sig} {{ x(); }}\n    pub fn btnB_click{sig} {{ self.ajuda(); }}\n    pub fn btnC_click{sig} {{ y(); }}\n    pub fn ajuda(&self) {{}}\n}}\n");
+        // O tipado também (`sender: Button`).
+        let typed = "(&mut self, ui: &mut Ui, sender: crate::generated::Button)";
+        let text = format!("impl F {{\n    pub fn btnA_click{sig} {{ x(); }}\n    pub fn btnB_click{sig} {{ self.ajuda(); }}\n    pub fn btnC_click{sig} {{ y(); }}\n    pub fn btnD_click{typed} {{ z(); }}\n    pub fn ajuda(&self) {{}}\n}}\n");
         let dead = super::dead_handlers(crate::Language::Rust, &text, &["btnB_click".to_string()]);
-        assert_eq!(dead, vec!["btnA_click".to_string(), "btnC_click".to_string()]);
+        assert_eq!(dead, vec!["btnA_click".to_string(), "btnC_click".to_string(), "btnD_click".to_string()]);
     }
 }

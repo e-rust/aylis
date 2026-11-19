@@ -70,8 +70,8 @@ static std::string tempo(double segundos) {
 
 // A fila na lista, com a mídia atual selecionada.
 static void atualizar_fila(aylis::Aylis& app) {
-    std::string itens;
-    for (size_t i = 0; i < fila.size(); i++) itens += (i ? ";" : "") + nome_do_arquivo(fila[i]) + "|" + pasta(fila[i]);
+    std::vector<aylis_components::ListViewItem> itens;
+    for (const auto& c : fila) itens.push_back({nome_do_arquivo(c), pasta(c)});
     frmPlayer.lvFila.set_items(itens);
     frmPlayer.lvFila.set_item_index(atual);
 }
@@ -127,22 +127,17 @@ static int proximo_indice() {
     return -1;
 }
 
-void abrir_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void abrir_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     frmPlayer.dlgAbrir.execute();
 }
 
-void abrir_select(aylis::Aylis& app, const aylis::Event& ev) {
-    // Os arquivos escolhidos vêm separados por ";".
-    std::string texto = ev.args.kind() == aylis::Json::Kind::String ? ev.args.str() : std::string();
+void abrir_select(aylis::Aylis& app, aylis_components::OpenDialog sender, std::vector<std::string> value) {
+    (void)sender;
+    // Os arquivos escolhidos (o evento já separa a lista).
     std::vector<std::string> novos;
-    size_t inicio = 0;
-    while (inicio <= texto.size()) {
-        size_t fim = texto.find(';', inicio);
-        if (fim == std::string::npos) fim = texto.size();
-        if (fim > inicio) novos.push_back(texto.substr(inicio, fim - inicio));
-        inicio = fim + 1;
-    }
+    for (const auto& p : value)
+        if (!p.empty()) novos.push_back(p);
     if (novos.empty()) return;
     int primeiro = static_cast<int>(fila.size());
     fila.insert(fila.end(), novos.begin(), novos.end());
@@ -151,8 +146,8 @@ void abrir_select(aylis::Aylis& app, const aylis::Event& ev) {
     else mostrar_atual(app);
 }
 
-void limpar_fila_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void limpar_fila_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     frmPlayer.vpVideo.stop();
     fila.clear();
     atual = -1;
@@ -163,15 +158,15 @@ void limpar_fila_click(aylis::Aylis& app, const aylis::Event& ev) {
     botao_reproduzir(app);
 }
 
-void sair_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void sair_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPlayer.close();
 }
 
-void reproduzir_click(aylis::Aylis& app, const aylis::Event& ev) {
+void reproduzir_click(aylis::Aylis& app, aylis::Component sender) {
     if (atual < 0) {
         if (!fila.empty()) tocar(app, 0);
-        else abrir_click(app, ev);
+        else abrir_click(app, sender);
     } else if (tocando) {
         frmPlayer.vpVideo.pause();
         tocando = false;
@@ -183,8 +178,8 @@ void reproduzir_click(aylis::Aylis& app, const aylis::Event& ev) {
     }
 }
 
-void parar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void parar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     if (atual < 0) return;
     frmPlayer.vpVideo.stop();
     tocando = false;
@@ -192,29 +187,29 @@ void parar_click(aylis::Aylis& app, const aylis::Event& ev) {
     frmPlayer.sbPosicao.set_position(0.0);
 }
 
-void anterior_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void anterior_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     if (atual > 0) tocar(app, atual - 1);
     else if (atual == 0 && repetir == 1) tocar(app, static_cast<int>(fila.size()) - 1);
     else if (atual == 0) frmPlayer.vpVideo.seek(0.0);
 }
 
-void proxima_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void proxima_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     int i = proximo_indice();
     if (i >= 0) tocar(app, i);
 }
 
-void embaralhar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void embaralhar_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     embaralhar = !embaralhar;
     frmPlayer.btnEmbaralhar.set_checked(embaralhar);
     frmPlayer.btnEmbaralhar.set_hint(embaralhar ? "Embaralhar: ativado" : "Embaralhar: desativado");
     frmPlayer.mnuEmbaralhar.set_checked(embaralhar);
 }
 
-void repetir_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void repetir_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     static const char* DICAS[] = {"Repetir: desativado", "Repetir: todos", "Repetir: um"};
     repetir = (repetir + 1) % 3;
     frmPlayer.btnRepetir.set_checked(repetir > 0);
@@ -231,34 +226,36 @@ static void pagina(aylis::Aylis& app, bool agora) {
     frmPlayer.btnFila.set_checked(!agora);
 }
 
-void agora_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void agora_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     pagina(app, true);
 }
 
-void fila_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void fila_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     pagina(app, false);
 }
 
-void posicao_seek(aylis::Aylis& app, const aylis::Event& ev) {
-    if (ev.args.kind() == aylis::Json::Kind::Number) frmPlayer.vpVideo.seek(ev.args.number());
+void posicao_seek(aylis::Aylis& app, aylis_components::SeekBar sender, double value) {
+    (void)sender;
+    frmPlayer.vpVideo.seek(value);
 }
 
-void mudo_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void mudo_click(aylis::Aylis& app, aylis_components::Button sender) {
+    (void)sender;
     mudo = !mudo;
     frmPlayer.vpVideo.set_muted(mudo);
     frmPlayer.btnMudo.set_icon(mudo ? "mute" : "volume");
     frmPlayer.btnMudo.set_hint(mudo ? "Com som" : "Sem som");
 }
 
-void volume_change(aylis::Aylis& app, const aylis::Event& ev) {
-    if (ev.args.kind() == aylis::Json::Kind::Number) frmPlayer.vpVideo.set_volume(ev.args.number() / 100.0);
+void volume_change(aylis::Aylis& app, aylis_components::TrackBar sender, double value) {
+    (void)sender;
+    frmPlayer.vpVideo.set_volume(value / 100.0);
 }
 
-void video_fim(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void video_fim(aylis::Aylis& app, aylis_components::VideoPlayer sender) {
+    (void)sender;
     if (repetir == 2 && atual >= 0) {
         tocar(app, atual);
         return;
@@ -272,21 +269,22 @@ void video_fim(aylis::Aylis& app, const aylis::Event& ev) {
     }
 }
 
-void video_erro(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void video_erro(aylis::Aylis& app, aylis_components::VideoPlayer sender, std::string value) {
+    (void)sender;
+    (void)value;
     tocando = false;
     botao_reproduzir(app);
     frmPlayer.lblDetalhe.set_text("Não foi possível reproduzir este arquivo");
 }
 
-void fila_item_click(aylis::Aylis& app, const aylis::Event& ev) {
-    if (ev.args.kind() != aylis::Json::Kind::Number) return;
-    int i = static_cast<int>(ev.args.number());
+void fila_item_click(aylis::Aylis& app, aylis_components::ListView sender, long long value) {
+    (void)sender;
+    int i = static_cast<int>(value);
     if (i >= 0 && i < static_cast<int>(fila.size())) tocar(app, i);
 }
 
-void posicao_timer(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void posicao_timer(aylis::Aylis& app, aylis_components::Timer sender) {
+    (void)sender;
     if (atual < 0) return;
     double posicao = frmPlayer.vpVideo.position();
     double duracao = frmPlayer.vpVideo.duration();

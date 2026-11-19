@@ -320,6 +320,15 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         "get" => {
             let id = target(ui, obj)?;
             if let Some(name) = obj.get("prop").and_then(Value::as_str) {
+                // `"ref": true`: a referência a outro componente com o id, o nome e a classe
+                // (o acesso tipado das linguagens monta o objeto dele), ou `null`.
+                if obj.get("ref").and_then(Value::as_bool) == Some(true) {
+                    let value = ui.get_prop(id, name).map_err(|e| e.to_string())?;
+                    return Ok(match value.to_component() {
+                        Ok(Some(c)) => json!({ "id": c.to_u64(), "name": ui.name(c).unwrap_or_default(), "class": ui.class_name(c).unwrap_or_default() }),
+                        _ => Value::Null,
+                    });
+                }
                 return get(ui, id, name);
             }
             let names = obj.get("props").and_then(Value::as_array).ok_or("informe \"prop\" ou \"props\"")?;
@@ -341,6 +350,13 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             let method = string(obj, "method")?;
             let args: Vec<PropValue> = obj.get("args").and_then(Value::as_array).map(|a| a.iter().map(json_arg).collect()).unwrap_or_default();
             let result = ui.invoke(id, method, &args)?;
+            // `"ref": true`: o componente devolvido com o id, o nome e a classe (como no `get`).
+            if obj.get("ref").and_then(Value::as_bool) == Some(true) {
+                return Ok(match result.to_component() {
+                    Ok(Some(c)) => json!({ "id": c.to_u64(), "name": ui.name(c).unwrap_or_default(), "class": ui.class_name(c).unwrap_or_default() }),
+                    _ => Value::Null,
+                });
+            }
             Ok(aylis_json::prop_to_json(ui, &result))
         }
         "click" => {

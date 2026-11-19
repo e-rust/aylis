@@ -11,11 +11,11 @@
       },
       "handlers": {
         "frmPrincipal.carregar_click": {
-          "hash": "753d62a2f34ab3f5",
+          "hash": "v2:eecc03b2286ef3b9",
           "seen": 4
         },
         "frmPrincipal.parar_click": {
-          "hash": "9aa8c1f307bfb1c3",
+          "hash": "v2:9aa8c1f307bfb1c3",
           "seen": 2
         }
       }

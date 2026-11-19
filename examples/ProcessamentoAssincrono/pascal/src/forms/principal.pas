@@ -12,7 +12,7 @@ uses
 type
   TFrmPrincipal = class(TFrmPrincipalBase)
   published
-    procedure fechar_mes_click(Sender: TAylisComponent; Event: TJSONObject);
+    procedure fechar_mes_click(Sender: TButton);
   end;
 
 var
@@ -23,7 +23,7 @@ implementation
 uses
   fechamento;
 
-procedure TFrmPrincipal.fechar_mes_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPrincipal.fechar_mes_click(Sender: TButton);
 begin
   if Controle.Ativo then
     Exit;

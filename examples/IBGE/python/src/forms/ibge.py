@@ -45,7 +45,7 @@ def imagem(caminho):
     return DADOS + caminho if caminho else ""
 
 
-def form_show(aylis, event):
+def form_show(aylis, sender: "Form"):
     global _municipios, _populacao
     estados = ler("estados.json")
     if estados is None:
@@ -58,10 +58,10 @@ def form_show(aylis, event):
     carregar(aylis, frmIBGE.cdsDistritos, ler("distritos.json") or [])
     carregar(aylis, frmIBGE.cdsMunicipios, _municipios)
     carregar(aylis, frmIBGE.cdsEstados, estados)
-    estado_mudou(aylis, event)
+    estado_mudou(aylis, frmIBGE.cdsEstados)
 
 
-def estado_mudou(aylis, event):
+def estado_mudou(aylis, sender: "ClientDataSet"):
     """Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios."""
     e = registro(aylis, frmIBGE.cdsEstados)
     if e.get("id") is None:
@@ -71,7 +71,7 @@ def estado_mudou(aylis, event):
     frmIBGE.lblRegiao.text = f"{e['sigla']} · Região {e['regiao']}"
     frmIBGE.imgBandeiraEstado.image = imagem(e.get("bandeira") or "")
     frmIBGE.lblEstadoEstimativa.text = f"Estimativa de {e['estimativa_ano']}"
-    frmIBGE.svgBrasil.highlight = f"e{uf}"
+    frmIBGE.svgBrasil.highlight = [f"e{uf}"]
     mapa = f"{DADOS}mapas/{uf}.svg"
     frmIBGE.svgEstado.source = mapa
     frmIBGE.svgMunicipio.source = mapa
@@ -79,10 +79,10 @@ def estado_mudou(aylis, event):
     do_estado = [m for m in _municipios if m["uf_id"] == uf]
     do_estado.sort(key=lambda m: (-(m["populacao"] or 0), m["nome"]))
     carregar(aylis, frmIBGE.cdsMaiores, [{"nome": m["nome"], "habitantes": m["populacao"]} for m in do_estado[:10]])
-    municipio_mudou(aylis, event)
+    municipio_mudou(aylis, frmIBGE.cdsMunicipios)
 
 
-def municipio_mudou(aylis, event):
+def municipio_mudou(aylis, sender: "ClientDataSet"):
     """Outro município: a bandeira, o destaque nos mapas e a população ano a ano."""
     m = registro(aylis, frmIBGE.cdsMunicipios)
     if m.get("id") is None:
@@ -95,8 +95,8 @@ def municipio_mudou(aylis, event):
     frmIBGE.lblSemBandeira.visible = not bandeira
     frmIBGE.lblEstimativa.text = f"Estimativa de {m['estimativa_ano']}"
     alvo = f"m{codigo}"
-    frmIBGE.svgEstado.highlight = alvo
-    frmIBGE.svgMunicipio.highlight = alvo
+    frmIBGE.svgEstado.highlight = [alvo]
+    frmIBGE.svgMunicipio.highlight = [alvo]
     frmIBGE.svgMunicipio.zoom_to = alvo
 
     serie = _populacao.get(str(codigo), [])

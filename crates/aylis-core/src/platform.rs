@@ -408,6 +408,37 @@ impl PermissionState {
 
 /// Consultar e pedir permissões ao sistema. `done` recebe cada permissão pedida com a
 /// resposta, de qualquer thread.
+/// As permissões como enum do acesso tipado (o argumento do `Permissions.state`).
+impl crate::prop::PropEnum for Permission {
+    const NAMES: &'static [&'static str] = &["camera", "microphone", "location", "notifications", "photos", "contacts", "calendar", "bluetooth"];
+    fn from_index(index: usize) -> Option<Self> {
+        Permission::ALL.get(index).copied()
+    }
+    fn index(self) -> usize {
+        Permission::ALL.iter().position(|p| *p == self).unwrap_or(0)
+    }
+}
+
+impl crate::prop::PropEnum for PermissionState {
+    const NAMES: &'static [&'static str] = &["granted", "denied", "prompt", "unavailable"];
+    fn from_index(index: usize) -> Option<Self> {
+        [PermissionState::Granted, PermissionState::Denied, PermissionState::Prompt, PermissionState::Unavailable].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+impl crate::prop::PropEnum for Biometry {
+    const NAMES: &'static [&'static str] = &["none", "fingerprint", "face", "iris", "any"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Biometry::None, Biometry::Fingerprint, Biometry::Face, Biometry::Iris, Biometry::Any].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 pub trait PermissionService {
     fn state(&self, permission: Permission) -> PermissionState;
     fn request(&mut self, permissions: Vec<Permission>, done: Box<dyn FnOnce(Vec<(Permission, PermissionState)>) + Send>);

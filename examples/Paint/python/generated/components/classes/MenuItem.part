@@ -4,73 +4,89 @@ class MenuItem(AylisComponent):
     """Um MenuItem de um form."""
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self._get("text")
 
     @text.setter
-    def text(self, value):
+    def text(self, value: str) -> None:
         self._set("text", value)
 
     @property
-    def shortcut(self):
+    def shortcut(self) -> str:
         return self._get("shortcut")
 
     @shortcut.setter
-    def shortcut(self, value):
+    def shortcut(self, value: str) -> None:
         self._set("shortcut", value)
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         return self._get("enabled")
 
     @enabled.setter
-    def enabled(self, value):
+    def enabled(self, value: bool) -> None:
         self._set("enabled", value)
 
     @property
-    def checked(self):
+    def checked(self) -> bool:
         return self._get("checked")
 
     @checked.setter
-    def checked(self, value):
+    def checked(self, value: bool) -> None:
         self._set("checked", value)
 
     @property
-    def auto_check(self):
+    def auto_check(self) -> bool:
         return self._get("auto_check")
 
     @auto_check.setter
-    def auto_check(self, value):
+    def auto_check(self, value: bool) -> None:
         self._set("auto_check", value)
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         return self._get("icon")
 
     @icon.setter
-    def icon(self, value):
+    def icon(self, value: str) -> None:
         self._set("icon", value)
 
     @property
-    def visible(self):
+    def visible(self) -> bool:
         return self._get("visible")
 
     @visible.setter
-    def visible(self, value):
+    def visible(self, value: bool) -> None:
         self._set("visible", value)
 
     @property
-    def danger(self):
+    def danger(self) -> bool:
         return self._get("danger")
 
     @danger.setter
-    def danger(self, value):
+    def danger(self, value: bool) -> None:
         self._set("danger", value)
 
     @property
-    def header(self):
+    def header(self) -> bool:
         return self._get("header")
 
     @header.setter
-    def header(self, value):
+    def header(self, value: bool) -> None:
         self._set("header", value)
+
+    @property
+    def content(self) -> AylisComponent | None:
+        return self._get_ref("content")
+
+    @content.setter
+    def content(self, value: AylisComponent | None) -> None:
+        self._set_ref("content", value)
+
+    @property
+    def on_click(self) -> str:
+        return self._get("on_click")
+
+    @on_click.setter
+    def on_click(self, value: str) -> None:
+        self._set("on_click", value)

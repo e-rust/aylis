@@ -38,7 +38,7 @@ pub fn needs(item: &str) -> Option<Capability> {
     use Capability::*;
     Some(match item {
         "Novo projeto…" | "Abrir projeto…" | "Abrir form…" | "Nova janela" | "Abrir gravação…" | "Recentes" | "Salvar como…" | "Salvar tudo"
-        | "Fechar projeto" | "Sair" | "Abrir pasta do projeto" | "Confiar neste projeto" | "Adicionar form existente…" | "Ícone do app…" | "Android…"
+        | "Fechar projeto" | "Sair" | "Abrir pasta do projeto" | "Confiar neste projeto" | "Adicionar form existente…" | "Ícone do app…" | "Android…" | "iPhone (GitHub)"
         | "Gravar o uso da IDE" | "Abrir pasta das gravações" | "Relatar problema…" | "Opções da IDE…" | "Verificar atualizações"
         | "Avisar de novas versões" => Disk,
         "Gerar código" | "Abrir código do form" | "Abrir fonte…" | "Novo fonte…" | "Pendências entre linguagens…" | "Pesquisar no projeto…" | "Depurar no aparelho" => Code,

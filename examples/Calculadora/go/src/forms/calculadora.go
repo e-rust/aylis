@@ -4,7 +4,6 @@
 package forms
 
 import (
-	"strings"
 	"unicode/utf8"
 
 	"aylis.dev/cliente/aylis"
@@ -46,22 +45,20 @@ func atualizar(app *aylis.Aylis) {
 	for _, botao := range []aylisButton{frmCalculadora.btnMC, frmCalculadora.btnMR} {
 		botao.SetEnabled(!erro && len(calc.Memoria) > 0)
 	}
-	itens := []string{}
+	historico := []ListViewItem{}
 	for i := len(calc.Historico) - 1; i >= 0; i-- {
-		itens = append(itens, Formatar(calc.Historico[i].Resultado)+"|"+calc.Historico[i].Expressao)
+		historico = append(historico, ListViewItem{Title: Formatar(calc.Historico[i].Resultado), Detail: calc.Historico[i].Expressao})
 	}
-	historico := "Ainda não há histórico|"
-	if len(itens) > 0 {
-		historico = strings.Join(itens, ";")
+	if len(historico) == 0 {
+		historico = append(historico, ListViewItem{Title: "Ainda não há histórico"})
 	}
 	frmCalculadora.lvHistorico.SetItems(historico)
-	itens = itens[:0]
+	memoria := []ListViewItem{}
 	for i := len(calc.Memoria) - 1; i >= 0; i-- {
-		itens = append(itens, Formatar(calc.Memoria[i])+"|")
+		memoria = append(memoria, ListViewItem{Title: Formatar(calc.Memoria[i])})
 	}
-	memoria := "Não há nada salvo na memória|"
-	if len(itens) > 0 {
-		memoria = strings.Join(itens, ";")
+	if len(memoria) == 0 {
+		memoria = append(memoria, ListViewItem{Title: "Não há nada salvo na memória"})
 	}
 	frmCalculadora.lvMemoria.SetItems(memoria)
 }
@@ -73,13 +70,6 @@ func apertar(app *aylis.Aylis, texto string) {
 	}
 }
 
-func indice(ev aylis.Event) int {
-	if n, ok := ev.Args.(float64); ok {
-		return int(n)
-	}
-	return -1
-}
-
 func (f FrmCalculadora) form_key_down(app *aylis.Aylis, ev aylis.Event) {
 	args, _ := ev.Args.(map[string]any)
 	tecla, _ := args["key"].(string)
@@ -87,37 +77,37 @@ func (f FrmCalculadora) form_key_down(app *aylis.Aylis, ev aylis.Event) {
 	shift, _ := args["shift"].(bool)
 	switch botao := BotaoDoTeclado(tecla, ctrl, shift); botao {
 	case "historico":
-		f.historico_click(app, ev)
+		f.historico_click(app, frmCalculadora.btnHistorico)
 	case "":
 	default:
 		apertar(app, botao)
 	}
 }
 
-func (f FrmCalculadora) limpar_historico_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmCalculadora) limpar_historico_click(app *aylis.Aylis, sender aylisButton) {
 	calc.Historico = nil
 	atualizar(app)
 }
 
-func (f FrmCalculadora) historico_item_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmCalculadora) historico_item_click(app *aylis.Aylis, sender aylisListView, value int64) {
 	// A lista mostra a conta mais nova em cima.
-	if i := indice(ev); i >= 0 && i < len(calc.Historico) {
+	if i := int(value); i >= 0 && i < len(calc.Historico) {
 		calc.Usar(calc.Historico[len(calc.Historico)-1-i].Resultado)
 		atualizar(app)
 	}
 }
 
-func (f FrmCalculadora) memoria_item_click(app *aylis.Aylis, ev aylis.Event) {
-	if i := indice(ev); i >= 0 && i < len(calc.Memoria) {
+func (f FrmCalculadora) memoria_item_click(app *aylis.Aylis, sender aylisListView, value int64) {
+	if i := int(value); i >= 0 && i < len(calc.Memoria) {
 		calc.Usar(calc.Memoria[len(calc.Memoria)-1-i])
 		atualizar(app)
 	}
 }
 
-func (f FrmCalculadora) historico_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmCalculadora) historico_click(app *aylis.Aylis, sender aylisButton) {
 	frmCalculadora.pnlLateral.SetVisible(!frmCalculadora.pnlLateral.Visible())
 }
 
-func (f FrmCalculadora) tecla_click(app *aylis.Aylis, ev aylis.Event) {
-	apertar(app, frmCalculadora.SenderAsButton(ev).Text())
+func (f FrmCalculadora) tecla_click(app *aylis.Aylis, sender aylisButton) {
+	apertar(app, sender.Text())
 }

@@ -4,7 +4,7 @@
 use aylis::prelude::*;
 
 use crate::motor::{Calculadora, botao_do_teclado, formatar};
-use crate::generated::{Button, FrmCalculadora};
+use crate::generated::{Button, FrmCalculadora, ListView, ListViewItem};
 
 /// O estado do form: a calculadora desta janela (duas janelas, duas contas).
 pub struct Data {
@@ -60,18 +60,19 @@ impl FrmCalculadora {
         for botao in [&self.btnMC, &self.btnMR] {
             botao.set_enabled(ui, !erro && !calc.memoria.is_empty());
         }
-        let historico = if calc.historico.is_empty() {
-            "Ainda não há histórico|".to_string()
+        let item = |title: String, detail: String| ListViewItem { title, detail };
+        let historico: Vec<ListViewItem> = if calc.historico.is_empty() {
+            vec![item("Ainda não há histórico".into(), String::new())]
         } else {
-            calc.historico.iter().rev().map(|c| format!("{}|{}", formatar(c.resultado), c.expressao)).collect::<Vec<_>>().join(";")
+            calc.historico.iter().rev().map(|c| item(formatar(c.resultado), c.expressao.clone())).collect()
         };
-        self.lvHistorico.set_items(ui, historico);
-        let memoria = if calc.memoria.is_empty() {
-            "Não há nada salvo na memória|".to_string()
+        self.lvHistorico.set_items(ui, &historico);
+        let memoria: Vec<ListViewItem> = if calc.memoria.is_empty() {
+            vec![item("Não há nada salvo na memória".into(), String::new())]
         } else {
-            calc.memoria.iter().rev().map(|m| format!("{}|", formatar(*m))).collect::<Vec<_>>().join(";")
+            calc.memoria.iter().rev().map(|m| item(formatar(*m), String::new())).collect()
         };
-        self.lvMemoria.set_items(ui, memoria);
+        self.lvMemoria.set_items(ui, &memoria);
     }
 
     /// Aperta um botão pelo texto dele.
@@ -85,56 +86,51 @@ impl FrmCalculadora {
         let _ = sender;
         let EventArgs::Key(k) = args else { return };
         match botao_do_teclado(&nome_da_tecla(k.key), k.modifiers.ctrl, k.modifiers.shift) {
-            Some("historico") => self.historico_click(ui, sender, args),
+            Some("historico") => self.historico_click(ui, self.btnHistorico),
             Some(texto) => self.apertar(ui, texto),
             None => {}
         }
     }
 
-    pub fn limpar_historico_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
-        let _ = (sender, args);
+    pub fn limpar_historico_click(&mut self, ui: &mut Ui, sender: Button) {
+        let _ = sender;
         self.data.calc.historico.clear();
         self.atualizar(ui);
     }
 
-    pub fn historico_item_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    pub fn historico_item_click(&mut self, ui: &mut Ui, sender: ListView, value: i64) {
         let _ = sender;
         // A lista mostra a conta mais nova em cima.
-        let valor = indice(args).and_then(|i| self.data.calc.historico.iter().rev().nth(i).map(|c| c.resultado));
+        let valor = indice(value).and_then(|i| self.data.calc.historico.iter().rev().nth(i).map(|c| c.resultado));
         if let Some(v) = valor {
             self.data.calc.usar(v);
             self.atualizar(ui);
         }
     }
 
-    pub fn memoria_item_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    pub fn memoria_item_click(&mut self, ui: &mut Ui, sender: ListView, value: i64) {
         let _ = sender;
-        let valor = indice(args).and_then(|i| self.data.calc.memoria.iter().rev().nth(i).copied());
+        let valor = indice(value).and_then(|i| self.data.calc.memoria.iter().rev().nth(i).copied());
         if let Some(v) = valor {
             self.data.calc.usar(v);
             self.atualizar(ui);
         }
     }
 
-    pub fn historico_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
-        let _ = (sender, args);
+    pub fn historico_click(&mut self, ui: &mut Ui, sender: Button) {
+        let _ = sender;
         self.pnlLateral.set_visible(ui, !self.pnlLateral.visible(ui));
     }
 
-    pub fn tecla_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
-        let _ = args;
-        if let Some(botao) = self.sender_as_button(ui, sender) {
-            let texto = botao.text(ui);
-            self.apertar(ui, &texto);
-        }
+    pub fn tecla_click(&mut self, ui: &mut Ui, sender: Button) {
+        let texto = sender.text(ui);
+        self.apertar(ui, &texto);
     }
 }
 
-fn indice(args: &EventArgs) -> Option<usize> {
-    match args {
-        EventArgs::Value(v) => v.to_i64().ok().and_then(|i| usize::try_from(i).ok()),
-        _ => None,
-    }
+/// O índice do item clicado (negativo: nenhum).
+fn indice(value: i64) -> Option<usize> {
+    usize::try_from(value).ok()
 }
 
 /// O nome que o aylis dá à tecla (o mesmo que as outras linguagens recebem no evento).

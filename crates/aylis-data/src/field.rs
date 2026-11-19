@@ -409,7 +409,7 @@ impl Field {
     /// o valor para o próximo pedido em lote e devolve `None`; `true` no segundo item quando
     /// a fila estava vazia (quem chamou agenda o envio).
     pub(crate) fn remote_text(&self, value: &Value) -> (Option<String>, bool) {
-        let key = crate::json::value_to_json(value).to_string();
+        let key = crate::value_text(value);
         if let Some(text) = self.remote_texts.borrow().get(&key) {
             return (Some(text.clone()), false);
         }
@@ -430,7 +430,7 @@ impl Field {
     pub(crate) fn store_texts(&self, texts: impl IntoIterator<Item = (Value, String)>) {
         let mut cache = self.remote_texts.borrow_mut();
         for (value, text) in texts {
-            cache.insert(crate::json::value_to_json(&value).to_string(), text);
+            cache.insert(crate::value_text(&value), text);
         }
     }
 
@@ -664,15 +664,15 @@ fn trim(d: Decimal) -> Decimal {
 
 const FIELD_PROPS: &[PropInfo] = &[
     PropInfo::new("field_name", PropKind::String, "Data"),
-    PropInfo::new("type", PropKind::Enum(FieldType::NAMES), "Data"),
+    PropInfo::new("type", PropKind::Enum(FieldType::NAMES), "Data").rust_type("FieldType"),
     PropInfo::new("size", PropKind::Int, "Data"),
     PropInfo::new("scale", PropKind::Int, "Data"),
-    PropInfo::new("rounding", PropKind::Enum(Rounding::NAMES), "Data"),
+    PropInfo::new("rounding", PropKind::Enum(Rounding::NAMES), "Data").rust_type("Rounding"),
     PropInfo::new("display_label", PropKind::String, "Appearance"),
     PropInfo::new("display_width", PropKind::Float, "Appearance"),
     PropInfo::new("display_format", PropKind::String, "Appearance"),
     PropInfo::new("edit_format", PropKind::String, "Appearance"),
-    PropInfo::new("alignment", PropKind::Enum(<TextAlign as PropEnum>::NAMES), "Appearance"),
+    PropInfo::new("alignment", PropKind::Enum(<TextAlign as PropEnum>::NAMES), "Appearance").rust_type("TextAlign"),
     PropInfo::new("required", PropKind::Bool, "Behavior"),
     PropInfo::new("read_only", PropKind::Bool, "Behavior"),
     PropInfo::new("visible", PropKind::Bool, "Behavior"),
@@ -680,21 +680,25 @@ const FIELD_PROPS: &[PropInfo] = &[
     PropInfo::new("max", PropKind::Float, "Behavior"),
     PropInfo::new("default_value", PropKind::String, "Data"),
     PropInfo::new("display_values", PropKind::String, "Appearance"),
-    PropInfo::new("char_case", PropKind::Enum(CharCase::NAMES), "Behavior"),
+    PropInfo::new("char_case", PropKind::Enum(CharCase::NAMES), "Behavior").rust_type("CharCase"),
     PropInfo::new("edit_mask", PropKind::String, "Behavior"),
     PropInfo::new("sensitive", PropKind::Bool, "Behavior"),
-    PropInfo::new("kind", PropKind::Enum(FieldKind::NAMES), "Data"),
+    PropInfo::new("kind", PropKind::Enum(FieldKind::NAMES), "Data").rust_type("FieldKind"),
     PropInfo::new("expression", PropKind::String, "Data"),
     PropInfo::new("lookup_data_set", PropKind::Component, "Lookup"),
     PropInfo::new("key_fields", PropKind::String, "Lookup"),
     PropInfo::new("lookup_key_fields", PropKind::String, "Lookup"),
     PropInfo::new("lookup_result_field", PropKind::String, "Lookup"),
-    PropInfo::new("on_change", PropKind::Event, "Events"),
+    PropInfo::new("on_change", PropKind::Event, "Events").event_arg(aylis_core::EventArg::Value(PropKind::String)),
     // Por nome (backend remoto): o texto de exibição vem em lote e assíncrono; a
     // validação chega depois e trava o `post` enquanto houver erro.
-    PropInfo::new("on_get_text", PropKind::Event, "Events"),
+    PropInfo::new("on_get_text", PropKind::Event, "Events")
+        .event_arg(aylis_core::EventArg::Value(PropKind::Record(&crate::events::GET_TEXT_REQUEST_RECORD)))
+        .rust_type("GetTextRequest"),
     // O texto digitado vai ao handler, que grava o valor (ou recusa): `aylis_data::set_text`.
-    PropInfo::new("on_set_text", PropKind::Event, "Events"),
+    PropInfo::new("on_set_text", PropKind::Event, "Events")
+        .event_arg(aylis_core::EventArg::Value(PropKind::Record(&crate::events::SET_TEXT_REQUEST_RECORD)))
+        .rust_type("SetTextRequest"),
     PropInfo::new("on_validate", PropKind::Event, "Events"),
 ];
 

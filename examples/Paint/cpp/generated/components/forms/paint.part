@@ -188,7 +188,7 @@ struct FrmPaintComponents : Form {
         dlgAbrir = OpenDialog(resolve_(list, "dlgAbrir", "OpenDialog"));
         dlgSalvar = SaveDialog(resolve_(list, "dlgSalvar", "SaveDialog"));
     }
-    // O Button deste form com o nome (como o FindComponent; vazio se não há).
+    // O Button deste form com o nome (vazio se não há).
     Button find_button(const std::string& name) const {
         if (name == "btnSalvar") return btnSalvar;
         if (name == "btnDesfazer") return btnDesfazer;
@@ -206,14 +206,14 @@ struct FrmPaintComponents : Form {
     }
     // O Button que disparou o evento.
     Button sender_as_button(const aylis::Event& ev) const { return find_button(ev.sender_name); }
-    // O CheckBox deste form com o nome (como o FindComponent; vazio se não há).
+    // O CheckBox deste form com o nome (vazio se não há).
     CheckBox find_check_box(const std::string& name) const {
         if (name == "chkPreencher") return chkPreencher;
         return CheckBox();
     }
     // O CheckBox que disparou o evento.
     CheckBox sender_as_check_box(const aylis::Event& ev) const { return find_check_box(ev.sender_name); }
-    // O Circle deste form com o nome (como o FindComponent; vazio se não há).
+    // O Circle deste form com o nome (vazio se não há).
     Circle find_circle(const std::string& name) const {
         if (name == "btnCor1") return btnCor1;
         if (name == "btnCor2") return btnCor2;
@@ -241,14 +241,14 @@ struct FrmPaintComponents : Form {
     }
     // O Circle que disparou o evento.
     Circle sender_as_circle(const aylis::Event& ev) const { return find_circle(ev.sender_name); }
-    // O ComboBox deste form com o nome (como o FindComponent; vazio se não há).
+    // O ComboBox deste form com o nome (vazio se não há).
     ComboBox find_combo_box(const std::string& name) const {
         if (name == "cbEspessura") return cbEspessura;
         return ComboBox();
     }
     // O ComboBox que disparou o evento.
     ComboBox sender_as_combo_box(const aylis::Event& ev) const { return find_combo_box(ev.sender_name); }
-    // O Divider deste form com o nome (como o FindComponent; vazio se não há).
+    // O Divider deste form com o nome (vazio se não há).
     Divider find_divider(const std::string& name) const {
         if (name == "divTopo") return divTopo;
         if (name == "divSelecao") return divSelecao;
@@ -260,7 +260,7 @@ struct FrmPaintComponents : Form {
     }
     // O Divider que disparou o evento.
     Divider sender_as_divider(const aylis::Event& ev) const { return find_divider(ev.sender_name); }
-    // O GridLayout deste form com o nome (como o FindComponent; vazio se não há).
+    // O GridLayout deste form com o nome (vazio se não há).
     GridLayout find_grid_layout(const std::string& name) const {
         if (name == "grdFerramentas") return grdFerramentas;
         if (name == "grdFormas") return grdFormas;
@@ -269,7 +269,7 @@ struct FrmPaintComponents : Form {
     }
     // O GridLayout que disparou o evento.
     GridLayout sender_as_grid_layout(const aylis::Event& ev) const { return find_grid_layout(ev.sender_name); }
-    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    // O Label deste form com o nome (vazio se não há).
     Label find_label(const std::string& name) const {
         if (name == "lblSelecaoGrupo") return lblSelecaoGrupo;
         if (name == "lblFerramentasGrupo") return lblFerramentasGrupo;
@@ -284,7 +284,7 @@ struct FrmPaintComponents : Form {
     }
     // O Label que disparou o evento.
     Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
-    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    // O Layout deste form com o nome (vazio se não há).
     Layout find_layout(const std::string& name) const {
         if (name == "lytTopo") return lytTopo;
         if (name == "lytSelecao") return lytSelecao;
@@ -297,14 +297,14 @@ struct FrmPaintComponents : Form {
     }
     // O Layout que disparou o evento.
     Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
-    // O MainMenu deste form com o nome (como o FindComponent; vazio se não há).
+    // O MainMenu deste form com o nome (vazio se não há).
     MainMenu find_main_menu(const std::string& name) const {
         if (name == "mnuPrincipal") return mnuPrincipal;
         return MainMenu();
     }
     // O MainMenu que disparou o evento.
     MainMenu sender_as_main_menu(const aylis::Event& ev) const { return find_main_menu(ev.sender_name); }
-    // O MenuItem deste form com o nome (como o FindComponent; vazio se não há).
+    // O MenuItem deste form com o nome (vazio se não há).
     MenuItem find_menu_item(const std::string& name) const {
         if (name == "mnuArquivo") return mnuArquivo;
         if (name == "mnuNovo") return mnuNovo;
@@ -332,42 +332,42 @@ struct FrmPaintComponents : Form {
     }
     // O MenuItem que disparou o evento.
     MenuItem sender_as_menu_item(const aylis::Event& ev) const { return find_menu_item(ev.sender_name); }
-    // O OpenDialog deste form com o nome (como o FindComponent; vazio se não há).
+    // O OpenDialog deste form com o nome (vazio se não há).
     OpenDialog find_open_dialog(const std::string& name) const {
         if (name == "dlgAbrir") return dlgAbrir;
         return OpenDialog();
     }
     // O OpenDialog que disparou o evento.
     OpenDialog sender_as_open_dialog(const aylis::Event& ev) const { return find_open_dialog(ev.sender_name); }
-    // O PaintCanvas deste form com o nome (como o FindComponent; vazio se não há).
+    // O PaintCanvas deste form com o nome (vazio se não há).
     PaintCanvas find_paint_canvas(const std::string& name) const {
         if (name == "pcDesenho") return pcDesenho;
         return PaintCanvas();
     }
     // O PaintCanvas que disparou o evento.
     PaintCanvas sender_as_paint_canvas(const aylis::Event& ev) const { return find_paint_canvas(ev.sender_name); }
-    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    // O Panel deste form com o nome (vazio se não há).
     Panel find_panel(const std::string& name) const {
         if (name == "pnlFaixa") return pnlFaixa;
         return Panel();
     }
     // O Panel que disparou o evento.
     Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
-    // O SaveDialog deste form com o nome (como o FindComponent; vazio se não há).
+    // O SaveDialog deste form com o nome (vazio se não há).
     SaveDialog find_save_dialog(const std::string& name) const {
         if (name == "dlgSalvar") return dlgSalvar;
         return SaveDialog();
     }
     // O SaveDialog que disparou o evento.
     SaveDialog sender_as_save_dialog(const aylis::Event& ev) const { return find_save_dialog(ev.sender_name); }
-    // O ScrollBox deste form com o nome (como o FindComponent; vazio se não há).
+    // O ScrollBox deste form com o nome (vazio se não há).
     ScrollBox find_scroll_box(const std::string& name) const {
         if (name == "sbxArea") return sbxArea;
         return ScrollBox();
     }
     // O ScrollBox que disparou o evento.
     ScrollBox sender_as_scroll_box(const aylis::Event& ev) const { return find_scroll_box(ev.sender_name); }
-    // O StatusBar deste form com o nome (como o FindComponent; vazio se não há).
+    // O StatusBar deste form com o nome (vazio se não há).
     StatusBar find_status_bar(const std::string& name) const {
         if (name == "stbStatus") return stbStatus;
         return StatusBar();

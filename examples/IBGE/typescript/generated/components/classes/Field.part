@@ -2,159 +2,177 @@
 /** Um Field de um form. */
 export class Field extends AylisComponent {
     get fieldName(): Promise<string> {
-        return this.getProp("field_name");
+        return this.getProp("field_name") as Promise<any>;
     }
     set fieldName(value: string) {
         this.setProp("field_name", value);
     }
-    get type(): Promise<string> {
-        return this.getProp("type");
+    get type(): Promise<FieldType> {
+        return this.getProp("type") as Promise<any>;
     }
-    set type(value: string) {
+    set type(value: FieldType) {
         this.setProp("type", value);
     }
     get size(): Promise<number> {
-        return this.getProp("size");
+        return this.getProp("size") as Promise<any>;
     }
     set size(value: number) {
         this.setProp("size", value);
     }
     get scale(): Promise<number> {
-        return this.getProp("scale");
+        return this.getProp("scale") as Promise<any>;
     }
     set scale(value: number) {
         this.setProp("scale", value);
     }
-    get rounding(): Promise<string> {
-        return this.getProp("rounding");
+    get rounding(): Promise<Rounding> {
+        return this.getProp("rounding") as Promise<any>;
     }
-    set rounding(value: string) {
+    set rounding(value: Rounding) {
         this.setProp("rounding", value);
     }
     get displayLabel(): Promise<string> {
-        return this.getProp("display_label");
+        return this.getProp("display_label") as Promise<any>;
     }
     set displayLabel(value: string) {
         this.setProp("display_label", value);
     }
     get displayWidth(): Promise<number> {
-        return this.getProp("display_width");
+        return this.getProp("display_width") as Promise<any>;
     }
     set displayWidth(value: number) {
         this.setProp("display_width", value);
     }
     get displayFormat(): Promise<string> {
-        return this.getProp("display_format");
+        return this.getProp("display_format") as Promise<any>;
     }
     set displayFormat(value: string) {
         this.setProp("display_format", value);
     }
     get editFormat(): Promise<string> {
-        return this.getProp("edit_format");
+        return this.getProp("edit_format") as Promise<any>;
     }
     set editFormat(value: string) {
         this.setProp("edit_format", value);
     }
-    get alignment(): Promise<string> {
-        return this.getProp("alignment");
+    get alignment(): Promise<TextAlign> {
+        return this.getProp("alignment") as Promise<any>;
     }
-    set alignment(value: string) {
+    set alignment(value: TextAlign) {
         this.setProp("alignment", value);
     }
     get required(): Promise<boolean> {
-        return this.getProp("required");
+        return this.getProp("required") as Promise<any>;
     }
     set required(value: boolean) {
         this.setProp("required", value);
     }
     get readOnly(): Promise<boolean> {
-        return this.getProp("read_only");
+        return this.getProp("read_only") as Promise<any>;
     }
     set readOnly(value: boolean) {
         this.setProp("read_only", value);
     }
     get visible(): Promise<boolean> {
-        return this.getProp("visible");
+        return this.getProp("visible") as Promise<any>;
     }
     set visible(value: boolean) {
         this.setProp("visible", value);
     }
     get min(): Promise<number> {
-        return this.getProp("min");
+        return this.getProp("min") as Promise<any>;
     }
     set min(value: number) {
         this.setProp("min", value);
     }
     get max(): Promise<number> {
-        return this.getProp("max");
+        return this.getProp("max") as Promise<any>;
     }
     set max(value: number) {
         this.setProp("max", value);
     }
     get defaultValue(): Promise<string> {
-        return this.getProp("default_value");
+        return this.getProp("default_value") as Promise<any>;
     }
     set defaultValue(value: string) {
         this.setProp("default_value", value);
     }
     get displayValues(): Promise<string> {
-        return this.getProp("display_values");
+        return this.getProp("display_values") as Promise<any>;
     }
     set displayValues(value: string) {
         this.setProp("display_values", value);
     }
-    get charCase(): Promise<string> {
-        return this.getProp("char_case");
+    get charCase(): Promise<CharCase> {
+        return this.getProp("char_case") as Promise<any>;
     }
-    set charCase(value: string) {
+    set charCase(value: CharCase) {
         this.setProp("char_case", value);
     }
     get editMask(): Promise<string> {
-        return this.getProp("edit_mask");
+        return this.getProp("edit_mask") as Promise<any>;
     }
     set editMask(value: string) {
         this.setProp("edit_mask", value);
     }
     get sensitive(): Promise<boolean> {
-        return this.getProp("sensitive");
+        return this.getProp("sensitive") as Promise<any>;
     }
     set sensitive(value: boolean) {
         this.setProp("sensitive", value);
     }
-    get kind(): Promise<string> {
-        return this.getProp("kind");
+    get kind(): Promise<FieldKind> {
+        return this.getProp("kind") as Promise<any>;
     }
-    set kind(value: string) {
+    set kind(value: FieldKind) {
         this.setProp("kind", value);
     }
     get expression(): Promise<string> {
-        return this.getProp("expression");
+        return this.getProp("expression") as Promise<any>;
     }
     set expression(value: string) {
         this.setProp("expression", value);
     }
-    get lookupDataSet(): Promise<string> {
-        return this.getProp("lookup_data_set");
+    get lookupDataSet(): Promise<AylisComponent | null> {
+        return this.getRef("lookup_data_set");
     }
-    set lookupDataSet(value: string) {
-        this.setProp("lookup_data_set", value);
+    set lookupDataSet(value: AylisComponent | null) {
+        this.setRef("lookup_data_set", value);
     }
     get keyFields(): Promise<string> {
-        return this.getProp("key_fields");
+        return this.getProp("key_fields") as Promise<any>;
     }
     set keyFields(value: string) {
         this.setProp("key_fields", value);
     }
     get lookupKeyFields(): Promise<string> {
-        return this.getProp("lookup_key_fields");
+        return this.getProp("lookup_key_fields") as Promise<any>;
     }
     set lookupKeyFields(value: string) {
         this.setProp("lookup_key_fields", value);
     }
     get lookupResultField(): Promise<string> {
-        return this.getProp("lookup_result_field");
+        return this.getProp("lookup_result_field") as Promise<any>;
     }
     set lookupResultField(value: string) {
         this.setProp("lookup_result_field", value);
+    }
+    get onChange(): Promise<string> {
+        return this.getProp("on_change") as Promise<any>;
+    }
+    set onChange(value: string) {
+        this.setProp("on_change", value);
+    }
+    get onGetText(): Promise<string> {
+        return this.getProp("on_get_text") as Promise<any>;
+    }
+    set onGetText(value: string) {
+        this.setProp("on_get_text", value);
+    }
+    get onSetText(): Promise<string> {
+        return this.getProp("on_set_text") as Promise<any>;
+    }
+    set onSetText(value: string) {
+        this.setProp("on_set_text", value);
     }
 }

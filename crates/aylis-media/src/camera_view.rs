@@ -310,7 +310,7 @@ impl Component for CameraView {
         quality: CameraQuality => "Behavior",
         resolution: String => "Behavior",
         torch: bool => "Behavior";
-        events: on_error, on_ready;
+        events: on_error: String, on_ready: ();
         computed: sizes: String => sizes / set_sizes, frame_size: String => frame_size / set_frame_size, has_flash: bool => has_flash / set_has_flash
     }
 

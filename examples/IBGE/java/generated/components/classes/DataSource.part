@@ -5,12 +5,12 @@
             super(aylis, id, name);
         }
 
-        public String getDataSet() {
-            return asText(getProp("data_set"));
+        public Aylis.AylisComponent getDataSet() {
+            return getRef("data_set");
         }
 
-        public void setDataSet(String value) {
-            setProp("data_set", value);
+        public void setDataSet(Aylis.AylisComponent value) {
+            setRef("data_set", value);
         }
 
         public boolean isAutoEdit() {
@@ -27,5 +27,21 @@
 
         public void setEnabled(boolean value) {
             setProp("enabled", value);
+        }
+
+        public String getOnDataChange() {
+            return asText(getProp("on_data_change"));
+        }
+
+        public void setOnDataChange(String value) {
+            setProp("on_data_change", value);
+        }
+
+        public String getOnStateChange() {
+            return asText(getProp("on_state_change"));
+        }
+
+        public void setOnStateChange(String value) {
+            setProp("on_state_change", value);
         }
     }

@@ -26,7 +26,7 @@ Mostra vídeo: **ele mesmo desenha cada quadro**, então dá para ter cantos arr
 | `volume` | Volume | número | O volume, de 0 (mudo) a 1 (o máximo). |
 | `muted` | Mudo | lógico | Sem som, sem perder o `volume`. |
 | `rate` | Velocidade | número | A velocidade: 1 é a normal, 2 o dobro, 0.5 a metade. Fora de 1 o som fica mudo (volta no lugar certo em 1). Só áudio e o navegador tocam sempre em 1. |
-| `output` | Saída | texto | As saídas do som (como no `MediaPlayer`). No navegador, o `<video>` toca na saída padrão. |
+| `output` | Saída | lista de `OutputSpec` | As saídas do som (como no `MediaPlayer`). No navegador, o `<video>` toca na saída padrão. |
 | `frames_ahead` | Quadros à frente | inteiro | Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13). |
 
 ## Eventos

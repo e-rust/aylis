@@ -25,11 +25,11 @@ Lista suspensa: mostra a opção escolhida e abre a lista para trocar. Os itens 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | As opções da lista, separadas por `;`. |
+| `items` | Itens | lista de textos (separados por `;`) | As opções da lista, separadas por `;`. |
 | `values` | Valores | texto | O código de cada opção (`;`); vazio: o código é o próprio texto. |
 | `item_index` | Item escolhido | inteiro | A opção escolhida, a partir de 0; -1: nenhuma. |
-| `groups` | Grupos das opções | texto | O grupo de cada opção (`;`, na ordem de `items`): a lista mostra o nome do grupo, sem clique, antes da primeira opção dele (o `<optgroup>`). Vazio: sem grupos. |
-| `disabled_items` | Opções desligadas | texto | As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem. |
+| `groups` | Grupos das opções | lista de textos (separados por `;`) | O grupo de cada opção (`;`, na ordem de `items`): a lista mostra o nome do grupo, sem clique, antes da primeira opção dele (o `<optgroup>`). Vazio: sem grupos. |
+| `disabled_items` | Opções desligadas | lista de textos (separados por `;`) | As opções desligadas, pelos índices (`"2;5"`): aparecem fracas e não se escolhem. |
 
 ### Texto
 
@@ -57,8 +57,8 @@ E o handler, um método do form (`self.ComboBox1` já é um `ComboBox`):
 ```rust
 impl FrmPrincipal {
     pub fn combo_box1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.ComboBox1.items(ui);
-        self.ComboBox1.set_items(ui, format!("{atual}!"));
+        let atual = self.ComboBox1.values(ui);
+        self.ComboBox1.set_values(ui, format!("{atual}!"));
     }
 }
 ```

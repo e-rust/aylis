@@ -4,25 +4,41 @@ class DataSource(AylisComponent):
     """Um DataSource de um form."""
 
     @property
-    def data_set(self):
-        return self._get("data_set")
+    def data_set(self) -> AylisComponent | None:
+        return self._get_ref("data_set")
 
     @data_set.setter
-    def data_set(self, value):
-        self._set("data_set", value)
+    def data_set(self, value: AylisComponent | None) -> None:
+        self._set_ref("data_set", value)
 
     @property
-    def auto_edit(self):
+    def auto_edit(self) -> bool:
         return self._get("auto_edit")
 
     @auto_edit.setter
-    def auto_edit(self, value):
+    def auto_edit(self, value: bool) -> None:
         self._set("auto_edit", value)
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         return self._get("enabled")
 
     @enabled.setter
-    def enabled(self, value):
+    def enabled(self, value: bool) -> None:
         self._set("enabled", value)
+
+    @property
+    def on_data_change(self) -> str:
+        return self._get("on_data_change")
+
+    @on_data_change.setter
+    def on_data_change(self, value: str) -> None:
+        self._set("on_data_change", value)
+
+    @property
+    def on_state_change(self) -> str:
+        return self._get("on_state_change")
+
+    @on_state_change.setter
+    def on_state_change(self, value: str) -> None:
+        self._set("on_state_change", value)

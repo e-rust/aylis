@@ -33,7 +33,21 @@ pub(crate) fn to_prop(value: &Value, kind: PropKind, theme: &Theme) -> Result<Pr
             }
         }
         PropKind::Easing => PropValue::String(value.as_str().ok_or_else(|| wrong("curva (\"out_quad\", \"ease-in\" ou \"cubic-bezier(...)\")"))?.to_string()),
-        PropKind::String => PropValue::String(value.as_str().ok_or_else(|| wrong("texto"))?.to_string()),
+        // O registro e a lista de registros: no form, o objeto e a lista de objetos (o texto
+        // com o JSON também vale: é o que vem do fio).
+        // O texto do JSON é normalizado (as chaves em ordem, sem espaços): o mesmo registro vem
+        // igual de qualquer linguagem.
+        PropKind::Record(r) | PropKind::RecordList(r) => match value {
+            Value::String(s) => match serde_json::from_str::<Value>(s) {
+                Ok(parsed @ (Value::Array(_) | Value::Object(_))) => PropValue::String(canonical(&parsed, r).to_string()),
+                _ => PropValue::String(s.clone()),
+            },
+            Value::Array(_) | Value::Object(_) => PropValue::String(canonical(value, r).to_string()),
+            _ => return Err(wrong("lista de objetos")),
+        },
+        PropKind::String | PropKind::Date | PropKind::Time | PropKind::DateTime | PropKind::List | PropKind::NumberList | PropKind::ColorList | PropKind::PointList | PropKind::StyleName | PropKind::ThemeName | PropKind::FormName => {
+            PropValue::String(value.as_str().ok_or_else(|| wrong("texto"))?.to_string())
+        }
         PropKind::Color => {
             let text = value.as_str().ok_or_else(|| wrong("cor em texto (\"#RRGGBB\", um nome ou nome/NN)"))?;
             let c = color(text, theme)?;
@@ -62,8 +76,41 @@ pub(crate) fn to_prop(value: &Value, kind: PropKind, theme: &Theme) -> Result<Pr
             }
             PropValue::Event(Some(handler.to_string()))
         }
-        PropKind::Component => PropValue::String(value.as_str().ok_or_else(|| wrong("nome do componente"))?.to_string()),
+        // Pelo nome (ou caminho) ou pelo id: o acesso tipado das linguagens manda o id do
+        // componente que recebeu.
+        PropKind::Component => match value.as_u64() {
+            Some(id) => PropValue::Component(Some(aylis_core::ComponentId::from_u64(id))),
+            None => PropValue::String(value.as_str().ok_or_else(|| wrong("nome ou id do componente"))?.to_string()),
+        },
     })
+}
+
+/// O registro (ou a lista dele) na forma de sempre: os campos na ordem do [`RecordInfo`] e cada
+/// número no tipo do campo (o `1` de uma linguagem e o `1.0` de outra viram o mesmo). Os campos
+/// que o registro não tem vão no fim, como vieram.
+pub(crate) fn canonical(value: &Value, record: &aylis_core::RecordInfo) -> Value {
+    match value {
+        Value::Array(items) => Value::Array(items.iter().map(|v| canonical(v, record)).collect()),
+        Value::Object(map) => {
+            let mut out = Map::new();
+            for (name, kind) in record.fields {
+                let Some(v) = map.get(*name) else { continue };
+                let v = match (kind, v) {
+                    (PropKind::Record(r) | PropKind::RecordList(r), _) => canonical(v, r),
+                    (PropKind::Float, Value::Number(n)) => n.as_f64().map_or(v.clone(), Value::from),
+                    (PropKind::Int, Value::Number(n)) => n.as_f64().map_or(v.clone(), |f| Value::from(f as i64)),
+                    (PropKind::NumberList, Value::Array(a)) => Value::Array(a.iter().map(|x| x.as_f64().map_or(x.clone(), Value::from)).collect()),
+                    _ => v.clone(),
+                };
+                out.insert(name.to_string(), v);
+            }
+            for (k, v) in map.iter().filter(|(k, _)| !record.fields.iter().any(|(n, _)| n == k)) {
+                out.insert(k.clone(), v.clone());
+            }
+            Value::Object(out)
+        }
+        other => other.clone(),
+    }
 }
 
 /// Valor de propriedade → JSON (na forma mais curta).

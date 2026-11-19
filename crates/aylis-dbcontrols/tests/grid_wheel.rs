@@ -36,7 +36,7 @@ fn setup() -> Setup {
     let grid = ui.add(DataGrid::new(ds), scroll);
     ui.set_prop(grid, "align", "top").unwrap();
     ui.set_prop(grid, "height", 250.0).unwrap();
-    ui.set_prop(grid, "columns", "id:400;nome:400;valor:400").unwrap();
+    ui.set_prop(grid, "columns", r#"[{"field": "id", "width": 400}, {"field": "nome", "width": 400}, {"field": "valor", "width": 400}]"#).unwrap();
     let bottom = ui.create("Panel", Some(scroll)).unwrap();
     ui.set_prop(bottom, "align", "top").unwrap();
     ui.set_prop(bottom, "height", 900.0).unwrap();

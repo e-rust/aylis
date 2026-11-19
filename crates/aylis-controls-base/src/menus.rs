@@ -96,7 +96,7 @@ impl Component for MenuItem {
         danger: bool => "Appearance",
         header: bool => "Appearance",
         content: Option<ComponentId> => "Appearance";
-        events: on_click
+        events: on_click: ()
     }
 
     fn shortcut(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {

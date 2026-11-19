@@ -79,7 +79,7 @@ impl Component for Timer {
         precision: TimerPrecision => "Behavior",
         background: bool => "Behavior",
         one_shot: bool => "Behavior";
-        events: on_timer;
+        events: on_timer: ();
         computed: drift: f64 => drift / set_drift
     }
 
@@ -153,7 +153,7 @@ impl Component for FrameTimer {
 
     properties! {
         enabled: bool => "Behavior";
-        events: on_frame
+        events: on_frame: f64
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -197,7 +197,7 @@ impl Component for DataModule {
 
     properties! {
         tag: i64 => "Misc";
-        events: on_create
+        events: on_create: ()
     }
 }
 
@@ -207,8 +207,8 @@ impl Component for DataModule {
 /// Os eventos da aplicação inteira, num componente
 /// não visual de qualquer form: `on_key_down` e `on_key_press` recebem as teclas antes de todos
 /// (antes do form com `key_preview` e do controle com foco; engolir ou trocar a tecla vale
-/// como lá), e `on_exception` recebe todo erro de handler e de componente: com ele ligado, a
-/// caixa de erro padrão não aparece.
+/// como lá), e `on_exception` recebe todo erro de handler e de componente (o
+/// [`ExceptionEvent`]): com ele ligado, a caixa de erro padrão não aparece.
 #[derive(Default)]
 pub struct ApplicationEvents {
     /// Um número livre para o código (não muda nada).
@@ -222,7 +222,39 @@ impl Component for ApplicationEvents {
 
     properties! {
         tag: i64 => "Misc";
-        events: on_key_down, on_key_press, on_exception, on_terminate
+        events: on_key_down, on_key_press, on_exception: ExceptionEvent, on_terminate: ()
+    }
+}
+
+/// O erro que o `on_exception` do `ApplicationEvents` recebe (o [`aylis_core::Exception`]
+/// no evento: o núcleo manda o JSON com estes campos).
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct ExceptionEvent {
+    /// A mensagem (a do `panic!`, a da exceção do backend).
+    pub message: String,
+    /// Onde: o caminho do componente (`frmPedido.btnSalvar`), vazio se não se sabe.
+    pub path: String,
+    /// O evento ou o método que estava rodando (`on_click`, `paint`), vazio se não se sabe.
+    pub event: String,
+}
+
+/// O registro do [`ExceptionEvent`] no acesso tipado.
+pub const EXCEPTION_EVENT: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "ExceptionEvent",
+    fields: &[("message", aylis_core::PropKind::String), ("path", aylis_core::PropKind::String), ("event", aylis_core::PropKind::String)],
+};
+
+impl aylis_core::EventValue for ExceptionEvent {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&EXCEPTION_EVENT));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        crate::records::from_event(args)
+    }
+}
+
+impl From<ExceptionEvent> for aylis_core::Exception {
+    fn from(e: ExceptionEvent) -> Self {
+        aylis_core::Exception { message: e.message, path: e.path, event: e.event }
     }
 }
 
@@ -282,8 +314,8 @@ impl Component for EventInterceptor {
 
     properties! {
         scope: InterceptScope => "Behavior",
-        events: String => "Behavior",
-        classes: String => "Behavior",
+        events: String as List => "Behavior",
+        classes: String as List => "Behavior",
         enabled: bool => "Behavior",
         tag: i64 => "Misc";
         events: on_intercept, after_intercept
@@ -352,7 +384,7 @@ impl Component for BusyWatcher {
         busy_form: Option<ComponentId> => "Behavior",
         block_input: bool => "Behavior",
         min_visible: i64 => "Behavior";
-        events: on_busy_start, on_busy_end
+        events: on_busy_start: (), on_busy_end: ()
     }
 }
 
@@ -466,7 +498,7 @@ impl Component for OpenDialog {
         initial_dir: String => "Behavior",
         file_name: String => "Data",
         multiple: bool => "Behavior";
-        events: on_select, on_cancel
+        events: on_select: Vec<String>, on_cancel: ()
     }
 }
 
@@ -582,7 +614,7 @@ impl Component for MessageDialog {
         text: String => "Appearance",
         kind: DlgKind => "Appearance",
         buttons: String => "Behavior";
-        events: on_close
+        events: on_close: aylis_core::ModalResult
     }
 }
 
@@ -895,8 +927,8 @@ pub struct Notification {
     pub channel_name: String,
     /// `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som).
     pub priority: NotificationPriority,
-    /// Botões: `"responder:Responder;arquivar:Arquivar"` (identificador:texto); o toque
-    /// chega em `on_action` com o identificador.
+    /// Botões, em JSON (o registro [`NOTIFICATION_ACTION`]):
+    /// `[{"id": "responder", "text": "Responder"}]`; o toque chega em `on_action` com o `id`.
     pub actions: String,
     /// Fixa (o usuário não descarta), como um download em andamento.
     pub ongoing: bool,
@@ -929,6 +961,21 @@ impl Default for Notification {
     }
 }
 
+/// Um botão da `Notification`: o identificador (o que chega no `on_action`) e o texto (vazio:
+/// o identificador).
+pub const NOTIFICATION_ACTION: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "NotificationAction",
+    fields: &[("id", aylis_core::PropKind::String), ("text", aylis_core::PropKind::String)],
+};
+
+/// Um botão no JSON do `actions` (o [`NOTIFICATION_ACTION`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct NotificationActionRecord {
+    id: String,
+    text: String,
+}
+
 impl Notification {
     /// Mostra a notificação.
     pub fn show(ui: &mut Ui, id: ComponentId) -> Result<(), String> {
@@ -943,12 +990,12 @@ impl Notification {
         } else {
             n.app_id.clone()
         };
-        let actions = n
-            .actions
-            .split(';')
-            .filter_map(|a| {
-                let (id, text) = a.split_once(':').unwrap_or((a, a));
-                (!id.trim().is_empty()).then(|| (id.trim().to_string(), text.trim().to_string()))
+        let actions = crate::records::parse_list::<NotificationActionRecord>(&n.actions)
+            .into_iter()
+            .filter(|a| !a.id.trim().is_empty())
+            .map(|a| {
+                let text = if a.text.trim().is_empty() { a.id.trim().to_string() } else { a.text.trim().to_string() };
+                (a.id.trim().to_string(), text)
             })
             .collect();
         let (form, form_size, image) = (n.form.clone(), (n.form_width, n.form_height), n.image.clone());
@@ -1009,7 +1056,7 @@ impl Component for Notification {
         title: String => "Behavior",
         text: String => "Behavior",
         image: String => "Appearance",
-        form: String => "Appearance",
+        form: String as FormName => "Appearance",
         form_width: f32 => "Appearance",
         form_height: f32 => "Appearance",
         app_name: String => "Behavior",
@@ -1018,10 +1065,10 @@ impl Component for Notification {
         channel: String => "Behavior",
         channel_name: String => "Behavior",
         priority: NotificationPriority => "Behavior",
-        actions: String => "Behavior",
+        actions: String as RecordList(&NOTIFICATION_ACTION) => "Behavior",
         ongoing: bool => "Behavior",
         progress: f32 => "Behavior",
         full_screen: bool => "Behavior";
-        events: on_click, on_action
+        events: on_click: (), on_action: String
     }
 }

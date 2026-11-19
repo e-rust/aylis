@@ -103,7 +103,7 @@
             btnIgual = resolve(list, "btnIgual", "Button", Button::new);
         }
 
-        /** O Button deste form com o nome (como o FindComponent). */
+        /** O Button deste form com o nome. */
         public Button findButton(String name) {
             return switch (name) {
                 case "btnLimparHistorico" -> btnLimparHistorico;
@@ -146,7 +146,7 @@
             return findButton(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O GridLayout deste form com o nome (como o FindComponent). */
+        /** O GridLayout deste form com o nome. */
         public GridLayout findGridLayout(String name) {
             return switch (name) {
                 case "grdMemoria" -> grdMemoria;
@@ -160,7 +160,7 @@
             return findGridLayout(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Label deste form com o nome (como o FindComponent). */
+        /** O Label deste form com o nome. */
         public Label findLabel(String name) {
             return switch (name) {
                 case "lblTitulo" -> lblTitulo;
@@ -175,7 +175,7 @@
             return findLabel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Layout deste form com o nome (como o FindComponent). */
+        /** O Layout deste form com o nome. */
         public Layout findLayout(String name) {
             return switch (name) {
                 case "lytCorpo" -> lytCorpo;
@@ -189,7 +189,7 @@
             return findLayout(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O ListView deste form com o nome (como o FindComponent). */
+        /** O ListView deste form com o nome. */
         public ListView findListView(String name) {
             return switch (name) {
                 case "lvHistorico" -> lvHistorico;
@@ -203,7 +203,7 @@
             return findListView(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Panel deste form com o nome (como o FindComponent). */
+        /** O Panel deste form com o nome. */
         public Panel findPanel(String name) {
             return switch (name) {
                 case "pnlLateral" -> pnlLateral;
@@ -216,7 +216,7 @@
             return findPanel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O TabControl deste form com o nome (como o FindComponent). */
+        /** O TabControl deste form com o nome. */
         public TabControl findTabControl(String name) {
             return switch (name) {
                 case "tabLateral" -> tabLateral;
@@ -229,7 +229,7 @@
             return findTabControl(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O TabItem deste form com o nome (como o FindComponent). */
+        /** O TabItem deste form com o nome. */
         public TabItem findTabItem(String name) {
             return switch (name) {
                 case "tabHistorico" -> tabHistorico;

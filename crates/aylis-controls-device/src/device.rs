@@ -12,21 +12,122 @@
 
 use aylis_core::platform::{BiometricResult, Biometry, Permission, PermissionState};
 use aylis_core::prop::PropKind;
-use aylis_core::{Component, ComponentId, EventArgs, EventCtx, MethodInfo, PropValue, Ui, properties};
+use aylis_core::{Component, ComponentId, EventArgs, EventCtx, MethodInfo, PropEnum, PropValue, Ui, properties};
+
+use crate::records::record_event;
+
+/// O registro de um motivo (o `reasons` do [`Permissions`]).
+pub const PERMISSION_REASON: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "PermissionReason",
+    fields: &[("permission", PropKind::Enum(<Permission as PropEnum>::NAMES)), ("reason", PropKind::String)],
+};
+
+/// Por que o app usa uma permissão (o texto que o iOS mostra ao pedir).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct PermissionReason {
+    pub permission: String,
+    pub reason: String,
+}
+
+/// O registro de uma resposta (um item do [`PermissionResult`]).
+pub const PERMISSION_ANSWER: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "PermissionAnswer",
+    fields: &[("permission", PropKind::Enum(<Permission as PropEnum>::NAMES)), ("state", PropKind::Enum(<PermissionState as PropEnum>::NAMES))],
+};
+
+/// O registro do `on_result` do [`Permissions`].
+pub const PERMISSION_RESULT: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "PermissionResult", fields: &[("answers", PropKind::RecordList(&PERMISSION_ANSWER))] };
+
+/// A resposta do sistema a uma permissão pedida.
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+pub struct PermissionAnswer {
+    #[serde(with = "enum_name")]
+    pub permission: Permission,
+    #[serde(with = "enum_name")]
+    pub state: PermissionState,
+}
+
+/// O que o `on_result` do [`Permissions`] leva: cada permissão pedida com a resposta.
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct PermissionResult {
+    pub answers: Vec<PermissionAnswer>,
+}
+
+impl PermissionResult {
+    /// A resposta para `permission` (`None`: não foi pedida).
+    pub fn state(&self, permission: Permission) -> Option<PermissionState> {
+        self.answers.iter().find(|a| a.permission == permission).map(|a| a.state)
+    }
+
+    /// Todas as pedidas foram liberadas.
+    pub fn all_granted(&self) -> bool {
+        self.answers.iter().all(|a| a.state == PermissionState::Granted)
+    }
+}
+
+record_event!(PermissionResult, PERMISSION_RESULT);
+
+/// Um enum do Aylis no JSON pelo nome (`"camera"`, `"granted"`).
+mod enum_name {
+    use aylis_core::PropEnum;
+
+    pub fn serialize<E: PropEnum, S: serde::Serializer>(value: &E, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(value.name())
+    }
+
+    pub fn deserialize<'de, E: PropEnum, D: serde::Deserializer<'de>>(d: D) -> Result<E, D::Error> {
+        let name = <String as serde::Deserialize>::deserialize(d)?;
+        E::from_name(name.trim()).ok_or_else(|| serde::de::Error::custom(format!("valor desconhecido: {name}")))
+    }
+}
+
+/// O registro do `on_shared` do [`AppLink`].
+pub const SHARED_CONTENT: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "SharedContent", fields: &[("text", PropKind::String), ("files", PropKind::List)] };
+
+/// O que outro app compartilhou com este (o `on_shared`): um texto ou arquivos (os caminhos
+/// das cópias que o app pode ler).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct SharedContent {
+    pub text: String,
+    pub files: Vec<String>,
+}
+
+record_event!(SharedContent, SHARED_CONTENT);
+
+impl SharedContent {
+    /// O que a plataforma entrega (`Incoming::Shared`): os caminhos absolutos separados por
+    /// `;` (as cópias dos arquivos) ou o texto. Um texto que só tenha caminhos absolutos passa
+    /// por arquivos: o Android não diz qual dos dois veio.
+    pub fn from_platform(text: &str) -> SharedContent {
+        let parts: Vec<&str> = text.split(';').filter(|p| !p.is_empty()).collect();
+        let is_path = |p: &str| !p.contains('\n') && (p.starts_with('/') || p.get(1..3) == Some(":\\"));
+        if !parts.is_empty() && parts.iter().all(|p| is_path(p)) {
+            SharedContent { text: String::new(), files: parts.into_iter().map(str::to_string).collect() }
+        } else {
+            SharedContent { text: text.to_string(), files: Vec::new() }
+        }
+    }
+}
 
 /// Consulta e pede as permissões do aparelho (câmera, microfone, localização, notificações,
 /// fotos, contatos, agenda, bluetooth).
 ///
 /// `permissions` lista as que o app usa (`camera;location`): a publicação as declara no
 /// AndroidManifest e no Info.plist, e [`Permissions::request_all`] pede todas. No iOS cada
-/// uma precisa de um texto que diz por que o app a usa: `reasons`
-/// (`camera=Para a foto do perfil;location=Para achar a loja mais perto`).
+/// uma precisa de um texto que diz por que o app a usa: `reasons` (`[{"permission":
+/// "camera", "reason": "Para a foto do perfil"}, {"permission": "location", "reason": "Para
+/// achar a loja mais perto"}]`).
 ///
 /// ```no_run
 /// # use aylis_core::Ui; use aylis_core::platform::Permission; use aylis_controls_device::Permissions;
 /// # let mut ui = Ui::new(); let perm = ui.find("prmApp").unwrap();
 /// if Permissions::state(&ui, Permission::Camera) != aylis_core::platform::PermissionState::Granted {
-///     // a resposta chega no on_result: "camera=granted"
+///     // a resposta chega no on_result: {"answers": [{"permission": "camera", "state": "granted"}]}
 ///     Permissions::request(&mut ui, perm, &[Permission::Camera]);
 /// }
 /// ```
@@ -35,7 +136,8 @@ pub struct Permissions {
     /// As permissões que o app usa, separadas por `;` (`camera;location`): a publicação as
     /// declara e o `request_all` pede todas.
     pub permissions: String,
-    /// Por que o app usa cada uma (o iOS mostra ao pedir): `camera=Para a foto do perfil;...`.
+    /// Por que o app usa cada uma (o iOS mostra ao pedir), em JSON ([`PERMISSION_REASON`]):
+    /// `[{"permission": "camera", "reason": "Para a foto do perfil"}]`.
     pub reasons: String,
 }
 
@@ -46,13 +148,14 @@ impl Permissions {
     }
 
     /// Pede as permissões (o sistema pergunta só as que ainda não foram respondidas). A
-    /// resposta chega no `on_result` do componente `id`, como `camera=granted;location=denied`.
+    /// resposta chega no `on_result` do componente `id` ([`PermissionResult`]: `{"answers":
+    /// [{"permission": "camera", "state": "granted"}]}`).
     pub fn request(ui: &mut Ui, id: ComponentId, permissions: &[Permission]) {
         let poster = ui.poster();
         let done = Box::new(move |answers: Vec<(Permission, PermissionState)>| {
             poster.post(move |ui| {
-                let text = answers.iter().map(|(p, s)| format!("{}={}", p.name(), s.name())).collect::<Vec<_>>().join(";");
-                ui.fire(id, "on_result", &EventArgs::Text(text));
+                let result = PermissionResult { answers: answers.into_iter().map(|(permission, state)| PermissionAnswer { permission, state }).collect() };
+                ui.fire(id, "on_result", &EventArgs::Text(serde_json::to_string(&result).unwrap_or_default()));
             });
         });
         match ui.services_mut().permissions.as_mut() {
@@ -69,11 +172,10 @@ impl Permissions {
 
     /// O texto de `reasons` para uma permissão (vazio se não houver).
     pub fn reason(&self, permission: Permission) -> String {
-        self.reasons
-            .split(';')
-            .filter_map(|pair| pair.split_once('='))
-            .find(|(name, _)| Permission::parse(name) == Some(permission))
-            .map(|(_, text)| text.trim().to_string())
+        crate::records::parse_list::<PermissionReason>(&self.reasons)
+            .into_iter()
+            .find(|r| Permission::parse(&r.permission) == Some(permission))
+            .map(|r| r.reason.trim().to_string())
             .unwrap_or_default()
     }
 }
@@ -84,15 +186,17 @@ impl Component for Permissions {
     }
 
     properties! {
-        permissions: String => "Behavior",
-        reasons: String => "Behavior";
-        events: on_result
+        permissions: String as List => "Behavior",
+        reasons: String as RecordList(&PERMISSION_REASON) => "Behavior";
+        events: on_result: PermissionResult
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
         const METHODS: &[MethodInfo] = &[
-            MethodInfo::new("state", &[PropKind::String], Some(PropKind::String)).params(&["permission"]),
-            MethodInfo::new("request", &[PropKind::String], Some(PropKind::Bool)).params(&["permission"]),
+            MethodInfo::new("state", &[PropKind::Enum(<aylis_core::platform::Permission as aylis_core::PropEnum>::NAMES)], Some(PropKind::Enum(<aylis_core::platform::PermissionState as aylis_core::PropEnum>::NAMES)))
+                .params(&["permission"])
+                .types(&["Permission"], "PermissionState"),
+            MethodInfo::new("request", &[PropKind::Enum(<aylis_core::platform::Permission as aylis_core::PropEnum>::NAMES)], Some(PropKind::Bool)).params(&["permission"]).types(&["Permission"], ""),
             MethodInfo::new("request_all", &[], Some(PropKind::Bool)),
         ];
         METHODS
@@ -175,12 +279,12 @@ impl Component for Biometrics {
     properties! {
         reason: String => "Behavior",
         allow_device_credential: bool => "Behavior";
-        events: on_success, on_fail, on_cancel
+        events: on_success: (), on_fail: String, on_cancel: ()
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
         const METHODS: &[MethodInfo] = &[
-            MethodInfo::new("availability", &[], Some(PropKind::String)),
+            MethodInfo::new("availability", &[], Some(PropKind::Enum(<aylis_core::platform::Biometry as aylis_core::PropEnum>::NAMES))).types(&[], "Biometry"),
             MethodInfo::new("available", &[], Some(PropKind::Bool)),
             MethodInfo::new("authenticate", &[], Some(PropKind::Bool)),
         ];
@@ -205,7 +309,7 @@ impl Component for Biometrics {
 /// app, compartilha texto e arquivos pela folha do sistema e pede algo a outro app
 /// (`request`, com a resposta em `on_result`). Também recebe o que chega de fora: `on_link`
 /// (o link que abriu o app, dos `deep_links` do projeto) e `on_shared` (o que outro app
-/// compartilhou com este: o texto, ou os arquivos separados por `;`). Com o `on_shared` num
+/// compartilhou com este, um [`SharedContent`]: o texto ou os arquivos). Com o `on_shared` num
 /// form, a publicação do Android põe o app na lista de compartilhar.
 ///
 /// | Plataforma | Abrir endereço | Abrir app | Compartilhar | Pedir | Receber |
@@ -270,7 +374,7 @@ impl Component for AppLink {
 
     properties! {
         ;
-        events: on_link, on_shared, on_result, on_error
+        events: on_link: String, on_shared: SharedContent, on_result: String, on_error: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -321,7 +425,10 @@ impl Component for AppLink {
         for item in aylis_core::platform::take_incoming() {
             match item {
                 aylis_core::platform::Incoming::Link(url) => ctx.fire("on_link", EventArgs::Text(url)),
-                aylis_core::platform::Incoming::Shared(text) => ctx.fire("on_shared", EventArgs::Text(text)),
+                aylis_core::platform::Incoming::Shared(text) => {
+                    let shared = SharedContent::from_platform(&text);
+                    ctx.fire("on_shared", EventArgs::Text(serde_json::to_string(&shared).unwrap_or_default()))
+                }
             }
         }
     }

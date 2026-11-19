@@ -121,7 +121,7 @@ impl Component for AngleDial {
         angle: f32 as Angle => "Data",
         snap: f32 => "Behavior",
         show_value: bool => "Appearance";
-        events: on_change, on_commit
+        events: on_change: f64, on_commit: f64
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -357,7 +357,7 @@ impl Component for ShadowEditor {
         spread: f32 => "Data",
         color: Color => "Data",
         range: f32 => "Behavior";
-        events: on_change, on_commit
+        events: on_change: Option<aylis_core::Shadow>, on_commit: Option<aylis_core::Shadow>
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -519,7 +519,7 @@ impl Component for EasingEditor {
         y2: f32 => "Data",
         preview: bool => "Appearance",
         compact: bool => "Appearance";
-        events: on_change, on_commit
+        events: on_change: aylis_core::Easing, on_commit: aylis_core::Easing
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -770,7 +770,7 @@ impl Component for TimingEditor {
         looping: bool => "Animation",
         snap: f32 => "Behavior",
         playing: bool => "Behavior";
-        events: on_change, on_commit
+        events: on_change: String, on_commit: String
     }
 
     fn pointer_down(&mut self, _ctx: &mut EventCtx<'_>, event: &PointerEvent) {

@@ -11,5 +11,8 @@ fn main() {
     aylis_docview::register(&mut ui);
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../resources/components.json");
     std::fs::write(path, aylis_json::catalog(&ui)).expect("resources/components.json");
+    // O teste que confere os enums do catálogo no `aylis::prelude`.
+    let test = concat!(env!("CARGO_MANIFEST_DIR"), "/../aylis/tests/catalog_enums.rs");
+    std::fs::write(test, aylis_json::catalog_enums_test(&ui)).expect("crates/aylis/tests/catalog_enums.rs");
     println!("resources/components.json atualizado");
 }

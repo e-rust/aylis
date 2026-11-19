@@ -28,15 +28,15 @@ var estado = struct {
 // ferramenta: um botão de ferramenta e a ferramenta dele.
 type ferramenta struct {
 	botao aylisButton
-	nome  string
+	nome  PaintTool
 }
 
 // ferramentas: os botões de ferramenta (os do form do evento) e a ferramenta de cada um.
 func ferramentas() []ferramenta {
 	return []ferramenta{
-		{frmPaint.btnSelecionar, "select"}, {frmPaint.btnLapis, "pencil"}, {frmPaint.btnPincel, "brush"}, {frmPaint.btnBorracha, "eraser"},
-		{frmPaint.btnBalde, "fill"}, {frmPaint.btnContaGotas, "picker"}, {frmPaint.btnLinha, "line"}, {frmPaint.btnRetangulo, "rectangle"},
-		{frmPaint.btnElipse, "ellipse"},
+		{frmPaint.btnSelecionar, PaintToolSelect}, {frmPaint.btnLapis, PaintToolPencil}, {frmPaint.btnPincel, PaintToolBrush}, {frmPaint.btnBorracha, PaintToolEraser},
+		{frmPaint.btnBalde, PaintToolFill}, {frmPaint.btnContaGotas, PaintToolPicker}, {frmPaint.btnLinha, PaintToolLine}, {frmPaint.btnRetangulo, PaintToolRectangle},
+		{frmPaint.btnElipse, PaintToolEllipse},
 	}
 }
 
@@ -48,9 +48,12 @@ func invocar(app *aylis.Aylis, metodo string, args ...any) (any, error) {
 	return app.Call("invoke", aylis.M{"target": frmPaint.pcDesenho.ID, "method": metodo, "args": args})
 }
 
-func texto(ev aylis.Event) string {
-	s, _ := ev.Args.(string)
-	return s
+// primeiro é o primeiro caminho da lista do diálogo (um arquivo só).
+func primeiro(caminhos []string) string {
+	if len(caminhos) == 0 {
+		return ""
+	}
+	return caminhos[0]
 }
 
 // nomeDoArquivo é o nome do arquivo sem a pasta.
@@ -82,7 +85,9 @@ func atualizarEdicao(app *aylis.Aylis) {
 	frmPaint.btnDesfazer.SetEnabled(desfazer)
 	frmPaint.mnuRefazer.SetEnabled(refazer)
 	frmPaint.btnRefazer.SetEnabled(refazer)
-	frmPaint.lblTamanho.SetText(frmPaint.pcDesenho.Size() + "px")
+	if tamanho := frmPaint.pcDesenho.Size(); tamanho != nil {
+		frmPaint.lblTamanho.SetText(fmt.Sprintf("%d × %dpx", tamanho.Width, tamanho.Height))
+	}
 }
 
 func marcarModificado(app *aylis.Aylis) {
@@ -109,10 +114,10 @@ func marcarCor(app *aylis.Aylis, cor int) {
 	estado.corAtiva = cor
 	for n, circulo := range []aylisCircle{frmPaint.btnCor1, frmPaint.btnCor2} {
 		if n+1 == cor {
-			circulo.SetStroke("#0067C0")
+			circulo.SetStroke(aylis.RGB(0x00, 0x67, 0xC0))
 			circulo.SetStrokeWidth(3.0)
 		} else {
-			circulo.SetStroke("#9A9A9A")
+			circulo.SetStroke(aylis.RGB(0x9A, 0x9A, 0x9A))
 			circulo.SetStrokeWidth(1.0)
 		}
 	}
@@ -132,7 +137,7 @@ func salvarEm(app *aylis.Aylis, caminho string) {
 	titulo(app)
 }
 
-func (f FrmPaint) novo_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) novo_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.New(640, 400)
 	estado.arquivo = ""
 	estado.modificado = false
@@ -140,81 +145,81 @@ func (f FrmPaint) novo_click(app *aylis.Aylis, ev aylis.Event) {
 	atualizarEdicao(app)
 }
 
-func (f FrmPaint) abrir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) abrir_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.dlgAbrir.Execute()
 }
 
-func (f FrmPaint) salvar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) salvar_click(app *aylis.Aylis, sender aylis.Component) {
 	if estado.arquivo != "" {
 		salvarEm(app, estado.arquivo)
 	} else {
-		f.salvar_como_click(app, ev)
+		// Sem arquivo ainda: o mesmo do "Salvar como".
+		frmPaint.dlgSalvar.Execute()
 	}
 }
 
-func (f FrmPaint) salvar_como_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) salvar_como_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.dlgSalvar.Execute()
 }
 
-func (f FrmPaint) sair_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) sair_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.Close()
 }
 
-func (f FrmPaint) desfazer_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) desfazer_click(app *aylis.Aylis, sender aylis.Component) {
 	frmPaint.pcDesenho.Undo()
 	marcarModificado(app)
 }
 
-func (f FrmPaint) refazer_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) refazer_click(app *aylis.Aylis, sender aylis.Component) {
 	frmPaint.pcDesenho.Redo()
 	marcarModificado(app)
 }
 
-func (f FrmPaint) recortar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) recortar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.Cut()
 }
 
-func (f FrmPaint) copiar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) copiar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.Copy()
 }
 
-func (f FrmPaint) colar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) colar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	// O que foi colado entra como seleção solta: a ferramenta passa a ser a seleção.
 	if frmPaint.pcDesenho.Paste() {
 		marcarFerramenta(app, frmPaint.btnSelecionar)
 	}
 }
 
-func (f FrmPaint) excluir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) excluir_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.Delete()
 }
 
-func (f FrmPaint) selecionar_tudo_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) selecionar_tudo_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.SelectAll()
 	marcarFerramenta(app, frmPaint.btnSelecionar)
 }
 
-func (f FrmPaint) limpar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) limpar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPaint.pcDesenho.Clear()
 	marcarModificado(app)
 }
 
-func (f FrmPaint) ampliar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) ampliar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	aplicarZoom(app, min(estado.zoom*2, 800))
 }
 
-func (f FrmPaint) reduzir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) reduzir_click(app *aylis.Aylis, sender aylisMenuItem) {
 	aplicarZoom(app, max(estado.zoom/2, 25))
 }
 
-func (f FrmPaint) tamanho_real_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) tamanho_real_click(app *aylis.Aylis, sender aylisMenuItem) {
 	aplicarZoom(app, 100)
 }
 
-func (f FrmPaint) ferramenta_click(app *aylis.Aylis, ev aylis.Event) {
-	clicado := frmPaint.SenderAsButton(ev)
+func (f FrmPaint) ferramenta_click(app *aylis.Aylis, sender aylisButton) {
 	for _, fe := range ferramentas() {
-		if clicado.ID != 0 && fe.botao.ID == clicado.ID {
+		if fe.botao.ID == sender.ID {
 			frmPaint.pcDesenho.SetTool(fe.nome)
 			marcarFerramenta(app, fe.botao)
 			return
@@ -222,29 +227,27 @@ func (f FrmPaint) ferramenta_click(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPaint) preencher_change(app *aylis.Aylis, ev aylis.Event) {
-	if b, ok := ev.Args.(bool); ok {
-		frmPaint.pcDesenho.SetFilled(b)
-	}
+func (f FrmPaint) preencher_change(app *aylis.Aylis, sender aylisCheckBox, value bool) {
+	frmPaint.pcDesenho.SetFilled(value)
 }
 
-func (f FrmPaint) espessura_change(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) espessura_change(app *aylis.Aylis, sender aylisComboBox, value string) {
 	// "5 px" → 5
-	if n, err := strconv.Atoi(strings.Split(texto(ev), " ")[0]); err == nil {
+	if n, err := strconv.Atoi(strings.Split(value, " ")[0]); err == nil {
 		frmPaint.pcDesenho.SetBrushSize(int64(n))
 	}
 }
 
-func (f FrmPaint) cor1_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) cor1_click(app *aylis.Aylis, sender aylisCircle) {
 	marcarCor(app, 1)
 }
 
-func (f FrmPaint) cor2_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) cor2_click(app *aylis.Aylis, sender aylisCircle) {
 	marcarCor(app, 2)
 }
 
-func (f FrmPaint) paleta_click(app *aylis.Aylis, ev aylis.Event) {
-	cor := frmPaint.SenderAsCircle(ev).Fill()
+func (f FrmPaint) paleta_click(app *aylis.Aylis, sender aylisCircle) {
+	cor := sender.Fill()
 	if estado.corAtiva == 1 {
 		frmPaint.pcDesenho.SetColor(cor)
 		frmPaint.btnCor1.SetFill(cor)
@@ -254,30 +257,30 @@ func (f FrmPaint) paleta_click(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPaint) desenho_change(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) desenho_change(app *aylis.Aylis, sender aylisPaintCanvas) {
 	marcarModificado(app)
 }
 
-func (f FrmPaint) desenho_pick(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPaint) desenho_pick(app *aylis.Aylis, sender aylisPaintCanvas, value string) {
 	// "#RRGGBB" (cor 1) ou "#RRGGBB2" (cor 2, o botão direito)
-	t := texto(ev)
-	if strings.HasSuffix(t, "2") {
-		frmPaint.btnCor2.SetFill(t[:len(t)-1])
+	if strings.HasSuffix(value, "2") {
+		c, _ := aylis.ColorHex(value[:len(value)-1])
+		frmPaint.btnCor2.SetFill(c)
 	} else {
-		frmPaint.btnCor1.SetFill(t)
+		c, _ := aylis.ColorHex(value)
+		frmPaint.btnCor1.SetFill(c)
 	}
 }
 
-func (f FrmPaint) desenho_cursor(app *aylis.Aylis, ev aylis.Event) {
-	t := texto(ev)
-	if t != "" {
-		t += "px"
+func (f FrmPaint) desenho_cursor(app *aylis.Aylis, sender aylisPaintCanvas, value string) {
+	if value != "" {
+		value += "px"
 	}
-	frmPaint.lblPosicao.SetText(t)
+	frmPaint.lblPosicao.SetText(value)
 }
 
-func (f FrmPaint) abrir_select(app *aylis.Aylis, ev aylis.Event) {
-	caminho := texto(ev)
+func (f FrmPaint) abrir_select(app *aylis.Aylis, sender aylisOpenDialog, value []string) {
+	caminho := primeiro(value)
 	if _, err := invocar(app, "open", caminho); err != nil {
 		erro(app, "Não foi possível abrir a imagem.\n"+err.Error())
 		return
@@ -288,6 +291,6 @@ func (f FrmPaint) abrir_select(app *aylis.Aylis, ev aylis.Event) {
 	atualizarEdicao(app)
 }
 
-func (f FrmPaint) salvar_select(app *aylis.Aylis, ev aylis.Event) {
-	salvarEm(app, texto(ev))
+func (f FrmPaint) salvar_select(app *aylis.Aylis, sender aylisSaveDialog, value []string) {
+	salvarEm(app, primeiro(value))
 }

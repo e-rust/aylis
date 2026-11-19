@@ -209,7 +209,7 @@
             dbcEstados = resolve(list, "dbcEstados", "DBChart", DBChart::new);
         }
 
-        /** O ClientDataSet deste form com o nome (como o FindComponent). */
+        /** O ClientDataSet deste form com o nome. */
         public ClientDataSet findClientDataSet(String name) {
             return switch (name) {
                 case "cdsEstados" -> cdsEstados;
@@ -226,7 +226,7 @@
             return findClientDataSet(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O DBChart deste form com o nome (como o FindComponent). */
+        /** O DBChart deste form com o nome. */
         public DBChart findDBChart(String name) {
             return switch (name) {
                 case "dbcPopulacao" -> dbcPopulacao;
@@ -241,7 +241,7 @@
             return findDBChart(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O DataGrid deste form com o nome (como o FindComponent). */
+        /** O DataGrid deste form com o nome. */
         public DataGrid findDataGrid(String name) {
             return switch (name) {
                 case "grdEstados" -> grdEstados;
@@ -256,7 +256,7 @@
             return findDataGrid(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O DataSource deste form com o nome (como o FindComponent). */
+        /** O DataSource deste form com o nome. */
         public DataSource findDataSource(String name) {
             return switch (name) {
                 case "dsEstados" -> dsEstados;
@@ -273,7 +273,7 @@
             return findDataSource(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Field deste form com o nome (como o FindComponent). */
+        /** O Field deste form com o nome. */
         public Field findField(String name) {
             return switch (name) {
                 case "cdsEstadosId" -> cdsEstadosId;
@@ -323,7 +323,7 @@
             return findField(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O GroupBox deste form com o nome (como o FindComponent). */
+        /** O GroupBox deste form com o nome. */
         public GroupBox findGroupBox(String name) {
             return switch (name) {
                 case "gbEstados" -> gbEstados;
@@ -338,7 +338,7 @@
             return findGroupBox(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Image deste form com o nome (como o FindComponent). */
+        /** O Image deste form com o nome. */
         public Image findImage(String name) {
             return switch (name) {
                 case "imgBandeiraEstado" -> imgBandeiraEstado;
@@ -352,7 +352,7 @@
             return findImage(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Label deste form com o nome (como o FindComponent). */
+        /** O Label deste form com o nome. */
         public Label findLabel(String name) {
             return switch (name) {
                 case "lblFonte" -> lblFonte;
@@ -389,7 +389,7 @@
             return findLabel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Layout deste form com o nome (como o FindComponent). */
+        /** O Layout deste form com o nome. */
         public Layout findLayout(String name) {
             return switch (name) {
                 case "lytListas" -> lytListas;
@@ -408,7 +408,7 @@
             return findLayout(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Panel deste form com o nome (como o FindComponent). */
+        /** O Panel deste form com o nome. */
         public Panel findPanel(String name) {
             return switch (name) {
                 case "pnlEstado" -> pnlEstado;
@@ -422,7 +422,7 @@
             return findPanel(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Splitter deste form com o nome (como o FindComponent). */
+        /** O Splitter deste form com o nome. */
         public Splitter findSplitter(String name) {
             return switch (name) {
                 case "splListas" -> splListas;
@@ -435,7 +435,7 @@
             return findSplitter(String.valueOf(ev.sender().get("name")));
         }
 
-        /** O Svg deste form com o nome (como o FindComponent). */
+        /** O Svg deste form com o nome. */
         public Svg findSvg(String name) {
             return switch (name) {
                 case "svgBrasil" -> svgBrasil;

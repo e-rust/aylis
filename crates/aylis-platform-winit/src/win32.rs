@@ -266,8 +266,54 @@ fn wake() {
     }
 }
 
+thread_local! {
+    /// A cor de fundo de cada form (`COLORREF`), para o `WM_ERASEBKGND`: o que a janela mostra
+    /// antes do primeiro quadro (e por baixo da swap chain) sai na cor dele, não em branco.
+    static BACKGROUNDS: RefCell<HashMap<u64, u32>> = RefCell::new(HashMap::new());
+}
+
+/// A cor com que a janela do form é apagada antes de o quadro chegar (`None`: a janela
+/// transparente, que não apaga).
+pub(crate) fn set_background(form: ComponentId, color: Option<aylis_core::Color>) {
+    BACKGROUNDS.with(|b| {
+        let mut b = b.borrow_mut();
+        match color {
+            Some(c) => {
+                b.insert(form.to_u64(), c.r as u32 | (c.g as u32) << 8 | (c.b as u32) << 16);
+            }
+            None => {
+                b.remove(&form.to_u64());
+            }
+        }
+    });
+}
+
+/// Apaga a área da janela na cor de fundo do form (o `WM_ERASEBKGND`).
+fn erase_background(hwnd: HWND, hdc: usize, colorref: u32) {
+    use windows::Win32::Foundation::{COLORREF, RECT};
+    use windows::Win32::Graphics::Gdi::{CreateSolidBrush, DeleteObject, FillRect, HDC};
+    use windows::Win32::UI::WindowsAndMessaging::GetClientRect;
+    let mut rect = RECT::default();
+    // SAFETY: `hwnd` é a janela da mensagem e `hdc` o contexto que o sistema mandou nela; o
+    // pincel é criado, usado e apagado aqui.
+    unsafe {
+        if GetClientRect(hwnd, &mut rect).is_ok() {
+            let brush = CreateSolidBrush(COLORREF(colorref));
+            FillRect(HDC(hdc as *mut _), &rect, brush);
+            let _ = DeleteObject(brush.into());
+        }
+    }
+}
+
 unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lparam: LPARAM, _id: usize, form: usize) -> LRESULT {
     let form_id = ComponentId::from_u64(form as u64);
+    // Apagar o fundo: na cor do form (sem isso, a janela aparece branca até o primeiro quadro).
+    if message == windows::Win32::UI::WindowsAndMessaging::WM_ERASEBKGND {
+        if let Some(color) = BACKGROUNDS.with(|b| b.borrow().get(&(form as u64)).copied()) {
+            erase_background(hwnd, wparam.0, color);
+            return LRESULT(1);
+        }
+    }
     if message == taskbar_created() {
         if let Ok(mut q) = BUTTON_CREATED.lock() {
             q.push(form as u64);
@@ -480,6 +526,25 @@ pub(crate) fn set_window_corners(window: &winit::window::Window, preference: i32
     // SAFETY: `hwnd` é a janela viva do winit, e o ponteiro e o tamanho são os de `value`, que
     // vive até o fim da chamada (o DWM copia o valor).
     let _ = unsafe { DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, (&raw const value).cast(), size_of::<DWM_WINDOW_CORNER_PREFERENCE>() as u32) };
+}
+
+/// Encobre a janela só na tela (`DWMWA_CLOAK`): para o sistema ela está mostrada (o primeiro
+/// quadro é apresentado de verdade; numa janela escondida a swap chain descarta o quadro), mas o
+/// usuário não a vê. A janela nasce encoberta e aparece já pintada: sem o branco da abertura.
+pub(crate) fn set_cloaked(window: &winit::window::Window, cloaked: bool) {
+    use windows::core::BOOL;
+    use windows::Win32::Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    // Ao descobrir: espera o DWM compor o quadro já apresentado (o DirectComposition junta a
+    // camada na composição seguinte); sem isso, a primeira composição visível podia vir sem ele.
+    if !cloaked {
+        // SAFETY: sem argumentos; só espera a próxima composição do DWM.
+        let _ = unsafe { windows::Win32::Graphics::Dwm::DwmFlush() };
+    }
+    let value = BOOL::from(cloaked);
+    // SAFETY: `hwnd` é a janela viva do winit, e o ponteiro e o tamanho são os de `value`, que
+    // vive até o fim da chamada (o DWM copia o valor).
+    let _ = unsafe { DwmSetWindowAttribute(hwnd, DWMWA_CLOAK, (&raw const value).cast(), size_of::<BOOL>() as u32) };
 }
 
 /// A animação do Windows ao abrir, minimizar e restaurar (`window_animation`):

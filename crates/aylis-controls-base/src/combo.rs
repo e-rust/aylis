@@ -247,17 +247,17 @@ impl Component for ComboBox {
     leaf_control!("ComboBox");
 
     properties! {
-        items: String => "Data",
+        items: String as List => "Data",
         values: String => "Data",
         item_index: i64 => "Data",
         h_align: TextAlign => "Text",
         trimming: Trimming => "Text",
         arrow: ComboArrow => "Appearance",
         sensitive: bool => "Behavior",
-        groups: String => "Data",
-        disabled_items: String => "Data",
+        groups: String as List => "Data",
+        disabled_items: String as List => "Data",
         drop_down_count: i64 => "Behavior";
-        events: on_change;
+        events: on_change: String;
         computed: value: String => value / set_value
     }
 

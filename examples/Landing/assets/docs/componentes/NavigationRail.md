@@ -12,14 +12,14 @@ Trilho de navegação (o "navigation rail" do Material 3, para telas largas): í
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem dos `items`, separados por `;`. |
+| `icons` | Ícones | lista de textos (separados por `;`) | Os ícones dos destinos, na mesma ordem dos `items`, separados por `;`. |
 | `fab_icon` | Ícone do botão flutuante | texto | O ícone do botão de ação em cima (dispara `on_fab`); vazio: sem botão. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os nomes dos destinos, separados por `;` (`Início;Buscar;Perfil`). |
+| `items` | Itens | lista de textos (separados por `;`) | Os nomes dos destinos, separados por `;` (`Início;Buscar;Perfil`). |
 | `item_index` | Item escolhido | inteiro | O destino escolhido (0 = o primeiro; -1 = nenhum). |
 
 ## Eventos
@@ -42,8 +42,8 @@ E o handler, um método do form (`self.NavigationRail1` já é um `NavigationRai
 ```rust
 impl FrmPrincipal {
     pub fn navigation_rail1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.NavigationRail1.items(ui);
-        self.NavigationRail1.set_items(ui, format!("{atual}!"));
+        let atual = self.NavigationRail1.item_index(ui);
+        self.NavigationRail1.set_item_index(ui, atual + 1);
     }
 }
 ```

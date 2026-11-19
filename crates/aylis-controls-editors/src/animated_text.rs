@@ -1,32 +1,37 @@
 //! [`AnimatedText`]: texto com efeitos de entrada, saída e contínuos por letra, palavra ou
 //! linha (como os de um programa de apresentação), vários ao mesmo tempo ou encadeados.
 //!
-//! Os efeitos vêm em `effects`, separados por `;`. Cada um é o nome e os parâmetros
-//! `chave=valor` (e as palavras `out`, `after`, `loop`):
+//! Os efeitos vêm em `effects`, uma lista em JSON ([`TEXT_EFFECT`]): o `effect` e os
+//! parâmetros dele (os ausentes são o padrão):
 //!
-//! ```text
-//! fade by=letter duration=500 stagger=40; slide dy=30 by=word duration=600 easing=back
-//! typewriter speed=30 cursor; wave amplitude=6 period=1200 after
+//! ```json
+//! [
+//!   {"effect": "fade", "by": "letter", "duration": 500, "stagger": 40},
+//!   {"effect": "slide", "dy": 30, "by": "word", "duration": 600, "easing": "back"},
+//!   {"effect": "typewriter", "speed": 30, "cursor": true},
+//!   {"effect": "wave", "amplitude": 6, "period": 1200, "after": true}
+//! ]
 //! ```
 //!
 //! | Efeito | O que faz | Parâmetros próprios |
 //! |---|---|---|
 //! | `fade` | aparece (com `out`, some) | — |
-//! | `slide` | vem de um deslocamento | `dx`, `dy` (pontos; padrão `dy=24`) |
+//! | `slide` | vem de um deslocamento | `dx`, `dy` (pontos; padrão `dy` 24) |
 //! | `scale` | cresce (ou encolhe) até o tamanho | `from` (padrão 0) |
 //! | `rotate` | gira até ficar reto | `from` (graus; padrão -90) |
 //! | `typewriter` | máquina de escrever, uma letra por vez | `speed` (ms por letra), `cursor` |
-//! | `color` | muda de cor até a final | `from` (`#ff0000`) |
+//! | `color` | muda de cor até a final | `from_color` (`#ff0000`) |
 //! | `tracking` | as letras chegam juntando | `from` (pontos entre letras; padrão 20) |
 //! | `wave` | onda contínua | `amplitude`, `period` (ms) |
 //! | `shake` | tremor contínuo | `amplitude` |
 //! | `blink` | pisca | `period` (ms) |
 //!
-//! Comuns a todos: `by=letter|word|line|all` (a unidade animada), `duration` e `delay` (ms),
-//! `stagger` (ms entre uma unidade e a seguinte), `order=normal|reverse|center|random`,
-//! `easing=linear|in|out|in_out|back|bounce|elastic`, `out` (saída: do normal para o
-//! efeito) e `after` (começa quando o efeito anterior termina, mais o `delay`). Sem `after`,
-//! todos começam juntos (cada um com o seu `delay`): simultâneos ou em cascata, como quiser.
+//! Comuns a todos: `by` (`letter`, `word`, `line`, `all`: a unidade animada), `duration` e
+//! `delay` (ms), `stagger` (ms entre uma unidade e a seguinte), `order` (`normal`,
+//! `reverse`, `center`, `random`), `easing` (`auto`, `linear`, `in`, `out`, `in_out`,
+//! `back`, `bounce`, `elastic`), `out` (saída: do normal para o efeito) e `after` (começa
+//! quando o efeito anterior termina, mais o `delay`). Sem `after`, todos começam juntos
+//! (cada um com o seu `delay`): simultâneos ou em cascata, como quiser.
 //!
 //! Antes de começar, cada efeito segura o estado inicial dele (o `slide` deslocado, o
 //! `scale` pequeno) sem esconder a letra: para "aparecer deslizando", junte `fade` e `slide`.
@@ -145,64 +150,127 @@ struct Effect {
     after: bool,
 }
 
-/// Lê `effects`. Efeitos desconhecidos ficam de fora (o erro vai para o `errors`).
+/// Os efeitos (o `effect` do [`TEXT_EFFECT`]).
+const EFFECT_NAMES: &[&str] = &["fade", "slide", "scale", "rotate", "typewriter", "color", "tracking", "wave", "shake", "blink"];
+/// A unidade animada (o `by`).
+const UNIT_NAMES: &[&str] = &["letter", "word", "line", "all"];
+/// A ordem das unidades (o `order`).
+const ORDER_NAMES: &[&str] = &["normal", "reverse", "center", "random"];
+/// A curva (o `easing`); `auto`: `linear` na máquina de escrever, `out` nos outros.
+const EASING_NAMES: &[&str] = &["auto", "linear", "in", "out", "in_out", "back", "bounce", "elastic"];
+
+/// O registro de um efeito do `AnimatedText` (o `effects`, em JSON). Os números ausentes (ou
+/// nulos) são o padrão do efeito: `duration` 500, `dy` 24 no `slide`, `from` -90 no
+/// `rotate`, `amplitude` 6 na `wave`... Tempos em ms, distâncias em pontos, ângulos em graus.
+pub const TEXT_EFFECT: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TextEffect",
+    fields: &[
+        ("effect", PropKind::Enum(EFFECT_NAMES)),
+        ("by", PropKind::Enum(UNIT_NAMES)),
+        ("order", PropKind::Enum(ORDER_NAMES)),
+        ("easing", PropKind::Enum(EASING_NAMES)),
+        ("duration", PropKind::Float),
+        ("delay", PropKind::Float),
+        ("stagger", PropKind::Float),
+        ("speed", PropKind::Float),
+        ("out", PropKind::Bool),
+        ("after", PropKind::Bool),
+        ("cursor", PropKind::Bool),
+        ("dx", PropKind::Float),
+        ("dy", PropKind::Float),
+        ("from", PropKind::Float),
+        ("from_color", PropKind::Color),
+        ("amplitude", PropKind::Float),
+        ("period", PropKind::Float),
+    ],
+};
+
+/// Um efeito como vem no JSON ([`TEXT_EFFECT`]); `None`: o padrão do efeito.
+#[derive(Default, serde::Deserialize)]
+#[serde(default)]
+struct EffectRecord {
+    effect: String,
+    by: String,
+    order: String,
+    easing: String,
+    duration: Option<f32>,
+    delay: Option<f32>,
+    stagger: Option<f32>,
+    speed: Option<f32>,
+    out: bool,
+    after: bool,
+    cursor: bool,
+    dx: Option<f32>,
+    dy: Option<f32>,
+    from: Option<f32>,
+    from_color: String,
+    amplitude: Option<f32>,
+    period: Option<f32>,
+}
+
+/// Lê `effects` (JSON: a lista de [`TEXT_EFFECT`]). Efeitos desconhecidos ficam de fora (o
+/// erro vai para o `errors`), como o JSON inválido.
 fn parse_effects(text: &str, errors: &mut Vec<String>) -> Vec<Effect> {
-    let mut out = Vec::new();
-    for part in text.split(';').map(str::trim).filter(|p| !p.is_empty()) {
-        let mut words = part.split_whitespace();
-        let Some(name) = words.next() else { continue };
-        let mut params: Vec<(String, String)> = Vec::new();
-        let mut flags: Vec<String> = Vec::new();
-        for w in words {
-            match w.split_once('=') {
-                Some((k, v)) => params.push((k.to_ascii_lowercase(), v.to_string())),
-                None => flags.push(w.to_ascii_lowercase()),
+    let records: Vec<EffectRecord> = if text.trim().is_empty() {
+        Vec::new()
+    } else {
+        match serde_json::from_str(text) {
+            Ok(list) => list,
+            Err(e) => {
+                errors.push(format!("efeitos inválidos: {e}"));
+                Vec::new()
             }
         }
-        let get = |k: &str| params.iter().find(|(key, _)| key == k).map(|(_, v)| v.as_str());
-        let num = |k: &str, default: f32| get(k).and_then(|v| v.trim_end_matches("ms").parse::<f32>().ok()).unwrap_or(default);
-        let flag = |f: &str| flags.iter().any(|x| x == f);
-        let kind = match name.to_ascii_lowercase().as_str() {
+    };
+    let mut out = Vec::new();
+    for r in records {
+        let kind = match r.effect.trim() {
             "fade" => Kind::Fade,
-            "slide" => Kind::Slide { dx: num("dx", 0.0), dy: num("dy", if get("dx").is_some() { 0.0 } else { 24.0 }) },
-            "scale" | "zoom" => Kind::Scale { from: num("from", 0.0) },
-            "rotate" => Kind::Rotate { from: num("from", -90.0) },
-            "typewriter" | "type" => Kind::Typewriter { cursor: flag("cursor") },
-            "color" => Kind::Color { from: get("from").and_then(Color::from_hex).unwrap_or(Color::rgb(255, 255, 255)) },
-            "tracking" | "spacing" => Kind::Tracking { from: num("from", 20.0) },
-            "wave" => Kind::Wave { amplitude: num("amplitude", 6.0), period: num("period", 1200.0).max(1.0) },
-            "shake" => Kind::Shake { amplitude: num("amplitude", 2.0) },
-            "blink" => Kind::Blink { period: num("period", 800.0).max(1.0) },
+            "slide" => Kind::Slide { dx: r.dx.unwrap_or(0.0), dy: r.dy.unwrap_or(if r.dx.is_some() { 0.0 } else { 24.0 }) },
+            "scale" => Kind::Scale { from: r.from.unwrap_or(0.0) },
+            "rotate" => Kind::Rotate { from: r.from.unwrap_or(-90.0) },
+            "typewriter" => Kind::Typewriter { cursor: r.cursor },
+            "color" => Kind::Color { from: Color::from_hex(&r.from_color).unwrap_or(Color::rgb(255, 255, 255)) },
+            "tracking" => Kind::Tracking { from: r.from.unwrap_or(20.0) },
+            "wave" => Kind::Wave { amplitude: r.amplitude.unwrap_or(6.0), period: r.period.unwrap_or(1200.0).max(1.0) },
+            "shake" => Kind::Shake { amplitude: r.amplitude.unwrap_or(2.0) },
+            "blink" => Kind::Blink { period: r.period.unwrap_or(800.0).max(1.0) },
             other => {
                 errors.push(format!("efeito desconhecido: {other}"));
                 continue;
             }
         };
         let typewriter = matches!(kind, Kind::Typewriter { .. });
-        let unit = match get("by").unwrap_or(if typewriter { "letter" } else { "letter" }) {
-            "word" | "words" => Unit::Word,
-            "line" | "lines" => Unit::Line,
-            "all" | "text" => Unit::All,
+        let unit = match r.by.trim() {
+            "word" => Unit::Word,
+            "line" => Unit::Line,
+            "all" => Unit::All,
             _ => Unit::Letter,
         };
-        let order = match get("order").unwrap_or("normal") {
+        let order = match r.order.trim() {
             "reverse" => Order::Reverse,
             "center" => Order::Center,
             "random" => Order::Random,
             _ => Order::Normal,
         };
-        let curve = match get("easing").unwrap_or(if typewriter { "linear" } else { "out" }) {
+        let curve = match r.easing.trim() {
             "linear" => Curve::Linear,
             "in" => Curve::In,
-            "in_out" | "inout" => Curve::InOut,
+            "out" => Curve::Out,
+            "in_out" => Curve::InOut,
             "back" => Curve::Back,
             "bounce" => Curve::Bounce,
             "elastic" => Curve::Elastic,
+            _ if typewriter => Curve::Linear,
             _ => Curve::Out,
         };
         // A máquina de escrever: `speed` é o intervalo entre as letras.
-        let (duration, stagger) = if typewriter { (0.0, num("speed", num("stagger", 40.0))) } else { (num("duration", 500.0).max(0.0), num("stagger", 0.0).max(0.0)) };
-        out.push(Effect { kind, unit, order, curve, delay: num("delay", 0.0), duration, stagger, out: flag("out"), after: flag("after") });
+        let (duration, stagger) = if typewriter {
+            (0.0, r.speed.or(r.stagger).unwrap_or(40.0).max(0.0))
+        } else {
+            (r.duration.unwrap_or(500.0).max(0.0), r.stagger.unwrap_or(0.0).max(0.0))
+        };
+        out.push(Effect { kind, unit, order, curve, delay: r.delay.unwrap_or(0.0), duration, stagger, out: r.out, after: r.after });
     }
     out
 }
@@ -237,8 +305,8 @@ pub struct AnimatedText {
     pub base: ControlBase,
     /// O texto animado (as quebras de linha valem).
     pub text: String,
-    /// Os efeitos, separados por `;`: o nome e os parâmetros (`fade by=letter duration=500;
-    /// wave amplitude=6 after`). Vazio: o texto parado.
+    /// Os efeitos, em JSON ([`TEXT_EFFECT`]): `[{"effect": "fade", "by": "letter", "duration":
+    /// 500}, {"effect": "wave", "amplitude": 6, "after": true}]`. Vazio: o texto parado.
     pub effects: String,
     /// Começa a animar quando aparece.
     pub autoplay: bool,
@@ -569,14 +637,14 @@ impl Component for AnimatedText {
 
     properties! {
         text: String => "Appearance",
-        effects: String => "Behavior",
+        effects: String as RecordList(&TEXT_EFFECT) => "Behavior",
         autoplay: bool => "Behavior",
         looping: bool => "Behavior",
         loop_delay: f32 => "Behavior",
         h_align: TextAlign => "Appearance",
         v_align: TextAlign => "Appearance",
         wrap: bool => "Appearance";
-        events: on_finish;
+        events: on_finish: ();
         on_set: on_set
     }
 
@@ -714,7 +782,12 @@ mod tests {
     #[test]
     fn effects_parse_with_defaults_and_errors() {
         let mut errors = Vec::new();
-        let e = parse_effects("fade by=word duration=300 stagger=50; slide dy=10 after delay=100 easing=bounce; zzz; wave", &mut errors);
+        let e = parse_effects(
+            r#"[{"effect": "fade", "by": "word", "duration": 300, "stagger": 50},
+                {"effect": "slide", "dy": 10, "after": true, "delay": 100, "easing": "bounce"},
+                {"effect": "zzz"}, {"effect": "wave"}]"#,
+            &mut errors,
+        );
         assert_eq!(e.len(), 3);
         assert_eq!(errors, ["efeito desconhecido: zzz"]);
         assert_eq!((e[0].unit, e[0].duration, e[0].stagger), (Unit::Word, 300.0, 50.0));
@@ -725,6 +798,13 @@ mod tests {
         assert_eq!(t[0], (0.0, 400.0));
         assert_eq!(t[1], (500.0, 500.0 + 9.0 * 0.0 + 500.0));
         assert_eq!(t[2], (0.0, 0.0), "contínuo: só começa");
+        // O texto antigo não é JSON: nenhum efeito, com o erro.
+        let mut errors = Vec::new();
+        assert!(parse_effects("fade by=word", &mut errors).is_empty());
+        assert_eq!(errors.len(), 1);
+        // A máquina de escrever: linear e `speed` como intervalo.
+        let e = parse_effects(r#"[{"effect": "typewriter", "speed": 30, "cursor": true}]"#, &mut Vec::new());
+        assert_eq!((e[0].curve, e[0].stagger, e[0].kind.clone()), (Curve::Linear, 30.0, Kind::Typewriter { cursor: true }));
     }
 
     #[test]

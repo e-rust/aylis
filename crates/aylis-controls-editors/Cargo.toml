@@ -9,6 +9,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.7.0", path = "../aylis-core" }
+aylis-core = { version = "0.8.0", path = "../aylis-core" }
+# Os registros das propriedades em JSON.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 # O PaintCanvas abre e grava PNG, JPEG e BMP.
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }

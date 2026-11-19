@@ -11,6 +11,13 @@ impl Handle for SaveDialog {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: SaveDialog`): só um SaveDialog.
+impl aylis::prelude::FromSender for SaveDialog {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("SaveDialog")).then_some(Self { id })
+    }
+}
+
 impl SaveDialog {
     pub fn title(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "title"))
@@ -41,6 +48,18 @@ impl SaveDialog {
     }
     pub fn set_multiple(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "multiple", value)
+    }
+    pub fn on_select(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_select"))
+    }
+    pub fn set_on_select(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_select", Into::<String>::into(value))
+    }
+    pub fn on_cancel(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_cancel"))
+    }
+    pub fn set_on_cancel(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_cancel", Into::<String>::into(value))
     }
     pub fn execute(self, ui: &mut Ui) {
         aylis::prelude::SaveDialog::execute(ui, self.id);

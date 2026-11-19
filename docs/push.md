@@ -75,7 +75,8 @@ comum da mensagem. Evento: `on_trigger` (os dados).
 
 **`WakeAppAction`**: `form` (o form que abre; vazio, o do componente), `title` e `text`
 (modelos: `{caller}` vira o valor da chave nos dados; `{{` e `}}` são as chaves), `buttons`
-(`answer:Atender;reject:Recusar`), `open_buttons` (os que abrem o app; `*`, todos; os outros
+(`[{"id": "answer", "text": "Atender"}, {"id": "reject", "text": "Recusar"}]`), `open_buttons`
+(os que abrem o app; `*`, todos; os outros
 respondem sem abrir), `ringtone` (`default`, `notification`, `alarm`, `none`), `vibrate`,
 `timeout` (segundos sem resposta; 0, sem limite), `call_style` (o estilo de chamada do
 Android 12+, com os botões `answer` e `reject`/`decline`) e `turn_screen_on`. Eventos:

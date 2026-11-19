@@ -11,11 +11,11 @@
       },
       "handlers": {
         "frmPrincipal.ajuste_timer": {
-          "hash": "dfc96d163dd40d32",
+          "hash": "v2:dfc96d163dd40d32",
           "seen": 2
         },
         "frmPrincipal.nivel_change": {
-          "hash": "f132367b0c778d0e",
+          "hash": "v2:878851914ab12d19",
           "seen": 1
         }
       }

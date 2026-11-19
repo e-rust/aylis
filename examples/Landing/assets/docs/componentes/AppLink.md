@@ -1,6 +1,6 @@
 # AppLink
 
-Fala com outros apps: abre um endereço (`https:`, `mailto:`, `tel:`, `geo:`) ou outro app, compartilha texto e arquivos pela folha do sistema e pede algo a outro app (`request`, com a resposta em `on_result`). Também recebe o que chega de fora: `on_link` (o link que abriu o app, dos `deep_links` do projeto) e `on_shared` (o que outro app compartilhou com este: o texto, ou os arquivos separados por `;`). Com o `on_shared` num form, a publicação do Android põe o app na lista de compartilhar.
+Fala com outros apps: abre um endereço (`https:`, `mailto:`, `tel:`, `geo:`) ou outro app, compartilha texto e arquivos pela folha do sistema e pede algo a outro app (`request`, com a resposta em `on_result`). Também recebe o que chega de fora: `on_link` (o link que abriu o app, dos `deep_links` do projeto) e `on_shared` (o que outro app compartilhou com este, um `SharedContent`: o texto ou os arquivos). Com o `on_shared` num form, a publicação do Android põe o app na lista de compartilhar.
 
 **Paleta:** System · **componente não visual**
 

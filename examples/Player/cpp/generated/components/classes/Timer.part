@@ -7,12 +7,14 @@ struct Timer : aylis::Component {
     void set_interval(double v) const { set_prop_("interval", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
     void set_enabled(bool v) const { set_prop_("enabled", v); }
-    std::string precision() const { return get_prop_("precision").str(); }
-    void set_precision(const std::string& v) const { set_prop_("precision", v); }
+    TimerPrecision precision() const { return enum_of_<TimerPrecision>(get_prop_("precision"), TimerPrecision_names); }
+    void set_precision(TimerPrecision v) const { set_prop_("precision", aylis::Json(TimerPrecision_names[static_cast<int>(v)])); }
     bool background() const { return get_prop_("background").boolean(); }
     void set_background(bool v) const { set_prop_("background", v); }
     bool one_shot() const { return get_prop_("one_shot").boolean(); }
     void set_one_shot(bool v) const { set_prop_("one_shot", v); }
+    std::string on_timer() const { return get_prop_("on_timer").str(); }
+    void set_on_timer(const std::string& v) const { set_prop_("on_timer", v); }
     double drift() const { return get_prop_("drift").number(); }
     void set_drift(double v) const { set_prop_("drift", v); }
     void restart() const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "restart"}, {"args", aylis::Json::array({})}}); }

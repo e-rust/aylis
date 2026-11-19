@@ -27,7 +27,7 @@ fn orders(ui: &mut Ui) -> (ComponentId, ComponentId) {
     ui.add(Field::new("pedido_id", FieldType::Integer), items);
     ui.add(Field::new("produto", FieldType::String), items);
     ui.set_prop(items, "master_source", source).unwrap();
-    ui.set_prop(items, "master_fields", "pedido_id=id").unwrap();
+    ui.set_prop(items, "master_fields", r#"[{"field": "pedido_id", "master_field": "id"}]"#).unwrap();
     data_set(ui, orders).load_rows(vec![vec![1.into(), "Maria".into()]]).unwrap();
     data_set(ui, items)
         .load_rows(vec![vec![10.into(), 1.into(), "Caneta".into()], vec![11.into(), 1.into(), "Lápis".into()]])

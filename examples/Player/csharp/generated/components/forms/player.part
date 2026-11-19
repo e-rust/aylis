@@ -116,7 +116,7 @@
             tmrPosicao = Resolve(list, "tmrPosicao", "Timer", (i, d, n) => new Timer(i, d, n));
         }
 
-        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Button deste form com o nome.</summary>
         public Button? FindButton(string name) => name switch
         {
             "btnMudo" => btnMudo,
@@ -136,7 +136,7 @@
         /// <summary>O Button que disparou o evento.</summary>
         public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
 
-        /// <summary>O Divider deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Divider deste form com o nome.</summary>
         public Divider? FindDivider(string name) => name switch
         {
             "divNavegacao" => divNavegacao,
@@ -146,7 +146,7 @@
         /// <summary>O Divider que disparou o evento.</summary>
         public Divider? SenderAsDivider(AylisClient.AylisEvent ev) => FindDivider(ev.SenderName);
 
-        /// <summary>O Icon deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Icon deste form com o nome.</summary>
         public Icon? FindIcon(string name) => name switch
         {
             "icoCapa" => icoCapa,
@@ -156,7 +156,7 @@
         /// <summary>O Icon que disparou o evento.</summary>
         public Icon? SenderAsIcon(AylisClient.AylisEvent ev) => FindIcon(ev.SenderName);
 
-        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Label deste form com o nome.</summary>
         public Label? FindLabel(string name) => name switch
         {
             "lblTempo" => lblTempo,
@@ -170,7 +170,7 @@
         /// <summary>O Label que disparou o evento.</summary>
         public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
 
-        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Layout deste form com o nome.</summary>
         public Layout? FindLayout(string name) => name switch
         {
             "lytBarra" => lytBarra,
@@ -187,7 +187,7 @@
         /// <summary>O Layout que disparou o evento.</summary>
         public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
 
-        /// <summary>O ListView deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O ListView deste form com o nome.</summary>
         public ListView? FindListView(string name) => name switch
         {
             "lvFila" => lvFila,
@@ -197,7 +197,7 @@
         /// <summary>O ListView que disparou o evento.</summary>
         public ListView? SenderAsListView(AylisClient.AylisEvent ev) => FindListView(ev.SenderName);
 
-        /// <summary>O MainMenu deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O MainMenu deste form com o nome.</summary>
         public MainMenu? FindMainMenu(string name) => name switch
         {
             "mnuPrincipal" => mnuPrincipal,
@@ -207,7 +207,7 @@
         /// <summary>O MainMenu que disparou o evento.</summary>
         public MainMenu? SenderAsMainMenu(AylisClient.AylisEvent ev) => FindMainMenu(ev.SenderName);
 
-        /// <summary>O MenuItem deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O MenuItem deste form com o nome.</summary>
         public MenuItem? FindMenuItem(string name) => name switch
         {
             "mnuArquivo" => mnuArquivo,
@@ -232,7 +232,7 @@
         /// <summary>O MenuItem que disparou o evento.</summary>
         public MenuItem? SenderAsMenuItem(AylisClient.AylisEvent ev) => FindMenuItem(ev.SenderName);
 
-        /// <summary>O OpenDialog deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O OpenDialog deste form com o nome.</summary>
         public OpenDialog? FindOpenDialog(string name) => name switch
         {
             "dlgAbrir" => dlgAbrir,
@@ -242,7 +242,7 @@
         /// <summary>O OpenDialog que disparou o evento.</summary>
         public OpenDialog? SenderAsOpenDialog(AylisClient.AylisEvent ev) => FindOpenDialog(ev.SenderName);
 
-        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Panel deste form com o nome.</summary>
         public Panel? FindPanel(string name) => name switch
         {
             "pnlControles" => pnlControles,
@@ -254,7 +254,7 @@
         /// <summary>O Panel que disparou o evento.</summary>
         public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
 
-        /// <summary>O SeekBar deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O SeekBar deste form com o nome.</summary>
         public SeekBar? FindSeekBar(string name) => name switch
         {
             "sbPosicao" => sbPosicao,
@@ -264,7 +264,7 @@
         /// <summary>O SeekBar que disparou o evento.</summary>
         public SeekBar? SenderAsSeekBar(AylisClient.AylisEvent ev) => FindSeekBar(ev.SenderName);
 
-        /// <summary>O Timer deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Timer deste form com o nome.</summary>
         public Timer? FindTimer(string name) => name switch
         {
             "tmrPosicao" => tmrPosicao,
@@ -274,7 +274,7 @@
         /// <summary>O Timer que disparou o evento.</summary>
         public Timer? SenderAsTimer(AylisClient.AylisEvent ev) => FindTimer(ev.SenderName);
 
-        /// <summary>O TrackBar deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O TrackBar deste form com o nome.</summary>
         public TrackBar? FindTrackBar(string name) => name switch
         {
             "tbVolume" => tbVolume,
@@ -284,7 +284,7 @@
         /// <summary>O TrackBar que disparou o evento.</summary>
         public TrackBar? SenderAsTrackBar(AylisClient.AylisEvent ev) => FindTrackBar(ev.SenderName);
 
-        /// <summary>O VideoPlayer deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O VideoPlayer deste form com o nome.</summary>
         public VideoPlayer? FindVideoPlayer(string name) => name switch
         {
             "vpVideo" => vpVideo,

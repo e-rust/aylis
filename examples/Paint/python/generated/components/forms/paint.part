@@ -96,7 +96,7 @@ class FrmPaintComponents(Form):
         self.dlgSalvar = self._resolve(components, "dlgSalvar", "SaveDialog", SaveDialog)
 
     def find_button(self, name):
-        """O Button deste form com o nome (como o FindComponent)."""
+        """O Button deste form com o nome."""
         if name == "btnSalvar":
             return self.btnSalvar
         if name == "btnDesfazer":
@@ -128,7 +128,7 @@ class FrmPaintComponents(Form):
         return self.find_button(event["sender"]["name"])
 
     def find_check_box(self, name):
-        """O CheckBox deste form com o nome (como o FindComponent)."""
+        """O CheckBox deste form com o nome."""
         if name == "chkPreencher":
             return self.chkPreencher
         return None
@@ -138,7 +138,7 @@ class FrmPaintComponents(Form):
         return self.find_check_box(event["sender"]["name"])
 
     def find_circle(self, name):
-        """O Circle deste form com o nome (como o FindComponent)."""
+        """O Circle deste form com o nome."""
         if name == "btnCor1":
             return self.btnCor1
         if name == "btnCor2":
@@ -190,7 +190,7 @@ class FrmPaintComponents(Form):
         return self.find_circle(event["sender"]["name"])
 
     def find_combo_box(self, name):
-        """O ComboBox deste form com o nome (como o FindComponent)."""
+        """O ComboBox deste form com o nome."""
         if name == "cbEspessura":
             return self.cbEspessura
         return None
@@ -200,7 +200,7 @@ class FrmPaintComponents(Form):
         return self.find_combo_box(event["sender"]["name"])
 
     def find_divider(self, name):
-        """O Divider deste form com o nome (como o FindComponent)."""
+        """O Divider deste form com o nome."""
         if name == "divTopo":
             return self.divTopo
         if name == "divSelecao":
@@ -220,7 +220,7 @@ class FrmPaintComponents(Form):
         return self.find_divider(event["sender"]["name"])
 
     def find_grid_layout(self, name):
-        """O GridLayout deste form com o nome (como o FindComponent)."""
+        """O GridLayout deste form com o nome."""
         if name == "grdFerramentas":
             return self.grdFerramentas
         if name == "grdFormas":
@@ -234,7 +234,7 @@ class FrmPaintComponents(Form):
         return self.find_grid_layout(event["sender"]["name"])
 
     def find_label(self, name):
-        """O Label deste form com o nome (como o FindComponent)."""
+        """O Label deste form com o nome."""
         if name == "lblSelecaoGrupo":
             return self.lblSelecaoGrupo
         if name == "lblFerramentasGrupo":
@@ -260,7 +260,7 @@ class FrmPaintComponents(Form):
         return self.find_label(event["sender"]["name"])
 
     def find_layout(self, name):
-        """O Layout deste form com o nome (como o FindComponent)."""
+        """O Layout deste form com o nome."""
         if name == "lytTopo":
             return self.lytTopo
         if name == "lytSelecao":
@@ -282,7 +282,7 @@ class FrmPaintComponents(Form):
         return self.find_layout(event["sender"]["name"])
 
     def find_main_menu(self, name):
-        """O MainMenu deste form com o nome (como o FindComponent)."""
+        """O MainMenu deste form com o nome."""
         if name == "mnuPrincipal":
             return self.mnuPrincipal
         return None
@@ -292,7 +292,7 @@ class FrmPaintComponents(Form):
         return self.find_main_menu(event["sender"]["name"])
 
     def find_menu_item(self, name):
-        """O MenuItem deste form com o nome (como o FindComponent)."""
+        """O MenuItem deste form com o nome."""
         if name == "mnuArquivo":
             return self.mnuArquivo
         if name == "mnuNovo":
@@ -344,7 +344,7 @@ class FrmPaintComponents(Form):
         return self.find_menu_item(event["sender"]["name"])
 
     def find_open_dialog(self, name):
-        """O OpenDialog deste form com o nome (como o FindComponent)."""
+        """O OpenDialog deste form com o nome."""
         if name == "dlgAbrir":
             return self.dlgAbrir
         return None
@@ -354,7 +354,7 @@ class FrmPaintComponents(Form):
         return self.find_open_dialog(event["sender"]["name"])
 
     def find_paint_canvas(self, name):
-        """O PaintCanvas deste form com o nome (como o FindComponent)."""
+        """O PaintCanvas deste form com o nome."""
         if name == "pcDesenho":
             return self.pcDesenho
         return None
@@ -364,7 +364,7 @@ class FrmPaintComponents(Form):
         return self.find_paint_canvas(event["sender"]["name"])
 
     def find_panel(self, name):
-        """O Panel deste form com o nome (como o FindComponent)."""
+        """O Panel deste form com o nome."""
         if name == "pnlFaixa":
             return self.pnlFaixa
         return None
@@ -374,7 +374,7 @@ class FrmPaintComponents(Form):
         return self.find_panel(event["sender"]["name"])
 
     def find_save_dialog(self, name):
-        """O SaveDialog deste form com o nome (como o FindComponent)."""
+        """O SaveDialog deste form com o nome."""
         if name == "dlgSalvar":
             return self.dlgSalvar
         return None
@@ -384,7 +384,7 @@ class FrmPaintComponents(Form):
         return self.find_save_dialog(event["sender"]["name"])
 
     def find_scroll_box(self, name):
-        """O ScrollBox deste form com o nome (como o FindComponent)."""
+        """O ScrollBox deste form com o nome."""
         if name == "sbxArea":
             return self.sbxArea
         return None
@@ -394,7 +394,7 @@ class FrmPaintComponents(Form):
         return self.find_scroll_box(event["sender"]["name"])
 
     def find_status_bar(self, name):
-        """O StatusBar deste form com o nome (como o FindComponent)."""
+        """O StatusBar deste form com o nome."""
         if name == "stbStatus":
             return self.stbStatus
         return None

@@ -134,7 +134,7 @@ impl Component for Snackbar {
         action: String => "Appearance",
         timeout: u32 as Duration => "Behavior",
         active: bool => "Behavior";
-        events: on_action, on_close
+        events: on_action: (), on_close: ()
     }
 
     fn timer_interval(&self) -> Option<f64> {
@@ -418,12 +418,12 @@ pub fn notify(ui: &mut Ui, title: &str, message: &str, kind: ToastKind, ttl_ms: 
 // ===========================================================================
 
 /// Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho passando.
-/// `layout` lista as peças separadas por vírgula: `avatar`, `heading`, `text`, `text@3`
-/// (três linhas), `image`, `button`, `chip`, `list-item` (avatar e duas linhas), `card`
-/// (imagem, título e texto), `table-row`.
+/// `layout` é a lista das peças, de cima para baixo: `avatar`, `heading`, `text`, `image`,
+/// `button`, `chip`, `list-item` (avatar e duas linhas), `card` (imagem, título e texto),
+/// `table-row`. Repita a peça para ter mais de uma (`text;text;text`: três linhas).
 pub struct SkeletonLoader {
     pub base: ControlBase,
-    /// As peças do esqueleto, separadas por vírgula (`avatar`, `heading`, `text@3`, `card`,
+    /// As peças do esqueleto, de cima para baixo (`avatar;heading;text;text`, `card`,
     /// `list-item`, `table-row`...).
     pub layout: String,
     /// Uma faixa de brilho passa pelas peças, mostrando que está carregando.
@@ -442,7 +442,7 @@ impl Component for SkeletonLoader {
     leaf_control!("SkeletonLoader");
 
     properties! {
-        layout: String => "Appearance",
+        layout: String as List => "Appearance",
         animated: bool => "Appearance",
     }
 
@@ -456,49 +456,46 @@ impl Component for SkeletonLoader {
             shapes.push((RectF::new(x, *y, width * frac, h), h / 2.0));
             *y += h + 10.0;
         };
-        for token in self.layout.split(',').map(str::trim).filter(|t| !t.is_empty()) {
-            let (name, count) = token.split_once('@').map_or((token, 1), |(n, c)| (n, c.parse().unwrap_or(1)));
-            for _ in 0..count {
-                match name {
-                    "avatar" => {
-                        shapes.push((RectF::new(r.x, y, 40.0, 40.0), 20.0));
-                        y += 50.0;
+        for name in self.layout.split(';').map(str::trim).filter(|t| !t.is_empty()) {
+            match name {
+                "avatar" => {
+                    shapes.push((RectF::new(r.x, y, 40.0, 40.0), 20.0));
+                    y += 50.0;
+                }
+                "heading" => line(&mut y, 0.55, 20.0, &mut shapes, r.x, w),
+                "text" => line(&mut y, 0.92, 12.0, &mut shapes, r.x, w),
+                "image" => {
+                    shapes.push((RectF::new(r.x, y, w, 120.0), 6.0));
+                    y += 130.0;
+                }
+                "button" => {
+                    shapes.push((RectF::new(r.x, y, 96.0, 36.0), 6.0));
+                    y += 46.0;
+                }
+                "chip" => {
+                    shapes.push((RectF::new(r.x, y, 72.0, 30.0), 15.0));
+                    y += 40.0;
+                }
+                "list-item" => {
+                    shapes.push((RectF::new(r.x, y, 40.0, 40.0), 20.0));
+                    shapes.push((RectF::new(r.x + 52.0, y + 4.0, (w - 52.0) * 0.6, 12.0), 6.0));
+                    shapes.push((RectF::new(r.x + 52.0, y + 24.0, (w - 52.0) * 0.85, 10.0), 5.0));
+                    y += 52.0;
+                }
+                "table-row" => {
+                    for c in 0..4 {
+                        let cw = w / 4.0;
+                        shapes.push((RectF::new(r.x + c as f32 * cw + 4.0, y + 8.0, cw - 16.0, 12.0), 6.0));
                     }
-                    "heading" => line(&mut y, 0.55, 20.0, &mut shapes, r.x, w),
-                    "text" => line(&mut y, 0.92, 12.0, &mut shapes, r.x, w),
-                    "image" => {
-                        shapes.push((RectF::new(r.x, y, w, 120.0), 6.0));
-                        y += 130.0;
-                    }
-                    "button" => {
-                        shapes.push((RectF::new(r.x, y, 96.0, 36.0), 6.0));
-                        y += 46.0;
-                    }
-                    "chip" => {
-                        shapes.push((RectF::new(r.x, y, 72.0, 30.0), 15.0));
-                        y += 40.0;
-                    }
-                    "list-item" => {
-                        shapes.push((RectF::new(r.x, y, 40.0, 40.0), 20.0));
-                        shapes.push((RectF::new(r.x + 52.0, y + 4.0, (w - 52.0) * 0.6, 12.0), 6.0));
-                        shapes.push((RectF::new(r.x + 52.0, y + 24.0, (w - 52.0) * 0.85, 10.0), 5.0));
-                        y += 52.0;
-                    }
-                    "table-row" => {
-                        for c in 0..4 {
-                            let cw = w / 4.0;
-                            shapes.push((RectF::new(r.x + c as f32 * cw + 4.0, y + 8.0, cw - 16.0, 12.0), 6.0));
-                        }
-                        y += 32.0;
-                    }
-                    _ => {
-                        // card
-                        shapes.push((RectF::new(r.x, y, w, 110.0), 6.0));
-                        y += 120.0;
-                        line(&mut y, 0.55, 18.0, &mut shapes, r.x, w);
-                        line(&mut y, 0.92, 12.0, &mut shapes, r.x, w);
-                        line(&mut y, 0.75, 12.0, &mut shapes, r.x, w);
-                    }
+                    y += 32.0;
+                }
+                _ => {
+                    // card
+                    shapes.push((RectF::new(r.x, y, w, 110.0), 6.0));
+                    y += 120.0;
+                    line(&mut y, 0.55, 18.0, &mut shapes, r.x, w);
+                    line(&mut y, 0.92, 12.0, &mut shapes, r.x, w);
+                    line(&mut y, 0.75, 12.0, &mut shapes, r.x, w);
                 }
             }
         }
@@ -645,7 +642,7 @@ impl Component for EmptyState {
         title: String => "Appearance",
         text: String => "Appearance",
         action: String => "Appearance";
-        events: on_action
+        events: on_action: ()
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -759,7 +756,7 @@ impl Component for Pagination {
         page: i64 => "Data",
         length: i64 => "Data",
         total_visible: u32 => "Appearance";
-        events: on_change
+        events: on_change: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -868,10 +865,10 @@ impl Component for Stepper {
     leaf_control!("Stepper");
 
     properties! {
-        items: String => "Data",
+        items: String as List => "Data",
         step: i64 => "Data",
         vertical: bool => "Appearance";
-        events: on_change
+        events: on_change: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -951,46 +948,72 @@ impl Component for Stepper {
 // Timeline
 // ===========================================================================
 
-/// Linha do tempo (o `v-timeline`): `items` separados por `;`, cada um
-/// `título|quando|texto` (as partes depois do título são opcionais). Pontos na cor da
-/// variante; o primeiro em destaque.
+/// Linha do tempo (o `v-timeline`): `items` é a lista de registros [`TIMELINE_ITEM`]
+/// (`[{"title": "Pedido entregue", "when": "hoje, 14:20", "text": "Recebido por Ana"}]`; o
+/// `when` e o `text` são opcionais). Pontos na cor da variante; o primeiro em destaque.
 pub struct Timeline {
     pub base: ControlBase,
-    /// Os eventos, separados por `;`, cada um `título|quando|texto` (depois do título, opcionais).
+    /// Os eventos, em JSON: `[{"title": "Pedido entregue", "when": "hoje, 14:20", "text": "..."}]`.
     pub items: String,
     /// A altura de cada evento na linha, em pontos.
     pub item_height: f32,
+    /// Os eventos lidos do `items` (refeitos só quando ele muda).
+    list: Vec<TimelineRecord>,
+}
+
+/// Um evento do `Timeline` no JSON do `items`.
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct TimelineRecord {
+    title: String,
+    /// Quando, como texto livre para mostrar (`hoje, 14:20`).
+    when: String,
+    text: String,
 }
 
 impl Default for Timeline {
     fn default() -> Self {
         let mut base = ControlBase::new(320.0, 240.0);
         base.set_hit_test(false);
-        Self {
+        let mut t = Self {
             base,
-            items: "Pedido entregue|hoje, 14:20|Recebido por Ana;Saiu para entrega|hoje, 08:05;Pedido enviado|ontem, 17:40|Transportadora XPTO;Pagamento aprovado|ontem, 10:12".into(),
+            items: r#"[{"title":"Pedido entregue","when":"hoje, 14:20","text":"Recebido por Ana"},{"title":"Saiu para entrega","when":"hoje, 08:05"},{"title":"Pedido enviado","when":"ontem, 17:40","text":"Transportadora XPTO"},{"title":"Pagamento aprovado","when":"ontem, 10:12"}]"#.into(),
             item_height: 60.0,
+            list: Vec::new(),
+        };
+        t.sync("items");
+        t
+    }
+}
+
+impl Timeline {
+    fn sync(&mut self, name: &str) {
+        if name == "items" {
+            self.list = crate::records::parse_list(&self.items);
         }
     }
 }
+
+/// Um evento do `Timeline`: o título, quando (texto livre, `hoje, 14:20`) e o texto embaixo.
+pub const TIMELINE_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "TimelineItem", fields: &[("title", aylis_core::PropKind::String), ("when", aylis_core::PropKind::String), ("text", aylis_core::PropKind::String)] };
 
 impl Component for Timeline {
     leaf_control!("Timeline");
 
     properties! {
-        items: String => "Data",
-        item_height: f32 => "Appearance",
+        items: String as RecordList(&TIMELINE_ITEM) => "Data",
+        item_height: f32 => "Appearance";
+        on_set: sync
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        let items = split(&self.items);
+        let items = &self.list;
         let color = accent(ctx);
         let border = ctx.theme.color("border");
         let x = 10.0;
         let h = self.item_height.max(24.0);
         for (i, item) in items.iter().enumerate() {
-            let mut parts = item.split('|');
-            let (title, when, text) = (parts.next().unwrap_or(""), parts.next().unwrap_or(""), parts.next().unwrap_or(""));
+            let (title, when, text) = (item.title.as_str(), item.when.as_str(), item.text.as_str());
             let y = i as f32 * h;
             if i + 1 < items.len() {
                 canvas.draw_line(PointF::new(x, y + 16.0), PointF::new(x, y + h + 2.0), &Stroke::new(border, 2.0));

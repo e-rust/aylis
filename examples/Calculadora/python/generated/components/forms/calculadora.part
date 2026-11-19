@@ -50,7 +50,7 @@ class FrmCalculadoraComponents(Form):
         self.btnIgual = self._resolve(components, "btnIgual", "Button", Button)
 
     def find_button(self, name):
-        """O Button deste form com o nome (como o FindComponent)."""
+        """O Button deste form com o nome."""
         if name == "btnLimparHistorico":
             return self.btnLimparHistorico
         if name == "btnHistorico":
@@ -120,7 +120,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_button(event["sender"]["name"])
 
     def find_grid_layout(self, name):
-        """O GridLayout deste form com o nome (como o FindComponent)."""
+        """O GridLayout deste form com o nome."""
         if name == "grdMemoria":
             return self.grdMemoria
         if name == "grdTeclado":
@@ -132,7 +132,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_grid_layout(event["sender"]["name"])
 
     def find_label(self, name):
-        """O Label deste form com o nome (como o FindComponent)."""
+        """O Label deste form com o nome."""
         if name == "lblTitulo":
             return self.lblTitulo
         if name == "lblExpressao":
@@ -146,7 +146,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_label(event["sender"]["name"])
 
     def find_layout(self, name):
-        """O Layout deste form com o nome (como o FindComponent)."""
+        """O Layout deste form com o nome."""
         if name == "lytCorpo":
             return self.lytCorpo
         if name == "lytTopo":
@@ -158,7 +158,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_layout(event["sender"]["name"])
 
     def find_list_view(self, name):
-        """O ListView deste form com o nome (como o FindComponent)."""
+        """O ListView deste form com o nome."""
         if name == "lvHistorico":
             return self.lvHistorico
         if name == "lvMemoria":
@@ -170,7 +170,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_list_view(event["sender"]["name"])
 
     def find_panel(self, name):
-        """O Panel deste form com o nome (como o FindComponent)."""
+        """O Panel deste form com o nome."""
         if name == "pnlLateral":
             return self.pnlLateral
         return None
@@ -180,7 +180,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_panel(event["sender"]["name"])
 
     def find_tab_control(self, name):
-        """O TabControl deste form com o nome (como o FindComponent)."""
+        """O TabControl deste form com o nome."""
         if name == "tabLateral":
             return self.tabLateral
         return None
@@ -190,7 +190,7 @@ class FrmCalculadoraComponents(Form):
         return self.find_tab_control(event["sender"]["name"])
 
     def find_tab_item(self, name):
-        """O TabItem deste form com o nome (como o FindComponent)."""
+        """O TabItem deste form com o nome."""
         if name == "tabHistorico":
             return self.tabHistorico
         if name == "tabMemoria":

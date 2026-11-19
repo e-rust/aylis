@@ -234,6 +234,208 @@ def delta_selftest():
     return "delta %d %d %d %s %d" % (len(delta.inserted()), len(delta.updated()), len(delta.deleted()), item["new"]["pedido_id"], len(delta.results))
 
 
+class Color:
+    """Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema (`Color.of_token("primary")`),
+    que acompanha a troca de tema."""
+
+    def __init__(self, r=0, g=0, b=0, a=255, token=None):
+        self.r, self.g, self.b, self.a, self.token = r, g, b, a, token
+
+    @staticmethod
+    def rgb(r, g, b, a=255):
+        return Color(r, g, b, a)
+
+    @staticmethod
+    def hex(text):
+        """`#RRGGBB`, `#RRGGBBAA` ou `#RGB`."""
+        h = text.strip().lstrip("#")
+        if len(h) == 3:
+            h = "".join(c * 2 for c in h)
+        try:
+            r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+            a = int(h[6:8], 16) if len(h) >= 8 else 255
+        except ValueError:
+            raise AylisError("cor inválida: %r (use #RRGGBB ou #RRGGBBAA)" % text)
+        return Color(r, g, b, a)
+
+    @staticmethod
+    def of_token(name):
+        return Color(token=name.strip())
+
+    @staticmethod
+    def from_json(value):
+        """O valor da tela (`#RRGGBB[AA]` ou um nome)."""
+        if not isinstance(value, str) or not value:
+            return Color()
+        return Color.hex(value) if value.startswith("#") else Color.of_token(value)
+
+    def to_json(self):
+        if self.token:
+            return self.token
+        h = "#%02X%02X%02X" % (self.r, self.g, self.b)
+        return h if self.a == 255 else h + "%02X" % self.a
+
+    def __eq__(self, other):
+        return isinstance(other, Color) and self.to_json() == other.to_json()
+
+    def __hash__(self):
+        return hash(self.to_json())
+
+    def __repr__(self):
+        return "Color(%r)" % self.to_json()
+
+
+class Bounds:
+    """Margens (`margins`, `padding`): esquerda, cima, direita e baixo."""
+
+    def __init__(self, left=0.0, top=0.0, right=0.0, bottom=0.0):
+        self.left, self.top, self.right, self.bottom = left, top, right, bottom
+
+    @staticmethod
+    def all(value):
+        return Bounds(value, value, value, value)
+
+    @staticmethod
+    def symmetric(horizontal, vertical):
+        return Bounds(horizontal, vertical, horizontal, vertical)
+
+    @staticmethod
+    def from_json(value):
+        """O valor da tela: um número, `[h, v]`, `[l, t, r, b]` ou `{"left": ...}`."""
+        if isinstance(value, (int, float)):
+            return Bounds.all(value)
+        if isinstance(value, list) and len(value) == 2:
+            return Bounds.symmetric(value[0], value[1])
+        if isinstance(value, list) and len(value) == 4:
+            return Bounds(*value)
+        if isinstance(value, dict):
+            return Bounds(value.get("left", 0), value.get("top", 0), value.get("right", 0), value.get("bottom", 0))
+        return Bounds()
+
+    def to_json(self):
+        return [self.left, self.top, self.right, self.bottom]
+
+    def __eq__(self, other):
+        return isinstance(other, Bounds) and self.to_json() == other.to_json()
+
+    def __repr__(self):
+        return "Bounds(%r, %r, %r, %r)" % (self.left, self.top, self.right, self.bottom)
+
+
+def _num(v):
+    """O número como a tela grava (`0.5`, `12`)."""
+    return "%g" % v
+
+
+class Shadow:
+    """Uma sombra: o deslocamento (`dx`, `dy`), o desfoque, o espalhamento e a cor (sem cor, preto a
+    25%). `None` no acesso tipado é sem sombra."""
+
+    def __init__(self, dx=0.0, dy=0.0, blur=0.0, spread=0.0, color=None):
+        self.dx, self.dy, self.blur, self.spread = dx, dy, blur, spread
+        self.color = color if color is not None else Color(0, 0, 0, 64)
+
+    @staticmethod
+    def from_json(value):
+        """`"dx dy desfoque [espalhamento] [#cor]"` (vazio ou inválido: None)."""
+        numbers, color = [], None
+        for token in str(value or "").replace(",", " ").split():
+            try:
+                numbers.append(float(token.removesuffix("px")))
+            except ValueError:
+                if color is not None or not token.startswith("#"):
+                    return None
+                color = Color.hex(token)
+        if not 2 <= len(numbers) <= 4:
+            return None
+        return Shadow(numbers[0], numbers[1], numbers[2] if len(numbers) > 2 else 0.0, numbers[3] if len(numbers) > 3 else 0.0, color)
+
+    def to_json(self):
+        text = "%s %s %s" % (_num(self.dx), _num(self.dy), _num(self.blur))
+        if self.spread:
+            text += " " + _num(self.spread)
+        return text + " " + self.color.to_json()
+
+    def __eq__(self, other):
+        return isinstance(other, Shadow) and self.to_json() == other.to_json()
+
+    def __repr__(self):
+        return "Shadow(%r)" % self.to_json()
+
+
+class Easing:
+    """Uma curva de suavização: uma das prontas (`Easing.OUT_QUAD`) ou a Bézier cúbica
+    (`Easing.cubic_bezier(0.2, 0, 0, 1)`), como o `cubic-bezier()` do CSS."""
+
+    NAMES = ("linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back")
+
+    def __init__(self, name="linear", bezier=None):
+        self.name, self.bezier = name, bezier
+
+    @staticmethod
+    def cubic_bezier(x1, y1, x2, y2):
+        return Easing(None, (x1, y1, x2, y2))
+
+    @staticmethod
+    def from_json(value):
+        text = str(value or "").strip()
+        if text.startswith("cubic-bezier(") and text.endswith(")"):
+            try:
+                x1, y1, x2, y2 = (float(n) for n in text[13:-1].split(","))
+                return Easing.cubic_bezier(x1, y1, x2, y2)
+            except ValueError:
+                return Easing()
+        css = {"ease": (0.25, 0.1, 0.25, 1.0), "ease-in": (0.42, 0.0, 1.0, 1.0), "ease-out": (0.0, 0.0, 0.58, 1.0), "ease-in-out": (0.42, 0.0, 0.58, 1.0)}
+        if text.lower() in css:
+            return Easing.cubic_bezier(*css[text.lower()])
+        plain = text.replace("-", "_").lower()
+        return Easing(plain) if plain in Easing.NAMES else Easing()
+
+    def to_json(self):
+        if self.bezier is not None:
+            return "cubic-bezier(%s)" % ", ".join(_num(v) for v in self.bezier)
+        return self.name
+
+    def __eq__(self, other):
+        return isinstance(other, Easing) and self.to_json() == other.to_json()
+
+    def __repr__(self):
+        return "Easing(%r)" % self.to_json()
+
+
+for _name in Easing.NAMES:
+    setattr(Easing, _name.upper(), Easing(_name))
+
+
+class Point:
+    """Um ponto (`x`, `y`)."""
+
+    def __init__(self, x=0.0, y=0.0):
+        self.x, self.y = x, y
+
+    def __eq__(self, other):
+        return isinstance(other, Point) and (self.x, self.y) == (other.x, other.y)
+
+    def __repr__(self):
+        return "Point(%r, %r)" % (self.x, self.y)
+
+    @staticmethod
+    def list_from_json(value):
+        """`"0.5,0 1,1 0,1"` (os que não são pontos ficam de fora)."""
+        out = []
+        for pair in str(value or "").split():
+            try:
+                x, y = pair.split(",")
+                out.append(Point(float(x), float(y)))
+            except ValueError:
+                pass
+        return out
+
+    @staticmethod
+    def list_to_json(points):
+        return " ".join("%s,%s" % (_num(p.x), _num(p.y)) for p in points)
+
+
 class AylisComponent:
     """Um componente de um form, pelo id dele na tela (resolvido quando a instância do form é
     montada). As classes de cada componente (Button, Label...) vêm do components.py gerado."""
@@ -248,6 +450,19 @@ class AylisComponent:
 
     def _set(self, prop, value):
         self.aylis.send("set", target=self.id, props={prop: value})
+
+    def _get_ref(self, prop):
+        """A referência a outro componente (`popup_menu`, `data_source`), ou None."""
+        info = self.aylis.call("get", target=self.id, prop=prop, ref=True)
+        return AylisComponent(self.aylis, info["id"], info["name"]) if info else None
+
+    def _set_ref(self, prop, component):
+        self._set(prop, component.id if component is not None else None)
+
+    def _component(self, info):
+        """O componente que um método devolveu (com `ref=True`: o id e o nome), ou None."""
+        return AylisComponent(self.aylis, info["id"], info["name"]) if info else None
+
 
     def set_focus(self):
         self.aylis.send("focus", target=self.id)

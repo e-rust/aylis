@@ -2,7 +2,7 @@
 
 ![DataRepeater](img/DataRepeater.png)
 
-Lista virtual de registros: `data_source` dá a quantidade e os valores; `bindings` (`"lblNome=nome;lblPreco=preco"`) liga os componentes do modelo aos campos.
+Lista virtual de registros: `data_source` dá a quantidade e os valores; `item_bindings` (`"lblNome=nome;lblPreco=preco"`) liga os componentes do modelo aos campos.
 
 **Paleta:** Data Controls · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -14,7 +14,7 @@ Lista virtual de registros: `data_source` dá a quantidade e os valores; `bindin
 |---|---|---|---|
 | `item_height` | Altura do item | número | A altura de cada item, em pontos (na vertical). |
 | `item_width` | Largura do item | número | Na horizontal: a largura de cada item. |
-| `sizes` | Tamanhos da câmera | texto | Tamanhos próprios dos itens, em ordem (`80;120;80`; os que faltam usam `item_height` ou `item_width`). Só na lista (uma coluna). |
+| `sizes` | Tamanhos da câmera | lista de números (separados por `;`) | Tamanhos próprios dos itens, em ordem (`80;120;80`; os que faltam usam `item_height` ou `item_width`). Só na lista (uma coluna). |
 
 ### Comportamento
 
@@ -22,15 +22,15 @@ Lista virtual de registros: `data_source` dá a quantidade e os valores; `bindin
 |---|---|---|---|
 | `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
 | `item_count` | Quantidade de itens | inteiro | Quantos itens (com uma fonte, vem dela). |
-| `item_form` | Form de cada item | texto | Um form do projeto como modelo (vazio: o primeiro filho da lista). |
-| `bindings` | Ligações | texto | `"lblNome=nome;imgFoto=foto"`: componente do modelo = campo da fonte. |
+| `item_form` | Form de cada item | nome de um form do projeto | Um form do projeto como modelo (vazio: o primeiro filho da lista). |
+| `item_bindings` | Ligações do item | lista de `ItemBinding` | O que cada componente do modelo mostra da fonte: a lista de `ITEM_BINDING` em JSON (`[{"component": "lblNome", "field": "nome"}, {"component": "pinEstado", "property": "fill", "field": "cor"}]`). Sem `property`: o texto, a imagem, o valor ou a marca (a primeira que o componente tiver). |
 | `swipe_actions` | Ações ao deslizar | texto | As ações que aparecem ao deslizar uma linha para a esquerda com o dedo (`Arquivar;Excluir`; vazio: sem). O toque numa dispara `on_swipe_action`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data_source` | Fonte de dados | componente | O `DataSource` dos registros: um item por registro, com os campos de `bindings`. |
+| `data_source` | Fonte de dados | componente | O `DataSource` dos registros: um item por registro, com os campos de `item_bindings`. |
 
 ### Posição e tamanho
 

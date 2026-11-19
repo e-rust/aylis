@@ -330,7 +330,7 @@ func init() {
 	}, func(form aylis.FormInstance) { frmPlayer = form.(*frmPlayerComponents) })
 }
 
-// FindButton é o Button deste form com o nome (como o FindComponent).
+// FindButton é o Button deste form com o nome.
 func (f *frmPlayerComponents) FindButton(name string) aylisButton {
 	switch name {
 	case "btnMudo":
@@ -362,7 +362,7 @@ func (f *frmPlayerComponents) FindButton(name string) aylisButton {
 // SenderAsButton é o Button que disparou o evento.
 func (f *frmPlayerComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
 
-// FindDivider é o Divider deste form com o nome (como o FindComponent).
+// FindDivider é o Divider deste form com o nome.
 func (f *frmPlayerComponents) FindDivider(name string) aylisDivider {
 	switch name {
 	case "divNavegacao":
@@ -374,7 +374,7 @@ func (f *frmPlayerComponents) FindDivider(name string) aylisDivider {
 // SenderAsDivider é o Divider que disparou o evento.
 func (f *frmPlayerComponents) SenderAsDivider(ev aylis.Event) aylisDivider { return f.FindDivider(ev.Sender.Name) }
 
-// FindIcon é o Icon deste form com o nome (como o FindComponent).
+// FindIcon é o Icon deste form com o nome.
 func (f *frmPlayerComponents) FindIcon(name string) aylisIcon {
 	switch name {
 	case "icoCapa":
@@ -386,7 +386,7 @@ func (f *frmPlayerComponents) FindIcon(name string) aylisIcon {
 // SenderAsIcon é o Icon que disparou o evento.
 func (f *frmPlayerComponents) SenderAsIcon(ev aylis.Event) aylisIcon { return f.FindIcon(ev.Sender.Name) }
 
-// FindLabel é o Label deste form com o nome (como o FindComponent).
+// FindLabel é o Label deste form com o nome.
 func (f *frmPlayerComponents) FindLabel(name string) aylisLabel {
 	switch name {
 	case "lblTempo":
@@ -406,7 +406,7 @@ func (f *frmPlayerComponents) FindLabel(name string) aylisLabel {
 // SenderAsLabel é o Label que disparou o evento.
 func (f *frmPlayerComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
 
-// FindLayout é o Layout deste form com o nome (como o FindComponent).
+// FindLayout é o Layout deste form com o nome.
 func (f *frmPlayerComponents) FindLayout(name string) aylisLayout {
 	switch name {
 	case "lytBarra":
@@ -432,7 +432,7 @@ func (f *frmPlayerComponents) FindLayout(name string) aylisLayout {
 // SenderAsLayout é o Layout que disparou o evento.
 func (f *frmPlayerComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
 
-// FindListView é o ListView deste form com o nome (como o FindComponent).
+// FindListView é o ListView deste form com o nome.
 func (f *frmPlayerComponents) FindListView(name string) aylisListView {
 	switch name {
 	case "lvFila":
@@ -444,7 +444,7 @@ func (f *frmPlayerComponents) FindListView(name string) aylisListView {
 // SenderAsListView é o ListView que disparou o evento.
 func (f *frmPlayerComponents) SenderAsListView(ev aylis.Event) aylisListView { return f.FindListView(ev.Sender.Name) }
 
-// FindMainMenu é o MainMenu deste form com o nome (como o FindComponent).
+// FindMainMenu é o MainMenu deste form com o nome.
 func (f *frmPlayerComponents) FindMainMenu(name string) aylisMainMenu {
 	switch name {
 	case "mnuPrincipal":
@@ -456,7 +456,7 @@ func (f *frmPlayerComponents) FindMainMenu(name string) aylisMainMenu {
 // SenderAsMainMenu é o MainMenu que disparou o evento.
 func (f *frmPlayerComponents) SenderAsMainMenu(ev aylis.Event) aylisMainMenu { return f.FindMainMenu(ev.Sender.Name) }
 
-// FindMenuItem é o MenuItem deste form com o nome (como o FindComponent).
+// FindMenuItem é o MenuItem deste form com o nome.
 func (f *frmPlayerComponents) FindMenuItem(name string) aylisMenuItem {
 	switch name {
 	case "mnuArquivo":
@@ -498,7 +498,7 @@ func (f *frmPlayerComponents) FindMenuItem(name string) aylisMenuItem {
 // SenderAsMenuItem é o MenuItem que disparou o evento.
 func (f *frmPlayerComponents) SenderAsMenuItem(ev aylis.Event) aylisMenuItem { return f.FindMenuItem(ev.Sender.Name) }
 
-// FindOpenDialog é o OpenDialog deste form com o nome (como o FindComponent).
+// FindOpenDialog é o OpenDialog deste form com o nome.
 func (f *frmPlayerComponents) FindOpenDialog(name string) aylisOpenDialog {
 	switch name {
 	case "dlgAbrir":
@@ -510,7 +510,7 @@ func (f *frmPlayerComponents) FindOpenDialog(name string) aylisOpenDialog {
 // SenderAsOpenDialog é o OpenDialog que disparou o evento.
 func (f *frmPlayerComponents) SenderAsOpenDialog(ev aylis.Event) aylisOpenDialog { return f.FindOpenDialog(ev.Sender.Name) }
 
-// FindPanel é o Panel deste form com o nome (como o FindComponent).
+// FindPanel é o Panel deste form com o nome.
 func (f *frmPlayerComponents) FindPanel(name string) aylisPanel {
 	switch name {
 	case "pnlControles":
@@ -526,7 +526,7 @@ func (f *frmPlayerComponents) FindPanel(name string) aylisPanel {
 // SenderAsPanel é o Panel que disparou o evento.
 func (f *frmPlayerComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
 
-// FindSeekBar é o SeekBar deste form com o nome (como o FindComponent).
+// FindSeekBar é o SeekBar deste form com o nome.
 func (f *frmPlayerComponents) FindSeekBar(name string) aylisSeekBar {
 	switch name {
 	case "sbPosicao":
@@ -538,7 +538,7 @@ func (f *frmPlayerComponents) FindSeekBar(name string) aylisSeekBar {
 // SenderAsSeekBar é o SeekBar que disparou o evento.
 func (f *frmPlayerComponents) SenderAsSeekBar(ev aylis.Event) aylisSeekBar { return f.FindSeekBar(ev.Sender.Name) }
 
-// FindTimer é o Timer deste form com o nome (como o FindComponent).
+// FindTimer é o Timer deste form com o nome.
 func (f *frmPlayerComponents) FindTimer(name string) aylisTimer {
 	switch name {
 	case "tmrPosicao":
@@ -550,7 +550,7 @@ func (f *frmPlayerComponents) FindTimer(name string) aylisTimer {
 // SenderAsTimer é o Timer que disparou o evento.
 func (f *frmPlayerComponents) SenderAsTimer(ev aylis.Event) aylisTimer { return f.FindTimer(ev.Sender.Name) }
 
-// FindTrackBar é o TrackBar deste form com o nome (como o FindComponent).
+// FindTrackBar é o TrackBar deste form com o nome.
 func (f *frmPlayerComponents) FindTrackBar(name string) aylisTrackBar {
 	switch name {
 	case "tbVolume":
@@ -562,7 +562,7 @@ func (f *frmPlayerComponents) FindTrackBar(name string) aylisTrackBar {
 // SenderAsTrackBar é o TrackBar que disparou o evento.
 func (f *frmPlayerComponents) SenderAsTrackBar(ev aylis.Event) aylisTrackBar { return f.FindTrackBar(ev.Sender.Name) }
 
-// FindVideoPlayer é o VideoPlayer deste form com o nome (como o FindComponent).
+// FindVideoPlayer é o VideoPlayer deste form com o nome.
 func (f *frmPlayerComponents) FindVideoPlayer(name string) aylisVideoPlayer {
 	switch name {
 	case "vpVideo":

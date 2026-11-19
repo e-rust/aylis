@@ -223,7 +223,7 @@ fn strips_without_pages_receive_only_with_on_tab_drop() {
     let (fa, sa, _) = window(&mut ui, &[]);
     let (fb, sb, _) = window(&mut ui, &[]);
     for (s, f) in [(sa, fa), (sb, fb)] {
-        ui.get_mut::<TabStrip>(s).unwrap().set_tabs_text("x;y".into());
+        ui.get_mut::<TabStrip>(s).unwrap().set_tabs_text(r#"[{"title": "x"}, {"title": "y"}]"#.into());
         ui.layout();
         ui.paint(f, &mut NullCanvas);
     }

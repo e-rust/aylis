@@ -15,6 +15,8 @@
 
 #include <cstdio>
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <charconv>
 #include <condition_variable>
 #include <deque>
@@ -23,6 +25,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -332,6 +335,8 @@ struct Event {
     /// clique do teclado ou do código.
     bool has_pointer = false;
     Pointer pointer;
+    /// O id de quem disparou (o do componente no form).
+    long long sender_id = 0;
 };
 
 class Error : public std::runtime_error {
@@ -348,6 +353,162 @@ class Aylis;
 
 /// Um componente de um form aberto: o id dele na tela (as classes geradas no components.hpp
 /// têm as propriedades). Um vazio (sem `app_`) é o que o find_x devolve para um nome que não há.
+/// Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema (`Color::of_token("primary")`),
+/// que acompanha a troca de tema.
+struct Color {
+    unsigned char r = 0, g = 0, b = 0, a = 255;
+    std::string token;
+
+    static Color rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255) { return Color{r, g, b, a, {}}; }
+    static Color of_token(const std::string& name) { return Color{0, 0, 0, 255, name}; }
+    /// `#RRGGBB`, `#RRGGBBAA` ou `#RGB` (inválida: preta).
+    static Color hex(std::string h) {
+        if (!h.empty() && h[0] == '#') h.erase(0, 1);
+        if (h.size() == 3) h = std::string{h[0], h[0], h[1], h[1], h[2], h[2]};
+        auto n = [&](size_t i) { return static_cast<unsigned char>(std::stoi(h.substr(i, 2), nullptr, 16)); };
+        if (h.size() != 6 && h.size() != 8) return Color{};
+        try {
+            return Color{n(0), n(2), n(4), h.size() == 8 ? n(6) : static_cast<unsigned char>(255), {}};
+        } catch (...) {
+            return Color{};
+        }
+    }
+    /// O valor da tela (`#RRGGBB[AA]` ou um nome).
+    static Color from_json(const Json& v) {
+        std::string s = v.kind() == Json::Kind::String ? v.str() : std::string();
+        if (s.empty()) return Color{};
+        return s[0] == '#' ? hex(s) : of_token(s);
+    }
+    std::string to_json() const {
+        if (!token.empty()) return token;
+        char out[10];
+        if (a == 255)
+            std::snprintf(out, sizeof out, "#%02X%02X%02X", r, g, b);
+        else
+            std::snprintf(out, sizeof out, "#%02X%02X%02X%02X", r, g, b, a);
+        return out;
+    }
+    bool operator==(const Color& o) const { return to_json() == o.to_json(); }
+};
+
+/// Margens (`margins`, `padding`): esquerda, cima, direita e baixo.
+struct Bounds {
+    double left = 0, top = 0, right = 0, bottom = 0;
+
+    static Bounds all(double v) { return Bounds{v, v, v, v}; }
+    static Bounds symmetric(double h, double v) { return Bounds{h, v, h, v}; }
+    /// O valor da tela: um número, `[h, v]`, `[l, t, r, b]` ou um objeto.
+    static Bounds from_json(const Json& v) {
+        if (v.kind() == Json::Kind::Number) return all(v.number());
+        if (v.kind() == Json::Kind::Array && v.items().size() == 2) return symmetric(v.items()[0].number(), v.items()[1].number());
+        if (v.kind() == Json::Kind::Array && v.items().size() == 4) return Bounds{v.items()[0].number(), v.items()[1].number(), v.items()[2].number(), v.items()[3].number()};
+        if (v.kind() == Json::Kind::Object) return Bounds{v["left"].number(), v["top"].number(), v["right"].number(), v["bottom"].number()};
+        return Bounds{};
+    }
+    Json to_json() const { return Json::array({Json(left), Json(top), Json(right), Json(bottom)}); }
+    bool operator==(const Bounds& o) const { return left == o.left && top == o.top && right == o.right && bottom == o.bottom; }
+};
+
+inline std::string num_(double v) {
+    char out[32];
+    std::snprintf(out, sizeof out, "%g", std::round(v * 1000) / 1000);
+    return out;
+}
+
+/// Uma sombra: o deslocamento (`dx`, `dy`), o desfoque, o espalhamento e a cor (sem cor, preto a
+/// 25%). Vazia (`std::nullopt`) no acesso tipado é sem sombra.
+struct Shadow {
+    double dx = 0, dy = 0, blur = 0, spread = 0;
+    Color color = Color::rgb(0, 0, 0, 64);
+
+    /// `"dx dy desfoque [espalhamento] [#cor]"` (vazio ou inválido: nullopt).
+    static std::optional<Shadow> from_json(const Json& v) {
+        std::string text = v.kind() == Json::Kind::String ? v.str() : std::string();
+        for (auto& c : text)
+            if (c == ',') c = ' ';
+        std::istringstream in(text);
+        std::vector<double> numbers;
+        Shadow s;
+        bool has_color = false;
+        std::string token;
+        while (in >> token) {
+            if (token.size() > 2 && token.compare(token.size() - 2, 2, "px") == 0) token.resize(token.size() - 2);
+            char* end = nullptr;
+            double d = std::strtod(token.c_str(), &end);
+            if (end && *end == '\0' && end != token.c_str())
+                numbers.push_back(d);
+            else if (!has_color && token[0] == '#') {
+                s.color = Color::hex(token);
+                has_color = true;
+            } else
+                return std::nullopt;
+        }
+        if (numbers.size() < 2 || numbers.size() > 4) return std::nullopt;
+        s.dx = numbers[0];
+        s.dy = numbers[1];
+        if (numbers.size() > 2) s.blur = numbers[2];
+        if (numbers.size() > 3) s.spread = numbers[3];
+        return s;
+    }
+    std::string to_json() const {
+        std::string out = num_(dx) + " " + num_(dy) + " " + num_(blur);
+        if (spread != 0) out += " " + num_(spread);
+        return out + " " + color.to_json();
+    }
+};
+
+/// Uma curva de suavização: uma das prontas (`Easing::named("out_quad")`) ou a Bézier cúbica
+/// (`Easing::cubic_bezier(0.2, 0, 0, 1)`), como o `cubic-bezier()` do CSS.
+struct Easing {
+    std::string name = "linear";
+    std::optional<std::array<double, 4>> bezier;
+
+    static Easing named(const std::string& n) { return Easing{n, std::nullopt}; }
+    static Easing cubic_bezier(double x1, double y1, double x2, double y2) { return Easing{"", std::array<double, 4>{x1, y1, x2, y2}}; }
+    static Easing from_json(const Json& v) {
+        std::string text = v.kind() == Json::Kind::String ? v.str() : std::string();
+        double b[4];
+        if (text.rfind("cubic-bezier(", 0) == 0 && std::sscanf(text.c_str() + 13, "%lf , %lf , %lf , %lf", &b[0], &b[1], &b[2], &b[3]) == 4)
+            return cubic_bezier(b[0], b[1], b[2], b[3]);
+        if (text == "ease") return cubic_bezier(0.25, 0.1, 0.25, 1);
+        if (text == "ease-in") return cubic_bezier(0.42, 0, 1, 1);
+        if (text == "ease-out") return cubic_bezier(0, 0, 0.58, 1);
+        if (text == "ease-in-out") return cubic_bezier(0.42, 0, 0.58, 1);
+        for (auto& c : text)
+            if (c == '-') c = '_';
+        for (const char* n : {"linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back"})
+            if (text == n) return named(n);
+        return named("linear");
+    }
+    std::string to_json() const {
+        if (!bezier) return name;
+        auto& b = *bezier;
+        return "cubic-bezier(" + num_(b[0]) + ", " + num_(b[1]) + ", " + num_(b[2]) + ", " + num_(b[3]) + ")";
+    }
+};
+
+/// Um ponto (`x`, `y`).
+struct Point {
+    double x = 0, y = 0;
+
+    /// `"0.5,0 1,1 0,1"` (os que não são pontos ficam de fora).
+    static std::vector<Point> list_from_json(const Json& v) {
+        std::vector<Point> out;
+        std::istringstream in(v.kind() == Json::Kind::String ? v.str() : std::string());
+        std::string pair;
+        while (in >> pair) {
+            Point p;
+            if (std::sscanf(pair.c_str(), "%lf,%lf", &p.x, &p.y) == 2) out.push_back(p);
+        }
+        return out;
+    }
+    static std::string list_to_json(const std::vector<Point>& points) {
+        std::string out;
+        for (size_t i = 0; i < points.size(); ++i) out += (i ? " " : "") + num_(points[i].x) + "," + num_(points[i].y);
+        return out;
+    }
+};
+
 struct Component {
     Aylis* app_ = nullptr;
     long long id_ = 0;
@@ -358,11 +519,21 @@ struct Component {
     explicit operator bool() const { return app_ != nullptr; }
     /// O id do componente na tela (o alvo dos comandos).
     long long id() const { return id_; }
+    /// O nome do componente no form.
+    const std::string& name() const { return name_; }
 
     Json get_prop_(const std::string& prop) const;
     void set_prop_(const std::string& prop, Json value) const;
     Json ask_(const std::string& cmd, Json fields) const;
     void tell_(const std::string& cmd, Json fields) const;
+    /// A referência a outro componente (`popup_menu`, `data_source`); vazia se não há.
+    std::optional<Component> get_ref_(const std::string& prop) const;
+    void set_ref_(const std::string& prop, const std::optional<Component>& component) const;
+    /// O componente que a tela devolveu com `"ref": true` (o id e o nome); vazio se não há.
+    std::optional<Component> component_of_(const Json& info) const {
+        if (info.kind() != Json::Kind::Object) return std::nullopt;
+        return Component(app_, static_cast<long long>(info["id"].number()), info["name"].str());
+    }
 };
 
 /// A base dos forms: cada form aberto na tela tem a sua instância
@@ -599,6 +770,7 @@ public:
         }
         Event ev{m["event"].str(), m["handler"].str(), m["form"].str(), m["sender"]["name"].str(), m["sender"]["class"].str(), m["args"], m["info"]};
         if (m["ask"].kind() == Json::Kind::Number) ev.ask = static_cast<long long>(m["ask"].number());
+        if (m["sender"]["id"].kind() == Json::Kind::Number) ev.sender_id = static_cast<long long>(m["sender"]["id"].number());
         if (m["pointer"].kind() == Json::Kind::Object) {
             ev.has_pointer = true;
             ev.pointer = Pointer::from(m["pointer"]);
@@ -915,6 +1087,12 @@ inline Json Component::get_prop_(const std::string& prop) const { return app_->c
 inline void Component::set_prop_(const std::string& prop, Json value) const { app_->send("set", {{"target", Json(id_)}, {"props", {{prop, std::move(value)}}}}); }
 inline Json Component::ask_(const std::string& cmd, Json fields) const { return app_->call(cmd, std::move(fields)); }
 inline void Component::tell_(const std::string& cmd, Json fields) const { app_->send(cmd, std::move(fields)); }
+inline std::optional<Component> Component::get_ref_(const std::string& prop) const {
+    return component_of_(app_->call("get", {{"target", Json(id_)}, {"prop", prop}, {"ref", true}}));
+}
+inline void Component::set_ref_(const std::string& prop, const std::optional<Component>& component) const {
+    set_prop_(prop, component ? Json(component->id()) : Json());
+}
 
 inline Session::Session(Server* server, int number) : server_(server), number_(number) {
     inbox_ = std::make_shared<Inbox>();

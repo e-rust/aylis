@@ -17,17 +17,17 @@ func (c aylisStatusBar) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisStatusBar) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisStatusBar) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisStatusBar) Align() string { return asText(c.Get("align")) }
-func (c aylisStatusBar) SetAlign(v string) { c.Set("align", v) }
+func (c aylisStatusBar) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisStatusBar) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisStatusBar) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisStatusBar) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisStatusBar) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisStatusBar) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisStatusBar) Margins() string { return asText(c.Get("margins")) }
-func (c aylisStatusBar) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisStatusBar) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisStatusBar) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisStatusBar) Padding() string { return asText(c.Get("padding")) }
-func (c aylisStatusBar) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisStatusBar) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisStatusBar) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisStatusBar) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisStatusBar) SetVisible(v bool) { c.Set("visible", v) }
@@ -50,6 +50,9 @@ func (c aylisStatusBar) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisStatusBar) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisStatusBar) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisStatusBar) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisStatusBar) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisStatusBar) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisStatusBar) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -65,8 +68,8 @@ func (c aylisStatusBar) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisStatusBar) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisStatusBar) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisStatusBar) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisStatusBar) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisStatusBar) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisStatusBar) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisStatusBar) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisStatusBar) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -74,17 +77,23 @@ func (c aylisStatusBar) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisStatusBar) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisStatusBar) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisStatusBar) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisStatusBar) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisStatusBar) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisStatusBar) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisStatusBar) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisStatusBar) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisStatusBar) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisStatusBar) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisStatusBar) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisStatusBar) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisStatusBar) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisStatusBar) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisStatusBar) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisStatusBar) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisStatusBar) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisStatusBar) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -107,8 +116,8 @@ func (c aylisStatusBar) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisStatusBar) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisStatusBar) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisStatusBar) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisStatusBar) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisStatusBar) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisStatusBar) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisStatusBar) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisStatusBar) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -128,35 +137,35 @@ func (c aylisStatusBar) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisStatusBar) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisStatusBar) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisStatusBar) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisStatusBar) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisStatusBar) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisStatusBar) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisStatusBar) Style() string { return asText(c.Get("style")) }
-func (c aylisStatusBar) SetStyle(v string) { c.Set("style", v) }
+func (c aylisStatusBar) Style() StatusBarStyle { return StatusBarStyle(asText(c.Get("style"))) }
+func (c aylisStatusBar) SetStyle(v StatusBarStyle) { c.Set("style", string(v)) }
 
-func (c aylisStatusBar) Theme() string { return asText(c.Get("theme")) }
-func (c aylisStatusBar) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisStatusBar) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisStatusBar) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisStatusBar) Fill() string { return asText(c.Get("fill")) }
-func (c aylisStatusBar) SetFill(v string) { c.Set("fill", v) }
+func (c aylisStatusBar) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisStatusBar) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisStatusBar) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisStatusBar) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisStatusBar) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisStatusBar) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisStatusBar) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisStatusBar) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisStatusBar) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisStatusBar) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisStatusBar) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisStatusBar) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisStatusBar) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisStatusBar) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisStatusBar) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisStatusBar) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisStatusBar) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisStatusBar) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisStatusBar) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisStatusBar) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisStatusBar) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisStatusBar) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisStatusBar) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisStatusBar) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisStatusBar) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisStatusBar) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisStatusBar) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisStatusBar) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -164,8 +173,8 @@ func (c aylisStatusBar) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisStatusBar) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisStatusBar) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisStatusBar) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisStatusBar) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisStatusBar) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisStatusBar) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisStatusBar) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisStatusBar) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -188,5 +197,62 @@ func (c aylisStatusBar) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisStatusBar) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisStatusBar) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisStatusBar) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisStatusBar) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisStatusBar) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisStatusBar) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisStatusBar) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisStatusBar) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisStatusBar) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisStatusBar) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisStatusBar) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisStatusBar) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisStatusBar) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisStatusBar) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisStatusBar) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisStatusBar) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisStatusBar) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisStatusBar) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisStatusBar) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisStatusBar) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisStatusBar) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisStatusBar) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisStatusBar) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisStatusBar) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisStatusBar) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisStatusBar) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisStatusBar) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisStatusBar) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisStatusBar) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisStatusBar) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisStatusBar) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisStatusBar) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisStatusBar) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisStatusBar) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisStatusBar) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisStatusBar) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisStatusBar) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisStatusBar) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisStatusBar) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisStatusBar) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisStatusBar) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisStatusBar) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisStatusBar) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisStatusBar) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }

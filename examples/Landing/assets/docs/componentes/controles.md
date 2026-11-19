@@ -15,8 +15,8 @@ Todo controle visual (o que tem `ControlBase`) tem estas, além das próprias.
 | `translate_x` | Deslocar X | número | Deslocamento só do desenho (não muda o layout): animações e transições. |
 | `translate_y` | Deslocar Y | número | Deslocamento só do desenho (não muda o layout): animações e transições. |
 | `shadow` | Sombra | sombra | Sombra do controle; quando há, vale no lugar da sombra do estilo. |
-| `style` | Estilo | texto | A variante do tema (`primary`, `outline`, `flat`, `card`...): o estilo `Classe.variante`. |
-| `theme` | Tema | texto | Tema próprio (pelo nome), que vale também para os filhos. Vazio = o do pai. |
+| `style` | Estilo | variante do tema (`primary`, `outline`...) | A variante do tema (`primary`, `outline`, `flat`, `card`...): o estilo `Classe.variante`. |
+| `theme` | Tema | nome de um tema | Tema próprio (pelo nome), que vale também para os filhos. Vazio = o do pai. |
 | `fill` | Preenchimento | cor | A cor do fundo; vazio: a do tema. |
 | `border_color` | Cor da borda | cor | A cor da borda; vazio: a do tema. |
 | `text_color` | Cor do texto | cor | A cor do texto; vazio: a do tema. |

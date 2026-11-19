@@ -10,6 +10,34 @@ use aylis_core::{
 
 use crate::leaf_control;
 
+/// A seleção do `CropBox` nos eventos `on_change` e `on_end`, em pixels da origem.
+#[derive(Clone, Copy, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct CropSelection {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+/// O registro do [`CropSelection`] no acesso tipado.
+pub const CROP_SELECTION: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "CropSelection",
+    fields: &[
+        ("x", aylis_core::PropKind::Float),
+        ("y", aylis_core::PropKind::Float),
+        ("width", aylis_core::PropKind::Float),
+        ("height", aylis_core::PropKind::Float),
+    ],
+};
+
+impl aylis_core::EventValue for CropSelection {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&CROP_SELECTION));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        crate::records::from_event(args)
+    }
+}
+
 /// O que um arrasto mexe: o miolo (mover) ou uma borda/canto (`n`, `se`...).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct Grip {
@@ -57,7 +85,8 @@ struct Drag {
 ///   fora da moldura (verdes arrastando) e o tamanho em cima, à esquerda (dentro, num
 ///   selo, quando não cabe acima). Desenha um pouco fora do controle: deixe uns 10 px
 ///   de margem em volta.
-/// - Eventos: `on_change` a cada passo do arrasto, `on_end` ao soltar e `on_tap`
+/// - Eventos: `on_change` a cada passo do arrasto, `on_end` ao soltar (os dois com a
+///   seleção, o [`CropSelection`]) e `on_tap`
 ///   num clique sem arrastar no miolo (o play/pausa de uma prévia, por exemplo).
 pub struct CropBox {
     pub base: ControlBase,
@@ -245,7 +274,8 @@ impl CropBox {
     }
 
     fn selection_value(&self) -> EventArgs {
-        EventArgs::Text(format!("{} {} {} {}", self.sel_x, self.sel_y, self.sel_width, self.sel_height))
+        let s = CropSelection { x: self.sel_x as f64, y: self.sel_y as f64, width: self.sel_width as f64, height: self.sel_height as f64 };
+        EventArgs::Text(crate::records::to_json(&s))
     }
 }
 
@@ -264,7 +294,7 @@ impl Component for CropBox {
         caption: String => "Appearance",
         framed: bool => "Appearance",
         shade: Color => "Appearance";
-        events: on_change, on_end, on_tap
+        events: on_change: CropSelection, on_end: CropSelection, on_tap: ()
     }
 
     /// As alças do `framed` passam da borda do controle (a seleção inteira encosta nela).

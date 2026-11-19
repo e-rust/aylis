@@ -81,10 +81,10 @@ fn save_open_and_size() {
     let path_s = path.to_string_lossy().to_string();
     ui.invoke(pc, "save", &[PropValue::String(path_s.clone())]).unwrap();
     ui.invoke(pc, "new", &[PropValue::Int(50), PropValue::Int(40)]).unwrap();
-    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String("50 × 40".into()));
+    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String(r#"{"width":50,"height":40}"#.into()));
     ui.invoke(pc, "open", &[PropValue::String(path_s)]).unwrap();
     let _ = std::fs::remove_file(&path);
-    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String("200 × 100".into()));
+    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String(r#"{"width":200,"height":100}"#.into()));
     assert_eq!(pixel(&ui, pc, 70, 50), Color::rgb(0, 128, 0));
     // O controle acompanha o tamanho da imagem e o zoom.
     ui.set_prop(pc, "zoom", 2.0).unwrap();
@@ -145,17 +145,17 @@ fn the_border_handles_resize_the_image() {
     ui.set_prop(pc, "back_color", Color::rgb(0, 0, 255)).unwrap();
     // A alça do canto fica logo depois da imagem (200 × 100): arrastar para 120 × 160.
     drag(&mut ui, form, (204.0, 104.0), (119.0, 159.0), PointerButton::Primary);
-    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String("120 × 160".into()));
+    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String(r#"{"width":120,"height":160}"#.into()));
     assert_eq!(pixel(&ui, pc, 10, 150), Color::rgb(0, 0, 255), "o que cresceu tem a cor 2");
     assert_eq!(pixel(&ui, pc, 10, 10), Color::rgb(255, 255, 255), "o que ficou é o mesmo");
     ui.layout();
     assert_eq!(ui.control(pc).unwrap().bounds().width, 120.0 + 12.0, "o controle acompanha");
     // A alça da direita só mexe na largura; desfazer volta ao tamanho de antes.
     drag(&mut ui, form, (124.0, 80.0), (299.0, 80.0), PointerButton::Primary);
-    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String("300 × 160".into()));
+    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String(r#"{"width":300,"height":160}"#.into()));
     ui.invoke(pc, "undo", &[]).unwrap();
     ui.invoke(pc, "undo", &[]).unwrap();
-    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String("200 × 100".into()));
+    assert_eq!(ui.invoke(pc, "size", &[]).unwrap(), PropValue::String(r#"{"width":200,"height":100}"#.into()));
     assert_eq!(pixel(&ui, pc, 170, 50), red, "o traço cortado volta com o desfazer");
 }
 

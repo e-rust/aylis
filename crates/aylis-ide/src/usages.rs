@@ -73,11 +73,15 @@ fn has_word(text: &str, word: &str, fold: bool) -> bool {
     })
 }
 
-/// O texto de um valor do form (só os simples; listas viram texto separado por vírgula).
+/// O texto de um valor do form (só os simples; listas viram texto separado por vírgula, e uma
+/// lista de registros com `field`, como as colunas e o rodapé do `DataGrid`, a lista dos campos).
 fn shown(value: &Value) -> Option<String> {
     match value {
         Value::String(s) => Some(s.clone()),
         Value::Array(items) if items.iter().all(Value::is_string) => Some(items.iter().filter_map(Value::as_str).collect::<Vec<_>>().join(", ")),
+        Value::Array(items) if !items.is_empty() && items.iter().all(|i| i["field"].is_string()) => {
+            Some(items.iter().filter_map(|i| i["field"].as_str()).collect::<Vec<_>>().join(", "))
+        }
         _ => None,
     }
 }
@@ -243,7 +247,7 @@ mod tests {
             { "class": "DataSource", "name": "dsCliente", "data_set": "cdsCliente" },
             { "class": "DBEdit", "name": "edtSaldo", "data_source": "dsCliente", "data_field": "saldo" },
             { "class": "DBEdit", "name": "edtNome", "data_source": "dsCliente", "data_field": "nome", "on_change": "form_show" },
-            { "class": "DataGrid", "name": "grdClientes", "data_source": "dsCliente", "columns": ["nome", "saldo"] },
+            { "class": "DataGrid", "name": "grdClientes", "data_source": "dsCliente", "columns": [{ "field": "nome" }, { "field": "saldo" }] },
             { "class": "Label", "name": "lblSaldo", "text": "saldo", "bindings": { "visible": { "source": "dsCliente", "field": "ativo" } } }
         ] } });
         let pedidos = json!({ "aylis": 1, "root": { "class": "Form", "name": "frmPedidos", "children": [

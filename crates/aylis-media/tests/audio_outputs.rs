@@ -42,7 +42,7 @@ fn no_outputs() -> bool {
 }
 
 /// A saída padrão duas vezes, muda, a segunda com 100 ms de atraso.
-const TWO_SILENT_OUTPUTS: &str = ";volume=0|;volume=0;delay=100";
+const TWO_SILENT_OUTPUTS: &str = r#"[{"name": "", "volume": 0}, {"name": "", "volume": 0, "delay_ms": 100}]"#;
 
 #[test]
 fn a_player_plays_on_two_outputs_on_the_clock_and_feeds_a_tap() {
@@ -113,7 +113,7 @@ fn audio_output_sound_and_mixer_as_components() {
     // Um Sound toca por cima de si mesmo, até a polifonia.
     let sound = ui.add(Sound::default(), root);
     ui.set_prop(sound, "file", path.to_string_lossy().to_string()).unwrap();
-    ui.set_prop(sound, "output", ";volume=0").unwrap();
+    ui.set_prop(sound, "output", r#"[{"name": "", "volume": 0}]"#).unwrap();
     ui.set_prop(sound, "polyphony", 2i64).unwrap();
     for _ in 0..3 {
         Sound::play(&mut ui, sound).unwrap();
@@ -125,7 +125,7 @@ fn audio_output_sound_and_mixer_as_components() {
     // O mixer grava o MediaPlayer (mudo nas saídas) num WAV.
     let player = ui.add(MediaPlayer::new(path.to_string_lossy()), root);
     ui.set_name(player, "mpTom").unwrap();
-    ui.set_prop(player, "output", ";volume=0").unwrap();
+    ui.set_prop(player, "output", r#"[{"name": "", "volume": 0}]"#).unwrap();
     let mixer = ui.add(AudioMixer::default(), root);
     let errors = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
     let e = errors.clone();
@@ -134,7 +134,7 @@ fn audio_output_sound_and_mixer_as_components() {
             e.borrow_mut().push(t.clone());
         }
     });
-    ui.set_prop(mixer, "sources", "mpTom;volume=0.5;pan=-1").unwrap();
+    ui.set_prop(mixer, "sources", r#"[{"name": "mpTom", "volume": 0.5, "pan": -1}]"#).unwrap();
     ui.set_prop(mixer, "keep_samples", true).unwrap();
     ui.set_prop(mixer, "active", true).unwrap();
     ui.process_posted();
@@ -153,7 +153,7 @@ fn audio_output_sound_and_mixer_as_components() {
     assert!((0.15..0.2).contains(&left), "esquerda {left}");
     assert_eq!(right, 0.0);
     // Mudar só o volume não religa (as mesmas fontes).
-    ui.set_prop(mixer, "sources", "mpTom;mute").unwrap();
+    ui.set_prop(mixer, "sources", r#"[{"name": "mpTom", "mute": true}]"#).unwrap();
     ui.process_posted();
     std::thread::sleep(Duration::from_millis(150));
     let _ = AudioMixer::take_samples(&ui, mixer);
@@ -161,7 +161,7 @@ fn audio_output_sound_and_mixer_as_components() {
     let muted = AudioMixer::take_samples(&ui, mixer);
     assert!(!muted.is_empty() && muted.iter().all(|s| *s == 0.0), "mudo");
     // Uma fonte que não existe avisa.
-    ui.set_prop(mixer, "sources", "naoExiste").unwrap();
+    ui.set_prop(mixer, "sources", r#"[{"name": "naoExiste"}]"#).unwrap();
     ui.process_posted();
     assert_eq!(errors.borrow().len(), 1, "{:?}", errors.borrow());
     let _ = std::fs::remove_file(&path);

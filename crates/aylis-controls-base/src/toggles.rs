@@ -105,7 +105,7 @@ impl Component for CheckBox {
         text: String => "Appearance",
         checked: bool => "Data",
         box_size: f32 => "Appearance";
-        events: on_change;
+        events: on_change: bool;
         on_set: sync
     }
 
@@ -197,7 +197,7 @@ impl Component for RadioButton {
         text: String => "Appearance",
         checked: bool => "Data",
         group: String => "Behavior";
-        events: on_change;
+        events: on_change: bool;
         on_set: sync
     }
 
@@ -289,7 +289,7 @@ impl Component for Switch {
     properties! {
         text: String => "Appearance",
         checked: bool => "Data";
-        events: on_change;
+        events: on_change: bool;
         on_set: sync
     }
 

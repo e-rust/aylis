@@ -5,7 +5,7 @@ O Reprodutor Multimídia do Windows: a fila de reprodução, os botões de tocar
 anterior e próxima, embaralhar, repetir (todos ou um), volume e a barra de posição. Quem
 toca é o componente VideoPlayer (vpVideo), áudio e vídeo."""
 
-from .components import frmPlayer  # noqa: E402
+from .components import frmPlayer, ListViewItem  # noqa: E402
 
 import math
 
@@ -47,8 +47,7 @@ def tempo(segundos):
 
 def atualizar_fila(aylis):
     """A fila na lista, com a mídia atual selecionada."""
-    itens = ";".join("%s|%s" % (nome_do_arquivo(c), pasta(c)) for c in estado["fila"])
-    frmPlayer.lvFila.items = itens
+    frmPlayer.lvFila.items = [ListViewItem(nome_do_arquivo(c), pasta(c)) for c in estado["fila"]]
     frmPlayer.lvFila.item_index = estado["atual"]
 
 
@@ -106,13 +105,13 @@ def proximo_indice():
     return -1
 
 
-def abrir_click(aylis, event):
+def abrir_click(aylis, sender: "AylisComponent"):
     frmPlayer.dlgAbrir.execute()
 
 
-def abrir_select(aylis, event):
-    # Os arquivos escolhidos vêm separados por ";".
-    novos = [s for s in str(event.get("args") or "").split(";") if s]
+def abrir_select(aylis, sender: "OpenDialog", value: "list[str]"):
+    # Os arquivos escolhidos (o evento já separa a lista).
+    novos = [s for s in value if s]
     if not novos:
         return
     primeiro = len(estado["fila"])
@@ -124,7 +123,7 @@ def abrir_select(aylis, event):
         mostrar_atual(aylis)
 
 
-def limpar_fila_click(aylis, event):
+def limpar_fila_click(aylis, sender: "AylisComponent"):
     frmPlayer.vpVideo.stop()
     estado["fila"] = []
     estado["atual"] = -1
@@ -135,16 +134,16 @@ def limpar_fila_click(aylis, event):
     botao_reproduzir(aylis)
 
 
-def sair_click(aylis, event):
+def sair_click(aylis, sender: "MenuItem"):
     frmPlayer.close()
 
 
-def reproduzir_click(aylis, event):
+def reproduzir_click(aylis, sender: "AylisComponent"):
     if estado["atual"] < 0:
         if estado["fila"]:
             tocar(aylis, 0)
         else:
-            abrir_click(aylis, event)
+            abrir_click(aylis, sender)
     elif estado["tocando"]:
         frmPlayer.vpVideo.pause()
         estado["tocando"] = False
@@ -155,7 +154,7 @@ def reproduzir_click(aylis, event):
         frmPlayer.vpVideo.play()
 
 
-def parar_click(aylis, event):
+def parar_click(aylis, sender: "MenuItem"):
     if estado["atual"] < 0:
         return
     frmPlayer.vpVideo.stop()
@@ -164,7 +163,7 @@ def parar_click(aylis, event):
     frmPlayer.sbPosicao.position = 0.0
 
 
-def anterior_click(aylis, event):
+def anterior_click(aylis, sender: "AylisComponent"):
     atual = estado["atual"]
     if atual > 0:
         tocar(aylis, atual - 1)
@@ -174,13 +173,13 @@ def anterior_click(aylis, event):
         frmPlayer.vpVideo.seek(0.0)
 
 
-def proxima_click(aylis, event):
+def proxima_click(aylis, sender: "AylisComponent"):
     i = proximo_indice()
     if i >= 0:
         tocar(aylis, i)
 
 
-def embaralhar_click(aylis, event):
+def embaralhar_click(aylis, sender: "AylisComponent"):
     estado["embaralhar"] = not estado["embaralhar"]
     ligado = estado["embaralhar"]
     frmPlayer.btnEmbaralhar.checked = ligado
@@ -188,7 +187,7 @@ def embaralhar_click(aylis, event):
     frmPlayer.mnuEmbaralhar.checked = ligado
 
 
-def repetir_click(aylis, event):
+def repetir_click(aylis, sender: "AylisComponent"):
     estado["repetir"] = (estado["repetir"] + 1) % 3
     modo = estado["repetir"]
     frmPlayer.btnRepetir.checked = modo > 0
@@ -205,20 +204,19 @@ def pagina(aylis, agora):
     frmPlayer.btnFila.checked = not agora
 
 
-def agora_click(aylis, event):
+def agora_click(aylis, sender: "AylisComponent"):
     pagina(aylis, True)
 
 
-def fila_click(aylis, event):
+def fila_click(aylis, sender: "AylisComponent"):
     pagina(aylis, False)
 
 
-def posicao_seek(aylis, event):
-    if isinstance(event.get("args"), (int, float)):
-        frmPlayer.vpVideo.seek(float(event["args"]))
+def posicao_seek(aylis, sender: "SeekBar", value: "float"):
+    frmPlayer.vpVideo.seek(value)
 
 
-def mudo_click(aylis, event):
+def mudo_click(aylis, sender: "Button"):
     estado["mudo"] = not estado["mudo"]
     mudo = estado["mudo"]
     frmPlayer.vpVideo.muted = mudo
@@ -226,12 +224,11 @@ def mudo_click(aylis, event):
     frmPlayer.btnMudo.hint = "Com som" if mudo else "Sem som"
 
 
-def volume_change(aylis, event):
-    if isinstance(event.get("args"), (int, float)):
-        frmPlayer.vpVideo.volume = float(event["args"]) / 100.0
+def volume_change(aylis, sender: "TrackBar", value: "float"):
+    frmPlayer.vpVideo.volume = value / 100.0
 
 
-def video_fim(aylis, event):
+def video_fim(aylis, sender: "VideoPlayer"):
     if estado["repetir"] == 2 and estado["atual"] >= 0:
         tocar(aylis, estado["atual"])
         return
@@ -243,19 +240,19 @@ def video_fim(aylis, event):
         botao_reproduzir(aylis)
 
 
-def video_erro(aylis, event):
+def video_erro(aylis, sender: "VideoPlayer", value: "str"):
     estado["tocando"] = False
     botao_reproduzir(aylis)
     frmPlayer.lblDetalhe.text = "Não foi possível reproduzir este arquivo"
 
 
-def fila_item_click(aylis, event):
-    i = event.get("args")
-    if isinstance(i, int) and 0 <= i < len(estado["fila"]):
+def fila_item_click(aylis, sender: "ListView", value: "int"):
+    i = value
+    if 0 <= i < len(estado["fila"]):
         tocar(aylis, i)
 
 
-def posicao_timer(aylis, event):
+def posicao_timer(aylis, sender: "Timer"):
     if estado["atual"] < 0:
         return
     posicao = frmPlayer.vpVideo.position() or 0.0

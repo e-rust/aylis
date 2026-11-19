@@ -86,7 +86,12 @@
         "name": "cdsItens",
         "key_fields": "id",
         "master_source": "dsMestre",
-        "master_fields": "mestre_id=id",
+        "master_fields": [
+          {
+            "field": "mestre_id",
+            "master_field": "id"
+          }
+        ],
         "children": [
           {
             "class": "Field",

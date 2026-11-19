@@ -20,10 +20,10 @@ const CORES: [&str; 6] = ["#E8F0FE", "#FDECEA", "#E6F4EA", "#FEF7E0", "#F3E8FD",
 
 impl FrmPrincipal {
     /// Abre com três abas. A janela nascida de uma aba arrancada já chega com ela: não cria.
-    pub fn principal_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn principal_show(&mut self, ui: &mut Ui, _sender: crate::generated::Form) {
         let strip = self.tbsAbas.id;
         if ui.get::<TabStrip>(strip).is_some_and(|s| !s.tabs().is_empty()) {
-            self.abas_change(ui, strip, &EventArgs::None);
+            self.update_caption(ui, strip);
             return;
         }
         for _ in 0..3 {
@@ -33,18 +33,24 @@ impl FrmPrincipal {
             s.tab_index = 0;
         }
         TabStrip::sync_pages(ui, strip);
-        self.abas_change(ui, strip, &EventArgs::None);
+        self.update_caption(ui, strip);
     }
 
     /// O "+": uma aba nova nesta janela.
-    pub fn abas_add(&mut self, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
-        nova_aba(ui, sender);
-        self.abas_change(ui, sender, &EventArgs::None);
+    pub fn abas_add(&mut self, ui: &mut Ui, sender: crate::generated::TabStrip) {
+        nova_aba(ui, sender.id);
+        self.update_caption(ui, sender.id);
     }
 
-    /// O título da janela segue a aba escolhida.
-    pub fn abas_change(&mut self, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
-        let titulo = ui.get::<TabStrip>(sender).and_then(|s| s.tabs().get(s.tab_index.max(0) as usize).map(|t| t.title.clone()));
+    /// O título da janela segue a aba escolhida (`value` é o índice dela; a faixa já o tem).
+    pub fn abas_change(&mut self, ui: &mut Ui, sender: crate::generated::TabStrip, value: i64) {
+        let _ = value;
+        self.update_caption(ui, sender.id);
+    }
+
+    /// O título da janela com o da aba escolhida na faixa `strip`.
+    fn update_caption(&mut self, ui: &mut Ui, strip: ComponentId) {
+        let titulo = ui.get::<TabStrip>(strip).and_then(|s| s.tabs().get(s.tab_index.max(0) as usize).map(|t| t.title.clone()));
         if let Some(titulo) = titulo {
             self.form.set_caption(ui, format!("{titulo} — Abas"));
         }

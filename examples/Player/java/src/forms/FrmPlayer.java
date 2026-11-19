@@ -12,6 +12,7 @@ import dev.aylis.Aylis;
 import java.util.ArrayList;
 import java.util.List;
 import static forms.Components.frmPlayer;
+import forms.Components.*;
 
 public final class FrmPlayer {
     // O que o form guarda. repetir: 0 não repete, 1 repete a fila, 2 repete a mídia.
@@ -58,9 +59,9 @@ public final class FrmPlayer {
 
     /** A fila na lista, com a mídia atual selecionada. */
     static void atualizarFila(Aylis aylis) {
-        List<String> itens = new ArrayList<>();
-        for (String c : fila) itens.add(nomeDoArquivo(c) + "|" + pasta(c));
-        frmPlayer.lvFila.setItems(String.join(";", itens));
+        List<Components.ListViewItem> itens = new ArrayList<>();
+        for (String c : fila) itens.add(new Components.ListViewItem(nomeDoArquivo(c), pasta(c)));
+        frmPlayer.lvFila.setItems(itens);
         frmPlayer.lvFila.setItemIndex(atual);
     }
 
@@ -115,15 +116,14 @@ public final class FrmPlayer {
         return -1;
     }
 
-    public static void abrir_click(Aylis aylis, Aylis.Event ev) {
+    public static void abrir_click(Aylis aylis, Aylis.AylisComponent sender) {
         frmPlayer.dlgAbrir.execute();
     }
 
-    public static void abrir_select(Aylis aylis, Aylis.Event ev) {
-        // Os arquivos escolhidos vêm separados por ";".
-        String texto = ev.args() instanceof String s ? s : "";
+    public static void abrir_select(Aylis aylis, Components.OpenDialog sender, java.util.List<String> value) {
+        // Os arquivos escolhidos (o evento já separa a lista).
         List<String> novos = new ArrayList<>();
-        for (String p : texto.split(";")) if (!p.isEmpty()) novos.add(p);
+        for (String p : value) if (!p.isEmpty()) novos.add(p);
         if (novos.isEmpty()) return;
         int primeiro = fila.size();
         fila.addAll(novos);
@@ -132,7 +132,7 @@ public final class FrmPlayer {
         else mostrarAtual(aylis);
     }
 
-    public static void limpar_fila_click(Aylis aylis, Aylis.Event ev) {
+    public static void limpar_fila_click(Aylis aylis, Aylis.AylisComponent sender) {
         frmPlayer.vpVideo.stop();
         fila.clear();
         atual = -1;
@@ -143,14 +143,14 @@ public final class FrmPlayer {
         botaoReproduzir(aylis);
     }
 
-    public static void sair_click(Aylis aylis, Aylis.Event ev) {
+    public static void sair_click(Aylis aylis, Components.MenuItem sender) {
         frmPlayer.close();
     }
 
-    public static void reproduzir_click(Aylis aylis, Aylis.Event ev) {
+    public static void reproduzir_click(Aylis aylis, Aylis.AylisComponent sender) {
         if (atual < 0) {
             if (!fila.isEmpty()) tocar(aylis, 0);
-            else abrir_click(aylis, ev);
+            else abrir_click(aylis, sender);
         } else if (tocando) {
             frmPlayer.vpVideo.pause();
             tocando = false;
@@ -162,7 +162,7 @@ public final class FrmPlayer {
         }
     }
 
-    public static void parar_click(Aylis aylis, Aylis.Event ev) {
+    public static void parar_click(Aylis aylis, Components.MenuItem sender) {
         if (atual < 0) return;
         frmPlayer.vpVideo.stop();
         tocando = false;
@@ -170,25 +170,25 @@ public final class FrmPlayer {
         frmPlayer.sbPosicao.setPosition(0.0);
     }
 
-    public static void anterior_click(Aylis aylis, Aylis.Event ev) {
+    public static void anterior_click(Aylis aylis, Aylis.AylisComponent sender) {
         if (atual > 0) tocar(aylis, atual - 1);
         else if (atual == 0 && repetir == 1) tocar(aylis, fila.size() - 1);
         else if (atual == 0) frmPlayer.vpVideo.seek(0.0);
     }
 
-    public static void proxima_click(Aylis aylis, Aylis.Event ev) {
+    public static void proxima_click(Aylis aylis, Aylis.AylisComponent sender) {
         int i = proximoIndice();
         if (i >= 0) tocar(aylis, i);
     }
 
-    public static void embaralhar_click(Aylis aylis, Aylis.Event ev) {
+    public static void embaralhar_click(Aylis aylis, Aylis.AylisComponent sender) {
         embaralhar = !embaralhar;
         frmPlayer.btnEmbaralhar.setChecked(embaralhar);
         frmPlayer.btnEmbaralhar.setHint(embaralhar ? "Embaralhar: ativado" : "Embaralhar: desativado");
         frmPlayer.mnuEmbaralhar.setChecked(embaralhar);
     }
 
-    public static void repetir_click(Aylis aylis, Aylis.Event ev) {
+    public static void repetir_click(Aylis aylis, Aylis.AylisComponent sender) {
         repetir = (repetir + 1) % 3;
         frmPlayer.btnRepetir.setChecked(repetir > 0);
         frmPlayer.btnRepetir.setIcon(repetir == 2 ? "repeat_one" : "repeat");
@@ -204,30 +204,30 @@ public final class FrmPlayer {
         frmPlayer.btnFila.setChecked(!agora);
     }
 
-    public static void agora_click(Aylis aylis, Aylis.Event ev) {
+    public static void agora_click(Aylis aylis, Aylis.AylisComponent sender) {
         pagina(aylis, true);
     }
 
-    public static void fila_click(Aylis aylis, Aylis.Event ev) {
+    public static void fila_click(Aylis aylis, Aylis.AylisComponent sender) {
         pagina(aylis, false);
     }
 
-    public static void posicao_seek(Aylis aylis, Aylis.Event ev) {
-        if (ev.args() instanceof Number n) frmPlayer.vpVideo.seek(n.doubleValue());
+    public static void posicao_seek(Aylis aylis, Components.SeekBar sender, double value) {
+        frmPlayer.vpVideo.seek(value);
     }
 
-    public static void mudo_click(Aylis aylis, Aylis.Event ev) {
+    public static void mudo_click(Aylis aylis, Components.Button sender) {
         mudo = !mudo;
         frmPlayer.vpVideo.setMuted(mudo);
         frmPlayer.btnMudo.setIcon(mudo ? "mute" : "volume");
         frmPlayer.btnMudo.setHint(mudo ? "Com som" : "Sem som");
     }
 
-    public static void volume_change(Aylis aylis, Aylis.Event ev) {
-        if (ev.args() instanceof Number n) frmPlayer.vpVideo.setVolume(n.doubleValue() / 100.0);
+    public static void volume_change(Aylis aylis, Components.TrackBar sender, double value) {
+        frmPlayer.vpVideo.setVolume(value / 100.0);
     }
 
-    public static void video_fim(Aylis aylis, Aylis.Event ev) {
+    public static void video_fim(Aylis aylis, Components.VideoPlayer sender) {
         if (repetir == 2 && atual >= 0) {
             tocar(aylis, atual);
             return;
@@ -240,20 +240,17 @@ public final class FrmPlayer {
         }
     }
 
-    public static void video_erro(Aylis aylis, Aylis.Event ev) {
+    public static void video_erro(Aylis aylis, Components.VideoPlayer sender, String value) {
         tocando = false;
         botaoReproduzir(aylis);
         frmPlayer.lblDetalhe.setText("Não foi possível reproduzir este arquivo");
     }
 
-    public static void fila_item_click(Aylis aylis, Aylis.Event ev) {
-        if (ev.args() instanceof Number n) {
-            int i = n.intValue();
-            if (i >= 0 && i < fila.size()) tocar(aylis, i);
-        }
+    public static void fila_item_click(Aylis aylis, Components.ListView sender, long value) {
+        if (value >= 0 && value < fila.size()) tocar(aylis, (int) value);
     }
 
-    public static void posicao_timer(Aylis aylis, Aylis.Event ev) {
+    public static void posicao_timer(Aylis aylis, Components.Timer sender) {
         if (atual < 0) return;
         double posicao = frmPlayer.vpVideo.position();
         double duracao = frmPlayer.vpVideo.duration();

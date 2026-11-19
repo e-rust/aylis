@@ -2,34 +2,46 @@
 /** Um SaveDialog de um form. */
 export class SaveDialog extends AylisComponent {
     get title(): Promise<string> {
-        return this.getProp("title");
+        return this.getProp("title") as Promise<any>;
     }
     set title(value: string) {
         this.setProp("title", value);
     }
     get filter(): Promise<string> {
-        return this.getProp("filter");
+        return this.getProp("filter") as Promise<any>;
     }
     set filter(value: string) {
         this.setProp("filter", value);
     }
     get initialDir(): Promise<string> {
-        return this.getProp("initial_dir");
+        return this.getProp("initial_dir") as Promise<any>;
     }
     set initialDir(value: string) {
         this.setProp("initial_dir", value);
     }
     get fileName(): Promise<string> {
-        return this.getProp("file_name");
+        return this.getProp("file_name") as Promise<any>;
     }
     set fileName(value: string) {
         this.setProp("file_name", value);
     }
     get multiple(): Promise<boolean> {
-        return this.getProp("multiple");
+        return this.getProp("multiple") as Promise<any>;
     }
     set multiple(value: boolean) {
         this.setProp("multiple", value);
+    }
+    get onSelect(): Promise<string> {
+        return this.getProp("on_select") as Promise<any>;
+    }
+    set onSelect(value: string) {
+        this.setProp("on_select", value);
+    }
+    get onCancel(): Promise<string> {
+        return this.getProp("on_cancel") as Promise<any>;
+    }
+    set onCancel(value: string) {
+        this.setProp("on_cancel", value);
     }
     execute() {
         this.aylis.send("execute", { target: this.id });

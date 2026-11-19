@@ -13,14 +13,14 @@ struct StatusBar : aylis::Component {
     void set_width(double v) const { set_prop_("width", v); }
     double height() const { return get_prop_("height").number(); }
     void set_height(double v) const { set_prop_("height", v); }
-    std::string align() const { return get_prop_("align").str(); }
-    void set_align(const std::string& v) const { set_prop_("align", v); }
-    std::string anchors() const { return get_prop_("anchors").str(); }
-    void set_anchors(const std::string& v) const { set_prop_("anchors", v); }
-    std::string margins() const { return get_prop_("margins").str(); }
-    void set_margins(const std::string& v) const { set_prop_("margins", v); }
-    std::string padding() const { return get_prop_("padding").str(); }
-    void set_padding(const std::string& v) const { set_prop_("padding", v); }
+    Align align() const { return enum_of_<Align>(get_prop_("align"), Align_names); }
+    void set_align(Align v) const { set_prop_("align", aylis::Json(Align_names[static_cast<int>(v)])); }
+    std::vector<Anchor> anchors() const { return enum_list_<Anchor>(get_prop_("anchors"), Anchor_names); }
+    void set_anchors(const std::vector<Anchor>& v) const { set_prop_("anchors", enum_names_(v, Anchor_names)); }
+    aylis::Bounds margins() const { return aylis::Bounds::from_json(get_prop_("margins")); }
+    void set_margins(const aylis::Bounds& v) const { set_prop_("margins", v.to_json()); }
+    aylis::Bounds padding() const { return aylis::Bounds::from_json(get_prop_("padding")); }
+    void set_padding(const aylis::Bounds& v) const { set_prop_("padding", v.to_json()); }
     bool visible() const { return get_prop_("visible").boolean(); }
     void set_visible(bool v) const { set_prop_("visible", v); }
     bool enabled() const { return get_prop_("enabled").boolean(); }
@@ -35,6 +35,8 @@ struct StatusBar : aylis::Component {
     void set_translate(bool v) const { set_prop_("translate", v); }
     bool captures_wheel() const { return get_prop_("captures_wheel").boolean(); }
     void set_captures_wheel(bool v) const { set_prop_("captures_wheel", v); }
+    bool captures_gesture() const { return get_prop_("captures_gesture").boolean(); }
+    void set_captures_gesture(bool v) const { set_prop_("captures_gesture", v); }
     bool can_focus() const { return get_prop_("can_focus").boolean(); }
     void set_can_focus(bool v) const { set_prop_("can_focus", v); }
     bool draggable() const { return get_prop_("draggable").boolean(); }
@@ -45,20 +47,24 @@ struct StatusBar : aylis::Component {
     void set_drag_data(const std::string& v) const { set_prop_("drag_data", v); }
     std::string drag_label() const { return get_prop_("drag_label").str(); }
     void set_drag_label(const std::string& v) const { set_prop_("drag_label", v); }
-    std::string drag_image() const { return get_prop_("drag_image").str(); }
-    void set_drag_image(const std::string& v) const { set_prop_("drag_image", v); }
+    std::optional<aylis::Component> drag_image() const { return get_ref_("drag_image"); }
+    void set_drag_image(const std::optional<aylis::Component>& v) const { set_ref_("drag_image", v); }
     std::string drop_types() const { return get_prop_("drop_types").str(); }
     void set_drop_types(const std::string& v) const { set_prop_("drop_types", v); }
     bool tab_stop() const { return get_prop_("tab_stop").boolean(); }
     void set_tab_stop(bool v) const { set_prop_("tab_stop", v); }
-    std::string cursor() const { return get_prop_("cursor").str(); }
-    void set_cursor(const std::string& v) const { set_prop_("cursor", v); }
+    CursorShape cursor() const { return enum_of_<CursorShape>(get_prop_("cursor"), CursorShape_names); }
+    void set_cursor(CursorShape v) const { set_prop_("cursor", aylis::Json(CursorShape_names[static_cast<int>(v)])); }
     double opacity() const { return get_prop_("opacity").number(); }
     void set_opacity(double v) const { set_prop_("opacity", v); }
+    BlendMode blend_mode() const { return enum_of_<BlendMode>(get_prop_("blend_mode"), BlendMode_names); }
+    void set_blend_mode(BlendMode v) const { set_prop_("blend_mode", aylis::Json(BlendMode_names[static_cast<int>(v)])); }
     bool cache_layer() const { return get_prop_("cache_layer").boolean(); }
     void set_cache_layer(bool v) const { set_prop_("cache_layer", v); }
     double rotation() const { return get_prop_("rotation").number(); }
     void set_rotation(double v) const { set_prop_("rotation", v); }
+    double scale() const { return get_prop_("scale").number(); }
+    void set_scale(double v) const { set_prop_("scale", v); }
     double translate_x() const { return get_prop_("translate_x").number(); }
     void set_translate_x(double v) const { set_prop_("translate_x", v); }
     double translate_y() const { return get_prop_("translate_y").number(); }
@@ -73,8 +79,8 @@ struct StatusBar : aylis::Component {
     void set_min_height(double v) const { set_prop_("min_height", v); }
     double max_height() const { return get_prop_("max_height").number(); }
     void set_max_height(double v) const { set_prop_("max_height", v); }
-    std::string self_align() const { return get_prop_("self_align").str(); }
-    void set_self_align(const std::string& v) const { set_prop_("self_align", v); }
+    SelfAlign self_align() const { return enum_of_<SelfAlign>(get_prop_("self_align"), SelfAlign_names); }
+    void set_self_align(SelfAlign v) const { set_prop_("self_align", aylis::Json(SelfAlign_names[static_cast<int>(v)])); }
     bool auto_size() const { return get_prop_("auto_size").boolean(); }
     void set_auto_size(bool v) const { set_prop_("auto_size", v); }
     long long column_span() const { return static_cast<long long>(get_prop_("column_span").number()); }
@@ -87,32 +93,32 @@ struct StatusBar : aylis::Component {
     void set_row_span(long long v) const { set_prop_("row_span", v); }
     double grow() const { return get_prop_("grow").number(); }
     void set_grow(double v) const { set_prop_("grow", v); }
-    std::string shadow() const { return get_prop_("shadow").str(); }
-    void set_shadow(const std::string& v) const { set_prop_("shadow", v); }
-    std::string style() const { return get_prop_("style").str(); }
-    void set_style(const std::string& v) const { set_prop_("style", v); }
-    std::string theme() const { return get_prop_("theme").str(); }
-    void set_theme(const std::string& v) const { set_prop_("theme", v); }
-    std::string fill() const { return get_prop_("fill").str(); }
-    void set_fill(const std::string& v) const { set_prop_("fill", v); }
-    std::string border_color() const { return get_prop_("border_color").str(); }
-    void set_border_color(const std::string& v) const { set_prop_("border_color", v); }
-    std::string text_color() const { return get_prop_("text_color").str(); }
-    void set_text_color(const std::string& v) const { set_prop_("text_color", v); }
-    std::string accent_color() const { return get_prop_("accent_color").str(); }
-    void set_accent_color(const std::string& v) const { set_prop_("accent_color", v); }
-    std::string success_color() const { return get_prop_("success_color").str(); }
-    void set_success_color(const std::string& v) const { set_prop_("success_color", v); }
-    std::string warning_color() const { return get_prop_("warning_color").str(); }
-    void set_warning_color(const std::string& v) const { set_prop_("warning_color", v); }
-    std::string danger_color() const { return get_prop_("danger_color").str(); }
-    void set_danger_color(const std::string& v) const { set_prop_("danger_color", v); }
+    std::optional<aylis::Shadow> shadow() const { return aylis::Shadow::from_json(get_prop_("shadow")); }
+    void set_shadow(const std::optional<aylis::Shadow>& v) const { set_prop_("shadow", (v ? v->to_json() : std::string())); }
+    StatusBarStyle style() const { return enum_of_<StatusBarStyle>(get_prop_("style"), StatusBarStyle_names); }
+    void set_style(StatusBarStyle v) const { set_prop_("style", aylis::Json(StatusBarStyle_names[static_cast<int>(v)])); }
+    ThemeName theme() const { return enum_of_<ThemeName>(get_prop_("theme"), ThemeName_names); }
+    void set_theme(ThemeName v) const { set_prop_("theme", aylis::Json(ThemeName_names[static_cast<int>(v)])); }
+    aylis::Color fill() const { return aylis::Color::from_json(get_prop_("fill")); }
+    void set_fill(const aylis::Color& v) const { set_prop_("fill", v.to_json()); }
+    aylis::Color border_color() const { return aylis::Color::from_json(get_prop_("border_color")); }
+    void set_border_color(const aylis::Color& v) const { set_prop_("border_color", v.to_json()); }
+    aylis::Color text_color() const { return aylis::Color::from_json(get_prop_("text_color")); }
+    void set_text_color(const aylis::Color& v) const { set_prop_("text_color", v.to_json()); }
+    aylis::Color accent_color() const { return aylis::Color::from_json(get_prop_("accent_color")); }
+    void set_accent_color(const aylis::Color& v) const { set_prop_("accent_color", v.to_json()); }
+    aylis::Color success_color() const { return aylis::Color::from_json(get_prop_("success_color")); }
+    void set_success_color(const aylis::Color& v) const { set_prop_("success_color", v.to_json()); }
+    aylis::Color warning_color() const { return aylis::Color::from_json(get_prop_("warning_color")); }
+    void set_warning_color(const aylis::Color& v) const { set_prop_("warning_color", v.to_json()); }
+    aylis::Color danger_color() const { return aylis::Color::from_json(get_prop_("danger_color")); }
+    void set_danger_color(const aylis::Color& v) const { set_prop_("danger_color", v.to_json()); }
     std::string font_family() const { return get_prop_("font_family").str(); }
     void set_font_family(const std::string& v) const { set_prop_("font_family", v); }
     double font_size() const { return get_prop_("font_size").number(); }
     void set_font_size(double v) const { set_prop_("font_size", v); }
-    std::string font_weight() const { return get_prop_("font_weight").str(); }
-    void set_font_weight(const std::string& v) const { set_prop_("font_weight", v); }
+    FontWeight font_weight() const { return enum_of_<FontWeight>(get_prop_("font_weight"), FontWeight_names); }
+    void set_font_weight(FontWeight v) const { set_prop_("font_weight", aylis::Json(FontWeight_names[static_cast<int>(v)])); }
     bool font_italic() const { return get_prop_("font_italic").boolean(); }
     void set_font_italic(bool v) const { set_prop_("font_italic", v); }
     bool font_underline() const { return get_prop_("font_underline").boolean(); }
@@ -127,6 +133,44 @@ struct StatusBar : aylis::Component {
     void set_tag_string(const std::string& v) const { set_prop_("tag_string", v); }
     std::string accessible_name() const { return get_prop_("accessible_name").str(); }
     void set_accessible_name(const std::string& v) const { set_prop_("accessible_name", v); }
-    std::string popup_menu() const { return get_prop_("popup_menu").str(); }
-    void set_popup_menu(const std::string& v) const { set_prop_("popup_menu", v); }
+    std::optional<aylis::Component> popup_menu() const { return get_ref_("popup_menu"); }
+    void set_popup_menu(const std::optional<aylis::Component>& v) const { set_ref_("popup_menu", v); }
+    std::string on_click() const { return get_prop_("on_click").str(); }
+    void set_on_click(const std::string& v) const { set_prop_("on_click", v); }
+    std::string on_dbl_click() const { return get_prop_("on_dbl_click").str(); }
+    void set_on_dbl_click(const std::string& v) const { set_prop_("on_dbl_click", v); }
+    std::string on_long_press() const { return get_prop_("on_long_press").str(); }
+    void set_on_long_press(const std::string& v) const { set_prop_("on_long_press", v); }
+    std::string on_pointer_down() const { return get_prop_("on_pointer_down").str(); }
+    void set_on_pointer_down(const std::string& v) const { set_prop_("on_pointer_down", v); }
+    std::string on_pointer_up() const { return get_prop_("on_pointer_up").str(); }
+    void set_on_pointer_up(const std::string& v) const { set_prop_("on_pointer_up", v); }
+    std::string on_pointer_move() const { return get_prop_("on_pointer_move").str(); }
+    void set_on_pointer_move(const std::string& v) const { set_prop_("on_pointer_move", v); }
+    std::string on_pointer_enter() const { return get_prop_("on_pointer_enter").str(); }
+    void set_on_pointer_enter(const std::string& v) const { set_prop_("on_pointer_enter", v); }
+    std::string on_pointer_leave() const { return get_prop_("on_pointer_leave").str(); }
+    void set_on_pointer_leave(const std::string& v) const { set_prop_("on_pointer_leave", v); }
+    std::string on_wheel() const { return get_prop_("on_wheel").str(); }
+    void set_on_wheel(const std::string& v) const { set_prop_("on_wheel", v); }
+    std::string on_gesture() const { return get_prop_("on_gesture").str(); }
+    void set_on_gesture(const std::string& v) const { set_prop_("on_gesture", v); }
+    std::string on_swipe() const { return get_prop_("on_swipe").str(); }
+    void set_on_swipe(const std::string& v) const { set_prop_("on_swipe", v); }
+    std::string on_key_up() const { return get_prop_("on_key_up").str(); }
+    void set_on_key_up(const std::string& v) const { set_prop_("on_key_up", v); }
+    std::string on_enter() const { return get_prop_("on_enter").str(); }
+    void set_on_enter(const std::string& v) const { set_prop_("on_enter", v); }
+    std::string on_exit() const { return get_prop_("on_exit").str(); }
+    void set_on_exit(const std::string& v) const { set_prop_("on_exit", v); }
+    std::string on_resize() const { return get_prop_("on_resize").str(); }
+    void set_on_resize(const std::string& v) const { set_prop_("on_resize", v); }
+    std::string on_drag_move() const { return get_prop_("on_drag_move").str(); }
+    void set_on_drag_move(const std::string& v) const { set_prop_("on_drag_move", v); }
+    std::string on_drag_leave() const { return get_prop_("on_drag_leave").str(); }
+    void set_on_drag_leave(const std::string& v) const { set_prop_("on_drag_leave", v); }
+    std::string on_drag_drop() const { return get_prop_("on_drag_drop").str(); }
+    void set_on_drag_drop(const std::string& v) const { set_prop_("on_drag_drop", v); }
+    std::string on_drag_end() const { return get_prop_("on_drag_end").str(); }
+    void set_on_drag_end(const std::string& v) const { set_prop_("on_drag_end", v); }
 };

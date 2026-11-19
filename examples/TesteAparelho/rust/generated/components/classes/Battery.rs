@@ -11,12 +11,25 @@ impl Handle for Battery {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Battery`): só um Battery.
+impl aylis::prelude::FromSender for Battery {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Battery")).then_some(Self { id })
+    }
+}
+
 impl Battery {
     pub fn interval(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "interval").and_then(|v| v.to_f64().ok()).unwrap_or_default()
     }
     pub fn set_interval(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "interval", value)
+    }
+    pub fn on_change(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_change"))
+    }
+    pub fn set_on_change(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_change", Into::<String>::into(value))
     }
     pub fn level(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "level").and_then(|v| v.to_f64().ok()).unwrap_or_default()

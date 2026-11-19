@@ -47,18 +47,30 @@ fn at(p: PointF) -> PointerEvent {
 }
 
 #[test]
-fn series_carry_their_style_in_the_text() {
+fn series_carry_their_style_in_the_records() {
     let (mut ui, _, c) = setup();
-    ui.set_prop(c, "series", "A[bar;right;#FF0000;width 3;dash 4 2;triangle;fill origin]=1,2|B=1:2,3:4|C[fill -1]=1:2:5").unwrap();
+    let series = r##"[
+        {"name": "A", "values": [1, 2], "kind": "bar", "right_axis": true, "color": "#FF0000", "width": 3, "dash": [4, 2], "point": "triangle", "fill": "origin"},
+        {"name": "B", "x": [1, 3], "values": [2, 4]},
+        {"name": "C", "x": [1], "values": [2], "radius": [5], "fill": "series", "fill_series": 1, "color": "success"}
+    ]"##;
+    ui.set_prop(c, "series", series).unwrap();
     let chart = ui.get::<Chart>(c).unwrap();
     let a = &chart.data()[0];
     assert_eq!((a.kind, a.right_axis, a.color, a.width, a.dash.clone(), a.point, a.fill), (Some(SeriesKind::Bar), true, Color::from_hex("#FF0000"), Some(3.0), vec![4.0, 2.0], PointStyle::Triangle, SeriesFill::Origin));
     assert_eq!((chart.data()[1].x.clone(), chart.data()[1].values.clone()), (vec![1.0, 3.0], vec![2.0, 4.0]));
-    assert_eq!((chart.data()[2].radius.clone(), chart.data()[2].fill), (vec![5.0], SeriesFill::Series(1)));
-    // Pelo código, o texto guarda as opções (e volta igual).
+    let s = &chart.data()[2];
+    assert_eq!((s.radius.clone(), s.fill, s.color, s.color_name.as_str()), (vec![5.0], SeriesFill::Series(1), None, "success"));
+    // Pelo código, o JSON guarda as opções (só as que não são o padrão) e volta igual.
     let mut chart = Chart::default();
     chart.set_data(vec!["a".into(), "b".into()], vec![Series::new("X", vec![1.0, 2.0]).with_kind(SeriesKind::Line).on_right_axis().with_point(PointStyle::Diamond)]);
-    assert_eq!(chart.series, "X[line;right;diamond]=1,2");
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&chart.series).unwrap(),
+        serde_json::json!([{"name": "X", "values": [1.0, 2.0], "kind": "line", "right_axis": true, "point": "diamond"}])
+    );
+    // O texto antigo não é JSON: nenhuma série, sem pânico.
+    ui.set_prop(c, "series", "A=1,2").unwrap();
+    assert!(ui.get::<Chart>(c).unwrap().data().is_empty());
 }
 
 #[test]
@@ -95,7 +107,7 @@ fn every_kind_paints_and_the_legend_hides_series() {
     ui.pointer_down(f, at(rect.center()));
     ui.pointer_up(f, at(rect.center()));
     assert!(ui.get::<Chart>(c).unwrap().data()[index].hidden, "o clique na legenda esconde");
-    assert!(matches!(ui.get_prop(c, "series").unwrap(), PropValue::String(s) if s.contains("[hidden]")));
+    assert!(matches!(ui.get_prop(c, "series").unwrap(), PropValue::String(s) if s.contains(r#""hidden":true"#)));
     paint(&mut ui, f);
     let rect = ui.get::<Chart>(c).unwrap().legend_items()[0].0;
     ui.pointer_down(f, at(rect.center()));
@@ -158,7 +170,7 @@ fn dates_and_the_data_animation() {
     let (mut ui, f, c) = setup();
     ui.set_time(10.0);
     paint(&mut ui, f);
-    ui.set_prop(c, "series", "Vendas=50,50,50,50,50,50").unwrap();
+    ui.set_prop(c, "series", r#"[{"name":"Vendas","values":[50,50,50,50,50,50]}]"#).unwrap();
     assert!(ui.get::<Chart>(c).unwrap().animating(), "trocar os dados anima");
     paint(&mut ui, f);
     ui.set_time(11.0);
@@ -204,7 +216,7 @@ fn waffle_has_one_square_per_percent() {
     let (mut ui, f, c) = setup();
     ui.set_prop(c, "kind", "waffle").unwrap();
     ui.set_prop(c, "labels", "Norte;Sul;Leste").unwrap();
-    ui.set_prop(c, "series", "Vendas=1,1,1").unwrap();
+    ui.set_prop(c, "series", r#"[{"name":"Vendas","values":[1,1,1]}]"#).unwrap();
     ui.set_prop(c, "legend", false).unwrap();
     ui.layout();
     let mut fills = Fills::default();
@@ -235,7 +247,7 @@ fn sankey_draws_one_band_per_flow_and_nodes_by_the_largest_side() {
     let (mut ui, f, c) = setup();
     ui.set_prop(c, "kind", "sankey").unwrap();
     ui.set_prop(c, "labels", "Salário>Receita;Vendas>Receita;Receita>Gastos;Receita>Poupança").unwrap();
-    ui.set_prop(c, "series", "Fluxo=5000,2000,4500,2500").unwrap();
+    ui.set_prop(c, "series", r#"[{"name":"Fluxo","values":[5000,2000,4500,2500]}]"#).unwrap();
     ui.set_prop(c, "legend", false).unwrap();
     ui.layout();
     let mut fills = Fills::default();
@@ -252,7 +264,7 @@ fn sankey_draws_one_band_per_flow_and_nodes_by_the_largest_side() {
     assert!((nodes[0].height / tallest - 5.0 / 7.0).abs() < 0.01, "{nodes:?}");
     // Um ciclo não trava o desenho.
     ui.set_prop(c, "labels", "A>B;B>A").unwrap();
-    ui.set_prop(c, "series", "Fluxo=1,1").unwrap();
+    ui.set_prop(c, "series", r#"[{"name":"Fluxo","values":[1,1]}]"#).unwrap();
     ui.layout();
     ui.paint(f, &mut Fills::default());
 }
@@ -262,8 +274,8 @@ fn sankey_draws_one_band_per_flow_and_nodes_by_the_largest_side() {
 fn save_sankey_and_waffle_for_a_look() {
     let Some(dir) = std::env::var_os("AYLIS_CHARTS") else { return };
     for (kind, labels, series) in [
-        ("sankey", "Salário>Receita;Vendas>Receita;Receita>Moradia;Receita>Mercado;Receita>Poupança;Poupança>Reserva;Poupança>Ações", "Fluxo=5000,2000,2200,1800,3000,1800,1200"),
-        ("waffle", "Norte;Sul;Leste;Oeste", "Vendas=42,27,19,12"),
+        ("sankey", "Salário>Receita;Vendas>Receita;Receita>Moradia;Receita>Mercado;Receita>Poupança;Poupança>Reserva;Poupança>Ações", r#"[{"name":"Fluxo","values":[5000,2000,2200,1800,3000,1800,1200]}]"#),
+        ("waffle", "Norte;Sul;Leste;Oeste", r#"[{"name":"Vendas","values":[42,27,19,12]}]"#),
     ] {
         let (mut ui, f, c) = setup();
         ui.set_prop(c, "kind", PropValue::Enum(kind.into())).unwrap();

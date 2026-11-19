@@ -96,9 +96,12 @@ pub fn class_info(ui: &Ui, class: &str, inherited: bool) -> Option<Value> {
         if common_props.contains(&info.name) {
             continue;
         }
-        let mut text = match TEXT_FORMATS.iter().find(|(name, _)| *name == info.name) {
+        let mut text = match TEXT_FORMATS.iter().find(|(name, _)| *name == info.name).filter(|_| !matches!(info.kind, PropKind::Record(_) | PropKind::RecordList(_))) {
             Some((_, hint)) => format!("texto: {hint}"),
             None => match info.kind {
+                // A lista de registros: os campos de cada objeto.
+                PropKind::RecordList(r) => format!("lista de {} [{{{}}}]", r.name, r.fields.iter().map(|(f, k)| format!("{f}: {}", kind_label(*k))).collect::<Vec<_>>().join(", ")),
+                PropKind::Record(r) => format!("{} {{{}}}", r.name, r.fields.iter().map(|(f, k)| format!("{f}: {}", kind_label(*k))).collect::<Vec<_>>().join(", ")),
                 PropKind::Enum(names) => names.join(" | "),
                 PropKind::Set(names) => format!("lista de: {}", names.join(", ")),
                 kind => kind_label(kind).to_string(),
@@ -165,12 +168,8 @@ const TEXT_FORMATS: &[(&str, &str)] = &[
     ("items", "os itens separados por ; (ou um por linha): \"Ativo;Inativo;Pendente\""),
     ("values", "os códigos dos itens, na mesma ordem, separados por ;"),
     ("labels", "os rótulos separados por ;: \"Jan;Fev;Mar\""),
-    ("series", "Nome=1,2,3|Outra[line;right;#EF4444]=4,5,6"),
-    ("columns", "campo:largura separados por ;: \"nome:170;cidade\""),
-    ("bindings", "componente=campo ou componente.propriedade=campo, separados por ;"),
     ("sizes", "os tamanhos em ordem, separados por ;: \"80;120;80\""),
     ("selected", "os índices separados por ;"),
-    ("footer", "campo=sum|avg|min|max|count, separados por ;"),
     ("colors", "as cores em ordem, separadas por ;: \"#2563EB;#16A34A\""),
 ];
 
@@ -186,7 +185,12 @@ fn kind_schema(kind: PropKind) -> Value {
             "type": "string",
             "examples": ["out_quad", "ease-in-out", "cubic-bezier(0.2, 0, 0, 1)"]
         }),
-        PropKind::String => json!({ "type": "string" }),
+        PropKind::String | PropKind::List | PropKind::NumberList | PropKind::ColorList | PropKind::PointList | PropKind::StyleName | PropKind::ThemeName | PropKind::FormName => json!({ "type": "string" }),
+        PropKind::Record(_) => json!({ "type": ["object", "string"] }),
+        PropKind::RecordList(_) => json!({ "type": ["array", "string"] }),
+        PropKind::Date => json!({ "type": "string", "examples": ["2026-10-24"] }),
+        PropKind::Time => json!({ "type": "string", "examples": ["14:30"] }),
+        PropKind::DateTime => json!({ "type": "string", "examples": ["2026-11-12T14:30"] }),
         PropKind::Color => json!({ "type": ["string", "null"], "examples": ["#2563EB", "primary", "text_muted"] }),
         PropKind::Enum(names) => json!({ "enum": names }),
         PropKind::Set(names) => json!({
@@ -225,6 +229,18 @@ fn kind_label(kind: PropKind) -> &'static str {
         PropKind::Shadow => "sombra: \"dx dy desfoque [espalhamento] #cor\"",
         PropKind::Easing => "curva: nome ou \"cubic-bezier(x1, y1, x2, y2)\"",
         PropKind::String => "texto",
+        PropKind::Date => "data em ISO (\"2026-10-24\")",
+        PropKind::Time => "hora (\"14:30\")",
+        PropKind::DateTime => "dia e hora em ISO (\"2026-11-12T14:30\")",
+        PropKind::List => "textos separados por ;",
+        PropKind::NumberList => "números separados por ;",
+        PropKind::ColorList => "cores separadas por ;",
+        PropKind::PointList => "pontos x,y separados por espaço",
+        PropKind::Record(_) => "registro em JSON",
+        PropKind::RecordList(_) => "lista de registros em JSON",
+        PropKind::StyleName => "variante do tema (\"primary\", \"outline\"...)",
+        PropKind::ThemeName => "nome de um tema",
+        PropKind::FormName => "nome de um form do projeto",
         PropKind::Color => "cor: \"#RRGGBB\" ou token do tema",
         PropKind::Enum(_) => "um dos valores",
         PropKind::Set(_) => "lista de valores",
@@ -236,9 +252,9 @@ fn kind_label(kind: PropKind) -> &'static str {
 
 /// O catálogo das classes para o acesso tipado nas linguagens (`resources/components.json`,
 /// lido pela geração de código): cada classe com as propriedades e o tipo delas (`bool`,
-/// `int`, `float`, `string`, `color`, `enum`, `component`, `bounds` e `set` (`anchors`), estes
-/// dois como texto no código; `:ro` quando é só leitura). Os eventos e os outros conjuntos
-/// ficam de fora. Uma classe por linha.
+/// `int`, `float`, `string`, `color`, `component`, `bounds`, `enum(a|b|c)` e `set(a|b|c)`,
+/// estes dois com os valores, que viram um tipo em cada linguagem; `:ro` quando é só
+/// leitura). Os eventos comuns ficam de fora. Uma classe por linha.
 ///
 /// Os métodos entram com os parênteses e os argumentos na chave (`nome:tipo`, ou só o tipo
 /// quando o método não dá o nome) e, no valor, o
@@ -254,17 +270,26 @@ pub fn catalog(ui: &Ui) -> String {
         let mut props = Map::new();
         for info in prop_infos_of(instance.as_ref()) {
             let kind = match info.kind {
-                PropKind::Bool => "bool",
-                PropKind::Int => "int",
-                PropKind::Float | PropKind::Angle | PropKind::Duration => "float",
-                PropKind::String | PropKind::Shadow | PropKind::Easing => "string",
-                PropKind::Color => "color",
-                PropKind::Enum(_) => "enum",
-                PropKind::Component => "component",
                 // Os eventos que perguntam: `"question:campos"` (a IDE gera a assinatura certa).
                 PropKind::Event => match aylis_core::question::question_fields(info.name) {
                     Some(fields) => {
                         props.insert(info.name.to_string(), Value::String(format!("question:{}", fields.join(","))));
+                        continue;
+                    }
+                    // O que o evento leva, quando declarado (`"event:float"`, `"event:none"`):
+                    // o handler gerado recebe o valor nesse tipo.
+                    None if info.event_arg != aylis_core::EventArg::Unknown => {
+                        let arg = match info.event_arg {
+                            aylis_core::EventArg::Unknown | aylis_core::EventArg::None => "none".to_string(),
+                            aylis_core::EventArg::Pointer => "pointer".into(),
+                            aylis_core::EventArg::Wheel => "wheel".into(),
+                            aylis_core::EventArg::Gesture => "gesture".into(),
+                            aylis_core::EventArg::Swipe => "swipe".into(),
+                            aylis_core::EventArg::Key => "key".into(),
+                            aylis_core::EventArg::DateRange => "daterange".into(),
+                            aylis_core::EventArg::Value(kind) => catalog_kind(kind, info.rust_type),
+                        };
+                        props.insert(info.name.to_string(), Value::String(format!("event:{arg}")));
                         continue;
                     }
                     // Os que se juntam enquanto o anterior não terminou no backend.
@@ -274,12 +299,7 @@ pub fn catalog(ui: &Ui) -> String {
                     }
                     None => continue,
                 },
-                // Margens e âncoras no acesso tipado como texto ("12, 4, 12, 0", "left,top"):
-                // o `set_prop` aceita (relatório do RTSPlayer, 10/11: faltavam `margins`,
-                // `padding` e `anchors`). Os outros conjuntos ficam de fora.
-                PropKind::Bounds => "bounds",
-                PropKind::Set(_) if info.name == "anchors" => "set",
-                PropKind::Set(_) => continue,
+                other => catalog_kind(other, info.rust_type),
             };
             let kind = if info.read_only { format!("{kind}:ro") } else { kind.to_string() };
             props.insert(info.name.to_string(), Value::String(kind));
@@ -295,11 +315,11 @@ pub fn catalog(ui: &Ui) -> String {
                     .iter()
                     .enumerate()
                     .map(|(i, k)| match m.params.get(i) {
-                        Some(name) => format!("{name}:{}", method_kind(*k)),
-                        None => method_kind(*k).to_string(),
+                        Some(name) => format!("{name}:{}", catalog_kind(*k, m.arg_types.get(i).copied().unwrap_or_default())),
+                        None => catalog_kind(*k, m.arg_types.get(i).copied().unwrap_or_default()),
                     })
                     .collect();
-                (format!("{}({})", m.name, args.join(",")), format!("invoke:{}", m.returns.map_or("void", method_kind)))
+                (format!("{}({})", m.name, args.join(",")), format!("invoke:{}", m.returns.map_or("void".to_string(), |k| catalog_kind(k, m.returns_type))))
             })
             .collect();
         // Quem recebe foco: `set_focus()`.
@@ -330,17 +350,127 @@ pub fn catalog(ui: &Ui) -> String {
         }
         lines.push(format!("  {}: {}", Value::String(class.name.to_string()), Value::Object(props)));
     }
+    // Os registros (`record(Monitor)`): os campos de cada um, numa entrada `$records` (que não
+    // é classe).
+    let mut records = Map::new();
+    for class in ui.registry().iter() {
+        let instance = (class.create)();
+        for info in prop_infos_of(instance.as_ref()) {
+            collect_record(info.kind, &mut records);
+        }
+        for m in instance.methods() {
+            for k in m.args.iter().copied().chain(m.returns) {
+                collect_record(k, &mut records);
+            }
+        }
+    }
+    if !records.is_empty() {
+        lines.insert(0, format!("  \"$records\": {}", Value::Object(records)));
+    }
+    // Os nomes que o `style` e o `theme` aceitam sem o projeto: as variantes de cada classe (as
+    // registradas e as dos temas do Aylis) e os temas do Aylis. O gerador junta os do projeto.
+    let builtin: Vec<&aylis_core::Theme> = [aylis_core::themes::builtin("Aylis Light"), aylis_core::themes::builtin("Aylis Dark")].into_iter().flatten().chain(aylis_core::themes::all()).collect();
+    let mut styles = Map::new();
+    let mut names: Vec<&str> = ui.registry().iter().map(|c| c.name).collect();
+    names.sort();
+    for class in names {
+        let mut found: std::collections::BTreeSet<String> = ui.variants_of(class).into_iter().map(|v| v.name).collect();
+        for theme in &builtin {
+            found.extend(theme.variants_of(class));
+        }
+        found.retain(|v| !v.is_empty());
+        if !found.is_empty() {
+            styles.insert(class.to_string(), Value::Array(found.into_iter().map(Value::String).collect()));
+        }
+    }
+    lines.insert(0, format!("  \"$styles\": {}", Value::Object(styles)));
+    let themes: Vec<Value> = builtin.iter().map(|t| Value::String(t.name.clone())).collect();
+    lines.insert(0, format!("  \"$themes\": {}", Value::Array(themes)));
     format!("{{\n{}\n}}\n", lines.join(",\n"))
 }
 
-/// O tipo de um argumento ou resultado de método no catálogo.
-fn method_kind(kind: PropKind) -> &'static str {
-    match kind {
-        PropKind::Bool => "bool",
-        PropKind::Int => "int",
-        PropKind::Float | PropKind::Angle | PropKind::Duration => "float",
-        // O componente (cada linguagem passa o objeto dela; chega pelo id ou pelo caminho).
-        PropKind::Component => "component",
-        _ => "string",
+/// O registro de `kind` (e os que ele tem dentro) com os campos, em `out`.
+fn collect_record(kind: PropKind, out: &mut Map<String, Value>) {
+    let (PropKind::Record(r) | PropKind::RecordList(r)) = kind else { return };
+    if out.contains_key(r.name) {
+        return;
     }
+    let fields: Map<String, Value> = r.fields.iter().map(|(name, k)| (name.to_string(), Value::String(catalog_kind(*k, "")))).collect();
+    out.insert(r.name.to_string(), Value::Object(fields));
+    for (_, k) in r.fields {
+        collect_record(*k, out);
+    }
+}
+
+/// O tipo de uma propriedade, de um argumento ou do resultado de um método no catálogo. O
+/// enum e o conjunto levam o nome do tipo Rust e os valores (`enum(WindowState:normal|maximized)`;
+/// sem o tipo, `enum(:a|b)`), para cada linguagem ter um tipo com eles em vez de texto.
+fn catalog_kind(kind: PropKind, rust_type: &str) -> String {
+    // `crate::Align`, `Option<x::Y>`: só o último nome.
+    let ty: String = rust_type.chars().filter(|c| !c.is_whitespace()).collect();
+    let ty = ty.rsplit("::").next().unwrap_or_default();
+    let ty = if ty.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') { ty } else { "" };
+    match kind {
+        PropKind::Bool => "bool".into(),
+        PropKind::Int => "int".into(),
+        PropKind::Float | PropKind::Angle | PropKind::Duration => "float".into(),
+        PropKind::String | PropKind::Event => "string".into(),
+        PropKind::Shadow => "shadow".into(),
+        PropKind::Easing => "easing".into(),
+        PropKind::Date => "date".into(),
+        PropKind::Time => "time".into(),
+        PropKind::DateTime => "datetime".into(),
+        PropKind::List => "list".into(),
+        PropKind::NumberList => "numbers".into(),
+        PropKind::ColorList => "colors".into(),
+        PropKind::PointList => "points".into(),
+        PropKind::Record(r) => format!("record({})", r.name),
+        PropKind::RecordList(r) => format!("records({})", r.name),
+        // Os nomes do projeto: cada linguagem ganha um enum com os do Aylis e os do projeto.
+        PropKind::StyleName => "style".into(),
+        PropKind::ThemeName => "theme".into(),
+        PropKind::FormName => "form".into(),
+        PropKind::Color => "color".into(),
+        PropKind::Bounds => "bounds".into(),
+        // O componente (cada linguagem passa o objeto dela; chega pelo id ou pelo caminho).
+        PropKind::Component => "component".into(),
+        PropKind::Enum(names) => format!("enum({ty}:{})", names.join("|")),
+        PropKind::Set(names) => format!("set({ty}:{})", names.join("|")),
+    }
+}
+
+/// O teste que confere que os enums do [`catalog`] existem no `aylis::prelude` com o nome do
+/// catálogo (`crates/aylis/tests/catalog_enums.rs`): o acesso tipado em Rust usa o tipo do
+/// framework, e um enum que não está lá quebraria o código gerado. Regravado junto com o catálogo.
+pub fn catalog_enums_test(ui: &Ui) -> String {
+    let mut names = std::collections::BTreeSet::new();
+    for class in ui.registry().iter() {
+        let instance = (class.create)();
+        let mut add = |kind: PropKind, rust_type: &str| {
+            if matches!(kind, PropKind::Enum(_) | PropKind::Set(_)) {
+                let ty: String = rust_type.chars().filter(|c| !c.is_whitespace()).collect();
+                let ty = ty.rsplit("::").next().unwrap_or_default().to_string();
+                if !ty.is_empty() && ty.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+                    names.insert(ty);
+                }
+            }
+        };
+        for info in prop_infos_of(instance.as_ref()) {
+            add(info.kind, info.rust_type);
+        }
+        // Os enums dos argumentos e dos resultados dos métodos.
+        for m in instance.methods() {
+            for (i, k) in m.args.iter().enumerate() {
+                add(*k, m.arg_types.get(i).copied().unwrap_or_default());
+            }
+            if let Some(k) = m.returns {
+                add(k, m.returns_type);
+            }
+        }
+    }
+    let body: Vec<String> = names.iter().map(|n| format!("    let _: Option<aylis::prelude::{n}> = None;")).collect();
+    format!(
+        "//! Os enums do catálogo (`resources/components.json`) existem no `aylis::prelude` com o nome\n//! que o catálogo dá: o acesso tipado gerado em Rust usa o tipo do framework. Gerado pelo\n//! `aylis-tool update-catalog`.\n\n#[test]\nfn the_catalog_enums_are_in_the_prelude() {{\n{}\n}}\n",
+        body.join("\n")
+    )
 }

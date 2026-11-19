@@ -38,7 +38,7 @@ fn edit(path: &std::path::Path, from: &str, to: &str) {
     std::fs::write(path, text.replacen(from, to, 1)).unwrap();
 }
 
-const STUB_RUST: &str = "let _ = (ui, sender, args);";
+const STUB_RUST: &str = "let _ = (ui, sender);";
 
 /// Rust e Python em dia, cada handler com código nas duas.
 fn two_languages(name: &str) -> (std::path::PathBuf, Project, std::path::PathBuf, std::path::PathBuf) {
@@ -52,15 +52,15 @@ fn two_languages(name: &str) -> (std::path::PathBuf, Project, std::path::PathBuf
     let salvar = text.find("fn salvar_click(").unwrap();
     let at = salvar + text[salvar..].find(STUB_RUST).unwrap();
     let mut text = text;
-    text.replace_range(at..at + STUB_RUST.len(), "let _ = (sender, args);\n        let fecha = \"}\";\n        ui.log(&format!(\"salvando {fecha}\"));\n        let total = soma(1, 2);\n        let _ = total;");
+    text.replace_range(at..at + STUB_RUST.len(), "let _ = sender;\n        let fecha = \"}\";\n        ui.log(&format!(\"salvando {fecha}\"));\n        let total = soma(1, 2);\n        let _ = total;");
     std::fs::write(&rust, &text).unwrap();
-    edit(&rust, STUB_RUST, "let _ = (sender, args);\n        ui.log(\"limpando\");");
+    edit(&rust, STUB_RUST, "let _ = sender;\n        ui.log(\"limpando\");");
     codegen::generate(&project).unwrap();
     project.language = Language::Python;
     codegen::generate(&project).unwrap();
     let python = source(&project, Language::Python);
-    edit(&python, "def salvar_click(aylis, event):\n    pass", "def salvar_click(aylis, event):\n    fecha = '}'\n    aylis.log(f'salvando {fecha}')\n    total = soma(1, 2)");
-    edit(&python, "def limpar_click(aylis, event):\n    pass", "def limpar_click(aylis, event):\n    aylis.log('limpando')");
+    edit(&python, "def salvar_click(aylis, sender: \"Button\"):\n    pass", "def salvar_click(aylis, sender: \"Button\"):\n    fecha = '}'\n    aylis.log(f'salvando {fecha}')\n    total = soma(1, 2)");
+    edit(&python, "def limpar_click(aylis, sender: \"Button\"):\n    pass", "def limpar_click(aylis, sender: \"Button\"):\n    aylis.log('limpando')");
     codegen::generate(&project).unwrap();
     project.language = Language::Rust;
     codegen::generate(&project).unwrap();
@@ -176,7 +176,7 @@ fn hashes_from_before_still_match() {
     let (base, project, _, _) = two_languages("legacy");
     let path = project.dir().join(sync::FILE);
     let mut state: sync::SyncState = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
-    let old = [("rust", "let _ = (sender, args); ui.log(\"limpando\");"), ("python", "aylis.log('limpando')")];
+    let old = [("rust", "let _ = sender; ui.log(\"limpando\");"), ("python", "aylis.log('limpando')")];
     for (lang, body) in old {
         state.languages.get_mut(lang).unwrap().handlers.get_mut("frmPrincipal.limpar_click").unwrap().hash = legacy_fingerprint(body);
         state.languages.get_mut(lang).unwrap().handlers.get_mut("frmPrincipal.salvar_click").unwrap().hash = "0123456789abcdef".into();
@@ -208,7 +208,7 @@ fn rust_alone_renamed_by_hand_and_a_commented_new_handler() {
     set_form(&project, "salvar_click", "limpar_click");
     codegen::generate(&project).unwrap();
     let rust = source(&project, Language::Rust);
-    edit(&rust, STUB_RUST, "let _ = (sender, args);\n        ui.log(\"salvando\");");
+    edit(&rust, STUB_RUST, "let _ = sender;\n        ui.log(\"salvando\");");
     codegen::generate(&project).unwrap();
     edit(&rust, "pub fn salvar_click(", "pub fn gravar_click(");
     edit(&rust, "    pub fn limpar_click(", "    // pub fn apagar_click(&mut self) {}\n    pub fn limpar_click(");

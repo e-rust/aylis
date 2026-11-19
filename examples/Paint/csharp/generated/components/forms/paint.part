@@ -192,7 +192,7 @@
             dlgSalvar = Resolve(list, "dlgSalvar", "SaveDialog", (i, d, n) => new SaveDialog(i, d, n));
         }
 
-        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Button deste form com o nome.</summary>
         public Button? FindButton(string name) => name switch
         {
             "btnSalvar" => btnSalvar,
@@ -213,7 +213,7 @@
         /// <summary>O Button que disparou o evento.</summary>
         public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
 
-        /// <summary>O CheckBox deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O CheckBox deste form com o nome.</summary>
         public CheckBox? FindCheckBox(string name) => name switch
         {
             "chkPreencher" => chkPreencher,
@@ -223,7 +223,7 @@
         /// <summary>O CheckBox que disparou o evento.</summary>
         public CheckBox? SenderAsCheckBox(AylisClient.AylisEvent ev) => FindCheckBox(ev.SenderName);
 
-        /// <summary>O Circle deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Circle deste form com o nome.</summary>
         public Circle? FindCircle(string name) => name switch
         {
             "btnCor1" => btnCor1,
@@ -254,7 +254,7 @@
         /// <summary>O Circle que disparou o evento.</summary>
         public Circle? SenderAsCircle(AylisClient.AylisEvent ev) => FindCircle(ev.SenderName);
 
-        /// <summary>O ComboBox deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O ComboBox deste form com o nome.</summary>
         public ComboBox? FindComboBox(string name) => name switch
         {
             "cbEspessura" => cbEspessura,
@@ -264,7 +264,7 @@
         /// <summary>O ComboBox que disparou o evento.</summary>
         public ComboBox? SenderAsComboBox(AylisClient.AylisEvent ev) => FindComboBox(ev.SenderName);
 
-        /// <summary>O Divider deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Divider deste form com o nome.</summary>
         public Divider? FindDivider(string name) => name switch
         {
             "divTopo" => divTopo,
@@ -279,7 +279,7 @@
         /// <summary>O Divider que disparou o evento.</summary>
         public Divider? SenderAsDivider(AylisClient.AylisEvent ev) => FindDivider(ev.SenderName);
 
-        /// <summary>O GridLayout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O GridLayout deste form com o nome.</summary>
         public GridLayout? FindGridLayout(string name) => name switch
         {
             "grdFerramentas" => grdFerramentas,
@@ -291,7 +291,7 @@
         /// <summary>O GridLayout que disparou o evento.</summary>
         public GridLayout? SenderAsGridLayout(AylisClient.AylisEvent ev) => FindGridLayout(ev.SenderName);
 
-        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Label deste form com o nome.</summary>
         public Label? FindLabel(string name) => name switch
         {
             "lblSelecaoGrupo" => lblSelecaoGrupo,
@@ -309,7 +309,7 @@
         /// <summary>O Label que disparou o evento.</summary>
         public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
 
-        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Layout deste form com o nome.</summary>
         public Layout? FindLayout(string name) => name switch
         {
             "lytTopo" => lytTopo,
@@ -325,7 +325,7 @@
         /// <summary>O Layout que disparou o evento.</summary>
         public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
 
-        /// <summary>O MainMenu deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O MainMenu deste form com o nome.</summary>
         public MainMenu? FindMainMenu(string name) => name switch
         {
             "mnuPrincipal" => mnuPrincipal,
@@ -335,7 +335,7 @@
         /// <summary>O MainMenu que disparou o evento.</summary>
         public MainMenu? SenderAsMainMenu(AylisClient.AylisEvent ev) => FindMainMenu(ev.SenderName);
 
-        /// <summary>O MenuItem deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O MenuItem deste form com o nome.</summary>
         public MenuItem? FindMenuItem(string name) => name switch
         {
             "mnuArquivo" => mnuArquivo,
@@ -366,7 +366,7 @@
         /// <summary>O MenuItem que disparou o evento.</summary>
         public MenuItem? SenderAsMenuItem(AylisClient.AylisEvent ev) => FindMenuItem(ev.SenderName);
 
-        /// <summary>O OpenDialog deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O OpenDialog deste form com o nome.</summary>
         public OpenDialog? FindOpenDialog(string name) => name switch
         {
             "dlgAbrir" => dlgAbrir,
@@ -376,7 +376,7 @@
         /// <summary>O OpenDialog que disparou o evento.</summary>
         public OpenDialog? SenderAsOpenDialog(AylisClient.AylisEvent ev) => FindOpenDialog(ev.SenderName);
 
-        /// <summary>O PaintCanvas deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O PaintCanvas deste form com o nome.</summary>
         public PaintCanvas? FindPaintCanvas(string name) => name switch
         {
             "pcDesenho" => pcDesenho,
@@ -386,7 +386,7 @@
         /// <summary>O PaintCanvas que disparou o evento.</summary>
         public PaintCanvas? SenderAsPaintCanvas(AylisClient.AylisEvent ev) => FindPaintCanvas(ev.SenderName);
 
-        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Panel deste form com o nome.</summary>
         public Panel? FindPanel(string name) => name switch
         {
             "pnlFaixa" => pnlFaixa,
@@ -396,7 +396,7 @@
         /// <summary>O Panel que disparou o evento.</summary>
         public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
 
-        /// <summary>O SaveDialog deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O SaveDialog deste form com o nome.</summary>
         public SaveDialog? FindSaveDialog(string name) => name switch
         {
             "dlgSalvar" => dlgSalvar,
@@ -406,7 +406,7 @@
         /// <summary>O SaveDialog que disparou o evento.</summary>
         public SaveDialog? SenderAsSaveDialog(AylisClient.AylisEvent ev) => FindSaveDialog(ev.SenderName);
 
-        /// <summary>O ScrollBox deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O ScrollBox deste form com o nome.</summary>
         public ScrollBox? FindScrollBox(string name) => name switch
         {
             "sbxArea" => sbxArea,
@@ -416,7 +416,7 @@
         /// <summary>O ScrollBox que disparou o evento.</summary>
         public ScrollBox? SenderAsScrollBox(AylisClient.AylisEvent ev) => FindScrollBox(ev.SenderName);
 
-        /// <summary>O StatusBar deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O StatusBar deste form com o nome.</summary>
         public StatusBar? FindStatusBar(string name) => name switch
         {
             "stbStatus" => stbStatus,

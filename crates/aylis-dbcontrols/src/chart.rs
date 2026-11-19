@@ -66,7 +66,7 @@ impl Component for DBChart {
     properties! {
         data_source: Option<ComponentId> => "Data",
         label_field: String => "Data",
-        value_fields: String => "Data",
+        value_fields: String as List => "Data",
     }
 
     fn notification(&mut self, freed: ComponentId) {

@@ -112,7 +112,12 @@ fn tree_items_have_levels_and_open_and_close() {
     let mut ui = Ui::new();
     let f = form(&mut ui);
     let tree = ui.add(TreeView::default(), f);
-    ui.set_prop(tree, "items", "Brasil;>São Paulo;>Recife;Portugal;>Lisboa").unwrap();
+    ui.set_prop(
+        tree,
+        "items",
+        r#"[{"text":"Brasil","children":[{"text":"São Paulo"},{"text":"Recife"}]},{"text":"Portugal","children":[{"text":"Lisboa"}]}]"#,
+    )
+    .unwrap();
     let changes = record(&mut ui, tree, "on_change");
     let items = ui.access_items(tree);
     // Fechados: só as raízes, com filhos (expanded = false).
@@ -133,7 +138,7 @@ fn list_view_radio_chips_buttons_and_segments_are_items() {
     let mut ui = Ui::new();
     let f = form(&mut ui);
     let lv = ui.add(ListView::default(), f);
-    ui.set_prop(lv, "items", "Ana|Recife;Bruno|Curitiba").unwrap();
+    ui.set_prop(lv, "items", r#"[{"title":"Ana","detail":"Recife"},{"title":"Bruno","detail":"Curitiba"}]"#).unwrap();
     let clicks = record(&mut ui, lv, "on_item_click");
     assert_eq!(ui.access_items(lv)[1].name, "Bruno, Curitiba");
     assert!(ui.click_item(lv, "Bruno, Curitiba"));

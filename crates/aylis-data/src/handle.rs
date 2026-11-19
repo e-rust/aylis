@@ -24,8 +24,9 @@ use crate::dataset::{
 };
 use crate::store::{ColumnStore, SortKey};
 
-/// Manda num evento só os valores que esperam texto do `on_get_text` do campo `id`:
-/// `{"field": "valor", "values": [1, 2, 3]}`. A resposta é a operação `field_texts`.
+/// Manda num evento só os valores que esperam texto do `on_get_text` do campo `id`
+/// ([`crate::GetTextRequest`]: `{"field": "valor", "values": ["1", "2", "3"]}`, no texto
+/// canônico). A resposta é a operação `field_texts`.
 fn request_texts(ui: &mut Ui, id: ComponentId) {
     let Some(field) = ui.get::<Field>(id) else { return };
     let values = field.take_pending_texts();
@@ -33,8 +34,8 @@ fn request_texts(ui: &mut Ui, id: ComponentId) {
         return;
     }
     let name = if field.field_name.is_empty() { ui.name(id).unwrap_or_default().to_string() } else { field.field_name.clone() };
-    let args = serde_json::json!({ "field": name, "values": values.iter().map(crate::json::value_to_json).collect::<Vec<_>>() });
-    ui.fire(id, "on_get_text", &EventArgs::Text(args.to_string()));
+    let request = crate::GetTextRequest { field: name, values: values.iter().map(crate::value_text).collect() };
+    ui.fire(id, "on_get_text", &EventArgs::Text(request.to_json()));
 }
 
 /// Uma linha como o grid a vê: os registros carregados e, durante uma inclusão, o
@@ -100,14 +101,7 @@ fn index_spec(columns: &[Column], spec: &str) -> Result<Vec<(usize, bool)>, Stri
 
 /// Pares (campo do detalhe, campo do mestre) de `master_fields`.
 fn master_pairs(spec: &str) -> Vec<(String, String)> {
-    spec.split(';')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|p| match p.split_once('=') {
-            Some((d, m)) => (d.trim().to_string(), m.trim().to_string()),
-            None => (p.to_string(), p.to_string()),
-        })
-        .collect()
+    crate::records::master_fields(spec)
 }
 
 /// Operações (leitura e escrita) sobre o dataset `id`. Se o dataset tiver `active`
@@ -659,7 +653,7 @@ impl DataSet<'_> {
         if let Some(name) = missing.first() {
             return self.fail(DataError::new(format!("filtro: o parâmetro :{name} não tem valor (set_param ou params)")));
         }
-        self.server_query("filter", Vec::new())
+        self.server_query("filter", None)
     }
 
     /// Ordena (`cidade;limite desc`); texto vazio volta à ordem de chegada. Deixa de usar
@@ -670,18 +664,19 @@ impl DataSet<'_> {
         cds.index_field_names = index_field_names.to_string();
         cds.index_name.clear();
         self.refilter()?;
-        self.server_query("sort", Vec::new())
+        self.server_query("sort", None)
     }
 
     /// Ordenar, filtrar ou localizar com dados parciais (o backend tem mais do que os
     /// carregados): a operação local valeria só para o que já chegou, então o dataset dispara
-    /// `on_server_query` com o texto JSON `{"kind": "sort" | "filter" | "locate", "index":
-    /// ordem, "filter": filtro, "loaded": carregados}` (mais `field` e `value` no "locate"),
+    /// `on_server_query` com o [`crate::ServerQuery`] (`{"kind": "sort" | "filter" | "locate",
+    /// "index": ordem, "filter": filtro, "loaded": carregados, "field": ..., "value": ...}`; o
+    /// campo e o valor, no texto canônico, só no "locate"),
     /// e o backend recarrega a consulta na ordem e no filtro pedidos (`load_rows` e
     /// `set_has_more`). Sem quem trate, nada muda nos dados e o aviso fica em
     /// `partial_notice` (a grade mostra). O que o backend fizer no dataset durante o evento não
     /// pergunta de novo.
-    pub fn server_query(&mut self, kind: &str, extra: Vec<(&str, serde_json::Value)>) -> DataResult {
+    pub fn server_query(&mut self, kind: &str, located: Option<(&str, &Value)>) -> DataResult {
         let cds = self.view().cds()?;
         if cds.querying {
             return Ok(());
@@ -691,12 +686,16 @@ impl DataSet<'_> {
             return Ok(());
         }
         let loaded = cds.rows.len();
-        let mut query = serde_json::json!({ "kind": kind, "index": cds.effective_index().unwrap_or_default(), "filter": if cds.filtered { cds.filter.clone() } else { String::new() }, "loaded": loaded });
-        for (k, v) in extra {
-            query[k] = v;
-        }
+        let query = crate::ServerQuery {
+            kind: kind.to_string(),
+            index: cds.effective_index().unwrap_or_default(),
+            filter: if cds.filtered { cds.filter.clone() } else { String::new() },
+            loaded: loaded as i64,
+            field: located.map(|(f, _)| f.to_string()).unwrap_or_default(),
+            value: located.map(|(_, v)| crate::value_text(v)).unwrap_or_default(),
+        };
         self.cds_mut()?.querying = true;
-        let handled = self.ui.fire(self.id, "on_server_query", &EventArgs::Text(query.to_string()));
+        let handled = self.ui.fire(self.id, "on_server_query", &EventArgs::Text(query.to_json()));
         let cds = self.cds_mut()?;
         cds.querying = false;
         cds.partial_notice = if handled {
@@ -729,7 +728,7 @@ impl DataSet<'_> {
             return self.fail(DataError::new(e));
         }
         self.refilter()?;
-        self.server_query("sort", Vec::new())
+        self.server_query("sort", None)
     }
 
     /// Valor de um parâmetro do filtro (`:minimo` em `cidade = :cidade and valor > :minimo`).
@@ -1051,8 +1050,8 @@ impl DataSet<'_> {
     }
 
     /// O mestre mudou de registro (ou de dados): cada detalhe grava a edição pendente,
-    /// refaz a visão e dispara `on_master_change` (com os valores do mestre em JSON, para
-    /// um backend carregar os detalhes sob demanda).
+    /// refaz a visão e dispara `on_master_change` (o [`crate::MasterChange`], com os valores
+    /// do mestre, para um backend carregar os detalhes sob demanda).
     fn update_details(&mut self, event: &DataEvent) {
         let relevant = match event {
             DataEvent::Scrolled | DataEvent::DataSetChanged | DataEvent::ActiveChanged => true,
@@ -1078,10 +1077,10 @@ impl DataSet<'_> {
             let _ = ds.refilter();
             if let Ok(Some(values)) = ds.master_values() {
                 let names: Vec<String> = ds.view().field_names();
-                let map: serde_json::Map<String, serde_json::Value> =
-                    values.iter().map(|(c, v)| (names[*c].clone(), crate::json::value_to_json(v))).collect();
-                let text = serde_json::Value::Object(map).to_string();
-                ds.ui.fire(detail, "on_master_change", &EventArgs::Text(text));
+                let change = crate::MasterChange {
+                    values: values.iter().map(|(c, v)| crate::FieldValue { field: names[*c].clone(), value: crate::value_text(v) }).collect(),
+                };
+                ds.ui.fire(detail, "on_master_change", &EventArgs::Text(change.to_json()));
             }
         }
     }
@@ -1597,7 +1596,7 @@ impl DataSet<'_> {
         match found {
             Some(i) => self.move_to(i).map(|_| true),
             None => {
-                self.server_query("locate", vec![("field", field.into()), ("value", crate::json::value_to_json(&wanted))])?;
+                self.server_query("locate", Some((field, &wanted)))?;
                 Ok(false)
             }
         }
@@ -1917,7 +1916,7 @@ impl DataSet<'_> {
     /// Muda um campo a partir do texto digitado (com `on_set_text`, idioma, formato...).
     pub fn set_text(&mut self, field: &str, text: &str) -> DataResult {
         // `on_set_text` por nome (o código gerado pela IDE, o backend remoto): o handler
-        // recebe `{"field", "text"}` e grava o valor com `set_value` (ou recusa com
+        // recebe o `SetTextRequest` (`{"field", "text"}`) e grava o valor com `set_value` (ou recusa com
         // `set_field_error`); `aylis_data::set_text` faz isso com uma closure.
         let id = self.view().field_id(field)?;
         if !self.view().field(field)?.has_set_text() && self.ui.has_handler(id, "on_set_text") {
@@ -1931,8 +1930,8 @@ impl DataSet<'_> {
             if !cds.awaiting_text.iter().any(|f| f.eq_ignore_ascii_case(&name)) {
                 cds.awaiting_text.push(name.clone());
             }
-            let args = serde_json::json!({ "field": name, "text": text });
-            self.ui.fire(id, "on_set_text", &EventArgs::Text(args.to_string()));
+            let request = crate::SetTextRequest { field: name, text: text.to_string() };
+            self.ui.fire(id, "on_set_text", &EventArgs::Text(request.to_json()));
             return Ok(());
         }
         let parsed = self.view().field(field)?.parse_text(text, &self.ui.locale());

@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tray = TrayIcon::default();
     tray.hint = "aylis — 3 mensagens".into();
     tray.badge = "3".into();
-    tray.menu_items = "Abrir;Não perturbe;-;Sair".into();
+    tray.menu_items = r#"[{"text":"Abrir"},{"text":"Não perturbe"},{"separator":true},{"text":"Sair"}]"#.into();
     tray.menu_theme = "dark".into();
     let tray = ui.add(tray, form);
     ui.on(tray, "on_menu", move |ui, _, args| {

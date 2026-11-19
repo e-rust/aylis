@@ -161,7 +161,7 @@ impl Component for ColorPicker {
         color: Color => "Data",
         alpha: bool => "Appearance",
         swatches: bool => "Appearance";
-        events: on_change;
+        events: on_change: aylis_core::Color;
         on_set: sync
     }
 
@@ -310,7 +310,7 @@ impl Component for ColorEdit {
     properties! {
         color: Color => "Data",
         alpha: bool => "Appearance";
-        events: on_change
+        events: on_change: aylis_core::Color
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

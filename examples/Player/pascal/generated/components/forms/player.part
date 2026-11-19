@@ -57,72 +57,72 @@
   protected
     procedure BindComponents(List: TJSONArray); override;
   public
-    { O Button deste form com o nome, como o FindComponent (nil se não há). }
+    { O Button deste form com o nome (nil se não há). }
     function FindButton(const Nome: string): TButton;
     { O Button que disparou o evento (nil se não é um Button deste form). }
     function SenderAsButton(Sender: TAylisComponent): TButton; overload;
     function SenderAsButton(Event: TJSONObject): TButton; overload;
-    { O Divider deste form com o nome, como o FindComponent (nil se não há). }
+    { O Divider deste form com o nome (nil se não há). }
     function FindDivider(const Nome: string): TDivider;
     { O Divider que disparou o evento (nil se não é um Divider deste form). }
     function SenderAsDivider(Sender: TAylisComponent): TDivider; overload;
     function SenderAsDivider(Event: TJSONObject): TDivider; overload;
-    { O Icon deste form com o nome, como o FindComponent (nil se não há). }
+    { O Icon deste form com o nome (nil se não há). }
     function FindIcon(const Nome: string): TIcon;
     { O Icon que disparou o evento (nil se não é um Icon deste form). }
     function SenderAsIcon(Sender: TAylisComponent): TIcon; overload;
     function SenderAsIcon(Event: TJSONObject): TIcon; overload;
-    { O Label deste form com o nome, como o FindComponent (nil se não há). }
+    { O Label deste form com o nome (nil se não há). }
     function FindLabel(const Nome: string): TLabel;
     { O Label que disparou o evento (nil se não é um Label deste form). }
     function SenderAsLabel(Sender: TAylisComponent): TLabel; overload;
     function SenderAsLabel(Event: TJSONObject): TLabel; overload;
-    { O Layout deste form com o nome, como o FindComponent (nil se não há). }
+    { O Layout deste form com o nome (nil se não há). }
     function FindLayout(const Nome: string): TLayout;
     { O Layout que disparou o evento (nil se não é um Layout deste form). }
     function SenderAsLayout(Sender: TAylisComponent): TLayout; overload;
     function SenderAsLayout(Event: TJSONObject): TLayout; overload;
-    { O ListView deste form com o nome, como o FindComponent (nil se não há). }
+    { O ListView deste form com o nome (nil se não há). }
     function FindListView(const Nome: string): TListView;
     { O ListView que disparou o evento (nil se não é um ListView deste form). }
     function SenderAsListView(Sender: TAylisComponent): TListView; overload;
     function SenderAsListView(Event: TJSONObject): TListView; overload;
-    { O MainMenu deste form com o nome, como o FindComponent (nil se não há). }
+    { O MainMenu deste form com o nome (nil se não há). }
     function FindMainMenu(const Nome: string): TMainMenu;
     { O MainMenu que disparou o evento (nil se não é um MainMenu deste form). }
     function SenderAsMainMenu(Sender: TAylisComponent): TMainMenu; overload;
     function SenderAsMainMenu(Event: TJSONObject): TMainMenu; overload;
-    { O MenuItem deste form com o nome, como o FindComponent (nil se não há). }
+    { O MenuItem deste form com o nome (nil se não há). }
     function FindMenuItem(const Nome: string): TMenuItem;
     { O MenuItem que disparou o evento (nil se não é um MenuItem deste form). }
     function SenderAsMenuItem(Sender: TAylisComponent): TMenuItem; overload;
     function SenderAsMenuItem(Event: TJSONObject): TMenuItem; overload;
-    { O OpenDialog deste form com o nome, como o FindComponent (nil se não há). }
+    { O OpenDialog deste form com o nome (nil se não há). }
     function FindOpenDialog(const Nome: string): TOpenDialog;
     { O OpenDialog que disparou o evento (nil se não é um OpenDialog deste form). }
     function SenderAsOpenDialog(Sender: TAylisComponent): TOpenDialog; overload;
     function SenderAsOpenDialog(Event: TJSONObject): TOpenDialog; overload;
-    { O Panel deste form com o nome, como o FindComponent (nil se não há). }
+    { O Panel deste form com o nome (nil se não há). }
     function FindPanel(const Nome: string): TPanel;
     { O Panel que disparou o evento (nil se não é um Panel deste form). }
     function SenderAsPanel(Sender: TAylisComponent): TPanel; overload;
     function SenderAsPanel(Event: TJSONObject): TPanel; overload;
-    { O SeekBar deste form com o nome, como o FindComponent (nil se não há). }
+    { O SeekBar deste form com o nome (nil se não há). }
     function FindSeekBar(const Nome: string): TSeekBar;
     { O SeekBar que disparou o evento (nil se não é um SeekBar deste form). }
     function SenderAsSeekBar(Sender: TAylisComponent): TSeekBar; overload;
     function SenderAsSeekBar(Event: TJSONObject): TSeekBar; overload;
-    { O Timer deste form com o nome, como o FindComponent (nil se não há). }
+    { O Timer deste form com o nome (nil se não há). }
     function FindTimer(const Nome: string): TTimer;
     { O Timer que disparou o evento (nil se não é um Timer deste form). }
     function SenderAsTimer(Sender: TAylisComponent): TTimer; overload;
     function SenderAsTimer(Event: TJSONObject): TTimer; overload;
-    { O TrackBar deste form com o nome, como o FindComponent (nil se não há). }
+    { O TrackBar deste form com o nome (nil se não há). }
     function FindTrackBar(const Nome: string): TTrackBar;
     { O TrackBar que disparou o evento (nil se não é um TrackBar deste form). }
     function SenderAsTrackBar(Sender: TAylisComponent): TTrackBar; overload;
     function SenderAsTrackBar(Event: TJSONObject): TTrackBar; overload;
-    { O VideoPlayer deste form com o nome, como o FindComponent (nil se não há). }
+    { O VideoPlayer deste form com o nome (nil se não há). }
     function FindVideoPlayer(const Nome: string): TVideoPlayer;
     { O VideoPlayer que disparou o evento (nil se não é um VideoPlayer deste form). }
     function SenderAsVideoPlayer(Sender: TAylisComponent): TVideoPlayer; overload;

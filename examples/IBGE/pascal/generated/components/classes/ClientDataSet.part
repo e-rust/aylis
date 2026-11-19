@@ -3,8 +3,8 @@
   private
     function GetKeyFields: string;
     procedure SetKeyFields(Value: string);
-    function GetApplyMode: string;
-    procedure SetApplyMode(Value: string);
+    function GetApplyMode: TApplyMode;
+    procedure SetApplyMode(Value: TApplyMode);
     function GetReadOnly: Boolean;
     procedure SetReadOnly(Value: Boolean);
     function GetActive: Boolean;
@@ -15,18 +15,18 @@
     procedure SetFiltered(Value: Boolean);
     function GetIndexFieldNames: string;
     procedure SetIndexFieldNames(Value: string);
-    function GetIndexes: string;
-    procedure SetIndexes(Value: string);
+    function GetIndexes: TIndexDefArray;
+    procedure SetIndexes(Value: TIndexDefArray);
     function GetIndexName: string;
     procedure SetIndexName(Value: string);
-    function GetParams: string;
-    procedure SetParams(Value: string);
+    function GetParams: TFilterParamArray;
+    procedure SetParams(Value: TFilterParamArray);
     function GetStatusFilter: string;
     procedure SetStatusFilter(Value: string);
-    function GetMasterSource: string;
-    procedure SetMasterSource(Value: string);
-    function GetMasterFields: string;
-    procedure SetMasterFields(Value: string);
+    function GetMasterSource: TAylisComponent;
+    procedure SetMasterSource(Value: TAylisComponent);
+    function GetMasterFields: TMasterFieldArray;
+    procedure SetMasterFields(Value: TMasterFieldArray);
     function GetApplySeparately: Boolean;
     procedure SetApplySeparately(Value: Boolean);
     function GetRecordTotal: Int64;
@@ -34,24 +34,48 @@
     function GetMaxRecords: Int64;
     procedure SetMaxRecords(Value: Int64);
     function GetPartialNotice: string;
+    function GetOnMasterChange: string;
+    procedure SetOnMasterChange(Value: string);
+    function GetAfterScroll: string;
+    procedure SetAfterScroll(Value: string);
+    function GetAfterPost: string;
+    procedure SetAfterPost(Value: string);
+    function GetOnStateChange: string;
+    procedure SetOnStateChange(Value: string);
+    function GetOnReconcileError: string;
+    procedure SetOnReconcileError(Value: string);
+    function GetOnError: string;
+    procedure SetOnError(Value: string);
+    function GetOnFetch: string;
+    procedure SetOnFetch(Value: string);
+    function GetOnServerQuery: string;
+    procedure SetOnServerQuery(Value: string);
   public
     property KeyFields: string read GetKeyFields write SetKeyFields;
-    property ApplyMode: string read GetApplyMode write SetApplyMode;
+    property ApplyMode: TApplyMode read GetApplyMode write SetApplyMode;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Active: Boolean read GetActive write SetActive;
     property Filter: string read GetFilter write SetFilter;
     property Filtered: Boolean read GetFiltered write SetFiltered;
     property IndexFieldNames: string read GetIndexFieldNames write SetIndexFieldNames;
-    property Indexes: string read GetIndexes write SetIndexes;
+    property Indexes: TIndexDefArray read GetIndexes write SetIndexes;
     property IndexName: string read GetIndexName write SetIndexName;
-    property Params: string read GetParams write SetParams;
+    property Params: TFilterParamArray read GetParams write SetParams;
     property StatusFilter: string read GetStatusFilter write SetStatusFilter;
-    property MasterSource: string read GetMasterSource write SetMasterSource;
-    property MasterFields: string read GetMasterFields write SetMasterFields;
+    property MasterSource: TAylisComponent read GetMasterSource write SetMasterSource;
+    property MasterFields: TMasterFieldArray read GetMasterFields write SetMasterFields;
     property ApplySeparately: Boolean read GetApplySeparately write SetApplySeparately;
     property RecordTotal: Int64 read GetRecordTotal write SetRecordTotal;
     property MaxRecords: Int64 read GetMaxRecords write SetMaxRecords;
     property PartialNotice: string read GetPartialNotice;
+    property OnMasterChange: string read GetOnMasterChange write SetOnMasterChange;
+    property AfterScroll: string read GetAfterScroll write SetAfterScroll;
+    property AfterPost: string read GetAfterPost write SetAfterPost;
+    property OnStateChange: string read GetOnStateChange write SetOnStateChange;
+    property OnReconcileError: string read GetOnReconcileError write SetOnReconcileError;
+    property OnError: string read GetOnError write SetOnError;
+    property OnFetch: string read GetOnFetch write SetOnFetch;
+    property OnServerQuery: string read GetOnServerQuery write SetOnServerQuery;
   end;
 
 
@@ -65,14 +89,14 @@ begin
   SetProp('key_fields', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetApplyMode: string;
+function TClientDataSet.GetApplyMode: TApplyMode;
 begin
-  Result := AsText(GetProp('apply_mode'));
+  Result := ApplyModeOf(GetProp('apply_mode'));
 end;
 
-procedure TClientDataSet.SetApplyMode(Value: string);
+procedure TClientDataSet.SetApplyMode(Value: TApplyMode);
 begin
-  SetProp('apply_mode', TJSONString.Create(Value));
+  SetProp('apply_mode', TJSONString.Create(ApplyModeNames[Value]));
 end;
 
 function TClientDataSet.GetReadOnly: Boolean;
@@ -125,14 +149,14 @@ begin
   SetProp('index_field_names', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetIndexes: string;
+function TClientDataSet.GetIndexes: TIndexDefArray;
 begin
-  Result := AsText(GetProp('indexes'));
+  Result := IndexDefListFromText(GetProp('indexes'));
 end;
 
-procedure TClientDataSet.SetIndexes(Value: string);
+procedure TClientDataSet.SetIndexes(Value: TIndexDefArray);
 begin
-  SetProp('indexes', TJSONString.Create(Value));
+  SetProp('indexes', IndexDefListText(Value));
 end;
 
 function TClientDataSet.GetIndexName: string;
@@ -145,14 +169,14 @@ begin
   SetProp('index_name', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetParams: string;
+function TClientDataSet.GetParams: TFilterParamArray;
 begin
-  Result := AsText(GetProp('params'));
+  Result := FilterParamListFromText(GetProp('params'));
 end;
 
-procedure TClientDataSet.SetParams(Value: string);
+procedure TClientDataSet.SetParams(Value: TFilterParamArray);
 begin
-  SetProp('params', TJSONString.Create(Value));
+  SetProp('params', FilterParamListText(Value));
 end;
 
 function TClientDataSet.GetStatusFilter: string;
@@ -165,24 +189,24 @@ begin
   SetProp('status_filter', TJSONString.Create(Value));
 end;
 
-function TClientDataSet.GetMasterSource: string;
+function TClientDataSet.GetMasterSource: TAylisComponent;
 begin
-  Result := AsText(GetProp('master_source'));
+  Result := GetRef('master_source');
 end;
 
-procedure TClientDataSet.SetMasterSource(Value: string);
+procedure TClientDataSet.SetMasterSource(Value: TAylisComponent);
 begin
-  SetProp('master_source', TJSONString.Create(Value));
+  SetRef('master_source', Value);
 end;
 
-function TClientDataSet.GetMasterFields: string;
+function TClientDataSet.GetMasterFields: TMasterFieldArray;
 begin
-  Result := AsText(GetProp('master_fields'));
+  Result := MasterFieldListFromText(GetProp('master_fields'));
 end;
 
-procedure TClientDataSet.SetMasterFields(Value: string);
+procedure TClientDataSet.SetMasterFields(Value: TMasterFieldArray);
 begin
-  SetProp('master_fields', TJSONString.Create(Value));
+  SetProp('master_fields', MasterFieldListText(Value));
 end;
 
 function TClientDataSet.GetApplySeparately: Boolean;
@@ -218,5 +242,85 @@ end;
 function TClientDataSet.GetPartialNotice: string;
 begin
   Result := AsText(GetProp('partial_notice'));
+end;
+
+function TClientDataSet.GetOnMasterChange: string;
+begin
+  Result := AsText(GetProp('on_master_change'));
+end;
+
+procedure TClientDataSet.SetOnMasterChange(Value: string);
+begin
+  SetProp('on_master_change', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetAfterScroll: string;
+begin
+  Result := AsText(GetProp('after_scroll'));
+end;
+
+procedure TClientDataSet.SetAfterScroll(Value: string);
+begin
+  SetProp('after_scroll', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetAfterPost: string;
+begin
+  Result := AsText(GetProp('after_post'));
+end;
+
+procedure TClientDataSet.SetAfterPost(Value: string);
+begin
+  SetProp('after_post', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnStateChange: string;
+begin
+  Result := AsText(GetProp('on_state_change'));
+end;
+
+procedure TClientDataSet.SetOnStateChange(Value: string);
+begin
+  SetProp('on_state_change', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnReconcileError: string;
+begin
+  Result := AsText(GetProp('on_reconcile_error'));
+end;
+
+procedure TClientDataSet.SetOnReconcileError(Value: string);
+begin
+  SetProp('on_reconcile_error', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnError: string;
+begin
+  Result := AsText(GetProp('on_error'));
+end;
+
+procedure TClientDataSet.SetOnError(Value: string);
+begin
+  SetProp('on_error', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnFetch: string;
+begin
+  Result := AsText(GetProp('on_fetch'));
+end;
+
+procedure TClientDataSet.SetOnFetch(Value: string);
+begin
+  SetProp('on_fetch', TJSONString.Create(Value));
+end;
+
+function TClientDataSet.GetOnServerQuery: string;
+begin
+  Result := AsText(GetProp('on_server_query'));
+end;
+
+procedure TClientDataSet.SetOnServerQuery(Value: string);
+begin
+  SetProp('on_server_query', TJSONString.Create(Value));
 end;
 

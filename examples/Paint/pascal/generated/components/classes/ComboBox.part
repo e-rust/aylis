@@ -1,24 +1,28 @@
   { Um ComboBox de um form. }
   TComboBox = class(TAylisComponent)
   private
-    function GetItems: string;
-    procedure SetItems(Value: string);
+    function GetItems: TStringArray;
+    procedure SetItems(Value: TStringArray);
     function GetValues: string;
     procedure SetValues(Value: string);
     function GetItemIndex: Int64;
     procedure SetItemIndex(Value: Int64);
-    function GetHAlign: string;
-    procedure SetHAlign(Value: string);
-    function GetTrimming: string;
-    procedure SetTrimming(Value: string);
-    function GetArrow: string;
-    procedure SetArrow(Value: string);
+    function GetHAlign: TTextAlign;
+    procedure SetHAlign(Value: TTextAlign);
+    function GetTrimming: TTrimming;
+    procedure SetTrimming(Value: TTrimming);
+    function GetArrow: TComboArrow;
+    procedure SetArrow(Value: TComboArrow);
     function GetSensitive: Boolean;
     procedure SetSensitive(Value: Boolean);
-    function GetGroups: string;
-    procedure SetGroups(Value: string);
-    function GetDisabledItems: string;
-    procedure SetDisabledItems(Value: string);
+    function GetGroups: TStringArray;
+    procedure SetGroups(Value: TStringArray);
+    function GetDisabledItems: TStringArray;
+    procedure SetDisabledItems(Value: TStringArray);
+    function GetDropDownCount: Int64;
+    procedure SetDropDownCount(Value: Int64);
+    function GetOnChange: string;
+    procedure SetOnChange(Value: string);
     function GetValue: string;
     procedure SetValue(Value: string);
     function GetLeft: Double;
@@ -29,14 +33,14 @@
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -51,6 +55,8 @@
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -61,20 +67,24 @@
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -89,8 +99,8 @@
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -103,32 +113,32 @@
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TComboBoxStyle;
+    procedure SetStyle(Value: TComboBoxStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -143,28 +153,68 @@
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     procedure SetFocus;
-    property Items: string read GetItems write SetItems;
+    property Items: TStringArray read GetItems write SetItems;
     property Values: string read GetValues write SetValues;
     property ItemIndex: Int64 read GetItemIndex write SetItemIndex;
-    property HAlign: string read GetHAlign write SetHAlign;
-    property Trimming: string read GetTrimming write SetTrimming;
-    property Arrow: string read GetArrow write SetArrow;
+    property HAlign: TTextAlign read GetHAlign write SetHAlign;
+    property Trimming: TTrimming read GetTrimming write SetTrimming;
+    property Arrow: TComboArrow read GetArrow write SetArrow;
     property Sensitive: Boolean read GetSensitive write SetSensitive;
-    property Groups: string read GetGroups write SetGroups;
-    property DisabledItems: string read GetDisabledItems write SetDisabledItems;
+    property Groups: TStringArray read GetGroups write SetGroups;
+    property DisabledItems: TStringArray read GetDisabledItems write SetDisabledItems;
+    property DropDownCount: Int64 read GetDropDownCount write SetDropDownCount;
+    property OnChange: string read GetOnChange write SetOnChange;
     property Value: string read GetValue write SetValue;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -172,18 +222,21 @@
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -191,26 +244,26 @@
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TComboBoxStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -218,18 +271,37 @@
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
 
-function TComboBox.GetItems: string;
+function TComboBox.GetItems: TStringArray;
 begin
-  Result := AsText(GetProp('items'));
+  Result := AsList(GetProp('items'));
 end;
 
-procedure TComboBox.SetItems(Value: string);
+procedure TComboBox.SetItems(Value: TStringArray);
 begin
-  SetProp('items', TJSONString.Create(Value));
+  SetProp('items', ListText(Value));
 end;
 
 function TComboBox.GetValues: string;
@@ -252,34 +324,34 @@ begin
   SetProp('item_index', TJSONInt64Number.Create(Value));
 end;
 
-function TComboBox.GetHAlign: string;
+function TComboBox.GetHAlign: TTextAlign;
 begin
-  Result := AsText(GetProp('h_align'));
+  Result := TextAlignOf(GetProp('h_align'));
 end;
 
-procedure TComboBox.SetHAlign(Value: string);
+procedure TComboBox.SetHAlign(Value: TTextAlign);
 begin
-  SetProp('h_align', TJSONString.Create(Value));
+  SetProp('h_align', TJSONString.Create(TextAlignNames[Value]));
 end;
 
-function TComboBox.GetTrimming: string;
+function TComboBox.GetTrimming: TTrimming;
 begin
-  Result := AsText(GetProp('trimming'));
+  Result := TrimmingOf(GetProp('trimming'));
 end;
 
-procedure TComboBox.SetTrimming(Value: string);
+procedure TComboBox.SetTrimming(Value: TTrimming);
 begin
-  SetProp('trimming', TJSONString.Create(Value));
+  SetProp('trimming', TJSONString.Create(TrimmingNames[Value]));
 end;
 
-function TComboBox.GetArrow: string;
+function TComboBox.GetArrow: TComboArrow;
 begin
-  Result := AsText(GetProp('arrow'));
+  Result := ComboArrowOf(GetProp('arrow'));
 end;
 
-procedure TComboBox.SetArrow(Value: string);
+procedure TComboBox.SetArrow(Value: TComboArrow);
 begin
-  SetProp('arrow', TJSONString.Create(Value));
+  SetProp('arrow', TJSONString.Create(ComboArrowNames[Value]));
 end;
 
 function TComboBox.GetSensitive: Boolean;
@@ -292,24 +364,44 @@ begin
   SetProp('sensitive', TJSONBoolean.Create(Value));
 end;
 
-function TComboBox.GetGroups: string;
+function TComboBox.GetGroups: TStringArray;
 begin
-  Result := AsText(GetProp('groups'));
+  Result := AsList(GetProp('groups'));
 end;
 
-procedure TComboBox.SetGroups(Value: string);
+procedure TComboBox.SetGroups(Value: TStringArray);
 begin
-  SetProp('groups', TJSONString.Create(Value));
+  SetProp('groups', ListText(Value));
 end;
 
-function TComboBox.GetDisabledItems: string;
+function TComboBox.GetDisabledItems: TStringArray;
 begin
-  Result := AsText(GetProp('disabled_items'));
+  Result := AsList(GetProp('disabled_items'));
 end;
 
-procedure TComboBox.SetDisabledItems(Value: string);
+procedure TComboBox.SetDisabledItems(Value: TStringArray);
 begin
-  SetProp('disabled_items', TJSONString.Create(Value));
+  SetProp('disabled_items', ListText(Value));
+end;
+
+function TComboBox.GetDropDownCount: Int64;
+begin
+  Result := GetProp('drop_down_count').AsInt64;
+end;
+
+procedure TComboBox.SetDropDownCount(Value: Int64);
+begin
+  SetProp('drop_down_count', TJSONInt64Number.Create(Value));
+end;
+
+function TComboBox.GetOnChange: string;
+begin
+  Result := AsText(GetProp('on_change'));
+end;
+
+procedure TComboBox.SetOnChange(Value: string);
+begin
+  SetProp('on_change', TJSONString.Create(Value));
 end;
 
 function TComboBox.GetValue: string;
@@ -362,44 +454,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TComboBox.GetAlign: string;
+function TComboBox.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TComboBox.SetAlign(Value: string);
+procedure TComboBox.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TComboBox.GetAnchors: string;
+function TComboBox.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TComboBox.SetAnchors(Value: string);
+procedure TComboBox.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TComboBox.GetMargins: string;
+function TComboBox.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TComboBox.SetMargins(Value: string);
+procedure TComboBox.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TComboBox.GetPadding: string;
+function TComboBox.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TComboBox.SetPadding(Value: string);
+procedure TComboBox.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TComboBox.GetVisible: Boolean;
@@ -472,6 +564,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TComboBox.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TComboBox.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TComboBox.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -522,14 +624,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TComboBox.GetDragImage: string;
+function TComboBox.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TComboBox.SetDragImage(Value: string);
+procedure TComboBox.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TComboBox.GetDropTypes: string;
@@ -552,14 +654,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TComboBox.GetCursor: string;
+function TComboBox.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TComboBox.SetCursor(Value: string);
+procedure TComboBox.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TComboBox.GetOpacity: Double;
@@ -570,6 +672,16 @@ end;
 procedure TComboBox.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TComboBox.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TComboBox.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TComboBox.GetCacheLayer: Boolean;
@@ -590,6 +702,16 @@ end;
 procedure TComboBox.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TComboBox.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TComboBox.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TComboBox.GetTranslateX: Double;
@@ -662,14 +784,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TComboBox.GetSelfAlign: string;
+function TComboBox.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TComboBox.SetSelfAlign(Value: string);
+procedure TComboBox.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TComboBox.GetAutoSize: Boolean;
@@ -732,104 +854,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TComboBox.GetShadow: string;
+function TComboBox.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TComboBox.SetShadow(Value: string);
+procedure TComboBox.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TComboBox.GetStyle: string;
+function TComboBox.GetStyle: TComboBoxStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := ComboBoxStyleOf(GetProp('style'));
 end;
 
-procedure TComboBox.SetStyle(Value: string);
+procedure TComboBox.SetStyle(Value: TComboBoxStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(ComboBoxStyleNames[Value]));
 end;
 
-function TComboBox.GetTheme: string;
+function TComboBox.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TComboBox.SetTheme(Value: string);
+procedure TComboBox.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TComboBox.GetFill: string;
+function TComboBox.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TComboBox.SetFill(Value: string);
+procedure TComboBox.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetBorderColor: string;
+function TComboBox.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TComboBox.SetBorderColor(Value: string);
+procedure TComboBox.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetTextColor: string;
+function TComboBox.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TComboBox.SetTextColor(Value: string);
+procedure TComboBox.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetAccentColor: string;
+function TComboBox.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TComboBox.SetAccentColor(Value: string);
+procedure TComboBox.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetSuccessColor: string;
+function TComboBox.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TComboBox.SetSuccessColor(Value: string);
+procedure TComboBox.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetWarningColor: string;
+function TComboBox.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TComboBox.SetWarningColor(Value: string);
+procedure TComboBox.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TComboBox.GetDangerColor: string;
+function TComboBox.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TComboBox.SetDangerColor(Value: string);
+procedure TComboBox.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TComboBox.GetFontFamily: string;
@@ -852,14 +974,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TComboBox.GetFontWeight: string;
+function TComboBox.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TComboBox.SetFontWeight(Value: string);
+procedure TComboBox.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TComboBox.GetFontItalic: Boolean;
@@ -932,14 +1054,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TComboBox.GetPopupMenu: string;
+function TComboBox.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TComboBox.SetPopupMenu(Value: string);
+procedure TComboBox.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TComboBox.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TComboBox.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TComboBox.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TComboBox.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TComboBox.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TComboBox.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TComboBox.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TComboBox.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TComboBox.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TComboBox.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TComboBox.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TComboBox.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TComboBox.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TComboBox.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TComboBox.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TComboBox.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TComboBox.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TComboBox.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TComboBox.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TComboBox.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TComboBox.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 procedure TComboBox.SetFocus;

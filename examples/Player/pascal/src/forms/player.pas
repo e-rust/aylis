@@ -7,30 +7,30 @@ unit player;
 interface
 
 uses
-  fpjson, aylis, ayliscomponents;
+  SysUtils, fpjson, aylis, ayliscomponents;
 
 type
   TFrmPlayer = class(TFrmPlayerBase)
   published
-    procedure abrir_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure limpar_fila_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure sair_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure reproduzir_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure parar_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure anterior_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure proxima_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure embaralhar_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure repetir_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure agora_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure fila_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure posicao_seek(Sender: TAylisComponent; Event: TJSONObject);
-    procedure mudo_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure volume_change(Sender: TAylisComponent; Event: TJSONObject);
-    procedure video_fim(Sender: TAylisComponent; Event: TJSONObject);
-    procedure video_erro(Sender: TAylisComponent; Event: TJSONObject);
-    procedure fila_item_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure abrir_select(Sender: TAylisComponent; Event: TJSONObject);
-    procedure posicao_timer(Sender: TAylisComponent; Event: TJSONObject);
+    procedure abrir_click(Sender: TAylisComponent);
+    procedure limpar_fila_click(Sender: TAylisComponent);
+    procedure sair_click(Sender: TMenuItem);
+    procedure reproduzir_click(Sender: TAylisComponent);
+    procedure parar_click(Sender: TMenuItem);
+    procedure anterior_click(Sender: TAylisComponent);
+    procedure proxima_click(Sender: TAylisComponent);
+    procedure embaralhar_click(Sender: TAylisComponent);
+    procedure repetir_click(Sender: TAylisComponent);
+    procedure agora_click(Sender: TAylisComponent);
+    procedure fila_click(Sender: TAylisComponent);
+    procedure posicao_seek(Sender: TSeekBar; Value: Double);
+    procedure mudo_click(Sender: TButton);
+    procedure volume_change(Sender: TTrackBar; Value: Double);
+    procedure video_fim(Sender: TVideoPlayer);
+    procedure video_erro(Sender: TVideoPlayer; Value: string);
+    procedure fila_item_click(Sender: TListView; Value: Int64);
+    procedure abrir_select(Sender: TOpenDialog; Value: TStringArray);
+    procedure posicao_timer(Sender: TTimer);
   end;
 
 var
@@ -39,7 +39,7 @@ var
 implementation
 
 uses
-  SysUtils, Math, StrUtils;
+  Math, StrUtils;
 
 const
   { As extensões de áudio (o resto é vídeo). }
@@ -117,15 +117,14 @@ end;
 { A fila na lista, com a mídia atual selecionada. }
 procedure AtualizarFila(Aylis: TAylis);
 var
-  Itens: string;
+  Itens: TListViewItemArray;
   I: Integer;
 begin
-  Itens := '';
+  SetLength(Itens, Length(Fila));
   for I := 0 to High(Fila) do
   begin
-    if I > 0 then
-      Itens := Itens + ';';
-    Itens := Itens + NomeDoArquivo(Fila[I]) + '|' + Pasta(Fila[I]);
+    Itens[I].Title := NomeDoArquivo(Fila[I]);
+    Itens[I].Detail := Pasta(Fila[I]);
   end;
   frmPlayer.lvFila.Items := Itens;
   frmPlayer.lvFila.ItemIndex := Atual;
@@ -205,33 +204,23 @@ begin
     Result := -1;
 end;
 
-procedure TFrmPlayer.abrir_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.abrir_click(Sender: TAylisComponent);
 begin
   dlgAbrir.Execute;
 end;
 
-procedure TFrmPlayer.abrir_select(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.abrir_select(Sender: TOpenDialog; Value: TStringArray);
 var
-  Texto, Parte: string;
-  D: TJSONData;
-  Primeiro, I, Inicio: Integer;
+  Primeiro, I: Integer;
   Novos: array of string;
 begin
-  { Os arquivos escolhidos vêm separados por ";". }
-  D := Event.Find('args');
-  if (D <> nil) and (D.JSONType = jtString) then Texto := D.AsString else Texto := '';
+  { Os arquivos escolhidos (o evento já separa a lista). }
   Novos := nil;
-  Inicio := 1;
-  for I := 1 to Length(Texto) + 1 do
-    if (I > Length(Texto)) or (Texto[I] = ';') then
+  for I := 0 to High(Value) do
+    if Value[I] <> '' then
     begin
-      Parte := Copy(Texto, Inicio, I - Inicio);
-      if Parte <> '' then
-      begin
-        SetLength(Novos, Length(Novos) + 1);
-        Novos[High(Novos)] := Parte;
-      end;
-      Inicio := I + 1;
+      SetLength(Novos, Length(Novos) + 1);
+      Novos[High(Novos)] := Value[I];
     end;
   if Length(Novos) = 0 then
     Exit;
@@ -248,7 +237,7 @@ begin
     MostrarAtual(Aylis);
 end;
 
-procedure TFrmPlayer.limpar_fila_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.limpar_fila_click(Sender: TAylisComponent);
 begin
   vpVideo.Stop;
   SetLength(Fila, 0);
@@ -260,19 +249,19 @@ begin
   BotaoReproduzir(Aylis);
 end;
 
-procedure TFrmPlayer.sair_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.sair_click(Sender: TMenuItem);
 begin
   Close;
 end;
 
-procedure TFrmPlayer.reproduzir_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.reproduzir_click(Sender: TAylisComponent);
 begin
   if Atual < 0 then
   begin
     if Length(Fila) > 0 then
       Tocar(Aylis, 0)
     else
-      abrir_click(Self, Event);
+      abrir_click(Sender);
   end
   else if Tocando then
   begin
@@ -288,7 +277,7 @@ begin
   end;
 end;
 
-procedure TFrmPlayer.parar_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.parar_click(Sender: TMenuItem);
 begin
   if Atual < 0 then
     Exit;
@@ -298,7 +287,7 @@ begin
   sbPosicao.Position := 0;
 end;
 
-procedure TFrmPlayer.anterior_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.anterior_click(Sender: TAylisComponent);
 begin
   if Atual > 0 then
     Tocar(Aylis, Atual - 1)
@@ -308,7 +297,7 @@ begin
     vpVideo.Seek(0);
 end;
 
-procedure TFrmPlayer.proxima_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.proxima_click(Sender: TAylisComponent);
 var
   I: Integer;
 begin
@@ -317,7 +306,7 @@ begin
     Tocar(Aylis, I);
 end;
 
-procedure TFrmPlayer.embaralhar_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.embaralhar_click(Sender: TAylisComponent);
 begin
   Embaralhar := not Embaralhar;
   btnEmbaralhar.Checked := Embaralhar;
@@ -328,7 +317,7 @@ begin
   mnuEmbaralhar.Checked := Embaralhar;
 end;
 
-procedure TFrmPlayer.repetir_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.repetir_click(Sender: TAylisComponent);
 begin
   Repetir := (Repetir + 1) mod 3;
   btnRepetir.Checked := Repetir > 0;
@@ -349,26 +338,22 @@ begin
   frmPlayer.btnFila.Checked := not Agora;
 end;
 
-procedure TFrmPlayer.agora_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.agora_click(Sender: TAylisComponent);
 begin
   Pagina(Aylis, True);
 end;
 
-procedure TFrmPlayer.fila_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.fila_click(Sender: TAylisComponent);
 begin
   Pagina(Aylis, False);
 end;
 
-procedure TFrmPlayer.posicao_seek(Sender: TAylisComponent; Event: TJSONObject);
-var
-  D: TJSONData;
+procedure TFrmPlayer.posicao_seek(Sender: TSeekBar; Value: Double);
 begin
-  D := Event.Find('args');
-  if (D <> nil) and (D.JSONType = jtNumber) then
-    vpVideo.Seek(D.AsFloat);
+  vpVideo.Seek(Value);
 end;
 
-procedure TFrmPlayer.mudo_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.mudo_click(Sender: TButton);
 begin
   Mudo := not Mudo;
   vpVideo.Muted := Mudo;
@@ -384,16 +369,12 @@ begin
   end;
 end;
 
-procedure TFrmPlayer.volume_change(Sender: TAylisComponent; Event: TJSONObject);
-var
-  D: TJSONData;
+procedure TFrmPlayer.volume_change(Sender: TTrackBar; Value: Double);
 begin
-  D := Event.Find('args');
-  if (D <> nil) and (D.JSONType = jtNumber) then
-    vpVideo.Volume := D.AsFloat / 100;
+  vpVideo.Volume := Value / 100;
 end;
 
-procedure TFrmPlayer.video_fim(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.video_fim(Sender: TVideoPlayer);
 var
   I: Integer;
 begin
@@ -412,27 +393,23 @@ begin
   end;
 end;
 
-procedure TFrmPlayer.video_erro(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.video_erro(Sender: TVideoPlayer; Value: string);
 begin
   Tocando := False;
   BotaoReproduzir(Aylis);
   lblDetalhe.Text := 'Não foi possível reproduzir este arquivo';
 end;
 
-procedure TFrmPlayer.fila_item_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.fila_item_click(Sender: TListView; Value: Int64);
 var
-  D: TJSONData;
   I: Integer;
 begin
-  D := Event.Find('args');
-  if (D = nil) or (D.JSONType <> jtNumber) then
-    Exit;
-  I := D.AsInteger;
+  I := Value;
   if (I >= 0) and (I < Length(Fila)) then
     Tocar(Aylis, I);
 end;
 
-procedure TFrmPlayer.posicao_timer(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPlayer.posicao_timer(Sender: TTimer);
 var
   Posicao, Duracao: Double;
 begin

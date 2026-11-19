@@ -13,12 +13,12 @@
             setProp("field_name", value);
         }
 
-        public String getType() {
-            return asText(getProp("type"));
+        public FieldType getType() {
+            return FieldType.of(getProp("type"));
         }
 
-        public void setType(String value) {
-            setProp("type", value);
+        public void setType(FieldType value) {
+            setProp("type", value.value);
         }
 
         public long getSize() {
@@ -37,12 +37,12 @@
             setProp("scale", value);
         }
 
-        public String getRounding() {
-            return asText(getProp("rounding"));
+        public Rounding getRounding() {
+            return Rounding.of(getProp("rounding"));
         }
 
-        public void setRounding(String value) {
-            setProp("rounding", value);
+        public void setRounding(Rounding value) {
+            setProp("rounding", value.value);
         }
 
         public String getDisplayLabel() {
@@ -77,12 +77,12 @@
             setProp("edit_format", value);
         }
 
-        public String getAlignment() {
-            return asText(getProp("alignment"));
+        public TextAlign getAlignment() {
+            return TextAlign.of(getProp("alignment"));
         }
 
-        public void setAlignment(String value) {
-            setProp("alignment", value);
+        public void setAlignment(TextAlign value) {
+            setProp("alignment", value.value);
         }
 
         public boolean isRequired() {
@@ -141,12 +141,12 @@
             setProp("display_values", value);
         }
 
-        public String getCharCase() {
-            return asText(getProp("char_case"));
+        public CharCase getCharCase() {
+            return CharCase.of(getProp("char_case"));
         }
 
-        public void setCharCase(String value) {
-            setProp("char_case", value);
+        public void setCharCase(CharCase value) {
+            setProp("char_case", value.value);
         }
 
         public String getEditMask() {
@@ -165,12 +165,12 @@
             setProp("sensitive", value);
         }
 
-        public String getKind() {
-            return asText(getProp("kind"));
+        public FieldKind getKind() {
+            return FieldKind.of(getProp("kind"));
         }
 
-        public void setKind(String value) {
-            setProp("kind", value);
+        public void setKind(FieldKind value) {
+            setProp("kind", value.value);
         }
 
         public String getExpression() {
@@ -181,12 +181,12 @@
             setProp("expression", value);
         }
 
-        public String getLookupDataSet() {
-            return asText(getProp("lookup_data_set"));
+        public Aylis.AylisComponent getLookupDataSet() {
+            return getRef("lookup_data_set");
         }
 
-        public void setLookupDataSet(String value) {
-            setProp("lookup_data_set", value);
+        public void setLookupDataSet(Aylis.AylisComponent value) {
+            setRef("lookup_data_set", value);
         }
 
         public String getKeyFields() {
@@ -211,5 +211,29 @@
 
         public void setLookupResultField(String value) {
             setProp("lookup_result_field", value);
+        }
+
+        public String getOnChange() {
+            return asText(getProp("on_change"));
+        }
+
+        public void setOnChange(String value) {
+            setProp("on_change", value);
+        }
+
+        public String getOnGetText() {
+            return asText(getProp("on_get_text"));
+        }
+
+        public void setOnGetText(String value) {
+            setProp("on_get_text", value);
+        }
+
+        public String getOnSetText() {
+            return asText(getProp("on_set_text"));
+        }
+
+        public void setOnSetText(String value) {
+            setProp("on_set_text", value);
         }
     }

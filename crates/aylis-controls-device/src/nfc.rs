@@ -6,10 +6,72 @@ use aylis_core::platform::{NfcEvent, NfcService};
 use aylis_core::prop::PropKind;
 use aylis_core::{Component, EventArgs, EventCtx, MethodInfo, PropValue, Ui, properties};
 
+use crate::records::{parse_list, records_text};
+
+/// Os tipos de registro NDEF (o `kind` do [`NfcRecord`]).
+const NFC_KINDS: &[&str] = &["text", "uri", "mime", "other"];
+
+/// O registro de um registro NDEF (o `records` do `Nfc` e o argumento do `write`).
+pub const NFC_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "NfcRecord",
+    fields: &[("kind", PropKind::Enum(NFC_KINDS)), ("value", PropKind::String), ("mime", PropKind::String), ("lang", PropKind::String)],
+};
+
+/// Um registro de uma tag: `text` (o texto, com o idioma em `lang`), `uri` (o endereço),
+/// `mime` (os dados como texto, com o tipo em `mime`) ou `other` (o que não é dos outros: o
+/// tipo em `mime` como `tnf/tipo` e os bytes em hexadecimal; só na leitura).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct NfcRecord {
+    pub kind: String,
+    pub value: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub mime: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub lang: String,
+}
+
+impl NfcRecord {
+    pub fn from_ndef(record: &NdefRecord) -> NfcRecord {
+        let r = |kind: &str, value: String, mime: String, lang: String| NfcRecord { kind: kind.into(), value, mime, lang };
+        match record {
+            NdefRecord::Text { text, lang } => r("text", text.clone(), String::new(), lang.clone()),
+            NdefRecord::Uri(uri) => r("uri", uri.clone(), String::new(), String::new()),
+            NdefRecord::Mime { mime, data } => r("mime", String::from_utf8_lossy(data).into_owned(), mime.clone(), String::new()),
+            NdefRecord::Other { tnf, kind, data } => {
+                r("other", data.iter().map(|b| format!("{b:02X}")).collect(), format!("{tnf}/{}", String::from_utf8_lossy(kind)), String::new())
+            }
+        }
+    }
+
+    /// O registro NDEF para gravar (`other` não grava: `None`).
+    pub fn to_ndef(&self) -> Option<NdefRecord> {
+        Some(match self.kind.trim() {
+            "" | "text" => NdefRecord::Text { text: self.value.clone(), lang: if self.lang.trim().is_empty() { "pt".into() } else { self.lang.trim().to_string() } },
+            "uri" => NdefRecord::Uri(self.value.clone()),
+            "mime" if !self.mime.trim().is_empty() => NdefRecord::Mime { mime: self.mime.trim().to_string(), data: self.value.clone().into_bytes() },
+            _ => return None,
+        })
+    }
+}
+
+records_text!(NfcRecordList, NFC_RECORD);
+
+/// Os registros em JSON ([`NFC_RECORD`]).
+fn records_json(records: &[NdefRecord]) -> String {
+    serde_json::to_string(&records.iter().map(NfcRecord::from_ndef).collect::<Vec<_>>()).unwrap_or_default()
+}
+
+/// Os registros NDEF de um JSON ([`NFC_RECORD`]); os que não gravam ficam de fora.
+fn records_from_json(text: &str) -> Vec<NdefRecord> {
+    parse_list::<NfcRecord>(text).iter().filter_map(NfcRecord::to_ndef).collect()
+}
+
 /// Lê e grava tags NFC (NDEF): `active` lê enquanto o app está aberto; cada tag encostada
-/// chega no `on_tag` (o texto é o id) com `tag_id`, `tag_type` e `records` (um registro por
-/// linha: `text:Olá`, `uri:https://...`, `application/json:{...}`). `write(registros)` grava
-/// na próxima tag que encostar (o resultado no `on_written` ou no `on_error`).
+/// chega no `on_tag` (o texto é o id) com `tag_id`, `tag_type` e `records` (os registros em
+/// JSON, [`NfcRecord`]: `[{"kind": "text", "value": "Olá", "lang": "pt"}, {"kind": "uri",
+/// "value": "https://aylis.dev"}]`). `write(registros)` grava na próxima tag que encostar (o
+/// resultado no `on_written` ou no `on_error`).
 ///
 /// Android: o `NfcAdapter` em modo leitor (a publicação põe a permissão `NFC`). Windows,
 /// Linux e macOS: um leitor USB pelo PC/SC (ACR122U e parecidos), com tags do tipo 2 (NTAG,
@@ -21,7 +83,7 @@ pub struct Nfc {
     pub active: bool,
     tag_id: String,
     tag_type: String,
-    records: String,
+    records: Vec<NdefRecord>,
     writable: bool,
     writing: bool,
     reading: bool,
@@ -42,8 +104,9 @@ impl Nfc {
     pub fn tag_type(&self) -> String {
         self.tag_type.clone()
     }
-    pub fn records(&self) -> String {
-        self.records.clone()
+    /// Os registros da última tag, em JSON ([`NFC_RECORD`]).
+    pub fn records(&self) -> NfcRecordList {
+        NfcRecordList(records_json(&self.records))
     }
     pub fn writable(&self) -> bool {
         self.writable
@@ -53,10 +116,11 @@ impl Nfc {
     }
     fn set_s(&mut self, _: String) {}
     fn set_b(&mut self, _: bool) {}
+    fn set_records<T>(&mut self, _: T) {}
 
     /// Os registros da última tag.
     pub fn record_list(&self) -> Vec<NdefRecord> {
-        ndef::records_from_text(&self.records)
+        self.records.clone()
     }
 
     /// Grava os registros na próxima tag que encostar.
@@ -77,16 +141,16 @@ impl Component for Nfc {
 
     properties! {
         active: bool => "Behavior";
-        events: on_tag, on_written, on_error;
-        computed: tag_id: String => tag_id / set_s, tag_type: String => tag_type / set_s, records: String => records / set_s,
+        events: on_tag: String, on_written: (), on_error: String;
+        computed: tag_id: String => tag_id / set_s, tag_type: String => tag_type / set_s, records: NfcRecordList => records / set_records,
             writable: bool => writable / set_b, writing: bool => writing / set_b, available: bool => available / set_b
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
-        use PropKind::{Bool, String};
+        use PropKind::Bool;
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("enabled", &[], Some(Bool)),
-            MethodInfo::new("write", &[String], Some(Bool)).params(&["records"]),
+            MethodInfo::new("write", &[PropKind::RecordList(&NFC_RECORD)], Some(Bool)).params(&["records"]),
             MethodInfo::new("cancel_write", &[], None),
         ];
         METHODS
@@ -97,7 +161,7 @@ impl Component for Nfc {
             "enabled" => Ok(PropValue::Bool(ctx.ui.services().nfc.as_ref().is_some_and(|s| s.enabled()))),
             "write" => {
                 let text = args.first().and_then(|v| v.to_str().ok()).unwrap_or_default();
-                let records = ndef::records_from_text(text);
+                let records = records_from_json(text);
                 if records.is_empty() {
                     return Err(aylis_core::messages::t("nada para gravar"));
                 }
@@ -137,7 +201,7 @@ impl Component for Nfc {
                 NfcEvent::Tag(tag) => {
                     self.tag_id = tag.id.clone();
                     self.tag_type = tag.tech;
-                    self.records = ndef::records_to_text(&tag.records);
+                    self.records = tag.records;
                     self.writable = tag.writable;
                     ctx.fire("on_tag", EventArgs::Text(tag.id));
                 }

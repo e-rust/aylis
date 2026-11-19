@@ -160,17 +160,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bars = ui.add(Chart::new(ChartKind::Bar), charts);
     let _ = ui.set_prop(bars, "title", "Por trimestre");
     let _ = ui.set_prop(bars, "labels", "T1;T2;T3;T4");
-    let _ = ui.set_prop(bars, "series", "2025=120,140,135,180|2026=150,170,190,210");
+    let _ = ui.set_prop(bars, "series", r#"[{"name":"2025","values":[120,140,135,180]},{"name":"2026","values":[150,170,190,210]}]"#);
     put(&mut ui, bars, 520.0, 8.0, 520.0, 260.0);
     let area = ui.add(Chart::new(ChartKind::Area), charts);
     let _ = ui.set_prop(area, "title", "Acessos por hora");
     let _ = ui.set_prop(area, "labels", "0h;3h;6h;9h;12h;15h;18h;21h");
-    let _ = ui.set_prop(area, "series", "Acessos=12,5,9,48,77,64,90,40");
+    let _ = ui.set_prop(area, "series", r#"[{"name":"Acessos","values":[12,5,9,48,77,64,90,40]}]"#);
     put(&mut ui, area, 8.0, 280.0, 500.0, 220.0);
     let pie = ui.add(Chart::new(ChartKind::Pie), charts);
     let _ = ui.set_prop(pie, "title", "Pagamentos");
     let _ = ui.set_prop(pie, "labels", "Pix;Cartão;Dinheiro;Boleto");
-    let _ = ui.set_prop(pie, "series", "Pagamentos=45,30,15,10");
+    let _ = ui.set_prop(pie, "series", r#"[{"name":"Pagamentos","values":[45,30,15,10]}]"#);
     put(&mut ui, pie, 520.0, 280.0, 520.0, 220.0);
 
     // Para a verificação: AYLIS_TAB=1 abre direto na aba.

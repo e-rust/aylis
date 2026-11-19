@@ -128,7 +128,7 @@ fn inventar() -> (Vec<Vec<DataValue>>, Vec<Vec<DataValue>>, Vec<Vec<DataValue>>)
 }
 
 impl FrmPrincipal {
-    pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn form_show(&mut self, ui: &mut Ui, _sender: crate::generated::Form) {
         let (pedidos, itens, parcelas) = inventar();
         // Os detalhes primeiro: quando o mestre abre, eles já filtram pelo pedido.
         for (id, linhas) in [(self.cdsItens.id, itens), (self.cdsParcelas.id, parcelas), (self.cdsPedidos.id, pedidos)] {

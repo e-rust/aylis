@@ -138,10 +138,10 @@ impl Component for NavigationDrawer {
         drawer_width: f32 => "Layout",
         rail_width: f32 => "Layout",
         title: String => "Appearance",
-        items: String => "Data",
-        icons: String => "Appearance",
+        items: String as List => "Data",
+        icons: String as List => "Appearance",
         item_index: i64 => "Data";
-        events: on_change;
+        events: on_change: i64;
         on_set: sync
     }
 
@@ -241,10 +241,10 @@ impl Component for BottomNavigation {
     leaf_control!("BottomNavigation");
 
     properties! {
-        items: String => "Data",
-        icons: String => "Appearance",
+        items: String as List => "Data",
+        icons: String as List => "Appearance",
         item_index: i64 => "Data";
-        events: on_change
+        events: on_change: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -409,8 +409,8 @@ impl Component for BottomSheet {
     properties! {
         open: bool => "Behavior",
         sheet_height: f32 => "Layout",
-        detents: String => "Behavior";
-        events: on_close;
+        detents: String as NumberList => "Behavior";
+        events: on_close: ();
         on_set: sync
     }
 
@@ -558,7 +558,7 @@ impl Component for Carousel {
         interval: u32 as Duration => "Behavior",
         show_arrows: bool => "Appearance",
         cycle: bool => "Behavior";
-        events: on_change
+        events: on_change: i64
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -679,10 +679,10 @@ impl Component for SpeedDial {
 
     properties! {
         icon: String => "Appearance",
-        icons: String => "Appearance",
-        labels: String => "Appearance",
+        icons: String as List => "Appearance",
+        labels: String as List => "Appearance",
         open: bool => "Behavior";
-        events: on_item
+        events: on_item: i64
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -816,7 +816,7 @@ impl Component for AvatarGroup {
     leaf_control!("AvatarGroup");
 
     properties! {
-        names: String => "Data",
+        names: String as List => "Data",
         max: u32 => "Appearance",
         size: f32 => "Appearance",
     }

@@ -90,6 +90,36 @@ fn the_designer_with_a_project_looks_like_the_reference() {
     check("designer", render(&mut ide.ui, main));
 }
 
+/// Opções do projeto → iPhone (GitHub), com a Calculadora (no repositório do Aylis, ligado ao
+/// GitHub, sem o workflow criado).
+#[test]
+fn the_iphone_github_section_looks_like_the_reference() {
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    let project = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/Calculadora/Calculadora.aylisproj");
+    actions::open_recent(&mut ide.ui, &state, &ide.ids, &project);
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    let index = aylis_ide::projectsettings::section_titles().iter().position(|t| *t == "iPhone (GitHub)").expect("a seção");
+    let before = ide.ui.roots().len();
+    aylis_ide::projectsettings::open_at(&mut ide.ui, &state, &ide.ids, index);
+    assert_eq!(ide.ui.roots().len(), before + 1, "as Opções do projeto abriram");
+    let dialog = *ide.ui.roots().last().unwrap();
+    check("opcoes-iphone", render(&mut ide.ui, dialog));
+    // Assinado: os segredos no lugar do Sideloadly (o único combo da seção).
+    let mut stack = vec![dialog];
+    let mut combo = None;
+    while let Some(id) = stack.pop() {
+        if ide.ui.class_name(id) == Some("ComboBox") {
+            combo = Some(id);
+        }
+        stack.extend(ide.ui.children(id).iter().copied());
+    }
+    let combo = combo.expect("o combo da assinatura");
+    let _ = ide.ui.set_prop(combo, "item_index", 1i64);
+    ide.ui.fire(combo, "on_change", &aylis_core::EventArgs::None);
+    check("opcoes-iphone-assinado", render(&mut ide.ui, dialog));
+}
+
 /// Os forms principais dos exemplos (só o layout, com as classes que a IDE registra): o que um
 /// controle mudar de aparência aparece aqui.
 #[test]

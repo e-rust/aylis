@@ -42,6 +42,7 @@ mod handle;
 pub mod json;
 pub mod mask;
 mod parallel;
+mod records;
 mod store;
 mod link;
 mod value;
@@ -51,8 +52,12 @@ pub use dataset::{
     DataSetState, DataSource, Row, RowStatus,
 };
 pub use delta::Delta;
-pub use events::{get_text, set_text};
-pub use field::{CharCase, Field, FieldType};
+pub use records::{FILTER_PARAM_RECORD, INDEX_DEF_RECORD, MASTER_FIELD_RECORD};
+pub use events::{
+    FIELD_VALUE_RECORD, FieldValue, GET_TEXT_REQUEST_RECORD, GetTextRequest, MASTER_CHANGE_RECORD, MasterChange, SERVER_QUERY_RECORD,
+    SET_TEXT_REQUEST_RECORD, ServerQuery, SetTextRequest, get_text, set_text, value_text,
+};
+pub use field::{CharCase, Field, FieldKind, FieldType};
 pub use handle::{DataSet, DataView, RowInfo, data_set, open_active, view};
 pub use link::FieldLink;
 pub use store::RowBatch;

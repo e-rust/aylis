@@ -241,7 +241,7 @@ impl Polygon {
     }
 }
 
-shape!(Polygon, "Polygon", closed: |_: &Polygon| true, { sides: u32 => "Appearance", points: String => "Appearance" });
+shape!(Polygon, "Polygon", closed: |_: &Polygon| true, { sides: u32 => "Appearance", points: String as PointList => "Appearance" });
 
 /// Estrela de `points` pontas; `inner` é o raio de dentro em relação ao de fora (0 a 1).
 pub struct Star {

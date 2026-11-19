@@ -145,7 +145,7 @@ impl Component for NumberBox {
         max: f64 => "Behavior",
         increment: f64 => "Behavior",
         decimals: u32 => "Behavior";
-        events: on_change;
+        events: on_change: f64;
         on_set: after_set
     }
 
@@ -325,7 +325,7 @@ impl Component for TrackBar {
         track_size: f32 => "Appearance",
         solid_thumb: bool => "Appearance",
         limit: f64 => "Behavior";
-        events: on_change;
+        events: on_change: f64;
         on_set: after_set
     }
 

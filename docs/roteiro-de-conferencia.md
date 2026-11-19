@@ -480,6 +480,31 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     - No NoOBS, o form do print com a receita dos pendentes: abre pelo atalho em menos de ~100 ms,
       a seleção bate com o print pixel a pixel; o caso de dois monitores de escalas diferentes está
       em [testes em dispositivos](testes-em-dispositivos.md).
+163. **A janela sem o branco da abertura e a tela cheia** (19/11; detalhes nos pendentes). Num
+    tema escuro, abra a IDE e um app de exemplo: a janela aparece já pintada, sem um quadro
+    branco antes. `cargo run -p aylis-platform-winit --example window_start --features d2d --
+    full --stay`: nasce em tela cheia cobrindo a barra de tarefas; `full_later`: abre comum e
+    vai para a tela cheia; `back`: nasce em tela cheia e volta ao tamanho de antes.
+162. **O acesso tipado e os handlers tipados** (19/11; detalhes nos pendentes). Num projeto novo,
+    um Button, um DateEdit e um TrackBar com dois cliques em cada: os handlers nascem com quem
+    disparou na classe (`sender: Button`) e o valor no tipo (a data, o número); no código,
+    `self.form.set_window_state(ui, WindowState::FullScreen)`, a cor como `Color` e as margens
+    como `Bounds` (nada de texto). Um handler do jeito de antes (`args: &EventArgs`) continua
+    funcionando. Troque a linguagem nas Opções do projeto e confira o mesmo nas outras.
+    Os nomes do projeto: crie um tema em `themes/` com uma variante `Button.perigo` e um
+    segundo form; no código, `self.btnOk.set_style(ui, ButtonStyle::Perigo)`,
+    `set_theme(ui, ThemeName::...)` e, num Frame, `set_form(ui, FormName::FrmOutro)` (o
+    autocompletar mostra os do projeto). Acrescente outra variante ao tema e gere o código: ela
+    aparece no `ButtonStyle`. No Object Inspector, o `item_form` de um VirtualList ganha a lista
+    dos forms, como o `form` do Frame.
+    As listas em estrutura: num ListView, num TreeView e num Chart, o `items`/`series` no form é
+    JSON (`[{"title": "Ana", "detail": "Vendas"}]`, nós com `children`, séries com `values` e
+    `kind`); no código, `ListViewItem`, `TreeNode` e `ChartSeries` com os campos tipados. No
+    DataGrid, `columns` é `[{"field": "sigla", "width": 44}]` e o arraste da coluna no designer
+    regrava o JSON. Abra o IBGE e o Relatórios: as grades e o mestre-detalhe funcionam como
+    antes. No Object Inspector, o "…" do `items` de um TreeView abre o editor de coleção:
+    acrescente um nó, troque o texto, marque `expanded` e, em "Editar… (0)", acrescente um
+    filho; ao confirmar, a árvore no designer mostra o nó com o filho.
 161. **Reveal Highlight** (18/11; detalhes nos pendentes). `cargo run -p aylis-platform-winit
     --example reveal --features d2d`: passe o mouse pela grade de botões; o fundo do botão sob
     ele acende com uma luz que segue o mouse, e as bordas dos vizinhos acendem do lado mais

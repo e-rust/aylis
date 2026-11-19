@@ -3,20 +3,28 @@
     public class ClientDataSet(Aylis aylis, long id, string name) : AylisComponent(aylis, id, name)
     {
         public string KeyFields { get => Text(GetProp("key_fields")); set => SetProp("key_fields", value); }
-        public string ApplyMode { get => Text(GetProp("apply_mode")); set => SetProp("apply_mode", value); }
+        public ApplyMode ApplyMode { get => EnumNames.Of<ApplyMode>(GetProp("apply_mode"), EnumNames.ApplyMode); set => SetProp("apply_mode", EnumNames.ApplyMode[(int)value]); }
         public bool ReadOnly { get => Bool(GetProp("read_only")); set => SetProp("read_only", value); }
         public bool Active { get => Bool(GetProp("active")); set => SetProp("active", value); }
         public string Filter { get => Text(GetProp("filter")); set => SetProp("filter", value); }
         public bool Filtered { get => Bool(GetProp("filtered")); set => SetProp("filtered", value); }
         public string IndexFieldNames { get => Text(GetProp("index_field_names")); set => SetProp("index_field_names", value); }
-        public string Indexes { get => Text(GetProp("indexes")); set => SetProp("indexes", value); }
+        public global::App.Forms.IndexDef[] Indexes { get => global::App.Forms.IndexDef.ListFromText(GetProp("indexes")); set => SetProp("indexes", global::App.Forms.IndexDef.ListToText(value)); }
         public string IndexName { get => Text(GetProp("index_name")); set => SetProp("index_name", value); }
-        public string Params { get => Text(GetProp("params")); set => SetProp("params", value); }
+        public global::App.Forms.FilterParam[] Params { get => global::App.Forms.FilterParam.ListFromText(GetProp("params")); set => SetProp("params", global::App.Forms.FilterParam.ListToText(value)); }
         public string StatusFilter { get => Text(GetProp("status_filter")); set => SetProp("status_filter", value); }
-        public string MasterSource { get => Text(GetProp("master_source")); set => SetProp("master_source", value); }
-        public string MasterFields { get => Text(GetProp("master_fields")); set => SetProp("master_fields", value); }
+        public AylisComponent? MasterSource { get => GetRef("master_source"); set => SetRef("master_source", value); }
+        public global::App.Forms.MasterField[] MasterFields { get => global::App.Forms.MasterField.ListFromText(GetProp("master_fields")); set => SetProp("master_fields", global::App.Forms.MasterField.ListToText(value)); }
         public bool ApplySeparately { get => Bool(GetProp("apply_separately")); set => SetProp("apply_separately", value); }
         public long RecordTotal { get => (long)Number(GetProp("record_total")); set => SetProp("record_total", value); }
         public long MaxRecords { get => (long)Number(GetProp("max_records")); set => SetProp("max_records", value); }
         public string PartialNotice => Text(GetProp("partial_notice"));
+        public string OnMasterChange { get => Text(GetProp("on_master_change")); set => SetProp("on_master_change", value); }
+        public string AfterScroll { get => Text(GetProp("after_scroll")); set => SetProp("after_scroll", value); }
+        public string AfterPost { get => Text(GetProp("after_post")); set => SetProp("after_post", value); }
+        public string OnStateChange { get => Text(GetProp("on_state_change")); set => SetProp("on_state_change", value); }
+        public string OnReconcileError { get => Text(GetProp("on_reconcile_error")); set => SetProp("on_reconcile_error", value); }
+        public string OnError { get => Text(GetProp("on_error")); set => SetProp("on_error", value); }
+        public string OnFetch { get => Text(GetProp("on_fetch")); set => SetProp("on_fetch", value); }
+        public string OnServerQuery { get => Text(GetProp("on_server_query")); set => SetProp("on_server_query", value); }
     }

@@ -56,7 +56,7 @@ const COLUMN_PROPS: &[PropInfo] = &[
     PropInfo::new("field_name", PropKind::String, "Data"),
     PropInfo::new("title", PropKind::String, "Appearance"),
     PropInfo::new("width", PropKind::Float, "Appearance"),
-    PropInfo::new("alignment", PropKind::Enum(<TextAlign as PropEnum>::NAMES), "Appearance"),
+    PropInfo::new("alignment", PropKind::Enum(<TextAlign as PropEnum>::NAMES), "Appearance").rust_type("TextAlign"),
     PropInfo::new("color", PropKind::Color, "Appearance"),
     PropInfo::new("text_color", PropKind::Color, "Appearance"),
     PropInfo::new("visible", PropKind::Bool, "Behavior"),

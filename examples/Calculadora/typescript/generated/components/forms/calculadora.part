@@ -91,7 +91,7 @@ export class FrmCalculadoraComponents extends Form {
         this.btnVirgula = this.resolve(list, "btnVirgula", "Button", Button);
         this.btnIgual = this.resolve(list, "btnIgual", "Button", Button);
     }
-    /** O Button deste form com o nome (como o FindComponent). */
+    /** O Button deste form com o nome. */
     findButton(name: string): Button | undefined {
         switch (name) {
             case "btnLimparHistorico": return this.btnLimparHistorico;
@@ -132,7 +132,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsButton(ev: AylisEvent): Button | undefined {
         return this.findButton(ev.sender.name);
     }
-    /** O GridLayout deste form com o nome (como o FindComponent). */
+    /** O GridLayout deste form com o nome. */
     findGridLayout(name: string): GridLayout | undefined {
         switch (name) {
             case "grdMemoria": return this.grdMemoria;
@@ -144,7 +144,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsGridLayout(ev: AylisEvent): GridLayout | undefined {
         return this.findGridLayout(ev.sender.name);
     }
-    /** O Label deste form com o nome (como o FindComponent). */
+    /** O Label deste form com o nome. */
     findLabel(name: string): Label | undefined {
         switch (name) {
             case "lblTitulo": return this.lblTitulo;
@@ -157,7 +157,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsLabel(ev: AylisEvent): Label | undefined {
         return this.findLabel(ev.sender.name);
     }
-    /** O Layout deste form com o nome (como o FindComponent). */
+    /** O Layout deste form com o nome. */
     findLayout(name: string): Layout | undefined {
         switch (name) {
             case "lytCorpo": return this.lytCorpo;
@@ -169,7 +169,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsLayout(ev: AylisEvent): Layout | undefined {
         return this.findLayout(ev.sender.name);
     }
-    /** O ListView deste form com o nome (como o FindComponent). */
+    /** O ListView deste form com o nome. */
     findListView(name: string): ListView | undefined {
         switch (name) {
             case "lvHistorico": return this.lvHistorico;
@@ -181,7 +181,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsListView(ev: AylisEvent): ListView | undefined {
         return this.findListView(ev.sender.name);
     }
-    /** O Panel deste form com o nome (como o FindComponent). */
+    /** O Panel deste form com o nome. */
     findPanel(name: string): Panel | undefined {
         switch (name) {
             case "pnlLateral": return this.pnlLateral;
@@ -192,7 +192,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsPanel(ev: AylisEvent): Panel | undefined {
         return this.findPanel(ev.sender.name);
     }
-    /** O TabControl deste form com o nome (como o FindComponent). */
+    /** O TabControl deste form com o nome. */
     findTabControl(name: string): TabControl | undefined {
         switch (name) {
             case "tabLateral": return this.tabLateral;
@@ -203,7 +203,7 @@ export class FrmCalculadoraComponents extends Form {
     senderAsTabControl(ev: AylisEvent): TabControl | undefined {
         return this.findTabControl(ev.sender.name);
     }
-    /** O TabItem deste form com o nome (como o FindComponent). */
+    /** O TabItem deste form com o nome. */
     findTabItem(name: string): TabItem | undefined {
         switch (name) {
             case "tabHistorico": return this.tabHistorico;

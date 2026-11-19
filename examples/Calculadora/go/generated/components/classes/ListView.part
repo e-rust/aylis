@@ -2,8 +2,8 @@
 // aylisListView é um ListView de um form.
 type aylisListView struct{ aylis.Component }
 
-func (c aylisListView) Items() string { return asText(c.Get("items")) }
-func (c aylisListView) SetItems(v string) { c.Set("items", v) }
+func (c aylisListView) Items() []ListViewItem { return recordsListViewItem(c.Get("items")) }
+func (c aylisListView) SetItems(v []ListViewItem) { c.Set("items", recordsTextListViewItem(v)) }
 
 func (c aylisListView) ItemIndex() int64 { return int64(asNumber(c.Get("item_index"))) }
 func (c aylisListView) SetItemIndex(v int64) { c.Set("item_index", v) }
@@ -13,6 +13,12 @@ func (c aylisListView) SetItemHeight(v float64) { c.Set("item_height", v) }
 
 func (c aylisListView) Accessory() bool { return asBool(c.Get("accessory")) }
 func (c aylisListView) SetAccessory(v bool) { c.Set("accessory", v) }
+
+func (c aylisListView) OnChange() string { return asText(c.Get("on_change")) }
+func (c aylisListView) SetOnChange(v string) { c.Set("on_change", v) }
+
+func (c aylisListView) OnItemClick() string { return asText(c.Get("on_item_click")) }
+func (c aylisListView) SetOnItemClick(v string) { c.Set("on_item_click", v) }
 
 func (c aylisListView) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisListView) SetLeft(v float64) { c.Set("left", v) }
@@ -26,17 +32,17 @@ func (c aylisListView) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisListView) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisListView) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisListView) Align() string { return asText(c.Get("align")) }
-func (c aylisListView) SetAlign(v string) { c.Set("align", v) }
+func (c aylisListView) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisListView) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisListView) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisListView) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisListView) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisListView) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisListView) Margins() string { return asText(c.Get("margins")) }
-func (c aylisListView) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisListView) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisListView) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisListView) Padding() string { return asText(c.Get("padding")) }
-func (c aylisListView) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisListView) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisListView) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisListView) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisListView) SetVisible(v bool) { c.Set("visible", v) }
@@ -59,6 +65,9 @@ func (c aylisListView) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisListView) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisListView) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisListView) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisListView) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisListView) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisListView) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -74,8 +83,8 @@ func (c aylisListView) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisListView) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisListView) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisListView) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisListView) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisListView) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisListView) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisListView) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisListView) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -83,17 +92,23 @@ func (c aylisListView) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisListView) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisListView) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisListView) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisListView) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisListView) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisListView) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisListView) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisListView) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisListView) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisListView) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisListView) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisListView) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisListView) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisListView) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisListView) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisListView) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisListView) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisListView) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -116,8 +131,8 @@ func (c aylisListView) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisListView) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisListView) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisListView) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisListView) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisListView) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisListView) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisListView) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisListView) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -137,35 +152,35 @@ func (c aylisListView) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisListView) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisListView) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisListView) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisListView) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisListView) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisListView) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisListView) Style() string { return asText(c.Get("style")) }
-func (c aylisListView) SetStyle(v string) { c.Set("style", v) }
+func (c aylisListView) Style() ListViewStyle { return ListViewStyle(asText(c.Get("style"))) }
+func (c aylisListView) SetStyle(v ListViewStyle) { c.Set("style", string(v)) }
 
-func (c aylisListView) Theme() string { return asText(c.Get("theme")) }
-func (c aylisListView) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisListView) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisListView) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisListView) Fill() string { return asText(c.Get("fill")) }
-func (c aylisListView) SetFill(v string) { c.Set("fill", v) }
+func (c aylisListView) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisListView) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisListView) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisListView) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisListView) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisListView) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisListView) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisListView) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisListView) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisListView) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisListView) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisListView) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisListView) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisListView) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisListView) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisListView) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisListView) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisListView) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisListView) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisListView) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisListView) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisListView) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisListView) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisListView) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisListView) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisListView) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisListView) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisListView) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -173,8 +188,8 @@ func (c aylisListView) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisListView) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisListView) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisListView) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisListView) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisListView) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisListView) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisListView) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisListView) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -197,6 +212,63 @@ func (c aylisListView) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisListView) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisListView) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisListView) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisListView) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisListView) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisListView) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisListView) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisListView) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisListView) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisListView) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisListView) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisListView) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisListView) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisListView) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisListView) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisListView) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisListView) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisListView) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisListView) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisListView) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisListView) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisListView) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisListView) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisListView) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisListView) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisListView) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisListView) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisListView) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisListView) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisListView) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisListView) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisListView) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisListView) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisListView) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisListView) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisListView) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisListView) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisListView) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisListView) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisListView) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisListView) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisListView) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisListView) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisListView) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisListView) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

@@ -31,6 +31,9 @@ public sealed record AylisEvent(string Event, string Handler, string Form, strin
     /// (<c>if (ev.Pointer is { Ctrl: true }) ...</c>); nulo no clique do teclado ou do código.</summary>
     public AylisPointer? Pointer { get; init; }
 
+    /// <summary>O id de quem disparou (o do componente no form: <c>form.ComponentById</c>).</summary>
+    public long SenderId { get; init; }
+
     /// <summary>A resposta de um evento que pergunta, gravável pelo handler: <c>ev.Reply["can_close"] = false</c>
     /// (fechar), <c>ev.Reply["key"] = ""</c> (engolir a tecla), <c>ev.Reply["key"] = "."</c> (trocar o caractere),
     /// <c>data</c>/<c>label</c> (o arrasto), <c>accept</c> (soltar aqui). Recusar com mensagem
@@ -62,6 +65,132 @@ public sealed record AylisPointer(double X, double Y, double FormX, double FormY
 
 /// <summary>Um componente de um form, pelo id dele na tela (resolvido quando a instância do form
 /// é montada). As classes de cada componente vêm do Components.cs gerado.</summary>
+/// <summary>Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema
+/// (<c>Color.OfToken("primary")</c>), que acompanha a troca de tema.</summary>
+public sealed record Color(byte R = 0, byte G = 0, byte B = 0, byte A = 255)
+{
+    public string? Token { get; init; }
+
+    public static Color Rgb(byte r, byte g, byte b, byte a = 255) => new(r, g, b, a);
+
+    /// <summary><c>#RRGGBB</c>, <c>#RRGGBBAA</c> ou <c>#RGB</c>.</summary>
+    public static Color Hex(string text)
+    {
+        var h = text.Trim().TrimStart('#');
+        if (h.Length == 3) h = string.Concat(h.Select(c => $"{c}{c}"));
+        if ((h.Length != 6 && h.Length != 8) || !h.All(Uri.IsHexDigit)) throw new AylisException($"cor inválida: {text} (use #RRGGBB ou #RRGGBBAA)");
+        byte N(int i) => Convert.ToByte(h.Substring(i, 2), 16);
+        return new(N(0), N(2), N(4), h.Length == 8 ? N(6) : (byte)255);
+    }
+
+    public static Color OfToken(string name) => new() { Token = name.Trim() };
+
+    /// <summary>O valor da tela (<c>#RRGGBB[AA]</c> ou um nome).</summary>
+    public static Color FromJson(JsonNode? v) =>
+        v is JsonValue j && j.TryGetValue<string>(out var s) && s.Length > 0 ? (s.StartsWith('#') ? Hex(s) : OfToken(s)) : new();
+
+    public string ToJson() => Token ?? (A == 255 ? $"#{R:X2}{G:X2}{B:X2}" : $"#{R:X2}{G:X2}{B:X2}{A:X2}");
+}
+
+/// <summary>Margens (<c>margins</c>, <c>padding</c>): esquerda, cima, direita e baixo.</summary>
+public sealed record Bounds(double Left = 0, double Top = 0, double Right = 0, double Bottom = 0)
+{
+    public static Bounds All(double v) => new(v, v, v, v);
+
+    public static Bounds Symmetric(double horizontal, double vertical) => new(horizontal, vertical, horizontal, vertical);
+
+    /// <summary>O valor da tela: um número, <c>[h, v]</c>, <c>[l, t, r, b]</c> ou um objeto.</summary>
+    public static Bounds FromJson(JsonNode? v)
+    {
+        static double D(JsonNode? n) => n is JsonValue j && j.TryGetValue<double>(out var d) ? d : 0;
+        return v switch
+        {
+            JsonValue j when j.TryGetValue<double>(out var all) => All(all),
+            JsonArray { Count: 2 } a => Symmetric(D(a[0]), D(a[1])),
+            JsonArray { Count: 4 } a => new(D(a[0]), D(a[1]), D(a[2]), D(a[3])),
+            JsonObject o => new(D(o["left"]), D(o["top"]), D(o["right"]), D(o["bottom"])),
+            _ => new(),
+        };
+    }
+
+    public JsonArray ToJson() => new(Left, Top, Right, Bottom);
+}
+
+/// <summary>Uma sombra: o deslocamento (<c>Dx</c>, <c>Dy</c>), o desfoque, o espalhamento e a cor
+/// (sem cor, preto a 25%). <c>null</c> no acesso tipado é sem sombra.</summary>
+public sealed record Shadow(double Dx = 0, double Dy = 0, double Blur = 0, double Spread = 0, Color? Color = null)
+{
+    public Color ColorOrDefault => Color ?? new Color(0, 0, 0, 64);
+
+    static string N(double v) => Math.Round(v, 3).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary><c>"dx dy desfoque [espalhamento] [#cor]"</c> (vazio ou inválido: null).</summary>
+    public static Shadow? FromJson(JsonNode? v)
+    {
+        var text = v is JsonValue j && j.TryGetValue<string>(out var s) ? s : "";
+        var numbers = new List<double>();
+        Color? color = null;
+        foreach (var token in text.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (double.TryParse(token.EndsWith("px") ? token[..^2] : token, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var n)) numbers.Add(n);
+            else if (color is null && token.StartsWith('#')) color = AylisClient.Color.Hex(token);
+            else return null;
+        }
+        if (numbers.Count < 2 || numbers.Count > 4) return null;
+        return new Shadow(numbers[0], numbers[1], numbers.Count > 2 ? numbers[2] : 0, numbers.Count > 3 ? numbers[3] : 0, color);
+    }
+
+    public string ToJson() => $"{N(Dx)} {N(Dy)} {N(Blur)}{(Spread != 0 ? " " + N(Spread) : "")} {ColorOrDefault.ToJson()}";
+}
+
+/// <summary>Uma curva de suavização: uma das prontas (<c>Easing.OutQuad</c>) ou a Bézier cúbica
+/// (<c>Easing.CubicBezier(0.2, 0, 0, 1)</c>), como o <c>cubic-bezier()</c> do CSS.</summary>
+public sealed record Easing(string Name, double[]? Bezier = null)
+{
+    public static readonly string[] Names = ["linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back"];
+    public static readonly Easing Linear = new("linear"), InQuad = new("in_quad"), OutQuad = new("out_quad"), InOutQuad = new("in_out_quad"),
+        OutCubic = new("out_cubic"), InOutCubic = new("in_out_cubic"), OutBack = new("out_back");
+
+    public static Easing CubicBezier(double x1, double y1, double x2, double y2) => new("", [x1, y1, x2, y2]);
+
+    static string N(double v) => Math.Round(v, 3).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    public static Easing FromJson(JsonNode? v)
+    {
+        var text = (v is JsonValue j && j.TryGetValue<string>(out var s) ? s : "").Trim();
+        if (text.StartsWith("cubic-bezier(") && text.EndsWith(')'))
+        {
+            var parts = text[13..^1].Split(',').Select(p => double.TryParse(p, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) ? (double?)d : null).ToArray();
+            return parts.Length == 4 && parts.All(p => p.HasValue) ? CubicBezier(parts[0]!.Value, parts[1]!.Value, parts[2]!.Value, parts[3]!.Value) : Linear;
+        }
+        var css = new Dictionary<string, double[]> { ["ease"] = [0.25, 0.1, 0.25, 1], ["ease-in"] = [0.42, 0, 1, 1], ["ease-out"] = [0, 0, 0.58, 1], ["ease-in-out"] = [0.42, 0, 0.58, 1] };
+        if (css.TryGetValue(text.ToLowerInvariant(), out var b)) return new("", b);
+        var plain = text.Replace('-', '_').ToLowerInvariant();
+        return Names.Contains(plain) ? new(plain) : Linear;
+    }
+
+    public string ToJson() => Bezier is { } b ? $"cubic-bezier({string.Join(", ", b.Select(N))})" : Name;
+}
+
+/// <summary>Um ponto (<c>X</c>, <c>Y</c>).</summary>
+public readonly record struct Point(double X, double Y)
+{
+    /// <summary><c>"0.5,0 1,1 0,1"</c> (os que não são pontos ficam de fora).</summary>
+    public static Point[] ListFromJson(JsonNode? v)
+    {
+        var text = v is JsonValue j && j.TryGetValue<string>(out var s) ? s : "";
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        return text.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split(','))
+            .Where(p => p.Length == 2 && double.TryParse(p[0], System.Globalization.NumberStyles.Float, c, out _) && double.TryParse(p[1], System.Globalization.NumberStyles.Float, c, out _))
+            .Select(p => new Point(double.Parse(p[0], c), double.Parse(p[1], c)))
+            .ToArray();
+    }
+
+    public static string ListToJson(IEnumerable<Point> points) =>
+        string.Join(" ", points.Select(p => $"{p.X.ToString(System.Globalization.CultureInfo.InvariantCulture)},{p.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+}
+
 public class AylisComponent(Aylis aylis, long id, string name)
 {
     public Aylis Aylis { get; } = aylis;
@@ -71,6 +200,15 @@ public class AylisComponent(Aylis aylis, long id, string name)
     protected JsonNode? GetProp(string prop) => Aylis.Call("get", new() { ["target"] = Id, ["prop"] = prop });
 
     protected void SetProp(string prop, JsonNode? value) => Aylis.Send("set", new() { ["target"] = Id, ["props"] = new JsonObject { [prop] = value } });
+
+    /// <summary>A referência a outro componente (<c>PopupMenu</c>, <c>DataSource</c>), ou null.</summary>
+    protected AylisComponent? GetRef(string prop) => ComponentOf(Aylis.Call("get", new() { ["target"] = Id, ["prop"] = prop, ["ref"] = true }));
+
+    protected void SetRef(string prop, AylisComponent? component) => SetProp(prop, component is null ? null : JsonValue.Create(component.Id));
+
+    /// <summary>O componente que a tela devolveu com <c>"ref": true</c> (o id e o nome), ou null.</summary>
+    protected AylisComponent? ComponentOf(JsonNode? info) =>
+        info is JsonObject o && o["id"] is JsonValue id ? new AylisComponent(Aylis, id.GetValue<long>(), o["name"]?.ToString() ?? "") : null;
 
     public void SetFocus() => Aylis.Send("focus", new() { ["target"] = Id });
 }
@@ -408,7 +546,7 @@ public class Aylis
         var kind = message["event"]?.ToString() ?? "";
         long? ask = message["ask"] is JsonValue a && a.TryGetValue<long>(out var n) ? n : null;
         var ev = new AylisEvent(kind, message["handler"]?.ToString() ?? "", message["form"]?.ToString() ?? "",
-            message["sender"]?["name"]?.ToString() ?? "", message["sender"]?["class"]?.ToString() ?? "", message["args"], message["info"]) { Ask = ask, Pointer = AylisPointer.From(message["pointer"]) };
+            message["sender"]?["name"]?.ToString() ?? "", message["sender"]?["class"]?.ToString() ?? "", message["args"], message["info"]) { Ask = ask, Pointer = AylisPointer.From(message["pointer"]), SenderId = message["sender"]?["id"] is JsonValue sid && sid.TryGetValue<long>(out var senderId) ? senderId : 0 };
         running++;
         try
         {

@@ -22,7 +22,7 @@
 |---|---|---|---|
 | `hint` | Dica | texto | A dica que aparece com o mouse parado em cima do ícone. |
 | `visible` | Visível | lógico | O ícone aparece na bandeja; desligado, sai dela. |
-| `menu_items` | Itens do menu | texto | O menu do clique direito: itens separados por `;` (`-` é uma linha). |
+| `menu_items` | Itens do menu | lista de `TrayMenuItem` | O menu do clique direito, em JSON (o registro `TRAY_MENU_ITEM`): `[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`. |
 | `popup_menu` | Menu de contexto | componente | O menu do clique direito por um `PopupMenu`: os `MenuItem` dele, com `enabled`, `checked`, `header`, divisória e submenu (recuado). Escolher um item dispara o `on_click` dele (e o `on_item_click` do menu) e o `on_menu` daqui, com o texto. Vence o `menu_items`. O relatório do Tabernáculo, C26. |
 
 ## Eventos

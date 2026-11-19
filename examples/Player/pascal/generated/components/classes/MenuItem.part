@@ -19,6 +19,10 @@
     procedure SetDanger(Value: Boolean);
     function GetHeader: Boolean;
     procedure SetHeader(Value: Boolean);
+    function GetContent: TAylisComponent;
+    procedure SetContent(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
   public
     property Text: string read GetText write SetText;
     property Shortcut: string read GetShortcut write SetShortcut;
@@ -29,6 +33,8 @@
     property Visible: Boolean read GetVisible write SetVisible;
     property Danger: Boolean read GetDanger write SetDanger;
     property Header: Boolean read GetHeader write SetHeader;
+    property Content: TAylisComponent read GetContent write SetContent;
+    property OnClick: string read GetOnClick write SetOnClick;
   end;
 
 
@@ -120,5 +126,25 @@ end;
 procedure TMenuItem.SetHeader(Value: Boolean);
 begin
   SetProp('header', TJSONBoolean.Create(Value));
+end;
+
+function TMenuItem.GetContent: TAylisComponent;
+begin
+  Result := GetRef('content');
+end;
+
+procedure TMenuItem.SetContent(Value: TAylisComponent);
+begin
+  SetRef('content', Value);
+end;
+
+function TMenuItem.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TMenuItem.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
 end;
 

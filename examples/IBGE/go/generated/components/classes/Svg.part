@@ -5,17 +5,17 @@ type aylisSvg struct{ aylis.Component }
 func (c aylisSvg) Source() string { return asText(c.Get("source")) }
 func (c aylisSvg) SetSource(v string) { c.Set("source", v) }
 
-func (c aylisSvg) Color() string { return asText(c.Get("color")) }
-func (c aylisSvg) SetColor(v string) { c.Set("color", v) }
+func (c aylisSvg) Color() aylis.Color { return aylis.ColorFromJSON(c.Get("color")) }
+func (c aylisSvg) SetColor(v aylis.Color) { c.Set("color", v.JSON()) }
 
-func (c aylisSvg) Fit() string { return asText(c.Get("fit")) }
-func (c aylisSvg) SetFit(v string) { c.Set("fit", v) }
+func (c aylisSvg) Fit() ImageFit { return ImageFit(asText(c.Get("fit"))) }
+func (c aylisSvg) SetFit(v ImageFit) { c.Set("fit", string(v)) }
 
-func (c aylisSvg) Highlight() string { return asText(c.Get("highlight")) }
-func (c aylisSvg) SetHighlight(v string) { c.Set("highlight", v) }
+func (c aylisSvg) Highlight() []string { return asList(c.Get("highlight")) }
+func (c aylisSvg) SetHighlight(v []string) { c.Set("highlight", strings.Join(v, ";")) }
 
-func (c aylisSvg) HighlightColor() string { return asText(c.Get("highlight_color")) }
-func (c aylisSvg) SetHighlightColor(v string) { c.Set("highlight_color", v) }
+func (c aylisSvg) HighlightColor() aylis.Color { return aylis.ColorFromJSON(c.Get("highlight_color")) }
+func (c aylisSvg) SetHighlightColor(v aylis.Color) { c.Set("highlight_color", v.JSON()) }
 
 func (c aylisSvg) ZoomTo() string { return asText(c.Get("zoom_to")) }
 func (c aylisSvg) SetZoomTo(v string) { c.Set("zoom_to", v) }
@@ -32,17 +32,17 @@ func (c aylisSvg) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisSvg) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisSvg) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisSvg) Align() string { return asText(c.Get("align")) }
-func (c aylisSvg) SetAlign(v string) { c.Set("align", v) }
+func (c aylisSvg) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisSvg) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisSvg) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisSvg) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisSvg) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisSvg) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisSvg) Margins() string { return asText(c.Get("margins")) }
-func (c aylisSvg) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisSvg) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisSvg) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisSvg) Padding() string { return asText(c.Get("padding")) }
-func (c aylisSvg) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisSvg) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisSvg) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisSvg) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisSvg) SetVisible(v bool) { c.Set("visible", v) }
@@ -65,6 +65,9 @@ func (c aylisSvg) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisSvg) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisSvg) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisSvg) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisSvg) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisSvg) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisSvg) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -80,8 +83,8 @@ func (c aylisSvg) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisSvg) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisSvg) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisSvg) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisSvg) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisSvg) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisSvg) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisSvg) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisSvg) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -89,17 +92,23 @@ func (c aylisSvg) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisSvg) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisSvg) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisSvg) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisSvg) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisSvg) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisSvg) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisSvg) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisSvg) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisSvg) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisSvg) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisSvg) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisSvg) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisSvg) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisSvg) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisSvg) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisSvg) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisSvg) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisSvg) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -122,8 +131,8 @@ func (c aylisSvg) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisSvg) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisSvg) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisSvg) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisSvg) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisSvg) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisSvg) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisSvg) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisSvg) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -143,35 +152,35 @@ func (c aylisSvg) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisSvg) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisSvg) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisSvg) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisSvg) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisSvg) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisSvg) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisSvg) Style() string { return asText(c.Get("style")) }
-func (c aylisSvg) SetStyle(v string) { c.Set("style", v) }
+func (c aylisSvg) Style() SvgStyle { return SvgStyle(asText(c.Get("style"))) }
+func (c aylisSvg) SetStyle(v SvgStyle) { c.Set("style", string(v)) }
 
-func (c aylisSvg) Theme() string { return asText(c.Get("theme")) }
-func (c aylisSvg) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisSvg) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisSvg) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisSvg) Fill() string { return asText(c.Get("fill")) }
-func (c aylisSvg) SetFill(v string) { c.Set("fill", v) }
+func (c aylisSvg) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisSvg) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisSvg) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisSvg) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisSvg) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisSvg) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisSvg) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisSvg) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisSvg) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisSvg) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisSvg) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisSvg) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisSvg) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisSvg) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisSvg) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisSvg) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisSvg) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisSvg) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisSvg) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisSvg) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisSvg) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisSvg) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisSvg) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisSvg) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisSvg) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisSvg) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisSvg) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisSvg) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -179,8 +188,8 @@ func (c aylisSvg) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisSvg) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisSvg) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisSvg) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisSvg) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisSvg) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisSvg) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisSvg) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisSvg) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -203,5 +212,62 @@ func (c aylisSvg) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisSvg) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisSvg) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisSvg) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisSvg) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisSvg) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisSvg) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisSvg) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisSvg) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisSvg) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisSvg) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisSvg) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisSvg) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisSvg) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisSvg) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisSvg) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisSvg) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisSvg) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisSvg) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisSvg) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisSvg) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisSvg) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisSvg) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisSvg) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisSvg) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisSvg) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisSvg) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisSvg) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisSvg) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisSvg) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisSvg) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisSvg) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisSvg) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisSvg) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisSvg) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisSvg) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisSvg) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisSvg) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisSvg) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisSvg) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisSvg) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisSvg) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisSvg) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisSvg) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisSvg) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }

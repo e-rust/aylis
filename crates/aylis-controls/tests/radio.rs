@@ -94,7 +94,7 @@ fn nfc_reads_tags_and_writes_on_the_next_one() {
     // Sem serviço: indisponível e o gravar avisa.
     step(&mut ui, &mut t);
     assert_eq!(ui.get_prop(nfc, "available").unwrap(), PropValue::Bool(false));
-    assert!(ui.invoke(nfc, "write", &[PropValue::from("text:oi")]).is_err());
+    assert!(ui.invoke(nfc, "write", &[PropValue::from(r#"[{"kind":"text","value":"oi"}]"#)]).is_err());
 
     let link: Link<NfcEvent> = Default::default();
     ui.services_mut().nfc = Some(Box::new(FakeNfc(link.clone())));
@@ -111,13 +111,13 @@ fn nfc_reads_tags_and_writes_on_the_next_one() {
     }));
     step(&mut ui, &mut t);
     assert_eq!(*log.borrow(), ["on_tag:04:A2:1B"]);
-    assert_eq!(ui.get_prop(nfc, "records").unwrap(), PropValue::from("text:Olá\nuri:https://aylis.dev"));
+    assert_eq!(ui.get_prop(nfc, "records").unwrap(), PropValue::from(r#"[{"kind":"text","value":"Olá","lang":"pt"},{"kind":"uri","value":"https://aylis.dev"}]"#));
     assert_eq!(ui.get_prop(nfc, "tag_type").unwrap(), PropValue::from("MifareUltralight"));
     assert_eq!(ui.get_prop(nfc, "writable").unwrap(), PropValue::Bool(true));
 
     // Gravar: a mensagem montada vai para a plataforma; o resultado chega depois.
     assert!(ui.invoke(nfc, "write", &[PropValue::from("")]).is_err(), "nada para gravar");
-    ui.invoke(nfc, "write", &[PropValue::from("text:Pedido 42\nuri:tel:+5511999999999")]).unwrap();
+    ui.invoke(nfc, "write", &[PropValue::from(r#"[{"kind":"text","value":"Pedido 42"},{"kind":"uri","value":"tel:+5511999999999"}]"#)]).unwrap();
     assert_eq!(link.lock().unwrap().calls.last().unwrap(), "write text:Pedido 42\nuri:tel:+5511999999999");
     assert_eq!(ui.get_prop(nfc, "writing").unwrap(), PropValue::Bool(true));
     link.lock().unwrap().events.extend([NfcEvent::Written, NfcEvent::Error("a tag é só de leitura".into())]);
@@ -158,8 +158,8 @@ fn bluetooth_scans_connects_reads_and_is_notified() {
         BluetoothEvent::ScanStopped,
     ]);
     step(&mut ui, &mut t);
-    assert_eq!(*log.borrow(), ["on_found:A0:9E:1A:00:11:22;Polar H10;-60"]);
-    assert_eq!(ui.get_prop(bt, "devices").unwrap(), PropValue::from("A0:9E:1A:00:11:22;Polar H10;-52"));
+    assert_eq!(*log.borrow(), [r#"on_found:{"id":"A0:9E:1A:00:11:22","name":"Polar H10","rssi":-60}"#]);
+    assert_eq!(ui.get_prop(bt, "devices").unwrap(), PropValue::from(r#"[{"id":"A0:9E:1A:00:11:22","name":"Polar H10","rssi":-52}]"#));
     assert_eq!(ui.get_prop(bt, "scanning").unwrap(), PropValue::Bool(false));
 
     // Conectar, as características, ler, gravar e o aviso de mudança.
@@ -172,7 +172,7 @@ fn bluetooth_scans_connects_reads_and_is_notified() {
     });
     step(&mut ui, &mut t);
     assert_eq!(ui.get_prop(bt, "connected").unwrap(), PropValue::from(polar.id.as_str()));
-    assert_eq!(ui.get_prop(bt, "services").unwrap(), PropValue::from(format!("{}/{hr} notify", ble_uuid("180D")).as_str()));
+    assert_eq!(ui.get_prop(bt, "services").unwrap(), PropValue::from(format!(r#"[{{"service":"{}","characteristic":"{hr}","properties":["notify"]}}]"#, ble_uuid("180D")).as_str()));
     let args = |c: &str, data: &str| vec![id.clone(), PropValue::from("180D"), PropValue::from(c), PropValue::from(data), PropValue::Bool(false)];
     ui.invoke(bt, "subscribe", &args("2A37", "")[..3]).unwrap();
     ui.invoke(bt, "read", &args("2A38", "")[..3]).unwrap();
@@ -190,13 +190,13 @@ fn bluetooth_scans_connects_reads_and_is_notified() {
         BluetoothEvent::Disconnected(polar.id.clone()),
     ]);
     step(&mut ui, &mut t);
-    assert_eq!(log.borrow()[2..], [format!("on_value:{hr};0048"), format!("on_written:{}", ble_uuid("2A39")), format!("on_disconnected:{}", polar.id)]);
+    assert_eq!(log.borrow()[2..], [format!(r#"on_value:{{"device":"{}","characteristic":"{hr}","hex":"0048"}}"#, polar.id), format!("on_written:{}", ble_uuid("2A39")), format!("on_disconnected:{}", polar.id)]);
     assert_eq!(ui.get_prop(bt, "last_value").unwrap(), PropValue::from("0048"));
     assert_eq!(ui.get_prop(bt, "last_characteristic").unwrap(), PropValue::from(hr.as_str()));
     assert_eq!(ui.get_prop(bt, "connected").unwrap(), PropValue::from(""));
     // O clássico, onde a plataforma não tem: o erro diz.
     assert!(ui.invoke(bt, "open", std::slice::from_ref(&id)).is_err());
-    assert_eq!(ui.invoke(bt, "paired", &[]).unwrap(), PropValue::from(""));
+    assert_eq!(ui.invoke(bt, "paired", &[]).unwrap(), PropValue::from("[]"));
 }
 
 #[test]

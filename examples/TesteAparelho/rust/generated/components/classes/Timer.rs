@@ -11,6 +11,13 @@ impl Handle for Timer {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Timer`): só um Timer.
+impl aylis::prelude::FromSender for Timer {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Timer")).then_some(Self { id })
+    }
+}
+
 impl Timer {
     pub fn interval(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "interval").and_then(|v| v.to_f64().ok()).unwrap_or_default()
@@ -24,11 +31,11 @@ impl Timer {
     pub fn set_enabled(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "enabled", value)
     }
-    pub fn precision(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "precision"))
+    pub fn precision(self, ui: &Ui) -> aylis::prelude::TimerPrecision {
+        handles::read_enum::<aylis::prelude::TimerPrecision>(ui, self.id, "precision")
     }
-    pub fn set_precision(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "precision", Into::<String>::into(value))
+    pub fn set_precision(self, ui: &mut Ui, value: aylis::prelude::TimerPrecision) {
+        handles::write(ui, self.id, "precision", PropValue::enum_value(value))
     }
     pub fn background(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "background").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -41,6 +48,12 @@ impl Timer {
     }
     pub fn set_one_shot(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "one_shot", value)
+    }
+    pub fn on_timer(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_timer"))
+    }
+    pub fn set_on_timer(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_timer", Into::<String>::into(value))
     }
     pub fn drift(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "drift").and_then(|v| v.to_f64().ok()).unwrap_or_default()

@@ -558,7 +558,7 @@ func init() {
 	}, func(form aylis.FormInstance) { frmPaint = form.(*frmPaintComponents) })
 }
 
-// FindButton é o Button deste form com o nome (como o FindComponent).
+// FindButton é o Button deste form com o nome.
 func (f *frmPaintComponents) FindButton(name string) aylisButton {
 	switch name {
 	case "btnSalvar":
@@ -592,7 +592,7 @@ func (f *frmPaintComponents) FindButton(name string) aylisButton {
 // SenderAsButton é o Button que disparou o evento.
 func (f *frmPaintComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
 
-// FindCheckBox é o CheckBox deste form com o nome (como o FindComponent).
+// FindCheckBox é o CheckBox deste form com o nome.
 func (f *frmPaintComponents) FindCheckBox(name string) aylisCheckBox {
 	switch name {
 	case "chkPreencher":
@@ -604,7 +604,7 @@ func (f *frmPaintComponents) FindCheckBox(name string) aylisCheckBox {
 // SenderAsCheckBox é o CheckBox que disparou o evento.
 func (f *frmPaintComponents) SenderAsCheckBox(ev aylis.Event) aylisCheckBox { return f.FindCheckBox(ev.Sender.Name) }
 
-// FindCircle é o Circle deste form com o nome (como o FindComponent).
+// FindCircle é o Circle deste form com o nome.
 func (f *frmPaintComponents) FindCircle(name string) aylisCircle {
 	switch name {
 	case "btnCor1":
@@ -658,7 +658,7 @@ func (f *frmPaintComponents) FindCircle(name string) aylisCircle {
 // SenderAsCircle é o Circle que disparou o evento.
 func (f *frmPaintComponents) SenderAsCircle(ev aylis.Event) aylisCircle { return f.FindCircle(ev.Sender.Name) }
 
-// FindComboBox é o ComboBox deste form com o nome (como o FindComponent).
+// FindComboBox é o ComboBox deste form com o nome.
 func (f *frmPaintComponents) FindComboBox(name string) aylisComboBox {
 	switch name {
 	case "cbEspessura":
@@ -670,7 +670,7 @@ func (f *frmPaintComponents) FindComboBox(name string) aylisComboBox {
 // SenderAsComboBox é o ComboBox que disparou o evento.
 func (f *frmPaintComponents) SenderAsComboBox(ev aylis.Event) aylisComboBox { return f.FindComboBox(ev.Sender.Name) }
 
-// FindDivider é o Divider deste form com o nome (como o FindComponent).
+// FindDivider é o Divider deste form com o nome.
 func (f *frmPaintComponents) FindDivider(name string) aylisDivider {
 	switch name {
 	case "divTopo":
@@ -692,7 +692,7 @@ func (f *frmPaintComponents) FindDivider(name string) aylisDivider {
 // SenderAsDivider é o Divider que disparou o evento.
 func (f *frmPaintComponents) SenderAsDivider(ev aylis.Event) aylisDivider { return f.FindDivider(ev.Sender.Name) }
 
-// FindGridLayout é o GridLayout deste form com o nome (como o FindComponent).
+// FindGridLayout é o GridLayout deste form com o nome.
 func (f *frmPaintComponents) FindGridLayout(name string) aylisGridLayout {
 	switch name {
 	case "grdFerramentas":
@@ -708,7 +708,7 @@ func (f *frmPaintComponents) FindGridLayout(name string) aylisGridLayout {
 // SenderAsGridLayout é o GridLayout que disparou o evento.
 func (f *frmPaintComponents) SenderAsGridLayout(ev aylis.Event) aylisGridLayout { return f.FindGridLayout(ev.Sender.Name) }
 
-// FindLabel é o Label deste form com o nome (como o FindComponent).
+// FindLabel é o Label deste form com o nome.
 func (f *frmPaintComponents) FindLabel(name string) aylisLabel {
 	switch name {
 	case "lblSelecaoGrupo":
@@ -736,7 +736,7 @@ func (f *frmPaintComponents) FindLabel(name string) aylisLabel {
 // SenderAsLabel é o Label que disparou o evento.
 func (f *frmPaintComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
 
-// FindLayout é o Layout deste form com o nome (como o FindComponent).
+// FindLayout é o Layout deste form com o nome.
 func (f *frmPaintComponents) FindLayout(name string) aylisLayout {
 	switch name {
 	case "lytTopo":
@@ -760,7 +760,7 @@ func (f *frmPaintComponents) FindLayout(name string) aylisLayout {
 // SenderAsLayout é o Layout que disparou o evento.
 func (f *frmPaintComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
 
-// FindMainMenu é o MainMenu deste form com o nome (como o FindComponent).
+// FindMainMenu é o MainMenu deste form com o nome.
 func (f *frmPaintComponents) FindMainMenu(name string) aylisMainMenu {
 	switch name {
 	case "mnuPrincipal":
@@ -772,7 +772,7 @@ func (f *frmPaintComponents) FindMainMenu(name string) aylisMainMenu {
 // SenderAsMainMenu é o MainMenu que disparou o evento.
 func (f *frmPaintComponents) SenderAsMainMenu(ev aylis.Event) aylisMainMenu { return f.FindMainMenu(ev.Sender.Name) }
 
-// FindMenuItem é o MenuItem deste form com o nome (como o FindComponent).
+// FindMenuItem é o MenuItem deste form com o nome.
 func (f *frmPaintComponents) FindMenuItem(name string) aylisMenuItem {
 	switch name {
 	case "mnuArquivo":
@@ -826,7 +826,7 @@ func (f *frmPaintComponents) FindMenuItem(name string) aylisMenuItem {
 // SenderAsMenuItem é o MenuItem que disparou o evento.
 func (f *frmPaintComponents) SenderAsMenuItem(ev aylis.Event) aylisMenuItem { return f.FindMenuItem(ev.Sender.Name) }
 
-// FindOpenDialog é o OpenDialog deste form com o nome (como o FindComponent).
+// FindOpenDialog é o OpenDialog deste form com o nome.
 func (f *frmPaintComponents) FindOpenDialog(name string) aylisOpenDialog {
 	switch name {
 	case "dlgAbrir":
@@ -838,7 +838,7 @@ func (f *frmPaintComponents) FindOpenDialog(name string) aylisOpenDialog {
 // SenderAsOpenDialog é o OpenDialog que disparou o evento.
 func (f *frmPaintComponents) SenderAsOpenDialog(ev aylis.Event) aylisOpenDialog { return f.FindOpenDialog(ev.Sender.Name) }
 
-// FindPaintCanvas é o PaintCanvas deste form com o nome (como o FindComponent).
+// FindPaintCanvas é o PaintCanvas deste form com o nome.
 func (f *frmPaintComponents) FindPaintCanvas(name string) aylisPaintCanvas {
 	switch name {
 	case "pcDesenho":
@@ -850,7 +850,7 @@ func (f *frmPaintComponents) FindPaintCanvas(name string) aylisPaintCanvas {
 // SenderAsPaintCanvas é o PaintCanvas que disparou o evento.
 func (f *frmPaintComponents) SenderAsPaintCanvas(ev aylis.Event) aylisPaintCanvas { return f.FindPaintCanvas(ev.Sender.Name) }
 
-// FindPanel é o Panel deste form com o nome (como o FindComponent).
+// FindPanel é o Panel deste form com o nome.
 func (f *frmPaintComponents) FindPanel(name string) aylisPanel {
 	switch name {
 	case "pnlFaixa":
@@ -862,7 +862,7 @@ func (f *frmPaintComponents) FindPanel(name string) aylisPanel {
 // SenderAsPanel é o Panel que disparou o evento.
 func (f *frmPaintComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
 
-// FindSaveDialog é o SaveDialog deste form com o nome (como o FindComponent).
+// FindSaveDialog é o SaveDialog deste form com o nome.
 func (f *frmPaintComponents) FindSaveDialog(name string) aylisSaveDialog {
 	switch name {
 	case "dlgSalvar":
@@ -874,7 +874,7 @@ func (f *frmPaintComponents) FindSaveDialog(name string) aylisSaveDialog {
 // SenderAsSaveDialog é o SaveDialog que disparou o evento.
 func (f *frmPaintComponents) SenderAsSaveDialog(ev aylis.Event) aylisSaveDialog { return f.FindSaveDialog(ev.Sender.Name) }
 
-// FindScrollBox é o ScrollBox deste form com o nome (como o FindComponent).
+// FindScrollBox é o ScrollBox deste form com o nome.
 func (f *frmPaintComponents) FindScrollBox(name string) aylisScrollBox {
 	switch name {
 	case "sbxArea":
@@ -886,7 +886,7 @@ func (f *frmPaintComponents) FindScrollBox(name string) aylisScrollBox {
 // SenderAsScrollBox é o ScrollBox que disparou o evento.
 func (f *frmPaintComponents) SenderAsScrollBox(ev aylis.Event) aylisScrollBox { return f.FindScrollBox(ev.Sender.Name) }
 
-// FindStatusBar é o StatusBar deste form com o nome (como o FindComponent).
+// FindStatusBar é o StatusBar deste form com o nome.
 func (f *frmPaintComponents) FindStatusBar(name string) aylisStatusBar {
 	switch name {
 	case "stbStatus":

@@ -9,10 +9,10 @@ public final class Forms {
     public static void register(Aylis aylis) {
         Components.registerClasses();
         aylis.on("frmCalculadora.form_key_down", ev -> FrmCalculadora.form_key_down(aylis, ev));
-        aylis.on("frmCalculadora.limpar_historico_click", ev -> FrmCalculadora.limpar_historico_click(aylis, ev));
-        aylis.on("frmCalculadora.historico_item_click", ev -> FrmCalculadora.historico_item_click(aylis, ev));
-        aylis.on("frmCalculadora.memoria_item_click", ev -> FrmCalculadora.memoria_item_click(aylis, ev));
-        aylis.on("frmCalculadora.historico_click", ev -> FrmCalculadora.historico_click(aylis, ev));
-        aylis.on("frmCalculadora.tecla_click", ev -> FrmCalculadora.tecla_click(aylis, ev));
+        aylis.on("frmCalculadora.limpar_historico_click", ev -> FrmCalculadora.limpar_historico_click(aylis, Components.frmCalculadora.senderAsButton(ev)));
+        aylis.on("frmCalculadora.historico_item_click", ev -> FrmCalculadora.historico_item_click(aylis, Components.frmCalculadora.senderAsListView(ev), (long) Components.asNumber(ev.args())));
+        aylis.on("frmCalculadora.memoria_item_click", ev -> FrmCalculadora.memoria_item_click(aylis, Components.frmCalculadora.senderAsListView(ev), (long) Components.asNumber(ev.args())));
+        aylis.on("frmCalculadora.historico_click", ev -> FrmCalculadora.historico_click(aylis, Components.frmCalculadora.senderAsButton(ev)));
+        aylis.on("frmCalculadora.tecla_click", ev -> FrmCalculadora.tecla_click(aylis, Components.frmCalculadora.senderAsButton(ev)));
     }
 }

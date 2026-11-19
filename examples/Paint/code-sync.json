@@ -1,32 +1,32 @@
 {
   "revisions": {
-    "frmPaint.abrir_click": 1,
-    "frmPaint.abrir_select": 3,
-    "frmPaint.ampliar_click": 2,
-    "frmPaint.colar_click": 3,
-    "frmPaint.copiar_click": 3,
-    "frmPaint.cor1_click": 2,
-    "frmPaint.cor2_click": 2,
-    "frmPaint.desenho_change": 1,
-    "frmPaint.desenho_cursor": 1,
-    "frmPaint.desenho_pick": 1,
-    "frmPaint.desfazer_click": 2,
-    "frmPaint.espessura_change": 1,
-    "frmPaint.excluir_click": 3,
-    "frmPaint.ferramenta_click": 2,
-    "frmPaint.limpar_click": 2,
-    "frmPaint.novo_click": 2,
-    "frmPaint.paleta_click": 2,
-    "frmPaint.preencher_change": 1,
-    "frmPaint.recortar_click": 3,
-    "frmPaint.reduzir_click": 2,
-    "frmPaint.refazer_click": 2,
-    "frmPaint.sair_click": 1,
-    "frmPaint.salvar_click": 1,
-    "frmPaint.salvar_como_click": 1,
-    "frmPaint.salvar_select": 2,
-    "frmPaint.selecionar_tudo_click": 3,
-    "frmPaint.tamanho_real_click": 2
+    "frmPaint.abrir_click": 2,
+    "frmPaint.abrir_select": 4,
+    "frmPaint.ampliar_click": 4,
+    "frmPaint.colar_click": 4,
+    "frmPaint.copiar_click": 4,
+    "frmPaint.cor1_click": 4,
+    "frmPaint.cor2_click": 4,
+    "frmPaint.desenho_change": 3,
+    "frmPaint.desenho_cursor": 2,
+    "frmPaint.desenho_pick": 3,
+    "frmPaint.desfazer_click": 3,
+    "frmPaint.espessura_change": 2,
+    "frmPaint.excluir_click": 4,
+    "frmPaint.ferramenta_click": 4,
+    "frmPaint.limpar_click": 3,
+    "frmPaint.novo_click": 3,
+    "frmPaint.paleta_click": 4,
+    "frmPaint.preencher_change": 2,
+    "frmPaint.recortar_click": 4,
+    "frmPaint.reduzir_click": 4,
+    "frmPaint.refazer_click": 3,
+    "frmPaint.sair_click": 2,
+    "frmPaint.salvar_click": 2,
+    "frmPaint.salvar_como_click": 2,
+    "frmPaint.salvar_select": 3,
+    "frmPaint.selecionar_tudo_click": 4,
+    "frmPaint.tamanho_real_click": 4
   },
   "languages": {
     "cpp": {
@@ -91,112 +91,112 @@
       },
       "handlers": {
         "frmPaint.abrir_click": {
-          "hash": "v2:154b0cfacf196b9d",
-          "seen": 1
+          "hash": "v2:1f362714ffe34d47",
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:f59612fa5f713db6",
-          "seen": 3
+          "hash": "v2:6ab9b3fec19eb25c",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
-          "hash": "v2:a10019cc4075b7ca",
-          "seen": 2
+          "hash": "v2:51c9075566eb20ac",
+          "seen": 4
         },
         "frmPaint.colar_click": {
-          "hash": "v2:ef99a74eff61ff93",
-          "seen": 3
+          "hash": "v2:e940a8229134783d",
+          "seen": 4
         },
         "frmPaint.copiar_click": {
-          "hash": "v2:80dd29e0b8652abf",
-          "seen": 3
+          "hash": "v2:d93565e681d22e85",
+          "seen": 4
         },
         "frmPaint.cor1_click": {
-          "hash": "v2:da7a554322b1e7d1",
-          "seen": 2
+          "hash": "v2:af7e4e21c3449bef",
+          "seen": 4
         },
         "frmPaint.cor2_click": {
-          "hash": "v2:c0bada43142d88f0",
-          "seen": 2
+          "hash": "v2:b82e7721c8322df2",
+          "seen": 4
         },
         "frmPaint.desenho_change": {
-          "hash": "v2:9df47a5f3e465b7b",
-          "seen": 1
+          "hash": "v2:8b07d97a0c7bbc89",
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:87b7727604e0e2a2",
-          "seen": 1
+          "hash": "v2:bf1b03163eaf9a9a",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:9d6d750632eaa80a",
-          "seen": 1
+          "hash": "v2:4cff9c839e69a65a",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
-          "hash": "v2:03d8ea3a2696ca65",
-          "seen": 2
+          "hash": "v2:2671e38a0bef1beb",
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:e5da33f5aafa4dcf",
-          "seen": 1
+          "hash": "v2:91e31435edac7618",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
-          "hash": "v2:f5e5e642fa285cc8",
-          "seen": 3
+          "hash": "v2:58e8ffa31a88014e",
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:7c48adc2e313b281",
-          "seen": 2
+          "hash": "v2:6f363e12eb5f6409",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
-          "hash": "v2:5212a95be1ae79ba",
-          "seen": 2
+          "hash": "v2:3aa158c5f60d64ec",
+          "seen": 3
         },
         "frmPaint.novo_click": {
-          "hash": "v2:465c8ba88764241b",
-          "seen": 2
+          "hash": "v2:8876ba5c316b1961",
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:52137d8367c9d740",
-          "seen": 2
+          "hash": "v2:defaba5b0ad6d5f2",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:bc2cb8242badb832",
-          "seen": 1
+          "hash": "v2:a967d12862edefde",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
-          "hash": "v2:3c0cb38a94d6c93c",
-          "seen": 3
+          "hash": "v2:6bfc298ce2603962",
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
-          "hash": "v2:2544c4538bc7c0d4",
-          "seen": 2
+          "hash": "v2:3cd5593624c6c702",
+          "seen": 4
         },
         "frmPaint.refazer_click": {
-          "hash": "v2:240d526801e3b5f7",
-          "seen": 2
-        },
-        "frmPaint.sair_click": {
-          "hash": "v2:5f98b9491c1a10ed",
-          "seen": 1
-        },
-        "frmPaint.salvar_click": {
-          "hash": "v2:22b96577ed2125c7",
-          "seen": 1
-        },
-        "frmPaint.salvar_como_click": {
-          "hash": "v2:dad01b756c6a2632",
-          "seen": 1
-        },
-        "frmPaint.salvar_select": {
-          "hash": "v2:52f4d5bf1d0d5a3e",
-          "seen": 2
-        },
-        "frmPaint.selecionar_tudo_click": {
-          "hash": "v2:3a9571aed31fe79f",
+          "hash": "v2:d8f26a18e17c4905",
           "seen": 3
         },
-        "frmPaint.tamanho_real_click": {
-          "hash": "v2:f8401c80d6d4bc8e",
+        "frmPaint.sair_click": {
+          "hash": "v2:af550da004259387",
           "seen": 2
+        },
+        "frmPaint.salvar_click": {
+          "hash": "v2:4547671837ae85d1",
+          "seen": 2
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "v2:453735d416a1f920",
+          "seen": 2
+        },
+        "frmPaint.salvar_select": {
+          "hash": "v2:3a6541df9827ed5e",
+          "seen": 3
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "v2:584989d0aa0c36e1",
+          "seen": 4
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "v2:fd7fa8a876b182c8",
+          "seen": 4
         }
       }
     },
@@ -262,112 +262,112 @@
       },
       "handlers": {
         "frmPaint.abrir_click": {
-          "hash": "v2:1480ae512c354481",
-          "seen": 1
+          "hash": "v2:12a5820c33be5e79",
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:d055ae42895b91f5",
-          "seen": 3
+          "hash": "v2:495324ef35a6c6a3",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
-          "hash": "v2:446e9e4a4d106c1c",
-          "seen": 2
+          "hash": "v2:a726194862bc8203",
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:e071df93271d5160",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:e071df93271d5160",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
-          "hash": "v2:186bbe1bd860d547",
-          "seen": 2
+          "hash": "v2:705fa876077685ab",
+          "seen": 4
         },
         "frmPaint.cor2_click": {
-          "hash": "v2:186bbe1bd860d547",
-          "seen": 2
+          "hash": "v2:705fa876077685ab",
+          "seen": 4
         },
         "frmPaint.desenho_change": {
-          "hash": "v2:666faa7d7e009db4",
-          "seen": 1
+          "hash": "v2:c761b5b99c4ebdf8",
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:9f821a0edbc9693f",
-          "seen": 1
+          "hash": "v2:4f6b1a9ceb64bc9c",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:666faa7d7e009db4",
-          "seen": 1
+          "hash": "v2:c761b5b99c4ebdf8",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:f5e99c96f38c5008",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:cc0cc17080caa046",
-          "seen": 1
+          "hash": "v2:6c1ee891044724d3",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:850df1526df00c61",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:446e9e4a4d106c1c",
-          "seen": 2
+          "hash": "v2:a726194862bc8203",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:7d77b3634b4b5087",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:ad40b1baab6e6fd5",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:186bbe1bd860d547",
-          "seen": 2
+          "hash": "v2:705fa876077685ab",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:c01a341bd0380945",
-          "seen": 1
+          "hash": "v2:34d96c44b6cbc9b4",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:e071df93271d5160",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
-          "hash": "v2:446e9e4a4d106c1c",
-          "seen": 2
+          "hash": "v2:a726194862bc8203",
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:bd11d7e39db48b6e",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:f5e99c96f38c5008",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:1480ae512c354481",
-          "seen": 1
+          "hash": "v2:12a5820c33be5e79",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:f5e99c96f38c5008",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
           "hash": "v2:e071df93271d5160",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:850df1526df00c61",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
-          "hash": "v2:446e9e4a4d106c1c",
-          "seen": 2
+          "hash": "v2:a726194862bc8203",
+          "seen": 4
         }
       }
     },
@@ -434,111 +434,111 @@
       "handlers": {
         "frmPaint.abrir_click": {
           "hash": "v2:d19b2de811c8e73f",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:0eff7492d974cc89",
-          "seen": 3
+          "hash": "v2:2fd90bc2b9eb9542",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
           "hash": "v2:c860d01165b6752e",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:96c507d4f2e86c83",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:a6125dbf0325a729",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
           "hash": "v2:9b4d5ab72abb5ee8",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.cor2_click": {
           "hash": "v2:9b42dab72ab230e3",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.desenho_change": {
           "hash": "v2:22944cfa8d3d10ba",
-          "seen": 1
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:be57088d9e087184",
-          "seen": 1
+          "hash": "v2:4b4de8ad946eff4a",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:d3eb3916f366e16d",
-          "seen": 1
+          "hash": "v2:095e57916a738b9a",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:590dacbc1616ecdf",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:0b142068990b5c85",
-          "seen": 1
+          "hash": "v2:3d478de502b5008c",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:f7d36801522cac47",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:557fbfbb9ba6e903",
-          "seen": 2
+          "hash": "v2:4ee01cfa7769cd67",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:fee4d108092cd038",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:66a05e58aed69ab6",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:f427fc218c7400a4",
-          "seen": 2
+          "hash": "v2:f4518a1bca3746a9",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:2b628d1ed6c43578",
-          "seen": 1
+          "hash": "v2:dd0225350aec84a3",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:f5a843b6cb216432",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
           "hash": "v2:de4fc959f61e912a",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:f1d2bb3591a230c9",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:7a4ce1adfd457651",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:6531c518a4429ed8",
-          "seen": 1
+          "hash": "v2:f3584d56a9cefe93",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:b9187b7c6d7e6340",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
-          "hash": "v2:f575af7d102eaf6a",
-          "seen": 2
+          "hash": "v2:ab6cb9bc2ad7192d",
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:a561fdbf099029be",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
           "hash": "v2:401c73dbd420f523",
-          "seen": 2
+          "seen": 4
         }
       }
     },
@@ -605,111 +605,111 @@
       "handlers": {
         "frmPaint.abrir_click": {
           "hash": "v2:cf5568155b41742c",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:a2b88558ada2cbcf",
-          "seen": 3
+          "hash": "v2:f073780e0c338cc7",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
           "hash": "v2:1f68b0af554787a0",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:8589d1b24d0f1aa0",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:315812d6860d34b6",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
           "hash": "v2:f700e5347af92afc",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.cor2_click": {
           "hash": "v2:120660348a924c7d",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.desenho_change": {
           "hash": "v2:59a5c5aacd034f3a",
-          "seen": 1
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:2cf9c04e90e1fc30",
-          "seen": 1
+          "hash": "v2:203aae55172d0521",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:e8781880396f09c6",
-          "seen": 1
+          "hash": "v2:0617df16fb3ea1eb",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:b754ba792bbc9a08",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:5bb97b5ecea7e51d",
-          "seen": 1
+          "hash": "v2:2a292819892dc518",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:dff3c83c27d0d6d4",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:89a6e5841fd878b1",
-          "seen": 2
+          "hash": "v2:8b5e15ac381e3cda",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:514db2e74ce83c07",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:35c2c223cfcfa538",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:21a14a9aa3067cff",
-          "seen": 2
+          "hash": "v2:880c1fa0b6f3dea2",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:922c38ef959cdb0c",
-          "seen": 1
+          "hash": "v2:3f9ae2c60a097828",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:fc574589c4f358eb",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
           "hash": "v2:fc975206d43186a6",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:9990853ba8af3c6e",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:66ecc77df1b60e3e",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:baf9e561dd299c18",
-          "seen": 1
+          "hash": "v2:6a8cd8d740f13ed2",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:81b7e25aa48185a1",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
-          "hash": "v2:caf21c30b1e13fee",
-          "seen": 2
+          "hash": "v2:ef67938209def396",
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:cf411d89d3f2f421",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
           "hash": "v2:e9c1a72da8c45d1d",
-          "seen": 2
+          "seen": 4
         }
       }
     },
@@ -776,111 +776,111 @@
       "handlers": {
         "frmPaint.abrir_click": {
           "hash": "v2:b31f60cabbb153e7",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:d717bc3d616cd5aa",
-          "seen": 3
+          "hash": "v2:fb24262f109a1f76",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
           "hash": "v2:a859d0649bb9f3d0",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:11c436f4636dc3bd",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:478832ac95dea631",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
           "hash": "v2:36a197a41eecd73f",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.cor2_click": {
           "hash": "v2:f9335b37b47d9dd2",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.desenho_change": {
           "hash": "v2:7522798ec004573f",
-          "seen": 1
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:28ca1e21a2937b3c",
-          "seen": 1
+          "hash": "v2:c0e6ee31ab7a3e1b",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:cbcb8342a7c1d399",
-          "seen": 1
+          "hash": "v2:9c03ea69f8e7ce0b",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:185fec9d961baf0b",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:a409cdf1f1baa43d",
-          "seen": 1
+          "hash": "v2:57a965ce394fccd7",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:4804cd23fa337c67",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
           "hash": "v2:00ad572d27ecfa68",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:f9133b5fe74136a4",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:00da07ee1a95137f",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:41877fface2f9a85",
-          "seen": 2
+          "hash": "v2:0123b36863218a5e",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:b94f432454dd6b3f",
-          "seen": 1
+          "hash": "v2:ffd69eb06f45cf3a",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:7eb84b46f3ef73f0",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
           "hash": "v2:235f5df56c7241e8",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:6737360b929b57a9",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:7ed79c9d21e90a31",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:710d57ee1fd68f2c",
-          "seen": 1
+          "hash": "v2:0736cb21de0b3075",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:a55d8174cd84c7a6",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
-          "hash": "v2:34e1685b6f01d830",
-          "seen": 2
+          "hash": "v2:411e9ffe2ea15b62",
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:5420bc473f82aac0",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
           "hash": "v2:49a3f7cfc061895e",
-          "seen": 2
+          "seen": 4
         }
       }
     },
@@ -947,111 +947,111 @@
       "handlers": {
         "frmPaint.abrir_click": {
           "hash": "v2:e2d91aa3a7586d1f",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:b2f7b643d31aa84c",
-          "seen": 3
+          "hash": "v2:624ddb5a70cc6f3d",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
           "hash": "v2:1879b575f999d670",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:c896147c1867b483",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:bda98aab28ea4149",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
           "hash": "v2:b71415c764dcbb7c",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.cor2_click": {
           "hash": "v2:b709f5c764d43097",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.desenho_change": {
           "hash": "v2:695dba366c1ba794",
-          "seen": 1
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:48360334030b6613",
-          "seen": 1
+          "hash": "v2:685fc0af0d132551",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:820c1313696fd381",
-          "seen": 1
+          "hash": "v2:74a3f08816a0c7f0",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:168ddf21957dbd2f",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:67d52588015f1d3e",
-          "seen": 1
+          "hash": "v2:792ef239185122aa",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:4a057fa90a189be7",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:ec46fa4a4f46be12",
-          "seen": 2
+          "hash": "v2:df37744b6ea7d86e",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:6349cb3ad8a6cb56",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:5d0a7fe96cd7915b",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:11ccb35f3ed8dafa",
-          "seen": 2
+          "hash": "v2:a6bb80133f746716",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:fe844c1eb011b3a4",
-          "seen": 1
+          "hash": "v2:600e3da7e6f04467",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:379bdc505a7e7fd2",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
           "hash": "v2:bf73f98c57a6b2ef",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:4ae353be120f9bb5",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:54c816f22a56edf1",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:8923b3ac7bcbbe52",
-          "seen": 1
+          "hash": "v2:43863d7d994d4083",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:0fc3dbd2e4b7e960",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
-          "hash": "v2:6d1a1ec22a4d3d17",
-          "seen": 2
+          "hash": "v2:2acfe43edbe56722",
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:74a9f0286c2bc4d3",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
           "hash": "v2:3a969823e8fce2a1",
-          "seen": 2
+          "seen": 4
         }
       }
     },
@@ -1118,111 +1118,111 @@
       "handlers": {
         "frmPaint.abrir_click": {
           "hash": "v2:4367d7fc7d34a421",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:73163946f0429ce2",
-          "seen": 3
+          "hash": "v2:117235a4c4a170ad",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
           "hash": "v2:49a58604ed3390ee",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.colar_click": {
           "hash": "v2:1a343f90db39688b",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.copiar_click": {
           "hash": "v2:ace614517ea9cec4",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.cor1_click": {
           "hash": "v2:c6b5c87d1840b307",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.cor2_click": {
           "hash": "v2:d03f717d1de70f4a",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.desenho_change": {
           "hash": "v2:48d8f210ee178275",
-          "seen": 1
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:1a08a962181a32ea",
-          "seen": 1
+          "hash": "v2:3915e2b706a57f5d",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:6a6cab85edf8e6ee",
-          "seen": 1
+          "hash": "v2:ce21387e88449f2a",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
           "hash": "v2:807be7e487ef7539",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:dea6e7526e5014fc",
-          "seen": 1
+          "hash": "v2:dfbc54e82eda17d4",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
           "hash": "v2:7811425c0ff90072",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:451a822f0f6cc11e",
-          "seen": 2
+          "hash": "v2:89ad9de6ff1ea363",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
           "hash": "v2:8aadc8b911eea390",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.novo_click": {
           "hash": "v2:a41ce11055568496",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:4e00f5831a355581",
-          "seen": 2
+          "hash": "v2:52307b0f52a53b8c",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:2881a66462ab47d9",
-          "seen": 1
+          "hash": "v2:12b74fbb0c31d0fe",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
           "hash": "v2:7648fabc527d1985",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
           "hash": "v2:73854ccf7a392f26",
-          "seen": 2
+          "seen": 4
         },
         "frmPaint.refazer_click": {
           "hash": "v2:d0055b279d89b8c7",
-          "seen": 2
+          "seen": 3
         },
         "frmPaint.sair_click": {
           "hash": "v2:d117222643288be1",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_click": {
-          "hash": "v2:d680bb74de57aed1",
-          "seen": 1
+          "hash": "v2:fab9c51bb87f4c39",
+          "seen": 2
         },
         "frmPaint.salvar_como_click": {
           "hash": "v2:f207c1d1ce72a89e",
-          "seen": 1
+          "seen": 2
         },
         "frmPaint.salvar_select": {
-          "hash": "v2:0978b03f91631431",
-          "seen": 2
+          "hash": "v2:8786e39e0d53de36",
+          "seen": 3
         },
         "frmPaint.selecionar_tudo_click": {
           "hash": "v2:bf01612b4b4b46b0",
-          "seen": 3
+          "seen": 4
         },
         "frmPaint.tamanho_real_click": {
           "hash": "v2:f3651f2ed04c09ba",
-          "seen": 2
+          "seen": 4
         }
       }
     },
@@ -1288,112 +1288,112 @@
       },
       "handlers": {
         "frmPaint.abrir_click": {
-          "hash": "v2:6f29cba84fd10a60",
-          "seen": 1
+          "hash": "v2:cf5568155b41742c",
+          "seen": 2
         },
         "frmPaint.abrir_select": {
-          "hash": "v2:3d26c8c92dcba6db",
-          "seen": 3
+          "hash": "v2:7635061eeb00b706",
+          "seen": 4
         },
         "frmPaint.ampliar_click": {
-          "hash": "v2:92dc37d8ae5d4e7c",
-          "seen": 2
+          "hash": "v2:11b27e32e245d4e0",
+          "seen": 4
         },
         "frmPaint.colar_click": {
-          "hash": "v2:3a0949c716aa5dc2",
-          "seen": 3
+          "hash": "v2:5aefaccc21a7f1be",
+          "seen": 4
         },
         "frmPaint.copiar_click": {
-          "hash": "v2:8cf3b5a95d8f842a",
-          "seen": 3
+          "hash": "v2:24d7d6fb01a2564e",
+          "seen": 4
         },
         "frmPaint.cor1_click": {
-          "hash": "v2:205672f72d10f198",
-          "seen": 2
+          "hash": "v2:f700e5347af92afc",
+          "seen": 4
         },
         "frmPaint.cor2_click": {
-          "hash": "v2:3b5bedf73caa1319",
-          "seen": 2
+          "hash": "v2:120660348a924c7d",
+          "seen": 4
         },
         "frmPaint.desenho_change": {
-          "hash": "v2:1eec10fa21b942de",
-          "seen": 1
+          "hash": "v2:6939cf522a8e1222",
+          "seen": 3
         },
         "frmPaint.desenho_cursor": {
-          "hash": "v2:cc6b152d904e54a9",
-          "seen": 1
+          "hash": "v2:374c1da60c008c48",
+          "seen": 2
         },
         "frmPaint.desenho_pick": {
-          "hash": "v2:4354973f37098a6e",
-          "seen": 1
+          "hash": "v2:bf515a0f302859e2",
+          "seen": 3
         },
         "frmPaint.desfazer_click": {
-          "hash": "v2:da4b05d878b007fc",
-          "seen": 2
+          "hash": "v2:99a9ac53f3272040",
+          "seen": 3
         },
         "frmPaint.espessura_change": {
-          "hash": "v2:33bd4792d3eee754",
-          "seen": 1
+          "hash": "v2:e70518ebd2b4ac3f",
+          "seen": 2
         },
         "frmPaint.excluir_click": {
-          "hash": "v2:c4de2701ee0f2610",
-          "seen": 3
+          "hash": "v2:71eab97db99b697c",
+          "seen": 4
         },
         "frmPaint.ferramenta_click": {
-          "hash": "v2:a596af1607c8699a",
-          "seen": 2
+          "hash": "v2:604e940aa5c5adc7",
+          "seen": 4
         },
         "frmPaint.limpar_click": {
-          "hash": "v2:142732b8a0fb9ec1",
-          "seen": 2
+          "hash": "v2:0cf0f0341d7b0c9d",
+          "seen": 3
         },
         "frmPaint.novo_click": {
-          "hash": "v2:6facd9759ae548b3",
-          "seen": 2
+          "hash": "v2:6e826be8f62d8b1f",
+          "seen": 3
         },
         "frmPaint.paleta_click": {
-          "hash": "v2:d4b28d2834d174c1",
-          "seen": 2
+          "hash": "v2:9ae189f798e0001e",
+          "seen": 4
         },
         "frmPaint.preencher_change": {
-          "hash": "v2:c02ced3344151b47",
-          "seen": 1
+          "hash": "v2:2877204d6a442854",
+          "seen": 2
         },
         "frmPaint.recortar_click": {
-          "hash": "v2:096cf3f81c0d3bef",
-          "seen": 3
+          "hash": "v2:f9ef65ff68f55533",
+          "seen": 4
         },
         "frmPaint.reduzir_click": {
-          "hash": "v2:edc7d21f0e17a90b",
-          "seen": 2
+          "hash": "v2:dcd2020735996817",
+          "seen": 4
         },
         "frmPaint.refazer_click": {
-          "hash": "v2:97b1ba2b78e72c1a",
-          "seen": 2
-        },
-        "frmPaint.sair_click": {
-          "hash": "v2:59877938e5b5aeba",
-          "seen": 1
-        },
-        "frmPaint.salvar_click": {
-          "hash": "v2:b8065584569573bf",
-          "seen": 1
-        },
-        "frmPaint.salvar_como_click": {
-          "hash": "v2:365501684fbc8cfd",
-          "seen": 1
-        },
-        "frmPaint.salvar_select": {
-          "hash": "v2:d8e5c0a0d18c2966",
-          "seen": 2
-        },
-        "frmPaint.selecionar_tudo_click": {
-          "hash": "v2:6654839ebcfd99c5",
+          "hash": "v2:05b2fbd84c2acc76",
           "seen": 3
         },
-        "frmPaint.tamanho_real_click": {
-          "hash": "v2:1222bdac0b3e83d9",
+        "frmPaint.sair_click": {
+          "hash": "v2:66ecc77df1b60e3e",
           "seen": 2
+        },
+        "frmPaint.salvar_click": {
+          "hash": "v2:5750941b8102c2cf",
+          "seen": 2
+        },
+        "frmPaint.salvar_como_click": {
+          "hash": "v2:81b7e25aa48185a1",
+          "seen": 2
+        },
+        "frmPaint.salvar_select": {
+          "hash": "v2:8cc60278d079fa33",
+          "seen": 3
+        },
+        "frmPaint.selecionar_tudo_click": {
+          "hash": "v2:deb0014cb725aa99",
+          "seen": 4
+        },
+        "frmPaint.tamanho_real_click": {
+          "hash": "v2:e9c1a72da8c45d1d",
+          "seen": 4
         }
       }
     }

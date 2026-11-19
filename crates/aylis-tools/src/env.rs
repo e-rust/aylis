@@ -1467,6 +1467,12 @@ fn ios(out: &mut Vec<Check>, language: Language, rust: &SharedRust) {
         Some(v) => Check::ok(t, "Xcode (SDK do iOS)", v.trim()),
         None => Check::missing(t, "Xcode (SDK do iOS)", "não encontrado").help("Instale o Xcode pela App Store e abra-o uma vez"),
     });
+    // O iPhone de verdade (o simulador não precisa): o certificado do desenvolvedor no Keychain.
+    let identities = output("security", &["find-identity", "-v", "-p", "codesigning"]).map(|t| crate::ios_device::parse_identities(&t)).unwrap_or_default();
+    out.push(match identities.iter().find(|i| i.name.starts_with("Apple Development") || i.name.starts_with("iPhone Developer")) {
+        Some(i) => Check::ok(t, "Certificado de desenvolvedor (iPhone)", &i.name),
+        None => Check::warning(t, "Certificado de desenvolvedor (iPhone)", "nenhum (só para o iPhone; o simulador não precisa)").help("No Xcode: Settings → Accounts, entre com o seu Apple ID (o gratuito serve) e crie um em Manage Certificates"),
+    });
     live_items(out, t, language);
 }
 

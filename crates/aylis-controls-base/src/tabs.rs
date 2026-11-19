@@ -242,7 +242,7 @@ impl Component for TabControl {
         swipe: bool => "Behavior",
         tab_position: TabPosition => "Appearance",
         tab_width: f32 => "Appearance";
-        events: on_change
+        events: on_change: i64
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -495,7 +495,7 @@ impl Component for TabItem {
 
     properties! {
         caption: String => "Appearance";
-        events: on_show
+        events: on_show: ()
     }
 
     fn paint(&self, _canvas: &mut dyn Canvas, _ctx: &PaintCtx<'_>) {}
@@ -627,7 +627,7 @@ impl Component for Expander {
     properties! {
         caption: String => "Appearance",
         expanded: bool => "Behavior";
-        events: on_change
+        events: on_change: bool
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

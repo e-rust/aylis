@@ -11,6 +11,13 @@ impl Handle for Notification {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Notification`): só um Notification.
+impl aylis::prelude::FromSender for Notification {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Notification")).then_some(Self { id })
+    }
+}
+
 impl Notification {
     pub fn title(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "title"))
@@ -30,11 +37,11 @@ impl Notification {
     pub fn set_image(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "image", Into::<String>::into(value))
     }
-    pub fn form(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "form"))
+    pub fn form(self, ui: &Ui) -> FormName {
+        handles::read_enum::<FormName>(ui, self.id, "form")
     }
-    pub fn set_form(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "form", Into::<String>::into(value))
+    pub fn set_form(self, ui: &mut Ui, value: FormName) {
+        handles::write(ui, self.id, "form", PropValue::enum_value(value))
     }
     pub fn form_width(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "form_width").and_then(|v| v.to_f64().ok()).unwrap_or_default()
@@ -78,17 +85,17 @@ impl Notification {
     pub fn set_channel_name(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "channel_name", Into::<String>::into(value))
     }
-    pub fn priority(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "priority"))
+    pub fn priority(self, ui: &Ui) -> aylis::prelude::NotificationPriority {
+        handles::read_enum::<aylis::prelude::NotificationPriority>(ui, self.id, "priority")
     }
-    pub fn set_priority(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "priority", Into::<String>::into(value))
+    pub fn set_priority(self, ui: &mut Ui, value: aylis::prelude::NotificationPriority) {
+        handles::write(ui, self.id, "priority", PropValue::enum_value(value))
     }
-    pub fn actions(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "actions"))
+    pub fn actions(self, ui: &Ui) -> Vec<NotificationAction> {
+        NotificationAction::list_from_text(&handles::text(ui, handles::read(ui, self.id, "actions")))
     }
-    pub fn set_actions(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "actions", Into::<String>::into(value))
+    pub fn set_actions(self, ui: &mut Ui, value: &[NotificationAction]) {
+        handles::write(ui, self.id, "actions", PropValue::String(NotificationAction::list_text(value)))
     }
     pub fn ongoing(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "ongoing").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -107,5 +114,17 @@ impl Notification {
     }
     pub fn set_full_screen(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "full_screen", value)
+    }
+    pub fn on_click(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_click"))
+    }
+    pub fn set_on_click(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_click", Into::<String>::into(value))
+    }
+    pub fn on_action(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_action"))
+    }
+    pub fn set_on_action(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_action", Into::<String>::into(value))
     }
 }

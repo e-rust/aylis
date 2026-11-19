@@ -77,7 +77,8 @@ pub struct MediaPlayer {
     /// Começa a tocar quando o aplicativo abre.
     pub autoplay: bool,
     /// As saídas: vazio é a padrão; várias tocam o mesmo som sincronizado, cada uma com volume
-    /// e atraso (`Alto-falantes|Fone BT;volume=0.8;delay=180`). Veja [`crate::AudioOutput`].
+    /// e atraso (a lista de [`crate::OUTPUT_SPEC_RECORD`]: `[{"name": "Alto-falantes"},
+    /// {"name": "Fone BT", "volume": 0.8, "delay_ms": 180}]`). Veja [`crate::AudioOutput`].
     pub output: String,
     player: Option<AudioPlayer>,
     loaded: String,
@@ -286,8 +287,8 @@ impl Component for MediaPlayer {
         volume: f32 => "Behavior",
         looping: bool => "Behavior",
         autoplay: bool => "Behavior",
-        output: String => "Behavior";
-        events: on_ready, on_end, on_error;
+        output: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior";
+        events: on_ready: (), on_end: (), on_error: String;
         on_set: sync
     }
 }
@@ -900,10 +901,10 @@ impl Component for VideoPlayer {
         fit: ImageFit => "Appearance",
         radius: f32 => "Appearance",
         rate: f32 => "Behavior",
-        output: String => "Behavior",
+        output: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior",
         show_video: bool => "Appearance",
         frames_ahead: u32 => "Behavior";
-        events: on_ready, on_end, on_error, on_frame;
+        events: on_ready: (), on_end: (), on_error: String, on_frame: f64;
         on_set: sync
     }
 

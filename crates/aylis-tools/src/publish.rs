@@ -5,7 +5,7 @@
 //! | Windows/Linux/macOS | um executável só (forms e assets embutidos; ícone e dados de versão no .exe; no Windows, assinado se houver certificado, veja `codesign`) | uma pasta com dois programas: a tela (`<App>.exe`, com o projeto embutido) e o backend em `backend/` |
 //! | Android | APK assinado (arm64 + x86_64) | — |
 //! | Navegador | pasta com `index.html` e o `.wasm` (sirva com qualquer servidor) | — |
-//! | iOS | `.app` para o simulador (num Mac) | — |
+//! | iOS | num Mac: `.app` para o simulador, ou (`ios_device`) o `.app` e o `.ipa` do iPhone, assinados com o certificado e o perfil da máquina (veja `ios_device`) | — |
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -48,11 +48,31 @@ pub struct Options {
     /// Windows: não assinar nesta publicação, mesmo com certificado na máquina
     /// ([`crate::codesign`]).
     pub unsigned: bool,
+    /// iOS: para o iPhone (ARM64, assinado com o certificado e o perfil da máquina, e o
+    /// `.ipa`) em vez do simulador ([`crate::ios_device`]). Com `unsigned`, o `.ipa` sem a
+    /// assinatura da Apple (para o Sideloadly assinar com o Apple ID de quem instala).
+    pub ios_device: bool,
+    /// iOS: o UDID do aparelho em que o app vai rodar (o perfil tem de listá-lo).
+    pub ios_udid: Option<String>,
 }
 
 impl Options {
     pub fn new(target: Target) -> Self {
-        Self { target, out_dir: None, debug: false, abis: Vec::new(), aylis_host: None, features: Vec::new(), android_bundle: false, installer: false, signing: None, crate_dir: None, unsigned: false }
+        Self {
+            target,
+            out_dir: None,
+            debug: false,
+            abis: Vec::new(),
+            aylis_host: None,
+            features: Vec::new(),
+            android_bundle: false,
+            installer: false,
+            signing: None,
+            crate_dir: None,
+            unsigned: false,
+            ios_device: false,
+            ios_udid: None,
+        }
     }
 }
 
@@ -804,9 +824,17 @@ fn device_needs(forms: &Path) -> DeviceNeeds {
                             needs.permissions.push(p);
                         }
                     }
-                    for (name, why) in text("reasons").split(';').filter_map(|pair| pair.split_once('=')) {
-                        if let Some(p) = Permission::parse(name) {
-                            needs.reasons.push((p, why.trim().to_string()));
+                    // `reasons`: a lista de `{"permission", "reason"}` (no form, a lista; o texto
+                    // com o JSON também vale).
+                    let reasons = match map.get("reasons") {
+                        Some(serde_json::Value::String(t)) => serde_json::from_str::<serde_json::Value>(t).unwrap_or_default(),
+                        Some(v) => v.clone(),
+                        None => serde_json::Value::Null,
+                    };
+                    for item in reasons.as_array().into_iter().flatten() {
+                        let field = |k: &str| item.get(k).and_then(|v| v.as_str()).unwrap_or("");
+                        if let Some(p) = Permission::parse(field("permission")) {
+                            needs.reasons.push((p, field("reason").trim().to_string()));
                         }
                     }
                 }
@@ -1936,20 +1964,114 @@ fn ios(project: &Project, options: &Options, out: &Path, control: &Control, sink
     if !cfg!(target_os = "macos") {
         return Err("o app de iOS só é gerado num Mac (o Xcode é obrigatório)".into());
     }
-    let triple = if std::env::consts::ARCH == "aarch64" { "aarch64-apple-ios-sim" } else { "x86_64-apple-ios" };
+    let device = options.ios_device;
+    let push = aylis_build::used_classes(&project.dir().join("forms")).iter().any(|c| c == "PushNotifications");
+    // O iPhone: o certificado e o perfil antes de compilar (sem eles, não adianta esperar). Com
+    // `--no-sign` (`unsigned`), o `.ipa` sai sem a assinatura da Apple, para outra ferramenta
+    // assinar com o Apple ID de quem instala (o Sideloadly; a máquina macOS do GitHub, que não
+    // tem o certificado de ninguém).
+    let unsigned = device && options.unsigned;
+    let signing = if device && !unsigned {
+        let s = crate::ios_device::signing(&project.identifier(), options.ios_udid.as_deref(), push)?;
+        sink(Event::Line(format!("Assinatura: {} · perfil {} (vence em {})", s.identity.name, s.profile.name, s.profile.expires), LineKind::Tool));
+        Some(s)
+    } else {
+        None
+    };
+    let triple = if device {
+        "aarch64-apple-ios"
+    } else if std::env::consts::ARCH == "aarch64" {
+        "aarch64-apple-ios-sim"
+    } else {
+        "x86_64-apple-ios"
+    };
     sink(Event::Step(format!("Compilando para iOS ({triple})…")));
     let package = project.bin_name();
     let mut args = vec!["build", "--bin", package.as_str(), "--target", triple];
     if !options.debug {
         args.push("--release");
     }
-    let built = cargo("cargo", &args, &project.code_dir(), &[], control, sink)?;
+    let minimum = Path::new(crate::ios_device::MINIMUM_IOS);
+    let built = cargo("cargo", &args, &project.code_dir(), &[("IPHONEOS_DEPLOYMENT_TARGET", minimum)], control, sink)?;
     let bin = built.artifacts.iter().find_map(|a| a.executable.clone()).ok_or("o cargo não informou o executável")?;
     let app = out.join(format!("{}.app", file_name(project.app_name())));
+    // Sem restos de uma publicação anterior (a assinatura cobre tudo o que está no `.app`).
+    let _ = std::fs::remove_dir_all(&app);
     std::fs::create_dir_all(&app).map_err(|e| e.to_string())?;
     std::fs::copy(&bin, app.join(&package)).map_err(|e| e.to_string())?;
-    let push = aylis_build::used_classes(&project.dir().join("forms")).iter().any(|c| c == "PushNotifications");
-    let plist = format!(
+    let icon = !project.publish.icon.is_empty();
+    let plist = ios_info_plist(project, &package, device, icon, push);
+    std::fs::write(app.join("Info.plist"), plist).map_err(|e| e.to_string())?;
+    // O ícone: o catálogo do Xcode, compilado pelo `actool` para dentro do `.app` (o
+    // `Assets.car`). Falhando, o app sai com o ícone padrão, e não sem app.
+    if icon {
+        let icon = crate::icons::Icon::open(&project.file(&project.publish.icon))?;
+        let assets = out.join("Assets.xcassets");
+        crate::icons::ios(&icon, &assets)?;
+        let mut actool = Command::new("xcrun");
+        actool
+            .arg("actool")
+            .arg(&assets)
+            .arg("--compile")
+            .arg(&app)
+            .args(["--platform", if device { "iphoneos" } else { "iphonesimulator" }])
+            .args(["--minimum-deployment-target", crate::ios_device::MINIMUM_IOS, "--app-icon", "AppIcon", "--target-device", "iphone", "--target-device", "ipad"])
+            .arg("--output-partial-info-plist")
+            .arg(out.join("actool-info.plist"));
+        if let Err(e) = run_tool(&mut actool, control, sink, LineKind::Tool) {
+            sink(Event::Line(format!("o ícone não foi compilado ({e}); o app fica com o ícone padrão"), LineKind::Tool));
+        }
+    }
+    if unsigned {
+        // Só a assinatura "ad hoc" (o selo do conteúdo): quem instala troca pela dele, com os
+        // direitos do perfil dele.
+        run_tool(Command::new("codesign").args(["--force", "--sign", "-"]).arg(&app), control, sink, LineKind::Tool)?;
+        let ipa = out.join(format!("{}.ipa", file_name(project.app_name())));
+        crate::ios_device::write_ipa(&app, &package, &ipa)?;
+        sink(Event::Line(format!("{} ({}; sem a assinatura da Apple: assine e instale com o Sideloadly e um Apple ID)", ipa.display(), size(&ipa)), LineKind::Tool));
+        return Ok(Published { main: ipa, dir: out.to_path_buf() });
+    }
+    let Some(signing) = signing else {
+        // O simulador aceita assinatura "ad hoc". O push (o `PushNotifications`): o direito
+        // `aps-environment`, sem o qual o iOS recusa o registro.
+        let mut sign = Command::new("codesign");
+        sign.args(["--force", "--sign", "-"]);
+        if push {
+            let entitlements = out.join("entitlements.plist");
+            std::fs::write(&entitlements, IOS_PUSH_ENTITLEMENTS).map_err(|e| e.to_string())?;
+            sign.arg("--entitlements").arg(&entitlements);
+        }
+        run_tool(sign.arg(&app), control, sink, LineKind::Tool)?;
+        sink(Event::Line(format!("{} (para o simulador; para o iPhone, publique com --device)", app.display()), LineKind::Tool));
+        return Ok(Published { main: app, dir: out.to_path_buf() });
+    };
+    // O iPhone: o perfil dentro do `.app`, os direitos tirados dele e o certificado da máquina.
+    sink(Event::Step("Assinando para o iPhone…".into()));
+    std::fs::copy(&signing.profile.path, app.join("embedded.mobileprovision")).map_err(|e| e.to_string())?;
+    let entitlements = out.join("entitlements.plist");
+    std::fs::write(&entitlements, crate::ios_device::entitlements(&signing.profile, &project.identifier(), push)).map_err(|e| e.to_string())?;
+    let mut sign = Command::new("codesign");
+    sign.args(["--force", "--timestamp=none", "--generate-entitlement-der", "--sign", &signing.identity.sha1]).arg("--entitlements").arg(&entitlements).arg(&app);
+    run_tool(&mut sign, control, sink, LineKind::Tool)?;
+    let ipa = out.join(format!("{}.ipa", file_name(project.app_name())));
+    crate::ios_device::write_ipa(&app, &package, &ipa)?;
+    sink(Event::Line(format!("{} ({})", ipa.display(), size(&ipa)), LineKind::Tool));
+    Ok(Published { main: app, dir: out.to_path_buf() })
+}
+
+/// O `Info.plist` do app de iOS: o simulador ou o iPhone (`device`), com o ícone do catálogo,
+/// as orientações, as permissões e o push.
+fn ios_info_plist(project: &Project, package: &str, device: bool, icon: bool, push: bool) -> String {
+    let forms = project.dir().join("forms");
+    let mut extra = ios_orientation_plist(project.orientation(), &form_orientations(project));
+    extra += &ios_usage_plist(&device_needs(&forms), aylis_build::used_classes(&forms).iter().any(|c| c == "SaveDialog"));
+    if push {
+        extra += "  <key>UIBackgroundModes</key><array><string>remote-notification</string></array>\n";
+    }
+    if icon {
+        extra += "  <key>CFBundleIconName</key><string>AppIcon</string>\n  <key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconName</key><string>AppIcon</string></dict></dict>\n  <key>CFBundleIcons~ipad</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconName</key><string>AppIcon</string></dict></dict>\n";
+    }
+    format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -1961,39 +2083,23 @@ fn ios(project: &Project, options: &Options, out: &Path, control: &Control, sink
   <key>CFBundleShortVersionString</key><string>{version}</string>
   <key>CFBundleVersion</key><string>{version}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleSupportedPlatforms</key><array><string>{platform}</string></array>
+  <key>MinimumOSVersion</key><string>{minimum}</string>
   <key>LSRequiresIPhoneOS</key><true/>
+  <key>UIDeviceFamily</key><array><integer>1</integer><integer>2</integer></array>
   <key>UILaunchScreen</key><dict/>
   <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
-{orientation}{usage}</dict>
+{extra}</dict>
 </plist>
 "#,
         id = project.identifier(),
         name = xml_escape(project.app_name()),
         // O iOS aceita só números na versão (a beta vai como a parte de antes do `-`).
         version = aylis_build::version_core(project.version()),
-        orientation = ios_orientation_plist(project.orientation(), &form_orientations(project)),
-        usage = ios_usage_plist(&device_needs(&project.dir().join("forms")), aylis_build::used_classes(&project.dir().join("forms")).iter().any(|c| c == "SaveDialog"))
-            + if push { "  <key>UIBackgroundModes</key><array><string>remote-notification</string></array>\n" } else { "" },
-    );
-    std::fs::write(app.join("Info.plist"), plist).map_err(|e| e.to_string())?;
-    // O ícone como catálogo do Xcode (o `actool` só existe no Mac; fica pronto ao lado).
-    if !project.publish.icon.is_empty() {
-        let icon = crate::icons::Icon::open(&project.file(&project.publish.icon))?;
-        crate::icons::ios(&icon, &out.join("Assets.xcassets"))?;
-    }
-    // O simulador aceita assinatura "ad hoc"; um iPhone exige o certificado do desenvolvedor.
-    // O push (o `PushNotifications`): o direito `aps-environment`, sem o qual o iOS recusa o
-    // registro (o de desenvolvimento; a App Store troca pelo de produção na assinatura).
-    let mut sign = Command::new("codesign");
-    sign.args(["--force", "--sign", "-"]);
-    if push {
-        let entitlements = out.join("entitlements.plist");
-        std::fs::write(&entitlements, IOS_PUSH_ENTITLEMENTS).map_err(|e| e.to_string())?;
-        sign.arg("--entitlements").arg(&entitlements);
-    }
-    run_tool(sign.arg(&app), control, sink, LineKind::Tool)?;
-    sink(Event::Line(format!("{} (para o simulador; num iPhone, assine com o seu certificado)", app.display()), LineKind::Tool));
-    Ok(Published { main: app, dir: out.to_path_buf() })
+        platform = if device { "iPhoneOS" } else { "iPhoneSimulator" },
+        minimum = crate::ios_device::MINIMUM_IOS,
+    )
 }
 
 /// Os direitos do app de iOS com o `PushNotifications` (o APNs de desenvolvimento).
@@ -2140,6 +2246,27 @@ mod tests {
         let _ = std::fs::remove_dir_all(&base);
     }
 
+    /// O `Info.plist` do iPhone tem o que a instalação num aparelho confere (a plataforma, a
+    /// versão mínima, a família) e o ícone do catálogo; o do simulador diz o simulador.
+    #[test]
+    fn the_ios_plist_of_the_device_and_of_the_simulator() {
+        let dir = std::env::temp_dir().join(format!("aylis-ios-plist-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let project = aylis_project::create_at(&dir, "Meu App", Language::Rust).unwrap();
+        let device = crate::ios_device::parse_plist(&ios_info_plist(&project, "meu_app", true, true, false)).unwrap();
+        assert_eq!(device["CFBundleExecutable"], "meu_app");
+        assert_eq!(device["CFBundleIdentifier"], project.identifier().as_str());
+        assert_eq!(device["CFBundleSupportedPlatforms"][0], "iPhoneOS");
+        assert_eq!(device["MinimumOSVersion"], crate::ios_device::MINIMUM_IOS);
+        assert_eq!(device["UIDeviceFamily"], serde_json::json!([1, 2]));
+        assert_eq!(device["CFBundleIcons"]["CFBundlePrimaryIcon"]["CFBundleIconName"], "AppIcon");
+        let sim = crate::ios_device::parse_plist(&ios_info_plist(&project, "meu_app", false, false, true)).unwrap();
+        assert_eq!(sim["CFBundleSupportedPlatforms"][0], "iPhoneSimulator");
+        assert!(sim.get("CFBundleIconName").is_none());
+        assert_eq!(sim["UIBackgroundModes"][0], "remote-notification");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// O `Info.plist` do iOS: as orientações do projeto e as dos forms com orientação própria
     /// (o iOS só gira para as declaradas), no iPhone e no iPad.
     #[test]
@@ -2204,7 +2331,7 @@ mod tests {
         std::fs::write(
             dir.join("principal.json"),
             r#"{ "root": { "class": "Form", "children": [
-                { "class": "Permissions", "permissions": "camera;location", "reasons": "camera=Para a foto & o perfil" },
+                { "class": "Permissions", "permissions": "camera;location", "reasons": [{ "permission": "camera", "reason": "Para a foto & o perfil" }] },
                 { "class": "CameraView" } ] } }"#,
         )
         .unwrap();

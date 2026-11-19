@@ -33,7 +33,7 @@ Campo de data com calendário suspenso. Digite no formato do idioma ou escolha n
 | `auto_select` | Selecionar ao entrar | lógico | Ganhar o foco seleciona o texto todo (ligado por padrão). |
 | `clear_button` | Botão de limpar | lógico | Um "×" à direita que apaga o texto (só aparece com texto). |
 | `mask` | Máscara | texto | Máscara de digitação: `#` dígito, `A` letra, `X` letra ou dígito, o resto entra sozinho (`(##) #####-####`); vazio: livre. |
-| `rules` | Regras de validação | texto | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
+| `rules` | Regras de validação | lista de textos (separados por `;`) | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
 | `spellcheck` | Corretor ortográfico | lógico | Sublinha as palavras erradas (o motor de texto da plataforma ou o do app); o clique direito numa delas mostra as correções. |
 | `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita: o resto aparece apagado depois do cursor e o Tab (ou a seta para a direita) aceita. |
 | `language` | Idioma | texto | Idioma da correção e das sugestões (`"pt-BR"`); vazio: o do sistema. |
@@ -53,7 +53,7 @@ Campo de data com calendário suspenso. Digite no formato do idioma ou escolha n
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `date` | Data | texto | A data, em ISO (`2026-10-24`); a tela mostra no formato do idioma. Vazia = nenhuma. |
+| `date` | Data | data (ISO, `2026-10-24`) | A data, em ISO (`2026-10-24`); a tela mostra no formato do idioma. Vazia = nenhuma. |
 | `text` | Texto | texto | O texto do campo (com a `mask`, já formatado). |
 | `error` | Erro | texto | Mensagem de erro embaixo do campo, com a borda vermelha; vazio: sem erro. |
 
@@ -97,8 +97,8 @@ E o handler, um método do form (`self.DateEdit1` já é um `DateEdit`):
 ```rust
 impl FrmPrincipal {
     pub fn date_edit1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.DateEdit1.date(ui);
-        self.DateEdit1.set_date(ui, format!("{atual}!"));
+        let atual = self.DateEdit1.text(ui);
+        self.DateEdit1.set_text(ui, format!("{atual}!"));
     }
 }
 ```

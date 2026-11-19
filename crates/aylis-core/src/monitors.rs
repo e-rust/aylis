@@ -9,6 +9,35 @@ use crate::forms::WindowPlacement;
 use crate::ui::Ui;
 
 /// Um modo de vídeo que o monitor aceita.
+/// O registro de um modo de vídeo no acesso tipado (o `modes` do [`MONITOR_RECORD`]).
+pub const VIDEO_MODE_RECORD: crate::prop::RecordInfo = crate::prop::RecordInfo {
+    name: "VideoMode",
+    fields: &[("width", crate::PropKind::Int), ("height", crate::PropKind::Int), ("bit_depth", crate::PropKind::Int), ("refresh_hz", crate::PropKind::Float)],
+};
+
+/// O registro de um monitor no acesso tipado (o resultado do `Screen.monitors`, o JSON de
+/// [`Monitor::to_json`]).
+pub const MONITOR_RECORD: crate::prop::RecordInfo = crate::prop::RecordInfo {
+    name: "Monitor",
+    fields: &[
+        ("index", crate::PropKind::Int),
+        ("name", crate::PropKind::String),
+        ("device", crate::PropKind::String),
+        ("primary", crate::PropKind::Bool),
+        ("x", crate::PropKind::Int),
+        ("y", crate::PropKind::Int),
+        ("width", crate::PropKind::Int),
+        ("height", crate::PropKind::Int),
+        ("work_x", crate::PropKind::Int),
+        ("work_y", crate::PropKind::Int),
+        ("work_width", crate::PropKind::Int),
+        ("work_height", crate::PropKind::Int),
+        ("scale", crate::PropKind::Float),
+        ("refresh_hz", crate::PropKind::Float),
+        ("modes", crate::PropKind::RecordList(&VIDEO_MODE_RECORD)),
+    ],
+};
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct VideoMode {
     pub width: u32,

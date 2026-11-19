@@ -20,14 +20,14 @@ func (c aylisPanel) SetCharMap(v string) { c.Set("char_map", v) }
 func (c aylisPanel) Gap() float64 { return asNumber(c.Get("gap")) }
 func (c aylisPanel) SetGap(v float64) { c.Set("gap", v) }
 
-func (c aylisPanel) Fill() string { return asText(c.Get("fill")) }
-func (c aylisPanel) SetFill(v string) { c.Set("fill", v) }
+func (c aylisPanel) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisPanel) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisPanel) Fill2() string { return asText(c.Get("fill2")) }
-func (c aylisPanel) SetFill2(v string) { c.Set("fill2", v) }
+func (c aylisPanel) Fill2() aylis.Color { return aylis.ColorFromJSON(c.Get("fill2")) }
+func (c aylisPanel) SetFill2(v aylis.Color) { c.Set("fill2", v.JSON()) }
 
-func (c aylisPanel) FillMid() string { return asText(c.Get("fill_mid")) }
-func (c aylisPanel) SetFillMid(v string) { c.Set("fill_mid", v) }
+func (c aylisPanel) FillMid() aylis.Color { return aylis.ColorFromJSON(c.Get("fill_mid")) }
+func (c aylisPanel) SetFillMid(v aylis.Color) { c.Set("fill_mid", v.JSON()) }
 
 func (c aylisPanel) FillMidAt() float64 { return asNumber(c.Get("fill_mid_at")) }
 func (c aylisPanel) SetFillMidAt(v float64) { c.Set("fill_mid_at", v) }
@@ -38,14 +38,14 @@ func (c aylisPanel) SetGradientAngle(v float64) { c.Set("gradient_angle", v) }
 func (c aylisPanel) GradientRadial() bool { return asBool(c.Get("gradient_radial")) }
 func (c aylisPanel) SetGradientRadial(v bool) { c.Set("gradient_radial", v) }
 
-func (c aylisPanel) Stroke() string { return asText(c.Get("stroke")) }
-func (c aylisPanel) SetStroke(v string) { c.Set("stroke", v) }
+func (c aylisPanel) Stroke() aylis.Color { return aylis.ColorFromJSON(c.Get("stroke")) }
+func (c aylisPanel) SetStroke(v aylis.Color) { c.Set("stroke", v.JSON()) }
 
 func (c aylisPanel) StrokeWidth() float64 { return asNumber(c.Get("stroke_width")) }
 func (c aylisPanel) SetStrokeWidth(v float64) { c.Set("stroke_width", v) }
 
-func (c aylisPanel) Radius() string { return asText(c.Get("radius")) }
-func (c aylisPanel) SetRadius(v string) { c.Set("radius", v) }
+func (c aylisPanel) Radius() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("radius")) }
+func (c aylisPanel) SetRadius(v aylis.Bounds) { c.Set("radius", v.JSON()) }
 
 func (c aylisPanel) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisPanel) SetLeft(v float64) { c.Set("left", v) }
@@ -59,17 +59,17 @@ func (c aylisPanel) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisPanel) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisPanel) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisPanel) Align() string { return asText(c.Get("align")) }
-func (c aylisPanel) SetAlign(v string) { c.Set("align", v) }
+func (c aylisPanel) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisPanel) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisPanel) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisPanel) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisPanel) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisPanel) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisPanel) Margins() string { return asText(c.Get("margins")) }
-func (c aylisPanel) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisPanel) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisPanel) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisPanel) Padding() string { return asText(c.Get("padding")) }
-func (c aylisPanel) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisPanel) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisPanel) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisPanel) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisPanel) SetVisible(v bool) { c.Set("visible", v) }
@@ -92,6 +92,9 @@ func (c aylisPanel) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisPanel) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisPanel) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisPanel) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisPanel) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisPanel) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisPanel) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -107,8 +110,8 @@ func (c aylisPanel) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisPanel) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisPanel) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisPanel) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisPanel) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisPanel) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisPanel) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisPanel) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisPanel) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -116,17 +119,23 @@ func (c aylisPanel) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisPanel) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisPanel) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisPanel) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisPanel) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisPanel) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisPanel) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisPanel) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisPanel) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisPanel) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisPanel) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisPanel) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisPanel) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisPanel) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisPanel) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisPanel) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisPanel) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisPanel) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisPanel) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -149,8 +158,8 @@ func (c aylisPanel) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisPanel) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisPanel) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisPanel) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisPanel) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisPanel) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisPanel) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisPanel) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisPanel) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -170,32 +179,32 @@ func (c aylisPanel) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisPanel) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisPanel) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisPanel) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisPanel) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisPanel) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisPanel) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisPanel) Style() string { return asText(c.Get("style")) }
-func (c aylisPanel) SetStyle(v string) { c.Set("style", v) }
+func (c aylisPanel) Style() PanelStyle { return PanelStyle(asText(c.Get("style"))) }
+func (c aylisPanel) SetStyle(v PanelStyle) { c.Set("style", string(v)) }
 
-func (c aylisPanel) Theme() string { return asText(c.Get("theme")) }
-func (c aylisPanel) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisPanel) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisPanel) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisPanel) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisPanel) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisPanel) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisPanel) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisPanel) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisPanel) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisPanel) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisPanel) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisPanel) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisPanel) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisPanel) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisPanel) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisPanel) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisPanel) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisPanel) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisPanel) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisPanel) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisPanel) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisPanel) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisPanel) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisPanel) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisPanel) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisPanel) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisPanel) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisPanel) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisPanel) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -203,8 +212,8 @@ func (c aylisPanel) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisPanel) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisPanel) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisPanel) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisPanel) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisPanel) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisPanel) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisPanel) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisPanel) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -227,5 +236,62 @@ func (c aylisPanel) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisPanel) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisPanel) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisPanel) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisPanel) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisPanel) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisPanel) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisPanel) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisPanel) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisPanel) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisPanel) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisPanel) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisPanel) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisPanel) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisPanel) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisPanel) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisPanel) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisPanel) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisPanel) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisPanel) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisPanel) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisPanel) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisPanel) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisPanel) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisPanel) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisPanel) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisPanel) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisPanel) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisPanel) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisPanel) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisPanel) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisPanel) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisPanel) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisPanel) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisPanel) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisPanel) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisPanel) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisPanel) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisPanel) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisPanel) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisPanel) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisPanel) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisPanel) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisPanel) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisPanel) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }

@@ -19,8 +19,8 @@ Progresso, selo e botões no ícone do app na barra de tarefas.
 |---|---|---|---|
 | `progress` | Progresso | um de: `none`, `normal`, `paused`, `error`, `indeterminate` | A barra de progresso no botão: `none` (sem barra), `normal` (verde), `paused` (amarela), `error` (vermelha) ou `indeterminate` (anda sozinha, sem valor). |
 | `value` | Valor | número | 0 a 100. |
-| `buttons` | Botões | texto | Botões da miniatura (até 7): `icone.png\|Dica` separados por `;`. |
-| `tasks` | Tarefas | texto | Tarefas do clique direito: `Nome\|argumentos` separados por `;`. Abrem o próprio app com os argumentos (veja `std::env::args`). |
+| `buttons` | Botões | lista de `ThumbButton` | Botões da miniatura (até 7), em JSON: `[{"icon": "play.png", "hint": "Tocar"}]`. |
+| `tasks` | Tarefas | lista de `JumpTask` | Tarefas do clique direito, em JSON: `[{"name": "Nova janela", "arguments": "--new"}]`. Abrem o próprio app com os argumentos (veja `std::env::args`). |
 
 ## Eventos
 

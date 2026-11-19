@@ -42,7 +42,7 @@ fn go(ui: &mut Ui, cds: ComponentId, name: &str) {
 #[test]
 fn named_indexes_switch_the_order_by_name() {
     let (mut ui, cds) = setup();
-    ui.set_prop(cds, "indexes", "porNome=nome|porLimite=limite desc|porCidade=cidade;nome").unwrap();
+    ui.set_prop(cds, "indexes", r#"[{"name": "porNome", "fields": "nome"}, {"name": "porLimite", "fields": "limite desc"}, {"name": "porCidade", "fields": "cidade;nome"}]"#).unwrap();
     assert_eq!(ui.get::<ClientDataSet>(cds).unwrap().index_names(), ["porNome", "porLimite", "porCidade"]);
     data_set(&mut ui, cds).set_index_name("porLimite").unwrap();
     assert_eq!(names(&mut ui, cds), ["Duda", "Ana", "Caio", "Bia"]);
@@ -82,7 +82,7 @@ fn the_filter_takes_parameters() {
 
     // Pela propriedade `params` (texto; número vira número).
     let (mut ui, cds) = setup();
-    ui.set_prop(cds, "params", "cidade=São Paulo;minimo=1000").unwrap();
+    ui.set_prop(cds, "params", r#"[{"name": "cidade", "value": "São Paulo"}, {"name": "minimo", "value": "1000"}]"#).unwrap();
     ui.set_prop(cds, "filter", "cidade = :cidade and limite > :minimo").unwrap();
     ui.set_prop(cds, "filtered", true).unwrap();
     ui.process_posted();

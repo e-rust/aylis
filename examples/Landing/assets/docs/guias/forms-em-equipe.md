@@ -8,7 +8,8 @@ sempre no mesmo formato, para que a diferença entre duas versões mostre só o 
 - uma chave por linha, dois espaços por nível;
 - a ordem é fixa: `class`, `name`, as propriedades na ordem da classe, `bindings`, `views` e
   `children` por último;
-- listas curtas numa linha só (`"margins": [8, 4, 8, 8]`, `"columns": ["nome", "saldo"]`);
+- listas curtas numa linha só (`"margins": [8, 4, 8, 8]`); uma lista de objetos (as colunas
+  do `DataGrid`) abre um objeto por bloco, como os `children`;
 - só o que é diferente do padrão da classe é gravado.
 
 Por isso:

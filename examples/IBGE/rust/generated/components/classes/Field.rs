@@ -11,6 +11,13 @@ impl Handle for Field {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Field`): só um Field.
+impl aylis::prelude::FromSender for Field {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Field")).then_some(Self { id })
+    }
+}
+
 impl Field {
     pub fn field_name(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "field_name"))
@@ -18,11 +25,11 @@ impl Field {
     pub fn set_field_name(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "field_name", Into::<String>::into(value))
     }
-    pub fn r#type(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "type"))
+    pub fn r#type(self, ui: &Ui) -> aylis::prelude::FieldType {
+        handles::read_enum::<aylis::prelude::FieldType>(ui, self.id, "type")
     }
-    pub fn set_type(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "type", Into::<String>::into(value))
+    pub fn set_type(self, ui: &mut Ui, value: aylis::prelude::FieldType) {
+        handles::write(ui, self.id, "type", PropValue::enum_value(value))
     }
     pub fn size(self, ui: &Ui) -> i64 {
         handles::read(ui, self.id, "size").and_then(|v| v.to_i64().ok()).unwrap_or_default()
@@ -36,11 +43,11 @@ impl Field {
     pub fn set_scale(self, ui: &mut Ui, value: i64) {
         handles::write(ui, self.id, "scale", value)
     }
-    pub fn rounding(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "rounding"))
+    pub fn rounding(self, ui: &Ui) -> aylis::prelude::Rounding {
+        handles::read_enum::<aylis::prelude::Rounding>(ui, self.id, "rounding")
     }
-    pub fn set_rounding(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "rounding", Into::<String>::into(value))
+    pub fn set_rounding(self, ui: &mut Ui, value: aylis::prelude::Rounding) {
+        handles::write(ui, self.id, "rounding", PropValue::enum_value(value))
     }
     pub fn display_label(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "display_label"))
@@ -66,11 +73,11 @@ impl Field {
     pub fn set_edit_format(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "edit_format", Into::<String>::into(value))
     }
-    pub fn alignment(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "alignment"))
+    pub fn alignment(self, ui: &Ui) -> aylis::prelude::TextAlign {
+        handles::read_enum::<aylis::prelude::TextAlign>(ui, self.id, "alignment")
     }
-    pub fn set_alignment(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "alignment", Into::<String>::into(value))
+    pub fn set_alignment(self, ui: &mut Ui, value: aylis::prelude::TextAlign) {
+        handles::write(ui, self.id, "alignment", PropValue::enum_value(value))
     }
     pub fn required(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "required").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -114,11 +121,11 @@ impl Field {
     pub fn set_display_values(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "display_values", Into::<String>::into(value))
     }
-    pub fn char_case(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "char_case"))
+    pub fn char_case(self, ui: &Ui) -> aylis::prelude::CharCase {
+        handles::read_enum::<aylis::prelude::CharCase>(ui, self.id, "char_case")
     }
-    pub fn set_char_case(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "char_case", Into::<String>::into(value))
+    pub fn set_char_case(self, ui: &mut Ui, value: aylis::prelude::CharCase) {
+        handles::write(ui, self.id, "char_case", PropValue::enum_value(value))
     }
     pub fn edit_mask(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "edit_mask"))
@@ -132,11 +139,11 @@ impl Field {
     pub fn set_sensitive(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "sensitive", value)
     }
-    pub fn kind(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "kind"))
+    pub fn kind(self, ui: &Ui) -> aylis::prelude::FieldKind {
+        handles::read_enum::<aylis::prelude::FieldKind>(ui, self.id, "kind")
     }
-    pub fn set_kind(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "kind", Into::<String>::into(value))
+    pub fn set_kind(self, ui: &mut Ui, value: aylis::prelude::FieldKind) {
+        handles::write(ui, self.id, "kind", PropValue::enum_value(value))
     }
     pub fn expression(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "expression"))
@@ -144,11 +151,11 @@ impl Field {
     pub fn set_expression(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "expression", Into::<String>::into(value))
     }
-    pub fn lookup_data_set(self, ui: &Ui) -> String {
-        handles::text(ui, handles::read(ui, self.id, "lookup_data_set"))
+    pub fn lookup_data_set(self, ui: &Ui) -> Option<ComponentId> {
+        handles::read_ref(ui, self.id, "lookup_data_set")
     }
-    pub fn set_lookup_data_set(self, ui: &mut Ui, value: impl Into<String>) {
-        handles::write(ui, self.id, "lookup_data_set", Into::<String>::into(value))
+    pub fn set_lookup_data_set(self, ui: &mut Ui, value: impl Into<handles::Ref>) {
+        handles::write(ui, self.id, "lookup_data_set", Into::<handles::Ref>::into(value))
     }
     pub fn key_fields(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "key_fields"))
@@ -167,5 +174,23 @@ impl Field {
     }
     pub fn set_lookup_result_field(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "lookup_result_field", Into::<String>::into(value))
+    }
+    pub fn on_change(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_change"))
+    }
+    pub fn set_on_change(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_change", Into::<String>::into(value))
+    }
+    pub fn on_get_text(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_get_text"))
+    }
+    pub fn set_on_get_text(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_get_text", Into::<String>::into(value))
+    }
+    pub fn on_set_text(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_set_text"))
+    }
+    pub fn set_on_set_text(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_set_text", Into::<String>::into(value))
     }
 }

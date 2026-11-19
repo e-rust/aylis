@@ -52,14 +52,15 @@ impl FrmPrincipal {
         LADOS[(self.segNivel.item_index(ui).max(0) as usize).min(LADOS.len() - 1)]
     }
 
-    pub fn nivel_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let lado = self.lado_atual(ui);
+    /// A opção escolhida (`value`, o índice) diz o lado da grade.
+    pub fn nivel_change(&mut self, ui: &mut Ui, _sender: crate::generated::SegmentedControl, value: i64) {
+        let lado = LADOS[(value.max(0) as usize).min(LADOS.len() - 1)];
         self.montar(ui, lado);
     }
 
     /// Na primeira volta liga o lingote do form; depois acompanha o tamanho da tela (girar o
     /// celular muda a altura das linhas).
-    pub fn ajuste_timer(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn ajuste_timer(&mut self, ui: &mut Ui, _sender: crate::generated::Timer) {
         let lado = self.lado_atual(ui);
         for id in ui.children(self.grdLingotes.id).to_vec() {
             ligar(ui, id);

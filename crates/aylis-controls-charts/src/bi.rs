@@ -12,6 +12,7 @@ use aylis_core::{
 };
 
 use crate::leaf_control;
+use crate::records::RecordCache;
 
 /// Número com separador de milhar e decimais do idioma (`1.234.567,89`).
 pub fn format_number(v: f64, decimals: usize, locale: &LocaleInfo) -> String {
@@ -348,7 +349,7 @@ impl Component for PivotTable {
         aggregate: Aggregate => "Data",
         decimals: u32 => "Appearance",
         totals: bool => "Appearance";
-        events: on_cell_click;
+        events: on_cell_click: String;
         on_set: sync
     }
 
@@ -523,7 +524,7 @@ impl Component for Slicer {
         items: String => "Data",
         selected: String => "Data",
         multi: bool => "Behavior";
-        events: on_change
+        events: on_change: String
     }
 
     fn pointer_down(&mut self, _ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -632,17 +633,32 @@ fn parse_geojson(text: &str, name_property: &str) -> Vec<Region> {
     out
 }
 
+/// O registro do valor de uma região (o `values` do [`ChoroplethMap`]).
+pub const REGION_VALUE: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "RegionValue", fields: &[("region", aylis_core::PropKind::String), ("value", aylis_core::PropKind::Float)] };
+
+/// O valor de uma região do mapa coroplético, pelo nome dela no GeoJSON.
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct RegionValue {
+    pub region: String,
+    pub value: f64,
+}
+
 /// Mapa coroplético: as regiões de um GeoJSON (`geojson`: o texto ou um arquivo/asset)
-/// pintadas pela escala de cor do valor (`values` = `"SP=10;RJ=5"`, pelo nome em
-/// `name_property`). Passar o mouse mostra a região e o valor; clique: `on_region_click`.
+/// pintadas pela escala de cor do valor (`values` = `[{"region": "SP", "value": 10}]`, pelo
+/// nome em `name_property`). Passar o mouse mostra a região e o valor; clique:
+/// `on_region_click`.
 pub struct ChoroplethMap {
     pub base: ControlBase,
     /// As regiões em GeoJSON: o texto ou o caminho de um arquivo/asset.
     pub geojson: String,
     /// A propriedade do GeoJSON com o nome de cada região (sem ela, a `name`).
     pub name_property: String,
-    /// O valor de cada região pelo nome: `"SP=10;RJ=5"`.
+    /// O valor de cada região pelo nome, em JSON ([`REGION_VALUE`]): `[{"region": "SP",
+    /// "value": 10}, {"region": "RJ", "value": 5}]`.
     pub values: String,
+    values_read: RecordCache<RegionValue>,
     /// A cor do menor valor; vazio: a cor primária do tema, clara.
     pub low_color: Option<Color>,
     /// A cor do maior valor; vazio: a cor primária do tema.
@@ -669,7 +685,8 @@ impl Default for ChoroplethMap {
                 {"type":"Feature","properties":{"name":"C"},"geometry":{"type":"Polygon","coordinates":[[[0,10],[20,10],[20,18],[0,18],[0,10]]]}}]}"#
                 .into(),
             name_property: "name".into(),
-            values: "A=10;B=40;C=25".into(),
+            values: r#"[{"region":"A","value":10},{"region":"B","value":40},{"region":"C","value":25}]"#.into(),
+            values_read: RecordCache::default(),
             low_color: None,
             high_color: None,
             decimals: 0,
@@ -683,13 +700,7 @@ impl Default for ChoroplethMap {
 
 impl ChoroplethMap {
     fn value_map(&self) -> BTreeMap<String, f64> {
-        self.values
-            .split(';')
-            .filter_map(|p| {
-                let (k, v) = p.split_once('=')?;
-                Some((k.trim().to_lowercase(), v.trim().replace(',', ".").parse().ok()?))
-            })
-            .collect()
+        self.values_read.get(&self.values).iter().map(|r| (r.region.trim().to_lowercase(), r.value)).collect()
     }
 
     /// As regiões (lidas uma vez por `geojson`).
@@ -719,11 +730,11 @@ impl Component for ChoroplethMap {
     properties! {
         geojson: String => "Data",
         name_property: String => "Data",
-        values: String => "Data",
+        values: String as RecordList(&REGION_VALUE) => "Data",
         low_color: Option<Color> => "Appearance",
         high_color: Option<Color> => "Appearance",
         decimals: u32 => "Appearance";
-        events: on_region_click
+        events: on_region_click: String
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

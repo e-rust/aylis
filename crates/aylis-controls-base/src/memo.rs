@@ -1534,7 +1534,7 @@ impl Component for Memo {
         caret_width: f32 => "Caret",
         caret_style: crate::CaretStyle => "Caret",
         caret_blink: u32 as Duration => "Caret";
-        events: on_change, on_caret_move, on_gutter_click, on_bookmarks_change, on_paste;
+        events: on_change: String, on_caret_move: (), on_gutter_click: i64, on_bookmarks_change: (), on_paste: String;
         computed: sel_start: usize => sel_start / set_sel_start,
             sel_length: usize => sel_length / set_sel_length,
             sel_text: String => sel_text / set_sel_text,

@@ -227,7 +227,7 @@ fn master_detail(items: &[i64]) -> (Ui, ComponentId, ComponentId) {
     ui.add(Field::new("produto", FieldType::String), lines);
     ui.add(Field::new("valor", FieldType::Integer), lines);
     ui.set_prop(lines, "master_source", PropValue::Component(Some(orders_ds))).unwrap();
-    ui.set_prop(lines, "master_fields", "pedido=numero").unwrap();
+    ui.set_prop(lines, "master_fields", r#"[{"field": "pedido", "master_field": "numero"}]"#).unwrap();
     let lines_ds = ui.add(DataSource::new(lines), form);
     let mut rows = Vec::new();
     for (o, &n) in items.iter().enumerate() {

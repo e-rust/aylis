@@ -33,7 +33,7 @@ fn setup() -> (Ui, ComponentId, ComponentId, Rc<RefCell<Vec<String>>>) {
     aylis_controls::register(&mut ui);
     let form = ui.add_root(Form::new("Teste", 900.0, 300.0));
     let id = ui.create("TabStrip", Some(form)).unwrap();
-    ui.set_prop(id, "tabs", "Início|home;Relatório;Notas").unwrap();
+    ui.set_prop(id, "tabs", r#"[{"title": "Início", "icon": "home"}, {"title": "Relatório"}, {"title": "Notas"}]"#).unwrap();
     ui.control_mut(id).unwrap().set_align(Align::Top).set_height(40.0);
     let log = Rc::new(RefCell::new(Vec::new()));
     for event in ["on_change", "on_close", "on_add", "on_reorder"] {
@@ -56,13 +56,13 @@ fn strip(ui: &Ui, id: ComponentId) -> &TabStrip {
 #[test]
 fn tabs_from_text_and_api() {
     let mut t = TabStrip::new();
-    t.set_tabs_text("A|home;B;C".into());
+    t.set_tabs_text(r#"[{"title": "A", "icon": "home"}, {"title": "B"}, {"title": "C"}]"#.into());
     assert_eq!(t.tabs().len(), 3);
     assert_eq!(t.tabs()[0].icon, "home");
-    assert_eq!(t.tabs_text(), "A|home;B;C");
+    assert_eq!(t.tabs_text(), r#"[{"title":"A","icon":"home"},{"title":"B"},{"title":"C"}]"#);
     t.tab_index = 2;
     t.move_tab(2, 0);
-    assert_eq!(t.tabs_text(), "C;A|home;B");
+    assert_eq!(t.tabs_text(), r#"[{"title":"C"},{"title":"A","icon":"home"},{"title":"B"}]"#);
     assert_eq!(t.tab_index, 0, "a ativa acompanha");
     t.remove(0);
     assert_eq!(t.tab_index, 0);
@@ -96,7 +96,7 @@ fn dragging_reorders() {
     ui.pointer_up(form, at(300.0, 22.0, PointerButton::Primary));
     assert_eq!(strip(&ui, id).tabs()[1].title, "Início");
     assert_eq!(strip(&ui, id).tab_index, 1);
-    assert!(log.borrow().iter().any(|l| l.contains("on_reorder") && l.contains("0,1")), "{:?}", log.borrow());
+    assert!(log.borrow().iter().any(|l| l.contains("on_reorder") && l.contains(&format!("{:?}", r#"{"from":0,"to":1}"#))), "{:?}", log.borrow());
 }
 
 /// Guarda onde cada título foi desenhado (para ver a aba andando).
@@ -187,7 +187,7 @@ fn closing_keeps_the_widths_until_the_mouse_leaves() {
     let form = ui.add_root(Form::new("Teste", 900.0, 300.0));
     let id = ui.create("TabStrip", Some(form)).unwrap();
     // Cinco abas numa faixa de 900: 160 cada (sem caber as 240 da largura máxima).
-    ui.set_prop(id, "tabs", "A;B;C;D;E").unwrap();
+    ui.set_prop(id, "tabs", r#"[{"title": "A"}, {"title": "B"}, {"title": "C"}, {"title": "D"}, {"title": "E"}]"#).unwrap();
     ui.control_mut(id).unwrap().set_align(Align::Top).set_height(40.0);
     let content = ui.add(Panel::default(), form);
     ui.control_mut(content).unwrap().set_align(Align::Client);

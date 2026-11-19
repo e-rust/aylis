@@ -25,9 +25,9 @@ Lista de opções: `items` separados por `;`, `item_index` escolhido. Setas, Hom
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os itens, separados por `;`. |
+| `items` | Itens | lista de textos (separados por `;`) | Os itens, separados por `;`. |
 | `item_index` | Item escolhido | inteiro | O item escolhido (o atual, com `multi_select`), a partir de 0; -1: nenhum. |
-| `selected` | Escolhidos | texto | Os índices escolhidos com `multi_select`, separados por `;` (`"1;4;5"`); vazio: nenhum. |
+| `selected` | Escolhidos | lista de números (separados por `;`) | Os índices escolhidos com `multi_select`, separados por `;` (`"1;4;5"`); vazio: nenhum. |
 
 ## Eventos
 
@@ -48,8 +48,8 @@ E o handler, um método do form (`self.ListBox1` já é um `ListBox`):
 ```rust
 impl FrmPrincipal {
     pub fn list_box1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.ListBox1.items(ui);
-        self.ListBox1.set_items(ui, format!("{atual}!"));
+        let atual = self.ListBox1.item_index(ui);
+        self.ListBox1.set_item_index(ui, atual + 1);
     }
 }
 ```

@@ -47,7 +47,7 @@ public static class FrmIBGE
     /// <summary>O caminho de uma imagem da pasta dos dados (vazio: não tem).</summary>
     static string Imagem(string caminho) => caminho == "" ? "" : Dados + caminho;
 
-    public static void form_show(Aylis aylis, AylisEvent ev)
+    public static void form_show(Aylis aylis, AylisUi.Form sender)
     {
         var estados = Ler("estados.json");
         if (estados == null)
@@ -62,11 +62,11 @@ public static class FrmIBGE
         Carregar(aylis, frmIBGE.cdsDistritos, Ler("distritos.json"));
         Carregar(aylis, frmIBGE.cdsMunicipios, municipios);
         Carregar(aylis, frmIBGE.cdsEstados, estados);
-        estado_mudou(aylis, ev);
+        estado_mudou(aylis, frmIBGE.cdsEstados);
     }
 
     /// <summary>Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios.</summary>
-    public static void estado_mudou(Aylis aylis, AylisEvent ev)
+    public static void estado_mudou(Aylis aylis, AylisUi.ClientDataSet sender)
     {
         var e = Registro(aylis, frmIBGE.cdsEstados);
         if (e["id"] == null) return;
@@ -75,7 +75,7 @@ public static class FrmIBGE
         frmIBGE.lblRegiao.Text = $"{Texto(e["sigla"])} · Região {Texto(e["regiao"])}";
         frmIBGE.imgBandeiraEstado.ImageValue = Imagem(Texto(e["bandeira"]));
         frmIBGE.lblEstadoEstimativa.Text = $"Estimativa de {Texto(e["estimativa_ano"])}";
-        frmIBGE.svgBrasil.Highlight = $"e{uf}";
+        frmIBGE.svgBrasil.Highlight = [$"e{uf}"];
         var mapa = $"{Dados}mapas/{uf}.svg";
         frmIBGE.svgEstado.Source = mapa;
         frmIBGE.svgMunicipio.Source = mapa;
@@ -88,11 +88,11 @@ public static class FrmIBGE
             .Take(10)
             .Select(m => (JsonNode)new JsonObject { ["nome"] = m.Nome, ["habitantes"] = m.Habitantes });
         Carregar(aylis, frmIBGE.cdsMaiores, new JsonArray(maiores.ToArray()));
-        municipio_mudou(aylis, ev);
+        municipio_mudou(aylis, frmIBGE.cdsMunicipios);
     }
 
     /// <summary>Outro município: a bandeira, o destaque nos mapas e a população ano a ano.</summary>
-    public static void municipio_mudou(Aylis aylis, AylisEvent ev)
+    public static void municipio_mudou(Aylis aylis, AylisUi.ClientDataSet sender)
     {
         var m = Registro(aylis, frmIBGE.cdsMunicipios);
         if (m["id"] == null) return;
@@ -104,8 +104,8 @@ public static class FrmIBGE
         frmIBGE.lblSemBandeira.Visible = bandeira == "";
         frmIBGE.lblEstimativa.Text = $"Estimativa de {Texto(m["estimativa_ano"])}";
         var alvo = $"m{codigo}";
-        frmIBGE.svgEstado.Highlight = alvo;
-        frmIBGE.svgMunicipio.Highlight = alvo;
+        frmIBGE.svgEstado.Highlight = [alvo];
+        frmIBGE.svgMunicipio.Highlight = [alvo];
         frmIBGE.svgMunicipio.ZoomTo = alvo;
 
         var linhas = new JsonArray();

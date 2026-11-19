@@ -1602,10 +1602,10 @@ impl Component for RichEditor {
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         html: String => "Data",
-        toolbar: String => "Appearance",
+        toolbar: String as List => "Appearance",
         placeholder: String => "Appearance",
         read_only: bool => "Behavior";
-        events: on_change;
+        events: on_change: String;
         on_set: after_set
     }
 

@@ -17,8 +17,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -114,6 +116,296 @@ func (c Component) Set(prop string, value any) {
 
 // Focus põe o foco no componente.
 func (c Component) Focus() { c.App.Send("focus", M{"target": c.ID}) }
+
+// GetRef lê a referência a outro componente (PopupMenu, DataSource); nil se não há.
+func (c Component) GetRef(prop string) *Component {
+	v, err := c.App.Call("get", M{"target": c.ID, "prop": prop, "ref": true})
+	if err != nil {
+		Log("ler", c.Name+"."+prop+":", err)
+	}
+	return c.ComponentOf(v)
+}
+
+// SetRef grava a referência a outro componente (nil: nenhum).
+func (c Component) SetRef(prop string, ref Ref) {
+	if ref == nil {
+		c.Set(prop, nil)
+		return
+	}
+	c.Set(prop, ref.ComponentID())
+}
+
+// ComponentOf é o componente que a tela devolveu com "ref": true (o id e o nome); nil se não há.
+func (c Component) ComponentOf(info any) *Component {
+	m, ok := info.(map[string]any)
+	if !ok {
+		return nil
+	}
+	name, _ := m["name"].(string)
+	return &Component{App: c.App, ID: int64(number(m["id"])), Name: name}
+}
+
+func number(v any) float64 {
+	switch n := v.(type) {
+	case float64:
+		return n
+	case int:
+		return float64(n)
+	case int64:
+		return float64(n)
+	case json.Number:
+		f, _ := n.Float64()
+		return f
+	}
+	return 0
+}
+
+// Color é uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema (ColorToken("primary")),
+// que acompanha a troca de tema.
+type Color struct {
+	R, G, B, A uint8
+	Token      string
+}
+
+// RGB é a cor opaca.
+func RGB(r, g, b uint8) Color { return Color{R: r, G: g, B: b, A: 255} }
+
+// RGBA é a cor com a opacidade.
+func RGBA(r, g, b, a uint8) Color { return Color{R: r, G: g, B: b, A: a} }
+
+// ColorToken é um nome de cor do tema ou do projeto.
+func ColorToken(name string) Color { return Color{A: 255, Token: strings.TrimSpace(name)} }
+
+// ColorHex lê "#RRGGBB", "#RRGGBBAA" ou "#RGB".
+func ColorHex(text string) (Color, error) {
+	h := strings.TrimPrefix(strings.TrimSpace(text), "#")
+	if len(h) == 3 {
+		h = string([]byte{h[0], h[0], h[1], h[1], h[2], h[2]})
+	}
+	var c Color
+	c.A = 255
+	switch len(h) {
+	case 6:
+		if _, err := fmt.Sscanf(h, "%02x%02x%02x", &c.R, &c.G, &c.B); err != nil {
+			return Color{}, fmt.Errorf("cor inválida: %s (use #RRGGBB ou #RRGGBBAA)", text)
+		}
+	case 8:
+		if _, err := fmt.Sscanf(h, "%02x%02x%02x%02x", &c.R, &c.G, &c.B, &c.A); err != nil {
+			return Color{}, fmt.Errorf("cor inválida: %s (use #RRGGBB ou #RRGGBBAA)", text)
+		}
+	default:
+		return Color{}, fmt.Errorf("cor inválida: %s (use #RRGGBB ou #RRGGBBAA)", text)
+	}
+	return c, nil
+}
+
+// ColorFromJSON é a cor que a tela devolveu ("#RRGGBB[AA]" ou um nome).
+func ColorFromJSON(v any) Color {
+	s, _ := v.(string)
+	if s == "" {
+		return Color{}
+	}
+	if !strings.HasPrefix(s, "#") {
+		return ColorToken(s)
+	}
+	c, _ := ColorHex(s)
+	return c
+}
+
+// JSON é a cor como a tela entende.
+func (c Color) JSON() string {
+	if c.Token != "" {
+		return c.Token
+	}
+	if c.A == 255 {
+		return fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B)
+	}
+	return fmt.Sprintf("#%02X%02X%02X%02X", c.R, c.G, c.B, c.A)
+}
+
+// Bounds são margens (margins, padding): esquerda, cima, direita e baixo.
+type Bounds struct {
+	Left, Top, Right, Bottom float64
+}
+
+// BoundsAll é a mesma medida nos quatro lados.
+func BoundsAll(v float64) Bounds { return Bounds{v, v, v, v} }
+
+// BoundsSymmetric é a medida na horizontal e na vertical.
+func BoundsSymmetric(horizontal, vertical float64) Bounds {
+	return Bounds{horizontal, vertical, horizontal, vertical}
+}
+
+// BoundsFromJSON lê o valor da tela: um número, [h, v], [l, t, r, b] ou um objeto.
+func BoundsFromJSON(v any) Bounds {
+	switch x := v.(type) {
+	case []any:
+		if len(x) == 2 {
+			return BoundsSymmetric(number(x[0]), number(x[1]))
+		}
+		if len(x) == 4 {
+			return Bounds{number(x[0]), number(x[1]), number(x[2]), number(x[3])}
+		}
+	case map[string]any:
+		return Bounds{number(x["left"]), number(x["top"]), number(x["right"]), number(x["bottom"])}
+	case nil:
+		return Bounds{}
+	default:
+		return BoundsAll(number(x))
+	}
+	return Bounds{}
+}
+
+// JSON são as margens como a tela entende.
+func (b Bounds) JSON() []float64 { return []float64{b.Left, b.Top, b.Right, b.Bottom} }
+
+func num(v float64) string { return strconv.FormatFloat(math.Round(v*1000)/1000, 'g', -1, 64) }
+
+// Shadow é uma sombra: o deslocamento (Dx, Dy), o desfoque, o espalhamento e a cor. nil no acesso
+// tipado é sem sombra.
+type Shadow struct {
+	Dx, Dy, Blur, Spread float64
+	Color                Color
+}
+
+// ShadowFromJSON lê "dx dy desfoque [espalhamento] [#cor]" (vazio ou inválido: nil; sem cor,
+// preto a 25%).
+func ShadowFromJSON(v any) *Shadow {
+	s, _ := v.(string)
+	var numbers []float64
+	color := RGBA(0, 0, 0, 64)
+	hasColor := false
+	for _, token := range strings.Fields(strings.ReplaceAll(s, ",", " ")) {
+		if f, err := strconv.ParseFloat(strings.TrimSuffix(token, "px"), 64); err == nil {
+			numbers = append(numbers, f)
+		} else if c, err := ColorHex(token); err == nil && !hasColor {
+			color, hasColor = c, true
+		} else {
+			return nil
+		}
+	}
+	if len(numbers) < 2 || len(numbers) > 4 {
+		return nil
+	}
+	sh := &Shadow{Dx: numbers[0], Dy: numbers[1], Color: color}
+	if len(numbers) > 2 {
+		sh.Blur = numbers[2]
+	}
+	if len(numbers) > 3 {
+		sh.Spread = numbers[3]
+	}
+	return sh
+}
+
+// JSON é a sombra como a tela entende ("" sem sombra).
+func (s *Shadow) JSON() string {
+	if s == nil {
+		return ""
+	}
+	text := num(s.Dx) + " " + num(s.Dy) + " " + num(s.Blur)
+	if s.Spread != 0 {
+		text += " " + num(s.Spread)
+	}
+	return text + " " + s.Color.JSON()
+}
+
+// Easing é uma curva de suavização: uma das prontas (EasingOutQuad) ou a Bézier cúbica
+// (EasingCubicBezier(0.2, 0, 0, 1)), como o cubic-bezier() do CSS.
+type Easing struct {
+	Name   string
+	Bezier *[4]float64
+}
+
+// As curvas prontas.
+var (
+	EasingLinear     = Easing{Name: "linear"}
+	EasingInQuad     = Easing{Name: "in_quad"}
+	EasingOutQuad    = Easing{Name: "out_quad"}
+	EasingInOutQuad  = Easing{Name: "in_out_quad"}
+	EasingOutCubic   = Easing{Name: "out_cubic"}
+	EasingInOutCubic = Easing{Name: "in_out_cubic"}
+	EasingOutBack    = Easing{Name: "out_back"}
+)
+
+// EasingCubicBezier é a Bézier cúbica com os dois pontos de controle.
+func EasingCubicBezier(x1, y1, x2, y2 float64) Easing { return Easing{Bezier: &[4]float64{x1, y1, x2, y2}} }
+
+// EasingFromJSON lê o nome, um nome do CSS ou "cubic-bezier(x1, y1, x2, y2)".
+func EasingFromJSON(v any) Easing {
+	s, _ := v.(string)
+	text := strings.TrimSpace(s)
+	if strings.HasPrefix(text, "cubic-bezier(") && strings.HasSuffix(text, ")") {
+		parts := strings.Split(text[13:len(text)-1], ",")
+		if len(parts) == 4 {
+			var b [4]float64
+			for i, p := range parts {
+				f, err := strconv.ParseFloat(strings.TrimSpace(p), 64)
+				if err != nil {
+					return EasingLinear
+				}
+				b[i] = f
+			}
+			return Easing{Bezier: &b}
+		}
+		return EasingLinear
+	}
+	switch strings.ToLower(text) {
+	case "ease":
+		return EasingCubicBezier(0.25, 0.1, 0.25, 1)
+	case "ease-in":
+		return EasingCubicBezier(0.42, 0, 1, 1)
+	case "ease-out":
+		return EasingCubicBezier(0, 0, 0.58, 1)
+	case "ease-in-out":
+		return EasingCubicBezier(0.42, 0, 0.58, 1)
+	}
+	plain := strings.ToLower(strings.ReplaceAll(text, "-", "_"))
+	for _, n := range []string{"linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back"} {
+		if n == plain {
+			return Easing{Name: n}
+		}
+	}
+	return EasingLinear
+}
+
+// JSON é a curva como a tela entende.
+func (e Easing) JSON() string {
+	if e.Bezier == nil {
+		return e.Name
+	}
+	b := e.Bezier
+	return "cubic-bezier(" + num(b[0]) + ", " + num(b[1]) + ", " + num(b[2]) + ", " + num(b[3]) + ")"
+}
+
+// Point é um ponto (X, Y).
+type Point struct{ X, Y float64 }
+
+// PointsFromJSON lê "0.5,0 1,1 0,1" (os que não são pontos ficam de fora).
+func PointsFromJSON(v any) []Point {
+	s, _ := v.(string)
+	var out []Point
+	for _, pair := range strings.Fields(s) {
+		xy := strings.Split(pair, ",")
+		if len(xy) != 2 {
+			continue
+		}
+		x, e1 := strconv.ParseFloat(xy[0], 64)
+		y, e2 := strconv.ParseFloat(xy[1], 64)
+		if e1 == nil && e2 == nil {
+			out = append(out, Point{x, y})
+		}
+	}
+	return out
+}
+
+// PointsJSON são os pontos como a tela entende.
+func PointsJSON(points []Point) string {
+	out := make([]string, len(points))
+	for i, p := range points {
+		out[i] = num(p.X) + "," + num(p.Y)
+	}
+	return strings.Join(out, " ")
+}
 
 // Form é a base dos forms: cada form aberto na tela tem a sua
 // instância (duas janelas do mesmo form, duas instâncias), com os componentes resolvidos ao

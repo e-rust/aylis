@@ -14,7 +14,7 @@ Microfone com medidor de nível (a barra acende com o som). `active` liga; `Micr
 |---|---|---|---|
 | `device` | Dispositivo | texto | O dispositivo (vazio: o padrão do sistema); `capture::input_devices()` lista. |
 | `active` | Ativo | lógico | Liga o microfone (a barra mostra o nível do som); desligado, ele fecha. |
-| `monitor` | Retorno | texto | Manda a entrada para uma ou mais saídas (o formato do `output` dos players, com volume e atraso por saída); vazio: não manda. |
+| `monitor` | Retorno | lista de `OutputSpec` | Manda a entrada para uma ou mais saídas (o formato do `output` dos players, com volume e atraso por saída); vazio: não manda. |
 
 ## Eventos
 

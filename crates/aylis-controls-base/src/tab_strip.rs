@@ -47,6 +47,25 @@ const TAB_DRAG: &str = "aylis-tab:";
 const PREVIEW_WIDTH: f32 = 300.0;
 const PREVIEW_HEAD: f32 = 34.0;
 
+/// Uma aba da propriedade `tabs` (no JSON).
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+struct TabItem {
+    title: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    icon: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    hint: String,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    modified: bool,
+}
+
+/// O registro das abas do `TabStrip.tabs`.
+pub const TAB_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TabItem",
+    fields: &[("title", aylis_core::PropKind::String), ("icon", aylis_core::PropKind::String), ("hint", aylis_core::PropKind::String), ("modified", aylis_core::PropKind::Bool)],
+};
+
 /// Uma aba.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Tab {
@@ -60,6 +79,35 @@ pub struct Tab {
     /// O conteúdo da aba ([`TabStrip::add_page`]): só o da escolhida aparece, e ele vai
     /// junto quando a aba muda de faixa ou de janela.
     pub page: Option<ComponentId>,
+}
+
+/// A aba que mudou de lugar: o `on_reorder` (arrastada na mesma faixa) e o `on_tab_drop`
+/// (chegou de outra faixa) levam de onde veio e para onde foi.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct TabMove {
+    /// O índice que a aba tinha (no `on_tab_drop`, na faixa de origem).
+    pub from: i64,
+    /// O índice dela agora.
+    pub to: i64,
+}
+
+/// O registro do [`TabMove`] no acesso tipado.
+pub const TAB_MOVE: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TabMove",
+    fields: &[("from", aylis_core::PropKind::Int), ("to", aylis_core::PropKind::Int)],
+};
+
+impl aylis_core::EventValue for TabMove {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&TAB_MOVE));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        crate::records::from_event(args)
+    }
+}
+
+/// O JSON do evento de uma aba que mudou de lugar.
+fn tab_move(from: usize, to: usize) -> EventArgs {
+    EventArgs::Text(crate::records::to_json(&TabMove { from: from as i64, to: to as i64 }))
 }
 
 /// A última aba que chegou de outra faixa (`on_tab_drop`): de onde veio e para onde foi.
@@ -307,25 +355,17 @@ impl TabStrip {
         ctx.ui.request_frames(ctx.id);
     }
 
-    /// As abas como texto: `"Título|ícone;Outra"` (o que vai para o layout).
+    /// As abas em JSON (`[{"title": "Início", "icon": "home"}]`): o título, o ícone, a dica e
+    /// se tem alteração não salva.
     pub fn tabs_text(&self) -> String {
-        self.tabs
-            .iter()
-            .map(|t| if t.icon.is_empty() { t.title.replace(';', ",") } else { format!("{}|{}", t.title.replace(';', ","), t.icon) })
-            .collect::<Vec<_>>()
-            .join(";")
+        let items: Vec<TabItem> = self.tabs.iter().map(|t| TabItem { title: t.title.clone(), icon: t.icon.clone(), hint: t.hint.clone(), modified: t.modified }).collect();
+        crate::records::to_json(&items)
     }
 
     pub fn set_tabs_text(&mut self, text: String) {
         self.offsets.clear();
-        self.tabs = text
-            .split(';')
-            .filter(|s| !s.trim().is_empty())
-            .map(|s| {
-                let mut parts = s.splitn(2, '|');
-                Tab { title: parts.next().unwrap_or_default().trim().to_string(), icon: parts.next().unwrap_or_default().trim().to_string(), ..Default::default() }
-            })
-            .collect();
+        let items: Vec<TabItem> = crate::records::parse_list(&text);
+        self.tabs = items.into_iter().map(|i| Tab { title: i.title, icon: i.icon, hint: i.hint, modified: i.modified, ..Default::default() }).collect();
         self.tab_index = self.tab_index.clamp(0, self.tabs.len().saturating_sub(1) as i64);
     }
 
@@ -368,7 +408,7 @@ impl TabStrip {
             let to = if slot > from { slot - 1 } else { slot }.min(self.tabs.len().saturating_sub(1));
             if to != from {
                 self.move_tab(from, to);
-                ctx.fire("on_reorder", EventArgs::Text(format!("{from},{to}")));
+                ctx.fire("on_reorder", tab_move(from, to));
             }
             self.select(ctx, to);
             return;
@@ -400,7 +440,7 @@ impl TabStrip {
         self.tab_index = to as i64;
         show_pages(ctx.ui, &self.pages());
         self.last_drop = Some(TabDrop { source, from, to });
-        ctx.fire("on_tab_drop", EventArgs::Text(format!("{from},{to}")));
+        ctx.fire("on_tab_drop", tab_move(from, to));
         ctx.fire("on_change", EventArgs::Value((to as i64).into()));
         // A janela de onde a aba saiu ficou vazia: fecha (a daqui vira a principal, se era ela).
         let empty_closes = ctx.ui.get::<TabStrip>(source).is_some_and(|s| s.close_empty);
@@ -689,8 +729,8 @@ impl Component for TabStrip {
         drop_group: String => "Behavior",
         page_host: Option<ComponentId> => "Behavior",
         close_empty: bool => "Behavior";
-        events: on_change, on_close, on_add, on_reorder, on_tear_off, on_tab_drop, on_new_window;
-        computed: tabs: String => tabs_text / set_tabs_text
+        events: on_change: i64, on_close: i64, on_add: (), on_reorder: TabMove, on_tear_off: i64, on_tab_drop: TabMove, on_new_window: Option<aylis_core::ComponentId>;
+        computed: tabs: String as RecordList(&TAB_ITEM) => tabs_text / set_tabs_text
     }
 
     fn notification(&mut self, freed: ComponentId) {
@@ -822,7 +862,7 @@ impl Component for TabStrip {
                     if to != from {
                         self.slide_tab(ctx, from, to);
                         self.drag = Some((to, start));
-                        ctx.fire("on_reorder", EventArgs::Text(format!("{from},{to}")));
+                        ctx.fire("on_reorder", tab_move(from, to));
                     }
                 }
                 ctx.repaint();

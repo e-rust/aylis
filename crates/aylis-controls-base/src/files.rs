@@ -132,11 +132,11 @@ impl Component for FileInput {
     leaf_control!("FileInput");
 
     properties! {
-        files: String => "Data",
+        files: String as List => "Data",
         filter: String => "Behavior",
         multiple: bool => "Behavior",
         placeholder: String => "Appearance";
-        events: on_change, on_reject
+        events: on_change: String, on_reject: Vec<String>
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -250,11 +250,11 @@ impl Component for FileDropZone {
     leaf_control!("FileDropZone");
 
     properties! {
-        files: String => "Data",
+        files: String as List => "Data",
         filter: String => "Behavior",
         multiple: bool => "Behavior",
         title: String => "Appearance";
-        events: on_change, on_reject, on_file_enter, on_file_leave
+        events: on_change: String, on_reject: Vec<String>, on_file_enter: String, on_file_leave: ()
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

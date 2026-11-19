@@ -317,21 +317,27 @@ pub struct ClientDataSet {
     /// Ordem dos registros: campos separados por `;`, com `desc` opcional
     /// (`cidade;limite desc`).
     pub index_field_names: String,
-    /// Índices com nome: `porNome=nome|porValor=valor desc;nome`.
+    /// Índices com nome: a lista de [`INDEX_DEF_RECORD`](crate::INDEX_DEF_RECORD) em JSON, cada um
+    /// com a ordem no formato de `index_field_names`
+    /// (`[{"name": "porNome", "fields": "nome"}, {"name": "porValor", "fields": "valor desc;nome"}]`).
     pub indexes: String,
     /// O índice de `indexes` em uso; vale no lugar de
     /// `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome.
     pub index_name: String,
-    /// Valores dos parâmetros do filtro (`:minimo`): `minimo=100;cidade=São Paulo`. Por
-    /// código, [`DataSet::set_param`](crate::DataSet::set_param) aceita qualquer valor.
+    /// Valores dos parâmetros do filtro (`:minimo`): a lista de
+    /// [`FILTER_PARAM_RECORD`](crate::FILTER_PARAM_RECORD) em JSON
+    /// (`[{"name": "minimo", "value": "100"}, {"name": "cidade", "value": "São Paulo"}]`; o
+    /// texto que é número ou lógico vale como tal). Por código,
+    /// [`DataSet::set_param`](crate::DataSet::set_param) aceita qualquer valor.
     pub params: String,
     /// Só os registros nestas situações: `unmodified;modified;inserted` (vazio = todos),
     /// como o `StatusFilter`.
     pub status_filter: String,
     /// Master-detail: o `DataSource` do dataset mestre.
     pub master_source: Option<ComponentId>,
-    /// Master-detail: `campo_daqui=campo_do_mestre` separados por `;` (só o nome se
-    /// forem iguais): `cliente_id=id`.
+    /// Master-detail: a lista de [`MASTER_FIELD_RECORD`](crate::MASTER_FIELD_RECORD) em JSON, o
+    /// campo daqui e o do mestre (sem `master_field`, o mesmo nome):
+    /// `[{"field": "cliente_id", "master_field": "id"}]`.
     pub master_fields: String,
     /// Master-detail: as alterações deste detalhe vão à parte, no `apply_updates` dele.
     /// Desligado (o padrão), vão junto no delta do mestre, na ordem de gravar.
@@ -482,17 +488,16 @@ impl ClientDataSet {
         if self.index_name.trim().is_empty() {
             return Ok(self.index_field_names.clone());
         }
-        self.index_names()
+        crate::records::index_defs(&self.indexes)
             .into_iter()
-            .zip(self.indexes.split('|'))
             .find(|(n, _)| n.eq_ignore_ascii_case(self.index_name.trim()))
-            .map(|(_, def)| def.split_once('=').map_or("", |(_, fields)| fields).trim().to_string())
+            .map(|(_, fields)| fields)
             .ok_or_else(|| format!("índice '{}' não existe em indexes", self.index_name.trim()))
     }
 
     /// Os nomes dos índices de `indexes`.
     pub fn index_names(&self) -> Vec<String> {
-        self.indexes.split('|').filter(|d| !d.trim().is_empty()).map(|d| d.split_once('=').map_or(d, |(n, _)| n).trim().to_string()).collect()
+        crate::records::index_defs(&self.indexes).into_iter().map(|(n, _)| n).collect()
     }
 
     /// O valor de um parâmetro do filtro: o dado por código ou o de `params` (número,
@@ -501,7 +506,7 @@ impl ClientDataSet {
         if let Some((_, v)) = self.param_values.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)) {
             return Some(v.clone());
         }
-        let (_, text) = self.params.split(';').filter_map(|p| p.split_once('=')).find(|(n, _)| n.trim().eq_ignore_ascii_case(name))?;
+        let (_, text) = crate::records::filter_params(&self.params).into_iter().find(|(n, _)| n.eq_ignore_ascii_case(name))?;
         let text = text.trim();
         Some(if let Ok(i) = text.parse::<i64>() {
             Value::Int(i)
@@ -540,36 +545,40 @@ impl Component for ClientDataSet {
     }
 
     fn props(&self) -> &'static [aylis_core::PropInfo] {
-        use aylis_core::{PropInfo, PropKind};
+        use aylis_core::{EventArg, PropInfo, PropKind};
         const PROPS: &[PropInfo] = &[
             PropInfo::new("key_fields", PropKind::String, "Data"),
-            PropInfo::new("apply_mode", PropKind::Enum(ApplyMode::NAMES), "Data"),
+            PropInfo::new("apply_mode", PropKind::Enum(ApplyMode::NAMES), "Data").rust_type("ApplyMode"),
             PropInfo::new("read_only", PropKind::Bool, "Data"),
             PropInfo::new("active", PropKind::Bool, "Data"),
             PropInfo::new("filter", PropKind::String, "Data"),
             PropInfo::new("filtered", PropKind::Bool, "Data"),
             PropInfo::new("index_field_names", PropKind::String, "Data"),
-            PropInfo::new("indexes", PropKind::String, "Data"),
+            PropInfo::new("indexes", PropKind::RecordList(&crate::INDEX_DEF_RECORD), "Data"),
             PropInfo::new("index_name", PropKind::String, "Data"),
-            PropInfo::new("params", PropKind::String, "Data"),
+            PropInfo::new("params", PropKind::RecordList(&crate::FILTER_PARAM_RECORD), "Data"),
             PropInfo::new("status_filter", PropKind::String, "Data"),
             PropInfo::new("master_source", PropKind::Component, "Data"),
-            PropInfo::new("master_fields", PropKind::String, "Data"),
+            PropInfo::new("master_fields", PropKind::RecordList(&crate::MASTER_FIELD_RECORD), "Data"),
             PropInfo::new("apply_separately", PropKind::Bool, "Data"),
             PropInfo::new("record_total", PropKind::Int, "Data"),
             PropInfo::new("max_records", PropKind::Int, "Data"),
             PropInfo::new("partial_notice", PropKind::String, "Data").read_only().runtime(),
-            PropInfo::new("on_master_change", PropKind::Event, "Events"),
-            PropInfo::new("after_scroll", PropKind::Event, "Events"),
+            PropInfo::new("on_master_change", PropKind::Event, "Events")
+                .event_arg(EventArg::Value(PropKind::Record(&crate::events::MASTER_CHANGE_RECORD)))
+                .rust_type("MasterChange"),
+            PropInfo::new("after_scroll", PropKind::Event, "Events").event_arg(EventArg::None),
             PropInfo::new("before_post", PropKind::Event, "Events"),
-            PropInfo::new("after_post", PropKind::Event, "Events"),
+            PropInfo::new("after_post", PropKind::Event, "Events").event_arg(EventArg::None),
             PropInfo::new("before_delete", PropKind::Event, "Events"),
-            PropInfo::new("on_state_change", PropKind::Event, "Events"),
+            PropInfo::new("on_state_change", PropKind::Event, "Events").event_arg(EventArg::None),
             PropInfo::new("on_apply_updates", PropKind::Event, "Events"),
-            PropInfo::new("on_reconcile_error", PropKind::Event, "Events"),
-            PropInfo::new("on_error", PropKind::Event, "Events"),
-            PropInfo::new("on_fetch", PropKind::Event, "Events"),
-            PropInfo::new("on_server_query", PropKind::Event, "Events"),
+            PropInfo::new("on_reconcile_error", PropKind::Event, "Events").event_arg(EventArg::Value(PropKind::String)),
+            PropInfo::new("on_error", PropKind::Event, "Events").event_arg(EventArg::Value(PropKind::String)),
+            PropInfo::new("on_fetch", PropKind::Event, "Events").event_arg(EventArg::Value(PropKind::Int)),
+            PropInfo::new("on_server_query", PropKind::Event, "Events")
+                .event_arg(EventArg::Value(PropKind::Record(&crate::events::SERVER_QUERY_RECORD)))
+                .rust_type("ServerQuery"),
         ];
         PROPS
     }
@@ -687,7 +696,7 @@ impl Component for DataSource {
         data_set: Option<ComponentId> => "Data",
         auto_edit: bool => "Data",
         enabled: bool => "Data";
-        events: on_data_change, on_state_change
+        events: on_data_change: (), on_state_change: ()
     }
 
     fn notification(&mut self, freed: ComponentId) {

@@ -85,6 +85,12 @@ fn map_projection_round_trips_and_parses_markers() {
     // Zoom 0: o mundo num bloco de 256; (0,0) no meio.
     assert_eq!(project(0.0, 0.0, 0.0), (128.0, 128.0));
     let mut m = MapView::default();
-    m.markers = "-23.56,-46.65,MASP;bad;1,2".into();
-    assert_eq!(m.marker_list(), vec![(-23.56, -46.65, "MASP".to_string()), (1.0, 2.0, String::new())]);
+    m.markers = r#"[{"latitude": -23.56, "longitude": -46.65, "label": "MASP"}, {"latitude": 1, "longitude": 2}]"#.into();
+    assert_eq!(
+        m.marker_list(),
+        vec![MapMarker { latitude: -23.56, longitude: -46.65, label: "MASP".into() }, MapMarker { latitude: 1.0, longitude: 2.0, label: String::new() }]
+    );
+    // JSON inválido (o texto antigo): nenhum marcador, sem pânico.
+    m.markers = "-23.56,-46.65,MASP".into();
+    assert!(m.marker_list().is_empty());
 }

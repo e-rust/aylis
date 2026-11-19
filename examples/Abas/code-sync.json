@@ -13,15 +13,15 @@
       },
       "handlers": {
         "frmPrincipal.abas_add": {
-          "hash": "52eea43536613f87",
+          "hash": "v2:fcec7803eda32cf2",
           "seen": 1
         },
         "frmPrincipal.abas_change": {
-          "hash": "080ce8bedc04498d",
+          "hash": "v2:44d21f1a773366e6",
           "seen": 2
         },
         "frmPrincipal.principal_show": {
-          "hash": "c2670b5407bb6a11",
+          "hash": "v2:20ad68f40e2cef25",
           "seen": 1
         }
       }

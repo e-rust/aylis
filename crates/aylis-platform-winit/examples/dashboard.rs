@@ -45,7 +45,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let slicer = place(&mut ui, "Slicer", bi, (1032.0, 16.0, 330.0, 130.0));
     ui.set_prop(slicer, "selected", "Sudeste;Sul")?;
     place(&mut ui, "PivotTable", bi, (16.0, 160.0, 500.0, 220.0));
-    let kinds = [("waterfall", "Fluxo de caixa", "Saldo;Vendas;Serviços;Folha;Impostos;Outros", "Variação=120,80,35,-90,-40,-15"), ("funnel", "Funil de vendas", "Visitas;Leads;Propostas;Fechados", "Etapas=1000,420,160,64"), ("treemap", "Vendas por categoria", "Bebidas;Mercearia;Limpeza;Padaria;Hortifrúti;Frios", "Vendas=420,310,180,150,120,90"), ("radar", "Avaliação", "Preço;Qualidade;Entrega;Suporte;Prazo", "Nós=8,9,7,6,8|Concorrente=7,6,8,8,6"), ("stacked_bar", "Canais", "Jan;Fev;Mar;Abr;Mai;Jun", "Loja=12,14,13,15,16,18|Site=8,9,12,14,17,20|App=3,4,6,8,11,14"), ("scatter", "Preço x volume", "", "Preço=10,12,14,15,18,20,22,25,28,30|A=90,85,80,70,62,58,50,41,35,30|B=60,66,58,55,50,47,40,38,30,25")];
+    let kinds = [
+        ("waterfall", "Fluxo de caixa", "Saldo;Vendas;Serviços;Folha;Impostos;Outros", r#"[{"name":"Variação","values":[120,80,35,-90,-40,-15]}]"#),
+        ("funnel", "Funil de vendas", "Visitas;Leads;Propostas;Fechados", r#"[{"name":"Etapas","values":[1000,420,160,64]}]"#),
+        ("treemap", "Vendas por categoria", "Bebidas;Mercearia;Limpeza;Padaria;Hortifrúti;Frios", r#"[{"name":"Vendas","values":[420,310,180,150,120,90]}]"#),
+        ("radar", "Avaliação", "Preço;Qualidade;Entrega;Suporte;Prazo", r#"[{"name":"Nós","values":[8,9,7,6,8]},{"name":"Concorrente","values":[7,6,8,8,6]}]"#),
+        (
+            "stacked_bar",
+            "Canais",
+            "Jan;Fev;Mar;Abr;Mai;Jun",
+            r#"[{"name":"Loja","values":[12,14,13,15,16,18]},{"name":"Site","values":[8,9,12,14,17,20]},{"name":"App","values":[3,4,6,8,11,14]}]"#,
+        ),
+        (
+            "scatter",
+            "Preço x volume",
+            "",
+            r#"[{"name":"Preço","values":[10,12,14,15,18,20,22,25,28,30]},{"name":"A","values":[90,85,80,70,62,58,50,41,35,30]},{"name":"B","values":[60,66,58,55,50,47,40,38,30,25]}]"#,
+        ),
+    ];
     for (i, (kind, title, labels, series)) in kinds.iter().enumerate() {
         let c = ui.add(Chart::default(), bi);
         let (col, row) = (i % 3, i / 3);
@@ -63,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tape = place(&mut ui, "TickerTape", trade, (0.0, 0.0, 1400.0, 34.0));
     let _ = tape;
     let candles = place(&mut ui, "CandleChart", trade, (16.0, 48.0, 860.0, 520.0));
-    ui.set_prop(candles, "indicators", "sma:9;sma:21;bollinger:20")?;
+    ui.set_prop(candles, "indicators", r#"[{"kind":"sma","period":9},{"kind":"sma","period":21},{"kind":"bollinger","period":20}]"#)?;
     ui.set_prop(candles, "volume_profile", true)?;
     place(&mut ui, "OrderBook", trade, (892.0, 48.0, 240.0, 420.0));
     let watch = place(&mut ui, "Watchlist", trade, (1144.0, 48.0, 240.0, 260.0));

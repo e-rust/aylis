@@ -95,7 +95,7 @@ func imagem(caminho string) string {
 	return dados + caminho
 }
 
-func (f FrmIBGE) form_show(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmIBGE) form_show(app *aylis.Aylis, sender aylisForm) {
 	estados := ler("estados.json")
 	if estados == nil {
 		frmIBGE.lblFonte.SetText("Faltam os dados: rode  aylis-tool ibge examples/IBGE/assets/dados")
@@ -109,11 +109,11 @@ func (f FrmIBGE) form_show(app *aylis.Aylis, ev aylis.Event) {
 	carregar(app, frmIBGE.cdsDistritos.Component, ler("distritos.json"))
 	carregar(app, frmIBGE.cdsMunicipios.Component, municipiosJSON)
 	carregar(app, frmIBGE.cdsEstados.Component, estados)
-	f.estado_mudou(app, ev)
+	f.estado_mudou(app, frmIBGE.cdsEstados)
 }
 
 // estado_mudou: outro estado na grade (a bandeira, os mapas e os 10 maiores municípios).
-func (f FrmIBGE) estado_mudou(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmIBGE) estado_mudou(app *aylis.Aylis, sender aylisClientDataSet) {
 	e := registro(app, frmIBGE.cdsEstados.Component)
 	if e == nil || e["id"] == nil {
 		return
@@ -123,7 +123,7 @@ func (f FrmIBGE) estado_mudou(app *aylis.Aylis, ev aylis.Event) {
 	frmIBGE.lblRegiao.SetText(texto(e["sigla"]) + " · Região " + texto(e["regiao"]))
 	frmIBGE.imgBandeiraEstado.SetImage(imagem(texto(e["bandeira"])))
 	frmIBGE.lblEstadoEstimativa.SetText("Estimativa de " + texto(e["estimativa_ano"]))
-	frmIBGE.svgBrasil.SetHighlight(fmt.Sprintf("e%d", uf))
+	frmIBGE.svgBrasil.SetHighlight([]string{fmt.Sprintf("e%d", uf)})
 	mapa := fmt.Sprintf("%smapas/%d.svg", dados, uf)
 	frmIBGE.svgEstado.SetSource(mapa)
 	frmIBGE.svgMunicipio.SetSource(mapa)
@@ -151,11 +151,11 @@ func (f FrmIBGE) estado_mudou(app *aylis.Aylis, ev aylis.Event) {
 		maiores = append(maiores, aylis.M{"nome": doEstado[i].Nome, "habitantes": doEstado[i].Populacao})
 	}
 	carregar(app, frmIBGE.cdsMaiores.Component, maiores)
-	f.municipio_mudou(app, ev)
+	f.municipio_mudou(app, frmIBGE.cdsMunicipios)
 }
 
 // municipio_mudou: outro município (a bandeira, o destaque nos mapas e a população ano a ano).
-func (f FrmIBGE) municipio_mudou(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmIBGE) municipio_mudou(app *aylis.Aylis, sender aylisClientDataSet) {
 	m := registro(app, frmIBGE.cdsMunicipios.Component)
 	if m == nil || m["id"] == nil {
 		return
@@ -168,8 +168,8 @@ func (f FrmIBGE) municipio_mudou(app *aylis.Aylis, ev aylis.Event) {
 	frmIBGE.lblSemBandeira.SetVisible(bandeira == "")
 	frmIBGE.lblEstimativa.SetText("Estimativa de " + texto(m["estimativa_ano"]))
 	alvo := fmt.Sprintf("m%d", codigo)
-	frmIBGE.svgEstado.SetHighlight(alvo)
-	frmIBGE.svgMunicipio.SetHighlight(alvo)
+	frmIBGE.svgEstado.SetHighlight([]string{alvo})
+	frmIBGE.svgMunicipio.SetHighlight([]string{alvo})
 	frmIBGE.svgMunicipio.SetZoomTo(alvo)
 
 	linhas := []aylis.M{}

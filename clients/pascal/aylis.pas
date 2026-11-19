@@ -45,6 +45,40 @@ type
 
   TAylisForm = class;
 
+  { Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema (AylisColorToken('primary')),
+    que acompanha a troca de tema. }
+  TAylisColor = record
+    R, G, B, A: Byte;
+    Token: string;
+  end;
+
+  { Margens (margins, padding): esquerda, cima, direita e baixo. }
+  TAylisBounds = record
+    Left, Top, Right, Bottom: Double;
+  end;
+
+  { Uma sombra: o deslocamento (Dx, Dy), o desfoque, o espalhamento e a cor. Sem sombra:
+    Valid = False. }
+  TAylisShadow = record
+    Dx, Dy, Blur, Spread: Double;
+    Color: TAylisColor;
+    Valid: Boolean;
+  end;
+
+  { Uma curva de suavização: uma das prontas (Name: 'out_quad') ou a Bézier cúbica
+    (IsBezier, com X1, Y1, X2, Y2), como o cubic-bezier() do CSS. }
+  TAylisEasing = record
+    Name: string;
+    IsBezier: Boolean;
+    X1, Y1, X2, Y2: Double;
+  end;
+
+  { Um ponto (X, Y). }
+  TAylisPoint = record
+    X, Y: Double;
+  end;
+  TAylisPointArray = array of TAylisPoint;
+
   { Um componente de um form, pelo id dele na tela (resolvido quando a instância do form é
     montada). As classes de cada componente (TButton, TLabel...) vêm da unit gerada
     (ayliscomponents), com as propriedades tipadas. }
@@ -53,13 +87,21 @@ type
     FAylis: TAylis;
     FId: Int64;
     FName: string;
+    FRefs: TObjectList;
   protected
     { Lê uma propriedade (o resultado é do cliente: use antes da próxima chamada). }
     function GetProp(const Prop: string): TJSONData;
     procedure SetProp(const Prop: string; Value: TJSONData);
     function Invoke(const Method: string; Args: TJSONArray): TJSONData;
+    { A referência a outro componente (PopupMenu, DataSource); nil se não há. O objeto é
+      deste componente (liberado com ele). }
+    function GetRef(const Prop: string): TAylisComponent;
+    procedure SetRef(const Prop: string; Value: TAylisComponent);
+    { O componente que a tela devolveu com "ref": true (o id e o nome); nil se não há. }
+    function ComponentOf(Info: TJSONData): TAylisComponent;
   public
     constructor Create(AAylis: TAylis; AId: Int64; const AName: string); virtual;
+    destructor Destroy; override;
     procedure SetFocus;
     { O cliente (Aylis.Call, Aylis.Send, Aylis.Post) e o id e o nome na tela. }
     property Aylis: TAylis read FAylis;
@@ -110,6 +152,11 @@ type
     procedure Close;
   end;
   TAylisFormClass = class of TAylisForm;
+
+  { Os handlers tipados de um form (gerados em aylisforms.pas): chama o handler com quem
+    disparou e o valor do evento no tipo; False se o handler não é tipado (vai pelo nome, com
+    o evento inteiro). }
+  TAylisTypedDispatch = function(Instance: TAylisForm; const Handler: string; Sender: TAylisComponent; Msg: TJSONObject): Boolean;
 
   TAylis = class
   private
@@ -372,7 +419,312 @@ function AylisDeltaSelftest: string;
   variável global do form, como frmClientes). }
 procedure RegisterForm(AClass: TAylisFormClass; const Name: string; Global: PPointer = nil);
 
+{ Registra os handlers tipados do form (o aylisforms.pas gerado chama no RegisterForms). }
+procedure RegisterTypedHandlers(const Form: string; Dispatch: TAylisTypedDispatch);
+
+{ As cores e as margens do acesso tipado. }
+function AylisRGB(R, G, B: Byte; A: Byte = 255): TAylisColor;
+{ '#RRGGBB', '#RRGGBBAA' ou '#RGB' (inválida: EAylis). }
+function AylisColorHex(const Text: string): TAylisColor;
+function AylisColorToken(const Name: string): TAylisColor;
+function AylisColorFromJSON(Data: TJSONData): TAylisColor;
+function AylisColorToJSON(const C: TAylisColor): TJSONData;
+function AylisBounds(ALeft, ATop, ARight, ABottom: Double): TAylisBounds;
+function AylisBoundsAll(V: Double): TAylisBounds;
+function AylisBoundsFromJSON(Data: TJSONData): TAylisBounds;
+function AylisBoundsToJSON(const B: TAylisBounds): TJSONData;
+{ A sombra ('dx dy desfoque [espalhamento] [#cor]'; inválida ou vazia: Valid = False). }
+function AylisShadow(ADx, ADy, ABlur: Double; ASpread: Double; const AColor: TAylisColor): TAylisShadow;
+function AylisShadowFromJSON(Data: TJSONData): TAylisShadow;
+function AylisShadowToJSON(const S: TAylisShadow): TJSONData;
+{ As curvas: pelo nome ('out_quad') ou a Bézier cúbica. }
+function AylisEasing(const AName: string): TAylisEasing;
+function AylisCubicBezier(AX1, AY1, AX2, AY2: Double): TAylisEasing;
+function AylisEasingFromJSON(Data: TJSONData): TAylisEasing;
+function AylisEasingToJSON(const E: TAylisEasing): TJSONData;
+{ Os pontos ('0.5,0 1,1 0,1'). }
+function AylisPointsFromJSON(Data: TJSONData): TAylisPointArray;
+function AylisPointsToJSON(const P: TAylisPointArray): TJSONData;
+
 implementation
+
+var
+  AylisNumbers: TFormatSettings;
+
+function Num(V: Double): string;
+begin
+  Result := FloatToStr(Round(V * 1000) / 1000, AylisNumbers);
+end;
+
+function AylisShadow(ADx, ADy, ABlur: Double; ASpread: Double; const AColor: TAylisColor): TAylisShadow;
+begin
+  Result.Dx := ADx;
+  Result.Dy := ADy;
+  Result.Blur := ABlur;
+  Result.Spread := ASpread;
+  Result.Color := AColor;
+  Result.Valid := True;
+end;
+
+function AylisShadowFromJSON(Data: TJSONData): TAylisShadow;
+var
+  Parts: TStringArray;
+  Token: string;
+  Numbers: array of Double;
+  V: Double;
+  HasColor: Boolean;
+begin
+  Result := AylisShadow(0, 0, 0, 0, AylisRGB(0, 0, 0, 64));
+  Result.Valid := False;
+  if (Data = nil) or (Data.JSONType <> jtString) then
+    Exit;
+  Numbers := nil;
+  HasColor := False;
+  Parts := StringReplace(Data.AsString, ',', ' ', [rfReplaceAll]).Split([' ']);
+  for Token in Parts do
+    if Token = '' then
+      Continue
+    else if TryStrToFloat(StringReplace(Token, 'px', '', []), V, AylisNumbers) then
+      Insert(V, Numbers, Length(Numbers))
+    else if (not HasColor) and (Token <> '') and (Token[1] = '#') then
+    begin
+      Result.Color := AylisColorHex(Token);
+      HasColor := True;
+    end
+    else
+      Exit;
+  if (Length(Numbers) < 2) or (Length(Numbers) > 4) then
+    Exit;
+  Result.Dx := Numbers[0];
+  Result.Dy := Numbers[1];
+  if Length(Numbers) > 2 then
+    Result.Blur := Numbers[2];
+  if Length(Numbers) > 3 then
+    Result.Spread := Numbers[3];
+  Result.Valid := True;
+end;
+
+function AylisShadowToJSON(const S: TAylisShadow): TJSONData;
+var
+  Text: string;
+  C: TJSONData;
+begin
+  if not S.Valid then
+    Exit(TJSONString.Create(''));
+  Text := Num(S.Dx) + ' ' + Num(S.Dy) + ' ' + Num(S.Blur);
+  if S.Spread <> 0 then
+    Text := Text + ' ' + Num(S.Spread);
+  C := AylisColorToJSON(S.Color);
+  try
+    Result := TJSONString.Create(Text + ' ' + C.AsString);
+  finally
+    C.Free;
+  end;
+end;
+
+function AylisEasing(const AName: string): TAylisEasing;
+begin
+  Result.Name := AName;
+  Result.IsBezier := False;
+  Result.X1 := 0;
+  Result.Y1 := 0;
+  Result.X2 := 1;
+  Result.Y2 := 1;
+end;
+
+function AylisCubicBezier(AX1, AY1, AX2, AY2: Double): TAylisEasing;
+begin
+  Result := AylisEasing('');
+  Result.IsBezier := True;
+  Result.X1 := AX1;
+  Result.Y1 := AY1;
+  Result.X2 := AX2;
+  Result.Y2 := AY2;
+end;
+
+function AylisEasingFromJSON(Data: TJSONData): TAylisEasing;
+var
+  Text: string;
+  Parts: TStringArray;
+  V: array[0..3] of Double;
+  I: Integer;
+begin
+  Result := AylisEasing('linear');
+  if (Data = nil) or (Data.JSONType <> jtString) then
+    Exit;
+  Text := Trim(Data.AsString);
+  if (Copy(Text, 1, 13) = 'cubic-bezier(') and (Text[Length(Text)] = ')') then
+  begin
+    Parts := Copy(Text, 14, Length(Text) - 14).Split([',']);
+    if Length(Parts) <> 4 then
+      Exit;
+    for I := 0 to 3 do
+      if not TryStrToFloat(Trim(Parts[I]), V[I], AylisNumbers) then
+        Exit;
+    Exit(AylisCubicBezier(V[0], V[1], V[2], V[3]));
+  end;
+  Text := LowerCase(Text);
+  if Text = 'ease' then
+    Exit(AylisCubicBezier(0.25, 0.1, 0.25, 1))
+  else if Text = 'ease-in' then
+    Exit(AylisCubicBezier(0.42, 0, 1, 1))
+  else if Text = 'ease-out' then
+    Exit(AylisCubicBezier(0, 0, 0.58, 1))
+  else if Text = 'ease-in-out' then
+    Exit(AylisCubicBezier(0.42, 0, 0.58, 1));
+  Text := StringReplace(Text, '-', '_', [rfReplaceAll]);
+  if (Text = 'linear') or (Text = 'in_quad') or (Text = 'out_quad') or (Text = 'in_out_quad') or (Text = 'out_cubic') or (Text = 'in_out_cubic') or (Text = 'out_back') then
+    Result := AylisEasing(Text);
+end;
+
+function AylisEasingToJSON(const E: TAylisEasing): TJSONData;
+begin
+  if E.IsBezier then
+    Result := TJSONString.Create('cubic-bezier(' + Num(E.X1) + ', ' + Num(E.Y1) + ', ' + Num(E.X2) + ', ' + Num(E.Y2) + ')')
+  else
+    Result := TJSONString.Create(E.Name);
+end;
+
+function AylisPointsFromJSON(Data: TJSONData): TAylisPointArray;
+var
+  Pair, Text: string;
+  XY: TStringArray;
+  P: TAylisPoint;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtString) then
+    Exit;
+  Text := Data.AsString;
+  for Pair in Text.Split([' ']) do
+  begin
+    XY := Pair.Split([',']);
+    if (Length(XY) = 2) and TryStrToFloat(XY[0], P.X, AylisNumbers) and TryStrToFloat(XY[1], P.Y, AylisNumbers) then
+      Insert(P, Result, Length(Result));
+  end;
+end;
+
+function AylisPointsToJSON(const P: TAylisPointArray): TJSONData;
+var
+  I: Integer;
+  Text: string;
+begin
+  Text := '';
+  for I := 0 to High(P) do
+  begin
+    if I > 0 then
+      Text := Text + ' ';
+    Text := Text + Num(P[I].X) + ',' + Num(P[I].Y);
+  end;
+  Result := TJSONString.Create(Text);
+end;
+
+function AylisRGB(R, G, B: Byte; A: Byte): TAylisColor;
+begin
+  Result.R := R;
+  Result.G := G;
+  Result.B := B;
+  Result.A := A;
+  Result.Token := '';
+end;
+
+function AylisColorHex(const Text: string): TAylisColor;
+var
+  H: string;
+  V: Integer;
+  function Part(I: Integer): Byte;
+  begin
+    if not TryStrToInt('$' + Copy(H, I, 2), V) then
+      raise EAylis.CreateFmt('cor inválida: %s (use #RRGGBB ou #RRGGBBAA)', [Text]);
+    Result := V;
+  end;
+begin
+  H := Trim(Text);
+  if (H <> '') and (H[1] = '#') then
+    Delete(H, 1, 1);
+  if Length(H) = 3 then
+    H := H[1] + H[1] + H[2] + H[2] + H[3] + H[3];
+  if (Length(H) <> 6) and (Length(H) <> 8) then
+    raise EAylis.CreateFmt('cor inválida: %s (use #RRGGBB ou #RRGGBBAA)', [Text]);
+  Result := AylisRGB(Part(1), Part(3), Part(5), 255);
+  if Length(H) = 8 then
+    Result.A := Part(7);
+end;
+
+function AylisColorToken(const Name: string): TAylisColor;
+begin
+  Result := AylisRGB(0, 0, 0, 255);
+  Result.Token := Trim(Name);
+end;
+
+function AylisColorFromJSON(Data: TJSONData): TAylisColor;
+var
+  S: string;
+begin
+  Result := AylisRGB(0, 0, 0, 255);
+  if (Data = nil) or (Data.JSONType <> jtString) then
+    Exit;
+  S := Data.AsString;
+  if S = '' then
+    Exit;
+  if S[1] = '#' then
+    Result := AylisColorHex(S)
+  else
+    Result := AylisColorToken(S);
+end;
+
+function AylisColorToJSON(const C: TAylisColor): TJSONData;
+begin
+  if C.Token <> '' then
+    Result := TJSONString.Create(C.Token)
+  else if C.A = 255 then
+    Result := TJSONString.Create(Format('#%.2X%.2X%.2X', [C.R, C.G, C.B]))
+  else
+    Result := TJSONString.Create(Format('#%.2X%.2X%.2X%.2X', [C.R, C.G, C.B, C.A]));
+end;
+
+function AylisBounds(ALeft, ATop, ARight, ABottom: Double): TAylisBounds;
+begin
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Right := ARight;
+  Result.Bottom := ABottom;
+end;
+
+function AylisBoundsAll(V: Double): TAylisBounds;
+begin
+  Result := AylisBounds(V, V, V, V);
+end;
+
+function AylisBoundsFromJSON(Data: TJSONData): TAylisBounds;
+var
+  A: TJSONArray;
+  O: TJSONObject;
+begin
+  Result := AylisBoundsAll(0);
+  if Data = nil then
+    Exit;
+  case Data.JSONType of
+    jtNumber: Result := AylisBoundsAll(Data.AsFloat);
+    jtArray:
+      begin
+        A := TJSONArray(Data);
+        if A.Count = 2 then
+          Result := AylisBounds(A.Floats[0], A.Floats[1], A.Floats[0], A.Floats[1])
+        else if A.Count = 4 then
+          Result := AylisBounds(A.Floats[0], A.Floats[1], A.Floats[2], A.Floats[3]);
+      end;
+    jtObject:
+      begin
+        O := TJSONObject(Data);
+        Result := AylisBounds(O.Get('left', 0.0), O.Get('top', 0.0), O.Get('right', 0.0), O.Get('bottom', 0.0));
+      end;
+  end;
+end;
+
+function AylisBoundsToJSON(const B: TAylisBounds): TJSONData;
+begin
+  Result := TJSONArray.Create([B.Left, B.Top, B.Right, B.Bottom]);
+end;
 
 type
   { A thread de uma tela. }
@@ -991,6 +1343,33 @@ type
 var
   FormClasses: TStringList;
 
+type
+  TTypedEntry = record
+    Form: string;
+    Dispatch: TAylisTypedDispatch;
+  end;
+
+var
+  TypedHandlers: array of TTypedEntry;
+
+procedure RegisterTypedHandlers(const Form: string; Dispatch: TAylisTypedDispatch);
+begin
+  SetLength(TypedHandlers, Length(TypedHandlers) + 1);
+  TypedHandlers[High(TypedHandlers)].Form := Form;
+  TypedHandlers[High(TypedHandlers)].Dispatch := Dispatch;
+end;
+
+{ O handler tipado do form, se há: True se tratou. }
+function DispatchTyped(const Form: string; Instance: TAylisForm; const Handler: string; Sender: TAylisComponent; Msg: TJSONObject): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to High(TypedHandlers) do
+    if SameText(TypedHandlers[I].Form, Form) and TypedHandlers[I].Dispatch(Instance, Handler, Sender, Msg) then
+      Exit(True);
+end;
+
 procedure RegisterForm(AClass: TAylisFormClass; const Name: string; Global: PPointer);
 var
   Box: TFormClassBox;
@@ -1025,6 +1404,43 @@ begin
   FAylis := AAylis;
   FId := AId;
   FName := AName;
+end;
+
+destructor TAylisComponent.Destroy;
+begin
+  FRefs.Free;
+  inherited Destroy;
+end;
+
+function TAylisComponent.ComponentOf(Info: TJSONData): TAylisComponent;
+var
+  I: Integer;
+  RefId: Int64;
+begin
+  Result := nil;
+  if (Info = nil) or (Info.JSONType <> jtObject) then
+    Exit;
+  RefId := TJSONObject(Info).Get('id', Int64(0));
+  if FRefs = nil then
+    FRefs := TObjectList.Create(True);
+  for I := 0 to FRefs.Count - 1 do
+    if TAylisComponent(FRefs[I]).Id = RefId then
+      Exit(TAylisComponent(FRefs[I]));
+  Result := TAylisComponent.Create(FAylis, RefId, TJSONObject(Info).Get('name', ''));
+  FRefs.Add(Result);
+end;
+
+function TAylisComponent.GetRef(const Prop: string): TAylisComponent;
+begin
+  Result := ComponentOf(FAylis.Call('get', TJSONObject.Create(['target', FId, 'prop', Prop, 'ref', True])));
+end;
+
+procedure TAylisComponent.SetRef(const Prop: string; Value: TAylisComponent);
+begin
+  if Value = nil then
+    SetProp(Prop, TJSONNull.Create)
+  else
+    SetProp(Prop, TJSONInt64Number.Create(Value.Id));
 end;
 
 function TAylisComponent.GetProp(const Prop: string): TJSONData;
@@ -1168,6 +1584,15 @@ begin
     Exit(False);
   Result := True;
   Handler := Msg.Get('handler', '');
+  Sender := nil;
+  SenderData := TJSONObject(Msg.Find('sender'));
+  if SenderData <> nil then
+    Sender := Instance.ComponentById(SenderData.Get('id', Int64(-1)));
+  if Sender = nil then
+    Sender := Instance;
+  { O handler tipado (quem disparou e o valor no tipo), se o form tem. }
+  if DispatchTyped(Form, Instance, Handler, Sender, Msg) then
+    Exit;
   Method.Code := Instance.MethodAddress(Handler);
   if Method.Code = nil then
   begin
@@ -1175,12 +1600,6 @@ begin
     Exit;
   end;
   Method.Data := Instance;
-  Sender := nil;
-  SenderData := TJSONObject(Msg.Find('sender'));
-  if SenderData <> nil then
-    Sender := Instance.ComponentById(SenderData.Get('id', Int64(-1)));
-  if Sender = nil then
-    Sender := Instance;
   CallFormMethod(Method, Sender, Msg);
 end;
 
@@ -1814,5 +2233,9 @@ begin
       Send('done', TJSONObject.Create(['seq', Msg.Find('seq').AsInt64]));
   end;
 end;
+
+initialization
+  AylisNumbers := DefaultFormatSettings;
+  AylisNumbers.DecimalSeparator := '.';
 
 end.

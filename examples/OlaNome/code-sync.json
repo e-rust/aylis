@@ -1,7 +1,6 @@
 {
   "revisions": {
-    "frmPrincipal.btn_saudar_click": 1,
-    "frmPrincipal.saudar_click": 1
+    "frmPrincipal.btn_saudar_click": 1
   },
   "languages": {
     "rust": {
@@ -10,11 +9,7 @@
       },
       "handlers": {
         "frmPrincipal.btn_saudar_click": {
-          "hash": "93154c7e1a47ab40",
-          "seen": 1
-        },
-        "frmPrincipal.saudar_click": {
-          "hash": "93154c7e1a47ab40",
+          "hash": "v2:481bff171f02218a",
           "seen": 1
         }
       }

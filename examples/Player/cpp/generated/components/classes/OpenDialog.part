@@ -13,5 +13,9 @@ struct OpenDialog : aylis::Component {
     void set_file_name(const std::string& v) const { set_prop_("file_name", v); }
     bool multiple() const { return get_prop_("multiple").boolean(); }
     void set_multiple(bool v) const { set_prop_("multiple", v); }
+    std::string on_select() const { return get_prop_("on_select").str(); }
+    void set_on_select(const std::string& v) const { set_prop_("on_select", v); }
+    std::string on_cancel() const { return get_prop_("on_cancel").str(); }
+    void set_on_cancel(const std::string& v) const { set_prop_("on_cancel", v); }
     void execute() const { tell_("execute", {{"target", aylis::Json(id_)}}); }
 };

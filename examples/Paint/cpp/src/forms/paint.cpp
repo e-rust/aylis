@@ -18,20 +18,21 @@ static int zoom = 100;
 // Um botão de ferramenta e a ferramenta dele.
 struct Ferramenta {
     aylis_components::Button botao;
-    const char* nome;
+    aylis_components::PaintTool nome;
 };
 
 // Os botões de ferramenta (os do form do evento) e a ferramenta de cada um.
 static std::vector<Ferramenta> ferramentas() {
     return {
-        {frmPaint.btnSelecionar, "select"}, {frmPaint.btnLapis, "pencil"}, {frmPaint.btnPincel, "brush"}, {frmPaint.btnBorracha, "eraser"},
-        {frmPaint.btnBalde, "fill"}, {frmPaint.btnContaGotas, "picker"}, {frmPaint.btnLinha, "line"}, {frmPaint.btnRetangulo, "rectangle"},
-        {frmPaint.btnElipse, "ellipse"},
+        {frmPaint.btnSelecionar, aylis_components::PaintTool::Select}, {frmPaint.btnLapis, aylis_components::PaintTool::Pencil}, {frmPaint.btnPincel, aylis_components::PaintTool::Brush}, {frmPaint.btnBorracha, aylis_components::PaintTool::Eraser},
+        {frmPaint.btnBalde, aylis_components::PaintTool::Fill}, {frmPaint.btnContaGotas, aylis_components::PaintTool::Picker}, {frmPaint.btnLinha, aylis_components::PaintTool::Line}, {frmPaint.btnRetangulo, aylis_components::PaintTool::Rectangle},
+        {frmPaint.btnElipse, aylis_components::PaintTool::Ellipse},
     };
 }
 
-static std::string texto(const aylis::Event& ev) {
-    return ev.args.kind() == aylis::Json::Kind::String ? ev.args.str() : std::string();
+// O primeiro caminho da lista do diálogo (um arquivo só).
+static std::string primeiro(const std::vector<std::string>& caminhos) {
+    return caminhos.empty() ? std::string() : caminhos.front();
 }
 
 // O nome do arquivo sem a pasta.
@@ -54,7 +55,8 @@ static void atualizar_edicao(aylis::Aylis& app) {
     frmPaint.btnDesfazer.set_enabled(desfazer);
     frmPaint.mnuRefazer.set_enabled(refazer);
     frmPaint.btnRefazer.set_enabled(refazer);
-    frmPaint.lblTamanho.set_text(frmPaint.pcDesenho.size() + "px");
+    auto tamanho = frmPaint.pcDesenho.size();
+    frmPaint.lblTamanho.set_text(tamanho ? std::to_string(tamanho->width) + " × " + std::to_string(tamanho->height) + "px" : std::string());
 }
 
 static void marcar_modificado(aylis::Aylis& app) {
@@ -77,9 +79,9 @@ static void marcar_ferramenta(aylis::Aylis& app, const aylis_components::Button&
 // A cor que a paleta troca fica com o anel azul, como no Paint.
 static void marcar_cor(aylis::Aylis& app, int cor) {
     cor_ativa = cor;
-    frmPaint.btnCor1.set_stroke(cor == 1 ? "#0067C0" : "#9A9A9A");
+    frmPaint.btnCor1.set_stroke(cor == 1 ? aylis::Color::rgb(0x00, 0x67, 0xC0) : aylis::Color::rgb(0x9A, 0x9A, 0x9A));
     frmPaint.btnCor1.set_stroke_width(cor == 1 ? 3.0 : 1.0);
-    frmPaint.btnCor2.set_stroke(cor == 2 ? "#0067C0" : "#9A9A9A");
+    frmPaint.btnCor2.set_stroke(cor == 2 ? aylis::Color::rgb(0x00, 0x67, 0xC0) : aylis::Color::rgb(0x9A, 0x9A, 0x9A));
     frmPaint.btnCor2.set_stroke_width(cor == 2 ? 3.0 : 1.0);
 }
 
@@ -99,8 +101,8 @@ static void salvar_em(aylis::Aylis& app, const std::string& caminho) {
     titulo(app);
 }
 
-void novo_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void novo_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.new_(640, 400);
     arquivo.clear();
     modificado = false;
@@ -108,90 +110,91 @@ void novo_click(aylis::Aylis& app, const aylis::Event& ev) {
     atualizar_edicao(app);
 }
 
-void abrir_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void abrir_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.dlgAbrir.execute();
 }
 
-void salvar_click(aylis::Aylis& app, const aylis::Event& ev) {
+void salvar_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     if (!arquivo.empty()) salvar_em(app, arquivo);
-    else salvar_como_click(app, ev);
+    // Sem arquivo ainda: o mesmo do "Salvar como".
+    else frmPaint.dlgSalvar.execute();
 }
 
-void salvar_como_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void salvar_como_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.dlgSalvar.execute();
 }
 
-void sair_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void sair_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.close();
 }
 
-void desfazer_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void desfazer_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     frmPaint.pcDesenho.undo();
     marcar_modificado(app);
 }
 
-void refazer_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void refazer_click(aylis::Aylis& app, aylis::Component sender) {
+    (void)sender;
     frmPaint.pcDesenho.redo();
     marcar_modificado(app);
 }
 
-void recortar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void recortar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.cut();
 }
 
-void copiar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void copiar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.copy();
 }
 
-void colar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void colar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     // O que foi colado entra como seleção solta: a ferramenta passa a ser a seleção.
     if (frmPaint.pcDesenho.paste()) marcar_ferramenta(app, frmPaint.btnSelecionar);
 }
 
-void excluir_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void excluir_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.delete_();
 }
 
-void selecionar_tudo_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void selecionar_tudo_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.select_all();
     marcar_ferramenta(app, frmPaint.btnSelecionar);
 }
 
-void limpar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void limpar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     frmPaint.pcDesenho.clear();
     marcar_modificado(app);
 }
 
-void ampliar_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void ampliar_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     aplicar_zoom(app, std::min(zoom * 2, 800));
 }
 
-void reduzir_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void reduzir_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     aplicar_zoom(app, std::max(zoom / 2, 25));
 }
 
-void tamanho_real_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void tamanho_real_click(aylis::Aylis& app, aylis_components::MenuItem sender) {
+    (void)sender;
     aplicar_zoom(app, 100);
 }
 
-void ferramenta_click(aylis::Aylis& app, const aylis::Event& ev) {
-    const auto clicado = frmPaint.sender_as_button(ev);
+void ferramenta_click(aylis::Aylis& app, aylis_components::Button sender) {
     for (const auto& f : ferramentas()) {
-        if (clicado && f.botao.id() == clicado.id()) {
+        if (f.botao.id() == sender.id()) {
             frmPaint.pcDesenho.set_tool(f.nome);
             marcar_ferramenta(app, f.botao);
             return;
@@ -199,28 +202,29 @@ void ferramenta_click(aylis::Aylis& app, const aylis::Event& ev) {
     }
 }
 
-void preencher_change(aylis::Aylis& app, const aylis::Event& ev) {
-    if (ev.args.kind() == aylis::Json::Kind::Bool) frmPaint.pcDesenho.set_filled(ev.args.boolean());
+void preencher_change(aylis::Aylis& app, aylis_components::CheckBox sender, bool value) {
+    (void)sender;
+    frmPaint.pcDesenho.set_filled(value);
 }
 
-void espessura_change(aylis::Aylis& app, const aylis::Event& ev) {
+void espessura_change(aylis::Aylis& app, aylis_components::ComboBox sender, std::string value) {
     // "5 px" → 5
-    std::string t = texto(ev);
-    if (!t.empty() && t[0] >= '0' && t[0] <= '9') frmPaint.pcDesenho.set_brush_size(std::atoi(t.c_str()));
+    (void)sender;
+    if (!value.empty() && value[0] >= '0' && value[0] <= '9') frmPaint.pcDesenho.set_brush_size(std::atoi(value.c_str()));
 }
 
-void cor1_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void cor1_click(aylis::Aylis& app, aylis_components::Circle sender) {
+    (void)sender;
     marcar_cor(app, 1);
 }
 
-void cor2_click(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void cor2_click(aylis::Aylis& app, aylis_components::Circle sender) {
+    (void)sender;
     marcar_cor(app, 2);
 }
 
-void paleta_click(aylis::Aylis& app, const aylis::Event& ev) {
-    std::string cor = frmPaint.sender_as_circle(ev).fill();
+void paleta_click(aylis::Aylis& app, aylis_components::Circle sender) {
+    aylis::Color cor = sender.fill();
     if (cor_ativa == 1) {
         frmPaint.pcDesenho.set_color(cor);
         frmPaint.btnCor1.set_fill(cor);
@@ -230,25 +234,26 @@ void paleta_click(aylis::Aylis& app, const aylis::Event& ev) {
     }
 }
 
-void desenho_change(aylis::Aylis& app, const aylis::Event& ev) {
-    (void)ev;
+void desenho_change(aylis::Aylis& app, aylis_components::PaintCanvas sender) {
+    (void)sender;
     marcar_modificado(app);
 }
 
-void desenho_pick(aylis::Aylis& app, const aylis::Event& ev) {
+void desenho_pick(aylis::Aylis& app, aylis_components::PaintCanvas sender, std::string value) {
     // "#RRGGBB" (cor 1) ou "#RRGGBB2" (cor 2, o botão direito)
-    std::string t = texto(ev);
-    if (!t.empty() && t.back() == '2') frmPaint.btnCor2.set_fill(t.substr(0, t.size() - 1));
-    else frmPaint.btnCor1.set_fill(t);
+    (void)sender;
+    if (!value.empty() && value.back() == '2') frmPaint.btnCor2.set_fill(aylis::Color::hex(value.substr(0, value.size() - 1)));
+    else frmPaint.btnCor1.set_fill(aylis::Color::hex(value));
 }
 
-void desenho_cursor(aylis::Aylis& app, const aylis::Event& ev) {
-    std::string t = texto(ev);
-    frmPaint.lblPosicao.set_text(t.empty() ? t : t + "px");
+void desenho_cursor(aylis::Aylis& app, aylis_components::PaintCanvas sender, std::string value) {
+    (void)sender;
+    frmPaint.lblPosicao.set_text(value.empty() ? value : value + "px");
 }
 
-void abrir_select(aylis::Aylis& app, const aylis::Event& ev) {
-    std::string caminho = texto(ev);
+void abrir_select(aylis::Aylis& app, aylis_components::OpenDialog sender, std::vector<std::string> value) {
+    (void)sender;
+    std::string caminho = primeiro(value);
     try {
         frmPaint.pcDesenho.open(caminho);
     } catch (const aylis::Error& e) {
@@ -261,8 +266,9 @@ void abrir_select(aylis::Aylis& app, const aylis::Event& ev) {
     atualizar_edicao(app);
 }
 
-void salvar_select(aylis::Aylis& app, const aylis::Event& ev) {
-    salvar_em(app, texto(ev));
+void salvar_select(aylis::Aylis& app, aylis_components::SaveDialog sender, std::vector<std::string> value) {
+    (void)sender;
+    salvar_em(app, primeiro(value));
 }
 
 }  // namespace frm_paint

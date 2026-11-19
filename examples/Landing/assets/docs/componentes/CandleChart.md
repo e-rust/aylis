@@ -20,14 +20,14 @@ Gráfico de candles (OHLC) com volume, indicadores e ferramentas de desenho.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `indicators` | Indicadores | texto | Os indicadores sobre o preço, separados por `;`: `"sma:20;ema:9;bollinger:20"`. |
+| `indicators` | Indicadores | lista de `PriceIndicator` | Os indicadores sobre o preço, em JSON (`PRICE_INDICATOR`): `[{"kind": "sma", "period": 20}]`. |
 | `draw_mode` | Modo de desenho | um de: `pan`, `trend`, `fibonacci` | O que arrastar faz: `pan` (anda no tempo), `trend` (desenha uma linha de tendência) ou `fibonacci` (desenha uma retração). |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `data` | Dados | texto | Os candles, um por linha: `tempo;abertura;máxima;mínima;fechamento;volume`. |
+| `data` | Dados | lista de `Candle` | Os candles, em JSON (`CANDLE`). |
 
 ## Eventos
 
@@ -48,8 +48,8 @@ E o handler, um método do form (`self.CandleChart1` já é um `CandleChart`):
 ```rust
 impl FrmPrincipal {
     pub fn candle_chart1_drawing(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.CandleChart1.data(ui);
-        self.CandleChart1.set_data(ui, format!("{atual}!"));
+        let atual = self.CandleChart1.volume_profile(ui);
+        self.CandleChart1.set_volume_profile(ui, !atual);
     }
 }
 ```

@@ -49,7 +49,7 @@ O handler lê o nome do `Edit` e escreve a saudação no `Label`. Escolha a sua 
 ```rust
 // rust/src/forms/principal.rs
 impl FrmPrincipal {
-    pub fn btn_saudar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn btn_saudar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let nome = self.edtNome.text(ui);
         self.lblResposta.set_text(ui, format!("Olá, {nome}!"));
     }
@@ -58,14 +58,14 @@ impl FrmPrincipal {
 
 ```python
 # python/src/forms/principal.py
-def btn_saudar_click(aylis, event):
+def btn_saudar_click(aylis, sender: "Button"):
     nome = frmPrincipal.edtNome.text
     frmPrincipal.lblResposta.text = f"Olá, {nome}!"
 ```
 
 ```typescript
 // typescript/src/forms/principal.ts
-export async function btn_saudar_click(aylis: Aylis, ev: AylisEvent) {
+export async function btn_saudar_click(aylis: Aylis, sender: import("./components.ts").Button) {
     const nome = await frmPrincipal.edtNome.text;
     frmPrincipal.lblResposta.text = `Olá, ${nome}!`;
 }
@@ -73,7 +73,7 @@ export async function btn_saudar_click(aylis: Aylis, ev: AylisEvent) {
 
 ```csharp
 // csharp/src/forms/FrmPrincipal.cs
-public static void btn_saudar_click(Aylis aylis, AylisEvent ev)
+public static void btn_saudar_click(Aylis aylis, AylisUi.Button sender)
 {
     frmPrincipal.lblResposta.Text = $"Olá, {frmPrincipal.edtNome.Text}!";
 }
@@ -81,28 +81,28 @@ public static void btn_saudar_click(Aylis aylis, AylisEvent ev)
 
 ```java
 // java/src/forms/FrmPrincipal.java
-public static void btn_saudar_click(Aylis aylis, Aylis.Event ev) {
+public static void btn_saudar_click(Aylis aylis, Components.Button sender) {
     frmPrincipal.lblResposta.setText("Olá, " + frmPrincipal.edtNome.getText() + "!");
 }
 ```
 
 ```go
 // go/src/forms/principal.go
-func (f FrmPrincipal) btn_saudar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPrincipal) btn_saudar_click(app *aylis.Aylis, sender aylisButton) {
 	frmPrincipal.lblResposta.SetText("Olá, " + frmPrincipal.edtNome.Text() + "!")
 }
 ```
 
 ```cpp
 // cpp/src/forms/principal.cpp
-void btn_saudar_click(aylis::Aylis& app, const aylis::Event& ev) {
+void btn_saudar_click(aylis::Aylis& app, aylis_components::Button sender) {
     frmPrincipal.lblResposta.set_text("Olá, " + frmPrincipal.edtNome.text() + "!");
 }
 ```
 
 ```pascal
 { pascal/src/forms/principal.pas }
-procedure TFrmPrincipal.btn_saudar_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmPrincipal.btn_saudar_click(Sender: TButton);
 begin
   frmPrincipal.lblResposta.Text := 'Olá, ' + frmPrincipal.edtNome.Text + '!';
 end;
@@ -110,6 +110,11 @@ end;
 
 Os nomes `edtNome` e `lblResposta` vêm do form: a IDE gera o acesso tipado a cada
 componente, então um nome errado é erro de compilação, não uma falha na hora de rodar.
+
+O handler recebe quem disparou já com a classe dele (`sender`, o `Button`) e, nos eventos que
+levam um valor, o valor no tipo: o `on_change` de um `DateEdit` recebe a data, o de um
+`TrackBar` o número, o de um `CheckBox` o `bool`. O handler escrito do jeito de antes (com o
+evento inteiro: `args: &EventArgs`, `event`, `AylisEvent`...) continua funcionando.
 
 ## 6. Execute
 

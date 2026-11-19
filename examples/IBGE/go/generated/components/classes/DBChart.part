@@ -2,26 +2,26 @@
 // aylisDBChart é um DBChart de um form.
 type aylisDBChart struct{ aylis.Component }
 
-func (c aylisDBChart) DataSource() string { return asText(c.Get("data_source")) }
-func (c aylisDBChart) SetDataSource(v string) { c.Set("data_source", v) }
+func (c aylisDBChart) DataSource() *aylis.Component { return c.GetRef("data_source") }
+func (c aylisDBChart) SetDataSource(v aylis.Ref) { c.SetRef("data_source", v) }
 
 func (c aylisDBChart) LabelField() string { return asText(c.Get("label_field")) }
 func (c aylisDBChart) SetLabelField(v string) { c.Set("label_field", v) }
 
-func (c aylisDBChart) ValueFields() string { return asText(c.Get("value_fields")) }
-func (c aylisDBChart) SetValueFields(v string) { c.Set("value_fields", v) }
+func (c aylisDBChart) ValueFields() []string { return asList(c.Get("value_fields")) }
+func (c aylisDBChart) SetValueFields(v []string) { c.Set("value_fields", strings.Join(v, ";")) }
 
-func (c aylisDBChart) Kind() string { return asText(c.Get("kind")) }
-func (c aylisDBChart) SetKind(v string) { c.Set("kind", v) }
+func (c aylisDBChart) Kind() ChartKind { return ChartKind(asText(c.Get("kind"))) }
+func (c aylisDBChart) SetKind(v ChartKind) { c.Set("kind", string(v)) }
 
 func (c aylisDBChart) Title() string { return asText(c.Get("title")) }
 func (c aylisDBChart) SetTitle(v string) { c.Set("title", v) }
 
-func (c aylisDBChart) Labels() string { return asText(c.Get("labels")) }
-func (c aylisDBChart) SetLabels(v string) { c.Set("labels", v) }
+func (c aylisDBChart) Labels() []string { return asList(c.Get("labels")) }
+func (c aylisDBChart) SetLabels(v []string) { c.Set("labels", strings.Join(v, ";")) }
 
-func (c aylisDBChart) Series() string { return asText(c.Get("series")) }
-func (c aylisDBChart) SetSeries(v string) { c.Set("series", v) }
+func (c aylisDBChart) Series() []ChartSeries { return recordsChartSeries(c.Get("series")) }
+func (c aylisDBChart) SetSeries(v []ChartSeries) { c.Set("series", recordsTextChartSeries(v)) }
 
 func (c aylisDBChart) Json() string { return asText(c.Get("json")) }
 func (c aylisDBChart) SetJson(v string) { c.Set("json", v) }
@@ -65,14 +65,14 @@ func (c aylisDBChart) SetClickedSeries(v int64) { c.Set("clicked_series", v) }
 func (c aylisDBChart) ClickedIndex() int64 { return int64(asNumber(c.Get("clicked_index"))) }
 func (c aylisDBChart) SetClickedIndex(v int64) { c.Set("clicked_index", v) }
 
-func (c aylisDBChart) ValueFormat() string { return asText(c.Get("value_format")) }
-func (c aylisDBChart) SetValueFormat(v string) { c.Set("value_format", v) }
+func (c aylisDBChart) ValueFormat() ValueFormat { return ValueFormat(asText(c.Get("value_format"))) }
+func (c aylisDBChart) SetValueFormat(v ValueFormat) { c.Set("value_format", string(v)) }
 
 func (c aylisDBChart) LabelAngle() float64 { return asNumber(c.Get("label_angle")) }
 func (c aylisDBChart) SetLabelAngle(v float64) { c.Set("label_angle", v) }
 
-func (c aylisDBChart) TitleAlign() string { return asText(c.Get("title_align")) }
-func (c aylisDBChart) SetTitleAlign(v string) { c.Set("title_align", v) }
+func (c aylisDBChart) TitleAlign() TitleAlign { return TitleAlign(asText(c.Get("title_align"))) }
+func (c aylisDBChart) SetTitleAlign(v TitleAlign) { c.Set("title_align", string(v)) }
 
 func (c aylisDBChart) TitleBold() bool { return asBool(c.Get("title_bold")) }
 func (c aylisDBChart) SetTitleBold(v bool) { c.Set("title_bold", v) }
@@ -80,8 +80,8 @@ func (c aylisDBChart) SetTitleBold(v bool) { c.Set("title_bold", v) }
 func (c aylisDBChart) AreaOpacity() float64 { return asNumber(c.Get("area_opacity")) }
 func (c aylisDBChart) SetAreaOpacity(v float64) { c.Set("area_opacity", v) }
 
-func (c aylisDBChart) LegendPosition() string { return asText(c.Get("legend_position")) }
-func (c aylisDBChart) SetLegendPosition(v string) { c.Set("legend_position", v) }
+func (c aylisDBChart) LegendPosition() LegendPosition { return LegendPosition(asText(c.Get("legend_position"))) }
+func (c aylisDBChart) SetLegendPosition(v LegendPosition) { c.Set("legend_position", string(v)) }
 
 func (c aylisDBChart) Stacked() bool { return asBool(c.Get("stacked")) }
 func (c aylisDBChart) SetStacked(v bool) { c.Set("stacked", v) }
@@ -107,17 +107,17 @@ func (c aylisDBChart) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisDBChart) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisDBChart) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisDBChart) Align() string { return asText(c.Get("align")) }
-func (c aylisDBChart) SetAlign(v string) { c.Set("align", v) }
+func (c aylisDBChart) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisDBChart) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisDBChart) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisDBChart) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisDBChart) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisDBChart) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisDBChart) Margins() string { return asText(c.Get("margins")) }
-func (c aylisDBChart) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisDBChart) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisDBChart) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisDBChart) Padding() string { return asText(c.Get("padding")) }
-func (c aylisDBChart) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisDBChart) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisDBChart) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisDBChart) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisDBChart) SetVisible(v bool) { c.Set("visible", v) }
@@ -140,6 +140,9 @@ func (c aylisDBChart) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisDBChart) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisDBChart) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisDBChart) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisDBChart) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisDBChart) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisDBChart) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -155,8 +158,8 @@ func (c aylisDBChart) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisDBChart) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisDBChart) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisDBChart) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisDBChart) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisDBChart) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisDBChart) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisDBChart) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisDBChart) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -164,17 +167,23 @@ func (c aylisDBChart) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisDBChart) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisDBChart) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisDBChart) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisDBChart) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisDBChart) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisDBChart) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisDBChart) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisDBChart) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisDBChart) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisDBChart) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisDBChart) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisDBChart) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisDBChart) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisDBChart) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisDBChart) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisDBChart) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisDBChart) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisDBChart) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -197,8 +206,8 @@ func (c aylisDBChart) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisDBChart) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisDBChart) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisDBChart) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisDBChart) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisDBChart) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisDBChart) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisDBChart) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisDBChart) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -218,35 +227,35 @@ func (c aylisDBChart) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisDBChart) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisDBChart) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisDBChart) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisDBChart) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisDBChart) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisDBChart) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisDBChart) Style() string { return asText(c.Get("style")) }
-func (c aylisDBChart) SetStyle(v string) { c.Set("style", v) }
+func (c aylisDBChart) Style() DBChartStyle { return DBChartStyle(asText(c.Get("style"))) }
+func (c aylisDBChart) SetStyle(v DBChartStyle) { c.Set("style", string(v)) }
 
-func (c aylisDBChart) Theme() string { return asText(c.Get("theme")) }
-func (c aylisDBChart) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisDBChart) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisDBChart) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisDBChart) Fill() string { return asText(c.Get("fill")) }
-func (c aylisDBChart) SetFill(v string) { c.Set("fill", v) }
+func (c aylisDBChart) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisDBChart) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisDBChart) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisDBChart) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisDBChart) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisDBChart) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisDBChart) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisDBChart) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisDBChart) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisDBChart) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisDBChart) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisDBChart) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisDBChart) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisDBChart) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisDBChart) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisDBChart) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisDBChart) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisDBChart) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisDBChart) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisDBChart) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisDBChart) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisDBChart) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisDBChart) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisDBChart) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisDBChart) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisDBChart) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisDBChart) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisDBChart) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -254,8 +263,8 @@ func (c aylisDBChart) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisDBChart) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisDBChart) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisDBChart) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisDBChart) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisDBChart) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisDBChart) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisDBChart) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisDBChart) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -278,5 +287,62 @@ func (c aylisDBChart) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisDBChart) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisDBChart) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisDBChart) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisDBChart) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisDBChart) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisDBChart) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisDBChart) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisDBChart) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisDBChart) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisDBChart) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisDBChart) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisDBChart) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisDBChart) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisDBChart) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisDBChart) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisDBChart) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisDBChart) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisDBChart) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisDBChart) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisDBChart) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisDBChart) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisDBChart) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisDBChart) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisDBChart) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisDBChart) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisDBChart) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisDBChart) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisDBChart) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisDBChart) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisDBChart) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisDBChart) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisDBChart) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisDBChart) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisDBChart) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisDBChart) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisDBChart) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisDBChart) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisDBChart) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisDBChart) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisDBChart) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisDBChart) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisDBChart) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisDBChart) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisDBChart) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }

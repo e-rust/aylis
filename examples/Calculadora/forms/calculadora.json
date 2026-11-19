@@ -40,7 +40,11 @@
                   {
                     "class": "ListView",
                     "name": "lvHistorico",
-                    "items": "Ainda não há histórico|",
+                    "items": [
+                      {
+                        "title": "Ainda não há histórico"
+                      }
+                    ],
                     "on_item_click": "historico_item_click",
                     "align": "client"
                   }
@@ -54,7 +58,11 @@
                   {
                     "class": "ListView",
                     "name": "lvMemoria",
-                    "items": "Não há nada salvo na memória|",
+                    "items": [
+                      {
+                        "title": "Não há nada salvo na memória"
+                      }
+                    ],
                     "on_item_click": "memoria_item_click",
                     "align": "client"
                   }

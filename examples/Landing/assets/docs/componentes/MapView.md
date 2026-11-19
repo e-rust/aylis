@@ -15,7 +15,7 @@ Mapa interativo de blocos (como os mapas da web): arrastar, aproximar com a roda
 | `latitude` | Latitude | número | A latitude do centro do mapa, em graus (negativa ao sul). |
 | `longitude` | Longitude | número | A longitude do centro do mapa, em graus (negativa a oeste). |
 | `zoom` | Zoom | número | 1 (o mundo) a 19 (a rua); pode ser fracionário. |
-| `markers` | Marcadores | texto | Marcadores: `lat,lon,rótulo` separados por `;`. |
+| `markers` | Marcadores | lista de `MapMarker` | Os marcadores, em JSON: `[{"latitude": -23.56, "longitude": -46.65, "label": "MASP"}]` (`MapMarker`). |
 | `provider` | Provedor | componente | Quem fornece os blocos (um provedor de mapa, item 25): o endereço e o crédito são os dele; sem ele, os do OpenStreetMap (`TileServer`). |
 
 ## Eventos

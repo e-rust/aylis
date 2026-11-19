@@ -4,52 +4,60 @@ class Timer(AylisComponent):
     """Um Timer de um form."""
 
     @property
-    def interval(self):
+    def interval(self) -> float:
         return self._get("interval")
 
     @interval.setter
-    def interval(self, value):
+    def interval(self, value: float) -> None:
         self._set("interval", value)
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         return self._get("enabled")
 
     @enabled.setter
-    def enabled(self, value):
+    def enabled(self, value: bool) -> None:
         self._set("enabled", value)
 
     @property
-    def precision(self):
-        return self._get("precision")
+    def precision(self) -> TimerPrecision:
+        return _enum(TimerPrecision, self._get("precision"))
 
     @precision.setter
-    def precision(self, value):
-        self._set("precision", value)
+    def precision(self, value: TimerPrecision) -> None:
+        self._set("precision", value.value)
 
     @property
-    def background(self):
+    def background(self) -> bool:
         return self._get("background")
 
     @background.setter
-    def background(self, value):
+    def background(self, value: bool) -> None:
         self._set("background", value)
 
     @property
-    def one_shot(self):
+    def one_shot(self) -> bool:
         return self._get("one_shot")
 
     @one_shot.setter
-    def one_shot(self, value):
+    def one_shot(self, value: bool) -> None:
         self._set("one_shot", value)
 
     @property
-    def drift(self):
+    def on_timer(self) -> str:
+        return self._get("on_timer")
+
+    @on_timer.setter
+    def on_timer(self, value: str) -> None:
+        self._set("on_timer", value)
+
+    @property
+    def drift(self) -> float:
         return self._get("drift")
 
     @drift.setter
-    def drift(self, value):
+    def drift(self, value: float) -> None:
         self._set("drift", value)
 
-    def restart(self):
+    def restart(self) -> None:
         self.aylis.send("invoke", target=self.id, method="restart", args=[])

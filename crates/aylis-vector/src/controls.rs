@@ -307,7 +307,7 @@ impl Component for Svg {
         source: String => "Appearance",
         color: Option<Color> => "Appearance",
         fit: ImageFit => "Appearance",
-        highlight: String => "Appearance",
+        highlight: String as List => "Appearance",
         highlight_color: Option<Color> => "Appearance",
         zoom_to: String => "Appearance",
     }

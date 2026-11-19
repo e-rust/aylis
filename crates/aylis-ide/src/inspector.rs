@@ -889,7 +889,7 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                     }
                 }
             }
-            PropKind::String if class == "Frame" && name == "form" => {
+            PropKind::FormName => {
                 // Os forms do projeto (menos este e os DataModules).
                 let forms = {
                     let st = state.borrow();
@@ -1036,6 +1036,20 @@ pub fn rebuild(ui: &mut Ui, state: &Shared, ids: &Ids) {
                         let title = if name2 == "tab_keys" { "Teclas que fazem o Tab" } else { "Teclas que fazem o Shift+Tab" };
                         dialogs::list_editor(ui, title, items, suggestions, move |ui, list| {
                             commit_to(ui, &name3, Value::String(list.join(";")));
+                        });
+                    });
+                } else if let PropKind::Record(record) | PropKind::RecordList(record) = kind {
+                    // A lista de registros (os itens do ListView, as colunas do DataGrid...): o
+                    // editor de coleção, com um editor por campo.
+                    let more = small_button(ui, l, "…");
+                    let single = matches!(kind, PropKind::Record(_));
+                    let (commit_to, name2, shown) = (commit_to.clone(), name.clone(), shown.clone());
+                    ui.on_click(more, move |ui, _| {
+                        let (commit_to, name3) = (commit_to.clone(), name2.clone());
+                        let title = crate::lang::property_label(&name2);
+                        crate::records_editor::records_editor(ui, &title, record, &shown, single, move |ui, value| {
+                            let value = if single { value.as_array().and_then(|a| a.first()).cloned().unwrap_or(Value::Null) } else { value };
+                            commit_to(ui, &name3, value);
                         });
                     });
                 } else if name == "items" || name == "columns" {

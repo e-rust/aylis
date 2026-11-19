@@ -11,11 +11,17 @@ func (c aylisSeekBar) SetDuration(v float64) { c.Set("duration", v) }
 func (c aylisSeekBar) Buffered() float64 { return asNumber(c.Get("buffered")) }
 func (c aylisSeekBar) SetBuffered(v float64) { c.Set("buffered", v) }
 
-func (c aylisSeekBar) Markers() string { return asText(c.Get("markers")) }
-func (c aylisSeekBar) SetMarkers(v string) { c.Set("markers", v) }
+func (c aylisSeekBar) Markers() []float64 { return asNumbers(c.Get("markers")) }
+func (c aylisSeekBar) SetMarkers(v []float64) { c.Set("markers", numbersText(v)) }
 
 func (c aylisSeekBar) ShowTime() bool { return asBool(c.Get("show_time")) }
 func (c aylisSeekBar) SetShowTime(v bool) { c.Set("show_time", v) }
+
+func (c aylisSeekBar) OnChange() string { return asText(c.Get("on_change")) }
+func (c aylisSeekBar) SetOnChange(v string) { c.Set("on_change", v) }
+
+func (c aylisSeekBar) OnSeek() string { return asText(c.Get("on_seek")) }
+func (c aylisSeekBar) SetOnSeek(v string) { c.Set("on_seek", v) }
 
 func (c aylisSeekBar) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisSeekBar) SetLeft(v float64) { c.Set("left", v) }
@@ -29,17 +35,17 @@ func (c aylisSeekBar) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisSeekBar) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisSeekBar) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisSeekBar) Align() string { return asText(c.Get("align")) }
-func (c aylisSeekBar) SetAlign(v string) { c.Set("align", v) }
+func (c aylisSeekBar) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisSeekBar) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisSeekBar) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisSeekBar) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisSeekBar) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisSeekBar) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisSeekBar) Margins() string { return asText(c.Get("margins")) }
-func (c aylisSeekBar) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisSeekBar) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisSeekBar) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisSeekBar) Padding() string { return asText(c.Get("padding")) }
-func (c aylisSeekBar) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisSeekBar) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisSeekBar) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisSeekBar) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisSeekBar) SetVisible(v bool) { c.Set("visible", v) }
@@ -62,6 +68,9 @@ func (c aylisSeekBar) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisSeekBar) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisSeekBar) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisSeekBar) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisSeekBar) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisSeekBar) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisSeekBar) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -77,8 +86,8 @@ func (c aylisSeekBar) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisSeekBar) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisSeekBar) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisSeekBar) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisSeekBar) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisSeekBar) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisSeekBar) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisSeekBar) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisSeekBar) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -86,17 +95,23 @@ func (c aylisSeekBar) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisSeekBar) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisSeekBar) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisSeekBar) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisSeekBar) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisSeekBar) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisSeekBar) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisSeekBar) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisSeekBar) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisSeekBar) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisSeekBar) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisSeekBar) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisSeekBar) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisSeekBar) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisSeekBar) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisSeekBar) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisSeekBar) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisSeekBar) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisSeekBar) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -119,8 +134,8 @@ func (c aylisSeekBar) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisSeekBar) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisSeekBar) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisSeekBar) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisSeekBar) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisSeekBar) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisSeekBar) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisSeekBar) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisSeekBar) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -140,35 +155,35 @@ func (c aylisSeekBar) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisSeekBar) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisSeekBar) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisSeekBar) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisSeekBar) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisSeekBar) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisSeekBar) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisSeekBar) Style() string { return asText(c.Get("style")) }
-func (c aylisSeekBar) SetStyle(v string) { c.Set("style", v) }
+func (c aylisSeekBar) Style() SeekBarStyle { return SeekBarStyle(asText(c.Get("style"))) }
+func (c aylisSeekBar) SetStyle(v SeekBarStyle) { c.Set("style", string(v)) }
 
-func (c aylisSeekBar) Theme() string { return asText(c.Get("theme")) }
-func (c aylisSeekBar) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisSeekBar) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisSeekBar) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisSeekBar) Fill() string { return asText(c.Get("fill")) }
-func (c aylisSeekBar) SetFill(v string) { c.Set("fill", v) }
+func (c aylisSeekBar) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisSeekBar) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisSeekBar) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisSeekBar) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisSeekBar) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisSeekBar) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisSeekBar) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisSeekBar) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisSeekBar) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisSeekBar) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisSeekBar) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisSeekBar) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisSeekBar) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisSeekBar) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisSeekBar) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisSeekBar) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisSeekBar) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisSeekBar) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisSeekBar) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisSeekBar) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisSeekBar) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisSeekBar) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisSeekBar) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisSeekBar) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisSeekBar) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisSeekBar) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisSeekBar) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisSeekBar) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -176,8 +191,8 @@ func (c aylisSeekBar) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisSeekBar) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisSeekBar) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisSeekBar) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisSeekBar) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisSeekBar) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisSeekBar) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisSeekBar) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisSeekBar) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -200,6 +215,63 @@ func (c aylisSeekBar) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisSeekBar) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisSeekBar) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisSeekBar) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisSeekBar) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisSeekBar) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisSeekBar) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisSeekBar) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisSeekBar) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisSeekBar) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisSeekBar) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisSeekBar) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisSeekBar) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisSeekBar) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisSeekBar) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisSeekBar) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisSeekBar) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisSeekBar) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisSeekBar) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisSeekBar) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisSeekBar) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisSeekBar) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisSeekBar) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisSeekBar) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisSeekBar) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisSeekBar) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisSeekBar) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisSeekBar) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisSeekBar) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisSeekBar) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisSeekBar) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisSeekBar) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisSeekBar) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisSeekBar) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisSeekBar) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisSeekBar) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisSeekBar) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisSeekBar) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisSeekBar) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisSeekBar) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisSeekBar) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisSeekBar) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisSeekBar) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisSeekBar) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisSeekBar) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisSeekBar) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

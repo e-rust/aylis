@@ -2,37 +2,43 @@
 /** Um Timer de um form. */
 export class Timer extends AylisComponent {
     get interval(): Promise<number> {
-        return this.getProp("interval");
+        return this.getProp("interval") as Promise<any>;
     }
     set interval(value: number) {
         this.setProp("interval", value);
     }
     get enabled(): Promise<boolean> {
-        return this.getProp("enabled");
+        return this.getProp("enabled") as Promise<any>;
     }
     set enabled(value: boolean) {
         this.setProp("enabled", value);
     }
-    get precision(): Promise<string> {
-        return this.getProp("precision");
+    get precision(): Promise<TimerPrecision> {
+        return this.getProp("precision") as Promise<any>;
     }
-    set precision(value: string) {
+    set precision(value: TimerPrecision) {
         this.setProp("precision", value);
     }
     get background(): Promise<boolean> {
-        return this.getProp("background");
+        return this.getProp("background") as Promise<any>;
     }
     set background(value: boolean) {
         this.setProp("background", value);
     }
     get oneShot(): Promise<boolean> {
-        return this.getProp("one_shot");
+        return this.getProp("one_shot") as Promise<any>;
     }
     set oneShot(value: boolean) {
         this.setProp("one_shot", value);
     }
+    get onTimer(): Promise<string> {
+        return this.getProp("on_timer") as Promise<any>;
+    }
+    set onTimer(value: string) {
+        this.setProp("on_timer", value);
+    }
     get drift(): Promise<number> {
-        return this.getProp("drift");
+        return this.getProp("drift") as Promise<any>;
     }
     set drift(value: number) {
         this.setProp("drift", value);

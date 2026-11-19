@@ -10,10 +10,7 @@ use aylis_core::{
 
 use crate::dates::Day;
 use crate::leaf_control;
-
-fn split(items: &str) -> Vec<&str> {
-    if items.is_empty() { Vec::new() } else { items.split(';').collect() }
-}
+use crate::records::{from_event, parse_list, to_json};
 
 /// Cor de um evento pelo nome da cor do tema (`primary`, `success`...) ou `#hex`.
 fn event_color(ctx: &PaintCtx<'_>, name: &str) -> Color {
@@ -49,44 +46,94 @@ impl aylis_core::PropEnum for CalendarView {
 /// Um evento lido de `events`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CalendarEvent {
+    /// A posição no `events` (o `index` do `on_event`).
+    pub index: usize,
+    /// O dia, em ISO (`2026-10-25`).
     pub date: String,
     /// Início e fim em minutos do dia (`None` = o dia todo).
     pub time: Option<(u32, u32)>,
     pub title: String,
+    /// A cor: o nome de uma cor do tema (`success`) ou `#RRGGBB`; vazio = `primary`.
     pub color: String,
 }
 
-/// Lê `2026-10-25|Reunião|success` ou `2026-10-25 14:00-15:30|Reunião|success`.
+/// Um evento no JSON do `events` (o [`CALENDAR_EVENT`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct CalendarEventRecord {
+    start: String,
+    end: String,
+    all_day: bool,
+    title: String,
+    color: String,
+}
+
+/// Lê o JSON do `events`: `[{"start": "2026-10-25T14:00", "end": "2026-10-25T15:30", "title":
+/// "Reunião", "color": "success"}, {"start": "2026-10-25", "all_day": true, "title": "Feriado"}]`.
+/// Sem `end`, uma hora; o fim noutro dia vai até a meia-noite. Evento sem `start` válido fica
+/// de fora.
 pub fn parse_events(text: &str) -> Vec<CalendarEvent> {
-    let minutes = |t: &str| {
-        let (h, m) = t.trim().split_once(':')?;
-        Some(h.parse::<u32>().ok()? * 60 + m.parse::<u32>().ok()?)
-    };
-    split(text)
+    parse_list::<CalendarEventRecord>(text)
         .into_iter()
-        .filter_map(|e| {
-            let mut p = e.split('|');
-            let when = p.next()?.trim();
-            let (date, time) = match when.split_once(' ') {
-                Some((d, t)) => {
-                    let (a, b) = t.split_once('-').unwrap_or((t, ""));
-                    let start = minutes(a)?;
-                    let end = minutes(b).unwrap_or(start + 60).max(start + 15);
-                    (d.to_string(), Some((start, end)))
-                }
-                None => (when.to_string(), None),
-            };
-            Some(CalendarEvent { date, time, title: p.next().unwrap_or("").to_string(), color: p.next().unwrap_or("").to_string() })
+        .enumerate()
+        .filter_map(|(index, e)| {
+            let start = aylis_core::DateTime::parse_iso(&e.start)?;
+            let date = start.date.to_string();
+            let time = (!e.all_day).then(|| {
+                let from = start.time.hour() as u32 * 60 + start.time.minute() as u32;
+                let to = match aylis_core::DateTime::parse_iso(&e.end) {
+                    Some(end) if end.date == start.date => end.time.hour() as u32 * 60 + end.time.minute() as u32,
+                    Some(end) if end.date > start.date => 24 * 60,
+                    _ => from + 60,
+                };
+                (from, to.max(from + 15))
+            });
+            Some(CalendarEvent { index, date, time, title: e.title, color: e.color })
         })
         .collect()
 }
 
-/// Calendário de eventos (o `v-calendar`): vista de mês, semana ou dia (`view`). `events`
-/// separados por `;`, cada um `2026-10-25|Reunião|success` (o dia todo) ou
-/// `2026-10-25 14:00-15:30|Reunião|success` (com horário; a cor é opcional). `date` é o
-/// dia de referência (vazio = hoje); as setas andam um mês, uma semana ou um dia.
-/// Eventos: `on_day` (data ISO), `on_event` (`data|título`) e `on_slot` (`data HH:00`, o
-/// horário vazio clicado na semana ou no dia).
+/// O evento clicado no `EventCalendar` (o `on_event`): a posição dele no `events`, o dia e o
+/// título.
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct CalendarEventClick {
+    pub index: i64,
+    #[serde(with = "iso_date")]
+    pub date: Option<aylis_core::Date>,
+    pub title: String,
+}
+
+/// O registro do [`CalendarEventClick`] no acesso tipado.
+pub const CALENDAR_EVENT_CLICK: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "CalendarEventClick",
+    fields: &[("index", aylis_core::PropKind::Int), ("date", aylis_core::PropKind::Date), ("title", aylis_core::PropKind::String)],
+};
+
+impl aylis_core::EventValue for CalendarEventClick {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&CALENDAR_EVENT_CLICK));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        from_event(args)
+    }
+}
+
+/// A data em ISO no JSON (vazio = nenhuma).
+mod iso_date {
+    pub fn serialize<S: serde::Serializer>(date: &Option<aylis_core::Date>, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&date.map(|d| d.to_string()).unwrap_or_default())
+    }
+
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<aylis_core::Date>, D::Error> {
+        let text: String = serde::Deserialize::deserialize(d)?;
+        Ok(aylis_core::Date::parse_iso(&text))
+    }
+}
+
+/// Calendário de eventos (o `v-calendar`): vista de mês, semana ou dia (`view`). `events` é a
+/// lista de registros [`CALENDAR_EVENT`] (veja [`parse_events`]). `date` é o dia de referência
+/// (vazio = hoje); as setas andam um mês, uma semana ou um dia.
+/// Eventos: `on_day` (a data), `on_event` (o [`CalendarEventClick`]: posição, dia e título) e
+/// `on_slot` (o dia e a hora do horário vazio clicado na semana ou no dia).
 pub struct EventCalendar {
     pub base: ControlBase,
     /// A vista: `month` (o mês), `week` (a semana com as horas) ou `day` (um dia).
@@ -95,13 +142,15 @@ pub struct EventCalendar {
     pub date: String,
     /// Mês mostrado (`2026-10`): o mesmo que `date` no dia 1 (mantido para compatibilidade).
     pub month: String,
-    /// Os eventos, separados por `;`: `2026-10-25|Reunião|success` (o dia todo) ou
-    /// `2026-10-25 14:00-15:30|Reunião|success` (com horário; a cor é opcional).
+    /// Os eventos, em JSON: `[{"start": "2026-10-25T14:00", "end": "2026-10-25T15:30",
+    /// "title": "Reunião", "color": "success"}]` (`all_day: true` = o dia todo; a cor é opcional).
     pub events: String,
     /// A primeira hora mostrada nas vistas de semana e de dia (0 a 23).
     pub start_hour: u32,
     /// A hora em que as vistas de semana e de dia terminam (até 24).
     pub end_hour: u32,
+    /// Os eventos lidos do `events` (refeitos só quando ele muda).
+    parsed: Vec<CalendarEvent>,
     hits: RefCell<Vec<(RectF, String, &'static str)>>,
 }
 
@@ -117,6 +166,7 @@ impl Default for EventCalendar {
             events: String::new(),
             start_hour: 7,
             end_hour: 20,
+            parsed: Vec::new(),
             hits: RefCell::new(Vec::new()),
         }
     }
@@ -160,6 +210,9 @@ impl EventCalendar {
     }
 
     fn sync(&mut self, name: &str) {
+        if name == "events" {
+            self.parsed = parse_events(&self.events);
+        }
         // `month` trocado por fora: o dia de referência vai para lá.
         if name == "month" && !self.month.is_empty() && !self.date.starts_with(&self.month) {
             self.date = format!("{}-01", self.month);
@@ -215,7 +268,7 @@ impl EventCalendar {
                     let w = (cr.width - 12.0) / 3.0;
                     let er = RectF::new(cr.x + 6.0 + k as f32 * w, cr.bottom() - 7.0, w - 2.0, 4.0);
                     canvas.fill_rect(er, 2.0, &Brush::Solid(event_color(ctx, &e.color)));
-                    hits.push((RectF::new(er.x, er.y - 4.0, er.width, 10.0), format!("{}|{}", e.date, e.title), "on_event"));
+                    hits.push((RectF::new(er.x, er.y - 4.0, er.width, 10.0), event_click(e), "on_event"));
                 }
                 day_hits.push((cr, iso, "on_day"));
                 continue;
@@ -232,7 +285,7 @@ impl EventCalendar {
                     None => e.title.clone(),
                 };
                 canvas.draw_text(&label, RectF::new(er.x + 4.0, er.y, er.width - 6.0, er.height), &et);
-                hits.push((er, format!("{}|{}", e.date, e.title), "on_event"));
+                hits.push((er, event_click(e), "on_event"));
             }
             if todays.len() > show {
                 let mut more = small.clone();
@@ -297,7 +350,7 @@ impl EventCalendar {
                 let mut et = small.clone();
                 et.color = Color::WHITE;
                 canvas.draw_text(&e.title, RectF::new(er.x + 4.0, er.y, er.width - 6.0, er.height), &et);
-                hits.push((er, format!("{}|{}", e.date, e.title), "on_event"));
+                hits.push((er, event_click(e), "on_event"));
             }
             // Eventos com horário, lado a lado quando se sobrepõem.
             let mut timed: Vec<&CalendarEvent> = events.iter().filter(|e| e.date == iso && e.time.is_some()).collect();
@@ -341,7 +394,7 @@ impl EventCalendar {
                     let label = format!("{:02}:{:02}–{:02}:{:02}", s / 60, s % 60, f / 60, f % 60);
                     canvas.draw_text(&label, RectF::new(er.x + 4.0, er.y + 16.0, er.width - 6.0, 16.0), &tt);
                 }
-                hits.push((er, format!("{}|{}", e.date, e.title), "on_event"));
+                hits.push((er, event_click(e), "on_event"));
             }
             // Horários vazios.
             for (j, h) in (start..end).enumerate() {
@@ -365,17 +418,35 @@ impl EventCalendar {
     }
 }
 
+/// O JSON do `on_event` de um evento.
+fn event_click(e: &CalendarEvent) -> String {
+    to_json(&CalendarEventClick { index: e.index as i64, date: aylis_core::Date::parse_iso(&e.date), title: e.title.clone() })
+}
+
+/// Um evento do `EventCalendar`: início e fim (`2026-10-25T14:00`), o dia todo (`all_day`, o
+/// horário do início não conta), o título e a cor (do tema, `success`, ou `#RRGGBB`).
+pub const CALENDAR_EVENT: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "CalendarEvent",
+    fields: &[
+        ("start", aylis_core::PropKind::DateTime),
+        ("end", aylis_core::PropKind::DateTime),
+        ("all_day", aylis_core::PropKind::Bool),
+        ("title", aylis_core::PropKind::String),
+        ("color", aylis_core::PropKind::Color),
+    ],
+};
+
 impl Component for EventCalendar {
     leaf_control!("EventCalendar");
 
     properties! {
         view: CalendarView => "Appearance",
-        date: String => "Data",
+        date: String as Date => "Data",
         month: String => "Data",
-        events: String => "Data",
+        events: String as RecordList(&CALENDAR_EVENT) => "Data",
         start_hour: u32 => "Appearance",
         end_hour: u32 => "Appearance";
-        events: on_day, on_event, on_slot;
+        events: on_day: Option<aylis_core::Date>, on_event: CalendarEventClick, on_slot: Option<aylis_core::DateTime>;
         on_set: sync
     }
 
@@ -431,11 +502,11 @@ impl Component for EventCalendar {
         for (x, icon) in [(r.x + 10.0, "chevron-left"), (r.right() - 34.0, "chevron-right")] {
             ctx.draw_icon(canvas, icon, RectF::new(x, r.y + 10.0, 22.0, 22.0), theme.color("text_muted"));
         }
-        let events = parse_events(&self.events);
+        let events = &self.parsed;
         let mut hits = Vec::new();
         match self.view {
-            CalendarView::Month => self.paint_month(canvas, ctx, &events, &mut hits),
-            _ => self.paint_days(canvas, ctx, &events, &mut hits),
+            CalendarView::Month => self.paint_month(canvas, ctx, events, &mut hits),
+            _ => self.paint_days(canvas, ctx, events, &mut hits),
         }
         // Os eventos primeiro (por cima de dias e horários no clique).
         hits.sort_by_key(|(_, _, kind)| if *kind == "on_event" { 0 } else { 1 });
@@ -454,32 +525,46 @@ fn now_minutes() -> u32 {
 // ===========================================================================
 
 /// Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa
-/// (`on_select` com o comando). `items` separados por `;`, cada um `nome|atalho|ícone`
-/// (atalho e ícone opcionais).
+/// (`on_select` com o nome do comando). `items` é a lista de registros [`PALETTE_COMMAND`]
+/// (`[{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}]`; atalho e ícone opcionais).
 pub struct CommandPalette {
     pub base: ControlBase,
-    /// Os comandos, separados por `;`, cada um `nome|atalho|ícone` (atalho e ícone opcionais).
+    /// Os comandos, em JSON: `[{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}]`.
     pub items: String,
     /// O texto digitado na busca: a lista mostra só os comandos que o contêm. Vazio: todos.
     pub query: String,
     /// O texto apagado da busca vazia.
     pub placeholder: String,
+    /// Os comandos lidos do `items` (refeitos só quando ele muda).
+    commands: Vec<PaletteCommandRecord>,
     active: usize,
     rows: RefCell<Vec<(RectF, usize)>>,
+}
+
+/// Um comando no JSON do `items` (o [`PALETTE_COMMAND`]).
+#[derive(serde::Deserialize, Default, Clone)]
+#[serde(default)]
+struct PaletteCommandRecord {
+    name: String,
+    shortcut: String,
+    icon: String,
 }
 
 impl Default for CommandPalette {
     fn default() -> Self {
         let mut base = ControlBase::new(480.0, 320.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self {
+        let mut p = Self {
             base,
-            items: "Abrir arquivo|Ctrl+O|folder;Salvar|Ctrl+S|download;Procurar|Ctrl+F|search;Configurações|Ctrl+,|settings;Sair|Alt+F4|logout".into(),
+            items: r#"[{"name":"Abrir arquivo","shortcut":"Ctrl+O","icon":"folder"},{"name":"Salvar","shortcut":"Ctrl+S","icon":"download"},{"name":"Procurar","shortcut":"Ctrl+F","icon":"search"},{"name":"Configurações","shortcut":"Ctrl+,","icon":"settings"},{"name":"Sair","shortcut":"Alt+F4","icon":"logout"}]"#.into(),
             query: String::new(),
             placeholder: "Digite um comando…".into(),
+            commands: Vec::new(),
             active: 0,
             rows: RefCell::new(Vec::new()),
-        }
+        };
+        p.sync("items");
+        p
     }
 }
 
@@ -489,14 +574,17 @@ impl CommandPalette {
     /// Os comandos que combinam com a busca: (nome, atalho, ícone).
     pub fn matches(&self) -> Vec<(String, String, String)> {
         let q = crate::autocomplete::fold(self.query.trim());
-        split(&self.items)
-            .into_iter()
-            .map(|i| {
-                let mut p = i.split('|');
-                (p.next().unwrap_or("").to_string(), p.next().unwrap_or("").to_string(), p.next().unwrap_or("").to_string())
-            })
-            .filter(|(name, _, _)| q.is_empty() || crate::autocomplete::fold(name).contains(&q))
+        self.commands
+            .iter()
+            .filter(|c| q.is_empty() || crate::autocomplete::fold(&c.name).contains(&q))
+            .map(|c| (c.name.clone(), c.shortcut.clone(), c.icon.clone()))
             .collect()
+    }
+
+    fn sync(&mut self, name: &str) {
+        if name == "items" {
+            self.commands = parse_list(&self.items);
+        }
     }
 
     fn run(&mut self, ctx: &mut EventCtx<'_>, i: usize) {
@@ -506,14 +594,18 @@ impl CommandPalette {
     }
 }
 
+/// Um comando do `CommandPalette`: o nome, o atalho mostrado à direita e o ícone.
+pub const PALETTE_COMMAND: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "PaletteCommand", fields: &[("name", aylis_core::PropKind::String), ("shortcut", aylis_core::PropKind::String), ("icon", aylis_core::PropKind::String)] };
+
 impl Component for CommandPalette {
     leaf_control!("CommandPalette");
 
     properties! {
-        items: String => "Data",
+        items: String as RecordList(&PALETTE_COMMAND) => "Data",
         query: String => "Data",
         placeholder: String => "Appearance";
-        events: on_select
+        events: on_select: String;
+        on_set: sync
     }
 
     fn accepts_text(&self) -> bool {

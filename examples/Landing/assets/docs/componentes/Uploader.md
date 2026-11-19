@@ -26,8 +26,8 @@ O envio de arquivos (`QUploader`): o cabeçalho com o título, o "+" (escolher, 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `files` | Arquivos | texto | Os caminhos dos arquivos escolhidos, separados por `;` (vazio: nenhum). |
-| `progress` | Progresso | texto | O andamento de cada arquivo, de 0 a 1, separados por `;` na ordem dos `files` (`0.5;1`). |
+| `files` | Arquivos | lista de textos (separados por `;`) | Os caminhos dos arquivos escolhidos, separados por `;` (vazio: nenhum). |
+| `progress` | Progresso | lista de números (separados por `;`) | O andamento de cada arquivo, de 0 a 1, separados por `;` na ordem dos `files` (`0.5;1`). |
 
 ## Eventos
 

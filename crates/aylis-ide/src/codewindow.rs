@@ -725,9 +725,8 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
     });
     ui.on(tab_bar, "on_reorder", move |ui, sender, args| {
         select_of(ui, sender);
-        let aylis_core::EventArgs::Text(t) = args else { return };
-        let mut parts = t.split(',').filter_map(|p| p.trim().parse::<usize>().ok());
-        let (Some(from), Some(to)) = (parts.next(), parts.next()) else { return };
+        let Some(moved) = <aylis_controls::TabMove as aylis_core::EventValue>::from_args(args) else { return };
+        let (Ok(from), Ok(to)) = (usize::try_from(moved.from), usize::try_from(moved.to)) else { return };
         let active_now = ui.get::<TabStrip>(tab_bar).map(|s| s.tab_index.max(0) as usize).unwrap_or(0);
         with_editor(ui, |ed| {
             if from < ed.tabs.len() && to < ed.tabs.len() {

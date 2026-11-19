@@ -1254,6 +1254,9 @@ struct FormWindow {
     /// O mouse está sobre ela (os pedaços de um form: o `pointer_leave` só sai quando o mouse
     /// sai de todos).
     hovered: bool,
+    /// Windows: mostrada encoberta (`DWMWA_CLOAK`) e descoberta depois do próximo quadro
+    /// pintado (o form que nasceu escondido aparecendo sem o branco).
+    uncloak_after_draw: bool,
 }
 
 struct App {
@@ -1461,11 +1464,27 @@ impl App {
                     win32::set_shown(window, false);
                 }
                 WindowCommand::Show => {
+                    // Escondida até aqui (nunca pintada, ou com o quadro de antes): aparece com o
+                    // próximo quadro, encoberta até ele.
+                    #[cfg(windows)]
+                    let hidden_before = window.is_visible() == Some(false);
+                    #[cfg(windows)]
+                    if hidden_before {
+                        win32::set_cloaked(window, true);
+                    }
                     window.set_visible(true);
                     window.set_minimized(false);
                     #[cfg(windows)]
                     win32::set_shown(window, true);
                     bring_to_front(&self.ui, form, window);
+                    #[cfg(windows)]
+                    if hidden_before {
+                        window.request_redraw();
+                        self.ui.request_repaint();
+                        if let Some(i) = self.windows.iter().position(|w| w.form == form && !w.is_extra()) {
+                            self.windows[i].uncloak_after_draw = true;
+                        }
+                    }
                 }
                 WindowCommand::SetFullscreen(on) => {
                     #[cfg(windows)]
@@ -2467,12 +2486,11 @@ impl App {
         let accessible = setting("AYLIS_ACCESSIBILITY").as_deref() != Some("0");
         #[cfg(not(web))]
         let hidden = self.ui.take_start_hidden(form);
-        // Sem a animação do Windows (o `animation` do `WindowSettings`): a janela nasce
-        // escondida para o atributo valer já na primeira aparição.
+        // A janela nasce escondida e só aparece com o primeiro quadro pintado (sem o branco da
+        // abertura): o AccessKit também se liga antes de ela aparecer (exigência dele), e a falta
+        // da animação do Windows (`animation` do `WindowSettings`) já vale na primeira aparição.
         #[cfg(not(web))]
-        let animate = self.window_animation(form);
-        #[cfg(not(web))]
-        let attributes = if (accessible || hidden || !animate) && !cfg!(mobile) { attributes.with_visible(false) } else { attributes };
+        let attributes = if !cfg!(mobile) { attributes.with_visible(false) } else { attributes };
         // Windows: um form modal tem como dono a janela principal e fica sempre na frente
         // dela, mesmo aberto antes de ela aparecer (a pergunta de confiança ao abrir a IDE).
         // Um modal com a janela principal minimizada: ela volta antes (o modal bloqueia a
@@ -2503,6 +2521,9 @@ impl App {
         // tarefas.
         #[cfg(windows)]
         win32::attach(&window, form, &self.win_proxy);
+        // O fundo que a janela mostra antes do primeiro quadro: a cor do form.
+        #[cfg(windows)]
+        win32::set_background(form, self.erase_color(form));
         #[cfg(windows)]
         win32::set_window_corners(&window, self.corner_preference(form));
         #[cfg(windows)]
@@ -2521,16 +2542,14 @@ impl App {
             window.set_minimized(true);
         }
         #[cfg(not(web))]
-        let access = accessible.then(|| {
-            let adapter = access::Adapter::new(event_loop, &window, self.ui.poster());
-            if !hidden && !spanned {
-                window.set_visible(true);
-            }
-            adapter
-        });
-        // Sem o AccessKit, a janela escondida só pela falta de animação aparece agora.
+        let access = accessible.then(|| access::Adapter::new(event_loop, &window, self.ui.poster()));
+        // A que vai aparecer: com o primeiro quadro (no fim do `open_window`). No Windows ela já
+        // fica mostrada, mas encoberta: a swap chain de uma janela escondida descarta o quadro.
         #[cfg(not(web))]
-        if !accessible && !animate && !hidden && !spanned && !cfg!(mobile) {
+        let reveal = !hidden && !spanned && !cfg!(mobile);
+        #[cfg(windows)]
+        if reveal {
+            win32::set_cloaked(&window, true);
             window.set_visible(true);
         }
         // Nas gravações de uso: qual renderizador cada janela usa (e a placa, no OpenGL e no
@@ -2578,6 +2597,7 @@ impl App {
             span: None,
             focused: false,
             hovered: false,
+            uncloak_after_draw: false,
         });
         let index = self.windows.len() - 1;
         if spanned {
@@ -2597,6 +2617,19 @@ impl App {
         // `aylis::platform::win::hwnd`): o `on_show` vem antes dela, então quem precisa da
         // janela (a barra de título, a posição) usa este (o relatório do Tabernáculo, R03).
         self.ui.fire(form, "on_window_created", &aylis_core::EventArgs::None);
+        // O primeiro quadro, e só então a janela aparece (sem o branco da abertura).
+        #[cfg(not(web))]
+        if reveal {
+            if let Err(e) = self.redraw(index) {
+                self.ui.report(&aylis_core::activity::Activity::Custom { name: "primeiro_quadro", value: &e.to_string() });
+            }
+            if let Some(w) = self.windows.get(index) {
+                #[cfg(windows)]
+                win32::set_cloaked(&w.window, false);
+                #[cfg(not(windows))]
+                w.window.set_visible(true);
+            }
+        }
         Ok(())
     }
 
@@ -2833,6 +2866,22 @@ impl App {
         event_loop.exit();
     }
 
+    /// A cor com que a janela do form é apagada antes do quadro (a do fundo dele; a do tema se
+    /// ele não pinta fundo); `None` na janela transparente.
+    #[cfg(windows)]
+    fn erase_color(&self, form: ComponentId) -> Option<aylis_core::Color> {
+        if self.see_through(form) {
+            return None;
+        }
+        // O `fill` do próprio form vale mais que o do estilo dele.
+        let own = match self.ui.get_prop(form, "fill") {
+            Ok(PropValue::Color(c)) if c.a == 255 => Some(c),
+            _ => None,
+        };
+        let fill = own.unwrap_or_else(|| self.ui.background_color(form));
+        Some(if fill.a == 255 { fill } else { self.ui.theme().color("background") })
+    }
+
     /// A animação do sistema na janela do form (o `animation` do `WindowSettings`).
     #[cfg_attr(any(web, mobile), allow(dead_code))]
     fn window_animation(&self, form: ComponentId) -> bool {
@@ -2857,7 +2906,7 @@ impl App {
             return aylis_core::gpu::PresentMode::Transparent;
         }
         match self.ui.get_prop(form, "present") {
-            Ok(PropValue::String(text)) => aylis_core::gpu::present_for(&text),
+            Ok(PropValue::String(text) | PropValue::Enum(text)) => aylis_core::gpu::present_for(&text),
             _ => aylis_core::gpu::present(),
         }
     }
@@ -3099,6 +3148,9 @@ impl App {
         self.ui.update_layout();
         // A janela transparente começa de nada: o que o form não pinta deixa ver o que está atrás.
         let background = if self.see_through(self.windows[index].form) { aylis_core::Color::TRANSPARENT } else { self.ui.theme().color("background") };
+        // A cor do apagar do Windows acompanha o form (o tema pode ter mudado).
+        #[cfg(windows)]
+        win32::set_background(self.windows[index].form, self.erase_color(self.windows[index].form));
         let capture = self.snapshot_dir.is_some();
         let floating_mode = self.floating_mode();
         let w = &mut self.windows[index];
@@ -3177,6 +3229,12 @@ impl App {
         }
         self.ui.frame_cost_measured(elapsed / 1000.0);
         self.ui.frame_drawn();
+        // A janela mostrada encoberta aparece já com este quadro.
+        #[cfg(windows)]
+        if let Some(w) = self.windows.get_mut(index).filter(|w| w.uncloak_after_draw) {
+            w.uncloak_after_draw = false;
+            win32::set_cloaked(&w.window, false);
+        }
         if let (Some(dir), Some(rgba)) = (&self.snapshot_dir, frame) {
             save_snapshot(dir, self.ui.name(form).filter(|n| !n.is_empty()).unwrap_or("form"), &rgba, size);
         }

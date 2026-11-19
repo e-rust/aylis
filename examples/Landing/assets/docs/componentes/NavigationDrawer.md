@@ -13,7 +13,7 @@ Gaveta de navegação: fica à esquerda (`align` Left), aberta ou fechada (`open
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `title` | Título | texto | O título no topo da gaveta aberta; vazio: sem título. |
-| `icons` | Ícones | texto | Os ícones dos destinos, na mesma ordem, separados por `;`. |
+| `icons` | Ícones | lista de textos (separados por `;`) | Os ícones dos destinos, na mesma ordem, separados por `;`. |
 
 ### Comportamento
 
@@ -26,7 +26,7 @@ Gaveta de navegação: fica à esquerda (`align` Left), aberta ou fechada (`open
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os destinos da lista, separados por `;`. |
+| `items` | Itens | lista de textos (separados por `;`) | Os destinos da lista, separados por `;`. |
 | `item_index` | Item escolhido | inteiro | O destino escolhido (a partir de 0); -1: nenhum. |
 
 ### Posição e tamanho

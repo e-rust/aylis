@@ -128,7 +128,7 @@ impl Component for UrlScheme {
         description: String => "Behavior",
         active: bool => "Behavior",
         bring_to_front: bool => "Behavior";
-        events: on_link, on_error
+        events: on_link: String, on_error: String
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {

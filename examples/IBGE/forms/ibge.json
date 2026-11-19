@@ -137,7 +137,12 @@
         "read_only": true,
         "index_field_names": "nome",
         "master_source": "dsEstados",
-        "master_fields": "uf_id=id",
+        "master_fields": [
+          {
+            "field": "uf_id",
+            "master_field": "id"
+          }
+        ],
         "after_scroll": "municipio_mudou",
         "children": [
           {
@@ -295,7 +300,12 @@
         "read_only": true,
         "index_field_names": "nome",
         "master_source": "dsMunicipios",
-        "master_fields": "municipio_id=id",
+        "master_fields": [
+          {
+            "field": "municipio_id",
+            "master_field": "id"
+          }
+        ],
         "children": [
           {
             "class": "Field",
@@ -404,7 +414,23 @@
                 "class": "DataGrid",
                 "name": "grdEstados",
                 "data_source": "dsEstados",
-                "columns": "sigla;nome;populacao;municipios;regiao",
+                "columns": [
+                  {
+                    "field": "sigla"
+                  },
+                  {
+                    "field": "nome"
+                  },
+                  {
+                    "field": "populacao"
+                  },
+                  {
+                    "field": "municipios"
+                  },
+                  {
+                    "field": "regiao"
+                  }
+                ],
                 "read_only": true,
                 "filter_row": true,
                 "incremental_search": true,
@@ -423,7 +449,14 @@
                 "class": "DataGrid",
                 "name": "grdDistritos",
                 "data_source": "dsDistritos",
-                "columns": "nome;id",
+                "columns": [
+                  {
+                    "field": "nome"
+                  },
+                  {
+                    "field": "id"
+                  }
+                ],
                 "read_only": true,
                 "filter_row": true,
                 "align": "client"
@@ -441,7 +474,23 @@
                 "class": "DataGrid",
                 "name": "grdMunicipios",
                 "data_source": "dsMunicipios",
-                "columns": "nome;populacao;area;densidade;distritos",
+                "columns": [
+                  {
+                    "field": "nome"
+                  },
+                  {
+                    "field": "populacao"
+                  },
+                  {
+                    "field": "area"
+                  },
+                  {
+                    "field": "densidade"
+                  },
+                  {
+                    "field": "distritos"
+                  }
+                ],
                 "read_only": true,
                 "filter_row": true,
                 "incremental_search": true,
@@ -1051,7 +1100,12 @@
                 "value_fields": "habitantes",
                 "title": "População do município (estimativas e Censo 2022)",
                 "labels": "",
-                "series": "habitantes=",
+                "series": [
+                  {
+                    "name": "habitantes",
+                    "values": []
+                  }
+                ],
                 "legend": false,
                 "width": 330,
                 "align": "left"
@@ -1065,7 +1119,12 @@
                 "kind": "horizontal_bar",
                 "title": "Os 10 municípios mais populosos do estado",
                 "labels": "",
-                "series": "habitantes=",
+                "series": [
+                  {
+                    "name": "habitantes",
+                    "values": []
+                  }
+                ],
                 "legend": false,
                 "width": 330,
                 "align": "left",
@@ -1080,7 +1139,12 @@
                 "kind": "bar",
                 "title": "População por estado (Censo 2022)",
                 "labels": "",
-                "series": "populacao=",
+                "series": [
+                  {
+                    "name": "populacao",
+                    "values": []
+                  }
+                ],
                 "legend": false,
                 "align": "client",
                 "margins": [8, 0, 0, 0]

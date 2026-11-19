@@ -1,18 +1,24 @@
   { Um PaintCanvas de um form. }
   TPaintCanvas = class(TAylisComponent)
   private
-    function GetTool: string;
-    procedure SetTool(Value: string);
-    function GetColor: string;
-    procedure SetColor(Value: string);
-    function GetBackColor: string;
-    procedure SetBackColor(Value: string);
+    function GetTool: TPaintTool;
+    procedure SetTool(Value: TPaintTool);
+    function GetColor: TAylisColor;
+    procedure SetColor(Value: TAylisColor);
+    function GetBackColor: TAylisColor;
+    procedure SetBackColor(Value: TAylisColor);
     function GetBrushSize: Int64;
     procedure SetBrushSize(Value: Int64);
     function GetFilled: Boolean;
     procedure SetFilled(Value: Boolean);
     function GetZoom: Double;
     procedure SetZoom(Value: Double);
+    function GetOnChange: string;
+    procedure SetOnChange(Value: string);
+    function GetOnPick: string;
+    procedure SetOnPick(Value: string);
+    function GetOnCursor: string;
+    procedure SetOnCursor(Value: string);
     function GetLeft: Double;
     procedure SetLeft(Value: Double);
     function GetTop: Double;
@@ -21,14 +27,14 @@
     procedure SetWidth(Value: Double);
     function GetHeight: Double;
     procedure SetHeight(Value: Double);
-    function GetAlign: string;
-    procedure SetAlign(Value: string);
-    function GetAnchors: string;
-    procedure SetAnchors(Value: string);
-    function GetMargins: string;
-    procedure SetMargins(Value: string);
-    function GetPadding: string;
-    procedure SetPadding(Value: string);
+    function GetAlign: TAlign;
+    procedure SetAlign(Value: TAlign);
+    function GetAnchors: TAnchorSet;
+    procedure SetAnchors(Value: TAnchorSet);
+    function GetMargins: TAylisBounds;
+    procedure SetMargins(Value: TAylisBounds);
+    function GetPadding: TAylisBounds;
+    procedure SetPadding(Value: TAylisBounds);
     function GetVisible: Boolean;
     procedure SetVisible(Value: Boolean);
     function GetEnabled: Boolean;
@@ -43,6 +49,8 @@
     procedure SetTranslate(Value: Boolean);
     function GetCapturesWheel: Boolean;
     procedure SetCapturesWheel(Value: Boolean);
+    function GetCapturesGesture: Boolean;
+    procedure SetCapturesGesture(Value: Boolean);
     function GetCanFocus: Boolean;
     procedure SetCanFocus(Value: Boolean);
     function GetDraggable: Boolean;
@@ -53,20 +61,24 @@
     procedure SetDragData(Value: string);
     function GetDragLabel: string;
     procedure SetDragLabel(Value: string);
-    function GetDragImage: string;
-    procedure SetDragImage(Value: string);
+    function GetDragImage: TAylisComponent;
+    procedure SetDragImage(Value: TAylisComponent);
     function GetDropTypes: string;
     procedure SetDropTypes(Value: string);
     function GetTabStop: Boolean;
     procedure SetTabStop(Value: Boolean);
-    function GetCursor: string;
-    procedure SetCursor(Value: string);
+    function GetCursor: TCursorShape;
+    procedure SetCursor(Value: TCursorShape);
     function GetOpacity: Double;
     procedure SetOpacity(Value: Double);
+    function GetBlendMode: TBlendMode;
+    procedure SetBlendMode(Value: TBlendMode);
     function GetCacheLayer: Boolean;
     procedure SetCacheLayer(Value: Boolean);
     function GetRotation: Double;
     procedure SetRotation(Value: Double);
+    function GetScale: Double;
+    procedure SetScale(Value: Double);
     function GetTranslateX: Double;
     procedure SetTranslateX(Value: Double);
     function GetTranslateY: Double;
@@ -81,8 +93,8 @@
     procedure SetMinHeight(Value: Double);
     function GetMaxHeight: Double;
     procedure SetMaxHeight(Value: Double);
-    function GetSelfAlign: string;
-    procedure SetSelfAlign(Value: string);
+    function GetSelfAlign: TSelfAlign;
+    procedure SetSelfAlign(Value: TSelfAlign);
     function GetAutoSize: Boolean;
     procedure SetAutoSize(Value: Boolean);
     function GetColumnSpan: Int64;
@@ -95,32 +107,32 @@
     procedure SetRowSpan(Value: Int64);
     function GetGrow: Double;
     procedure SetGrow(Value: Double);
-    function GetShadow: string;
-    procedure SetShadow(Value: string);
-    function GetStyle: string;
-    procedure SetStyle(Value: string);
-    function GetTheme: string;
-    procedure SetTheme(Value: string);
-    function GetFill: string;
-    procedure SetFill(Value: string);
-    function GetBorderColor: string;
-    procedure SetBorderColor(Value: string);
-    function GetTextColor: string;
-    procedure SetTextColor(Value: string);
-    function GetAccentColor: string;
-    procedure SetAccentColor(Value: string);
-    function GetSuccessColor: string;
-    procedure SetSuccessColor(Value: string);
-    function GetWarningColor: string;
-    procedure SetWarningColor(Value: string);
-    function GetDangerColor: string;
-    procedure SetDangerColor(Value: string);
+    function GetShadow: TAylisShadow;
+    procedure SetShadow(Value: TAylisShadow);
+    function GetStyle: TPaintCanvasStyle;
+    procedure SetStyle(Value: TPaintCanvasStyle);
+    function GetTheme: TThemeName;
+    procedure SetTheme(Value: TThemeName);
+    function GetFill: TAylisColor;
+    procedure SetFill(Value: TAylisColor);
+    function GetBorderColor: TAylisColor;
+    procedure SetBorderColor(Value: TAylisColor);
+    function GetTextColor: TAylisColor;
+    procedure SetTextColor(Value: TAylisColor);
+    function GetAccentColor: TAylisColor;
+    procedure SetAccentColor(Value: TAylisColor);
+    function GetSuccessColor: TAylisColor;
+    procedure SetSuccessColor(Value: TAylisColor);
+    function GetWarningColor: TAylisColor;
+    procedure SetWarningColor(Value: TAylisColor);
+    function GetDangerColor: TAylisColor;
+    procedure SetDangerColor(Value: TAylisColor);
     function GetFontFamily: string;
     procedure SetFontFamily(Value: string);
     function GetFontSize: Double;
     procedure SetFontSize(Value: Double);
-    function GetFontWeight: string;
-    procedure SetFontWeight(Value: string);
+    function GetFontWeight: TFontWeight;
+    procedure SetFontWeight(Value: TFontWeight);
     function GetFontItalic: Boolean;
     procedure SetFontItalic(Value: Boolean);
     function GetFontUnderline: Boolean;
@@ -135,14 +147,52 @@
     procedure SetTagString(Value: string);
     function GetAccessibleName: string;
     procedure SetAccessibleName(Value: string);
-    function GetPopupMenu: string;
-    procedure SetPopupMenu(Value: string);
+    function GetPopupMenu: TAylisComponent;
+    procedure SetPopupMenu(Value: TAylisComponent);
+    function GetOnClick: string;
+    procedure SetOnClick(Value: string);
+    function GetOnDblClick: string;
+    procedure SetOnDblClick(Value: string);
+    function GetOnLongPress: string;
+    procedure SetOnLongPress(Value: string);
+    function GetOnPointerDown: string;
+    procedure SetOnPointerDown(Value: string);
+    function GetOnPointerUp: string;
+    procedure SetOnPointerUp(Value: string);
+    function GetOnPointerMove: string;
+    procedure SetOnPointerMove(Value: string);
+    function GetOnPointerEnter: string;
+    procedure SetOnPointerEnter(Value: string);
+    function GetOnPointerLeave: string;
+    procedure SetOnPointerLeave(Value: string);
+    function GetOnWheel: string;
+    procedure SetOnWheel(Value: string);
+    function GetOnGesture: string;
+    procedure SetOnGesture(Value: string);
+    function GetOnSwipe: string;
+    procedure SetOnSwipe(Value: string);
+    function GetOnKeyUp: string;
+    procedure SetOnKeyUp(Value: string);
+    function GetOnEnter: string;
+    procedure SetOnEnter(Value: string);
+    function GetOnExit: string;
+    procedure SetOnExit(Value: string);
+    function GetOnResize: string;
+    procedure SetOnResize(Value: string);
+    function GetOnDragMove: string;
+    procedure SetOnDragMove(Value: string);
+    function GetOnDragLeave: string;
+    procedure SetOnDragLeave(Value: string);
+    function GetOnDragDrop: string;
+    procedure SetOnDragDrop(Value: string);
+    function GetOnDragEnd: string;
+    procedure SetOnDragEnd(Value: string);
   public
     function Undo: Boolean;
     function Redo: Boolean;
     function CanUndo: Boolean;
     function CanRedo: Boolean;
-    function Size: string;
+    function Size: TImageSize;
     function Checksum: string;
     function Clear: Boolean;
     function Resize(AWidth: Int64; AHeight: Int64): Boolean;
@@ -157,20 +207,23 @@
     function Delete: Boolean;
     function Deselect: Boolean;
     procedure SetFocus;
-    property Tool: string read GetTool write SetTool;
-    property Color: string read GetColor write SetColor;
-    property BackColor: string read GetBackColor write SetBackColor;
+    property Tool: TPaintTool read GetTool write SetTool;
+    property Color: TAylisColor read GetColor write SetColor;
+    property BackColor: TAylisColor read GetBackColor write SetBackColor;
     property BrushSize: Int64 read GetBrushSize write SetBrushSize;
     property Filled: Boolean read GetFilled write SetFilled;
     property Zoom: Double read GetZoom write SetZoom;
+    property OnChange: string read GetOnChange write SetOnChange;
+    property OnPick: string read GetOnPick write SetOnPick;
+    property OnCursor: string read GetOnCursor write SetOnCursor;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
     property Width: Double read GetWidth write SetWidth;
     property Height: Double read GetHeight write SetHeight;
-    property Align: string read GetAlign write SetAlign;
-    property Anchors: string read GetAnchors write SetAnchors;
-    property Margins: string read GetMargins write SetMargins;
-    property Padding: string read GetPadding write SetPadding;
+    property Align: TAlign read GetAlign write SetAlign;
+    property Anchors: TAnchorSet read GetAnchors write SetAnchors;
+    property Margins: TAylisBounds read GetMargins write SetMargins;
+    property Padding: TAylisBounds read GetPadding write SetPadding;
     property Visible: Boolean read GetVisible write SetVisible;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property HitTest: Boolean read GetHitTest write SetHitTest;
@@ -178,18 +231,21 @@
     property InheritState: Boolean read GetInheritState write SetInheritState;
     property Translate: Boolean read GetTranslate write SetTranslate;
     property CapturesWheel: Boolean read GetCapturesWheel write SetCapturesWheel;
+    property CapturesGesture: Boolean read GetCapturesGesture write SetCapturesGesture;
     property CanFocus: Boolean read GetCanFocus write SetCanFocus;
     property Draggable: Boolean read GetDraggable write SetDraggable;
     property AcceptsDrops: Boolean read GetAcceptsDrops write SetAcceptsDrops;
     property DragData: string read GetDragData write SetDragData;
     property DragLabel: string read GetDragLabel write SetDragLabel;
-    property DragImage: string read GetDragImage write SetDragImage;
+    property DragImage: TAylisComponent read GetDragImage write SetDragImage;
     property DropTypes: string read GetDropTypes write SetDropTypes;
     property TabStop: Boolean read GetTabStop write SetTabStop;
-    property Cursor: string read GetCursor write SetCursor;
+    property Cursor: TCursorShape read GetCursor write SetCursor;
     property Opacity: Double read GetOpacity write SetOpacity;
+    property BlendMode: TBlendMode read GetBlendMode write SetBlendMode;
     property CacheLayer: Boolean read GetCacheLayer write SetCacheLayer;
     property Rotation: Double read GetRotation write SetRotation;
+    property Scale: Double read GetScale write SetScale;
     property TranslateX: Double read GetTranslateX write SetTranslateX;
     property TranslateY: Double read GetTranslateY write SetTranslateY;
     property AspectRatio: Double read GetAspectRatio write SetAspectRatio;
@@ -197,26 +253,26 @@
     property MinWidth: Double read GetMinWidth write SetMinWidth;
     property MinHeight: Double read GetMinHeight write SetMinHeight;
     property MaxHeight: Double read GetMaxHeight write SetMaxHeight;
-    property SelfAlign: string read GetSelfAlign write SetSelfAlign;
+    property SelfAlign: TSelfAlign read GetSelfAlign write SetSelfAlign;
     property AutoSize: Boolean read GetAutoSize write SetAutoSize;
     property ColumnSpan: Int64 read GetColumnSpan write SetColumnSpan;
     property GridRow: Int64 read GetGridRow write SetGridRow;
     property GridColumn: Int64 read GetGridColumn write SetGridColumn;
     property RowSpan: Int64 read GetRowSpan write SetRowSpan;
     property Grow: Double read GetGrow write SetGrow;
-    property Shadow: string read GetShadow write SetShadow;
-    property Style: string read GetStyle write SetStyle;
-    property Theme: string read GetTheme write SetTheme;
-    property Fill: string read GetFill write SetFill;
-    property BorderColor: string read GetBorderColor write SetBorderColor;
-    property TextColor: string read GetTextColor write SetTextColor;
-    property AccentColor: string read GetAccentColor write SetAccentColor;
-    property SuccessColor: string read GetSuccessColor write SetSuccessColor;
-    property WarningColor: string read GetWarningColor write SetWarningColor;
-    property DangerColor: string read GetDangerColor write SetDangerColor;
+    property Shadow: TAylisShadow read GetShadow write SetShadow;
+    property Style: TPaintCanvasStyle read GetStyle write SetStyle;
+    property Theme: TThemeName read GetTheme write SetTheme;
+    property Fill: TAylisColor read GetFill write SetFill;
+    property BorderColor: TAylisColor read GetBorderColor write SetBorderColor;
+    property TextColor: TAylisColor read GetTextColor write SetTextColor;
+    property AccentColor: TAylisColor read GetAccentColor write SetAccentColor;
+    property SuccessColor: TAylisColor read GetSuccessColor write SetSuccessColor;
+    property WarningColor: TAylisColor read GetWarningColor write SetWarningColor;
+    property DangerColor: TAylisColor read GetDangerColor write SetDangerColor;
     property FontFamily: string read GetFontFamily write SetFontFamily;
     property FontSize: Double read GetFontSize write SetFontSize;
-    property FontWeight: string read GetFontWeight write SetFontWeight;
+    property FontWeight: TFontWeight read GetFontWeight write SetFontWeight;
     property FontItalic: Boolean read GetFontItalic write SetFontItalic;
     property FontUnderline: Boolean read GetFontUnderline write SetFontUnderline;
     property FontStrikeout: Boolean read GetFontStrikeout write SetFontStrikeout;
@@ -224,38 +280,57 @@
     property Tag: Int64 read GetTag write SetTag;
     property TagString: string read GetTagString write SetTagString;
     property AccessibleName: string read GetAccessibleName write SetAccessibleName;
-    property PopupMenu: string read GetPopupMenu write SetPopupMenu;
+    property PopupMenu: TAylisComponent read GetPopupMenu write SetPopupMenu;
+    property OnClick: string read GetOnClick write SetOnClick;
+    property OnDblClick: string read GetOnDblClick write SetOnDblClick;
+    property OnLongPress: string read GetOnLongPress write SetOnLongPress;
+    property OnPointerDown: string read GetOnPointerDown write SetOnPointerDown;
+    property OnPointerUp: string read GetOnPointerUp write SetOnPointerUp;
+    property OnPointerMove: string read GetOnPointerMove write SetOnPointerMove;
+    property OnPointerEnter: string read GetOnPointerEnter write SetOnPointerEnter;
+    property OnPointerLeave: string read GetOnPointerLeave write SetOnPointerLeave;
+    property OnWheel: string read GetOnWheel write SetOnWheel;
+    property OnGesture: string read GetOnGesture write SetOnGesture;
+    property OnSwipe: string read GetOnSwipe write SetOnSwipe;
+    property OnKeyUp: string read GetOnKeyUp write SetOnKeyUp;
+    property OnEnter: string read GetOnEnter write SetOnEnter;
+    property OnExit: string read GetOnExit write SetOnExit;
+    property OnResize: string read GetOnResize write SetOnResize;
+    property OnDragMove: string read GetOnDragMove write SetOnDragMove;
+    property OnDragLeave: string read GetOnDragLeave write SetOnDragLeave;
+    property OnDragDrop: string read GetOnDragDrop write SetOnDragDrop;
+    property OnDragEnd: string read GetOnDragEnd write SetOnDragEnd;
   end;
 
 
-function TPaintCanvas.GetTool: string;
+function TPaintCanvas.GetTool: TPaintTool;
 begin
-  Result := AsText(GetProp('tool'));
+  Result := PaintToolOf(GetProp('tool'));
 end;
 
-procedure TPaintCanvas.SetTool(Value: string);
+procedure TPaintCanvas.SetTool(Value: TPaintTool);
 begin
-  SetProp('tool', TJSONString.Create(Value));
+  SetProp('tool', TJSONString.Create(PaintToolNames[Value]));
 end;
 
-function TPaintCanvas.GetColor: string;
+function TPaintCanvas.GetColor: TAylisColor;
 begin
-  Result := AsText(GetProp('color'));
+  Result := AylisColorFromJSON(GetProp('color'));
 end;
 
-procedure TPaintCanvas.SetColor(Value: string);
+procedure TPaintCanvas.SetColor(Value: TAylisColor);
 begin
-  SetProp('color', TJSONString.Create(Value));
+  SetProp('color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetBackColor: string;
+function TPaintCanvas.GetBackColor: TAylisColor;
 begin
-  Result := AsText(GetProp('back_color'));
+  Result := AylisColorFromJSON(GetProp('back_color'));
 end;
 
-procedure TPaintCanvas.SetBackColor(Value: string);
+procedure TPaintCanvas.SetBackColor(Value: TAylisColor);
 begin
-  SetProp('back_color', TJSONString.Create(Value));
+  SetProp('back_color', AylisColorToJSON(Value));
 end;
 
 function TPaintCanvas.GetBrushSize: Int64;
@@ -286,6 +361,36 @@ end;
 procedure TPaintCanvas.SetZoom(Value: Double);
 begin
   SetProp('zoom', TJSONFloatNumber.Create(Value));
+end;
+
+function TPaintCanvas.GetOnChange: string;
+begin
+  Result := AsText(GetProp('on_change'));
+end;
+
+procedure TPaintCanvas.SetOnChange(Value: string);
+begin
+  SetProp('on_change', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPick: string;
+begin
+  Result := AsText(GetProp('on_pick'));
+end;
+
+procedure TPaintCanvas.SetOnPick(Value: string);
+begin
+  SetProp('on_pick', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnCursor: string;
+begin
+  Result := AsText(GetProp('on_cursor'));
+end;
+
+procedure TPaintCanvas.SetOnCursor(Value: string);
+begin
+  SetProp('on_cursor', TJSONString.Create(Value));
 end;
 
 function TPaintCanvas.GetLeft: Double;
@@ -328,44 +433,44 @@ begin
   SetProp('height', TJSONFloatNumber.Create(Value));
 end;
 
-function TPaintCanvas.GetAlign: string;
+function TPaintCanvas.GetAlign: TAlign;
 begin
-  Result := AsText(GetProp('align'));
+  Result := AlignOf(GetProp('align'));
 end;
 
-procedure TPaintCanvas.SetAlign(Value: string);
+procedure TPaintCanvas.SetAlign(Value: TAlign);
 begin
-  SetProp('align', TJSONString.Create(Value));
+  SetProp('align', TJSONString.Create(AlignNames[Value]));
 end;
 
-function TPaintCanvas.GetAnchors: string;
+function TPaintCanvas.GetAnchors: TAnchorSet;
 begin
-  Result := AsText(GetProp('anchors'));
+  Result := AnchorSetOf(GetProp('anchors'));
 end;
 
-procedure TPaintCanvas.SetAnchors(Value: string);
+procedure TPaintCanvas.SetAnchors(Value: TAnchorSet);
 begin
-  SetProp('anchors', TJSONString.Create(Value));
+  SetProp('anchors', AnchorSetToJSON(Value));
 end;
 
-function TPaintCanvas.GetMargins: string;
+function TPaintCanvas.GetMargins: TAylisBounds;
 begin
-  Result := AsText(GetProp('margins'));
+  Result := AylisBoundsFromJSON(GetProp('margins'));
 end;
 
-procedure TPaintCanvas.SetMargins(Value: string);
+procedure TPaintCanvas.SetMargins(Value: TAylisBounds);
 begin
-  SetProp('margins', TJSONString.Create(Value));
+  SetProp('margins', AylisBoundsToJSON(Value));
 end;
 
-function TPaintCanvas.GetPadding: string;
+function TPaintCanvas.GetPadding: TAylisBounds;
 begin
-  Result := AsText(GetProp('padding'));
+  Result := AylisBoundsFromJSON(GetProp('padding'));
 end;
 
-procedure TPaintCanvas.SetPadding(Value: string);
+procedure TPaintCanvas.SetPadding(Value: TAylisBounds);
 begin
-  SetProp('padding', TJSONString.Create(Value));
+  SetProp('padding', AylisBoundsToJSON(Value));
 end;
 
 function TPaintCanvas.GetVisible: Boolean;
@@ -438,6 +543,16 @@ begin
   SetProp('captures_wheel', TJSONBoolean.Create(Value));
 end;
 
+function TPaintCanvas.GetCapturesGesture: Boolean;
+begin
+  Result := GetProp('captures_gesture').AsBoolean;
+end;
+
+procedure TPaintCanvas.SetCapturesGesture(Value: Boolean);
+begin
+  SetProp('captures_gesture', TJSONBoolean.Create(Value));
+end;
+
 function TPaintCanvas.GetCanFocus: Boolean;
 begin
   Result := GetProp('can_focus').AsBoolean;
@@ -488,14 +603,14 @@ begin
   SetProp('drag_label', TJSONString.Create(Value));
 end;
 
-function TPaintCanvas.GetDragImage: string;
+function TPaintCanvas.GetDragImage: TAylisComponent;
 begin
-  Result := AsText(GetProp('drag_image'));
+  Result := GetRef('drag_image');
 end;
 
-procedure TPaintCanvas.SetDragImage(Value: string);
+procedure TPaintCanvas.SetDragImage(Value: TAylisComponent);
 begin
-  SetProp('drag_image', TJSONString.Create(Value));
+  SetRef('drag_image', Value);
 end;
 
 function TPaintCanvas.GetDropTypes: string;
@@ -518,14 +633,14 @@ begin
   SetProp('tab_stop', TJSONBoolean.Create(Value));
 end;
 
-function TPaintCanvas.GetCursor: string;
+function TPaintCanvas.GetCursor: TCursorShape;
 begin
-  Result := AsText(GetProp('cursor'));
+  Result := CursorShapeOf(GetProp('cursor'));
 end;
 
-procedure TPaintCanvas.SetCursor(Value: string);
+procedure TPaintCanvas.SetCursor(Value: TCursorShape);
 begin
-  SetProp('cursor', TJSONString.Create(Value));
+  SetProp('cursor', TJSONString.Create(CursorShapeNames[Value]));
 end;
 
 function TPaintCanvas.GetOpacity: Double;
@@ -536,6 +651,16 @@ end;
 procedure TPaintCanvas.SetOpacity(Value: Double);
 begin
   SetProp('opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TPaintCanvas.GetBlendMode: TBlendMode;
+begin
+  Result := BlendModeOf(GetProp('blend_mode'));
+end;
+
+procedure TPaintCanvas.SetBlendMode(Value: TBlendMode);
+begin
+  SetProp('blend_mode', TJSONString.Create(BlendModeNames[Value]));
 end;
 
 function TPaintCanvas.GetCacheLayer: Boolean;
@@ -556,6 +681,16 @@ end;
 procedure TPaintCanvas.SetRotation(Value: Double);
 begin
   SetProp('rotation', TJSONFloatNumber.Create(Value));
+end;
+
+function TPaintCanvas.GetScale: Double;
+begin
+  Result := GetProp('scale').AsFloat;
+end;
+
+procedure TPaintCanvas.SetScale(Value: Double);
+begin
+  SetProp('scale', TJSONFloatNumber.Create(Value));
 end;
 
 function TPaintCanvas.GetTranslateX: Double;
@@ -628,14 +763,14 @@ begin
   SetProp('max_height', TJSONFloatNumber.Create(Value));
 end;
 
-function TPaintCanvas.GetSelfAlign: string;
+function TPaintCanvas.GetSelfAlign: TSelfAlign;
 begin
-  Result := AsText(GetProp('self_align'));
+  Result := SelfAlignOf(GetProp('self_align'));
 end;
 
-procedure TPaintCanvas.SetSelfAlign(Value: string);
+procedure TPaintCanvas.SetSelfAlign(Value: TSelfAlign);
 begin
-  SetProp('self_align', TJSONString.Create(Value));
+  SetProp('self_align', TJSONString.Create(SelfAlignNames[Value]));
 end;
 
 function TPaintCanvas.GetAutoSize: Boolean;
@@ -698,104 +833,104 @@ begin
   SetProp('grow', TJSONFloatNumber.Create(Value));
 end;
 
-function TPaintCanvas.GetShadow: string;
+function TPaintCanvas.GetShadow: TAylisShadow;
 begin
-  Result := AsText(GetProp('shadow'));
+  Result := AylisShadowFromJSON(GetProp('shadow'));
 end;
 
-procedure TPaintCanvas.SetShadow(Value: string);
+procedure TPaintCanvas.SetShadow(Value: TAylisShadow);
 begin
-  SetProp('shadow', TJSONString.Create(Value));
+  SetProp('shadow', AylisShadowToJSON(Value));
 end;
 
-function TPaintCanvas.GetStyle: string;
+function TPaintCanvas.GetStyle: TPaintCanvasStyle;
 begin
-  Result := AsText(GetProp('style'));
+  Result := PaintCanvasStyleOf(GetProp('style'));
 end;
 
-procedure TPaintCanvas.SetStyle(Value: string);
+procedure TPaintCanvas.SetStyle(Value: TPaintCanvasStyle);
 begin
-  SetProp('style', TJSONString.Create(Value));
+  SetProp('style', TJSONString.Create(PaintCanvasStyleNames[Value]));
 end;
 
-function TPaintCanvas.GetTheme: string;
+function TPaintCanvas.GetTheme: TThemeName;
 begin
-  Result := AsText(GetProp('theme'));
+  Result := ThemeNameOf(GetProp('theme'));
 end;
 
-procedure TPaintCanvas.SetTheme(Value: string);
+procedure TPaintCanvas.SetTheme(Value: TThemeName);
 begin
-  SetProp('theme', TJSONString.Create(Value));
+  SetProp('theme', TJSONString.Create(ThemeNameNames[Value]));
 end;
 
-function TPaintCanvas.GetFill: string;
+function TPaintCanvas.GetFill: TAylisColor;
 begin
-  Result := AsText(GetProp('fill'));
+  Result := AylisColorFromJSON(GetProp('fill'));
 end;
 
-procedure TPaintCanvas.SetFill(Value: string);
+procedure TPaintCanvas.SetFill(Value: TAylisColor);
 begin
-  SetProp('fill', TJSONString.Create(Value));
+  SetProp('fill', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetBorderColor: string;
+function TPaintCanvas.GetBorderColor: TAylisColor;
 begin
-  Result := AsText(GetProp('border_color'));
+  Result := AylisColorFromJSON(GetProp('border_color'));
 end;
 
-procedure TPaintCanvas.SetBorderColor(Value: string);
+procedure TPaintCanvas.SetBorderColor(Value: TAylisColor);
 begin
-  SetProp('border_color', TJSONString.Create(Value));
+  SetProp('border_color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetTextColor: string;
+function TPaintCanvas.GetTextColor: TAylisColor;
 begin
-  Result := AsText(GetProp('text_color'));
+  Result := AylisColorFromJSON(GetProp('text_color'));
 end;
 
-procedure TPaintCanvas.SetTextColor(Value: string);
+procedure TPaintCanvas.SetTextColor(Value: TAylisColor);
 begin
-  SetProp('text_color', TJSONString.Create(Value));
+  SetProp('text_color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetAccentColor: string;
+function TPaintCanvas.GetAccentColor: TAylisColor;
 begin
-  Result := AsText(GetProp('accent_color'));
+  Result := AylisColorFromJSON(GetProp('accent_color'));
 end;
 
-procedure TPaintCanvas.SetAccentColor(Value: string);
+procedure TPaintCanvas.SetAccentColor(Value: TAylisColor);
 begin
-  SetProp('accent_color', TJSONString.Create(Value));
+  SetProp('accent_color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetSuccessColor: string;
+function TPaintCanvas.GetSuccessColor: TAylisColor;
 begin
-  Result := AsText(GetProp('success_color'));
+  Result := AylisColorFromJSON(GetProp('success_color'));
 end;
 
-procedure TPaintCanvas.SetSuccessColor(Value: string);
+procedure TPaintCanvas.SetSuccessColor(Value: TAylisColor);
 begin
-  SetProp('success_color', TJSONString.Create(Value));
+  SetProp('success_color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetWarningColor: string;
+function TPaintCanvas.GetWarningColor: TAylisColor;
 begin
-  Result := AsText(GetProp('warning_color'));
+  Result := AylisColorFromJSON(GetProp('warning_color'));
 end;
 
-procedure TPaintCanvas.SetWarningColor(Value: string);
+procedure TPaintCanvas.SetWarningColor(Value: TAylisColor);
 begin
-  SetProp('warning_color', TJSONString.Create(Value));
+  SetProp('warning_color', AylisColorToJSON(Value));
 end;
 
-function TPaintCanvas.GetDangerColor: string;
+function TPaintCanvas.GetDangerColor: TAylisColor;
 begin
-  Result := AsText(GetProp('danger_color'));
+  Result := AylisColorFromJSON(GetProp('danger_color'));
 end;
 
-procedure TPaintCanvas.SetDangerColor(Value: string);
+procedure TPaintCanvas.SetDangerColor(Value: TAylisColor);
 begin
-  SetProp('danger_color', TJSONString.Create(Value));
+  SetProp('danger_color', AylisColorToJSON(Value));
 end;
 
 function TPaintCanvas.GetFontFamily: string;
@@ -818,14 +953,14 @@ begin
   SetProp('font_size', TJSONFloatNumber.Create(Value));
 end;
 
-function TPaintCanvas.GetFontWeight: string;
+function TPaintCanvas.GetFontWeight: TFontWeight;
 begin
-  Result := AsText(GetProp('font_weight'));
+  Result := FontWeightOf(GetProp('font_weight'));
 end;
 
-procedure TPaintCanvas.SetFontWeight(Value: string);
+procedure TPaintCanvas.SetFontWeight(Value: TFontWeight);
 begin
-  SetProp('font_weight', TJSONString.Create(Value));
+  SetProp('font_weight', TJSONString.Create(FontWeightNames[Value]));
 end;
 
 function TPaintCanvas.GetFontItalic: Boolean;
@@ -898,14 +1033,204 @@ begin
   SetProp('accessible_name', TJSONString.Create(Value));
 end;
 
-function TPaintCanvas.GetPopupMenu: string;
+function TPaintCanvas.GetPopupMenu: TAylisComponent;
 begin
-  Result := AsText(GetProp('popup_menu'));
+  Result := GetRef('popup_menu');
 end;
 
-procedure TPaintCanvas.SetPopupMenu(Value: string);
+procedure TPaintCanvas.SetPopupMenu(Value: TAylisComponent);
 begin
-  SetProp('popup_menu', TJSONString.Create(Value));
+  SetRef('popup_menu', Value);
+end;
+
+function TPaintCanvas.GetOnClick: string;
+begin
+  Result := AsText(GetProp('on_click'));
+end;
+
+procedure TPaintCanvas.SetOnClick(Value: string);
+begin
+  SetProp('on_click', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnDblClick: string;
+begin
+  Result := AsText(GetProp('on_dbl_click'));
+end;
+
+procedure TPaintCanvas.SetOnDblClick(Value: string);
+begin
+  SetProp('on_dbl_click', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnLongPress: string;
+begin
+  Result := AsText(GetProp('on_long_press'));
+end;
+
+procedure TPaintCanvas.SetOnLongPress(Value: string);
+begin
+  SetProp('on_long_press', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPointerDown: string;
+begin
+  Result := AsText(GetProp('on_pointer_down'));
+end;
+
+procedure TPaintCanvas.SetOnPointerDown(Value: string);
+begin
+  SetProp('on_pointer_down', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPointerUp: string;
+begin
+  Result := AsText(GetProp('on_pointer_up'));
+end;
+
+procedure TPaintCanvas.SetOnPointerUp(Value: string);
+begin
+  SetProp('on_pointer_up', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPointerMove: string;
+begin
+  Result := AsText(GetProp('on_pointer_move'));
+end;
+
+procedure TPaintCanvas.SetOnPointerMove(Value: string);
+begin
+  SetProp('on_pointer_move', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPointerEnter: string;
+begin
+  Result := AsText(GetProp('on_pointer_enter'));
+end;
+
+procedure TPaintCanvas.SetOnPointerEnter(Value: string);
+begin
+  SetProp('on_pointer_enter', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnPointerLeave: string;
+begin
+  Result := AsText(GetProp('on_pointer_leave'));
+end;
+
+procedure TPaintCanvas.SetOnPointerLeave(Value: string);
+begin
+  SetProp('on_pointer_leave', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnWheel: string;
+begin
+  Result := AsText(GetProp('on_wheel'));
+end;
+
+procedure TPaintCanvas.SetOnWheel(Value: string);
+begin
+  SetProp('on_wheel', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnGesture: string;
+begin
+  Result := AsText(GetProp('on_gesture'));
+end;
+
+procedure TPaintCanvas.SetOnGesture(Value: string);
+begin
+  SetProp('on_gesture', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnSwipe: string;
+begin
+  Result := AsText(GetProp('on_swipe'));
+end;
+
+procedure TPaintCanvas.SetOnSwipe(Value: string);
+begin
+  SetProp('on_swipe', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnKeyUp: string;
+begin
+  Result := AsText(GetProp('on_key_up'));
+end;
+
+procedure TPaintCanvas.SetOnKeyUp(Value: string);
+begin
+  SetProp('on_key_up', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnEnter: string;
+begin
+  Result := AsText(GetProp('on_enter'));
+end;
+
+procedure TPaintCanvas.SetOnEnter(Value: string);
+begin
+  SetProp('on_enter', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnExit: string;
+begin
+  Result := AsText(GetProp('on_exit'));
+end;
+
+procedure TPaintCanvas.SetOnExit(Value: string);
+begin
+  SetProp('on_exit', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnResize: string;
+begin
+  Result := AsText(GetProp('on_resize'));
+end;
+
+procedure TPaintCanvas.SetOnResize(Value: string);
+begin
+  SetProp('on_resize', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnDragMove: string;
+begin
+  Result := AsText(GetProp('on_drag_move'));
+end;
+
+procedure TPaintCanvas.SetOnDragMove(Value: string);
+begin
+  SetProp('on_drag_move', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnDragLeave: string;
+begin
+  Result := AsText(GetProp('on_drag_leave'));
+end;
+
+procedure TPaintCanvas.SetOnDragLeave(Value: string);
+begin
+  SetProp('on_drag_leave', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnDragDrop: string;
+begin
+  Result := AsText(GetProp('on_drag_drop'));
+end;
+
+procedure TPaintCanvas.SetOnDragDrop(Value: string);
+begin
+  SetProp('on_drag_drop', TJSONString.Create(Value));
+end;
+
+function TPaintCanvas.GetOnDragEnd: string;
+begin
+  Result := AsText(GetProp('on_drag_end'));
+end;
+
+procedure TPaintCanvas.SetOnDragEnd(Value: string);
+begin
+  SetProp('on_drag_end', TJSONString.Create(Value));
 end;
 
 function TPaintCanvas.Undo: Boolean;
@@ -928,9 +1253,9 @@ begin
   Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'can_redo', 'args', TJSONArray.Create])).AsBoolean;
 end;
 
-function TPaintCanvas.Size: string;
+function TPaintCanvas.Size: TImageSize;
 begin
-  Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'size', 'args', TJSONArray.Create])));
+  Result := ImageSizeFromText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'size', 'args', TJSONArray.Create])));
 end;
 
 function TPaintCanvas.Checksum: string;

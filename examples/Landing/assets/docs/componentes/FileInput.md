@@ -25,7 +25,7 @@ Campo de arquivo: mostra os nomes escolhidos; o clique abre o diálogo do sistem
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `files` | Arquivos | texto | Os caminhos escolhidos, separados por `;`; vazio: nenhum. |
+| `files` | Arquivos | lista de textos (separados por `;`) | Os caminhos escolhidos, separados por `;`; vazio: nenhum. |
 
 ## Eventos
 
@@ -47,8 +47,8 @@ E o handler, um método do form (`self.FileInput1` já é um `FileInput`):
 ```rust
 impl FrmPrincipal {
     pub fn file_input1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.FileInput1.files(ui);
-        self.FileInput1.set_files(ui, format!("{atual}!"));
+        let atual = self.FileInput1.filter(ui);
+        self.FileInput1.set_filter(ui, format!("{atual}!"));
     }
 }
 ```

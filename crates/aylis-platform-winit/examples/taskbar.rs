@@ -26,8 +26,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     bar.progress = TaskbarProgress::Normal;
     bar.value = 40.0;
     bar.badge = "5".into();
-    bar.buttons = format!("{data}previous.png|Anterior;{data}play.png|Tocar;{data}next.png|Próxima");
-    bar.tasks = "Nova mensagem|--nova;Abrir caixa de entrada|--entrada".into();
+    bar.buttons = serde_json::json!([
+        {"icon": format!("{data}previous.png"), "hint": "Anterior"},
+        {"icon": format!("{data}play.png"), "hint": "Tocar"},
+        {"icon": format!("{data}next.png"), "hint": "Próxima"},
+    ])
+    .to_string();
+    bar.tasks = r#"[{"name":"Nova mensagem","arguments":"--nova"},{"name":"Abrir caixa de entrada","arguments":"--entrada"}]"#.into();
     let bar = ui.add(bar, form);
     ui.on(bar, "on_button", move |ui, _, args| {
         let _ = ui.set_prop(status, "text", format!("Botão da miniatura: {args:?}"));

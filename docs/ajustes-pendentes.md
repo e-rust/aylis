@@ -13,6 +13,212 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 19/11/2026: a janela sem o branco da abertura e a tela cheia**
+
+- Pedido: "a janela exibida antes de ser pintada o primeiro quadro, fazendo o app piscar em
+  branco na abertura" e "mandar uma janela ser fullscreen ou já nascer fullscreen tem que ser
+  verificado se funciona corretamente".
+  - Feito: a janela nasce escondida e só aparece com o primeiro quadro pintado (`open_window`
+    pinta antes de mostrar). No Windows ela fica mostrada mas encoberta (`DWMWA_CLOAK`; a swap
+    chain de uma janela escondida descarta o quadro) e é descoberta depois do quadro, com um
+    `DwmFlush`; o form que nasce escondido e aparece depois (o `show`) também. E o fundo da
+    janela (`WM_ERASEBKGND`) é apagado na cor do form: o que aparece por baixo da swap chain
+    antes do quadro era branco.
+  - Conferido no Windows (Direct2D e Skia na CPU), com o exemplo `window_start` gravado da tela
+    a ~30 qps (`gdigrab`): nos modos normal, já em tela cheia, tela cheia pedida depois e de
+    volta ao normal, a área da janela passa do fundo direto para a cor do form, sem quadro
+    branco (antes, no Direct2D, a superfície da janela aparecia branca). A tela cheia, de
+    nascença e pedida depois, cobre o monitor inteiro com a barra de tarefas
+    (`GetWindowRect` = `(0,0)-(3840,2160)`, o form com 2560×1440 lógicos na escala 1,5), e a
+    volta ao normal devolve o tamanho e o lugar de antes.
+  - Falta: a tela cheia num segundo monitor (a máquina tem um só) e o Linux e o macOS (lá a
+    janela nasce escondida e aparece com o primeiro quadro; não conferido): em
+    [testes-em-dispositivos.md](testes-em-dispositivos.md).
+
+**Ajustes de 18/11/2026: o acesso tipado o mais tipado possível**
+
+- [ ] Pedido do autor em 18/11: "esses nomes não deveriam estar tipados?" (o `window_state` como
+  texto) e "mapeie tudo que poderia estar tipado também e não está.. devemos manter o mais
+  tipado possível"; do mapa, "Fazer todas" as etapas. Em andamento:
+  - Feito (etapas 1 e 2): o catálogo leva o tipo Rust e os valores dos enums e dos conjuntos
+    (`enum(WindowState:normal|...)`); o gerador das 8 linguagens dá um tipo a cada um (o Rust usa
+    o do framework, pelo `aylis::prelude`; os 17 que faltavam lá foram exportados, e
+    `crates/aylis/tests/catalog_enums.rs`, gerado com o catálogo, confere). A cor (`Color`:
+    RGBA ou um nome do tema), as margens (`Bounds`) e a referência a outro componente (o objeto
+    dele; o protocolo aceita o id e devolve id, nome e classe com `"ref": true`) ganharam tipo
+    nos 7 clientes. `GENERATOR_VERSION` 14.
+  - Feito (etapa 4, a parte simples): os tipos `Date`, `Time`, `DateTime`, `List`,
+    `NumberList` e `ColorList` do `PropKind` (com `as` nos campos de texto, sem mudar o que o
+    form grava); o `Date`/`Time`/`DateTime` passou do `aylis-data` para o `aylis-core`. No
+    acesso tipado: a data de cada linguagem (`Option<Date>`, `datetime.date`, `DateOnly?`,
+    `LocalDate`, `time.Time`, `TDateTime`...) e listas de texto, número e cor, em 60
+    propriedades. As escolhas fixas que eram texto viraram enum: `Chart.legend_position`,
+    `title_align`, `value_format` e `Form.present` (vazio continua valendo). `GENERATOR_VERSION` 15.
+  - Conferido: os testes do gerador, o teste das apps (Calculadora, Paint, Player e IBGE dão o
+    mesmo estado nas 8 linguagens, com o Paint passando a cor e a ferramenta tipadas) e um
+    projeto com DateEdit, TimeEdit, ChipGroup e ActivityRings compilado e rodado nas 8.
+  - Feito (etapa 3, decisão do autor em 19/11: "A: change the signature"): o handler recebe quem
+    disparou na classe dele e o valor do evento no tipo. Cada componente declara o que o
+    evento leva (`events: on_change: f64` no `properties!`; o trait `EventValue` tira o valor,
+    o `DateRange` é o do Calendar com `range`), e o catálogo grava (`"on_change":
+    "event:date"`): 143 eventos declarados pelo que os componentes mandam, 129 ainda sem tipo
+    (ficam com a assinatura de sempre). O esqueleto novo nasce tipado nas 8 linguagens; o
+    handler de antes (o evento inteiro) continua sendo chamado do jeito dele: no Rust, o
+    `form_handler` aceita as duas assinaturas (o compilador escolhe); nas outras, a geração lê a
+    assinatura no código do usuário e escreve a chamada certa no registro (no Pascal, um
+    despacho por form em `aylisforms.pas`). Nas outras linguagens, o ponteiro, a roda, o gesto,
+    o deslize, a tecla e o intervalo de datas ainda vão com a assinatura de sempre, e também o
+    handler ligado a componentes de classes diferentes. `GENERATOR_VERSION` 16.
+  - Conferido: um projeto com Button, DateEdit e TrackBar, os handlers tipados e um do jeito
+    de antes, rodado nas 8 linguagens (o clique, a data que chega no tipo e o de antes); os
+    testes do núcleo (`typed_handlers`) e do gerador (`handlers_get_the_sender_and_the_value_typed`).
+  - Feito (etapa 3, 19/11): 122 eventos declarados (115 nos controles, a sombra e a curva dos
+    editores com `EventValue` novos, os três `on_error` sem disparo achado como texto). Nas
+    outras linguagens: o ponteiro, a roda, o gesto, o deslize e a tecla chegam como registros
+    (`PointerEvent`, `KeyEvent`... com os campos que o protocolo já manda); o intervalo de datas
+    como `DateRange` (início e fim nas datas de cada linguagem); o componente do
+    `TabStrip.on_new_window` pelo id (menos no Pascal, onde o objeto não teria dono); o handler
+    ligado a componentes de classes diferentes recebe quem disparou como o componente genérico
+    (no C# e no C++, o evento ganhou o id de quem disparou; no C++, `Component::name()`). No
+    caminho: o Java tomava `PointerEvent value` pela assinatura antiga (procurava `Event `).
+    `GENERATOR_VERSION` 23.
+  - Conferido (etapa 3): o projeto de teste nas 8 linguagens (o `on_pointer_down` de um Panel
+    pelo arrasto do roteiro, `clicks:1`; um handler num Button e num CheckBox, com o nome de
+    quem disparou; o `Calendar` com intervalo, `d2-5`).
+  - Feito (etapa 3, 19/11, "Mini linguagem em estrutura"): os eventos com texto estruturado
+    levam um registro (struct do framework no Rust, com `EventValue`; um registro gerado nas
+    outras): `MasterChange`, `ServerQuery`, `GetTextRequest`, `SetTextRequest`, `ExceptionEvent`,
+    `CropSelection`, `CalendarEventClick`, `PermissionResult`, `SharedContent`, `MapPoint`,
+    `BluetoothDevice`, `BluetoothValue`, `TabMove`, `SwipeAction`, `ColumnLayout`. O
+    `OptionGroup.on_change` leva sempre a lista dos marcados (no rádio, um só; o `selected`
+    acompanha o `item_index`).
+  - Falta (etapa 3): o `WmiQuery.on_event` (as propriedades vêm da classe WMI da consulta, sem
+    campos fixos), o `Chart.on_click` (`série;índice`: é o `on_click` comum) e o `on_pick`/`on_cursor`
+    do `PaintCanvas` (texto da barra de status) seguem texto. Os eventos-pergunta e os do
+    `EventInterceptor` têm a assinatura deles.
+  - Feito (19/11): os exemplos na assinatura tipada (Calculadora, Paint, Player e IBGE nas 8
+    linguagens; Abas, OlaNome, Relatorios, TesteAparelho, GradeGigante, Galeria e Estresse3D em
+    Rust; ProcessamentoAssincrono em Pascal). Ficam como estavam só os eventos-pergunta
+    (`form_key_down`, `form_close_query`).
+  - Feito (etapa 5, 19/11): a sombra (`Shadow`), a curva (`Easing`) e os pontos (`PointList`,
+    o `Polygon.points`) tipados; os enums nos argumentos e nos resultados dos métodos
+    (`Permissions.state(Permission) → PermissionState`, `Screen.set_orientation`,
+    `Biometrics.availability`; o `MethodInfo` ganhou o tipo Rust deles); os registros
+    (`RecordInfo`, `$records` no catálogo): o `Screen.monitors`/`monitor` devolve o `Monitor`
+    com os `VideoMode`; os itens com campos num texto (`PropKind::Items`): o `ListView.items`,
+    o `Timeline.items`, o `EventCalendar.events`, o `CommandPalette.items` e os `buttons`/`tasks`
+    do `Taskbar` viram listas do registro; o `Form.gpu_adapters` virou lista. Nos 7 clientes,
+    `Shadow`, `Easing` e `Point`. No caminho, o `FloatAnimation.property` quebrava o Python (o
+    nome escondia o `@property`). `GENERATOR_VERSION` 21.
+  - Conferido (etapa 5): o projeto de teste nas 8 linguagens (a sombra e os pontos gravados e
+    lidos de volta, a lista do `Screen.monitors`, os itens do `ListView` com um item a mais) e a
+    leitura do `Monitor` com dados de verdade em Python; o teste
+    `structures_records_and_method_enums_are_typed`.
+  - Feito (etapa 5, 19/11, "Sem compatibilidade com versão anterior, Mini linguagem em
+    estrutura"): as mini-linguagens viraram listas de registros (`PropKind::RecordList`; no
+    form, JSON de verdade, e no fio, o texto do JSON). Saiu o `PropKind::Items` (`a|b;c`). Os
+    registros podem ter cor, data, listas, enum e registro dentro (o `TreeNode` tem os filhos;
+    `RecordInfo` compara e mostra pelo nome). Convertidos: os itens do `ListView`, os nós do
+    `TreeView`, o `Timeline`, o `EventCalendar`, o `CommandPalette`, o `Taskbar`, o menu do
+    `TrayIcon`, as ações da `Notification`, as linhas do `MarkupTable`, as abas do `TabStrip`
+    (a macro aceita `as` nas calculadas), o `VirtualList.item_bindings` (era `bindings`, o mesmo
+    nome da ligação de dados do form), os marcadores do mapa, as séries do `Chart`, o trader e o
+    BI (velas, indicadores, livro de ofertas, cotações, regiões), os botões do `PushButtons` e
+    das notificações, os efeitos do `AnimatedText`, o `Permissions.reasons`, o NFC, as colunas e
+    o rodapé do `DataGrid`, o `master_fields`/`indexes`/`params` do `ClientDataSet` (504 forms
+    do ERP), as saídas e as fontes de áudio. Métodos: `Bluetooth.paired`, `Phone.history` e
+    `PaintCanvas.size` devolvem registros. Nas 8 linguagens: ler e gravar a lista (`to_json`), e
+    formas curtas para criar (`new ChartSeries { Name = "S" }` no C#, `newChartSeries({...})`
+    no TypeScript, `ChartSeries.of().withName("S")` no Java). No caminho: o C++ lia a lista de
+    registros vazia (o temporário do `Json::parse` morria antes do laço). `GENERATOR_VERSION` 24.
+  - Conferido (etapa 5): o projeto de teste nas 8 linguagens (um TreeView com um nó filho e uma
+    série de Chart com enum e números, gravados e lidos: `Filho:2:line:1`); os testes do
+    gerador, do catálogo e dos controles mexidos.
+  - Feito (19/11): no Object Inspector, o "…" de uma lista de registros abre o editor de
+    coleção (`aylis_ide::records_editor`): os itens à esquerda (acrescentar, tirar, subir,
+    descer) e os campos do escolhido à direita, cada um no editor do tipo (caixa para o
+    booleano, lista para o enum, texto para número, data e cor, `a; b` para as listas); a lista
+    dentro do item (os filhos de um nó) abre o mesmo editor por cima. O que fica vazio sai do
+    JSON. Testes `records_editor` da IDE.
+  - Segue texto, de propósito: o `PushTrigger.filter` (expressão lida também pelo Java) e o
+    `PivotTable.data` (tabela sem campos fixos).
+  - Conferido antes do commit (19/11): o `cargo check` para wasm de todos os crates mexidos e da
+    IDE lite; o `cargo ndk` (x86_64) dos mesmos; o `giant_screen` em release; a suíte do
+    workspace e os 4 apps nas 8 linguagens. A IDE de desktop não compila para Android por causa
+    do `trash` (dependência do `aylis-tools` que já estava no commit anterior; a IDE de desktop
+    não roda no Android).
+  - Feito (etapa 6, 19/11): os nomes do projeto viram enums. O núcleo ganhou
+    `PropKind::StyleName`, `ThemeName` e `FormName` (no fio, texto como antes): o `style` de
+    cada classe é um enum dela (`ButtonStyle`: as variantes registradas e as dos temas do
+    Aylis, que o catálogo guarda em `$styles`, mais as dos temas do projeto), o `theme` é o
+    `ThemeName` (os temas do Aylis, `$themes`, e os de `themes/` do projeto) e o `form` do
+    `Frame`, o `item_form` do `VirtualList`, o `form` da `Notification` e o do `WakeAppAction`
+    são o `FormName` (os forms do projeto). O primeiro valor, vazio, é o `Default`. Mudar um
+    tema ou a lista de forms refaz o arquivo gerado (a marca dos temas entra no índice); o
+    camelCase separa as palavras (`frmOutro` → `FRM_OUTRO`). No Object Inspector, o seletor de
+    forms do Frame vale para toda referência a form. `GENERATOR_VERSION` 22.
+  - Conferido (etapa 6): o projeto de teste nas 8 linguagens (um tema `Empresa` com a variante
+    `Button.perigo`, um segundo form num `Frame`: os três gravados pelo enum e lidos no
+    roteiro); o teste `project_names_are_typed` (com a variante nova que entra ao mudar o tema).
+  - Feito (etapa 6): os forms dos pacotes (`pkg:Termometro` → `FormName::PkgTermometro`; a
+    lista de `packages/` entra na marca que refaz o gerado). Um estilo que o app registra só em
+    código (`ui.register_variant`) não tem como ser visto ao gerar: declarado no tema do projeto
+    (`"Button.meu": {}`), entra no enum.
+  - Quebra o código que passava texto nessas propriedades (na 0.x pode; vai nas notas da versão).
+
+**Ajustes de 18/11/2026: o iOS no iPhone pelo `aylis-tool`**
+
+- [ ] Pedido do autor em 18/11: gerar o app para o iPhone (com a assinatura) direto pelo
+  `aylis-tool`, sem passar pelo Xcode, mesmo sem Mac para testar. Feito em 18/11
+  (`aylis_tools::ios_device`):
+  - `aylis-tool publish app.aylisproj --target ios --device`: compila para `aarch64-apple-ios`
+    (o iOS mínimo 14.0, no `IPHONEOS_DEPLOYMENT_TARGET` e no `MinimumOSVersion`), põe o perfil
+    como `embedded.mobileprovision`, escreve os direitos a partir dele (a equipe, o app, o
+    `get-task-allow`, o `aps-environment` com o `PushNotifications`), assina com o certificado
+    e grava o `.ipa` (`Payload/<App>.app`). Sem `--device`, o simulador, como antes.
+  - O perfil e o certificado são da máquina, nunca do projeto: o perfil é achado nas pastas
+    onde o Xcode grava, pelo bundle id (o exato antes do curinga), pelo aparelho e pela
+    validade; o certificado, pelo SHA-1 dos que o perfil aceita. As Opções podem fixar os
+    dois (`ios_profile` e `ios_sign_identity` no `tools.json`, ou `AYLIS_IOS_PROFILE` e
+    `AYLIS_IOS_IDENTITY`). Sem perfil que sirva, o erro diz por que cada um ficou de fora e
+    como conseguir um (com a conta gratuita, só pelo Xcode).
+  - `aylis-tool run app.aylisproj --target ios --device [--serial udid]`: o iPhone conectado
+    (o único pareado, ou o pedido), instalado e aberto pelo `xcrun devicectl` (Xcode 15+), com
+    o console do app na saída.
+  - O ícone do projeto agora é compilado pelo `actool` para dentro do `.app`, no simulador e no
+    iPhone (antes, o catálogo ficava ao lado, sem uso). O `Info.plist` ganhou a plataforma, a
+    versão mínima e a família (iPhone e iPad).
+  - O Verificar ambiente do iOS mostra o certificado de desenvolvedor do Keychain.
+  - Pedido do autor em 18/11, depois: "pode fazer o --no-sign e o workflow do github" (compilar
+    sem Mac e mandar o app para qualquer iPhone). Feito:
+    - `publish --target ios --device --no-sign`: o `.ipa` só com a assinatura "ad hoc", sem
+      certificado nem perfil, para o Sideloadly assinar no Windows com o Apple ID de quem
+      instala (a conta gratuita serve; o app vale 7 dias).
+    - `aylis-tool ci-ios app.aylisproj [--signed]` (`aylis_tools::github_ci`): grava
+      `.github/workflows/ios-<app>.yml` no repositório do projeto. Na máquina macOS do GitHub:
+      baixa o projeto e o Aylis na tag desta versão (`v<versão>`), compila o `aylis-tool`,
+      roda o `generate` (que liga o `.aylis/sdk` ao Aylis baixado) e o `publish`, e deixa o
+      `.ipa` nos Artifacts. Roda só pelo "Run workflow" (o minuto de macOS conta dez vezes em
+      repositório privado). Com `--signed`, o `.p12`, a senha e o perfil vêm dos segredos do
+      repositório para um Keychain temporário.
+    - Atenção: o workflow baixa a tag da versão do `aylis-tool` que o gerou, e a `v0.7.0` ainda
+      não tem o `--device`. Funciona a partir da próxima versão publicada.
+  - Pedido do autor em 18/11, depois: "quero essa configuração de workflow nas configurações do
+    projeto pelo Aylis IDE, não quero ter que ficar decorando comandos". Feito: Projeto →
+    Opções do projeto → **iPhone (GitHub)** (`crates/aylis-ide/src/iosview.rs`, a interface do
+    `aylis_tools::github_ci`): o passo a passo; o repositório (lido do `.git/config`, sem rodar
+    o git) e o workflow (criado ou não, assinado ou não, de que versão do Aylis); a escolha da
+    assinatura; Criar/Atualizar o workflow, Abrir no GitHub (a página do workflow, com o Run
+    workflow) e Abrir a pasta. Sem assinatura: como instalar pelo Sideloadly e o link dele.
+    Assinado: os três segredos, com "Copiar de um .p12…" e "Copiar de um .mobileprovision…"
+    (leem o arquivo, convertem para base64 e copiam; o perfil é conferido contra o bundle id
+    e a validade antes) e o link da página dos segredos. Fora da IDE lite (precisa de disco).
+    Os textos nos 11 idiomas; as telas em `tests/visual/opcoes-iphone*-windows.png`.
+  - Falta: nada rodou num Mac nem no GitHub Actions (veja [testes-em-dispositivos.md](testes-em-dispositivos.md)); a
+    IDE ainda executa o iOS só no simulador (a escolha do iPhone no Executar vem depois da
+    conferência no Mac); a publicação para a App Store (o perfil de distribuição e o envio pelo
+    Transporter) não foi feita.
+
 **Ajustes de 18/11/2026: Reveal Highlight nos estilos**
 
 - [ ] Pedido do autor em 18/11: "suporte ao efeito Reveal Highlight, não precisa ser nativo, só

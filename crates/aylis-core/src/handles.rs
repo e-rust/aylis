@@ -30,6 +30,197 @@ pub trait Handle: Copy {
     }
 }
 
+/// Uma cor para o acesso tipado (`set_fill`): a cor ([`crate::Color`]) ou um nome do tema
+/// ([`ColorRef::token`]), que acompanha a troca de tema.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ColorRef(PropValue);
+
+impl ColorRef {
+    /// Um nome de cor do tema ou do projeto (`primary`, `primary/40`).
+    pub fn token(name: &str) -> Self {
+        Self(PropValue::String(name.trim().to_string()))
+    }
+}
+
+impl From<crate::Color> for ColorRef {
+    fn from(c: crate::Color) -> Self {
+        Self(PropValue::Color(c))
+    }
+}
+
+impl From<ColorRef> for PropValue {
+    fn from(c: ColorRef) -> Self {
+        c.0
+    }
+}
+
+/// Uma referência a outro componente no acesso tipado (`set_popup_menu(ui, self.pmMenu)`):
+/// um handle qualquer, um id ou [`Ref::NONE`] (nenhum).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Ref(pub Option<ComponentId>);
+
+impl Ref {
+    pub const NONE: Ref = Ref(None);
+}
+
+impl<H: Handle> From<H> for Ref {
+    fn from(h: H) -> Self {
+        Ref(Some(h.id()))
+    }
+}
+
+impl From<ComponentId> for Ref {
+    fn from(id: ComponentId) -> Self {
+        Ref(Some(id))
+    }
+}
+
+impl From<Option<ComponentId>> for Ref {
+    fn from(id: Option<ComponentId>) -> Self {
+        Ref(id)
+    }
+}
+
+impl From<Ref> for PropValue {
+    fn from(r: Ref) -> Self {
+        PropValue::Component(r.0)
+    }
+}
+
+/// Lê um enum (o primeiro valor, se o que está lá não for um dos nomes).
+pub fn read_enum<E: crate::prop::PropEnum>(ui: &Ui, id: ComponentId, prop: &str) -> E {
+    read(ui, id, prop).and_then(|v| v.to_enum::<E>().ok()).or_else(|| E::from_index(0)).expect("enum sem valores")
+}
+
+/// Lê um conjunto de enums (os nomes que não são do enum ficam de fora).
+pub fn read_set<E: crate::prop::PropEnum>(ui: &Ui, id: ComponentId, prop: &str) -> Vec<E> {
+    let names: Vec<String> = match read(ui, id, prop) {
+        Some(PropValue::Set(names)) => names,
+        Some(PropValue::String(s) | PropValue::Enum(s)) => s.split(',').map(|p| p.trim().to_string()).filter(|p| !p.is_empty()).collect(),
+        _ => Vec::new(),
+    };
+    names.iter().filter_map(|n| E::from_name(n)).collect()
+}
+
+/// Um conjunto de enums como a tela grava.
+pub fn set_value<E: crate::prop::PropEnum>(values: &[E]) -> PropValue {
+    PropValue::Set(values.iter().map(|v| v.name().to_string()).collect())
+}
+
+fn read_text(ui: &Ui, id: ComponentId, prop: &str) -> String {
+    read(ui, id, prop).and_then(|v| v.to_str().ok().map(str::to_string)).unwrap_or_default()
+}
+
+/// Lê uma data (`None`: vazia ou inválida).
+pub fn read_date(ui: &Ui, id: ComponentId, prop: &str) -> Option<crate::Date> {
+    crate::Date::parse_iso(&read_text(ui, id, prop))
+}
+
+/// Lê uma hora (`None`: vazia ou inválida).
+pub fn read_time(ui: &Ui, id: ComponentId, prop: &str) -> Option<crate::Time> {
+    crate::Time::parse_iso(&read_text(ui, id, prop))
+}
+
+/// Lê o dia e a hora (`None`: vazio ou inválido).
+pub fn read_datetime(ui: &Ui, id: ComponentId, prop: &str) -> Option<crate::DateTime> {
+    crate::DateTime::parse_iso(&read_text(ui, id, prop))
+}
+
+/// A data como a tela grava (`None`: vazia).
+pub fn date_value(value: Option<crate::Date>) -> PropValue {
+    PropValue::String(value.map(|d| d.to_string()).unwrap_or_default())
+}
+
+/// A hora como a tela grava: `HH:MM`, com os segundos só quando há (`None`: vazia).
+pub fn time_value(value: Option<crate::Time>) -> PropValue {
+    PropValue::String(value.map(time_text).unwrap_or_default())
+}
+
+/// O dia e a hora como a tela grava (`2026-11-12T14:30`; `None`: vazio).
+pub fn datetime_value(value: Option<crate::DateTime>) -> PropValue {
+    PropValue::String(value.map(|d| format!("{}T{}", d.date, time_text(d.time))).unwrap_or_default())
+}
+
+fn time_text(t: crate::Time) -> String {
+    if t.second() == 0 { format!("{:02}:{:02}", t.hour(), t.minute()) } else { format!("{:02}:{:02}:{:02}", t.hour(), t.minute(), t.second()) }
+}
+
+/// Os itens de uma lista separada por `;` (vazia: nenhum).
+fn items(text: &str) -> impl Iterator<Item = &str> {
+    text.split(';').map(str::trim).filter(|s| !s.is_empty())
+}
+
+/// Lê uma lista de textos (`a;b;c`).
+pub fn read_list(ui: &Ui, id: ComponentId, prop: &str) -> Vec<String> {
+    items(&read_text(ui, id, prop)).map(str::to_string).collect()
+}
+
+/// Lê uma lista de números (`0.4;0.9`; o que não é número fica de fora).
+pub fn read_numbers(ui: &Ui, id: ComponentId, prop: &str) -> Vec<f64> {
+    items(&read_text(ui, id, prop)).filter_map(|s| s.parse().ok()).collect()
+}
+
+/// Lê uma lista de cores (`#FF0000;#00AA00`; o que não é cor fica de fora).
+pub fn read_colors(ui: &Ui, id: ComponentId, prop: &str) -> Vec<crate::Color> {
+    items(&read_text(ui, id, prop)).filter_map(crate::Color::from_hex).collect()
+}
+
+/// Uma lista de textos como a tela grava.
+pub fn list_value<S: AsRef<str>>(values: &[S]) -> PropValue {
+    PropValue::String(values.iter().map(|s| s.as_ref()).collect::<Vec<_>>().join(";"))
+}
+
+/// Uma lista de números como a tela grava.
+pub fn numbers_value(values: &[f64]) -> PropValue {
+    PropValue::String(values.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(";"))
+}
+
+/// Uma lista de cores como a tela grava.
+pub fn colors_value(values: &[crate::Color]) -> PropValue {
+    PropValue::String(values.iter().map(|c| c.to_hex()).collect::<Vec<_>>().join(";"))
+}
+
+/// Lê a sombra (`None`: sem sombra).
+pub fn read_shadow(ui: &Ui, id: ComponentId, prop: &str) -> Option<crate::Shadow> {
+    crate::Shadow::parse(&read_text(ui, id, prop))
+}
+
+/// A sombra como a tela grava (`None`: sem sombra).
+pub fn shadow_value(value: Option<crate::Shadow>) -> PropValue {
+    PropValue::String(value.map(|s| s.to_spec()).unwrap_or_default())
+}
+
+/// Lê a curva (a linear, se o texto não é uma curva).
+pub fn read_easing(ui: &Ui, id: ComponentId, prop: &str) -> crate::Easing {
+    crate::Easing::parse(&read_text(ui, id, prop)).unwrap_or_default()
+}
+
+/// A curva como a tela grava (`out_quad`, `cubic-bezier(...)`).
+pub fn easing_value(value: crate::Easing) -> PropValue {
+    PropValue::String(value.to_spec())
+}
+
+/// Lê os pontos `x,y` separados por espaço (os que não são pontos ficam de fora).
+pub fn read_points(ui: &Ui, id: ComponentId, prop: &str) -> Vec<crate::PointF> {
+    read_text(ui, id, prop)
+        .split_whitespace()
+        .filter_map(|p| {
+            let (x, y) = p.split_once(',')?;
+            Some(crate::PointF::new(x.trim().parse().ok()?, y.trim().parse().ok()?))
+        })
+        .collect()
+}
+
+/// Os pontos como a tela grava (`0.5,0 1,1 0,1`).
+pub fn points_value(values: &[crate::PointF]) -> PropValue {
+    PropValue::String(values.iter().map(|p| format!("{},{}", p.x, p.y)).collect::<Vec<_>>().join(" "))
+}
+
+/// Lê a referência a outro componente (`None`: nenhum).
+pub fn read_ref(ui: &Ui, id: ComponentId, prop: &str) -> Option<ComponentId> {
+    read(ui, id, prop).and_then(|v| v.to_component().ok().flatten())
+}
+
 /// Lê a propriedade; a falha vai para o log em modo dev (a leitura não tem como avisar a
 /// atividade: ela só vê o `Ui`).
 pub fn read(ui: &Ui, id: ComponentId, prop: &str) -> Option<PropValue> {

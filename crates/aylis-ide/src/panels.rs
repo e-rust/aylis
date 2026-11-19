@@ -1149,9 +1149,8 @@ fn strip_of(ui: &mut Ui, state: &Shared, ids: &Ids) -> ComponentId {
     });
     // Arrastou: a ordem nova fica guardada (a faixa já trocou as abas de lugar).
     ui.on(strip, "on_reorder", move |ui, sender, args| {
-        let EventArgs::Text(t) = args else { return };
-        let mut parts = t.split(',').filter_map(|p| p.trim().parse::<usize>().ok());
-        let (Some(from), Some(to)) = (parts.next(), parts.next()) else { return };
+        let Some(moved) = <aylis_controls::TabMove as aylis_core::EventValue>::from_args(args) else { return };
+        let (Ok(from), Ok(to)) = (usize::try_from(moved.from), usize::try_from(moved.to)) else { return };
         let titles: Vec<String> = ui.get::<TabStrip>(sender).map(|s| s.tabs().iter().map(|t| t.title.clone()).collect()).unwrap_or_default();
         KINDS.with(|k| {
             let mut kinds = k.borrow_mut();

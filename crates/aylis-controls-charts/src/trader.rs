@@ -13,6 +13,7 @@ use aylis_core::{
 
 use crate::bi::format_number;
 use crate::leaf_control;
+use crate::records::{RecordCache, parse_list};
 
 fn small(ctx: &PaintCtx<'_>) -> TextStyle {
     let mut t = ctx.text_style();
@@ -29,14 +30,27 @@ fn down(ctx: &PaintCtx<'_>) -> Color {
     ctx.theme.color("danger")
 }
 
-/// `"38.50:1200;38.49:800"` → [(38.50, 1200), (38.49, 800)].
-fn pairs(text: &str) -> Vec<(f64, f64)> {
-    text.split(';')
-        .filter_map(|p| {
-            let (a, b) = p.split_once(':')?;
-            Some((a.trim().replace(',', ".").parse().ok()?, b.trim().replace(',', ".").parse().ok()?))
-        })
-        .collect()
+/// O registro de um preço do livro (o `bids` e o `asks` do [`OrderBook`] e do [`DepthChart`]).
+pub const ORDER_LEVEL: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "OrderLevel", fields: &[("price", aylis_core::PropKind::Float), ("quantity", aylis_core::PropKind::Float)] };
+
+/// Um preço do livro de ofertas e a quantidade nele.
+#[derive(Clone, Copy, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct OrderLevel {
+    pub price: f64,
+    pub quantity: f64,
+}
+
+/// As ofertas em JSON (`[{"price": 38.5, "quantity": 1200}]`).
+fn levels_text(levels: &[(f64, f64)]) -> String {
+    let list: Vec<OrderLevel> = levels.iter().map(|&(price, quantity)| OrderLevel { price, quantity }).collect();
+    serde_json::to_string(&list).unwrap_or_default()
+}
+
+/// As ofertas lidas (do cache): (preço, quantidade).
+fn pairs(cache: &RecordCache<OrderLevel>, text: &str) -> Vec<(f64, f64)> {
+    cache.get(text).iter().map(|l| (l.price, l.quantity)).collect()
 }
 
 // ===========================================================================
@@ -134,8 +148,64 @@ pub fn macd(values: &[f64]) -> Vec<Option<(f64, f64, f64)>> {
 // ===========================================================================
 // CandleChart
 
+/// O registro de um candle (o `data` do [`CandleChart`]).
+pub const CANDLE: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "Candle",
+    fields: &[
+        ("time", aylis_core::PropKind::String),
+        ("open", aylis_core::PropKind::Float),
+        ("high", aylis_core::PropKind::Float),
+        ("low", aylis_core::PropKind::Float),
+        ("close", aylis_core::PropKind::Float),
+        ("volume", aylis_core::PropKind::Float),
+    ],
+};
+
+/// O registro de um indicador sobre o preço (o `indicators` do [`CandleChart`]).
+pub const PRICE_INDICATOR: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "PriceIndicator",
+    fields: &[("kind", aylis_core::PropKind::Enum(<IndicatorKind as PropEnum>::NAMES)), ("period", aylis_core::PropKind::Int)],
+};
+
+/// Os indicadores sobre o preço.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum IndicatorKind {
+    /// Média móvel simples.
+    #[default]
+    Sma,
+    /// Média móvel exponencial.
+    Ema,
+    /// Bandas de Bollinger (dois desvios).
+    Bollinger,
+}
+
+impl PropEnum for IndicatorKind {
+    const NAMES: &'static [&'static str] = &["sma", "ema", "bollinger"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Sma, Self::Ema, Self::Bollinger].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Um indicador como vem no JSON (`{"kind": "sma", "period": 20}`; sem período, 20).
+#[derive(serde::Deserialize)]
+#[serde(default)]
+struct IndicatorRecord {
+    kind: String,
+    period: i64,
+}
+
+impl Default for IndicatorRecord {
+    fn default() -> Self {
+        Self { kind: "sma".into(), period: 20 }
+    }
+}
+
 /// Um candle: tempo (rótulo), abertura, máxima, mínima, fechamento e volume.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Candle {
     pub time: String,
     pub open: f64,
@@ -199,17 +269,21 @@ const FIBO: [f64; 6] = [0.0, 0.236, 0.382, 0.5, 0.618, 1.0];
 
 /// Gráfico de candles (OHLC) com volume, indicadores e ferramentas de desenho.
 ///
-/// `data`: um candle por linha, `tempo;abertura;máxima;mínima;fechamento;volume`; pelo
-/// código, [`CandleChart::set_candles`] e [`CandleChart::push`] (o candle em formação:
-/// mesmo tempo atualiza o último). `indicators` = `"sma:20;ema:9;bollinger:20"`. Roda do
-/// mouse: zoom; arrastar: anda no tempo (ou desenha, com `draw_mode`); o cursor mostra o
-/// candle sob o mouse.
+/// `data`: os candles em JSON ([`CANDLE`]: `[{"time": "01/01", "open": 30, "high": 30.6,
+/// "low": 29.8, "close": 30.2, "volume": 2400}]`); pelo código, [`CandleChart::set_candles`]
+/// e [`CandleChart::push`] (o candle em formação: mesmo tempo atualiza o último).
+/// `indicators` = `[{"kind": "sma", "period": 20}, {"kind": "bollinger", "period": 20}]`
+/// ([`PRICE_INDICATOR`]). Roda do mouse: zoom; arrastar: anda no tempo (ou desenha, com
+/// `draw_mode`); o cursor mostra o candle sob o mouse.
 pub struct CandleChart {
     pub base: ControlBase,
-    /// Os candles, um por linha: `tempo;abertura;máxima;mínima;fechamento;volume`.
+    /// Os candles, em JSON ([`CANDLE`]).
     pub data: String,
-    /// Os indicadores sobre o preço, separados por `;`: `"sma:20;ema:9;bollinger:20"`.
+    /// Os indicadores sobre o preço, em JSON ([`PRICE_INDICATOR`]): `[{"kind": "sma",
+    /// "period": 20}]`.
     pub indicators: String,
+    /// Os indicadores lidos: (`sma`/`ema`/`bollinger`, períodos).
+    overlays: Vec<(String, usize)>,
     /// O painel de baixo: `none`, `volume`, `rsi` ou `macd`.
     pub lower: LowerPanel,
     /// Mostra o volume por faixa de preço, em barras da direita para dentro.
@@ -236,7 +310,8 @@ impl Default for CandleChart {
         let mut c = Self {
             base: ControlBase::new(640.0, 400.0),
             data: String::new(),
-            indicators: "sma:9;sma:21".into(),
+            indicators: r#"[{"kind":"sma","period":9},{"kind":"sma","period":21}]"#.into(),
+            overlays: Vec::new(),
             lower: LowerPanel::Volume,
             volume_profile: false,
             draw_mode: DrawMode::Pan,
@@ -252,6 +327,7 @@ impl Default for CandleChart {
         };
         c.data = sample_candles(120);
         c.sync("data");
+        c.sync("indicators");
         c.base.set_cursor(CursorShape::Crosshair);
         c
     }
@@ -265,17 +341,25 @@ fn sample_candles(n: usize) -> String {
         seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         ((seed >> 33) as f64 / (1u64 << 31) as f64) - 0.5
     };
-    let mut lines = Vec::new();
+    let round = |v: f64, places: i32| (v * 10f64.powi(places)).round() / 10f64.powi(places);
+    let mut candles = Vec::with_capacity(n);
     for i in 0..n {
         let open = price;
         let close = (open + rnd() * 1.2 + 0.03).max(1.0);
         let high = open.max(close) + rnd().abs() * 0.6;
         let low = open.min(close) - rnd().abs() * 0.6;
         let volume = 1000.0 + (rnd() + 0.5) * 4000.0;
-        lines.push(format!("{:02}/{:02};{open:.2};{high:.2};{low:.2};{close:.2};{volume:.0}", i % 28 + 1, i / 28 + 1));
+        candles.push(Candle {
+            time: format!("{:02}/{:02}", i % 28 + 1, i / 28 + 1),
+            open: round(open, 2),
+            high: round(high, 2),
+            low: round(low, 2),
+            close: round(close, 2),
+            volume: round(volume, 0),
+        });
         price = close;
     }
-    lines.join("\n")
+    serde_json::to_string(&candles).unwrap_or_default()
 }
 
 impl CandleChart {
@@ -303,13 +387,14 @@ impl CandleChart {
 
     fn sync(&mut self, name: &str) {
         if name == "data" && !self.data.is_empty() {
-            self.candles = self
-                .data
-                .lines()
-                .filter_map(|l| {
-                    let f: Vec<&str> = l.split(';').map(str::trim).collect();
-                    let n = |i: usize| f.get(i).and_then(|v| v.replace(',', ".").parse::<f64>().ok());
-                    Some(Candle { time: f.first()?.to_string(), open: n(1)?, high: n(2)?, low: n(3)?, close: n(4)?, volume: n(5).unwrap_or(0.0) })
+            self.candles = parse_list(&self.data);
+        }
+        if name == "indicators" {
+            self.overlays = parse_list::<IndicatorRecord>(&self.indicators)
+                .into_iter()
+                .filter_map(|i| {
+                    let kind = IndicatorKind::from_name(i.kind.trim())?;
+                    Some((kind.name().to_string(), i.period.clamp(1, 10_000) as usize))
                 })
                 .collect();
         }
@@ -324,14 +409,8 @@ impl CandleChart {
         (start, end - start)
     }
 
-    fn overlays(&self) -> Vec<(String, usize)> {
-        self.indicators
-            .split(';')
-            .filter_map(|p| {
-                let (name, n) = p.split_once(':').unwrap_or((p, "20"));
-                Some((name.trim().to_lowercase(), n.trim().parse().ok()?))
-            })
-            .collect()
+    fn overlays(&self) -> &[(String, usize)] {
+        &self.overlays
     }
 
     /// Ponto da tela → (índice, preço).
@@ -352,13 +431,13 @@ impl Component for CandleChart {
     leaf_control!("CandleChart");
 
     properties! {
-        data: String => "Data",
-        indicators: String => "Behavior",
+        data: String as RecordList(&CANDLE) => "Data",
+        indicators: String as RecordList(&PRICE_INDICATOR) => "Behavior",
         lower: LowerPanel => "Appearance",
         volume_profile: bool => "Appearance",
         draw_mode: DrawMode => "Behavior",
         decimals: u32 => "Appearance";
-        events: on_drawing;
+        events: on_drawing: i64;
         on_set: sync
     }
 
@@ -637,14 +716,16 @@ impl Component for CandleChart {
 /// numa linha: `on_price_click` com o preço (para a boleta).
 pub struct OrderBook {
     pub base: ControlBase,
-    /// `"38.50:1200;38.49:800"` (preço:quantidade).
+    /// As ofertas de compra, em JSON ([`ORDER_LEVEL`]): `[{"price": 38.49, "quantity": 1200}]`.
     pub bids: String,
-    /// As ofertas de venda, no mesmo formato das `bids` (preço:quantidade).
+    /// As ofertas de venda, no mesmo formato das `bids`.
     pub asks: String,
     /// Quantos preços aparecem de cada lado.
     pub levels: u32,
     /// Casas decimais dos preços.
     pub decimals: u32,
+    bids_read: RecordCache<OrderLevel>,
+    asks_read: RecordCache<OrderLevel>,
     rows: RefCell<Vec<(RectF, f64)>>,
     pressed: Option<PointF>,
 }
@@ -655,10 +736,12 @@ impl Default for OrderBook {
         base.set_cursor(CursorShape::Pointer);
         Self {
             base,
-            bids: "38.49:1200;38.48:3400;38.47:900;38.46:5200;38.45:2100;38.44:800;38.43:4100;38.42:1500".into(),
-            asks: "38.50:700;38.51:2600;38.52:1800;38.53:4400;38.54:900;38.55:3100;38.56:1200;38.57:2500".into(),
+            bids: levels_text(&[(38.49, 1200.0), (38.48, 3400.0), (38.47, 900.0), (38.46, 5200.0), (38.45, 2100.0), (38.44, 800.0), (38.43, 4100.0), (38.42, 1500.0)]),
+            asks: levels_text(&[(38.50, 700.0), (38.51, 2600.0), (38.52, 1800.0), (38.53, 4400.0), (38.54, 900.0), (38.55, 3100.0), (38.56, 1200.0), (38.57, 2500.0)]),
             levels: 8,
             decimals: 2,
+            bids_read: RecordCache::default(),
+            asks_read: RecordCache::default(),
             rows: RefCell::default(),
             pressed: None,
         }
@@ -668,15 +751,14 @@ impl Default for OrderBook {
 impl OrderBook {
     /// Troca o livro pelo código.
     pub fn set_book(ui: &mut Ui, id: ComponentId, bids: &[(f64, f64)], asks: &[(f64, f64)]) {
-        let text = |levels: &[(f64, f64)]| levels.iter().map(|(p, q)| format!("{p}:{q}")).collect::<Vec<_>>().join(";");
-        let _ = ui.set_prop(id, "bids", text(bids));
-        let _ = ui.set_prop(id, "asks", text(asks));
+        let _ = ui.set_prop(id, "bids", levels_text(bids));
+        let _ = ui.set_prop(id, "asks", levels_text(asks));
     }
 
     /// Compras (maior preço primeiro) e vendas (menor primeiro), até `levels`.
     fn book(&self) -> (Vec<(f64, f64)>, Vec<(f64, f64)>) {
-        let mut bids = pairs(&self.bids);
-        let mut asks = pairs(&self.asks);
+        let mut bids = pairs(&self.bids_read, &self.bids);
+        let mut asks = pairs(&self.asks_read, &self.asks);
         bids.sort_by(|a, b| b.0.total_cmp(&a.0));
         asks.sort_by(|a, b| a.0.total_cmp(&b.0));
         bids.truncate(self.levels as usize);
@@ -689,11 +771,11 @@ impl Component for OrderBook {
     leaf_control!("OrderBook");
 
     properties! {
-        bids: String => "Data",
-        asks: String => "Data",
+        bids: String as RecordList(&ORDER_LEVEL) => "Data",
+        asks: String as RecordList(&ORDER_LEVEL) => "Data",
         levels: u32 => "Appearance",
         decimals: u32 => "Appearance";
-        events: on_price_click
+        events: on_price_click: f64
     }
 
     fn pointer_down(&mut self, _ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -774,19 +856,29 @@ impl Component for OrderBook {
 /// acumuladas (vermelho, à direita), em degraus; o cursor mostra preço e acumulado.
 pub struct DepthChart {
     pub base: ControlBase,
-    /// As ofertas de compra: `"38.50:1200;38.49:800"` (preço:quantidade).
+    /// As ofertas de compra, em JSON ([`ORDER_LEVEL`]): `[{"price": 38.49, "quantity": 1200}]`.
     pub bids: String,
-    /// As ofertas de venda, no mesmo formato (preço:quantidade).
+    /// As ofertas de venda, no mesmo formato.
     pub asks: String,
     /// Casas decimais dos preços.
     pub decimals: u32,
+    bids_read: RecordCache<OrderLevel>,
+    asks_read: RecordCache<OrderLevel>,
     mouse: Cell<Option<PointF>>,
 }
 
 impl Default for DepthChart {
     fn default() -> Self {
         let book = OrderBook::default();
-        Self { base: ControlBase::new(420.0, 220.0), bids: book.bids, asks: book.asks, decimals: 2, mouse: Cell::new(None) }
+        Self {
+            base: ControlBase::new(420.0, 220.0),
+            bids: book.bids,
+            asks: book.asks,
+            decimals: 2,
+            bids_read: RecordCache::default(),
+            asks_read: RecordCache::default(),
+            mouse: Cell::new(None),
+        }
     }
 }
 
@@ -794,8 +886,8 @@ impl Component for DepthChart {
     leaf_control!("DepthChart");
 
     properties! {
-        bids: String => "Data",
-        asks: String => "Data",
+        bids: String as RecordList(&ORDER_LEVEL) => "Data",
+        asks: String as RecordList(&ORDER_LEVEL) => "Data",
         decimals: u32 => "Appearance"
     }
 
@@ -812,8 +904,8 @@ impl Component for DepthChart {
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let r = ctx.rect;
         canvas.fill_rect(r, 8.0, &Brush::Solid(ctx.theme.color("surface")));
-        let mut bids = pairs(&self.bids);
-        let mut asks = pairs(&self.asks);
+        let mut bids = pairs(&self.bids_read, &self.bids);
+        let mut asks = pairs(&self.asks_read, &self.asks);
         bids.sort_by(|a, b| b.0.total_cmp(&a.0));
         asks.sort_by(|a, b| a.0.total_cmp(&b.0));
         if bids.is_empty() || asks.is_empty() {
@@ -864,13 +956,30 @@ impl Component for DepthChart {
 // ===========================================================================
 // TickerTape
 
-/// Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` =
-/// `"PETR4:38.50:1.2;VALE3:61.10:-0.8"` (ativo:preço:variação %); `speed` em pontos por
-/// segundo; para enquanto o mouse está em cima.
+/// O registro de uma cotação da faixa (o `items` do [`TickerTape`]).
+pub const TICKER_QUOTE: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TickerQuote",
+    fields: &[("symbol", aylis_core::PropKind::String), ("price", aylis_core::PropKind::Float), ("change", aylis_core::PropKind::Float)],
+};
+
+/// Uma cotação da faixa: o ativo, o preço e a variação (%).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct TickerQuote {
+    pub symbol: String,
+    pub price: f64,
+    /// A variação, em % (negativa: caiu).
+    pub change: f64,
+}
+
+/// Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` = as cotações
+/// em JSON ([`TICKER_QUOTE`]: `[{"symbol": "PETR4", "price": 38.5, "change": 1.2}]`);
+/// `speed` em pontos por segundo; para enquanto o mouse está em cima.
 pub struct TickerTape {
     pub base: ControlBase,
-    /// As cotações, separadas por `;`: `"PETR4:38.50:1.2"` (ativo:preço:variação %).
+    /// As cotações, em JSON ([`TICKER_QUOTE`]).
     pub items: String,
+    items_read: RecordCache<TickerQuote>,
     /// A velocidade da rolagem, em pontos por segundo.
     pub speed: f32,
     /// Casas decimais dos preços.
@@ -885,7 +994,12 @@ impl Default for TickerTape {
     fn default() -> Self {
         Self {
             base: ControlBase::new(600.0, 34.0),
-            items: "PETR4:38.50:1.2;VALE3:61.10:-0.8;ITUB4:33.42:0.4;BBDC4:14.05:-1.6;ABEV3:12.88:0.1;WEGE3:52.30:2.3;MGLU3:9.12:-3.1".into(),
+            items: serde_json::to_string(
+                &[("PETR4", 38.50, 1.2), ("VALE3", 61.10, -0.8), ("ITUB4", 33.42, 0.4), ("BBDC4", 14.05, -1.6), ("ABEV3", 12.88, 0.1), ("WEGE3", 52.30, 2.3), ("MGLU3", 9.12, -3.1)]
+                    .map(|(symbol, price, change)| TickerQuote { symbol: symbol.into(), price, change }),
+            )
+            .unwrap_or_default(),
+            items_read: RecordCache::default(),
             speed: 60.0,
             decimals: 2,
             paused_at: Cell::new(None),
@@ -900,7 +1014,7 @@ impl Component for TickerTape {
     leaf_control!("TickerTape");
 
     properties! {
-        items: String => "Data",
+        items: String as RecordList(&TICKER_QUOTE) => "Data",
         speed: f32 => "Behavior",
         decimals: u32 => "Appearance"
     }
@@ -926,14 +1040,7 @@ impl Component for TickerTape {
         let locale = ctx.ui.locale();
         let mut t = ctx.text_style();
         t.h_align = TextAlign::Leading;
-        let items: Vec<(String, f64, f64)> = self
-            .items
-            .split(';')
-            .filter_map(|i| {
-                let f: Vec<&str> = i.split(':').collect();
-                Some((f.first()?.trim().to_string(), f.get(1)?.trim().parse().ok()?, f.get(2).and_then(|v| v.trim().parse().ok()).unwrap_or(0.0)))
-            })
-            .collect();
+        let items: Vec<(String, f64, f64)> = self.items_read.get(&self.items).iter().map(|q| (q.symbol.clone(), q.price, q.change)).collect();
         if items.is_empty() {
             return;
         }
@@ -1063,7 +1170,7 @@ impl Component for Watchlist {
     properties! {
         symbols: String => "Data",
         decimals: u32 => "Appearance";
-        events: on_select;
+        events: on_select: String;
         on_set: sync
     }
 

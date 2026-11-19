@@ -35,7 +35,7 @@ Campo de hora: `time` é `14:30` (ou `14:30:15` com `seconds`). ↑/↓ e a roda
 | `auto_select` | Selecionar ao entrar | lógico | Ganhar o foco seleciona o texto todo (ligado por padrão). |
 | `clear_button` | Botão de limpar | lógico | Um "×" à direita que apaga o texto (só aparece com texto). |
 | `mask` | Máscara | texto | Máscara de digitação: `#` dígito, `A` letra, `X` letra ou dígito, o resto entra sozinho (`(##) #####-####`); vazio: livre. |
-| `rules` | Regras de validação | texto | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
+| `rules` | Regras de validação | lista de textos (separados por `;`) | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
 | `spellcheck` | Corretor ortográfico | lógico | Sublinha as palavras erradas (o motor de texto da plataforma ou o do app); o clique direito numa delas mostra as correções. |
 | `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita: o resto aparece apagado depois do cursor e o Tab (ou a seta para a direita) aceita. |
 | `language` | Idioma | texto | Idioma da correção e das sugestões (`"pt-BR"`); vazio: o do sistema. |
@@ -55,7 +55,7 @@ Campo de hora: `time` é `14:30` (ou `14:30:15` com `seconds`). ↑/↓ e a roda
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `time` | Hora | texto | A hora, `14:30` (ou `14:30:15` com `seconds`); vazia = nenhuma. |
+| `time` | Hora | hora (`14:30`) | A hora, `14:30` (ou `14:30:15` com `seconds`); vazia = nenhuma. |
 | `text` | Texto | texto | O texto do campo (com a `mask`, já formatado). |
 | `error` | Erro | texto | Mensagem de erro embaixo do campo, com a borda vermelha; vazio: sem erro. |
 
@@ -99,8 +99,8 @@ E o handler, um método do form (`self.TimeEdit1` já é um `TimeEdit`):
 ```rust
 impl FrmPrincipal {
     pub fn time_edit1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.TimeEdit1.time(ui);
-        self.TimeEdit1.set_time(ui, format!("{atual}!"));
+        let atual = self.TimeEdit1.seconds(ui);
+        self.TimeEdit1.set_seconds(ui, !atual);
     }
 }
 ```

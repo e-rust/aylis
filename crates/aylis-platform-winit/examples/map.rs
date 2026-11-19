@@ -18,12 +18,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     map.latitude = -23.5614;
     map.longitude = -46.6559;
     map.zoom = 14.0;
-    map.markers = "-23.5614,-46.6559,MASP;-23.5874,-46.6576,Parque Ibirapuera;-23.5432,-46.6292,Catedral da Sé".into();
+    map.markers = r#"[
+        {"latitude": -23.5614, "longitude": -46.6559, "label": "MASP"},
+        {"latitude": -23.5874, "longitude": -46.6576, "label": "Parque Ibirapuera"},
+        {"latitude": -23.5432, "longitude": -46.6292, "label": "Catedral da Sé"}
+    ]"#
+    .into();
     let map = ui.add(map, form);
     ui.control_mut(map).unwrap().set_align(Align::Client);
     ui.on(map, "on_map_click", move |ui, _, args| {
-        if let EventArgs::Text(c) = args {
-            let _ = ui.set_prop(status, "text", format!("Coordenada: {c}"));
+        if let Some(p) = <MapPoint as EventValue>::from_args(args) {
+            let _ = ui.set_prop(status, "text", format!("Coordenada: {:.6}, {:.6}", p.latitude, p.longitude));
         }
     });
     aylis_platform_winit::run(ui, form)

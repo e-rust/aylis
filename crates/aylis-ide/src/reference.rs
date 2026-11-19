@@ -75,6 +75,18 @@ fn kind_text(kind: PropKind) -> String {
         PropKind::Duration => "duração (ms)".into(),
         PropKind::Shadow => "sombra".into(),
         PropKind::Easing => "curva de suavização".into(),
+        PropKind::Date => "data (ISO, `2026-10-24`)".into(),
+        PropKind::Time => "hora (`14:30`)".into(),
+        PropKind::DateTime => "dia e hora (ISO, `2026-11-12T14:30`)".into(),
+        PropKind::List => "lista de textos (separados por `;`)".into(),
+        PropKind::NumberList => "lista de números (separados por `;`)".into(),
+        PropKind::ColorList => "lista de cores (separadas por `;`)".into(),
+        PropKind::PointList => "pontos `x,y` (separados por espaço)".into(),
+        PropKind::Record(r) => format!("registro `{}`", r.name),
+        PropKind::RecordList(r) => format!("lista de `{}`", r.name),
+        PropKind::StyleName => "variante do tema (`primary`, `outline`...)".into(),
+        PropKind::ThemeName => "nome de um tema".into(),
+        PropKind::FormName => "nome de um form do projeto".into(),
     }
 }
 

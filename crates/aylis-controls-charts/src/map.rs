@@ -20,6 +20,36 @@ use aylis_core::{
 use aylis_core::providers::{MapTileProvider, Provided, TileServer};
 
 use crate::leaf_control;
+use crate::records::{RecordCache, record_event};
+
+/// O registro de um marcador (o `markers` do [`MapView`]).
+pub const MAP_MARKER: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "MapMarker",
+    fields: &[("latitude", aylis_core::PropKind::Float), ("longitude", aylis_core::PropKind::Float), ("label", aylis_core::PropKind::String)],
+};
+
+/// Um marcador do mapa: onde fica e o rótulo (vazio: só o alfinete).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct MapMarker {
+    pub latitude: f64,
+    pub longitude: f64,
+    pub label: String,
+}
+
+/// O registro do ponto clicado (o `on_map_click`).
+pub const MAP_POINT: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "MapPoint", fields: &[("latitude", aylis_core::PropKind::Float), ("longitude", aylis_core::PropKind::Float)] };
+
+/// O ponto do mapa que o `on_map_click` leva, em graus.
+#[derive(Clone, Copy, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct MapPoint {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+record_event!(MapPoint, MAP_POINT);
 
 const TILE: f64 = 256.0;
 const MIN_ZOOM: f64 = 1.0;
@@ -66,8 +96,10 @@ pub struct MapView {
     pub longitude: f64,
     /// 1 (o mundo) a 19 (a rua); pode ser fracionário.
     pub zoom: f64,
-    /// Marcadores: `lat,lon,rótulo` separados por `;`.
+    /// Os marcadores, em JSON: `[{"latitude": -23.56, "longitude": -46.65, "label": "MASP"}]`
+    /// ([`MapMarker`]).
     pub markers: String,
+    markers_read: RecordCache<MapMarker>,
     /// Quem fornece os blocos (um provedor de mapa, item 25): o endereço e o crédito são os
     /// dele; sem ele, os do OpenStreetMap ([`TileServer`]).
     pub provider: Option<ComponentId>,
@@ -90,6 +122,7 @@ impl Default for MapView {
             longitude: -46.6333,
             zoom: 12.0,
             markers: String::new(),
+            markers_read: RecordCache::default(),
             provider: None,
             attribution: RefCell::new(TileServer::default().attribution),
             tiles: RefCell::default(),
@@ -99,17 +132,9 @@ impl Default for MapView {
 }
 
 impl MapView {
-    /// Os marcadores: (latitude, longitude, rótulo).
-    pub fn marker_list(&self) -> Vec<(f64, f64, String)> {
-        self.markers
-            .split(';')
-            .filter_map(|m| {
-                let mut p = m.splitn(3, ',');
-                let lat = p.next()?.trim().parse().ok()?;
-                let lon = p.next()?.trim().parse().ok()?;
-                Some((lat, lon, p.next().unwrap_or("").trim().to_string()))
-            })
-            .collect()
+    /// Os marcadores, lidos do `markers` (JSON inválido: nenhum).
+    pub fn marker_list(&self) -> Vec<MapMarker> {
+        self.markers_read.get(&self.markers).clone()
     }
 
     /// Centraliza em `lat`, `lon` (e muda o zoom, se der).
@@ -214,9 +239,9 @@ impl Component for MapView {
         latitude: f64 => "Data",
         longitude: f64 => "Data",
         zoom: f64 => "Data",
-        markers: String => "Data",
+        markers: String as RecordList(&MAP_MARKER) => "Data",
         provider: Option<ComponentId> => "Data";
-        events: on_move, on_map_click
+        events: on_move: (), on_map_click: MapPoint
     }
 
     /// Outro provedor: os blocos guardados eram do servidor anterior.
@@ -258,7 +283,9 @@ impl Component for MapView {
         let moved = (event.position.x - start.x).abs() + (event.position.y - start.y).abs();
         if moved < 4.0 {
             let (lat, lon) = self.coordinate_at(event.position);
-            ctx.fire("on_map_click", EventArgs::Text(format!("{lat:.6},{lon:.6}")));
+            // Seis casas (uns 10 cm): o JSON não leva o ruído do ponto flutuante.
+            let point = MapPoint { latitude: (lat * 1e6).round() / 1e6, longitude: (lon * 1e6).round() / 1e6 };
+            ctx.fire("on_map_click", EventArgs::Text(serde_json::to_string(&point).unwrap_or_default()));
         } else {
             ctx.fire("on_move", EventArgs::None);
         }
@@ -347,8 +374,9 @@ impl Component for MapView {
         // Marcadores.
         let mut label = ctx.text_style();
         label.font.size = (label.font.size - 1.0).max(10.0);
-        for (lat, lon, text) in self.marker_list() {
-            let (px, py) = project(lat, lon, self.zoom);
+        let markers = self.markers_read.get(&self.markers);
+        for MapMarker { latitude: lat, longitude: lon, label: text } in markers.iter() {
+            let (px, py) = project(*lat, *lon, self.zoom);
             let (mcx, mcy) = project(self.latitude, self.longitude, self.zoom);
             let p = PointF::new(r.x + r.width / 2.0 + (px - mcx) as f32, r.y + r.height / 2.0 + (py - mcy) as f32);
             if !r.inflate(24.0).contains(p) {
@@ -359,13 +387,13 @@ impl Component for MapView {
             canvas.fill_ellipse(pin, &Brush::Solid(Color::rgb(0xE5, 0x39, 0x35)));
             canvas.fill_ellipse(pin.inflate(-5.5), &Brush::Solid(Color::WHITE));
             if !text.is_empty() {
-                let w = canvas.measure_text(&text, &label).width + 12.0;
+                let w = canvas.measure_text(text, &label).width + 12.0;
                 let box_r = RectF::new(p.x - w / 2.0, pin.y - 26.0, w, 22.0);
                 canvas.fill_rect(box_r, 6.0, &Brush::Solid(Color::WHITE.with_opacity(0.95)));
                 let mut lt = label.clone();
                 lt.h_align = TextAlign::Center;
                 lt.color = Color::rgb(0x20, 0x20, 0x20);
-                canvas.draw_text(&text, box_r, &lt);
+                canvas.draw_text(text, box_r, &lt);
             }
         }
 

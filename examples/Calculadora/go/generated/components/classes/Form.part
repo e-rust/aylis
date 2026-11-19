@@ -5,17 +5,41 @@ type aylisForm struct{ aylis.Form }
 func (c aylisForm) Caption() string { return asText(c.Get("caption")) }
 func (c aylisForm) SetCaption(v string) { c.Set("caption", v) }
 
-func (c aylisForm) Position() string { return asText(c.Get("position")) }
-func (c aylisForm) SetPosition(v string) { c.Set("position", v) }
+func (c aylisForm) Position() FormPosition { return FormPosition(asText(c.Get("position"))) }
+func (c aylisForm) SetPosition(v FormPosition) { c.Set("position", string(v)) }
 
-func (c aylisForm) BorderStyle() string { return asText(c.Get("border_style")) }
-func (c aylisForm) SetBorderStyle(v string) { c.Set("border_style", v) }
+func (c aylisForm) BorderStyle() BorderStyle { return BorderStyle(asText(c.Get("border_style"))) }
+func (c aylisForm) SetBorderStyle(v BorderStyle) { c.Set("border_style", string(v)) }
 
-func (c aylisForm) WindowState() string { return asText(c.Get("window_state")) }
-func (c aylisForm) SetWindowState(v string) { c.Set("window_state", v) }
+func (c aylisForm) WindowCorners() WindowCorners { return WindowCorners(asText(c.Get("window_corners"))) }
+func (c aylisForm) SetWindowCorners(v WindowCorners) { c.Set("window_corners", string(v)) }
 
-func (c aylisForm) Transition() string { return asText(c.Get("transition")) }
-func (c aylisForm) SetTransition(v string) { c.Set("transition", v) }
+func (c aylisForm) Transparent() bool { return asBool(c.Get("transparent")) }
+func (c aylisForm) SetTransparent(v bool) { c.Set("transparent", v) }
+
+func (c aylisForm) WindowShape() WindowShape { return WindowShape(asText(c.Get("window_shape"))) }
+func (c aylisForm) SetWindowShape(v WindowShape) { c.Set("window_shape", string(v)) }
+
+func (c aylisForm) ShapeRadius() float64 { return asNumber(c.Get("shape_radius")) }
+func (c aylisForm) SetShapeRadius(v float64) { c.Set("shape_radius", v) }
+
+func (c aylisForm) ShapeRadii() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("shape_radii")) }
+func (c aylisForm) SetShapeRadii(v aylis.Bounds) { c.Set("shape_radii", v.JSON()) }
+
+func (c aylisForm) ShapePath() string { return asText(c.Get("shape_path")) }
+func (c aylisForm) SetShapePath(v string) { c.Set("shape_path", v) }
+
+func (c aylisForm) WindowState() WindowState { return WindowState(asText(c.Get("window_state"))) }
+func (c aylisForm) SetWindowState(v WindowState) { c.Set("window_state", string(v)) }
+
+func (c aylisForm) Transition() Transition { return Transition(asText(c.Get("transition"))) }
+func (c aylisForm) SetTransition(v Transition) { c.Set("transition", string(v)) }
+
+func (c aylisForm) LayerCache() LayerCaching { return LayerCaching(asText(c.Get("layer_cache"))) }
+func (c aylisForm) SetLayerCache(v LayerCaching) { c.Set("layer_cache", string(v)) }
+
+func (c aylisForm) FrameReuseKb() int64 { return int64(asNumber(c.Get("frame_reuse_kb"))) }
+func (c aylisForm) SetFrameReuseKb(v int64) { c.Set("frame_reuse_kb", v) }
 
 func (c aylisForm) Topmost() bool { return asBool(c.Get("topmost")) }
 func (c aylisForm) SetTopmost(v bool) { c.Set("topmost", v) }
@@ -23,11 +47,11 @@ func (c aylisForm) SetTopmost(v bool) { c.Set("topmost", v) }
 func (c aylisForm) ShowInTaskbar() bool { return asBool(c.Get("show_in_taskbar")) }
 func (c aylisForm) SetShowInTaskbar(v bool) { c.Set("show_in_taskbar", v) }
 
-func (c aylisForm) ActiveControl() string { return asText(c.Get("active_control")) }
-func (c aylisForm) SetActiveControl(v string) { c.Set("active_control", v) }
+func (c aylisForm) ActiveControl() *aylis.Component { return c.GetRef("active_control") }
+func (c aylisForm) SetActiveControl(v aylis.Ref) { c.SetRef("active_control", v) }
 
-func (c aylisForm) TabOrder() string { return asText(c.Get("tab_order")) }
-func (c aylisForm) SetTabOrder(v string) { c.Set("tab_order", v) }
+func (c aylisForm) TabOrder() []string { return asList(c.Get("tab_order")) }
+func (c aylisForm) SetTabOrder(v []string) { c.Set("tab_order", strings.Join(v, ";")) }
 
 func (c aylisForm) TabKeys() string { return asText(c.Get("tab_keys")) }
 func (c aylisForm) SetTabKeys(v string) { c.Set("tab_keys", v) }
@@ -65,14 +89,62 @@ func (c aylisForm) SetRememberPlacement(v bool) { c.Set("remember_placement", v)
 func (c aylisForm) Gpu() string { return asText(c.Get("gpu")) }
 func (c aylisForm) SetGpu(v string) { c.Set("gpu", v) }
 
+func (c aylisForm) Present() FormPresent { return FormPresent(asText(c.Get("present"))) }
+func (c aylisForm) SetPresent(v FormPresent) { c.Set("present", string(v)) }
+
+func (c aylisForm) SpanMonitors() bool { return asBool(c.Get("span_monitors")) }
+func (c aylisForm) SetSpanMonitors(v bool) { c.Set("span_monitors", v) }
+
+func (c aylisForm) PhysicalPixels() bool { return asBool(c.Get("physical_pixels")) }
+func (c aylisForm) SetPhysicalPixels(v bool) { c.Set("physical_pixels", v) }
+
 func (c aylisForm) ActivateOnShow() bool { return asBool(c.Get("activate_on_show")) }
 func (c aylisForm) SetActivateOnShow(v bool) { c.Set("activate_on_show", v) }
 
-func (c aylisForm) CloseAction() string { return asText(c.Get("close_action")) }
-func (c aylisForm) SetCloseAction(v string) { c.Set("close_action", v) }
+func (c aylisForm) ForceForeground() bool { return asBool(c.Get("force_foreground")) }
+func (c aylisForm) SetForceForeground(v bool) { c.Set("force_foreground", v) }
+
+func (c aylisForm) CloseAction() CloseAction { return CloseAction(asText(c.Get("close_action"))) }
+func (c aylisForm) SetCloseAction(v CloseAction) { c.Set("close_action", string(v)) }
 
 func (c aylisForm) FrameRate() float64 { return asNumber(c.Get("frame_rate")) }
 func (c aylisForm) SetFrameRate(v float64) { c.Set("frame_rate", v) }
+
+func (c aylisForm) Orientation() FormOrientation { return FormOrientation(asText(c.Get("orientation"))) }
+func (c aylisForm) SetOrientation(v FormOrientation) { c.Set("orientation", string(v)) }
+
+func (c aylisForm) OnShow() string { return asText(c.Get("on_show")) }
+func (c aylisForm) SetOnShow(v string) { c.Set("on_show", v) }
+
+func (c aylisForm) OnWindowCreated() string { return asText(c.Get("on_window_created")) }
+func (c aylisForm) SetOnWindowCreated(v string) { c.Set("on_window_created", v) }
+
+func (c aylisForm) OnClose() string { return asText(c.Get("on_close")) }
+func (c aylisForm) SetOnClose(v string) { c.Set("on_close", v) }
+
+func (c aylisForm) OnActivate() string { return asText(c.Get("on_activate")) }
+func (c aylisForm) SetOnActivate(v string) { c.Set("on_activate", v) }
+
+func (c aylisForm) OnDeactivate() string { return asText(c.Get("on_deactivate")) }
+func (c aylisForm) SetOnDeactivate(v string) { c.Set("on_deactivate", v) }
+
+func (c aylisForm) OnMinimize() string { return asText(c.Get("on_minimize")) }
+func (c aylisForm) SetOnMinimize(v string) { c.Set("on_minimize", v) }
+
+func (c aylisForm) OnRestore() string { return asText(c.Get("on_restore")) }
+func (c aylisForm) SetOnRestore(v string) { c.Set("on_restore", v) }
+
+func (c aylisForm) OnNavigate() string { return asText(c.Get("on_navigate")) }
+func (c aylisForm) SetOnNavigate(v string) { c.Set("on_navigate", v) }
+
+func (c aylisForm) OnGpuChange() string { return asText(c.Get("on_gpu_change")) }
+func (c aylisForm) SetOnGpuChange(v string) { c.Set("on_gpu_change", v) }
+
+func (c aylisForm) ClientWidth() float64 { return asNumber(c.Get("client_width")) }
+func (c aylisForm) SetClientWidth(v float64) { c.Set("client_width", v) }
+
+func (c aylisForm) ClientHeight() float64 { return asNumber(c.Get("client_height")) }
+func (c aylisForm) SetClientHeight(v float64) { c.Set("client_height", v) }
 
 func (c aylisForm) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisForm) SetLeft(v float64) { c.Set("left", v) }
@@ -86,17 +158,17 @@ func (c aylisForm) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisForm) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisForm) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisForm) Align() string { return asText(c.Get("align")) }
-func (c aylisForm) SetAlign(v string) { c.Set("align", v) }
+func (c aylisForm) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisForm) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisForm) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisForm) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisForm) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisForm) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisForm) Margins() string { return asText(c.Get("margins")) }
-func (c aylisForm) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisForm) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisForm) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisForm) Padding() string { return asText(c.Get("padding")) }
-func (c aylisForm) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisForm) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisForm) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisForm) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisForm) SetVisible(v bool) { c.Set("visible", v) }
@@ -119,6 +191,9 @@ func (c aylisForm) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisForm) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisForm) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisForm) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisForm) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisForm) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisForm) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -134,8 +209,8 @@ func (c aylisForm) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisForm) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisForm) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisForm) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisForm) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisForm) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisForm) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisForm) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisForm) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -143,17 +218,23 @@ func (c aylisForm) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisForm) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisForm) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisForm) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisForm) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisForm) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisForm) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisForm) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisForm) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisForm) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisForm) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisForm) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisForm) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisForm) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisForm) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisForm) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisForm) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisForm) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisForm) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -176,8 +257,8 @@ func (c aylisForm) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisForm) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisForm) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisForm) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisForm) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisForm) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisForm) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisForm) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisForm) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -197,35 +278,35 @@ func (c aylisForm) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisForm) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisForm) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisForm) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisForm) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisForm) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisForm) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisForm) Style() string { return asText(c.Get("style")) }
-func (c aylisForm) SetStyle(v string) { c.Set("style", v) }
+func (c aylisForm) Style() FormStyle { return FormStyle(asText(c.Get("style"))) }
+func (c aylisForm) SetStyle(v FormStyle) { c.Set("style", string(v)) }
 
-func (c aylisForm) Theme() string { return asText(c.Get("theme")) }
-func (c aylisForm) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisForm) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisForm) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisForm) Fill() string { return asText(c.Get("fill")) }
-func (c aylisForm) SetFill(v string) { c.Set("fill", v) }
+func (c aylisForm) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisForm) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisForm) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisForm) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisForm) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisForm) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisForm) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisForm) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisForm) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisForm) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisForm) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisForm) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisForm) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisForm) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisForm) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisForm) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisForm) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisForm) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisForm) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisForm) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisForm) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisForm) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisForm) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisForm) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisForm) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisForm) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisForm) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisForm) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -233,8 +314,8 @@ func (c aylisForm) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisForm) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisForm) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisForm) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisForm) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisForm) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisForm) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisForm) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisForm) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -257,11 +338,69 @@ func (c aylisForm) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisForm) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisForm) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisForm) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisForm) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisForm) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisForm) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisForm) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisForm) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisForm) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisForm) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisForm) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisForm) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisForm) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisForm) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisForm) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisForm) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisForm) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisForm) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisForm) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisForm) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisForm) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisForm) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisForm) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisForm) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisForm) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisForm) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisForm) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisForm) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisForm) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisForm) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisForm) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisForm) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisForm) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisForm) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisForm) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisForm) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisForm) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisForm) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisForm) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisForm) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisForm) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisForm) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisForm) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisForm) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisForm) MoveToMonitor(monitor int64) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "move_to_monitor", "args": []any{monitor}}) }
 func (c aylisForm) GpuAdapter() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapter", "args": []any{}})) }
-func (c aylisForm) GpuAdapters() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapters", "args": []any{}})) }
+func (c aylisForm) GpuAdapters() []string { return asList(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapters", "args": []any{}})) }
+func (c aylisForm) RenderRgba(x float64, y float64, width float64, height float64, scale float64) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "render_rgba", "args": []any{x, y, width, height, scale}})) }
 func (c aylisForm) Focused() string { return asText(askCmd(c.App, "focused", aylis.M{"target": c.ID})) }
 func (c aylisForm) FocusNext() { c.App.Send("focus_next", aylis.M{"target": c.ID}) }
 func (c aylisForm) FocusPrev() { c.App.Send("focus_prev", aylis.M{"target": c.ID}) }

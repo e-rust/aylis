@@ -19,8 +19,8 @@ Calendário de um mês: clique num dia escolhe; ‹ › trocam o mês; setas and
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `date` | Data | texto | Data escolhida (ISO, `2026-10-24`); vazia = nenhuma. |
-| `end_date` | Data final | texto | O fim do intervalo, com `range` (ISO); vazia = só o início escolhido. |
+| `date` | Data | data (ISO, `2026-10-24`) | Data escolhida (ISO, `2026-10-24`); vazia = nenhuma. |
+| `end_date` | Data final | data (ISO, `2026-10-24`) | O fim do intervalo, com `range` (ISO); vazia = só o início escolhido. |
 | `events` | Eventos | texto | Dias com eventos (ISO separados por `;`): ganham um ponto embaixo do número. |
 
 ## Eventos
@@ -42,8 +42,8 @@ E o handler, um método do form (`self.Calendar1` já é um `Calendar`):
 ```rust
 impl FrmPrincipal {
     pub fn calendar1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Calendar1.date(ui);
-        self.Calendar1.set_date(ui, format!("{atual}!"));
+        let atual = self.Calendar1.range(ui);
+        self.Calendar1.set_range(ui, !atual);
     }
 }
 ```

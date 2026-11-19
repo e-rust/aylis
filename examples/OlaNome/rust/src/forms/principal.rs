@@ -14,7 +14,7 @@ pub struct Data {}
 
 impl FrmPrincipal {
     /// O clique em "Saudar": lê o nome e escreve a saudação.
-    pub fn btn_saudar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn btn_saudar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let nome = self.edtNome.text(ui);
         let nome = if nome.trim().is_empty() { "mundo".to_string() } else { nome.trim().to_string() };
         self.lblResposta.set_text(ui, format!("Olá, {nome}!"));

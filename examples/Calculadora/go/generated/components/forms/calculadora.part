@@ -282,7 +282,7 @@ func init() {
 	}, func(form aylis.FormInstance) { frmCalculadora = form.(*frmCalculadoraComponents) })
 }
 
-// FindButton é o Button deste form com o nome (como o FindComponent).
+// FindButton é o Button deste form com o nome.
 func (f *frmCalculadoraComponents) FindButton(name string) aylisButton {
 	switch name {
 	case "btnLimparHistorico":
@@ -354,7 +354,7 @@ func (f *frmCalculadoraComponents) FindButton(name string) aylisButton {
 // SenderAsButton é o Button que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsButton(ev aylis.Event) aylisButton { return f.FindButton(ev.Sender.Name) }
 
-// FindGridLayout é o GridLayout deste form com o nome (como o FindComponent).
+// FindGridLayout é o GridLayout deste form com o nome.
 func (f *frmCalculadoraComponents) FindGridLayout(name string) aylisGridLayout {
 	switch name {
 	case "grdMemoria":
@@ -368,7 +368,7 @@ func (f *frmCalculadoraComponents) FindGridLayout(name string) aylisGridLayout {
 // SenderAsGridLayout é o GridLayout que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsGridLayout(ev aylis.Event) aylisGridLayout { return f.FindGridLayout(ev.Sender.Name) }
 
-// FindLabel é o Label deste form com o nome (como o FindComponent).
+// FindLabel é o Label deste form com o nome.
 func (f *frmCalculadoraComponents) FindLabel(name string) aylisLabel {
 	switch name {
 	case "lblTitulo":
@@ -384,7 +384,7 @@ func (f *frmCalculadoraComponents) FindLabel(name string) aylisLabel {
 // SenderAsLabel é o Label que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsLabel(ev aylis.Event) aylisLabel { return f.FindLabel(ev.Sender.Name) }
 
-// FindLayout é o Layout deste form com o nome (como o FindComponent).
+// FindLayout é o Layout deste form com o nome.
 func (f *frmCalculadoraComponents) FindLayout(name string) aylisLayout {
 	switch name {
 	case "lytCorpo":
@@ -398,7 +398,7 @@ func (f *frmCalculadoraComponents) FindLayout(name string) aylisLayout {
 // SenderAsLayout é o Layout que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsLayout(ev aylis.Event) aylisLayout { return f.FindLayout(ev.Sender.Name) }
 
-// FindListView é o ListView deste form com o nome (como o FindComponent).
+// FindListView é o ListView deste form com o nome.
 func (f *frmCalculadoraComponents) FindListView(name string) aylisListView {
 	switch name {
 	case "lvHistorico":
@@ -412,7 +412,7 @@ func (f *frmCalculadoraComponents) FindListView(name string) aylisListView {
 // SenderAsListView é o ListView que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsListView(ev aylis.Event) aylisListView { return f.FindListView(ev.Sender.Name) }
 
-// FindPanel é o Panel deste form com o nome (como o FindComponent).
+// FindPanel é o Panel deste form com o nome.
 func (f *frmCalculadoraComponents) FindPanel(name string) aylisPanel {
 	switch name {
 	case "pnlLateral":
@@ -424,7 +424,7 @@ func (f *frmCalculadoraComponents) FindPanel(name string) aylisPanel {
 // SenderAsPanel é o Panel que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsPanel(ev aylis.Event) aylisPanel { return f.FindPanel(ev.Sender.Name) }
 
-// FindTabControl é o TabControl deste form com o nome (como o FindComponent).
+// FindTabControl é o TabControl deste form com o nome.
 func (f *frmCalculadoraComponents) FindTabControl(name string) aylisTabControl {
 	switch name {
 	case "tabLateral":
@@ -436,7 +436,7 @@ func (f *frmCalculadoraComponents) FindTabControl(name string) aylisTabControl {
 // SenderAsTabControl é o TabControl que disparou o evento.
 func (f *frmCalculadoraComponents) SenderAsTabControl(ev aylis.Event) aylisTabControl { return f.FindTabControl(ev.Sender.Name) }
 
-// FindTabItem é o TabItem deste form com o nome (como o FindComponent).
+// FindTabItem é o TabItem deste form com o nome.
 func (f *frmCalculadoraComponents) FindTabItem(name string) aylisTabItem {
 	switch name {
 	case "tabHistorico":

@@ -255,7 +255,7 @@ impl Component for MediaCard {
         progress_text: String => "Data",
         highlighted: bool => "Appearance",
         editable_title: bool => "Behavior";
-        events: on_click, on_select, on_context, on_rename
+        events: on_click: (), on_select: (), on_context: aylis_core::PointerEvent, on_rename: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {

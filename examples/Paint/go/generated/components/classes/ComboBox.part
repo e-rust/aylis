@@ -2,8 +2,8 @@
 // aylisComboBox é um ComboBox de um form.
 type aylisComboBox struct{ aylis.Component }
 
-func (c aylisComboBox) Items() string { return asText(c.Get("items")) }
-func (c aylisComboBox) SetItems(v string) { c.Set("items", v) }
+func (c aylisComboBox) Items() []string { return asList(c.Get("items")) }
+func (c aylisComboBox) SetItems(v []string) { c.Set("items", strings.Join(v, ";")) }
 
 func (c aylisComboBox) Values() string { return asText(c.Get("values")) }
 func (c aylisComboBox) SetValues(v string) { c.Set("values", v) }
@@ -11,23 +11,29 @@ func (c aylisComboBox) SetValues(v string) { c.Set("values", v) }
 func (c aylisComboBox) ItemIndex() int64 { return int64(asNumber(c.Get("item_index"))) }
 func (c aylisComboBox) SetItemIndex(v int64) { c.Set("item_index", v) }
 
-func (c aylisComboBox) HAlign() string { return asText(c.Get("h_align")) }
-func (c aylisComboBox) SetHAlign(v string) { c.Set("h_align", v) }
+func (c aylisComboBox) HAlign() TextAlign { return TextAlign(asText(c.Get("h_align"))) }
+func (c aylisComboBox) SetHAlign(v TextAlign) { c.Set("h_align", string(v)) }
 
-func (c aylisComboBox) Trimming() string { return asText(c.Get("trimming")) }
-func (c aylisComboBox) SetTrimming(v string) { c.Set("trimming", v) }
+func (c aylisComboBox) Trimming() Trimming { return Trimming(asText(c.Get("trimming"))) }
+func (c aylisComboBox) SetTrimming(v Trimming) { c.Set("trimming", string(v)) }
 
-func (c aylisComboBox) Arrow() string { return asText(c.Get("arrow")) }
-func (c aylisComboBox) SetArrow(v string) { c.Set("arrow", v) }
+func (c aylisComboBox) Arrow() ComboArrow { return ComboArrow(asText(c.Get("arrow"))) }
+func (c aylisComboBox) SetArrow(v ComboArrow) { c.Set("arrow", string(v)) }
 
 func (c aylisComboBox) Sensitive() bool { return asBool(c.Get("sensitive")) }
 func (c aylisComboBox) SetSensitive(v bool) { c.Set("sensitive", v) }
 
-func (c aylisComboBox) Groups() string { return asText(c.Get("groups")) }
-func (c aylisComboBox) SetGroups(v string) { c.Set("groups", v) }
+func (c aylisComboBox) Groups() []string { return asList(c.Get("groups")) }
+func (c aylisComboBox) SetGroups(v []string) { c.Set("groups", strings.Join(v, ";")) }
 
-func (c aylisComboBox) DisabledItems() string { return asText(c.Get("disabled_items")) }
-func (c aylisComboBox) SetDisabledItems(v string) { c.Set("disabled_items", v) }
+func (c aylisComboBox) DisabledItems() []string { return asList(c.Get("disabled_items")) }
+func (c aylisComboBox) SetDisabledItems(v []string) { c.Set("disabled_items", strings.Join(v, ";")) }
+
+func (c aylisComboBox) DropDownCount() int64 { return int64(asNumber(c.Get("drop_down_count"))) }
+func (c aylisComboBox) SetDropDownCount(v int64) { c.Set("drop_down_count", v) }
+
+func (c aylisComboBox) OnChange() string { return asText(c.Get("on_change")) }
+func (c aylisComboBox) SetOnChange(v string) { c.Set("on_change", v) }
 
 func (c aylisComboBox) Value() string { return asText(c.Get("value")) }
 func (c aylisComboBox) SetValue(v string) { c.Set("value", v) }
@@ -44,17 +50,17 @@ func (c aylisComboBox) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisComboBox) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisComboBox) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisComboBox) Align() string { return asText(c.Get("align")) }
-func (c aylisComboBox) SetAlign(v string) { c.Set("align", v) }
+func (c aylisComboBox) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisComboBox) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisComboBox) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisComboBox) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisComboBox) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisComboBox) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisComboBox) Margins() string { return asText(c.Get("margins")) }
-func (c aylisComboBox) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisComboBox) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisComboBox) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisComboBox) Padding() string { return asText(c.Get("padding")) }
-func (c aylisComboBox) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisComboBox) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisComboBox) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisComboBox) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisComboBox) SetVisible(v bool) { c.Set("visible", v) }
@@ -77,6 +83,9 @@ func (c aylisComboBox) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisComboBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisComboBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisComboBox) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisComboBox) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisComboBox) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisComboBox) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -92,8 +101,8 @@ func (c aylisComboBox) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisComboBox) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisComboBox) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisComboBox) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisComboBox) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisComboBox) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisComboBox) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisComboBox) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisComboBox) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -101,17 +110,23 @@ func (c aylisComboBox) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisComboBox) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisComboBox) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisComboBox) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisComboBox) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisComboBox) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisComboBox) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisComboBox) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisComboBox) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisComboBox) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisComboBox) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisComboBox) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisComboBox) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisComboBox) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisComboBox) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisComboBox) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisComboBox) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisComboBox) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisComboBox) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -134,8 +149,8 @@ func (c aylisComboBox) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisComboBox) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisComboBox) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisComboBox) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisComboBox) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisComboBox) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisComboBox) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisComboBox) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisComboBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -155,35 +170,35 @@ func (c aylisComboBox) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisComboBox) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisComboBox) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisComboBox) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisComboBox) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisComboBox) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisComboBox) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisComboBox) Style() string { return asText(c.Get("style")) }
-func (c aylisComboBox) SetStyle(v string) { c.Set("style", v) }
+func (c aylisComboBox) Style() ComboBoxStyle { return ComboBoxStyle(asText(c.Get("style"))) }
+func (c aylisComboBox) SetStyle(v ComboBoxStyle) { c.Set("style", string(v)) }
 
-func (c aylisComboBox) Theme() string { return asText(c.Get("theme")) }
-func (c aylisComboBox) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisComboBox) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisComboBox) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisComboBox) Fill() string { return asText(c.Get("fill")) }
-func (c aylisComboBox) SetFill(v string) { c.Set("fill", v) }
+func (c aylisComboBox) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisComboBox) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisComboBox) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisComboBox) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisComboBox) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisComboBox) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisComboBox) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisComboBox) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisComboBox) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisComboBox) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisComboBox) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisComboBox) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisComboBox) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisComboBox) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisComboBox) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisComboBox) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisComboBox) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisComboBox) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisComboBox) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisComboBox) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisComboBox) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisComboBox) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisComboBox) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisComboBox) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisComboBox) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisComboBox) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisComboBox) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisComboBox) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -191,8 +206,8 @@ func (c aylisComboBox) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisComboBox) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisComboBox) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisComboBox) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisComboBox) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisComboBox) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisComboBox) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisComboBox) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisComboBox) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -215,6 +230,63 @@ func (c aylisComboBox) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisComboBox) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisComboBox) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisComboBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisComboBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisComboBox) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisComboBox) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisComboBox) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisComboBox) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisComboBox) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisComboBox) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisComboBox) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisComboBox) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisComboBox) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisComboBox) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisComboBox) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisComboBox) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisComboBox) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisComboBox) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisComboBox) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisComboBox) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisComboBox) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisComboBox) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisComboBox) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisComboBox) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisComboBox) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisComboBox) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisComboBox) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisComboBox) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisComboBox) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisComboBox) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisComboBox) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisComboBox) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisComboBox) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisComboBox) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisComboBox) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisComboBox) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisComboBox) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisComboBox) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisComboBox) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisComboBox) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisComboBox) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisComboBox) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisComboBox) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisComboBox) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisComboBox) SetFocus() { c.App.Send("focus", aylis.M{"target": c.ID}) }

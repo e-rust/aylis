@@ -202,7 +202,7 @@ struct FrmIBGEComponents : Form {
         dbcMaiores = DBChart(resolve_(list, "dbcMaiores", "DBChart"));
         dbcEstados = DBChart(resolve_(list, "dbcEstados", "DBChart"));
     }
-    // O ClientDataSet deste form com o nome (como o FindComponent; vazio se não há).
+    // O ClientDataSet deste form com o nome (vazio se não há).
     ClientDataSet find_client_data_set(const std::string& name) const {
         if (name == "cdsEstados") return cdsEstados;
         if (name == "cdsMunicipios") return cdsMunicipios;
@@ -213,7 +213,7 @@ struct FrmIBGEComponents : Form {
     }
     // O ClientDataSet que disparou o evento.
     ClientDataSet sender_as_client_data_set(const aylis::Event& ev) const { return find_client_data_set(ev.sender_name); }
-    // O DBChart deste form com o nome (como o FindComponent; vazio se não há).
+    // O DBChart deste form com o nome (vazio se não há).
     DBChart find_d_b_chart(const std::string& name) const {
         if (name == "dbcPopulacao") return dbcPopulacao;
         if (name == "dbcMaiores") return dbcMaiores;
@@ -222,7 +222,7 @@ struct FrmIBGEComponents : Form {
     }
     // O DBChart que disparou o evento.
     DBChart sender_as_d_b_chart(const aylis::Event& ev) const { return find_d_b_chart(ev.sender_name); }
-    // O DataGrid deste form com o nome (como o FindComponent; vazio se não há).
+    // O DataGrid deste form com o nome (vazio se não há).
     DataGrid find_data_grid(const std::string& name) const {
         if (name == "grdEstados") return grdEstados;
         if (name == "grdDistritos") return grdDistritos;
@@ -231,7 +231,7 @@ struct FrmIBGEComponents : Form {
     }
     // O DataGrid que disparou o evento.
     DataGrid sender_as_data_grid(const aylis::Event& ev) const { return find_data_grid(ev.sender_name); }
-    // O DataSource deste form com o nome (como o FindComponent; vazio se não há).
+    // O DataSource deste form com o nome (vazio se não há).
     DataSource find_data_source(const std::string& name) const {
         if (name == "dsEstados") return dsEstados;
         if (name == "dsMunicipios") return dsMunicipios;
@@ -242,7 +242,7 @@ struct FrmIBGEComponents : Form {
     }
     // O DataSource que disparou o evento.
     DataSource sender_as_data_source(const aylis::Event& ev) const { return find_data_source(ev.sender_name); }
-    // O Field deste form com o nome (como o FindComponent; vazio se não há).
+    // O Field deste form com o nome (vazio se não há).
     Field find_field(const std::string& name) const {
         if (name == "cdsEstadosId") return cdsEstadosId;
         if (name == "cdsEstadosSigla") return cdsEstadosSigla;
@@ -286,7 +286,7 @@ struct FrmIBGEComponents : Form {
     }
     // O Field que disparou o evento.
     Field sender_as_field(const aylis::Event& ev) const { return find_field(ev.sender_name); }
-    // O GroupBox deste form com o nome (como o FindComponent; vazio se não há).
+    // O GroupBox deste form com o nome (vazio se não há).
     GroupBox find_group_box(const std::string& name) const {
         if (name == "gbEstados") return gbEstados;
         if (name == "gbDistritos") return gbDistritos;
@@ -295,7 +295,7 @@ struct FrmIBGEComponents : Form {
     }
     // O GroupBox que disparou o evento.
     GroupBox sender_as_group_box(const aylis::Event& ev) const { return find_group_box(ev.sender_name); }
-    // O Image deste form com o nome (como o FindComponent; vazio se não há).
+    // O Image deste form com o nome (vazio se não há).
     Image find_image(const std::string& name) const {
         if (name == "imgBandeiraEstado") return imgBandeiraEstado;
         if (name == "imgBandeiraMunicipio") return imgBandeiraMunicipio;
@@ -303,7 +303,7 @@ struct FrmIBGEComponents : Form {
     }
     // O Image que disparou o evento.
     Image sender_as_image(const aylis::Event& ev) const { return find_image(ev.sender_name); }
-    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    // O Label deste form com o nome (vazio se não há).
     Label find_label(const std::string& name) const {
         if (name == "lblFonte") return lblFonte;
         if (name == "lblEstado") return lblEstado;
@@ -334,7 +334,7 @@ struct FrmIBGEComponents : Form {
     }
     // O Label que disparou o evento.
     Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
-    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    // O Layout deste form com o nome (vazio se não há).
     Layout find_layout(const std::string& name) const {
         if (name == "lytListas") return lytListas;
         if (name == "lytPainel") return lytPainel;
@@ -347,7 +347,7 @@ struct FrmIBGEComponents : Form {
     }
     // O Layout que disparou o evento.
     Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
-    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    // O Panel deste form com o nome (vazio se não há).
     Panel find_panel(const std::string& name) const {
         if (name == "pnlEstado") return pnlEstado;
         if (name == "pnlMunicipio") return pnlMunicipio;
@@ -355,14 +355,14 @@ struct FrmIBGEComponents : Form {
     }
     // O Panel que disparou o evento.
     Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
-    // O Splitter deste form com o nome (como o FindComponent; vazio se não há).
+    // O Splitter deste form com o nome (vazio se não há).
     Splitter find_splitter(const std::string& name) const {
         if (name == "splListas") return splListas;
         return Splitter();
     }
     // O Splitter que disparou o evento.
     Splitter sender_as_splitter(const aylis::Event& ev) const { return find_splitter(ev.sender_name); }
-    // O Svg deste form com o nome (como o FindComponent; vazio se não há).
+    // O Svg deste form com o nome (vazio se não há).
     Svg find_svg(const std::string& name) const {
         if (name == "svgBrasil") return svgBrasil;
         if (name == "svgMunicipio") return svgMunicipio;

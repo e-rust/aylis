@@ -70,127 +70,127 @@
       },
       "handlers": {
         "frmPrincipal.abrir_site_click": {
-          "hash": "5b0bc60278b6830a",
+          "hash": "v2:ab011d1681128418",
           "seen": 2
         },
         "frmPrincipal.cam_ciclo_click": {
-          "hash": "1c7f33ef166f001a",
+          "hash": "v2:2d69a3b3529ef4f2",
           "seen": 1
         },
         "frmPrincipal.cam_flash_click": {
-          "hash": "1af80ed57a92edd0",
+          "hash": "v2:b116a063c5e01a8c",
           "seen": 2
         },
         "frmPrincipal.cam_foto_click": {
-          "hash": "cfe1a05f3be813e9",
+          "hash": "v2:c57ac8e8c25d171a",
           "seen": 3
         },
         "frmPrincipal.cam_ligar_click": {
-          "hash": "5de6abf354228421",
+          "hash": "v2:5501bc97d54b26a1",
           "seen": 1
         },
         "frmPrincipal.cam_pronta": {
-          "hash": "22d52aa8264cfd52",
+          "hash": "v2:1eae7df1fda20f80",
           "seen": 2
         },
         "frmPrincipal.cam_qualidade_change": {
-          "hash": "06e054382ddfdc71",
+          "hash": "v2:2bd4f7444fa48573",
           "seen": 2
         },
         "frmPrincipal.cam_trocar_click": {
-          "hash": "bd2a35f469ad18dc",
+          "hash": "v2:46ce2b067108d78a",
           "seen": 2
         },
         "frmPrincipal.chamada_estado": {
-          "hash": "5dd91f47cfb2c61e",
+          "hash": "v2:478d3261a6914bc8",
           "seen": 1
         },
         "frmPrincipal.compartilhado_recebido": {
-          "hash": "5ab54cfcecf66984",
+          "hash": "v2:41df47aa258218f7",
           "seen": 1
         },
         "frmPrincipal.compartilhar_click": {
-          "hash": "abb89ab711699bb3",
+          "hash": "v2:e522fe32eb558445",
           "seen": 2
         },
         "frmPrincipal.discar_click": {
-          "hash": "a6248eb0444e4c0b",
+          "hash": "v2:fc05c89b734761b7",
           "seen": 2
         },
         "frmPrincipal.fps_click": {
-          "hash": "1cda02dddde4d801",
+          "hash": "v2:73444bb8c6617af3",
           "seen": 1
         },
         "frmPrincipal.link_erro": {
-          "hash": "eaa373b61a6c2c7c",
+          "hash": "v2:5a820b91f559ade4",
           "seen": 1
         },
         "frmPrincipal.link_recebido": {
-          "hash": "9d04795ad3acc687",
+          "hash": "v2:3951b10da04d1f27",
           "seen": 1
         },
         "frmPrincipal.mic_apps_click": {
-          "hash": "7d4c21b721c24da7",
+          "hash": "v2:fd1fa38ad408de8b",
           "seen": 1
         },
         "frmPrincipal.mic_gravar_click": {
-          "hash": "f269bf5314ce4274",
+          "hash": "v2:136a0c20335e907c",
           "seen": 3
         },
         "frmPrincipal.mic_ligar_click": {
-          "hash": "fc429a32ff1901f3",
+          "hash": "v2:a76a0bc1a83b6f39",
           "seen": 1
         },
         "frmPrincipal.not_acao": {
-          "hash": "031e7b06d15e025d",
+          "hash": "v2:1b695fed957d6598",
           "seen": 1
         },
         "frmPrincipal.not_botoes_click": {
-          "hash": "fd8e587d86302f2c",
+          "hash": "v2:fd8e587d86302f2c",
           "seen": 2
         },
         "frmPrincipal.not_form_click": {
-          "hash": "c7ba4bed8d43cbc0",
+          "hash": "v2:c7ba4bed8d43cbc0",
           "seen": 2
         },
         "frmPrincipal.not_progresso_click": {
-          "hash": "f1a9ef369ecb764d",
+          "hash": "v2:f1a9ef369ecb764d",
           "seen": 2
         },
         "frmPrincipal.not_simples_click": {
-          "hash": "845dc08d96893d25",
+          "hash": "v2:845dc08d96893d25",
           "seen": 2
         },
         "frmPrincipal.servico_click": {
-          "hash": "d53f3b2fdbc05673",
+          "hash": "v2:88d4b437b5ea0db5",
           "seen": 1
         },
         "frmPrincipal.servico_mensagem": {
-          "hash": "9ffe636915f448a5",
+          "hash": "v2:67df13c3c6e71c35",
           "seen": 1
         },
         "frmPrincipal.tema_click": {
-          "hash": "1d09a3552eb5d2bf",
+          "hash": "v2:18226faafdd74335",
           "seen": 2
         },
         "frmPrincipal.tick_timer": {
-          "hash": "70eae59fc4200e8f",
+          "hash": "v2:a8bdc1e6de87ef36",
           "seen": 10
         },
         "frmPrincipal.vibrar_click": {
-          "hash": "b48f748e221a4534",
+          "hash": "v2:9d0d2211df5eb1ce",
           "seen": 2
         },
         "frmPrincipal.vid_ciclo_click": {
-          "hash": "25aeac069efe7dc0",
+          "hash": "v2:da1d7082610dc4cc",
           "seen": 1
         },
         "frmPrincipal.vid_parar_click": {
-          "hash": "478dd937c82dcafb",
+          "hash": "v2:222b9e32b37ae3b3",
           "seen": 1
         },
         "frmPrincipal.vid_tocar_click": {
-          "hash": "457c07c3ff13b2bc",
+          "hash": "v2:4f3a447ee887dde8",
           "seen": 1
         }
       }

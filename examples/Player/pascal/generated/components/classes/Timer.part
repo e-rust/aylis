@@ -5,21 +5,24 @@
     procedure SetInterval(Value: Double);
     function GetEnabled: Boolean;
     procedure SetEnabled(Value: Boolean);
-    function GetPrecision: string;
-    procedure SetPrecision(Value: string);
+    function GetPrecision: TTimerPrecision;
+    procedure SetPrecision(Value: TTimerPrecision);
     function GetBackground: Boolean;
     procedure SetBackground(Value: Boolean);
     function GetOneShot: Boolean;
     procedure SetOneShot(Value: Boolean);
+    function GetOnTimer: string;
+    procedure SetOnTimer(Value: string);
     function GetDrift: Double;
     procedure SetDrift(Value: Double);
   public
     procedure Restart;
     property Interval: Double read GetInterval write SetInterval;
     property Enabled: Boolean read GetEnabled write SetEnabled;
-    property Precision: string read GetPrecision write SetPrecision;
+    property Precision: TTimerPrecision read GetPrecision write SetPrecision;
     property Background: Boolean read GetBackground write SetBackground;
     property OneShot: Boolean read GetOneShot write SetOneShot;
+    property OnTimer: string read GetOnTimer write SetOnTimer;
     property Drift: Double read GetDrift write SetDrift;
   end;
 
@@ -44,14 +47,14 @@ begin
   SetProp('enabled', TJSONBoolean.Create(Value));
 end;
 
-function TTimer.GetPrecision: string;
+function TTimer.GetPrecision: TTimerPrecision;
 begin
-  Result := AsText(GetProp('precision'));
+  Result := TimerPrecisionOf(GetProp('precision'));
 end;
 
-procedure TTimer.SetPrecision(Value: string);
+procedure TTimer.SetPrecision(Value: TTimerPrecision);
 begin
-  SetProp('precision', TJSONString.Create(Value));
+  SetProp('precision', TJSONString.Create(TimerPrecisionNames[Value]));
 end;
 
 function TTimer.GetBackground: Boolean;
@@ -72,6 +75,16 @@ end;
 procedure TTimer.SetOneShot(Value: Boolean);
 begin
   SetProp('one_shot', TJSONBoolean.Create(Value));
+end;
+
+function TTimer.GetOnTimer: string;
+begin
+  Result := AsText(GetProp('on_timer'));
+end;
+
+procedure TTimer.SetOnTimer(Value: string);
+begin
+  SetProp('on_timer', TJSONString.Create(Value));
 end;
 
 function TTimer.GetDrift: Double;

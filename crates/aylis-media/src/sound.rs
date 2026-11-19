@@ -23,7 +23,7 @@ use crate::output::{MIX_CHANNELS, MIX_RATE, OutputDevice, OutputSpec, Sink, Sink
 ///   2 s com `watch` ligado).
 ///
 /// Para tocar numa delas, ponha o nome no `output` do [`MediaPlayer`](crate::MediaPlayer),
-/// do [`VideoPlayer`](crate::VideoPlayer) ou do [`Sound`].
+/// do [`VideoPlayer`](crate::VideoPlayer) ou do [`Sound`] (`[{"name": "Fone BT"}]`).
 pub struct AudioOutput {
     /// Confere as saídas a cada 2 s e avisa no `on_devices_changed` quando uma entra ou sai.
     pub watch: bool,
@@ -67,7 +67,7 @@ impl Component for AudioOutput {
 
     properties! {
         watch: bool => "Behavior";
-        events: on_devices_changed;
+        events: on_devices_changed: ();
         computed: devices: String => device_names / set_device_names, default_device: String => default_device / set_default_device
     }
 
@@ -205,9 +205,9 @@ impl Component for Sound {
     properties! {
         file: String => "Behavior",
         volume: f32 => "Behavior",
-        output: String => "Behavior",
+        output: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior",
         polyphony: i64 => "Behavior";
-        events: on_error;
+        events: on_error: String;
         on_set: sync
     }
 
@@ -239,8 +239,21 @@ impl Component for Sound {
 
 // ---------------------------------------------------------------------------
 
-/// Uma fonte do mixer: `device:<entrada>` (um microfone ou `device:loopback:<saída>`) ou
-/// o nome de um componente do form (um `Microphone`, `MediaPlayer` ou `VideoPlayer`).
+/// O registro de uma fonte do mixer no acesso tipado (a lista do `sources`):
+/// `[{"name": "micVoz", "volume": 1.2}, {"name": "loopback:Alto-falantes", "device": true}]`.
+pub const MIX_SOURCE_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "MixSource",
+    fields: &[
+        ("name", aylis_core::PropKind::String),
+        ("device", aylis_core::PropKind::Bool),
+        ("volume", aylis_core::PropKind::Float),
+        ("pan", aylis_core::PropKind::Float),
+        ("mute", aylis_core::PropKind::Bool),
+    ],
+};
+
+/// Uma fonte do mixer: uma entrada do sistema (`device`: um microfone ou `loopback:<saída>`)
+/// ou o nome de um componente do form (um `Microphone`, `MediaPlayer` ou `VideoPlayer`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct MixSource {
     pub name: String,
@@ -252,36 +265,29 @@ pub struct MixSource {
     pub mute: bool,
 }
 
-/// O começo de uma fonte que é uma entrada do sistema.
-pub const DEVICE_PREFIX: &str = "device:";
-
-/// Lê a propriedade `sources` do mixer: fontes separadas por `|`, cada uma seguida, se
-/// quiser, de `;volume=0.5;pan=-0.3;mute`.
+/// Lê a propriedade `sources` do mixer: a lista de [`MIX_SOURCE_RECORD`] em JSON, cada fonte
+/// com `device`, `volume` (sem ele, 1), `pan` e `mute` opcionais. Vazio, `[]` ou JSON
+/// inválido: nenhuma.
 ///
-/// `micVoz;volume=1.2|device:loopback:Alto-falantes;volume=0.4|mpFundo;pan=0.5;mute`
+/// `[{"name": "micVoz", "volume": 1.2}, {"name": "loopback:Alto-falantes", "device": true,
+/// "volume": 0.4}, {"name": "mpFundo", "pan": 0.5, "mute": true}]`
 pub fn parse_sources(text: &str) -> Vec<MixSource> {
-    text.split('|')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|entry| {
-            let mut parts = entry.split(';');
-            let first = parts.next().unwrap_or_default().trim();
-            let (device, name) = match first.strip_prefix(DEVICE_PREFIX) {
-                Some(rest) => (true, rest.to_string()),
-                None => (false, first.to_string()),
-            };
-            let mut source = MixSource { name, device, volume: 1.0, pan: 0.0, mute: false };
-            for option in parts {
-                let (key, value) = option.split_once('=').unwrap_or((option, ""));
-                let number = value.trim().parse::<f32>().ok().filter(|v| v.is_finite());
-                match (key.trim(), number) {
-                    ("volume", Some(v)) => source.volume = v.clamp(0.0, 4.0),
-                    ("pan", Some(v)) => source.pan = v.clamp(-1.0, 1.0),
-                    ("mute", _) => source.mute = !matches!(value.trim(), "false" | "0"),
-                    _ => {}
-                }
+    let Ok(serde_json::Value::Array(items)) = serde_json::from_str::<serde_json::Value>(text) else { return Vec::new() };
+    let number = |j: &serde_json::Value| j.as_f64().map(|v| v as f32).filter(|v| v.is_finite());
+    items
+        .iter()
+        .filter_map(|j| {
+            let name = j["name"].as_str()?.trim();
+            if name.is_empty() {
+                return None;
             }
-            source
+            Some(MixSource {
+                name: name.to_string(),
+                device: j["device"].as_bool().unwrap_or(false),
+                volume: number(&j["volume"]).map_or(1.0, |v| v.clamp(0.0, 4.0)),
+                pan: number(&j["pan"]).map_or(0.0, |v| v.clamp(-1.0, 1.0)),
+                mute: j["mute"].as_bool().unwrap_or(false),
+            })
         })
         .collect()
 }
@@ -315,8 +321,8 @@ struct MixShared {
 /// `sources`: veja [`parse_sources`]. `output` vazio: não toca em lugar nenhum (o mixer
 /// costuma ir para arquivo ou para o código); a padrão é o nome dela ou `default`.
 pub struct AudioMixer {
-    /// As fontes, separadas por `|`, cada uma com `;volume=`, `;pan=` e `;mute` opcionais
-    /// (`micVoz;volume=1.2|device:loopback:Alto-falantes;volume=0.4|mpFundo;pan=0.5`).
+    /// As fontes, cada uma com `volume`, `pan` e `mute` opcionais (a lista de
+    /// [`MIX_SOURCE_RECORD`]; veja [`parse_sources`]).
     pub sources: String,
     /// As saídas que tocam a mistura (como no `MediaPlayer`); vazio: não toca em lugar nenhum.
     pub output: String,
@@ -464,11 +470,11 @@ impl Component for AudioMixer {
     }
 
     properties! {
-        sources: String => "Behavior",
-        output: String => "Behavior",
+        sources: String as RecordList(&MIX_SOURCE_RECORD) => "Behavior",
+        output: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior",
         active: bool => "Behavior",
         keep_samples: bool => "Behavior";
-        events: on_error
+        events: on_error: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -629,7 +635,9 @@ mod tests {
 
     #[test]
     fn parses_mixer_sources() {
-        let s = parse_sources("micVoz;volume=1.2 | device:loopback:Alto-falantes;volume=0.4;pan=-2|mpFundo;mute");
+        let s = parse_sources(
+            r#"[{"name": "micVoz", "volume": 1.2}, {"name": "loopback:Alto-falantes", "device": true, "volume": 0.4, "pan": -2}, {"name": "mpFundo", "mute": true}]"#,
+        );
         assert_eq!(s.len(), 3);
         assert_eq!(s[0], MixSource { name: "micVoz".into(), device: false, volume: 1.2, pan: 0.0, mute: false });
         assert!(s[1].device);

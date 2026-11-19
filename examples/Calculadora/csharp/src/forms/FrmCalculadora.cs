@@ -32,14 +32,12 @@ public static class FrmCalculadora
         bool erro = calc.TemErro;
         foreach (var botao in SemErro) botao.Enabled = !erro;
         foreach (var botao in new[] { frmCalculadora.btnMC, frmCalculadora.btnMR }) botao.Enabled = !erro && calc.Memoria.Count > 0;
-        string historico = calc.Historico.Count == 0
-            ? "Ainda não há histórico|"
-            : string.Join(";", Enumerable.Reverse(calc.Historico).Select(c => $"{Calculadora.Formatar(c.Resultado)}|{c.Expressao}"));
-        frmCalculadora.lvHistorico.Items = historico;
-        string memoria = calc.Memoria.Count == 0
-            ? "Não há nada salvo na memória|"
-            : string.Join(";", Enumerable.Reverse(calc.Memoria).Select(m => $"{Calculadora.Formatar(m)}|"));
-        frmCalculadora.lvMemoria.Items = memoria;
+        frmCalculadora.lvHistorico.Items = calc.Historico.Count == 0
+            ? [new ListViewItem("Ainda não há histórico", "")]
+            : Enumerable.Reverse(calc.Historico).Select(c => new ListViewItem(Calculadora.Formatar(c.Resultado), c.Expressao)).ToArray();
+        frmCalculadora.lvMemoria.Items = calc.Memoria.Count == 0
+            ? [new ListViewItem("Não há nada salvo na memória", "")]
+            : Enumerable.Reverse(calc.Memoria).Select(m => new ListViewItem(Calculadora.Formatar(m), "")).ToArray();
     }
 
     /// <summary>Aperta um botão pelo texto dele.</summary>
@@ -48,50 +46,50 @@ public static class FrmCalculadora
         if (calc.Tecla(texto)) Atualizar(aylis);
     }
 
-    static int? Indice(AylisEvent ev) => ev.Args is JsonValue v && v.TryGetValue<int>(out var i) ? i : null;
-
     public static void form_key_down(Aylis aylis, AylisEvent ev)
     {
         string tecla = ev.Args?["key"]?.GetValue<string>() ?? "";
         bool ctrl = ev.Args?["ctrl"]?.GetValue<bool>() ?? false;
         bool shift = ev.Args?["shift"]?.GetValue<bool>() ?? false;
         string? botao = Calculadora.BotaoDoTeclado(tecla, ctrl, shift);
-        if (botao == "historico") historico_click(aylis, ev);
+        if (botao == "historico") historico_click(aylis, frmCalculadora.btnHistorico);
         else if (botao != null) Apertar(aylis, botao);
     }
 
-    public static void limpar_historico_click(Aylis aylis, AylisEvent ev)
+    public static void limpar_historico_click(Aylis aylis, AylisUi.Button sender)
     {
         calc.Historico.Clear();
         Atualizar(aylis);
     }
 
-    public static void historico_item_click(Aylis aylis, AylisEvent ev)
+    public static void historico_item_click(Aylis aylis, AylisUi.ListView sender, long value)
     {
         // A lista mostra a conta mais nova em cima.
-        if (Indice(ev) is int i && i >= 0 && i < calc.Historico.Count)
+        if (value >= 0 && value < calc.Historico.Count)
         {
+            int i = (int)value;
             calc.Usar(calc.Historico[calc.Historico.Count - 1 - i].Resultado);
             Atualizar(aylis);
         }
     }
 
-    public static void memoria_item_click(Aylis aylis, AylisEvent ev)
+    public static void memoria_item_click(Aylis aylis, AylisUi.ListView sender, long value)
     {
-        if (Indice(ev) is int i && i >= 0 && i < calc.Memoria.Count)
+        if (value >= 0 && value < calc.Memoria.Count)
         {
+            int i = (int)value;
             calc.Usar(calc.Memoria[calc.Memoria.Count - 1 - i]);
             Atualizar(aylis);
         }
     }
 
-    public static void historico_click(Aylis aylis, AylisEvent ev)
+    public static void historico_click(Aylis aylis, AylisUi.Button sender)
     {
         frmCalculadora.pnlLateral.Visible = !frmCalculadora.pnlLateral.Visible;
     }
 
-    public static void tecla_click(Aylis aylis, AylisEvent ev)
+    public static void tecla_click(Aylis aylis, AylisUi.Button sender)
     {
-        Apertar(aylis, frmCalculadora.SenderAsButton(ev)!.Text);
+        Apertar(aylis, sender.Text);
     }
 }

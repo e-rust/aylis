@@ -362,7 +362,7 @@ impl Component for Knob {
         show_value: bool => "Appearance",
         suffix: String => "Appearance",
         read_only: bool => "Behavior";
-        events: on_change
+        events: on_change: f64
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -530,14 +530,14 @@ impl PropEnum for TableSeparator {
 }
 
 /// A tabela simples (`QMarkupTable`): `columns` com os títulos (`Nome;Idade;Cidade`) e
-/// `rows` com uma linha por linha de texto (as células separadas por `;`). Os números
-/// ficam à direita. `dense` aperta as linhas, `striped` alterna o fundo e `separator` escolhe
+/// `rows` com as linhas, o registro [`MARKUP_TABLE_ROW`] (`[{"cells": ["Café", "2", "12,50"]}]`).
+/// Os números ficam à direita. `dense` aperta as linhas, `striped` alterna o fundo e `separator` escolhe
 /// as linhas de separação. Para dados de banco, use o `DataGrid`.
 pub struct MarkupTable {
     pub base: ControlBase,
     /// Os títulos das colunas, separados por `;` (`Nome;Idade;Cidade`).
     pub columns: String,
-    /// As linhas da tabela, uma por linha de texto, com as células separadas por `;`.
+    /// As linhas da tabela, em JSON: `[{"cells": ["Café", "2", "12,50"]}]`.
     pub rows: String,
     /// Linhas mais baixas (28 pontos em vez de 44).
     pub dense: bool,
@@ -545,24 +545,48 @@ pub struct MarkupTable {
     pub striped: bool,
     /// As linhas de separação: horizontais, verticais, em volta de cada célula ou nenhuma.
     pub separator: TableSeparator,
+    /// As células lidas do `rows` (refeitas só quando ele muda).
+    cells: Vec<Vec<String>>,
+}
+
+/// Uma linha do `MarkupTable`: as células, na ordem das colunas.
+pub const MARKUP_TABLE_ROW: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "MarkupTableRow", fields: &[("cells", aylis_core::PropKind::List)] };
+
+/// Uma linha no JSON do `rows` (o [`MARKUP_TABLE_ROW`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct MarkupTableRowRecord {
+    cells: Vec<String>,
 }
 
 impl Default for MarkupTable {
     fn default() -> Self {
-        Self {
+        let mut t = Self {
             base: ControlBase::new(420.0, 200.0),
             columns: "Produto;Qtde;Preço".into(),
-            rows: "Café;2;12,50\nPão de queijo;6;18,00\nSuco;1;8,90".into(),
+            rows: r#"[{"cells":["Café","2","12,50"]},{"cells":["Pão de queijo","6","18,00"]},{"cells":["Suco","1","8,90"]}]"#.into(),
             dense: false,
             striped: false,
             separator: TableSeparator::Horizontal,
-        }
+            cells: Vec::new(),
+        };
+        t.sync("rows");
+        t
     }
 }
 
 impl MarkupTable {
-    fn cells(&self) -> Vec<Vec<String>> {
-        self.rows.lines().filter(|l| !l.trim().is_empty()).map(|l| l.split(';').map(|c| c.trim().to_string()).collect()).collect()
+    fn cells(&self) -> &[Vec<String>] {
+        &self.cells
+    }
+
+    fn sync(&mut self, name: &str) {
+        if name == "rows" {
+            self.cells = crate::records::parse_list::<MarkupTableRowRecord>(&self.rows)
+                .into_iter()
+                .map(|r| r.cells.into_iter().map(|c| c.trim().to_string()).collect())
+                .collect();
+        }
     }
 }
 
@@ -575,11 +599,12 @@ impl Component for MarkupTable {
     leaf_control!("MarkupTable");
 
     properties! {
-        columns: String => "Data",
-        rows: String => "Data",
+        columns: String as List => "Data",
+        rows: String as RecordList(&MARKUP_TABLE_ROW) => "Data",
         dense: bool => "Appearance",
         striped: bool => "Appearance",
-        separator: TableSeparator => "Appearance",
+        separator: TableSeparator => "Appearance";
+        on_set: sync
     }
 
     fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
@@ -706,7 +731,7 @@ impl Component for SlideItem {
         right_text: String => "Appearance",
         right_icon: String => "Appearance",
         right_color: Option<Color> => "Appearance";
-        events: on_left, on_right, on_click
+        events: on_left: (), on_right: (), on_click: ()
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -946,12 +971,12 @@ impl Component for Uploader {
 
     properties! {
         title: String => "Appearance",
-        files: String => "Data",
-        progress: String => "Data",
+        files: String as List => "Data",
+        progress: String as NumberList => "Data",
         filter: String => "Behavior",
         multiple: bool => "Behavior",
         auto_upload: bool => "Behavior";
-        events: on_change, on_upload
+        events: on_change: String, on_upload: String
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1149,7 +1174,7 @@ impl Component for PopupEdit {
     properties! {
         text: String => "Data",
         placeholder: String => "Appearance";
-        events: on_save
+        events: on_save: String
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1211,8 +1236,9 @@ impl PropEnum for OptionKind {
 }
 
 /// O grupo de opções (`QOptionGroup`): `items` (`Pequeno;Médio;Grande`) como botões de
-/// rádio (uma escolha, `item_index`), caixas ou interruptores (várias, os textos marcados
-/// em `selected`, separados por `;`). `inline` põe lado a lado. `on_change` a cada mudança.
+/// rádio (uma escolha, `item_index`), caixas ou interruptores (várias). `selected` tem os
+/// textos marcados nos três (no rádio, o escolhido). `inline` põe lado a lado. `on_change` a
+/// cada mudança, sempre com a lista dos marcados (o `selected`), em qualquer `kind`.
 pub struct OptionGroup {
     pub base: ControlBase,
     /// As opções, separadas por `;` (`Pequeno;Médio;Grande`).
@@ -1221,7 +1247,8 @@ pub struct OptionGroup {
     pub kind: OptionKind,
     /// A opção escolhida no modo rádio (0 = a primeira; -1 = nenhuma).
     pub item_index: i64,
-    /// As opções marcadas nas caixas e interruptores: os textos, separados por `;`.
+    /// As opções marcadas: os textos, separados por `;`. No rádio, o texto do `item_index`
+    /// (gravar um muda o outro).
     pub selected: String,
     /// As opções lado a lado em vez de uma embaixo da outra.
     pub inline: bool,
@@ -1238,7 +1265,7 @@ impl Default for OptionGroup {
             items: "Pequeno;Médio;Grande".into(),
             kind: OptionKind::Radio,
             item_index: 0,
-            selected: String::new(),
+            selected: "Pequeno".into(),
             inline: false,
             rows: RefCell::new(Vec::new()),
             focus: Cell::new(0),
@@ -1254,13 +1281,31 @@ impl OptionGroup {
         }
     }
 
+    /// No rádio, `item_index` e `selected` dizem o mesmo: o que foi gravado acerta o outro.
+    fn sync(&mut self, name: &str) {
+        if self.kind != OptionKind::Radio {
+            return;
+        }
+        let items = split(&self.items);
+        match name {
+            "selected" => {
+                let first = split(&self.selected).first().map(|s| s.trim().to_string()).unwrap_or_default();
+                self.item_index = items.iter().position(|s| *s == first).map_or(-1, |i| i as i64);
+            }
+            _ => {
+                self.selected = usize::try_from(self.item_index).ok().and_then(|i| items.get(i)).map(|s| s.to_string()).unwrap_or_default();
+            }
+        }
+    }
+
     fn toggle(&mut self, ctx: &mut EventCtx<'_>, i: usize) {
         let items: Vec<String> = split(&self.items).into_iter().map(str::to_string).collect();
         let Some(item) = items.get(i) else { return };
         match self.kind {
             OptionKind::Radio => {
                 self.item_index = i as i64;
-                ctx.fire("on_change", EventArgs::Value(PropValue::Int(i as i64)));
+                self.selected = item.clone();
+                ctx.fire("on_change", EventArgs::Text(self.selected.clone()));
             }
             _ => {
                 let mut on: Vec<String> = split(&self.selected).into_iter().map(str::to_string).collect();
@@ -1281,23 +1326,21 @@ impl OptionGroup {
 }
 
 impl Component for OptionGroup {
-    // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
-    fn change_args(&self, name: &str, value: &aylis_core::PropValue) -> Option<EventArgs> {
-        match name {
-            "selected" => Some(EventArgs::Text(self.selected.clone())),
-            _ => Some(EventArgs::Value(value.clone())),
-        }
+    // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário: os marcados.
+    fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
+        Some(EventArgs::Text(self.selected.clone()))
     }
 
     leaf_control!("OptionGroup");
 
     properties! {
-        items: String => "Data",
+        items: String as List => "Data",
         kind: OptionKind => "Behavior",
         item_index: i64 => "Data",
-        selected: String => "Data",
+        selected: String as List => "Data",
         inline: bool => "Appearance";
-        events: on_change
+        events: on_change: Vec<String>;
+        on_set: sync
     }
 
     fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {

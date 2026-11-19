@@ -174,8 +174,8 @@ ev.reply.set("results", delta.results_json());
 Uma consulta grande chega em partes: o backend manda a primeira página (`load_rows`), diz que
 há mais (`set_has_more(true)`) e o `on_fetch` traz o resto conforme a grade rola. Com só parte
 carregada, ordenar pelo título da coluna, filtrar ou localizar na memória valeria só para o que
-já chegou. Então o `ClientDataSet` pergunta ao backend pelo evento `on_server_query`, com um
-texto JSON:
+já chegou. Então o `ClientDataSet` pergunta ao backend pelo evento `on_server_query`, com o
+registro `ServerQuery`:
 
 | Campo | O que é |
 |---|---|
@@ -183,7 +183,7 @@ texto JSON:
 | `index` | a ordem pedida (`cliente;total desc`; vazio: a de chegada) |
 | `filter` | o filtro em vigor (vazio: sem filtro) |
 | `loaded` | quantos registros estão carregados |
-| `field`, `value` | só no `locate`: o campo e o valor procurados |
+| `field`, `value` | só no `locate`: o campo e o valor procurados (o valor em texto: `42`, `2024-05-01`) |
 
 O handler refaz a consulta no servidor, na ordem e no filtro pedidos, e manda a primeira página
 de novo. O que ele faz no dataset durante o evento não dispara outra pergunta. Sem handler, os
@@ -196,15 +196,13 @@ No form:
 { "class": "ClientDataSet", "name": "cdsPedidos", "on_server_query": "cds_pedidos_server_query" }
 ```
 
-E o handler (`consultar` é o acesso do app ao servidor, que devolve as linhas e se há mais):
+E o handler, que recebe o `ServerQuery` já lido (`consultar` é o acesso do app ao servidor,
+que devolve as linhas e se há mais):
 
 ```rust
 impl FrmPedidos {
-    pub fn cds_pedidos_server_query(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        let pedido: serde_json::Value = serde_json::from_str(args.text().unwrap_or("{}")).unwrap_or_default();
-        let ordem = pedido["index"].as_str().unwrap_or_default();
-        let filtro = pedido["filter"].as_str().unwrap_or_default();
-        let (linhas, tem_mais) = consultar(ordem, filtro, 200);
+    pub fn cds_pedidos_server_query(&mut self, ui: &mut Ui, _sender: ComponentId, pedido: ServerQuery) {
+        let (linhas, tem_mais) = consultar(&pedido.index, &pedido.filter, 200);
         let mut ds = data_set(ui, self.cdsPedidos.id);
         if let Err(e) = ds.load_rows(linhas).and_then(|_| ds.set_has_more(tem_mais)) {
             let _ = message_dlg(ui, &e.message, DlgKind::Error, &[ModalResult::Ok], |_, _| {});
@@ -214,5 +212,5 @@ impl FrmPedidos {
 ```
 
 Num `locate`, o backend também pode achar o registro (`field` = `value`) e mandar a página
-em que ele está. Em outra linguagem é o mesmo evento: o texto JSON chega nos argumentos, e o
-backend responde mandando as linhas ao dataset (o `cds.load_rows` do cliente).
+em que ele está. Em outra linguagem é o mesmo evento, com o mesmo registro, e o backend
+responde mandando as linhas ao dataset (o `cds.load_rows` do cliente).

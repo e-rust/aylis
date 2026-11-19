@@ -24,8 +24,7 @@ const FORA: &[&str] = &["Form", "DataModule", "MenuItem", "TabItem", "TitleBar",
 
 impl FrmPrincipal {
     /// Um cartão por classe visual, na ordem das categorias da paleta.
-    pub fn montar(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
-        let _ = (sender, args);
+    pub fn montar(&mut self, ui: &mut Ui, _sender: crate::generated::Form) {
         let grade = self.fluCartoes.id;
         let mut classes: Vec<(String, String)> = ui
             .registry()
@@ -43,10 +42,9 @@ impl FrmPrincipal {
         self.lblConta.set_text(ui, format!("{quantos} componentes"));
     }
 
-    /// Mostra só os cartões cujo nome tem o texto da busca.
-    pub fn filtrar(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
-        let _ = (sender, args);
-        let busca = self.edtBusca.text(ui).to_lowercase();
+    /// Mostra só os cartões cujo nome tem o texto da busca (`value`, o texto do Edit).
+    pub fn filtrar(&mut self, ui: &mut Ui, _sender: crate::generated::Edit, value: String) {
+        let busca = value.to_lowercase();
         let grade = self.fluCartoes.id;
         let mut visiveis = 0;
         for cartao in ui.children(grade).to_vec() {

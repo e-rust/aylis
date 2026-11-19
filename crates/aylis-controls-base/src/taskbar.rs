@@ -19,10 +19,10 @@ pub struct Taskbar {
     pub badge: String,
     /// A cor do fundo do indicador.
     pub badge_color: Color,
-    /// Botões da miniatura (até 7): `icone.png|Dica` separados por `;`.
+    /// Botões da miniatura (até 7), em JSON: `[{"icon": "play.png", "hint": "Tocar"}]`.
     pub buttons: String,
-    /// Tarefas do clique direito: `Nome|argumentos` separados por `;`. Abrem o próprio app
-    /// com os argumentos (veja `std::env::args`).
+    /// Tarefas do clique direito, em JSON: `[{"name": "Nova janela", "arguments": "--new"}]`.
+    /// Abrem o próprio app com os argumentos (veja `std::env::args`).
     pub tasks: String,
     icons: RefCell<(String, Vec<Option<Arc<Vec<u8>>>>)>,
 }
@@ -41,16 +41,27 @@ impl Default for Taskbar {
     }
 }
 
-fn pairs(text: &str) -> Vec<(String, String)> {
-    text.split(';')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let (a, b) = s.split_once('|').unwrap_or((s, ""));
-            (a.trim().to_string(), b.trim().to_string())
-        })
-        .collect()
+/// Um botão da miniatura no JSON do `buttons` (o [`THUMB_BUTTON`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct ThumbButtonRecord {
+    icon: String,
+    hint: String,
 }
+
+/// Uma tarefa no JSON do `tasks` (o [`JUMP_TASK`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct JumpTaskRecord {
+    name: String,
+    arguments: String,
+}
+
+/// Um botão da miniatura do `Taskbar`: o arquivo do ícone (PNG) e a dica.
+pub const THUMB_BUTTON: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "ThumbButton", fields: &[("icon", aylis_core::PropKind::String), ("hint", aylis_core::PropKind::String)] };
+
+/// Uma tarefa do clique direito do `Taskbar`: o nome e os argumentos com que o app abre.
+pub const JUMP_TASK: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "JumpTask", fields: &[("name", aylis_core::PropKind::String), ("arguments", aylis_core::PropKind::String)] };
 
 impl Component for Taskbar {
     fn class_name(&self) -> &'static str {
@@ -62,9 +73,9 @@ impl Component for Taskbar {
         value: f32 => "Behavior",
         badge: String => "Appearance",
         badge_color: Color => "Appearance",
-        buttons: String => "Behavior",
-        tasks: String => "Behavior";
-        events: on_button
+        buttons: String as RecordList(&THUMB_BUTTON) => "Behavior",
+        tasks: String as RecordList(&JUMP_TASK) => "Behavior";
+        events: on_button: i64
     }
 
     fn platform_hooks(&self) -> Option<&dyn aylis_core::PlatformHooks> {
@@ -84,9 +95,9 @@ impl Component for Taskbar {
 
 impl aylis_core::PlatformHooks for Taskbar {
     fn taskbar(&self) -> Option<TaskbarSpec> {
-        let buttons = pairs(&self.buttons);
+        let buttons: Vec<ThumbButtonRecord> = crate::records::parse_list(&self.buttons);
         if self.icons.borrow().0 != self.buttons {
-            let icons = buttons.iter().map(|(file, _)| std::fs::read(file).ok().map(Arc::new)).collect();
+            let icons = buttons.iter().map(|b| std::fs::read(b.icon.trim()).ok().map(Arc::new)).collect();
             *self.icons.borrow_mut() = (self.buttons.clone(), icons);
         }
         let icons = self.icons.borrow();
@@ -99,9 +110,13 @@ impl aylis_core::PlatformHooks for Taskbar {
                 .into_iter()
                 .take(7)
                 .enumerate()
-                .map(|(i, (_, tooltip))| ThumbButton { icon: icons.1.get(i).cloned().flatten(), tooltip })
+                .map(|(i, b)| ThumbButton { icon: icons.1.get(i).cloned().flatten(), tooltip: b.hint })
                 .collect(),
-            tasks: pairs(&self.tasks).into_iter().map(|(title, arguments)| JumpTask { title, arguments }).collect(),
+            tasks: crate::records::parse_list::<JumpTaskRecord>(&self.tasks)
+                .into_iter()
+                .filter(|t| !t.name.trim().is_empty())
+                .map(|t| JumpTask { title: t.name, arguments: t.arguments })
+                .collect(),
         })
     }
 }

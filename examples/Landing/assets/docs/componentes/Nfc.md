@@ -1,6 +1,6 @@
 # Nfc
 
-Lê e grava tags NFC (NDEF): `active` lê enquanto o app está aberto; cada tag encostada chega no `on_tag` (o texto é o id) com `tag_id`, `tag_type` e `records` (um registro por linha: `text:Olá`, `uri:https://...`, `application/json:{...}`). `write(registros)` grava na próxima tag que encostar (o resultado no `on_written` ou no `on_error`).
+Lê e grava tags NFC (NDEF): `active` lê enquanto o app está aberto; cada tag encostada chega no `on_tag` (o texto é o id) com `tag_id`, `tag_type` e `records` (os registros em JSON, `NfcRecord`: `{"kind": "text", "value": "Olá", "lang": "pt"}, {"kind": "uri", "value": "https://aylis.dev"}`). `write(registros)` grava na próxima tag que encostar (o resultado no `on_written` ou no `on_error`).
 
 **Paleta:** Device · **componente não visual**
 

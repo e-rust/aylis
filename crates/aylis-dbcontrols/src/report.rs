@@ -1015,7 +1015,7 @@ impl Component for ReportPreview {
         page: i64 => "Behavior",
         zoom: f32 => "Behavior",
         toolbar: bool => "Appearance";
-        events: on_export, on_print
+        events: on_export: String, on_print: String
     }
 
     fn notification(&mut self, freed: ComponentId) {

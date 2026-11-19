@@ -32,17 +32,17 @@ func (c aylisGroupBox) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisGroupBox) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisGroupBox) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisGroupBox) Align() string { return asText(c.Get("align")) }
-func (c aylisGroupBox) SetAlign(v string) { c.Set("align", v) }
+func (c aylisGroupBox) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisGroupBox) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisGroupBox) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisGroupBox) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisGroupBox) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisGroupBox) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisGroupBox) Margins() string { return asText(c.Get("margins")) }
-func (c aylisGroupBox) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisGroupBox) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisGroupBox) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisGroupBox) Padding() string { return asText(c.Get("padding")) }
-func (c aylisGroupBox) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisGroupBox) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisGroupBox) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisGroupBox) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisGroupBox) SetVisible(v bool) { c.Set("visible", v) }
@@ -65,6 +65,9 @@ func (c aylisGroupBox) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisGroupBox) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisGroupBox) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisGroupBox) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisGroupBox) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisGroupBox) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisGroupBox) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -80,8 +83,8 @@ func (c aylisGroupBox) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisGroupBox) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisGroupBox) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisGroupBox) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisGroupBox) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisGroupBox) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisGroupBox) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisGroupBox) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisGroupBox) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -89,17 +92,23 @@ func (c aylisGroupBox) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisGroupBox) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisGroupBox) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisGroupBox) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisGroupBox) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisGroupBox) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisGroupBox) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisGroupBox) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisGroupBox) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisGroupBox) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisGroupBox) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisGroupBox) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisGroupBox) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisGroupBox) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisGroupBox) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisGroupBox) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisGroupBox) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisGroupBox) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisGroupBox) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -122,8 +131,8 @@ func (c aylisGroupBox) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisGroupBox) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisGroupBox) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisGroupBox) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisGroupBox) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisGroupBox) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisGroupBox) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisGroupBox) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisGroupBox) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -143,35 +152,35 @@ func (c aylisGroupBox) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisGroupBox) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisGroupBox) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisGroupBox) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisGroupBox) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisGroupBox) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisGroupBox) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisGroupBox) Style() string { return asText(c.Get("style")) }
-func (c aylisGroupBox) SetStyle(v string) { c.Set("style", v) }
+func (c aylisGroupBox) Style() GroupBoxStyle { return GroupBoxStyle(asText(c.Get("style"))) }
+func (c aylisGroupBox) SetStyle(v GroupBoxStyle) { c.Set("style", string(v)) }
 
-func (c aylisGroupBox) Theme() string { return asText(c.Get("theme")) }
-func (c aylisGroupBox) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisGroupBox) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisGroupBox) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisGroupBox) Fill() string { return asText(c.Get("fill")) }
-func (c aylisGroupBox) SetFill(v string) { c.Set("fill", v) }
+func (c aylisGroupBox) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisGroupBox) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisGroupBox) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisGroupBox) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisGroupBox) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisGroupBox) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisGroupBox) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisGroupBox) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisGroupBox) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisGroupBox) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisGroupBox) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisGroupBox) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisGroupBox) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisGroupBox) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisGroupBox) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisGroupBox) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisGroupBox) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisGroupBox) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisGroupBox) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisGroupBox) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisGroupBox) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisGroupBox) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisGroupBox) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisGroupBox) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisGroupBox) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisGroupBox) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisGroupBox) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisGroupBox) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -179,8 +188,8 @@ func (c aylisGroupBox) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisGroupBox) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisGroupBox) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisGroupBox) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisGroupBox) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisGroupBox) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisGroupBox) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisGroupBox) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisGroupBox) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -203,5 +212,62 @@ func (c aylisGroupBox) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisGroupBox) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisGroupBox) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisGroupBox) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisGroupBox) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisGroupBox) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisGroupBox) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisGroupBox) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisGroupBox) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisGroupBox) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisGroupBox) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisGroupBox) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisGroupBox) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisGroupBox) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisGroupBox) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisGroupBox) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisGroupBox) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisGroupBox) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisGroupBox) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisGroupBox) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisGroupBox) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisGroupBox) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisGroupBox) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisGroupBox) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisGroupBox) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisGroupBox) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisGroupBox) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisGroupBox) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisGroupBox) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisGroupBox) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisGroupBox) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisGroupBox) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisGroupBox) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisGroupBox) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisGroupBox) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisGroupBox) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisGroupBox) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisGroupBox) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisGroupBox) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisGroupBox) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisGroupBox) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisGroupBox) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisGroupBox) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisGroupBox) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisGroupBox) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }

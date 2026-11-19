@@ -25,7 +25,7 @@
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `files` | Arquivos | texto | Os caminhos escolhidos, separados por `;`; vazio: nenhum. |
+| `files` | Arquivos | lista de textos (separados por `;`) | Os caminhos escolhidos, separados por `;`; vazio: nenhum. |
 
 ## Eventos
 
@@ -49,8 +49,8 @@ E o handler, um método do form (`self.FileDropZone1` já é um `FileDropZone`):
 ```rust
 impl FrmPrincipal {
     pub fn file_drop_zone1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.FileDropZone1.files(ui);
-        self.FileDropZone1.set_files(ui, format!("{atual}!"));
+        let atual = self.FileDropZone1.filter(ui);
+        self.FileDropZone1.set_filter(ui, format!("{atual}!"));
     }
 }
 ```

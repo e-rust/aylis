@@ -18,7 +18,8 @@ fn a_galeria_monta_os_cartoes_e_a_busca_filtra() {
     assert!(ui.bounds(grade).unwrap().height > 3000.0, "{:?}", ui.bounds(grade));
     let busca = ui.find_path("frmPrincipal.edtBusca").unwrap();
     ui.set_prop(busca, "text", "chart").unwrap();
-    ui.fire(busca, "on_change", &EventArgs::None);
+    // O Edit dispara com o texto, e o handler filtra por ele.
+    ui.fire(busca, "on_change", &EventArgs::Value("chart".into()));
     let visiveis = ui.children(grade).iter().filter(|&&c| ui.control(c).is_some_and(|cb| cb.visible())).count();
     assert!((1..10).contains(&visiveis), "com 'chart': {visiveis}");
 }

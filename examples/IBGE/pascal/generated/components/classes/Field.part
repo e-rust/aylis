@@ -3,14 +3,14 @@
   private
     function GetFieldName: string;
     procedure SetFieldName(Value: string);
-    function GetType: string;
-    procedure SetType(Value: string);
+    function GetType: TFieldType;
+    procedure SetType(Value: TFieldType);
     function GetSize: Int64;
     procedure SetSize(Value: Int64);
     function GetScale: Int64;
     procedure SetScale(Value: Int64);
-    function GetRounding: string;
-    procedure SetRounding(Value: string);
+    function GetRounding: TRounding;
+    procedure SetRounding(Value: TRounding);
     function GetDisplayLabel: string;
     procedure SetDisplayLabel(Value: string);
     function GetDisplayWidth: Double;
@@ -19,8 +19,8 @@
     procedure SetDisplayFormat(Value: string);
     function GetEditFormat: string;
     procedure SetEditFormat(Value: string);
-    function GetAlignment: string;
-    procedure SetAlignment(Value: string);
+    function GetAlignment: TTextAlign;
+    procedure SetAlignment(Value: TTextAlign);
     function GetRequired: Boolean;
     procedure SetRequired(Value: Boolean);
     function GetReadOnly: Boolean;
@@ -35,35 +35,41 @@
     procedure SetDefaultValue(Value: string);
     function GetDisplayValues: string;
     procedure SetDisplayValues(Value: string);
-    function GetCharCase: string;
-    procedure SetCharCase(Value: string);
+    function GetCharCase: TCharCase;
+    procedure SetCharCase(Value: TCharCase);
     function GetEditMask: string;
     procedure SetEditMask(Value: string);
     function GetSensitive: Boolean;
     procedure SetSensitive(Value: Boolean);
-    function GetKind: string;
-    procedure SetKind(Value: string);
+    function GetKind: TFieldKind;
+    procedure SetKind(Value: TFieldKind);
     function GetExpression: string;
     procedure SetExpression(Value: string);
-    function GetLookupDataSet: string;
-    procedure SetLookupDataSet(Value: string);
+    function GetLookupDataSet: TAylisComponent;
+    procedure SetLookupDataSet(Value: TAylisComponent);
     function GetKeyFields: string;
     procedure SetKeyFields(Value: string);
     function GetLookupKeyFields: string;
     procedure SetLookupKeyFields(Value: string);
     function GetLookupResultField: string;
     procedure SetLookupResultField(Value: string);
+    function GetOnChange: string;
+    procedure SetOnChange(Value: string);
+    function GetOnGetText: string;
+    procedure SetOnGetText(Value: string);
+    function GetOnSetText: string;
+    procedure SetOnSetText(Value: string);
   public
     property FieldName: string read GetFieldName write SetFieldName;
-    property &Type: string read GetType write SetType;
+    property &Type: TFieldType read GetType write SetType;
     property Size: Int64 read GetSize write SetSize;
     property Scale: Int64 read GetScale write SetScale;
-    property Rounding: string read GetRounding write SetRounding;
+    property Rounding: TRounding read GetRounding write SetRounding;
     property DisplayLabel: string read GetDisplayLabel write SetDisplayLabel;
     property DisplayWidth: Double read GetDisplayWidth write SetDisplayWidth;
     property DisplayFormat: string read GetDisplayFormat write SetDisplayFormat;
     property EditFormat: string read GetEditFormat write SetEditFormat;
-    property Alignment: string read GetAlignment write SetAlignment;
+    property Alignment: TTextAlign read GetAlignment write SetAlignment;
     property Required: Boolean read GetRequired write SetRequired;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Visible: Boolean read GetVisible write SetVisible;
@@ -71,15 +77,18 @@
     property Max: Double read GetMax write SetMax;
     property DefaultValue: string read GetDefaultValue write SetDefaultValue;
     property DisplayValues: string read GetDisplayValues write SetDisplayValues;
-    property CharCase: string read GetCharCase write SetCharCase;
+    property CharCase: TCharCase read GetCharCase write SetCharCase;
     property EditMask: string read GetEditMask write SetEditMask;
     property Sensitive: Boolean read GetSensitive write SetSensitive;
-    property Kind: string read GetKind write SetKind;
+    property Kind: TFieldKind read GetKind write SetKind;
     property Expression: string read GetExpression write SetExpression;
-    property LookupDataSet: string read GetLookupDataSet write SetLookupDataSet;
+    property LookupDataSet: TAylisComponent read GetLookupDataSet write SetLookupDataSet;
     property KeyFields: string read GetKeyFields write SetKeyFields;
     property LookupKeyFields: string read GetLookupKeyFields write SetLookupKeyFields;
     property LookupResultField: string read GetLookupResultField write SetLookupResultField;
+    property OnChange: string read GetOnChange write SetOnChange;
+    property OnGetText: string read GetOnGetText write SetOnGetText;
+    property OnSetText: string read GetOnSetText write SetOnSetText;
   end;
 
 
@@ -93,14 +102,14 @@ begin
   SetProp('field_name', TJSONString.Create(Value));
 end;
 
-function TField.GetType: string;
+function TField.GetType: TFieldType;
 begin
-  Result := AsText(GetProp('type'));
+  Result := FieldTypeOf(GetProp('type'));
 end;
 
-procedure TField.SetType(Value: string);
+procedure TField.SetType(Value: TFieldType);
 begin
-  SetProp('type', TJSONString.Create(Value));
+  SetProp('type', TJSONString.Create(FieldTypeNames[Value]));
 end;
 
 function TField.GetSize: Int64;
@@ -123,14 +132,14 @@ begin
   SetProp('scale', TJSONInt64Number.Create(Value));
 end;
 
-function TField.GetRounding: string;
+function TField.GetRounding: TRounding;
 begin
-  Result := AsText(GetProp('rounding'));
+  Result := RoundingOf(GetProp('rounding'));
 end;
 
-procedure TField.SetRounding(Value: string);
+procedure TField.SetRounding(Value: TRounding);
 begin
-  SetProp('rounding', TJSONString.Create(Value));
+  SetProp('rounding', TJSONString.Create(RoundingNames[Value]));
 end;
 
 function TField.GetDisplayLabel: string;
@@ -173,14 +182,14 @@ begin
   SetProp('edit_format', TJSONString.Create(Value));
 end;
 
-function TField.GetAlignment: string;
+function TField.GetAlignment: TTextAlign;
 begin
-  Result := AsText(GetProp('alignment'));
+  Result := TextAlignOf(GetProp('alignment'));
 end;
 
-procedure TField.SetAlignment(Value: string);
+procedure TField.SetAlignment(Value: TTextAlign);
 begin
-  SetProp('alignment', TJSONString.Create(Value));
+  SetProp('alignment', TJSONString.Create(TextAlignNames[Value]));
 end;
 
 function TField.GetRequired: Boolean;
@@ -253,14 +262,14 @@ begin
   SetProp('display_values', TJSONString.Create(Value));
 end;
 
-function TField.GetCharCase: string;
+function TField.GetCharCase: TCharCase;
 begin
-  Result := AsText(GetProp('char_case'));
+  Result := CharCaseOf(GetProp('char_case'));
 end;
 
-procedure TField.SetCharCase(Value: string);
+procedure TField.SetCharCase(Value: TCharCase);
 begin
-  SetProp('char_case', TJSONString.Create(Value));
+  SetProp('char_case', TJSONString.Create(CharCaseNames[Value]));
 end;
 
 function TField.GetEditMask: string;
@@ -283,14 +292,14 @@ begin
   SetProp('sensitive', TJSONBoolean.Create(Value));
 end;
 
-function TField.GetKind: string;
+function TField.GetKind: TFieldKind;
 begin
-  Result := AsText(GetProp('kind'));
+  Result := FieldKindOf(GetProp('kind'));
 end;
 
-procedure TField.SetKind(Value: string);
+procedure TField.SetKind(Value: TFieldKind);
 begin
-  SetProp('kind', TJSONString.Create(Value));
+  SetProp('kind', TJSONString.Create(FieldKindNames[Value]));
 end;
 
 function TField.GetExpression: string;
@@ -303,14 +312,14 @@ begin
   SetProp('expression', TJSONString.Create(Value));
 end;
 
-function TField.GetLookupDataSet: string;
+function TField.GetLookupDataSet: TAylisComponent;
 begin
-  Result := AsText(GetProp('lookup_data_set'));
+  Result := GetRef('lookup_data_set');
 end;
 
-procedure TField.SetLookupDataSet(Value: string);
+procedure TField.SetLookupDataSet(Value: TAylisComponent);
 begin
-  SetProp('lookup_data_set', TJSONString.Create(Value));
+  SetRef('lookup_data_set', Value);
 end;
 
 function TField.GetKeyFields: string;
@@ -341,5 +350,35 @@ end;
 procedure TField.SetLookupResultField(Value: string);
 begin
   SetProp('lookup_result_field', TJSONString.Create(Value));
+end;
+
+function TField.GetOnChange: string;
+begin
+  Result := AsText(GetProp('on_change'));
+end;
+
+procedure TField.SetOnChange(Value: string);
+begin
+  SetProp('on_change', TJSONString.Create(Value));
+end;
+
+function TField.GetOnGetText: string;
+begin
+  Result := AsText(GetProp('on_get_text'));
+end;
+
+procedure TField.SetOnGetText(Value: string);
+begin
+  SetProp('on_get_text', TJSONString.Create(Value));
+end;
+
+function TField.GetOnSetText: string;
+begin
+  Result := AsText(GetProp('on_set_text'));
+end;
+
+procedure TField.SetOnSetText(Value: string);
+begin
+  SetProp('on_set_text', TJSONString.Create(Value));
 end;
 

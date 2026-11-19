@@ -246,7 +246,7 @@ impl Component for McpServer {
         read_only: bool => "Behavior",
         forms: String => "Behavior",
         call_timeout: u32 as Duration => "Behavior";
-        events: on_call, on_error;
+        events: on_call, on_error: String;
         computed: url: String => url / set_s, running: bool => running / set_b, last_error: String => last_error / set_s
     }
 

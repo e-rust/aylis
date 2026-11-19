@@ -21,4 +21,8 @@ struct MenuItem : aylis::Component {
     void set_danger(bool v) const { set_prop_("danger", v); }
     bool header() const { return get_prop_("header").boolean(); }
     void set_header(bool v) const { set_prop_("header", v); }
+    std::optional<aylis::Component> content() const { return get_ref_("content"); }
+    void set_content(const std::optional<aylis::Component>& v) const { set_ref_("content", v); }
+    std::string on_click() const { return get_prop_("on_click").str(); }
+    void set_on_click(const std::string& v) const { set_prop_("on_click", v); }
 };

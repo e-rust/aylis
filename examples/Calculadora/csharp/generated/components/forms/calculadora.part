@@ -100,7 +100,7 @@
             btnIgual = Resolve(list, "btnIgual", "Button", (i, d, n) => new Button(i, d, n));
         }
 
-        /// <summary>O Button deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Button deste form com o nome.</summary>
         public Button? FindButton(string name) => name switch
         {
             "btnLimparHistorico" => btnLimparHistorico,
@@ -140,7 +140,7 @@
         /// <summary>O Button que disparou o evento.</summary>
         public Button? SenderAsButton(AylisClient.AylisEvent ev) => FindButton(ev.SenderName);
 
-        /// <summary>O GridLayout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O GridLayout deste form com o nome.</summary>
         public GridLayout? FindGridLayout(string name) => name switch
         {
             "grdMemoria" => grdMemoria,
@@ -151,7 +151,7 @@
         /// <summary>O GridLayout que disparou o evento.</summary>
         public GridLayout? SenderAsGridLayout(AylisClient.AylisEvent ev) => FindGridLayout(ev.SenderName);
 
-        /// <summary>O Label deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Label deste form com o nome.</summary>
         public Label? FindLabel(string name) => name switch
         {
             "lblTitulo" => lblTitulo,
@@ -163,7 +163,7 @@
         /// <summary>O Label que disparou o evento.</summary>
         public Label? SenderAsLabel(AylisClient.AylisEvent ev) => FindLabel(ev.SenderName);
 
-        /// <summary>O Layout deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Layout deste form com o nome.</summary>
         public Layout? FindLayout(string name) => name switch
         {
             "lytCorpo" => lytCorpo,
@@ -174,7 +174,7 @@
         /// <summary>O Layout que disparou o evento.</summary>
         public Layout? SenderAsLayout(AylisClient.AylisEvent ev) => FindLayout(ev.SenderName);
 
-        /// <summary>O ListView deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O ListView deste form com o nome.</summary>
         public ListView? FindListView(string name) => name switch
         {
             "lvHistorico" => lvHistorico,
@@ -185,7 +185,7 @@
         /// <summary>O ListView que disparou o evento.</summary>
         public ListView? SenderAsListView(AylisClient.AylisEvent ev) => FindListView(ev.SenderName);
 
-        /// <summary>O Panel deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O Panel deste form com o nome.</summary>
         public Panel? FindPanel(string name) => name switch
         {
             "pnlLateral" => pnlLateral,
@@ -195,7 +195,7 @@
         /// <summary>O Panel que disparou o evento.</summary>
         public Panel? SenderAsPanel(AylisClient.AylisEvent ev) => FindPanel(ev.SenderName);
 
-        /// <summary>O TabControl deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O TabControl deste form com o nome.</summary>
         public TabControl? FindTabControl(string name) => name switch
         {
             "tabLateral" => tabLateral,
@@ -205,7 +205,7 @@
         /// <summary>O TabControl que disparou o evento.</summary>
         public TabControl? SenderAsTabControl(AylisClient.AylisEvent ev) => FindTabControl(ev.SenderName);
 
-        /// <summary>O TabItem deste form com o nome (como o FindComponent).</summary>
+        /// <summary>O TabItem deste form com o nome.</summary>
         public TabItem? FindTabItem(string name) => name switch
         {
             "tabHistorico" => tabHistorico,

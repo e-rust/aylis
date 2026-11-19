@@ -1,1 +1,1 @@
-{"principal":{"form":"frmPrincipal","handlers":["carregar_click","parar_click"],"questions":[],"classes":["Form","ClientDataSet","Field","DataSource","Layout","Label","NumberBox","Button","ProgressBar","DataGrid"],"cited":[]}}
+{"principal":{"form":"frmPrincipal","handlers":["carregar_click","parar_click"],"questions":[],"classes":["Form","ClientDataSet","Field","DataSource","Layout","Label","NumberBox","Button","ProgressBar","DataGrid"],"cited":[],"events":[["carregar_click","Button","on_click"],["parar_click","Button","on_click"]]}}

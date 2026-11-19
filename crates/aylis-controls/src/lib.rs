@@ -58,7 +58,7 @@
 
 pub use aylis_controls_base::*;
 pub use aylis_controls_charts::{
-    Chart, ChartKind, GraphCable, GraphNode, GraphSelection, MapView, NodeGraph, PointStyle, Series, SeriesFill, SeriesKind, bi, parse_time, project, trader,
+    Chart, ChartKind, LegendPosition, TitleAlign, ValueFormat, GraphCable, GraphNode, GraphSelection, MapView, NodeGraph, PointStyle, Series, SeriesFill, SeriesKind, bi, parse_time, project, trader,
     unproject,
 };
 pub use aylis_controls_device::{
@@ -71,6 +71,19 @@ pub use aylis_controls_industrial::{
     self as industrial, Conveyor, ElectricalSymbol, EmergencyStop, Fan, FlowMeter, Manometer, Motor, Pipe, Pump, PushButtons, SelectorSwitch, SevenSegment,
     SignalLight, Silo, TankLevel, Thermometer, Valve, Wire,
 };
+// Os enums do acesso tipado gerado (`aylis::prelude::Aggregate`...).
+pub use aylis_controls_charts::bi::Aggregate;
+pub use aylis_controls_charts::trader::{DrawMode, LowerPanel};
+pub use aylis_controls_industrial::{Port, SignalState, Symbol, ValveState};
+// Os registros (as listas em JSON, os resultados dos métodos e o que os eventos levam).
+pub use aylis_controls_charts::{CHART_SERIES, MAP_MARKER, MAP_POINT, MapMarker, MapPoint};
+pub use aylis_controls_device::{
+    BLUETOOTH_DEVICE, BLUETOOTH_VALUE, BluetoothDevice, BluetoothValue, CALL_RECORD, CallRecord, GATT_CHARACTERISTIC, GattCharacteristic, NFC_RECORD,
+    NOTIFICATION_BUTTON, NfcRecord, NotificationButton, PAIRED_DEVICE, PERMISSION_ANSWER, PERMISSION_REASON, PERMISSION_RESULT, PairedDevice,
+    PermissionAnswer, PermissionReason, PermissionResult, SHARED_CONTENT, SharedContent,
+};
+pub use aylis_controls_editors::{IMAGE_SIZE, ImageSize, TEXT_EFFECT};
+pub use aylis_controls_industrial::{PUSH_BUTTON, PushButton};
 
 use aylis_core::{ColorAnimation, FloatAnimation, Ui};
 

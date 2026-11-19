@@ -260,7 +260,8 @@ examples/
 ## 11.11 Mais componentes (fase 16)
 
 - **Campos:** `Memo` (várias linhas, seleção, rolagem, Ctrl+A/C/X/V), `NumberBox` (setas, roda, ↑/↓, mínimo/máximo, casas decimais no formato do idioma), `TrackBar`, `DateEdit` (digita no formato do idioma ou escolhe no calendário suspenso; F4/Alt+↓), `TimeEdit`, `Calendar`. Datas são texto ISO nas propriedades (`2026-10-24`), horas `14:30`; `Day` faz a aritmética (dia da semana, somar meses, ler/escrever no formato do idioma). `LocaleInfo` ganhou nomes dos meses e dias.
-- **Listas (virtualizadas):** `ListBox`, `RadioGroup` (com colunas), `ListView` (título, detalhe, imagem, seta; 5 mil itens sem custo), `TreeView` (`items` com `>` por nível: `Brasil;>São Paulo;>>Campinas`; ←/→ abre e fecha).
+- **Listas (virtualizadas):** `ListBox`, `RadioGroup` (com colunas), `ListView` (título, detalhe, imagem, seta; 5 mil itens sem custo), `TreeView` (`items` com os nós em JSON, os filhos dentro de cada um:
+  `[{"text": "Brasil", "children": [{"text": "São Paulo"}]}]`; ←/→ abre e fecha).
 - **Contêineres:** `TabControl` + `TabItem`, `GroupBox`, `Expander`, `StatusBar`, `ToolBar`.
 - **Sistema:** `Timer` (`on_timer`; o core agenda e a plataforma dorme até o próximo tique), `OpenDialog`/`SaveDialog` (assíncronos; filtro no formato `Descrição|*.ext`; diálogo do sistema no desktop), `message_dlg`/`show_message` (feitos com o aylis: iguais no desktop, celular e web), `toast`.
 - **Gráficos:** `Chart` de linhas, barras, área e pizza (rosca), com legenda, grade com escala "bonita" e o valor sob o mouse; `labels`/`series` em texto (`Vendas=10,20|Custos=5,8`) ou `Chart::set_data`.

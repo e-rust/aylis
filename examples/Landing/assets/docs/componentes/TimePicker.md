@@ -18,7 +18,7 @@ Seletor de hora com relógio. `time` é `14:30`; `on_change` a cada mudança.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `time` | Hora | texto | A hora escolhida, `HH:MM` (`14:30`), de 00:00 a 23:59. |
+| `time` | Hora | hora (`14:30`) | A hora escolhida, `HH:MM` (`14:30`), de 00:00 a 23:59. |
 
 ## Eventos
 
@@ -39,8 +39,8 @@ E o handler, um método do form (`self.TimePicker1` já é um `TimePicker`):
 ```rust
 impl FrmPrincipal {
     pub fn time_picker1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.TimePicker1.time(ui);
-        self.TimePicker1.set_time(ui, format!("{atual}!"));
+        let atual = self.TimePicker1.minutes_mode(ui);
+        self.TimePicker1.set_minutes_mode(ui, !atual);
     }
 }
 ```

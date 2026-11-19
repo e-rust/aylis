@@ -483,7 +483,8 @@ fn time_edit_opens_the_clock() {
 
 #[test]
 fn event_calendar_week_and_day_views() {
-    let events = parse_events("2026-10-21 14:00-15:30|Reunião|success;2026-10-21|Feriado;2026-10-21 14:30-16:00|Revisão");
+    const EVENTS: &str = r#"[{"start":"2026-10-21T14:00","end":"2026-10-21T15:30","title":"Reunião","color":"success"},{"start":"2026-10-21","all_day":true,"title":"Feriado"},{"start":"2026-10-21T14:30","end":"2026-10-21T16:00","title":"Revisão"}]"#;
+    let events = parse_events(EVENTS);
     assert_eq!(events[0].time, Some((840, 930)));
     assert_eq!(events[1].time, None);
     let (mut ui, f) = setup();
@@ -491,7 +492,7 @@ fn event_calendar_week_and_day_views() {
     place(&mut ui, c, 0.0, 0.0, 700.0, 500.0);
     let _ = ui.set_prop(c, "view", "week");
     let _ = ui.set_prop(c, "date", "2026-10-21");
-    let _ = ui.set_prop(c, "events", "2026-10-21 14:00-15:30|Reunião|success;2026-10-21|Feriado;2026-10-21 14:30-16:00|Revisão");
+    let _ = ui.set_prop(c, "events", EVENTS);
     let picked = log(&mut ui, c, "on_event");
     let slots = log(&mut ui, c, "on_slot");
     let p = paint(&mut ui, f);
@@ -502,7 +503,8 @@ fn event_calendar_week_and_day_views() {
     let hour_h = (500.0 - grid_y - 4.0) / 13.0;
     let x = 44.0 + 3.0 * cw + 8.0; // a faixa da esquerda (Reunião)
     click(&mut ui, f, x, grid_y + (14.5 - 7.0) * hour_h);
-    assert_eq!(picked.borrow().as_slice(), ["2026-10-21|Reunião"]);
+    let clicked = CalendarEventClick::from_args(&EventArgs::Text(picked.borrow()[0].clone())).unwrap();
+    assert_eq!(clicked, CalendarEventClick { index: 0, date: aylis_core::Date::parse_iso("2026-10-21"), title: "Reunião".into() });
     click(&mut ui, f, x, grid_y + 0.5 * hour_h);
     assert_eq!(slots.borrow().as_slice(), ["2026-10-21 07:00"]);
     // A seta anda uma semana.

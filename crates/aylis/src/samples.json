@@ -1,5 +1,5 @@
 {
-  "ListView": { "size": [320, 280], "props": { "items": "Ana Souza|Vendas;Bruno Lima|Financeiro;Carla Dias|Suporte;Diego Alves|Compras;Elisa Rocha|Marketing" } },
+  "ListView": { "size": [320, 280], "props": { "items": [{"title": "Ana Souza", "detail": "Vendas"}, {"title": "Bruno Lima", "detail": "Financeiro"}, {"title": "Carla Dias", "detail": "Suporte"}, {"title": "Diego Alves", "detail": "Compras"}, {"title": "Elisa Rocha", "detail": "Marketing"}] } },
   "ListBox": { "size": [220, 180], "props": { "items": "Maçã;Banana;Laranja;Uva;Pera;Manga", "item_index": 1 } },
   "DateTimeEdit": { "size": [200, 36], "props": { "date_time": "2026-11-12T14:30" } },
   "Popover": { "size": [280, 140], "props": { "visible": true }, "children": [
@@ -18,7 +18,7 @@
     { "class": "Panel", "name": "slide1", "align": "client", "fill": "#2563EB", "children": [ { "class": "Label", "name": "lblSlide1", "text": "Um slide por vez", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] },
     { "class": "Panel", "name": "slide2", "align": "client", "fill": "#7C3AED", "children": [ { "class": "Label", "name": "lblSlide2", "text": "Arraste para o lado", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] },
     { "class": "Panel", "name": "slide3", "align": "client", "fill": "#DB2777", "children": [ { "class": "Label", "name": "lblSlide3", "text": "Ou use as setas", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] } ] },
-  "SkeletonLoader": { "size": [320, 200], "props": { "layout": "list-item, list-item, text@2" } },
+  "SkeletonLoader": { "size": [320, 200], "props": { "layout": "list-item;list-item;text;text" } },
   "Snackbar": { "size": [392, 64], "props": { "text": "Item apagado", "action": "DESFAZER", "timeout": 0, "active": true } },
   "AjaxBar": { "size": [392, 40], "props": { "active": true } },
   "BottomSheet": { "size": [392, 300], "props": { "open": true, "sheet_height": 240 }, "children": [

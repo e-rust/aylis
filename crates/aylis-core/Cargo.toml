@@ -17,6 +17,8 @@ text-shaping = ["dep:harfrust"]
 
 # O core não depende de nada do sistema operacional.
 [dependencies]
+# O relógio do sistema que também roda no navegador (o `DateTime::now` de `date.rs`).
+web-time = "1"
 # O motor de texto do núcleo (os modos `layout` e `core` do item 10): ler as fontes e montar as
 # letras (árabe, acentos combinados, kerning), em Rust puro, igual em todas as plataformas.
 harfrust = { version = "0.15", optional = true }

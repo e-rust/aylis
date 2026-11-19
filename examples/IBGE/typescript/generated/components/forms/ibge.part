@@ -197,7 +197,7 @@ export class FrmIBGEComponents extends Form {
         this.dbcMaiores = this.resolve(list, "dbcMaiores", "DBChart", DBChart);
         this.dbcEstados = this.resolve(list, "dbcEstados", "DBChart", DBChart);
     }
-    /** O ClientDataSet deste form com o nome (como o FindComponent). */
+    /** O ClientDataSet deste form com o nome. */
     findClientDataSet(name: string): ClientDataSet | undefined {
         switch (name) {
             case "cdsEstados": return this.cdsEstados;
@@ -212,7 +212,7 @@ export class FrmIBGEComponents extends Form {
     senderAsClientDataSet(ev: AylisEvent): ClientDataSet | undefined {
         return this.findClientDataSet(ev.sender.name);
     }
-    /** O DBChart deste form com o nome (como o FindComponent). */
+    /** O DBChart deste form com o nome. */
     findDBChart(name: string): DBChart | undefined {
         switch (name) {
             case "dbcPopulacao": return this.dbcPopulacao;
@@ -225,7 +225,7 @@ export class FrmIBGEComponents extends Form {
     senderAsDBChart(ev: AylisEvent): DBChart | undefined {
         return this.findDBChart(ev.sender.name);
     }
-    /** O DataGrid deste form com o nome (como o FindComponent). */
+    /** O DataGrid deste form com o nome. */
     findDataGrid(name: string): DataGrid | undefined {
         switch (name) {
             case "grdEstados": return this.grdEstados;
@@ -238,7 +238,7 @@ export class FrmIBGEComponents extends Form {
     senderAsDataGrid(ev: AylisEvent): DataGrid | undefined {
         return this.findDataGrid(ev.sender.name);
     }
-    /** O DataSource deste form com o nome (como o FindComponent). */
+    /** O DataSource deste form com o nome. */
     findDataSource(name: string): DataSource | undefined {
         switch (name) {
             case "dsEstados": return this.dsEstados;
@@ -253,7 +253,7 @@ export class FrmIBGEComponents extends Form {
     senderAsDataSource(ev: AylisEvent): DataSource | undefined {
         return this.findDataSource(ev.sender.name);
     }
-    /** O Field deste form com o nome (como o FindComponent). */
+    /** O Field deste form com o nome. */
     findField(name: string): Field | undefined {
         switch (name) {
             case "cdsEstadosId": return this.cdsEstadosId;
@@ -301,7 +301,7 @@ export class FrmIBGEComponents extends Form {
     senderAsField(ev: AylisEvent): Field | undefined {
         return this.findField(ev.sender.name);
     }
-    /** O GroupBox deste form com o nome (como o FindComponent). */
+    /** O GroupBox deste form com o nome. */
     findGroupBox(name: string): GroupBox | undefined {
         switch (name) {
             case "gbEstados": return this.gbEstados;
@@ -314,7 +314,7 @@ export class FrmIBGEComponents extends Form {
     senderAsGroupBox(ev: AylisEvent): GroupBox | undefined {
         return this.findGroupBox(ev.sender.name);
     }
-    /** O Image deste form com o nome (como o FindComponent). */
+    /** O Image deste form com o nome. */
     findImage(name: string): Image | undefined {
         switch (name) {
             case "imgBandeiraEstado": return this.imgBandeiraEstado;
@@ -326,7 +326,7 @@ export class FrmIBGEComponents extends Form {
     senderAsImage(ev: AylisEvent): Image | undefined {
         return this.findImage(ev.sender.name);
     }
-    /** O Label deste form com o nome (como o FindComponent). */
+    /** O Label deste form com o nome. */
     findLabel(name: string): Label | undefined {
         switch (name) {
             case "lblFonte": return this.lblFonte;
@@ -361,7 +361,7 @@ export class FrmIBGEComponents extends Form {
     senderAsLabel(ev: AylisEvent): Label | undefined {
         return this.findLabel(ev.sender.name);
     }
-    /** O Layout deste form com o nome (como o FindComponent). */
+    /** O Layout deste form com o nome. */
     findLayout(name: string): Layout | undefined {
         switch (name) {
             case "lytListas": return this.lytListas;
@@ -378,7 +378,7 @@ export class FrmIBGEComponents extends Form {
     senderAsLayout(ev: AylisEvent): Layout | undefined {
         return this.findLayout(ev.sender.name);
     }
-    /** O Panel deste form com o nome (como o FindComponent). */
+    /** O Panel deste form com o nome. */
     findPanel(name: string): Panel | undefined {
         switch (name) {
             case "pnlEstado": return this.pnlEstado;
@@ -390,7 +390,7 @@ export class FrmIBGEComponents extends Form {
     senderAsPanel(ev: AylisEvent): Panel | undefined {
         return this.findPanel(ev.sender.name);
     }
-    /** O Splitter deste form com o nome (como o FindComponent). */
+    /** O Splitter deste form com o nome. */
     findSplitter(name: string): Splitter | undefined {
         switch (name) {
             case "splListas": return this.splListas;
@@ -401,7 +401,7 @@ export class FrmIBGEComponents extends Form {
     senderAsSplitter(ev: AylisEvent): Splitter | undefined {
         return this.findSplitter(ev.sender.name);
     }
-    /** O Svg deste form com o nome (como o FindComponent). */
+    /** O Svg deste form com o nome. */
     findSvg(name: string): Svg | undefined {
         switch (name) {
             case "svgBrasil": return this.svgBrasil;

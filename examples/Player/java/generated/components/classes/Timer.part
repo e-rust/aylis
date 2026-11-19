@@ -21,12 +21,12 @@
             setProp("enabled", value);
         }
 
-        public String getPrecision() {
-            return asText(getProp("precision"));
+        public TimerPrecision getPrecision() {
+            return TimerPrecision.of(getProp("precision"));
         }
 
-        public void setPrecision(String value) {
-            setProp("precision", value);
+        public void setPrecision(TimerPrecision value) {
+            setProp("precision", value.value);
         }
 
         public boolean isBackground() {
@@ -43,6 +43,14 @@
 
         public void setOneShot(boolean value) {
             setProp("one_shot", value);
+        }
+
+        public String getOnTimer() {
+            return asText(getProp("on_timer"));
+        }
+
+        public void setOnTimer(String value) {
+            setProp("on_timer", value);
         }
 
         public double getDrift() {

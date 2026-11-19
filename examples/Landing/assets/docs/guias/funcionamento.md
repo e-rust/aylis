@@ -224,7 +224,8 @@ qualquer controle; o exemplo `titlebar` mostra.
 O `TrayIcon` (paleta "System", não visual) põe o app na bandeja do sistema, perto do
 relógio (Windows e macOS, feature `tray`): `icons` com um arquivo (parado) ou vários
 (animação a cada `interval` ms), `hint`, `badge` (um ponto `•` ou um número, desenhado sobre
-o ícone, como os apps de mensagem) e `menu_items` (`Abrir;-;Sair`) com `menu_theme`
+o ícone, como os apps de mensagem) e `menu_items` (a lista de itens em JSON:
+`[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`) com `menu_theme`
 `light`, `dark` ou uma cor. O menu é um form do Aylis aberto no ponto do clique, por cima de
 tudo e fora da barra de tarefas, e fecha ao perder o foco. Eventos: `on_click`,
 `on_dbl_click`, `on_menu` (o item). Para isso os forms ganharam `topmost`,
@@ -355,10 +356,12 @@ seletor de documentos do Android e do iOS. O caminho escolhido se lê e se grava
 
 **Permissões** (`Permissions`, não visual). `permissions` lista as que o app usa
 (`camera;microphone;location;notifications;photos;contacts;calendar;bluetooth`) e `reasons`
-diz por que (`camera=Para a foto do perfil`). `Permissions::state(ui, Permission::Camera)`
-responde `Granted`, `Denied`, `Prompt` (ainda não perguntada) ou `Unavailable`;
-`request`/`request_all` mostram as perguntas do sistema, uma por vez, e a resposta chega
-no `on_result` (`camera=granted;microphone=denied`). Nas outras linguagens:
+diz por que (`[{"permission": "camera", "reason": "Para a foto do perfil"}]`).
+`Permissions::state(ui, Permission::Camera)` responde `Granted`, `Denied`, `Prompt` (ainda
+não perguntada) ou `Unavailable`; `request`/`request_all` mostram as perguntas do sistema,
+uma por vez, e a resposta chega no `on_result` (um `PermissionResult`: `{"answers":
+[{"permission": "camera", "state": "granted"}, {"permission": "microphone", "state":
+"denied"}]}`; em Rust, `result.state(Permission::Camera)`). Nas outras linguagens:
 `frmX.prmApp.state("camera")`, `frmX.prmApp.request_all()`. A publicação declara no
 AndroidManifest as permissões listadas e põe no Info.plist do iOS os textos de `reasons`
 (sem texto, um genérico: sem a chave o iOS fecha o app ao perguntar). No desktop tudo vem
@@ -382,15 +385,18 @@ Exemplo: `cargo run -p aylis-platform-winit --example device --features d2d`.
 
 **NFC** (`Nfc`, não visual). Com `active`, lê as tags que encostarem (só com o app na
 frente): cada uma chega no `on_tag` (o texto é o id, `04:A2:1B:...`), com `tag_id`,
-`tag_type`, `writable` e `records`, um registro NDEF por linha:
+`tag_type`, `writable` e `records`, os registros NDEF em JSON (`NfcRecord`: o `kind`
+`text`, `uri`, `mime` ou `other`, o `value`, o `mime` e o `lang` do texto):
 
-```text
-text:Pedido 42
-uri:https://aylis.dev/pedido/42
-application/json:{"pedido":42}
+```json
+[
+  {"kind": "text", "value": "Pedido 42", "lang": "pt"},
+  {"kind": "uri", "value": "https://aylis.dev/pedido/42"},
+  {"kind": "mime", "mime": "application/json", "value": "{\"pedido\":42}"}
+]
 ```
 
-`write(registros)` (o mesmo texto) grava na próxima tag que encostar, e o resultado vem no
+`write(registros)` (a mesma lista) grava na próxima tag que encostar, e o resultado vem no
 `on_written` ou no `on_error` (só leitura, não cabe, a tag saiu antes). O formato NDEF
 (ler e montar a mensagem, a memória das tags do tipo 2) é do núcleo (`aylis_core::ndef`), em
 Rust puro. Por plataforma: o `NfcAdapter` em modo leitor no Android (a publicação põe a
@@ -402,14 +408,16 @@ navegador (só o Chrome do Android, em `https`). No iOS ainda não.
 **Bluetooth** (`Bluetooth`, não visual). BLE e o clássico num componente só:
 
 - `start_scan` procura (filtrando por `service_filter`, uuids separados por `;`, e por parte
-  do nome em `name_filter`); cada aparelho chega uma vez no `on_found` (`id;nome;rssi`) e
-  `devices` lista os achados;
+  do nome em `name_filter`); cada aparelho chega uma vez no `on_found` (um
+  `BluetoothDevice`: `{"id", "name", "rssi"}`) e `devices` lista os achados (a lista deles);
 - `connect(id)`: o `on_connected` traz o id e `services` lista as características
-  (`serviço/característica read,notify` por linha);
+  (`GattCharacteristic`: `{"service", "characteristic", "properties": ["read", "notify"]}`);
 - `read(id, serviço, característica)`, `write`/`write_hex` (com ou sem resposta) e
-  `subscribe` (o `notify`/`indicate`): os valores chegam no `on_value`
-  (`característica;hex`), com `last_value` (hex) e `last_text` (UTF-8);
-- o clássico (SPP/RFCOMM, impressoras e leitores serial): `paired`, `open(id)`,
+  `subscribe` (o `notify`/`indicate`): os valores chegam no `on_value` (um
+  `BluetoothValue`: `{"device", "characteristic", "hex"}`), com `last_value` (hex) e
+  `last_text` (UTF-8);
+- o clássico (SPP/RFCOMM, impressoras e leitores serial): `paired` (a lista de
+  `PairedDevice`: `{"id", "name"}`), `open(id)`,
   `send`/`send_hex` e `close`; o que chega vem no `on_received`.
 
 Os uuids aceitam a forma curta do Bluetooth SIG (`180D` é a frequência cardíaca). Por
@@ -453,9 +461,10 @@ Exemplo: `cargo run -p aylis-media --example camera`.
   `AudioOutput::devices` (canais e taxa de cada uma). `on_devices_changed` avisa quando um
   fone ou uma caixa Bluetooth entra ou sai (confere a cada 2 s com `watch`).
 - **Tocar em uma ou várias.** `output` no `MediaPlayer`, no `VideoPlayer` e no `Sound`:
-  vazio é a padrão; várias, separadas por `|`, tocam o mesmo som sincronizado, cada uma com
-  `volume` e `delay` em ms (`Alto-falantes|Fone BT;volume=0.8;delay=180`, para calibrar o
-  atraso do Bluetooth). Cada saída tem a sua fila, e a taxa de cada uma é corrigida devagar
+  vazio é a padrão; é uma lista de registros `OutputSpec` (`name`, `volume` e `delay_ms`), e
+  várias saídas tocam o mesmo som sincronizado, cada uma com o seu volume e atraso
+  (`[{"name": "Alto-falantes"}, {"name": "Fone BT", "volume": 0.8, "delay_ms": 180}]`, para
+  calibrar o atraso do Bluetooth; `name` vazio é a padrão). Cada saída tem a sua fila, e a taxa de cada uma é corrigida devagar
   (no máximo 0,5%) para acompanhar a primeira, porque o relógio de cada placa anda um pouco
   diferente. Trocar `output` tocando continua do mesmo ponto. No Android só a primeira da
   lista toca; no navegador, o `<video>` toca na saída padrão.
@@ -468,12 +477,13 @@ Exemplo: `cargo run -p aylis-media --example camera`.
   Android (`AudioPlaybackCapture`, com autorização do usuário), ainda não.
 - **Monitor.** `monitor` no `Microphone` manda a entrada para uma ou mais saídas, no mesmo
   formato do `output`. Cuidado com a microfonia: o microfone perto do alto-falante.
-- **AudioMixer.** Não visual. `sources` são as fontes, separadas por `|`:
+- **AudioMixer.** Não visual. `sources` são as fontes, uma lista de registros `MixSource`
+  (`name`, `device`, `volume`, `pan`, `mute`):
   - o nome de um `Microphone`, `MediaPlayer` ou `VideoPlayer` do form;
-  - ou `device:<entrada>` (um microfone ou `device:loopback:<saída>`), aberta pelo próprio
-    mixer.
+  - ou, com `"device": true`, uma entrada do sistema (um microfone ou `loopback:<saída>`),
+    aberta pelo próprio mixer.
 
-  Cada fonte leva, se quiser, `;volume=0.5;pan=-0.3;mute`. Mudar só volume, panorâmica e
+  Cada fonte leva, se quiser, `volume` (sem ele, 1), `pan` (-1 a 1) e `mute`. Mudar só volume, panorâmica e
   mudo vale na hora, sem religar. A mistura (48 kHz, estéreo) vai para:
   - as saídas do `output` (vazio: nenhuma);
   - um WAV (`AudioMixer::record` e `stop_recording`);
@@ -483,7 +493,11 @@ Exemplo: `cargo run -p aylis-media --example camera`.
 
 ```rust
 // A voz do microfone e o som do sistema, gravados juntos.
-ui.set_prop(mixer, "sources", "micVoz;volume=1.2|device:loopback:Alto-falantes;volume=0.4")?;
+ui.set_prop(
+    mixer,
+    "sources",
+    r#"[{"name": "micVoz", "volume": 1.2}, {"name": "loopback:Alto-falantes", "device": true, "volume": 0.4}]"#,
+)?;
 ui.set_prop(mixer, "active", true)?;
 aylis_media::AudioMixer::record(&mut ui, mixer)?;
 // ...
@@ -498,9 +512,9 @@ Nas outras linguagens: `Sound.play()`, `stop()` e `is_playing()`; `AudioMixer.re
 O `Taskbar` (paleta "System", não visual) controla o botão do form na barra de tarefas do
 Windows: `progress` (`normal`, `paused`, `error`, `indeterminate`) e `value` (0 a 100),
 `badge` (o número sobre o ícone, como os apps de mensagem), `buttons` (até 7 botões na
-miniatura que aparece ao passar o mouse: `icone.png|Dica;...`, o clique dispara
-`on_button` com o índice) e `tasks` (o menu do clique direito: `Nome|argumentos;...`, que
-abrem o próprio app com os argumentos).
+miniatura que aparece ao passar o mouse: `[{"icon": "play.png", "hint": "Tocar"}]`, o clique
+dispara `on_button` com o índice) e `tasks` (o menu do clique direito:
+`[{"name": "Nova janela", "arguments": "--new"}]`, que abrem o próprio app com os argumentos).
 
 Qualquer mensagem do Windows da janela de um form pode ser interceptada antes do
 processamento normal:
@@ -673,21 +687,25 @@ O zoom vai de 0,25 a 5. `ui.form_zoom(form)` diz o zoom em que um form aparece. 
 ### Texto com efeitos (AnimatedText)
 
 Como num programa de apresentação: o texto entra, sai ou fica se mexendo, por letra,
-palavra ou linha. A propriedade `effects` lista os efeitos separados por `;`, cada um com o
-nome e os parâmetros `chave=valor`:
+palavra ou linha. A propriedade `effects` é a lista de efeitos em JSON (`TextEffect`): o
+`effect` e os parâmetros dele (os ausentes são o padrão):
 
-```text
-fade by=letter duration=500 stagger=45; slide dy=40 by=letter duration=700 stagger=45 easing=back
-typewriter speed=55 cursor
-fade by=letter duration=300 stagger=25 order=center; wave amplitude=6 period=1400 after
+```json
+[
+  {"effect": "fade", "by": "letter", "duration": 500, "stagger": 45},
+  {"effect": "slide", "dy": 40, "by": "letter", "duration": 700, "stagger": 45, "easing": "back"},
+  {"effect": "wave", "amplitude": 6, "period": 1400, "after": true}
+]
 ```
 
 - **Efeitos:** `fade`, `slide` (`dx`, `dy`), `scale` (`from`), `rotate` (`from`, em graus),
-  `typewriter` (`speed`, `cursor`), `color` (`from=#22c55e`), `tracking` (`from`, as letras
-  chegam se juntando) e os contínuos `wave` (`amplitude`, `period`), `shake` e `blink`.
-- **Comuns:** `by=letter|word|line|all`, `duration` e `delay` (ms), `stagger` (ms entre
-  uma unidade e a próxima), `order=normal|reverse|center|random`,
-  `easing=linear|in|out|in_out|back|bounce|elastic` e `out` (saída em vez de entrada).
+  `typewriter` (`speed`, `cursor`), `color` (`from_color`, `#22c55e`), `tracking` (`from`,
+  as letras chegam se juntando) e os contínuos `wave` (`amplitude`, `period`), `shake` e
+  `blink`.
+- **Comuns:** `by` (`letter`, `word`, `line`, `all`), `duration` e `delay` (ms), `stagger`
+  (ms entre uma unidade e a próxima), `order` (`normal`, `reverse`, `center`, `random`),
+  `easing` (`auto`, `linear`, `in`, `out`, `in_out`, `back`, `bounce`, `elastic`) e `out`
+  (saída em vez de entrada).
 - **Simultâneos e encadeados:** sem nada, todos começam juntos (cada um com o seu
   `delay`); com `after`, o efeito começa quando o anterior termina (mais o `delay`).
   Antes de começar, cada efeito segura o estado inicial dele sem esconder a letra: para
@@ -733,7 +751,8 @@ Paleta "BI": `KpiCard` (o número grande, a variação contra `previous` em verd
 vermelho conforme `higher_is_better`, e a tendência), `PivotTable` (`data` com cabeçalho e
 campos separados por `;`, agrupada por `rows_field` × `columns_field` com `aggregate`;
 `on_cell_click` para detalhar), `Slicer` (botões de filtro; `Slicer::accepts`) e
-`ChoroplethMap` (regiões de um GeoJSON coloridas por `values`).
+`ChoroplethMap` (regiões de um GeoJSON coloridas por `values`: `[{"region": "SP", "value":
+10}]`).
 
 **O `Chart`** tem os tipos do Chart.js e mais alguns: linha, barra, barra horizontal, área,
 pizza, rosca, área polar, dispersão, bolhas, radar, barras, linhas e áreas empilhadas,
@@ -741,15 +760,18 @@ misto (cada série com o seu tipo), cascata, funil, treemap, mapa de calor, spar
 Sankey e waffle.
 - **Sankey** (`kind: sankey`): cada rótulo é um fluxo `origem>destino` e a 1ª série traz o
   valor de cada um (`labels: "Salário>Receita;Receita>Poupança"`, `series:
-  "Fluxo=5000,2500"`). Os nós ficam em colunas pelo caminho desde as origens, e a largura da
+  [{"name": "Fluxo", "values": [5000, 2500]}]`). Os nós ficam em colunas pelo caminho desde as origens, e a largura da
   faixa é o valor.
 - **Waffle** (`kind: waffle`): 10x10 quadrados, cada um 1% do total da 1ª série, uma cor por
   rótulo (as sobras do arredondamento vão para os itens de maior resto, para somar 100).
-- **Dados:** `series`, uma série por linha:
-  `Nome[bar;right;#e11d48;width 3;dash 6 3;triangle;fill origin]=10|20|x:y|x:y:r`. As
-  opções entre colchetes são o tipo da série, o eixo Y da direita, a cor, a espessura, o
-  tracejado, o estilo do ponto e o preenchimento (até a origem ou outra série). Também
-  aceita o JSON do Chart.js (`{"labels": [...], "datasets": [...]}`).
+- **Dados:** `series`, a lista de séries em JSON (`ChartSeries`):
+  `[{"name": "Custos", "values": [10, 20], "kind": "bar", "right_axis": true, "color":
+  "#e11d48", "width": 3, "dash": [6, 3], "point": "triangle", "fill": "origin"}]`. Além do
+  nome e dos valores: o tipo da série (no misto), o eixo Y da direita, a cor (hex ou do
+  tema), a espessura, o tracejado, o estilo do ponto, o preenchimento (`origin`, `start`,
+  `end` ou `series` com o índice em `fill_series`) e `hidden`; na dispersão, o `x` de cada
+  ponto, e nas bolhas também o `radius`. Também aceita o JSON do Chart.js em `json`
+  (`{"labels": [...], "datasets": [...]}`).
 - **Escalas:** `y_min`/`y_max` (ou `auto_scale`), `log_scale`, `reverse`, `time_axis`
   (rótulos com datas viram um eixo de tempo), o eixo da direita.
 - **Linhas:** `stepped` (degraus) e `tension` (suavizada, monotônica: não passa dos pontos).
@@ -792,11 +814,13 @@ Sankey e waffle.
   `examples/Relatorios` tem dois relatórios mestre-detalhe (pedidos com itens; vendas por
   vendedor com itens e parcelas).
 
-Paleta "Trader": `CandleChart` (`data` com `tempo;abertura;máxima;mínima;fechamento;volume`
-ou `set_candles`/`push`; `indicators` = `"sma:9;ema:21;bollinger:20"`; `lower` = volume,
-rsi ou macd; `volume_profile`; roda = zoom, arrastar = tempo, `draw_mode` = trend ou
-fibonacci para desenhar), `OrderBook` e `DepthChart` (`bids`/`asks` = `"preço:qtd;..."`),
-`TickerTape`, `Watchlist` (`Watchlist::update` faz a célula piscar) e `TimeAndSales`
+Paleta "Trader": `CandleChart` (`data` = os candles em JSON, `[{"time": "01/02", "open":
+30, "high": 31.2, "low": 29.8, "close": 30.9, "volume": 2400}]`, ou `set_candles`/`push`;
+`indicators` = `[{"kind": "sma", "period": 9}, {"kind": "bollinger", "period": 20}]`
+(`sma`, `ema` ou `bollinger`); `lower` = volume, rsi ou macd; `volume_profile`; roda = zoom,
+arrastar = tempo, `draw_mode` = trend ou fibonacci para desenhar), `OrderBook` e
+`DepthChart` (`bids`/`asks` = `[{"price": 38.49, "quantity": 1200}]`), `TickerTape`
+(`items` = `[{"symbol": "PETR4", "price": 38.5, "change": 1.2}]`), `Watchlist` (`Watchlist::update` faz a célula piscar) e `TimeAndSales`
 (`TimeAndSales::add`). Os indicadores (`sma`, `ema`, `bollinger`, `rsi`, `macd`) também
 servem direto pelo código. Os números seguem o idioma do app.
 
@@ -1029,8 +1053,8 @@ maior texto da coluna (o título e os registros a partir da primeira linha na te
 1.000: com milhões de registros, medir todos travaria). Por código: `fit_column`.
 Com `column_move` (ligado por padrão), arrastar o título muda a ordem das colunas: o título
 segue o mouse e uma barra marca onde a coluna entra; as colunas fixas (`fixed_columns`)
-trocam só entre si. A nova ordem chega no `on_column_moved`, no formato de `columns` (com as
-larguras), para o app guardar; por código, `DataGrid::move_column_to(ui, grade, de, para)`.
+trocam só entre si. A nova ordem chega no `on_column_moved` (o `ColumnLayout`: a lista de
+colunas no formato de `columns`, com as larguras), para o app guardar; por código, `DataGrid::move_column_to(ui, grade, de, para)`.
 Com `sortable`, o clique no título (ao soltar, sem arrastar) ordena pela coluna; o segundo inverte; o terceiro volta à
 ordem do dataset (`index_field_names` ou `index_name`). Ctrl+clique acrescenta a coluna à
 ordem, depois das que já estão (de novo inverte, na terceira sai); com mais de uma, o
@@ -1045,7 +1069,9 @@ As colunas vêm, nesta ordem de preferência:
 - dos componentes `Column` filhos da grade (como as colunas persistentes): cada um com
   `field_name`, `title`, `width`, `alignment`, `color`, `text_color`, `visible` e
   `read_only`; o que fica vazio vem do `Field` (o rótulo, a largura, o alinhamento);
-- da lista `columns`, `"sigla:44;nome:170;regiao"` (a largura depois de `:` é opcional);
+- da lista `columns`, uma lista de registros `ColumnSpec` (`field` e, opcionais, `title`,
+  `width`, `read_only`, `color`, `text_color`):
+  `[{"field": "sigla", "width": 44}, {"field": "nome", "width": 170}, {"field": "regiao"}]`;
 - dos campos visíveis do dataset.
 
 No designer a grade já mostra as colunas, mesmo com o dataset fechado. O duplo clique no

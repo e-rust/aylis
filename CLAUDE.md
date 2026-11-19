@@ -105,6 +105,9 @@ A base para decidir onde entra uma melhoria (aprovada em 15/11):
   expressar como classe + propriedade + valor (`PropValue`). Recurso só com API Rust tipada
   não basta: precisa de nome no registro (propriedade, evento ou método do `invoke`), para
   valer no JSON, no protocolo, na API C e nos 7 clientes.
+- **O mais tipado possível:** no acesso tipado gerado, nada que tenha tipo vai como texto
+  (enum, conjunto, cor, margens, referência a componente; o Rust usa o tipo do framework). Um
+  valor com escolhas fixas é enum no componente (`PropEnum`), não `String`.
 - **Nada de banco no frontend:** sem conexão, SQL ou driver. O `ClientDataSet` guarda os dados
   e o delta, e o backend recebe o delta e aplica.
 - **Biblioteca de terceiros por provedor:** o componente que o app usa liga-se a um componente

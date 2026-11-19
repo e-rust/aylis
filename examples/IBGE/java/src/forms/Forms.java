@@ -8,8 +8,8 @@ public final class Forms {
     /** Registra as classes dos forms e os handlers de todos. */
     public static void register(Aylis aylis) {
         Components.registerClasses();
-        aylis.on("frmIBGE.form_show", ev -> FrmIBGE.form_show(aylis, ev));
-        aylis.on("frmIBGE.estado_mudou", ev -> FrmIBGE.estado_mudou(aylis, ev));
-        aylis.on("frmIBGE.municipio_mudou", ev -> FrmIBGE.municipio_mudou(aylis, ev));
+        aylis.on("frmIBGE.form_show", ev -> FrmIBGE.form_show(aylis, Components.frmIBGE));
+        aylis.on("frmIBGE.estado_mudou", ev -> FrmIBGE.estado_mudou(aylis, Components.frmIBGE.senderAsClientDataSet(ev)));
+        aylis.on("frmIBGE.municipio_mudou", ev -> FrmIBGE.municipio_mudou(aylis, Components.frmIBGE.senderAsClientDataSet(ev)));
     }
 }

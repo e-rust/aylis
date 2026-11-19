@@ -262,7 +262,7 @@ impl Component for ChatView {
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         show_authors: bool => "Appearance";
-        events: on_message_click
+        events: on_message_click: String
     }
 
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &WheelEvent) {
@@ -506,7 +506,7 @@ impl Component for Waveform {
         duration: f64 => "Data",
         seek_bar: bool => "Appearance",
         paused: bool => "Appearance";
-        events: on_seek
+        events: on_seek: f64
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

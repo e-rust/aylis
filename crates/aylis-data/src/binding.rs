@@ -121,22 +121,46 @@ fn is_focused(ui: &Ui, id: ComponentId) -> bool {
 /// e os rótulos do eixo do `Chart`.
 pub const LIST_PROPS: [&str; 4] = ["items", "values", "labels", "series"];
 
-/// As séries do `Chart` ligadas a campos: `Vendas=vendas|Custos[line;#EF4444]=custos` (o nome
-/// e as opções da série antes do `=`, o campo depois) ou só os campos (`vendas;custos`), um
-/// ponto por registro: `Vendas=10,20,30|Custos=5,8,9`, o formato do `series`.
+/// As séries do `Chart` ligadas a campos, um ponto por registro. O caminho é só os campos
+/// (`vendas;custos`: o nome da série é o do campo) ou a lista de séries do `series`
+/// (`ChartSeries`) com o `field` de cada uma no lugar dos `values`
+/// (`[{"name": "Custos", "kind": "line", "color": "#EF4444", "field": "custos"}]`). Sai o
+/// JSON do `series`, com os `values`.
 fn series_of(v: &crate::handle::DataView<'_>, path: &str) -> String {
-    let parts: Vec<&str> = if path.contains('=') { path.split('|').collect() } else { path.split(';').collect() };
-    parts
-        .iter()
-        .map(|p| p.trim())
-        .filter(|p| !p.is_empty())
-        .map(|p| {
-            let (head, field) = p.rsplit_once('=').map_or((p, p), |(h, f)| (h.trim(), f.trim()));
-            let values: Vec<String> = (0..v.record_count()).map(|r| v.value_at(r, field).ok().and_then(|x| x.as_f64()).unwrap_or(0.0).to_string()).collect();
-            format!("{head}={}", values.join(","))
-        })
-        .collect::<Vec<_>>()
-        .join("|")
+    use serde_json::{Map, Value as Json};
+    let values = |field: &str| -> Json {
+        (0..v.record_count())
+            .map(|r| {
+                let x = v.value_at(r, field).ok().and_then(|x| x.as_f64()).unwrap_or(0.0);
+                if x.fract() == 0.0 && x.abs() < 9.0e15 { Json::from(x as i64) } else { Json::from(x) }
+            })
+            .collect()
+    };
+    let path = path.trim();
+    let series: Vec<Json> = if path.starts_with('[') {
+        let Ok(Json::Array(items)) = serde_json::from_str::<Json>(path) else { return "[]".into() };
+        items
+            .into_iter()
+            .filter_map(|item| {
+                let Json::Object(mut o) = item else { return None };
+                let field = o.remove("field")?.as_str()?.trim().to_string();
+                o.insert("values".into(), values(&field));
+                Some(Json::Object(o))
+            })
+            .collect()
+    } else {
+        path.split(';')
+            .map(str::trim)
+            .filter(|f| !f.is_empty())
+            .map(|f| {
+                let mut o = Map::new();
+                o.insert("name".into(), f.into());
+                o.insert("values".into(), values(f));
+                Json::Object(o)
+            })
+            .collect()
+    };
+    Json::Array(series).to_string()
 }
 
 /// O valor da ligação, já no tipo da propriedade.
@@ -152,12 +176,13 @@ pub fn compute(ui: &Ui, id: ComponentId, b: &Binding) -> Option<PropValue> {
         let value = expr.eval(&|name| v.value(name).ok()).ok()?;
         return Some(to_prop(&value, kind, &text_of(&value)));
     }
-    if b.path.contains('{') {
-        return Some(PropValue::String(template(ui, ds, &b.path)));
-    }
-    // As séries de um gráfico: um ponto por registro em cada uma.
+    // As séries de um gráfico: um ponto por registro em cada uma (antes do modelo com `{}`:
+    // o caminho delas pode ser JSON).
     if b.property == "series" {
         return Some(PropValue::String(series_of(&v, &b.path)));
+    }
+    if b.path.contains('{') {
+        return Some(PropValue::String(template(ui, ds, &b.path)));
     }
     // As listas (`items` e `values` de uma lista suspensa, `labels` de um gráfico): o campo
     // de todos os registros.

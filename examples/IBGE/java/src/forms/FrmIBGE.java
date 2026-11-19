@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import dev.aylis.Aylis;
 import static forms.Components.frmIBGE;
+import forms.Components.*;
 
 public final class FrmIBGE {
     /** A pasta dos dados no projeto (para os componentes). */
@@ -72,7 +73,7 @@ public final class FrmIBGE {
     }
 
     @SuppressWarnings("unchecked")
-    public static void form_show(Aylis aylis, Aylis.Event ev) {
+    public static void form_show(Aylis aylis, Components.Form sender) {
         Object estados = ler("estados.json");
         if (estados == null) {
             frmIBGE.lblFonte.setText("Faltam os dados: rode  aylis-tool ibge examples/IBGE/assets/dados");
@@ -85,12 +86,12 @@ public final class FrmIBGE {
         carregar(aylis, frmIBGE.cdsDistritos, ler("distritos.json"));
         carregar(aylis, frmIBGE.cdsMunicipios, municipios);
         carregar(aylis, frmIBGE.cdsEstados, estados);
-        estado_mudou(aylis, ev);
+        estado_mudou(aylis, frmIBGE.cdsEstados);
     }
 
     /** Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios. */
     @SuppressWarnings("unchecked")
-    public static void estado_mudou(Aylis aylis, Aylis.Event ev) {
+    public static void estado_mudou(Aylis aylis, Components.ClientDataSet sender) {
         Map<String, Object> e = registro(aylis, frmIBGE.cdsEstados);
         if (e.get("id") == null) return;
         long uf = numero(e.get("id"));
@@ -98,7 +99,7 @@ public final class FrmIBGE {
         frmIBGE.lblRegiao.setText(texto(e.get("sigla")) + " · Região " + texto(e.get("regiao")));
         frmIBGE.imgBandeiraEstado.setImage(imagem(texto(e.get("bandeira"))));
         frmIBGE.lblEstadoEstimativa.setText("Estimativa de " + texto(e.get("estimativa_ano")));
-        frmIBGE.svgBrasil.setHighlight("e" + uf);
+        frmIBGE.svgBrasil.setHighlight(java.util.List.of("e" + uf));
         String mapa = DADOS + "mapas/" + uf + ".svg";
         frmIBGE.svgEstado.setSource(mapa);
         frmIBGE.svgMunicipio.setSource(mapa);
@@ -114,11 +115,11 @@ public final class FrmIBGE {
             maiores.add(Aylis.obj("nome", m.get("nome"), "habitantes", m.get("populacao")));
         }
         carregar(aylis, frmIBGE.cdsMaiores, maiores);
-        municipio_mudou(aylis, ev);
+        municipio_mudou(aylis, frmIBGE.cdsMunicipios);
     }
 
     /** Outro município: a bandeira, o destaque nos mapas e a população ano a ano. */
-    public static void municipio_mudou(Aylis aylis, Aylis.Event ev) {
+    public static void municipio_mudou(Aylis aylis, Components.ClientDataSet sender) {
         Map<String, Object> m = registro(aylis, frmIBGE.cdsMunicipios);
         if (m.get("id") == null) return;
         long codigo = numero(m.get("id"));
@@ -129,8 +130,8 @@ public final class FrmIBGE {
         frmIBGE.lblSemBandeira.setVisible(bandeira.isEmpty());
         frmIBGE.lblEstimativa.setText("Estimativa de " + texto(m.get("estimativa_ano")));
         String alvo = "m" + codigo;
-        frmIBGE.svgEstado.setHighlight(alvo);
-        frmIBGE.svgMunicipio.setHighlight(alvo);
+        frmIBGE.svgEstado.setHighlight(java.util.List.of(alvo));
+        frmIBGE.svgMunicipio.setHighlight(java.util.List.of(alvo));
         frmIBGE.svgMunicipio.setZoomTo(alvo);
 
         List<Object> linhas = new ArrayList<>();

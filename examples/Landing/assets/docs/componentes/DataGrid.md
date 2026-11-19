@@ -25,7 +25,7 @@ Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, ed
 | `overscroll` | Fim da rolagem | um de: `auto`, `glow`, `stretch`, `bounce`, `none` | O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`). |
 | `read_only` | Somente leitura | lógico | Só leitura: as células não editam (mesmo com o dataset editável). |
 | `sortable` | Ordenável | lógico | O clique no título ordena pela coluna (de novo: decrescente; na terceira, volta à ordem do dataset); Ctrl+clique junta colunas à ordem. |
-| `column_move` | Arrastar colunas | lógico | Arrastar o título muda a ordem das colunas (as fixas trocam só entre si). A nova ordem chega no `on_column_moved`, no formato de `columns` (com as larguras). |
+| `column_move` | Arrastar colunas | lógico | Arrastar o título muda a ordem das colunas (as fixas trocam só entre si). A nova ordem chega no `on_column_moved` (`ColumnLayout`), no formato de `columns` (com as larguras). |
 | `filter_row` | Linha de filtro | lógico | Uma linha embaixo do título para filtrar cada coluna (Enter aplica; vira o `filter` do dataset). |
 | `multi_select` | Seleção múltipla | lógico | Seleciona várias linhas: Ctrl+clique marca e desmarca, Shift+clique estende, Ctrl+A seleciona tudo. |
 | `incremental_search` | Busca ao digitar | lógico | Digitar procura na coluna atual o primeiro texto que começa com o digitado (em vez de editar a célula). |
@@ -36,8 +36,8 @@ Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, ed
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `data_source` | Fonte de dados | componente | O `DataSource` de onde vêm os registros. |
-| `columns` | Colunas | texto | Campos a mostrar, separados por `;`, cada um com a largura opcional depois de `:` (`"sigla:44;nome:170;regiao"`). Vazio = todos os campos visíveis. |
-| `footer` | Rodapé | texto | O rodapé com totais: `"valor=sum;id=count"` (sum, avg, min, max, count), sobre os registros carregados. Vazio: sem rodapé. |
+| `columns` | Colunas | lista de `ColumnSpec` | As colunas a mostrar, na ordem: a lista de `GRID_COLUMN_RECORD` em JSON (`[{"field": "sigla", "width": 44}, {"field": "nome", "width": 170}, {"field": "regiao"}]`; no form, a lista de objetos). Vazio = todos os campos visíveis. Lida só quando muda (as colunas ficam prontas até a próxima mudança). |
+| `footer` | Rodapé | lista de `GridTotal` | O rodapé com totais: a lista de `GRID_TOTAL_RECORD` em JSON (`[{"field": "valor", "function": "sum"}, {"field": "id", "function": "count"}]`; sum, avg, min, max, count), sobre os registros carregados. Vazio: sem rodapé. |
 
 ## Eventos
 
@@ -61,8 +61,8 @@ E o handler, um método do form (`self.DataGrid1` já é um `DataGrid`):
 ```rust
 impl FrmPrincipal {
     pub fn data_grid1_error(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.DataGrid1.columns(ui);
-        self.DataGrid1.set_columns(ui, format!("{atual}!"));
+        let atual = self.DataGrid1.row_height(ui);
+        self.DataGrid1.set_row_height(ui, atual + 10.0);
     }
 }
 ```

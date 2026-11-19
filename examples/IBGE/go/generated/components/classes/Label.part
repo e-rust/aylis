@@ -5,23 +5,23 @@ type aylisLabel struct{ aylis.Component }
 func (c aylisLabel) Text() string { return asText(c.Get("text")) }
 func (c aylisLabel) SetText(v string) { c.Set("text", v) }
 
-func (c aylisLabel) HAlign() string { return asText(c.Get("h_align")) }
-func (c aylisLabel) SetHAlign(v string) { c.Set("h_align", v) }
+func (c aylisLabel) HAlign() TextAlign { return TextAlign(asText(c.Get("h_align"))) }
+func (c aylisLabel) SetHAlign(v TextAlign) { c.Set("h_align", string(v)) }
 
-func (c aylisLabel) VAlign() string { return asText(c.Get("v_align")) }
-func (c aylisLabel) SetVAlign(v string) { c.Set("v_align", v) }
+func (c aylisLabel) VAlign() TextAlign { return TextAlign(asText(c.Get("v_align"))) }
+func (c aylisLabel) SetVAlign(v TextAlign) { c.Set("v_align", string(v)) }
 
 func (c aylisLabel) Wrap() bool { return asBool(c.Get("wrap")) }
 func (c aylisLabel) SetWrap(v bool) { c.Set("wrap", v) }
 
-func (c aylisLabel) Trimming() string { return asText(c.Get("trimming")) }
-func (c aylisLabel) SetTrimming(v string) { c.Set("trimming", v) }
+func (c aylisLabel) Trimming() Trimming { return Trimming(asText(c.Get("trimming"))) }
+func (c aylisLabel) SetTrimming(v Trimming) { c.Set("trimming", string(v)) }
 
 func (c aylisLabel) Bold() bool { return asBool(c.Get("bold")) }
 func (c aylisLabel) SetBold(v bool) { c.Set("bold", v) }
 
-func (c aylisLabel) Color() string { return asText(c.Get("color")) }
-func (c aylisLabel) SetColor(v string) { c.Set("color", v) }
+func (c aylisLabel) Color() aylis.Color { return aylis.ColorFromJSON(c.Get("color")) }
+func (c aylisLabel) SetColor(v aylis.Color) { c.Set("color", v.JSON()) }
 
 func (c aylisLabel) Highlight() string { return asText(c.Get("highlight")) }
 func (c aylisLabel) SetHighlight(v string) { c.Set("highlight", v) }
@@ -29,14 +29,14 @@ func (c aylisLabel) SetHighlight(v string) { c.Set("highlight", v) }
 func (c aylisLabel) LetterSpacing() float64 { return asNumber(c.Get("letter_spacing")) }
 func (c aylisLabel) SetLetterSpacing(v float64) { c.Set("letter_spacing", v) }
 
-func (c aylisLabel) TextCase() string { return asText(c.Get("text_case")) }
-func (c aylisLabel) SetTextCase(v string) { c.Set("text_case", v) }
+func (c aylisLabel) TextCase() TextCase { return TextCase(asText(c.Get("text_case"))) }
+func (c aylisLabel) SetTextCase(v TextCase) { c.Set("text_case", string(v)) }
 
 func (c aylisLabel) Markup() bool { return asBool(c.Get("markup")) }
 func (c aylisLabel) SetMarkup(v bool) { c.Set("markup", v) }
 
-func (c aylisLabel) Outline() string { return asText(c.Get("outline")) }
-func (c aylisLabel) SetOutline(v string) { c.Set("outline", v) }
+func (c aylisLabel) Outline() aylis.Color { return aylis.ColorFromJSON(c.Get("outline")) }
+func (c aylisLabel) SetOutline(v aylis.Color) { c.Set("outline", v.JSON()) }
 
 func (c aylisLabel) OutlineWidth() float64 { return asNumber(c.Get("outline_width")) }
 func (c aylisLabel) SetOutlineWidth(v float64) { c.Set("outline_width", v) }
@@ -44,11 +44,11 @@ func (c aylisLabel) SetOutlineWidth(v float64) { c.Set("outline_width", v) }
 func (c aylisLabel) LineHeight() float64 { return asNumber(c.Get("line_height")) }
 func (c aylisLabel) SetLineHeight(v float64) { c.Set("line_height", v) }
 
-func (c aylisLabel) TextShadow() string { return asText(c.Get("text_shadow")) }
-func (c aylisLabel) SetTextShadow(v string) { c.Set("text_shadow", v) }
+func (c aylisLabel) TextShadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("text_shadow")) }
+func (c aylisLabel) SetTextShadow(v *aylis.Shadow) { c.Set("text_shadow", v.JSON()) }
 
-func (c aylisLabel) FocusControl() string { return asText(c.Get("focus_control")) }
-func (c aylisLabel) SetFocusControl(v string) { c.Set("focus_control", v) }
+func (c aylisLabel) FocusControl() *aylis.Component { return c.GetRef("focus_control") }
+func (c aylisLabel) SetFocusControl(v aylis.Ref) { c.SetRef("focus_control", v) }
 
 func (c aylisLabel) Left() float64 { return asNumber(c.Get("left")) }
 func (c aylisLabel) SetLeft(v float64) { c.Set("left", v) }
@@ -62,17 +62,17 @@ func (c aylisLabel) SetWidth(v float64) { c.Set("width", v) }
 func (c aylisLabel) Height() float64 { return asNumber(c.Get("height")) }
 func (c aylisLabel) SetHeight(v float64) { c.Set("height", v) }
 
-func (c aylisLabel) Align() string { return asText(c.Get("align")) }
-func (c aylisLabel) SetAlign(v string) { c.Set("align", v) }
+func (c aylisLabel) Align() Align { return Align(asText(c.Get("align"))) }
+func (c aylisLabel) SetAlign(v Align) { c.Set("align", string(v)) }
 
-func (c aylisLabel) Anchors() string { return asText(c.Get("anchors")) }
-func (c aylisLabel) SetAnchors(v string) { c.Set("anchors", v) }
+func (c aylisLabel) Anchors() []Anchor { return enumListAnchor(c.Get("anchors")) }
+func (c aylisLabel) SetAnchors(v []Anchor) { c.Set("anchors", enumNamesAnchor(v)) }
 
-func (c aylisLabel) Margins() string { return asText(c.Get("margins")) }
-func (c aylisLabel) SetMargins(v string) { c.Set("margins", v) }
+func (c aylisLabel) Margins() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("margins")) }
+func (c aylisLabel) SetMargins(v aylis.Bounds) { c.Set("margins", v.JSON()) }
 
-func (c aylisLabel) Padding() string { return asText(c.Get("padding")) }
-func (c aylisLabel) SetPadding(v string) { c.Set("padding", v) }
+func (c aylisLabel) Padding() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("padding")) }
+func (c aylisLabel) SetPadding(v aylis.Bounds) { c.Set("padding", v.JSON()) }
 
 func (c aylisLabel) Visible() bool { return asBool(c.Get("visible")) }
 func (c aylisLabel) SetVisible(v bool) { c.Set("visible", v) }
@@ -95,6 +95,9 @@ func (c aylisLabel) SetTranslate(v bool) { c.Set("translate", v) }
 func (c aylisLabel) CapturesWheel() bool { return asBool(c.Get("captures_wheel")) }
 func (c aylisLabel) SetCapturesWheel(v bool) { c.Set("captures_wheel", v) }
 
+func (c aylisLabel) CapturesGesture() bool { return asBool(c.Get("captures_gesture")) }
+func (c aylisLabel) SetCapturesGesture(v bool) { c.Set("captures_gesture", v) }
+
 func (c aylisLabel) CanFocus() bool { return asBool(c.Get("can_focus")) }
 func (c aylisLabel) SetCanFocus(v bool) { c.Set("can_focus", v) }
 
@@ -110,8 +113,8 @@ func (c aylisLabel) SetDragData(v string) { c.Set("drag_data", v) }
 func (c aylisLabel) DragLabel() string { return asText(c.Get("drag_label")) }
 func (c aylisLabel) SetDragLabel(v string) { c.Set("drag_label", v) }
 
-func (c aylisLabel) DragImage() string { return asText(c.Get("drag_image")) }
-func (c aylisLabel) SetDragImage(v string) { c.Set("drag_image", v) }
+func (c aylisLabel) DragImage() *aylis.Component { return c.GetRef("drag_image") }
+func (c aylisLabel) SetDragImage(v aylis.Ref) { c.SetRef("drag_image", v) }
 
 func (c aylisLabel) DropTypes() string { return asText(c.Get("drop_types")) }
 func (c aylisLabel) SetDropTypes(v string) { c.Set("drop_types", v) }
@@ -119,17 +122,23 @@ func (c aylisLabel) SetDropTypes(v string) { c.Set("drop_types", v) }
 func (c aylisLabel) TabStop() bool { return asBool(c.Get("tab_stop")) }
 func (c aylisLabel) SetTabStop(v bool) { c.Set("tab_stop", v) }
 
-func (c aylisLabel) Cursor() string { return asText(c.Get("cursor")) }
-func (c aylisLabel) SetCursor(v string) { c.Set("cursor", v) }
+func (c aylisLabel) Cursor() CursorShape { return CursorShape(asText(c.Get("cursor"))) }
+func (c aylisLabel) SetCursor(v CursorShape) { c.Set("cursor", string(v)) }
 
 func (c aylisLabel) Opacity() float64 { return asNumber(c.Get("opacity")) }
 func (c aylisLabel) SetOpacity(v float64) { c.Set("opacity", v) }
+
+func (c aylisLabel) BlendMode() BlendMode { return BlendMode(asText(c.Get("blend_mode"))) }
+func (c aylisLabel) SetBlendMode(v BlendMode) { c.Set("blend_mode", string(v)) }
 
 func (c aylisLabel) CacheLayer() bool { return asBool(c.Get("cache_layer")) }
 func (c aylisLabel) SetCacheLayer(v bool) { c.Set("cache_layer", v) }
 
 func (c aylisLabel) Rotation() float64 { return asNumber(c.Get("rotation")) }
 func (c aylisLabel) SetRotation(v float64) { c.Set("rotation", v) }
+
+func (c aylisLabel) Scale() float64 { return asNumber(c.Get("scale")) }
+func (c aylisLabel) SetScale(v float64) { c.Set("scale", v) }
 
 func (c aylisLabel) TranslateX() float64 { return asNumber(c.Get("translate_x")) }
 func (c aylisLabel) SetTranslateX(v float64) { c.Set("translate_x", v) }
@@ -152,8 +161,8 @@ func (c aylisLabel) SetMinHeight(v float64) { c.Set("min_height", v) }
 func (c aylisLabel) MaxHeight() float64 { return asNumber(c.Get("max_height")) }
 func (c aylisLabel) SetMaxHeight(v float64) { c.Set("max_height", v) }
 
-func (c aylisLabel) SelfAlign() string { return asText(c.Get("self_align")) }
-func (c aylisLabel) SetSelfAlign(v string) { c.Set("self_align", v) }
+func (c aylisLabel) SelfAlign() SelfAlign { return SelfAlign(asText(c.Get("self_align"))) }
+func (c aylisLabel) SetSelfAlign(v SelfAlign) { c.Set("self_align", string(v)) }
 
 func (c aylisLabel) AutoSize() bool { return asBool(c.Get("auto_size")) }
 func (c aylisLabel) SetAutoSize(v bool) { c.Set("auto_size", v) }
@@ -173,35 +182,35 @@ func (c aylisLabel) SetRowSpan(v int64) { c.Set("row_span", v) }
 func (c aylisLabel) Grow() float64 { return asNumber(c.Get("grow")) }
 func (c aylisLabel) SetGrow(v float64) { c.Set("grow", v) }
 
-func (c aylisLabel) Shadow() string { return asText(c.Get("shadow")) }
-func (c aylisLabel) SetShadow(v string) { c.Set("shadow", v) }
+func (c aylisLabel) Shadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("shadow")) }
+func (c aylisLabel) SetShadow(v *aylis.Shadow) { c.Set("shadow", v.JSON()) }
 
-func (c aylisLabel) Style() string { return asText(c.Get("style")) }
-func (c aylisLabel) SetStyle(v string) { c.Set("style", v) }
+func (c aylisLabel) Style() LabelStyle { return LabelStyle(asText(c.Get("style"))) }
+func (c aylisLabel) SetStyle(v LabelStyle) { c.Set("style", string(v)) }
 
-func (c aylisLabel) Theme() string { return asText(c.Get("theme")) }
-func (c aylisLabel) SetTheme(v string) { c.Set("theme", v) }
+func (c aylisLabel) Theme() ThemeName { return ThemeName(asText(c.Get("theme"))) }
+func (c aylisLabel) SetTheme(v ThemeName) { c.Set("theme", string(v)) }
 
-func (c aylisLabel) Fill() string { return asText(c.Get("fill")) }
-func (c aylisLabel) SetFill(v string) { c.Set("fill", v) }
+func (c aylisLabel) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
+func (c aylisLabel) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
-func (c aylisLabel) BorderColor() string { return asText(c.Get("border_color")) }
-func (c aylisLabel) SetBorderColor(v string) { c.Set("border_color", v) }
+func (c aylisLabel) BorderColor() aylis.Color { return aylis.ColorFromJSON(c.Get("border_color")) }
+func (c aylisLabel) SetBorderColor(v aylis.Color) { c.Set("border_color", v.JSON()) }
 
-func (c aylisLabel) TextColor() string { return asText(c.Get("text_color")) }
-func (c aylisLabel) SetTextColor(v string) { c.Set("text_color", v) }
+func (c aylisLabel) TextColor() aylis.Color { return aylis.ColorFromJSON(c.Get("text_color")) }
+func (c aylisLabel) SetTextColor(v aylis.Color) { c.Set("text_color", v.JSON()) }
 
-func (c aylisLabel) AccentColor() string { return asText(c.Get("accent_color")) }
-func (c aylisLabel) SetAccentColor(v string) { c.Set("accent_color", v) }
+func (c aylisLabel) AccentColor() aylis.Color { return aylis.ColorFromJSON(c.Get("accent_color")) }
+func (c aylisLabel) SetAccentColor(v aylis.Color) { c.Set("accent_color", v.JSON()) }
 
-func (c aylisLabel) SuccessColor() string { return asText(c.Get("success_color")) }
-func (c aylisLabel) SetSuccessColor(v string) { c.Set("success_color", v) }
+func (c aylisLabel) SuccessColor() aylis.Color { return aylis.ColorFromJSON(c.Get("success_color")) }
+func (c aylisLabel) SetSuccessColor(v aylis.Color) { c.Set("success_color", v.JSON()) }
 
-func (c aylisLabel) WarningColor() string { return asText(c.Get("warning_color")) }
-func (c aylisLabel) SetWarningColor(v string) { c.Set("warning_color", v) }
+func (c aylisLabel) WarningColor() aylis.Color { return aylis.ColorFromJSON(c.Get("warning_color")) }
+func (c aylisLabel) SetWarningColor(v aylis.Color) { c.Set("warning_color", v.JSON()) }
 
-func (c aylisLabel) DangerColor() string { return asText(c.Get("danger_color")) }
-func (c aylisLabel) SetDangerColor(v string) { c.Set("danger_color", v) }
+func (c aylisLabel) DangerColor() aylis.Color { return aylis.ColorFromJSON(c.Get("danger_color")) }
+func (c aylisLabel) SetDangerColor(v aylis.Color) { c.Set("danger_color", v.JSON()) }
 
 func (c aylisLabel) FontFamily() string { return asText(c.Get("font_family")) }
 func (c aylisLabel) SetFontFamily(v string) { c.Set("font_family", v) }
@@ -209,8 +218,8 @@ func (c aylisLabel) SetFontFamily(v string) { c.Set("font_family", v) }
 func (c aylisLabel) FontSize() float64 { return asNumber(c.Get("font_size")) }
 func (c aylisLabel) SetFontSize(v float64) { c.Set("font_size", v) }
 
-func (c aylisLabel) FontWeight() string { return asText(c.Get("font_weight")) }
-func (c aylisLabel) SetFontWeight(v string) { c.Set("font_weight", v) }
+func (c aylisLabel) FontWeight() FontWeight { return FontWeight(asText(c.Get("font_weight"))) }
+func (c aylisLabel) SetFontWeight(v FontWeight) { c.Set("font_weight", string(v)) }
 
 func (c aylisLabel) FontItalic() bool { return asBool(c.Get("font_italic")) }
 func (c aylisLabel) SetFontItalic(v bool) { c.Set("font_italic", v) }
@@ -233,7 +242,64 @@ func (c aylisLabel) SetTagString(v string) { c.Set("tag_string", v) }
 func (c aylisLabel) AccessibleName() string { return asText(c.Get("accessible_name")) }
 func (c aylisLabel) SetAccessibleName(v string) { c.Set("accessible_name", v) }
 
-func (c aylisLabel) PopupMenu() string { return asText(c.Get("popup_menu")) }
-func (c aylisLabel) SetPopupMenu(v string) { c.Set("popup_menu", v) }
+func (c aylisLabel) PopupMenu() *aylis.Component { return c.GetRef("popup_menu") }
+func (c aylisLabel) SetPopupMenu(v aylis.Ref) { c.SetRef("popup_menu", v) }
+
+func (c aylisLabel) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisLabel) SetOnClick(v string) { c.Set("on_click", v) }
+
+func (c aylisLabel) OnDblClick() string { return asText(c.Get("on_dbl_click")) }
+func (c aylisLabel) SetOnDblClick(v string) { c.Set("on_dbl_click", v) }
+
+func (c aylisLabel) OnLongPress() string { return asText(c.Get("on_long_press")) }
+func (c aylisLabel) SetOnLongPress(v string) { c.Set("on_long_press", v) }
+
+func (c aylisLabel) OnPointerDown() string { return asText(c.Get("on_pointer_down")) }
+func (c aylisLabel) SetOnPointerDown(v string) { c.Set("on_pointer_down", v) }
+
+func (c aylisLabel) OnPointerUp() string { return asText(c.Get("on_pointer_up")) }
+func (c aylisLabel) SetOnPointerUp(v string) { c.Set("on_pointer_up", v) }
+
+func (c aylisLabel) OnPointerMove() string { return asText(c.Get("on_pointer_move")) }
+func (c aylisLabel) SetOnPointerMove(v string) { c.Set("on_pointer_move", v) }
+
+func (c aylisLabel) OnPointerEnter() string { return asText(c.Get("on_pointer_enter")) }
+func (c aylisLabel) SetOnPointerEnter(v string) { c.Set("on_pointer_enter", v) }
+
+func (c aylisLabel) OnPointerLeave() string { return asText(c.Get("on_pointer_leave")) }
+func (c aylisLabel) SetOnPointerLeave(v string) { c.Set("on_pointer_leave", v) }
+
+func (c aylisLabel) OnWheel() string { return asText(c.Get("on_wheel")) }
+func (c aylisLabel) SetOnWheel(v string) { c.Set("on_wheel", v) }
+
+func (c aylisLabel) OnGesture() string { return asText(c.Get("on_gesture")) }
+func (c aylisLabel) SetOnGesture(v string) { c.Set("on_gesture", v) }
+
+func (c aylisLabel) OnSwipe() string { return asText(c.Get("on_swipe")) }
+func (c aylisLabel) SetOnSwipe(v string) { c.Set("on_swipe", v) }
+
+func (c aylisLabel) OnKeyUp() string { return asText(c.Get("on_key_up")) }
+func (c aylisLabel) SetOnKeyUp(v string) { c.Set("on_key_up", v) }
+
+func (c aylisLabel) OnEnter() string { return asText(c.Get("on_enter")) }
+func (c aylisLabel) SetOnEnter(v string) { c.Set("on_enter", v) }
+
+func (c aylisLabel) OnExit() string { return asText(c.Get("on_exit")) }
+func (c aylisLabel) SetOnExit(v string) { c.Set("on_exit", v) }
+
+func (c aylisLabel) OnResize() string { return asText(c.Get("on_resize")) }
+func (c aylisLabel) SetOnResize(v string) { c.Set("on_resize", v) }
+
+func (c aylisLabel) OnDragMove() string { return asText(c.Get("on_drag_move")) }
+func (c aylisLabel) SetOnDragMove(v string) { c.Set("on_drag_move", v) }
+
+func (c aylisLabel) OnDragLeave() string { return asText(c.Get("on_drag_leave")) }
+func (c aylisLabel) SetOnDragLeave(v string) { c.Set("on_drag_leave", v) }
+
+func (c aylisLabel) OnDragDrop() string { return asText(c.Get("on_drag_drop")) }
+func (c aylisLabel) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
+
+func (c aylisLabel) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
+func (c aylisLabel) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisLabel) MinContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "min_content_width", "args": []any{}})) }
 func (c aylisLabel) MaxContentWidth() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "max_content_width", "args": []any{}})) }

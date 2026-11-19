@@ -73,9 +73,10 @@ fn the_examples_reach_components_by_typed_access_not_by_name() {
         let Ok(text) = std::fs::read_to_string(&file) else { continue };
         for (i, line) in text.lines().enumerate() {
             let code = line.trim_start();
-            // O registro da classe do form em Pascal (`RegisterForm(TFrmX, 'frmX', ...)`)
-            // dá o nome ao form; não procura componente.
-            if code.starts_with("//") || code.starts_with('#') || code.starts_with('{') || code.starts_with("///") || code.starts_with("/*") || code.starts_with('*') || code.starts_with("RegisterForm(") {
+            // O registro da classe do form em Pascal (`RegisterForm(TFrmX, 'frmX', ...)`) e o do
+            // despacho tipado (`RegisterTypedHandlers('frmX', ...)`) dão o nome ao form; não
+            // procuram componente.
+            if code.starts_with("//") || code.starts_with('#') || code.starts_with('{') || code.starts_with("///") || code.starts_with("/*") || code.starts_with('*') || code.starts_with("RegisterForm(") || code.starts_with("RegisterTypedHandlers(") {
                 continue;
             }
             let lookup = lookups.iter().find(|l| line.contains(*l)).map(|l| l.to_string());

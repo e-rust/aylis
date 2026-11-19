@@ -5,14 +5,14 @@ struct Field : aylis::Component {
     explicit Field(const aylis::Component& c) : aylis::Component(c) {}
     std::string field_name() const { return get_prop_("field_name").str(); }
     void set_field_name(const std::string& v) const { set_prop_("field_name", v); }
-    std::string type() const { return get_prop_("type").str(); }
-    void set_type(const std::string& v) const { set_prop_("type", v); }
+    FieldType type() const { return enum_of_<FieldType>(get_prop_("type"), FieldType_names); }
+    void set_type(FieldType v) const { set_prop_("type", aylis::Json(FieldType_names[static_cast<int>(v)])); }
     long long size() const { return static_cast<long long>(get_prop_("size").number()); }
     void set_size(long long v) const { set_prop_("size", v); }
     long long scale() const { return static_cast<long long>(get_prop_("scale").number()); }
     void set_scale(long long v) const { set_prop_("scale", v); }
-    std::string rounding() const { return get_prop_("rounding").str(); }
-    void set_rounding(const std::string& v) const { set_prop_("rounding", v); }
+    Rounding rounding() const { return enum_of_<Rounding>(get_prop_("rounding"), Rounding_names); }
+    void set_rounding(Rounding v) const { set_prop_("rounding", aylis::Json(Rounding_names[static_cast<int>(v)])); }
     std::string display_label() const { return get_prop_("display_label").str(); }
     void set_display_label(const std::string& v) const { set_prop_("display_label", v); }
     double display_width() const { return get_prop_("display_width").number(); }
@@ -21,8 +21,8 @@ struct Field : aylis::Component {
     void set_display_format(const std::string& v) const { set_prop_("display_format", v); }
     std::string edit_format() const { return get_prop_("edit_format").str(); }
     void set_edit_format(const std::string& v) const { set_prop_("edit_format", v); }
-    std::string alignment() const { return get_prop_("alignment").str(); }
-    void set_alignment(const std::string& v) const { set_prop_("alignment", v); }
+    TextAlign alignment() const { return enum_of_<TextAlign>(get_prop_("alignment"), TextAlign_names); }
+    void set_alignment(TextAlign v) const { set_prop_("alignment", aylis::Json(TextAlign_names[static_cast<int>(v)])); }
     bool required() const { return get_prop_("required").boolean(); }
     void set_required(bool v) const { set_prop_("required", v); }
     bool read_only() const { return get_prop_("read_only").boolean(); }
@@ -37,22 +37,28 @@ struct Field : aylis::Component {
     void set_default_value(const std::string& v) const { set_prop_("default_value", v); }
     std::string display_values() const { return get_prop_("display_values").str(); }
     void set_display_values(const std::string& v) const { set_prop_("display_values", v); }
-    std::string char_case() const { return get_prop_("char_case").str(); }
-    void set_char_case(const std::string& v) const { set_prop_("char_case", v); }
+    CharCase char_case() const { return enum_of_<CharCase>(get_prop_("char_case"), CharCase_names); }
+    void set_char_case(CharCase v) const { set_prop_("char_case", aylis::Json(CharCase_names[static_cast<int>(v)])); }
     std::string edit_mask() const { return get_prop_("edit_mask").str(); }
     void set_edit_mask(const std::string& v) const { set_prop_("edit_mask", v); }
     bool sensitive() const { return get_prop_("sensitive").boolean(); }
     void set_sensitive(bool v) const { set_prop_("sensitive", v); }
-    std::string kind() const { return get_prop_("kind").str(); }
-    void set_kind(const std::string& v) const { set_prop_("kind", v); }
+    FieldKind kind() const { return enum_of_<FieldKind>(get_prop_("kind"), FieldKind_names); }
+    void set_kind(FieldKind v) const { set_prop_("kind", aylis::Json(FieldKind_names[static_cast<int>(v)])); }
     std::string expression() const { return get_prop_("expression").str(); }
     void set_expression(const std::string& v) const { set_prop_("expression", v); }
-    std::string lookup_data_set() const { return get_prop_("lookup_data_set").str(); }
-    void set_lookup_data_set(const std::string& v) const { set_prop_("lookup_data_set", v); }
+    std::optional<aylis::Component> lookup_data_set() const { return get_ref_("lookup_data_set"); }
+    void set_lookup_data_set(const std::optional<aylis::Component>& v) const { set_ref_("lookup_data_set", v); }
     std::string key_fields() const { return get_prop_("key_fields").str(); }
     void set_key_fields(const std::string& v) const { set_prop_("key_fields", v); }
     std::string lookup_key_fields() const { return get_prop_("lookup_key_fields").str(); }
     void set_lookup_key_fields(const std::string& v) const { set_prop_("lookup_key_fields", v); }
     std::string lookup_result_field() const { return get_prop_("lookup_result_field").str(); }
     void set_lookup_result_field(const std::string& v) const { set_prop_("lookup_result_field", v); }
+    std::string on_change() const { return get_prop_("on_change").str(); }
+    void set_on_change(const std::string& v) const { set_prop_("on_change", v); }
+    std::string on_get_text() const { return get_prop_("on_get_text").str(); }
+    void set_on_get_text(const std::string& v) const { set_prop_("on_get_text", v); }
+    std::string on_set_text() const { return get_prop_("on_set_text").str(); }
+    void set_on_set_text(const std::string& v) const { set_prop_("on_set_text", v); }
 };

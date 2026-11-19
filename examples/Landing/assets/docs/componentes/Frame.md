@@ -12,7 +12,7 @@ Um pedaço de tela reaproveitável (um form dentro de outro), com os seus própr
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `form` | Form | texto | O nome do form do projeto mostrado aqui (`pkg:Nome` para o de um pacote); vazio: nada. |
+| `form` | Form | nome de um form do projeto | O nome do form do projeto mostrado aqui (`pkg:Nome` para o de um pacote); vazio: nada. |
 | `values` | Valores | texto | Num frame de pacote (`form = "pkg:Nome"`): os valores das propriedades expostas pelo pacote, em JSON (`{"valor": 42}`). |
 
 ## Em código
@@ -28,8 +28,8 @@ E o handler, um método do form (`self.Frame1` já é um `Frame`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Frame1.form(ui);
-        self.Frame1.set_form(ui, format!("{atual}!"));
+        let atual = self.Frame1.values(ui);
+        self.Frame1.set_values(ui, format!("{atual}!"));
     }
 }
 ```

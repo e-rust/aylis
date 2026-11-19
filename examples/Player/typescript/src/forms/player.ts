@@ -5,7 +5,7 @@
 // anterior e próxima, embaralhar, repetir (todos ou um), volume e a barra de posição. Quem
 // toca é o componente VideoPlayer (vpVideo), áudio e vídeo.
 
-import type { Aylis, AylisEvent } from "../aylis.ts";
+import type { Aylis } from "../aylis.ts";
 import { frmPlayer } from "./components.ts";
 
 /** O que o form guarda. repetir: 0 não repete, 1 repete a fila, 2 repete a mídia. */
@@ -45,7 +45,7 @@ function tempo(segundos: number): string {
 
 /** A fila na lista, com a mídia atual selecionada. */
 function atualizarFila(aylis: Aylis) {
-    frmPlayer.lvFila.items = estado.fila.map((c) => `${nomeDoArquivo(c)}|${pasta(c)}`).join(";");
+    frmPlayer.lvFila.items = estado.fila.map((c) => ({ title: nomeDoArquivo(c), detail: pasta(c) }));
     frmPlayer.lvFila.itemIndex = estado.atual;
 }
 
@@ -100,14 +100,15 @@ function proximoIndice(): number {
     return -1;
 }
 
-export function abrir_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function abrir_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     frmPlayer.dlgAbrir.execute();
 }
 
-export function abrir_select(aylis: Aylis, ev: AylisEvent) {
-    // Os arquivos escolhidos vêm separados por ";".
-    const novos = String(ev.args ?? "").split(";").filter((s) => s);
+export function abrir_select(aylis: Aylis, sender: import("./components.ts").OpenDialog, value: string[]) {
+    void sender;
+    // Os arquivos escolhidos (o evento já separa a lista).
+    const novos = value.filter((s) => s);
     if (novos.length === 0) return;
     const primeiro = estado.fila.length;
     estado.fila.push(...novos);
@@ -116,8 +117,8 @@ export function abrir_select(aylis: Aylis, ev: AylisEvent) {
     else mostrarAtual(aylis);
 }
 
-export function limpar_fila_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function limpar_fila_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     frmPlayer.vpVideo.stop();
     estado.fila = [];
     estado.atual = -1;
@@ -128,15 +129,15 @@ export function limpar_fila_click(aylis: Aylis, ev: AylisEvent) {
     botaoReproduzir(aylis);
 }
 
-export function sair_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function sair_click(aylis: Aylis, sender: import("./components.ts").MenuItem) {
+    void sender;
     frmPlayer.close();
 }
 
-export function reproduzir_click(aylis: Aylis, ev: AylisEvent) {
+export function reproduzir_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
     if (estado.atual < 0) {
         if (estado.fila.length > 0) tocar(aylis, 0);
-        else abrir_click(aylis, ev);
+        else abrir_click(aylis, sender);
     } else if (estado.tocando) {
         frmPlayer.vpVideo.pause();
         estado.tocando = false;
@@ -148,8 +149,8 @@ export function reproduzir_click(aylis: Aylis, ev: AylisEvent) {
     }
 }
 
-export function parar_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function parar_click(aylis: Aylis, sender: import("./components.ts").MenuItem) {
+    void sender;
     if (estado.atual < 0) return;
     frmPlayer.vpVideo.stop();
     estado.tocando = false;
@@ -157,22 +158,22 @@ export function parar_click(aylis: Aylis, ev: AylisEvent) {
     frmPlayer.sbPosicao.position = 0;
 }
 
-export function anterior_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function anterior_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     const atual = estado.atual;
     if (atual > 0) tocar(aylis, atual - 1);
     else if (atual === 0 && estado.repetir === 1) tocar(aylis, estado.fila.length - 1);
     else if (atual === 0) frmPlayer.vpVideo.seek(0);
 }
 
-export function proxima_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function proxima_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     const i = proximoIndice();
     if (i >= 0) tocar(aylis, i);
 }
 
-export function embaralhar_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function embaralhar_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     estado.embaralhar = !estado.embaralhar;
     const ligado = estado.embaralhar;
     frmPlayer.btnEmbaralhar.checked = ligado;
@@ -180,8 +181,8 @@ export function embaralhar_click(aylis: Aylis, ev: AylisEvent) {
     frmPlayer.mnuEmbaralhar.checked = ligado;
 }
 
-export function repetir_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function repetir_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     estado.repetir = (estado.repetir + 1) % 3;
     const modo = estado.repetir;
     frmPlayer.btnRepetir.checked = modo > 0;
@@ -198,22 +199,23 @@ function pagina(aylis: Aylis, agora: boolean) {
     frmPlayer.btnFila.checked = !agora;
 }
 
-export function agora_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function agora_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     pagina(aylis, true);
 }
 
-export function fila_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function fila_click(aylis: Aylis, sender: import("../aylis.ts").AylisComponent) {
+    void sender;
     pagina(aylis, false);
 }
 
-export function posicao_seek(aylis: Aylis, ev: AylisEvent) {
-    if (typeof ev.args === "number") frmPlayer.vpVideo.seek(ev.args);
+export function posicao_seek(aylis: Aylis, sender: import("./components.ts").SeekBar, value: number) {
+    void sender;
+    frmPlayer.vpVideo.seek(value);
 }
 
-export function mudo_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function mudo_click(aylis: Aylis, sender: import("./components.ts").Button) {
+    void sender;
     estado.mudo = !estado.mudo;
     const mudo = estado.mudo;
     frmPlayer.vpVideo.muted = mudo;
@@ -221,12 +223,13 @@ export function mudo_click(aylis: Aylis, ev: AylisEvent) {
     frmPlayer.btnMudo.hint = mudo ? "Com som" : "Sem som";
 }
 
-export function volume_change(aylis: Aylis, ev: AylisEvent) {
-    if (typeof ev.args === "number") frmPlayer.vpVideo.volume = ev.args / 100;
+export function volume_change(aylis: Aylis, sender: import("./components.ts").TrackBar, value: number) {
+    void sender;
+    frmPlayer.vpVideo.volume = value / 100;
 }
 
-export function video_fim(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function video_fim(aylis: Aylis, sender: import("./components.ts").VideoPlayer) {
+    void sender;
     if (estado.repetir === 2 && estado.atual >= 0) {
         tocar(aylis, estado.atual);
         return;
@@ -239,20 +242,21 @@ export function video_fim(aylis: Aylis, ev: AylisEvent) {
     }
 }
 
-export function video_erro(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function video_erro(aylis: Aylis, sender: import("./components.ts").VideoPlayer, value: string) {
+    void sender, value;
     estado.tocando = false;
     botaoReproduzir(aylis);
     frmPlayer.lblDetalhe.text = "Não foi possível reproduzir este arquivo";
 }
 
-export function fila_item_click(aylis: Aylis, ev: AylisEvent) {
-    const i = ev.args;
-    if (typeof i === "number" && i >= 0 && i < estado.fila.length) tocar(aylis, i);
+export function fila_item_click(aylis: Aylis, sender: import("./components.ts").ListView, value: number) {
+    void sender;
+    const i = value;
+    if (i >= 0 && i < estado.fila.length) tocar(aylis, i);
 }
 
-export async function posicao_timer(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export async function posicao_timer(aylis: Aylis, sender: import("./components.ts").Timer) {
+    void sender;
     if (estado.atual < 0) return;
     const posicao = Number((await frmPlayer.vpVideo.position()) ?? 0);
     const duracao = Number((await frmPlayer.vpVideo.duration()) ?? 0);

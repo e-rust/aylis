@@ -14,7 +14,7 @@ Toca áudio e vídeo sem tela (sons, música).
 | `volume` | Volume | número | O volume, de 0 (mudo) a 1 (o máximo). |
 | `looping` | Repetindo | lógico | Volta ao começo ao terminar, sem parar. |
 | `autoplay` | Toca sozinho | lógico | Começa a tocar quando o aplicativo abre. |
-| `output` | Saída | texto | As saídas: vazio é a padrão; várias tocam o mesmo som sincronizado, cada uma com volume e atraso (`Alto-falantes\|Fone BT;volume=0.8;delay=180`). Veja `crate::AudioOutput`. |
+| `output` | Saída | lista de `OutputSpec` | As saídas: vazio é a padrão; várias tocam o mesmo som sincronizado, cada uma com volume e atraso (a lista de `crate::OUTPUT_SPEC_RECORD`: `[{"name": "Alto-falantes"}, {"name": "Fone BT", "volume": 0.8, "delay_ms": 180}]`). Veja `crate::AudioOutput`. |
 
 ## Eventos
 

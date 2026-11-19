@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { Aylis, AylisComponent, AylisEvent, Json } from "../aylis.ts";
+import type { Aylis, AylisComponent, Json } from "../aylis.ts";
 import { frmIBGE } from "./components.ts";
 
 /** A pasta dos dados no projeto (para os componentes). */
@@ -49,7 +49,8 @@ function imagem(caminho: Json): string {
     return caminho ? DADOS + caminho : "";
 }
 
-export async function form_show(aylis: Aylis, ev: AylisEvent) {
+export async function form_show(aylis: Aylis, sender: import("./components.ts").Form) {
+    void sender;
     const estados = ler("estados.json");
     if (estados === null) {
         frmIBGE.lblFonte.text = "Faltam os dados: rode  aylis-tool ibge examples/IBGE/assets/dados";
@@ -62,11 +63,12 @@ export async function form_show(aylis: Aylis, ev: AylisEvent) {
     await carregar(aylis, frmIBGE.cdsDistritos, ler("distritos.json") ?? []);
     await carregar(aylis, frmIBGE.cdsMunicipios, municipios as unknown as Json);
     await carregar(aylis, frmIBGE.cdsEstados, estados);
-    await estado_mudou(aylis, ev);
+    await estado_mudou(aylis, frmIBGE.cdsEstados);
 }
 
 /** Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios. */
-export async function estado_mudou(aylis: Aylis, ev: AylisEvent) {
+export async function estado_mudou(aylis: Aylis, sender: import("./components.ts").ClientDataSet) {
+    void sender;
     const e = await registro(aylis, frmIBGE.cdsEstados);
     if (e.id === null || e.id === undefined) return;
     const uf = e.id as number;
@@ -74,7 +76,7 @@ export async function estado_mudou(aylis: Aylis, ev: AylisEvent) {
     frmIBGE.lblRegiao.text = `${e.sigla} · Região ${e.regiao}`;
     frmIBGE.imgBandeiraEstado.image = imagem(e.bandeira);
     frmIBGE.lblEstadoEstimativa.text = `Estimativa de ${e.estimativa_ano}`;
-    frmIBGE.svgBrasil.highlight = `e${uf}`;
+    frmIBGE.svgBrasil.highlight = [`e${uf}`];
     const mapa = `${DADOS}mapas/${uf}.svg`;
     frmIBGE.svgEstado.source = mapa;
     frmIBGE.svgMunicipio.source = mapa;
@@ -82,12 +84,12 @@ export async function estado_mudou(aylis: Aylis, ev: AylisEvent) {
     const doEstado = municipios.filter((m) => m.uf_id === uf);
     doEstado.sort((a, b) => (b.populacao ?? 0) - (a.populacao ?? 0) || (a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : 0));
     await carregar(aylis, frmIBGE.cdsMaiores, doEstado.slice(0, 10).map((m) => ({ nome: m.nome, habitantes: m.populacao })));
-    await municipio_mudou(aylis, ev);
+    await municipio_mudou(aylis, frmIBGE.cdsMunicipios);
 }
 
 /** Outro município: a bandeira, o destaque nos mapas e a população ano a ano. */
-export async function municipio_mudou(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export async function municipio_mudou(aylis: Aylis, sender: import("./components.ts").ClientDataSet) {
+    void sender;
     const m = await registro(aylis, frmIBGE.cdsMunicipios);
     if (m.id === null || m.id === undefined) return;
     const codigo = m.id as number;
@@ -98,8 +100,8 @@ export async function municipio_mudou(aylis: Aylis, ev: AylisEvent) {
     frmIBGE.lblSemBandeira.visible = bandeira === "";
     frmIBGE.lblEstimativa.text = `Estimativa de ${m.estimativa_ano}`;
     const alvo = `m${codigo}`;
-    frmIBGE.svgEstado.highlight = alvo;
-    frmIBGE.svgMunicipio.highlight = alvo;
+    frmIBGE.svgEstado.highlight = [alvo];
+    frmIBGE.svgMunicipio.highlight = [alvo];
     frmIBGE.svgMunicipio.zoomTo = alvo;
 
     const serie = populacao[String(codigo)] ?? [];

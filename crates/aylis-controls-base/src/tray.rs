@@ -27,7 +27,8 @@ pub struct TrayIcon {
     pub badge_color: Color,
     /// O ícone aparece na bandeja; desligado, sai dela.
     pub visible: bool,
-    /// O menu do clique direito: itens separados por `;` (`-` é uma linha).
+    /// O menu do clique direito, em JSON (o registro [`TRAY_MENU_ITEM`]):
+    /// `[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`.
     pub menu_items: String,
     /// `light`, `dark` ou uma cor (`#1E293B`).
     pub menu_theme: String,
@@ -102,7 +103,11 @@ impl TrayIcon {
                 menu_entries(ui, menu, 0, &mut out);
                 out
             }
-            None => tray.menu_items.split(';').map(str::trim).filter(|s| !s.is_empty()).map(Entry::text).collect(),
+            None => crate::records::parse_list::<TrayMenuItemRecord>(&tray.menu_items)
+                .into_iter()
+                .filter(|it| it.separator || !it.text.trim().is_empty())
+                .map(|it| Entry { separator: it.separator, enabled: !it.disabled, checked: it.checked, text: it.text, ..Default::default() })
+                .collect(),
         };
         if items.is_empty() {
             return;
@@ -166,10 +171,10 @@ impl Component for TrayIcon {
         badge: String => "Appearance",
         badge_color: Color => "Appearance",
         visible: bool => "Behavior",
-        menu_items: String => "Behavior",
+        menu_items: String as RecordList(&TRAY_MENU_ITEM) => "Behavior",
         menu_theme: String => "Appearance",
         popup_menu: Option<ComponentId> => "Behavior";
-        events: on_click, on_dbl_click, on_menu
+        events: on_click: (), on_dbl_click: (), on_menu: String
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
@@ -236,10 +241,26 @@ struct Entry {
     depth: usize,
 }
 
-impl Entry {
-    fn text(text: &str) -> Self {
-        Self { separator: text == "-", text: text.to_string(), enabled: true, ..Default::default() }
-    }
+/// Um item do `menu_items` do `TrayIcon`: o texto, uma linha divisória no lugar
+/// (`separator`), marcado (`checked`) ou desabilitado (`disabled`).
+pub const TRAY_MENU_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TrayMenuItem",
+    fields: &[
+        ("text", aylis_core::PropKind::String),
+        ("separator", aylis_core::PropKind::Bool),
+        ("checked", aylis_core::PropKind::Bool),
+        ("disabled", aylis_core::PropKind::Bool),
+    ],
+};
+
+/// Um item no JSON do `menu_items` (o [`TRAY_MENU_ITEM`]).
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct TrayMenuItemRecord {
+    text: String,
+    separator: bool,
+    checked: bool,
+    disabled: bool,
 }
 
 /// Os itens visíveis do menu `parent`, com os submenus logo abaixo de cada item, recuados.

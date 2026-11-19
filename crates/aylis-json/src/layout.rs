@@ -154,10 +154,9 @@ impl Loader<'_> {
         let first = |key: &str| LIMITS.contains(&key) || key == "translate";
         let entries = obj.iter().filter(|(key, _)| first(key)).chain(obj.iter().filter(|(key, _)| !first(key)));
         for (key, value) in entries {
-            // `bindings` como texto é a propriedade da lista (`DataRepeater`, `VirtualList`:
-            // "lblNome=nome"); como objeto, as ligações de propriedade a campo (abaixo). Pulada
-            // sempre, a da lista sumia ao carregar o form (relatório do RTSPlayer, 10/11).
-            if RESERVED.contains(&key.as_str()) && !(key == "bindings" && value.is_string()) {
+            // `bindings`: as ligações de propriedade a campo (abaixo). A da lista (`VirtualList`,
+            // `DataRepeater`) chama `item_bindings` e não colide com ela.
+            if RESERVED.contains(&key.as_str()) {
                 continue;
             }
             if let Err(e) = self.property(id, class, key, value, path) {
@@ -399,7 +398,16 @@ fn save_node(ui: &Ui, id: ComponentId, path: &mut Vec<String>) -> Result<Value> 
                 if read_prop(defaults.as_ref(), info.name).as_ref() == Some(&value) {
                     continue;
                 }
-                from_prop(&value)
+                match (&value, info.kind) {
+                    // O registro e a lista de registros vão como JSON de verdade (bom para merge).
+                    (PropValue::String(text), PropKind::Record(_) | PropKind::RecordList(_)) => {
+                        match serde_json::from_str::<Value>(text) {
+                            Ok(v @ (Value::Array(_) | Value::Object(_))) => v,
+                            _ => from_prop(&value),
+                        }
+                    }
+                    _ => from_prop(&value),
+                }
             }
         };
         map.insert(info.name.to_string(), json);

@@ -1,8 +1,8 @@
 //! Listas: ListBox, RadioGroup, ListView e TreeView.
 //!
 //! As listas são virtualizadas: só as linhas visíveis são pintadas, então 100 mil itens
-//! custam o mesmo que 10. Os itens vêm de `items` (texto, para o JSON e o Object
-//! Inspector) ou da API de cada controle.
+//! custam o mesmo que 10. Os itens vêm de `items` (no ListBox, a lista de textos; no ListView e
+//! no TreeView, a lista de registros em JSON) ou da API de cada controle.
 
 use std::cell::Cell;
 
@@ -13,6 +13,7 @@ use aylis_core::{
 use aylis_core::automation::{AccessItem, ItemAction, ItemRole};
 
 use crate::leaf_control;
+use crate::records::{is_default, parse_list, to_json};
 
 /// Rolagem vertical de uma lista: deslocamento em pixels, com o limite calculado na pintura.
 #[derive(Default)]
@@ -361,12 +362,12 @@ impl Component for ListBox {
 
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
-        items: String => "Data",
+        items: String as List => "Data",
         item_index: i64 => "Data",
         item_height: f32 => "Appearance",
         multi_select: bool => "Behavior",
-        selected: String => "Data";
-        events: on_change;
+        selected: String as NumberList => "Data";
+        events: on_change: String;
         on_set: sync
     }
 
@@ -581,7 +582,7 @@ impl Component for RadioGroup {
         items: String => "Data",
         item_index: i64 => "Data",
         columns: u32 => "Appearance";
-        events: on_change
+        events: on_change: String
     }
 
     // As opções para leitores de tela e automação.
@@ -701,11 +702,13 @@ impl ListItem {
 }
 
 /// Lista de itens com título, detalhe e imagem opcional,
-/// pensada também para o celular (linhas altas, rolagem com o dedo). `items` no texto:
-/// `Título|detalhe;Outro|mais`. `on_change` traz o índice; `on_item_click` também.
+/// pensada também para o celular (linhas altas, rolagem com o dedo). `items` é a lista de
+/// registros [`LIST_VIEW_ITEM`] (`[{"title": "Ana", "detail": "Cliente desde 2020"}]`).
+/// `on_change` traz o índice; `on_item_click` também.
 pub struct ListView {
     pub base: ControlBase,
-    /// Os itens, separados por `;`, cada um `Título|detalhe` (o detalhe é opcional).
+    /// Os itens, em JSON: `[{"title": "Ana", "detail": "Cliente desde 2020"}]` (o detalhe é
+    /// opcional).
     pub items: String,
     /// O item escolhido, a partir de 0; -1: nenhum.
     pub item_index: i64,
@@ -737,7 +740,8 @@ impl Default for ListView {
 
 impl ListView {
     pub fn set_items(&mut self, items: Vec<ListItem>) {
-        self.items = items.iter().map(|i| if i.detail.is_empty() { i.text.clone() } else { format!("{}|{}", i.text, i.detail) }).collect::<Vec<_>>().join(";");
+        let records: Vec<ListViewItemRecord> = items.iter().map(|i| ListViewItemRecord { title: i.text.clone(), detail: i.detail.clone() }).collect();
+        self.items = to_json(&records);
         self.list = items;
         if self.item_index >= self.list.len() as i64 {
             self.item_index = -1;
@@ -760,13 +764,7 @@ impl ListView {
 
     fn sync(&mut self, name: &str) {
         if name == "items" {
-            self.list = split_items(&self.items)
-                .into_iter()
-                .map(|s| match s.split_once('|') {
-                    Some((t, d)) => ListItem::new(t, d),
-                    None => ListItem::new(s, ""),
-                })
-                .collect();
+            self.list = parse_list::<ListViewItemRecord>(&self.items).into_iter().map(|r| ListItem::new(r.title, r.detail)).collect();
         }
         if self.item_index >= self.list.len() as i64 {
             self.item_index = -1;
@@ -793,15 +791,27 @@ impl ListView {
     }
 }
 
+/// Um item do `ListView`: o título e o detalhe (o texto menor embaixo).
+pub const LIST_VIEW_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "ListViewItem", fields: &[("title", aylis_core::PropKind::String), ("detail", aylis_core::PropKind::String)] };
+
+/// Um item do `ListView` no JSON do `items` (o [`LIST_VIEW_ITEM`]).
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(default)]
+struct ListViewItemRecord {
+    title: String,
+    #[serde(skip_serializing_if = "is_default")]
+    detail: String,
+}
+
 impl Component for ListView {
     leaf_control!("ListView");
 
     properties! {
-        items: String => "Data",
+        items: String as RecordList(&LIST_VIEW_ITEM) => "Data",
         item_index: i64 => "Data",
         item_height: f32 => "Appearance",
         accessory: bool => "Appearance";
-        events: on_change, on_item_click;
+        events: on_change: i64, on_item_click: i64;
         on_set: sync
     }
 
@@ -960,18 +970,37 @@ impl Component for ListView {
 // ---------------------------------------------------------------------------
 // TreeView
 
-/// Um nó do TreeView.
-#[derive(Clone, Debug, Default, PartialEq)]
+/// Um nó do TreeView. No `items`, o registro [`TREE_NODE`] com os mesmos campos (os vazios
+/// ficam de fora do JSON).
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct TreeNode {
     pub text: String,
-    pub children: Vec<TreeNode>,
-    pub expanded: bool,
-    /// Valor livre (um id do banco, um caminho de arquivo).
-    pub data: String,
     /// Ícone à esquerda do texto (`"folder"`, `"pacote:nome"`). Com um ícone em qualquer nó, a
     /// coluna do ícone vale para todos; onde fica o das folhas, `TreeView::leaf_layout`.
+    #[serde(skip_serializing_if = "is_default")]
     pub icon: String,
+    /// Valor livre (um id do banco, um caminho de arquivo).
+    #[serde(skip_serializing_if = "is_default")]
+    pub data: String,
+    #[serde(skip_serializing_if = "is_default")]
+    pub expanded: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub children: Vec<TreeNode>,
 }
+
+/// Um nó do `TreeView` no acesso tipado: o texto, o ícone, o valor livre (`data`), se começa
+/// aberto e os filhos (o mesmo registro).
+pub static TREE_NODE: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TreeNode",
+    fields: &[
+        ("text", aylis_core::PropKind::String),
+        ("icon", aylis_core::PropKind::String),
+        ("data", aylis_core::PropKind::String),
+        ("expanded", aylis_core::PropKind::Bool),
+        ("children", aylis_core::PropKind::RecordList(&TREE_NODE)),
+    ],
+};
 
 impl TreeNode {
     pub fn new(text: impl Into<String>) -> Self {
@@ -996,14 +1025,14 @@ impl TreeNode {
 
 /// Árvore, virtualizada: só as linhas visíveis são pintadas.
 ///
-/// `items` no texto: um nó por item (`;`), com `>` na frente para cada nível e o ícone depois
-/// de `|`: `Brasil|flag;>São Paulo;>>Campinas;>Rio de Janeiro;Portugal`. Pela API,
-/// [`TreeView::set_nodes`]. Clique no triângulo (ou →/←, Enter) abre e fecha;
+/// `items` é a lista de nós [`TREE_NODE`] em JSON, com os filhos dentro de cada um:
+/// `[{"text": "Brasil", "icon": "flag", "children": [{"text": "São Paulo"}]}, {"text": "Portugal"}]`.
+/// Pela API, [`TreeView::set_nodes`]. Clique no triângulo (ou →/←, Enter) abre e fecha;
 /// `on_change` traz o caminho do nó (`Brasil/São Paulo`).
 pub struct TreeView {
     pub base: ControlBase,
-    /// Os nós, separados por `;`, com um `>` na frente por nível e o ícone depois de `|`
-    /// (`Brasil|flag;>São Paulo;>>Campinas;Portugal`).
+    /// Os nós em JSON (o registro `TreeNode`: `text`, `icon`, `data`, `expanded`, `children`):
+    /// `[{"text": "Brasil", "icon": "flag", "children": [{"text": "São Paulo"}]}]`.
     pub items: String,
     /// Altura de cada linha, em pontos.
     pub item_height: f32,
@@ -1094,16 +1123,7 @@ impl TreeView {
         self.nodes = nodes;
         self.selected = None;
         self.icons = any_icon(&self.nodes);
-        let mut out = Vec::new();
-        fn write(nodes: &[TreeNode], depth: usize, out: &mut Vec<String>) {
-            for n in nodes {
-                let icon = if n.icon.is_empty() { String::new() } else { format!("|{}", n.icon) };
-                out.push(format!("{}{}{icon}", ">".repeat(depth), n.text));
-                write(&n.children, depth + 1, out);
-            }
-        }
-        write(&self.nodes, 0, &mut out);
-        self.items = out.join(";");
+        self.items = to_json(&self.nodes);
     }
 
     pub fn nodes(&self) -> &[TreeNode] {
@@ -1246,37 +1266,7 @@ impl TreeView {
         if name != "items" {
             return;
         }
-        // ">" no começo = um nível abaixo do item anterior de nível menor.
-        let mut roots: Vec<TreeNode> = Vec::new();
-        let mut stack: Vec<Vec<usize>> = Vec::new();
-        for raw in split_items(&self.items) {
-            let depth = raw.chars().take_while(|c| *c == '>').count();
-            let text = raw[depth..].trim().to_string();
-            let depth = depth.min(stack.len());
-            stack.truncate(depth);
-            let node = match text.rsplit_once('|') {
-                Some((t, icon)) => TreeNode::new(t.trim_end()).with_icon(icon.trim()),
-                None => TreeNode::new(text),
-            };
-            let path = match stack.last().cloned() {
-                Some(parent) => {
-                    let p = parent.clone();
-                    let n = self_node_mut(&mut roots, &p).map(|n| {
-                        n.children.push(node);
-                        n.children.len() - 1
-                    });
-                    let mut path = parent;
-                    path.push(n.unwrap_or(0));
-                    path
-                }
-                None => {
-                    roots.push(node);
-                    vec![roots.len() - 1]
-                }
-            };
-            stack.push(path);
-        }
-        self.nodes = roots;
+        self.nodes = parse_list(&self.items);
         self.selected = None;
         self.icons = any_icon(&self.nodes);
     }
@@ -1357,11 +1347,6 @@ fn next_to_toggle(nodes: &[TreeNode], open: bool) -> Option<Vec<usize>> {
     found
 }
 
-fn self_node_mut<'a>(nodes: &'a mut [TreeNode], path: &[usize]) -> Option<&'a mut TreeNode> {
-    let (first, rest) = path.split_first()?;
-    rest.iter().try_fold(nodes.get_mut(*first)?, |n, &i| n.children.get_mut(i))
-}
-
 impl Component for TreeView {
     /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
     fn scroll_axes(&self) -> (bool, bool) {
@@ -1372,13 +1357,13 @@ impl Component for TreeView {
 
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
-        items: String => "Data",
+        items: String as RecordList(&TREE_NODE) => "Data",
         item_height: f32 => "Appearance",
         leaf_layout: TreeLeafLayout => "Appearance",
         indent: f32 => "Appearance",
         icon_size: f32 => "Appearance",
         icon_gap: f32 => "Appearance";
-        events: on_change, on_click, on_dbl_click, on_expand, on_collapse;
+        events: on_change: String, on_click: String, on_dbl_click: String, on_expand: String, on_collapse: String;
         on_set: sync
     }
 

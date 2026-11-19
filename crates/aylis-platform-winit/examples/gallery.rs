@@ -214,7 +214,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui,
             p,
             with(|x: &mut SkeletonLoader| {
-                x.layout = "list-item,text@2".into();
+                x.layout = "list-item;text;text".into();
             }),
             110.0,
         );
@@ -275,7 +275,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     card(&mut ui, grid, "EventCalendar", 340.0, |ui, p| {
         let c = client(ui, p, EventCalendar::default());
         let _ = ui.set_prop(c, "month", "2026-10");
-        let _ = ui.set_prop(c, "events", "2026-10-05|Reunião;2026-10-12|Feriado|danger;2026-10-21|Entrega|success;2026-10-21|Revisão;2026-10-28|Viagem|warning");
+        let _ = ui.set_prop(
+            c,
+            "events",
+            r#"[{"start":"2026-10-05","all_day":true,"title":"Reunião"},{"start":"2026-10-12","all_day":true,"title":"Feriado","color":"danger"},{"start":"2026-10-21","all_day":true,"title":"Entrega","color":"success"},{"start":"2026-10-21","all_day":true,"title":"Revisão"},{"start":"2026-10-28","all_day":true,"title":"Viagem","color":"warning"}]"#,
+        );
     });
     card(&mut ui, grid, "Carousel, AvatarGroup", 260.0, |ui, p| {
         top(ui, p, AvatarGroup::default(), 40.0);
@@ -340,14 +344,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .unwrap()
                 .set_align(Align::Top)
                 .set_height(56.0);
-            let _ = ui.set_prop(spark, "series", "Vendas=4,6,5,9,7,11,10,14,12,16");
+            let _ = ui.set_prop(spark, "series", r#"[{"name":"Vendas","values":[4,6,5,9,7,11,10,14,12,16]}]"#);
             let heat = ui.create("Chart.heatmap", Some(p)).unwrap();
             ui.control_mut(heat).unwrap().set_align(Align::Client);
             let _ = ui.set_prop(heat, "labels", "S;T;Q;Q;S;S;D");
             let _ = ui.set_prop(
                 heat,
                 "series",
-                "Manhã=3,5,8,6,9,2,1|Tarde=6,9,12,10,14,4,2|Noite=2,3,4,5,8,9,7",
+                r#"[{"name":"Manhã","values":[3,5,8,6,9,2,1]},{"name":"Tarde","values":[6,9,12,10,14,4,2]},{"name":"Noite","values":[2,3,4,5,8,9,7]}]"#,
             );
         },
     );
@@ -392,7 +396,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = ui.set_prop(
             c,
             "events",
-            "2026-10-19 09:00-10:30|Daily;2026-10-21 14:00-15:30|Reunião|success;2026-10-21 14:30-16:00|Revisão|warning;2026-10-23|Feriado|danger;2026-10-22 11:00-12:00|Almoço",
+            r#"[{"start":"2026-10-19T09:00","end":"2026-10-19T10:30","title":"Daily"},{"start":"2026-10-21T14:00","end":"2026-10-21T15:30","title":"Reunião","color":"success"},{"start":"2026-10-21T14:30","end":"2026-10-21T16:00","title":"Revisão","color":"warning"},{"start":"2026-10-23","all_day":true,"title":"Feriado","color":"danger"},{"start":"2026-10-22T11:00","end":"2026-10-22T12:00","title":"Almoço"}]"#,
         );
     });
     card(&mut ui, grid, "Badge preso, destaque, rolagem lateral", 380.0, |ui, p| {

@@ -33,7 +33,7 @@ Campo de texto de uma linha para o usuário digitar: nome, e-mail, busca. Tem te
 | `auto_select` | Selecionar ao entrar | lógico | Ganhar o foco seleciona o texto todo (ligado por padrão). |
 | `clear_button` | Botão de limpar | lógico | Um "×" à direita que apaga o texto (só aparece com texto). |
 | `mask` | Máscara | texto | Máscara de digitação: `#` dígito, `A` letra, `X` letra ou dígito, o resto entra sozinho (`(##) #####-####`); vazio: livre. |
-| `rules` | Regras de validação | texto | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
+| `rules` | Regras de validação | lista de textos (separados por `;`) | Regras conferidas ao sair do campo e por `validate_form`, separadas por `;` (`required;email;min:3;max:20;number;cpf`); vazio: nenhuma. |
 | `spellcheck` | Corretor ortográfico | lógico | Sublinha as palavras erradas (o motor de texto da plataforma ou o do app); o clique direito numa delas mostra as correções. |
 | `autocomplete` | Completar sozinho | lógico | Completa a palavra enquanto digita: o resto aparece apagado depois do cursor e o Tab (ou a seta para a direita) aceita. |
 | `language` | Idioma | texto | Idioma da correção e das sugestões (`"pt-BR"`); vazio: o do sistema. |

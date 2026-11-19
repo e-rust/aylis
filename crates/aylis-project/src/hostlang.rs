@@ -63,6 +63,39 @@ struct FormCode {
     insert_before: &'static str,
 }
 
+/// O esqueleto tipado de um handler (o evento declara o que leva): quem disparou e o valor.
+fn typed_stub(lang: Language, class: &str, h: &str, sig: &crate::bindings::HandlerSig) -> String {
+    let params = crate::bindings::typed_params(lang, sig);
+    let value = sig.arg != crate::bindings::EventKind::None;
+    match lang {
+        Language::TypeScript => format!("\nexport function {h}({params}) {{\n    void aylis, sender{};\n}}\n", if value { ", value" } else { "" }),
+        Language::CSharp => format!("\n    public static void {h}({params})\n    {{\n    }}\n"),
+        Language::Java => format!("\n    public static void {h}({params}) {{\n    }}\n"),
+        Language::Go => format!("\nfunc (f {class}) {h}({params}) {{\n}}\n"),
+        Language::Cpp => format!("\nvoid {h}({params}) {{\n    (void)app;\n    (void)sender;\n{}}}\n", if value { "    (void)value;\n" } else { "" }),
+        _ => String::new(),
+    }
+}
+
+/// O esqueleto de cada handler: o tipado quando o evento declara o que leva, senão o de sempre.
+fn stubs(lang: Language, form: &str, handlers: &[String], plain: impl Fn(&str) -> (String, String)) -> Vec<(String, String)> {
+    let class = class_name(form);
+    handlers
+        .iter()
+        .map(|h| match crate::codegen::handler_sig_for(lang, form, h) {
+            Some(sig) => {
+                let marker = match lang {
+                    Language::TypeScript => format!("function {h}("),
+                    Language::Go => format!(") {h}("),
+                    _ => format!("void {h}("),
+                };
+                (marker, typed_stub(lang, &class, h, &sig))
+            }
+            None => plain(h),
+        })
+        .collect()
+}
+
 fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> FormCode {
     let class = class_name(form);
     match lang {
@@ -78,7 +111,7 @@ fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> F
             ),
             block: String::new(),
             decl: None,
-            stubs: handlers.iter().map(|h| (format!("function {h}("), format!("\nexport function {h}(aylis: Aylis, ev: AylisEvent) {{\n    void aylis, ev;\n}}\n"))).collect(),
+            stubs: stubs(lang, form, handlers, |h| (format!("function {h}("), format!("\nexport function {h}(aylis: Aylis, ev: AylisEvent) {{\n    void aylis, ev;\n}}\n"))),
             insert_before: "",
         },
         Language::CSharp => FormCode {
@@ -95,7 +128,7 @@ fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> F
             ),
             block: String::new(),
             decl: None,
-            stubs: handlers.iter().map(|h| (format!("void {h}("), format!("\n    public static void {h}(Aylis aylis, AylisEvent ev)\n    {{\n    }}\n"))).collect(),
+            stubs: stubs(lang, form, handlers, |h| (format!("void {h}("), format!("\n    public static void {h}(Aylis aylis, AylisEvent ev)\n    {{\n    }}\n"))),
             insert_before: "}",
         },
         Language::Java => FormCode {
@@ -112,7 +145,7 @@ fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> F
             ),
             block: String::new(),
             decl: None,
-            stubs: handlers.iter().map(|h| (format!("void {h}("), format!("\n    public static void {h}(Aylis aylis, Aylis.Event ev) {{\n    }}\n"))).collect(),
+            stubs: stubs(lang, form, handlers, |h| (format!("void {h}("), format!("\n    public static void {h}(Aylis aylis, Aylis.Event ev) {{\n    }}\n"))),
             insert_before: "}",
         },
         Language::Go => FormCode {
@@ -131,7 +164,7 @@ fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> F
             ),
             block: String::new(),
             decl: None,
-            stubs: handlers.iter().map(|h| (format!(") {h}("), format!("\nfunc (f {class}) {h}(app *aylis.Aylis, ev aylis.Event) {{\n}}\n"))).collect(),
+            stubs: stubs(lang, form, handlers, |h| (format!(") {h}("), format!("\nfunc (f {class}) {h}(app *aylis.Aylis, ev aylis.Event) {{\n}}\n"))),
             insert_before: "",
         },
         Language::Cpp => {
@@ -148,10 +181,9 @@ fn form_code(lang: Language, module: &str, form: &str, handlers: &[String]) -> F
                 ),
                 block: String::new(),
                 decl: None,
-                stubs: handlers
-                    .iter()
-                    .map(|h| (format!("void {h}(aylis::Aylis& app, const aylis::Event& ev) {{"), format!("\nvoid {h}(aylis::Aylis& app, const aylis::Event& ev) {{\n    (void)app;\n    (void)ev;\n}}\n")))
-                    .collect(),
+                stubs: stubs(lang, form, handlers, |h| {
+                    (format!("void {h}(aylis::Aylis& app, const aylis::Event& ev) {{"), format!("\nvoid {h}(aylis::Aylis& app, const aylis::Event& ev) {{\n    (void)app;\n    (void)ev;\n}}\n"))
+                }),
                 insert_before: "}  // namespace",
             }
         }
@@ -191,6 +223,8 @@ fn update_pascal_unit(existing: Option<String>, code: &FormCode, form: &str, han
     let class = class_name(form);
     let mut text = existing.unwrap_or_else(|| code.new.clone());
     for h in handlers {
+        // O evento declara o que leva: o handler novo nasce tipado (quem disparou e o valor).
+        let typed = crate::codegen::handler_sig_for(Language::Pascal, form, h).map(|sig| crate::bindings::typed_params(Language::Pascal, &sig));
         // Um evento que pergunta ligado a um handler com a assinatura comum (o form mudou, ou
         // um projeto de antes): a assinatura passa a ser a do evento, nos dois lugares.
         let params = pascal_params(form, h);
@@ -202,6 +236,7 @@ fn update_pascal_unit(existing: Option<String>, code: &FormCode, form: &str, han
         if text.contains(&format!("T{class}.{h}(")) {
             continue;
         }
+        let params = typed.as_deref().unwrap_or(params);
         // A declaração: no fim da primeira seção published da classe.
         let head = format!("T{class} = class(");
         if let Some(start) = text.find(&head) {
@@ -275,10 +310,19 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
     };
     // Se a unit existe: pela listagem da pasta (uma por pasta, não uma consulta por form).
     let mut files = crate::FormFiles::default();
+    // Os handlers que o usuário já escreveu com a assinatura tipada: o registro chama esses com
+    // quem disparou e o valor; os outros, com o evento inteiro.
+    let mut typed: std::collections::HashSet<(String, String)> = Default::default();
     for (module, form, handlers) in forms {
         let code = form_code(lang, module, form, handlers);
         let unit = dir.join(&code.file);
+        let has_typed = handlers.iter().any(|h| crate::codegen::handler_sig_for(lang, form, h).is_some());
         if changed.is_some_and(|c| !c.iter().any(|n| n.eq_ignore_ascii_case(form))) && files.exists(&unit) {
+            // A unit só é lida se algum handler pode ser tipado.
+            if has_typed {
+                let text = read(&unit).unwrap_or_default();
+                typed.extend(handlers.iter().filter(|h| crate::bindings::is_typed_handler(lang, &text, h)).map(|h| (form.clone(), h.clone())));
+            }
             continue;
         }
         let existing = read(&unit);
@@ -286,7 +330,12 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
         if existing.as_deref() != Some(text.as_str()) {
             put(&code.file, &text, true)?;
         }
+        if has_typed {
+            typed.extend(handlers.iter().filter(|h| crate::bindings::is_typed_handler(lang, &text, h)).map(|h| (form.clone(), h.clone())));
+        }
     }
+    // O handler tipado que o usuário escreveu: a assinatura dele e a chamada do registro.
+    let sig_of = |form: &str, h: &str| crate::codegen::handler_sig_for(lang, form, h).filter(|_| typed.contains(&(form.to_string(), h.to_string())));
     let classes: Vec<(String, String)> = forms.iter().map(|(m, f, _)| (m.clone(), class_name(f))).collect();
     let header = "Forms do projeto. Gerado pela IDE do Aylis a cada \"Gerar código\": não edite.";
     match lang {
@@ -295,14 +344,20 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             let from = import_specifier(&client_path(&dir.join("src"), "typescript/aylis.ts"));
             put("src/aylis.ts", &format!("// {BRIDGE_MARK} (a instalação, ou o repositório): este arquivo só aponta para ele.\n// {GENERATED}\n\nexport * from \"{from}\";\n"), true)?;
             // As classes dos forms se registram ao carregar o components.ts; aqui, os handlers.
-            let mut t = format!("// {header}\n\nimport type {{ Aylis }} from \"../aylis.ts\";\nimport \"./components.ts\";\n");
+            let mut t = format!("// {header}\n\nimport type {{ Aylis }} from \"../aylis.ts\";\nimport {{ AylisComponent, Color, Shadow, Easing }} from \"../aylis.ts\";\nimport * as components from \"./components.ts\";\nvoid AylisComponent, Color, Shadow, Easing, components;\n");
             for (m, _) in &classes {
                 t.push_str(&format!("import * as {m} from \"./{m}.ts\";\n"));
             }
             t.push_str("\n/** Registra os handlers de todos os forms. */\nexport function registerForms(aylis: Aylis) {\n");
             for (m, form, handlers) in forms {
                 for h in handlers {
-                    t.push_str(&format!("    aylis.on(\"{form}.{h}\", (ev) => {m}.{h}(aylis, ev));\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => {
+                            let call = crate::bindings::typed_call(lang, &format!("{m}.{h}"), form, "ev", &sig);
+                            t.push_str(&format!("    aylis.on(\"{form}.{h}\", (ev) => {call});\n"));
+                        }
+                        None => t.push_str(&format!("    aylis.on(\"{form}.{h}\", (ev) => {m}.{h}(aylis, ev));\n")),
+                    }
                 }
             }
             if forms.iter().all(|(_, _, h)| h.is_empty()) {
@@ -328,7 +383,13 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             for (_, form, handlers) in forms {
                 let c = class_name(form);
                 for h in handlers {
-                    t.push_str(&format!("        aylis.On(\"{form}.{h}\", ev => {c}.{h}(aylis, ev));\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => {
+                            let call = crate::bindings::typed_call(lang, &format!("{c}.{h}"), form, "ev", &sig);
+                            t.push_str(&format!("        aylis.On(\"{form}.{h}\", ev => {call});\n"));
+                        }
+                        None => t.push_str(&format!("        aylis.On(\"{form}.{h}\", ev => {c}.{h}(aylis, ev));\n")),
+                    }
                 }
             }
             t.push_str("    }\n}\n");
@@ -364,7 +425,13 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             for (_, form, handlers) in forms {
                 let c = class_name(form);
                 for h in handlers {
-                    t.push_str(&format!("        aylis.on(\"{form}.{h}\", ev -> {c}.{h}(aylis, ev));\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => {
+                            let call = crate::bindings::typed_call(lang, &format!("{c}.{h}"), form, "ev", &sig);
+                            t.push_str(&format!("        aylis.on(\"{form}.{h}\", ev -> {call});\n"));
+                        }
+                        None => t.push_str(&format!("        aylis.on(\"{form}.{h}\", ev -> {c}.{h}(aylis, ev));\n")),
+                    }
                 }
             }
             t.push_str("    }\n}\n");
@@ -388,7 +455,13 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             for (_, form, handlers) in forms {
                 let c = class_name(form);
                 for h in handlers {
-                    t.push_str(&format!("\tapp.On(\"{form}.{h}\", func(ev aylis.Event) {{ {c}{{}}.{h}(app, ev) }})\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => {
+                            let call = crate::bindings::typed_call(lang, &format!("{c}{{}}.{h}"), form, "ev", &sig);
+                            t.push_str(&format!("\tapp.On(\"{form}.{h}\", func(ev aylis.Event) {{ {call} }})\n"));
+                        }
+                        None => t.push_str(&format!("\tapp.On(\"{form}.{h}\", func(ev aylis.Event) {{ {c}{{}}.{h}(app, ev) }})\n")),
+                    }
                 }
             }
             if forms.iter().all(|(_, _, h)| h.is_empty()) {
@@ -413,17 +486,26 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             // As declarações dos handlers (as units do usuário só têm as funções), as classes dos
             // forms e o registro de todos.
             let mut t = format!("// {header}\n\n#pragma once\n\n#include \"../aylis.hpp\"\n#include \"components.hpp\"\n\n");
-            for (m, _, handlers) in forms {
+            for (m, form, handlers) in forms {
                 t.push_str(&format!("namespace frm_{m} {{\n"));
                 for h in handlers {
-                    t.push_str(&format!("void {h}(aylis::Aylis& app, const aylis::Event& ev);\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => t.push_str(&format!("void {h}({});\n", crate::bindings::typed_params(lang, &sig))),
+                        None => t.push_str(&format!("void {h}(aylis::Aylis& app, const aylis::Event& ev);\n")),
+                    }
                 }
                 t.push_str(&format!("}}  // namespace frm_{m}\n\n"));
             }
             t.push_str("// Registra as classes dos forms e os handlers de todos.\ninline void register_forms(aylis::Aylis& app) {\n    aylis_components::register_classes();\n");
             for (m, form, handlers) in forms {
                 for h in handlers {
-                    t.push_str(&format!("    app.on(\"{form}.{h}\", [&app](const aylis::Event& ev) {{ frm_{m}::{h}(app, ev); }});\n"));
+                    match sig_of(form, h) {
+                        Some(sig) => {
+                            let call = crate::bindings::typed_call(lang, &format!("frm_{m}::{h}"), form, "ev", &sig);
+                            t.push_str(&format!("    app.on(\"{form}.{h}\", [&app](const aylis::Event& ev) {{\n        using namespace aylis_components;\n        {call};\n    }});\n"));
+                        }
+                        None => t.push_str(&format!("    app.on(\"{form}.{h}\", [&app](const aylis::Event& ev) {{ frm_{m}::{h}(app, ev); }});\n")),
+                    }
                 }
             }
             if forms.iter().all(|(_, _, h)| h.is_empty()) {
@@ -445,10 +527,29 @@ pub fn generate(dir: &Path, project_name: &str, lang: Language, forms: &[(String
             // As units dos forms registram as classes deles na initialization (RegisterForm):
             // aqui elas só entram no programa.
             let mut t = format!("{{ {header} }}\nunit aylisforms;\n\n{{$mode objfpc}}{{$H+}}\n\ninterface\n\nuses\n  aylis;\n\n{{ Os forms do projeto (cada unit registra a classe do form dela ao carregar). }}\nprocedure RegisterForms(Aylis: TAylis);\n\nimplementation\n\n");
-            let mut used = vec!["ayliscomponents"];
+            let mut used = vec!["fpjson", "ayliscomponents"];
             used.extend(units.iter().copied());
             t.push_str(&format!("uses\n  {};\n\n", used.join(", ")));
-            t.push_str("procedure RegisterForms(Aylis: TAylis);\nbegin\nend;\n\nend.\n");
+            // Os handlers tipados de cada form: quem disparou e o valor do evento no tipo (os
+            // outros vão pelo nome, com o evento inteiro).
+            let mut registers = String::new();
+            for (_, form, handlers) in forms {
+                let c = class_name(form);
+                let calls: Vec<String> = handlers
+                    .iter()
+                    .filter_map(|h| sig_of(form, h).map(|sig| (h, sig)))
+                    .map(|(h, sig)| format!("  if Handler = '{h}' then\n    {}\n  else", crate::bindings::typed_call(lang, &format!("T{c}(Instance).{h}"), form, "Msg", &sig)))
+                    .collect();
+                if calls.is_empty() {
+                    continue;
+                }
+                t.push_str(&format!(
+                    "function Dispatch{c}(Instance: TAylisForm; const Handler: string; Sender: TAylisComponent; Msg: TJSONObject): Boolean;\nbegin\n  Result := True;\n{}\n    Result := False;\nend;\n\n",
+                    calls.join("\n")
+                ));
+                registers.push_str(&format!("  RegisterTypedHandlers('{form}', @Dispatch{c});\n"));
+            }
+            t.push_str(&format!("procedure RegisterForms(Aylis: TAylis);\nbegin\n{registers}end;\n\nend.\n"));
             put("src/forms/aylisforms.pas", &t, true)?;
             put(
                 "src/app.lpr",

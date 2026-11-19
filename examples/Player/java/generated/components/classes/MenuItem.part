@@ -76,4 +76,20 @@
         public void setHeader(boolean value) {
             setProp("header", value);
         }
+
+        public Aylis.AylisComponent getContent() {
+            return getRef("content");
+        }
+
+        public void setContent(Aylis.AylisComponent value) {
+            setRef("content", value);
+        }
+
+        public String getOnClick() {
+            return asText(getProp("on_click"));
+        }
+
+        public void setOnClick(String value) {
+            setProp("on_click", value);
+        }
     }

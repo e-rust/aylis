@@ -64,7 +64,8 @@ fn crop_box_resizes_moves_and_clicks() {
     // A seleção na tela: (48.4, 31.6) com 192×108; o canto de baixo à direita +20, +10.
     drag(&mut ui, form, (240.4, 139.6), (260.4, 149.6));
     assert_eq!(ui.get::<CropBox>(id).unwrap().selection(), (192.0, 108.0, 1060.0, 590.0));
-    assert_eq!(*ends.borrow(), ["192 108 1060 590"]);
+    let end = CropSelection::from_args(&EventArgs::Text(ends.borrow()[0].clone())).unwrap();
+    assert_eq!((ends.borrow().len(), end), (1, CropSelection { x: 192.0, y: 108.0, width: 1060.0, height: 590.0 }));
     // O miolo move (e para no limite da imagem).
     drag(&mut ui, form, (150.0, 80.0), (140.0, 70.0));
     assert_eq!(ui.get::<CropBox>(id).unwrap().selection(), (142.0, 58.0, 1060.0, 590.0));

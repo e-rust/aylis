@@ -29,14 +29,12 @@ function atualizar(aylis: Aylis) {
     const erro = calc.temErro();
     for (const botao of semErro()) botao.enabled = !erro;
     for (const botao of [frmCalculadora.btnMC, frmCalculadora.btnMR]) botao.enabled = !erro && calc.memoria.length > 0;
-    const historico = calc.historico.length === 0
-        ? "Ainda não há histórico|"
-        : [...calc.historico].reverse().map((c) => `${formatar(c.resultado)}|${c.expressao}`).join(";");
-    frmCalculadora.lvHistorico.items = historico;
-    const memoria = calc.memoria.length === 0
-        ? "Não há nada salvo na memória|"
-        : [...calc.memoria].reverse().map((m) => `${formatar(m)}|`).join(";");
-    frmCalculadora.lvMemoria.items = memoria;
+    frmCalculadora.lvHistorico.items = calc.historico.length === 0
+        ? [{ title: "Ainda não há histórico", detail: "" }]
+        : [...calc.historico].reverse().map((c) => ({ title: formatar(c.resultado), detail: c.expressao }));
+    frmCalculadora.lvMemoria.items = calc.memoria.length === 0
+        ? [{ title: "Não há nada salvo na memória", detail: "" }]
+        : [...calc.memoria].reverse().map((m) => ({ title: formatar(m), detail: "" }));
 }
 
 /** Aperta um botão pelo texto dele. */
@@ -47,38 +45,40 @@ function apertar(aylis: Aylis, texto: string) {
 export async function form_key_down(aylis: Aylis, ev: AylisEvent) {
     const args = (ev.args ?? {}) as { key?: string; ctrl?: boolean; shift?: boolean };
     const botao = botaoDoTeclado(args.key ?? "", args.ctrl ?? false, args.shift ?? false);
-    if (botao === "historico") await historico_click(aylis, ev);
+    if (botao === "historico") await historico_click(aylis, frmCalculadora.btnHistorico);
     else if (botao !== null) apertar(aylis, botao);
 }
 
-export function limpar_historico_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export function limpar_historico_click(aylis: Aylis, sender: import("./components.ts").Button) {
+    void sender;
     calc.historico = [];
     atualizar(aylis);
 }
 
-export function historico_item_click(aylis: Aylis, ev: AylisEvent) {
+export function historico_item_click(aylis: Aylis, sender: import("./components.ts").ListView, value: number) {
+    void sender;
     // A lista mostra a conta mais nova em cima.
-    const i = ev.args;
-    if (typeof i === "number" && i >= 0 && i < calc.historico.length) {
+    const i = value;
+    if (i >= 0 && i < calc.historico.length) {
         calc.usar(calc.historico[calc.historico.length - 1 - i].resultado);
         atualizar(aylis);
     }
 }
 
-export function memoria_item_click(aylis: Aylis, ev: AylisEvent) {
-    const i = ev.args;
-    if (typeof i === "number" && i >= 0 && i < calc.memoria.length) {
+export function memoria_item_click(aylis: Aylis, sender: import("./components.ts").ListView, value: number) {
+    void sender;
+    const i = value;
+    if (i >= 0 && i < calc.memoria.length) {
         calc.usar(calc.memoria[calc.memoria.length - 1 - i]);
         atualizar(aylis);
     }
 }
 
-export async function historico_click(aylis: Aylis, ev: AylisEvent) {
-    void ev;
+export async function historico_click(aylis: Aylis, sender: import("./components.ts").Button) {
+    void sender;
     frmCalculadora.pnlLateral.visible = !(await frmCalculadora.pnlLateral.visible);
 }
 
-export async function tecla_click(aylis: Aylis, ev: AylisEvent) {
-    apertar(aylis, await frmCalculadora.senderAsButton(ev).text);
+export async function tecla_click(aylis: Aylis, sender: import("./components.ts").Button) {
+    apertar(aylis, await sender.text);
 }

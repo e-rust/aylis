@@ -89,7 +89,7 @@ impl Component for CodeEditor {
     }
 
     properties! {
-        ; events: on_word_click, on_complete_request, on_signature_request, on_hover_index
+        ; events: on_word_click: String, on_complete_request: i64, on_signature_request: i64, on_hover_index: i64
         ; computed: minimap: bool => minimap / set_minimap,
             folding: bool => folding / set_folding,
             color_theme: String => color_theme / set_color_theme

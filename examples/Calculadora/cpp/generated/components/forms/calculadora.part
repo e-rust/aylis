@@ -96,7 +96,7 @@ struct FrmCalculadoraComponents : Form {
         btnVirgula = Button(resolve_(list, "btnVirgula", "Button"));
         btnIgual = Button(resolve_(list, "btnIgual", "Button"));
     }
-    // O Button deste form com o nome (como o FindComponent; vazio se não há).
+    // O Button deste form com o nome (vazio se não há).
     Button find_button(const std::string& name) const {
         if (name == "btnLimparHistorico") return btnLimparHistorico;
         if (name == "btnHistorico") return btnHistorico;
@@ -133,7 +133,7 @@ struct FrmCalculadoraComponents : Form {
     }
     // O Button que disparou o evento.
     Button sender_as_button(const aylis::Event& ev) const { return find_button(ev.sender_name); }
-    // O GridLayout deste form com o nome (como o FindComponent; vazio se não há).
+    // O GridLayout deste form com o nome (vazio se não há).
     GridLayout find_grid_layout(const std::string& name) const {
         if (name == "grdMemoria") return grdMemoria;
         if (name == "grdTeclado") return grdTeclado;
@@ -141,7 +141,7 @@ struct FrmCalculadoraComponents : Form {
     }
     // O GridLayout que disparou o evento.
     GridLayout sender_as_grid_layout(const aylis::Event& ev) const { return find_grid_layout(ev.sender_name); }
-    // O Label deste form com o nome (como o FindComponent; vazio se não há).
+    // O Label deste form com o nome (vazio se não há).
     Label find_label(const std::string& name) const {
         if (name == "lblTitulo") return lblTitulo;
         if (name == "lblExpressao") return lblExpressao;
@@ -150,7 +150,7 @@ struct FrmCalculadoraComponents : Form {
     }
     // O Label que disparou o evento.
     Label sender_as_label(const aylis::Event& ev) const { return find_label(ev.sender_name); }
-    // O Layout deste form com o nome (como o FindComponent; vazio se não há).
+    // O Layout deste form com o nome (vazio se não há).
     Layout find_layout(const std::string& name) const {
         if (name == "lytCorpo") return lytCorpo;
         if (name == "lytTopo") return lytTopo;
@@ -158,7 +158,7 @@ struct FrmCalculadoraComponents : Form {
     }
     // O Layout que disparou o evento.
     Layout sender_as_layout(const aylis::Event& ev) const { return find_layout(ev.sender_name); }
-    // O ListView deste form com o nome (como o FindComponent; vazio se não há).
+    // O ListView deste form com o nome (vazio se não há).
     ListView find_list_view(const std::string& name) const {
         if (name == "lvHistorico") return lvHistorico;
         if (name == "lvMemoria") return lvMemoria;
@@ -166,21 +166,21 @@ struct FrmCalculadoraComponents : Form {
     }
     // O ListView que disparou o evento.
     ListView sender_as_list_view(const aylis::Event& ev) const { return find_list_view(ev.sender_name); }
-    // O Panel deste form com o nome (como o FindComponent; vazio se não há).
+    // O Panel deste form com o nome (vazio se não há).
     Panel find_panel(const std::string& name) const {
         if (name == "pnlLateral") return pnlLateral;
         return Panel();
     }
     // O Panel que disparou o evento.
     Panel sender_as_panel(const aylis::Event& ev) const { return find_panel(ev.sender_name); }
-    // O TabControl deste form com o nome (como o FindComponent; vazio se não há).
+    // O TabControl deste form com o nome (vazio se não há).
     TabControl find_tab_control(const std::string& name) const {
         if (name == "tabLateral") return tabLateral;
         return TabControl();
     }
     // O TabControl que disparou o evento.
     TabControl sender_as_tab_control(const aylis::Event& ev) const { return find_tab_control(ev.sender_name); }
-    // O TabItem deste form com o nome (como o FindComponent; vazio se não há).
+    // O TabItem deste form com o nome (vazio se não há).
     TabItem find_tab_item(const std::string& name) const {
         if (name == "tabHistorico") return tabHistorico;
         if (name == "tabMemoria") return tabMemoria;

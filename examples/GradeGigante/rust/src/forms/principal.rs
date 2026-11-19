@@ -150,7 +150,7 @@ impl FrmPrincipal {
         }
     }
 
-    pub fn carregar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn carregar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let cds = self.cdsDados.id;
         let total = self.nbRegistros.value(ui).max(1.0) as usize;
         // Começa vazio (a ordem e o filtro escolhidos continuam valendo).
@@ -249,7 +249,7 @@ impl FrmPrincipal {
         });
     }
 
-    pub fn parar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn parar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         ATUAL.with(|a| {
             if let Some(carga) = a.borrow().as_ref() {
                 carga.stop.store(true, Ordering::Relaxed);

@@ -17,12 +17,12 @@ Tabela de dados em memória: campos, registros, filtros.
 | `filter` | Filtro | texto | Expressão de filtro (`cidade = 'São Paulo' and limite > 1000`, ver `crate::expr`); vale com `filtered` ligado. |
 | `filtered` | Filtrado | lógico | Aplica o `filter`: só os registros que passam nele aparecem (os outros continuam no delta). |
 | `index_field_names` | Campos do índice | texto | Ordem dos registros: campos separados por `;`, com `desc` opcional (`cidade;limite desc`). |
-| `indexes` | Índices | texto | Índices com nome: `porNome=nome\|porValor=valor desc;nome`. |
+| `indexes` | Índices | lista de `IndexDef` | Índices com nome: a lista de `INDEX_DEF_RECORD`(crate::INDEX_DEF_RECORD) em JSON, cada um com a ordem no formato de `index_field_names` (`[{"name": "porNome", "fields": "nome"}, {"name": "porValor", "fields": "valor desc;nome"}]`). |
 | `index_name` | Nome do índice | texto | O índice de `indexes` em uso; vale no lugar de `index_field_names`. Ordenar por campos (`set_index`) volta a ser sem nome. |
-| `params` | Parâmetros | texto | Valores dos parâmetros do filtro (`:minimo`): `minimo=100;cidade=São Paulo`. Por código, `DataSet::set_param`(crate::DataSet::set_param) aceita qualquer valor. |
+| `params` | Parâmetros | lista de `FilterParam` | Valores dos parâmetros do filtro (`:minimo`): a lista de `FILTER_PARAM_RECORD`(crate::FILTER_PARAM_RECORD) em JSON (`[{"name": "minimo", "value": "100"}, {"name": "cidade", "value": "São Paulo"}]`; o texto que é número ou lógico vale como tal). Por código, `DataSet::set_param`(crate::DataSet::set_param) aceita qualquer valor. |
 | `status_filter` | Filtro de situação | texto | Só os registros nestas situações: `unmodified;modified;inserted` (vazio = todos), como o `StatusFilter`. |
 | `master_source` | Fonte mestre | componente | Master-detail: o `DataSource` do dataset mestre. |
-| `master_fields` | Campos mestre | texto | Master-detail: `campo_daqui=campo_do_mestre` separados por `;` (só o nome se forem iguais): `cliente_id=id`. |
+| `master_fields` | Campos mestre | lista de `MasterField` | Master-detail: a lista de `MASTER_FIELD_RECORD`(crate::MASTER_FIELD_RECORD) em JSON, o campo daqui e o do mestre (sem `master_field`, o mesmo nome): `[{"field": "cliente_id", "master_field": "id"}]`. |
 | `apply_separately` | Gravar à parte do mestre | lógico | Master-detail: as alterações deste detalhe vão à parte, no `apply_updates` dele. Desligado (o padrão), vão junto no delta do mestre, na ordem de gravar. |
 | `record_total` | Total de registros | inteiro | Quantos registros a consulta tem no backend (0: não se sabe). Com os dados em partes, a barra de rolagem da grade usa este total. |
 | `max_records` | Máximo de registros | inteiro | Limite de registros na memória (0: sem limite): a busca sob demanda para nele, e a grade avisa que mostra só os primeiros. |

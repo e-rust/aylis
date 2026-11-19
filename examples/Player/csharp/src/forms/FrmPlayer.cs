@@ -5,7 +5,6 @@
 // anterior e próxima, embaralhar, repetir (todos ou um), volume e a barra de posição. Quem
 // toca é o componente VideoPlayer (vpVideo), áudio e vídeo.
 
-using System.Text.Json.Nodes;
 using AylisClient;
 using static App.Forms.Components;
 
@@ -59,7 +58,7 @@ public static class FrmPlayer
     /// <summary>A fila na lista, com a mídia atual selecionada.</summary>
     static void AtualizarFila(Aylis aylis)
     {
-        frmPlayer.lvFila.Items = string.Join(";", fila.Select(c => $"{NomeDoArquivo(c)}|{Pasta(c)}"));
+        frmPlayer.lvFila.Items = fila.Select(c => new ListViewItem(NomeDoArquivo(c), Pasta(c))).ToArray();
         frmPlayer.lvFila.ItemIndex = atual;
     }
 
@@ -121,13 +120,12 @@ public static class FrmPlayer
         return -1;
     }
 
-    public static void abrir_click(Aylis aylis, AylisEvent ev) => frmPlayer.dlgAbrir.Execute();
+    public static void abrir_click(Aylis aylis, AylisComponent sender) => frmPlayer.dlgAbrir.Execute();
 
-    public static void abrir_select(Aylis aylis, AylisEvent ev)
+    public static void abrir_select(Aylis aylis, AylisUi.OpenDialog sender, string[] value)
     {
-        // Os arquivos escolhidos vêm separados por ";".
-        string texto = ev.Args is JsonValue v && v.TryGetValue<string>(out var s) ? s : "";
-        var novos = texto.Split(';').Where(x => x != "").ToList();
+        // Os arquivos escolhidos (o evento já separa a lista).
+        var novos = value.Where(x => x != "").ToList();
         if (novos.Count == 0) return;
         int primeiro = fila.Count;
         fila.AddRange(novos);
@@ -136,7 +134,7 @@ public static class FrmPlayer
         else MostrarAtual(aylis);
     }
 
-    public static void limpar_fila_click(Aylis aylis, AylisEvent ev)
+    public static void limpar_fila_click(Aylis aylis, AylisComponent sender)
     {
         frmPlayer.vpVideo.Stop();
         fila.Clear();
@@ -148,14 +146,14 @@ public static class FrmPlayer
         BotaoReproduzir(aylis);
     }
 
-    public static void sair_click(Aylis aylis, AylisEvent ev) => frmPlayer.Close();
+    public static void sair_click(Aylis aylis, AylisUi.MenuItem sender) => frmPlayer.Close();
 
-    public static void reproduzir_click(Aylis aylis, AylisEvent ev)
+    public static void reproduzir_click(Aylis aylis, AylisComponent sender)
     {
         if (atual < 0)
         {
             if (fila.Count > 0) Tocar(aylis, 0);
-            else abrir_click(aylis, ev);
+            else abrir_click(aylis, sender);
         }
         else if (tocando)
         {
@@ -171,7 +169,7 @@ public static class FrmPlayer
         }
     }
 
-    public static void parar_click(Aylis aylis, AylisEvent ev)
+    public static void parar_click(Aylis aylis, AylisUi.MenuItem sender)
     {
         if (atual < 0) return;
         frmPlayer.vpVideo.Stop();
@@ -180,20 +178,20 @@ public static class FrmPlayer
         frmPlayer.sbPosicao.Position = 0.0;
     }
 
-    public static void anterior_click(Aylis aylis, AylisEvent ev)
+    public static void anterior_click(Aylis aylis, AylisComponent sender)
     {
         if (atual > 0) Tocar(aylis, atual - 1);
         else if (atual == 0 && repetir == 1) Tocar(aylis, fila.Count - 1);
         else if (atual == 0) frmPlayer.vpVideo.Seek(0.0);
     }
 
-    public static void proxima_click(Aylis aylis, AylisEvent ev)
+    public static void proxima_click(Aylis aylis, AylisComponent sender)
     {
         int i = ProximoIndice();
         if (i >= 0) Tocar(aylis, i);
     }
 
-    public static void embaralhar_click(Aylis aylis, AylisEvent ev)
+    public static void embaralhar_click(Aylis aylis, AylisComponent sender)
     {
         embaralhar = !embaralhar;
         frmPlayer.btnEmbaralhar.Checked = embaralhar;
@@ -201,7 +199,7 @@ public static class FrmPlayer
         frmPlayer.mnuEmbaralhar.Checked = embaralhar;
     }
 
-    public static void repetir_click(Aylis aylis, AylisEvent ev)
+    public static void repetir_click(Aylis aylis, AylisComponent sender)
     {
         repetir = (repetir + 1) % 3;
         frmPlayer.btnRepetir.Checked = repetir > 0;
@@ -219,16 +217,16 @@ public static class FrmPlayer
         frmPlayer.btnFila.Checked = !agora;
     }
 
-    public static void agora_click(Aylis aylis, AylisEvent ev) => Pagina(aylis, true);
+    public static void agora_click(Aylis aylis, AylisComponent sender) => Pagina(aylis, true);
 
-    public static void fila_click(Aylis aylis, AylisEvent ev) => Pagina(aylis, false);
+    public static void fila_click(Aylis aylis, AylisComponent sender) => Pagina(aylis, false);
 
-    public static void posicao_seek(Aylis aylis, AylisEvent ev)
+    public static void posicao_seek(Aylis aylis, AylisUi.SeekBar sender, double value)
     {
-        if (ev.Args is JsonValue v && v.TryGetValue<double>(out double s)) frmPlayer.vpVideo.Seek(s);
+        frmPlayer.vpVideo.Seek(value);
     }
 
-    public static void mudo_click(Aylis aylis, AylisEvent ev)
+    public static void mudo_click(Aylis aylis, AylisUi.Button sender)
     {
         mudo = !mudo;
         frmPlayer.vpVideo.Muted = mudo;
@@ -236,12 +234,12 @@ public static class FrmPlayer
         frmPlayer.btnMudo.Hint = mudo ? "Com som" : "Sem som";
     }
 
-    public static void volume_change(Aylis aylis, AylisEvent ev)
+    public static void volume_change(Aylis aylis, AylisUi.TrackBar sender, double value)
     {
-        if (ev.Args is JsonValue v && v.TryGetValue<double>(out double valor)) frmPlayer.vpVideo.Volume = valor / 100.0;
+        frmPlayer.vpVideo.Volume = value / 100.0;
     }
 
-    public static void video_fim(Aylis aylis, AylisEvent ev)
+    public static void video_fim(Aylis aylis, AylisUi.VideoPlayer sender)
     {
         if (repetir == 2 && atual >= 0)
         {
@@ -257,19 +255,19 @@ public static class FrmPlayer
         }
     }
 
-    public static void video_erro(Aylis aylis, AylisEvent ev)
+    public static void video_erro(Aylis aylis, AylisUi.VideoPlayer sender, string value)
     {
         tocando = false;
         BotaoReproduzir(aylis);
         frmPlayer.lblDetalhe.Text = "Não foi possível reproduzir este arquivo";
     }
 
-    public static void fila_item_click(Aylis aylis, AylisEvent ev)
+    public static void fila_item_click(Aylis aylis, AylisUi.ListView sender, long value)
     {
-        if (ev.Args is JsonValue v && v.TryGetValue<int>(out int i) && i >= 0 && i < fila.Count) Tocar(aylis, i);
+        if (value >= 0 && value < fila.Count) Tocar(aylis, (int)value);
     }
 
-    public static void posicao_timer(Aylis aylis, AylisEvent ev)
+    public static void posicao_timer(Aylis aylis, AylisUi.Timer sender)
     {
         if (atual < 0) return;
         double posicao = frmPlayer.vpVideo.Position();

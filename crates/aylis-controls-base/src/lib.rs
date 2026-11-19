@@ -38,10 +38,12 @@ mod menus;
 mod navigation;
 mod number;
 mod planner;
+mod records;
 mod platform;
 pub mod quasar;
 mod rich_editor;
 pub mod shapes;
+pub use shapes::LineDirection;
 pub mod recorder;
 pub mod recycler;
 mod render_settings;
@@ -63,7 +65,7 @@ mod widgets;
 
 pub use autocomplete::AutoComplete;
 pub use basic::{
-    BorderStyle, Button, CloseAction, Form, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
+    BorderStyle, Button, CloseAction, Form, WindowCorners, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
     window_state_commands,
 };
 pub use chips::{Chip, ChipGroup, OtpInput, RangeSlider, Rating, SplitButton};
@@ -83,9 +85,9 @@ pub use toggles::{CheckBox, RadioButton, Switch};
 pub use chat::{ChatMessage, ChatView, MessageStatus, Waveform};
 pub use dates::{Calendar, DateEdit, DateTimeEdit, Day, TimeEdit, days_in_month};
 pub use popover::{Popover, PopoverPlacement};
-pub use lists::{ListBox, ListItem, ListView, RadioGroup, TreeLeafLayout, TreeNode, TreeNodeRects, TreeView};
+pub use lists::{LIST_VIEW_ITEM, ListBox, ListItem, ListView, RadioGroup, TREE_NODE, TreeLeafLayout, TreeNode, TreeNodeRects, TreeView};
 pub use code_editor::CodeEditor;
-pub use tab_strip::{Tab, TabDrop, TabStrip};
+pub use tab_strip::{Tab, TabDrop, TabMove, TabStrip};
 pub use memo::{Bookmark, Diagnostic, Memo, Suggestion, block_end};
 pub use navigation::{AvatarGroup, BottomNavigation, BottomSheet, Carousel, NavigationDrawer, SpeedDial};
 pub use number::{NumberBox, TrackBar};
@@ -97,16 +99,16 @@ pub use emoji::{EmojiInfo, EmojiPicker, emoji_groups, emoji_list};
 pub use titlebar::TitleBar;
 pub use taskbar::Taskbar;
 pub use tray::TrayIcon;
-pub use planner::{CalendarEvent, CalendarView, CommandPalette, EventCalendar, parse_events};
+pub use planner::{CalendarEvent, CalendarEventClick, CalendarView, CommandPalette, EventCalendar, parse_events};
 pub use render_settings::RenderSettings;
 pub use window_settings::{WindowSettings, WindowSettingsScope};
-pub use recycler::{ListOrientation, RowSource, Sizer, VirtualList};
+pub use recycler::{ListOrientation, RowSource, Sizer, SwipeAction, VirtualList};
 pub use recorder::{Analytics, EventRecorder, Recording, RECORDING_EXTENSION};
-pub use system::{ApplicationEvents, BusyAction, BusyWatcher, DataModule, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
+pub use system::{ApplicationEvents, ExceptionEvent, BusyAction, BusyWatcher, DataModule, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
 pub use tabs::{Expander, GroupBox, StatusBar, TabControl, TabItem, TabPosition, ToolBar};
 pub use feedback::{ToastKind, ToastStack, notify};
 pub use frame_view::FrameView;
-pub use crop_box::CropBox;
+pub use crop_box::{CropBox, CropSelection};
 pub use media_card::MediaCard;
 pub use quasar::{AjaxBar, Card, ChatBubble, InnerLoading, Knob, MarkupTable, OptionGroup, OptionKind, Parallax, PopupEdit, SlideItem, SpinnerKind, TableSeparator, Uploader, paint_spinner};
 pub use rich_editor::{Block as RichBlock, BlockKind as RichBlockKind, DEFAULT_TOOLBAR as RICH_EDITOR_TOOLBAR, Format as RichFormat, RichEditor};

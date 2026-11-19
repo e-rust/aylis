@@ -13,12 +13,12 @@
             setProp("key_fields", value);
         }
 
-        public String getApplyMode() {
-            return asText(getProp("apply_mode"));
+        public ApplyMode getApplyMode() {
+            return ApplyMode.of(getProp("apply_mode"));
         }
 
-        public void setApplyMode(String value) {
-            setProp("apply_mode", value);
+        public void setApplyMode(ApplyMode value) {
+            setProp("apply_mode", value.value);
         }
 
         public boolean isReadOnly() {
@@ -61,12 +61,12 @@
             setProp("index_field_names", value);
         }
 
-        public String getIndexes() {
-            return asText(getProp("indexes"));
+        public java.util.List<IndexDef> getIndexes() {
+            return IndexDef.listFromText(getProp("indexes"));
         }
 
-        public void setIndexes(String value) {
-            setProp("indexes", value);
+        public void setIndexes(java.util.List<IndexDef> value) {
+            setProp("indexes", IndexDef.listToText(value));
         }
 
         public String getIndexName() {
@@ -77,12 +77,12 @@
             setProp("index_name", value);
         }
 
-        public String getParams() {
-            return asText(getProp("params"));
+        public java.util.List<FilterParam> getParams() {
+            return FilterParam.listFromText(getProp("params"));
         }
 
-        public void setParams(String value) {
-            setProp("params", value);
+        public void setParams(java.util.List<FilterParam> value) {
+            setProp("params", FilterParam.listToText(value));
         }
 
         public String getStatusFilter() {
@@ -93,20 +93,20 @@
             setProp("status_filter", value);
         }
 
-        public String getMasterSource() {
-            return asText(getProp("master_source"));
+        public Aylis.AylisComponent getMasterSource() {
+            return getRef("master_source");
         }
 
-        public void setMasterSource(String value) {
-            setProp("master_source", value);
+        public void setMasterSource(Aylis.AylisComponent value) {
+            setRef("master_source", value);
         }
 
-        public String getMasterFields() {
-            return asText(getProp("master_fields"));
+        public java.util.List<MasterField> getMasterFields() {
+            return MasterField.listFromText(getProp("master_fields"));
         }
 
-        public void setMasterFields(String value) {
-            setProp("master_fields", value);
+        public void setMasterFields(java.util.List<MasterField> value) {
+            setProp("master_fields", MasterField.listToText(value));
         }
 
         public boolean isApplySeparately() {
@@ -135,5 +135,69 @@
 
         public String getPartialNotice() {
             return asText(getProp("partial_notice"));
+        }
+
+        public String getOnMasterChange() {
+            return asText(getProp("on_master_change"));
+        }
+
+        public void setOnMasterChange(String value) {
+            setProp("on_master_change", value);
+        }
+
+        public String getAfterScroll() {
+            return asText(getProp("after_scroll"));
+        }
+
+        public void setAfterScroll(String value) {
+            setProp("after_scroll", value);
+        }
+
+        public String getAfterPost() {
+            return asText(getProp("after_post"));
+        }
+
+        public void setAfterPost(String value) {
+            setProp("after_post", value);
+        }
+
+        public String getOnStateChange() {
+            return asText(getProp("on_state_change"));
+        }
+
+        public void setOnStateChange(String value) {
+            setProp("on_state_change", value);
+        }
+
+        public String getOnReconcileError() {
+            return asText(getProp("on_reconcile_error"));
+        }
+
+        public void setOnReconcileError(String value) {
+            setProp("on_reconcile_error", value);
+        }
+
+        public String getOnError() {
+            return asText(getProp("on_error"));
+        }
+
+        public void setOnError(String value) {
+            setProp("on_error", value);
+        }
+
+        public String getOnFetch() {
+            return asText(getProp("on_fetch"));
+        }
+
+        public void setOnFetch(String value) {
+            setProp("on_fetch", value);
+        }
+
+        public String getOnServerQuery() {
+            return asText(getProp("on_server_query"));
+        }
+
+        public void setOnServerQuery(String value) {
+            setProp("on_server_query", value);
         }
     }

@@ -11,4 +11,6 @@
         public bool Visible { get => Bool(GetProp("visible")); set => SetProp("visible", value); }
         public bool Danger { get => Bool(GetProp("danger")); set => SetProp("danger", value); }
         public bool Header { get => Bool(GetProp("header")); set => SetProp("header", value); }
+        public AylisComponent? Content { get => GetRef("content"); set => SetRef("content", value); }
+        public string OnClick { get => Text(GetProp("on_click")); set => SetProp("on_click", value); }
     }

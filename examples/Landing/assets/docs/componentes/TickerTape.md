@@ -2,7 +2,7 @@
 
 ![TickerTape](img/TickerTape.png)
 
-Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` = `"PETR4:38.50:1.2;VALE3:61.10:-0.8"` (ativo:preço:variação %); `speed` em pontos por segundo; para enquanto o mouse está em cima.
+Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` = as cotações em JSON; `speed` em pontos por segundo; para enquanto o mouse está em cima.
 
 **Paleta:** Trader · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -24,7 +24,7 @@ Faixa de cotações rolando (como no rodapé dos canais de notícias). `items` =
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | As cotações, separadas por `;`: `"PETR4:38.50:1.2"` (ativo:preço:variação %). |
+| `items` | Itens | lista de `TickerQuote` | As cotações, em JSON (`TICKER_QUOTE`). |
 
 ## Em código
 
@@ -39,8 +39,8 @@ E o handler, um método do form (`self.TickerTape1` já é um `TickerTape`):
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.TickerTape1.items(ui);
-        self.TickerTape1.set_items(ui, format!("{atual}!"));
+        let atual = self.TickerTape1.speed(ui);
+        self.TickerTape1.set_speed(ui, atual + 10.0);
     }
 }
 ```

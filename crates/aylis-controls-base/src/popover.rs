@@ -125,7 +125,7 @@ impl Component for Popover {
     properties! {
         placement: PopoverPlacement => "Behavior",
         gap: f32 => "Behavior";
-        events: on_close
+        events: on_close: ()
     }
 
     fn inner(&self) -> Option<&dyn Component> {

@@ -8,7 +8,7 @@
 use std::cell::RefCell;
 
 use aylis::prelude::*;
-use crate::generated::FrmPlayer;
+use crate::generated::{FrmPlayer, ListViewItem};
 
 /// O estado do form: cada janela aberta dele tem o seu (`self.data`).
 #[derive(Default)]
@@ -72,10 +72,10 @@ impl FrmPlayer {
     fn atualizar_fila(&mut self, ui: &mut Ui) {
         let (itens, atual) = ESTADO.with(|e| {
             let e = e.borrow();
-            let itens: Vec<String> = e.fila.iter().map(|c| format!("{}|{}", nome_do_arquivo(c), pasta(c))).collect();
-            (itens.join(";"), e.atual)
+            let itens: Vec<ListViewItem> = e.fila.iter().map(|c| ListViewItem { title: nome_do_arquivo(c).to_string(), detail: pasta(c).to_string() }).collect();
+            (itens, e.atual)
         });
-        self.lvFila.set_items(ui, itens);
+        self.lvFila.set_items(ui, &itens);
         self.lvFila.set_item_index(ui, atual);
     }
 
@@ -124,13 +124,13 @@ impl FrmPlayer {
         self.vpVideo.play(ui);
     }
 
-    pub fn abrir_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn abrir_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         self.dlgAbrir.execute(ui);
     }
 
-    pub fn abrir_select(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        // Os arquivos escolhidos vêm separados por ";".
-        let novos: Vec<String> = args.text().unwrap_or_default().split(';').filter(|s| !s.is_empty()).map(str::to_string).collect();
+    pub fn abrir_select(&mut self, ui: &mut Ui, _sender: crate::generated::OpenDialog, value: Vec<String>) {
+        // Os arquivos escolhidos (o evento já separa a lista).
+        let novos: Vec<String> = value.into_iter().filter(|s| !s.is_empty()).collect();
         if novos.is_empty() {
             return;
         }
@@ -148,7 +148,7 @@ impl FrmPlayer {
         }
     }
 
-    pub fn limpar_fila_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn limpar_fila_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         self.vpVideo.stop(ui);
         ESTADO.with(|e| {
             let mut e = e.borrow_mut();
@@ -162,18 +162,18 @@ impl FrmPlayer {
         self.botao_reproduzir(ui);
     }
 
-    pub fn sair_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn sair_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         self.close(ui);
     }
 
-    pub fn reproduzir_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    pub fn reproduzir_click(&mut self, ui: &mut Ui, sender: ComponentId) {
         let (atual, vazia, tocando) = ESTADO.with(|e| {
             let e = e.borrow();
             (e.atual, e.fila.is_empty(), e.tocando)
         });
         if atual < 0 {
             if vazia {
-                self.abrir_click(ui, sender, args);
+                self.abrir_click(ui, sender);
             } else {
                 self.tocar(ui, 0);
             }
@@ -188,7 +188,7 @@ impl FrmPlayer {
         }
     }
 
-    pub fn parar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn parar_click(&mut self, ui: &mut Ui, _sender: crate::generated::MenuItem) {
         if ESTADO.with(|e| e.borrow().atual) < 0 {
             return;
         }
@@ -198,7 +198,7 @@ impl FrmPlayer {
         self.sbPosicao.set_position(ui, 0.0);
     }
 
-    pub fn anterior_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn anterior_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let (atual, n, repetir) = ESTADO.with(|e| {
             let e = e.borrow();
             (e.atual, e.fila.len() as i64, e.repetir)
@@ -212,14 +212,14 @@ impl FrmPlayer {
         }
     }
 
-    pub fn proxima_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn proxima_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let i = proximo_indice();
         if i >= 0 {
             self.tocar(ui, i);
         }
     }
 
-    pub fn embaralhar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn embaralhar_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let ligado = ESTADO.with(|e| {
             let mut e = e.borrow_mut();
             e.embaralhar = !e.embaralhar;
@@ -230,7 +230,7 @@ impl FrmPlayer {
         self.mnuEmbaralhar.set_checked(ui, ligado);
     }
 
-    pub fn repetir_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn repetir_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         let modo = ESTADO.with(|e| {
             let mut e = e.borrow_mut();
             e.repetir = (e.repetir + 1) % 3;
@@ -250,22 +250,19 @@ impl FrmPlayer {
         self.btnFila.set_checked(ui, !agora);
     }
 
-    pub fn agora_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn agora_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         self.pagina(ui, true);
     }
 
-    pub fn fila_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn fila_click(&mut self, ui: &mut Ui, _sender: ComponentId) {
         self.pagina(ui, false);
     }
 
-    pub fn posicao_seek(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        if let EventArgs::Value(v) = args {
-            let segundos = v.to_f64().unwrap_or(0.0);
-            self.vpVideo.seek(ui, segundos);
-        }
+    pub fn posicao_seek(&mut self, ui: &mut Ui, _sender: crate::generated::SeekBar, value: f64) {
+        self.vpVideo.seek(ui, value);
     }
 
-    pub fn mudo_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn mudo_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let mudo = ESTADO.with(|e| {
             let mut e = e.borrow_mut();
             e.mudo = !e.mudo;
@@ -276,13 +273,11 @@ impl FrmPlayer {
         self.btnMudo.set_hint(ui, if mudo { "Com som" } else { "Sem som" });
     }
 
-    pub fn volume_change(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        if let EventArgs::Value(v) = args {
-            self.vpVideo.set_volume(ui, v.to_f64().unwrap_or(0.0) / 100.0);
-        }
+    pub fn volume_change(&mut self, ui: &mut Ui, _sender: crate::generated::TrackBar, value: f64) {
+        self.vpVideo.set_volume(ui, value / 100.0);
     }
 
-    pub fn video_fim(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn video_fim(&mut self, ui: &mut Ui, _sender: crate::generated::VideoPlayer) {
         let (atual, repetir) = ESTADO.with(|e| (e.borrow().atual, e.borrow().repetir));
         if repetir == 2 && atual >= 0 {
             self.tocar(ui, atual);
@@ -297,23 +292,20 @@ impl FrmPlayer {
         }
     }
 
-    pub fn video_erro(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn video_erro(&mut self, ui: &mut Ui, _sender: crate::generated::VideoPlayer, _value: String) {
         ESTADO.with(|e| e.borrow_mut().tocando = false);
         self.botao_reproduzir(ui);
         self.lblDetalhe.set_text(ui, "Não foi possível reproduzir este arquivo");
     }
 
-    pub fn fila_item_click(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        let i = match args {
-            EventArgs::Value(v) => v.to_i64().unwrap_or(-1),
-            _ => -1,
-        };
+    pub fn fila_item_click(&mut self, ui: &mut Ui, _sender: crate::generated::ListView, value: i64) {
+        let i = value;
         if i >= 0 && i < ESTADO.with(|e| e.borrow().fila.len() as i64) {
             self.tocar(ui, i);
         }
     }
 
-    pub fn posicao_timer(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn posicao_timer(&mut self, ui: &mut Ui, _sender: crate::generated::Timer) {
         if ESTADO.with(|e| e.borrow().atual) < 0 {
             return;
         }

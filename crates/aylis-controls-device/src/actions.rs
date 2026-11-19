@@ -40,12 +40,32 @@ impl PropEnum for Ringtone {
     }
 }
 
-/// Os botões no formato `id:Texto;id2:Texto 2` (sem `:`, o id é o texto).
+/// O registro de um botão de notificação (o `buttons` do `WakeAppAction` e do `NotifyAction`).
+pub const NOTIFICATION_BUTTON: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "NotificationButton", fields: &[("id", PropKind::String), ("text", PropKind::String)] };
+
+/// Um botão da notificação: o id (o que chega no `on_button`) e o texto (um modelo:
+/// `{chave}` vira o valor nos dados).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct NotificationButton {
+    pub id: String,
+    pub text: String,
+}
+
+/// Os botões em JSON (`[{"id": "answer", "text": "Atender"}]`): (id, texto). Sem id, o id é
+/// o texto; sem os dois, o botão fica de fora.
 fn parse_buttons(text: &str) -> Vec<(String, String)> {
-    text.split(';')
+    crate::records::parse_list::<NotificationButton>(text)
+        .into_iter()
         .filter_map(|b| {
-            let (id, label) = b.split_once(':').unwrap_or((b, b));
-            (!id.trim().is_empty()).then(|| (id.trim().to_string(), label.trim().to_string()))
+            let (id, label) = (b.id.trim().to_string(), b.text.trim().to_string());
+            match (id.is_empty(), label.is_empty()) {
+                (true, true) => None,
+                (true, false) => Some((label.clone(), label)),
+                (false, true) => Some((id.clone(), id)),
+                (false, false) => Some((id, label)),
+            }
         })
         .collect()
 }
@@ -257,7 +277,7 @@ impl Component for PushTrigger {
         filter: String => "Behavior",
         action: Option<ComponentId> => "Behavior",
         replace_default: bool => "Behavior";
-        events: on_trigger, on_error;
+        events: on_trigger: String, on_error: String;
         computed: data: String => data / set_s
     }
 
@@ -323,7 +343,7 @@ pub(crate) fn all_rules(ui: &Ui) -> String {
 
 /// Abre o app por cima da tela bloqueada e acende a tela, tocando, como uma chamada
 /// chegando: `execute(dados)` mostra a notificação de tela cheia com `title` e `text` (modelos:
-/// `{caller}` vira o valor da chave nos dados) e os botões (`buttons`, `id:Texto;...`); os de
+/// `{caller}` vira o valor da chave nos dados) e os botões (`buttons`, a lista de `{"id", "text"}` em JSON); os de
 /// `open_buttons` abrem o app (`*`: todos), os outros respondem sem abrir. Com a tela
 /// bloqueada ou apagada, o app abre direto no `form`.
 ///
@@ -343,7 +363,8 @@ pub struct WakeAppAction {
     pub title: String,
     /// O texto da notificação; `{chave}` vira o valor da chave nos dados.
     pub text: String,
-    /// Os botões da notificação: `id:Texto;...` (`answer:Atender;reject:Recusar`).
+    /// Os botões da notificação, em JSON ([`NOTIFICATION_BUTTON`]): `[{"id": "answer", "text":
+    /// "Atender"}, {"id": "reject", "text": "Recusar"}]`.
     pub buttons: String,
     /// Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos. Os outros
     /// respondem sem abrir.
@@ -449,17 +470,17 @@ impl Component for WakeAppAction {
     }
 
     properties! {
-        form: String => "Behavior",
+        form: String as FormName => "Behavior",
         title: String => "Behavior",
         text: String => "Behavior",
-        buttons: String => "Behavior",
-        open_buttons: String => "Behavior",
+        buttons: String as RecordList(&NOTIFICATION_BUTTON) => "Behavior",
+        open_buttons: String as List => "Behavior",
         ringtone: Ringtone => "Behavior",
         vibrate: bool => "Behavior",
         timeout: f32 => "Behavior",
         call_style: bool => "Behavior",
         turn_screen_on: bool => "Behavior";
-        events: on_open, on_button, on_timeout;
+        events: on_open: String, on_button: String, on_timeout: String;
         computed: data: String => data / set_s, running: bool => running / set_b
     }
 
@@ -505,7 +526,7 @@ impl Component for WakeAppAction {
 /// Uma notificação montada com os dados: `execute(dados)` mostra `title`, `text` e `image`
 /// (modelos: `{chave}` vira o valor nos dados; a imagem é um asset, um arquivo ou, no
 /// Android, um endereço `https`), no canal e com a prioridade escolhidos, e os botões
-/// (`buttons`, `id:Texto;...`; os de `open_buttons` abrem o app, `*`: todos). Eventos:
+/// (`buttons`, a lista de `{"id", "text"}` em JSON; os de `open_buttons` abrem o app, `*`: todos). Eventos:
 /// `on_click` (o toque no corpo, com os dados) e `on_button` (o id do botão). `stop()` tira a
 /// notificação.
 pub struct NotifyAction {
@@ -522,7 +543,8 @@ pub struct NotifyAction {
     pub channel_name: String,
     /// `low` (silenciosa, só na lista), `default` ou `high` (aparece por cima do app, com som).
     pub priority: NotificationPriority,
-    /// Os botões da notificação: `id:Texto;...`; o toque chega em `on_button` com o id.
+    /// Os botões da notificação, em JSON ([`NOTIFICATION_BUTTON`]): `[{"id": "ver", "text":
+    /// "Ver pedido {order}"}]`; o toque chega em `on_button` com o id.
     pub buttons: String,
     /// Os botões (pelo id, separados por `;`) que abrem o app; `*`: todos.
     pub open_buttons: String,
@@ -627,9 +649,9 @@ impl Component for NotifyAction {
         channel: String => "Behavior",
         channel_name: String => "Behavior",
         priority: NotificationPriority => "Behavior",
-        buttons: String => "Behavior",
-        open_buttons: String => "Behavior";
-        events: on_click, on_button;
+        buttons: String as RecordList(&NOTIFICATION_BUTTON) => "Behavior",
+        open_buttons: String as List => "Behavior";
+        events: on_click: String, on_button: String;
         computed: data: String => data / set_s
     }
 
@@ -693,7 +715,11 @@ mod tests {
         assert_eq!(base64(b"Man"), "TWFu");
         assert_eq!(base64(b"Ma"), "TWE=");
         assert_eq!(base64(b"M"), "TQ==");
-        assert_eq!(parse_buttons("answer:Atender; reject:Recusar;ok"), [("answer".into(), "Atender".into()), ("reject".into(), "Recusar".into()), ("ok".into(), "ok".into())]);
+        assert_eq!(
+            parse_buttons(r#"[{"id": "answer", "text": "Atender"}, {"id": " reject", "text": "Recusar"}, {"text": "ok"}, {}]"#),
+            [("answer".into(), "Atender".into()), ("reject".into(), "Recusar".into()), ("ok".into(), "ok".into())]
+        );
+        assert!(parse_buttons("answer:Atender").is_empty(), "o formato antigo não vale mais");
         assert_eq!(open_json("answer; *"), r#"["answer","*"]"#);
     }
 }

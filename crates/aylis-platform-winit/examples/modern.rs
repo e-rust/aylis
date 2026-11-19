@@ -144,7 +144,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let donut = ui.add(Chart::new(ChartKind::Donut), form);
     put(&mut ui, donut, x0 + 150.0, 668.0, 280.0, 140.0);
     text(&mut ui, donut, "labels", "Pessoas;Veículos;Animais");
-    text(&mut ui, donut, "series", "Eventos=42,18,7");
+    text(&mut ui, donut, "series", r#"[{"name":"Eventos","values":[42,18,7]}]"#);
     ui.set_prop(donut, "legend", false).ok();
 
     // ----- coluna 2: grafo e conversa -----

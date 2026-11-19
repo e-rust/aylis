@@ -21,7 +21,7 @@ Texto com efeitos animados (entrada, saída, contínuos), por letra, palavra ou 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `effects` | Efeitos | texto | Os efeitos, separados por `;`: o nome e os parâmetros (`fade by=letter duration=500; wave amplitude=6 after`). Vazio: o texto parado. |
+| `effects` | Efeitos | lista de `TextEffect` | Os efeitos, em JSON (`TEXT_EFFECT`): `[{"effect": "fade", "by": "letter", "duration": 500}, {"effect": "wave", "amplitude": 6, "after": true}]`. Vazio: o texto parado. |
 | `autoplay` | Toca sozinho | lógico | Começa a animar quando aparece. |
 | `looping` | Repetindo | lógico | Repete a animação ao terminar, depois de `loop_delay`. |
 | `loop_delay` | Pausa entre repetições | número | Espera entre uma volta e outra (ms). |

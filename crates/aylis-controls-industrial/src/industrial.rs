@@ -530,7 +530,7 @@ impl Component for SignalLight {
 
     properties! {
         state: SignalState => "Data",
-        lights: String => "Data",
+        lights: String as List => "Data",
         blink: bool => "Data",
     }
 
@@ -611,7 +611,7 @@ impl Component for Valve {
     properties! {
         state: ValveState => "Data",
         alarm: bool => "Data";
-        events: on_click
+        events: on_click: ()
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -684,7 +684,7 @@ macro_rules! rotating_component {
                 alarm: bool => "Data",
                 speed: f64 => "Behavior",
                 label: String => "Appearance";
-                events: on_click
+                events: on_click: ()
             }
 
             fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -921,7 +921,7 @@ impl Component for EmergencyStop {
 
     properties! {
         pressed: bool => "Data";
-        events: on_change
+        events: on_change: bool
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -976,9 +976,9 @@ impl Component for SelectorSwitch {
     paint_value_props!();
 
     properties! {
-        positions: String => "Data",
+        positions: String as List => "Data",
         item_index: i64 => "Data";
-        events: on_change
+        events: on_change: i64
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -1012,43 +1012,68 @@ impl Component for SelectorSwitch {
     }
 }
 
-/// Botoeira: botões de painel lado a lado (`buttons`: `Liga:green;Desliga:red`); o clique
-/// num deles dispara `on_click` com o índice (e o texto) dele.
+/// O registro de um botão da botoeira (o `buttons` do [`PushButtons`]).
+pub const PUSH_BUTTON: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "PushButton", fields: &[("text", aylis_core::PropKind::String), ("color", aylis_core::PropKind::Color)] };
+
+/// Um botão da botoeira: o texto embaixo e a cor (`green`, `red`, `yellow`, `blue`,
+/// `black`, `#rrggbb` ou uma cor do tema; vazia: cinza).
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct PushButton {
+    pub text: String,
+    pub color: String,
+}
+
+/// Botoeira: botões de painel lado a lado (`buttons`: `[{"text": "Liga", "color": "green"},
+/// {"text": "Desliga", "color": "red"}]`); o clique num deles dispara `on_click` com o texto
+/// dele (e o `item_index` fica com o índice).
 pub struct PushButtons {
     pub base: ControlBase,
-    /// Os botões, separados por `;`, cada um `texto:cor` (`Liga:green;Desliga:red`; a cor pelo
-    /// nome ou `#rrggbb`, sem cor: cinza).
+    /// Os botões, em JSON ([`PUSH_BUTTON`]): o texto e a cor de cada um (pelo nome de painel
+    /// `green`, `red`, `yellow`, `blue`, `black`, por `#rrggbb` ou do tema; sem cor: cinza).
     pub buttons: String,
     /// O botão que está aceso (o último clicado; -1 = nenhum).
     pub item_index: i64,
+    /// Os botões lidos, pelo texto de `buttons` (refeitos só quando ele muda).
+    read: std::cell::RefCell<(String, Vec<PushButton>)>,
 }
 
 impl Default for PushButtons {
     fn default() -> Self {
         let mut base = ControlBase::new(170.0, 80.0);
         base.set_cursor(CursorShape::Pointer);
-        Self { base, buttons: "Liga:green;Desliga:red".into(), item_index: -1 }
+        Self {
+            base,
+            buttons: r#"[{"text":"Liga","color":"green"},{"text":"Desliga","color":"red"}]"#.into(),
+            item_index: -1,
+            read: std::cell::RefCell::default(),
+        }
     }
 }
 
 impl PushButtons {
-    fn list(&self) -> Vec<(String, Color)> {
-        self.buttons
-            .split(';')
-            .filter(|s| !s.trim().is_empty())
-            .map(|s| {
-                let (label, color) = s.split_once(':').unwrap_or((s, "gray"));
-                let color = match color.trim() {
-                    "green" => Color::rgb(40, 170, 70),
-                    "red" => Color::rgb(210, 40, 40),
-                    "yellow" => Color::rgb(240, 190, 30),
-                    "blue" => Color::rgb(40, 110, 220),
-                    "black" => Color::rgb(30, 30, 30),
-                    other => Color::from_hex(other).unwrap_or(Color::rgb(130, 130, 130)),
-                };
-                (label.trim().to_string(), color)
-            })
-            .collect()
+    /// Os botões (JSON inválido: nenhum).
+    pub fn list(&self) -> Vec<PushButton> {
+        let mut read = self.read.borrow_mut();
+        if read.0 != self.buttons {
+            read.1 = if self.buttons.trim().is_empty() { Vec::new() } else { serde_json::from_str(&self.buttons).unwrap_or_default() };
+            read.0 = self.buttons.clone();
+        }
+        read.1.clone()
+    }
+
+    /// A cor de um botão: as de painel pelo nome, o hex ou a do tema.
+    fn face(spec: &str, ctx: &PaintCtx<'_>) -> Color {
+        match spec.trim() {
+            "green" => Color::rgb(40, 170, 70),
+            "red" => Color::rgb(210, 40, 40),
+            "yellow" => Color::rgb(240, 190, 30),
+            "blue" => Color::rgb(40, 110, 220),
+            "black" => Color::rgb(30, 30, 30),
+            "" => Color::rgb(130, 130, 130),
+            other => ctx.theme.resolve_color(other).unwrap_or(Color::rgb(130, 130, 130)),
+        }
     }
 
     fn slot(&self, r: RectF, i: usize, n: usize) -> RectF {
@@ -1062,16 +1087,17 @@ impl Component for PushButtons {
     paint_value_props!();
 
     properties! {
-        buttons: String => "Data",
+        buttons: String as RecordList(&PUSH_BUTTON) => "Data",
         item_index: i64 => "Data";
-        events: on_click
+        events: on_click: String
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let r = ctx.rect;
         canvas.fill_rect(r, 6.0, &Brush::Solid(Color::rgb(70, 72, 78)));
         let list = self.list();
-        for (i, (label, color)) in list.iter().enumerate() {
+        for (i, PushButton { text: label, color }) in list.iter().enumerate() {
+            let color = &Self::face(color, ctx);
             let s = self.slot(r, i, list.len());
             let side = (s.width.min(s.height - 16.0) * 0.7).max(8.0);
             let c = PointF::new(s.x + s.width / 2.0, s.y + (s.height - 16.0) / 2.0 + 2.0);
@@ -1094,7 +1120,7 @@ impl Component for PushButtons {
         let list = self.list();
         if let Some(i) = (0..list.len()).find(|&i| self.slot(r, i, list.len()).contains(event.position)) {
             self.item_index = i as i64;
-            ctx.fire("on_click", EventArgs::Text(list[i].0.clone()));
+            ctx.fire("on_click", EventArgs::Text(list[i].text.clone()));
             ctx.repaint();
         }
     }
@@ -1407,7 +1433,7 @@ impl Component for ElectricalSymbol {
         symbol: Symbol => "Appearance",
         state: bool => "Data",
         label: String => "Appearance";
-        events: on_click
+        events: on_click: ()
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {

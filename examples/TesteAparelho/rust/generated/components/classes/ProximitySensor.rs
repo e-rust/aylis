@@ -11,6 +11,13 @@ impl Handle for ProximitySensor {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: ProximitySensor`): só um ProximitySensor.
+impl aylis::prelude::FromSender for ProximitySensor {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("ProximitySensor")).then_some(Self { id })
+    }
+}
+
 impl ProximitySensor {
     pub fn active(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "active").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -23,6 +30,12 @@ impl ProximitySensor {
     }
     pub fn set_interval(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "interval", value)
+    }
+    pub fn on_change(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_change"))
+    }
+    pub fn set_on_change(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_change", Into::<String>::into(value))
     }
     pub fn near(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "near").and_then(|v| v.to_bool().ok()).unwrap_or_default()

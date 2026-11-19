@@ -112,7 +112,7 @@ impl Component for Chip {
         closable: bool => "Behavior",
         checkable: bool => "Behavior",
         checked: bool => "Data";
-        events: on_close, on_change
+        events: on_close: (), on_change: bool
     }
 
     // Um chip é clicado; marcar (`on_change`) e fechar (`on_close`) são casos à parte.
@@ -231,12 +231,12 @@ impl Component for ChipGroup {
     leaf_control!("ChipGroup");
 
     properties! {
-        items: String => "Data",
-        selected: String => "Data",
+        items: String as List => "Data",
+        selected: String as List => "Data",
         multiple: bool => "Behavior",
         wrap: bool => "Appearance",
         chip_height: f32 => "Appearance";
-        events: on_change
+        events: on_change: String
     }
 
     // Os chips para leitores de tela e automação: botões que marcam; clicar alterna.
@@ -410,7 +410,7 @@ impl Component for Rating {
         max: u32 => "Data",
         half: bool => "Behavior",
         read_only: bool => "Behavior";
-        events: on_change
+        events: on_change: f64
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -549,7 +549,7 @@ impl Component for RangeSlider {
         min: f64 => "Data",
         max: f64 => "Data",
         step: f64 => "Data";
-        events: on_change
+        events: on_change: ()
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -647,7 +647,7 @@ impl Component for OtpInput {
         length: u32 => "Behavior",
         digits: bool => "Behavior",
         password: bool => "Behavior";
-        events: on_change, on_complete
+        events: on_change: String, on_complete: String
     }
 
     fn accepts_text(&self) -> bool {
@@ -743,7 +743,7 @@ impl Component for SplitButton {
     properties! {
         text: String => "Appearance",
         icon: String => "Appearance";
-        events: on_dropdown
+        events: on_dropdown: ()
     }
 
     fn click(&mut self, _ctx: &mut EventCtx<'_>) {}

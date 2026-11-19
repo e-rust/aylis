@@ -134,7 +134,35 @@ pub fn present() -> PresentMode {
 
 /// O modo de apresentar de um form: a propriedade `present` dele ou, vazia, o do projeto.
 pub fn present_for(form_text: &str) -> PresentMode {
-    if form_text.trim().is_empty() { present() } else { PresentMode::parse(form_text) }
+    if form_text.trim().is_empty() || form_text.trim() == "project" { present() } else { PresentMode::parse(form_text) }
+}
+
+/// O `present` de um form: o do projeto ou um dos modos (`PresentMode` sem o `transparent`,
+/// que vem do form transparente).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FormPresent {
+    #[default]
+    Project,
+    Window,
+    Composition,
+    Composed,
+}
+
+impl crate::PropEnum for FormPresent {
+    const NAMES: &'static [&'static str] = &["project", "window", "composition", "composed"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Project, Self::Window, Self::Composition, Self::Composed].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+    /// Vazio é o do projeto (o padrão de antes, quando era texto).
+    fn from_name(name: &str) -> Option<Self> {
+        if name.trim().is_empty() {
+            return Some(Self::Project);
+        }
+        Self::NAMES.iter().position(|n| n.eq_ignore_ascii_case(name.trim())).and_then(Self::from_index)
+    }
 }
 
 static CHOICE: Mutex<GpuChoice> = Mutex::new(GpuChoice::Auto);

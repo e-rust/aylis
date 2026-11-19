@@ -71,6 +71,198 @@ export interface ComponentInfo {
  * Um componente de um form, pelo id dele na tela (resolvido quando a instância do form é
  * montada). As classes de cada componente (Button, Label...) vêm do `components.ts` gerado.
  */
+/** Uma cor do acesso tipado: RGBA (0 a 255) ou um nome do tema (`Color.ofToken("primary")`),
+ *  que acompanha a troca de tema. */
+export class Color {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+  readonly a: number;
+  readonly token: string | undefined;
+
+  constructor(r = 0, g = 0, b = 0, a = 255, token?: string) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+    this.a = a;
+    this.token = token;
+  }
+
+  static rgb(r: number, g: number, b: number, a = 255): Color {
+    return new Color(r, g, b, a);
+  }
+
+  /** `#RRGGBB`, `#RRGGBBAA` ou `#RGB`. */
+  static hex(text: string): Color {
+    let h = text.trim().replace(/^#/, "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    const n = (i: number) => parseInt(h.slice(i, i + 2), 16);
+    if (!/^[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(h)) throw new Error(`cor inválida: ${text} (use #RRGGBB ou #RRGGBBAA)`);
+    return new Color(n(0), n(2), n(4), h.length >= 8 ? n(6) : 255);
+  }
+
+  static ofToken(name: string): Color {
+    return new Color(0, 0, 0, 255, name.trim());
+  }
+
+  /** O valor da tela (`#RRGGBB[AA]` ou um nome). */
+  static fromJson(value: unknown): Color {
+    if (typeof value !== "string" || value === "") return new Color();
+    return value.startsWith("#") ? Color.hex(value) : Color.ofToken(value);
+  }
+
+  toJson(): string {
+    if (this.token) return this.token;
+    const x = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0").toUpperCase();
+    return `#${x(this.r)}${x(this.g)}${x(this.b)}${this.a === 255 ? "" : x(this.a)}`;
+  }
+}
+
+/** Margens (`margins`, `padding`): esquerda, cima, direita e baixo. */
+export class Bounds {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+
+  constructor(left = 0, top = 0, right = 0, bottom = 0) {
+    this.left = left;
+    this.top = top;
+    this.right = right;
+    this.bottom = bottom;
+  }
+
+  static all(value: number): Bounds {
+    return new Bounds(value, value, value, value);
+  }
+
+  static symmetric(horizontal: number, vertical: number): Bounds {
+    return new Bounds(horizontal, vertical, horizontal, vertical);
+  }
+
+  /** O valor da tela: um número, `[h, v]`, `[l, t, r, b]` ou `{ left, top, right, bottom }`. */
+  static fromJson(value: unknown): Bounds {
+    if (typeof value === "number") return Bounds.all(value);
+    if (Array.isArray(value) && value.length === 2) return Bounds.symmetric(value[0], value[1]);
+    if (Array.isArray(value) && value.length === 4) return new Bounds(value[0], value[1], value[2], value[3]);
+    if (value && typeof value === "object") {
+      const o = value as Record<string, number>;
+      return new Bounds(o.left ?? 0, o.top ?? 0, o.right ?? 0, o.bottom ?? 0);
+    }
+    return new Bounds();
+  }
+
+  toJson(): number[] {
+    return [this.left, this.top, this.right, this.bottom];
+  }
+}
+
+/** O número como a tela grava (`0.5`, `12`). */
+function num(v: number): string {
+  return String(Math.round(v * 1000) / 1000);
+}
+
+/** Uma sombra: o deslocamento (`dx`, `dy`), o desfoque, o espalhamento e a cor (sem cor, preto a
+ *  25%). `null` no acesso tipado é sem sombra. */
+export class Shadow {
+  readonly dx: number;
+  readonly dy: number;
+  readonly blur: number;
+  readonly spread: number;
+  readonly color: Color;
+
+  constructor(dx = 0, dy = 0, blur = 0, spread = 0, color: Color = new Color(0, 0, 0, 64)) {
+    this.dx = dx;
+    this.dy = dy;
+    this.blur = blur;
+    this.spread = spread;
+    this.color = color;
+  }
+
+  /** `"dx dy desfoque [espalhamento] [#cor]"` (vazio ou inválido: `null`). */
+  static fromJson(value: unknown): Shadow | null {
+    const numbers: number[] = [];
+    let color: Color | undefined;
+    for (const token of String(value ?? "").replace(/,/g, " ").split(/\s+/).filter((t) => t !== "")) {
+      const n = Number(token.replace(/px$/, ""));
+      if (!Number.isNaN(n)) numbers.push(n);
+      else if (!color && token.startsWith("#")) color = Color.hex(token);
+      else return null;
+    }
+    if (numbers.length < 2 || numbers.length > 4) return null;
+    return new Shadow(numbers[0], numbers[1], numbers[2] ?? 0, numbers[3] ?? 0, color);
+  }
+
+  toJson(): string {
+    return `${num(this.dx)} ${num(this.dy)} ${num(this.blur)}${this.spread ? " " + num(this.spread) : ""} ${this.color.toJson()}`;
+  }
+}
+
+/** Uma curva de suavização: uma das prontas (`Easing.outQuad`) ou a Bézier cúbica
+ *  (`Easing.cubicBezier(0.2, 0, 0, 1)`), como o `cubic-bezier()` do CSS. */
+export class Easing {
+  static readonly NAMES = ["linear", "in_quad", "out_quad", "in_out_quad", "out_cubic", "in_out_cubic", "out_back"];
+  static readonly linear = new Easing("linear");
+  static readonly inQuad = new Easing("in_quad");
+  static readonly outQuad = new Easing("out_quad");
+  static readonly inOutQuad = new Easing("in_out_quad");
+  static readonly outCubic = new Easing("out_cubic");
+  static readonly inOutCubic = new Easing("in_out_cubic");
+  static readonly outBack = new Easing("out_back");
+  readonly name: string;
+  readonly bezier: [number, number, number, number] | undefined;
+
+  constructor(name = "linear", bezier?: [number, number, number, number]) {
+    this.name = name;
+    this.bezier = bezier;
+  }
+
+  static cubicBezier(x1: number, y1: number, x2: number, y2: number): Easing {
+    return new Easing("", [x1, y1, x2, y2]);
+  }
+
+  static fromJson(value: unknown): Easing {
+    const text = String(value ?? "").trim();
+    const m = /^cubic-bezier\(([^)]*)\)$/.exec(text);
+    if (m) {
+      const v = m[1].split(",").map(Number);
+      return v.length === 4 && v.every((n) => !Number.isNaN(n)) ? Easing.cubicBezier(v[0], v[1], v[2], v[3]) : new Easing();
+    }
+    const css: Record<string, [number, number, number, number]> = { ease: [0.25, 0.1, 0.25, 1], "ease-in": [0.42, 0, 1, 1], "ease-out": [0, 0, 0.58, 1], "ease-in-out": [0.42, 0, 0.58, 1] };
+    if (css[text.toLowerCase()]) return new Easing("", css[text.toLowerCase()]);
+    const plain = text.replace(/-/g, "_").toLowerCase();
+    return Easing.NAMES.includes(plain) ? new Easing(plain) : new Easing();
+  }
+
+  toJson(): string {
+    return this.bezier ? `cubic-bezier(${this.bezier.map(num).join(", ")})` : this.name;
+  }
+}
+
+/** Um ponto (`x`, `y`). */
+export class Point {
+  readonly x: number;
+  readonly y: number;
+
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  }
+
+  /** `"0.5,0 1,1 0,1"` (os que não são pontos ficam de fora). */
+  static listFromJson(value: unknown): Point[] {
+    return String(value ?? "")
+      .split(/\s+/)
+      .map((p) => p.split(",").map(Number))
+      .filter((p) => p.length === 2 && !Number.isNaN(p[0]) && !Number.isNaN(p[1]))
+      .map((p) => new Point(p[0], p[1]));
+  }
+
+  static listToJson(points: Point[]): string {
+    return points.map((p) => `${num(p.x)},${num(p.y)}`).join(" ");
+  }
+}
+
 export class AylisComponent {
   readonly aylis: Aylis;
   readonly id: number;
@@ -91,6 +283,21 @@ export class AylisComponent {
   /** Grava uma propriedade. */
   protected setProp(prop: string, value: Json) {
     this.aylis.send("set", { target: this.id, props: { [prop]: value } });
+  }
+
+  /** A referência a outro componente (`popupMenu`, `dataSource`), ou `null`. */
+  protected async getRef(prop: string): Promise<AylisComponent | null> {
+    const info: any = await this.aylis.call("get", { target: this.id, prop, ref: true });
+    return info ? new AylisComponent(this.aylis, info.id, info.name) : null;
+  }
+
+  protected setRef(prop: string, component: AylisComponent | null) {
+    this.setProp(prop, component ? component.id : null);
+  }
+
+  /** O componente que um método devolveu (com `ref: true`: o id e o nome), ou `null`. */
+  protected componentOf(info: any): AylisComponent | null {
+    return info ? new AylisComponent(this.aylis, info.id, info.name) : null;
   }
 
   setFocus() {

@@ -103,7 +103,7 @@ class FrmIBGEComponents(Form):
         self.dbcEstados = self._resolve(components, "dbcEstados", "DBChart", DBChart)
 
     def find_client_data_set(self, name):
-        """O ClientDataSet deste form com o nome (como o FindComponent)."""
+        """O ClientDataSet deste form com o nome."""
         if name == "cdsEstados":
             return self.cdsEstados
         if name == "cdsMunicipios":
@@ -121,7 +121,7 @@ class FrmIBGEComponents(Form):
         return self.find_client_data_set(event["sender"]["name"])
 
     def find_d_b_chart(self, name):
-        """O DBChart deste form com o nome (como o FindComponent)."""
+        """O DBChart deste form com o nome."""
         if name == "dbcPopulacao":
             return self.dbcPopulacao
         if name == "dbcMaiores":
@@ -135,7 +135,7 @@ class FrmIBGEComponents(Form):
         return self.find_d_b_chart(event["sender"]["name"])
 
     def find_data_grid(self, name):
-        """O DataGrid deste form com o nome (como o FindComponent)."""
+        """O DataGrid deste form com o nome."""
         if name == "grdEstados":
             return self.grdEstados
         if name == "grdDistritos":
@@ -149,7 +149,7 @@ class FrmIBGEComponents(Form):
         return self.find_data_grid(event["sender"]["name"])
 
     def find_data_source(self, name):
-        """O DataSource deste form com o nome (como o FindComponent)."""
+        """O DataSource deste form com o nome."""
         if name == "dsEstados":
             return self.dsEstados
         if name == "dsMunicipios":
@@ -167,7 +167,7 @@ class FrmIBGEComponents(Form):
         return self.find_data_source(event["sender"]["name"])
 
     def find_field(self, name):
-        """O Field deste form com o nome (como o FindComponent)."""
+        """O Field deste form com o nome."""
         if name == "cdsEstadosId":
             return self.cdsEstadosId
         if name == "cdsEstadosSigla":
@@ -251,7 +251,7 @@ class FrmIBGEComponents(Form):
         return self.find_field(event["sender"]["name"])
 
     def find_group_box(self, name):
-        """O GroupBox deste form com o nome (como o FindComponent)."""
+        """O GroupBox deste form com o nome."""
         if name == "gbEstados":
             return self.gbEstados
         if name == "gbDistritos":
@@ -265,7 +265,7 @@ class FrmIBGEComponents(Form):
         return self.find_group_box(event["sender"]["name"])
 
     def find_image(self, name):
-        """O Image deste form com o nome (como o FindComponent)."""
+        """O Image deste form com o nome."""
         if name == "imgBandeiraEstado":
             return self.imgBandeiraEstado
         if name == "imgBandeiraMunicipio":
@@ -277,7 +277,7 @@ class FrmIBGEComponents(Form):
         return self.find_image(event["sender"]["name"])
 
     def find_label(self, name):
-        """O Label deste form com o nome (como o FindComponent)."""
+        """O Label deste form com o nome."""
         if name == "lblFonte":
             return self.lblFonte
         if name == "lblEstado":
@@ -335,7 +335,7 @@ class FrmIBGEComponents(Form):
         return self.find_label(event["sender"]["name"])
 
     def find_layout(self, name):
-        """O Layout deste form com o nome (como o FindComponent)."""
+        """O Layout deste form com o nome."""
         if name == "lytListas":
             return self.lytListas
         if name == "lytPainel":
@@ -357,7 +357,7 @@ class FrmIBGEComponents(Form):
         return self.find_layout(event["sender"]["name"])
 
     def find_panel(self, name):
-        """O Panel deste form com o nome (como o FindComponent)."""
+        """O Panel deste form com o nome."""
         if name == "pnlEstado":
             return self.pnlEstado
         if name == "pnlMunicipio":
@@ -369,7 +369,7 @@ class FrmIBGEComponents(Form):
         return self.find_panel(event["sender"]["name"])
 
     def find_splitter(self, name):
-        """O Splitter deste form com o nome (como o FindComponent)."""
+        """O Splitter deste form com o nome."""
         if name == "splListas":
             return self.splListas
         return None
@@ -379,7 +379,7 @@ class FrmIBGEComponents(Form):
         return self.find_splitter(event["sender"]["name"])
 
     def find_svg(self, name):
-        """O Svg deste form com o nome (como o FindComponent)."""
+        """O Svg deste form com o nome."""
         if name == "svgBrasil":
             return self.svgBrasil
         if name == "svgMunicipio":

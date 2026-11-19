@@ -28,7 +28,7 @@
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os nós, separados por `;`, com um `>` na frente por nível e o ícone depois de `\|` (`Brasil\|flag;>São Paulo;>>Campinas;Portugal`). |
+| `items` | Itens | lista de `TreeNode` | Os nós em JSON (o registro `TreeNode`: `text`, `icon`, `data`, `expanded`, `children`): `[{"text": "Brasil", "icon": "flag", "children": [{"text": "São Paulo"}]}]`. |
 
 ## Eventos
 
@@ -51,8 +51,8 @@ E o handler, um método do form (`self.TreeView1` já é um `TreeView`):
 ```rust
 impl FrmPrincipal {
     pub fn tree_view1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.TreeView1.items(ui);
-        self.TreeView1.set_items(ui, format!("{atual}!"));
+        let atual = self.TreeView1.item_height(ui);
+        self.TreeView1.set_item_height(ui, atual + 10.0);
     }
 }
 ```

@@ -844,11 +844,20 @@ pub struct MethodInfo {
     /// O nome de cada argumento (`path`), que o acesso tipado gerado usa nas assinaturas;
     /// vazio: sem nome (o gerado numera, `a1`, `a2`).
     pub params: &'static [&'static str],
+    /// O tipo Rust de cada argumento e do resultado que são enum (`ScreenOrientation`): o acesso
+    /// tipado usa o mesmo nome em todas as linguagens. Vazio nos outros.
+    pub arg_types: &'static [&'static str],
+    pub returns_type: &'static str,
 }
 
 impl MethodInfo {
     pub const fn new(name: &'static str, args: &'static [PropKind], returns: Option<PropKind>) -> Self {
-        Self { name, args, returns, params: &[] }
+        Self { name, args, returns, params: &[], arg_types: &[], returns_type: "" }
+    }
+
+    /// O tipo Rust dos argumentos e do resultado que são enum (veja [`MethodInfo::arg_types`]).
+    pub const fn types(self, args: &'static [&'static str], returns: &'static str) -> Self {
+        Self { arg_types: args, returns_type: returns, ..self }
     }
 
     /// Os nomes dos argumentos, na ordem de `args`:
@@ -1123,8 +1132,8 @@ impl ControlBase {
         PropInfo::new("top", PropKind::Float, "Layout"),
         PropInfo::new("width", PropKind::Float, "Layout"),
         PropInfo::new("height", PropKind::Float, "Layout"),
-        PropInfo::new("align", PropKind::Enum(<Align as crate::prop::PropEnum>::NAMES), "Layout"),
-        PropInfo::new("anchors", PropKind::Set(&Anchors::NAMES), "Layout"),
+        PropInfo::new("align", PropKind::Enum(<Align as crate::prop::PropEnum>::NAMES), "Layout").rust_type("Align"),
+        PropInfo::new("anchors", PropKind::Set(&Anchors::NAMES), "Layout").rust_type("Anchors"),
         PropInfo::new("margins", PropKind::Bounds, "Layout"),
         PropInfo::new("padding", PropKind::Bounds, "Layout"),
         PropInfo::new("visible", PropKind::Bool, "Behavior"),
@@ -1143,9 +1152,9 @@ impl ControlBase {
         PropInfo::new("drag_image", PropKind::Component, "Behavior"),
         PropInfo::new("drop_types", PropKind::String, "Behavior"),
         PropInfo::new("tab_stop", PropKind::Bool, "Behavior"),
-        PropInfo::new("cursor", PropKind::Enum(<CursorShape as crate::prop::PropEnum>::NAMES), "Behavior"),
+        PropInfo::new("cursor", PropKind::Enum(<CursorShape as crate::prop::PropEnum>::NAMES), "Behavior").rust_type("CursorShape"),
         PropInfo::new("opacity", PropKind::Float, "Appearance"),
-        PropInfo::new("blend_mode", PropKind::Enum(<crate::BlendMode as crate::prop::PropEnum>::NAMES), "Appearance"),
+        PropInfo::new("blend_mode", PropKind::Enum(<crate::BlendMode as crate::prop::PropEnum>::NAMES), "Appearance").rust_type("BlendMode"),
         PropInfo::new("cache_layer", PropKind::Bool, "Appearance"),
         PropInfo::new("rotation", PropKind::Angle, "Layout"),
         PropInfo::new("scale", PropKind::Float, "Layout"),
@@ -1156,7 +1165,7 @@ impl ControlBase {
         PropInfo::new("min_width", PropKind::Float, "Layout"),
         PropInfo::new("min_height", PropKind::Float, "Layout"),
         PropInfo::new("max_height", PropKind::Float, "Layout"),
-        PropInfo::new("self_align", PropKind::Enum(<SelfAlign as crate::prop::PropEnum>::NAMES), "Layout"),
+        PropInfo::new("self_align", PropKind::Enum(<SelfAlign as crate::prop::PropEnum>::NAMES), "Layout").rust_type("SelfAlign"),
         PropInfo::new("auto_size", PropKind::Bool, "Layout"),
         PropInfo::new("column_span", PropKind::Int, "Layout"),
         PropInfo::new("grid_row", PropKind::Int, "Layout"),
@@ -1164,8 +1173,8 @@ impl ControlBase {
         PropInfo::new("row_span", PropKind::Int, "Layout"),
         PropInfo::new("grow", PropKind::Float, "Layout"),
         PropInfo::new("shadow", PropKind::Shadow, "Appearance"),
-        PropInfo::new("style", PropKind::String, "Appearance"),
-        PropInfo::new("theme", PropKind::String, "Appearance"),
+        PropInfo::new("style", PropKind::StyleName, "Appearance"),
+        PropInfo::new("theme", PropKind::ThemeName, "Appearance"),
         PropInfo::new("fill", PropKind::Color, "Appearance"),
         PropInfo::new("border_color", PropKind::Color, "Appearance"),
         PropInfo::new("text_color", PropKind::Color, "Appearance"),
@@ -1184,29 +1193,29 @@ impl ControlBase {
         PropInfo::new("tag_string", PropKind::String, "Misc"),
         PropInfo::new("accessible_name", PropKind::String, "Behavior"),
         PropInfo::new("popup_menu", PropKind::Component, "Behavior"),
-        PropInfo::new("on_click", PropKind::Event, "Events"),
-        PropInfo::new("on_dbl_click", PropKind::Event, "Events"),
-        PropInfo::new("on_long_press", PropKind::Event, "Events"),
-        PropInfo::new("on_pointer_down", PropKind::Event, "Events"),
-        PropInfo::new("on_pointer_up", PropKind::Event, "Events"),
-        PropInfo::new("on_pointer_move", PropKind::Event, "Events"),
-        PropInfo::new("on_pointer_enter", PropKind::Event, "Events"),
-        PropInfo::new("on_pointer_leave", PropKind::Event, "Events"),
-        PropInfo::new("on_wheel", PropKind::Event, "Events"),
-        PropInfo::new("on_gesture", PropKind::Event, "Events"),
-        PropInfo::new("on_swipe", PropKind::Event, "Events"),
+        PropInfo::new("on_click", PropKind::Event, "Events").event_arg(crate::EventArg::None),
+        PropInfo::new("on_dbl_click", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_long_press", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_pointer_down", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_pointer_up", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_pointer_move", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_pointer_enter", PropKind::Event, "Events").event_arg(crate::EventArg::None),
+        PropInfo::new("on_pointer_leave", PropKind::Event, "Events").event_arg(crate::EventArg::None),
+        PropInfo::new("on_wheel", PropKind::Event, "Events").event_arg(crate::EventArg::Wheel),
+        PropInfo::new("on_gesture", PropKind::Event, "Events").event_arg(crate::EventArg::Gesture),
+        PropInfo::new("on_swipe", PropKind::Event, "Events").event_arg(crate::EventArg::Swipe),
         PropInfo::new("on_key_down", PropKind::Event, "Events"),
         PropInfo::new("on_key_press", PropKind::Event, "Events"),
-        PropInfo::new("on_key_up", PropKind::Event, "Events"),
-        PropInfo::new("on_enter", PropKind::Event, "Events"),
-        PropInfo::new("on_exit", PropKind::Event, "Events"),
-        PropInfo::new("on_resize", PropKind::Event, "Events"),
+        PropInfo::new("on_key_up", PropKind::Event, "Events").event_arg(crate::EventArg::Key),
+        PropInfo::new("on_enter", PropKind::Event, "Events").event_arg(crate::EventArg::None),
+        PropInfo::new("on_exit", PropKind::Event, "Events").event_arg(crate::EventArg::None),
+        PropInfo::new("on_resize", PropKind::Event, "Events").event_arg(crate::EventArg::None),
         PropInfo::new("on_drag_start", PropKind::Event, "Events"),
         PropInfo::new("on_drag_over", PropKind::Event, "Events"),
-        PropInfo::new("on_drag_move", PropKind::Event, "Events"),
-        PropInfo::new("on_drag_leave", PropKind::Event, "Events"),
-        PropInfo::new("on_drag_drop", PropKind::Event, "Events"),
-        PropInfo::new("on_drag_end", PropKind::Event, "Events"),
+        PropInfo::new("on_drag_move", PropKind::Event, "Events").event_arg(crate::EventArg::Pointer),
+        PropInfo::new("on_drag_leave", PropKind::Event, "Events").event_arg(crate::EventArg::Value(PropKind::String)),
+        PropInfo::new("on_drag_drop", PropKind::Event, "Events").event_arg(crate::EventArg::Value(PropKind::String)),
+        PropInfo::new("on_drag_end", PropKind::Event, "Events").event_arg(crate::EventArg::Value(PropKind::Bool)),
     ];
 
     pub fn new(width: f32, height: f32) -> Self {

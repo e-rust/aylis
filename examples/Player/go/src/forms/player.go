@@ -77,11 +77,11 @@ func tempo(segundos float64) string {
 
 // atualizarFila: a fila na lista, com a mídia atual selecionada.
 func atualizarFila(app *aylis.Aylis) {
-	itens := make([]string, 0, len(estado.fila))
+	itens := make([]ListViewItem, 0, len(estado.fila))
 	for _, c := range estado.fila {
-		itens = append(itens, nomeDoArquivo(c)+"|"+pasta(c))
+		itens = append(itens, ListViewItem{Title: nomeDoArquivo(c), Detail: pasta(c)})
 	}
-	frmPlayer.lvFila.SetItems(strings.Join(itens, ";"))
+	frmPlayer.lvFila.SetItems(itens)
 	frmPlayer.lvFila.SetItemIndex(int64(estado.atual))
 }
 
@@ -150,15 +150,14 @@ func proximoIndice() int {
 	return -1
 }
 
-func (f FrmPlayer) abrir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) abrir_click(app *aylis.Aylis, sender aylis.Component) {
 	frmPlayer.dlgAbrir.Execute()
 }
 
-func (f FrmPlayer) abrir_select(app *aylis.Aylis, ev aylis.Event) {
-	// Os arquivos escolhidos vêm separados por ";".
-	texto, _ := ev.Args.(string)
+func (f FrmPlayer) abrir_select(app *aylis.Aylis, sender aylisOpenDialog, value []string) {
+	// Os arquivos escolhidos (o evento já separa a lista).
 	var novos []string
-	for _, p := range strings.Split(texto, ";") {
+	for _, p := range value {
 		if p != "" {
 			novos = append(novos, p)
 		}
@@ -176,7 +175,7 @@ func (f FrmPlayer) abrir_select(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPlayer) limpar_fila_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) limpar_fila_click(app *aylis.Aylis, sender aylis.Component) {
 	frmPlayer.vpVideo.Stop()
 	estado.fila = nil
 	estado.atual = -1
@@ -187,17 +186,17 @@ func (f FrmPlayer) limpar_fila_click(app *aylis.Aylis, ev aylis.Event) {
 	botaoReproduzir(app)
 }
 
-func (f FrmPlayer) sair_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) sair_click(app *aylis.Aylis, sender aylisMenuItem) {
 	frmPlayer.Close()
 }
 
-func (f FrmPlayer) reproduzir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) reproduzir_click(app *aylis.Aylis, sender aylis.Component) {
 	switch {
 	case estado.atual < 0:
 		if len(estado.fila) > 0 {
 			tocar(app, 0)
 		} else {
-			f.abrir_click(app, ev)
+			f.abrir_click(app, sender)
 		}
 	case estado.tocando:
 		frmPlayer.vpVideo.Pause()
@@ -210,7 +209,7 @@ func (f FrmPlayer) reproduzir_click(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPlayer) parar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) parar_click(app *aylis.Aylis, sender aylisMenuItem) {
 	if estado.atual < 0 {
 		return
 	}
@@ -220,7 +219,7 @@ func (f FrmPlayer) parar_click(app *aylis.Aylis, ev aylis.Event) {
 	frmPlayer.sbPosicao.SetPosition(0.0)
 }
 
-func (f FrmPlayer) anterior_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) anterior_click(app *aylis.Aylis, sender aylis.Component) {
 	switch atual := estado.atual; {
 	case atual > 0:
 		tocar(app, atual-1)
@@ -231,13 +230,13 @@ func (f FrmPlayer) anterior_click(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPlayer) proxima_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) proxima_click(app *aylis.Aylis, sender aylis.Component) {
 	if i := proximoIndice(); i >= 0 {
 		tocar(app, i)
 	}
 }
 
-func (f FrmPlayer) embaralhar_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) embaralhar_click(app *aylis.Aylis, sender aylis.Component) {
 	estado.embaralhar = !estado.embaralhar
 	ligado := estado.embaralhar
 	dica := "Embaralhar: desativado"
@@ -249,7 +248,7 @@ func (f FrmPlayer) embaralhar_click(app *aylis.Aylis, ev aylis.Event) {
 	frmPlayer.mnuEmbaralhar.SetChecked(ligado)
 }
 
-func (f FrmPlayer) repetir_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) repetir_click(app *aylis.Aylis, sender aylis.Component) {
 	estado.repetir = (estado.repetir + 1) % 3
 	modo := estado.repetir
 	icone := "repeat"
@@ -270,21 +269,19 @@ func pagina(app *aylis.Aylis, agora bool) {
 	frmPlayer.btnFila.SetChecked(!agora)
 }
 
-func (f FrmPlayer) agora_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) agora_click(app *aylis.Aylis, sender aylis.Component) {
 	pagina(app, true)
 }
 
-func (f FrmPlayer) fila_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) fila_click(app *aylis.Aylis, sender aylis.Component) {
 	pagina(app, false)
 }
 
-func (f FrmPlayer) posicao_seek(app *aylis.Aylis, ev aylis.Event) {
-	if s, ok := ev.Args.(float64); ok {
-		frmPlayer.vpVideo.Seek(s)
-	}
+func (f FrmPlayer) posicao_seek(app *aylis.Aylis, sender aylisSeekBar, value float64) {
+	frmPlayer.vpVideo.Seek(value)
 }
 
-func (f FrmPlayer) mudo_click(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) mudo_click(app *aylis.Aylis, sender aylisButton) {
 	estado.mudo = !estado.mudo
 	icone, dica := "volume", "Sem som"
 	if estado.mudo {
@@ -295,13 +292,11 @@ func (f FrmPlayer) mudo_click(app *aylis.Aylis, ev aylis.Event) {
 	frmPlayer.btnMudo.SetHint(dica)
 }
 
-func (f FrmPlayer) volume_change(app *aylis.Aylis, ev aylis.Event) {
-	if v, ok := ev.Args.(float64); ok {
-		frmPlayer.vpVideo.SetVolume(v / 100)
-	}
+func (f FrmPlayer) volume_change(app *aylis.Aylis, sender aylisTrackBar, value float64) {
+	frmPlayer.vpVideo.SetVolume(value / 100)
 }
 
-func (f FrmPlayer) video_fim(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) video_fim(app *aylis.Aylis, sender aylisVideoPlayer) {
 	if estado.repetir == 2 && estado.atual >= 0 {
 		tocar(app, estado.atual)
 		return
@@ -314,21 +309,19 @@ func (f FrmPlayer) video_fim(app *aylis.Aylis, ev aylis.Event) {
 	}
 }
 
-func (f FrmPlayer) video_erro(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) video_erro(app *aylis.Aylis, sender aylisVideoPlayer, value string) {
 	estado.tocando = false
 	botaoReproduzir(app)
 	frmPlayer.lblDetalhe.SetText("Não foi possível reproduzir este arquivo")
 }
 
-func (f FrmPlayer) fila_item_click(app *aylis.Aylis, ev aylis.Event) {
-	if n, ok := ev.Args.(float64); ok {
-		if i := int(n); i >= 0 && i < len(estado.fila) {
-			tocar(app, i)
-		}
+func (f FrmPlayer) fila_item_click(app *aylis.Aylis, sender aylisListView, value int64) {
+	if i := int(value); i >= 0 && i < len(estado.fila) {
+		tocar(app, i)
 	}
 }
 
-func (f FrmPlayer) posicao_timer(app *aylis.Aylis, ev aylis.Event) {
+func (f FrmPlayer) posicao_timer(app *aylis.Aylis, sender aylisTimer) {
 	if estado.atual < 0 {
 		return
 	}

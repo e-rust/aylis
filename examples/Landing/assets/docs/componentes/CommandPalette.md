@@ -2,7 +2,7 @@
 
 ![CommandPalette](img/CommandPalette.png)
 
-Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa (`on_select` com o comando). `items` separados por `;`, cada um `nome|atalho|ícone` (atalho e ícone opcionais).
+Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa (`on_select` com o nome do comando). `items` é a lista de registros `PALETTE_COMMAND` (`{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}`; atalho e ícone opcionais).
 
 **Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -18,7 +18,7 @@ Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa (`on_s
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os comandos, separados por `;`, cada um `nome\|atalho\|ícone` (atalho e ícone opcionais). |
+| `items` | Itens | lista de `PaletteCommand` | Os comandos, em JSON: `[{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}]`. |
 | `query` | Busca | texto | O texto digitado na busca: a lista mostra só os comandos que o contêm. Vazio: todos. |
 
 ## Eventos
@@ -40,8 +40,8 @@ E o handler, um método do form (`self.CommandPalette1` já é um `CommandPalett
 ```rust
 impl FrmPrincipal {
     pub fn command_palette1_select(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.CommandPalette1.items(ui);
-        self.CommandPalette1.set_items(ui, format!("{atual}!"));
+        let atual = self.CommandPalette1.query(ui);
+        self.CommandPalette1.set_query(ui, format!("{atual}!"));
     }
 }
 ```

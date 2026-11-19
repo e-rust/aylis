@@ -10,7 +10,7 @@ Bluetooth: BLE e o clássico num componente só.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `service_filter` | Filtro de serviços | texto | A procura só acha os aparelhos com estes serviços (uuids separados por `;`, aceita a forma curta como `180D`); vazio: todos. |
+| `service_filter` | Filtro de serviços | lista de textos (separados por `;`) | A procura só acha os aparelhos com estes serviços (uuids separados por `;`, aceita a forma curta como `180D`); vazio: todos. |
 | `name_filter` | Filtro de nome | texto | A procura só acha os aparelhos com este trecho no nome; vazio: todos. |
 
 ## Eventos
@@ -38,8 +38,8 @@ E o handler, um método do form (`self.Bluetooth1` já é um `Bluetooth`):
 ```rust
 impl FrmPrincipal {
     pub fn bluetooth1_found(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.Bluetooth1.service_filter(ui);
-        self.Bluetooth1.set_service_filter(ui, format!("{atual}!"));
+        let atual = self.Bluetooth1.name_filter(ui);
+        self.Bluetooth1.set_name_filter(ui, format!("{atual}!"));
     }
 }
 ```

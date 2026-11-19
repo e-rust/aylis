@@ -12,7 +12,7 @@ Som curto (efeito, alerta): toca por cima de si mesmo, na memória.
 |---|---|---|---|
 | `file` | Arquivo | texto | Arquivo do aplicativo (`assets/audio/clique.wav`) ou caminho no disco. |
 | `volume` | Volume | número | O volume, de 0 (mudo) a 1 (o máximo). |
-| `output` | Saída | texto | As saídas (como no `MediaPlayer`(crate::MediaPlayer)). |
+| `output` | Saída | lista de `OutputSpec` | As saídas (como no `MediaPlayer`(crate::MediaPlayer)). |
 | `polyphony` | Toques ao mesmo tempo | inteiro | Quantos toques ao mesmo tempo (o mais antigo para quando passa). |
 
 ## Eventos

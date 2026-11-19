@@ -189,7 +189,7 @@ impl Component for WebView {
         data_dir: String => "Behavior",
         browser_args: String => "Behavior",
         sandbox: String => "Behavior";
-        events: on_load, on_navigate, on_blocked, on_message;
+        events: on_load: String, on_navigate: String, on_blocked: String, on_message: String;
         computed: message_url: String => message_url / set_message_url;
         on_set: sync
     }

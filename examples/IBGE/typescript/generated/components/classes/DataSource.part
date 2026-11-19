@@ -1,22 +1,34 @@
 
 /** Um DataSource de um form. */
 export class DataSource extends AylisComponent {
-    get dataSet(): Promise<string> {
-        return this.getProp("data_set");
+    get dataSet(): Promise<AylisComponent | null> {
+        return this.getRef("data_set");
     }
-    set dataSet(value: string) {
-        this.setProp("data_set", value);
+    set dataSet(value: AylisComponent | null) {
+        this.setRef("data_set", value);
     }
     get autoEdit(): Promise<boolean> {
-        return this.getProp("auto_edit");
+        return this.getProp("auto_edit") as Promise<any>;
     }
     set autoEdit(value: boolean) {
         this.setProp("auto_edit", value);
     }
     get enabled(): Promise<boolean> {
-        return this.getProp("enabled");
+        return this.getProp("enabled") as Promise<any>;
     }
     set enabled(value: boolean) {
         this.setProp("enabled", value);
+    }
+    get onDataChange(): Promise<string> {
+        return this.getProp("on_data_change") as Promise<any>;
+    }
+    set onDataChange(value: string) {
+        this.setProp("on_data_change", value);
+    }
+    get onStateChange(): Promise<string> {
+        return this.getProp("on_state_change") as Promise<any>;
+    }
+    set onStateChange(value: string) {
+        this.setProp("on_state_change", value);
     }
 }

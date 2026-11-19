@@ -285,7 +285,7 @@ impl Component for ScrollBox {
         only_allowed: bool => "Keyboard",
         chars_override: bool => "Keyboard",
         char_map: String => "Keyboard";
-        events: on_end_reached, on_refresh, on_scroll;
+        events: on_end_reached: (), on_refresh: (), on_scroll: f64;
         computed: scroll_position: f32 => scroll / set_scroll_position;
         on_set: sync
     }

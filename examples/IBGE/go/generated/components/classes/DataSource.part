@@ -2,11 +2,17 @@
 // aylisDataSource é um DataSource de um form.
 type aylisDataSource struct{ aylis.Component }
 
-func (c aylisDataSource) DataSet() string { return asText(c.Get("data_set")) }
-func (c aylisDataSource) SetDataSet(v string) { c.Set("data_set", v) }
+func (c aylisDataSource) DataSet() *aylis.Component { return c.GetRef("data_set") }
+func (c aylisDataSource) SetDataSet(v aylis.Ref) { c.SetRef("data_set", v) }
 
 func (c aylisDataSource) AutoEdit() bool { return asBool(c.Get("auto_edit")) }
 func (c aylisDataSource) SetAutoEdit(v bool) { c.Set("auto_edit", v) }
 
 func (c aylisDataSource) Enabled() bool { return asBool(c.Get("enabled")) }
 func (c aylisDataSource) SetEnabled(v bool) { c.Set("enabled", v) }
+
+func (c aylisDataSource) OnDataChange() string { return asText(c.Get("on_data_change")) }
+func (c aylisDataSource) SetOnDataChange(v string) { c.Set("on_data_change", v) }
+
+func (c aylisDataSource) OnStateChange() string { return asText(c.Get("on_state_change")) }
+func (c aylisDataSource) SetOnStateChange(v string) { c.Set("on_state_change", v) }

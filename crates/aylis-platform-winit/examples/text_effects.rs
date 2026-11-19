@@ -16,11 +16,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.control_mut(form).unwrap().set_padding(24.0);
 
     let slides: [(&str, &str, f32); 5] = [
-        ("Bem-vindo ao aylis", "fade by=letter duration=500 stagger=45; slide dy=40 by=letter duration=700 stagger=45 easing=back", 44.0),
-        ("Palavra por palavra, de baixo para cima", "fade by=word duration=400 stagger=180; scale from=0.3 by=word duration=600 stagger=180 easing=elastic", 26.0),
-        ("Máquina de escrever, com cursor…", "typewriter speed=55 cursor", 24.0),
-        ("Depois de entrar, fica ondulando", "fade by=letter duration=300 stagger=25 order=center; wave amplitude=6 period=1400 after", 26.0),
-        ("Cor e espaçamento chegando juntos", "color from=#22c55e duration=1500; tracking from=12 duration=1200 easing=out; rotate from=-25 by=word duration=800 stagger=150", 26.0),
+        (
+            "Bem-vindo ao aylis",
+            r#"[{"effect":"fade","by":"letter","duration":500,"stagger":45},{"effect":"slide","dy":40,"by":"letter","duration":700,"stagger":45,"easing":"back"}]"#,
+            44.0,
+        ),
+        (
+            "Palavra por palavra, de baixo para cima",
+            r#"[{"effect":"fade","by":"word","duration":400,"stagger":180},{"effect":"scale","from":0.3,"by":"word","duration":600,"stagger":180,"easing":"elastic"}]"#,
+            26.0,
+        ),
+        ("Máquina de escrever, com cursor…", r#"[{"effect":"typewriter","speed":55,"cursor":true}]"#, 24.0),
+        (
+            "Depois de entrar, fica ondulando",
+            r#"[{"effect":"fade","by":"letter","duration":300,"stagger":25,"order":"center"},{"effect":"wave","amplitude":6,"period":1400,"after":true}]"#,
+            26.0,
+        ),
+        (
+            "Cor e espaçamento chegando juntos",
+            r##"[{"effect":"color","from_color":"#22c55e","duration":1500},{"effect":"tracking","from":12,"duration":1200,"easing":"out"},{"effect":"rotate","from":-25,"by":"word","duration":800,"stagger":150}]"##,
+            26.0,
+        ),
     ];
     let mut texts = Vec::new();
     for (text, effects, size) in slides {

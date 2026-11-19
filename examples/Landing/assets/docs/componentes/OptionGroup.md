@@ -2,7 +2,7 @@
 
 ![OptionGroup](img/OptionGroup.png)
 
-O grupo de opções (`QOptionGroup`): `items` (`Pequeno;Médio;Grande`) como botões de rádio (uma escolha, `item_index`), caixas ou interruptores (várias, os textos marcados em `selected`, separados por `;`). `inline` põe lado a lado. `on_change` a cada mudança.
+O grupo de opções (`QOptionGroup`): `items` (`Pequeno;Médio;Grande`) como botões de rádio (uma escolha, `item_index`), caixas ou interruptores (várias). `selected` tem os textos marcados nos três (no rádio, o escolhido). `inline` põe lado a lado. `on_change` a cada mudança, sempre com a lista dos marcados (o `selected`), em qualquer `kind`.
 
 **Paleta:** Quasar · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -24,9 +24,9 @@ O grupo de opções (`QOptionGroup`): `items` (`Pequeno;Médio;Grande`) como bot
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | As opções, separadas por `;` (`Pequeno;Médio;Grande`). |
+| `items` | Itens | lista de textos (separados por `;`) | As opções, separadas por `;` (`Pequeno;Médio;Grande`). |
 | `item_index` | Item escolhido | inteiro | A opção escolhida no modo rádio (0 = a primeira; -1 = nenhuma). |
-| `selected` | Escolhidos | texto | As opções marcadas nas caixas e interruptores: os textos, separados por `;`. |
+| `selected` | Escolhidos | lista de textos (separados por `;`) | As opções marcadas: os textos, separados por `;`. No rádio, o texto do `item_index` (gravar um muda o outro). |
 
 ## Eventos
 
@@ -47,8 +47,8 @@ E o handler, um método do form (`self.OptionGroup1` já é um `OptionGroup`):
 ```rust
 impl FrmPrincipal {
     pub fn option_group1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.OptionGroup1.items(ui);
-        self.OptionGroup1.set_items(ui, format!("{atual}!"));
+        let atual = self.OptionGroup1.item_index(ui);
+        self.OptionGroup1.set_item_index(ui, atual + 1);
     }
 }
 ```

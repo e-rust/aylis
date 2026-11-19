@@ -11,6 +11,10 @@
     procedure SetFileName(Value: string);
     function GetMultiple: Boolean;
     procedure SetMultiple(Value: Boolean);
+    function GetOnSelect: string;
+    procedure SetOnSelect(Value: string);
+    function GetOnCancel: string;
+    procedure SetOnCancel(Value: string);
   public
     procedure Execute;
     property Title: string read GetTitle write SetTitle;
@@ -18,6 +22,8 @@
     property InitialDir: string read GetInitialDir write SetInitialDir;
     property FileName: string read GetFileName write SetFileName;
     property Multiple: Boolean read GetMultiple write SetMultiple;
+    property OnSelect: string read GetOnSelect write SetOnSelect;
+    property OnCancel: string read GetOnCancel write SetOnCancel;
   end;
 
 
@@ -69,6 +75,26 @@ end;
 procedure TSaveDialog.SetMultiple(Value: Boolean);
 begin
   SetProp('multiple', TJSONBoolean.Create(Value));
+end;
+
+function TSaveDialog.GetOnSelect: string;
+begin
+  Result := AsText(GetProp('on_select'));
+end;
+
+procedure TSaveDialog.SetOnSelect(Value: string);
+begin
+  SetProp('on_select', TJSONString.Create(Value));
+end;
+
+function TSaveDialog.GetOnCancel: string;
+begin
+  Result := AsText(GetProp('on_cancel'));
+end;
+
+procedure TSaveDialog.SetOnCancel(Value: string);
+begin
+  SetProp('on_cancel', TJSONString.Create(Value));
 end;
 
 procedure TSaveDialog.Execute;

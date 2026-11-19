@@ -271,7 +271,7 @@ impl Component for Banner {
         text: String => "Appearance",
         icon: String => "Appearance",
         closable: bool => "Behavior";
-        events: on_close
+        events: on_close: ()
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -616,7 +616,7 @@ impl Component for SegmentedControl {
         items: String => "Data",
         icons: String => "Appearance",
         item_index: i64 => "Data";
-        events: on_change
+        events: on_change: i64
     }
 
     // Os segmentos para leitores de tela e automação (como opções de rádio).
@@ -1056,8 +1056,8 @@ impl Component for Breadcrumb {
     }
 
     properties! {
-        items: String => "Data";
-        events: on_change
+        items: String as List => "Data";
+        events: on_change: i64
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1194,9 +1194,9 @@ impl Component for SeekBar {
         position: f64 => "Data",
         duration: f64 => "Data",
         buffered: f64 => "Data",
-        markers: String => "Data",
+        markers: String as NumberList => "Data",
         show_time: bool => "Appearance";
-        events: on_change, on_seek;
+        events: on_change: f64, on_seek: f64;
         on_set: after_set
     }
 
@@ -1364,7 +1364,7 @@ impl Component for HotkeyEdit {
     properties! {
         hotkey: String => "Data",
         placeholder: String => "Appearance";
-        events: on_change
+        events: on_change: String
     }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
@@ -1480,7 +1480,7 @@ impl Component for DirectionPad {
     properties! {
         diagonals: bool => "Behavior",
         center_icon: String => "Appearance";
-        events: on_press, on_release
+        events: on_press: String, on_release: String
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1636,7 +1636,7 @@ impl Component for Joystick {
     properties! {
         dead_zone: f32 => "Behavior",
         spring: bool => "Behavior";
-        events: on_change, on_release;
+        events: on_change: (), on_release: ();
         computed: x: f64 => x / set_f, y: f64 => y / set_f
     }
 

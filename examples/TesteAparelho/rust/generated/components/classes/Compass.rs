@@ -11,6 +11,13 @@ impl Handle for Compass {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: Compass`): só um Compass.
+impl aylis::prelude::FromSender for Compass {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("Compass")).then_some(Self { id })
+    }
+}
+
 impl Compass {
     pub fn active(self, ui: &Ui) -> bool {
         handles::read(ui, self.id, "active").and_then(|v| v.to_bool().ok()).unwrap_or_default()
@@ -23,6 +30,12 @@ impl Compass {
     }
     pub fn set_interval(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "interval", value)
+    }
+    pub fn on_change(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_change"))
+    }
+    pub fn set_on_change(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_change", Into::<String>::into(value))
     }
     pub fn heading(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "heading").and_then(|v| v.to_f64().ok()).unwrap_or_default()

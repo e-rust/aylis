@@ -11,6 +11,13 @@ impl Handle for OpenDialog {
     }
 }
 
+/// Quem disparou um handler tipado (`sender: OpenDialog`): só um OpenDialog.
+impl aylis::prelude::FromSender for OpenDialog {
+    fn from_sender(ui: &Ui, id: ComponentId) -> Option<Self> {
+        (ui.class_name(id) == Some("OpenDialog")).then_some(Self { id })
+    }
+}
+
 impl OpenDialog {
     pub fn title(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "title"))
@@ -41,6 +48,18 @@ impl OpenDialog {
     }
     pub fn set_multiple(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "multiple", value)
+    }
+    pub fn on_select(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_select"))
+    }
+    pub fn set_on_select(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_select", Into::<String>::into(value))
+    }
+    pub fn on_cancel(self, ui: &Ui) -> String {
+        handles::text(ui, handles::read(ui, self.id, "on_cancel"))
+    }
+    pub fn set_on_cancel(self, ui: &mut Ui, value: impl Into<String>) {
+        handles::write(ui, self.id, "on_cancel", Into::<String>::into(value))
     }
     pub fn execute(self, ui: &mut Ui) {
         aylis::prelude::OpenDialog::execute(ui, self.id);

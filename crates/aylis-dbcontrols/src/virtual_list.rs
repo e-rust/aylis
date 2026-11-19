@@ -1,5 +1,5 @@
 //! [`DataRepeater`]: a [`VirtualList`] ligada a um dataset: um item
-//! por registro, desenhado com o modelo, com os campos de `bindings` preenchidos sozinhos.
+//! por registro, desenhado com o modelo, com os campos de `item_bindings` preenchidos sozinhos.
 
 use std::any::Any;
 
@@ -29,12 +29,12 @@ impl RowSource for DataRows {
     }
 }
 
-/// Lista virtual de registros: `data_source` dá a quantidade e os valores; `bindings`
+/// Lista virtual de registros: `data_source` dá a quantidade e os valores; `item_bindings`
 /// (`"lblNome=nome;lblPreco=preco"`) liga os componentes do modelo aos campos.
 #[derive(Default)]
 pub struct DataRepeater {
     pub base: VirtualList,
-    /// O `DataSource` dos registros: um item por registro, com os campos de `bindings`.
+    /// O `DataSource` dos registros: um item por registro, com os campos de `item_bindings`.
     pub data_source: Option<ComponentId>,
 }
 

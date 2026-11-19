@@ -139,22 +139,24 @@ fn columns_of(ui: &Ui, grid: ComponentId) -> Vec<ComponentId> {
 
 /// Adiciona colunas à grade, num passo só do desfazer: a do próximo campo sem coluna ou,
 /// com `every`, a de cada campo visível sem coluna. Sem colunas ainda, a lista `columns`
-/// da grade (com as larguras) vira as primeiras colunas, e a lista fica vazia.
+/// da grade (com as larguras, os títulos e as cores) vira as primeiras colunas, e a lista
+/// fica vazia.
 fn add_columns(doc: &mut crate::document::Document, grid: ComponentId, every: bool) -> Result<usize, String> {
     let fields = grid_fields(&doc.ui, grid);
     if fields.is_empty() {
         return Err("ligue a grade a um DataSource com campos antes".into());
     }
     let existing = columns_of(&doc.ui, grid);
-    let mut wanted: Vec<(String, f32)> = Vec::new();
+    // O campo e o resto do registro da lista (`title`, `width`, `read_only`, as cores).
+    let mut wanted: Vec<(String, serde_json::Value)> = Vec::new();
     if existing.is_empty() {
+        // A lista `columns` é JSON (`[{"field": "sigla", "width": 44}]`).
         if let Ok(PropValue::String(list)) = doc.ui.get_prop(grid, "columns") {
-            for item in list.split(';').map(str::trim).filter(|s| !s.is_empty()) {
-                let (name, width) = match item.split_once(':') {
-                    Some((n, w)) => (n.trim().to_string(), w.trim().parse().unwrap_or(0.0)),
-                    None => (item.to_string(), 0.0),
-                };
-                wanted.push((name, width));
+            if let Ok(serde_json::Value::Array(items)) = serde_json::from_str::<serde_json::Value>(&list) {
+                for item in &items {
+                    let Some(name) = item["field"].as_str().map(str::trim).filter(|s| !s.is_empty()) else { continue };
+                    wanted.push((name.to_string(), item.clone()));
+                }
             }
         }
     }
@@ -169,7 +171,7 @@ fn add_columns(doc: &mut crate::document::Document, grid: ComponentId, every: bo
     let free: Vec<String> = fields.iter().filter(|(n, visible)| *visible && !used.contains(n)).map(|(n, _)| n.clone()).collect();
     if every || wanted.is_empty() {
         let take = if every { free.len() } else { free.len().min(1) };
-        wanted.extend(free.into_iter().take(take).map(|n| (n, 0.0)));
+        wanted.extend(free.into_iter().take(take).map(|n| (n, serde_json::Value::Null)));
     }
     if wanted.is_empty() {
         return Ok(0);
@@ -177,12 +179,20 @@ fn add_columns(doc: &mut crate::document::Document, grid: ComponentId, every: bo
     doc.begin_change();
     let grid_name = doc.ui.name(grid).unwrap_or("grid").to_string();
     let mut last = None;
-    for (field, width) in &wanted {
+    for (field, spec) in &wanted {
         let id = doc.ui.create("Column", Some(grid)).map_err(|e| e.to_string())?;
         let _ = doc.ui.set_name(id, &column_name(doc, &grid_name, field));
         let _ = doc.ui.set_prop(id, "field_name", field.as_str());
-        if *width > 0.0 {
-            let _ = doc.ui.set_prop(id, "width", *width);
+        if let Some(width) = spec["width"].as_f64().filter(|&w| w > 0.0) {
+            let _ = doc.ui.set_prop(id, "width", width);
+        }
+        for prop in ["title", "color", "text_color"] {
+            if let Some(text) = spec[prop].as_str().filter(|t| !t.is_empty()) {
+                let _ = doc.ui.set_prop(id, prop, text);
+            }
+        }
+        if spec["read_only"].as_bool() == Some(true) {
+            let _ = doc.ui.set_prop(id, "read_only", true);
         }
         last = Some(id);
     }

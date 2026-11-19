@@ -2,102 +2,150 @@
 /** Um ClientDataSet de um form. */
 export class ClientDataSet extends AylisComponent {
     get keyFields(): Promise<string> {
-        return this.getProp("key_fields");
+        return this.getProp("key_fields") as Promise<any>;
     }
     set keyFields(value: string) {
         this.setProp("key_fields", value);
     }
-    get applyMode(): Promise<string> {
-        return this.getProp("apply_mode");
+    get applyMode(): Promise<ApplyMode> {
+        return this.getProp("apply_mode") as Promise<any>;
     }
-    set applyMode(value: string) {
+    set applyMode(value: ApplyMode) {
         this.setProp("apply_mode", value);
     }
     get readOnly(): Promise<boolean> {
-        return this.getProp("read_only");
+        return this.getProp("read_only") as Promise<any>;
     }
     set readOnly(value: boolean) {
         this.setProp("read_only", value);
     }
     get active(): Promise<boolean> {
-        return this.getProp("active");
+        return this.getProp("active") as Promise<any>;
     }
     set active(value: boolean) {
         this.setProp("active", value);
     }
     get filter(): Promise<string> {
-        return this.getProp("filter");
+        return this.getProp("filter") as Promise<any>;
     }
     set filter(value: string) {
         this.setProp("filter", value);
     }
     get filtered(): Promise<boolean> {
-        return this.getProp("filtered");
+        return this.getProp("filtered") as Promise<any>;
     }
     set filtered(value: boolean) {
         this.setProp("filtered", value);
     }
     get indexFieldNames(): Promise<string> {
-        return this.getProp("index_field_names");
+        return this.getProp("index_field_names") as Promise<any>;
     }
     set indexFieldNames(value: string) {
         this.setProp("index_field_names", value);
     }
-    get indexes(): Promise<string> {
-        return this.getProp("indexes");
+    get indexes(): Promise<IndexDef[]> {
+        return this.getProp("indexes").then((t) => ((typeof t === "string" ? JSON.parse(t || "[]") : t) ?? []).map(indexDefFromJson));
     }
-    set indexes(value: string) {
-        this.setProp("indexes", value);
+    set indexes(value: IndexDef[]) {
+        this.setProp("indexes", JSON.stringify(value.map(indexDefToJson)));
     }
     get indexName(): Promise<string> {
-        return this.getProp("index_name");
+        return this.getProp("index_name") as Promise<any>;
     }
     set indexName(value: string) {
         this.setProp("index_name", value);
     }
-    get params(): Promise<string> {
-        return this.getProp("params");
+    get params(): Promise<FilterParam[]> {
+        return this.getProp("params").then((t) => ((typeof t === "string" ? JSON.parse(t || "[]") : t) ?? []).map(filterParamFromJson));
     }
-    set params(value: string) {
-        this.setProp("params", value);
+    set params(value: FilterParam[]) {
+        this.setProp("params", JSON.stringify(value.map(filterParamToJson)));
     }
     get statusFilter(): Promise<string> {
-        return this.getProp("status_filter");
+        return this.getProp("status_filter") as Promise<any>;
     }
     set statusFilter(value: string) {
         this.setProp("status_filter", value);
     }
-    get masterSource(): Promise<string> {
-        return this.getProp("master_source");
+    get masterSource(): Promise<AylisComponent | null> {
+        return this.getRef("master_source");
     }
-    set masterSource(value: string) {
-        this.setProp("master_source", value);
+    set masterSource(value: AylisComponent | null) {
+        this.setRef("master_source", value);
     }
-    get masterFields(): Promise<string> {
-        return this.getProp("master_fields");
+    get masterFields(): Promise<MasterField[]> {
+        return this.getProp("master_fields").then((t) => ((typeof t === "string" ? JSON.parse(t || "[]") : t) ?? []).map(masterFieldFromJson));
     }
-    set masterFields(value: string) {
-        this.setProp("master_fields", value);
+    set masterFields(value: MasterField[]) {
+        this.setProp("master_fields", JSON.stringify(value.map(masterFieldToJson)));
     }
     get applySeparately(): Promise<boolean> {
-        return this.getProp("apply_separately");
+        return this.getProp("apply_separately") as Promise<any>;
     }
     set applySeparately(value: boolean) {
         this.setProp("apply_separately", value);
     }
     get recordTotal(): Promise<number> {
-        return this.getProp("record_total");
+        return this.getProp("record_total") as Promise<any>;
     }
     set recordTotal(value: number) {
         this.setProp("record_total", value);
     }
     get maxRecords(): Promise<number> {
-        return this.getProp("max_records");
+        return this.getProp("max_records") as Promise<any>;
     }
     set maxRecords(value: number) {
         this.setProp("max_records", value);
     }
     get partialNotice(): Promise<string> {
-        return this.getProp("partial_notice");
+        return this.getProp("partial_notice") as Promise<any>;
+    }
+    get onMasterChange(): Promise<string> {
+        return this.getProp("on_master_change") as Promise<any>;
+    }
+    set onMasterChange(value: string) {
+        this.setProp("on_master_change", value);
+    }
+    get afterScroll(): Promise<string> {
+        return this.getProp("after_scroll") as Promise<any>;
+    }
+    set afterScroll(value: string) {
+        this.setProp("after_scroll", value);
+    }
+    get afterPost(): Promise<string> {
+        return this.getProp("after_post") as Promise<any>;
+    }
+    set afterPost(value: string) {
+        this.setProp("after_post", value);
+    }
+    get onStateChange(): Promise<string> {
+        return this.getProp("on_state_change") as Promise<any>;
+    }
+    set onStateChange(value: string) {
+        this.setProp("on_state_change", value);
+    }
+    get onReconcileError(): Promise<string> {
+        return this.getProp("on_reconcile_error") as Promise<any>;
+    }
+    set onReconcileError(value: string) {
+        this.setProp("on_reconcile_error", value);
+    }
+    get onError(): Promise<string> {
+        return this.getProp("on_error") as Promise<any>;
+    }
+    set onError(value: string) {
+        this.setProp("on_error", value);
+    }
+    get onFetch(): Promise<string> {
+        return this.getProp("on_fetch") as Promise<any>;
+    }
+    set onFetch(value: string) {
+        this.setProp("on_fetch", value);
+    }
+    get onServerQuery(): Promise<string> {
+        return this.getProp("on_server_query") as Promise<any>;
+    }
+    set onServerQuery(value: string) {
+        this.setProp("on_server_query", value);
     }
 }

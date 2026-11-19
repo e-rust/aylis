@@ -2,7 +2,7 @@
 
 ![SkeletonLoader](img/SkeletonLoader.png)
 
-Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho passando. `layout` lista as peças separadas por vírgula: `avatar`, `heading`, `text`, `text@3` (três linhas), `image`, `button`, `chip`, `list-item` (avatar e duas linhas), `card` (imagem, título e texto), `table-row`.
+Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho passando. `layout` é a lista das peças, de cima para baixo: `avatar`, `heading`, `text`, `image`, `button`, `chip`, `list-item` (avatar e duas linhas), `card` (imagem, título e texto), `table-row`. Repita a peça para ter mais de uma (`text;text;text`: três linhas).
 
 **Paleta:** Additional · **controle visual** · também tem as [propriedades e eventos comuns a todo controle](controles.md)
 
@@ -12,7 +12,7 @@ Esqueleto do conteúdo enquanto carrega (o `v-skeleton-loader`), com brilho pass
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `layout` | Disposição | texto | As peças do esqueleto, separadas por vírgula (`avatar`, `heading`, `text@3`, `card`, `list-item`, `table-row`...). |
+| `layout` | Disposição | lista de textos (separados por `;`) | As peças do esqueleto, de cima para baixo (`avatar;heading;text;text`, `card`, `list-item`, `table-row`...). |
 | `animated` | Animado | lógico | Uma faixa de brilho passa pelas peças, mostrando que está carregando. |
 
 ## Em código
@@ -28,8 +28,8 @@ E o handler, um método do form (`self.SkeletonLoader1` já é um `SkeletonLoade
 ```rust
 impl FrmPrincipal {
     pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.SkeletonLoader1.layout(ui);
-        self.SkeletonLoader1.set_layout(ui, format!("{atual}!"));
+        let atual = self.SkeletonLoader1.animated(ui);
+        self.SkeletonLoader1.set_animated(ui, !atual);
     }
 }
 ```

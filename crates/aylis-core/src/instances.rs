@@ -227,13 +227,70 @@ impl Ui {
 
 /// O handler por nome que chama um método da instância do form
 /// (`ui.register_handler("frmClientes.salvar_click", form_handler(FrmClientes::salvar_click))`).
-pub fn form_handler<T: 'static, R: HandlerResult + 'static>(method: fn(&mut T, &mut Ui, ComponentId, &EventArgs) -> R) -> impl Fn(&mut Ui, ComponentId, &EventArgs) + 'static {
+///
+/// O método pode ter a assinatura de sempre (`sender: ComponentId, args: &EventArgs`) ou a
+/// tipada, que o gerador escreve para os eventos que declaram o que levam: `sender: Button`
+/// (o handle do componente) e, quando o evento leva algo, `value: f64` ([`crate::EventValue`]).
+pub fn form_handler<T: 'static, M, H: FormMethod<T, M>>(method: H) -> impl Fn(&mut Ui, ComponentId, &EventArgs) + 'static {
+    let method = Rc::new(method);
     move |ui, sender, args| {
         let args = args.clone();
-        if !ui.with_form::<T>(sender, move |instance, ui| method(instance, ui, sender, &args).finish(ui)) && cfg!(debug_assertions) {
+        let method = method.clone();
+        if !ui.with_form::<T>(sender, move |instance, ui| method.call(instance, ui, sender, &args)) && cfg!(debug_assertions) {
             crate::stderr_line!("aylis: {} não tem a instância do form ({}): o form foi criado sem a classe registrada", ui.path_of(sender), std::any::type_name::<T>());
         }
     }
+}
+
+/// Um método de form que serve de handler: a assinatura de sempre ou a tipada (veja
+/// [`form_handler`]). `M` só distingue as assinaturas.
+pub trait FormMethod<T, M>: 'static {
+    fn call(&self, instance: &mut T, ui: &mut Ui, sender: ComponentId, args: &EventArgs);
+}
+
+/// A assinatura de sempre: o `ComponentId` e o `EventArgs`.
+pub struct Untyped;
+
+impl<T, R: HandlerResult, F: Fn(&mut T, &mut Ui, ComponentId, &EventArgs) -> R + 'static> FormMethod<T, Untyped> for F {
+    fn call(&self, instance: &mut T, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+        self(instance, ui, sender, args).finish(ui)
+    }
+}
+
+impl<T, S: crate::FromSender, R: HandlerResult, F: Fn(&mut T, &mut Ui, S) -> R + 'static> FormMethod<T, (S,)> for F {
+    fn call(&self, instance: &mut T, ui: &mut Ui, sender: ComponentId, _args: &EventArgs) {
+        let Some(s) = typed_sender::<S>(ui, sender) else { return };
+        self(instance, ui, s).finish(ui)
+    }
+}
+
+impl<T, S: crate::FromSender, A: crate::EventValue, R: HandlerResult, F: Fn(&mut T, &mut Ui, S, A) -> R + 'static> FormMethod<T, (S, A)> for F {
+    fn call(&self, instance: &mut T, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+        let Some(s) = typed_sender::<S>(ui, sender) else { return };
+        let Some(value) = A::from_args(args) else {
+            let message = format!("o evento de {} chegou com {args:?}, e o handler espera {}", ui.path_of(sender), std::any::type_name::<A>());
+            if cfg!(debug_assertions) {
+                crate::stderr_line!("aylis: {message}");
+            }
+            ui.report(&crate::activity::Activity::Error { message: &message });
+            return;
+        };
+        self(instance, ui, s, value).finish(ui)
+    }
+}
+
+/// Quem disparou, no tipo que o handler espera; o que não bate (outra classe) vai para a
+/// atividade do app e o handler não roda.
+fn typed_sender<S: crate::FromSender>(ui: &mut Ui, sender: ComponentId) -> Option<S> {
+    let s = S::from_sender(ui, sender);
+    if s.is_none() {
+        let message = format!("{} disparou um handler que espera {}", ui.path_of(sender), std::any::type_name::<S>());
+        if cfg!(debug_assertions) {
+            crate::stderr_line!("aylis: {message}");
+        }
+        ui.report(&crate::activity::Activity::Error { message: &message });
+    }
+    s
 }
 
 /// O que um handler devolve: nada, ou `Result<(), String>` nos eventos-pergunta (o

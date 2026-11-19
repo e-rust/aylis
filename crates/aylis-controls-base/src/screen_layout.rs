@@ -103,7 +103,7 @@ impl Component for ScreenLayout {
 
     properties! {
         locked: bool => "Behavior";
-        events: on_change
+        events: on_change: String
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {

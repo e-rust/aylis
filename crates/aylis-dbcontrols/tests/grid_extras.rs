@@ -173,7 +173,12 @@ fn several_rows_are_selected_with_ctrl_and_shift_and_survive_sorting() {
 #[test]
 fn the_footer_shows_totals_in_the_field_format_and_follows_the_data() {
     let mut s = setup(10);
-    s.ui.set_prop(s.grid, "footer", "valor=sum;id=count;nome=max").unwrap();
+    s.ui.set_prop(
+        s.grid,
+        "footer",
+        r#"[{"field": "valor", "function": "sum"}, {"field": "id", "function": "count"}, {"field": "nome", "function": "max"}]"#,
+    )
+    .unwrap();
     s.ui.paint(s.form, &mut NullCanvas);
     // 0 + 1,50 + ... + 13,50 = 67,50
     assert_eq!(grid(&s).footer_text("valor"), Some("67,50"));
@@ -193,7 +198,7 @@ fn the_footer_shows_totals_in_the_field_format_and_follows_the_data() {
     data_set(&mut s.ui, s.cds).set_filter("id <= 3").unwrap();
     assert_eq!(grid(&s).footer_text("id"), Some("3"));
     assert_eq!(grid(&s).footer_text("valor"), Some("104,50"), "100,00 + 1,50 + 3,00");
-    s.ui.set_prop(s.grid, "footer", "valor=avg").unwrap();
+    s.ui.set_prop(s.grid, "footer", r#"[{"field": "valor", "function": "avg"}]"#).unwrap();
     s.ui.paint(s.form, &mut NullCanvas);
     assert_eq!(grid(&s).footer_text("valor"), Some("34,83"));
 }
@@ -360,7 +365,7 @@ fn closed_data_set_still_shows_the_columns() {
 #[test]
 fn columns_list_takes_widths() {
     let mut s = setup(3);
-    s.ui.set_prop(s.grid, "columns", "nome:150;valor").unwrap();
+    s.ui.set_prop(s.grid, "columns", r#"[{"field": "nome", "width": 150}, {"field": "valor"}]"#).unwrap();
     assert_eq!(titles(&s), [("Nome".to_string(), 150.0), ("Valor".to_string(), 120.0)]);
 }
 
@@ -387,7 +392,8 @@ fn designer_drags_the_column_separator() {
     assert_eq!(grip, Some(1));
     assert_eq!(s.ui.component(s.grid).unwrap().design_hooks().unwrap().design_grip(PointF::new(327.0, 80.0)), None, "só no cabeçalho");
     let change = s.ui.component_mut(s.grid).unwrap().design_hooks_mut().unwrap().design_drag(1, PointF::new(-25.0, 0.0), true).unwrap();
-    assert_eq!(change, (None, "columns", PropValue::String("id:80;nome:200;valor:120;ativo:70".into())));
+    let expected = r#"[{"field":"id","width":80},{"field":"nome","width":200},{"field":"valor","width":120},{"field":"ativo","width":70}]"#;
+    assert_eq!(change, (None, "columns", PropValue::String(expected.into())));
     // com componentes Column, a largura vai para a coluna
     let nome = s.ui.add(Column::new("nome"), s.grid);
     s.ui.send_message(s.grid, &DesignChanged);

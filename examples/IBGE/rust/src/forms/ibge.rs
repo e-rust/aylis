@@ -56,7 +56,7 @@ impl FrmIBGE {
         view(ui, dataset).value(nome).unwrap_or(DataValue::Null)
     }
 
-    pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn form_show(&mut self, ui: &mut Ui, _sender: crate::generated::Form) {
         let estados = ler(ui, "estados.json");
         if !estados.is_array() {
             self.lblFonte.set_text(ui, "Faltam os dados: rode  aylis-tool ibge examples/IBGE/assets/dados");
@@ -75,18 +75,18 @@ impl FrmIBGE {
         self.carregar(ui, self.cdsDistritos.id, &distritos);
         self.carregar(ui, self.cdsMunicipios.id, &municipios);
         self.carregar(ui, self.cdsEstados.id, &estados);
-        self.estado_mudou(ui, _sender, _args);
+        self.estado_mudou(ui, self.cdsEstados);
     }
 
     /// Outro estado na grade: a bandeira, os mapas e os 10 maiores municípios.
-    pub fn estado_mudou(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    pub fn estado_mudou(&mut self, ui: &mut Ui, _sender: crate::generated::ClientDataSet) {
         let Some(id) = self.campo(ui, self.cdsEstados.id, "id").as_i64() else { return };
         let sigla = self.campo(ui, self.cdsEstados.id, "sigla").to_string();
         self.lblEstado.set_text(ui, self.campo(ui, self.cdsEstados.id, "nome").to_string());
         self.lblRegiao.set_text(ui, format!("{sigla} · Região {}", self.campo(ui, self.cdsEstados.id, "regiao")));
         self.imgBandeiraEstado.set_image(ui, imagem(&self.campo(ui, self.cdsEstados.id, "bandeira").to_string()));
         self.lblEstadoEstimativa.set_text(ui, format!("Estimativa de {}", self.campo(ui, self.cdsEstados.id, "estimativa_ano")));
-        self.svgBrasil.set_highlight(ui, format!("e{id}"));
+        self.svgBrasil.set_highlight(ui, &[format!("e{id}")]);
         let mapa = format!("{DADOS}mapas/{id}.svg");
         self.svgEstado.set_source(ui, mapa.clone());
         self.svgMunicipio.set_source(ui, mapa);
@@ -102,11 +102,11 @@ impl FrmIBGE {
         do_estado.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         let maiores: Vec<Value> = do_estado.iter().take(10).map(|(nome, habitantes)| json!({ "nome": nome, "habitantes": habitantes })).collect();
         self.carregar(ui, self.cdsMaiores.id, &Value::Array(maiores));
-        self.municipio_mudou(ui, sender, args);
+        self.municipio_mudou(ui, self.cdsMunicipios);
     }
 
     /// Outro município: a bandeira, o destaque nos mapas e a população ano a ano.
-    pub fn municipio_mudou(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn municipio_mudou(&mut self, ui: &mut Ui, _sender: crate::generated::ClientDataSet) {
         let Some(id) = self.campo(ui, self.cdsMunicipios.id, "id").as_i64() else { return };
         self.lblMunicipio.set_text(ui, self.campo(ui, self.cdsMunicipios.id, "nome").to_string());
         self.lblCodigo.set_text(ui, format!("Código IBGE {id}"));
@@ -115,8 +115,8 @@ impl FrmIBGE {
         self.lblSemBandeira.set_visible(ui, bandeira.is_empty());
         self.lblEstimativa.set_text(ui, format!("Estimativa de {}", self.campo(ui, self.cdsMunicipios.id, "estimativa_ano")));
         let alvo = format!("m{id}");
-        self.svgEstado.set_highlight(ui, alvo.clone());
-        self.svgMunicipio.set_highlight(ui, alvo.clone());
+        self.svgEstado.set_highlight(ui, &[alvo.as_str()]);
+        self.svgMunicipio.set_highlight(ui, &[alvo.as_str()]);
         self.svgMunicipio.set_zoom_to(ui, alvo);
 
         let serie = DADOS_CARREGADOS.with(|d| d.borrow().populacao.get(&id.to_string()).cloned()).unwrap_or(Value::Null);

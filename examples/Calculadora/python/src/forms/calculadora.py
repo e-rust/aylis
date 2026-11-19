@@ -1,7 +1,7 @@
 """Eventos do form frmCalculadora: o código é seu (o registro dos handlers fica no
 forms/__init__.py gerado). Dentro de um handler, o form é a janela do evento."""
 
-from .components import frmCalculadora  # noqa: E402
+from .components import frmCalculadora, ListViewItem  # noqa: E402
 
 from motor import Calculadora, botao_do_teclado, formatar
 
@@ -38,14 +38,14 @@ def atualizar(aylis):
     for botao in (frmCalculadora.btnMC, frmCalculadora.btnMR):
         botao.enabled = not erro and len(calc.memoria) > 0
     if calc.historico:
-        historico = ";".join("%s|%s" % (formatar(r), e) for e, r in reversed(calc.historico))
+        historico = [ListViewItem(formatar(r), e) for e, r in reversed(calc.historico)]
     else:
-        historico = "Ainda não há histórico|"
+        historico = [ListViewItem("Ainda não há histórico")]
     frmCalculadora.lvHistorico.items = historico
     if calc.memoria:
-        memoria = ";".join("%s|" % formatar(m) for m in reversed(calc.memoria))
+        memoria = [ListViewItem(formatar(m)) for m in reversed(calc.memoria)]
     else:
-        memoria = "Não há nada salvo na memória|"
+        memoria = [ListViewItem("Não há nada salvo na memória")]
     frmCalculadora.lvMemoria.items = memoria
 
 
@@ -59,35 +59,34 @@ def form_key_down(aylis, event):
     args = event.get("args") or {}
     botao = botao_do_teclado(args.get("key", ""), args.get("ctrl", False), args.get("shift", False))
     if botao == "historico":
-        historico_click(aylis, event)
+        historico_click(aylis, frmCalculadora.btnHistorico)
     elif botao is not None:
         apertar(aylis, botao)
 
 
-def limpar_historico_click(aylis, event):
+def limpar_historico_click(aylis, sender: "Button"):
     calc.historico = []
     atualizar(aylis)
 
 
-def historico_item_click(aylis, event):
+def historico_item_click(aylis, sender: "ListView", value: "int"):
     # A lista mostra a conta mais nova em cima.
-    i = event.get("args")
-    if isinstance(i, int) and 0 <= i < len(calc.historico):
+    i = value
+    if 0 <= i < len(calc.historico):
         calc.usar(calc.historico[len(calc.historico) - 1 - i][1])
         atualizar(aylis)
 
 
-def memoria_item_click(aylis, event):
-    i = event.get("args")
-    if isinstance(i, int) and 0 <= i < len(calc.memoria):
+def memoria_item_click(aylis, sender: "ListView", value: "int"):
+    i = value
+    if 0 <= i < len(calc.memoria):
         calc.usar(calc.memoria[len(calc.memoria) - 1 - i])
         atualizar(aylis)
 
 
-def historico_click(aylis, event):
+def historico_click(aylis, sender: "Button"):
     frmCalculadora.pnlLateral.visible = not frmCalculadora.pnlLateral.visible
 
 
-def tecla_click(aylis, event):
-    texto = frmCalculadora.sender_as_button(event).text
-    apertar(aylis, texto)
+def tecla_click(aylis, sender: "Button"):
+    apertar(aylis, sender.text)

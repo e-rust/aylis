@@ -68,6 +68,18 @@ pub fn props(ui: &Ui, id: ComponentId) -> Value {
                 PropKind::Duration => ("duration", &[]),
                 PropKind::Shadow => ("shadow", &[]),
                 PropKind::Easing => ("easing", &[]),
+                PropKind::Date => ("date", &[]),
+                PropKind::Time => ("time", &[]),
+                PropKind::DateTime => ("datetime", &[]),
+                PropKind::List => ("list", &[]),
+                PropKind::NumberList => ("numbers", &[]),
+                PropKind::ColorList => ("colors", &[]),
+                PropKind::PointList => ("points", &[]),
+                PropKind::Record(_) => ("record", &[]),
+                PropKind::RecordList(_) => ("records", &[]),
+                PropKind::StyleName => ("style", &[]),
+                PropKind::ThemeName => ("theme", &[]),
+                PropKind::FormName => ("form", &[]),
             };
             let mut m = Map::new();
             m.insert("name".into(), json!(info.name));

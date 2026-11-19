@@ -34,13 +34,13 @@ impl FrmPrincipal {
         self.lblStatus.set_text(ui, texto);
     }
 
-    pub fn cam_ligar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_ligar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let ligada = self.camView.active(ui);
         self.camView.set_active(ui, !ligada);
         self.status(ui, if ligada { "Câmera desligada" } else { "Câmera ligada" });
     }
 
-    pub fn cam_trocar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_trocar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let nova = if self.camView.camera(ui) == "front" { "back" } else { "front" };
         self.camView.set_camera(ui, nova);
         self.camView.set_mirror(ui, nova == "front");
@@ -49,15 +49,15 @@ impl FrmPrincipal {
 
     /// A qualidade da imagem: low (até 640x480), medium (até 1280x960), high (até 1920x1440) ou
     /// max (o maior que a câmera dá). Com a câmera ligada, ela reabre na nova.
-    pub fn cam_qualidade_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_qualidade_change(&mut self, ui: &mut Ui, _sender: crate::generated::SegmentedControl, value: i64) {
         let nomes = ["low", "medium", "high", "max"];
-        let i = self.segCamQualidade.item_index(ui).clamp(0, 3) as usize;
+        let i = value.clamp(0, 3) as usize;
         let _ = ui.set_prop(self.camView.id, "quality", nomes[i]);
         self.status(ui, format!("Qualidade: {}", nomes[i]));
     }
 
     /// Acende ou apaga o flash como lanterna (só se a câmera tiver).
-    pub fn cam_flash_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_flash_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let cam = self.camView.id;
         if !matches!(ui.get_prop(cam, "has_flash"), Ok(PropValue::Bool(true))) {
             self.status(ui, "Esta câmera não tem flash (ou ainda não abriu)");
@@ -69,7 +69,7 @@ impl FrmPrincipal {
     }
 
     /// A câmera abriu: os limites do aparelho (os tamanhos que ela dá e se tem flash).
-    pub fn cam_pronta(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_pronta(&mut self, ui: &mut Ui, _sender: crate::generated::CameraView) {
         let cam = self.camView.id;
         let texto = |ui: &Ui, p: &str| match ui.get_prop(cam, p) {
             Ok(PropValue::String(s)) => s,
@@ -81,18 +81,18 @@ impl FrmPrincipal {
         self.status(ui, format!("Câmera: {} tamanhos (o maior, {maior}); flash: {}", tamanhos.split(';').filter(|s| !s.is_empty()).count(), if flash { "sim" } else { "não" }));
     }
 
-    pub fn cam_ciclo_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_ciclo_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         CICLO_CAM.with(|c| c.set(40));
         self.status(ui, "Câmera: abrindo e fechando 20 vezes…");
     }
 
-    pub fn mic_ligar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn mic_ligar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let ligado = self.micEntrada.active(ui);
         self.micEntrada.set_active(ui, !ligado);
         self.status(ui, if ligado { "Microfone desligado" } else { "Microfone ligado" });
     }
 
-    pub fn mic_gravar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn mic_gravar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let mic = self.micEntrada.id;
         match aylis::media::Microphone::record(ui, mic) {
             Ok(()) => {
@@ -103,17 +103,17 @@ impl FrmPrincipal {
         }
     }
 
-    pub fn vid_tocar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn vid_tocar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         self.vpVideo.play(ui);
         self.status(ui, "Vídeo tocando");
     }
 
-    pub fn vid_parar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn vid_parar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         self.vpVideo.stop(ui);
         self.status(ui, "Vídeo parado");
     }
 
-    pub fn vid_ciclo_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn vid_ciclo_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         CICLO_VID.with(|c| c.set(20));
         self.status(ui, "Vídeo: abrindo e fechando 10 vezes…");
     }
@@ -126,29 +126,30 @@ impl FrmPrincipal {
         }
     }
 
-    pub fn not_simples_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn not_simples_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         self.notificar(ui, self.ntfSimples);
     }
 
-    pub fn not_botoes_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn not_botoes_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         self.notificar(ui, self.ntfBotoes);
     }
 
-    pub fn not_progresso_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn not_progresso_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         PROGRESSO.with(|p| p.set(0.0));
         self.ntfProgresso.set_progress(ui, 0.0);
         self.notificar(ui, self.ntfProgresso);
     }
 
-    pub fn not_form_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn not_form_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         self.notificar(ui, self.ntfForm);
     }
 
-    pub fn not_acao(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.status(ui, format!("Botão da notificação: {args:?}"));
+    /// O botão da notificação que o usuário tocou (`value`, a ação dele).
+    pub fn not_acao(&mut self, ui: &mut Ui, _sender: Notification, value: String) {
+        self.status(ui, format!("Botão da notificação: {value}"));
     }
 
-    pub fn tema_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn tema_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let (familia, escuro) = (ui.theme().family.clone(), ui.theme().dark);
         if let Some(tema) = aylis::core::themes::of_family(&familia, !escuro) {
             ui.set_theme(tema.clone());
@@ -156,14 +157,14 @@ impl FrmPrincipal {
         }
     }
 
-    pub fn fps_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn fps_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let limitar = !FPS30.with(|f| f.get());
         FPS30.with(|f| f.set(limitar));
         ui.set_max_fps(if limitar { 30.0 } else { 0.0 });
         self.status(ui, if limitar { "Limitado a 30 quadros/s" } else { "Sem limite de quadros" });
     }
 
-    pub fn tick_timer(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn tick_timer(&mut self, ui: &mut Ui, _sender: crate::generated::Timer) {
         // O lingote da abertura da IDE no 3D, na primeira volta (o mesmo modelo, câmera, giro e
         // brilho: `aylis::scene3d::ingot`).
         if !CENA.with(|c| c.replace(true))
@@ -240,7 +241,7 @@ impl FrmPrincipal {
 
     /// Tira a foto em PNG, mostra o tamanho e o tempo e apaga o arquivo: confere que a foto sai no
     /// tamanho cheio da câmera mesmo com a tela mostrando os quadros reduzidos.
-    pub fn cam_foto_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn cam_foto_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let cam = self.camView.id;
         let arquivo = std::env::temp_dir().join("teste-foto.png");
         let inicio = std::time::Instant::now();
@@ -261,7 +262,7 @@ impl FrmPrincipal {
     }
 
     /// O AppLink abre o endereço no navegador do aparelho.
-    pub fn abrir_site_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn abrir_site_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let texto = match aylis::controls::AppLink::open_url(ui, "https://example.com") {
             Ok(()) => "AppLink: site aberto".to_string(),
             Err(e) => format!("AppLink: {e}"),
@@ -270,28 +271,30 @@ impl FrmPrincipal {
     }
 
     /// A folha de compartilhar do sistema, com um texto.
-    pub fn compartilhar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn compartilhar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         if let Err(e) = aylis::controls::AppLink::share(ui, "Teste do aylis", &[]) {
             self.lblStatus.set_text(ui, format!("AppLink: {e}"));
         }
     }
 
     /// O link que abriu o app (ou chegou com ele aberto).
-    pub fn link_recebido(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.lblStatus.set_text(ui, format!("Link: {}", args.text().unwrap_or_default()));
+    pub fn link_recebido(&mut self, ui: &mut Ui, _sender: crate::generated::AppLink, value: String) {
+        self.lblStatus.set_text(ui, format!("Link: {value}"));
     }
 
-    /// O que outro app compartilhou com este.
-    pub fn compartilhado_recebido(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.lblStatus.set_text(ui, format!("Recebido: {}", args.text().unwrap_or_default()));
+    /// O que outro app compartilhou com este: o texto ou os arquivos (as cópias, no app).
+    pub fn compartilhado_recebido(&mut self, ui: &mut Ui, _sender: crate::generated::AppLink, value: aylis::prelude::SharedContent) {
+        let recebido = if value.files.is_empty() { value.text } else { value.files.join("; ") };
+        self.lblStatus.set_text(ui, format!("Recebido: {recebido}"));
     }
 
-    pub fn link_erro(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.lblStatus.set_text(ui, format!("AppLink: {}", args.text().unwrap_or_default()));
+    /// O erro do AppLink ou do serviço (o mesmo handler nos dois: quem disparou vem genérico).
+    pub fn link_erro(&mut self, ui: &mut Ui, _sender: ComponentId, value: String) {
+        self.lblStatus.set_text(ui, format!("AppLink: {value}"));
     }
 
     /// O componente Vibration: 300 ms.
-    pub fn vibrar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn vibrar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let ok = aylis::controls::Vibration::vibrate(ui, 300);
         self.lblStatus.set_text(ui, if ok { "Vibrou" } else { "Este aparelho não vibra" });
     }
@@ -314,19 +317,19 @@ impl FrmPrincipal {
     }
 
     /// Liga ou desliga o serviço em segundo plano.
-    pub fn servico_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn servico_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let ligado = self.svcFundo.active(ui);
         self.svcFundo.set_active(ui, !ligado);
         self.lblStatus.set_text(ui, if ligado { "Serviço desligado" } else { "Serviço ligado" });
     }
 
     /// O que o serviço mandou (as mensagens de quando a tela estava fechada chegam juntas).
-    pub fn servico_mensagem(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        self.lblStatus.set_text(ui, format!("Serviço: {}", args.text().unwrap_or_default()));
+    pub fn servico_mensagem(&mut self, ui: &mut Ui, _sender: crate::generated::BackgroundService, value: String) {
+        self.lblStatus.set_text(ui, format!("Serviço: {value}"));
     }
 
     /// O Phone abre o discador com um número.
-    pub fn discar_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn discar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let resultado = ui.invoke(self.fonTelefone.id, "dial", &[PropValue::from("5551234")]);
         if let Err(e) = resultado {
             self.lblStatus.set_text(ui, format!("Phone: {e}"));
@@ -334,13 +337,13 @@ impl FrmPrincipal {
     }
 
     /// O estado da chamada (e o número, quando o sistema informa).
-    pub fn chamada_estado(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-        let numero = self.fonTelefone.number(ui);
-        self.lblStatus.set_text(ui, format!("Chamada: {} {numero}", args.text().unwrap_or_default()));
+    pub fn chamada_estado(&mut self, ui: &mut Ui, sender: crate::generated::Phone, value: String) {
+        let numero = sender.number(ui);
+        self.lblStatus.set_text(ui, format!("Chamada: {value} {numero}"));
     }
 
     /// O som que os apps tocam (o loopback do Android: o sistema pede a autorização).
-    pub fn mic_apps_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn mic_apps_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {
         let ligado = self.micApps.active(ui);
         self.micApps.set_active(ui, !ligado);
         self.status(ui, if ligado { "Som dos apps desligado" } else { "Som dos apps ligado" });

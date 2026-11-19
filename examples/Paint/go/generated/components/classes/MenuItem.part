@@ -28,3 +28,9 @@ func (c aylisMenuItem) SetDanger(v bool) { c.Set("danger", v) }
 
 func (c aylisMenuItem) Header() bool { return asBool(c.Get("header")) }
 func (c aylisMenuItem) SetHeader(v bool) { c.Set("header", v) }
+
+func (c aylisMenuItem) Content() *aylis.Component { return c.GetRef("content") }
+func (c aylisMenuItem) SetContent(v aylis.Ref) { c.SetRef("content", v) }
+
+func (c aylisMenuItem) OnClick() string { return asText(c.Get("on_click")) }
+func (c aylisMenuItem) SetOnClick(v string) { c.Set("on_click", v) }

@@ -108,7 +108,12 @@
         "read_only": true,
         "index_field_names": "item",
         "master_source": "dsPedidos",
-        "master_fields": "pedido=numero",
+        "master_fields": [
+          {
+            "field": "pedido",
+            "master_field": "numero"
+          }
+        ],
         "children": [
           {
             "class": "Field",
@@ -196,7 +201,12 @@
         "read_only": true,
         "index_field_names": "parcela",
         "master_source": "dsPedidos",
-        "master_fields": "pedido=numero",
+        "master_fields": [
+          {
+            "field": "pedido",
+            "master_field": "numero"
+          }
+        ],
         "children": [
           {
             "class": "Field",
@@ -275,7 +285,20 @@
                     "class": "DataGrid",
                     "name": "grdParcelas",
                     "data_source": "dsParcelas",
-                    "columns": "parcela;vencimento;forma;valor",
+                    "columns": [
+                      {
+                        "field": "parcela"
+                      },
+                      {
+                        "field": "vencimento"
+                      },
+                      {
+                        "field": "forma"
+                      },
+                      {
+                        "field": "valor"
+                      }
+                    ],
                     "read_only": true,
                     "width": 380,
                     "align": "right"
@@ -289,7 +312,32 @@
                     "class": "DataGrid",
                     "name": "grdItens",
                     "data_source": "dsItens",
-                    "columns": "item;codigo;produto;unidade;quantidade;preco;desconto;total",
+                    "columns": [
+                      {
+                        "field": "item"
+                      },
+                      {
+                        "field": "codigo"
+                      },
+                      {
+                        "field": "produto"
+                      },
+                      {
+                        "field": "unidade"
+                      },
+                      {
+                        "field": "quantidade"
+                      },
+                      {
+                        "field": "preco"
+                      },
+                      {
+                        "field": "desconto"
+                      },
+                      {
+                        "field": "total"
+                      }
+                    ],
                     "read_only": true,
                     "align": "client"
                   }
@@ -304,7 +352,38 @@
                 "class": "DataGrid",
                 "name": "grdPedidos",
                 "data_source": "dsPedidos",
-                "columns": "numero;emissao;cliente;cidade;uf;vendedor;situacao;itens;peso;total",
+                "columns": [
+                  {
+                    "field": "numero"
+                  },
+                  {
+                    "field": "emissao"
+                  },
+                  {
+                    "field": "cliente"
+                  },
+                  {
+                    "field": "cidade"
+                  },
+                  {
+                    "field": "uf"
+                  },
+                  {
+                    "field": "vendedor"
+                  },
+                  {
+                    "field": "situacao"
+                  },
+                  {
+                    "field": "itens"
+                  },
+                  {
+                    "field": "peso"
+                  },
+                  {
+                    "field": "total"
+                  }
+                ],
                 "read_only": true,
                 "align": "client"
               }

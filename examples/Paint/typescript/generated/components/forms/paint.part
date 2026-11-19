@@ -183,7 +183,7 @@ export class FrmPaintComponents extends Form {
         this.dlgAbrir = this.resolve(list, "dlgAbrir", "OpenDialog", OpenDialog);
         this.dlgSalvar = this.resolve(list, "dlgSalvar", "SaveDialog", SaveDialog);
     }
-    /** O Button deste form com o nome (como o FindComponent). */
+    /** O Button deste form com o nome. */
     findButton(name: string): Button | undefined {
         switch (name) {
             case "btnSalvar": return this.btnSalvar;
@@ -205,7 +205,7 @@ export class FrmPaintComponents extends Form {
     senderAsButton(ev: AylisEvent): Button | undefined {
         return this.findButton(ev.sender.name);
     }
-    /** O CheckBox deste form com o nome (como o FindComponent). */
+    /** O CheckBox deste form com o nome. */
     findCheckBox(name: string): CheckBox | undefined {
         switch (name) {
             case "chkPreencher": return this.chkPreencher;
@@ -216,7 +216,7 @@ export class FrmPaintComponents extends Form {
     senderAsCheckBox(ev: AylisEvent): CheckBox | undefined {
         return this.findCheckBox(ev.sender.name);
     }
-    /** O Circle deste form com o nome (como o FindComponent). */
+    /** O Circle deste form com o nome. */
     findCircle(name: string): Circle | undefined {
         switch (name) {
             case "btnCor1": return this.btnCor1;
@@ -248,7 +248,7 @@ export class FrmPaintComponents extends Form {
     senderAsCircle(ev: AylisEvent): Circle | undefined {
         return this.findCircle(ev.sender.name);
     }
-    /** O ComboBox deste form com o nome (como o FindComponent). */
+    /** O ComboBox deste form com o nome. */
     findComboBox(name: string): ComboBox | undefined {
         switch (name) {
             case "cbEspessura": return this.cbEspessura;
@@ -259,7 +259,7 @@ export class FrmPaintComponents extends Form {
     senderAsComboBox(ev: AylisEvent): ComboBox | undefined {
         return this.findComboBox(ev.sender.name);
     }
-    /** O Divider deste form com o nome (como o FindComponent). */
+    /** O Divider deste form com o nome. */
     findDivider(name: string): Divider | undefined {
         switch (name) {
             case "divTopo": return this.divTopo;
@@ -275,7 +275,7 @@ export class FrmPaintComponents extends Form {
     senderAsDivider(ev: AylisEvent): Divider | undefined {
         return this.findDivider(ev.sender.name);
     }
-    /** O GridLayout deste form com o nome (como o FindComponent). */
+    /** O GridLayout deste form com o nome. */
     findGridLayout(name: string): GridLayout | undefined {
         switch (name) {
             case "grdFerramentas": return this.grdFerramentas;
@@ -288,7 +288,7 @@ export class FrmPaintComponents extends Form {
     senderAsGridLayout(ev: AylisEvent): GridLayout | undefined {
         return this.findGridLayout(ev.sender.name);
     }
-    /** O Label deste form com o nome (como o FindComponent). */
+    /** O Label deste form com o nome. */
     findLabel(name: string): Label | undefined {
         switch (name) {
             case "lblSelecaoGrupo": return this.lblSelecaoGrupo;
@@ -307,7 +307,7 @@ export class FrmPaintComponents extends Form {
     senderAsLabel(ev: AylisEvent): Label | undefined {
         return this.findLabel(ev.sender.name);
     }
-    /** O Layout deste form com o nome (como o FindComponent). */
+    /** O Layout deste form com o nome. */
     findLayout(name: string): Layout | undefined {
         switch (name) {
             case "lytTopo": return this.lytTopo;
@@ -324,7 +324,7 @@ export class FrmPaintComponents extends Form {
     senderAsLayout(ev: AylisEvent): Layout | undefined {
         return this.findLayout(ev.sender.name);
     }
-    /** O MainMenu deste form com o nome (como o FindComponent). */
+    /** O MainMenu deste form com o nome. */
     findMainMenu(name: string): MainMenu | undefined {
         switch (name) {
             case "mnuPrincipal": return this.mnuPrincipal;
@@ -335,7 +335,7 @@ export class FrmPaintComponents extends Form {
     senderAsMainMenu(ev: AylisEvent): MainMenu | undefined {
         return this.findMainMenu(ev.sender.name);
     }
-    /** O MenuItem deste form com o nome (como o FindComponent). */
+    /** O MenuItem deste form com o nome. */
     findMenuItem(name: string): MenuItem | undefined {
         switch (name) {
             case "mnuArquivo": return this.mnuArquivo;
@@ -367,7 +367,7 @@ export class FrmPaintComponents extends Form {
     senderAsMenuItem(ev: AylisEvent): MenuItem | undefined {
         return this.findMenuItem(ev.sender.name);
     }
-    /** O OpenDialog deste form com o nome (como o FindComponent). */
+    /** O OpenDialog deste form com o nome. */
     findOpenDialog(name: string): OpenDialog | undefined {
         switch (name) {
             case "dlgAbrir": return this.dlgAbrir;
@@ -378,7 +378,7 @@ export class FrmPaintComponents extends Form {
     senderAsOpenDialog(ev: AylisEvent): OpenDialog | undefined {
         return this.findOpenDialog(ev.sender.name);
     }
-    /** O PaintCanvas deste form com o nome (como o FindComponent). */
+    /** O PaintCanvas deste form com o nome. */
     findPaintCanvas(name: string): PaintCanvas | undefined {
         switch (name) {
             case "pcDesenho": return this.pcDesenho;
@@ -389,7 +389,7 @@ export class FrmPaintComponents extends Form {
     senderAsPaintCanvas(ev: AylisEvent): PaintCanvas | undefined {
         return this.findPaintCanvas(ev.sender.name);
     }
-    /** O Panel deste form com o nome (como o FindComponent). */
+    /** O Panel deste form com o nome. */
     findPanel(name: string): Panel | undefined {
         switch (name) {
             case "pnlFaixa": return this.pnlFaixa;
@@ -400,7 +400,7 @@ export class FrmPaintComponents extends Form {
     senderAsPanel(ev: AylisEvent): Panel | undefined {
         return this.findPanel(ev.sender.name);
     }
-    /** O SaveDialog deste form com o nome (como o FindComponent). */
+    /** O SaveDialog deste form com o nome. */
     findSaveDialog(name: string): SaveDialog | undefined {
         switch (name) {
             case "dlgSalvar": return this.dlgSalvar;
@@ -411,7 +411,7 @@ export class FrmPaintComponents extends Form {
     senderAsSaveDialog(ev: AylisEvent): SaveDialog | undefined {
         return this.findSaveDialog(ev.sender.name);
     }
-    /** O ScrollBox deste form com o nome (como o FindComponent). */
+    /** O ScrollBox deste form com o nome. */
     findScrollBox(name: string): ScrollBox | undefined {
         switch (name) {
             case "sbxArea": return this.sbxArea;
@@ -422,7 +422,7 @@ export class FrmPaintComponents extends Form {
     senderAsScrollBox(ev: AylisEvent): ScrollBox | undefined {
         return this.findScrollBox(ev.sender.name);
     }
-    /** O StatusBar deste form com o nome (como o FindComponent). */
+    /** O StatusBar deste form com o nome. */
     findStatusBar(name: string): StatusBar | undefined {
         switch (name) {
             case "stbStatus": return this.stbStatus;

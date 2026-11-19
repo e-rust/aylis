@@ -243,7 +243,7 @@ impl Component for PushNotifications {
         app_id: String => "Behavior",
         api_key: String => "Behavior",
         vapid_key: String => "Behavior";
-        events: on_token, on_message, on_opened, on_error;
+        events: on_token: String, on_message: String, on_opened: String, on_error: String;
         computed: token: String => token / set_s, provider: String => provider / set_s, available: bool => available / set_b,
             registered: bool => registered / set_b, title: String => title / set_s, body: String => body / set_s,
             data: String => data / set_s, message_id: String => message_id / set_s

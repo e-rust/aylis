@@ -12,7 +12,7 @@ Grupo de botões do Material 3 Expressive: lado a lado (`connected` = colados, c
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `icons` | Ícones | texto | Os ícones dos botões, na mesma ordem dos `items`, separados por `;`; vazio: só texto. |
+| `icons` | Ícones | lista de textos (separados por `;`) | Os ícones dos botões, na mesma ordem dos `items`, separados por `;`; vazio: só texto. |
 | `connected` | Juntos | lógico | Os botões colados, com os cantos de dentro pequenos; desligado, separados. |
 
 ### Comportamento
@@ -25,8 +25,8 @@ Grupo de botões do Material 3 Expressive: lado a lado (`connected` = colados, c
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `items` | Itens | texto | Os textos dos botões, separados por `;` (`Dia;Semana;Mês`). |
-| `selected` | Escolhidos | texto | Os botões marcados: os textos, separados por `;` (vazio: nenhum). |
+| `items` | Itens | lista de textos (separados por `;`) | Os textos dos botões, separados por `;` (`Dia;Semana;Mês`). |
+| `selected` | Escolhidos | lista de textos (separados por `;`) | Os botões marcados: os textos, separados por `;` (vazio: nenhum). |
 
 ## Eventos
 
@@ -47,8 +47,8 @@ E o handler, um método do form (`self.ButtonGroup1` já é um `ButtonGroup`):
 ```rust
 impl FrmPrincipal {
     pub fn button_group1_change(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let atual = self.ButtonGroup1.items(ui);
-        self.ButtonGroup1.set_items(ui, format!("{atual}!"));
+        let atual = self.ButtonGroup1.multiple(ui);
+        self.ButtonGroup1.set_multiple(ui, !atual);
     }
 }
 ```

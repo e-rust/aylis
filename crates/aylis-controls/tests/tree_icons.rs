@@ -15,9 +15,12 @@ fn tree(ui: &mut Ui, items: &str) -> aylis_core::ComponentId {
 }
 
 #[test]
-fn the_icon_comes_after_a_pipe_and_every_node_keeps_the_text_aligned() {
+fn the_icon_of_each_node_keeps_the_text_aligned() {
     let mut ui = Ui::new();
-    let t = tree(&mut ui, "Brasil|folder;>Campinas|home;Portugal;>Lisboa;Chile|flag;>Santiago");
+    let t = tree(
+        &mut ui,
+        r#"[{"text":"Brasil","icon":"folder","children":[{"text":"Campinas","icon":"home"}]},{"text":"Portugal","children":[{"text":"Lisboa"}]},{"text":"Chile","icon":"flag","children":[{"text":"Santiago"}]}]"#,
+    );
     let tv = ui.get::<TreeView>(t).unwrap();
     assert_eq!((tv.nodes()[0].text.as_str(), tv.nodes()[0].icon.as_str()), ("Brasil", "folder"));
     assert_eq!(tv.nodes()[1].icon, "");
@@ -29,13 +32,18 @@ fn the_icon_comes_after_a_pipe_and_every_node_keeps_the_text_aligned() {
     assert_eq!(b.row.y - a.row.y, 26.0, "uma linha abaixo");
 
     // Sem ícone em nenhum nó, nada de coluna (como antes).
-    ui.set_prop(t, "items", "Brasil;>Campinas;Portugal").unwrap();
+    ui.set_prop(t, "items", r#"[{"text":"Brasil","children":[{"text":"Campinas"}]},{"text":"Portugal"}]"#).unwrap();
     let tv = ui.get::<TreeView>(t).unwrap();
     let c = tv.node_rects(&[0]).unwrap();
     assert!(c.icon.is_none() && c.text.x < a.text.x);
 
     // As folhas seguem o `leaf_layout`; Rio é folha sem ícone, irmã de São Paulo.
-    ui.set_prop(t, "items", "Brasil|folder;>São Paulo|folder;>>Campinas|home;>Rio").unwrap();
+    ui.set_prop(
+        t,
+        "items",
+        r#"[{"text":"Brasil","icon":"folder","children":[{"text":"São Paulo","icon":"folder","children":[{"text":"Campinas","icon":"home"}]},{"text":"Rio"}]}]"#,
+    )
+    .unwrap();
     ui.get_mut::<TreeView>(t).unwrap().expand_all(true);
     let rects = |ui: &Ui, path: &[usize]| ui.get::<TreeView>(t).unwrap().node_rects(path).unwrap();
     // aligned (o padrão): todo texto do mesmo nível no mesmo lugar, o ícone na coluna dos pais.
@@ -64,16 +72,19 @@ fn the_icon_comes_after_a_pipe_and_every_node_keeps_the_text_aligned() {
     assert_eq!(after.text.x - after.icon.unwrap().right(), 10.0);
     assert!(after.text.x > before.text.x);
 
-    // A API grava o ícone no texto de `items`.
+    // A API grava os nós (com o ícone) no JSON de `items`, e ele volta igual.
     let tv = ui.get_mut::<TreeView>(t).unwrap();
     tv.set_nodes(vec![TreeNode::new("A").with_icon("file").with_children(vec![TreeNode::new("B")])]);
-    assert_eq!(tv.items, "A|file;>B");
+    assert_eq!(tv.items, r#"[{"text":"A","icon":"file","children":[{"text":"B"}]}]"#);
+    let text = tv.items.clone();
+    ui.set_prop(t, "items", text).unwrap();
+    assert_eq!(ui.get::<TreeView>(t).unwrap().nodes()[0].children[0].text, "B");
 }
 
 #[test]
 fn item_rect_says_where_a_node_is_painted() {
     let mut ui = Ui::new();
-    let t = tree(&mut ui, "Brasil;>São Paulo;Portugal");
+    let t = tree(&mut ui, r#"[{"text":"Brasil","children":[{"text":"São Paulo"}]},{"text":"Portugal"}]"#);
     // São Paulo está dentro de um nó fechado: não está à vista.
     assert_eq!(ui.invoke(t, "item_rect", &[PropValue::String("Brasil/São Paulo".into())]).unwrap(), PropValue::Null);
     let PropValue::Bounds(b) = ui.invoke(t, "item_rect", &[PropValue::String("Portugal".into())]).unwrap() else { panic!() };

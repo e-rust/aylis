@@ -140,7 +140,7 @@ impl Component for EmojiPicker {
         filter: String => "Data",
         recent: String => "Data",
         max_recent: i64 => "Behavior";
-        events: on_select
+        events: on_select: String
     }
 
     fn accepts_text(&self) -> bool {

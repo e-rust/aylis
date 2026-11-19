@@ -96,15 +96,15 @@ fn a_chart_shows_the_dataset_through_bindings() {
     let (mut ui, form, cds, ds) = setup();
     let chart = ui.add(aylis_controls::Chart::default(), form);
     ui.set_binding(chart, "labels", Some(ds), "nome");
-    ui.set_binding(chart, "series", Some(ds), "Preço[line;#EF4444]=preco|Qtd=quantidade");
+    ui.set_binding(chart, "series", Some(ds), r##"[{"name": "Preço", "kind": "line", "color": "#EF4444", "field": "preco"}, {"name": "Qtd", "field": "quantidade"}]"##);
     assert_eq!(ui.get_prop(chart, "labels").unwrap(), PropValue::String("Café;Pão".into()));
-    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String("Preço[line;#EF4444]=12.5,0.75|Qtd=3,10".into()));
+    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String(r##"[{"name":"Preço","kind":"line","color":"#EF4444","values":[12.5,0.75]},{"name":"Qtd","values":[3,10]}]"##.into()));
     let c = ui.get::<aylis_controls::Chart>(chart).unwrap();
     assert_eq!(c.data().len(), 2);
     assert_eq!(c.data()[0].name, "Preço");
     // Só os campos: o nome da série é o do campo.
     ui.set_binding(chart, "series", Some(ds), "quantidade");
-    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String("quantidade=3,10".into()));
+    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String(r#"[{"name":"quantidade","values":[3,10]}]"#.into()));
     // Um registro novo entra no gráfico.
     {
         let mut d = data_set(&mut ui, cds);
@@ -115,7 +115,7 @@ fn a_chart_shows_the_dataset_through_bindings() {
     }
     ui.process_posted();
     assert_eq!(ui.get_prop(chart, "labels").unwrap(), PropValue::String("Café;Pão;Leite".into()));
-    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String("quantidade=3,10,2".into()));
+    assert_eq!(ui.get_prop(chart, "series").unwrap(), PropValue::String(r#"[{"name":"quantidade","values":[3,10,2]}]"#.into()));
 }
 
 #[test]

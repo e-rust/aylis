@@ -391,7 +391,7 @@ impl Component for NodeGraph {
     properties! {
         snap: bool => "Behavior",
         show_grid: bool => "Appearance";
-        events: on_node_click, on_node_moved, on_cable_click, on_cable_delete, on_connect, on_pane_click
+        events: on_node_click: String, on_node_moved: String, on_cable_click: String, on_cable_delete: String, on_connect: String, on_pane_click: ()
     }
 
     /// Enquadra os nós ao mudar de tamanho, até o usuário mover ou dar zoom na vista.

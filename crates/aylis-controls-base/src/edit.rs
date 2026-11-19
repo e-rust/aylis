@@ -936,7 +936,7 @@ impl Component for Edit {
         prefix: String => "Appearance",
         suffix: String => "Appearance",
         mask: String => "Behavior",
-        rules: String => "Behavior",
+        rules: String as List => "Behavior",
         spellcheck: bool => "Behavior",
         autocomplete: bool => "Behavior",
         language: String => "Behavior",
@@ -946,7 +946,7 @@ impl Component for Edit {
         caret_width: f32 => "Caret",
         caret_style: CaretStyle => "Caret",
         caret_blink: u32 as Duration => "Caret";
-        events: on_change, on_caret_move, on_paste;
+        events: on_change: String, on_caret_move: (), on_paste: String;
         computed: sel_start: usize => sel_start / set_sel_start,
             sel_length: usize => sel_length / set_sel_length,
             sel_text: String => sel_text / set_sel_text;

@@ -14,10 +14,26 @@ procedure RegisterForms(Aylis: TAylis);
 implementation
 
 uses
-  ayliscomponents, ibge;
+  fpjson, ayliscomponents, ibge;
+
+function DispatchFrmIBGE(Instance: TAylisForm; const Handler: string; Sender: TAylisComponent; Msg: TJSONObject): Boolean;
+begin
+  Result := True;
+  if Handler = 'form_show' then
+    TFrmIBGE(Instance).form_show(TForm(Sender))
+  else
+  if Handler = 'estado_mudou' then
+    TFrmIBGE(Instance).estado_mudou(TClientDataSet(Sender))
+  else
+  if Handler = 'municipio_mudou' then
+    TFrmIBGE(Instance).municipio_mudou(TClientDataSet(Sender))
+  else
+    Result := False;
+end;
 
 procedure RegisterForms(Aylis: TAylis);
 begin
+  RegisterTypedHandlers('frmIBGE', @DispatchFrmIBGE);
 end;
 
 end.

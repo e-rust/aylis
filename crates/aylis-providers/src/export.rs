@@ -33,7 +33,7 @@ impl Component for Export {
     properties! {
         data_source: Option<ComponentId> => "Data",
         provider: Option<ComponentId> => "Data",
-        fields: String => "Data",
+        fields: String as List => "Data",
         sheet_name: String => "Data",
     }
 

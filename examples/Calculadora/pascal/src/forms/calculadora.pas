@@ -13,11 +13,11 @@ type
   TFrmCalculadora = class(TFrmCalculadoraBase)
   published
     procedure form_key_down(Sender: TAylisComponent; var Key: string; Event: TJSONObject);
-    procedure limpar_historico_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure historico_item_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure memoria_item_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure historico_click(Sender: TAylisComponent; Event: TJSONObject);
-    procedure tecla_click(Sender: TAylisComponent; Event: TJSONObject);
+    procedure limpar_historico_click(Sender: TButton);
+    procedure historico_item_click(Sender: TListView; Value: Int64);
+    procedure memoria_item_click(Sender: TListView; Value: Int64);
+    procedure historico_click(Sender: TButton);
+    procedure tecla_click(Sender: TButton);
   end;
 
 var
@@ -66,7 +66,8 @@ end;
 { Põe o estado da calculadora na tela. }
 procedure Atualizar(Aylis: TAylis);
 var
-  Visor, Itens: string;
+  Visor: string;
+  Itens: TListViewItemArray;
   N, Tamanho, I: Integer;
   Erro: Boolean;
   Botao: TButton;
@@ -88,25 +89,30 @@ begin
     Botao.Enabled := not Erro;
   frmCalculadora.btnMC.Enabled := (not Erro) and (Length(Calc.Memoria) > 0);
   frmCalculadora.btnMR.Enabled := (not Erro) and (Length(Calc.Memoria) > 0);
-  Itens := '';
+  Itens := nil;
   for I := High(Calc.Historico) downto 0 do
   begin
-    if Itens <> '' then
-      Itens := Itens + ';';
-    Itens := Itens + Formatar(Calc.Historico[I].Resultado) + '|' + Calc.Historico[I].Expressao;
+    SetLength(Itens, Length(Itens) + 1);
+    Itens[High(Itens)].Title := Formatar(Calc.Historico[I].Resultado);
+    Itens[High(Itens)].Detail := Calc.Historico[I].Expressao;
   end;
-  if Itens = '' then
-    Itens := 'Ainda não há histórico|';
+  if Length(Itens) = 0 then
+  begin
+    SetLength(Itens, 1);
+    Itens[0].Title := 'Ainda não há histórico';
+  end;
   frmCalculadora.lvHistorico.Items := Itens;
-  Itens := '';
+  Itens := nil;
   for I := High(Calc.Memoria) downto 0 do
   begin
-    if Itens <> '' then
-      Itens := Itens + ';';
-    Itens := Itens + Formatar(Calc.Memoria[I]) + '|';
+    SetLength(Itens, Length(Itens) + 1);
+    Itens[High(Itens)].Title := Formatar(Calc.Memoria[I]);
   end;
-  if Itens = '' then
-    Itens := 'Não há nada salvo na memória|';
+  if Length(Itens) = 0 then
+  begin
+    SetLength(Itens, 1);
+    Itens[0].Title := 'Não há nada salvo na memória';
+  end;
   frmCalculadora.lvMemoria.Items := Itens;
 end;
 
@@ -115,17 +121,6 @@ procedure Apertar(Aylis: TAylis; const Texto: string);
 begin
   if Calc.Tecla(Texto) then
     Atualizar(Aylis);
-end;
-
-function Indice(Event: TJSONObject): Integer;
-var
-  Args: TJSONData;
-begin
-  Args := Event.Find('args');
-  if (Args <> nil) and (Args.JSONType = jtNumber) then
-    Result := Args.AsInteger
-  else
-    Result := -1;
 end;
 
 procedure TFrmCalculadora.form_key_down(Sender: TAylisComponent; var Key: string; Event: TJSONObject);
@@ -138,52 +133,46 @@ begin
   Args := TJSONObject(Event.Find('args'));
   Botao := BotaoDoTeclado(Args.Get('key', ''), Args.Get('ctrl', False), Args.Get('shift', False));
   if Botao = 'historico' then
-    historico_click(Self, Event)
+    historico_click(btnHistorico)
   else if Botao <> '' then
     Apertar(Aylis, Botao);
 end;
 
-procedure TFrmCalculadora.limpar_historico_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmCalculadora.limpar_historico_click(Sender: TButton);
 begin
   SetLength(Calc.Historico, 0);
   Atualizar(Aylis);
 end;
 
-procedure TFrmCalculadora.historico_item_click(Sender: TAylisComponent; Event: TJSONObject);
-var
-  I: Integer;
+procedure TFrmCalculadora.historico_item_click(Sender: TListView; Value: Int64);
 begin
   { A lista mostra a conta mais nova em cima. }
-  I := Indice(Event);
-  if (I >= 0) and (I < Length(Calc.Historico)) then
+  if (Value >= 0) and (Value < Length(Calc.Historico)) then
   begin
-    Calc.Usar(Calc.Historico[High(Calc.Historico) - I].Resultado);
+    Calc.Usar(Calc.Historico[High(Calc.Historico) - Value].Resultado);
     Atualizar(Aylis);
   end;
 end;
 
-procedure TFrmCalculadora.memoria_item_click(Sender: TAylisComponent; Event: TJSONObject);
-var
-  I: Integer;
+procedure TFrmCalculadora.memoria_item_click(Sender: TListView; Value: Int64);
 begin
-  I := Indice(Event);
-  if (I >= 0) and (I < Length(Calc.Memoria)) then
+  if (Value >= 0) and (Value < Length(Calc.Memoria)) then
   begin
-    Calc.Usar(Calc.Memoria[High(Calc.Memoria) - I]);
+    Calc.Usar(Calc.Memoria[High(Calc.Memoria) - Value]);
     Atualizar(Aylis);
   end;
 end;
 
-procedure TFrmCalculadora.historico_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmCalculadora.historico_click(Sender: TButton);
 begin
   pnlLateral.Visible := not pnlLateral.Visible;
 end;
 
-procedure TFrmCalculadora.tecla_click(Sender: TAylisComponent; Event: TJSONObject);
+procedure TFrmCalculadora.tecla_click(Sender: TButton);
 var
   Texto: string;
 begin
-  Texto := SenderAsButton(Event).Text;
+  Texto := Sender.Text;
   Apertar(Aylis, Texto);
 end;
 
