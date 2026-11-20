@@ -1118,7 +1118,8 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 24: os registros em JSON nas propriedades (o fim dos itens `a|b;c`), com cor, data, listas,
 /// enum e registro dentro de registro; os eventos com registro (19/11).
 /// 25: o `field` dos registros em Python e o campo com o nome do registro em C# (19/11).
-const GENERATOR_VERSION: u32 = 25;
+/// 26: o `problems` do `bind` sem o aviso de `mut` num form sem componentes (19/11).
+const GENERATOR_VERSION: u32 = 26;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1672,7 +1673,7 @@ fn rust(m: &Model) -> Out {
             "    /// Monta a instância de um {name} recém-criado (o `register` liga). Um componente que\n\
              \x20   /// sumiu do form ou mudou de classe impede o form de abrir, com a lista do que não bate.\n\
              \x20   pub fn bind(ui: &mut Ui, root: ComponentId) -> Result<Box<dyn std::any::Any>, String> {{\n\
-             \x20       let mut problems: Vec<String> = Vec::new();\n\
+             \x20       #[allow(unused_mut)] // um form sem componentes não acrescenta nada\n        let mut problems: Vec<String> = Vec::new();\n\
              \x20       let instance = Self {{\n            form: Form {{ id: root }},\n",
             name = f.name
         ));

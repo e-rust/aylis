@@ -431,7 +431,44 @@ pub fn run_with_pump(
     options: Options,
     make_pump: impl FnOnce(Waker) -> Pump,
 ) -> Result<(), Error> {
-    run_on(EventLoop::new()?, ui, form, options, make_pump)
+    #[allow(unused_mut)]
+    let mut builder = EventLoop::builder();
+    // Linux: vai pelo X11 quando o Wayland não serve (veja `prefer_x11`).
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
+    if prefer_x11() {
+        use winit::platform::x11::EventLoopBuilderExtX11;
+        builder.with_x11();
+    }
+    run_on(builder.build()?, ui, form, options, make_pump)
+}
+
+/// Há um X11 (`DISPLAY`) e o Wayland pedido não serve:
+/// - no WSL: o compositor do WSLg (o weston) cai com uma janela desenhada pelo EGL no Wayland
+///   ao lado de outra (testado em 19/11: o app com a IDE aberta, ou com o `glxgears`), e todos
+///   os apps do Linux caem junto. Pelo X11 (o Xwayland do WSLg) não cai, com o d3d12 ou o
+///   llvmpipe; o Executar da IDE do Windows no WSL já ia por ele (`aylis_tools::wsl`);
+/// - o `WAYLAND_DISPLAY` aponta para um soquete que não existe, nem no `XDG_RUNTIME_DIR` nem
+///   como caminho absoluto (o WSL rodando como root: o WSLg liga o soquete só no diretório do
+///   usuário dele). Sem o X11, o app não abriria.
+#[cfg(all(target_os = "linux", not(target_os = "android")))]
+fn prefer_x11() -> bool {
+    let Some(display) = std::env::var_os("WAYLAND_DISPLAY").filter(|d| !d.is_empty()) else { return false };
+    if std::env::var_os("DISPLAY").is_none_or(|d| d.is_empty()) {
+        return false;
+    }
+    if is_wsl() {
+        return true;
+    }
+    let display = std::path::PathBuf::from(display);
+    let socket = if display.is_absolute() { display } else { std::env::var_os("XDG_RUNTIME_DIR").map_or(display.clone(), |r| std::path::PathBuf::from(r).join(&display)) };
+    !socket.exists()
+}
+
+/// Roda no WSL (o núcleo do Linux da Microsoft).
+#[cfg(all(target_os = "linux", not(target_os = "android")))]
+fn is_wsl() -> bool {
+    std::env::var_os("WSL_DISTRO_NAME").is_some()
+        || std::fs::read_to_string("/proc/sys/kernel/osrelease").is_ok_and(|r| r.to_ascii_lowercase().contains("microsoft"))
 }
 
 /// Android: o app começa em `android_main(app: AndroidApp)` e entrega o `AndroidApp` aqui.
@@ -1256,6 +1293,7 @@ struct FormWindow {
     hovered: bool,
     /// Windows: mostrada encoberta (`DWMWA_CLOAK`) e descoberta depois do próximo quadro
     /// pintado (o form que nasceu escondido aparecendo sem o branco).
+    #[cfg_attr(not(windows), allow(dead_code))]
     uncloak_after_draw: bool,
 }
 
@@ -3846,6 +3884,17 @@ impl ApplicationHandler for App {
 #[cfg(target_os = "linux")]
 fn mesa_gpu(choice: &aylis_core::gpu::GpuChoice) {
     use aylis_core::gpu::GpuChoice;
+    // No WSL a placa do Windows chega pelo `/dev/dxg`, e o Mesa só a usa com o driver d3d12
+    // (sem ele, o zink falha e o desenho vai para a CPU, no llvmpipe). Como no Executar da IDE
+    // do Windows no WSL (`aylis_tools::wsl`); a biblioteca vem de `/usr/lib/wsl/lib`.
+    if is_wsl()
+        && std::env::var_os("GALLIUM_DRIVER").is_none()
+        && std::path::Path::new("/dev/dxg").exists()
+        && std::path::Path::new("/usr/lib/wsl/lib/libd3d12.so").exists()
+    {
+        // SAFETY: na abertura do app, antes de o OpenGL e as threads de desenho existirem.
+        unsafe { std::env::set_var("GALLIUM_DRIVER", "d3d12") };
+    }
     let (var, value) = match choice {
         GpuChoice::HighPerformance => ("DRI_PRIME", "1".to_string()),
         GpuChoice::LowPower => ("DRI_PRIME", "0".to_string()),

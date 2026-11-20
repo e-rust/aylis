@@ -2,10 +2,12 @@
 //! `.aylispkg`, `.aylisrec`, `.aylisreport`) abrindo nela com dois cliques e um ícone por tipo
 //! (os mesmos do instalador do Windows, `icons::FILE_TYPES`).
 //!
-//! - Linux: uma pasta com `bin/aylis-ide`, o `.desktop` (com o `MimeType`), o XML dos tipos
+//! - Linux: uma pasta com `bin/` (a IDE, o `aylis-host`, o `aylis-tool` e o `aylis-migrate`
+//!   compilados ao lado dela, e a pasta `aylis/` com o código do Aylis, como no instalador do
+//!   Windows: os projetos compilam contra ela), o `.desktop` (com o `MimeType`), o XML dos tipos
 //!   (`share/mime/packages`), os ícones (`hicolor`) e o `instalar.sh`, que copia para
-//!   `~/.local` e atualiza os bancos do sistema (`update-mime-database`,
-//!   `update-desktop-database`).
+//!   `~/.local/share/aylis-ide`, liga a IDE e o `aylis-tool` em `~/.local/bin` e atualiza os
+//!   bancos do sistema (`update-mime-database`, `update-desktop-database`).
 //! - macOS: o `Aylis IDE.app` com o `Info.plist` (`CFBundleDocumentTypes` e os tipos exportados,
 //!   `UTExportedTypeDeclarations`) e um `.icns` por tipo.
 //!
@@ -96,11 +98,99 @@ fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
 }
 
 /// O script que instala a pasta da IDE para o usuário (`~/.local`).
-const LINUX_INSTALL: &str = "#!/bin/sh\n# Instala a IDE do Aylis para este usuário (~/.local) e associa os arquivos do Aylis a ela.\nset -e\nhere=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\nmkdir -p \"$HOME/.local/bin\" \"$HOME/.local/share\"\ncp \"$here/bin/aylis-ide\" \"$HOME/.local/bin/aylis-ide\"\nchmod +x \"$HOME/.local/bin/aylis-ide\"\ncp -r \"$here/share/.\" \"$HOME/.local/share/\"\nsed -i \"s|@EXEC@|$HOME/.local/bin/aylis-ide|\" \"$HOME/.local/share/applications/aylis-ide.desktop\"\nupdate-mime-database \"$HOME/.local/share/mime\" 2>/dev/null || true\nupdate-desktop-database \"$HOME/.local/share/applications\" 2>/dev/null || true\ngtk-update-icon-cache \"$HOME/.local/share/icons/hicolor\" 2>/dev/null || true\necho \"Aylis IDE instalada: $HOME/.local/bin/aylis-ide\"\n";
+/// O `instalar.sh` do Linux: a IDE (com os outros executáveis e a pasta `aylis/`) em
+/// `~/.local/share/aylis-ide/bin`, o lançador da IDE e o `aylis-tool` em `~/.local/bin`, e os
+/// tipos de arquivo associados a ela.
+const LINUX_INSTALL: &str = r#"#!/bin/sh
+# Instala a IDE do Aylis para este usuário (~/.local) e associa os arquivos do Aylis a ela.
+set -e
+here="$(cd "$(dirname "$0")" && pwd)"
+dest="$HOME/.local/share/aylis-ide"
+rm -rf "$dest"
+mkdir -p "$dest" "$HOME/.local/bin" "$HOME/.local/share"
+cp -r "$here/bin" "$dest/"
+for exe in aylis-ide aylis-host aylis-tool aylis-migrate; do
+  if [ -f "$dest/bin/$exe" ]; then chmod +x "$dest/bin/$exe"; fi
+done
+# O lançador: no WSL, a IDE e os apps que ela abre (herdam o ambiente, mesmo os compilados
+# com um Aylis anterior) vão pelo X11 e pela placa do Windows (d3d12): pelo Wayland do WSLg,
+# uma janela desenhada pelo EGL ao lado de outra derruba o compositor.
+rm -f "$HOME/.local/bin/aylis-ide"
+cat > "$HOME/.local/bin/aylis-ide" <<LAUNCHER
+#!/bin/sh
+if [ -e /dev/dxg ] && [ -n "\$DISPLAY" ]; then
+  unset WAYLAND_DISPLAY
+  if [ -z "\$GALLIUM_DRIVER" ] && [ -e /usr/lib/wsl/lib/libd3d12.so ]; then export GALLIUM_DRIVER=d3d12; fi
+fi
+exec "$dest/bin/aylis-ide" "\$@"
+LAUNCHER
+chmod +x "$HOME/.local/bin/aylis-ide"
+if [ -f "$dest/bin/aylis-tool" ]; then ln -sf "$dest/bin/aylis-tool" "$HOME/.local/bin/aylis-tool"; fi
+cp -r "$here/share/." "$HOME/.local/share/"
+sed -i "s|@EXEC@|$HOME/.local/bin/aylis-ide|" "$HOME/.local/share/applications/aylis-ide.desktop"
+update-mime-database "$HOME/.local/share/mime" 2>/dev/null || true
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+gtk-update-icon-cache "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+echo "Aylis IDE instalada: $HOME/.local/bin/aylis-ide"
+"#;
+
+/// Copia a pasta `from` para `to`, sem o que o instalador também deixa de fora (as saídas de
+/// compilação e o que é da máquina: `installer::SKIP`, pelo nome ou por `*.extensão`).
+fn copy_tree(from: &Path, to: &Path) -> Result<(), String> {
+    let skipped = |name: &str| {
+        crate::installer::SKIP.iter().any(|s| match s.strip_prefix('*') {
+            Some(ext) => name.ends_with(ext),
+            None => name == *s,
+        })
+    };
+    std::fs::create_dir_all(to).map_err(|e| format!("{}: {e}", to.display()))?;
+    for entry in std::fs::read_dir(from).map_err(|e| format!("{}: {e}", from.display()))?.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if skipped(&name) {
+            continue;
+        }
+        let path = entry.path();
+        if path.is_dir() {
+            copy_tree(&path, &to.join(&name))?;
+        } else {
+            std::fs::copy(&path, to.join(&name)).map_err(|e| format!("{}: {e}", path.display()))?;
+        }
+    }
+    Ok(())
+}
+
+/// A pasta `aylis/` ao lado da IDE (`aylis_project::codegen::aylis_root` acha ela lá): o código
+/// do Aylis sem os exemplos, os recursos, os clientes e a documentação, como no instalador do
+/// Windows.
+fn copy_sdk(root: &Path, to: &Path) -> Result<(), String> {
+    let manifest = std::fs::read_to_string(root.join("Cargo.toml")).map_err(|e| e.to_string())?;
+    write(&to.join("Cargo.toml"), crate::installer::without_examples(&manifest).as_bytes())?;
+    for file in ["Cargo.lock", "README.md", "LICENSE"] {
+        if root.join(file).is_file() {
+            std::fs::copy(root.join(file), to.join(file)).map_err(|e| format!("{file}: {e}"))?;
+        }
+    }
+    for dir in ["crates", "third_party", "clients", "resources", "docs", "schema"] {
+        if root.join(dir).is_dir() {
+            copy_tree(&root.join(dir), &to.join(dir))?;
+        }
+    }
+    // As páginas dos componentes (o MCP da IDE lê), sem as imagens.
+    let reference = root.join("examples/Landing/assets/docs/componentes");
+    for entry in std::fs::read_dir(&reference).into_iter().flatten().flatten() {
+        let path = entry.path();
+        if path.extension().is_some_and(|e| e == "md") {
+            let target = to.join("docs/referencia").join(entry.file_name());
+            write(&target, &std::fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?)?;
+        }
+    }
+    Ok(())
+}
 
 /// Monta a IDE para `target` (`linux` ou `macos`) com o executável `binary` em `out`.
-/// Devolve a pasta (Linux) ou o `.app` (macOS).
-pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version: &str) -> Result<PathBuf, String> {
+/// `sdk`: o repositório do Aylis, para o Linux levar os outros executáveis (os que estão ao
+/// lado de `binary`) e a pasta `aylis/`. Devolve a pasta (Linux) ou o `.app` (macOS).
+pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version: &str, sdk: Option<&Path>) -> Result<PathBuf, String> {
     let exe = std::fs::read(binary).map_err(|e| format!("{}: {e}", binary.display()))?;
     let logo = crate::icons::from_ico(&std::fs::read(logo_ico).map_err(|e| format!("{}: {e}", logo_ico.display()))?)?;
     let type_image = |ext: &str, size: u32| crate::icons::file_type_image(&logo, ext, size).expect("tipo do Aylis");
@@ -109,6 +199,18 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
             let root = out.join("aylis-ide");
             let _ = std::fs::remove_dir_all(&root);
             write(&root.join("bin/aylis-ide"), &exe)?;
+            if let Some(sdk) = sdk {
+                // Os outros executáveis compilados com ela (o `aylis-host` roda as outras
+                // linguagens; o `aylis-tool`, as ferramentas).
+                let dir = binary.parent().unwrap_or(Path::new("."));
+                for (_, name) in crate::installer::BINARIES.iter().filter(|(_, n)| *n != "aylis-ide") {
+                    let other = dir.join(name);
+                    if other.is_file() {
+                        write(&root.join("bin").join(name), &std::fs::read(&other).map_err(|e| format!("{}: {e}", other.display()))?)?;
+                    }
+                }
+                copy_sdk(sdk, &root.join("bin/aylis"))?;
+            }
             write(&root.join("share/applications/aylis-ide.desktop"), linux_desktop("@EXEC@").as_bytes())?;
             write(&root.join("share/mime/packages/aylis-ide.xml"), linux_mime_xml().as_bytes())?;
             for size in [48u32, 128, 256] {
@@ -161,14 +263,14 @@ mod tests {
         let out = std::env::temp_dir().join(format!("aylis_ide_package_{}", std::process::id()));
         let fake = out.join("aylis-ide-bin");
         write(&fake, b"exe").unwrap();
-        let linux = package("linux", &fake, &logo, &out, "1.0.0").unwrap();
+        let linux = package("linux", &fake, &logo, &out, "1.0.0", None).unwrap();
         assert!(linux.join("share/icons/hicolor/256x256/mimetypes/application-x-aylis-aylisproj.png").is_file());
         assert!(linux.join("instalar.sh").is_file() && linux.join("bin/aylis-ide").is_file());
-        let app = package("macos", &fake, &logo, &out, "1.0.0").unwrap();
+        let app = package("macos", &fake, &logo, &out, "1.0.0", None).unwrap();
         let icns = std::fs::read(app.join("Contents/Resources/aylisrec.icns")).unwrap();
         assert_eq!(&icns[..4], b"icns");
         assert_eq!(u32::from_be_bytes(icns[4..8].try_into().unwrap()) as usize, icns.len());
-        assert!(package("windows", &fake, &logo, &out, "1.0.0").is_err());
+        assert!(package("windows", &fake, &logo, &out, "1.0.0", None).is_err());
         let _ = std::fs::remove_dir_all(&out);
     }
 }

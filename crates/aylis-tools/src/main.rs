@@ -415,7 +415,10 @@ fn main() -> ExitCode {
             let binary = PathBuf::from(value_of(&args, "--binary").ok_or("informe --binary (a IDE compilada no sistema de destino)")?);
             let out = PathBuf::from(value_of(&args, "--out").unwrap_or_else(|| "dist".into()));
             let logo = PathBuf::from(aylis_project::codegen::aylis_root()).join("crates/aylis-ide/resources/aylis-ide.ico");
-            let made = aylis_tools::ide_package::package(&target, &binary, &logo, &out, env!("CARGO_PKG_VERSION"))?;
+            // Do repositório do Aylis: o pacote do Linux leva a pasta `aylis/` e os outros executáveis.
+            let root = PathBuf::from(aylis_project::codegen::aylis_root());
+            let sdk = root.join("crates").is_dir().then_some(root.as_path());
+            let made = aylis_tools::ide_package::package(&target, &binary, &logo, &out, env!("CARGO_PKG_VERSION"), sdk)?;
             println!("pronto: {}", made.display());
             Ok(())
         })(),

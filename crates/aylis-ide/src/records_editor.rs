@@ -1,6 +1,6 @@
 //! O editor de uma lista de registros (`PropKind::RecordList`: os itens do ListView, os nós do
-//! TreeView, as colunas do DataGrid, as séries do Chart...), como o editor de coleção do
-//! Delphi: os itens à esquerda e, à direita, os campos do item escolhido, cada um com o editor
+//! TreeView, as colunas do DataGrid, as séries do Chart...), um editor de coleção: os itens à
+//! esquerda e, à direita, os campos do item escolhido, cada um com o editor
 //! do tipo dele. Uma lista dentro do item (os filhos de um nó) abre o mesmo editor por cima.
 
 use std::cell::RefCell;

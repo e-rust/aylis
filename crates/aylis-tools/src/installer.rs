@@ -58,11 +58,11 @@ const PLATFORM: &str = "windows-x86_64";
 
 
 /// Os executáveis (o pacote do cargo e o nome do binário).
-const BINARIES: &[(&str, &str)] = &[("aylis-ide", "aylis-ide"), ("aylis-host", "aylis-host"), ("aylis-tools", "aylis-tool"), ("aylis-migrate", "aylis-migrate")];
+pub(crate) const BINARIES: &[(&str, &str)] = &[("aylis-ide", "aylis-ide"), ("aylis-host", "aylis-host"), ("aylis-tools", "aylis-tool"), ("aylis-migrate", "aylis-migrate")];
 
 /// O `Cargo.toml` do workspace sem os exemplos entre os membros (os exemplos não vão para o
 /// instalador; com eles listados, o cargo recusaria o workspace instalado).
-fn without_examples(manifest: &str) -> String {
+pub(crate) fn without_examples(manifest: &str) -> String {
     manifest
         .lines()
         .map(|line| {
@@ -84,7 +84,7 @@ fn without_examples(manifest: &str) -> String {
 /// nível das pastas copiadas).
 /// `.aylis` (a compilação local do projeto), `.cache` (o índice do clangd), `dist` (o
 /// publicado) e o `ibge-cache` (as respostas da API) são da máquina de quem gera.
-const SKIP: &[&str] = &[
+pub(crate) const SKIP: &[&str] = &[
     "target",
     "pkg",
     "node_modules",

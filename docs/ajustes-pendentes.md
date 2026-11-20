@@ -13,6 +13,29 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 19/11/2026: a IDE para Linux, testada no WSL**
+
+- Pedido: "gere a IDE para o linux e teste no meu wsl".
+  - Feito: o `aylis-tool ide-package --target linux` leva, além da IDE, o `aylis-host`, o
+    `aylis-tool` e o `aylis-migrate` compilados ao lado dela e a pasta `aylis/` com o código do
+    Aylis (como o instalador do Windows); o `instalar.sh` copia para `~/.local/share/aylis-ide`
+    e põe a IDE (um lançador) e o `aylis-tool` em `~/.local/bin`. Compilado no WSL (Ubuntu
+    26.04, ~4,5 min em release), o pacote tem 338 MB (128 MB em `.tar.gz`).
+  - Conferido no WSL (como root, WSLg): instalar a partir do `.tar.gz`, abrir a IDE, criar um
+    projeto, compilar (2m53s na primeira vez) e Executar, com o app aberto ao lado da IDE e
+    conectado a ela.
+  - Achado: o compositor do WSLg (o weston) às vezes cai (segfault no `libpixman`) quando uma
+    janela desenhada pelo EGL no Wayland convive com outra, e leva junto todos os apps do Linux
+    ("Broken pipe"). É intermitente: de 1 em 1 a 0 em 8 nas mesmas condições. Não é do Aylis
+    (diretriz 7), mas a plataforma agora, no WSL, vai pelo X11 (o Xwayland do WSLg) e põe o Mesa
+    no d3d12 (a placa do Windows; sem ele, o desenho vai para a CPU no llvmpipe), como o Executar
+    da IDE do Windows no WSL já fazia (`aylis_tools::wsl`). Pelo X11 nenhuma queda foi vista. O
+    lançador da IDE faz o mesmo, para valer também para os apps compilados com a 0.8.0. Como a
+    queda é intermitente, não dá para afirmar que sumiu: fica para o autor conferir no uso.
+  - Também: quem roda o WSL como root não tem o soquete do Wayland no `XDG_RUNTIME_DIR`; fora do
+    WSL, com o `WAYLAND_DISPLAY` apontando para um soquete que não existe, a plataforma vai pelo
+    X11 em vez de não abrir.
+
 **Ajustes de 19/11/2026: a janela sem o branco da abertura e a tela cheia**
 
 - Pedido: "a janela exibida antes de ser pintada o primeiro quadro, fazendo o app piscar em

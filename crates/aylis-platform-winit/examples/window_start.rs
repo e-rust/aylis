@@ -3,7 +3,7 @@
 //! O form é escuro de propósito: um quadro branco na abertura salta à vista.
 //!
 //! ```text
-//! cargo run -p aylis-platform-winit --example window_start --features d2d -- [normal|full|full_later|back] [--stay] [--fill #rrggbb]
+//! cargo run -p aylis-platform-winit --example window_start --features d2d -- [normal|full|full_later|back] [--stay] [--fill #rrggbb] [--cursor wait] [--icon logo.png]
 //! ```
 //!
 //! - `normal`: a janela comum;
@@ -29,6 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `--fill #rrggbb`: outra cor (para achar a janela numa gravação da tela).
     let fill = args.iter().position(|a| a == "--fill").and_then(|i| args.get(i + 1)).and_then(|c| Color::from_hex(c)).unwrap_or(Color::rgb(24, 24, 28));
     ui.set_prop(form, "fill", fill)?;
+    // `--cursor wait`: o cursor do form (para conferir os cursores do sistema).
+    if let Some(cursor) = args.iter().position(|a| a == "--cursor").and_then(|i| args.get(i + 1)) {
+        ui.set_prop(form, "cursor", cursor.as_str())?;
+    }
     if matches!(mode.as_str(), "full" | "back") {
         ui.set_prop(form, "window_state", "full_screen")?;
     }
@@ -69,5 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.request_close();
         });
     }
-    aylis_platform_winit::run(ui, form)
+    // `--icon logo.png`: o ícone da janela (para conferir como o sistema o recebe).
+    let icon = args.iter().position(|a| a == "--icon").and_then(|i| args.get(i + 1)).map(std::fs::read).transpose()?;
+    aylis_platform_winit::run_with(ui, form, aylis_platform_winit::Options { icon, ..Default::default() })
 }
