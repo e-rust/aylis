@@ -65,6 +65,20 @@ pub enum WindowCommand {
     /// O `WindowSettings` do form (ou o do app) mudou: a janela aplica as opções de novo
     /// (veja [`WindowOptions`]).
     UpdateOptions,
+    /// Chama a atenção para a janela sem tomar o foco: no Windows, o botão dela pisca na barra
+    /// de tarefas até o usuário ativá-la (`true`, urgente: a janela pisca também); no macOS, o
+    /// ícone pula no Dock (urgente: até ativar); no Linux, a dica de urgência do gerenciador.
+    RequestAttention(bool),
+    /// O `topmost` ou o `bottommost` do form mudou: a janela fica por cima de todas, por baixo
+    /// de todas ou normal.
+    UpdateLevel,
+    /// O `keep_awake` de um form mudou (ou um form abriu ou fechou): a plataforma junta o de
+    /// todos os forms abertos e pede ao sistema.
+    UpdateKeepAwake,
+    /// O `confine_cursor` do form mudou: o mouse fica preso na janela, no monitor dela ou solto.
+    UpdateCursorConfine,
+    /// O `window_opacity` do form mudou: a janela inteira (com a moldura) fica translúcida.
+    UpdateOpacity,
 }
 
 impl Ui {

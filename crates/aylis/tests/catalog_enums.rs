@@ -23,6 +23,7 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::ChartKind> = None;
     let _: Option<aylis::prelude::CloseAction> = None;
     let _: Option<aylis::prelude::ComboArrow> = None;
+    let _: Option<aylis::prelude::CursorConfine> = None;
     let _: Option<aylis::prelude::CursorShape> = None;
     let _: Option<aylis::prelude::DlgKind> = None;
     let _: Option<aylis::prelude::DrawMode> = None;
@@ -32,10 +33,12 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::FormOrientation> = None;
     let _: Option<aylis::prelude::FormPosition> = None;
     let _: Option<aylis::prelude::FormPresent> = None;
+    let _: Option<aylis::prelude::FullScreenMode> = None;
     let _: Option<aylis::prelude::HorizontalWheel> = None;
     let _: Option<aylis::prelude::IconPosition> = None;
     let _: Option<aylis::prelude::ImageFit> = None;
     let _: Option<aylis::prelude::InterceptScope> = None;
+    let _: Option<aylis::prelude::KeepAwake> = None;
     let _: Option<aylis::prelude::LayerCaching> = None;
     let _: Option<aylis::prelude::LegendPosition> = None;
     let _: Option<aylis::prelude::LineDirection> = None;

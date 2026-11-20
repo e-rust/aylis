@@ -596,6 +596,10 @@ fn numeric(s: &str) -> bool {
 }
 
 impl Component for MarkupTable {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     leaf_control!("MarkupTable");
 
     properties! {
@@ -605,11 +609,6 @@ impl Component for MarkupTable {
         striped: bool => "Appearance",
         separator: TableSeparator => "Appearance";
         on_set: sync
-    }
-
-    fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
-        let row = if self.dense { 28.0 } else { 44.0 };
-        Some(row * (self.cells().len() as f32 + 1.0) + 2.0)
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -658,6 +657,13 @@ impl Component for MarkupTable {
             }
         }
         canvas.restore();
+    }
+}
+
+impl aylis_core::LayoutHooks for MarkupTable {
+    fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
+        let row = if self.dense { 28.0 } else { 44.0 };
+        Some(row * (self.cells().len() as f32 + 1.0) + 2.0)
     }
 }
 
@@ -1326,6 +1332,10 @@ impl OptionGroup {
 }
 
 impl Component for OptionGroup {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário: os marcados.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(self.selected.clone()))
@@ -1341,10 +1351,6 @@ impl Component for OptionGroup {
         inline: bool => "Appearance";
         events: on_change: Vec<String>;
         on_set: sync
-    }
-
-    fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
-        Some(if self.inline { 40.0 } else { 36.0 * split(&self.items).len().max(1) as f32 + 4.0 })
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -1444,6 +1450,12 @@ impl Component for OptionGroup {
             }
         }
         *self.rows.borrow_mut() = rows;
+    }
+}
+
+impl aylis_core::LayoutHooks for OptionGroup {
+    fn auto_height(&self, _ui: &aylis_core::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
+        Some(if self.inline { 40.0 } else { 36.0 * split(&self.items).len().max(1) as f32 + 4.0 })
     }
 }
 

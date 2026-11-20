@@ -13,6 +13,122 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 20/11/2026: uma janela por monitor, a que fica por cima e o arrasto entre elas**
+
+- [ ] Relato do autor em 20/11 (um app dele, feito com uma LLM): abrir uma janela por monitor,
+  umas em tela cheia e outras não; a do monitor principal levada para cima das outras e
+  continuando visível; arrastar itens entre todas as janelas. No app, o arrasto que começava
+  na janela em tela cheia não chegava à janela do outro monitor.
+  - Testado com dois monitores 4K no exemplo novo `multi_monitor` (uma janela comum no
+    principal, uma em tela cheia no outro e uma paleta `topmost`), com o mouse simulado
+    (`SendInput`): as 9 combinações de arrasto (comum, tela cheia e paleta, entre si e na
+    mesma janela) chegam ao destino, inclusive da tela cheia para a comum. A paleta, levada
+    pela barra de título para cima da tela cheia no outro monitor, continua visível e recebe
+    o soltar.
+  - Achado e corrigido (`aylis-core`, `forms.rs`): o form principal era possuído pelo último
+    form aberto. O `show` faz de cada form aberto o dono do próximo, e o `run` mostra o
+    principal por último; num app que abre antes as janelas dos outros monitores e a paleta,
+    o principal ficava possuído pela paleta, por cima dela e com o `topmost` dela. Assim a
+    paleta sumia atrás da principal, e soltar nela (ou começar o arrasto nela) caía na janela
+    de baixo. Agora o principal nunca tem dona (também quando é escolhido depois de aberto,
+    no `set_main_form`). Teste `the_main_form_is_never_owned`.
+  - Achado e corrigido (`aylis-core`, `input.rs`): o controle com `draggable` ou
+    `accepts_drops` recebe o mouse mesmo com o `hit_test` desligado. O Label nasce com ele
+    desligado, e ligar o `draggable` num Label não fazia nada, sem aviso. Teste
+    `a_label_drags_without_turning_hit_test_on`.
+  - Achado e corrigido (`aylis-platform-winit`, `resize_edge`): na tela cheia de um form com
+    a barra própria (`border_style = custom`), a borda de 6 px continuava redimensionando (a
+    seta aparecia e puxar tirava da tela cheia); só a maximizada deixava de redimensionar.
+    Conferido com o `window_start full --border <estilo>` e o mouse nas bordas: nos quatro
+    estilos a janela cobre o monitor inteiro (a barra de tarefas também) e o cursor fica a
+    seta; sem a correção, o `custom` mostrava a seta de redimensionar.
+  - Pedido do autor em 20/11: fixar o monitor em que o form nasce em tela cheia e, com o app
+    rodando, escolher em que monitor ele ocupa a tela toda. Nascer: `monitor` e
+    `window_state = full_screen` no form (já valia). Com o app rodando, feito
+    (`aylis-controls-base`, `aylis-platform-winit`):
+    - o `monitor` mudado com o form aberto leva a janela para lá (antes, só valia ao nascer);
+    - em tela cheia, o `move_to_monitor` (e o `monitor`) passa a tela cheia para o outro
+      monitor: sai dela, leva a janela comum para o centro do outro e entra em tela cheia lá
+      (trocando direto, a volta ao normal ficava do tamanho do monitor);
+    - o `move_to_monitor` atualiza o `monitor`, e a tela cheia ligada depois vai para o
+      monitor certo.
+    Conferido com o `window_start switch` (a cada 2 s: tela cheia no 0, tela cheia no 1, normal
+    no 1 com o tamanho do form, normal no 0, tela cheia no 0), olhando o retângulo da janela
+    por fora.
+  - Revisão pedida pelo autor em 20/11 (os recursos do form com vários monitores). Achado e
+    corrigido: o `remember_placement` em tela cheia gravava o retângulo da tela cheia como o
+    lugar normal, e a janela reaberta vinha do tamanho do monitor, com moldura. Agora o
+    `WindowPlacement` tem `full_screen`: em tela cheia, o lugar normal fica e a marca vai junto
+    (com o monitor dela), e o form reabre em tela cheia no monitor em que estava (o guardado
+    vale mais que o `monitor` do form, como a posição). Conferido com o `window_start
+    --remember`: comum → tela cheia → reabre em tela cheia → volta ao normal → reabre comum,
+    no tamanho do form.
+  - Para decidir com o autor (vistos na revisão, não feitos):
+    - o `monitor` é um índice na ordem do sistema, que pode mudar quando um monitor é
+      desligado e ligado de novo (o `remember_placement` já guarda pelo nome do aparelho);
+    - um monitor desligado com o app aberto: as janelas dele ficam onde o Windows as puser, e
+      ao religar não voltam (o `Screen.on_change` avisa; o app decide). Não testado com uma
+      janela em tela cheia nele;
+    Decidido pelo autor em 20/11: o `monitor` continua o índice na ordem do sistema; para o
+    monitor desligado, basta o evento (`Screen.on_change`).
+  - Pedido do autor em 20/11 ("pode fazer"): os recursos do Windows que o form não expunha.
+    Feito, cada um conferido na tela com o exemplo novo `window_features`:
+    - `request_attention(critical)` (método): o botão na barra de tarefas pisca até a janela
+      ser ativada (urgente: a janela também). Visto o botão destacado na barra de tarefas;
+    - `keep_awake` (`off`, `system`, `display`): o maior pedido dos forms abertos, pelo
+      `SetThreadExecutionState`. Conferido pelo estado de energia do sistema: `system` segura o
+      PC, `display` segura a tela também, e fechar devolve o normal;
+    - `bottommost`: sempre por baixo das outras (com `topmost`, vale o `topmost`). Conferido
+      ativando a janela: ela continua atrás da comum;
+    - `confine_cursor` (`none`, `window`, `monitor`): o mouse preso na janela ou no monitor
+      dela enquanto ela está ativa (o `monitor` pelo `ClipCursor`, de novo a cada foco).
+      Conferido o `window` (o mouse não sai da área da janela; fechar solta); o `monitor` só
+      com mais de um monitor, que não estava ligado;
+    - `window_opacity`: a janela inteira translúcida (`WS_EX_LAYERED`). Conferido a 50% no
+      Direct2D, no Skia CPU e no Skia GPU (o mesmo tom);
+    - `full_screen_mode = exclusive`, com `video_width`, `video_height` e `video_refresh`: o
+      monitor passa para o modo de vídeo mais perto do pedido. Conferido: de 3840×2160 a 160 Hz
+      para 1920×1080 a 60 Hz e de volta ao fechar.
+    `request_attention`, `bottommost` e `confine_cursor = window` também valem no Linux e no
+    macOS pelo winit (não conferidos lá); os outros, só no Windows por enquanto.
+  - Pedido do autor em 20/11: o form que entra em outro e sai dele, "como as abas do
+    navegador". Feito (`aylis-controls-base::docking`, `aylis-core`, `aylis-platform-winit`):
+    - `host` do form (pelo código): entra no contêiner (numa faixa de abas, vira uma aba com o
+      título dele); aberto numa janela, ela some sem fechar o form (o `Ui::release_window`, sem
+      `on_close`); vazio, ele volta a ter janela, com o tamanho de antes. Eventos `on_dock` e
+      `on_undock`. O principal e um modal não entram;
+    - arrastando: a aba de um form com `dockable` puxada para fora da faixa vira a janela do
+      próprio form, onde foi solta; a janela de um form com `dockable`, arrastada pela barra de
+      título até uma faixa com `accept_forms`, entra nela como aba, no lugar marcado
+      (`Ui::window_drag_over`/`window_drag_end`, pelos mesmos ganchos `drop_*` do arrasto).
+    Conferido no exemplo novo `docking`, com o mouse simulado: os dois forms começam como abas;
+    a aba do Clientes puxada para fora vira a janela dele (520×340, o mesmo conteúdo); a
+    janela arrastada pela barra até a faixa volta como aba, depois de Pedidos; o botão (o
+    `host`) tira e põe de volta. Testes `a_form_docks_into_a_tab_strip_and_back` e
+    `a_dragged_window_docks_where_it_is_dropped`. O arrasto da janela até a faixa é só do
+    Windows por enquanto (nas outras, pelo `host` e pela aba).
+  - Pedido do autor em 20/11: o `app_command` simular o arrasto de um form para outro. Feito
+    (`aylis-remote`): o `drag` com `to` noutro form arrasta de uma janela do app para outra (o
+    `drag_over_form`, como a plataforma faz quando o mouse sai da janela); sem `to`, com
+    `screen_x`/`screen_y`, solta fora de todas (a aba arrastada para longe vira janela); e o
+    comando novo `drag_window` leva a janela inteira de um form até um componente de outro (a
+    faixa com `accept_forms` recebe o form com `dockable`). No manual do `app_command`. Testes
+    `drag_goes_from_one_form_to_another` e `drag_window_docks_a_form_and_drag_out_undocks_it`.
+  - Relato do autor em 20/11: a pergunta "Confiar neste projeto?" às vezes ficava atrás da
+    janela da IDE, travando tudo. Causa: o projeto aberto durante a tela de abertura (pelo MCP
+    ou por um duplo clique) abre a pergunta com a abertura como dona; a abertura fecha antes de
+    a janela da IDE existir, e a plataforma deixava a pergunta sem dona. Feito
+    (`aylis-platform-winit`): a dona passa a ser o form principal mesmo sem janela ainda, e a
+    janela dele, ao abrir, assume as que esperavam (`adopt_owned_windows`). Conferido abrindo
+    um projeto de fora pelo MCP com a IDE nova: a pergunta fica com a janela da IDE como dona
+    (antes, sem dona). E com o `window_features --splash --confirm`.
+  - Visto nos testes de 20/11 (não é defeito): com um monitor só, a cópia de tela pela GDI não
+    enxerga a janela do Skia GPU sem nada por cima (ela vai para o plano de overlay da placa);
+    para fotos de teste, usar o Skia CPU ou pôr outra janela por cima de um canto.
+  - Falta: o autor conferir no app dele, com três monitores. A falha da tela cheia para a
+    janela comum não se repetiu aqui; se continuar lá, pode depender de monitores com escalas
+    diferentes (aqui os dois estão na mesma) ou da ordem em que o app abre as janelas.
+
 **Ajustes de 19/11/2026: a IDE para Linux, testada no WSL**
 
 - Pedido: "gere a IDE para o linux e teste no meu wsl".
@@ -310,16 +426,16 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
 
 **Ajustes de 17/11/2026: arrastar para uma janela do app que está por cima**
 
-- [ ] Relato vindo do MD304V em 17/11 (a janela da revisão por cima da parede: soltar uma
-  câmera na revisão caía na célula da parede embaixo e trocava as câmeras dela): o Aylis só
+- [ ] Relato de um app do autor em 17/11 (uma janela pequena por cima de uma grande: soltar
+  um item na de cima caía na grande, embaixo): o Aylis só
   procurava outra janela do app quando o mouse saía da janela onde o arrasto começou. Feito
   em 17/11 (`aylis-platform-winit`): durante um arrasto, a cada movimento a plataforma
   pergunta ao Windows qual janela está à vista naquele ponto (`win32::top_level_at`,
   `WindowFromPoint`); se é a de outro form do app, o destino é ela (acende ao passar, recebe o
   soltar) e o form de baixo não recebe o movimento. A imagem do arrasto é transparente ao
   mouse e não atrapalha. Fora do Windows continua como antes (o winit não diz a ordem das
-  janelas): vai para testes-em-dispositivos. Conferir no MD304V: arrastar da parede e da
-  lista lateral para a revisão.
+  janelas): vai para testes-em-dispositivos. Conferir no app: arrastar da janela grande e
+  da lista lateral para a de cima.
 
 **Ajustes de 17/11/2026: ícones no TreeView e onde cada nó é pintado**
 
@@ -494,10 +610,10 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   entre 1.88 e 1.91 passa na verificação e falha ao compilar um app com relatório (o pacote de
   ferramentas instala o 1.99, então só afeta quem usa um Rust próprio mais velho).
 
-- [ ] Relatado pelo MD304V em 16/11: nas janelas com a barra de título do Windows (as de
+- [ ] Relatado em 16/11 (um app do autor): nas janelas com a barra de título do Windows (as de
   configuração), o botão maximizar não fazia nada. O `win32.rs` engolia o clique no
   `HTMAXBUTTON` de toda janela, achando que era o da barra própria do app. Feito em 16/11 (falta
-  o autor conferir no MD304V): o clique só é da barra própria na janela que registrou o botão
+  o autor conferir no app): o clique só é da barra própria na janela que registrou o botão
   (`set_maximize_button`). Teste `the_maximize_click_is_only_taken_where_the_own_bar_has_the_button`.
 - [ ] Pedido do autor em 16/11: o instalador não instalava com o Claude usando o MCP (a ponte é
   o `aylis-tool.exe` da instalação, preso). Feito em 16/11 (falta o autor conferir numa

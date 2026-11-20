@@ -175,6 +175,14 @@ impl WmiQuery {
 }
 
 impl Component for WmiQuery {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "WmiQuery"
     }
@@ -253,6 +261,18 @@ impl Component for WmiQuery {
         }
     }
 
+    fn property_changed(&mut self, _ctx: &mut EventCtx<'_>, name: &str) {
+        // Religar o `watch` (ou trocar a consulta) tenta de novo depois de uma falha.
+        if matches!(name, "watch" | "query" | "namespace") {
+            self.watch_failed = false;
+            if name != "watch" {
+                self.subscription = None;
+            }
+        }
+    }
+}
+
+impl aylis_core::Timed for WmiQuery {
     fn timer_interval(&self) -> Option<f64> {
         // Só enquanto há uma mudança do `watch` para aplicar; parado, sem timer.
         self.watch_pending().then_some(0.01)
@@ -261,16 +281,6 @@ impl Component for WmiQuery {
     fn timer(&mut self, ctx: &mut EventCtx<'_>) {
         if !ctx.ui.design_mode() {
             self.sync_watch(ctx);
-        }
-    }
-
-    fn property_changed(&mut self, _ctx: &mut EventCtx<'_>, name: &str) {
-        // Religar o `watch` (ou trocar a consulta) tenta de novo depois de uma falha.
-        if matches!(name, "watch" | "query" | "namespace") {
-            self.watch_failed = false;
-            if name != "watch" {
-                self.subscription = None;
-            }
         }
     }
 }

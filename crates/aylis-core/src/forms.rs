@@ -35,9 +35,10 @@ use crate::prop::{PropEnum, PropValue};
 use crate::ui::Ui;
 
 /// Onde a janela de um form fica na tela, em pixels físicos: posição do canto, tamanho da
-/// área interna e se está maximizada.
+/// área interna e se está maximizada ou em tela cheia.
 /// A plataforma atualiza quando a janela é movida ou muda de
-/// tamanho; maximizada, guarda a posição e o tamanho de antes (para voltar a eles). Para
+/// tamanho; maximizada ou em tela cheia, guarda a posição e o tamanho de antes (para voltar a
+/// eles; em tela cheia, a posição fica no monitor dela). Para
 /// reabrir onde estava, o app guarda isto e devolve com [`Ui::set_window_placement`]
 /// antes do `show`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -48,6 +49,8 @@ pub struct WindowPlacement {
     pub width: u32,
     pub height: u32,
     pub maximized: bool,
+    /// Em tela cheia (no monitor da posição): reabre em tela cheia nele.
+    pub full_screen: bool,
 }
 
 impl Ui {
@@ -238,7 +241,10 @@ impl Ui {
         if self.main_form.is_none() {
             self.main_form = Some(form);
         }
-        let owner = self.open_forms.last().map(|f| f.form);
+        // O principal nunca tem dona: possuído por outro form (os abertos antes dele, um por
+        // monitor), ele ficava preso por cima dela e herdava o `topmost` dela (testado em 20/11:
+        // a paleta sempre por cima atrás da janela principal).
+        let owner = if self.main_form == Some(form) { None } else { self.open_forms.last().map(|f| f.form) };
         self.open_forms.push(OpenForm { form, modal, owner, result: ModalResult::None, on_close });
         if let Some(cb) = self.control_mut(form) {
             cb.set_visible(true);
@@ -279,6 +285,24 @@ impl Ui {
             stack.extend(self.children(id).iter().rev().copied());
         }
         out
+    }
+
+    /// O form aberto numa janela deixa de ter janela, sem fechar: sem o `on_close_query`, o
+    /// `on_close` nem o `close_action`, e continua com o estado dele (vai ser embutido em outro,
+    /// como a aba de uma faixa). O principal não larga a janela (`false`), nem um modal.
+    pub fn release_window(&mut self, form: ComponentId) -> bool {
+        let Some(pos) = self.open_forms.iter().position(|f| f.form == form) else { return true };
+        if self.main_form == Some(form) || self.open_forms[pos].modal {
+            return false;
+        }
+        let entry = self.open_forms.remove(pos);
+        self.frame_requests.borrow_mut().remove(&form);
+        if let Some(state) = self.input.get_mut(&form) {
+            *state = Default::default();
+        }
+        self.activate = entry.owner.filter(|o| self.is_open(*o)).or_else(|| self.open_forms.last().map(|f| f.form));
+        self.invalidate();
+        true
     }
 
     /// Fecha o form (como `Close`). Antes pergunta ao `on_close_query`: um handler que
@@ -496,6 +520,8 @@ impl Ui {
     /// Escolhe o form principal (como `Application.MainForm`).
     pub fn set_main_form(&mut self, form: ComponentId) {
         self.main_form = Some(form);
+        // Já aberto, deixa de ser possuído (veja o `open`).
+        self.set_form_owner(form, None);
     }
 
     /// Existe um form modal aberto depois deste: ele não recebe mouse nem teclado.

@@ -903,7 +903,8 @@ pub const APP_COMMAND_HELP: &str = "\
              - {\"cmd\":\"rect\",\"target\":\"pnlX\"}, {\"cmd\":\"props\",\"target\":\"btnSalvar\"}, {\"cmd\":\"get\",\"target\":\"edtNome\",\"prop\":\"text\"}: posição, propriedades, um valor;\n\
              - {\"cmd\":\"set\",\"target\":\"edtNome\",\"prop\":\"text\",\"value\":\"Ana\"} (ou várias: \"props\":{...}), {\"cmd\":\"focus\",...}, {\"cmd\":\"invoke\",\"target\":...,\"method\":...,\"args\":[]}, {\"cmd\":\"highlight\",\"target\":...};\n\
              - {\"cmd\":\"click\",\"target\":\"btnSalvar\"}: o clique do componente; com \"modifiers\" (\"Ctrl+Shift\" ou [\"ctrl\",\"shift\"]; ctrl, shift, alt, meta), \"x\"/\"y\" (dentro do componente; padrão o meio), \"button\" (left, right, middle) ou \"double\":true, o mouse de verdade naquele ponto (Ctrl+clique e Shift+clique na lista, o menu do botão direito);\n\
-             - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click;\n\
+             - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um; \"to\" noutro form arrasta de uma janela do app para outra), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click; sem \"to\", com \"screen_x\"/\"screen_y\", solta fora de todas as janelas nesse ponto da tela (a aba arrastada para longe vira janela);\n\
+             - {\"cmd\":\"drag_window\",\"form\":\"frmClientes\",\"to\":\"tabForms\"}: a janela inteira do form arrastada pela barra de título até \"to\" (noutro form), como no arrasto de verdade: a faixa de abas com accept_forms recebe o form com dockable como aba; \"to_x\"/\"to_y\" dentro de \"to\"; devolve {\"received\": true/false};\n\
              - {\"cmd\":\"key\",\"target\":\"frmX\",\"key\":\"Ctrl+A\"} (\"Enter\", \"Shift+Tab\", \"Alt+S\"; \"modifiers\" soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}): a tecla no controle com foco do form; {\"cmd\":\"type\",\"target\":\"frmX\",\"text\":\"Ana\"}: o texto digitado nele;\n\
              - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program);\n\
              - {\"cmd\":\"profile\",\"on\":true} começa a medir e {\"cmd\":\"profile_take\"} devolve os blocos medidos, as amostras e a memória ({\"cmd\":\"profile\",\"on\":false} para);\n\
@@ -1376,7 +1377,7 @@ mod argument_tests {
         let app = tool("app_command");
         let text = app["description"].as_str().unwrap();
         assert!(text.contains("\"cmd\":\"help\"") && text.contains("feature `dev`"), "{text}");
-        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
+        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "drag_window", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
             assert!(super::APP_COMMAND_HELP.contains(&format!("\"cmd\":\"{cmd}\"")), "falta {cmd}");
         }
         assert!(super::APP_COMMAND_HELP.contains("\"modifiers\"") && super::APP_COMMAND_HELP.contains("Ctrl+Shift"), "as teclas seguradas no clique e no arrasto");

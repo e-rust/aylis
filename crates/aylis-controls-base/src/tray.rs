@@ -132,7 +132,7 @@ impl TrayIcon {
         let (w, h) = ((width * scale) as i32, (height * scale) as i32);
         let x = (screen.x as i32 - w).max(0);
         let y = (screen.y as i32 - h).max(0);
-        ui.set_window_placement(form, WindowPlacement { x, y, width: w as u32, height: h as u32, maximized: false });
+        ui.set_window_placement(form, WindowPlacement { x, y, width: w as u32, height: h as u32, maximized: false, full_screen: false });
         ui.on(list, "on_select", move |ui, list, args| {
             ui.close(form);
             let EventArgs::Text(text) = args else { return };

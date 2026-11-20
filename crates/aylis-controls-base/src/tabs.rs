@@ -215,6 +215,14 @@ fn apply_visibility(ui: &mut Ui, tabs: &[ComponentId], index: i64) {
 }
 
 impl Component for TabControl {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     leaf_control!("TabControl");
 
     // Com `swipe`, deslizar o dedo para os lados troca de página (sem dar a volta nas pontas).
@@ -312,29 +320,6 @@ impl Component for TabControl {
     }
 
     // As abas para leitores de tela e automação: o título, onde está e qual está à vista.
-    fn access_items(&self, ui: &Ui, id: ComponentId) -> Vec<AccessItem> {
-        let headers = self.headers.borrow();
-        TabControl::tabs(ui, id)
-            .iter()
-            .enumerate()
-            .map(|(i, &tab)| {
-                let caption = ui.get::<TabItem>(tab).map(|t| t.caption.clone()).unwrap_or_default();
-                let mut item = AccessItem::new(ItemRole::Tab, caption).selected(i as i64 == self.tab_index);
-                if let Some((_, r)) = headers.iter().find(|(t, _)| *t == tab) {
-                    item = item.rect(*r);
-                }
-                item
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
-        if index >= TabControl::tabs(ctx.ui, ctx.id).len() {
-            return false;
-        }
-        self.change(ctx, index as i64);
-        true
-    }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         let delta = match event.key {
@@ -466,6 +451,32 @@ impl Component for TabControl {
         // Só as abas à vista recebem o clique.
         headers.retain(|(_, rect)| rect.intersects(bar));
         *self.headers.borrow_mut() = headers;
+    }
+}
+
+impl aylis_core::AccessibleItems for TabControl {
+    fn access_items(&self, ui: &Ui, id: ComponentId) -> Vec<AccessItem> {
+        let headers = self.headers.borrow();
+        TabControl::tabs(ui, id)
+            .iter()
+            .enumerate()
+            .map(|(i, &tab)| {
+                let caption = ui.get::<TabItem>(tab).map(|t| t.caption.clone()).unwrap_or_default();
+                let mut item = AccessItem::new(ItemRole::Tab, caption).selected(i as i64 == self.tab_index);
+                if let Some((_, r)) = headers.iter().find(|(t, _)| *t == tab) {
+                    item = item.rect(*r);
+                }
+                item
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
+        if index >= TabControl::tabs(ctx.ui, ctx.id).len() {
+            return false;
+        }
+        self.change(ctx, index as i64);
+        true
     }
 }
 

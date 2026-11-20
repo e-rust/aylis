@@ -838,6 +838,10 @@ fn byte_index(text: &str, chars: usize) -> usize {
 }
 
 impl Component for Edit {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     leaf_control!("Edit");
 
     fn accepts_text(&self) -> bool {
@@ -861,51 +865,6 @@ impl Component for Edit {
     fn contains_point(&self, local: PointF, size: aylis_core::SizeF) -> bool {
         let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < size.width && local.y < size.height;
         inside || crate::text_menu::handle_at(self.handles.get(), local).is_some()
-    }
-
-    /// `auto_size`: o texto (ou, vazio, o placeholder), o ícone, o "×", o prefixo e o
-    /// sufixo, o lugar do cursor e o padding; o campo acompanha o que se digita. Sem o
-    /// `auto_size`, a largura desenhada.
-    fn auto_width(&self, ui: &Ui, id: ComponentId) -> Option<f32> {
-        if !self.base.auto_size() {
-            return None;
-        }
-        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
-        let measure = |s: &str| ui.measure_text(s, &style).width;
-        let display = self.display();
-        let shown: &str = if !self.text.is_empty() {
-            &display
-        } else if self.placeholder.is_empty() {
-            &self.label
-        } else {
-            &self.placeholder
-        };
-        let mut width = measure(shown);
-        let icon_side = (style.font.size * 1.15).round();
-        if !self.icon.is_empty() {
-            width += icon_side + 6.0;
-        }
-        if self.clear_button && !self.read_only {
-            width += (icon_side * 0.85).round() + 4.0;
-        }
-        for piece in [&self.prefix, &self.suffix] {
-            if !piece.is_empty() {
-                width += measure(piece) + 4.0;
-            }
-        }
-        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
-        Some((width + self.right_inset + caret_room(self.caret_width) + pad.horizontal()).ceil())
-    }
-
-    /// `auto_size`: uma linha e o padding (mais a ajuda, o erro e o contador embaixo).
-    fn auto_height(&self, ui: &Ui, id: ComponentId, _width: f32) -> Option<f32> {
-        if !self.base.auto_size() {
-            return None;
-        }
-        let font = ui.font_of(id);
-        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
-        let below = !self.helper.is_empty() || !self.error.is_empty() || self.counter;
-        Some((font.size * 1.45).ceil() + pad.vertical() + if below { BELOW } else { 0.0 })
     }
 
     properties! {
@@ -1440,6 +1399,53 @@ impl Component for Edit {
                 crate::text_menu::draw_handle(c, x2, bottom, color);
             });
         }
+    }
+}
+
+impl aylis_core::LayoutHooks for Edit {
+    /// `auto_size`: o texto (ou, vazio, o placeholder), o ícone, o "×", o prefixo e o
+    /// sufixo, o lugar do cursor e o padding; o campo acompanha o que se digita. Sem o
+    /// `auto_size`, a largura desenhada.
+    fn auto_width(&self, ui: &Ui, id: ComponentId) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
+        let measure = |s: &str| ui.measure_text(s, &style).width;
+        let display = self.display();
+        let shown: &str = if !self.text.is_empty() {
+            &display
+        } else if self.placeholder.is_empty() {
+            &self.label
+        } else {
+            &self.placeholder
+        };
+        let mut width = measure(shown);
+        let icon_side = (style.font.size * 1.15).round();
+        if !self.icon.is_empty() {
+            width += icon_side + 6.0;
+        }
+        if self.clear_button && !self.read_only {
+            width += (icon_side * 0.85).round() + 4.0;
+        }
+        for piece in [&self.prefix, &self.suffix] {
+            if !piece.is_empty() {
+                width += measure(piece) + 4.0;
+            }
+        }
+        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
+        Some((width + self.right_inset + caret_room(self.caret_width) + pad.horizontal()).ceil())
+    }
+
+    /// `auto_size`: uma linha e o padding (mais a ajuda, o erro e o contador embaixo).
+    fn auto_height(&self, ui: &Ui, id: ComponentId, _width: f32) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let font = ui.font_of(id);
+        let pad = if self.plain { aylis_core::Bounds::default() } else { ui.style_padding(id) };
+        let below = !self.helper.is_empty() || !self.error.is_empty() || self.counter;
+        Some((font.size * 1.45).ceil() + pad.vertical() + if below { BELOW } else { 0.0 })
     }
 }
 

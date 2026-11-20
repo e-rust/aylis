@@ -542,6 +542,14 @@ impl EventRecorder {
 }
 
 impl Component for EventRecorder {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "EventRecorder"
     }
@@ -559,6 +567,19 @@ impl Component for EventRecorder {
     }
 
     // Começa no primeiro tique depois de entrar no Ui (ninguém precisa chamar `start`).
+
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if name == "active" && !self.active && self.started() {
+            let id = ctx.id;
+            ctx.ui.poster().post(move |ui| {
+                EventRecorder::stop(ui, id);
+                ui.sync_timer(id);
+            });
+        }
+    }
+}
+
+impl aylis_core::Timed for EventRecorder {
     fn timer_interval(&self) -> Option<f64> {
         (self.active && !self.started()).then_some(0.001)
     }
@@ -575,16 +596,6 @@ impl Component for EventRecorder {
             // Começou: o tique de partida sai da agenda.
             ui.sync_timer(id);
         });
-    }
-
-    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        if name == "active" && !self.active && self.started() {
-            let id = ctx.id;
-            ctx.ui.poster().post(move |ui| {
-                EventRecorder::stop(ui, id);
-                ui.sync_timer(id);
-            });
-        }
     }
 }
 
@@ -1036,6 +1047,14 @@ impl Analytics {
 }
 
 impl Component for Analytics {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Analytics"
     }
@@ -1045,21 +1064,6 @@ impl Component for Analytics {
         file: String => "Behavior",
         app_name: String => "Behavior",
         performance: bool => "Behavior"
-    }
-
-    fn timer_interval(&self) -> Option<f64> {
-        (self.active && !self.started()).then_some(0.001)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        if ctx.ui.design_mode() {
-            return;
-        }
-        let id = ctx.id;
-        ctx.ui.poster().post(move |ui| {
-            Analytics::start(ui, id);
-            ui.sync_timer(id);
-        });
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -1076,5 +1080,22 @@ impl Component for Analytics {
                 ui.sync_timer(id);
             });
         }
+    }
+}
+
+impl aylis_core::Timed for Analytics {
+    fn timer_interval(&self) -> Option<f64> {
+        (self.active && !self.started()).then_some(0.001)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        if ctx.ui.design_mode() {
+            return;
+        }
+        let id = ctx.id;
+        ctx.ui.poster().post(move |ui| {
+            Analytics::start(ui, id);
+            ui.sync_timer(id);
+        });
     }
 }

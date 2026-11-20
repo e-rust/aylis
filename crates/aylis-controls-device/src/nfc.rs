@@ -135,6 +135,14 @@ impl Nfc {
 }
 
 impl Component for Nfc {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Nfc"
     }
@@ -180,6 +188,9 @@ impl Component for Nfc {
         }
     }
 
+}
+
+impl aylis_core::Timed for Nfc {
     fn timer_interval(&self) -> Option<f64> {
         // Parado, só confere de vez em quando se há NFC (o `available`).
         Some(if self.active || self.writing || self.reading { 0.1 } else { 1.0 })

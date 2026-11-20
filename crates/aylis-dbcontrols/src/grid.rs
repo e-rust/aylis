@@ -1455,13 +1455,25 @@ impl DataGrid {
 }
 
 impl Component for DataGrid {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn drag_drop(&self) -> Option<&dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
+    fn drag_drop_mut(&mut self) -> Option<&mut dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
     /// As linhas na vertical e as colunas de lado.
     fn scroll_axes(&self) -> (bool, bool) {
         (true, true)
-    }
-
-    fn drag_item(&self, ui: &Ui) -> Option<(String, String)> {
-        self.current_key(ui)
     }
 
     fn class_name(&self) -> &'static str {
@@ -1619,37 +1631,8 @@ impl Component for DataGrid {
         ctx.set_handled();
     }
 
-    fn access_items(&self, _: &Ui, _: ComponentId) -> Vec<AccessItem> {
-        self.access_layout().into_iter().map(|(item, _)| item).collect()
-    }
-
     // Cabeçalho: ordena (se `sortable`); linha ou célula: vai para o registro (e a coluna),
     // como o clique.
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
-        let Some((_, target)) = self.access_layout().into_iter().nth(index) else { return false };
-        if !self.close_editor(ctx, true) {
-            return false;
-        }
-        match target {
-            GridTarget::Header(c) => {
-                if !self.sortable || action == ItemAction::Select {
-                    return false;
-                }
-                self.sort_by(ctx, c, false);
-            }
-            GridTarget::Row(row) | GridTarget::Cell(row, _) => {
-                if let GridTarget::Cell(_, c) = target {
-                    self.col = c;
-                }
-                self.with_data(ctx, |d| d.move_to(row));
-                if self.multi_select {
-                    self.select_row(ctx, row, false, false);
-                }
-                ctx.repaint();
-            }
-        }
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if event.button != PointerButton::Primary {
@@ -2279,6 +2262,44 @@ impl Component for DataGrid {
         }
         canvas.restore();
         canvas.stroke_rect(r, 6.0, &Stroke::new(if ctx.state.focused { theme.color("focus_ring") } else { border }, 1.0));
+    }
+}
+
+impl aylis_core::AccessibleItems for DataGrid {
+    fn access_items(&self, _: &Ui, _: ComponentId) -> Vec<AccessItem> {
+        self.access_layout().into_iter().map(|(item, _)| item).collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
+        let Some((_, target)) = self.access_layout().into_iter().nth(index) else { return false };
+        if !self.close_editor(ctx, true) {
+            return false;
+        }
+        match target {
+            GridTarget::Header(c) => {
+                if !self.sortable || action == ItemAction::Select {
+                    return false;
+                }
+                self.sort_by(ctx, c, false);
+            }
+            GridTarget::Row(row) | GridTarget::Cell(row, _) => {
+                if let GridTarget::Cell(_, c) = target {
+                    self.col = c;
+                }
+                self.with_data(ctx, |d| d.move_to(row));
+                if self.multi_select {
+                    self.select_row(ctx, row, false, false);
+                }
+                ctx.repaint();
+            }
+        }
+        true
+    }
+}
+
+impl aylis_core::DragDrop for DataGrid {
+    fn drag_item(&self, ui: &Ui) -> Option<(String, String)> {
+        self.current_key(ui)
     }
 }
 

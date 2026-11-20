@@ -69,6 +69,14 @@ impl Timer {
 }
 
 impl Component for Timer {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Timer"
     }
@@ -102,6 +110,9 @@ impl Component for Timer {
         }
     }
 
+}
+
+impl aylis_core::Timed for Timer {
     fn timer(&mut self, ctx: &mut EventCtx<'_>) {
         if self.one_shot {
             self.enabled = false;
@@ -147,6 +158,14 @@ impl FrameTimer {
 }
 
 impl Component for FrameTimer {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "FrameTimer"
     }
@@ -163,6 +182,9 @@ impl Component for FrameTimer {
         }
     }
 
+}
+
+impl aylis_core::Timed for FrameTimer {
     fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
         if !self.enabled {
             self.last = None;
@@ -868,18 +890,15 @@ struct Toast {
 }
 
 impl Component for Toast {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     leaf_control!("Toast");
-
-    fn timer_interval(&self) -> Option<f64> {
-        Some(2.5)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        let id = ctx.id;
-        ctx.ui.poster().post(move |ui| {
-            ui.free(id);
-        });
-    }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let r = ctx.rect;
@@ -889,6 +908,19 @@ impl Component for Toast {
         text.h_align = TextAlign::Center;
         text.color = Color::WHITE;
         canvas.draw_text(&self.text, r.inflate(-12.0), &text);
+    }
+}
+
+impl aylis_core::Timed for Toast {
+    fn timer_interval(&self) -> Option<f64> {
+        Some(2.5)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        let id = ctx.id;
+        ctx.ui.poster().post(move |ui| {
+            ui.free(id);
+        });
     }
 }
 

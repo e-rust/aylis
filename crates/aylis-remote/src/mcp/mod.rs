@@ -232,6 +232,14 @@ impl McpServer {
 }
 
 impl Component for McpServer {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "McpServer"
     }
@@ -275,6 +283,10 @@ impl Component for McpServer {
     }
 
     // Carregado de um form com `active` ligado, liga na primeira volta do timer.
+
+}
+
+impl aylis_core::Timed for McpServer {
     fn timer_interval(&self) -> Option<f64> {
         (self.active && self.running.is_none() && !self.attempted).then_some(0.2)
     }

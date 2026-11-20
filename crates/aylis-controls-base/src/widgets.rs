@@ -610,6 +610,14 @@ impl SegmentedControl {
 }
 
 impl Component for SegmentedControl {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     leaf_control!("SegmentedControl");
 
     properties! {
@@ -620,28 +628,6 @@ impl Component for SegmentedControl {
     }
 
     // Os segmentos para leitores de tela e automação (como opções de rádio).
-    fn access_items(&self, _: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
-        use aylis_core::automation::{AccessItem, ItemRole};
-        let items = split_items(&self.items);
-        let b = self.base.bounds();
-        let w = b.width / items.len().max(1) as f32;
-        items
-            .into_iter()
-            .enumerate()
-            .map(|(i, t)| {
-                let on = i as i64 == self.item_index;
-                AccessItem::new(ItemRole::Radio, t).checked(on).selected(on).rect(RectF::new(i as f32 * w, 0.0, w, b.height))
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        if index >= self.count() {
-            return false;
-        }
-        self.select(ctx, index as i64);
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         let n = self.count();
@@ -723,6 +709,31 @@ impl Component for SegmentedControl {
                 None => canvas.draw_text(item, cell.deflate(aylis_core::Bounds::new(6.0, 0.0, 6.0, 0.0)), &text),
             }
         }
+    }
+}
+
+impl aylis_core::AccessibleItems for SegmentedControl {
+    fn access_items(&self, _: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
+        use aylis_core::automation::{AccessItem, ItemRole};
+        let items = split_items(&self.items);
+        let b = self.base.bounds();
+        let w = b.width / items.len().max(1) as f32;
+        items
+            .into_iter()
+            .enumerate()
+            .map(|(i, t)| {
+                let on = i as i64 == self.item_index;
+                AccessItem::new(ItemRole::Radio, t).checked(on).selected(on).rect(RectF::new(i as f32 * w, 0.0, w, b.height))
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
+        if index >= self.count() {
+            return false;
+        }
+        self.select(ctx, index as i64);
+        true
     }
 }
 

@@ -231,6 +231,14 @@ pub(crate) fn message_data(m: &PushMessage) -> String {
 }
 
 impl Component for PushNotifications {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "PushNotifications"
     }
@@ -282,6 +290,10 @@ impl Component for PushNotifications {
     }
 
     // O toque que abriu o app chega antes de o form existir: fica na fila até aqui.
+
+}
+
+impl aylis_core::Timed for PushNotifications {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }

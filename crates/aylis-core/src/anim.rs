@@ -393,7 +393,7 @@ impl Ui {
 
     fn tick_frame_hooks(&mut self) {
         for id in std::mem::take(&mut self.frame_hooks) {
-            let more = self.with_component(id, |c, ctx| c.frame(ctx)).unwrap_or(false);
+            let more = self.with_component(id, |c, ctx| c.timed_mut().is_some_and(|t| t.frame(ctx))).unwrap_or(false);
             if more && self.contains(id) && !self.frame_hooks.contains(&id) {
                 self.frame_hooks.push(id);
             }

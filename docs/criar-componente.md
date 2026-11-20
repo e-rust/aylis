@@ -243,8 +243,43 @@ ali, e `ctx.ui.get_prop`, `set_prop`, `invoke` e `send_message` nele respondem "
 ocupado". Use os campos do próprio `self`. Os handlers das telas não sofrem com isso: o
 `ctx.fire` os entrega depois que o método termina. Os métodos disponíveis são `click`,
 `pointer_down/up/move/enter/leave`, `wheel`, `key_down/up`, `text_input` (com
-`accepts_text() -> true`), `focus_enter/exit`, `resized`, `timer` (com `timer_interval`),
-`property_changed`, `notification` (outro componente foi liberado) e `message`.
+`accepts_text() -> true`), `focus_enter/exit`, `resized`, `property_changed`, `notification`
+(outro componente foi liberado) e `message`.
+
+Os grupos que poucos componentes usam ficam em traits próprios, fora do `Component`: o
+componente implementa o trait e devolve `Some(self)` no acessor do `Component` (o padrão
+repassa ao componente de dentro, na composição, ou é `None`):
+
+| Trait | Acessor | Para |
+|---|---|---|
+| `Timed` | `timed`, `timed_mut` | o relógio (`timer_interval`, `timer`, `timer_precision`, `timer_background`, `timer_late`) e a animação quadro a quadro (`frame`) |
+| `LayoutHooks` | `layout_hooks` | o layout próprio: `arrange` (onde ficam os filhos), `baseline`, `dock_gap`, `auto_width`, `auto_height` |
+| `DragDrop` | `drag_drop`, `drag_drop_mut` | o item que vai num arrasto (`drag_item`), a imagem dele (`drag_visual`) e o arrasto recebido pelos ganchos `drop_*` |
+| `Popup` | `popup`, `popup_mut` | o que aparece por cima e some: fechar com o clique fora, o `dismissed`, o `dies_with` |
+| `AccessibleItems` | `accessible_items`, `accessible_items_mut` | os itens para a acessibilidade e a automação (`access_items`, `access_action`) |
+
+```rust
+impl Component for Relogio {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+    // ...
+}
+
+impl aylis_core::Timed for Relogio {
+    fn timer_interval(&self) -> Option<f64> {
+        self.enabled.then_some(1.0)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        ctx.fire("on_timer", EventArgs::None);
+    }
+}
+```
 
 ### 5. Estilo no tema e subtipos
 

@@ -551,7 +551,7 @@ impl Ui {
         // Só o destino desta janela (o de outra é pintado lá) e que não se destaca sozinho
         // (quem recebe pelos ganchos `drop_*` mostra onde entra).
         let data = self.drag_data(root).unwrap_or_default();
-        let target = target.filter(|&t| self.root_of(t) == root && !self.component(t).is_some_and(|c| c.drop_accepts(self, t, data)));
+        let target = target.filter(|&t| self.root_of(t) == root && !self.component(t).and_then(|c| c.drag_drop()).is_some_and(|d| d.drop_accepts(self, t, data)));
         if let Some(r) = target.and_then(|t| self.absolute_rect(t)) {
             let r = RectF::new(r.x - origin.x, r.y - origin.y, r.width, r.height);
             canvas.stroke_rect(r.inflate(1.0), 6.0, &crate::canvas::Stroke::new(self.theme.color("primary"), 2.0));

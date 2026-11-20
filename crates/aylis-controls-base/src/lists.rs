@@ -342,6 +342,22 @@ impl ListBox {
 }
 
 impl Component for ListBox {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn drag_drop(&self) -> Option<&dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
+    fn drag_drop_mut(&mut self) -> Option<&mut dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
     /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
     fn scroll_axes(&self) -> (bool, bool) {
         (false, true)
@@ -355,10 +371,6 @@ impl Component for ListBox {
     leaf_control!("ListBox");
 
     // Arrastar da lista leva o item escolhido (o texto), sem handler.
-    fn drag_item(&self, _ui: &aylis_core::Ui) -> Option<(String, String)> {
-        let item = self.item_list().get(usize::try_from(self.item_index).ok()?)?.clone();
-        Some((item.clone(), item))
-    }
 
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
@@ -372,31 +384,6 @@ impl Component for ListBox {
     }
 
     // As linhas para leitores de tela e automação (as fora da parte visível, sem posição).
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
-        let row = self.row();
-        let (width, view) = (self.base.bounds().width, self.rows.view.get());
-        self.list
-            .iter()
-            .enumerate()
-            .map(|(i, text)| {
-                let item = AccessItem::new(ItemRole::ListItem, text.clone()).selected(self.is_selected(i));
-                let y = 1.0 + i as f32 * row - self.rows.offset.get();
-                if y + row > 0.0 && (view <= 0.0 || y < view) { item.rect(RectF::new(2.0, y, width - 4.0, row)) } else { item }
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
-        if index >= self.list.len() {
-            return false;
-        }
-        if self.multi_select {
-            self.select_multi(ctx, index, true, false);
-        } else {
-            self.choose(ctx, index);
-        }
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if event.button == PointerButton::Primary {
@@ -514,6 +501,41 @@ impl Component for ListBox {
     }
 }
 
+impl aylis_core::AccessibleItems for ListBox {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
+        let row = self.row();
+        let (width, view) = (self.base.bounds().width, self.rows.view.get());
+        self.list
+            .iter()
+            .enumerate()
+            .map(|(i, text)| {
+                let item = AccessItem::new(ItemRole::ListItem, text.clone()).selected(self.is_selected(i));
+                let y = 1.0 + i as f32 * row - self.rows.offset.get();
+                if y + row > 0.0 && (view <= 0.0 || y < view) { item.rect(RectF::new(2.0, y, width - 4.0, row)) } else { item }
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
+        if index >= self.list.len() {
+            return false;
+        }
+        if self.multi_select {
+            self.select_multi(ctx, index, true, false);
+        } else {
+            self.choose(ctx, index);
+        }
+        true
+    }
+}
+
+impl aylis_core::DragDrop for ListBox {
+    fn drag_item(&self, _ui: &aylis_core::Ui) -> Option<(String, String)> {
+        let item = self.item_list().get(usize::try_from(self.item_index).ok()?)?.clone();
+        Some((item.clone(), item))
+    }
+}
+
 // ---------------------------------------------------------------------------
 // RadioGroup
 
@@ -570,6 +592,14 @@ impl RadioGroup {
 }
 
 impl Component for RadioGroup {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(self.text()))
@@ -586,21 +616,6 @@ impl Component for RadioGroup {
     }
 
     // As opções para leitores de tela e automação.
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
-        split_items(&self.items)
-            .into_iter()
-            .enumerate()
-            .map(|(i, t)| AccessItem::new(ItemRole::Radio, t).checked(i as i64 == self.item_index).selected(i as i64 == self.item_index).rect(self.cell(i)))
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
-        if index >= split_items(&self.items).len() {
-            return false;
-        }
-        self.choose(ctx, index);
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         let count = split_items(&self.items).len();
@@ -644,6 +659,24 @@ impl Component for RadioGroup {
             canvas.draw_text(item, RectF::new(dot.right() + 8.0, cell.y, cell.width - 30.0, RADIO_ROW), &text);
         }
         let _ = s;
+    }
+}
+
+impl aylis_core::AccessibleItems for RadioGroup {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
+        split_items(&self.items)
+            .into_iter()
+            .enumerate()
+            .map(|(i, t)| AccessItem::new(ItemRole::Radio, t).checked(i as i64 == self.item_index).selected(i as i64 == self.item_index).rect(self.cell(i)))
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
+        if index >= split_items(&self.items).len() {
+            return false;
+        }
+        self.choose(ctx, index);
+        true
     }
 }
 
@@ -804,6 +837,14 @@ struct ListViewItemRecord {
 }
 
 impl Component for ListView {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     leaf_control!("ListView");
 
     properties! {
@@ -817,31 +858,6 @@ impl Component for ListView {
 
     // Os itens (texto e detalhe) para leitores de tela e automação; clicar escolhe e dispara
     // o `on_item_click`, como o toque.
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
-        let row = self.row();
-        let width = self.base.bounds().width;
-        self.list
-            .iter()
-            .enumerate()
-            .map(|(i, it)| {
-                let name = if it.detail.is_empty() { it.text.clone() } else { format!("{}, {}", it.text, it.detail) };
-                AccessItem::new(ItemRole::ListItem, name)
-                    .selected(i as i64 == self.item_index)
-                    .rect(RectF::new(0.0, 1.0 + i as f32 * row - self.rows.offset.get(), width, row))
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
-        if index >= self.list.len() {
-            return false;
-        }
-        self.choose(ctx, index);
-        if action == ItemAction::Click {
-            ctx.fire("on_item_click", EventArgs::Value((index as i64).into()));
-        }
-        true
-    }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
         if self.item_index >= 0 {
@@ -964,6 +980,34 @@ impl Component for ListView {
         }
         self.rows.paint_bar(canvas, ctx, area);
         canvas.restore();
+    }
+}
+
+impl aylis_core::AccessibleItems for ListView {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
+        let row = self.row();
+        let width = self.base.bounds().width;
+        self.list
+            .iter()
+            .enumerate()
+            .map(|(i, it)| {
+                let name = if it.detail.is_empty() { it.text.clone() } else { format!("{}, {}", it.text, it.detail) };
+                AccessItem::new(ItemRole::ListItem, name)
+                    .selected(i as i64 == self.item_index)
+                    .rect(RectF::new(0.0, 1.0 + i as f32 * row - self.rows.offset.get(), width, row))
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
+        if index >= self.list.len() {
+            return false;
+        }
+        self.choose(ctx, index);
+        if action == ItemAction::Click {
+            ctx.fire("on_item_click", EventArgs::Value((index as i64).into()));
+        }
+        true
     }
 }
 
@@ -1348,6 +1392,14 @@ fn next_to_toggle(nodes: &[TreeNode], open: bool) -> Option<Vec<usize>> {
 }
 
 impl Component for TreeView {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     /// Rola só na vertical (o fim da rolagem estica só em cima e embaixo).
     fn scroll_axes(&self) -> (bool, bool) {
         (false, true)
@@ -1407,36 +1459,6 @@ impl Component for TreeView {
     }
 
     // Os nós visíveis para leitores de tela e automação: nível, aberto/fechado e o escolhido.
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
-        let row = self.row();
-        let width = self.base.bounds().width;
-        self.visible()
-            .iter()
-            .enumerate()
-            .filter_map(|(i, v)| {
-                let n = self.node(&v.path)?;
-                let mut item = AccessItem::new(ItemRole::TreeItem, n.text.clone())
-                    .level(v.depth)
-                    .selected(self.selected.as_ref() == Some(&v.path))
-                    .rect(RectF::new(0.0, 1.0 + i as f32 * row - self.rows.offset.get(), width, row));
-                if !n.children.is_empty() {
-                    item = item.expanded(n.expanded);
-                }
-                Some(item)
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
-        let rows = self.visible();
-        let Some(path) = rows.get(index).map(|r| r.path.clone()) else { return false };
-        match action {
-            ItemAction::Expand => self.toggle(ctx, &path, Some(true)),
-            ItemAction::Collapse => self.toggle(ctx, &path, Some(false)),
-            ItemAction::Click | ItemAction::Select => self.select_row(ctx, &rows, index),
-        }
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if event.button != PointerButton::Primary {
@@ -1588,5 +1610,38 @@ impl Component for TreeView {
         }
         self.rows.paint_bar(canvas, ctx, area);
         canvas.restore();
+    }
+}
+
+impl aylis_core::AccessibleItems for TreeView {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<AccessItem> {
+        let row = self.row();
+        let width = self.base.bounds().width;
+        self.visible()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, v)| {
+                let n = self.node(&v.path)?;
+                let mut item = AccessItem::new(ItemRole::TreeItem, n.text.clone())
+                    .level(v.depth)
+                    .selected(self.selected.as_ref() == Some(&v.path))
+                    .rect(RectF::new(0.0, 1.0 + i as f32 * row - self.rows.offset.get(), width, row));
+                if !n.children.is_empty() {
+                    item = item.expanded(n.expanded);
+                }
+                Some(item)
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
+        let rows = self.visible();
+        let Some(path) = rows.get(index).map(|r| r.path.clone()) else { return false };
+        match action {
+            ItemAction::Expand => self.toggle(ctx, &path, Some(true)),
+            ItemAction::Collapse => self.toggle(ctx, &path, Some(false)),
+            ItemAction::Click | ItemAction::Select => self.select_row(ctx, &rows, index),
+        }
+        true
     }
 }

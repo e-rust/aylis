@@ -111,12 +111,12 @@ pub use canvas::{
 };
 pub use color::Color;
 pub use component::{
-    ArrangeItem, ClipShape, ColorOverride, Component, ComponentId, Connection, ControlBase, ControlState, DesignHooks, FONT_WEIGHTS, FontOverride, MethodInfo, NativeCommand, NativeView, NativeViewSlot, PlatformHooks, WebMessage, navigation_allowed, url_origin,
+    ArrangeItem, ClipShape, ColorOverride, Component, ComponentId, Connection, ControlBase, ControlState, DesignHooks, DragDrop, LayoutHooks, Popup, Timed, AccessibleItems, FONT_WEIGHTS, FontOverride, MethodInfo, NativeCommand, NativeView, NativeViewSlot, PlatformHooks, WebMessage, navigation_allowed, url_origin,
     prop_infos_of, read_prop,
 };
 pub use error::{Error, Result};
 pub use ui::DesignChanged;
-pub use input::{DragEnd, DragVisual, HINT_DELAY, ScreenPointer};
+pub use input::{DragEnd, DragVisual, FORM_DRAG, HINT_DELAY, ScreenPointer};
 pub use event::{
     ClickPointer, EventArgs, EventCtx, GestureEvent, GesturePhase, Intercepted, Key, KeyEvent, Modifiers, PointerButton, PointerEvent, PointerKind,
     PopupRequest, ScrollOptions, SwipeDirection, SwipeEvent, WHEEL_LINE, WheelEvent,

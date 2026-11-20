@@ -190,6 +190,14 @@ impl TitleEditor {
 }
 
 impl Component for TitleEditor {
+    fn popup(&self) -> Option<&dyn aylis_core::Popup> {
+        Some(self)
+    }
+
+    fn popup_mut(&mut self) -> Option<&mut dyn aylis_core::Popup> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "MediaCardEditor"
     }
@@ -202,14 +210,7 @@ impl Component for TitleEditor {
         Some(&mut self.edit)
     }
 
-    fn dies_with(&self) -> Option<ComponentId> {
-        Some(self.owner)
-    }
-
     // O clique fora (mesmo onde não há foco) fecha e grava, pelo `focus_exit`.
-    fn closes_on_outside_press(&self) -> bool {
-        true
-    }
 
     fn captures_key(&self, event: &KeyEvent) -> bool {
         matches!(event.key, Key::Enter | Key::Escape) || self.edit.captures_key(event)
@@ -234,6 +235,16 @@ impl Component for TitleEditor {
         self.edit.focus_exit(ctx);
         let name = self.edit.text.clone();
         self.finish(ctx, Some(name));
+    }
+}
+
+impl aylis_core::Popup for TitleEditor {
+    fn dies_with(&self) -> Option<ComponentId> {
+        Some(self.owner)
+    }
+
+    fn closes_on_outside_press(&self) -> bool {
+        true
     }
 }
 

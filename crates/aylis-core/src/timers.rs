@@ -95,6 +95,7 @@ impl Ui {
     /// direto nos campos do componente).
     pub fn sync_timer(&mut self, id: ComponentId) {
         let wanted = self.component(id).and_then(|c| {
+            let c = c.timed()?;
             let interval = c.timer_interval().filter(|i| *i > 0.0)?;
             Some((interval, c.timer_precision(), c.timer_background()))
         });
@@ -130,8 +131,14 @@ impl Ui {
     fn fire_timer(&mut self, id: ComponentId, late: f64) {
         let _profile = crate::profile::scope(crate::profile::Lane::Timer, || self.path_of(id));
         let _ = self.with_component(id, |c, ctx| {
-            c.timer_late(late);
-            c.timer(ctx);
+            // Sem relógio próprio, o `on_timer` (o padrão do `Timed`).
+            match c.timed_mut() {
+                Some(t) => {
+                    t.timer_late(late);
+                    t.timer(ctx);
+                }
+                None => ctx.fire("on_timer", crate::EventArgs::None),
+            }
         });
         // O componente pode ter parado (ou mudado) o próprio timer.
         self.sync_timer(id);

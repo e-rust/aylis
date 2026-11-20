@@ -71,7 +71,7 @@ fn flow_layout_aligns_text_by_baseline() {
     let badge = ui.add(Label::new("novo"), flow);
     ui.control_mut(badge).unwrap().set_width(40.0).set_height(18.0);
     ui.layout();
-    let base = |ui: &Ui, id| rect(ui, id).y + ui.component(id).unwrap().baseline(ui, id, rect(ui, id).height).unwrap();
+    let base = |ui: &Ui, id| rect(ui, id).y + ui.component(id).unwrap().layout_hooks().and_then(|l| l.baseline(ui, id, rect(ui, id).height)).unwrap();
     assert!((base(&ui, title) - base(&ui, badge)).abs() < 0.5, "{} × {}", base(&ui, title), base(&ui, badge));
 }
 

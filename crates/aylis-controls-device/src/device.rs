@@ -368,6 +368,14 @@ impl AppLink {
 // Sem propriedades, só eventos: o `get_prop` gerado não tem casos.
 #[allow(unreachable_code)]
 impl Component for AppLink {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "AppLink"
     }
@@ -417,6 +425,10 @@ impl Component for AppLink {
 
     // O que chega de fora fica numa fila até um `AppLink` pegar (o app aberto pelo link ainda
     // não tinha o form quando ele chegou).
+
+}
+
+impl aylis_core::Timed for AppLink {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }

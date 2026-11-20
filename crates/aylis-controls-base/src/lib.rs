@@ -9,6 +9,7 @@
 
 mod autocomplete;
 mod basic;
+pub mod docking;
 mod mnemonic;
 mod chat;
 mod chips;
@@ -65,7 +66,7 @@ mod widgets;
 
 pub use autocomplete::AutoComplete;
 pub use basic::{
-    BorderStyle, Button, CloseAction, Form, WindowCorners, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
+    BorderStyle, Button, CloseAction, CursorConfine, Form, FullScreenMode, KeepAwake, WindowCorners, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
     window_state_commands,
 };
 pub use chips::{Chip, ChipGroup, OtpInput, RangeSlider, Rating, SplitButton};

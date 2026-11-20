@@ -254,6 +254,9 @@ pub struct Ui {
     pub(crate) form_monitors: std::collections::HashMap<ComponentId, usize>,
     /// Onde o último arrasto foi solto, no destino (`Ui::drop_point`).
     pub(crate) drop_point: Option<crate::geometry::PointF>,
+    /// A janela de um form arrastada pela barra de título agora (`Ui::window_drag_over`): o
+    /// form, o destino sob o mouse e o ponto no form do destino.
+    pub(crate) window_drag: Option<(ComponentId, Option<ComponentId>, crate::geometry::PointF)>,
     /// Os forms com a janela minimizada (`monitors.rs`).
     pub(crate) minimized_forms: std::collections::HashSet<ComponentId>,
     /// A placa de vídeo de cada janela (veja `gpu.rs`).
@@ -455,6 +458,7 @@ impl Ui {
             form_monitors: std::collections::HashMap::new(),
             minimized_forms: std::collections::HashSet::new(),
             drop_point: None,
+            window_drag: None,
             form_gpus: std::collections::HashMap::new(),
             form_pieces: std::collections::HashMap::new(),
             piece_requests: std::cell::Cell::new(None),
@@ -800,7 +804,7 @@ impl Ui {
         // Quem só vive com um dos liberados (a lista aberta de um ComboBox) vai junto.
         let dependents: Vec<ComponentId> = self
             .components()
-            .filter(|&c| self.component(c).and_then(|c| c.dies_with()).is_some_and(|o| gone(&o)))
+            .filter(|&c| self.component(c).and_then(|c| c.popup()).and_then(|p| p.dies_with()).is_some_and(|o| gone(&o)))
             .collect();
         self.free_many(&dependents);
         if !freed_forms.is_empty() {
@@ -2776,13 +2780,13 @@ impl Ui {
     /// Os itens que o controle desenha sozinho (abas, linhas de lista, itens de menu,
     /// células): o que o leitor de tela e a automação do sistema veem dentro dele.
     pub fn access_items(&self, id: ComponentId) -> Vec<crate::automation::AccessItem> {
-        self.component(id).map_or_else(Vec::new, |c| c.access_items(self, id))
+        self.component(id).and_then(|c| c.accessible_items()).map_or_else(Vec::new, |a| a.access_items(self, id))
     }
 
     /// Clica ou seleciona um item do controle (sem evento de mouse, como a automação do
     /// sistema faz). Devolve `false` se o controle não fez nada.
     pub fn access_action(&mut self, id: ComponentId, index: usize, action: crate::automation::ItemAction) -> bool {
-        let done = self.with_component(id, |c, ctx| c.access_action(ctx, index, action)).unwrap_or(false);
+        let done = self.with_component(id, |c, ctx| c.accessible_items_mut().is_some_and(|a| a.access_action(ctx, index, action))).unwrap_or(false);
         if done {
             self.request_repaint();
         }

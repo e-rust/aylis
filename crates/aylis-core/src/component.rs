@@ -421,40 +421,15 @@ pub trait Component: Any {
         self.inner().map_or((false, false), |i| i.scroll_axes())
     }
 
-    /// O componente edita texto. No celular, quando ele tem o foco a plataforma abre o
-    /// teclado virtual.
-    /// O que vai num arrasto que começa neste controle sem `drag_data` nem handler: as listas
-    /// e as grades mandam o item (o texto, a chave do registro) e o rótulo. `None`: nada.
-    fn drag_item(&self, _ui: &crate::Ui) -> Option<(String, String)> {
+    /// O arrasto e a soltura feitos pelo próprio componente (veja [`DragDrop`]). `None` (o padrão):
+    /// o componente não usa.
+    fn drag_drop(&self) -> Option<&dyn DragDrop> {
         None
     }
 
-    /// O que acompanha o cursor num arrasto, quando este componente é o `drag_image` de um
-    /// controle (o `DragImage`); `source` é o controle arrastado. `None`: nada.
-    fn drag_visual(&self, _ui: &crate::Ui, _source: ComponentId) -> Option<crate::DragVisual> {
+    fn drag_drop_mut(&mut self) -> Option<&mut dyn DragDrop> {
         None
     }
-
-    /// O próprio componente recebe este arrasto (sem `accepts_drops` nem eventos): as abas
-    /// que passam de uma faixa para outra. Vale também quando ele é a origem (a aba que volta
-    /// para a faixa de onde saiu). Com `true`, recebe [`drop_hover`](Self::drop_hover),
-    /// [`drop_leave`](Self::drop_leave) e [`drop_receive`](Self::drop_receive).
-    fn drop_accepts(&self, _ui: &crate::Ui, _id: ComponentId, _data: &str) -> bool {
-        false
-    }
-
-    /// O arrasto aceito por [`drop_accepts`](Self::drop_accepts) está sobre o componente, no
-    /// ponto `position` (coordenadas dele); chamado a cada movimento.
-    fn drop_hover(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _position: PointF) {}
-
-    /// O arrasto saiu de cima do componente (ou foi cancelado).
-    fn drop_leave(&mut self, _ctx: &mut EventCtx<'_>) {}
-
-    /// Soltou o arrasto aceito sobre o componente, em `position` (coordenadas dele).
-    fn drop_receive(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _position: PointF) {}
-
-    /// O arrasto que começou neste componente acabou (`on_drag_end` também dispara).
-    fn drag_ended(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _end: crate::DragEnd) {}
 
     fn accepts_text(&self) -> bool {
         self.inner().is_some_and(|i| i.accepts_text())
@@ -532,118 +507,39 @@ pub trait Component: Any {
         self.inner().is_some_and(|inner| inner.paint_only_property(name))
     }
 
-    /// Intervalo do timer deste componente, em segundos (`None` = parado). O `Ui` dispara
-    /// `on_timer` a cada intervalo; ver [`Ui::sync_timer`](crate::Ui::sync_timer).
-    fn timer_interval(&self) -> Option<f64> {
-        self.inner().and_then(|i| i.timer_interval())
+    /// O relógio do próprio componente (veja [`Timed`]). O padrão: o do componente de dentro.
+    fn timed(&self) -> Option<&dyn Timed> {
+        self.inner().and_then(|i| i.timed())
     }
 
-    /// Quanto o timer pode atrasar ([`TimerPrecision`](crate::TimerPrecision)).
-    fn timer_precision(&self) -> crate::TimerPrecision {
-        self.inner().map(|i| i.timer_precision()).unwrap_or_default()
+    fn timed_mut(&mut self) -> Option<&mut dyn Timed> {
+        self.inner_mut().and_then(|i| i.timed_mut())
     }
 
-    /// O timer conta numa thread própria (não espera o laço da tela, que pode estar
-    /// ocupado); o `on_timer` chega à tela pelo [`Poster`](crate::Poster).
-    fn timer_background(&self) -> bool {
-        self.inner().is_some_and(|i| i.timer_background())
+    /// O layout feito pelo próprio componente (veja [`LayoutHooks`]). O padrão: o do componente de
+    /// dentro.
+    fn layout_hooks(&self) -> Option<&dyn LayoutHooks> {
+        self.inner().and_then(|i| i.layout_hooks())
     }
 
-    /// Quanto o disparo que vem a seguir atrasou, em segundos (antes de [`timer`](Component::timer)).
-    fn timer_late(&mut self, late: f64) {
-        if let Some(inner) = self.inner_mut() {
-            inner.timer_late(late);
-        }
+    /// O comportamento de popup do próprio componente (veja [`Popup`]). O padrão: o do componente
+    /// de dentro.
+    fn popup(&self) -> Option<&dyn Popup> {
+        self.inner().and_then(|i| i.popup())
     }
 
-    /// Um quadro vai ser pintado (pedido com [`Ui::request_frames`](crate::Ui::request_frames)):
-    /// chamado antes da pintura, com o tempo do quadro em `ctx.ui.time()`, para um movimento
-    /// que acompanha o monitor (a rolagem com deslize). Devolve se quer o próximo quadro.
-    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
-        self.inner_mut().is_some_and(|inner| inner.frame(ctx))
+    fn popup_mut(&mut self) -> Option<&mut dyn Popup> {
+        self.inner_mut().and_then(|i| i.popup_mut())
     }
 
-    /// O timer venceu (ver [`timer_interval`](Component::timer_interval)). O padrão dispara o
-    /// evento `on_timer`.
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        match self.inner_mut() {
-            Some(inner) => inner.timer(ctx),
-            None => ctx.fire("on_timer", EventArgs::None),
-        }
+    /// Os itens de acessibilidade do próprio componente (veja [`AccessibleItems`]). O padrão: o do
+    /// componente de dentro.
+    fn accessible_items(&self) -> Option<&dyn AccessibleItems> {
+        self.inner().and_then(|i| i.accessible_items())
     }
 
-    /// Organiza os filhos com `align = None` (grade, fluxo...): recebe a área livre (já
-    /// sem o padding e sem o que os filhos encaixados ocuparam) e o tamanho pedido e as
-    /// margens de cada filho; devolve o retângulo de cada um, na mesma ordem. `None` (o
-    /// padrão) = posição livre.
-    fn arrange(&self, area: RectF, children: &[ArrangeItem]) -> Option<Vec<RectF>> {
-        self.inner().and_then(|i| i.arrange(area, children))
-    }
-
-    /// A linha de base do texto do controle, em pixels do topo dele, na altura `height` (para
-    /// o `FlowLayout` com `baseline` alinhar os textos de uma fileira; L12 do Tabernáculo).
-    /// `None` (o padrão): o controle não tem texto, e fica pelo fundo.
-    fn baseline(&self, ui: &crate::Ui, id: ComponentId, height: f32) -> Option<f32> {
-        self.inner().and_then(|i| i.baseline(ui, id, height))
-    }
-
-    /// O vão entre os filhos encaixados (Top, Left...), em pixels: o `gap` do `Layout` e do
-    /// `Panel` (o `gap` do CSS; L05 do Tabernáculo). Padrão: 0.
-    fn dock_gap(&self) -> f32 {
-        self.inner().map_or(0.0, |i| i.dock_gap())
-    }
-
-    /// A altura que o conteúdo pede na largura `width` (o texto de um Label quebrado nela),
-    /// para o `auto_size`. `None` (o padrão): o controle não mede o conteúdo (um contêiner
-    /// com `auto_size` fica da altura dos filhos encaixados em cima e embaixo).
-    fn auto_height(&self, ui: &crate::Ui, id: ComponentId, width: f32) -> Option<f32> {
-        self.inner().and_then(|i| i.auto_height(ui, id, width))
-    }
-
-    /// A largura que o conteúdo pede (o texto de um Label sem quebra), para o `auto_size` de
-    /// quem não é esticado na largura (`align` left, right ou none). `None` (o padrão): a
-    /// largura fica a pedida.
-    fn auto_width(&self, ui: &crate::Ui, id: ComponentId) -> Option<f32> {
-        self.inner().and_then(|i| i.auto_width(ui, id))
-    }
-
-    /// Uma camada aberta por outro (a lista de um ComboBox, as sugestões de um campo), posta
-    /// direto no form: o mouse apertado fora dela e fora de quem a abriu ([`dies_with`]) a
-    /// libera, mesmo que o clique caia onde não recebe foco (o fundo da tela, um rótulo). O
-    /// dono fica sabendo pelo [`notification`](Component::notification). Padrão: `false`.
-    ///
-    /// [`dies_with`]: Component::dies_with
-    fn closes_on_outside_press(&self) -> bool {
-        false
-    }
-
-    /// O clique fora fechou a camada ([`closes_on_outside_press`]): `true` se ela mesma se
-    /// escondeu e deve continuar existindo (o `Popover`, desenhado no form com os filhos);
-    /// `false` (o padrão), o núcleo a libera.
-    ///
-    /// [`closes_on_outside_press`]: Component::closes_on_outside_press
-    fn dismissed(&mut self, ctx: &mut EventCtx<'_>) -> bool {
-        let _ = ctx;
-        false
-    }
-
-    /// Este componente só vive enquanto `dies_with` existir: liberar aquele libera este
-    /// também. É o que a lista aberta de um ComboBox (uma camada sobre o form) usa: se o
-    /// ComboBox some (a tela foi refeita), a lista não fica órfã na tela.
-    fn dies_with(&self) -> Option<ComponentId> {
-        self.inner().and_then(|i| i.dies_with())
-    }
-
-    /// Os itens que o controle desenha sozinho (abas, linhas, itens de menu, células), para
-    /// leitores de tela, automação e testes ([`crate::automation`]). `id` é este controle.
-    fn access_items(&self, ui: &crate::Ui, id: ComponentId) -> Vec<crate::automation::AccessItem> {
-        self.inner().map_or_else(Vec::new, |i| i.access_items(ui, id))
-    }
-
-    /// Clica ou seleciona o item `index` de [`access_items`](Self::access_items). Devolve
-    /// `false` se não fez nada.
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: crate::automation::ItemAction) -> bool {
-        self.inner_mut().is_some_and(|i| i.access_action(ctx, index, action))
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn AccessibleItems> {
+        self.inner_mut().and_then(|i| i.accessible_items_mut())
     }
 
     /// Prende o controle a um irmão (mesmo pai): devolve o alvo e o ponto dele onde o
@@ -686,6 +582,177 @@ pub trait Component: Any {
         }
     }
 
+}
+
+/// Os itens que o componente mostra para a acessibilidade e a automação (as linhas de uma
+/// lista, os nós de uma árvore) e as ações neles. O componente que usa devolve `Some(self)`
+/// em [`Component::accessible_items`] e [`Component::accessible_items_mut`]; o padrão
+/// repassa ao de dentro.
+pub trait AccessibleItems {
+    /// Os itens que o controle desenha sozinho (abas, linhas, itens de menu, células), para
+    /// leitores de tela, automação e testes ([`crate::automation`]). `id` é este controle.
+    fn access_items(&self, _ui: &crate::Ui, _id: ComponentId) -> Vec<crate::automation::AccessItem> {
+        Vec::new()
+    }
+
+    /// Clica ou seleciona o item `index` de [`access_items`](Self::access_items). Devolve
+    /// `false` se não fez nada.
+    fn access_action(&mut self, _ctx: &mut EventCtx<'_>, _index: usize, _action: crate::automation::ItemAction) -> bool {
+        false
+    }
+}
+
+/// O componente que aparece por cima e some (o popover, o menu, o editor de título): fecha
+/// com o clique fora, decide o que fazer ao ser dispensado e some junto com quem o abriu.
+/// O componente que usa devolve `Some(self)` em [`Component::popup`] e
+/// [`Component::popup_mut`]; o padrão repassa ao de dentro.
+pub trait Popup {
+    /// Uma camada aberta por outro (a lista de um ComboBox, as sugestões de um campo), posta
+    /// direto no form: o mouse apertado fora dela e fora de quem a abriu ([`dies_with`]) a
+    /// libera, mesmo que o clique caia onde não recebe foco (o fundo da tela, um rótulo). O
+    /// dono fica sabendo pelo [`notification`](Component::notification). Padrão: `false`.
+    ///
+    /// [`dies_with`]: Component::dies_with
+    fn closes_on_outside_press(&self) -> bool {
+        false
+    }
+
+    /// O clique fora fechou a camada ([`closes_on_outside_press`]): `true` se ela mesma se
+    /// escondeu e deve continuar existindo (o `Popover`, desenhado no form com os filhos);
+    /// `false` (o padrão), o núcleo a libera.
+    ///
+    /// [`closes_on_outside_press`]: Component::closes_on_outside_press
+    fn dismissed(&mut self, _ctx: &mut EventCtx<'_>) -> bool {
+        false
+    }
+
+    /// Este componente só vive enquanto `dies_with` existir: liberar aquele libera este
+    /// também. É o que a lista aberta de um ComboBox (uma camada sobre o form) usa: se o
+    /// ComboBox some (a tela foi refeita), a lista não fica órfã na tela.
+    fn dies_with(&self) -> Option<ComponentId> {
+        None
+    }
+}
+
+/// O layout feito pelo próprio componente: onde ficam os filhos (`arrange`), a linha de base
+/// do texto, o espaço entre os filhos alinhados e o tamanho pelo conteúdo. O componente que
+/// usa devolve `Some(self)` em [`Component::layout_hooks`]; o padrão repassa ao de dentro.
+pub trait LayoutHooks {
+    /// Organiza os filhos com `align = None` (grade, fluxo...): recebe a área livre (já
+    /// sem o padding e sem o que os filhos encaixados ocuparam) e o tamanho pedido e as
+    /// margens de cada filho; devolve o retângulo de cada um, na mesma ordem. `None` (o
+    /// padrão) = posição livre.
+    fn arrange(&self, _area: RectF, _children: &[ArrangeItem]) -> Option<Vec<RectF>> {
+        None
+    }
+
+    /// A linha de base do texto do controle, em pixels do topo dele, na altura `height` (para
+    /// o `FlowLayout` com `baseline` alinhar os textos de uma fileira; L12 do Tabernáculo).
+    /// `None` (o padrão): o controle não tem texto, e fica pelo fundo.
+    fn baseline(&self, _ui: &crate::Ui, _id: ComponentId, _height: f32) -> Option<f32> {
+        None
+    }
+
+    /// O vão entre os filhos encaixados (Top, Left...), em pixels: o `gap` do `Layout` e do
+    /// `Panel` (o `gap` do CSS; L05 do Tabernáculo). Padrão: 0.
+    fn dock_gap(&self) -> f32 {
+        0.0
+    }
+
+    /// A altura que o conteúdo pede na largura `width` (o texto de um Label quebrado nela),
+    /// para o `auto_size`. `None` (o padrão): o controle não mede o conteúdo (um contêiner
+    /// com `auto_size` fica da altura dos filhos encaixados em cima e embaixo).
+    fn auto_height(&self, _ui: &crate::Ui, _id: ComponentId, _width: f32) -> Option<f32> {
+        None
+    }
+
+    /// A largura que o conteúdo pede (o texto de um Label sem quebra), para o `auto_size` de
+    /// quem não é esticado na largura (`align` left, right ou none). `None` (o padrão): a
+    /// largura fica a pedida.
+    fn auto_width(&self, _ui: &crate::Ui, _id: ComponentId) -> Option<f32> {
+        None
+    }
+}
+
+/// O relógio e a animação quadro a quadro do próprio componente (o `Timer`, a animação que
+/// pede quadros): o intervalo, a precisão, se roda com o app em segundo plano, o atraso, o
+/// quadro e o disparo. O componente que usa devolve `Some(self)` em
+/// [`Component::timed`] e [`Component::timed_mut`]; o padrão repassa ao de dentro (`inner`).
+pub trait Timed {
+    /// Intervalo do timer deste componente, em segundos (`None` = parado). O `Ui` dispara
+    /// `on_timer` a cada intervalo; ver [`Ui::sync_timer`](crate::Ui::sync_timer).
+    fn timer_interval(&self) -> Option<f64> {
+        None
+    }
+
+    /// Quanto o timer pode atrasar ([`TimerPrecision`](crate::TimerPrecision)).
+    fn timer_precision(&self) -> crate::TimerPrecision {
+        crate::TimerPrecision::default()
+    }
+
+    /// O timer conta numa thread própria (não espera o laço da tela, que pode estar
+    /// ocupado); o `on_timer` chega à tela pelo [`Poster`](crate::Poster).
+    fn timer_background(&self) -> bool {
+        false
+    }
+
+    /// Quanto o disparo que vem a seguir atrasou, em segundos (antes de [`timer`](Component::timer)).
+    fn timer_late(&mut self, _late: f64) {}
+
+    /// Um quadro vai ser pintado (pedido com [`Ui::request_frames`](crate::Ui::request_frames)):
+    /// chamado antes da pintura, com o tempo do quadro em `ctx.ui.time()`, para um movimento
+    /// que acompanha o monitor (a rolagem com deslize). Devolve se quer o próximo quadro.
+    fn frame(&mut self, _ctx: &mut EventCtx<'_>) -> bool {
+        false
+    }
+
+    /// O timer venceu (ver [`timer_interval`](Component::timer_interval)). O padrão dispara o
+    /// evento `on_timer`.
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        ctx.fire("on_timer", EventArgs::None);
+    }
+}
+
+/// O arrasto e a soltura feitos pelo próprio componente, em vez dos eventos: o que vai num
+/// arrasto que começa nele (as listas e as grades mandam o item), o desenho que acompanha o
+/// cursor (o `DragImage`) e o arrasto que ele recebe pelos ganchos `drop_*` (as abas que
+/// passam de uma faixa para outra, a janela de um form). O componente que usa devolve
+/// `Some(self)` em [`Component::drag_drop`] e [`Component::drag_drop_mut`].
+pub trait DragDrop {
+    /// O componente edita texto. No celular, quando ele tem o foco a plataforma abre o
+    /// teclado virtual.
+    /// O que vai num arrasto que começa neste controle sem `drag_data` nem handler: as listas
+    /// e as grades mandam o item (o texto, a chave do registro) e o rótulo. `None`: nada.
+    fn drag_item(&self, _ui: &crate::Ui) -> Option<(String, String)> {
+        None
+    }
+
+    /// O que acompanha o cursor num arrasto, quando este componente é o `drag_image` de um
+    /// controle (o `DragImage`); `source` é o controle arrastado. `None`: nada.
+    fn drag_visual(&self, _ui: &crate::Ui, _source: ComponentId) -> Option<crate::DragVisual> {
+        None
+    }
+
+    /// O próprio componente recebe este arrasto (sem `accepts_drops` nem eventos): as abas
+    /// que passam de uma faixa para outra. Vale também quando ele é a origem (a aba que volta
+    /// para a faixa de onde saiu). Com `true`, recebe [`drop_hover`](Self::drop_hover),
+    /// [`drop_leave`](Self::drop_leave) e [`drop_receive`](Self::drop_receive).
+    fn drop_accepts(&self, _ui: &crate::Ui, _id: ComponentId, _data: &str) -> bool {
+        false
+    }
+
+    /// O arrasto aceito por [`drop_accepts`](Self::drop_accepts) está sobre o componente, no
+    /// ponto `position` (coordenadas dele); chamado a cada movimento.
+    fn drop_hover(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _position: PointF) {}
+
+    /// O arrasto saiu de cima do componente (ou foi cancelado).
+    fn drop_leave(&mut self, _ctx: &mut EventCtx<'_>) {}
+
+    /// Soltou o arrasto aceito sobre o componente, em `position` (coordenadas dele).
+    fn drop_receive(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _position: PointF) {}
+
+    /// O arrasto que começou neste componente acabou (`on_drag_end` também dispara).
+    fn drag_ended(&mut self, _ctx: &mut EventCtx<'_>, _data: &str, _end: crate::DragEnd) {}
 }
 
 /// Os ganchos que só uns poucos componentes usam: fora do [`Component`], para a lista de

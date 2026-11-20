@@ -555,6 +555,14 @@ impl UpDown {
 }
 
 impl Component for UpDown {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     leaf_control!("UpDown");
 
     properties! {
@@ -563,16 +571,6 @@ impl Component for UpDown {
         max: f64 => "Data",
         step: f64 => "Data";
         events: on_change: f64
-    }
-
-    fn timer_interval(&self) -> Option<f64> {
-        self.pressed.get().map(|_| 0.12)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        if let Some(up) = self.pressed.get() {
-            self.bump(ctx, up);
-        }
     }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -623,6 +621,18 @@ impl Component for UpDown {
         let can_up = self.value < self.max;
         ctx.draw_icon(canvas, "minus", RectF::new(r.x + half / 2.0 - 9.0, r.y + r.height / 2.0 - 9.0, 18.0, 18.0), if can_down { fg } else { fg.with_opacity(0.3) });
         ctx.draw_icon(canvas, "plus", RectF::new(r.x + half * 1.5 - 9.0, r.y + r.height / 2.0 - 9.0, 18.0, 18.0), if can_up { fg } else { fg.with_opacity(0.3) });
+    }
+}
+
+impl aylis_core::Timed for UpDown {
+    fn timer_interval(&self) -> Option<f64> {
+        self.pressed.get().map(|_| 0.12)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        if let Some(up) = self.pressed.get() {
+            self.bump(ctx, up);
+        }
     }
 }
 
@@ -837,6 +847,14 @@ impl ButtonGroup {
 }
 
 impl Component for ButtonGroup {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(self.selected.clone()))
@@ -862,31 +880,6 @@ impl Component for ButtonGroup {
 
     // Os botões para leitores de tela e automação: marcados ou não; clicar faz o mesmo que o
     // toque.
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<aylis_core::automation::AccessItem> {
-        use aylis_core::automation::{AccessItem, ItemRole};
-        let rects = self.rects.borrow();
-        let chosen = split(&self.selected);
-        split(&self.items)
-            .into_iter()
-            .enumerate()
-            .map(|(i, t)| {
-                let on = chosen.contains(&t);
-                let item = AccessItem::new(ItemRole::Button, t).checked(on).selected(on);
-                match rects.get(i) {
-                    Some(r) => item.rect(*r),
-                    None => item,
-                }
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        if index >= split(&self.items).len() {
-            return false;
-        }
-        self.press(ctx, index);
-        true
-    }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let r = ctx.rect;
@@ -942,6 +935,34 @@ impl Component for ButtonGroup {
             rects.push(b);
         }
         *self.rects.borrow_mut() = rects;
+    }
+}
+
+impl aylis_core::AccessibleItems for ButtonGroup {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<aylis_core::automation::AccessItem> {
+        use aylis_core::automation::{AccessItem, ItemRole};
+        let rects = self.rects.borrow();
+        let chosen = split(&self.selected);
+        split(&self.items)
+            .into_iter()
+            .enumerate()
+            .map(|(i, t)| {
+                let on = chosen.contains(&t);
+                let item = AccessItem::new(ItemRole::Button, t).checked(on).selected(on);
+                match rects.get(i) {
+                    Some(r) => item.rect(*r),
+                    None => item,
+                }
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
+        if index >= split(&self.items).len() {
+            return false;
+        }
+        self.press(ctx, index);
+        true
     }
 }
 

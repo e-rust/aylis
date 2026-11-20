@@ -197,7 +197,7 @@ fn monitor(device: &str, x: i32, width: u32, primary: bool) -> aylis_core::monit
 fn a_remembered_placement_comes_back_only_while_its_monitor_is_on_and_visible() {
     use aylis_core::monitors::{SavedPlacement, restore_placement};
     let monitors = [monitor(r"\\.\DISPLAY1", 0, 3840, true), monitor(r"\\.\DISPLAY2", -3840, 3840, false)];
-    let at = |x: i32, y: i32| SavedPlacement { monitor: r"\\.\DISPLAY2".into(), placement: WindowPlacement { x, y, width: 1200, height: 800, maximized: false } };
+    let at = |x: i32, y: i32| SavedPlacement { monitor: r"\\.\DISPLAY2".into(), placement: WindowPlacement { x, y, width: 1200, height: 800, maximized: false, full_screen: false } };
     assert_eq!(restore_placement(&at(-3000, 100), &monitors).map(|p| p.x), Some(-3000));
     // O monitor desligado: abre como se não houvesse posição guardada.
     assert_eq!(restore_placement(&at(-3000, 100), &monitors[..1]), None);

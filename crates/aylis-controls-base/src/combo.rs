@@ -239,6 +239,18 @@ impl ComboBox {
 }
 
 impl Component for ComboBox {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(self.text().to_string()))
@@ -261,38 +273,12 @@ impl Component for ComboBox {
         computed: value: String => value / set_value
     }
 
-    /// `auto_size`: a opção mais larga, o padding do estilo e o lugar da seta (C21 do
-    /// Tabernáculo; antes, a conta à mão no app).
-    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
-        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
-        let widest = self.item_list().iter().map(|t| ui.measure_text(t, &style).width).fold(0.0f32, f32::max);
-        Some((widest + ui.style_padding(id).horizontal() + ARROW_ROOM + 2.0).ceil())
-    }
-
-    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
-        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
-        Some((ui.measure_text("Ág", &style).height + ui.style_padding(id).vertical()).ceil().max(24.0))
-    }
-
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
         if self.popup.is_some() { self.close(ctx) } else { self.open(ctx) }
         ctx.fire("on_click", EventArgs::None);
     }
 
     // As opções para leitores de tela e automação: escolher uma não precisa abrir a lista.
-    fn access_items(&self, _: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
-        use aylis_core::automation::{AccessItem, ItemRole};
-        self.item_list().iter().enumerate().map(|(i, t)| AccessItem::new(ItemRole::ListItem, *t).selected(i as i64 == self.item_index).disabled(!self.item_enabled(i))).collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        if index >= self.item_list().len() || !self.item_enabled(index) {
-            return false;
-        }
-        self.choose(ctx, index);
-        self.close(ctx);
-        true
-    }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         // As setas pulam as opções desligadas (C20 do Tabernáculo).
@@ -361,6 +347,37 @@ impl Component for ComboBox {
         let tip = if up { c.y - 2.0 } else { c.y + 2.0 };
         canvas.draw_line(PointF::new(c.x - 4.5, tip - dy * 1.5), PointF::new(c.x, tip), &stroke);
         canvas.draw_line(PointF::new(c.x, tip), PointF::new(c.x + 4.5, tip - dy * 1.5), &stroke);
+    }
+}
+
+impl aylis_core::AccessibleItems for ComboBox {
+    fn access_items(&self, _: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
+        use aylis_core::automation::{AccessItem, ItemRole};
+        self.item_list().iter().enumerate().map(|(i, t)| AccessItem::new(ItemRole::ListItem, *t).selected(i as i64 == self.item_index).disabled(!self.item_enabled(i))).collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
+        if index >= self.item_list().len() || !self.item_enabled(index) {
+            return false;
+        }
+        self.choose(ctx, index);
+        self.close(ctx);
+        true
+    }
+}
+
+impl aylis_core::LayoutHooks for ComboBox {
+    /// `auto_size`: a opção mais larga, o padding do estilo e o lugar da seta (C21 do
+    /// Tabernáculo; antes, a conta à mão no app).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
+        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
+        let widest = self.item_list().iter().map(|t| ui.measure_text(t, &style).width).fold(0.0f32, f32::max);
+        Some((widest + ui.style_padding(id).horizontal() + ARROW_ROOM + 2.0).ceil())
+    }
+
+    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
+        let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
+        Some((ui.measure_text("Ág", &style).height + ui.style_padding(id).vertical()).ceil().max(24.0))
     }
 }
 
@@ -454,18 +471,20 @@ impl ComboPopup {
 }
 
 impl Component for ComboPopup {
+    fn popup(&self) -> Option<&dyn aylis_core::Popup> {
+        Some(self)
+    }
+
+    fn popup_mut(&mut self) -> Option<&mut dyn aylis_core::Popup> {
+        Some(self)
+    }
+
     leaf_control!("ComboPopup");
 
     // Some junto com quem a abriu (a tela refeita não deixa a lista órfã).
-    fn dies_with(&self) -> Option<ComponentId> {
-        Some(self.owner)
-    }
 
     // O clique fora fecha a lista, mesmo onde não recebe foco (o fundo da tela, um rótulo):
     // antes só a perda de foco do ComboBox fechava.
-    fn closes_on_outside_press(&self) -> bool {
-        true
-    }
 
     // A barra: pegar o polegar e arrastar (na calha, fora do polegar, pula para lá).
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -582,5 +601,15 @@ impl Component for ComboPopup {
             let alpha = if self.dragging.is_some() { 0.6 } else { 0.35 };
             canvas.fill_rect(thumb.offset(r.x, r.y), BAR / 2.0, &Brush::Solid(theme.color("text_muted").with_opacity(alpha)));
         }
+    }
+}
+
+impl aylis_core::Popup for ComboPopup {
+    fn dies_with(&self) -> Option<ComponentId> {
+        Some(self.owner)
+    }
+
+    fn closes_on_outside_press(&self) -> bool {
+        true
     }
 }

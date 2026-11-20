@@ -77,6 +77,14 @@ impl DragImage {
 }
 
 impl Component for DragImage {
+    fn drag_drop(&self) -> Option<&dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
+    fn drag_drop_mut(&mut self) -> Option<&mut dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "DragImage"
     }
@@ -97,6 +105,9 @@ impl Component for DragImage {
         }
     }
 
+}
+
+impl aylis_core::DragDrop for DragImage {
     fn drag_visual(&self, ui: &Ui, source: ComponentId) -> Option<DragVisual> {
         let (image, natural) = match self.file_image(ui) {
             Some(image) => (image, DEFAULT_SIZE),

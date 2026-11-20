@@ -29,6 +29,22 @@
     procedure SetFrameReuseKb(Value: Int64);
     function GetTopmost: Boolean;
     procedure SetTopmost(Value: Boolean);
+    function GetBottommost: Boolean;
+    procedure SetBottommost(Value: Boolean);
+    function GetKeepAwake: TKeepAwake;
+    procedure SetKeepAwake(Value: TKeepAwake);
+    function GetConfineCursor: TCursorConfine;
+    procedure SetConfineCursor(Value: TCursorConfine);
+    function GetWindowOpacity: Double;
+    procedure SetWindowOpacity(Value: Double);
+    function GetFullScreenMode: TFullScreenMode;
+    procedure SetFullScreenMode(Value: TFullScreenMode);
+    function GetVideoWidth: Int64;
+    procedure SetVideoWidth(Value: Int64);
+    function GetVideoHeight: Int64;
+    procedure SetVideoHeight(Value: Int64);
+    function GetVideoRefresh: Double;
+    procedure SetVideoRefresh(Value: Double);
     function GetShowInTaskbar: Boolean;
     procedure SetShowInTaskbar(Value: Boolean);
     function GetActiveControl: TAylisComponent;
@@ -75,6 +91,10 @@
     procedure SetFrameRate(Value: Double);
     function GetOrientation: TFormOrientation;
     procedure SetOrientation(Value: TFormOrientation);
+    function GetHost: TAylisComponent;
+    procedure SetHost(Value: TAylisComponent);
+    function GetDockable: Boolean;
+    procedure SetDockable(Value: Boolean);
     function GetOnShow: string;
     procedure SetOnShow(Value: string);
     function GetOnWindowCreated: string;
@@ -93,6 +113,10 @@
     procedure SetOnNavigate(Value: string);
     function GetOnGpuChange: string;
     procedure SetOnGpuChange(Value: string);
+    function GetOnDock: string;
+    procedure SetOnDock(Value: string);
+    function GetOnUndock: string;
+    procedure SetOnUndock(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -267,6 +291,7 @@
     procedure SetOnDragEnd(Value: string);
   public
     procedure MoveToMonitor(AMonitor: Int64);
+    procedure RequestAttention(ACritical: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
     function RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
@@ -287,6 +312,14 @@
     property LayerCache: TLayerCaching read GetLayerCache write SetLayerCache;
     property FrameReuseKb: Int64 read GetFrameReuseKb write SetFrameReuseKb;
     property Topmost: Boolean read GetTopmost write SetTopmost;
+    property Bottommost: Boolean read GetBottommost write SetBottommost;
+    property KeepAwake: TKeepAwake read GetKeepAwake write SetKeepAwake;
+    property ConfineCursor: TCursorConfine read GetConfineCursor write SetConfineCursor;
+    property WindowOpacity: Double read GetWindowOpacity write SetWindowOpacity;
+    property FullScreenMode: TFullScreenMode read GetFullScreenMode write SetFullScreenMode;
+    property VideoWidth: Int64 read GetVideoWidth write SetVideoWidth;
+    property VideoHeight: Int64 read GetVideoHeight write SetVideoHeight;
+    property VideoRefresh: Double read GetVideoRefresh write SetVideoRefresh;
     property ShowInTaskbar: Boolean read GetShowInTaskbar write SetShowInTaskbar;
     property ActiveControl: TAylisComponent read GetActiveControl write SetActiveControl;
     property TabOrder: TStringArray read GetTabOrder write SetTabOrder;
@@ -310,6 +343,8 @@
     property CloseAction: TCloseAction read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
     property Orientation: TFormOrientation read GetOrientation write SetOrientation;
+    property Host: TAylisComponent read GetHost write SetHost;
+    property Dockable: Boolean read GetDockable write SetDockable;
     property OnShow: string read GetOnShow write SetOnShow;
     property OnWindowCreated: string read GetOnWindowCreated write SetOnWindowCreated;
     property OnClose: string read GetOnClose write SetOnClose;
@@ -319,6 +354,8 @@
     property OnRestore: string read GetOnRestore write SetOnRestore;
     property OnNavigate: string read GetOnNavigate write SetOnNavigate;
     property OnGpuChange: string read GetOnGpuChange write SetOnGpuChange;
+    property OnDock: string read GetOnDock write SetOnDock;
+    property OnUndock: string read GetOnUndock write SetOnUndock;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -546,6 +583,86 @@ end;
 procedure TForm.SetTopmost(Value: Boolean);
 begin
   SetProp('topmost', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetBottommost: Boolean;
+begin
+  Result := GetProp('bottommost').AsBoolean;
+end;
+
+procedure TForm.SetBottommost(Value: Boolean);
+begin
+  SetProp('bottommost', TJSONBoolean.Create(Value));
+end;
+
+function TForm.GetKeepAwake: TKeepAwake;
+begin
+  Result := KeepAwakeOf(GetProp('keep_awake'));
+end;
+
+procedure TForm.SetKeepAwake(Value: TKeepAwake);
+begin
+  SetProp('keep_awake', TJSONString.Create(KeepAwakeNames[Value]));
+end;
+
+function TForm.GetConfineCursor: TCursorConfine;
+begin
+  Result := CursorConfineOf(GetProp('confine_cursor'));
+end;
+
+procedure TForm.SetConfineCursor(Value: TCursorConfine);
+begin
+  SetProp('confine_cursor', TJSONString.Create(CursorConfineNames[Value]));
+end;
+
+function TForm.GetWindowOpacity: Double;
+begin
+  Result := GetProp('window_opacity').AsFloat;
+end;
+
+procedure TForm.SetWindowOpacity(Value: Double);
+begin
+  SetProp('window_opacity', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetFullScreenMode: TFullScreenMode;
+begin
+  Result := FullScreenModeOf(GetProp('full_screen_mode'));
+end;
+
+procedure TForm.SetFullScreenMode(Value: TFullScreenMode);
+begin
+  SetProp('full_screen_mode', TJSONString.Create(FullScreenModeNames[Value]));
+end;
+
+function TForm.GetVideoWidth: Int64;
+begin
+  Result := GetProp('video_width').AsInt64;
+end;
+
+procedure TForm.SetVideoWidth(Value: Int64);
+begin
+  SetProp('video_width', TJSONInt64Number.Create(Value));
+end;
+
+function TForm.GetVideoHeight: Int64;
+begin
+  Result := GetProp('video_height').AsInt64;
+end;
+
+procedure TForm.SetVideoHeight(Value: Int64);
+begin
+  SetProp('video_height', TJSONInt64Number.Create(Value));
+end;
+
+function TForm.GetVideoRefresh: Double;
+begin
+  Result := GetProp('video_refresh').AsFloat;
+end;
+
+procedure TForm.SetVideoRefresh(Value: Double);
+begin
+  SetProp('video_refresh', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetShowInTaskbar: Boolean;
@@ -778,6 +895,26 @@ begin
   SetProp('orientation', TJSONString.Create(FormOrientationNames[Value]));
 end;
 
+function TForm.GetHost: TAylisComponent;
+begin
+  Result := GetRef('host');
+end;
+
+procedure TForm.SetHost(Value: TAylisComponent);
+begin
+  SetRef('host', Value);
+end;
+
+function TForm.GetDockable: Boolean;
+begin
+  Result := GetProp('dockable').AsBoolean;
+end;
+
+procedure TForm.SetDockable(Value: Boolean);
+begin
+  SetProp('dockable', TJSONBoolean.Create(Value));
+end;
+
 function TForm.GetOnShow: string;
 begin
   Result := AsText(GetProp('on_show'));
@@ -866,6 +1003,26 @@ end;
 procedure TForm.SetOnGpuChange(Value: string);
 begin
   SetProp('on_gpu_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnDock: string;
+begin
+  Result := AsText(GetProp('on_dock'));
+end;
+
+procedure TForm.SetOnDock(Value: string);
+begin
+  SetProp('on_dock', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnUndock: string;
+begin
+  Result := AsText(GetProp('on_undock'));
+end;
+
+procedure TForm.SetOnUndock(Value: string);
+begin
+  SetProp('on_undock', TJSONString.Create(Value));
 end;
 
 function TForm.GetClientWidth: Double;
@@ -1731,6 +1888,11 @@ end;
 procedure TForm.MoveToMonitor(AMonitor: Int64);
 begin
   Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'move_to_monitor', 'args', TJSONArray.Create([AMonitor])]));
+end;
+
+procedure TForm.RequestAttention(ACritical: Boolean);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'request_attention', 'args', TJSONArray.Create([ACritical])]));
 end;
 
 function TForm.GpuAdapter: string;

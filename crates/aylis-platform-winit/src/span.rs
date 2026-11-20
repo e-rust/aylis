@@ -154,17 +154,21 @@ impl App {
             }
             // Mostrar, esconder e ficar por cima valem para os pedaços também; a principal
             // segue o caminho de sempre.
-            WindowCommand::Hide | WindowCommand::Show | WindowCommand::SetTopmost(_) => {
+            WindowCommand::Hide | WindowCommand::Show | WindowCommand::SetTopmost(_) | WindowCommand::UpdateLevel => {
+                let level = self.window_level(form);
                 for w in self.windows.iter().filter(|w| w.form == form && w.is_extra()) {
                     match command {
                         WindowCommand::Hide => w.window.set_visible(false),
                         WindowCommand::Show => w.window.set_visible(true),
                         WindowCommand::SetTopmost(on) => w.window.set_window_level(if on { winit::window::WindowLevel::AlwaysOnTop } else { winit::window::WindowLevel::Normal }),
+                        WindowCommand::UpdateLevel => w.window.set_window_level(level),
                         _ => {}
                     }
                 }
                 return false;
             }
+            // Os da janela principal (o app, o mouse, a opacidade, o piscar): o caminho de sempre.
+            WindowCommand::RequestAttention(_) | WindowCommand::UpdateOpacity | WindowCommand::UpdateKeepAwake | WindowCommand::UpdateCursorConfine => return false,
             // Minimizar a principal leva as extras junto (são dela).
             WindowCommand::Minimize | WindowCommand::Restore | WindowCommand::Close | WindowCommand::UpdateGpu => return false,
             // Maximizar, arrastar e redimensionar pela borda não valem para um form em vários
@@ -426,9 +430,7 @@ impl App {
             .with_position(PhysicalPosition::new(piece.screen.x, piece.screen.y))
             .with_inner_size(PhysicalSize::new(piece.screen.width, piece.screen.height))
             .with_theme(Some(if dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
-        if matches!(self.ui.get_prop(form, "topmost"), Ok(PropValue::Bool(true))) {
-            attributes = attributes.with_window_level(winit::window::WindowLevel::AlwaysOnTop);
-        }
+        attributes = attributes.with_window_level(self.window_level(form));
         #[cfg(not(any(web, mobile)))]
         {
             attributes = attributes.with_window_icon(self.icon.clone());
@@ -476,6 +478,7 @@ impl App {
             focused: false,
             hovered: false,
             uncloak_after_draw: false,
+            clipped_monitor: false,
         });
         Ok(())
     }

@@ -237,6 +237,14 @@ impl MainMenu {
 }
 
 impl Component for MainMenu {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     leaf_control!("MainMenu");
 
     fn props(&self) -> &'static [aylis_core::PropInfo] {
@@ -286,6 +294,25 @@ impl Component for MainMenu {
     }
 
     // Os itens da barra para leitores de tela e automação; clicar abre o submenu.
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        CLOSE_METHOD
+    }
+
+    /// `close()` fecha o menu aberto.
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        invoke_close(ctx, method)
+    }
+
+    fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
+        if let Some(MenuClosed(open)) = message.downcast_ref::<MenuClosed>() {
+            self.open = *open;
+            ctx.repaint();
+        }
+    }
+}
+
+impl aylis_core::AccessibleItems for MainMenu {
     fn access_items(&self, ui: &Ui, id: ComponentId) -> Vec<AccessItem> {
         let slots = self.slots.borrow();
         visible_items(ui, id)
@@ -312,22 +339,6 @@ impl Component for MainMenu {
         let Some(slot) = self.slots.borrow().iter().position(|(s, _)| *s == id) else { return false };
         self.open_index(ctx, slot);
         true
-    }
-
-    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
-        CLOSE_METHOD
-    }
-
-    /// `close()` fecha o menu aberto.
-    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
-        invoke_close(ctx, method)
-    }
-
-    fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn Any) {
-        if let Some(MenuClosed(open)) = message.downcast_ref::<MenuClosed>() {
-            self.open = *open;
-            ctx.repaint();
-        }
     }
 }
 
@@ -711,60 +722,28 @@ impl MenuOverlay {
 }
 
 impl Component for MenuOverlay {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn popup(&self) -> Option<&dyn aylis_core::Popup> {
+        Some(self)
+    }
+
+    fn popup_mut(&mut self) -> Option<&mut dyn aylis_core::Popup> {
+        Some(self)
+    }
+
     leaf_control!("MenuOverlay");
 
     // Some junto com quem a abriu (a tela refeita não deixa a lista órfã).
-    fn dies_with(&self) -> Option<ComponentId> {
-        Some(self.owner)
-    }
 
     // Os itens dos painéis abertos (o menu e os submenus), sem as divisórias: clicar num
     // com submenu abre o submenu; nos outros, ativa como o clique.
-    fn access_items(&self, ui: &Ui, _: ComponentId) -> Vec<AccessItem> {
-        let mut out = Vec::new();
-        for level in &self.levels {
-            let rows = Self::rows(ui, level);
-            for (i, &id) in level.items.iter().enumerate() {
-                let Some(it) = item(ui, id).filter(|it| !it.is_separator()) else { continue };
-                let role = if it.auto_check || it.checked { ItemRole::MenuItemCheck } else { ItemRole::MenuItem };
-                let mut a = AccessItem::new(role, it.text.clone()).disabled(!it.enabled).has_popup(has_submenu(ui, id)).selected(level.hovered == Some(i));
-                if role == ItemRole::MenuItemCheck {
-                    a = a.checked(it.checked);
-                }
-                if let Some((_, r)) = rows.iter().find(|(r, _)| *r == i) {
-                    a = a.rect(*r);
-                }
-                out.push(a);
-            }
-        }
-        out
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
-        // O mesmo percurso do `access_items`: (painel, linha) do índice.
-        let mut n = 0;
-        let mut found = None;
-        for (li, level) in self.levels.iter().enumerate() {
-            for (i, &id) in level.items.iter().enumerate() {
-                if item(ctx.ui, id).is_some_and(|it| !it.is_separator()) {
-                    if n == index {
-                        found = Some((li, i, id));
-                    }
-                    n += 1;
-                }
-            }
-        }
-        let Some((level, row, id)) = found else { return false };
-        if !Self::selectable(ctx.ui, id) {
-            return false;
-        }
-        if has_submenu(ctx.ui, id) {
-            self.hover(ctx.ui, level, Some(row));
-        }
-        self.activate(ctx, id);
-        self.sync(ctx);
-        true
-    }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if let Some((level, row)) = self.hit(ctx.ui, event.position) {
@@ -930,5 +909,59 @@ impl Component for MenuOverlay {
                 }
             }
         }
+    }
+}
+
+impl aylis_core::AccessibleItems for MenuOverlay {
+    fn access_items(&self, ui: &Ui, _: ComponentId) -> Vec<AccessItem> {
+        let mut out = Vec::new();
+        for level in &self.levels {
+            let rows = Self::rows(ui, level);
+            for (i, &id) in level.items.iter().enumerate() {
+                let Some(it) = item(ui, id).filter(|it| !it.is_separator()) else { continue };
+                let role = if it.auto_check || it.checked { ItemRole::MenuItemCheck } else { ItemRole::MenuItem };
+                let mut a = AccessItem::new(role, it.text.clone()).disabled(!it.enabled).has_popup(has_submenu(ui, id)).selected(level.hovered == Some(i));
+                if role == ItemRole::MenuItemCheck {
+                    a = a.checked(it.checked);
+                }
+                if let Some((_, r)) = rows.iter().find(|(r, _)| *r == i) {
+                    a = a.rect(*r);
+                }
+                out.push(a);
+            }
+        }
+        out
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: ItemAction) -> bool {
+        // O mesmo percurso do `access_items`: (painel, linha) do índice.
+        let mut n = 0;
+        let mut found = None;
+        for (li, level) in self.levels.iter().enumerate() {
+            for (i, &id) in level.items.iter().enumerate() {
+                if item(ctx.ui, id).is_some_and(|it| !it.is_separator()) {
+                    if n == index {
+                        found = Some((li, i, id));
+                    }
+                    n += 1;
+                }
+            }
+        }
+        let Some((level, row, id)) = found else { return false };
+        if !Self::selectable(ctx.ui, id) {
+            return false;
+        }
+        if has_submenu(ctx.ui, id) {
+            self.hover(ctx.ui, level, Some(row));
+        }
+        self.activate(ctx, id);
+        self.sync(ctx);
+        true
+    }
+}
+
+impl aylis_core::Popup for MenuOverlay {
+    fn dies_with(&self) -> Option<ComponentId> {
+        Some(self.owner)
     }
 }

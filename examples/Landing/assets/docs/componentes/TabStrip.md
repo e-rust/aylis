@@ -26,6 +26,7 @@ Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reorde
 | `drop_group` | Grupo de arrasto | texto | As abas só passam entre faixas do mesmo grupo (vazio também é um grupo). |
 | `page_host` | Lugar das páginas | componente | Onde ficam as páginas das abas (vazio: o pai da faixa). |
 | `close_empty` | Fecha a janela vazia | lógico | Com páginas: a janela que fica sem abas (a última foi para outra faixa) fecha. |
+| `accept_forms` | Aceitar forms | lógico | A janela de um form com `dockable`, arrastada pela barra de título até a faixa, entra como aba (o form vira a página dela; veja `crate::docking`). |
 
 ## Eventos
 

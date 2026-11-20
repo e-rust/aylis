@@ -235,7 +235,7 @@ fn watch_delivers_events_and_stops() {
     assert_eq!(json["TargetInstance"]["ProcessId"], 42);
     assert_eq!(ui.get_prop(wmi, "last_event").unwrap().to_str().unwrap(), events.borrow()[0]);
     // Parado, sem timer.
-    assert!(ui.component(wmi).unwrap().timer_interval().is_none());
+    assert!(ui.component(wmi).unwrap().timed().and_then(|t| t.timer_interval()).is_none());
     ui.set_prop(wmi, "watch", false).unwrap();
     ui.advance(0.05);
     assert!(log.lock().unwrap().stopped);

@@ -265,6 +265,14 @@ const END_MARGIN: f32 = 48.0;
 const PULL: f32 = 64.0;
 
 impl Component for ScrollBox {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     /// Só fundo e borda pelo estilo: o ensaio do desenho (`Ui::drawing_unchanged`) vale.
     fn paint_is_pure(&self) -> bool {
         true
@@ -397,25 +405,6 @@ impl Component for ScrollBox {
         ctx.set_handled();
     }
 
-    /// Um passo do deslize da roda (desacelerando no fim), em cada quadro e no tempo dele: anda
-    /// junto com o monitor (60, 144, 160 Hz), sem degraus. No meio do caminho a posição não é
-    /// arredondada (com a escala do sistema, 1 ponto são 1,5 pixel); no fim, sim.
-    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
-        let Some((from, to, at)) = self.glide else { return false };
-        let ms = ctx.ui.scroll_options().smooth_ms.max(1.0) as f64;
-        let k = ((ctx.ui.time() - at) * 1000.0 / ms).clamp(0.0, 1.0) as f32;
-        let eased = 1.0 - (1.0 - k).powi(3);
-        let y = from + (to - from) * eased;
-        self.exact = y;
-        if k >= 1.0 {
-            self.glide = None;
-            self.set_scroll(ctx, y, true);
-            return false;
-        }
-        self.set_scroll_exact(ctx, y, true);
-        true
-    }
-
     fn resized(&mut self, ctx: &mut EventCtx<'_>) {
         let mut y = self.scroll();
         if self.horizontal {
@@ -486,6 +475,27 @@ impl Component for ScrollBox {
             let alpha = if self.dragging.is_some() { 0.5 } else { 0.3 };
             canvas.fill_rect(thumb, BAR / 2.0, &Brush::Solid(ctx.theme.color("text_muted").with_opacity(alpha)));
         }
+    }
+}
+
+impl aylis_core::Timed for ScrollBox {
+    /// Um passo do deslize da roda (desacelerando no fim), em cada quadro e no tempo dele: anda
+    /// junto com o monitor (60, 144, 160 Hz), sem degraus. No meio do caminho a posição não é
+    /// arredondada (com a escala do sistema, 1 ponto são 1,5 pixel); no fim, sim.
+    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
+        let Some((from, to, at)) = self.glide else { return false };
+        let ms = ctx.ui.scroll_options().smooth_ms.max(1.0) as f64;
+        let k = ((ctx.ui.time() - at) * 1000.0 / ms).clamp(0.0, 1.0) as f32;
+        let eased = 1.0 - (1.0 - k).powi(3);
+        let y = from + (to - from) * eased;
+        self.exact = y;
+        if k >= 1.0 {
+            self.glide = None;
+            self.set_scroll(ctx, y, true);
+            return false;
+        }
+        self.set_scroll_exact(ctx, y, true);
+        true
     }
 }
 

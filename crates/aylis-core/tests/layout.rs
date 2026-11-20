@@ -306,6 +306,10 @@ struct Counted {
 }
 
 impl Component for Counted {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Counted"
     }
@@ -318,6 +322,9 @@ impl Component for Counted {
         Some(&mut self.base)
     }
 
+}
+
+impl aylis_core::LayoutHooks for Counted {
     fn arrange(&self, _area: RectF, _children: &[ArrangeItem]) -> Option<Vec<RectF>> {
         self.arranged.set(self.arranged.get() + 1);
         None

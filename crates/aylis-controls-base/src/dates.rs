@@ -260,6 +260,14 @@ impl Calendar {
 }
 
 impl Component for Calendar {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         match (self.owner, self.range) {
@@ -283,52 +291,6 @@ impl Component for Calendar {
 
     // Para leitores de tela e automação: os botões de mês anterior e próximo e cada dia da
     // grade (o nome é a data ISO, `2026-10-27`; no modo mês, o nome do mês).
-    fn access_items(&self, ui: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
-        use aylis_core::automation::{AccessItem, ItemRole};
-        let w = self.base.bounds().width;
-        let mut out = vec![
-            AccessItem::new(ItemRole::Button, ui.tr(if self.month_mode { "Ano anterior" } else { "Mês anterior" })).rect(RectF::new(0.0, 0.0, 40.0, HEADER)),
-            AccessItem::new(ItemRole::Button, ui.tr(if self.month_mode { "Próximo ano" } else { "Próximo mês" })).rect(RectF::new(w - 40.0, 0.0, 40.0, HEADER)),
-        ];
-        let chosen = self.selected();
-        if self.month_mode {
-            let names = ui.locale().month_names;
-            for m in 0..12u32 {
-                let selected = chosen.is_some_and(|d| d.year == self.shown.year && d.month == m + 1);
-                out.push(AccessItem::new(ItemRole::Cell, names[m as usize].to_string()).selected(selected));
-            }
-            return out;
-        }
-        let (area, cw, ch) = self.grid();
-        let first = self.first_cell(ui.locale().first_day_of_week);
-        let end = Day::parse_iso(&self.end_date);
-        for i in 0..42i64 {
-            let day = first.add_days(i);
-            let selected = chosen == Some(day) || (self.range && chosen.zip(end).is_some_and(|(a, b)| day >= a && day <= b));
-            let rect = RectF::new(area.x + (i % 7) as f32 * cw, area.y + (i / 7) as f32 * ch, cw, ch);
-            out.push(AccessItem::new(ItemRole::Cell, day.iso()).selected(selected).cell((i / 7) as usize, (i % 7) as usize).rect(rect));
-        }
-        out
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        let step = if self.month_mode { 12 } else { 1 };
-        match index {
-            0 => self.shown = self.shown.add_months(-step),
-            1 => self.shown = self.shown.add_months(step),
-            i if self.month_mode => {
-                let Some(m) = Day::new(self.shown.year, (i - 2 + 1).min(12) as u32, 1) else { return false };
-                self.choose(ctx, m);
-            }
-            i if i < 44 => {
-                let first = self.first_cell(ctx.ui.locale().first_day_of_week);
-                self.choose(ctx, first.add_days(i as i64 - 2));
-            }
-            _ => return false,
-        }
-        ctx.repaint();
-        true
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         if event.button != PointerButton::Primary {
@@ -485,6 +447,55 @@ impl Component for Calendar {
             }
             canvas.draw_text(&day.day.to_string(), rect, &style);
         }
+    }
+}
+
+impl aylis_core::AccessibleItems for Calendar {
+    fn access_items(&self, ui: &aylis_core::Ui, _: ComponentId) -> Vec<aylis_core::automation::AccessItem> {
+        use aylis_core::automation::{AccessItem, ItemRole};
+        let w = self.base.bounds().width;
+        let mut out = vec![
+            AccessItem::new(ItemRole::Button, ui.tr(if self.month_mode { "Ano anterior" } else { "Mês anterior" })).rect(RectF::new(0.0, 0.0, 40.0, HEADER)),
+            AccessItem::new(ItemRole::Button, ui.tr(if self.month_mode { "Próximo ano" } else { "Próximo mês" })).rect(RectF::new(w - 40.0, 0.0, 40.0, HEADER)),
+        ];
+        let chosen = self.selected();
+        if self.month_mode {
+            let names = ui.locale().month_names;
+            for m in 0..12u32 {
+                let selected = chosen.is_some_and(|d| d.year == self.shown.year && d.month == m + 1);
+                out.push(AccessItem::new(ItemRole::Cell, names[m as usize].to_string()).selected(selected));
+            }
+            return out;
+        }
+        let (area, cw, ch) = self.grid();
+        let first = self.first_cell(ui.locale().first_day_of_week);
+        let end = Day::parse_iso(&self.end_date);
+        for i in 0..42i64 {
+            let day = first.add_days(i);
+            let selected = chosen == Some(day) || (self.range && chosen.zip(end).is_some_and(|(a, b)| day >= a && day <= b));
+            let rect = RectF::new(area.x + (i % 7) as f32 * cw, area.y + (i / 7) as f32 * ch, cw, ch);
+            out.push(AccessItem::new(ItemRole::Cell, day.iso()).selected(selected).cell((i / 7) as usize, (i % 7) as usize).rect(rect));
+        }
+        out
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
+        let step = if self.month_mode { 12 } else { 1 };
+        match index {
+            0 => self.shown = self.shown.add_months(-step),
+            1 => self.shown = self.shown.add_months(step),
+            i if self.month_mode => {
+                let Some(m) = Day::new(self.shown.year, (i - 2 + 1).min(12) as u32, 1) else { return false };
+                self.choose(ctx, m);
+            }
+            i if i < 44 => {
+                let first = self.first_cell(ctx.ui.locale().first_day_of_week);
+                self.choose(ctx, first.add_days(i as i64 - 2));
+            }
+            _ => return false,
+        }
+        ctx.repaint();
+        true
     }
 }
 

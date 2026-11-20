@@ -122,6 +122,11 @@ pub struct TabDrop {
 }
 
 /// Os dados de um arrasto de aba: (grupo, faixa de origem, índice).
+/// O form de um arrasto de janela inteira (`aylis_core::FORM_DRAG`).
+fn form_drag(data: &str) -> Option<ComponentId> {
+    data.strip_prefix(aylis_core::FORM_DRAG)?.parse().ok().map(ComponentId::from_u64)
+}
+
 fn parse_drag(data: &str) -> Option<(&str, ComponentId, usize)> {
     let rest = data.strip_prefix(TAB_DRAG)?;
     let mut parts = rest.rsplitn(3, ':');
@@ -159,6 +164,9 @@ pub struct TabStrip {
     pub page_host: Option<ComponentId>,
     /// Com páginas: a janela que fica sem abas (a última foi para outra faixa) fecha.
     pub close_empty: bool,
+    /// A janela de um form com `dockable`, arrastada pela barra de título até a faixa, entra
+    /// como aba (o form vira a página dela; veja `crate::docking`).
+    pub accept_forms: bool,
     hits: RefCell<Hits>,
     hover: Cell<Option<usize>>,
     hover_close: Cell<bool>,
@@ -217,6 +225,7 @@ impl Default for TabStrip {
             drop_group: String::new(),
             page_host: None,
             close_empty: true,
+            accept_forms: false,
             hits: RefCell::default(),
             hover: Cell::new(None),
             hover_close: Cell::new(false),
@@ -656,7 +665,7 @@ impl TabStrip {
         let corner = Self::window_corner(ctx.ui, window, grab_in_form);
         if corner.is_some() || placement.width > 0 {
             let (x, y) = corner.unwrap_or((placement.x + 40, placement.y + 40));
-            ctx.ui.set_window_placement(window, WindowPlacement { x, y, width: placement.width, height: placement.height, maximized: false });
+            ctx.ui.set_window_placement(window, WindowPlacement { x, y, width: placement.width, height: placement.height, maximized: false, full_screen: false });
         }
         let _ = ctx.ui.show(window);
         // Como as do navegador: janela independente, não presa por cima da outra.
@@ -717,6 +726,22 @@ fn show_pages(ui: &mut Ui, pages: &[(ComponentId, bool)]) {
 }
 
 impl Component for TabStrip {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn drag_drop(&self) -> Option<&dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
+    fn drag_drop_mut(&mut self) -> Option<&mut dyn aylis_core::DragDrop> {
+        Some(self)
+    }
+
     leaf_control!("TabStrip");
 
     properties! {
@@ -728,7 +753,8 @@ impl Component for TabStrip {
         tear_off: bool => "Behavior",
         drop_group: String => "Behavior",
         page_host: Option<ComponentId> => "Behavior",
-        close_empty: bool => "Behavior";
+        close_empty: bool => "Behavior",
+        accept_forms: bool => "Behavior";
         events: on_change: i64, on_close: i64, on_add: (), on_reorder: TabMove, on_tear_off: i64, on_tab_drop: TabMove, on_new_window: Option<aylis_core::ComponentId>;
         computed: tabs: String as RecordList(&TAB_ITEM) => tabs_text / set_tabs_text
     }
@@ -747,54 +773,6 @@ impl Component for TabStrip {
     // O arrasto de aba (desta faixa ou de outra, em qualquer janela) é recebido aqui mesmo.
     // Uma aba sem página vinda de outra faixa só entra se quem usa leva o conteúdo junto (tem
     // o `on_tab_drop`): faixas sem páginas que não esperam abas de fora não as recebem.
-    fn drop_accepts(&self, ui: &Ui, id: ComponentId, data: &str) -> bool {
-        let Some((group, source, index)) = parse_drag(data) else { return false };
-        if group != self.drop_group || !ui.contains(source) {
-            return false;
-        }
-        let has_page = ui.get::<TabStrip>(source).and_then(|s| s.tabs.get(index)).is_some_and(|t| t.page.is_some());
-        source == id || has_page || ui.has_handler(id, "on_tab_drop")
-    }
-
-    fn drop_hover(&mut self, ctx: &mut EventCtx<'_>, _data: &str, position: PointF) {
-        let slot = Some(self.slot_at(position.x));
-        if self.drop_at.replace(slot) != slot {
-            ctx.repaint();
-        }
-    }
-
-    fn drop_leave(&mut self, ctx: &mut EventCtx<'_>) {
-        if self.drop_at.take().is_some() {
-            ctx.repaint();
-        }
-    }
-
-    fn drop_receive(&mut self, ctx: &mut EventCtx<'_>, data: &str, position: PointF) {
-        let slot = self.drop_at.take().unwrap_or_else(|| self.slot_at(position.x));
-        let Some((_, source, from)) = parse_drag(data) else { return };
-        if source == ctx.id {
-            self.lifted = None;
-        }
-        self.receive(ctx, source, from, slot);
-    }
-
-    fn drag_ended(&mut self, ctx: &mut EventCtx<'_>, _data: &str, end: DragEnd) {
-        let Some((index, grab)) = self.lifted.take() else { return };
-        ctx.repaint();
-        if end != DragEnd::Nowhere || index >= self.tabs.len() {
-            return;
-        }
-        if self.tabs[index].page.is_none() {
-            // Sem páginas: quem usa decide (como levar a aba para outra janela).
-            ctx.fire("on_tear_off", EventArgs::Value((index as i64).into()));
-            return;
-        }
-        let asked = ctx.ui.ask(ctx.id, "on_tear_off", &EventArgs::Value((index as i64).into()));
-        if matches!(asked, aylis_core::question::Asked::Answered(aylis_core::question::Answer::Refused(_))) {
-            return;
-        }
-        self.tear_into_window(ctx, index, grab);
-    }
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         let p = event.position;
@@ -891,40 +869,6 @@ impl Component for TabStrip {
             }
             ctx.repaint();
         }
-    }
-
-    /// Um passo do deslize: os desvios caem pela metade a cada ~40 ms (rápido no começo,
-    /// assentando suave), no tempo do quadro.
-    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
-        let now = ctx.ui.time();
-        let dt = (now - self.last_frame.unwrap_or(now)).clamp(0.0, 0.1) as f32;
-        self.last_frame = Some(now);
-        let k = (-dt / 0.055).exp();
-        let mut moving = false;
-        for o in &mut self.offsets {
-            *o *= k;
-            if o.abs() < 0.5 {
-                *o = 0.0;
-            } else {
-                moving = true;
-            }
-        }
-        // A largura solta (o mouse saiu da faixa) vai até a natural, no mesmo ritmo.
-        if let Some(w) = self.width_now.filter(|_| !self.width_held) {
-            let target = self.natural_w.get();
-            let next = target + (w - target) * k;
-            if (next - target).abs() < 0.5 {
-                self.width_now = None;
-            } else {
-                self.width_now = Some(next);
-                moving = true;
-            }
-        }
-        ctx.repaint();
-        if !moving {
-            self.last_frame = None;
-        }
-        moving
     }
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
@@ -1089,5 +1033,131 @@ impl Component for TabStrip {
         }
         canvas.restore();
         *self.hits.borrow_mut() = hits;
+    }
+}
+
+impl aylis_core::Timed for TabStrip {
+    /// Um passo do deslize: os desvios caem pela metade a cada ~40 ms (rápido no começo,
+    /// assentando suave), no tempo do quadro.
+    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
+        let now = ctx.ui.time();
+        let dt = (now - self.last_frame.unwrap_or(now)).clamp(0.0, 0.1) as f32;
+        self.last_frame = Some(now);
+        let k = (-dt / 0.055).exp();
+        let mut moving = false;
+        for o in &mut self.offsets {
+            *o *= k;
+            if o.abs() < 0.5 {
+                *o = 0.0;
+            } else {
+                moving = true;
+            }
+        }
+        // A largura solta (o mouse saiu da faixa) vai até a natural, no mesmo ritmo.
+        if let Some(w) = self.width_now.filter(|_| !self.width_held) {
+            let target = self.natural_w.get();
+            let next = target + (w - target) * k;
+            if (next - target).abs() < 0.5 {
+                self.width_now = None;
+            } else {
+                self.width_now = Some(next);
+                moving = true;
+            }
+        }
+        ctx.repaint();
+        if !moving {
+            self.last_frame = None;
+        }
+        moving
+    }
+}
+
+impl aylis_core::DragDrop for TabStrip {
+    fn drop_accepts(&self, ui: &Ui, id: ComponentId, data: &str) -> bool {
+        // A janela de um form arrastada até aqui (`Ui::window_drag_over`).
+        if let Some(form) = form_drag(data) {
+            return self.accept_forms
+                && ui.get::<crate::Form>(form).is_some_and(|f| f.dockable)
+                && ui.root_of(id) != form
+                && ui.main_form() != Some(form);
+        }
+        let Some((group, source, index)) = parse_drag(data) else { return false };
+        if group != self.drop_group || !ui.contains(source) {
+            return false;
+        }
+        let has_page = ui.get::<TabStrip>(source).and_then(|s| s.tabs.get(index)).is_some_and(|t| t.page.is_some());
+        source == id || has_page || ui.has_handler(id, "on_tab_drop")
+    }
+
+    fn drop_hover(&mut self, ctx: &mut EventCtx<'_>, _data: &str, position: PointF) {
+        let slot = Some(self.slot_at(position.x));
+        if self.drop_at.replace(slot) != slot {
+            ctx.repaint();
+        }
+    }
+
+    fn drop_leave(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.drop_at.take().is_some() {
+            ctx.repaint();
+        }
+    }
+
+    fn drop_receive(&mut self, ctx: &mut EventCtx<'_>, data: &str, position: PointF) {
+        let slot = self.drop_at.take().unwrap_or_else(|| self.slot_at(position.x));
+        // Um form inteiro: entra como aba no lugar marcado, depois deste evento (a faixa é
+        // mexida pelo `dock_form`).
+        if let Some(form) = form_drag(data) {
+            let strip = ctx.id;
+            ctx.ui.set_timeout(0, move |ui| {
+                if let Err(e) = crate::docking::dock_form(ui, form, strip, Some(slot)) {
+                    aylis_core::stderr_line!("aylis: o form não entrou na faixa ({e})");
+                }
+            });
+            ctx.repaint();
+            return;
+        }
+        let Some((_, source, from)) = parse_drag(data) else { return };
+        if source == ctx.id {
+            self.lifted = None;
+        }
+        self.receive(ctx, source, from, slot);
+    }
+
+    fn drag_ended(&mut self, ctx: &mut EventCtx<'_>, _data: &str, end: DragEnd) {
+        let Some((index, grab)) = self.lifted.take() else { return };
+        ctx.repaint();
+        if end != DragEnd::Nowhere || index >= self.tabs.len() {
+            return;
+        }
+        if self.tabs[index].page.is_none() {
+            // Sem páginas: quem usa decide (como levar a aba para outra janela).
+            ctx.fire("on_tear_off", EventArgs::Value((index as i64).into()));
+            return;
+        }
+        let asked = ctx.ui.ask(ctx.id, "on_tear_off", &EventArgs::Value((index as i64).into()));
+        if matches!(asked, aylis_core::question::Asked::Answered(aylis_core::question::Answer::Refused(_))) {
+            return;
+        }
+        // A aba de um form com `dockable`: o próprio form vira a janela, onde a aba foi solta.
+        if let Some(form) = self.tabs[index].page.filter(|&p| ctx.ui.get::<crate::Form>(p).is_some_and(|f| f.dockable)) {
+            let was = self.tab_index;
+            self.remove(index);
+            show_pages(ctx.ui, &self.pages());
+            if self.tab_index != was || index as i64 == was {
+                ctx.fire("on_change", EventArgs::Value(self.tab_index.into()));
+            }
+            if let Some(f) = ctx.ui.get_mut::<crate::Form>(form) {
+                f.docked_in = None;
+            }
+            let at = ctx.ui.screen_pointer().map(|p| (p.x - (grab.x * p.scale) as i32 - 8, p.y - (grab.y * p.scale) as i32 - 8));
+            ctx.ui.set_timeout(0, move |ui| {
+                if let Err(e) = crate::docking::undock_form(ui, form, at) {
+                    aylis_core::stderr_line!("aylis: o form não saiu da faixa ({e})");
+                }
+            });
+            ctx.repaint();
+            return;
+        }
+        self.tear_into_window(ctx, index, grab);
     }
 }

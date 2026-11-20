@@ -22,7 +22,8 @@
 //! | `get` | `target`, `prop` ou `props: [..]` | valor ou objeto |
 //! | `free`, `focus` | `target` | — |
 //! | `click` | `target`, `modifiers`?, `x`?, `y`?, `button`?, `double`? | — (sem os opcionais, o clique do componente; com eles, o mouse de verdade no ponto: `x`/`y` dentro do componente, padrão o meio; `modifiers`: `"Ctrl+Shift"` ou `["ctrl", "shift"]`; `button`: `left`, `right`, `middle`) |
-//! | `drag` | `from`, `to`, `from_x`?, `from_y`?, `to_x`?, `to_y`?, `modifiers`?, `button`?, `steps`? | — (aperta em `from`, anda em `steps` passos, padrão 10, e solta em `to`: o arrastar e soltar entre componentes e o arrastar dentro de um, como o mouse) |
+//! | `drag` | `from`, `to`?, `from_x`?, `from_y`?, `to_x`?, `to_y`?, `modifiers`?, `button`?, `steps`?, `screen_x`?, `screen_y`? | — (aperta em `from`, anda em `steps` passos, padrão 10, e solta em `to`: o arrastar e soltar entre componentes e o arrastar dentro de um, como o mouse; `to` noutro form: de uma janela do app para outra; sem `to`: solta fora de todas, no ponto `screen_x`/`screen_y` da tela) |
+//! | `drag_window` | `form`, `to`, `to_x`?, `to_y`? | `{received}` (a janela inteira do form arrastada pela barra de título até `to`, noutro form: a faixa de abas com `accept_forms` recebe o form com `dockable`) |
 //! | `find` | `name` | id ou `null` |
 //! | `save` | `target` | documento de layout |
 //! | `theme` | `theme` (JSON de tema) ou `name: "light"/"dark"` | — |
@@ -385,14 +386,35 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         // com a mão.
         "drag" => {
             let from = resolve(ui, obj.get("from").ok_or("falta \"from\"")?)?;
-            let to = resolve(ui, obj.get("to").ok_or("falta \"to\"")?)?;
             let (root, start) = point_in(ui, from, obj.get("from_x"), obj.get("from_y"))?;
-            let (end_root, end) = point_in(ui, to, obj.get("to_x"), obj.get("to_y"))?;
-            if end_root != root {
-                return Err("drag: \"from\" e \"to\" estão em forms diferentes".into());
-            }
             let steps = obj.get("steps").and_then(Value::as_u64).unwrap_or(10).clamp(1, 200) as usize;
             let event = aylis_core::PointerEvent { position: start, button: button(obj)?, modifiers: modifiers(obj)?, click_count: 1, ..Default::default() };
+            // Sem `to`: solta fora de todas as janelas, no ponto da tela `screen_x`/`screen_y`
+            // (a aba arrastada para longe vira janela ali).
+            let Some(to) = obj.get("to") else {
+                let screen = |k: &str| obj.get(k).and_then(Value::as_i64).map(|v| v as i32).ok_or(format!("drag sem \"to\": falta \"{k}\""));
+                let (x, y) = (screen("screen_x")?, screen("screen_y")?);
+                start_drag_between_forms(ui, root, start, event)?;
+                ui.drag_over_form(root, None, aylis_core::PointF::default());
+                ui.set_screen_pointer(Some(aylis_core::ScreenPointer { x, y, scale: 1.0 }));
+                ui.pointer_up(root, aylis_core::PointerEvent { position: aylis_core::PointF::new(-1.0e6, -1.0e6), ..event });
+                ui.process_events();
+                return Ok(Value::Null);
+            };
+            let to = resolve(ui, to)?;
+            let (end_root, end) = point_in(ui, to, obj.get("to_x"), obj.get("to_y"))?;
+            // Para outro form (outra janela do app): começa o arrasto neste, passa por cima do
+            // outro como a plataforma diz quando o mouse sai da janela, e solta lá.
+            if end_root != root {
+                start_drag_between_forms(ui, root, start, event)?;
+                for _ in 0..steps.min(3) {
+                    ui.drag_over_form(root, Some(end_root), end);
+                    ui.process_events();
+                }
+                ui.pointer_up(root, aylis_core::PointerEvent { position: aylis_core::PointF::new(-1.0e6, -1.0e6), ..event });
+                ui.process_events();
+                return Ok(Value::Null);
+            }
             ui.pointer_move(root, event);
             ui.pointer_down(root, event);
             for i in 1..=steps {
@@ -404,6 +426,21 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             ui.pointer_up(root, aylis_core::PointerEvent { position: end, ..event });
             ui.process_events();
             Ok(Value::Null)
+        }
+        // A janela inteira de um form arrastada pela barra de título até um componente de outro
+        // form (a faixa de abas com `accept_forms`), como a plataforma faz durante o arrasto.
+        "drag_window" => {
+            let form = resolve(ui, obj.get("form").ok_or("falta \"form\"")?)?;
+            let form = ui.root_of(form);
+            let to = resolve(ui, obj.get("to").ok_or("falta \"to\"")?)?;
+            let (end_root, end) = point_in(ui, to, obj.get("to_x"), obj.get("to_y"))?;
+            if end_root == form {
+                return Err("drag_window: \"to\" está no próprio form".into());
+            }
+            ui.window_drag_over(form, Some((end_root, end)));
+            let received = ui.window_drag_end(form);
+            ui.process_events();
+            Ok(json!({ "received": received }))
         }
         // Os itens que o controle desenha (abas, linhas, itens de menu, células).
         "items" => {
@@ -810,6 +847,24 @@ fn named_everywhere(ui: &Ui, name: &str) -> Vec<ComponentId> {
 
 /// O ponto de um comando de mouse, no form: `x`/`y` dentro do componente (padrão: o meio).
 /// Devolve o form e o ponto nele.
+/// Aperta em `start` no form `root` e anda até o arrasto começar (como o mouse que sai da
+/// janela); erro se ali não há nada que arraste.
+fn start_drag_between_forms(ui: &mut Ui, root: ComponentId, start: aylis_core::PointF, event: aylis_core::PointerEvent) -> Result<(), String> {
+    ui.pointer_move(root, event);
+    ui.pointer_down(root, event);
+    // Na diagonal, para baixo: sai de uma faixa (a aba puxada para fora) e passa do limiar.
+    for i in 1..=6 {
+        let at = aylis_core::PointF::new(start.x + 6.0 * i as f32, start.y + 12.0 * i as f32);
+        ui.pointer_move(root, aylis_core::PointerEvent { position: at, ..event });
+        ui.process_events();
+    }
+    if !ui.dragging(root) {
+        ui.pointer_up(root, event);
+        return Err("drag: o arrasto não começou (o componente em \"from\" não arrasta)".into());
+    }
+    Ok(())
+}
+
 fn point_in(ui: &mut Ui, id: ComponentId, x: Option<&Value>, y: Option<&Value>) -> Result<(ComponentId, aylis_core::PointF), String> {
     ui.update_layout();
     let rect = ui.absolute_rect(id).ok_or("o componente não está numa tela")?;

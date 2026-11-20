@@ -78,6 +78,8 @@ thread_local! {
     /// As janelas que conferem a placa de vídeo (soltas depois do arraste; `true`: os monitores
     /// mudaram).
     static GPU_CHECKS: RefCell<Vec<(u64, bool)>> = const { RefCell::new(Vec::new()) };
+    /// As janelas que o usuário acabou de soltar depois de arrastar (o `WM_EXITSIZEMOVE`).
+    static MOVE_ENDS: RefCell<Vec<u64>> = const { RefCell::new(Vec::new()) };
     /// O botão maximizar da barra própria de cada janela, em pixels da área cliente
     /// (esquerda, topo, direita, base): o `WM_NCHITTEST` diz ao Windows que ali é o botão.
     static MAXIMIZE_BUTTONS: RefCell<HashMap<u64, (i32, i32, i32, i32)>> = RefCell::new(HashMap::new());
@@ -137,8 +139,8 @@ fn client_point(hwnd: HWND, lparam: isize) -> (i32, i32) {
 /// mensagem para aqui); `None`: segue o caminho normal.
 fn caption_button(hwnd: HWND, form: u64, message: u32, wparam: usize, lparam: isize) -> Option<LRESULT> {
     // Só a janela que registrou o botão da barra própria: na que usa a barra do Windows, o
-    // `HTMAXBUTTON` é o botão dele, e o clique engolido aqui não maximizava (relatado pelo
-    // MD304V em 16/11: as janelas de configuração não maximizavam pelo botão).
+    // `HTMAXBUTTON` é o botão dele, e o clique engolido aqui não maximizava (relatado em
+    // 16/11: as janelas de configuração de um app não maximizavam pelo botão).
     if !MAXIMIZE_BUTTONS.with(|m| m.borrow().contains_key(&form)) {
         return None;
     }
@@ -188,6 +190,42 @@ const WM_EXITSIZEMOVE: u32 = 0x0232;
 #[cfg_attr(not(native_d2d), allow(dead_code))]
 pub(crate) fn in_size_move(form: ComponentId) -> bool {
     SIZE_MOVE.with(|s| s.borrow().contains(&form.to_u64()))
+}
+
+/// As janelas que o usuário soltou depois de arrastar (ou redimensionar) desde a última vez.
+pub(crate) fn take_move_ends() -> Vec<ComponentId> {
+    MOVE_ENDS.with(|m| std::mem::take(&mut *m.borrow_mut())).into_iter().map(ComponentId::from_u64).collect()
+}
+
+/// Onde está o mouse na tela (pixels físicos).
+pub(crate) fn cursor_pos() -> Option<(i32, i32)> {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+    let mut p = POINT::default();
+    // SAFETY: só lê a posição do mouse para `p`.
+    unsafe { GetCursorPos(&mut p) }.ok().map(|_| (p.x, p.y))
+}
+
+/// A primeira janela visível abaixo de `hwnd` (na ordem real das janelas) que contém o ponto
+/// da tela: a que fica à vista ali sem a janela que está sendo arrastada por cima.
+pub(crate) fn window_below(hwnd: isize, x: i32, y: i32) -> Option<isize> {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::UI::WindowsAndMessaging::{GW_HWNDNEXT, GetWindow, GetWindowRect, IsIconic, IsWindowVisible};
+    let mut cur = HWND(hwnd as *mut _);
+    // SAFETY: só percorre e lê as janelas de cima para baixo; os HWND são só comparados.
+    unsafe {
+        for _ in 0..4096 {
+            cur = GetWindow(cur, GW_HWNDNEXT).ok()?;
+            if !IsWindowVisible(cur).as_bool() || IsIconic(cur).as_bool() {
+                continue;
+            }
+            let mut r = RECT::default();
+            if GetWindowRect(cur, &mut r).is_ok() && x >= r.left && x < r.right && y >= r.top && y < r.bottom {
+                return Some(cur.0 as isize);
+            }
+        }
+    }
+    None
 }
 
 /// As janelas que devem conferir a placa de vídeo (com `true`: os monitores mudaram).
@@ -322,6 +360,9 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
     } else if message == WM_ENTERSIZEMOVE {
         SIZE_MOVE.with(|s| s.borrow_mut().insert(form as u64));
     } else if message == WM_EXITSIZEMOVE || message == msg::WM_DISPLAYCHANGE {
+        if message == WM_EXITSIZEMOVE {
+            MOVE_ENDS.with(|m| m.borrow_mut().push(form as u64));
+        }
         SIZE_MOVE.with(|s| s.borrow_mut().remove(&(form as u64)));
         GPU_CHECKS.with(|g| g.borrow_mut().push((form as u64, message == msg::WM_DISPLAYCHANGE)));
         wake();
@@ -605,12 +646,69 @@ pub(crate) fn top_level_at(x: i32, y: i32) -> Option<isize> {
     Some(if root.0.is_null() { hwnd.0 as isize } else { root.0 as isize })
 }
 
+/// O `keep_awake` dos forms abertos (0: nada, 1: o sistema, 2: o sistema e a tela), pelo
+/// `SetThreadExecutionState` contínuo (vale enquanto a thread da interface viver; 0 devolve o
+/// normal).
+pub(crate) fn keep_awake(level: u8) {
+    use windows::Win32::System::Power::{ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED, SetThreadExecutionState};
+    let flags = match level {
+        0 => ES_CONTINUOUS,
+        1 => ES_CONTINUOUS | ES_SYSTEM_REQUIRED,
+        _ => ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED,
+    };
+    // SAFETY: só muda o pedido de energia desta thread.
+    unsafe { SetThreadExecutionState(flags) };
+}
+
+/// Prende o mouse no retângulo da tela (pixels físicos: esquerda, cima, direita, baixo) ou
+/// solta (`None`). O Windows solta sozinho quando outra janela prende ou ao trocar de área de
+/// trabalho; quem chama aplica de novo ao ganhar o foco.
+pub(crate) fn clip_cursor(rect: Option<(i32, i32, i32, i32)>) {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::UI::WindowsAndMessaging::ClipCursor;
+    let r = rect.map(|(left, top, right, bottom)| RECT { left, top, right, bottom });
+    // SAFETY: o retângulo vive durante a chamada; `None` solta.
+    let _ = unsafe { ClipCursor(r.as_ref().map(|r| r as *const RECT)) };
+}
+
+/// A transparência da janela inteira (1 = opaca): `WS_EX_LAYERED` com `LWA_ALPHA`; opaca,
+/// tira o `WS_EX_LAYERED` (a janela volta a ser composta como as outras).
+pub(crate) fn set_opacity(window: &winit::window::Window, opacity: f32) {
+    use windows::Win32::Foundation::COLORREF;
+    use windows::Win32::UI::WindowsAndMessaging::{GWL_EXSTYLE, GetWindowLongPtrW, LWA_ALPHA, SetLayeredWindowAttributes, SetWindowLongPtrW, WS_EX_LAYERED};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let opaque = opacity >= 0.999;
+    // SAFETY: `hwnd` é a janela viva do winit; só o bit `WS_EX_LAYERED` e o alfa dela mudam.
+    unsafe {
+        let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+        if opaque {
+            if style & WS_EX_LAYERED.0 != 0 {
+                SetWindowLongPtrW(hwnd, GWL_EXSTYLE, (style & !WS_EX_LAYERED.0) as isize);
+            }
+            return;
+        }
+        if style & WS_EX_LAYERED.0 == 0 {
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, (style | WS_EX_LAYERED.0) as isize);
+        }
+        let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), (opacity.clamp(0.0, 1.0) * 255.0).round() as u8, LWA_ALPHA);
+    }
+}
+
 pub(crate) fn hwnd_of(window: &winit::window::Window) -> Option<HWND> {
     use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
     match window.window_handle().ok()?.as_raw() {
         RawWindowHandle::Win32(h) => Some(HWND(h.hwnd.get() as *mut _)),
         _ => None,
     }
+}
+
+/// A janela dona de `window` no sistema (`None`: sem dona).
+pub(crate) fn owner_of(window: &winit::window::Window) -> Option<isize> {
+    use windows::Win32::UI::WindowsAndMessaging::{GW_OWNER, GetWindow};
+    let hwnd = hwnd_of(window)?;
+    // SAFETY: a janela é deste processo e está viva (o winit a guarda); só lê a dona.
+    let owner = unsafe { GetWindow(hwnd, GW_OWNER) }.ok()?;
+    (!owner.0.is_null()).then_some(owner.0 as isize)
 }
 
 /// Troca a janela dona de `window` (`None`: sem dona). O Windows destrói as janelas possuídas

@@ -61,6 +61,14 @@ impl AudioOutput {
 }
 
 impl Component for AudioOutput {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "AudioOutput"
     }
@@ -77,6 +85,9 @@ impl Component for AudioOutput {
         }
     }
 
+}
+
+impl aylis_core::Timed for AudioOutput {
     fn timer_interval(&self) -> Option<f64> {
         self.watch.then_some(2.0)
     }

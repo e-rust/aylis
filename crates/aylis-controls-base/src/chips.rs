@@ -223,6 +223,14 @@ impl ChipGroup {
 }
 
 impl Component for ChipGroup {
+    fn accessible_items(&self) -> Option<&dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
+    fn accessible_items_mut(&mut self) -> Option<&mut dyn aylis_core::AccessibleItems> {
+        Some(self)
+    }
+
     // O `on_change` do valor mudado pelo código leva o mesmo que o do usuário.
     fn change_args(&self, _name: &str, _value: &aylis_core::PropValue) -> Option<EventArgs> {
         Some(EventArgs::Text(self.selected.clone()))
@@ -240,28 +248,6 @@ impl Component for ChipGroup {
     }
 
     // Os chips para leitores de tela e automação: botões que marcam; clicar alterna.
-    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<aylis_core::automation::AccessItem> {
-        use aylis_core::automation::{AccessItem, ItemRole};
-        let rects = self.rects.borrow();
-        split(&self.items)
-            .into_iter()
-            .enumerate()
-            .map(|(i, t)| {
-                let on = self.is_selected(t);
-                let item = AccessItem::new(ItemRole::Button, t).checked(on).selected(on);
-                match rects.get(i) {
-                    Some(r) => item.rect(r.offset(if self.wrap { 0.0 } else { -self.offset.get() }, 0.0)),
-                    None => item,
-                }
-            })
-            .collect()
-    }
-
-    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
-        let Some(item) = split(&self.items).get(index).map(|s| s.to_string()) else { return false };
-        self.toggle(ctx, &item);
-        true
-    }
 
     fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::WheelEvent) {
         if self.wrap {
@@ -338,6 +324,31 @@ impl Component for ChipGroup {
             }
         }
         *self.rects.borrow_mut() = rects;
+    }
+}
+
+impl aylis_core::AccessibleItems for ChipGroup {
+    fn access_items(&self, _: &aylis_core::Ui, _: aylis_core::ComponentId) -> Vec<aylis_core::automation::AccessItem> {
+        use aylis_core::automation::{AccessItem, ItemRole};
+        let rects = self.rects.borrow();
+        split(&self.items)
+            .into_iter()
+            .enumerate()
+            .map(|(i, t)| {
+                let on = self.is_selected(t);
+                let item = AccessItem::new(ItemRole::Button, t).checked(on).selected(on);
+                match rects.get(i) {
+                    Some(r) => item.rect(r.offset(if self.wrap { 0.0 } else { -self.offset.get() }, 0.0)),
+                    None => item,
+                }
+            })
+            .collect()
+    }
+
+    fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, _: aylis_core::automation::ItemAction) -> bool {
+        let Some(item) = split(&self.items).get(index).map(|s| s.to_string()) else { return false };
+        self.toggle(ctx, &item);
+        true
     }
 }
 

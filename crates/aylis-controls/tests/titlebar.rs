@@ -72,17 +72,20 @@ fn changing_the_window_corners_asks_the_window() {
     assert!(ui.take_window_commands().is_empty());
 }
 
-/// `topmost` mudado com a janela aberta: a janela vem para a frente (ou sai); antes só valia na
-/// criação (relatório do RTSPlayer de 13/11, item 4).
+/// `topmost` (e `bottommost`) mudado com a janela aberta: a janela vem para a frente, vai para
+/// trás de todas ou volta ao normal; antes só valia na criação (relatório do RTSPlayer de 13/11,
+/// item 4). A plataforma lê as duas propriedades no `UpdateLevel`.
 #[test]
 fn changing_topmost_asks_the_window() {
     let mut ui = Ui::new();
     let form = ui.add_root(Form::new("Meu app", 600.0, 400.0));
     let _ = ui.take_window_commands();
     ui.set_prop(form, "topmost", true).unwrap();
-    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::SetTopmost(true))]);
+    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::UpdateLevel)]);
     ui.set_prop(form, "topmost", false).unwrap();
-    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::SetTopmost(false))]);
+    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::UpdateLevel)]);
+    ui.set_prop(form, "bottommost", true).unwrap();
+    assert_eq!(ui.take_window_commands(), vec![(form, WindowCommand::UpdateLevel)]);
     ui.set_design_mode(true);
     ui.set_prop(form, "topmost", true).unwrap();
     assert!(ui.take_window_commands().is_empty());

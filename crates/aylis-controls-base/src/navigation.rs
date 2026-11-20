@@ -538,6 +538,14 @@ impl Carousel {
 }
 
 impl Component for Carousel {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     leaf_control!("Carousel");
 
     // No toque, o arrasto vira rolagem e o soltar não chega aqui: o deslizar do núcleo troca
@@ -577,15 +585,6 @@ impl Component for Carousel {
             let i = self.index;
             self.show(ctx, i);
         }
-    }
-
-    fn timer_interval(&self) -> Option<f64> {
-        (self.interval > 0).then(|| f64::from(self.interval) / 1000.0)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        let i = self.index + 1;
-        self.show(ctx, i);
     }
 
     fn pointer_down(&mut self, _ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -640,6 +639,17 @@ impl Component for Carousel {
             let d = if current { 8.0 } else { 6.0 };
             canvas.fill_ellipse(RectF::new(c.x - d / 2.0, c.y - d / 2.0, d, d), &Brush::Solid(if current { accent(ctx) } else { muted.with_opacity(0.5) }));
         }
+    }
+}
+
+impl aylis_core::Timed for Carousel {
+    fn timer_interval(&self) -> Option<f64> {
+        (self.interval > 0).then(|| f64::from(self.interval) / 1000.0)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        let i = self.index + 1;
+        self.show(ctx, i);
     }
 }
 

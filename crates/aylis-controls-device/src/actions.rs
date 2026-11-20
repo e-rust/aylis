@@ -267,6 +267,14 @@ impl PushTrigger {
 }
 
 impl Component for PushTrigger {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "PushTrigger"
     }
@@ -293,6 +301,9 @@ impl Component for PushTrigger {
         }
     }
 
+}
+
+impl aylis_core::Timed for PushTrigger {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }
@@ -465,6 +476,14 @@ impl WakeAppAction {
 }
 
 impl Component for WakeAppAction {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "WakeAppAction"
     }
@@ -504,6 +523,9 @@ impl Component for WakeAppAction {
         }
     }
 
+}
+
+impl aylis_core::Timed for WakeAppAction {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }
@@ -638,6 +660,14 @@ impl NotifyAction {
 }
 
 impl Component for NotifyAction {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "NotifyAction"
     }
@@ -680,6 +710,9 @@ impl Component for NotifyAction {
         }
     }
 
+}
+
+impl aylis_core::Timed for NotifyAction {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }

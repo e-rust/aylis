@@ -510,6 +510,10 @@ struct Refresh;
 struct ScrollTo(usize);
 
 impl Component for VirtualList {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     leaf_control!("VirtualList");
 
     properties! {
@@ -694,6 +698,9 @@ impl Component for VirtualList {
         }
     }
 
+}
+
+impl aylis_core::LayoutHooks for VirtualList {
     /// Cada item no lugar dele (a linha e, na grade, a coluna); o modelo e as linhas sem
     /// item ficam fora.
     fn arrange(&self, area: RectF, children: &[ArrangeItem]) -> Option<Vec<RectF>> {

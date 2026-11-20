@@ -172,6 +172,14 @@ pub fn parse_hex(text: &str) -> Result<Vec<u8>, String> {
 }
 
 impl Component for Bluetooth {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Bluetooth"
     }
@@ -246,6 +254,9 @@ impl Component for Bluetooth {
         Ok(PropValue::Null)
     }
 
+}
+
+impl aylis_core::Timed for Bluetooth {
     fn timer_interval(&self) -> Option<f64> {
         // Sem nada acontecendo, só confere de vez em quando se há Bluetooth (o `available`).
         Some(if self.scanning || !self.connected.is_empty() { 0.05 } else { 0.25 })

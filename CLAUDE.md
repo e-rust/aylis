@@ -137,7 +137,11 @@ A base para decidir onde entra uma melhoria (aprovada em 15/11):
   - todo componente é `ControlBase` + `impl Component`, com `properties!` (categoria de cada
     propriedade) e eventos por nome;
   - criar, liberar e trocar de pai em execução, e mexer em propriedade por nome, valem para
-    todos.
+    todos;
+  - o `Component` tem só o que quase todo controle usa (identidade, propriedades, pintura,
+    mouse, teclado); o que poucos usam fica num trait próprio, devolvido por um acessor do
+    `Component` (`Timed`, `LayoutHooks`, `DragDrop`, `Popup`, `AccessibleItems`, os ganchos de
+    plataforma e de designer). Grupo novo de métodos opcionais segue o mesmo caminho.
 - **Estender por composição e delegação** (como o `GlowButton`), não copiando
   um controle para mudar a pintura. Comportamento fica separado da aparência.
 - **Aparência pelo tema:**

@@ -1,5 +1,5 @@
 //! O `remember_placement` dos forms: onde estava a janela de cada um (o monitor, a posição,
-//! o tamanho e se estava maximizada) num arquivo do app, na pasta de dados do usuário
+//! o tamanho e se estava maximizada ou em tela cheia) num arquivo do app, na pasta de dados do usuário
 //! (`%LOCALAPPDATA%\<app>\placements.json` no Windows), para reabrir igual. Gravado no máximo
 //! uma vez por segundo enquanto a janela se move e ao fechar.
 
@@ -72,7 +72,7 @@ impl Placements {
             .iter()
             .map(|(form, s)| {
                 let p = s.placement;
-                (form.clone(), json!({ "monitor": s.monitor, "x": p.x, "y": p.y, "width": p.width, "height": p.height, "maximized": p.maximized }))
+                (form.clone(), json!({ "monitor": s.monitor, "x": p.x, "y": p.y, "width": p.width, "height": p.height, "maximized": p.maximized, "full_screen": p.full_screen }))
             })
             .collect();
         if let Some(dir) = path.parent() {
@@ -96,6 +96,7 @@ fn read(path: &Path) -> Option<HashMap<String, SavedPlacement>> {
                     width: int("width")?.max(0) as u32,
                     height: int("height")?.max(0) as u32,
                     maximized: v.get("maximized").and_then(Value::as_bool).unwrap_or(false),
+                    full_screen: v.get("full_screen").and_then(Value::as_bool).unwrap_or(false),
                 };
                 Some((name.clone(), SavedPlacement { monitor: v.get("monitor")?.as_str()?.to_string(), placement }))
             })
@@ -112,7 +113,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("aylis-placements-{}", std::process::id()));
         let path = dir.join("placements.json");
         let mut store = Placements::at(Some(path.clone()));
-        let saved = SavedPlacement { monitor: "\\\\.\\DISPLAY2".into(), placement: WindowPlacement { x: -3000, y: 100, width: 1200, height: 800, maximized: true } };
+        let saved = SavedPlacement { monitor: "\\\\.\\DISPLAY2".into(), placement: WindowPlacement { x: -3000, y: 100, width: 1200, height: 800, maximized: true, full_screen: true } };
         store.set("frmPrincipal", saved.clone());
         store.flush();
         let again = Placements::at(Some(path));

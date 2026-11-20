@@ -174,7 +174,7 @@ impl Ui {
                 continue;
             }
             let scale = self.cb(child).map_or(1.0, |cb| cb.scale());
-            if let Some(w) = self.component(child).and_then(|c| c.auto_width(self, child)).map(|w| w * scale) {
+            if let Some(w) = self.component(child).and_then(|c| c.layout_hooks()).and_then(|l| l.auto_width(self, child)).map(|w| w * scale) {
                 if let Some(cb) = self.cb_mut(child) {
                     let w = cb.clamp_width(w);
                     cb.set_measured_width(w);
@@ -196,7 +196,7 @@ impl Ui {
             }
         }
 
-        let gap = self.component(id).map_or(0.0, |c| c.dock_gap()) * scales.1;
+        let gap = self.component(id).and_then(|c| c.layout_hooks()).map_or(0.0, |l| l.dock_gap()) * scales.1;
         for pass in DOCK_ORDER {
             for &child in &children {
                 if let Some(cb) = self.cb_mut(child) {
@@ -228,11 +228,11 @@ impl Ui {
             .filter_map(|&c| {
                 let cb = self.cb(c).filter(|cb| cb.visible() && cb.align() == Align::None)?;
                 let mut item = crate::component::ArrangeItem::of(c, cb);
-                item.baseline = self.component(c).and_then(|comp| comp.baseline(self, c, item.size.height));
+                item.baseline = self.component(c).and_then(|comp| comp.layout_hooks()).and_then(|l| l.baseline(self, c, item.size.height));
                 Some(item)
             })
             .collect();
-        let arranged = if free.is_empty() { None } else { self.component(id).and_then(|c| c.arrange(area, &free)) };
+        let arranged = if free.is_empty() { None } else { self.component(id).and_then(|c| c.layout_hooks()).and_then(|l| l.arrange(area, &free)) };
         if let Some(rects) = &arranged {
             for (item, rect) in free.iter().zip(rects) {
                 if let Some(cb) = self.cb_mut(item.id) {
@@ -367,7 +367,7 @@ impl Ui {
     /// Tabernáculo: medir sem somar o tema à mão).
     pub fn preferred_size(&self, id: ComponentId) -> SizeF {
         let Some(cb) = self.cb(id) else { return SizeF::new(0.0, 0.0) };
-        let width = self.component(id).and_then(|c| c.auto_width(self, id)).map_or(cb.width(), |w| cb.clamp_width(w));
+        let width = self.component(id).and_then(|c| c.layout_hooks()).and_then(|l| l.auto_width(self, id)).map_or(cb.width(), |w| cb.clamp_width(w));
         let height = self.auto_height_of(id, width).map_or(cb.height(), |h| cb.clamp_height(h));
         SizeF::new(width, height)
     }
@@ -395,14 +395,14 @@ impl Ui {
 
     /// A altura do conteúdo de `id` na largura `width` (no espaço de dentro dele).
     fn auto_height_inside(&self, id: ComponentId, width: f32) -> Option<f32> {
-        if let Some(h) = self.component(id).and_then(|c| c.auto_height(self, id, width)) {
+        if let Some(h) = self.component(id).and_then(|c| c.layout_hooks()).and_then(|l| l.auto_height(self, id, width)) {
             return Some(h.ceil());
         }
         let cb = self.cb(id)?;
         let padding = cb.padding();
         let inner = width - padding.horizontal();
         let mut total = padding.vertical();
-        let gap = self.component(id).map_or(0.0, |c| c.dock_gap()) * cb.spacing_scale();
+        let gap = self.component(id).and_then(|c| c.layout_hooks()).map_or(0.0, |l| l.dock_gap()) * cb.spacing_scale();
         let mut docked = 0usize;
         for &child in self.children(id) {
             let Some(c) = self.cb(child).filter(|c| c.visible() && matches!(c.align(), Align::Top | Align::Bottom)) else { continue };
@@ -422,13 +422,13 @@ impl Ui {
             .filter_map(|&c| {
                 let cb = self.cb(c).filter(|cb| cb.visible() && cb.align() == Align::None)?;
                 let mut item = crate::component::ArrangeItem::of(c, cb);
-                item.baseline = self.component(c).and_then(|comp| comp.baseline(self, c, item.size.height));
+                item.baseline = self.component(c).and_then(|comp| comp.layout_hooks()).and_then(|l| l.baseline(self, c, item.size.height));
                 Some(item)
             })
             .collect();
         if !free.is_empty() {
             let area = RectF::new(0.0, 0.0, inner.max(0.0), 0.0);
-            if let Some(rects) = self.component(id).and_then(|c| c.arrange(area, &free)) {
+            if let Some(rects) = self.component(id).and_then(|c| c.layout_hooks()).and_then(|l| l.arrange(area, &free)) {
                 let bottom = rects.iter().zip(&free).map(|(r, f)| r.bottom() + f.margins.bottom).fold(0.0f32, f32::max);
                 total += bottom;
             }

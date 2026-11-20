@@ -40,27 +40,42 @@ fn set_active(ui: &mut Ui, sensor: Sensor, on: bool) {
 /// `active` (bateria e rede).
 macro_rules! sensor_common {
     ($sensor:expr, $always:expr) => {
-        fn timer_interval(&self) -> Option<f64> {
-            ($always || self.active).then_some(f64::from(self.interval.max(0.05)))
+        fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+            Some(self)
         }
 
-        fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-            if ctx.ui.design_mode() {
-                return;
-            }
-            if !self.started {
-                self.started = true;
-                set_active(ctx.ui, $sensor, true);
-            }
-            if poll(ctx.ui, $sensor, &mut self.values, &mut self.available) {
-                ctx.fire("on_change", EventArgs::None);
-            }
+        fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+            Some(self)
         }
 
         fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
             if name == "active" && !self.active && self.started {
                 self.started = false;
                 set_active(ctx.ui, $sensor, false);
+            }
+        }
+    };
+}
+
+/// O relógio de cada sensor (o `Timed` dele): mede no intervalo e avisa o que mudou.
+macro_rules! sensor_timed {
+    ($ty:ty, $sensor:expr, $always:expr) => {
+        impl aylis_core::Timed for $ty {
+            fn timer_interval(&self) -> Option<f64> {
+                ($always || self.active).then_some(f64::from(self.interval.max(0.05)))
+            }
+
+            fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+                if ctx.ui.design_mode() {
+                    return;
+                }
+                if !self.started {
+                    self.started = true;
+                    set_active(ctx.ui, $sensor, true);
+                }
+                if poll(ctx.ui, $sensor, &mut self.values, &mut self.available) {
+                    ctx.fire("on_change", EventArgs::None);
+                }
             }
         }
     };
@@ -128,6 +143,8 @@ impl Component for Location {
     sensor_common!(Sensor::Location, false);
 }
 
+sensor_timed!(Location, Sensor::Location, false);
+
 /// A bateria: `level` (0 a 100) e `charging`. Sempre medindo (a cada `interval`, 5 s).
 pub struct Battery {
     /// De quanto em quanto tempo lê a bateria, em segundos.
@@ -171,6 +188,8 @@ impl Component for Battery {
 
     sensor_common!(Sensor::Battery, true);
 }
+
+sensor_timed!(Battery, Sensor::Battery, true);
 
 /// A rede: `connected` e `kind` (`wifi`, `cellular`, `ethernet`, `other` ou `none`).
 pub struct Network {
@@ -223,6 +242,8 @@ impl Component for Network {
     sensor_common!(Sensor::Network, true);
 }
 
+sensor_timed!(Network, Sensor::Network, true);
+
 /// O acelerômetro (com a gravidade), em m/s²: `x`, `y` e `z`.
 pub struct MotionSensor {
     /// Lê o acelerômetro; desligado, para.
@@ -272,6 +293,8 @@ impl Component for MotionSensor {
     sensor_common!(Sensor::Motion, false);
 }
 
+sensor_timed!(MotionSensor, Sensor::Motion, false);
+
 /// A bússola: `heading` em graus (0 = norte, 90 = leste).
 pub struct Compass {
     /// Lê a bússola; desligado, para.
@@ -314,6 +337,8 @@ impl Component for Compass {
 
     sensor_common!(Sensor::Compass, false);
 }
+
+sensor_timed!(Compass, Sensor::Compass, false);
 
 /// O sensor de proximidade (o rosto encostado no telefone): `near` e `distance` (cm).
 pub struct ProximitySensor {
@@ -361,6 +386,8 @@ impl Component for ProximitySensor {
     sensor_common!(Sensor::Proximity, false);
 }
 
+sensor_timed!(ProximitySensor, Sensor::Proximity, false);
+
 /// O sensor de luz ambiente: `lux`.
 pub struct LightSensor {
     /// Lê a luz ambiente; desligado, para.
@@ -403,6 +430,8 @@ impl Component for LightSensor {
 
     sensor_common!(Sensor::Light, false);
 }
+
+sensor_timed!(LightSensor, Sensor::Light, false);
 
 /// Vibra o aparelho: `vibrate(ms)` (no Android, a publicação declara a permissão `VIBRATE`).
 #[derive(Default)]
@@ -491,6 +520,14 @@ impl BackgroundService {
 }
 
 impl Component for BackgroundService {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "BackgroundService"
     }
@@ -520,6 +557,18 @@ impl Component for BackgroundService {
         }
     }
 
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if name == "active" && !self.active && self.started {
+            self.started = false;
+            aylis_core::background::stop();
+            if let Some(host) = ctx.ui.services_mut().background.as_mut() {
+                host.stop();
+            }
+        }
+    }
+}
+
+impl aylis_core::Timed for BackgroundService {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.25)
     }
@@ -533,16 +582,6 @@ impl Component for BackgroundService {
         }
         for message in aylis_core::background::take_messages() {
             ctx.fire("on_message", EventArgs::Text(message));
-        }
-    }
-
-    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        if name == "active" && !self.active && self.started {
-            self.started = false;
-            aylis_core::background::stop();
-            if let Some(host) = ctx.ui.services_mut().background.as_mut() {
-                host.stop();
-            }
         }
     }
 }
@@ -633,6 +672,14 @@ impl Phone {
 }
 
 impl Component for Phone {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Phone"
     }
@@ -675,6 +722,9 @@ impl Component for Phone {
         }
     }
 
+}
+
+impl aylis_core::Timed for Phone {
     fn timer_interval(&self) -> Option<f64> {
         (self.watch_state || self.dialer_app).then_some(0.25)
     }
@@ -712,6 +762,14 @@ pub struct LockScreen {
 }
 
 impl Component for LockScreen {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "LockScreen"
     }
@@ -740,6 +798,10 @@ impl Component for LockScreen {
     }
 
     // Aplica no primeiro timer e quando as propriedades mudam.
+
+}
+
+impl aylis_core::Timed for LockScreen {
     fn timer_interval(&self) -> Option<f64> {
         Some(0.5)
     }
@@ -877,6 +939,14 @@ impl Gamepad {
 }
 
 impl Component for Gamepad {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Gamepad"
     }
@@ -892,15 +962,6 @@ impl Component for Gamepad {
     }
 
     // A cada quadro (60 por segundo) enquanto `active`.
-    fn timer_interval(&self) -> Option<f64> {
-        self.active.then_some(1.0 / 60.0)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        if !ctx.ui.design_mode() {
-            self.poll(ctx);
-        }
-    }
 
     fn methods(&self) -> &'static [MethodInfo] {
         const METHODS: &[MethodInfo] = &[
@@ -926,6 +987,18 @@ impl Component for Gamepad {
     }
 }
 
+impl aylis_core::Timed for Gamepad {
+    fn timer_interval(&self) -> Option<f64> {
+        self.active.then_some(1.0 / 60.0)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        if !ctx.ui.design_mode() {
+            self.poll(ctx);
+        }
+    }
+}
+
 /// Os monitores, para todas as linguagens: `count()`, `primary()`
 /// (o índice do principal), `monitors()` (a lista em JSON: nome do aparelho, nome do sistema,
 /// principal, posição e tamanho, área útil sem a barra de tarefas, escala, taxa de
@@ -943,6 +1016,14 @@ pub struct Screen {
 // Sem propriedades, só os métodos: o `get_prop` gerado não tem casos.
 #[allow(unreachable_code)]
 impl Component for Screen {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Screen"
     }
@@ -950,18 +1031,6 @@ impl Component for Screen {
     properties! {
         ;
         events: on_change: ()
-    }
-
-    fn timer_interval(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        let now = ctx.ui.monitors_version();
-        if self.version.is_some_and(|v| v != now) {
-            ctx.fire("on_change", EventArgs::None);
-        }
-        self.version = Some(now);
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -1004,6 +1073,20 @@ impl Component for Screen {
             }
             _ => return Err(format!("Screen não tem o método '{method}'")),
         })
+    }
+}
+
+impl aylis_core::Timed for Screen {
+    fn timer_interval(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        let now = ctx.ui.monitors_version();
+        if self.version.is_some_and(|v| v != now) {
+            ctx.fire("on_change", EventArgs::None);
+        }
+        self.version = Some(now);
     }
 }
 

@@ -1440,6 +1440,18 @@ impl Memo {
 }
 
 impl Component for Memo {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     /// Na vertical e, sem `wrap` e com linha maior que a área (a barra horizontal), também
     /// de lado.
     fn scroll_axes(&self) -> (bool, bool) {
@@ -1471,37 +1483,6 @@ impl Component for Memo {
     fn contains_point(&self, local: PointF, size: aylis_core::SizeF) -> bool {
         let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < size.width && local.y < size.height;
         inside || crate::text_menu::handle_at(self.handles.get(), local).is_some()
-    }
-
-    /// `auto_size` (sem `wrap`): a linha mais larga, o lugar do cursor e o padding. Sem o
-    /// `auto_size`, a largura desenhada (o tamanho preferido não muda nos Memos de sempre).
-    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
-        if !self.base.auto_size() || self.wrap {
-            return None;
-        }
-        let style = self.measure_style(ui, id);
-        let mut measure = |s: &str| ui.measure_text(s, &style).width;
-        let width = self.content_width(&style, &mut measure);
-        Some((width + self.chrome_padding(ui, id).horizontal()).ceil())
-    }
-
-    /// `auto_size`: as linhas (as quebradas na largura, com `wrap`) vezes a altura da linha,
-    /// mais o padding.
-    fn auto_height(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId, width: f32) -> Option<f32> {
-        if !self.base.auto_size() {
-            return None;
-        }
-        let style = self.measure_style(ui, id);
-        let pad = self.chrome_padding(ui, id);
-        let rows = if self.wrap && self.syntax.is_empty() {
-            let mut measure = |s: &str| ui.measure_text(s, &style).width;
-            // A mesma largura em que a pintura quebra as linhas.
-            let inner = (width - pad.horizontal()).max(1.0);
-            self.build_rows(inner, &mut measure).len()
-        } else {
-            self.lines_of(self.text_key()).len()
-        };
-        Some(rows.max(1) as f32 * Self::line_height_for(style.font.size) + pad.vertical())
     }
 
     properties! {
@@ -1967,24 +1948,6 @@ impl Component for Memo {
         ctx.set_handled();
     }
 
-    /// Um passo do deslize da roda, no tempo do quadro (acompanha o monitor, sem degraus).
-    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
-        let Some((from, to, at)) = self.glide.get() else { return false };
-        let ms = ctx.ui.scroll_options().smooth_ms.max(1.0) as f64;
-        let k = ((ctx.ui.time() - at) * 1000.0 / ms).clamp(0.0, 1.0) as f32;
-        let eased = 1.0 - (1.0 - k).powi(3);
-        let mut s = self.scroll.get();
-        let before = s;
-        // Em pixels inteiros: o texto já pintado anda junto (é copiado, não repintado).
-        s.y = if k >= 1.0 { to.round() } else { (from + (to - from) * eased).round() };
-        self.scroll.set(s);
-        self.scrolled_from(ctx, before);
-        if k >= 1.0 {
-            self.glide.set(None);
-        }
-        k < 1.0
-    }
-
     fn focus_enter(&mut self, ctx: &mut EventCtx<'_>) {
         self.activity(ctx);
     }
@@ -2023,6 +1986,59 @@ impl Component for Memo {
         *self.painting.borrow_mut() = Some(self.lines_of(key));
         self.paint_text(canvas, ctx, key);
         *self.painting.borrow_mut() = None;
+    }
+}
+
+impl aylis_core::LayoutHooks for Memo {
+    /// `auto_size` (sem `wrap`): a linha mais larga, o lugar do cursor e o padding. Sem o
+    /// `auto_size`, a largura desenhada (o tamanho preferido não muda nos Memos de sempre).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
+        if !self.base.auto_size() || self.wrap {
+            return None;
+        }
+        let style = self.measure_style(ui, id);
+        let mut measure = |s: &str| ui.measure_text(s, &style).width;
+        let width = self.content_width(&style, &mut measure);
+        Some((width + self.chrome_padding(ui, id).horizontal()).ceil())
+    }
+
+    /// `auto_size`: as linhas (as quebradas na largura, com `wrap`) vezes a altura da linha,
+    /// mais o padding.
+    fn auto_height(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId, width: f32) -> Option<f32> {
+        if !self.base.auto_size() {
+            return None;
+        }
+        let style = self.measure_style(ui, id);
+        let pad = self.chrome_padding(ui, id);
+        let rows = if self.wrap && self.syntax.is_empty() {
+            let mut measure = |s: &str| ui.measure_text(s, &style).width;
+            // A mesma largura em que a pintura quebra as linhas.
+            let inner = (width - pad.horizontal()).max(1.0);
+            self.build_rows(inner, &mut measure).len()
+        } else {
+            self.lines_of(self.text_key()).len()
+        };
+        Some(rows.max(1) as f32 * Self::line_height_for(style.font.size) + pad.vertical())
+    }
+}
+
+impl aylis_core::Timed for Memo {
+    /// Um passo do deslize da roda, no tempo do quadro (acompanha o monitor, sem degraus).
+    fn frame(&mut self, ctx: &mut EventCtx<'_>) -> bool {
+        let Some((from, to, at)) = self.glide.get() else { return false };
+        let ms = ctx.ui.scroll_options().smooth_ms.max(1.0) as f64;
+        let k = ((ctx.ui.time() - at) * 1000.0 / ms).clamp(0.0, 1.0) as f32;
+        let eased = 1.0 - (1.0 - k).powi(3);
+        let mut s = self.scroll.get();
+        let before = s;
+        // Em pixels inteiros: o texto já pintado anda junto (é copiado, não repintado).
+        s.y = if k >= 1.0 { to.round() } else { (from + (to - from) * eased).round() };
+        self.scroll.set(s);
+        self.scrolled_from(ctx, before);
+        if k >= 1.0 {
+            self.glide.set(None);
+        }
+        k < 1.0
     }
 }
 

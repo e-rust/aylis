@@ -114,6 +114,14 @@ impl Popover {
 }
 
 impl Component for Popover {
+    fn popup(&self) -> Option<&dyn aylis_core::Popup> {
+        Some(self)
+    }
+
+    fn popup_mut(&mut self) -> Option<&mut dyn aylis_core::Popup> {
+        Some(self)
+    }
+
     fn paint_is_pure(&self) -> bool {
         true
     }
@@ -161,6 +169,15 @@ impl Component for Popover {
         }
     }
 
+    fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
+        if event.key == Key::Escape {
+            self.hide(ctx);
+            ctx.set_handled();
+        }
+    }
+}
+
+impl aylis_core::Popup for Popover {
     fn closes_on_outside_press(&self) -> bool {
         true
     }
@@ -168,12 +185,5 @@ impl Component for Popover {
     fn dismissed(&mut self, ctx: &mut EventCtx<'_>) -> bool {
         self.hide(ctx);
         true
-    }
-
-    fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
-        if event.key == Key::Escape {
-            self.hide(ctx);
-            ctx.set_handled();
-        }
     }
 }

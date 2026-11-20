@@ -254,3 +254,28 @@ fn without_an_image_the_drag_carries_the_control_itself() {
     assert_eq!(visual.size, SizeF::new(100.0, 100.0), "do tamanho do controle");
     ui.pointer_up(form, at(120.0, 60.0));
 }
+
+/// Um Label (que nasce com o `hit_test` desligado) com `draggable` e `drag_data` arrasta, e um
+/// Label com `accepts_drops` recebe: antes, ligar o `draggable` num Label não fazia nada.
+#[test]
+fn a_label_drags_without_turning_hit_test_on() {
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let form = ui.add_root(Form::new("t", 600.0, 300.0));
+    let item = ui.create("Label", Some(form)).unwrap();
+    ui.control_mut(item).unwrap().set_rect(10.0, 10.0, 100.0, 40.0);
+    ui.set_prop(item, "draggable", true).unwrap();
+    ui.set_prop(item, "drag_data", "item-1").unwrap();
+    let cell = ui.create("Label", Some(form)).unwrap();
+    ui.control_mut(cell).unwrap().set_rect(300.0, 10.0, 100.0, 40.0);
+    ui.set_prop(cell, "accepts_drops", true).unwrap();
+    assert_eq!(ui.get_prop(item, "hit_test"), Ok(PropValue::Bool(false)));
+    ui.layout();
+    let events = Rc::new(RefCell::new(Vec::new()));
+    log(&mut ui, cell, "on_drag_drop", &events);
+    ui.pointer_down(form, at(50.0, 30.0));
+    ui.pointer_move(form, at(150.0, 30.0));
+    ui.pointer_move(form, at(350.0, 30.0));
+    ui.pointer_up(form, at(350.0, 30.0));
+    assert_eq!(events.borrow().as_slice(), ["on_drag_drop item-1"]);
+}

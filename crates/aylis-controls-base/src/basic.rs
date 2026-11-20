@@ -218,6 +218,29 @@ pub struct Form {
     pub frame_reuse_kb: i64,
     /// Sempre por cima das outras janelas.
     pub topmost: bool,
+    /// Sempre por baixo das outras janelas, como um fundo de tela (com `topmost` também, vale
+    /// o `topmost`).
+    pub bottommost: bool,
+    /// Enquanto o form está aberto, o sistema não dorme (`system`) ou nem apaga a tela
+    /// (`display`). Vale o maior pedido entre os forms abertos. Windows; nas outras
+    /// plataformas, sem efeito por enquanto.
+    pub keep_awake: KeepAwake,
+    /// Prende o mouse na janela (`window`) ou no monitor dela (`monitor`) enquanto ela está
+    /// ativa; trocar de janela (Alt+Tab) solta.
+    pub confine_cursor: CursorConfine,
+    /// A transparência da janela inteira, com a moldura (1 = opaca, 0,5 = metade). Windows;
+    /// nas outras plataformas, sem efeito. Para o fundo transparente com os controles opacos,
+    /// use `transparent`.
+    pub window_opacity: f32,
+    /// A tela cheia sem bordas (o padrão) ou exclusiva, com o modo de vídeo pedido.
+    pub full_screen_mode: FullScreenMode,
+    /// A largura em pixels do modo de vídeo da tela cheia exclusiva (0: a atual do monitor).
+    /// Vale o modo do monitor mais perto da largura, da altura e da taxa pedidas.
+    pub video_width: i64,
+    /// A altura em pixels do modo de vídeo da tela cheia exclusiva (0: a atual do monitor).
+    pub video_height: i64,
+    /// A taxa de atualização em Hz da tela cheia exclusiva (0: a atual do monitor).
+    pub video_refresh: f32,
     /// Aparece na barra de tarefas (desligue para menus e janelas de ferramenta).
     pub show_in_taskbar: bool,
     /// O controle que recebe o foco quando o form abre.
@@ -295,6 +318,86 @@ pub struct Form {
     /// projeto). Fechá-lo devolve a do form de baixo; mudar com o app aberto gira na hora. No
     /// desktop e no navegador, sem efeito.
     pub orientation: aylis_core::FormOrientation,
+    /// Onde o form fica embutido (um painel, uma faixa de abas...); vazio: na janela dele.
+    /// Mudar com o app rodando entra ou sai: aberto numa janela, ela some sem fechar o form
+    /// (`on_dock`); solto, ele volta a ter janela, com o tamanho de antes (`on_undock`). Numa
+    /// faixa de abas, ele vira uma aba com o título dele. O form principal e um modal não
+    /// entram.
+    pub host: Option<ComponentId>,
+    /// A janela do form entra numa faixa de abas com `accept_forms` quando arrastada pela
+    /// barra de título até ela (como as do navegador); embutido numa faixa, puxar a aba dele
+    /// para fora o solta. Windows (nas outras plataformas, só pelo `host`).
+    pub dockable: bool,
+    /// Onde ele está embutido agora (o `host` pedido, depois de entrar).
+    pub(crate) docked_in: Option<ComponentId>,
+    /// O tamanho de janela de antes de entrar, para sair igual.
+    pub(crate) undocked_size: Option<(f32, f32)>,
+}
+
+/// O que o form aberto pede para o sistema não desligar (`keep_awake`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum KeepAwake {
+    /// Nada: o sistema apaga a tela e dorme como de costume (o padrão).
+    #[default]
+    Off,
+    /// O computador não dorme, mas a tela pode apagar (um download, um processamento).
+    System,
+    /// Nem o computador dorme nem a tela apaga (um painel, uma tela de parede, um vídeo).
+    Display,
+}
+
+impl PropEnum for KeepAwake {
+    const NAMES: &'static [&'static str] = &["off", "system", "display"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Off, Self::System, Self::Display].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Onde o mouse fica preso enquanto a janela do form está ativa (`confine_cursor`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CursorConfine {
+    /// Solto (o padrão).
+    #[default]
+    None,
+    /// Dentro da área da janela.
+    Window,
+    /// Dentro do monitor da janela (Windows; nas outras plataformas, como `window`).
+    Monitor,
+}
+
+impl PropEnum for CursorConfine {
+    const NAMES: &'static [&'static str] = &["none", "window", "monitor"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::None, Self::Window, Self::Monitor].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Como é a tela cheia (`full_screen_mode`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FullScreenMode {
+    /// Uma janela sem bordas do tamanho do monitor, sem mudar o modo de vídeo (o padrão: troca
+    /// de janela na hora, e os outros monitores e janelas continuam como estão).
+    #[default]
+    Borderless,
+    /// O monitor passa para o modo de vídeo pedido (`video_width`, `video_height`,
+    /// `video_refresh`; zero: o atual dele) enquanto o form está em tela cheia, como um jogo.
+    Exclusive,
+}
+
+impl PropEnum for FullScreenMode {
+    const NAMES: &'static [&'static str] = &["borderless", "exclusive"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Borderless, Self::Exclusive].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
 }
 
 /// O que fechar faz com o form (`close_action`).
@@ -365,6 +468,14 @@ impl Form {
             layer_cache: LayerCaching::Project,
             frame_reuse_kb: -1,
             topmost: false,
+            bottommost: false,
+            keep_awake: KeepAwake::Off,
+            confine_cursor: CursorConfine::None,
+            window_opacity: 1.0,
+            full_screen_mode: FullScreenMode::Borderless,
+            video_width: 0,
+            video_height: 0,
+            video_refresh: 0.0,
             show_in_taskbar: true,
             active_control: None,
             tab_order: String::new(),
@@ -388,6 +499,10 @@ impl Form {
             close_action: CloseAction::Hide,
             frame_rate: 0.0,
             orientation: aylis_core::FormOrientation::Project,
+            host: None,
+            dockable: false,
+            docked_in: None,
+            undocked_size: None,
         }
     }
 }
@@ -438,6 +553,14 @@ impl Component for Form {
         layer_cache: LayerCaching => "Behavior",
         frame_reuse_kb: i64 => "Behavior",
         topmost: bool => "Behavior",
+        bottommost: bool => "Behavior",
+        keep_awake: KeepAwake => "Behavior",
+        confine_cursor: CursorConfine => "Behavior",
+        window_opacity: f32 => "Appearance",
+        full_screen_mode: FullScreenMode => "Layout",
+        video_width: i64 => "Layout",
+        video_height: i64 => "Layout",
+        video_refresh: f32 => "Layout",
         show_in_taskbar: bool => "Behavior",
         active_control: Option<ComponentId> => "Behavior",
         tab_order: String as List => "Behavior",
@@ -460,8 +583,10 @@ impl Component for Form {
         force_foreground: bool => "Behavior",
         close_action: CloseAction => "Behavior",
         frame_rate: f32 => "Behavior",
-        orientation: aylis_core::FormOrientation => "Layout";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String;
+        orientation: aylis_core::FormOrientation => "Layout",
+        host: Option<ComponentId> => "Behavior",
+        dockable: bool => "Behavior";
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: ();
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -469,6 +594,7 @@ impl Component for Form {
         use aylis_core::{MethodInfo, PropKind};
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("move_to_monitor", &[PropKind::Int], None).params(&["monitor"]),
+            MethodInfo::new("request_attention", &[PropKind::Bool], None).params(&["critical"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
             MethodInfo::new("gpu_adapters", &[], Some(PropKind::List)),
             // Atendido pelo `Ui::invoke` (o `Ui` pinta o form): os pixels RGBA em base64.
@@ -479,11 +605,21 @@ impl Component for Form {
     }
 
     /// `move_to_monitor(i)`: leva a janela para o monitor `i` (o índice do `Screen`).
+    /// `request_attention(critical)`: chama a atenção para a janela sem tomar o foco (no
+    /// Windows, o botão na barra de tarefas pisca até o usuário ativá-la; `critical` pisca a
+    /// janela também).
     fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
         match method {
             "move_to_monitor" => {
                 let index = args.first().and_then(|v| v.to_i64().ok()).filter(|i| *i >= 0).ok_or("move_to_monitor pede o índice do monitor")?;
+                // O `monitor` acompanha: a tela cheia ligada depois vai para este monitor.
+                self.monitor = index;
                 ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::MoveToMonitor(index as usize));
+                Ok(aylis_core::PropValue::Null)
+            }
+            "request_attention" => {
+                let critical = args.first().and_then(|v| v.to_bool().ok()).unwrap_or(false);
+                ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::RequestAttention(critical));
                 Ok(aylis_core::PropValue::Null)
             }
             // A placa em que a janela desenha agora (vazio: não se sabe, como na CPU).
@@ -514,8 +650,35 @@ impl Component for Form {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateScale);
         }
         // `topmost` com a janela aberta: antes só valia na criação (RTSPlayer, 13/11, item 4).
-        if name == "topmost" && !ctx.ui.design_mode() {
-            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::SetTopmost(self.topmost));
+        // O `host` mudado pelo código: entra ou sai, depois deste evento (mexe na árvore).
+        if name == "host" && !ctx.ui.design_mode() && self.host != self.docked_in {
+            let (form, host) = (ctx.id, self.host);
+            ctx.ui.set_timeout(0, move |ui| {
+                let done = match host {
+                    Some(h) => crate::docking::dock_form(ui, form, h, None),
+                    None => crate::docking::undock_form(ui, form, None),
+                };
+                if let Err(e) = done {
+                    aylis_core::stderr_line!("aylis: o form não mudou de lugar ({e})");
+                }
+            });
+        }
+        if matches!(name, "topmost" | "bottommost") && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateLevel);
+        }
+        if name == "keep_awake" && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateKeepAwake);
+        }
+        if name == "confine_cursor" && !ctx.ui.design_mode() {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateCursorConfine);
+        }
+        if name == "window_opacity" && !ctx.ui.design_mode() {
+            self.window_opacity = self.window_opacity.clamp(0.05, 1.0);
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateOpacity);
+        }
+        // O modo de vídeo mudado com o form em tela cheia: a tela cheia se refaz.
+        if matches!(name, "full_screen_mode" | "video_width" | "video_height" | "video_refresh") && !ctx.ui.design_mode() && self.window_state == WindowState::FullScreen {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::SetFullscreen(true));
         }
         if matches!(name, "window_corners" | "border_style" | "window_shape" | "shape_radius" | "shape_radii" | "shape_path" | "transparent") && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::UpdateCorners);
@@ -524,6 +687,11 @@ impl Component for Form {
         // cliente do tamanho pedido (a moldura fica por fora; J11).
         if matches!(name, "width" | "height" | "client_width" | "client_height") && !ctx.ui.design_mode() {
             ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::ApplySize);
+        }
+        // O `monitor` mudado com o form aberto leva a janela para lá (em tela cheia, ela continua
+        // em tela cheia no outro). Antes de abrir, só escolhe onde ele nasce.
+        if name == "monitor" && !ctx.ui.design_mode() && self.monitor >= 0 && ctx.ui.is_open(ctx.id) && ctx.ui.form_monitor(ctx.id) != Some(self.monitor as usize) {
+            ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::MoveToMonitor(self.monitor as usize));
         }
         if name == "window_state" && !ctx.ui.design_mode() {
             let form = ctx.id;
@@ -536,6 +704,12 @@ impl Component for Form {
     fn notification(&mut self, freed: ComponentId) {
         if self.active_control == Some(freed) {
             self.active_control = None;
+        }
+        if self.host == Some(freed) {
+            self.host = None;
+        }
+        if self.docked_in == Some(freed) {
+            self.docked_in = None;
         }
     }
 
@@ -591,16 +765,16 @@ impl Default for Layout {
 }
 
 impl Component for Layout {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     /// Só fundo e borda pelo estilo: o ensaio do desenho (`Ui::drawing_unchanged`) vale.
     fn paint_is_pure(&self) -> bool {
         true
     }
 
     leaf_control!("Layout");
-
-    fn dock_gap(&self) -> f32 {
-        self.gap
-    }
 
     properties! {
         allowed_chars: String => "Keyboard",
@@ -609,6 +783,12 @@ impl Component for Layout {
         chars_override: bool => "Keyboard",
         char_map: String => "Keyboard",
         gap: f32 => "Layout",
+    }
+}
+
+impl aylis_core::LayoutHooks for Layout {
+    fn dock_gap(&self) -> f32 {
+        self.gap
     }
 }
 
@@ -858,6 +1038,10 @@ impl Panel {
 }
 
 impl Component for Panel {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     /// Só fundo e borda pelo estilo: o ensaio do desenho (`Ui::drawing_unchanged`) vale.
     fn paint_is_pure(&self) -> bool {
         true
@@ -865,10 +1049,6 @@ impl Component for Panel {
 
     fn class_name(&self) -> &'static str {
         "Panel"
-    }
-
-    fn dock_gap(&self) -> f32 {
-        self.gap
     }
 
     properties! {
@@ -886,6 +1066,12 @@ impl Component for Panel {
 
     fn inner_mut(&mut self) -> Option<&mut dyn Component> {
         Some(&mut self.base)
+    }
+}
+
+impl aylis_core::LayoutHooks for Panel {
+    fn dock_gap(&self) -> f32 {
+        self.gap
     }
 }
 
@@ -1012,6 +1198,10 @@ impl Label {
 }
 
 impl Component for Label {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     leaf_control!("Label");
 
     // Sem fundo: o `fill` próprio vira o fundo do controle.
@@ -1070,59 +1260,10 @@ impl Component for Label {
         Some(&self.text)
     }
 
-    fn baseline(&self, ui: &aylis_core::Ui, id: ComponentId, height: f32) -> Option<f32> {
-        let pad = add_bounds(ui.style_padding(id), self.base.padding());
-        Some(text_baseline(ui, id, height, pad, self.v_align))
-    }
-
     fn notification(&mut self, freed: ComponentId) {
         if self.focus_control == Some(freed) {
             self.focus_control = None;
         }
-    }
-
-    /// `auto_size`: a altura do texto (quebrado na largura, com `wrap`), mais o padding do
-    /// estilo. Sem texto, zero.
-    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, width: f32) -> Option<f32> {
-        let mut font = ui.font_of(id);
-        if self.bold {
-            font.weight = aylis_core::FontWeight::Bold;
-        }
-        let text = if self.markup { markup_plain(&self.text) } else { self.text_case.apply(&self.text).to_string() };
-        if text.is_empty() {
-            return Some(0.0);
-        }
-        let pad = add_bounds(ui.style_padding(id), self.base.padding());
-        let line_height = self.line_height_of(ui.style_line_height(id));
-        let style = TextStyle { font, wrap: self.wrap, ..Default::default() };
-        // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
-        let inner = (width - pad.horizontal()).max(1.0) * if self.markup { 0.97 } else { 1.0 };
-        // Com a altura de linha própria: as linhas quebradas vezes ela.
-        if line_height > 0.0 && self.wrap && !self.markup {
-            let mut measure = |s: &str| ui.measure_text(s, &style).width;
-            let lines = aylis_core::text::layout_lines(&text, inner, usize::MAX, true, Trimming::None, &mut measure).len().max(1);
-            return Some((lines as f32 * style.font.size * line_height).ceil() + pad.vertical() + 1.0);
-        }
-        let size = if self.wrap { ui.measure_text_wrapped(&text, &style, inner) } else { ui.measure_text(&text, &style) };
-        Some(size.height + pad.vertical() + 1.0)
-    }
-
-    /// `auto_size` sem quebra de linha: a largura do texto mais o padding (com `align` left ou
-    /// right o rótulo encolhe ao texto; relatório do InsightDB, 11/11).
-    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
-        // Solto (`align = none`), a largura desenhada vale (o texto centrado numa largura fixa).
-        if self.wrap || ui.control(id).is_some_and(|cb| cb.align() == aylis_core::Align::None) {
-            return None;
-        }
-        let mut font = ui.font_of(id);
-        if self.bold {
-            font.weight = aylis_core::FontWeight::Bold;
-        }
-        let text = if self.markup { markup_plain(&self.text) } else { self.text_case.apply(&self.text).to_string() };
-        let pad = add_bounds(ui.style_padding(id), self.base.padding());
-        let style = TextStyle { font, ..Default::default() };
-        // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
-        Some((ui.measure_text(&text, &style).width * if self.markup { 1.04 } else { 1.0 } + pad.horizontal() + 2.0).ceil())
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -1191,6 +1332,57 @@ impl Component for Label {
         } else {
             paint_highlighted(canvas, ctx, &self.text, &self.highlight, area, &style);
         }
+    }
+}
+
+impl aylis_core::LayoutHooks for Label {
+    fn baseline(&self, ui: &aylis_core::Ui, id: ComponentId, height: f32) -> Option<f32> {
+        let pad = add_bounds(ui.style_padding(id), self.base.padding());
+        Some(text_baseline(ui, id, height, pad, self.v_align))
+    }
+
+    /// `auto_size`: a altura do texto (quebrado na largura, com `wrap`), mais o padding do
+    /// estilo. Sem texto, zero.
+    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, width: f32) -> Option<f32> {
+        let mut font = ui.font_of(id);
+        if self.bold {
+            font.weight = aylis_core::FontWeight::Bold;
+        }
+        let text = if self.markup { markup_plain(&self.text) } else { self.text_case.apply(&self.text).to_string() };
+        if text.is_empty() {
+            return Some(0.0);
+        }
+        let pad = add_bounds(ui.style_padding(id), self.base.padding());
+        let line_height = self.line_height_of(ui.style_line_height(id));
+        let style = TextStyle { font, wrap: self.wrap, ..Default::default() };
+        // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
+        let inner = (width - pad.horizontal()).max(1.0) * if self.markup { 0.97 } else { 1.0 };
+        // Com a altura de linha própria: as linhas quebradas vezes ela.
+        if line_height > 0.0 && self.wrap && !self.markup {
+            let mut measure = |s: &str| ui.measure_text(s, &style).width;
+            let lines = aylis_core::text::layout_lines(&text, inner, usize::MAX, true, Trimming::None, &mut measure).len().max(1);
+            return Some((lines as f32 * style.font.size * line_height).ceil() + pad.vertical() + 1.0);
+        }
+        let size = if self.wrap { ui.measure_text_wrapped(&text, &style, inner) } else { ui.measure_text(&text, &style) };
+        Some(size.height + pad.vertical() + 1.0)
+    }
+
+    /// `auto_size` sem quebra de linha: a largura do texto mais o padding (com `align` left ou
+    /// right o rótulo encolhe ao texto; relatório do InsightDB, 11/11).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
+        // Solto (`align = none`), a largura desenhada vale (o texto centrado numa largura fixa).
+        if self.wrap || ui.control(id).is_some_and(|cb| cb.align() == aylis_core::Align::None) {
+            return None;
+        }
+        let mut font = ui.font_of(id);
+        if self.bold {
+            font.weight = aylis_core::FontWeight::Bold;
+        }
+        let text = if self.markup { markup_plain(&self.text) } else { self.text_case.apply(&self.text).to_string() };
+        let pad = add_bounds(ui.style_padding(id), self.base.padding());
+        let style = TextStyle { font, ..Default::default() };
+        // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
+        Some((ui.measure_text(&text, &style).width * if self.markup { 1.04 } else { 1.0 } + pad.horizontal() + 2.0).ceil())
     }
 }
 
@@ -1613,11 +1805,11 @@ impl Button {
 }
 
 impl Component for Button {
-    leaf_control!("Button");
-
-    fn baseline(&self, ui: &aylis_core::Ui, id: ComponentId, height: f32) -> Option<f32> {
-        Some(text_baseline(ui, id, height, ui.style_padding(id), TextAlign::Center))
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
     }
+
+    leaf_control!("Button");
 
     fn checked_state(&self) -> Option<bool> {
         self.checkable.then_some(self.checked)
@@ -1756,28 +1948,6 @@ impl Component for Button {
         }
     }
 
-    /// `auto_size`: a largura do texto e do ícone mais o padding do estilo (antes o botão
-    /// ficava nos 96 de fábrica; o relatório do Tabernáculo, C14).
-    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
-        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
-        let (plain, _) = crate::mnemonic::caption(&self.text);
-        let pad = ui.style_padding(id);
-        let text = if plain.is_empty() { 0.0 } else { ui.measure_text(&plain, &style).width };
-        let icon = if self.current_icon().is_empty() { 0.0 } else if self.icon_size > 0.0 { self.icon_size } else { (style.font.size * 1.25).round() };
-        let gap = if text > 0.0 && icon > 0.0 && self.icon_position != IconPosition::Top { 6.0 } else { 0.0 };
-        let content = if self.icon_position == IconPosition::Top { text.max(icon) } else { text + gap + icon };
-        Some((content + pad.horizontal() + 2.0).ceil())
-    }
-
-    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
-        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
-        let pad = ui.style_padding(id);
-        let line = ui.measure_text("Ág", &style).height;
-        let icon = if self.current_icon().is_empty() { 0.0 } else if self.icon_size > 0.0 { self.icon_size } else { (style.font.size * 1.25).round() };
-        let content = if self.icon_position == IconPosition::Top { icon + 2.0 + line } else { line.max(icon) };
-        Some((content + pad.vertical()).ceil())
-    }
-
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
         match event.key {
             Key::Enter => {
@@ -1810,6 +1980,34 @@ impl Component for Button {
         if self.space_down {
             self.set_space_down(ctx, false);
         }
+    }
+}
+
+impl aylis_core::LayoutHooks for Button {
+    fn baseline(&self, ui: &aylis_core::Ui, id: ComponentId, height: f32) -> Option<f32> {
+        Some(text_baseline(ui, id, height, ui.style_padding(id), TextAlign::Center))
+    }
+
+    /// `auto_size`: a largura do texto e do ícone mais o padding do estilo (antes o botão
+    /// ficava nos 96 de fábrica; o relatório do Tabernáculo, C14).
+    fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
+        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
+        let (plain, _) = crate::mnemonic::caption(&self.text);
+        let pad = ui.style_padding(id);
+        let text = if plain.is_empty() { 0.0 } else { ui.measure_text(&plain, &style).width };
+        let icon = if self.current_icon().is_empty() { 0.0 } else if self.icon_size > 0.0 { self.icon_size } else { (style.font.size * 1.25).round() };
+        let gap = if text > 0.0 && icon > 0.0 && self.icon_position != IconPosition::Top { 6.0 } else { 0.0 };
+        let content = if self.icon_position == IconPosition::Top { text.max(icon) } else { text + gap + icon };
+        Some((content + pad.horizontal() + 2.0).ceil())
+    }
+
+    fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
+        let style = TextStyle { font: ui.font_of(id), ..Default::default() };
+        let pad = ui.style_padding(id);
+        let line = ui.measure_text("Ág", &style).height;
+        let icon = if self.current_icon().is_empty() { 0.0 } else if self.icon_size > 0.0 { self.icon_size } else { (style.font.size * 1.25).round() };
+        let content = if self.icon_position == IconPosition::Top { icon + 2.0 + line } else { line.max(icon) };
+        Some((content + pad.vertical()).ceil())
     }
 }
 

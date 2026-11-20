@@ -222,7 +222,7 @@ fn the_window_and_the_panels_come_back_where_they_were() {
     ide.ui.control_mut(right).unwrap().set_width(420.0);
     ide.ui.control_mut(ide.ids.structure).unwrap().set_height(250.0);
     // A plataforma conta onde a janela está (aqui, à mão).
-    let placement = aylis_core::WindowPlacement { x: 120, y: 80, width: 1600, height: 1000, maximized: true };
+    let placement = aylis_core::WindowPlacement { x: 120, y: 80, width: 1600, height: 1000, maximized: true, full_screen: false };
     ide.ui.set_window_placement(ide.form, placement);
     let saved = actions::layout_json(&ide.ui, &ide.ids);
     assert_eq!(saved["panels"]["inspector_side"], 300.0);

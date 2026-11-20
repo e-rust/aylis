@@ -326,7 +326,7 @@ pub fn apply_layout(ui: &mut Ui, ids: &Ids, layout: &Value) {
         let int = |k: &str| w.get(k).and_then(Value::as_i64);
         if let (Some(x), Some(y), Some(width), Some(height)) = (int("x"), int("y"), int("width"), int("height")) {
             let maximized = w.get("maximized").and_then(Value::as_bool).unwrap_or(false);
-            let p = aylis_core::WindowPlacement { x: x as i32, y: y as i32, width: width.clamp(0, 16384) as u32, height: height.clamp(0, 16384) as u32, maximized };
+            let p = aylis_core::WindowPlacement { x: x as i32, y: y as i32, width: width.clamp(0, 16384) as u32, height: height.clamp(0, 16384) as u32, maximized, full_screen: false };
             ui.set_window_placement(ids.form, p);
         }
     }

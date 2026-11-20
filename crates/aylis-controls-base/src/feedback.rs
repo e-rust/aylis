@@ -127,6 +127,14 @@ impl Snackbar {
 }
 
 impl Component for Snackbar {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     leaf_control!("Snackbar");
 
     properties! {
@@ -135,14 +143,6 @@ impl Component for Snackbar {
         timeout: u32 as Duration => "Behavior",
         active: bool => "Behavior";
         events: on_action: (), on_close: ()
-    }
-
-    fn timer_interval(&self) -> Option<f64> {
-        (self.active && self.timeout > 0).then(|| f64::from(self.timeout) / 1000.0)
-    }
-
-    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
-        self.close(ctx);
     }
 
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
@@ -185,6 +185,16 @@ impl Component for Snackbar {
             right = ar.x - 8.0;
         }
         canvas.draw_text(&self.text, RectF::new(r.x + 16.0, r.y, (right - r.x - 16.0).max(0.0), r.height), &t);
+    }
+}
+
+impl aylis_core::Timed for Snackbar {
+    fn timer_interval(&self) -> Option<f64> {
+        (self.active && self.timeout > 0).then(|| f64::from(self.timeout) / 1000.0)
+    }
+
+    fn timer(&mut self, ctx: &mut EventCtx<'_>) {
+        self.close(ctx);
     }
 }
 

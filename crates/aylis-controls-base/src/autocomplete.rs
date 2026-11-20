@@ -243,19 +243,21 @@ struct Suggestions {
 }
 
 impl Component for Suggestions {
+    fn popup(&self) -> Option<&dyn aylis_core::Popup> {
+        Some(self)
+    }
+
+    fn popup_mut(&mut self) -> Option<&mut dyn aylis_core::Popup> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "Suggestions"
     }
 
     // Some junto com quem a abriu (a tela refeita não deixa a lista órfã).
-    fn dies_with(&self) -> Option<ComponentId> {
-        Some(self.owner)
-    }
 
     // O clique fora (mesmo onde não recebe foco) fecha as sugestões.
-    fn closes_on_outside_press(&self) -> bool {
-        true
-    }
 
     fn control(&self) -> Option<&ControlBase> {
         Some(&self.base)
@@ -317,6 +319,16 @@ impl Component for Suggestions {
                 None => canvas.draw_text(item, text_r, &t),
             }
         }
+    }
+}
+
+impl aylis_core::Popup for Suggestions {
+    fn dies_with(&self) -> Option<ComponentId> {
+        Some(self.owner)
+    }
+
+    fn closes_on_outside_press(&self) -> bool {
+        true
     }
 }
 

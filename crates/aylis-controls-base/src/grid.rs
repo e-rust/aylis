@@ -51,6 +51,10 @@ impl GridLayout {
 }
 
 impl Component for GridLayout {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     /// Só fundo e borda pelo estilo: o ensaio do desenho (`Ui::drawing_unchanged`) vale.
     fn paint_is_pure(&self) -> bool {
         true
@@ -65,6 +69,9 @@ impl Component for GridLayout {
         row_height: f32 => "Layout",
     }
 
+}
+
+impl aylis_core::LayoutHooks for GridLayout {
     fn arrange(&self, area: RectF, children: &[ArrangeItem]) -> Option<Vec<RectF>> {
         let gap = self.gap * children.first().map_or(1.0, |c| c.spacing);
         let cols = self.columns_with_gap(area.width, gap);
@@ -185,6 +192,10 @@ impl Default for FlowLayout {
 }
 
 impl Component for FlowLayout {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     /// Só fundo e borda pelo estilo: o ensaio do desenho (`Ui::drawing_unchanged`) vale.
     fn paint_is_pure(&self) -> bool {
         true
@@ -200,6 +211,9 @@ impl Component for FlowLayout {
         baseline: bool => "Layout",
     }
 
+}
+
+impl aylis_core::LayoutHooks for FlowLayout {
     fn arrange(&self, area: RectF, children: &[ArrangeItem]) -> Option<Vec<RectF>> {
         // Os espaços com a escala da vista ativa.
         let spacing = children.first().map_or(1.0, |c| c.spacing);

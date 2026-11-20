@@ -551,3 +551,57 @@ fn key_takes_modifiers_too() {
     run(&mut ui, json!({ "cmd": "key", "target": "Frm", "key": "A", "modifiers": ["ctrl"] }));
     assert_eq!(run(&mut ui, json!({ "cmd": "get", "target": "lstNomes", "prop": "selected" })), "0;1;2");
 }
+
+/// `drag` com `to` noutro form: o arrasto começa numa janela do app e solta noutra (como o
+/// mouse que sai de uma e entra na outra); sem nada que arraste em `from`, erro.
+#[test]
+fn drag_goes_from_one_form_to_another() {
+    let mut ui = ui();
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "FrmA", "width": 400, "height": 300, "children": [
+        { "class": "Panel", "name": "pnlItem", "align": "left", "width": 120, "draggable": true, "drag_data": "item:1" },
+        { "class": "Panel", "name": "pnlParado", "align": "right", "width": 120 }
+    ] } }));
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "FrmB", "width": 400, "height": 300, "children": [
+        { "class": "Panel", "name": "pnlCelula", "align": "client", "accepts_drops": true }
+    ] } }));
+    let dropped = Rc::new(RefCell::new(Vec::new()));
+    let d = dropped.clone();
+    let cell = ui.find("pnlCelula").unwrap();
+    ui.on(cell, "on_drag_drop", move |_, _, args| d.borrow_mut().push(format!("{args:?}")));
+    run(&mut ui, json!({ "cmd": "drag", "from": "pnlItem", "to": "pnlCelula" }));
+    assert_eq!(dropped.borrow().len(), 1, "soltou na outra janela");
+    assert!(dropped.borrow()[0].contains("item:1"), "{:?}", dropped.borrow());
+    let e = execute(&mut ui, &json!({ "cmd": "drag", "from": "pnlParado", "to": "pnlCelula" })).unwrap_err();
+    assert!(e.contains("não começou"), "{e}");
+}
+
+/// `drag_window`: a janela de um form com `dockable` arrastada até a faixa de abas de outro
+/// (com `accept_forms`) entra nela como aba; `drag` sem `to` solta fora de todas, e a aba do
+/// form vira a janela dele de novo.
+#[test]
+fn drag_window_docks_a_form_and_drag_out_undocks_it() {
+    let mut ui = ui();
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "FrmPrincipal", "width": 900, "height": 600, "children": [
+        { "class": "TabStrip", "name": "tabForms", "align": "top", "height": 40, "accept_forms": true, "tear_off": true }
+    ] } }));
+    run(&mut ui, json!({ "cmd": "load", "layout": { "class": "Form", "name": "FrmClientes", "caption": "Clientes", "width": 500, "height": 300, "dockable": true } }));
+    let main = ui.find("FrmPrincipal").unwrap();
+    let child = ui.find("FrmClientes").unwrap();
+    ui.set_main_form(main);
+    ui.show(main).unwrap();
+    ui.show(child).unwrap();
+    let out = run(&mut ui, json!({ "cmd": "drag_window", "form": "FrmClientes", "to": "tabForms", "to_x": 300 }));
+    assert_eq!(out["received"], true);
+    ui.advance(0.05);
+    assert!(!ui.is_open(child), "virou aba");
+    let strip = ui.find("tabForms").unwrap();
+    assert_eq!(ui.get::<aylis_controls::TabStrip>(strip).unwrap().tabs().len(), 1);
+    // A aba puxada para longe: o form volta a ter janela. A faixa sabe onde ficam as abas
+    // depois de pintar (no app, a janela pinta).
+    ui.layout();
+    ui.paint(main, &mut aylis_core::pages::RecordingCanvas::new(None));
+    run(&mut ui, json!({ "cmd": "drag", "from": "tabForms", "from_x": 40, "screen_x": 1500, "screen_y": 800 }));
+    ui.advance(0.05);
+    assert!(ui.is_open(child), "voltou a ser janela");
+    assert!(ui.get::<aylis_controls::TabStrip>(strip).unwrap().tabs().is_empty());
+}

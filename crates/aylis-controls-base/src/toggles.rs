@@ -81,6 +81,10 @@ impl CheckBox {
 }
 
 impl Component for CheckBox {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     // O valor só muda a pintura: não refaz o layout da tela.
     fn paint_only_property(&self, name: &str) -> bool {
         matches!(name, "checked")
@@ -122,6 +126,15 @@ impl Component for CheckBox {
         space_clicks(self, ctx, event);
     }
 
+    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        let side = if self.box_size > 0.0 { self.box_size } else { crate::looks::mark_size(ctx.look()) };
+        let b = mark_rect(ctx, side, side);
+        crate::looks::paint_check(canvas, ctx, b, self.checked);
+        paint_caption(canvas, ctx, &self.text, side + GAP);
+    }
+}
+
+impl aylis_core::LayoutHooks for CheckBox {
     /// `auto_size`: uma linha de texto (ou a caixinha, se for maior).
     fn auto_height(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId, _width: f32) -> Option<f32> {
         let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
@@ -131,13 +144,6 @@ impl Component for CheckBox {
     fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
         let side = if self.box_size > 0.0 { self.box_size } else { crate::looks::mark_size(ui.theme().look) };
         Some(caption_width(ui, id, &self.text, side))
-    }
-
-    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        let side = if self.box_size > 0.0 { self.box_size } else { crate::looks::mark_size(ctx.look()) };
-        let b = mark_rect(ctx, side, side);
-        crate::looks::paint_check(canvas, ctx, b, self.checked);
-        paint_caption(canvas, ctx, &self.text, side + GAP);
     }
 }
 
@@ -173,6 +179,10 @@ impl RadioButton {
 }
 
 impl Component for RadioButton {
+    fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
+        Some(self)
+    }
+
     // O valor só muda a pintura: não refaz o layout da tela.
     fn paint_only_property(&self, name: &str) -> bool {
         matches!(name, "checked")
@@ -227,15 +237,17 @@ impl Component for RadioButton {
         space_clicks(self, ctx, event);
     }
 
-    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
-        Some(caption_width(ui, id, &self.text, crate::looks::mark_size(ui.theme().look)))
-    }
-
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let side = crate::looks::mark_size(ctx.look());
         let b = mark_rect(ctx, side, side);
         crate::looks::paint_radio(canvas, ctx, b, self.checked);
         paint_caption(canvas, ctx, &self.text, side + GAP);
+    }
+}
+
+impl aylis_core::LayoutHooks for RadioButton {
+    fn auto_width(&self, ui: &aylis_core::Ui, id: aylis_core::ComponentId) -> Option<f32> {
+        Some(caption_width(ui, id, &self.text, crate::looks::mark_size(ui.theme().look)))
     }
 }
 

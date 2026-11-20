@@ -112,6 +112,14 @@ struct Highlight {
 }
 
 impl Component for Highlight {
+    fn timed(&self) -> Option<&dyn aylis_core::Timed> {
+        Some(self)
+    }
+
+    fn timed_mut(&mut self) -> Option<&mut dyn aylis_core::Timed> {
+        Some(self)
+    }
+
     fn class_name(&self) -> &'static str {
         "InspectorHighlight"
     }
@@ -124,6 +132,14 @@ impl Component for Highlight {
         Some(&mut self.base)
     }
 
+    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        let color = aylis_core::Color::from_hex("#F43F5E").unwrap_or(aylis_core::Color::BLACK);
+        canvas.fill_rect(ctx.rect, 4.0, &Brush::Solid(color.with_opacity(0.12)));
+        canvas.stroke_rect(ctx.rect, 4.0, &Stroke::new(color, 2.5));
+    }
+}
+
+impl aylis_core::Timed for Highlight {
     fn timer_interval(&self) -> Option<f64> {
         Some(1.5)
     }
@@ -133,11 +149,5 @@ impl Component for Highlight {
         ctx.ui.poster().post(move |ui| {
             ui.free(id);
         });
-    }
-
-    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        let color = aylis_core::Color::from_hex("#F43F5E").unwrap_or(aylis_core::Color::BLACK);
-        canvas.fill_rect(ctx.rect, 4.0, &Brush::Solid(color.with_opacity(0.12)));
-        canvas.stroke_rect(ctx.rect, 4.0, &Stroke::new(color, 2.5));
     }
 }

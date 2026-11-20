@@ -729,3 +729,14 @@ leaf_layout	Layout das folhas	Leaf layout	Disposición de las hojas	Disposition 
 indent	Recuo	Indent	Sangría	Retrait	Einzug	Отступ	缩进	インデント	الإزاحة	ইন্ডেন্ট	इंडेंट	Indentasi
 icon_gap	Espaço do ícone	Icon gap	Espacio del icono	Espace de l'icône	Symbolabstand	Отступ значка	图标间距	アイコンの間隔	مسافة الأيقونة	আইকনের ফাঁক	आइकन की दूरी	Jarak ikon
 item_bindings	Ligações do item	Item bindings	Vínculos del elemento	Liaisons de l'élément	Elementbindungen	Привязки элемента	项目绑定	項目のバインド	ارتباطات العنصر	আইটেমের সংযোগ	आइटम बाइंडिंग	Pengikatan item
+bottommost	Sempre atrás	Bottommost	Siempre detrás	Toujours en arrière-plan	Immer im Hintergrund	Позади всех окон	置底	常に背面	دائمًا في الخلف	সবসময় পেছনে	हमेशा सबसे नीचे	Selalu di belakang
+keep_awake	Manter acordado	Keep awake	Mantener activo	Garder éveillé	Wach halten	Не давать уснуть	保持唤醒	スリープさせない	إبقاء الجهاز نشطًا	জাগ্রত রাখুন	जागृत रखें	Tetap aktif
+confine_cursor	Prender o mouse	Confine cursor	Confinar el cursor	Confiner le curseur	Mauszeiger einschränken	Ограничить курсор	限制光标	カーソルを閉じ込める	حصر المؤشر	কার্সার আটকে রাখুন	कर्सर सीमित करें	Kurung kursor
+window_opacity	Opacidade da janela	Window opacity	Opacidad de la ventana	Opacité de la fenêtre	Fensterdeckkraft	Непрозрачность окна	窗口不透明度	ウィンドウの不透明度	شفافية النافذة	উইন্ডোর অস্বচ্ছতা	विंडो अपारदर्शिता	Opasitas jendela
+full_screen_mode	Modo da tela cheia	Full screen mode	Modo de pantalla completa	Mode plein écran	Vollbildmodus	Режим полноэкранного показа	全屏模式	全画面モード	وضع ملء الشاشة	পূর্ণ পর্দার মোড	पूर्ण स्क्रीन मोड	Mode layar penuh
+video_width	Largura do vídeo	Video width	Ancho de vídeo	Largeur vidéo	Videobreite	Ширина видеорежима	视频宽度	ビデオ幅	عرض الفيديو	ভিডিওর প্রস্থ	वीडियो चौड़ाई	Lebar video
+video_height	Altura do vídeo	Video height	Alto de vídeo	Hauteur vidéo	Videohöhe	Высота видеорежима	视频高度	ビデオの高さ	ارتفاع الفيديو	ভিডিওর উচ্চতা	वीडियो ऊंचाई	Tinggi video
+video_refresh	Taxa de atualização	Refresh rate	Frecuencia de actualización	Fréquence de rafraîchissement	Bildwiederholrate	Частота обновления	刷新率	リフレッシュレート	معدل التحديث	রিফ্রেশ রেট	रिफ्रेश दर	Kecepatan refresh
+host	Embutido em	Host	Incrustado en	Hébergé dans	Eingebettet in	Встроено в	宿主	埋め込み先	مضمّن في	যেখানে বসানো	इसमें समाहित	Disematkan di
+dockable	Pode encaixar	Dockable	Acoplable	Ancrable	Andockbar	Прикрепляемая	可停靠	ドッキング可能	قابل للإرساء	যুক্ত করা যায়	डॉक करने योग्य	Dapat ditambatkan
+accept_forms	Aceitar forms	Accept forms	Aceptar formularios	Accepter les formulaires	Formulare annehmen	Принимать формы	接受窗体	フォームを受け入れる	قبول النماذج	ফর্ম গ্রহণ করুন	फ़ॉर्म स्वीकार करें	Terima formulir

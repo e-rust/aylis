@@ -43,6 +43,10 @@ const DOUBLE_CLICK_TIME: f64 = 0.5;
 const DOUBLE_CLICK_DISTANCE: f32 = 4.0;
 /// Quanto o mouse anda, com o botão pressionado num controle `draggable`, até o arrasto começar.
 pub const DRAG_START: f32 = 5.0;
+
+/// O começo dos dados do arrasto de uma janela inteira (`Ui::window_drag_over`): depois dele,
+/// o id do form.
+pub const FORM_DRAG: &str = "aylis-form:";
 /// Quanto o dedo anda antes de o toque virar rolagem.
 const TOUCH_SLOP: f32 = 8.0;
 /// O deslizar (`on_swipe`): o dedo anda pelo menos isto, saindo a pelo menos esta velocidade
@@ -310,7 +314,7 @@ impl Ui {
     /// J09).
     pub fn open_popups(&self, form: ComponentId) -> Vec<ComponentId> {
         let root = self.root_of(form);
-        self.children(root).iter().copied().filter(|&c| self.component(c).is_some_and(|p| p.closes_on_outside_press() || p.dies_with().is_some())).collect()
+        self.children(root).iter().copied().filter(|&c| self.component(c).and_then(|c| c.popup()).is_some_and(|p| p.closes_on_outside_press() || p.dies_with().is_some())).collect()
     }
 
     // =====================================================================
@@ -411,7 +415,11 @@ impl Ui {
             let m = self.component(id).map_or(0.0, |c| c.hit_slop());
             m > 0.0 && local.x >= -m && local.y >= -m && local.x < b.width + m && local.y < b.height + m
         };
-        ((inside || near()) && cb.hit_test() && shape()).then_some(id)
+        // Quem arrasta ou recebe o soltar recebe o mouse mesmo com o `hit_test` desligado (o
+        // padrão do Label): ligar o `draggable` num Label não fazia nada, e nada avisava
+        // (testado em 20/11).
+        let hit = cb.hit_test() || cb.draggable() || cb.accepts_drops();
+        ((inside || near()) && hit && shape()).then_some(id)
     }
 
     /// O controle e todos os ancestrais estão visíveis e habilitados.
@@ -749,7 +757,7 @@ impl Ui {
             .children(root)
             .iter()
             .filter(|&&c| self.cb(c).is_none_or(|cb| cb.visible()))
-            .filter_map(|&c| self.component(c).filter(|p| p.closes_on_outside_press()).map(|p| (c, p.dies_with())))
+            .filter_map(|&c| self.component(c).and_then(|c| c.popup()).filter(|p| p.closes_on_outside_press()).map(|p| (c, p.dies_with())))
             .filter(|&(popup, owner)| !inside(self, popup) && !owner.is_some_and(|o| inside(self, o)))
             .collect();
         for (popup, owner) in doomed {
@@ -760,7 +768,7 @@ impl Ui {
             if focused.is_some() {
                 self.clear_focus(root);
             }
-            let kept = self.with_component(popup, |c, ctx| c.dismissed(ctx)).unwrap_or(false);
+            let kept = self.with_component(popup, |c, ctx| c.popup_mut().is_some_and(|p| p.dismissed(ctx))).unwrap_or(false);
             if !kept {
                 self.free(popup);
             }
@@ -984,9 +992,50 @@ impl Ui {
         self.screen_pointer
     }
 
+    /// A janela inteira do form `form` arrastada pela barra de título (o sistema move a janela)
+    /// passou por cima do form `over`, no ponto dele (`None`: fora das janelas do app). O
+    /// destino é quem aceita, pelos ganchos `drop_*`, os dados [`FORM_DRAG`] + o id do form
+    /// (a faixa de abas com `accept_forms`, que o recebe como aba); ele acende ao passar e
+    /// recebe no [`Ui::window_drag_end`]. A plataforma chama durante o movimento da janela.
+    pub fn window_drag_over(&mut self, form: ComponentId, over: Option<(ComponentId, PointF)>) {
+        let data = format!("{FORM_DRAG}{}", form.to_u64());
+        let target = over.filter(|&(f, _)| f != form && self.contains(f)).and_then(|(f, pos)| {
+            let mut cur = self.enabled_hit(f, pos);
+            while let Some(c) = cur {
+                if self.hook_target(c, &data) {
+                    return Some((c, pos));
+                }
+                cur = self.parent(c);
+            }
+            None
+        });
+        let old = self.window_drag.and_then(|(f, t, _)| t.filter(|_| f == form));
+        if let Some(old) = old.filter(|&o| Some(o) != target.map(|(t, _)| t) && self.contains(o)) {
+            self.deliver(old, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_leave(ctx) });
+        }
+        if let Some((t, pos)) = target {
+            let local = self.local_point(t, pos);
+            self.deliver(t, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_hover(ctx, &data, local) });
+        }
+        self.window_drag = Some((form, target.map(|(t, _)| t), target.map_or(PointF::default(), |(_, p)| p)));
+        self.request_repaint();
+    }
+
+    /// A janela do form foi solta (o sistema terminou de movê-la): o destino de agora recebe o
+    /// form (`drop_receive` com os dados [`FORM_DRAG`]). `true` se algum recebeu.
+    pub fn window_drag_end(&mut self, form: ComponentId) -> bool {
+        let Some((f, target, pos)) = self.window_drag.take() else { return false };
+        let Some(t) = target.filter(|&t| f == form && self.contains(t)) else { return false };
+        let data = format!("{FORM_DRAG}{}", form.to_u64());
+        let local = self.local_point(t, pos);
+        self.deliver(t, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_receive(ctx, &data, local) });
+        self.request_repaint();
+        true
+    }
+
     /// O componente recebe o arrasto pelos ganchos `drop_*` (e não por eventos)?
     fn hook_target(&self, id: ComponentId, data: &str) -> bool {
-        self.component(id).is_some_and(|c| c.drop_accepts(self, id, data))
+        self.component(id).and_then(|c| c.drag_drop()).is_some_and(|d| d.drop_accepts(self, id, data))
     }
 
     /// O controle arrastável que contém `id` (ele mesmo ou um pai).
@@ -1076,7 +1125,7 @@ impl Ui {
         let Some(source) = self.draggable_ancestor(root, press.target) else { return false };
         // O declarado (sem handler) e o item que a lista ou a grade mandam sozinhas.
         let declared = self.cb(source).map(|cb| (cb.drag_data().to_string(), cb.drag_label().to_string())).filter(|(d, _)| !d.is_empty());
-        let declared = declared.or_else(|| self.component(source).and_then(|c| c.drag_item(self)));
+        let declared = declared.or_else(|| self.component(source).and_then(|c| c.drag_drop()).and_then(|d| d.drag_item(self)));
         self.drag_request = None;
         self.drag_visual_request = None;
         let mut pending = None;
@@ -1111,7 +1160,7 @@ impl Ui {
         // A imagem: a que o handler pediu ou a do `drag_image` do controle.
         let visual = self.drag_visual_request.take().or_else(|| {
             let image = self.cb(source).and_then(|cb| cb.drag_image())?;
-            self.component(image)?.drag_visual(self, source)
+            self.component(image)?.drag_drop()?.drag_visual(self, source)
         });
         self.input_state(root).drag = Some(Drag { source, data, label, position: event.position, target: None, accepted: false, starting: pending, over: None, dropped: false, visual, target_position: event.position });
         true
@@ -1151,12 +1200,12 @@ impl Ui {
         let mut over = drag.over;
         // Quem recebe pelos ganchos: avisa que saiu e acompanha o mouse em cima.
         if let Some(old) = drag.target.filter(|&t| Some(t) != target && self.hook_target(t, &drag.data)) {
-            self.deliver(old, |c, ctx| c.drop_leave(ctx));
+            self.deliver(old, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_leave(ctx) });
         }
         if let Some(t) = target.filter(|&t| drag.starting.is_none() && self.hook_target(t, &drag.data)) {
             let local = self.local_point(t, target_position);
             let data = drag.data.clone();
-            self.deliver(t, |c, ctx| c.drop_hover(ctx, &data, local));
+            self.deliver(t, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_hover(ctx, &data, local) });
             if let Some(d) = self.input_state(root).drag.as_mut() {
                 d.position = position;
                 d.target = Some(t);
@@ -1237,7 +1286,7 @@ impl Ui {
         if let Some(t) = drag.target.filter(|_| dropped) {
             if self.hook_target(t, &drag.data) {
                 let local = self.local_point(t, drag.target_position);
-                self.deliver(t, |c, ctx| c.drop_receive(ctx, &drag.data, local));
+                self.deliver(t, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_receive(ctx, &drag.data, local) });
             } else {
                 // O ponto onde soltou, no destino: `drop_point` durante o `on_drag_drop` (J15).
                 self.drop_point = Some(self.local_point(t, drag.target_position));
@@ -1246,7 +1295,7 @@ impl Ui {
         }
         if self.contains(drag.source) {
             let end = if dropped { crate::DragEnd::Dropped } else { crate::DragEnd::Nowhere };
-            self.deliver(drag.source, |c, ctx| c.drag_ended(ctx, &drag.data, end));
+            self.deliver(drag.source, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drag_ended(ctx, &drag.data, end) });
         }
         if self.contains(drag.source) {
             self.fire(drag.source, "on_drag_end", &EventArgs::Value(dropped.into()));
@@ -1267,10 +1316,10 @@ impl Ui {
         state.press = None;
         state.captured = None;
         if let Some(t) = drag.target.filter(|&t| self.hook_target(t, &drag.data)) {
-            self.deliver(t, |c, ctx| c.drop_leave(ctx));
+            self.deliver(t, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drop_leave(ctx) });
         }
         if self.contains(drag.source) {
-            self.deliver(drag.source, |c, ctx| c.drag_ended(ctx, &drag.data, crate::DragEnd::Cancelled));
+            self.deliver(drag.source, |c, ctx| if let Some(d) = c.drag_drop_mut() { d.drag_ended(ctx, &drag.data, crate::DragEnd::Cancelled) });
         }
         if self.contains(drag.source) {
             self.fire(drag.source, "on_drag_end", &EventArgs::Value(false.into()));
