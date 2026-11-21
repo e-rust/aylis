@@ -171,7 +171,11 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
     - o backend em C# é compilado com `RollForward=Major`: o Ubuntu 26.04 só tem o .NET 10, e o
       app (do .NET 8) não abria;
     - a opção do Publicar virou "Instalador (Windows: o tipo do projeto; Linux: .deb)".
-  - Falta: o `.rpm` (Fedora) e o Executar no WSL das outras linguagens (só o publicar).
+  - O `.rpm` da IDE (`aylis-tool ide-package --target linux --rpm`, pelo `rpmbuild`; a mesma
+    árvore do `.deb`, com as dependências pelos nomes do `dnf`) saiu na release 0.9.1, conferido
+    por dentro (os arquivos, as permissões, os scripts e as dependências). Falta: instalar
+    num Fedora (o autor publicou sem esse teste, com a VM desligada), o `.rpm` dos apps e o
+    Executar no WSL das outras linguagens (só o publicar).
   - Pedido do autor em 20/11 ("devemos ter a opção de baixar ainda de lá tudo que for
     preciso"): a pasta do Drive é o espelho do Aylis (`settings::AYLIS_MIRROR`), junto da origem
     oficial, só para o que o Aylis monta (o Skia de 32 bits, o Free Pascal); posta como espelho
