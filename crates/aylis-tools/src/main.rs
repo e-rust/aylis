@@ -434,6 +434,11 @@ fn main() -> ExitCode {
                 let deb = aylis_tools::ide_package::linux_deb(&made, &out, env!("CARGO_PKG_VERSION"))?;
                 println!("pronto: {}", deb.display());
             }
+            // `--rpm`: também o do Fedora (pelo rpmbuild; só no Linux).
+            if target == "linux" && args.iter().any(|a| a == "--rpm") {
+                let rpm = aylis_tools::ide_package::linux_rpm(&made, &out, env!("CARGO_PKG_VERSION"))?;
+                println!("pronto: {}", rpm.display());
+            }
             Ok(())
         })(),
         // O agente remoto, no outro PC ou servidor: aylis-tool debug-agent [--listen 0.0.0.0:7444]

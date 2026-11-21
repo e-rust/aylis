@@ -424,9 +424,102 @@ pub fn linux_deb(pkg: &Path, out: &Path, version: &str) -> Result<PathBuf, Strin
     Ok(deb)
 }
 
+/// A versão no formato do RPM: sem hífen (o pré-lançamento `0.9.1-beta.1` vira `0.9.1~beta.1`,
+/// que vem antes do `0.9.1`).
+pub fn rpm_version(version: &str) -> String {
+    version.replacen('-', "~", 1)
+}
+
+/// O `.spec` do `.rpm` da IDE: os mesmos arquivos do `.deb` (copiados da pasta `stage`), as
+/// dependências com os nomes do `dnf` (`crate::linux_deps`) e os bancos de tipos, atalhos e
+/// ícones atualizados ao instalar e ao remover.
+pub fn rpm_spec(version: &str, stage: &Path) -> String {
+    let deps: Vec<&crate::linux_deps::Dep> = crate::linux_deps::DEPS.iter().collect();
+    let requires = crate::linux_deps::packages_for(&deps, crate::linux_deps::Manager::Dnf).join(" ");
+    let hook = "update-mime-database /usr/share/mime >/dev/null 2>&1 || :\nupdate-desktop-database -q /usr/share/applications >/dev/null 2>&1 || :\ngtk-update-icon-cache -q -t /usr/share/icons/hicolor >/dev/null 2>&1 || :";
+    format!(
+        "Name: aylis-ide\nVersion: {}\nRelease: 1\nSummary: Aylis IDE: interfaces visuais com designer, em Rust e mais 7 linguagens\nLicense: MIT\nURL: https://github.com/e-rust/aylis\nBuildArch: x86_64\nAutoReqProv: no\nRequires: {requires} curl\n\
+         %global debug_package %{{nil}}\n%global __os_install_post %{{nil}}\n%global _build_id_links none\n\n\
+         %description\nA IDE do Aylis: o designer de forms, o editor de código, compilar, executar, depurar e publicar\npara Windows, Linux, macOS, Android, iOS e navegador. Traz o código do Aylis em /opt/aylis-ide;\no Rust e as outras linguagens vêm pelos pacotes de ferramentas ou pelo sistema.\n\n\
+         %install\nmkdir -p %{{buildroot}}\ncp -a '{}'/. %{{buildroot}}/\n\n\
+         %post\n{hook}\n\n%postun\n{hook}\n\n\
+         %files\n/opt/aylis-ide\n/usr/bin/aylis-ide\n/usr/bin/aylis-tool\n/usr/share/applications/aylis-ide.desktop\n/usr/share/mime/packages/aylis-ide.xml\n/usr/share/icons/hicolor/*/apps/aylis-ide.png\n/usr/share/icons/hicolor/*/mimetypes/application-x-aylis-*.png\n",
+        rpm_version(version),
+        stage.display()
+    )
+}
+
+/// O `.rpm` da IDE (Fedora, RHEL, openSUSE) a partir da pasta do pacote do Linux: os mesmos
+/// arquivos e lugares do [`linux_deb`], montado pelo `rpmbuild` (só no Linux; no Debian e no
+/// Ubuntu, o pacote `rpm` o traz). Pedido do autor em 21/11: "com instalador para windows fedora
+/// e Ubuntu". Devolve o caminho do `.rpm`.
+pub fn linux_rpm(pkg: &Path, out: &Path, version: &str) -> Result<PathBuf, String> {
+    if !cfg!(target_os = "linux") {
+        return Err("o .rpm é montado no Linux (pelo rpmbuild)".into());
+    }
+    let work = out.join("rpm-build");
+    let _ = std::fs::remove_dir_all(&work);
+    let stage = work.join("root");
+    // A mesma árvore do `.deb`.
+    let mut files = Vec::new();
+    files_of(&pkg.join("bin"), "", &mut files)?;
+    for (rel, path) in &files {
+        let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        let dest = stage.join("opt/aylis-ide/bin").join(rel);
+        write(&dest, &bytes)?;
+        if executable(rel, &bytes) {
+            executable_mode(&dest)?;
+        }
+    }
+    let mut shared = Vec::new();
+    files_of(&pkg.join("share"), "", &mut shared)?;
+    for (rel, path) in &shared {
+        let mut bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        if rel.ends_with(".desktop") {
+            bytes = String::from_utf8_lossy(&bytes).replace("@EXEC@", "/usr/bin/aylis-ide").into_bytes();
+        }
+        write(&stage.join("usr/share").join(rel), &bytes)?;
+    }
+    write(&stage.join("usr/bin/aylis-ide"), DEB_LAUNCHER.as_bytes())?;
+    executable_mode(&stage.join("usr/bin/aylis-ide"))?;
+    #[cfg(unix)]
+    std::os::unix::fs::symlink("/opt/aylis-ide/bin/aylis-tool", stage.join("usr/bin/aylis-tool")).map_err(|e| e.to_string())?;
+    let spec = work.join("aylis-ide.spec");
+    write(&spec, rpm_spec(version, &stage).as_bytes())?;
+    let status = std::process::Command::new("rpmbuild")
+        .arg("-bb")
+        .arg("--define")
+        .arg(format!("_topdir {}", work.display()))
+        .arg("--define")
+        .arg(format!("_rpmdir {}", work.display()))
+        .arg(&spec)
+        .status()
+        .map_err(|e| format!("rpmbuild: {e} (instale o pacote rpm: sudo apt install rpm, ou sudo dnf install rpm-build)"))?;
+    if !status.success() {
+        return Err("o rpmbuild falhou (veja acima)".into());
+    }
+    let name = format!("aylis-ide-{}-1.x86_64.rpm", rpm_version(version));
+    let built = work.join("x86_64").join(&name);
+    let rpm = out.join(&name);
+    std::fs::rename(&built, &rpm).map_err(|e| format!("{}: {e}", built.display()))?;
+    let _ = std::fs::remove_dir_all(&work);
+    Ok(rpm)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// O `.spec` do `.rpm`: as dependências com os nomes do Fedora, a versão sem hífen, os
+    /// arquivos nos mesmos lugares do `.deb` (21/11).
+    #[test]
+    fn the_rpm_spec_has_the_fedora_names_and_the_deb_layout() {
+        let spec = rpm_spec("0.9.1-beta.2", Path::new("/tmp/stage"));
+        assert!(spec.contains("Version: 0.9.1~beta.2\n"), "{spec}");
+        assert!(spec.contains("Requires: gcc gcc-c++ make pkgconf-pkg-config libX11-devel") && spec.contains(" curl\n"), "{spec}");
+        assert!(spec.contains("cp -a '/tmp/stage'/. %{buildroot}/") && spec.contains("\n/opt/aylis-ide\n/usr/bin/aylis-ide\n/usr/bin/aylis-tool\n"));
+        assert!(spec.contains("%post\nupdate-mime-database") && spec.contains("AutoReqProv: no"));
+    }
 
     #[test]
     fn the_file_types_go_to_the_desktop_the_mime_database_and_the_plist() {
