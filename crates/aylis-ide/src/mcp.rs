@@ -513,7 +513,9 @@ fn after_run(wait: &u64, poster: &Poster) -> Value {
     match wait_job(poster, *wait, true) {
         Ok(Phase::Running) => {
             std::thread::sleep(Duration::from_secs(2));
-            match peek(poster, |state| state.borrow().job.is_none()) {
+            // No Rust depurado, quem roda o app é a sessão do depurador (não há `job`): com ela
+            // ativa, o app está aberto (antes dizia "abriu e fechou" com o app rodando; 21/11).
+            match peek(poster, |state| state.borrow().job.is_none() && !state.borrow().debugger.active()) {
                 Ok(true) => {
                     let mut v = job_summary(poster);
                     if let Some(text) = v["content"][0]["text"].as_str() {

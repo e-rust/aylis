@@ -79,6 +79,103 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
   - Falta: o autor testar o `.deb` numa VM limpa com Debian ou Ubuntu. O Rust não vem no `.deb` (o `cargo` do Ubuntu é velho
     para a edição 2024): vem pelos pacotes de ferramentas ou pelo rustup. Distribuições antigas
     (Ubuntu 20.04, Debian 10) não têm o `libfreetype-dev` com esse nome.
+  - O "Corrigir" das linguagens no Linux mandava sempre o `apt` (no Fedora falhava): agora o
+    `setup::linux_toolchain` tem os nomes de cada linguagem no apt, dnf, zypper e pacman (o
+    `golang`, o `nodejs-npm` e o `java-latest-openjdk-devel` do Fedora 45, conferidos na VM),
+    e o JDK do Android também. Teste `each_distribution_gets_its_own_package_names`.
+  - Testado do zero na VM do Fedora 45 em 21/11 (sem a IDE, sem os pacotes do Aylis e sem as
+    bibliotecas de desenvolvimento): o `.tar.gz` e o `instalar.sh`; o `setup rust` (o Rust e o
+    CodeLLDB do fabricante, as bibliotecas pelo `dnf`, 21 s); um projeto Rust compila (204 s) e
+    abre no Wayland; as outras 7 linguagens ficam prontas pelo `aylis-tool setup`, e um app de
+    cada uma publica e abre com o backend vivo. Achado e corrigido:
+    - o `./instalar.sh` dava "Permissão negada": o `ide-package` gravava o script e os
+      executáveis com 644. Agora 755 (Linux e o `.app` do macOS);
+    - o Python do Fedora vem sem o `pip` (`No module named pip`): o debugpy e o servidor de
+      linguagem falhavam. Agora há o item "pip", instalado pelo gerenciador da distribuição;
+    - o .NET 8 não roda no OpenSSL 4 do Fedora 45 ("No usable version of libssl was found": sem
+      NuGet, sem o csharp-ls). Agora há o item "OpenSSL 3", com o pacote de compatibilidade de
+      cada distribuição (`openssl3-libs` no Fedora);
+    - o servidor de linguagem do Pascal não tinha instalador fora do Windows: agora o pasls é
+      compilado com o git e o lazbuild do sistema; e o Lazarus do Fedora (`/usr/lib64/lazarus`)
+      passou a ser achado.
+  - Depurar e o servidor de linguagem nas 8 linguagens, pela IDE da VM (pelo MCP), em 21/11:
+    um botão com `on_click`, ponto de parada no handler, executar, clicar, a pilha, as variáveis,
+    o "Avaliar" e o passo; um erro de propósito vira diagnóstico, a dica e as sugestões. Tudo
+    funciona nas 8. Achado e corrigido:
+    - Rust: a primeira parada levava minutos, as variáveis não vinham e o F8 não voltava: o
+      resumo de struct do Rust 1.99 (`StructSummaryProvider`) junta o de todos os campos, sem
+      limite, e o `ui: &mut Ui` tem centenas. O `lldb/rust_formatters.py` (era o
+      `rust_hashmap.py`) limita o resumo a um nível e 6 campos; e o LLDB carrega os símbolos sob
+      demanda. Agora a parada leva 1 a 8 s e o passo, 1 s;
+    - Go, C++ e Free Pascal não paravam em nada: o Yama do Linux (`ptrace_scope = 1`, o padrão do
+      Fedora e do Ubuntu) só deixa depurar os filhos, e o depurador se anexa ao backend. Agora o
+      `aylis-host` faz o backend autorizar a IDE (`prctl(PR_SET_PTRACER)`, só esse processo e os
+      filhos dele; `AYLIS_DEBUG_PID` leva o pid da IDE);
+    - a IDE caía (estouro de pilha) ao realçar o `aylis.hpp` no passo do C++: um grupo de captura
+      da gramática do C++ casava o mesmo trecho de novo, sem fim. Agora no máximo 16 grupos um
+      dentro do outro (teste `the_clients_highlight_without_endless_recursion`);
+    - Java: o JDT LS 1.38 não roda no Java 25 do Fedora; agora usa o JDK 17 do pacote. E todo
+      arquivo mostrava "The import dev cannot be resolved": o `.classpath` gerado não tinha o
+      cliente do Aylis; agora tem, por uma pasta ligada ao `.aylis/sdk` do projeto, e o antigo é
+      refeito (teste `the_java_project_sees_the_aylis_client`);
+    - Python: todo handler mostrava "undefined name 'Button'" (a anotação `sender: "Button"` sem
+      import); agora o import do form traz as classes das anotações (gerador 27; teste
+      `the_python_import_brings_the_sender_classes`);
+    - o MCP dizia "o app abriu e fechou" ao depurar o Rust, com o app rodando.
+  - Limitações vistas: o pasls (Pascal) não publica diagnósticos, só sugestões e dicas (é do
+    servidor); o csharp-ls só manda os diagnósticos depois de o projeto carregar, e uma edição
+    feita durante o carregamento só aparece na seguinte (a IDE poderia pedir de novo, o
+    `textDocument/diagnostic`, quando ele termina de carregar).
+  - Falta: as 8 linguagens no Ubuntu (o `.deb`; lá o pip do sistema recusa instalar fora de um
+    venv, o "externally-managed-environment", e o debugpy pode precisar de outro caminho).
+  - Pedido do autor em 20/11 ("devemos ter a opção de baixar ainda de lá tudo que for
+    preciso"): a pasta do Drive é o espelho do Aylis (`settings::AYLIS_MIRROR`), junto da origem
+    oficial, só para o que o Aylis monta (o Skia de 32 bits, o Free Pascal); posta como espelho
+    nas Opções, serve para tudo. Teste `what_aylis_builds_comes_from_the_aylis_mirror`. A pasta
+    precisa continuar com o `pacotes.json` e esses dois arquivos.
+
+**Ajustes de 20/11/2026: o Windows limpo (uma VM com o Windows 11 Home, sem nada instalado)**
+
+- [ ] Pedido do autor: "desinstalando todas as ferramentas que o aylis usa hoje e instalando por
+  ele, pra garantir que funciona". Numa VM do Hyper-V, pelo instalador da IDE e pelo
+  `aylis-tool setup`. Achado e corrigido:
+  - a IDE e o `aylis-tool` nem abriam (`0xC0000135`): faltava o runtime do Visual C++
+    (`VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`, `MSVCP140.dll`), que vem com o Visual Studio e não
+    com o Windows. Agora o instalador da IDE e o publicar para Windows (Rust e as outras
+    linguagens) levam as três ao lado do executável (`aylis_tools::vcruntime`; a Microsoft
+    permite o "app-local"). Testes `the_visual_cpp_runtime_goes_beside_the_executables` e
+    `the_newest_redist_folder_wins`;
+  - o servidor de linguagem do Rust, do Go, do C# e do C++ não era achado no PATH: a busca
+    procurava `rust-analyzer.exe.exe` (o `.exe` duas vezes). E a correção do rust-analyzer
+    chamava o `rustup`, que o Rust do pacote não tem: agora instala o pacote `rust`, que já o traz;
+  - o Python do pacote do Aylis não era achado: o atalho da Microsoft Store
+    (`WindowsApps\python.exe`, só abre a loja) vinha antes no PATH. Agora o `env::python` tenta
+    cada um do PATH e devolve o caminho inteiro;
+  - o servidor de linguagem do Pascal não compilava: o script do `cmd /C` ia com as aspas
+    escapadas (`\"`), que o cmd não entende. Agora vai cru (`raw_arg`, `cmd /S /C`);
+  - o app publicado em TypeScript, C# e Java abria a janela sem backend (o Node, o .NET e o Java
+    estavam só nos pacotes do Aylis, fora do PATH do sistema), avisando só num toast que some; o
+    de Python sumia calado (o atalho da Microsoft Store no lugar do Python). Agora o
+    `spawn_backend` procura cada um do PATH (os atalhos da loja por último) e os pacotes do
+    Aylis; sem o runtime, o `MessageDialog` diz qual instalar e fecha no OK; e o backend que
+    termina ao abrir mostra o motivo (o fim do stderr dele) antes de fechar;
+  - o app publicado em Python e em TypeScript terminava ao abrir em qualquer máquina: o
+    `aylis_client.py` e o `aylis.ts` do `src` só apontam para `../../.aylis/sdk/clients/...`, que
+    não vai na pasta publicada. Agora o publicar põe o cliente de verdade no lugar
+    (`publish::bundle_client`).
+  - Conferido na VM, do zero: o instalador silencioso põe a IDE, o Rust e o Visual Studio Build
+    Tools; o `aylis-tool setup` deixa prontas as outras 7 linguagens (Python, Node, .NET, JDK e
+    Go dos pacotes do fabricante; clangd; Lazarus pelo winget, com o pasls compilado); um
+    projeto Rust compila (5 min 44 s) e abre (Direct2D, 136 fps); um projeto em cada uma das 7
+    publica e abre com o backend vivo (`node`, `dotnet`, `java`, `python`, os `app.exe` de Go,
+    C++ e Pascal).
+  - Falta: a correção do `spawn_backend` chega aos apps na próxima versão do `aylis` no
+    crates.io (a casca publicada usa o do crates.io; na VM foi conferida com um
+    `[patch.crates-io]` para a cópia instalada). O teste pela IDE (F9, depurar) nas 8
+    linguagens na VM não foi feito: só pelo `aylis-tool`.
+  - Conferido: o instalador silencioso instala a IDE e o Rust (do `static.rust-lang.org`) com o
+    Visual Studio Build Tools; a IDE abre; um projeto Rust novo compila (5 min 44 s) e abre
+    (Direct2D, 136 fps).
 
 **Ajustes de 20/11/2026: uma janela por monitor, a que fica por cima e o arrasto entre elas**
 

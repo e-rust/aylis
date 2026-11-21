@@ -36,9 +36,36 @@ fn shell(description: &str, script: &str) -> Fix {
     Fix { description: description.to_string(), command: vec![program.into(), flag.into(), script.into()], interactive: false, fetch: None, env: Vec::new() }
 }
 
-/// O apt pelo `pkexec` (a senha numa janela do sistema, sem terminal).
-fn apt(description: &str, packages: &str) -> Fix {
-    shell(description, &format!("pkexec sh -c 'apt-get update && apt-get install -y {packages}'"))
+/// Os pacotes do sistema pelo gerenciador da distribuição (`packages`: os nomes no apt, dnf,
+/// zypper e pacman), como root pelo `sudo` sem senha ou pelo `pkexec` (a senha numa janela do
+/// sistema). Antes era sempre o apt, e no Fedora o "Corrigir" das linguagens falhava (20/11).
+/// Sem distribuição conhecida, o do apt.
+pub(crate) fn system_packages(what: &str, packages: [&str; 4]) -> Fix {
+    use crate::linux_deps::Manager;
+    let manager = Manager::detect().unwrap_or(Manager::Apt);
+    let list: Vec<&str> = packages[manager as usize].split_whitespace().collect();
+    shell(&format!("Instala {what} ({})", manager.name()), &crate::linux_deps::as_root(&manager.install_command(&list)))
+}
+
+/// O que a linguagem pede ao sistema, pelo gerenciador desta distribuição (Linux).
+pub(crate) fn linux_system_toolchain(language: Language) -> Fix {
+    let (what, packages) = linux_toolchain(language);
+    system_packages(what, packages)
+}
+
+/// O que cada linguagem pede ao sistema no Linux, nos nomes do apt, dnf, zypper e pacman.
+/// (O Fedora 45 só tem o .NET 10 e o JDK mais novo; o Aylis aceita .NET 8+ e Java 17+.)
+pub(crate) fn linux_toolchain(language: Language) -> (&'static str, [&'static str; 4]) {
+    match language {
+        Language::Rust => ("o compilador C", ["build-essential", "gcc gcc-c++ make", "gcc gcc-c++ make", "base-devel"]),
+        Language::Python => ("o Python 3 e o pip", ["python3 python3-pip python3-venv", "python3 python3-pip", "python3 python3-pip", "python python-pip"]),
+        Language::TypeScript => ("o Node e o npm", ["nodejs npm", "nodejs nodejs-npm", "nodejs npm", "nodejs npm"]),
+        Language::CSharp => ("o .NET SDK", ["dotnet-sdk-8.0", "dotnet-sdk-10.0", "dotnet-sdk-8.0", "dotnet-sdk"]),
+        Language::Java => ("o JDK", ["openjdk-17-jdk", "java-latest-openjdk-devel", "java-17-openjdk-devel", "jdk-openjdk"]),
+        Language::Go => ("o Go", ["golang-go", "golang", "go", "go"]),
+        Language::Cpp => ("o g++", ["build-essential", "gcc-c++ make", "gcc-c++ make", "base-devel"]),
+        Language::Pascal => ("o Free Pascal e o Lazarus", ["fpc lazarus", "fpc lazarus", "fpc lazarus", "fpc lazarus"]),
+    }
 }
 
 fn brew(description: &str, packages: &str) -> Fix {
@@ -98,13 +125,10 @@ pub fn install_toolchain(language: Language) -> Option<Fix> {
     } else {
         Some(match language {
             Language::Rust => shell("Instala o Rust (rustup)", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"),
-            Language::Python => apt("Instala o Python 3 (apt)", "python3 python3-pip python3-venv"),
-            Language::TypeScript => apt("Instala o Node e o npm (apt)", "nodejs npm"),
-            Language::CSharp => apt("Instala o .NET SDK 8 (apt)", "dotnet-sdk-8.0"),
-            Language::Java => apt("Instala o JDK 17 (apt)", "openjdk-17-jdk"),
-            Language::Go => apt("Instala o Go (apt)", "golang-go"),
-            Language::Cpp => apt("Instala o g++ (apt)", "build-essential"),
-            Language::Pascal => apt("Instala o Free Pascal e o Lazarus (apt)", "fpc lazarus"),
+            other => {
+                let (what, packages) = linux_toolchain(other);
+                system_packages(what, packages)
+            }
         })
     }
 }
@@ -359,6 +383,22 @@ pub fn setup_targets(language: Language, targets: &[Target], aylis_host: Option<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// No Fedora os nomes são outros (o `golang`, o `nodejs-npm`, o JDK mais novo): antes o
+    /// "Corrigir" das linguagens mandava o apt (conferido numa VM com o Fedora 45 em 20/11).
+    #[test]
+    fn each_distribution_gets_its_own_package_names() {
+        use crate::linux_deps::Manager;
+        let dnf = |l| linux_toolchain(l).1[Manager::Dnf as usize];
+        assert_eq!(dnf(Language::Go), "golang");
+        assert_eq!(dnf(Language::TypeScript), "nodejs nodejs-npm");
+        assert_eq!(dnf(Language::Java), "java-latest-openjdk-devel");
+        assert_eq!(dnf(Language::Cpp), "gcc-c++ make");
+        assert_eq!(linux_toolchain(Language::Go).1[Manager::Apt as usize], "golang-go");
+        for language in Language::ALL {
+            assert!(linux_toolchain(language).1.iter().all(|p| !p.is_empty() && !p.contains('\'')), "{language:?}");
+        }
+    }
 
     /// A assinatura de código e o WiX são só para publicar: não contam para a linguagem ficar
     /// pronta (sem certificado, nenhuma ficava pronta; relatado pelo autor em 17/11). O que

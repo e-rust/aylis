@@ -111,7 +111,7 @@ pub use native::connect_backend;
 #[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
 mod local {
     use std::io::{BufRead, BufReader, Write};
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use std::process::{Child, ChildStdin, Command, Stdio};
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
@@ -161,9 +161,9 @@ mod local {
     /// `aylis-host`). Guarde o resultado até o app fechar.
     pub fn spawn_backend(ui: &mut Ui, command: &[&str], dir: &Path) -> Result<BackendProcess, String> {
         let (program, args) = command.split_first().ok_or("backend: comando vazio")?;
-        let local = dir.join(program);
-        let mut c = if local.is_file() { Command::new(local) } else { Command::new(program) };
-        c.args(args).current_dir(dir).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit());
+        let resolved = resolve(program, dir).ok_or_else(|| missing_runtime(program))?;
+        let mut c = Command::new(&resolved);
+        c.args(args).current_dir(dir).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
         // O backend é um programa de console: sem isto, o app abriria uma janela preta junto.
         #[cfg(windows)]
         {
@@ -171,8 +171,27 @@ mod local {
             const CREATE_NO_WINDOW: u32 = 0x0800_0000;
             c.creation_flags(CREATE_NO_WINDOW);
         }
-        let mut child = c.spawn().map_err(|e| format!("não consegui iniciar o backend '{program}': {e}"))?;
+        let mut child = c.spawn().map_err(|e| format!("{} ({}): {e}", aylis_core::messages::t("Não consegui iniciar o backend"), resolved.display()))?;
         let stdout = child.stdout.take().ok_or("backend: sem stdout")?;
+        // O fim do que o backend escreveu no stderr: o motivo, se ele terminar ao abrir.
+        let errors = Arc::new(Mutex::new(String::new()));
+        if let Some(stderr) = child.stderr.take() {
+            let errors = errors.clone();
+            let _ = std::thread::Builder::new().name("aylis-backend-stderr".into()).spawn(move || {
+                for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+                    if let Ok(mut text) = errors.lock() {
+                        text.push_str(&line);
+                        text.push('\n');
+                        if text.len() > 2000 {
+                            let cut = text.len() - 2000;
+                            let cut = (cut..text.len()).find(|i| text.is_char_boundary(*i)).unwrap_or(0);
+                            text.drain(..cut);
+                        }
+                    }
+                }
+            });
+        }
+        let what = resolved.display().to_string();
         let stdin: Stdin = Arc::new(Mutex::new(child.stdin.take()));
         let events = stdin.clone();
         aylis_remote::forward_events(ui, move |_, event| write_line(&events, &event.to_string()));
@@ -181,12 +200,14 @@ mod local {
         std::thread::Builder::new()
             .name("aylis-backend".into())
             .spawn(move || {
+                let mut talked = false;
                 for line in BufReader::new(stdout).lines() {
                     let Ok(line) = line else { break };
                     if line.trim().is_empty() {
                         continue;
                     }
                     let Ok(message) = serde_json::from_str::<Value>(&line) else { continue };
+                    talked = true;
                     let replies = replies.clone();
                     poster.post(move |ui| {
                         if let Some(reply) = super::handle(ui, &message) {
@@ -195,11 +216,98 @@ mod local {
                         ui.process_events();
                     });
                 }
-                // O backend terminou: o app fecha junto.
-                poster.post(|ui| ui.request_close());
+                // O backend terminou: o app fecha junto. Sem ter dito nada (terminou ao abrir:
+                // faltou o runtime, o atalho da Microsoft Store no lugar do Python), antes diz
+                // por quê; antes o app só sumia (testado num Windows limpo em 20/11).
+                if talked {
+                    poster.post(|ui| ui.request_close());
+                } else {
+                    std::thread::sleep(Duration::from_millis(200));
+                    let detail = errors.lock().map(|t| t.trim().to_string()).unwrap_or_default();
+                    poster.post(move |ui| {
+                        let mut text = format!("{} ({what}).", aylis_core::messages::t("O backend terminou ao abrir"));
+                        if !detail.is_empty() {
+                            text.push_str("\n\n");
+                            text.push_str(&detail);
+                        }
+                        aylis_controls::message_dlg(ui, &text, aylis_controls::DlgKind::Error, &[aylis_core::ModalResult::Ok], |ui, _| ui.request_close());
+                    });
+                }
             })
             .map_err(|e| e.to_string())?;
         Ok(BackendProcess { child, stdin })
+    }
+
+    fn exe(name: &str) -> String {
+        if cfg!(windows) && Path::new(name).extension().is_none() { format!("{name}.exe") } else { name.to_string() }
+    }
+
+    /// O programa do backend: um caminho relativo, em `dir` (`backend/app.exe`); um nome solto
+    /// (`node`, `dotnet`, `java`, `python`), cada um do PATH (os atalhos da Microsoft Store,
+    /// `WindowsApps`, por último: o do Python só abre a loja) e, por fim, os pacotes de
+    /// ferramentas do Aylis (`~/.aylis/tools`): na máquina de quem desenvolve, o runtime pode
+    /// estar só lá, fora do PATH do sistema (testado num Windows limpo em 20/11).
+    fn resolve(program: &str, dir: &Path) -> Option<PathBuf> {
+        let local = dir.join(program);
+        if local.is_file() {
+            return Some(local);
+        }
+        if Path::new(program).components().count() > 1 {
+            return None;
+        }
+        let file = exe(program);
+        let found: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).map(|d| d.join(&file)).filter(|p| p.is_file()).collect()).unwrap_or_default();
+        let (store, real): (Vec<PathBuf>, Vec<PathBuf>) = found.into_iter().partition(|p| p.components().any(|c| c.as_os_str().eq_ignore_ascii_case("WindowsApps")));
+        real.into_iter().next().or_else(|| aylis_tools_dir().and_then(|t| find_below(&t, &file, 4))).or_else(|| store.into_iter().next())
+    }
+
+    /// A pasta dos pacotes de ferramentas do Aylis (`%USERPROFILE%\.aylis\tools`).
+    fn aylis_tools_dir() -> Option<PathBuf> {
+        let home = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" })?;
+        Some(PathBuf::from(home).join(".aylis").join("tools")).filter(|d| d.is_dir())
+    }
+
+    /// `name` em `dir` ou abaixo (até `depth` níveis), a versão mais nova primeiro.
+    fn find_below(dir: &Path, name: &str, depth: u32) -> Option<PathBuf> {
+        let direct = dir.join(name);
+        if direct.is_file() {
+            return Some(direct);
+        }
+        if depth == 0 {
+            return None;
+        }
+        let mut entries: Vec<PathBuf> = std::fs::read_dir(dir).ok()?.flatten().map(|e| e.path()).filter(|p| p.is_dir()).collect();
+        entries.sort();
+        entries.into_iter().rev().find_map(|d| find_below(&d, name, depth - 1))
+    }
+
+    /// O texto de quando o runtime não existe na máquina.
+    fn missing_runtime(program: &str) -> String {
+        let what = match program {
+            "node" | "bun" => "o Node 22.6+ (nodejs.org)",
+            "dotnet" => "o .NET 8 (dot.net)",
+            "java" => "o Java 17+ (adoptium.net)",
+            "python" | "python3" | "py" => "o Python 3.8+ (python.org)",
+            other => other,
+        };
+        format!("{} {what}.", aylis_core::messages::t("Este aplicativo precisa de"))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        /// O programa ao lado (`backend/app.exe`) e um nome que não existe em lugar nenhum.
+        #[test]
+        fn the_backend_beside_the_app_and_a_missing_runtime() {
+            let dir = std::env::temp_dir().join(format!("aylis_backend_resolve_{}", std::process::id()));
+            std::fs::create_dir_all(dir.join("backend")).unwrap();
+            std::fs::write(dir.join("backend").join("app.exe"), b"x").unwrap();
+            assert_eq!(resolve("backend/app.exe", &dir), Some(dir.join("backend/app.exe")));
+            assert_eq!(resolve("aylis-nao-existe-123", &dir), None);
+            assert!(missing_runtime("dotnet").contains(".NET 8"));
+            let _ = std::fs::remove_dir_all(&dir);
+        }
     }
 }
 

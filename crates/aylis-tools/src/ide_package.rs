@@ -97,6 +97,19 @@ fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     std::fs::write(path, bytes).map_err(|e| format!("{}: {e}", path.display()))
 }
 
+/// O arquivo com permissão de execução (755), se existir (no Windows não há o que mudar: o
+/// `instalar.sh` também dá `chmod +x` nos executáveis).
+fn executable_mode(path: &Path) -> Result<(), String> {
+    #[cfg(unix)]
+    if path.is_file() {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).map_err(|e| format!("{}: {e}", path.display()))?;
+    }
+    #[cfg(not(unix))]
+    let _ = path;
+    Ok(())
+}
+
 /// O script que instala a pasta da IDE para o usuário (`~/.local`).
 /// O `instalar.sh` do Linux: a IDE (com os outros executáveis e a pasta `aylis/`) em
 /// `~/.local/share/aylis-ide/bin`, o lançador da IDE e o `aylis-tool` em `~/.local/bin`, e os
@@ -221,6 +234,11 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
                 }
             }
             write(&root.join("instalar.sh"), LINUX_INSTALL.as_bytes())?;
+            // O `./instalar.sh` e os executáveis prontos para rodar: o `write` grava 644 e o
+            // `./instalar.sh` dava "Permissão negada" (Fedora, 21/11).
+            for rel in ["instalar.sh", "bin/aylis-ide", "bin/aylis-host", "bin/aylis-tool", "bin/aylis-migrate"] {
+                executable_mode(&root.join(rel))?;
+            }
             Ok(root)
         }
         "macos" => {
@@ -228,6 +246,7 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
             let _ = std::fs::remove_dir_all(&app);
             let contents = app.join("Contents");
             write(&contents.join("MacOS/aylis-ide"), &exe)?;
+            executable_mode(&contents.join("MacOS/aylis-ide"))?;
             write(&contents.join("Info.plist"), macos_info_plist(version).as_bytes())?;
             write(&contents.join("Resources/aylis-ide.icns"), &crate::icons::icns(&logo))?;
             for (ext, _) in DESCRIPTIONS {

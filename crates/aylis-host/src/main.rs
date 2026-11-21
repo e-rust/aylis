@@ -201,6 +201,7 @@ fn run(args: Args) -> Result<(), Error> {
             if let Some(p) = &project {
                 command.current_dir(backend_dir(p));
             }
+            allow_debugger(&mut command);
             let child = command
                 .args(&args.backend[1..])
                 .stdin(Stdio::piped())
@@ -334,6 +335,27 @@ fn headless(mut ui: Ui, form: ComponentId, lines: transport::Incoming, out: &Out
     std::fs::write(path, png)?;
     eprintln!("aylis-host: tela gravada em {path}");
     Ok(())
+}
+
+/// Depurar na IDE (`AYLIS_DEBUG_PID`: o processo que vai depurar): no Linux, o backend autoriza
+/// esse processo e os filhos dele (o Delve, o CodeLLDB) a se anexar. O Fedora e o Ubuntu só
+/// deixam depurar os próprios filhos (Yama, `ptrace_scope = 1`), e a depuração por anexação de
+/// Go, C++ e Free Pascal não parava em nada (Fedora, 21/11). Só esse processo, não qualquer um.
+fn allow_debugger(command: &mut Command) {
+    #[cfg(target_os = "linux")]
+    if let Some(pid) = std::env::var("AYLIS_DEBUG_PID").ok().and_then(|p| p.parse::<libc::c_ulong>().ok()).filter(|p| *p > 1) {
+        use std::os::unix::process::CommandExt;
+        // SAFETY: entre o fork e o exec só se chama o `prctl`, que é seguro ali (async-signal-
+        // safe, sem alocar nem travar); a falha (um kernel sem o Yama) é ignorada.
+        unsafe {
+            command.pre_exec(move || {
+                libc::prctl(libc::PR_SET_PTRACER, pid, 0, 0, 0);
+                Ok(())
+            });
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    let _ = command;
 }
 
 /// Onde o backend roda: na pasta atual, se ela está dentro do projeto (quem chamou já

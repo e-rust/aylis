@@ -622,3 +622,34 @@ fn the_official_url_is_the_last_source_and_the_error_says_how_to_do_it_by_hand()
     assert!(e.contains("origem oficial") && e.contains("Para instalar à mão") && e.contains(&sha), "{e}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// O que o Aylis monta (sem `url`: o Skia de 32 bits, o Free Pascal) vem do espelho do Aylis,
+/// junto da origem oficial; o que tem fabricante nunca pergunta a ele (pedido do autor em 20/11).
+#[test]
+fn what_aylis_builds_comes_from_the_aylis_mirror() {
+    let dir = temp("aylis_mirror");
+    let built = zip_bytes(&[("b.txt", b"montado pelo Aylis")]);
+    let (base, asked) = serve(|_| {
+        let mut r = HashMap::new();
+        r.insert("/espelho/pacotes.json".to_string(), ("application/json", br#"{"files": {"b-1.zip": {"url": "b-1.zip"}}}"#.to_vec()));
+        r.insert("/espelho/b-1.zip".to_string(), ("application/zip", built.clone()));
+        r
+    });
+    let m = manifest(json!({ "b": { "version": "1", "install": "extract", "platforms": { "any": { "files": [file_entry("b-1.zip", &built, json!({ "built": "aylis-tool x" }))] } } } }));
+    let sources = Sources { official: true, aylis_mirror: Some(format!("{base}/espelho/pacotes.json")), ..Sources::default() };
+    installer(&dir, m, sources.clone()).install(&["b"], &Control::default(), &mut quiet()).unwrap();
+    assert_eq!(std::fs::read(dir.join("tools/b/1/b.txt")).unwrap(), b"montado pelo Aylis");
+    // Sem o espelho do Aylis (a origem oficial desligada): o passo a passo aponta a pasta dele.
+    let _ = std::fs::remove_dir_all(dir.join("cache"));
+    let _ = std::fs::remove_dir_all(dir.join("tools"));
+    let m = manifest(json!({ "b": { "version": "1", "install": "extract", "platforms": { "any": { "files": [file_entry("b-1.zip", &built, json!({ "built": "aylis-tool x" }))] } } } }));
+    let e = installer(&dir, m, Sources::default()).install(&["b"], &Control::default(), &mut quiet()).unwrap_err();
+    assert!(e.contains(crate::settings::AYLIS_MIRROR) && e.contains(&sha(&built)), "{e}");
+    let before = asked.lock().unwrap().len();
+    // Com fabricante: o espelho do Aylis não é consultado.
+    let other = zip_bytes(&[("o.txt", b"x")]);
+    let m = manifest(json!({ "o": { "version": "1", "install": "extract", "platforms": { "any": { "files": [file_entry("o-1.zip", &other, json!({ "url": "https://fabricante.example/o-1.zip" }))] } } } }));
+    let _ = installer(&dir, m, Sources { official: false, ..sources }).install(&["o"], &Control::default(), &mut quiet());
+    assert_eq!(asked.lock().unwrap().len(), before, "o espelho do Aylis não é perguntado pelo que tem fabricante");
+    let _ = std::fs::remove_dir_all(&dir);
+}

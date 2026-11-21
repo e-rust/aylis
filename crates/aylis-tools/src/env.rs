@@ -147,7 +147,21 @@ impl Fix {
         }
         let (program, args) = self.command.split_first().ok_or("comando vazio")?;
         let mut command = Command::new(program);
-        command.args(args).envs(self.env.iter().map(|(k, v)| (k, v)));
+        match args {
+            // O script do `cmd /C` vai como foi escrito: o Rust escapa as aspas como `\"`, que o
+            // cmd não entende, e os caminhos com espaço (`"C:\Program Files\Git\cmd\git.exe"`)
+            // quebravam (o servidor do Pascal num Windows limpo, 20/11). O `/S` tira só as aspas
+            // de fora.
+            #[cfg(windows)]
+            [flag, script] if program.eq_ignore_ascii_case("cmd") && flag.eq_ignore_ascii_case("/C") => {
+                use std::os::windows::process::CommandExt;
+                command.args(["/S", "/C"]).raw_arg(format!("\"{script}\""));
+            }
+            _ => {
+                command.args(args);
+            }
+        }
+        command.envs(self.env.iter().map(|(k, v)| (k, v)));
         crate::process::run_tool(&mut command, control, sink, crate::LineKind::Tool)
     }
 
@@ -213,7 +227,7 @@ pub fn on_system(name: &str) -> Option<String> {
         "android-ndk" => android_sdk().and_then(|s| android_ndk(&s)).and_then(outside_packages),
         "cargo-ndk" => program("cargo-ndk"),
         "wasm-bindgen" => program("wasm-bindgen"),
-        "python" => python().and_then(|(p, _)| which(&p)).and_then(outside_packages),
+        "python" => python().map(|(p, _)| PathBuf::from(p)).and_then(outside_packages),
         "node" => program("node"),
         "dotnet" => program("dotnet"),
         "go" => program("go"),
@@ -862,6 +876,14 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                 None => Check::missing(t, "Python 3.8+", "não encontrado").fix(install_python()),
             });
             if let Some((program, _)) = python() {
+                // No Linux, o Python do sistema pode vir sem o pip (o Fedora 45: "No module named
+                // pip"), e o debugpy e o servidor de linguagem vêm por ele (21/11).
+                if !cfg!(windows) && !cfg!(target_os = "macos") && output(&program, &["-m", "pip", "--version"]).is_none() {
+                    out.push(Check::missing(t, "pip (instala o debugpy e o servidor de linguagem)", "não instalado").fix(crate::setup::system_packages(
+                        "o pip",
+                        ["python3-pip python3-venv", "python3-pip", "python3-pip", "python-pip"],
+                    )));
+                }
                 let has = output(&program, &["-c", "import debugpy"]).is_some();
                 out.push(if has {
                     Check::ok(t, "debugpy (depurar na IDE e no VS Code)", "instalado")
@@ -910,6 +932,15 @@ fn desktop_host(out: &mut Vec<Check>, language: Language, aylis_host: Option<&Pa
             None => Check::missing(t, &label, e.clone()),
         },
     });
+    // O .NET 8 carrega o OpenSSL 3 ou o 1.1; o Fedora 45 já é OpenSSL 4, e o `dotnet` falhava
+    // ("No usable version of libssl was found": sem restaurar pacotes nem instalar ferramentas;
+    // 21/11). As distribuições têm o 3 em pacote à parte.
+    if language == Language::CSharp && cfg!(target_os = "linux") && !has_openssl_for_dotnet() {
+        out.push(Check::missing(t, "OpenSSL 3 (o .NET 8 precisa)", "só há uma versão mais nova do OpenSSL").fix(crate::setup::system_packages(
+            "o OpenSSL 3",
+            ["libssl3t64", "openssl3-libs", "libopenssl3", "openssl-3.0"],
+        )));
+    }
     out.push(host_debugger(language, toolchain.ok().map(|tc| tc.program)));
     out.push(match aylis_host.filter(|h| h.is_file()) {
         Some(h) => Check::ok(t, "aylis-host", h.display().to_string()),
@@ -918,6 +949,12 @@ fn desktop_host(out: &mut Vec<Check>, language: Language, aylis_host: Option<&Pa
             &["cargo", "build", "-p", "aylis-host", "--manifest-path", &crate::aylis_root().join("Cargo.toml").display().to_string()],
         )),
     });
+}
+
+/// Há o `libssl` que o .NET 8 carrega (o 3 ou o 1.1) nas pastas de bibliotecas do sistema?
+fn has_openssl_for_dotnet() -> bool {
+    let dirs = ["/usr/lib64", "/usr/lib", "/lib64", "/lib", "/usr/lib/x86_64-linux-gnu", "/lib/x86_64-linux-gnu", "/usr/lib/aarch64-linux-gnu"];
+    dirs.iter().any(|d| ["libssl.so.3", "libssl.so.1.1"].iter().any(|f| Path::new(d).join(f).exists()))
 }
 
 /// O pacote do compilador de uma linguagem (as que o manifesto tem).
@@ -1017,7 +1054,12 @@ fn install_language_server(language: Language) -> Option<Fix> {
     let tools = crate::dap::tools_dir()?;
     let dir = |name: &str| tools.join(name).display().to_string();
     Some(match language {
-        Language::Rust => Fix::new("Instala o rust-analyzer (rustup component add rust-analyzer)", &["rustup", "component", "add", "rust-analyzer"]),
+        // Pelo rustup, se houver; o Rust do pacote do Aylis (sem rustup) já traz o
+        // rust-analyzer, então o pacote (num Windows limpo o rustup não existia; 20/11).
+        Language::Rust => match crate::setup::existing_rustup() {
+            Some(rustup) => Fix::new("Instala o rust-analyzer (rustup component add rust-analyzer)", &[&rustup.display().to_string(), "component", "add", "rust-analyzer"]),
+            None => Fix::download("rust")?,
+        },
         Language::Go => {
             let go = crate::hostlang::find(Language::Go).ok()?.program;
             go_install("Instala o gopls", &go, "golang.org/x/tools/gopls", "gopls", &tools.join("gopls"))
@@ -1057,10 +1099,22 @@ fn install_language_server(language: Language) -> Option<Fix> {
         // O 1.38 é o último que roda no Java 17 (os de depois pedem o 21).
         Language::Java => Fix::download("jdtls")?,
         Language::Cpp => Fix::download("clangd")?,
+        Language::Pascal if !cfg!(windows) => {
+            // No Linux e no macOS: o mesmo pasls, com o git e o lazbuild do sistema (o Lazarus
+            // vem com o Free Pascal pelo gerenciador de pacotes). Antes não havia instalador
+            // fora do Windows (Fedora, 21/11).
+            let lazbuild = which("lazbuild").or_else(|| crate::lsp::lazarus_dir().map(|d| d.join("lazbuild")).filter(|p| p.is_file()))?;
+            let git = which("git").map_or("git".to_string(), |p| p.display().to_string());
+            let commit = crate::downloads::version("pascal-language-server");
+            let (src, out) = (dir("pasls-src"), dir("pasls"));
+            let cpu_os = format!("{}-{}", std::env::consts::ARCH, if cfg!(target_os = "macos") { "darwin" } else { "linux" });
+            let script = format!(
+                "rm -rf '{src}' && '{git}' clone https://github.com/castle-engine/pascal-language-server '{src}' && '{git}' -C '{src}' checkout {commit} && '{git}' -C '{src}' submodule update --init --recursive && '{lazbuild}' --build-mode=Release '{src}/server/pasls.lpi' && mkdir -p '{out}' && cp '{src}/server/lib/{cpu_os}/pasls' '{out}/pasls'",
+                lazbuild = lazbuild.display()
+            );
+            Fix::new(format!("Compila o pasls (Castle Engine, commit {}) com o Lazarus em {out}", &commit[..commit.len().min(12)]), &["sh", "-c", &script])
+        }
         Language::Pascal => {
-            if !cfg!(windows) {
-                return None;
-            }
             // O pasls da Castle Engine, compilado com o Lazarus (que o winget instala), do
             // GitHub pelo git (instalado antes, se faltar).
             let src = dir("pasls-src");
@@ -1095,13 +1149,19 @@ fn install_python() -> Fix {
     Fix::package_or("python", crate::setup::install_toolchain(Language::Python).unwrap_or_else(|| Fix::new("Instala o Python 3", &["python3", "--version"])))
 }
 
-/// O Python disponível: (programa, versão). No Windows também tenta o `py`.
+/// O Python disponível: (o caminho do programa, a versão). No Windows também tenta o `py`.
+/// Cada um do PATH, não só o primeiro: o atalho da Microsoft Store (`WindowsApps\python.exe`)
+/// só abre a loja e não diz versão, e vinha antes do Python do pacote do Aylis (no fim do
+/// PATH), que nunca era achado (testado num Windows limpo em 20/11).
 pub fn python() -> Option<(String, (u32, u32, u32))> {
     let candidates: &[&str] = if cfg!(windows) { &["python", "py", "python3"] } else { &["python3", "python"] };
-    candidates.iter().find_map(|p| {
-        let v = output(p, &["--version"])?;
-        // O "python" da Microsoft Store só abre a loja: não tem versão.
-        Some((p.to_string(), parse_version(&v)?))
+    let dirs: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
+    candidates.iter().find_map(|name| {
+        dirs.iter().map(|d| d.join(exe(name))).filter(|p| p.is_file()).find_map(|p| {
+            let program = p.display().to_string();
+            let v = output(&program, &["--version"])?;
+            Some((program, parse_version(&v)?))
+        })
     })
 }
 
@@ -1413,7 +1473,7 @@ fn install_jdk() -> Fix {
     } else if cfg!(target_os = "macos") {
         Fix::new("Instala o OpenJDK 17 (Homebrew)", &["brew", "install", "openjdk@17"])
     } else {
-        Fix::new("Instala o OpenJDK 17 (apt)", &["sudo", "apt", "install", "-y", "openjdk-17-jdk"]).interactive()
+        crate::setup::linux_system_toolchain(Language::Java)
     }
 }
 

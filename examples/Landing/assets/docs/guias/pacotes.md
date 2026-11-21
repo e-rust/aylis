@@ -51,11 +51,21 @@ Na ordem, e o primeiro que tiver o arquivo com o hash certo vence:
    Desligada nas Opções (`package_official = off` no `tools.json`), para a empresa que só
    aceita as origens dela.
 
+5. **O espelho do Aylis** (`settings::AYLIS_MIRROR`, a pasta do Drive do autor), junto da
+   origem oficial e com a mesma chave: só para os arquivos que o Aylis monta e que não têm
+   fabricante (veja "Pacote feito pelo Aylis" abaixo). O que tem fabricante nunca pergunta a
+   ele. Para baixar **tudo** dele (uma rede que bloqueia os fabricantes e libera o Drive),
+   ponha o link da pasta como espelho nas Opções (aba Pacotes) ou em
+   `aylis-tool packages sources --add-mirror <link>`. A pasta guarda o `pacotes.json` e os
+   arquivos do `pack`; os dois feitos pelo Aylis não podem sair dela.
+
 Decidido pelo autor em 20/11, mudando a decisão de 12/11 (que não usava a URL oficial e tinha
 como espelho padrão uma pasta do Google Drive): "eu não queria depender do meu google drive.. foi
 uma decisão ruim", e "não tem como deixar a IDE conseguindo gerar tudo como você fez?" (o `pack`).
 O espelho do Drive não tinha nenhum arquivo do Linux, e numa VM limpa com o Fedora o Rust só
-instalava pela pasta gerada à mão.
+instalava pela pasta gerada à mão. No mesmo dia, o autor lembrou que o Skia de 32 bits só existe
+no Drive ("devemos ter a opção de baixar ainda de lá tudo que for preciso"): o Drive ficou como a
+origem do que o Aylis monta e como espelho opcional de tudo.
 
 **Quando nenhuma origem dá** (a rede bloqueia o fabricante, por exemplo), o erro traz o passo a
 passo para instalar à mão: o endereço do arquivo, o comando que confere o SHA-256 em cada

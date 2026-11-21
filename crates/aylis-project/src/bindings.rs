@@ -1119,7 +1119,8 @@ fn generator(language: Language, m: &Model) -> Out {
 /// enum e registro dentro de registro; os eventos com registro (19/11).
 /// 25: o `field` dos registros em Python e o campo com o nome do registro em C# (19/11).
 /// 26: o `problems` do `bind` sem o aviso de `mut` num form sem componentes (19/11).
-const GENERATOR_VERSION: u32 = 26;
+/// 27: o import do form em Python traz também as classes das anotações dos handlers (21/11).
+const GENERATOR_VERSION: u32 = 27;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1435,6 +1436,19 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
 
 const HEADER: &str = "Os componentes dos forms com as propriedades tipadas (frmX.componente.Propriedade).\nGerado pela IDE do Aylis a cada \"Gerar código\": não edite.";
 
+/// As classes das anotações `sender: "X"` dos handlers Python (os nomes simples).
+fn python_sender_classes(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for part in text.split("sender: \"").skip(1) {
+        if let Some(name) = part.split('"').next().filter(|n| crate::is_identifier(n)) {
+            if !out.iter().any(|o: &String| o == name) {
+                out.push(name.to_string());
+            }
+        }
+    }
+    out
+}
+
 /// O arquivo de eventos com a linha que traz a instância do form, se ainda não tem.
 fn with_import(language: Language, text: &str, form: &str) -> Option<String> {
     let insert_after = |text: &str, line_matches: &dyn Fn(&str) -> bool, new: &str| -> Option<String> {
@@ -1453,8 +1467,32 @@ fn with_import(language: Language, text: &str, form: &str) -> Option<String> {
             insert_after(text, &|l| l.starts_with("use "), &format!("use crate::generated::{};", form_struct(form)))
         }
         Language::Python => {
+            // As classes das anotações dos handlers (`sender: "Button"`) também: sem o import,
+            // o servidor de linguagem marcava "undefined name 'Button'" em todo handler
+            // (Fedora, 21/11).
+            let classes = python_sender_classes(text);
+            let names = |extra: &[String]| {
+                let mut all: Vec<String> = extra.to_vec();
+                all.sort();
+                all.dedup();
+                all.retain(|c| c != form);
+                all.push(form.to_string());
+                all.join(", ")
+            };
             if text.contains("from .components import") {
-                return None;
+                // Só a linha no formato gerado; uma mudada pelo usuário fica como está.
+                let lines: Vec<&str> = text.split('\n').collect();
+                let at = lines.iter().position(|l| l.starts_with("from .components import ") && l.ends_with("  # noqa: E402"))?;
+                let current: Vec<String> = lines[at]["from .components import ".len()..lines[at].len() - "  # noqa: E402".len()].split(',').map(|s| s.trim().to_string()).collect();
+                if classes.iter().all(|c| current.contains(c)) {
+                    return None;
+                }
+                let mut wanted = current.clone();
+                wanted.extend(classes);
+                let line = format!("from .components import {}  # noqa: E402", names(&wanted));
+                let mut out: Vec<String> = lines.iter().map(|l| l.to_string()).collect();
+                out[at] = line;
+                return Some(out.join("\n"));
             }
             // Depois da docstring do módulo (a primeira linha que fecha as aspas triplas).
             let mut lines: Vec<&str> = text.split('\n').collect();
@@ -1464,7 +1502,7 @@ fn with_import(language: Language, text: &str, form: &str) -> Option<String> {
             } else {
                 0
             };
-            let new = format!("\nfrom .components import {form}  # noqa: E402");
+            let new = format!("\nfrom .components import {}  # noqa: E402", names(&classes));
             lines.insert(end + 1, &new);
             Some(lines.join("\n"))
         }
@@ -4888,6 +4926,25 @@ fn pascal_records(records: &Records, order: &[String]) -> (String, String, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// O import do form em Python traz as classes das anotações dos handlers (sem ele, o
+    /// servidor de linguagem marcava "undefined name 'Button'"); a linha mudada pelo usuário
+    /// fica como está (21/11).
+    #[test]
+    fn the_python_import_brings_the_sender_classes() {
+        let doc = "\"\"\"Eventos.\"\"\"\n";
+        let handlers = "\n\ndef btnOk_click(aylis, sender: \"Button\"):\n    pass\n\n\ndef edtNome_change(aylis, sender: \"Edit\", value: str):\n    pass\n";
+        let new = with_import(Language::Python, &format!("{doc}{handlers}"), "frmCliente").unwrap();
+        assert!(new.contains("from .components import Button, Edit, frmCliente  # noqa: E402"), "{new}");
+        // Já com o import gerado: só acrescenta o que falta, e depois não mexe mais.
+        let old = format!("{doc}\nfrom .components import frmCliente  # noqa: E402\n{handlers}");
+        let updated = with_import(Language::Python, &old, "frmCliente").unwrap();
+        assert!(updated.contains("from .components import Button, Edit, frmCliente  # noqa: E402"), "{updated}");
+        assert_eq!(with_import(Language::Python, &updated, "frmCliente"), None);
+        // Mudada pelo usuário: fica.
+        let mine = format!("{doc}\nfrom .components import frmCliente as janela\n{handlers}");
+        assert_eq!(with_import(Language::Python, &mine, "frmCliente"), None);
+    }
 
     #[test]
     fn names_in_each_language() {

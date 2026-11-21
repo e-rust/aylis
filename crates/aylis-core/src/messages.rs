@@ -69,6 +69,9 @@ pub fn tf(template: &str, args: &[&dyn std::fmt::Display]) -> String {
 
 // Ordem: diálogos, edição, dados, grid, arquivos e listas, mídia.
 const EN: &[(&str, &str)] = &[
+    ("Não consegui iniciar o backend", "Could not start the backend"),
+    ("O backend terminou ao abrir", "The backend ended right after starting"),
+    ("Este aplicativo precisa de", "This application needs"),
     ("Informação", "Information"),
     ("Aviso", "Warning"),
     ("Erro", "Error"),
@@ -222,6 +225,9 @@ const EN: &[(&str, &str)] = &[
 ];
 
 const ES: &[(&str, &str)] = &[
+    ("Não consegui iniciar o backend", "No se pudo iniciar el backend"),
+    ("O backend terminou ao abrir", "El backend terminó al iniciar"),
+    ("Este aplicativo precisa de", "Esta aplicación necesita"),
     ("Informação", "Información"),
     ("Aviso", "Aviso"),
     ("Erro", "Error"),

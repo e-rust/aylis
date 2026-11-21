@@ -41,6 +41,27 @@ struct Scopes {
 
 thread_local! {
     static SCOPES: RefCell<Scopes> = RefCell::new(Scopes { stacks: vec![(0, "".into())], ..Default::default() });
+    /// Quantos grupos de captura com regras próprias estão sendo realçados um dentro do outro.
+    static CAPTURE_DEPTH: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+/// O limite de grupos dentro de grupos no realce (as gramáticas reais usam poucos níveis).
+const MAX_CAPTURE_DEPTH: u32 = 16;
+
+/// Um nível a mais de `CAPTURE_DEPTH` enquanto vive (volta mesmo se o realce sair no meio).
+struct CaptureDepth;
+
+impl CaptureDepth {
+    fn enter() -> Self {
+        CAPTURE_DEPTH.with(|d| d.set(d.get() + 1));
+        CaptureDepth
+    }
+}
+
+impl Drop for CaptureDepth {
+    fn drop(&mut self) {
+        CAPTURE_DEPTH.with(|d| d.set(d.get().saturating_sub(1)));
+    }
 }
 
 /// A pilha `stack` com mais um ou vários escopos (separados por espaço) em cima.
@@ -644,8 +665,13 @@ impl Grammar {
                     k = j;
                 }
             }
-            if let Some(rule) = cap.patterns {
-                // O texto do grupo realçado só com as regras dele.
+            // O texto do grupo realçado só com as regras dele, até `MAX_CAPTURE_DEPTH` grupos
+            // dentro de grupos: a gramática do C++ tem regras de grupo que casam o mesmo
+            // trecho de novo, e a recursão sem fim derrubava a IDE (estouro de pilha ao abrir
+            // um cabeçalho no passo do depurador; Fedora, 21/11). Além do limite, o grupo fica
+            // com o escopo que já tem.
+            if let Some(rule) = cap.patterns.filter(|_| CAPTURE_DEPTH.with(|d| d.get()) < MAX_CAPTURE_DEPTH) {
+                let _depth = CaptureDepth::enter();
                 let base = scopes[s - ms];
                 let mut frames = vec![Frame { rule, end: None, name_scope: base, content_scope: base, eol: false, entered: None, outer_anchor: usize::MAX }];
                 let mut sub = Vec::new();

@@ -159,6 +159,15 @@ fn project_dir_of(dir: &str) -> Option<String> {
     None
 }
 
+/// `<projeto>/.aylis/sdk`, a pasta do aylis desta máquina vista de dentro do projeto (criada se
+/// faltar). O servidor de linguagem do Java acha por ela o cliente (`clients/java`), que fica
+/// fora da pasta do código.
+pub fn sdk_dir(project_dir: &Path) -> Option<PathBuf> {
+    let project = project_dir.display().to_string().replace('\\', "/");
+    ensure_sdk_link(&project, &aylis_root());
+    Some(project_dir.join(".aylis").join("sdk")).filter(|p| p.is_dir())
+}
+
 /// Deixa `<projeto>/.aylis/sdk` apontando para o aylis em `root` (a junção do Windows, sem
 /// administrador; o link simbólico nos outros sistemas), e o `.aylis/.gitignore` com ela de
 /// fora do git. Uma pasta de verdade no lugar não é mexida.
@@ -1734,7 +1743,8 @@ pub fn local_shell(project: &Project, backend: &[String]) -> Result<PathBuf, Str
              let backend = match aylis::spawn_backend(&mut app.ui, BACKEND, dir) {{\n        \
              Ok(backend) => Some(backend),\n        \
              Err(e) => {{\n            \
-             aylis::controls::toast(&mut app.ui, &e);\n            \
+             // Sem o backend o app não faz nada: diz o que falta e fecha no OK.\n            \
+             aylis::controls::message_dlg(&mut app.ui, &e, aylis::controls::DlgKind::Error, &[aylis::prelude::ModalResult::Ok], |ui, _| ui.request_close());\n            \
              None\n        \
              }}\n    \
              }};\n    \

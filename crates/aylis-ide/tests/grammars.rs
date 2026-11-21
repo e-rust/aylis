@@ -124,3 +124,26 @@ fn a_vsix_brings_its_language_and_theme() {
     assert!(store.join("ext").join("extension").join("package.json").is_file(), "guardado para a próxima vez");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// O cliente C++ inteiro realçado com a gramática do C++ (e os outros clientes com as deles),
+/// numa thread de pilha pequena: um grupo de captura cujas regras casavam o mesmo trecho de
+/// novo entrava em recursão sem fim e derrubava a IDE (o passo do depurador abriu o
+/// `aylis.hpp`; Fedora, 21/11).
+#[test]
+fn the_clients_highlight_without_endless_recursion() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../clients");
+    let files = [("cpp", "cpp/aylis.hpp"), ("cpp", "cpp/demo.cpp"), ("python", "python/aylis_client.py"), ("typescript", "typescript/aylis.ts")];
+    for (lang, rel) in files {
+        let text = std::fs::read_to_string(root.join(rel)).unwrap_or_else(|e| panic!("{rel}: {e}"));
+        let handle = std::thread::Builder::new()
+            .stack_size(2 << 20)
+            .spawn(move || {
+                aylis_ide::grammars::register();
+                let grammar = textmate::grammar_for(lang).unwrap();
+                let mut state = Default::default();
+                text.lines().map(|line| grammar.tokenize_line(line, &mut state).len()).sum::<usize>()
+            })
+            .unwrap();
+        assert!(handle.join().unwrap_or_else(|_| panic!("{rel}: o realce estourou a pilha")) > 0, "{rel}");
+    }
+}

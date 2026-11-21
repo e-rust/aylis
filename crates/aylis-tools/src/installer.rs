@@ -188,7 +188,13 @@ pub fn installer_ide(options: &Options) -> Result<PathBuf, String> {
     std::fs::write(&manifest, without_examples(&text)).map_err(|e| format!("{}: {e}", manifest.display()))?;
     let nsi = work.join("aylis-ide.nsi");
     // Com BOM: o NSIS lê o script como UTF-8 (os acentos dos textos).
-    let script = format!("\u{feff}{}", script(&root, &release, &readme, &icons, &manifest, &setup, version));
+    // O runtime do Visual C++ ao lado dos executáveis (um Windows limpo não o tem: a IDE nem
+    // abria; `crate::vcruntime`).
+    let runtime = crate::vcruntime::dlls();
+    if runtime.is_empty() {
+        return Err(format!("não achei o runtime do Visual C++ ({}) no Visual Studio nem no System32", crate::vcruntime::DLLS.join(", ")));
+    }
+    let script = format!("\u{feff}{}", script(&root, &release, &runtime, &readme, &icons, &manifest, &setup, version));
     std::fs::write(&nsi, script).map_err(|e| format!("{}: {e}", nsi.display()))?;
 
     println!("▶ gerando o instalador (makensis)");
@@ -243,7 +249,8 @@ pub fn makensis() -> Option<PathBuf> {
         })
 }
 
-fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &Path, setup: &Path, version: &str) -> String {
+#[allow(clippy::too_many_arguments)]
+fn script(root: &Path, release: &Path, runtime: &[PathBuf], readme: &Path, icons: &Path, manifest: &Path, setup: &Path, version: &str) -> String {
     let p = |path: &Path| path.display().to_string().replace('/', "\\");
     let skip: String = SKIP.iter().map(|s| format!("/x {s} ")).collect();
     let tree = |name: &str| format!("  File /r {skip}\"{}\"\n", p(&root.join(name)));
@@ -253,16 +260,17 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
     // a cópia nova entra no nome certo, quem estava rodando segue com o antigo até fechar, e o
     // renomeado sai no próximo reinício. Encerrar o processo derrubaria o MCP da conversa no
     // meio do trabalho (o Claude não religa o servidor sozinho; pedido do autor em 16/11).
+    // As DLLs do runtime do Visual C++ do mesmo jeito (a IDE aberta as tem carregadas).
+    let in_use = |name: &str, old: &str, from: &Path| {
+        format!("  Delete \"$INSTDIR\\{old}\"\n  Rename \"$INSTDIR\\{name}\" \"$INSTDIR\\{old}\"\n  Delete /REBOOTOK \"$INSTDIR\\{old}\"\n  File \"{}\"\n", p(from))
+    };
     let bins: String = BINARIES
         .iter()
-        .map(|(_, b)| {
-            let old = format!("{b}.antigo.exe");
-            format!(
-                "  Delete \"$INSTDIR\\{old}\"\n  Rename \"$INSTDIR\\{name}\" \"$INSTDIR\\{old}\"\n  Delete /REBOOTOK \"$INSTDIR\\{old}\"\n  File \"{}\"\n",
-                p(&release.join(exe(b))),
-                name = exe(b)
-            )
-        })
+        .map(|(_, b)| in_use(&exe(b), &format!("{b}.antigo.exe"), &release.join(exe(b))))
+        .chain(runtime.iter().map(|dll| {
+            let name = dll.file_name().unwrap_or_default().to_string_lossy().to_string();
+            in_use(&name, &format!("{name}.antigo"), dll)
+        }))
         .collect();
     // O código do Aylis (os projetos em Rust compilam contra ele), sem os exemplos: o
     // `Cargo.toml` é a cópia sem eles entre os membros. O `third_party` também: o cargo exige
@@ -285,7 +293,10 @@ fn script(root: &Path, release: &Path, readme: &Path, icons: &Path, manifest: &P
         .replace("@SETUP@", &p(setup))
         .replace("@BINS@", &bins)
         // O desinstalar apaga os mesmos executáveis que o instalar copia.
-        .replace("@UNBINS@", &BINARIES.iter().map(|(_, b)| format!("  Delete \"$INSTDIR\\{}\"\n", exe(b))).collect::<String>())
+        .replace(
+            "@UNBINS@",
+            &BINARIES.iter().map(|(_, b)| exe(b)).chain(crate::vcruntime::DLLS.iter().map(|d| d.to_string())).map(|f| format!("  Delete \"$INSTDIR\\{f}\"\n")).collect::<String>(),
+        )
         .replace("@README@", &format!("  File \"{}\"\n{}", p(readme), file("LICENSE")))
         .replace("@LICENSE@", &p(&root.join("LICENSE")))
         .replace("@RESOURCES@", &tree("resources"))
@@ -639,7 +650,19 @@ mod tests {
     fn generated_script() -> String {
         let root = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
         let x = Path::new("x");
-        script(root, x, x, x, x, x, "0.0.0")
+        script(root, x, &[x.join("vcruntime140.dll")], x, x, x, x, "0.0.0")
+    }
+
+    /// O runtime do Visual C++ vai ao lado dos executáveis (renomeado antes, se em uso) e sai
+    /// no desinstalar: num Windows limpo, sem ele a IDE nem abria (20/11).
+    #[test]
+    fn the_visual_cpp_runtime_goes_beside_the_executables() {
+        let script = generated_script();
+        assert!(script.contains("Rename \"$INSTDIR\\vcruntime140.dll\" \"$INSTDIR\\vcruntime140.dll.antigo\""), "{script}");
+        assert!(script.contains("File \"x\\vcruntime140.dll\""));
+        for dll in crate::vcruntime::DLLS {
+            assert!(script.contains(&format!("Delete \"$INSTDIR\\{dll}\"")), "o desinstalar apaga {dll}");
+        }
     }
 
     /// O executável em uso (a ponte do MCP, a IDE aberta) é renomeado antes da cópia, e nenhum

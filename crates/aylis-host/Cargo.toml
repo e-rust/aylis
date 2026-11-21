@@ -24,6 +24,10 @@ rustls = { version = "0.23", default-features = false, features = ["ring", "std"
 rustls-native-certs = "0.8"
 rustls-pki-types = { version = "1", features = ["std"] }
 
+# O `prctl(PR_SET_PTRACER)` do backend depurado pela IDE (o Yama do Linux).
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
 [dev-dependencies]
 tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }

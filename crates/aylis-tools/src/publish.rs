@@ -262,6 +262,7 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
     let mut extra = ray_tracing_dlls(project, out, sink)?;
     // Os arquivos que o projeto pede ao lado do executável (DLLs de terceiros).
     if cfg!(windows) {
+        extra.extend(visual_cpp_runtime(out, sink)?);
         extra.extend(win_installer::copy_extra_files(project, out, sink)?);
     }
     // A assinatura (Authenticode) com o certificado da máquina: o `.exe` antes de entrar no
@@ -382,6 +383,7 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
         Language::Python => {
             copy_dir(&project.code_dir().join("src"), &backend_dir)?;
             remove_pycache(&backend_dir);
+            bundle_client(project, "python/aylis_client.py", &backend_dir.join("aylis_client.py"))?;
             let python = if cfg!(windows) { "python" } else { "python3" };
             (vec![python.to_string(), "backend/main.py".into()], "o Python 3.8+")
         }
@@ -400,6 +402,7 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
             let needs = match language {
                 Language::TypeScript => {
                     copy_dir(&project.code_dir().join("src"), &backend_dir)?;
+                    bundle_client(project, "typescript/aylis.ts", &backend_dir.join("aylis.ts"))?;
                     command = command.iter().map(|a| if a == "src/main.ts" { "backend/main.ts".to_string() } else { a.clone() }).collect();
                     command[0] = runtime(&command[0]);
                     "o Bun ou o Node 22.6+"
@@ -435,6 +438,7 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
     std::fs::copy(&exe_path, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
     ray_tracing_dlls(project, &app, sink)?;
     if cfg!(windows) {
+        visual_cpp_runtime(&app, sink)?;
         win_installer::copy_extra_files(project, &app, sink)?;
     }
     let signing = if cfg!(windows) && !options.debug {
@@ -2152,6 +2156,34 @@ pub fn dxc_files() -> Vec<PathBuf> {
     if dxil.is_file() { vec![dxc, dxil] } else { vec![dxc] }
 }
 
+/// O cliente do protocolo no lugar do arquivo do projeto que só aponta para ele (o
+/// `aylis_client.py` e o `aylis.ts` do `src` carregam `../../.aylis/sdk/clients/...`, que não
+/// existe na pasta publicada): o app publicado em Python e em TypeScript terminava ao abrir,
+/// em qualquer máquina (achado num Windows limpo em 20/11). `client`: o caminho em `clients/`.
+fn bundle_client(project: &Project, client: &str, dest: &Path) -> Result<(), String> {
+    let from = [project.dir().join(".aylis").join("sdk"), PathBuf::from(aylis_project::codegen::aylis_root())]
+        .into_iter()
+        .map(|root| root.join("clients").join(client))
+        .find(|p| p.is_file())
+        .ok_or_else(|| format!("o cliente do Aylis ({client}) não foi achado em <projeto>/.aylis/sdk/clients nem na instalação"))?;
+    std::fs::copy(&from, dest).map(|_| ()).map_err(|e| format!("{}: {e}", from.display()))
+}
+
+/// No Windows, o runtime do Visual C++ ao lado do executável: sem ele, o app não abre numa
+/// máquina que não tem o Visual Studio nem o redistribuível (testado num Windows limpo em 20/11).
+fn visual_cpp_runtime(dir: &Path, sink: Sink) -> Result<Vec<PathBuf>, String> {
+    let copied = crate::vcruntime::copy_beside(dir)?;
+    if copied.is_empty() {
+        sink(Event::Line(
+            format!("O runtime do Visual C++ ({}) não foi achado: o app só abre onde o redistribuível do Visual C++ estiver instalado.", crate::vcruntime::DLLS.join(", ")),
+            LineKind::Tool,
+        ));
+    } else {
+        sink(Event::Line(format!("O runtime do Visual C++ ao lado do executável ({})", crate::vcruntime::DLLS.join(", ")), LineKind::Tool));
+    }
+    Ok(copied)
+}
+
 /// No Windows, com o traçado de raios ligado em algum form: o DXC vai ao lado do
 /// executável (sem ele, o app desenha o 3D sem raios). Devolve os arquivos copiados.
 fn ray_tracing_dlls(project: &Project, dir: &Path, sink: Sink) -> Result<Vec<PathBuf>, String> {
@@ -2179,6 +2211,22 @@ mod tests {
 
     /// As arquiteturas do APK: as padrão, as do projeto (com a de 32 bits) e as do publicar, que
     /// valem sobre as do projeto (relatório do RTSPlayer de 13/11, item 5).
+    /// O backend publicado em Python e em TypeScript leva o cliente de verdade, não o arquivo do
+    /// projeto que só aponta para `.aylis/sdk` (que não vai na pasta publicada; 20/11).
+    #[test]
+    fn the_published_backend_gets_the_real_client() {
+        let dir = std::env::temp_dir().join(format!("aylis_bundle_client_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let project = aylis_project::create(&dir, "Cliente", Language::Python).unwrap();
+        let py = dir.join("aylis_client.py");
+        bundle_client(&project, "python/aylis_client.py", &py).unwrap();
+        assert!(std::fs::read_to_string(&py).unwrap().contains("class Aylis"));
+        let ts = dir.join("aylis.ts");
+        bundle_client(&project, "typescript/aylis.ts", &ts).unwrap();
+        assert!(!std::fs::read_to_string(&ts).unwrap().contains(".aylis/sdk"), "o cliente, não o que aponta para ele");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     #[test]
     fn android_abis_come_from_the_publish_then_the_project() {
         let base = std::env::temp_dir().join(format!("aylis_abis_{}", std::process::id()));

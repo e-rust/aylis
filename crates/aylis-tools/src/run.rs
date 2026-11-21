@@ -391,7 +391,9 @@ fn desktop_host(project: &Project, options: &Options, control: &Control, sink: S
     }
     command.args(dev_port_args(options)).arg("--project").arg(&project.path).arg("--").args(&backend).current_dir(project.code_dir());
     if options.ide_debug {
-        command.env("AYLIS_DEBUG_PID", "1");
+        // O processo que vai depurar (este: a IDE; o depurador é filho dele). No Linux, o
+        // backend autoriza esse processo a se anexar (veja o `aylis-host`).
+        command.env("AYLIS_DEBUG_PID", std::process::id().to_string());
     }
     frame_env(&mut command, options);
     watch_with(&mut command, line.as_deref(), control, sink)

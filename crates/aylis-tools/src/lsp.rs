@@ -69,13 +69,13 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
         Language::Rust => {
             // O do rustup (rust-analyzer do toolchain), o da pasta de ferramentas ou o do PATH.
             let from_rustup = crate::env::output("rustup", &["which", "rust-analyzer"]).map(|p| PathBuf::from(p.trim())).filter(|p| p.is_file());
-            let program = from_rustup.or_else(|| first(t.iter().map(|d| d.join("rust-analyzer").join(exe("rust-analyzer"))))).or_else(|| crate::hostlang::which(&exe("rust-analyzer")))?;
+            let program = from_rustup.or_else(|| first(t.iter().map(|d| d.join("rust-analyzer").join(exe("rust-analyzer"))))).or_else(|| crate::hostlang::which("rust-analyzer"))?;
             Server { name: "rust-analyzer", program, args: Vec::new(), env: Vec::new(), language_id: "rust", init_options: json!({}) }
         }
         Language::Go => {
             let home = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from);
             let program = first(t.iter().map(|d| d.join("gopls").join(exe("gopls"))).chain(home.map(|h| h.join("go").join("bin").join(exe("gopls")))))
-                .or_else(|| crate::hostlang::which(&exe("gopls")))?;
+                .or_else(|| crate::hostlang::which("gopls"))?;
             Server { name: "gopls", program, args: Vec::new(), env: Vec::new(), language_id: "go", init_options: json!({}) }
         }
         Language::Python => {
@@ -113,7 +113,7 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
             }
         }
         Language::CSharp => {
-            let program = first(t.iter().map(|d| d.join("csharp-ls").join(exe("csharp-ls")))).or_else(|| crate::hostlang::which(&exe("csharp-ls")))?;
+            let program = first(t.iter().map(|d| d.join("csharp-ls").join(exe("csharp-ls")))).or_else(|| crate::hostlang::which("csharp-ls"))?;
             Server { name: "csharp-ls", program, args: Vec::new(), env: Vec::new(), language_id: "csharp", init_options: json!({}) }
         }
         Language::Java => {
@@ -124,7 +124,12 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
                 .flatten()
                 .map(|e| e.path())
                 .find(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("org.eclipse.equinox.launcher_")))?;
-            let java = crate::env::java_bin()?.join(exe("java"));
+            // O Java do pacote jdk (o 17, de que o jdtls depende) antes do da máquina: o JDT LS
+            // 1.38 não roda no Java 25 do Fedora 45 ("Unsupported class file major version 69";
+            // 21/11).
+            let java = crate::toolpacks::installed_dir("jdk")
+                .and_then(|jdk| first([jdk.join("bin").join(exe("java")), jdk.join("Contents/Home/bin").join(exe("java"))]))
+                .or_else(|| crate::env::java_bin().map(|b| b.join(exe("java"))))?;
             let config = dir.join(if cfg!(windows) { "config_win" } else if cfg!(target_os = "macos") { "config_mac" } else { "config_linux" });
             // Os dados do Eclipse por projeto (um índice por pasta).
             let data = t.as_ref()?.join("jdtls-data").join(format!("{:016x}", hash(&code_dir.display().to_string())));
@@ -150,7 +155,7 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
             let program = crate::toolpacks::installed_dir("clangd")
                 .and_then(|d| find_below(&d, &exe("clangd"), 2))
                 .or_else(|| t.as_ref().and_then(|d| find_below(&d.join("clangd"), &exe("clangd"), 2)))
-                .or_else(|| crate::hostlang::which(&exe("clangd")))
+                .or_else(|| crate::hostlang::which("clangd"))
                 .or_else(|| first([PathBuf::from("C:/Program Files/LLVM/bin/clangd.exe")]))?;
             Server {
                 name: "clangd",
@@ -196,7 +201,7 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
 
 /// A pasta do Lazarus (onde o instalador põe), para o pasls achar o CodeTools e o FPC.
 pub fn lazarus_dir() -> Option<PathBuf> {
-    std::env::var_os("LAZARUSDIR").map(PathBuf::from).filter(|p| p.is_dir()).or_else(|| first_dir(["C:/lazarus", "C:/Program Files/Lazarus", "/usr/lib/lazarus", "/usr/share/lazarus"]))
+    std::env::var_os("LAZARUSDIR").map(PathBuf::from).filter(|p| p.is_dir()).or_else(|| first_dir(["C:/lazarus", "C:/Program Files/Lazarus", "/usr/lib/lazarus", "/usr/lib64/lazarus", "/usr/share/lazarus"]))
 }
 
 /// Os fontes do Free Pascal (o pasls lê as units do RTL): os do Lazarus ou os do FPC.
@@ -222,18 +227,41 @@ fn hash(text: &str) -> u64 {
     h.finish()
 }
 
+/// O `.classpath` que o Aylis gerava antes do cliente entrar (é trocado pelo novo; um feito
+/// pelo usuário fica).
+const OLD_CLASSPATH: &str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<classpath>\n\t<classpathentry kind=\"src\" path=\"src\"/>\n\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n\t<classpathentry kind=\"output\" path=\"out\"/>\n</classpath>\n";
+
+/// O `.project` e o `.classpath` do jdtls para a pasta do código Java: os fontes são o `src`
+/// e o cliente do Aylis (`dev.aylis`, que a compilação junta de fora da pasta do código), por
+/// uma pasta ligada ao `.aylis/sdk` do projeto (sem caminho da máquina). Sem o cliente, todo
+/// arquivo mostrava "The import dev cannot be resolved" (Fedora, 21/11).
+pub fn java_project_files(name: &str, with_client: bool) -> (String, String) {
+    let link = if with_client {
+        "\t<linkedResources>\n\t\t<link>\n\t\t\t<name>aylis-client</name>\n\t\t\t<type>2</type>\n\t\t\t<locationURI>PARENT-1-PROJECT_LOC/.aylis/sdk/clients/java</locationURI>\n\t\t</link>\n\t</linkedResources>\n"
+    } else {
+        ""
+    };
+    let project = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<projectDescription>\n\t<name>{name}</name>\n\t<buildSpec>\n\t\t<buildCommand><name>org.eclipse.jdt.core.javabuilder</name></buildCommand>\n\t</buildSpec>\n\t<natures><nature>org.eclipse.jdt.core.javanature</nature></natures>\n{link}</projectDescription>\n"
+    );
+    let client = if with_client { "\t<classpathentry kind=\"src\" path=\"aylis-client\"/>\n" } else { "" };
+    let classpath = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<classpath>\n\t<classpathentry kind=\"src\" path=\"src\"/>\n{client}\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n\t<classpathentry kind=\"output\" path=\"out\"/>\n</classpath>\n"
+    );
+    (project, classpath)
+}
+
 /// O que cada linguagem precisa na pasta do código antes do servidor abrir: o
 /// `compile_commands.json` do clangd (os fontes e a pasta das units); o `.project` e o
-/// `.classpath` do jdtls (a pasta `src` é a dos fontes) quando não há Maven nem Gradle.
+/// `.classpath` do jdtls ([`java_project_files`]) quando não há Maven nem Gradle.
 pub fn prepare(language: Language, code_dir: &Path) {
     if language == Language::Java {
+        let generated_before = std::fs::read_to_string(code_dir.join(".classpath")).is_ok_and(|t| t.replace("\r\n", "\n") == OLD_CLASSPATH);
         let build = ["pom.xml", "build.gradle", "build.gradle.kts", ".classpath"].iter().any(|f| code_dir.join(f).exists());
-        if !build {
+        if !build || generated_before {
             let name = code_dir.parent().and_then(|p| p.file_name()).map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "app".into());
-            let project = format!(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<projectDescription>\n\t<name>{name}</name>\n\t<buildSpec>\n\t\t<buildCommand><name>org.eclipse.jdt.core.javabuilder</name></buildCommand>\n\t</buildSpec>\n\t<natures><nature>org.eclipse.jdt.core.javanature</nature></natures>\n</projectDescription>\n"
-            );
-            let classpath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<classpath>\n\t<classpathentry kind=\"src\" path=\"src\"/>\n\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n\t<classpathentry kind=\"output\" path=\"out\"/>\n</classpath>\n";
+            let with_client = code_dir.parent().and_then(aylis_project::codegen::sdk_dir).is_some_and(|sdk| sdk.join("clients/java").is_dir());
+            let (project, classpath) = java_project_files(&name, with_client);
             let _ = std::fs::write(code_dir.join(".project"), project);
             let _ = std::fs::write(code_dir.join(".classpath"), classpath);
         }
@@ -1177,6 +1205,30 @@ pub fn actions(value: &Value) -> Vec<Action> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// O projeto Java do jdtls tem o cliente do Aylis como fonte (pela pasta ligada ao
+    /// `.aylis/sdk`, sem caminho da máquina); o `.classpath` antigo gerado pelo Aylis é trocado
+    /// e um feito pelo usuário fica (Fedora, 21/11).
+    #[test]
+    fn the_java_project_sees_the_aylis_client() {
+        let (project, classpath) = java_project_files("Loja", true);
+        assert!(project.contains("<locationURI>PARENT-1-PROJECT_LOC/.aylis/sdk/clients/java</locationURI>"), "{project}");
+        assert!(classpath.contains("<classpathentry kind=\"src\" path=\"aylis-client\"/>"), "{classpath}");
+        let (_, plain) = java_project_files("Loja", false);
+        assert_eq!(plain, OLD_CLASSPATH, "sem o cliente, o de antes");
+
+        let dir = std::env::temp_dir().join(format!("aylis_java_project_{}", std::process::id()));
+        let code = dir.join("java");
+        std::fs::create_dir_all(&code).unwrap();
+        std::fs::write(code.join(".classpath"), OLD_CLASSPATH).unwrap();
+        prepare(Language::Java, &code);
+        let now = std::fs::read_to_string(code.join(".classpath")).unwrap();
+        assert_ne!(now, OLD_CLASSPATH, "o gerado antes é refeito");
+        std::fs::write(code.join(".classpath"), "<classpath>do usuário</classpath>").unwrap();
+        prepare(Language::Java, &code);
+        assert_eq!(std::fs::read_to_string(code.join(".classpath")).unwrap(), "<classpath>do usuário</classpath>");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     /// O `$/progress` do servidor (o rust-analyzer indexando): começa, avança com a
     /// porcentagem e termina; o rótulo diz o quê e quanto, e some quando acaba (07/11: "se ele

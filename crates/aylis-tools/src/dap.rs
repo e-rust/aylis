@@ -205,16 +205,23 @@ fn spawn_reader(input: impl Read + Send + 'static, wake: WakeSlot) -> Receiver<V
     rx
 }
 
-/// O formatador mais rápido de HashMap e HashSet (veja `lldb/rust_hashmap.py`).
-const RUST_HASHMAP: &str = include_str!("../lldb/rust_hashmap.py");
+/// Os formatadores do Rust mais rápidos: o HashMap e o HashSet, e o resumo das structs com
+/// limite (veja `lldb/rust_formatters.py`).
+const RUST_FORMATTERS: &str = include_str!("../lldb/rust_formatters.py");
+
+/// Os símbolos de cada biblioteca só quando preciso, não todos ao carregar: no Linux com OpenGL
+/// por software (o `libLLVM` do Mesa), a primeira parada demorava (Fedora, 21/11). Não o
+/// `symbols.load-on-demand`: com ele, o LLDB não acha uma global pelo nome (o "Avaliar" e a
+/// memória do passo, que lê `AYLIS_DEV_LIVE_BYTES`).
+const LLDB_INIT: [&str; 1] = ["settings set target.preload-symbols false"];
 
 /// Os comandos que o LLDB roda antes de iniciar o programa: carrega os scripts do aylis
 /// (gravados na pasta temporária; sem ela, nada).
 fn lldb_scripts() -> Vec<String> {
     let dir = std::env::temp_dir().join("aylis-lldb");
-    let file = dir.join("rust_hashmap.py");
-    let same = std::fs::read_to_string(&file).is_ok_and(|s| s == RUST_HASHMAP);
-    if !same && (std::fs::create_dir_all(&dir).is_err() || std::fs::write(&file, RUST_HASHMAP).is_err()) {
+    let file = dir.join("rust_formatters.py");
+    let same = std::fs::read_to_string(&file).is_ok_and(|s| s == RUST_FORMATTERS);
+    if !same && (std::fs::create_dir_all(&dir).is_err() || std::fs::write(&file, RUST_FORMATTERS).is_err()) {
         return Vec::new();
     }
     vec![format!("command script import '{}'", file.display().to_string().replace('\\', "/"))]
@@ -476,7 +483,7 @@ impl Session {
         s.seq += 1;
         s.send(&json!({ "seq": seq, "type": "request", "command": "launch", "arguments": {
             "program": exe, "cwd": cwd, "env": env, "args": [], "stopOnEntry": false, "sourceLanguages": ["rust"], "terminal": "console",
-            "preRunCommands": lldb_scripts() } }))?;
+            "initCommands": LLDB_INIT, "preRunCommands": lldb_scripts() } }))?;
         s.configure(breakpoints)?;
         // O app com `dev` conta os bytes alocados (veja `aylis::dev_memory`). Só se o contador
         // está no programa: o CodeLLDB cai ao avaliar um nome que não existe.
@@ -1198,7 +1205,7 @@ impl Session {
         let mut s = Session::spawn(command)?;
         s.initialize("lldb")?;
         s.watch(pid);
-        s.attach_with(json!({ "pid": pid, "stopOnEntry": false }), breakpoints)
+        s.attach_with(json!({ "pid": pid, "stopOnEntry": false, "initCommands": LLDB_INIT }), breakpoints)
     }
 
     /// Go: o `dlv dap` anexado ao processo.

@@ -136,6 +136,11 @@ pub const PACKAGE_MIRRORS: &str = "package_mirrors";
 /// (`package_official`; o padrão, ligado; `off` desliga).
 pub const PACKAGE_OFFICIAL: &str = "package_official";
 
+/// O espelho do Aylis (uma pasta do Drive com o `pacotes.json`): a origem, junto da oficial, do
+/// que o Aylis monta e não tem fabricante (o Skia de 32 bits para Android, o Free Pascal). Posto
+/// como espelho nas Opções, também serve para baixar tudo dele.
+pub const AYLIS_MIRROR: &str = "https://drive.google.com/drive/folders/128gDbpqvVzI_nXRe9e2J2T17v7x90zfe";
+
 /// A origem oficial está ligada (o padrão; `package_official = off` desliga).
 pub fn package_official() -> bool {
     !matches!(tool_text(PACKAGE_OFFICIAL).trim().to_ascii_lowercase().as_str(), "off" | "false" | "0" | "não" | "nao")

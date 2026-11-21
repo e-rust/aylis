@@ -65,6 +65,10 @@ pub struct Sources {
     /// o espelho não tinha os arquivos, e a IDE parava onde o `pack` conseguia. Desligada pelas
     /// Opções (`package_official = off`), para a empresa que só aceita as origens dela.
     pub official: bool,
+    /// Com a origem oficial, o espelho do próprio Aylis para os arquivos que não têm fabricante
+    /// (os que o Aylis monta: o Skia de 32 bits para Android, o Free Pascal extraído do
+    /// instalador). Pedido do autor em 20/11: sem ele, esses arquivos não vinham de lugar nenhum.
+    pub aylis_mirror: Option<String>,
     /// O download direto do Drive (os testes trocam por um servidor local).
     pub(crate) drive: String,
     /// Os índices já lidos, por espelho (uma ida por espelho, não por arquivo).
@@ -73,7 +77,7 @@ pub struct Sources {
 
 impl Default for Sources {
     fn default() -> Self {
-        Sources { folders: Vec::new(), installer_folder: None, mirrors: Vec::new(), official: false, drive: DRIVE.into(), indexes: Arc::default() }
+        Sources { folders: Vec::new(), installer_folder: None, mirrors: Vec::new(), official: false, aylis_mirror: None, drive: DRIVE.into(), indexes: Arc::default() }
     }
 }
 
@@ -92,6 +96,7 @@ impl Sources {
         s.folders.extend(crate::settings::list(crate::settings::PACKAGE_DIRS).into_iter().map(PathBuf::from));
         s.mirrors.extend(crate::settings::list(crate::settings::PACKAGE_MIRRORS));
         s.official = crate::settings::package_official();
+        s.aylis_mirror = s.official.then(|| crate::settings::AYLIS_MIRROR.to_string());
         s
     }
 
@@ -121,6 +126,9 @@ impl Sources {
         }
         if self.official {
             out.push("a origem oficial de cada arquivo (o fabricante), por último".into());
+        }
+        if let Some(m) = &self.aylis_mirror {
+            out.push(format!("o espelho do Aylis, para o que o Aylis monta: {m}"));
         }
         out
     }
@@ -341,6 +349,23 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
             }
         }
     }
+    // O que o Aylis monta (sem fabricante): o espelho do Aylis.
+    if let Some(mirror) = sources.aylis_mirror.as_deref().filter(|_| file.url.is_none()) {
+        control.check()?;
+        match from_mirror(mirror, file, sources, &dest, control, progress) {
+            Ok(()) => return Ok(dest),
+            Err(e) if e == crate::process::CANCELLED => return Err(e),
+            Err(e) => {
+                match why(&e) {
+                    Why::Mismatch => mismatched.push(format!("o baixado de {mirror}")),
+                    Why::Offline => offline.push((mirror.to_string(), e.replace(NETWORK, ""))),
+                    Why::Absent => absent_mirrors.push(mirror.to_string()),
+                    Why::Other => {}
+                }
+                tried.push(format!("espelho do Aylis {mirror}: {}", e.replace(NETWORK, "")));
+            }
+        }
+    }
     let mut headline = Vec::new();
     if !mismatched.is_empty() {
         headline.push(format!(
@@ -376,8 +401,10 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
 pub(crate) fn manual_steps(file: &FileSpec, cache: &Path) -> String {
     let Some(url) = file.url.as_deref().filter(|u| u.starts_with("https://") || (cfg!(test) && u.starts_with("http://127.0.0.1"))) else {
         return format!(
-            "\n  Este arquivo é montado pelo Aylis (não tem endereço do fabricante): peça o {} a quem distribui o Aylis na sua empresa e ponha em {}.",
+            "\n  Este arquivo é montado pelo Aylis (não tem endereço do fabricante). Para instalar à mão: baixe o {} da pasta {} num navegador (ou peça a quem distribui o Aylis na sua empresa), confira o SHA-256 {} e ponha em {}; depois, tente de novo.",
             file.name,
+            crate::settings::AYLIS_MIRROR,
+            file.sha256,
             cache.display()
         );
     };

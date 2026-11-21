@@ -71,6 +71,7 @@ pub mod toolpacks;
 pub mod touched;
 pub mod trust;
 pub mod updates;
+pub mod vcruntime;
 pub mod wsl;
 
 use std::path::{Path, PathBuf};
