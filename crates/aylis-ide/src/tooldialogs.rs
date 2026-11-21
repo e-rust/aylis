@@ -672,6 +672,18 @@ pub fn check_languages(_ui: &mut Ui, state: &Shared) {
     jobs::check_languages(state);
 }
 
+/// O assistente da primeira abertura, quando nenhum modal estiver aberto: aberto por cima da
+/// pergunta de confiar no projeto (o projeto aberto junto com a IDE), ele a bloqueava, e no
+/// Wayland ficava atrás da janela da IDE, travando tudo (testado no Fedora em 20/11).
+pub fn languages_when_free(ui: &mut Ui, state: &Shared, ids: &Ids) {
+    if ui.open_forms().iter().any(|&f| ui.is_modal(f)) {
+        let (state, ids) = (state.clone(), *ids);
+        ui.set_timeout(500, move |ui| languages_when_free(ui, &state, &ids));
+        return;
+    }
+    languages(ui, state, ids);
+}
+
 /// "Configurar linguagens": marca as linguagens e a IDE instala o compilador, o depurador
 /// e o servidor de linguagem de cada uma, sem passo manual.
 pub fn languages(ui: &mut Ui, state: &Shared, ids: &Ids) {

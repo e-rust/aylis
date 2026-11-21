@@ -239,6 +239,172 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
     }
 }
 
+/// O lançador `/usr/bin/aylis-ide` do `.deb` (o mesmo do `instalar.sh`): no WSL, a IDE e os
+/// apps que ela abre vão pelo X11 e pela placa do Windows (d3d12).
+const DEB_LAUNCHER: &str = r#"#!/bin/sh
+if [ -e /dev/dxg ] && [ -n "$DISPLAY" ]; then
+  unset WAYLAND_DISPLAY
+  if [ -z "$GALLIUM_DRIVER" ] && [ -e /usr/lib/wsl/lib/libd3d12.so ]; then export GALLIUM_DRIVER=d3d12; fi
+fi
+exec /opt/aylis-ide/bin/aylis-ide "$@"
+"#;
+
+/// O `postinst` e o `postrm` do `.deb`: os bancos de tipos, de atalhos e de ícones do sistema
+/// passam a ver (ou deixam de ver) os do Aylis.
+const DEB_HOOK: &str = "#!/bin/sh\nset -e\nupdate-mime-database /usr/share/mime >/dev/null 2>&1 || true\nupdate-desktop-database -q /usr/share/applications >/dev/null 2>&1 || true\ngtk-update-icon-cache -q -t /usr/share/icons/hicolor >/dev/null 2>&1 || true\n";
+
+/// A versão no formato do Debian: o pré-lançamento (`0.2.0-beta.1`) vira `0.2.0~beta.1`, que
+/// vem antes do `0.2.0` (o hífen seria a revisão do pacote).
+pub fn deb_version(version: &str) -> String {
+    version.replacen('-', "~", 1)
+}
+
+/// O `control` do `.deb`. As dependências são as bibliotecas que um app do Aylis precisa para
+/// compilar no Linux (as de `crate::wsl::PACKAGES`, as mesmas da CI): o `apt` as instala junto,
+/// e o primeiro projeto compila sem o usuário procurar o que falta.
+pub fn deb_control(version: &str, installed_kb: u64) -> String {
+    format!(
+        "Package: aylis-ide\nVersion: {}\nArchitecture: amd64\nMaintainer: e-rust <347532650+e-rust@users.noreply.github.com>\nInstalled-Size: {installed_kb}\nDepends: {}\nSection: devel\nPriority: optional\nHomepage: https://github.com/e-rust/aylis\nDescription: Aylis IDE: interfaces visuais com designer, em Rust e mais 7 linguagens\n A IDE do Aylis: o designer de forms, o editor de código, compilar, executar,\n depurar e publicar para Windows, Linux, macOS, Android, iOS e navegador. Traz o\n código do Aylis em /opt/aylis-ide; o Rust e as outras linguagens vêm pelos pacotes\n de ferramentas (Ferramentas → Pacotes de ferramentas) ou pelo sistema.\n",
+        deb_version(version),
+        crate::wsl::PACKAGES.join(", ")
+    )
+}
+
+/// Um arquivo `ar` (o envelope do `.deb`): os membros na ordem, cada um com o cabeçalho de 60
+/// bytes e alinhado em 2.
+fn ar(members: &[(&str, &[u8])]) -> Vec<u8> {
+    let mtime = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+    let mut out = b"!<arch>\n".to_vec();
+    for (name, data) in members {
+        out.extend_from_slice(format!("{name:<16}{mtime:<12}{:<6}{:<6}{:<8}{:<10}`\n", 0, 0, "100644", data.len()).as_bytes());
+        out.extend_from_slice(data);
+        if data.len() % 2 == 1 {
+            out.push(b'\n');
+        }
+    }
+    out
+}
+
+/// Um `.tar.gz` com dono root e as permissões dadas (o Windows não guarda o bit de execução).
+struct DebTar {
+    builder: tar::Builder<flate2::write::GzEncoder<Vec<u8>>>,
+    dirs: std::collections::BTreeSet<String>,
+    mtime: u64,
+    bytes: u64,
+}
+
+impl DebTar {
+    fn new() -> Self {
+        let mtime = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+        let encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        Self { builder: tar::Builder::new(encoder), dirs: Default::default(), mtime, bytes: 0 }
+    }
+
+    fn header(&self, kind: tar::EntryType, mode: u32, size: u64) -> tar::Header {
+        let mut h = tar::Header::new_gnu();
+        h.set_entry_type(kind);
+        h.set_mode(mode);
+        h.set_uid(0);
+        h.set_gid(0);
+        h.set_mtime(self.mtime);
+        h.set_size(size);
+        h
+    }
+
+    /// As pastas de cima de `path` (o dpkg quer cada uma na lista).
+    fn parents(&mut self, path: &str) -> Result<(), String> {
+        let mut acc = String::from(".");
+        let parts: Vec<&str> = path.split('/').collect();
+        for part in &parts[..parts.len() - 1] {
+            acc = format!("{acc}/{part}");
+            if self.dirs.insert(acc.clone()) {
+                let mut h = self.header(tar::EntryType::Directory, 0o755, 0);
+                self.builder.append_data(&mut h, format!("{acc}/"), std::io::empty()).map_err(|e| format!("{acc}: {e}"))?;
+            }
+        }
+        Ok(())
+    }
+
+    fn file(&mut self, path: &str, data: &[u8], mode: u32) -> Result<(), String> {
+        self.parents(path)?;
+        let mut h = self.header(tar::EntryType::Regular, mode, data.len() as u64);
+        self.bytes += data.len() as u64;
+        self.builder.append_data(&mut h, format!("./{path}"), data).map_err(|e| format!("{path}: {e}"))
+    }
+
+    fn symlink(&mut self, path: &str, target: &str) -> Result<(), String> {
+        self.parents(path)?;
+        let mut h = self.header(tar::EntryType::Symlink, 0o777, 0);
+        self.builder.append_link(&mut h, format!("./{path}"), target).map_err(|e| format!("{path}: {e}"))
+    }
+
+    fn finish(self) -> Result<Vec<u8>, String> {
+        self.builder.into_inner().and_then(|gz| gz.finish()).map_err(|e| e.to_string())
+    }
+}
+
+/// Executável no pacote: os binários do Aylis (em `bin/`, `rel` sem pasta) e os scripts (`#!`)
+/// da pasta do código.
+fn executable(rel: &str, data: &[u8]) -> bool {
+    (!rel.contains('/') && crate::installer::BINARIES.iter().any(|(_, n)| *n == rel)) || data.starts_with(b"#!")
+}
+
+/// Os arquivos de `dir` (recursivo), com o caminho relativo em `/`.
+fn files_of(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> Result<(), String> {
+    let mut entries: Vec<_> = std::fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?.flatten().collect();
+    entries.sort_by_key(|e| e.file_name());
+    for entry in entries {
+        let name = entry.file_name().to_string_lossy().to_string();
+        let path = entry.path();
+        let rel = if prefix.is_empty() { name } else { format!("{prefix}/{name}") };
+        if path.is_dir() {
+            files_of(&path, &rel, out)?;
+        } else {
+            out.push((rel, path));
+        }
+    }
+    Ok(())
+}
+
+/// O `.deb` da IDE a partir da pasta do pacote do Linux (`package("linux", ...)`): instala em
+/// `/opt/aylis-ide` (a IDE, as ferramentas e o código do Aylis), põe a IDE (pelo lançador) e
+/// o `aylis-tool` em `/usr/bin`, e o atalho, os tipos de arquivo e os ícones em `/usr/share`.
+/// Montado aqui mesmo (o `ar` e os `.tar.gz`), sem o `dpkg-deb`: sai igual no Windows e no
+/// Linux. Devolve o caminho do `.deb`.
+pub fn linux_deb(pkg: &Path, out: &Path, version: &str) -> Result<PathBuf, String> {
+    let mut data = DebTar::new();
+    let mut files = Vec::new();
+    files_of(&pkg.join("bin"), "", &mut files)?;
+    for (rel, path) in &files {
+        let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        let mode = if executable(rel, &bytes) { 0o755 } else { 0o644 };
+        data.file(&format!("opt/aylis-ide/bin/{rel}"), &bytes, mode)?;
+    }
+    let mut shared = Vec::new();
+    files_of(&pkg.join("share"), "", &mut shared)?;
+    for (rel, path) in &shared {
+        let mut bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        if rel.ends_with(".desktop") {
+            bytes = String::from_utf8_lossy(&bytes).replace("@EXEC@", "/usr/bin/aylis-ide").into_bytes();
+        }
+        data.file(&format!("usr/share/{rel}"), &bytes, 0o644)?;
+    }
+    data.file("usr/bin/aylis-ide", DEB_LAUNCHER.as_bytes(), 0o755)?;
+    data.symlink("usr/bin/aylis-tool", "/opt/aylis-ide/bin/aylis-tool")?;
+    let installed_kb = data.bytes.div_ceil(1024);
+    let data = data.finish()?;
+
+    let mut control = DebTar::new();
+    control.file("control", deb_control(version, installed_kb).as_bytes(), 0o644)?;
+    control.file("postinst", DEB_HOOK.as_bytes(), 0o755)?;
+    control.file("postrm", DEB_HOOK.as_bytes(), 0o755)?;
+    let control = control.finish()?;
+
+    let deb = out.join(format!("aylis-ide_{}_amd64.deb", deb_version(version)));
+    write(&deb, &ar(&[("debian-binary", b"2.0\n"), ("control.tar.gz", &control), ("data.tar.gz", &data)]))?;
+    Ok(deb)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -271,6 +437,68 @@ mod tests {
         assert_eq!(&icns[..4], b"icns");
         assert_eq!(u32::from_be_bytes(icns[4..8].try_into().unwrap()) as usize, icns.len());
         assert!(package("windows", &fake, &logo, &out, "1.0.0", None).is_err());
+        let _ = std::fs::remove_dir_all(&out);
+    }
+    /// O `.deb`: o envelope `ar` com os três membros na ordem, o `control` com a versão do
+    /// Debian e as dependências de compilação, e os arquivos com dono root, o lançador e a IDE
+    /// executáveis, o `aylis-tool` ligado em `/usr/bin` e o atalho apontando para o lançador.
+    #[test]
+    fn the_deb_installs_in_opt_with_the_launcher_and_the_dependencies() {
+        let root = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+        let logo = root.join("crates/aylis-ide/resources/aylis-ide.ico");
+        let out = std::env::temp_dir().join(format!("aylis_ide_deb_{}", std::process::id()));
+        let fake = out.join("aylis-ide");
+        write(&fake, b"ELF").unwrap();
+        let pkg = package("linux", &fake, &logo, &out.join("pkg"), "0.9.0-beta.2", None).unwrap();
+        let deb = linux_deb(&pkg, &out, "0.9.0-beta.2").unwrap();
+        assert!(deb.ends_with("aylis-ide_0.9.0~beta.2_amd64.deb"), "{}", deb.display());
+        let bytes = std::fs::read(&deb).unwrap();
+        assert!(bytes.starts_with(b"!<arch>
+debian-binary   "));
+        // Os membros do `ar`: nome, tamanho e o conteúdo.
+        let mut members = Vec::new();
+        let mut at = 8;
+        while at + 60 <= bytes.len() {
+            let name = String::from_utf8_lossy(&bytes[at..at + 16]).trim().to_string();
+            let size: usize = String::from_utf8_lossy(&bytes[at + 48..at + 58]).trim().parse().unwrap();
+            members.push((name, bytes[at + 60..at + 60 + size].to_vec()));
+            at += 60 + size + size % 2;
+        }
+        assert_eq!(members.iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), ["debian-binary", "control.tar.gz", "data.tar.gz"]);
+        assert_eq!(members[0].1, b"2.0
+");
+        let entries = |gz: &[u8]| -> Vec<(String, u32, u64, Vec<u8>)> {
+            let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(gz));
+            archive
+                .entries()
+                .unwrap()
+                .map(|e| {
+                    let mut e = e.unwrap();
+                    // O leitor tira o `./` do começo; o teste compara sem ele.
+                    let path = e.path().unwrap().to_string_lossy().trim_start_matches("./").to_string();
+                    let (mode, uid) = (e.header().mode().unwrap(), e.header().uid().unwrap());
+                    let mut data = Vec::new();
+                    std::io::Read::read_to_end(&mut e, &mut data).unwrap();
+                    (path, mode, uid, data)
+                })
+                .collect()
+        };
+        let control = entries(&members[1].1);
+        let text = String::from_utf8(control.iter().find(|e| e.0 == "control").unwrap().3.clone()).unwrap();
+        assert!(text.contains("Version: 0.9.0~beta.2
+") && text.contains("Architecture: amd64"));
+        assert!(text.contains("Depends: build-essential, pkg-config,") && text.contains("libfontconfig1-dev"));
+        assert_eq!(control.iter().find(|e| e.0 == "postinst").unwrap().1, 0o755);
+        let data = entries(&members[2].1);
+        let find = |p: &str| data.iter().find(|e| e.0 == p).unwrap_or_else(|| panic!("falta {p}"));
+        assert!(data.iter().all(|e| e.2 == 0), "dono root");
+        assert_eq!(find("opt/aylis-ide/bin/aylis-ide").1, 0o755);
+        assert_eq!(find("usr/bin/aylis-ide").1, 0o755);
+        assert!(String::from_utf8_lossy(&find("usr/bin/aylis-ide").3).contains("exec /opt/aylis-ide/bin/aylis-ide"));
+        assert!(data.iter().any(|e| e.0 == "usr/bin/aylis-tool"));
+        assert!(String::from_utf8_lossy(&find("usr/share/applications/aylis-ide.desktop").3).contains("Exec=\"/usr/bin/aylis-ide\" %f"));
+        assert_eq!(find("usr/share/icons/hicolor/48x48/apps/aylis-ide.png").1, 0o644);
+        assert!(data.iter().any(|e| e.0.trim_end_matches('/') == "opt"), "as pastas de cima também");
         let _ = std::fs::remove_dir_all(&out);
     }
 }

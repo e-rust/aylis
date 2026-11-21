@@ -15,8 +15,8 @@
 //! linguagens e as plataformas de destino (Android, navegador) se escolhem num lugar só, o
 //! assistente "Configurar linguagens" da IDE, que abre sozinho na primeira vez (decidido pelo
 //! autor em 16/11: "centralizar"). Tudo vem dos pacotes de ferramentas (`docs/pacotes.md`),
-//! conferidos com o SHA-256, da pasta `pacotes` ao lado do instalador (o kit offline) ou do
-//! espelho padrão ([`crate::settings::DEFAULT_PACKAGE_MIRROR`]); o que não tem pacote vem pelo
+//! conferidos com o SHA-256, da pasta `pacotes` ao lado do instalador (o kit offline), de um
+//! espelho da empresa (`/MIRROR=`) ou do fabricante (a URL do manifesto); o que não tem pacote vem pelo
 //! winget. A saída fica nos detalhes da instalação (`nsExec`, sem `cmd`). Se o Rust não se
 //! configurar, isso é dito no fim, com o caminho para refazer, e a IDE fica.
 //!
@@ -313,7 +313,7 @@ Var SetupFailed
 
 ; Configura uma linguagem ou uma plataforma: o aylis-tool recém-instalado roda o setup dela
 ; (o compilador, o depurador, o servidor de linguagem), dos pacotes da pasta ao lado do
-; instalador, das origens das Opções ou do espelho padrão. A saída vai para os detalhes (em
+; instalador, das origens das Opções ou do fabricante. A saída vai para os detalhes (em
 ; UTF-16: o nsExec lê UTF-8 como ANSI). Falhar não desfaz a IDE.
 !macro AylisSetup ARGS TITLE
   SetDetailsPrint both

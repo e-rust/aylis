@@ -458,7 +458,7 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
         let open = std::mem::take(&mut state.borrow_mut().wizard_on_start) && aylis_tools::settings::tool_text(aylis_tools::settings::SETUP_WIZARD_SHOWN).is_empty();
         if open {
             let _ = aylis_tools::settings::set_tool(aylis_tools::settings::SETUP_WIZARD_SHOWN, Some("1"));
-            crate::tooldialogs::languages(ui, state, ids);
+            crate::tooldialogs::languages_when_free(ui, state, ids);
         }
         crate::tooldialogs::fill_languages(ui, state);
     }

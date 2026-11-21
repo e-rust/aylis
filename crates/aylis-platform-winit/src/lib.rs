@@ -1383,8 +1383,20 @@ pub(crate) fn apply_window_options(window: &Window, o: &aylis_core::WindowOption
     }
 }
 
+/// O modo automático achou o OpenGL por software numa janela: as outras vão direto para a CPU.
+#[cfg(all(native_gpu, native_cpu))]
+static SOFTWARE_GL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// O `GL_RENDERER` é de um desenho por software: o llvmpipe, o softpipe e o swrast do Mesa, e
+/// os do Windows sem driver de vídeo (o "GDI Generic" e o "Basic Render").
+#[cfg_attr(not(all(native_gpu, native_cpu)), allow(dead_code))]
+fn software_gl(renderer: &str) -> bool {
+    let r = renderer.to_ascii_lowercase();
+    ["llvmpipe", "softpipe", "swrast", "software rasterizer", "gdi generic", "basic render"].iter().any(|s| r.contains(s))
+}
+
 /// Cria a janela já com o backend pedido; no modo automático, cai para a CPU se a GPU
-/// falhar.
+/// falhar ou for por software.
 #[cfg(not(web))]
 fn create_backend(
     event_loop: &ActiveEventLoop,
@@ -1407,8 +1419,21 @@ fn create_backend(
         Renderer::Gpu => gpu::create(event_loop, attributes, gpu).map(|(w, b)| (w, Backend::Gpu(b))),
         #[cfg(native_cpu)]
         Renderer::Cpu => cpu::create(event_loop, attributes).map(|(w, b)| (w, Backend::Cpu(b))),
+        // O OpenGL por software (o llvmpipe de uma VM sem placa, de um servidor): desenhar nele
+        // é bem mais lento que o Skia direto na CPU, e a IDE ficava segundos sem responder
+        // (testado numa VM do Hyper-V com o Fedora em 20/11). A primeira janela que o achar
+        // decide pelas outras.
+        #[cfg(all(native_gpu, native_cpu))]
+        Renderer::Auto if SOFTWARE_GL.load(std::sync::atomic::Ordering::Relaxed) => cpu::create(event_loop, attributes).map(|(w, b)| (w, Backend::Cpu(b))),
         #[cfg(all(native_gpu, native_cpu))]
         Renderer::Auto => match gpu::create(event_loop, attributes.clone(), gpu.clone()) {
+            Ok((w, b)) if b.adapter().is_some_and(|a| software_gl(&a)) => {
+                aylis_core::stderr_line!("aylis: o OpenGL é por software ({}); desenhando na CPU", b.adapter().unwrap_or_default());
+                SOFTWARE_GL.store(true, std::sync::atomic::Ordering::Relaxed);
+                drop(b);
+                drop(w);
+                cpu::create(event_loop, attributes).map(|(w, b)| (w, Backend::Cpu(b)))
+            }
             Ok((w, b)) => Ok((w, Backend::Gpu(b))),
             Err(e) => {
                 aylis_core::stderr_line!("aylis: OpenGL indisponível ({e}); desenhando na CPU");

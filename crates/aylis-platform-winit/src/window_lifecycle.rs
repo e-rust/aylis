@@ -152,6 +152,14 @@ impl App {
             attributes = attributes.with_position(p);
         }
         attributes = attributes.with_window_level(self.window_level(form));
+        // Linux: o identificador do app (o `app_id` do Wayland e o `WM_CLASS` do X11) é o nome do
+        // executável, o mesmo do `.desktop` (o da IDE e o do `.deb` dos apps): sem ele, o GNOME
+        // mostrava a janela como "Desconhecido", sem o ícone (testado no Fedora em 20/11).
+        #[cfg(all(target_os = "linux", not(target_os = "android")))]
+        if let Some(id) = std::env::current_exe().ok().and_then(|p| p.file_stem().map(|s| s.to_string_lossy().to_string())) {
+            use winit::platform::x11::WindowAttributesExtX11;
+            attributes = attributes.with_name(id.clone(), id);
+        }
         #[cfg(target_os = "windows")]
         if matches!(self.ui.get_prop(form, "show_in_taskbar"), Ok(PropValue::Bool(false))) {
             use winit::platform::windows::WindowAttributesExtWindows;

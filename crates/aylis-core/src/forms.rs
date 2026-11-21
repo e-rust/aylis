@@ -526,11 +526,14 @@ impl Ui {
 
     /// Existe um form modal aberto depois deste: ele não recebe mouse nem teclado.
     pub fn input_blocked(&self, form: ComponentId) -> bool {
-        let Some(top_modal) = self.open_forms.iter().rposition(|f| f.modal) else { return false };
-        match self.open_forms.iter().position(|f| f.form == form) {
-            Some(pos) => pos < top_modal,
-            None => false,
-        }
+        self.blocking_modal(form).is_some()
+    }
+
+    /// O modal que bloqueia o form (o último aberto depois dele), se houver.
+    pub fn blocking_modal(&self, form: ComponentId) -> Option<ComponentId> {
+        let top_modal = self.open_forms.iter().rposition(|f| f.modal)?;
+        let pos = self.open_forms.iter().position(|f| f.form == form)?;
+        (pos < top_modal).then(|| self.open_forms[top_modal].form)
     }
 
     /// Form que a plataforma deve trazer para a frente (o pedido é consumido).

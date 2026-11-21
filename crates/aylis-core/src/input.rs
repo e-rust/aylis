@@ -664,8 +664,13 @@ impl Ui {
     /// Um botão foi pressionado (ou um dedo tocou a tela).
     pub fn pointer_down(&mut self, root: ComponentId, event: PointerEvent) {
         self.report(&crate::activity::Activity::PointerDown { form: root, event });
-        if self.input_blocked(root) {
-            return; // há um form modal aberto por cima
+        // Há um form modal aberto por cima: o clique traz o modal para a frente e o faz piscar,
+        // como no Windows. Sem isso, o modal atrás de outra janela (no Wayland, onde a janela não
+        // fica presa à dona) travava o app sem nada à vista (testado no Fedora em 20/11).
+        if let Some(modal) = self.blocking_modal(root) {
+            self.window_command(modal, crate::WindowCommand::Show);
+            self.window_command(modal, crate::WindowCommand::RequestAttention(false));
+            return;
         }
         // O backend ainda roda um handler: o clique novo é recusado (o form continua pintando).
         if self.busy_blocks_input() {

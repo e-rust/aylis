@@ -830,10 +830,28 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                         .fix(Fix::new("Instala as ferramentas do Xcode", &["xcode-select", "--install"]).interactive()),
                 });
             } else {
-                out.push(match output("cc", &["--version"]) {
-                    Some(v) => Check::ok(t, "Compilador C (linker)", v.lines().next().unwrap_or_default()),
-                    None => Check::missing(t, "Compilador C (linker)", "cc não encontrado")
-                        .help("Instale o gcc ou clang (ex.: sudo apt install build-essential)"),
+                // O compilador C (o linker do Rust) e as bibliotecas que um app do Aylis usa ao
+                // compilar, com os nomes do gerenciador desta distribuição (`linux_deps`).
+                let missing = crate::linux_deps::missing();
+                let names = missing.iter().map(|d| d.label).collect::<Vec<_>>().join(", ");
+                out.push(if missing.is_empty() {
+                    Check::ok(t, "Compilador C e bibliotecas de compilação", format!("{} itens", crate::linux_deps::DEPS.len()))
+                } else {
+                    let check = Check::missing(t, "Compilador C e bibliotecas de compilação", format!("faltam: {names}"));
+                    match crate::linux_deps::Manager::detect() {
+                        Some(manager) => {
+                            let packages = crate::linux_deps::packages_for(&missing, manager);
+                            check
+                                // O `sudo` sem senha quando a máquina permite (sem tela, num
+                                // servidor, na CI); senão o `pkexec`, que pede a senha numa janela.
+                                .fix(Fix::new(
+                                    &format!("Instala pelo {} (pede a senha do administrador)", manager.name()),
+                                    &["sh", "-c", &crate::linux_deps::as_root(&manager.install_command(&packages))],
+                                ))
+                                .help(&format!("Ou num terminal: {}", crate::linux_deps::sudo_command(&missing, manager)))
+                        }
+                        None => check.help("Instale pelo gerenciador de pacotes da distribuição: o gcc, o pkg-config e os pacotes de desenvolvimento do X11, Wayland, xkbcommon, fontconfig, freetype, OpenGL/EGL, ALSA e udev"),
+                    }
                 });
             }
         }

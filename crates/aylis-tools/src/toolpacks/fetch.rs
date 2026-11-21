@@ -58,9 +58,13 @@ pub struct Sources {
     /// falta o arquivo nela, exista ela ou não.
     pub installer_folder: Option<PathBuf>,
     /// Endereços HTTPS de um `pacotes.json` (o índice diz o lugar de cada arquivo).
-    /// Não há a URL oficial do manifesto como última origem (decisão do autor): só o `pack` e
-    /// o `update` a usam.
     pub mirrors: Vec<String>,
+    /// Por último, a URL oficial do manifesto (o fabricante: o `static.rust-lang.org`, o GitHub
+    /// do CodeLLDB...), com o mesmo SHA-256 conferido. Decidido pelo autor em 20/11 ("não tem
+    /// como deixar a IDE conseguindo gerar tudo como você fez?"), mudando a de 12/11: no Linux
+    /// o espelho não tinha os arquivos, e a IDE parava onde o `pack` conseguia. Desligada pelas
+    /// Opções (`package_official = off`), para a empresa que só aceita as origens dela.
+    pub official: bool,
     /// O download direto do Drive (os testes trocam por um servidor local).
     pub(crate) drive: String,
     /// Os índices já lidos, por espelho (uma ida por espelho, não por arquivo).
@@ -69,14 +73,14 @@ pub struct Sources {
 
 impl Default for Sources {
     fn default() -> Self {
-        Sources { folders: Vec::new(), installer_folder: None, mirrors: Vec::new(), drive: DRIVE.into(), indexes: Arc::default() }
+        Sources { folders: Vec::new(), installer_folder: None, mirrors: Vec::new(), official: false, drive: DRIVE.into(), indexes: Arc::default() }
     }
 }
 
 impl Sources {
     /// As de sempre: a pasta de `AYLIS_PACKAGE_DIR` (o instalador da IDE), a pasta `pacotes`
     /// ao lado do executável (a IDE), as pastas e os espelhos das Opções (`settings`:
-    /// `package_dirs`, `package_mirrors`; sem nada gravado, o espelho padrão).
+    /// `package_dirs`, `package_mirrors`) e, por último, o fabricante (`package_official`).
     pub fn configured() -> Sources {
         let mut s = Sources::default();
         // A pasta `pacotes` ao lado do instalador da IDE (o kit offline): o instalador a passa
@@ -87,6 +91,7 @@ impl Sources {
         s.folders.extend(Sources::beside_exe());
         s.folders.extend(crate::settings::list(crate::settings::PACKAGE_DIRS).into_iter().map(PathBuf::from));
         s.mirrors.extend(crate::settings::list(crate::settings::PACKAGE_MIRRORS));
+        s.official = crate::settings::package_official();
         s
     }
 
@@ -97,7 +102,7 @@ impl Sources {
 
     /// Há de onde obter (uma pasta que existe ou um espelho)? Sem nenhuma, só o cache.
     pub fn has_any(&self) -> bool {
-        self.folders.iter().any(|f| f.is_dir()) || !self.mirrors.is_empty()
+        self.folders.iter().any(|f| f.is_dir()) || !self.mirrors.is_empty() || self.official
     }
 
     /// Só estas pastas, sem espelho nem rede.
@@ -113,6 +118,9 @@ impl Sources {
         }
         for m in &self.mirrors {
             out.push(format!("espelho: {m}"));
+        }
+        if self.official {
+            out.push("a origem oficial de cada arquivo (o fabricante), por último".into());
         }
         out
     }
@@ -314,6 +322,25 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
             }
         }
     }
+    // Por último, o fabricante (a URL do manifesto), com o mesmo SHA-256.
+    // Só `https` (nos testes, também o servidor local).
+    let allowed = |u: &str| u.starts_with("https://") || (cfg!(test) && u.starts_with("http://127.0.0.1"));
+    if let Some(url) = file.url.as_deref().filter(|u| sources.official && allowed(u)) {
+        control.check()?;
+        progress(Progress::Step(format!("Baixando {} ({} MB) de {url}…", file.name, file.megabytes())));
+        match download_verified(url, file, &dest, control, progress) {
+            Ok(()) => return Ok(dest),
+            Err(e) if e == crate::process::CANCELLED => return Err(e),
+            Err(e) => {
+                match why(&e) {
+                    Why::Mismatch => mismatched.push(format!("o baixado de {url}")),
+                    Why::Offline => offline.push((url.to_string(), e.replace(NETWORK, ""))),
+                    _ => {}
+                }
+                tried.push(format!("origem oficial {url}: {}", e.replace(NETWORK, "")));
+            }
+        }
+    }
     let mut headline = Vec::new();
     if !mismatched.is_empty() {
         headline.push(format!(
@@ -333,14 +360,41 @@ pub(crate) fn obtain(file: &FileSpec, sources: &Sources, cache: &Path, control: 
         headline.push(format!("O espelho {} não tem o {}.", absent_mirrors.join(", "), file.name));
     }
     if !sources.has_any() {
-        headline.push("Nenhuma origem configurada: indique uma pasta de pacotes ou um espelho (Opções da IDE → Pacotes, ou aylis-tool packages sources).".into());
+        headline.push("Nenhuma origem: a origem oficial está desligada nas Opções e não há pasta de pacotes nem espelho (Opções da IDE → Pacotes, ou aylis-tool packages sources).".into());
     }
     if headline.is_empty() {
         headline.push(format!("Não deu para obter o {} com o SHA-256 fixado em nenhuma origem.", file.name));
     }
     // Sem nada tentado (nenhuma origem e nada no cache), sem a lista vazia.
     let tried = if tried.is_empty() { String::new() } else { format!("\n  O que cada origem respondeu:\n  - {}", tried.join("\n  - ")) };
-    Err(format!("{}{tried}", headline.join(" ")))
+    Err(format!("{}{tried}{}", headline.join(" "), manual_steps(file, cache)))
+}
+
+/// O passo a passo para instalar o arquivo à mão, quando nenhuma origem deu (nem o
+/// fabricante): baixar num navegador (ou noutra rede), conferir o SHA-256, pôr no cache e
+/// tentar de novo. Pedido do autor em 20/11: quem tem a rede bloqueada não pode ficar sem saída.
+pub(crate) fn manual_steps(file: &FileSpec, cache: &Path) -> String {
+    let Some(url) = file.url.as_deref().filter(|u| u.starts_with("https://") || (cfg!(test) && u.starts_with("http://127.0.0.1"))) else {
+        return format!(
+            "\n  Este arquivo é montado pelo Aylis (não tem endereço do fabricante): peça o {} a quem distribui o Aylis na sua empresa e ponha em {}.",
+            file.name,
+            cache.display()
+        );
+    };
+    let check = if cfg!(windows) {
+        format!("certutil -hashfile {} SHA256", file.name)
+    } else if cfg!(target_os = "macos") {
+        format!("shasum -a 256 {}", file.name)
+    } else {
+        format!("sha256sum {}", file.name)
+    };
+    format!(
+        "\n  Para instalar à mão:\n  1. Baixe {url} ({} MB) num navegador; se esta rede bloqueia, baixe noutra e traga o arquivo (um pendrive, uma pasta de rede).\n  2. Confira que é o arquivo certo: `{check}` tem de mostrar {}.\n  3. Ponha o arquivo, com o nome {}, na pasta {} (ou numa pasta de pacotes das Opções da IDE → Pacotes).\n  4. Tente de novo: na IDE, Ferramentas → Pacotes de ferramentas (ou Configurar linguagens); no terminal, aylis-tool packages install com o nome do pacote.",
+        file.megabytes(),
+        file.sha256,
+        file.name,
+        cache.display()
+    )
 }
 
 /// O arquivo pelo índice de um espelho: `{"files": {"<nome>": {"url": "..."} | {"drive": "<id>"}}}`.

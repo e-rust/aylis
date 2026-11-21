@@ -36,9 +36,8 @@ Na ordem, e o primeiro que tiver o arquivo com o hash certo vence:
 2. **A pasta de pacotes**: a pasta `pacotes` ao lado do instalador ou da IDE, e as pastas
    configuradas nas Opções (uma pasta de rede, a pasta do Google Drive para desktop). Os
    arquivos estão lá pelo nome.
-3. **Os espelhos** configurados nas Opções (sem nada gravado, o espelho padrão: a pasta do
-   Google Drive de quem distribui o Aylis, `settings::DEFAULT_PACKAGE_MIRROR`; apagado nas
-   Opções, fica apagado). Cada espelho é o
+3. **Os espelhos** configurados nas Opções (nenhum por padrão: o da empresa, que guarda os
+   pacotes num servidor dela). Cada espelho é o
    endereço HTTPS de um índice (`pacotes.json`) que diz onde está cada arquivo — um endereço
    HTTPS, ou o id de um arquivo do Google Drive (`"drive": "<id>"`, baixado pelo endereço de
    download direto do Drive, com a confirmação que ele pede nos arquivos grandes). O índice
@@ -47,10 +46,25 @@ Na ordem, e o primeiro que tiver o arquivo com o hash certo vence:
    lista da pasta (a vista embutida dela, sem chave de API) vira o índice, pelo nome de cada
    arquivo. Basta subir a pasta do `pack` e compartilhar como "qualquer pessoa com o link".
 
-Não há endereço oficial dos fabricantes como último recurso (decisão do autor): quem distribui o Aylis monta a
-pasta de pacotes uma vez, numa máquina com internet, com `aylis-tool packages pack --out
-<pasta>` (baixa das origens oficiais as versões fixadas, confere os hashes e grava a pasta e o
-`pacotes.json` com os nomes), e a sobe no Drive, num servidor ou ao lado do instalador.
+4. **O fabricante**: a URL oficial do manifesto (o `static.rust-lang.org`, o GitHub do
+   CodeLLDB...), com o mesmo SHA-256 conferido. Na máquina comum, é daqui que tudo vem.
+   Desligada nas Opções (`package_official = off` no `tools.json`), para a empresa que só
+   aceita as origens dela.
+
+Decidido pelo autor em 20/11, mudando a decisão de 12/11 (que não usava a URL oficial e tinha
+como espelho padrão uma pasta do Google Drive): "eu não queria depender do meu google drive.. foi
+uma decisão ruim", e "não tem como deixar a IDE conseguindo gerar tudo como você fez?" (o `pack`).
+O espelho do Drive não tinha nenhum arquivo do Linux, e numa VM limpa com o Fedora o Rust só
+instalava pela pasta gerada à mão.
+
+**Quando nenhuma origem dá** (a rede bloqueia o fabricante, por exemplo), o erro traz o passo a
+passo para instalar à mão: o endereço do arquivo, o comando que confere o SHA-256 em cada
+sistema (`certutil -hashfile`, `sha256sum`, `shasum -a 256`) com o valor que tem de dar, a pasta
+onde pôr o arquivo (o cache) e como tentar de novo.
+
+**O kit offline** continua: `aylis-tool packages pack --out <pasta>` (baixa do fabricante as
+versões fixadas, confere os hashes e grava a pasta e o `pacotes.json` com os nomes), para levar
+ao lado do instalador numa máquina sem internet, ou para um espelho da empresa.
 
 O download respeita o proxy do sistema e tem prazo; um erro diz qual arquivo, de onde e por quê.
 
@@ -86,7 +100,7 @@ Android Studio).
   opcionais, e cada uma marcada vem com tudo o que precisa: no fim, o `aylis-tool setup` dela
   instala o compilador ou o interpretador, o depurador e o servidor de linguagem (o mesmo do
   "Configurar linguagens" da IDE), dos pacotes da pasta `pacotes` ao lado do instalador ou do
-  espelho padrão. Os projetos de exemplo não vão no instalador.
+  fabricante. Os projetos de exemplo não vão no instalador.
 
 ## A verificação de ambiente
 

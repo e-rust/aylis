@@ -238,7 +238,7 @@ fn a_file_with_the_wrong_hash_is_refused() {
     // Sem origem nenhuma, o erro diz o que fazer.
     let none = installer(&dir, manifest(tool_package("1.0", &zip)), Sources::default());
     let err = none.install(&["tool"], &Control::default(), &mut quiet()).unwrap_err();
-    assert!(err.contains("Nenhuma origem configurada"), "{err}");
+    assert!(err.contains("Nenhuma origem"), "{err}");
     // Um manifesto sem hash não instala.
     let mut no_hash = tool_package("1.0", &zip);
     no_hash["tool"]["platforms"]["any"]["files"][0]["sha256"] = json!("");
@@ -481,10 +481,11 @@ fn pack_writes_the_folder_and_the_index() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// Sem origem, nada cai na URL oficial do manifesto (decisão do autor): a instalação falha
-/// dizendo que não há origem, e o servidor da "URL oficial" não recebe pedido nenhum.
+/// Com a origem oficial desligada (as Opções, `package_official = off`: a empresa que só aceita
+/// as origens dela), nada cai na URL do manifesto: a instalação falha dizendo que não há origem,
+/// e o servidor da "URL oficial" não recebe pedido nenhum.
 #[test]
-fn nothing_falls_back_to_the_official_url() {
+fn the_official_url_off_asks_nothing() {
     let dir = temp("official");
     let zip = zip_bytes(&[("tool-1/bin/tool.exe", b"oficial")]);
     let (base, asked) = serve(|_| {
@@ -500,7 +501,7 @@ fn nothing_falls_back_to_the_official_url() {
     let i = installer(&dir, m, Sources::default());
     assert!(!i.sources.has_any());
     let err = i.install(&["tool"], &Control::default(), &mut quiet()).unwrap_err();
-    assert!(err.contains("Nenhuma origem configurada"), "{err}");
+    assert!(err.contains("Nenhuma origem"), "{err}");
     assert!(asked.lock().unwrap().is_empty(), "a URL oficial não é usada: {:?}", asked.lock().unwrap());
     assert!(!dir.join("tools/tool").exists());
     let _ = std::fs::remove_dir_all(&dir);
@@ -578,4 +579,46 @@ fn a_drive_folder_link_becomes_the_mirror_index() {
     assert_eq!(files["android-ndk-r27c-windows.zip"]["drive"], "1RQQd9DYrBXWglRlMmq89wqq9_dFx9G3R");
     assert_eq!(files["node-v26.13.1-win-x64.zip"]["drive"], "1uqXVOb6tpJdiwiRiYLKifCzbe9BbTxxL");
     assert_eq!(files["a & b.zip"]["drive"], "1abc-_");
+}
+
+/// Sem pasta nem espelho, o arquivo vem do fabricante (a URL do manifesto), conferido pelo
+/// SHA-256 (decidido pelo autor em 20/11); sem a origem oficial (as Opções desligam), não. E
+/// quando nem o fabricante dá, o erro traz o passo a passo para instalar à mão.
+#[test]
+fn the_official_url_is_the_last_source_and_the_error_says_how_to_do_it_by_hand() {
+    let dir = temp("official_last");
+    let body = zip_bytes(&[("x.txt", b"do fabricante")]);
+    let (base, _) = serve(|_| {
+        let mut r = HashMap::new();
+        r.insert("/oficial/x-1.zip".to_string(), ("application/zip", body.clone()));
+        r
+    });
+    // O manifesto só aceita `https`: monta com um e troca, na memória, pelo servidor local.
+    let package = |url: &str| {
+        let mut m = manifest(json!({ "x": { "version": "1", "install": "extract", "platforms": { "any": { "files": [file_entry("x-1.zip", &body, json!({ "url": "https://fabricante.example/x-1.zip" }))] } } } }));
+        for p in &mut m.packages {
+            for e in &mut p.platforms {
+                for f in &mut e.files {
+                    f.url = Some(url.to_string());
+                }
+            }
+        }
+        m
+    };
+    // Desligada: nenhuma origem, e o passo a passo.
+    let off = installer(&dir, package(&format!("{base}/oficial/x-1.zip")), Sources::default());
+    let e = off.install(&["x"], &Control::default(), &mut quiet()).unwrap_err();
+    assert!(e.contains("Para instalar à mão") && e.contains("/oficial/x-1.zip") && e.contains("x-1.zip"), "{e}");
+    // Ligada: do fabricante.
+    let on = installer(&dir, package(&format!("{base}/oficial/x-1.zip")), Sources { official: true, ..Sources::default() });
+    on.install(&["x"], &Control::default(), &mut quiet()).unwrap();
+    assert_eq!(std::fs::read(dir.join("tools/x/1/x.txt")).unwrap(), b"do fabricante");
+    // O fabricante fora do ar: o erro diz de onde baixar à mão e o SHA-256 que tem de dar.
+    let _ = std::fs::remove_dir_all(dir.join("cache"));
+    let _ = std::fs::remove_dir_all(dir.join("tools"));
+    let gone = installer(&dir, package(&format!("{base}/sumiu/x-1.zip")), Sources { official: true, ..Sources::default() });
+    let e = gone.install(&["x"], &Control::default(), &mut quiet()).unwrap_err();
+    let sha = sha(&body);
+    assert!(e.contains("origem oficial") && e.contains("Para instalar à mão") && e.contains(&sha), "{e}");
+    let _ = std::fs::remove_dir_all(&dir);
 }

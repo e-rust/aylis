@@ -269,8 +269,12 @@ struct PackageSources {
 }
 
 /// O texto de um campo de várias linhas como lista (sem linhas vazias).
+/// As linhas de um `Memo`, pela propriedade `text`: o `dialogs::text_of` lê só `Edit`, e aqui
+/// devolvia vazio, e o OK das Opções apagava os espelhos (o padrão também) e as pastas de
+/// pacotes de quem nem mexeu nelas (achado no Fedora em 20/11: o espelho sumiu ao ligar o MCP).
 fn lines_of(ui: &Ui, memo: ComponentId) -> Vec<String> {
-    crate::dialogs::text_of(ui, memo).lines().map(str::trim).filter(|l| !l.is_empty()).map(str::to_string).collect()
+    let text = ui.get_prop(memo, "text").ok().and_then(|v| v.to_str().ok().map(str::to_string)).unwrap_or_default();
+    text.lines().map(str::trim).filter(|l| !l.is_empty()).map(str::to_string).collect()
 }
 
 /// As origens dos pacotes (`aylis_tools::toolpacks`, docs/pacotes.md): as pastas e os

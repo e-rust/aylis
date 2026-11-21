@@ -13,6 +13,73 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 20/11/2026: a instalação do ambiente e o `.deb` da IDE**
+
+- Relato do autor em 20/11: quem usa o Aylis tem pouca experiência com Rust, e instalar e
+  configurar o ambiente é a parte que mais falha: empresas bloqueiam o Google Drive (o espelho
+  padrão dos pacotes, sem outra origem) e não se sabe se o Linux funciona. Levantado: os
+  pacotes só vêm do cache, da pasta `pacotes` ou do espelho (o Drive); o Rust do Windows (MSVC)
+  precisa das Build Tools do Visual Studio, que não são pacote (pelo `winget`); o Linux nunca
+  foi testado numa máquina limpa (o WSL usado já tinha as bibliotecas). Propostas, esperando o
+  autor: outras origens (os arquivos numa release do GitHub, a URL oficial como último recurso,
+  com o SHA-256 do manifesto: muda a decisão de 12/11), o kit offline publicado na release,
+  tirar as Build Tools do caminho (o `rust-lld` ou o Rust do MinGW, a pesquisar) e o teste em
+  máquina limpa (VM com Linux, Windows Sandbox).
+- Pedido do autor em 20/11 ("prepare para ser compatível com .deb do linux"; ele instala o
+  Linux numa VM para testar). Feito (`aylis-tools::ide_package::linux_deb`, `aylis-tool
+  ide-package --target linux --binary aylis-ide --deb`): o `.deb` da IDE, montado em Rust (o
+  `ar` e os `.tar.gz`, sem o `dpkg-deb`), instala em `/opt/aylis-ide` (a IDE, o `aylis-host`, o
+  `aylis-tool`, o `aylis-migrate` e o código do Aylis), põe a IDE (pelo lançador do WSL) e o
+  `aylis-tool` em `/usr/bin`, e o atalho, os tipos de arquivo e os ícones em `/usr/share`, com o
+  `postinst`/`postrm` atualizando os bancos do sistema. As dependências (`Depends`) são as
+  bibliotecas de compilação de `aylis_tools::wsl::PACKAGES` (as da CI): o `apt install
+  ./aylis-ide_0.9.0_amd64.deb` as instala junto. A versão de pré-lançamento vira `0.9.0~beta.1`.
+  Conferido no WSL (Ubuntu 26.04): o `dpkg-deb --info` lê o pacote; o `apt install` instala; a
+  IDE de `/opt` abre (`--png`); um projeto novo compila com o `aylis-tool` do `/usr/bin` (70 s);
+  o `apt remove` tira tudo. Teste `the_deb_installs_in_opt_with_the_launcher_and_the_dependencies`.
+  - Testado numa VM limpa do Hyper-V com o Fedora 45 (20/11), pelo `.tar.gz` e o
+    `instalar.sh` (sem `sudo`), por SSH e pelo MCP da IDE da VM: a IDE abre, um projeto novo
+    compila e roda, e o ciclo inteiro (ligar o `on_click`, o esqueleto, o código, compilar,
+    clicar e ver o texto mudar) funciona. Achado e corrigido no caminho:
+    - a verificação de ambiente só conhecia o `apt`: agora `aylis_tools::linux_deps` reconhece
+      a distribuição (`apt`, `dnf`, `zypper`, `pacman`), confere o compilador C e cada
+      biblioteca pelo `pkg-config` e monta o comando com os nomes de cada uma; roda pelo `sudo`
+      sem senha quando a máquina deixa, senão pelo `pkexec`;
+    - o `aylis-tool build` (e os outros comandos que compilam) não achava o Rust dos pacotes do
+      Aylis: agora chama o `setup::refresh_path`, como a IDE;
+    - a IDE ficava segundos sem responder (o GNOME oferecia "Forçar saída"): sem placa de vídeo,
+      o modo automático desenhava no OpenGL por software (llvmpipe). Agora, achando o OpenGL
+      por software, a janela desenha na CPU (e as seguintes já vão direto): rápida;
+    - o assistente "Configurar linguagens" da primeira abertura abria por cima da pergunta de
+      confiar no projeto e a bloqueava, e no Wayland ficava atrás da IDE: o "Confiar" não
+      fazia nada. Agora ele espera o modal fechar; e, no núcleo, clicar numa janela bloqueada
+      por um modal traz o modal para a frente e o faz piscar (`Ui::blocking_modal`);
+    - o `aylis-tool new` não marcava o projeto como confiável (o "Novo projeto" da IDE marca);
+    - o GNOME mostrava a janela como "Desconhecido": agora o `app_id` (e o `WM_CLASS`) é o
+      nome do executável, o mesmo do `.desktop`;
+    - o OK das Opções apagava os espelhos dos pacotes (o padrão também) e as pastas: o campo
+      (um `Memo`) era lido como `Edit` e vinha vazio. Teste `ok_keeps_the_package_sources`;
+    - na CPU, no Wayland, passar o mouse nas abas (Propriedades × Eventos, Design × Código)
+      deixava lixo piscando: o Wayland alterna buffers, e a pintura por parte só refazia as
+      áreas do quadro. Agora o `cpu.rs` guarda as áreas dos últimos quadros e, pela idade do
+      buffer, pinta também o que ele perdeu (teste `an_older_buffer_also_paints_what_it_missed`).
+      Confirmado pelo autor na VM.
+  - Decidido pelo autor em 20/11 ("eu não queria depender do meu google drive.. foi uma decisão
+    ruim"): os pacotes vêm do fabricante (a URL oficial do manifesto, por último, com o mesmo
+    SHA-256), e o espelho padrão do Drive sai. Feito (`toolpacks::fetch`, `settings`): a
+    origem oficial ligada por padrão (`package_official = off` desliga, para a empresa que só
+    aceita as origens dela); quando nenhuma origem dá, o erro traz o passo a passo para
+    instalar à mão (o endereço, o SHA-256 e o comando que o confere em cada sistema, a pasta,
+    tentar de novo). Conferido na VM com o Fedora, sem pasta `pacotes`, sem cache e sem
+    ferramentas: o `setup rust` baixou o Rust do `static.rust-lang.org` e o CodeLLDB do GitHub
+    dele, em 68 s. Testes `the_official_url_is_the_last_source_and_the_error_says_how_to_do_it_by_hand`
+    e `the_official_url_off_asks_nothing`.
+  - Falta: o `.rpm` para o Fedora (o `.tar.gz` funcionou); a chave `package_official` só pelo
+    `tools.json` (sem caixa nas Opções nem opção no `aylis-tool packages sources`).
+  - Falta: o autor testar o `.deb` numa VM limpa com Debian ou Ubuntu. O Rust não vem no `.deb` (o `cargo` do Ubuntu é velho
+    para a edição 2024): vem pelos pacotes de ferramentas ou pelo rustup. Distribuições antigas
+    (Ubuntu 20.04, Debian 10) não têm o `libfreetype-dev` com esse nome.
+
 **Ajustes de 20/11/2026: uma janela por monitor, a que fica por cima e o arrasto entre elas**
 
 - [ ] Relato do autor em 20/11 (um app dele, feito com uma LLM): abrir uma janela por monitor,

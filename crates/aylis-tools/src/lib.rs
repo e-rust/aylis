@@ -39,6 +39,7 @@ pub mod ibge;
 pub mod translations;
 pub mod jdb_dap;
 pub mod lint;
+pub mod linux_deps;
 pub mod lsp;
 pub mod mcp;
 pub mod packages;

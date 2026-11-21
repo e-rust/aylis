@@ -30,6 +30,12 @@ use aylis_tools::{Control, Target, publish, run};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    // Os comandos que compilam ou rodam ferramentas veem as dos pacotes do Aylis (o Rust de
+    // `~/.aylis/tools`), como a IDE: sem isso, o `aylis-tool build` não achava o `cargo` que o
+    // `aylis-tool setup rust` acabou de instalar (testado no Fedora em 20/11).
+    if matches!(args.first().map(String::as_str), Some("check" | "build" | "run" | "publish" | "test" | "debug-android" | "agent-run" | "ci-ios")) {
+        aylis_tools::setup::refresh_path();
+    }
     let result = match args.first().map(String::as_str) {
         Some("check") => check(&args[1..]),
         // Os textos da IDE sem tradução; com --apply, acrescenta as da tabela.
@@ -278,6 +284,9 @@ fn main() -> ExitCode {
                 match language {
                     Some(language) => aylis_project::create(std::path::Path::new(location), name, language)
                         .and_then(|p| aylis_project::codegen::generate(&p).map(|_| p))
+                        // Criado nesta máquina: confiável, como o "Novo projeto" da IDE (sem
+                        // isso, a IDE perguntava se confia no projeto que o usuário acabou de criar).
+                        .and_then(|p| aylis_tools::trust::trust(&p.dir()).map(|_| p))
                         .map(|p| println!("pronto: {}", p.path.display())),
                     None => Err(format!("linguagem desconhecida: {} (use {})", args[3], Language::ALL.map(|l| l.name()).join(", "))),
                 }
@@ -409,7 +418,7 @@ fn main() -> ExitCode {
             Ok(())
         }),
         // A IDE empacotada para Linux ou macOS, com os tipos de arquivo do aylis:
-        // aylis-tool ide-package --target linux|macos --binary aylis-ide [--out dist]
+        // aylis-tool ide-package --target linux|macos --binary aylis-ide [--out dist] [--deb]
         Some("ide-package") => (|| -> Result<(), String> {
             let target = value_of(&args, "--target").ok_or("informe --target linux ou macos")?;
             let binary = PathBuf::from(value_of(&args, "--binary").ok_or("informe --binary (a IDE compilada no sistema de destino)")?);
@@ -420,6 +429,11 @@ fn main() -> ExitCode {
             let sdk = root.join("crates").is_dir().then_some(root.as_path());
             let made = aylis_tools::ide_package::package(&target, &binary, &logo, &out, env!("CARGO_PKG_VERSION"), sdk)?;
             println!("pronto: {}", made.display());
+            // `--deb`: também o pacote do Debian e do Ubuntu, que instala as dependências pelo apt.
+            if target == "linux" && args.iter().any(|a| a == "--deb") {
+                let deb = aylis_tools::ide_package::linux_deb(&made, &out, env!("CARGO_PKG_VERSION"))?;
+                println!("pronto: {}", deb.display());
+            }
             Ok(())
         })(),
         // O agente remoto, no outro PC ou servidor: aylis-tool debug-agent [--listen 0.0.0.0:7444]
@@ -561,7 +575,7 @@ fn main() -> ExitCode {
             println!("pronto: {}", published.main.display());
             Ok(())
         }),
-        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> [--target t] [--device] [--serial s] | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--no-sign] [--abis a,b] [--device] | ci-ios <projeto.aylisproj> [--signed] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | bench-frames [--cameras 1,4,9,16,36] [--frames 600] [--width 1920 --height 1080] [--json saída.json] | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
+        _ => Err("uso: aylis-tool check [<projeto.aylisproj> [--web]] | build <projeto.aylisproj> [--target t] [--release] [--no-generate] [--no-compile] [--json] | run <projeto.aylisproj> [--target t] [--device] [--serial s] | publish <projeto.aylisproj> [--target desktop|android|web|ios] [--out pasta] [--aab] [--installer] [--no-sign] [--abis a,b] [--device] | ci-ios <projeto.aylisproj> [--signed] | debug-android <projeto.aylisproj> [--serial s] [--lldb] | android-wifi [--serial s] | debug-agent [--listen endereço] [--dir pasta] | agent-run <projeto.aylisproj> --agent código | agent-dap --agent código --project <projeto.aylisproj> -- adaptador... | keystore <arquivo> [--alias a] [--name n] | clean [--days 7] | installer-ide [--out pasta] [--skip-build] | ide-package --target linux|macos --binary aylis-ide [--out pasta] [--deb] | new <pasta> <nome> | generate <projeto.aylisproj> | script <projeto.aylisproj> <roteiro.json> | translations | resources | emoji <pasta> | bench <saída.json> | test-docs | bench-frames [--cameras 1,4,9,16,36] [--frames 600] [--width 1920 --height 1080] [--json saída.json] | skia-android [--libclang pasta] [--ninja ninja.exe] [--work pasta] | fpc-package --installer fpc-3.2.2.win32.and.win64.exe --innoextract innoextract.exe | docs".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

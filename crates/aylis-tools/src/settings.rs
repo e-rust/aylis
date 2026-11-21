@@ -132,13 +132,17 @@ pub const PACKAGE_DIRS: &str = "package_dirs";
 /// uma pasta compartilhada do Google Drive.
 pub const PACKAGE_MIRRORS: &str = "package_mirrors";
 
-/// O espelho de quem distribui o Aylis (a pasta do Google Drive com os pacotes de
-/// ferramentas): a origem que vale enquanto ninguém escolheu outra nas Opções. Apagado nas
-/// Opções, fica apagado (a lista vazia é gravada).
-pub const DEFAULT_PACKAGE_MIRROR: &str = "https://drive.google.com/drive/folders/128gDbpqvVzI_nXRe9e2J2T17v7x90zfe";
+/// Baixar do fabricante (a URL do manifesto) quando nenhuma outra origem tem o arquivo
+/// (`package_official`; o padrão, ligado; `off` desliga).
+pub const PACKAGE_OFFICIAL: &str = "package_official";
+
+/// A origem oficial está ligada (o padrão; `package_official = off` desliga).
+pub fn package_official() -> bool {
+    !matches!(tool_text(PACKAGE_OFFICIAL).trim().to_ascii_lowercase().as_str(), "off" | "false" | "0" | "não" | "nao")
+}
 
 /// Uma lista gravada (`package_dirs`, `package_mirrors`); um texto só vale como lista de um.
-/// Os espelhos nunca gravados são o [`DEFAULT_PACKAGE_MIRROR`].
+/// Nenhuma tem padrão: sem espelho, os arquivos vêm do fabricante (`package_official`).
 pub fn list(key: &str) -> Vec<String> {
     list_in(&read(), key)
 }
@@ -147,20 +151,16 @@ fn list_in(map: &Map<String, Value>, key: &str) -> Vec<String> {
     match map.get(key) {
         Some(Value::Array(a)) => a.iter().filter_map(Value::as_str).map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect(),
         Some(Value::String(s)) if !s.trim().is_empty() => vec![s.trim().to_string()],
-        None if key == PACKAGE_MIRRORS => vec![DEFAULT_PACKAGE_MIRROR.to_string()],
         _ => Vec::new(),
     }
 }
 
-/// Grava (ou apaga, se vazia) a lista de `key`, mantendo o resto. A dos espelhos vazia fica
-/// gravada vazia: senão voltaria a ser o espelho padrão.
+/// Grava (ou apaga, se vazia) a lista de `key`, mantendo o resto.
 pub fn set_list(key: &str, values: &[String]) -> Result<(), String> {
     let path = path().ok_or("sem pasta de dados do usuário")?;
     let mut map = read();
     let values: Vec<Value> = values.iter().map(|v| v.trim()).filter(|v| !v.is_empty()).map(|v| Value::String(v.to_string())).collect();
-    if values.is_empty() && key == PACKAGE_MIRRORS {
-        map.insert(key.to_string(), Value::Array(Vec::new()));
-    } else if values.is_empty() {
+    if values.is_empty() {
         map.remove(key);
     } else {
         map.insert(key.to_string(), Value::Array(values));
@@ -185,17 +185,16 @@ pub fn number(key: &str) -> Option<u64> {
 mod tests {
     use super::*;
 
-    /// Sem nada gravado, o espelho é o Drive de quem distribui o Aylis; a lista gravada (até
-    /// vazia, quando o usuário apagou) vale no lugar dele. As pastas não têm padrão.
+    /// Sem nada gravado, nenhum espelho nem pasta (os arquivos vêm do fabricante); a lista
+    /// gravada vale. Decidido pelo autor em 20/11: sem depender do Google Drive dele.
     #[test]
-    fn the_default_mirror_holds_until_the_list_is_saved() {
+    fn there_is_no_default_mirror() {
         let empty = Map::new();
-        assert_eq!(list_in(&empty, PACKAGE_MIRRORS), [DEFAULT_PACKAGE_MIRROR]);
+        assert!(list_in(&empty, PACKAGE_MIRRORS).is_empty());
         assert!(list_in(&empty, PACKAGE_DIRS).is_empty());
-        assert!(crate::toolpacks::fetch::drive_folder_id(DEFAULT_PACKAGE_MIRROR).is_some(), "o link é de uma pasta do Drive");
         let mut saved = Map::new();
         saved.insert(PACKAGE_MIRRORS.into(), Value::Array(Vec::new()));
-        assert!(list_in(&saved, PACKAGE_MIRRORS).is_empty(), "apagado nas Opções, fica apagado");
+        assert!(list_in(&saved, PACKAGE_MIRRORS).is_empty());
         saved.insert(PACKAGE_MIRRORS.into(), Value::Array(vec![Value::String("https://outro/pacotes.json".into())]));
         assert_eq!(list_in(&saved, PACKAGE_MIRRORS), ["https://outro/pacotes.json"]);
     }

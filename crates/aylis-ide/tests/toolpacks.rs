@@ -37,9 +37,9 @@ fn the_tool_packages_screen_and_the_fix_without_a_source() {
         // SAFETY: o único teste deste binário, antes de qualquer thread dele ler o ambiente.
         unsafe { std::env::set_var(key, &home) };
     }
-    // Sem a chave, vale o espelho padrão (a pasta do Drive do autor, desde a 0.2.0): aqui a
-    // lista vazia, como quem tirou o padrão nas Opções, para não haver origem nenhuma.
-    aylis_tools::settings::set_list(aylis_tools::settings::PACKAGE_MIRRORS, &[]).unwrap();
+    // Sem origem nenhuma: a oficial (o fabricante, ligada por padrão) desligada, como numa
+    // empresa que só aceita as origens dela, e sem pasta nem espelho.
+    aylis_tools::settings::set_tool(aylis_tools::settings::PACKAGE_OFFICIAL, Some("off")).unwrap();
     let state = shared(Document::new());
     let mut ide = app::build(state.clone());
     ide.ui.show(ide.form).unwrap();
