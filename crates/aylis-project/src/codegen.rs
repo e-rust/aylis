@@ -2219,9 +2219,13 @@ pub fn update_python(existing: Option<String>, handlers: &[String], form: &str) 
     // dentro deles, frmX é a janela do evento.
     let mut text = existing.unwrap_or_else(|| {
         format!(
-            "\"\"\"Eventos do form {form}: o código é seu (o registro dos handlers fica no\n\
-             forms/__init__.py gerado; a IDE só acrescenta os handlers novos). Dentro de um handler,\n\
-             {form} é a janela do evento.\"\"\"\n"
+            // Linhas de até 79 caracteres: o servidor de linguagem (pycodestyle) marcava a
+            // docstring gerada com o E501 em todo projeto novo (21/11).
+            "\"\"\"Eventos do form {form}: o código é seu.\n\
+             \n\
+             O registro dos handlers fica no forms/__init__.py gerado; a IDE só\n\
+             acrescenta os handlers novos. Dentro de um handler, {form} é a\n\
+             janela do evento.\"\"\"\n"
         )
     });
     for h in handlers {

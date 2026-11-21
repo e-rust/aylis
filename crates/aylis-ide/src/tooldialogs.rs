@@ -323,7 +323,7 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let line = field(ui, d.body, "Pacote");
     let bundle = ui.add(CheckBox::new("Android: AAB (Play Store)"), line);
     ui.control_mut(bundle).unwrap().set_align(Align::Left).set_width(230.0);
-    let installer = ui.add(CheckBox::new("Windows: instalador (o tipo do projeto)"), line);
+    let installer = ui.add(CheckBox::new("Instalador (Windows: o tipo do projeto; Linux: .deb)"), line);
     ui.control_mut(installer).unwrap().set_align(Align::Client);
     let line = field(ui, d.body, "Chave (Android)");
     let new_key = ui.add(Button::new("Criar…"), line);

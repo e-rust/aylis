@@ -45,6 +45,7 @@ pub mod mcp;
 pub mod packages;
 pub mod build;
 pub mod build_index;
+pub mod app_deb;
 pub mod cargo_config;
 pub mod cleanup;
 pub mod codesign;

@@ -490,6 +490,7 @@
  "Inspetor do app em execução": "运行中应用检查器",
  "Inspetor do app em execução…": "运行中应用检查器…",
  "Instalador": "安装程序",
+ "Instalador (Windows: o tipo do projeto; Linux: .deb)": "安装程序（Windows：项目的类型；Linux：.deb）",
  "Instalando": "正在安装",
  "Instalando pacotes": "正在安装软件包",
  "Instalar": "安装",

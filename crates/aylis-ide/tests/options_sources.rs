@@ -16,6 +16,13 @@ fn ok_keeps_the_package_sources() {
         // SAFETY: o único teste deste binário, antes de qualquer thread dele ler o ambiente.
         unsafe { std::env::set_var(key, &home) };
     }
+    // O OK das Opções grava o `config.toml` do cargo, no `CARGO_HOME`, que o `cargo test` passa
+    // apontando para o de verdade: sem trocar, o teste mudava a pasta de compilação da máquina
+    // inteira para a pasta temporária dele (e enchia o disco; 21/11).
+    // SAFETY: como acima.
+    unsafe { std::env::set_var("CARGO_HOME", home.join(".cargo")) };
+    let real_config = aylis_tools::cargo_config::global_path();
+    assert!(real_config.as_ref().is_some_and(|p| p.starts_with(&home)), "o config.toml do cargo do teste fica na pasta dele: {real_config:?}");
     use aylis_tools::settings::{PACKAGE_DIRS, PACKAGE_MIRRORS, list, set_list};
     // Um espelho gravado: o OK não pode apagá-lo.
     set_list(PACKAGE_MIRRORS, &["https://empresa.example/pacotes.json".to_string()]).unwrap();

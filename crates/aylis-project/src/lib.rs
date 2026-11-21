@@ -133,23 +133,25 @@ pub struct FormEntry {
     /// Os DataModules que o form declara em `"uses"`, anotados como o `data_module`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub uses: Vec<String>,
-    /// A hora da última alteração do arquivo do form (milissegundos desde 1970) quando o
-    /// `data_module` e o `uses` foram anotados; outra hora no disco faz ler o form de novo. Fica
-    /// em `.aylis/form-stamps.json` (fora do controle de versão), não no `.aylisproj`: gravada nele,
-    /// mudava a cada salvar de form, e duas pessoas mexendo em forms diferentes conflitavam no
-    /// `.aylisproj` (conferência de 08/11). Um `.aylisproj` de antes ainda é lido.
-    #[serde(default, skip_serializing)]
-    pub modified: Option<u64>,
+    /// A marca do arquivo do form (a hora em nanossegundos e o tamanho) quando o `data_module` e
+    /// o `uses` foram anotados; outra marca no disco faz ler o form de novo. Antes era a hora em
+    /// milissegundos, e um form regravado no mesmo milissegundo não era lido de novo (21/11).
+    /// Fica em `.aylis/form-stamps.json` (fora do controle de versão), não no `.aylisproj`:
+    /// gravada nele, mudava a cada salvar de form, e duas pessoas mexendo em forms diferentes
+    /// conflitavam no `.aylisproj` (conferência de 08/11). Um `.aylisproj` de antes ainda abre (a
+    /// hora antiga é ignorada e o form, lido de novo).
+    #[serde(default, skip_serializing, deserialize_with = "ignore_old_stamp")]
+    pub modified: Option<FileStamp>,
+}
+
+/// A hora de um `.aylisproj` de antes (um número): ignorada, o form é lido de novo.
+fn ignore_old_stamp<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<FileStamp>, D::Error> {
+    <serde::de::IgnoredAny as serde::Deserialize>::deserialize(d)?;
+    Ok(None)
 }
 
 fn is_false(b: &bool) -> bool {
     !*b
-}
-
-/// A hora da última alteração de um arquivo, em milissegundos desde 1970.
-pub fn modified_ms(path: &Path) -> Option<u64> {
-    let time = std::fs::metadata(path).ok()?.modified().ok()?;
-    Some(time.duration_since(std::time::UNIX_EPOCH).ok()?.as_millis() as u64)
 }
 
 /// O `.aylisproj`.
@@ -810,8 +812,8 @@ impl Project {
         // são lidos de novo (a IDE grava ao salvar). As horas anotadas ficam fora do `.aylisproj`.
         let stamps = project.load_stamps();
         for f in &mut project.forms {
-            if let Some(&ms) = stamps.get(&f.name) {
-                f.modified = Some(ms);
+            if let Some(&stamp) = stamps.get(&f.name) {
+                f.modified = Some(stamp);
             }
         }
         project.refresh_forms();
@@ -835,13 +837,13 @@ impl Project {
         self.dir().join(".aylis").join("form-stamps.json")
     }
 
-    fn load_stamps(&self) -> std::collections::HashMap<String, u64> {
+    fn load_stamps(&self) -> std::collections::HashMap<String, FileStamp> {
         std::fs::read_to_string(self.stamps_file()).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
     }
 
     /// Grava as horas dos forms (só quando mudaram), com a regra no `.aylis/.gitignore`.
     fn save_stamps(&self) {
-        let stamps: std::collections::BTreeMap<&str, u64> = self.forms.iter().filter_map(|f| Some((f.name.as_str(), f.modified?))).collect();
+        let stamps: std::collections::BTreeMap<&str, FileStamp> = self.forms.iter().filter_map(|f| Some((f.name.as_str(), f.modified?))).collect();
         let file = self.stamps_file();
         let text = serde_json::to_string_pretty(&stamps).unwrap_or_default() + "\n";
         if std::fs::read_to_string(&file).is_ok_and(|old| old == text) {
@@ -1024,7 +1026,7 @@ impl Project {
 
     fn refresh_entry(&mut self, i: usize) {
         let entry = &self.forms[i];
-        let modified = modified_ms(&self.file(&entry.file));
+        let modified = FileStamp::read(&self.file(&entry.file));
         let root = self.root_of(entry);
         let entry = &mut self.forms[i];
         entry.data_module = root.as_ref().is_some_and(|r| r["class"] == "DataModule");
@@ -1032,12 +1034,12 @@ impl Project {
         entry.modified = modified;
     }
 
-    /// Lê de novo os forms cujo arquivo tem outra hora que a anotada (mudaram fora da IDE, ou o
+    /// Lê de novo os forms cujo arquivo tem outra marca que a anotada (mudaram fora da IDE, ou o
     /// projeto é de antes desta anotação). Devolve se alguma entrada mudou.
     pub fn refresh_forms(&mut self) -> bool {
         let mut changed = false;
         for i in 0..self.forms.len() {
-            if modified_ms(&self.file(&self.forms[i].file)) != self.forms[i].modified {
+            if FileStamp::read(&self.file(&self.forms[i].file)) != self.forms[i].modified {
                 let before = self.forms[i].clone();
                 self.refresh_entry(i);
                 changed |= self.forms[i] != before;

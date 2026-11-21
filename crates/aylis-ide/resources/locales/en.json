@@ -490,6 +490,7 @@
  "Inspetor do app em execução": "Running app inspector",
  "Inspetor do app em execução…": "Running app inspector…",
  "Instalador": "Installer",
+ "Instalador (Windows: o tipo do projeto; Linux: .deb)": "Installer (Windows: the project's type; Linux: .deb)",
  "Instalando": "Installing",
  "Instalando pacotes": "Installing packages",
  "Instalar": "Install",

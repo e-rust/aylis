@@ -122,12 +122,56 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
       import); agora o import do form traz as classes das anotações (gerador 27; teste
       `the_python_import_brings_the_sender_classes`);
     - o MCP dizia "o app abriu e fechou" ao depurar o Rust, com o app rodando.
+  - Duas falhas de teste que apareceram na conferência do commit, corrigidas a pedido do autor
+    ("corrija as duas falhas também"):
+    - um form regravado no mesmo milissegundo não era lido de novo (o `uses` do DataModule
+      sumia; teste `data_modules_come_first_and_forms_reach_their_components`): a anotação dos
+      forms usava a hora em milissegundos; agora é o `FileStamp` (nanossegundos e tamanho). Um
+      `.aylisproj` de antes ainda abre;
+    - o servidor HTTP do MCP (o da IDE e o `McpServer` dos apps) soltava o soquete logo depois
+      de responder, e no Windows uma resposta grande chegava cortada ("conexão cancelada pelo
+      host remoto"; os testes `mcp` da IDE). Agora encerra a escrita e espera o cliente fechar.
   - Limitações vistas: o pasls (Pascal) não publica diagnósticos, só sugestões e dicas (é do
     servidor); o csharp-ls só manda os diagnósticos depois de o projeto carregar, e uma edição
     feita durante o carregamento só aparece na seguinte (a IDE poderia pedir de novo, o
     `textDocument/diagnostic`, quando ele termina de carregar).
-  - Falta: as 8 linguagens no Ubuntu (o `.deb`; lá o pip do sistema recusa instalar fora de um
-    venv, o "externally-managed-environment", e o debugpy pode precisar de outro caminho).
+  - Ubuntu 26.04 limpo (outra VM, 21/11): a IDE pelo `.deb` (`apt install`, 114 s, com as
+    bibliotecas de compilação) e as 8 linguagens pelo `aylis-tool setup`. Achado e corrigido:
+    - o debugpy não instalava: o Ubuntu recusa o `pip install` no Python do sistema (PEP 668,
+      "externally-managed-environment"). No Linux, agora vem do pacote do sistema
+      (`python3-debugpy`);
+    - o pasls não compilava: o Ubuntu não traz o `git`; agora ele é instalado antes;
+    - o Node das distribuições (o 22 do Ubuntu) vem sem o TypeScript ("ERR_NO_TYPESCRIPT") e
+      vinha antes do Node do pacote no PATH: o `hostlang::node` agora testa cada um
+      (`process.features.typescript`) e usa o que roda TypeScript;
+    - o `dotnet` do Ubuntu (só o runtime 10) vinha antes do SDK do pacote: o publicar do C#
+      falhava, e o csharp-ls fechava ao abrir (feito para o .NET 8). Agora o C# usa o primeiro
+      `dotnet` com SDK, e o csharp-ls recebe o `DOTNET_ROOT` dele;
+    - o pasls não dava dica nem sugestões: o Lazarus do Debian fica em `/usr/lib/lazarus/<versão>`
+      e os fontes do Free Pascal em `/usr/share/fpcsrc/<versão>`; agora são achados;
+    - a docstring que o gerador põe nos forms Python novos tinha linhas acima de 79 caracteres
+      (o aviso E501 em todo projeto).
+  - Depurar e o editor nas 8 linguagens também no Ubuntu, pela IDE (MCP), em 21/11: tudo
+    funciona (o C# com a limitação do csharp-ls de antes).
+  - Pedido do autor em 21/11: "quero poder gerar o .deb de um app no windows e no linux". Antes
+    o `.deb` só saía pelo WSL e só em Rust. Agora:
+    - no Linux, o Publicar com "Instalador" gera o `.deb` em Rust puro (`aylis_tools::app_deb`,
+      com o `ar` e o `tar.gz` do pacote da IDE), nas 8 linguagens: o app em `/opt/<app>`, o
+      atalho `/usr/bin/<app>`, o `.desktop` (com os `UrlScheme`), o ícone do projeto, as
+      bibliotecas do sistema e o runtime da linguagem (o `python3` como dependência; Node, .NET
+      e Java recomendados). Teste `the_app_deb_installs_in_opt_with_the_menu_entry`;
+    - no Windows, o alvo Linux das outras linguagens usa o mesmo publicar do Linux pelo WSL: o
+      `aylis-tool` de Linux é compilado no WSL a partir do código do Aylis da máquina (a primeira
+      vez leva alguns minutos), prepara a linguagem e publica. Conferido: um app Python publicado
+      no Windows virou `.deb`, instalou pelo `apt` no Ubuntu e abriu com o backend; os 8 apps
+      publicados no Ubuntu viraram `.deb`, instalaram e abriram pelo atalho com o backend;
+    - o app publicado em TypeScript leva `.js` (o publicar tira os tipos com o Node da máquina,
+      `stripTypeScriptTypes`): o Node das distribuições não roda `.ts`, e o app não abria. Roda
+      em qualquer Node 18+;
+    - o backend em C# é compilado com `RollForward=Major`: o Ubuntu 26.04 só tem o .NET 10, e o
+      app (do .NET 8) não abria;
+    - a opção do Publicar virou "Instalador (Windows: o tipo do projeto; Linux: .deb)".
+  - Falta: o `.rpm` (Fedora) e o Executar no WSL das outras linguagens (só o publicar).
   - Pedido do autor em 20/11 ("devemos ter a opção de baixar ainda de lá tudo que for
     preciso"): a pasta do Drive é o espelho do Aylis (`settings::AYLIS_MIRROR`), junto da origem
     oficial, só para o que o Aylis monta (o Skia de 32 bits, o Free Pascal); posta como espelho

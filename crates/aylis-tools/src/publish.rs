@@ -191,7 +191,7 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
         shell_options = options.clone();
         shell_options.crate_dir = Some(aylis_project::codegen::remote_shell(project, &project.publish.backend_url)?);
         &shell_options
-    } else if options.target != Target::Desktop && project.language.uses_host() {
+    } else if !matches!(options.target, Target::Desktop | Target::Linux) && project.language.uses_host() {
         return Err(format!("projetos em {} não publicam para {} (troque a linguagem para Rust)", project.language.name(), options.target.name()));
     } else {
         options
@@ -212,8 +212,7 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
         (Target::Android, _) => android(project, options, &out, control, sink),
         (Target::Web, _) => web(project, options, &out, control, sink),
         (Target::Ios, _) => ios(project, options, &out, control, sink),
-        (Target::Linux, Language::Rust) => linux_wsl(project, options, &out, control, sink),
-        (Target::Linux, _) => Err("o Linux pelo WSL só publica projetos em Rust".into()),
+        (Target::Linux, _) => linux_wsl(project, options, &out, control, sink),
     }
 }
 
@@ -221,6 +220,19 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
 fn linux_wsl(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     let distro = crate::wsl::distro().ok_or("nenhuma distribuição Linux no WSL (Ferramentas → Verificar ambiente instala o Ubuntu)")?;
     let app_file = file_name(project.app_name());
+    // O Rust compila direto no WSL; as outras linguagens, pelo publicar do Linux (o
+    // `aylis-tool` de Linux no WSL), com a tela, o backend e o `.deb` iguais aos do Linux.
+    if project.language != Language::Rust {
+        let script = crate::wsl::publish_with_tool_script(project, out, options.installer);
+        match crate::wsl::run(&distro, &script, control, sink, false)? {
+            Some(0) | None => {}
+            Some(3) => return Err("o Rust não está instalado no Linux do WSL (Ferramentas → Verificar ambiente instala)".into()),
+            Some(c) => return Err(format!("a publicação no WSL terminou com código {c} (veja as mensagens)")),
+        }
+        let deb = std::fs::read_dir(out).ok().and_then(|d| d.flatten().map(|e| e.path()).find(|p| p.extension().is_some_and(|x| x == "deb")));
+        let app = out.join(&app_file);
+        return Ok(Published { main: deb.unwrap_or_else(|| app.join(&app_file)), dir: app });
+    }
     let script = crate::wsl::publish_script(project, out, &app_file, options.installer);
     match crate::wsl::run(&distro, &script, control, sink, false)? {
         Some(0) | None => {}
@@ -282,6 +294,13 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
         };
         crate::codesign::apply(&signing, std::slice::from_ref(&main), false, control, sink)?;
         return Ok(Published { main, dir: out.to_path_buf() });
+    }
+    // No Linux, o instalador é o `.deb` (o executável e os arquivos que o projeto pede).
+    if options.installer && cfg!(target_os = "linux") {
+        let mut files = vec![(name.clone(), dest.clone())];
+        files.extend(extra.iter().filter_map(|p| Some((p.file_name()?.to_string_lossy().to_string(), p.clone()))));
+        let deb = debian_package(project, &files, &name, out, sink)?;
+        return Ok(Published { main: deb, dir: out.to_path_buf() });
     }
     Ok(Published { main: dest, dir: out.to_path_buf() })
 }
@@ -403,9 +422,17 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
                 Language::TypeScript => {
                     copy_dir(&project.code_dir().join("src"), &backend_dir)?;
                     bundle_client(project, "typescript/aylis.ts", &backend_dir.join("aylis.ts"))?;
-                    command = command.iter().map(|a| if a == "src/main.ts" { "backend/main.ts".to_string() } else { a.clone() }).collect();
-                    command[0] = runtime(&command[0]);
-                    "o Bun ou o Node 22.6+"
+                    // Os `.ts` viram `.js` aqui, com o Node desta máquina: o Node das
+                    // distribuições (o 22 do Ubuntu) vem sem o TypeScript ("ERR_NO_TYPESCRIPT"),
+                    // e o app publicado não abria (21/11). Assim roda em qualquer Node 18+.
+                    if strip_typescript(&backend_dir, control, sink).is_ok() {
+                        command = vec![runtime(&command[0]), "backend/main.js".into()];
+                        "o Node 18+ (ou o Bun)"
+                    } else {
+                        command = command.iter().map(|a| if a == "src/main.ts" { "backend/main.ts".to_string() } else { a.clone() }).collect();
+                        command[0] = runtime(&command[0]);
+                        "o Bun ou o Node 22.6+"
+                    }
                 }
                 Language::CSharp => {
                     command[0] = runtime(&command[0]);
@@ -455,6 +482,12 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
     let note = if needs.is_empty() { String::new() } else { format!("; a máquina precisa d{needs}") };
     sink(Event::Line(format!("{} ({}{note})", dest.display(), size(&dest)), LineKind::Tool));
     if options.installer {
+        // No Linux, o `.deb` com a pasta inteira (a tela e o backend).
+        if cfg!(target_os = "linux") {
+            let main = dest.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            let deb = debian_package(project, &crate::app_deb::files_in(&app)?, &main, out, sink)?;
+            return Ok(Published { main: deb, dir: app });
+        }
         sink(Event::Line(format!("O instalador ainda não sai para projetos em {}: distribua a pasta {}", project.language.name(), app.display()), LineKind::Tool));
     }
     Ok(Published { main: dest, dir: app })
@@ -2154,6 +2187,43 @@ pub fn dxc_files() -> Vec<PathBuf> {
     let Some(dxc) = [env, tools, vulkan, kits].into_iter().flatten().find(|p| p.is_file()) else { return Vec::new() };
     let dxil = dxc.with_file_name("dxil.dll");
     if dxil.is_file() { vec![dxc, dxil] } else { vec![dxc] }
+}
+
+/// Converte os `.ts` de `dir` em `.js` (sem os tipos; os imports `./x.ts` viram `./x.js`) e marca
+/// a pasta como módulo ES, com o Node 22.6+ desta máquina (`stripTypeScriptTypes`). Sem ele, o
+/// erro, e o publicar mantém os `.ts`.
+fn strip_typescript(dir: &Path, control: &Control, sink: Sink) -> Result<(), String> {
+    const SCRIPT: &str = r#"import { stripTypeScriptTypes } from "node:module";
+import fs from "node:fs";
+import path from "node:path";
+const walk = (d) => {
+  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    const p = path.join(d, e.name);
+    if (e.isDirectory()) walk(p);
+    else if (p.endsWith(".ts") && !p.endsWith(".d.ts")) {
+      let js = stripTypeScriptTypes(fs.readFileSync(p, "utf8"), { mode: "strip" });
+      js = js.replace(/((?:from|import)\s*\(?\s*["'])(\.{1,2}\/[^"']+?)\.ts(["'])/g, "$1$2.js$3");
+      fs.writeFileSync(p.slice(0, -3) + ".js", js);
+      fs.unlinkSync(p);
+    }
+  }
+};
+walk(process.argv[1]);
+fs.writeFileSync(path.join(process.argv[1], "package.json"), '{ "type": "module" }\n');
+"#;
+    let (node, _) = crate::hostlang::node()?;
+    sink(Event::Step("Convertendo o TypeScript em JavaScript…".into()));
+    let mut command = Command::new(node);
+    command.args(["--no-warnings", "--input-type=module", "-e", SCRIPT]).arg(dir);
+    crate::process::run_tool(&mut command, control, sink, LineKind::Tool)
+}
+
+/// O `.deb` do app (`crate::app_deb`), com a linha nas mensagens.
+fn debian_package(project: &Project, files: &[(String, PathBuf)], main: &str, out: &Path, sink: Sink) -> Result<PathBuf, String> {
+    sink(Event::Step("Montando o pacote .deb…".into()));
+    let deb = crate::app_deb::build(project, files, main, out)?;
+    sink(Event::Line(format!("{} ({}; instale com: sudo apt install ./{})", deb.display(), size(&deb), deb.file_name().unwrap_or_default().to_string_lossy()), LineKind::Tool));
+    Ok(deb)
 }
 
 /// O cliente do protocolo no lugar do arquivo do projeto que só aponta para ele (o

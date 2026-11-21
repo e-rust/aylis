@@ -55,15 +55,42 @@ fn vcvars() -> Option<PathBuf> {
 
 /// O Node 22.6+ (roda TypeScript direto): o escolhido nas Opções da IDE ou o do PATH. O depurador da IDE
 /// usa o Node mesmo com o Bun instalado (o js-debug só fala com o inspetor do Node).
+///
+/// O escolhido nas Opções vale sozinho; senão, cada `node` do PATH e, por fim, o do pacote do
+/// Aylis: o primeiro que roda TypeScript. O Node das distribuições (o 22 do Ubuntu) vem sem o
+/// TypeScript (`process.features.typescript` falso, "ERR_NO_TYPESCRIPT") e vinha antes do
+/// pacote no PATH (21/11).
 pub fn node() -> Result<(PathBuf, String), String> {
-    let node = crate::settings::tool("node").or_else(|| which("node")).ok_or("nem Bun nem Node encontrados (instale o Bun: bun.sh, ou o Node 22.6+)")?;
-    let v = version(&node, &["--version"]).unwrap_or_default();
-    let mut parts = v.trim_start_matches('v').split('.').map(|p| p.parse::<u32>().unwrap_or(0));
-    let (major, minor) = (parts.next().unwrap_or(0), parts.next().unwrap_or(0));
-    if major < 22 || (major == 22 && minor < 6) {
-        return Err(format!("Node {v} não roda TypeScript direto: precisa do 22.6+ (ou do Bun)"));
+    let candidates: Vec<PathBuf> = match crate::settings::tool("node") {
+        Some(chosen) => vec![chosen],
+        None => {
+            let file = exe("node");
+            let mut all: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).map(|d| d.join(&file)).filter(|p| p.is_file()).collect()).unwrap_or_default();
+            if let Some(dir) = crate::toolpacks::installed_dir("node") {
+                all.extend([dir.join(&file), dir.join("bin").join(&file)].into_iter().filter(|p| p.is_file()));
+            }
+            all
+        }
+    };
+    let mut last = None;
+    for node in candidates {
+        crate::env_cache::note_path(&node);
+        let v = version(&node, &["--version"]).unwrap_or_default();
+        let mut parts = v.trim_start_matches('v').split('.').map(|p| p.parse::<u32>().unwrap_or(0));
+        let (major, minor) = (parts.next().unwrap_or(0), parts.next().unwrap_or(0));
+        if major < 22 || (major == 22 && minor < 6) {
+            last = Some(format!("Node {v} não roda TypeScript direto: precisa do 22.6+ (ou do Bun)"));
+            continue;
+        }
+        // Do 22.10 em diante, o Node diz se tem o TypeScript; antes, a versão basta.
+        let features = version(&node, &["-p", "process.features.typescript"]).unwrap_or_default();
+        if features == "false" {
+            last = Some(format!("o Node {v} ({}) veio sem o TypeScript: instale o pacote node do Aylis (Ferramentas → Pacotes de ferramentas)", node.display()));
+            continue;
+        }
+        return Ok((node, v));
     }
-    Ok((node, v))
+    Err(last.unwrap_or_else(|| "nem Bun nem Node encontrados (instale o Bun: bun.sh, ou o Node 22.6+)".into()))
 }
 
 /// Acha as ferramentas da linguagem, ou diz o que falta.
@@ -79,11 +106,19 @@ pub fn find(language: Language) -> Result<Toolchain, String> {
             tc(node, None, format!("Node {v}"))
         }
         Language::CSharp => {
-            let dotnet = crate::settings::tool("dotnet")
-                .or_else(|| which("dotnet"))
-                .or_else(|| home(".dotnet").map(|d| d.join(exe("dotnet"))).filter(|p| p.is_file()))
-                .or_else(|| std::env::var_os("ProgramFiles").map(|p| PathBuf::from(p).join("dotnet").join(exe("dotnet"))).filter(|p| p.is_file()))
-                .ok_or("SDK do .NET não encontrado (dotnet.microsoft.com, .NET 8)")?;
+            // O primeiro `dotnet` com um SDK (o `--list-sdks` não vazio): o do PATH pode ser só o
+            // runtime (o `dotnet-runtime-10.0` do Ubuntu, que vinha antes do SDK do pacote do
+            // Aylis e não compila; 21/11).
+            let file = exe("dotnet");
+            let mut candidates: Vec<PathBuf> = crate::settings::tool("dotnet").into_iter().collect();
+            candidates.extend(std::env::var_os("PATH").map(|p| std::env::split_paths(&p).map(|d| d.join(&file)).filter(|p| p.is_file()).collect::<Vec<_>>()).unwrap_or_default());
+            candidates.extend(crate::toolpacks::installed_dir("dotnet").map(|d| d.join(&file)).filter(|p| p.is_file()));
+            candidates.extend(home(".dotnet").map(|d| d.join(&file)).filter(|p| p.is_file()));
+            candidates.extend(std::env::var_os("ProgramFiles").map(|p| PathBuf::from(p).join("dotnet").join(&file)).filter(|p| p.is_file()));
+            let dotnet = candidates
+                .into_iter()
+                .find(|d| version(d, &["--list-sdks"]).is_some_and(|s| !s.trim().is_empty()))
+                .ok_or("SDK do .NET não encontrado (dotnet.microsoft.com, .NET 8; um dotnet só com o runtime não compila)")?;
             let v = version(&dotnet, &["--version"]).unwrap_or_default();
             tc(dotnet, None, format!(".NET SDK {v}"))
         }
@@ -185,7 +220,9 @@ pub fn build(project: &Project, tc: &Toolchain, out: &Path, release: bool, contr
         }
         Language::CSharp => {
             let mut c = Command::new(&tc.program);
-            c.current_dir(&dir).args(["build", "App.csproj", "-v", "q", "-nologo", "-c", if release { "Release" } else { "Debug" }, "-o"]).arg(out);
+            // `RollForward=Major`: roda no .NET 8 e, sem ele, no maior que houver (o Ubuntu 26.04
+            // só tem o 10, e o app publicado não abria; 21/11).
+            c.current_dir(&dir).args(["build", "App.csproj", "-v", "q", "-nologo", "-p:RollForward=Major", "-c", if release { "Release" } else { "Debug" }, "-o"]).arg(out);
             c.env("DOTNET_CLI_TELEMETRY_OPTOUT", "1").env("DOTNET_NOLOGO", "1");
             run_tool(&mut c, control, sink, LineKind::Tool)?;
             Ok(vec![s(&tc.program), s(&out.join("App.dll"))])

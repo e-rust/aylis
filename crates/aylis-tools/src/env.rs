@@ -888,8 +888,15 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
                 out.push(if has {
                     Check::ok(t, "debugpy (depurar na IDE e no VS Code)", "instalado")
                 } else {
-                    Check::warning(t, "debugpy (depurar na IDE e no VS Code)", "não instalado (só para depurar)")
-                        .fix(Fix::new("Instala o debugpy", &[program.as_str(), "-m", "pip", "install", "debugpy"]))
+                    Check::warning(t, "debugpy (depurar na IDE e no VS Code)", "não instalado (só para depurar)").fix(
+                        // No Linux, pelo pacote do sistema: o Ubuntu recusa o `pip install` no
+                        // Python do sistema (PEP 668, "externally-managed-environment"; 21/11).
+                        if cfg!(target_os = "linux") {
+                            crate::setup::system_packages("o debugpy", ["python3-debugpy", "python3-debugpy", "python3-debugpy", "python-debugpy"])
+                        } else {
+                            Fix::new("Instala o debugpy", &[program.as_str(), "-m", "pip", "install", "debugpy"])
+                        },
+                    )
                 });
             }
             out.push(match aylis_host.filter(|h| h.is_file()) {
@@ -1108,8 +1115,13 @@ fn install_language_server(language: Language) -> Option<Fix> {
             let commit = crate::downloads::version("pascal-language-server");
             let (src, out) = (dir("pasls-src"), dir("pasls"));
             let cpu_os = format!("{}-{}", std::env::consts::ARCH, if cfg!(target_os = "macos") { "darwin" } else { "linux" });
+            // O git, se faltar (o Ubuntu não traz; 21/11), pelo gerenciador da distribuição.
+            let get_git = match (which("git"), crate::linux_deps::Manager::detect()) {
+                (None, Some(m)) if cfg!(target_os = "linux") => format!("{} && ", crate::linux_deps::as_root(&m.install_command(&["git"]))),
+                _ => String::new(),
+            };
             let script = format!(
-                "rm -rf '{src}' && '{git}' clone https://github.com/castle-engine/pascal-language-server '{src}' && '{git}' -C '{src}' checkout {commit} && '{git}' -C '{src}' submodule update --init --recursive && '{lazbuild}' --build-mode=Release '{src}/server/pasls.lpi' && mkdir -p '{out}' && cp '{src}/server/lib/{cpu_os}/pasls' '{out}/pasls'",
+                "{get_git}rm -rf '{src}' && '{git}' clone https://github.com/castle-engine/pascal-language-server '{src}' && '{git}' -C '{src}' checkout {commit} && '{git}' -C '{src}' submodule update --init --recursive && '{lazbuild}' --build-mode=Release '{src}/server/pasls.lpi' && mkdir -p '{out}' && cp '{src}/server/lib/{cpu_os}/pasls' '{out}/pasls'",
                 lazbuild = lazbuild.display()
             );
             Fix::new(format!("Compila o pasls (Castle Engine, commit {}) com o Lazarus em {out}", &commit[..commit.len().min(12)]), &["sh", "-c", &script])
@@ -1563,9 +1575,10 @@ fn linux_wsl(out: &mut Vec<Check>, language: Language) {
         out.push(Check::ok(t, "WSL", "não se aplica (fora do Windows, a saída do sistema já é o Linux ou o macOS)"));
         return;
     }
+    // As outras linguagens publicam para o Linux pelo `aylis-tool` de Linux no WSL (a tela, o
+    // backend e o `.deb`; 21/11), que usa as mesmas peças abaixo; o Executar no WSL é só do Rust.
     if language != Language::Rust {
-        out.push(Check::missing(t, "Linguagem", format!("projetos em {} ainda não rodam no Linux pelo WSL", language.name())).help("Use Rust para gerar o executável Linux."));
-        return;
+        out.push(Check::warning(t, "Linguagem", format!("{}: o Publicar para Linux funciona (com o .deb); o Executar no WSL é só do Rust", language.name())));
     }
     // O que dentro do Linux mudou o Windows não vê: vale o prazo do resultado guardado
     // (`env_cache::MAX_AGE_SECS`), o "Verificar de novo" e o "Corrigir".

@@ -291,7 +291,7 @@ pub fn deb_control(version: &str, installed_kb: u64) -> String {
 
 /// Um arquivo `ar` (o envelope do `.deb`): os membros na ordem, cada um com o cabeçalho de 60
 /// bytes e alinhado em 2.
-fn ar(members: &[(&str, &[u8])]) -> Vec<u8> {
+pub(crate) fn ar(members: &[(&str, &[u8])]) -> Vec<u8> {
     let mtime = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
     let mut out = b"!<arch>\n".to_vec();
     for (name, data) in members {
@@ -305,15 +305,15 @@ fn ar(members: &[(&str, &[u8])]) -> Vec<u8> {
 }
 
 /// Um `.tar.gz` com dono root e as permissões dadas (o Windows não guarda o bit de execução).
-struct DebTar {
+pub(crate) struct DebTar {
     builder: tar::Builder<flate2::write::GzEncoder<Vec<u8>>>,
     dirs: std::collections::BTreeSet<String>,
     mtime: u64,
-    bytes: u64,
+    pub(crate) bytes: u64,
 }
 
 impl DebTar {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let mtime = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
         let encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
         Self { builder: tar::Builder::new(encoder), dirs: Default::default(), mtime, bytes: 0 }
@@ -344,20 +344,20 @@ impl DebTar {
         Ok(())
     }
 
-    fn file(&mut self, path: &str, data: &[u8], mode: u32) -> Result<(), String> {
+    pub(crate) fn file(&mut self, path: &str, data: &[u8], mode: u32) -> Result<(), String> {
         self.parents(path)?;
         let mut h = self.header(tar::EntryType::Regular, mode, data.len() as u64);
         self.bytes += data.len() as u64;
         self.builder.append_data(&mut h, format!("./{path}"), data).map_err(|e| format!("{path}: {e}"))
     }
 
-    fn symlink(&mut self, path: &str, target: &str) -> Result<(), String> {
+    pub(crate) fn symlink(&mut self, path: &str, target: &str) -> Result<(), String> {
         self.parents(path)?;
         let mut h = self.header(tar::EntryType::Symlink, 0o777, 0);
         self.builder.append_link(&mut h, format!("./{path}"), target).map_err(|e| format!("{path}: {e}"))
     }
 
-    fn finish(self) -> Result<Vec<u8>, String> {
+    pub(crate) fn finish(self) -> Result<Vec<u8>, String> {
         self.builder.into_inner().and_then(|gz| gz.finish()).map_err(|e| e.to_string())
     }
 }
@@ -369,7 +369,7 @@ fn executable(rel: &str, data: &[u8]) -> bool {
 }
 
 /// Os arquivos de `dir` (recursivo), com o caminho relativo em `/`.
-fn files_of(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> Result<(), String> {
+pub(crate) fn files_of(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> Result<(), String> {
     let mut entries: Vec<_> = std::fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?.flatten().collect();
     entries.sort_by_key(|e| e.file_name());
     for entry in entries {

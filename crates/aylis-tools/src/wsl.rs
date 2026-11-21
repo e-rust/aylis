@@ -219,6 +219,35 @@ echo "pacote: {id}_{version}_amd64.deb"
     s
 }
 
+/// O script da publicação das outras linguagens (Python, TypeScript, C#, Java, Go, C++, Free
+/// Pascal): o mesmo publicar do Linux, pelo `aylis-tool` de Linux compilado no WSL a partir do
+/// código do Aylis desta máquina (só a primeira vez demora; fica em `~/.aylis-wsl/target`). Ele
+/// prepara a linguagem no WSL (`setup`) e publica no `out` (no Windows), com o `.deb` quando
+/// `deb` (pedido do autor em 21/11: o `.deb` de um app no Windows e no Linux).
+pub fn publish_with_tool_script(project: &Project, out: &Path, deb: bool) -> String {
+    let root = quote(&to_linux(Path::new(&crate::aylis_root())));
+    format!(
+        r#"set -e
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+if ! command -v cargo >/dev/null; then echo "o Rust não está instalado no Linux do WSL (Ferramentas → Verificar ambiente instala)" >&2; exit 3; fi
+export CARGO_TARGET_DIR="$HOME/.aylis-wsl/target"
+echo '▶ Preparando o aylis-tool do Linux (a primeira vez demora alguns minutos)…'
+cargo build --release --manifest-path {root}/Cargo.toml -p aylis-tools --bin aylis-tool
+T="$CARGO_TARGET_DIR/release/aylis-tool"
+echo '▶ Preparando {language} no Linux…'
+"$T" setup {lang} || echo "aviso: o {language} do Linux não ficou pronto (veja acima)"
+echo '▶ Publicando {name} (Linux)…'
+"$T" publish {project} --out {out}{installer}
+"#,
+        language = project.language.name(),
+        lang = project.language.folder(),
+        name = project.name,
+        project = quote(&to_linux(&project.path)),
+        out = quote(&to_linux(out)),
+        installer = if deb { " --installer" } else { "" },
+    )
+}
+
 /// A versão do pacote (a do `Cargo.toml` do projeto).
 fn project_version(project: &Project) -> String {
     std::fs::read_to_string(project.code_dir().join("Cargo.toml"))

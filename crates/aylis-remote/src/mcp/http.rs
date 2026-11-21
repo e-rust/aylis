@@ -180,6 +180,19 @@ fn respond(stream: &mut TcpStream, status: &str, body: Option<&Value>) {
     };
     let _ = stream.write_all(head.as_bytes());
     let _ = stream.write_all(text.as_bytes());
+    close_gracefully(stream);
+}
+
+/// Encerra a escrita (o FIN vai depois dos dados) e espera o cliente fechar, por pouco tempo,
+/// antes de soltar o soquete. Solto logo depois de uma resposta grande, o Windows fechava com
+/// RST, e o cliente perdia o resto dela ("conexão cancelada pelo host remoto", 10054; os
+/// testes do MCP da IDE com a lista de menus, 21/11).
+fn close_gracefully(stream: &mut TcpStream) {
+    let _ = stream.flush();
+    let _ = stream.shutdown(std::net::Shutdown::Write);
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+    let mut sink = [0u8; 1024];
+    while matches!(std::io::Read::read(stream, &mut sink), Ok(n) if n > 0) {}
 }
 
 fn serve(mut stream: TcpStream, token: &str, handler: &(dyn Fn(Value) -> Option<Value> + Send + Sync)) {

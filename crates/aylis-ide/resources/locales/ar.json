@@ -490,6 +490,7 @@
  "Inspetor do app em execução": "فاحص التطبيق قيد التشغيل",
  "Inspetor do app em execução…": "فاحص التطبيق قيد التشغيل…",
  "Instalador": "المثبّت",
+ "Instalador (Windows: o tipo do projeto; Linux: .deb)": "المثبّت (Windows: نوع المشروع؛ Linux: .deb)",
  "Instalando": "جارٍ التثبيت",
  "Instalando pacotes": "جارٍ تثبيت الحزم",
  "Instalar": "تثبيت",

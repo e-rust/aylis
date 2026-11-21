@@ -114,7 +114,14 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
         }
         Language::CSharp => {
             let program = first(t.iter().map(|d| d.join("csharp-ls").join(exe("csharp-ls")))).or_else(|| crate::hostlang::which("csharp-ls"))?;
-            Server { name: "csharp-ls", program, args: Vec::new(), env: Vec::new(), language_id: "csharp", init_options: json!({}) }
+            // O .NET do csharp-ls: o que a IDE usa (com o SDK). Sem isto, ele achava o do sistema
+            // (`/usr/lib/dotnet`, só o runtime 10 no Ubuntu 26.04) e fechava ao abrir (21/11).
+            let env: Vec<(String, String)> = crate::hostlang::find(Language::CSharp)
+                .ok()
+                .and_then(|tc| tc.program.parent().map(|d| d.display().to_string()))
+                .map(|root| vec![("DOTNET_ROOT".to_string(), root)])
+                .unwrap_or_default();
+            Server { name: "csharp-ls", program, args: Vec::new(), env, language_id: "csharp", init_options: json!({}) }
         }
         Language::Java => {
             // O do pacote jdtls ou o da pasta de ferramentas antiga.
@@ -201,7 +208,12 @@ pub fn server(language: Language, code_dir: &Path) -> Option<Server> {
 
 /// A pasta do Lazarus (onde o instalador põe), para o pasls achar o CodeTools e o FPC.
 pub fn lazarus_dir() -> Option<PathBuf> {
-    std::env::var_os("LAZARUSDIR").map(PathBuf::from).filter(|p| p.is_dir()).or_else(|| first_dir(["C:/lazarus", "C:/Program Files/Lazarus", "/usr/lib/lazarus", "/usr/lib64/lazarus", "/usr/share/lazarus"]))
+    std::env::var_os("LAZARUSDIR").map(PathBuf::from).filter(|p| p.is_dir()).or_else(|| {
+        // No Debian e no Ubuntu, o Lazarus fica numa pasta da versão (`/usr/lib/lazarus/4.4`, com
+        // o `default` apontando para ela): a pasta com a `lcl` (21/11).
+        first_dir(["C:/lazarus", "C:/Program Files/Lazarus", "/usr/lib/lazarus", "/usr/lib64/lazarus", "/usr/share/lazarus"])
+            .map(|d| if d.join("lcl").is_dir() { d.clone() } else { Some(d.join("default")).filter(|v| v.join("lcl").is_dir()).unwrap_or(d) })
+    })
 }
 
 /// Os fontes do Free Pascal (o pasls lê as units do RTL): os do Lazarus ou os do FPC.
@@ -209,11 +221,28 @@ pub fn fpc_source_dir() -> Option<PathBuf> {
     if let Some(dir) = std::env::var_os("FPCDIR").map(PathBuf::from).filter(|p| p.is_dir()) {
         return Some(dir);
     }
-    let lazarus = lazarus_dir()?;
-    let fpc = lazarus.join("fpc");
-    let mut versions: Vec<PathBuf> = std::fs::read_dir(&fpc).ok()?.flatten().map(|e| e.path().join("source")).filter(|p| p.is_dir()).collect();
-    versions.sort();
-    versions.pop()
+    // Os do Lazarus do Windows (`<lazarus>/fpc/<versão>/source`).
+    let bundled = lazarus_dir().and_then(|lazarus| {
+        let mut versions: Vec<PathBuf> = std::fs::read_dir(lazarus.join("fpc")).ok()?.flatten().map(|e| e.path().join("source")).filter(|p| p.is_dir()).collect();
+        versions.sort();
+        versions.pop()
+    });
+    // Os do pacote do sistema no Linux: o `fpc-source` do Debian e do Ubuntu
+    // (`/usr/share/fpcsrc/<versão>`, com o `default`) e o `fpc-src` do Fedora (21/11).
+    bundled.or_else(|| {
+        ["/usr/share/fpcsrc", "/usr/lib64/fpc/src", "/usr/lib/fpc/src"].iter().map(PathBuf::from).find_map(|root| {
+            if root.join("rtl").is_dir() {
+                return Some(root);
+            }
+            let default = root.join("default");
+            if default.join("rtl").is_dir() {
+                return Some(default);
+            }
+            let mut versions: Vec<PathBuf> = std::fs::read_dir(&root).ok()?.flatten().map(|e| e.path()).filter(|p| p.join("rtl").is_dir()).collect();
+            versions.sort();
+            versions.pop()
+        })
+    })
 }
 
 fn first_dir<const N: usize>(paths: [&str; N]) -> Option<PathBuf> {

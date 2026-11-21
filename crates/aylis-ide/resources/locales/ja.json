@@ -490,6 +490,7 @@
  "Inspetor do app em execução": "実行中アプリのインスペクター",
  "Inspetor do app em execução…": "実行中アプリのインスペクター…",
  "Instalador": "インストーラー",
+ "Instalador (Windows: o tipo do projeto; Linux: .deb)": "インストーラー（Windows：プロジェクトの種類、Linux：.deb）",
  "Instalando": "インストール中",
  "Instalando pacotes": "パッケージをインストール中",
  "Instalar": "インストール",
