@@ -85,4 +85,10 @@ impl FloatAnimation {
     pub fn set_keyframes(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "keyframes", Into::<String>::into(value))
     }
+    pub fn start(self, ui: &mut Ui) -> Result<(), String> {
+        handles::try_call(ui, self.id, "start", &[]).map(|_| ())
+    }
+    pub fn stop(self, ui: &mut Ui) -> Result<(), String> {
+        handles::try_call(ui, self.id, "stop", &[]).map(|_| ())
+    }
 }
