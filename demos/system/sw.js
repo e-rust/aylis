@@ -1,9 +1,9 @@
 // Gerado pelo Aylis: guarda a página no navegador para abrir rápido (e sem rede).
 const SCOPE = self.registration.scope;
 const PREFIX = "aylis:" + SCOPE + ":";
-const CACHE = PREFIX + "c76df14765";
+const CACHE = PREFIX + "5cd0780e9e";
 // A página (a pasta, com a barra no fim) e o que ela carrega antes de desenhar.
-const PRECACHE = ["./", "./pkg/aylis_demos-c76df14765.js", "./pkg/aylis_demos_bg-c76df14765.wasm"];
+const PRECACHE = ["./", "./pkg/aylis_demos-5cd0780e9e.js", "./pkg/aylis_demos_bg-5cd0780e9e.wasm"];
 // Com o hash no nome: o conteúdo nunca muda.
 const IMMUTABLE = /-[0-9a-f]{10}\.(js|wasm)$/;
 
