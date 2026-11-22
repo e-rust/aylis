@@ -367,6 +367,12 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let line = field(ui, d.body, "Fuso horário");
     let time_zone = edit(ui, line, &project.time_zone);
     let _ = ui.set_prop(time_zone, "placeholder", "(o do aparelho)   ex.: America/Sao_Paulo");
+    // Os ícones que o código monta em execução (o `icons`): os citados no form e no código o
+    // app já leva sozinho.
+    let line = field(ui, d.body, "Ícones extras");
+    let extra_icons = edit(ui, line, &project.icons.join("; "));
+    let _ = ui.set_prop(extra_icons, "placeholder", "ex.: fluent:pause-fill; fluent:play-fill");
+    let _ = ui.set_prop(extra_icons, "hint", "Os ícones de pacote que o código monta pelo nome em execução. Os citados no form e no código já vão no app.");
     // A orientação da tela no celular (o `orientation`): o Android e o iOS; cada form pode ter
     // a sua (pedido do autor em 14/11).
     let line = field(ui, d.body, "Orientação da tela");
@@ -489,6 +495,7 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
             p.main_form = combo_text(ui, main);
             p.locale = combo_text(ui, locale);
             p.time_zone = text_of(ui, time_zone).trim().to_string();
+            p.icons = text_of(ui, extra_icons).split([';', ',', ' ']).map(str::trim).filter(|s| s.contains(':')).map(str::to_string).collect();
             let chosen = ui.get::<ComboBox>(orientation).map_or(0, |c| c.item_index.max(0) as usize);
             p.orientation = match aylis_core::ScreenOrientation::from_index(chosen).unwrap_or_default() {
                 aylis_core::ScreenOrientation::Any => String::new(),

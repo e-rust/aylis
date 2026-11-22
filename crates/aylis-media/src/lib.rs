@@ -69,6 +69,10 @@ mod sound;
 #[cfg(target_vendor = "apple")]
 pub mod avf;
 mod components;
+mod info;
+mod playlist;
+mod spectrum;
+mod session;
 #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
 mod http;
 #[cfg(target_os = "linux")]
@@ -83,6 +87,10 @@ mod web;
 
 pub use audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
 pub use components::{MediaPlayer, PlaybackQuality, VideoPlayer};
+pub use playlist::{Playlist, RepeatMode};
+pub use session::MediaSession;
+pub use spectrum::{AudioSpectrum, SpectrumStyle, bands_of};
+pub use info::{MEDIA_TAGS_RECORD, MediaInfo, MediaTagsInfo, SymphoniaTagsProvider, read_tags};
 pub use camera::{CameraFacing, CameraInfo, CameraQuality, cameras, resolve_camera};
 pub use camera_view::CameraView;
 pub use microphone::Microphone;
@@ -101,6 +109,11 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<Sound>("Media");
     ui.register_class::<AudioMixer>("Media");
     ui.register_class::<CameraView>("Media");
+    ui.register_class::<MediaInfo>("Media");
+    ui.register_class::<SymphoniaTagsProvider>("Media");
+    ui.register_class::<Playlist>("Media");
+    ui.register_class::<AudioSpectrum>("Media");
+    ui.register_class::<MediaSession>("Media");
 }
 
 /// Começa a tocar os players com `autoplay` (o `aylis::Application` chama ao abrir). Os

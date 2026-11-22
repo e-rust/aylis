@@ -31,6 +31,8 @@
     procedure SetLineHeight(Value: Double);
     function GetTextShadow: TAylisShadow;
     procedure SetTextShadow(Value: TAylisShadow);
+    function GetMaxLines: Int64;
+    procedure SetMaxLines(Value: Int64);
     function GetFocusControl: TAylisComponent;
     procedure SetFocusControl(Value: TAylisComponent);
     function GetLeft: Double;
@@ -219,6 +221,7 @@
     property OutlineWidth: Double read GetOutlineWidth write SetOutlineWidth;
     property LineHeight: Double read GetLineHeight write SetLineHeight;
     property TextShadow: TAylisShadow read GetTextShadow write SetTextShadow;
+    property MaxLines: Int64 read GetMaxLines write SetMaxLines;
     property FocusControl: TAylisComponent read GetFocusControl write SetFocusControl;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
@@ -455,6 +458,16 @@ end;
 procedure TLabel.SetTextShadow(Value: TAylisShadow);
 begin
   SetProp('text_shadow', AylisShadowToJSON(Value));
+end;
+
+function TLabel.GetMaxLines: Int64;
+begin
+  Result := GetProp('max_lines').AsInt64;
+end;
+
+procedure TLabel.SetMaxLines(Value: Int64);
+begin
+  SetProp('max_lines', TJSONInt64Number.Create(Value));
 end;
 
 function TLabel.GetFocusControl: TAylisComponent;

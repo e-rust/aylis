@@ -50,8 +50,9 @@ impl PaintCtx<'_> {
     /// Desenha um ícone pelo nome (os do app e os do aylis), centralizado em `rect`.
     /// Nome desconhecido não desenha nada.
     pub fn draw_icon(&self, canvas: &mut dyn crate::Canvas, name: &str, rect: RectF, color: crate::Color) {
-        if let Some(icon) = self.ui.icon(name) {
-            icon.draw(canvas, rect, color);
+        match self.ui.icon(name) {
+            Some(icon) => icon.draw(canvas, rect, color),
+            None => warn_missing_icon(self.ui, name, self.design),
         }
     }
 
@@ -1536,4 +1537,26 @@ fn intersection(a: RectF, b: RectF) -> RectF {
     let x = a.x.max(b.x);
     let y = a.y.max(b.y);
     RectF::new(x, y, (a.right().min(b.right()) - x).max(0.0), (a.bottom().min(b.bottom()) - y).max(0.0))
+}
+
+/// Um ícone de pacote (`fluent:pause-fill`) pedido e que o app não tem: o aviso, uma vez por
+/// nome, no app compilado para depurar (o que a IDE roda). O app leva só os ícones citados nos
+/// forms, no código e na lista `icons` do projeto; um nome montado em execução ficava em branco
+/// sem aviso (o relatório do player de música, 21/11).
+fn warn_missing_icon(ui: &crate::Ui, name: &str, design: bool) {
+    if design || !cfg!(debug_assertions) {
+        return;
+    }
+    // Só com o pacote no app e sem este nome (o caso do ícone trocado pelo código): sem o
+    // pacote nenhum (uma ferramenta que desenha sem o projeto), não é o app.
+    let Some((pack, _)) = name.split_once(':') else { return };
+    thread_local! {
+        static WARNED: std::cell::RefCell<std::collections::HashSet<String>> = Default::default();
+    }
+    if WARNED.with(|w| w.borrow().contains(name)) || !ui.has_icon_pack(pack) {
+        return;
+    }
+    if WARNED.with(|w| w.borrow_mut().insert(name.to_string())) {
+        crate::stderr_line!("aylis: aviso: o ícone {name} não está no app (cite o nome no form ou no código, ou ponha na lista `icons` do projeto)");
+    }
 }

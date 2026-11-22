@@ -13,6 +13,89 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Relatório de um player de música portado para o Aylis (21/11/2026)**
+
+Um player (um form, `MediaPlayer`, `AudioMixer`, `VirtualList`, `OpenDialog`, `FileDropZone` e
+um visualizador feito de painéis) portado de Tauri para o Aylis 0.9.1 no Linux Mint 20.3. O
+relatório trouxe 19 problemas e 31 sugestões; conferidos no código em 21/11, e o autor decidiu
+os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no histórico (16).
+
+- Feito em 21/11, esperando a conferência do autor:
+  - correções: o `.deb` do app abre pelo `/usr/bin/<id>` (o `Exec` com espaço não abria) e pede
+    a `libasound2` com mídia; o `.deb` do WSL (Rust) usa o mesmo montador
+    (`aylis_tools::app_linux`); o `Label` com `line_height` e `wrap` para na altura e põe "…"
+    (`label_lines`); trocar o `file` do `MediaPlayer` não desliga mais o `AudioMixer` (os
+    pontos de escuta são do componente); `playing()`/`ready()` no acesso tipado do player e
+    `take_samples()` no `AudioMixer`; no Linux e no macOS compilar não recusa o app aberto; MCP:
+    o `stop` espera o app fechar, o `set_theme` aceita a string com JSON, o `invoke` de
+    `play`/`pause`/`seek` num player vai pelo `media` (que entrou na ajuda), o `trace` com
+    `events`/`exclude`; o designer registra os ícones do `set_layout`/`set_property` antes de
+    salvar; os stubs entram no `impl` que já tem handlers; `aylis-tool --version` e a versão no
+    `status` do MCP. O item 5 do relatório (ícone só no código) não se reproduziu: a geração já
+    leva os do código (teste `generating_keeps_the_icons_of_the_code_and_of_the_project_list`);
+  - recursos: `Image.set_image_file`/`set_image_bytes`/`dominant_color` (e o aviso em modo dev
+    quando o arquivo não está no projeto); `OpenDialog.kind` = `folder`; `pre_volume` nas fontes
+    do `AudioMixer`; o aviso de ícone que falta e a lista `icons` do projeto (nas Opções do
+    projeto → Geral); `Panel.hover_fill`/`pressed_fill`/`interactive` (com o mouse num filho,
+    pelo `ControlBase::set_hover_within`); `Form.on_files_drop` com `drop_x`/`drop_y`; a linha
+    tipada do `VirtualList` (`lstX_row(ui, i)`, `lstX_row_of(ui, c)`); `dialog_result` e
+    `drop_files` no `app_command` (só com a feature `dev`); `Label.max_lines`;
+    `SeekBar.show_labels`;
+  - Linux: `publish.linux` (Projeto → Opções → Linux): o formato (`deb`, `rpm`, `appimage`,
+    `flatpak`), o nome do pacote, as categorias, a descrição, o mantenedor, as dependências, os
+    tipos de arquivo e as permissões do Flatpak; os ícones em 8 tamanhos e o SVG; o
+    `StartupWMClass` igual ao nome que a janela declara (`Options::app_id`); o atalho no menu
+    ao publicar sem instalador (`menu_shortcut`) e o `--install-shortcut`/`--remove-shortcut`
+    no app publicado. O `.rpm` montado de verdade no WSL (Ubuntu com `rpmbuild`);
+  - mídia: `MediaInfo` (tags, duração, capa, `probe`) com o provedor padrão (Symphonia,
+    `SymphoniaTagsProvider`) e o `LoftyTagsProvider` (`aylis-providers`, feature `tags`; no app,
+    a feature `media-tags`); `Playlist` (`next`, `previous`, `play_index`, `shuffle`, `repeat`,
+    `on_track_change`) com a troca sem silêncio (`AudioPlayer::queue_next`); `AudioSpectrum`
+    (barras, espelhado, onda, picos; para quando o som para).
+  - o layout por largura pelas vistas que o núcleo já tinha (`views`; decidido de novo em
+    21/11, sem form por faixa): o `on_view_change` no `Form` (o nome da vista que entrou) e a
+    seção das vistas na página do `Form` (`docs/componentes/Form.md`).
+  - as listas do player (22/11, decididas depois da discussão do `DataGrid`): no
+    `VirtualList`, a seleção (`selection`, `item_index`, `selected`, a linha no estado
+    `checked`, o `Panel.selected_fill`), os eventos com o índice (`on_item_click`,
+    `on_item_dbl_click`, `on_item_activate`, `on_change`), o teclado, a `scroll_bar`, os
+    métodos `select`/`scroll_to`/`refresh_item`/`refresh` e vários modelos de linha (`kinds`,
+    `kind_field`, `set_kind`), com o gancho novo do núcleo `ChildPointer` (o contêiner sabe do
+    mouse nos de dentro); o `ListHeader` (alinha títulos a peças do modelo pelo nome, larguras
+    e `on_sort`); a linha tipada do `DataRepeater` e uma por modelo; o `ImageList` e as
+    colunas `kind: icon`/`image` do `DataGrid` (`images`; a altura é o `row_height`).
+  - as animações nas linhas do `VirtualList` (22/11): a linha reciclada recomeça as animações
+    (`Ui::reset_animations`), o estado do item chega sem animar
+    (`Ui::set_checked_state_instant`), o `appear` uma vez por item (`Ui::finish_appear`), os
+    métodos `start`/`stop` das animações e o gatilho `hover_within`. Testes em
+    `crates/aylis-controls/tests/list_animations.rs`; o ListaPlayer usa os quatro. Dois
+    defeitos achados no exemplo e corrigidos: o `on_bind` entregue com a lista fora do `Ui` (no
+    meio do `scroll_to`, por um `with_component` de outro componente; o handler tipado não
+    rodava e a linha ficava com o item velho): os eventos de quem está no meio de um método
+    agora esperam ele voltar (`Ui::process_events`); e a lista zerava o `translate_x` das
+    linhas a cada rolagem mesmo sem `swipe_actions`.
+  - o `MediaSession` (21/11): o serviço `MediaSessionService` no núcleo (começar, atualizar,
+    parar; os comandos chegam por uma função), o componente no `aylis-media` (com `player`
+    num `MediaPlayer` ou `VideoPlayer`, `playlist`, `info`, `active`, `forward`, `on_command`,
+    `on_seek`), o SMTC no Windows (compila; sem conferir na tela), o MPRIS no Linux (testado
+    pelo D-Bus de verdade no WSL: o painel lê o título e o estado, o `PlayPause` e o
+    `SetPosition` chegam ao app) e a Media Session API no navegador (compila).
+- Não conferido aqui (precisa de máquina ou ferramenta): o AppImage (o `appimagetool`) e o
+  Flatpak (o `flatpak-builder`) não foram montados de verdade, só o manifesto e o `AppRun` têm
+  teste; o código só de Linux do app (`--install-shortcut`, a classe da janela) não compilou
+  no WSL (faltam as bibliotecas do GTK lá); o som de verdade do `Playlist` sem silêncio e do
+  `AudioSpectrum` (só a FFT tem teste).
+- Falta fazer:
+  - a IDE escolher pasta pelo `OpenDialog.kind` (hoje pelo `rfd` direto em 4 lugares, com
+    blocos assíncronos: uma refatoração à parte);
+  - o `MediaSession` no macOS e no iOS (`MPNowPlayingInfoCenter` e `MPRemoteCommandCenter`)
+    e no Android (o `MediaSession` na `AylisActivity`): o componente existe e fica parado lá;
+  - o tema do designer: o relatório viu o form claro no designer com o projeto em
+    `"theme": "dark"` (o app saiu escuro); a conferir.
+  - As seções escritas à mão estão em `docs/componentes/` (a ordem do `align` no `Panel`, o
+    `VirtualList`, o `TrackBar`, o `Image`, o `OpenDialog` e as classes novas); as páginas da
+    Landing saem no próximo `aylis-tool docs`.
+
 **Ajustes de 20/11/2026: a instalação do ambiente e o `.deb` da IDE**
 
 - Relato do autor em 20/11: quem usa o Aylis tem pouca experiência com Rust, e instalar e
@@ -182,6 +265,84 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
     nas Opções, serve para tudo. Teste `what_aylis_builds_comes_from_the_aylis_mirror`. A pasta
     precisa continuar com o `pacotes.json` e esses dois arquivos.
 
+**Ajustes de 22/11/2026: o macOS (VM Intel) e o Linux Mint**
+
+- [ ] Pedido do autor: "verifique oque precisa para rodar no mac" e "vamos testar também na vm do
+  linux mint". O Aylis nunca tinha sido compilado num Mac: numa VM do macOS 15.8 Intel (Hyper-V,
+  sem GPU), com as Command Line Tools e o rustup, o `aylis-tool` e a IDE compilaram de primeira.
+  Achado e corrigido:
+  - todo app do Aylis (a IDE inclusive) caía ao abrir fora de um `.app` (o `cargo run`): a
+    `UNUserNotificationCenter` derruba o processo sem pacote. O push da Apple só liga com
+    `bundleIdentifier`; fora dele, "o APNs só registra o app empacotado (.app)";
+  - o "Verificando as linguagens…" ficava na barra para sempre (em todas as plataformas, na tela
+    inicial): o fim de um trabalho do ambiente não limpava o status. E o status de um trabalho
+    agora sai traduzido (o título com "…");
+  - os rótulos em maiúsculas da IDE sem tradução (RECENTES, MENSAGENS, COMPONENTES, APARÊNCIA,
+    APLICATIVO, ESCOLHIDO, ESCOLHIDA, FIXAS, PRONTAS). O `aylis-tool translations` não os acusa
+    (falta conferir por quê);
+  - os pacotes de ferramentas tinham só o Mac Apple Silicon: o Mac Intel caía no Homebrew, que o
+    macOS não traz. Agora há `macos-x86_64` do rust, jdk, android-sdk, cargo-ndk, wasm-bindgen,
+    node, dotnet e go (do fabricante, com SHA-256). O netcoredbg não publica para o Mac Intel:
+    o C# roda, sem depurar. O que só sai pelo Homebrew (o Free Pascal) diz para instalá-lo
+    (brew.sh) em vez do "brew: command not found";
+  - o `/usr/bin/javac` e o `/usr/bin/jdb` do macOS são atalhos que, sem JDK, só avisam: o Java
+    passava como pronto, o JDK do pacote não era instalado e o JDT LS fechava. Agora vale o
+    `javac` que responde, e o `jdb` e o `java` saem da pasta dele;
+  - o `setup` dizia "aylis-host não encontrado" depois de compilá-lo (o caminho era lido antes);
+  - o LLDB e o Delve só param no app com o modo de desenvolvedor do macOS ligado: a verificação
+    de ambiente avisa e o "Corrigir" liga (`DevToolsSecurity -enable`, com a senha numa janela);
+  - o app em C++ terminava quando o depurador se anexava no macOS: o LLDB para o processo com
+    SIGSTOP, a leitura do stdin volta com `EINTR` e o `std::getline` falhava como se a tela
+    tivesse fechado. O cliente C++ (`clients/cpp/aylis.hpp`, `read_line`) repete a leitura
+    interrompida. O Go e o Free Pascal já repetiam.
+  Conferido no Mac: as 8 linguagens instaladas pelo `setup` (o Pascal com o Homebrew, que não
+  foi instalado), o Rust, o TypeScript, o Python, o Go, o C++ e o Java rodam; depuram (param no
+  ponto de parada, com a pilha, as variáveis e o passo) o Rust, o Go, o C++, o TypeScript e o
+  Java (o `total` do Java veio "null": conferir; o LLDB não avalia expressão em Rust); o editor
+  (diagnósticos, dica, sugestões) no Rust, no TypeScript, no C#, no Go, no C++ e no Python.
+  Falta: o Pascal (precisa do Homebrew), o JDT LS no Mac, a câmera no macOS (`cameras()` vazio)
+  e um Mac de verdade.
+- [ ] **Os pacotes Linux da 0.9.1 só rodavam com a glibc 2.43** (compilados no WSL, Ubuntu
+  26.04): no Mint 22 (Ubuntu 24.04, glibc 2.39) a IDE e o `aylis-tool` nem abriam. Recompilados
+  num contêiner Ubuntu 22.04 (glibc 2.35, o commit 0c4b568e: a mesma 0.9.1) e conferidos no Mint
+  22.3: instalou pelo `.deb`, a IDE abriu e as 8 linguagens ficaram prontas pelo `setup`; o
+  Rust, o TypeScript, o C#, o Java, o Go, o C++ e o Pascal depuram e o editor responde. Espera o
+  autor: trocar os três arquivos na release do GitHub.
+  - Decidido pelo autor em 22/11 ("Ubuntu 22.04, glibc 2.35"; antes tinha escolhido o zigbuild
+    com a 2.31, que não serve: o Skia pré-compilado do `skia-safe` é feito contra a libstdc++ do
+    GCC e o zig liga com a libc++ dele, e a libstdc++ estática do GCC 15 pede a glibc 2.38,
+    conferido no WSL): a glibc mínima dos executáveis do Linux é a 2.35 (Ubuntu 22.04, Mint 21,
+    Debian 12, Fedora 36). Feito:
+    - no Windows, o publicar e o Executar para Linux usam a distribuição `Ubuntu-22.04` do WSL
+      quando ela existe (`wsl::distro`; o `AYLIS_WSL_DISTRO` continua mandando); a verificação de
+      ambiente instala essa (`wsl --install -d Ubuntu-22.04`) e avisa, com o "Corrigir", quando a
+      usada tem glibc mais nova que a mínima;
+    - o executável é conferido pelas versões que pede no ELF (`aylis_tools::glibc`, sem o
+      `objdump`; conferido contra o `objdump -T` no `ls` e no `g++` do WSL): no publicar (no
+      Linux e pelo WSL), passar da 2.35, da libstdc++ do GCC 12 ou pedir a `GLIBC_PRIVATE` vira
+      aviso com a versão pedida, e a tela e o backend compilado são conferidos;
+    - o `ide-package --target linux` recusa a IDE, o `aylis-host`, o `aylis-tool` e o
+      `aylis-migrate` que pedirem mais que a 2.35 (o que escapou na 0.9.1). A IDE da release
+      sai da `Ubuntu-22.04` do WSL, como saiu do contêiner.
+    - Conferido em 22/11: a `Ubuntu-22.04` instalada no WSL pelo mesmo comando do "Corrigir"
+      (glibc 2.35), as bibliotecas e o Rust (1.100) pelos outros dois; o publicar de um projeto
+      novo foi para ela sozinho (não para a `Ubuntu` 26.04); compilados lá, o exemplo `shapes`
+      (com o Skia) e o `aylis-tool` pedem no máximo a `GLIBC_2.35`.
+    - Achado e corrigido (já existia; a pedido do autor, "Sim, corrija"): o publicar e o
+      Executar pelo WSL falhavam com o `sdk` do projeto numa pasta e nos exemplos do
+      repositório, porque o gerador grava o caminho do Aylis relativo ao projeto (`../../...`) e
+      a pasta-espelho (`~/.aylis-wsl/<pacote>`) só trocava os absolutos (`C:/...`). Agora os
+      relativos passam a partir da pasta do código de verdade (`wsl::prepare`). Conferido: um
+      projeto novo com o `sdk` no repositório publicou pelo WSL (o executável, "glibc pedida:
+      2.35", e o `.deb`), o `.deb` instalou pelo `apt` na `Ubuntu-22.04` com todas as
+      bibliotecas achadas (`ldd`) e saiu pelo `apt remove`.
+    - Conferido na VM do Mint 22.3 (glibc 2.39) em 22/11: esse `.deb`, feito no Windows pela
+      `Ubuntu-22.04`, instalou pelo `apt`, o `ldd` achou todas as bibliotecas e o app abriu a
+      janela no X11 do Cinnamon (desenhando na CPU, sem placa de vídeo); depois, removido.
+    - Falta: no Linux, publicar numa distribuição mais nova ainda sai preso à glibc dela (só o
+      aviso; compilar num contêiner Ubuntu 22.04 seria o próximo passo); abrir um app publicado
+      assim num Mint 21 ou num Ubuntu 22.04 com desktop (a glibc igual à mínima).
+
 **Ajustes de 20/11/2026: o Windows limpo (uma VM com o Windows 11 Home, sem nada instalado)**
 
 - [ ] Pedido do autor: "desinstalando todas as ferramentas que o aylis usa hoje e instalando por
@@ -219,8 +380,45 @@ depois; os itens feitos que só esperam a confirmação dele são conferidos pri
     C++ e Pascal).
   - Falta: a correção do `spawn_backend` chega aos apps na próxima versão do `aylis` no
     crates.io (a casca publicada usa o do crates.io; na VM foi conferida com um
-    `[patch.crates-io]` para a cópia instalada). O teste pela IDE (F9, depurar) nas 8
-    linguagens na VM não foi feito: só pelo `aylis-tool`.
+    `[patch.crates-io]` para a cópia instalada).
+  - Depurar e o editor pela IDE nas 8 linguagens, na mesma VM, em 22/11 (pedido do autor:
+    "teste a depuração e o editor na VM do Windows"), com a IDE 0.9.1 do instalador:
+    - a 0.9.0 que estava na VM caía (estouro de pilha) no passo do C++: é o realce do
+      `aylis.hpp`, já corrigido na 0.9.1;
+    - depuram (param, pilha, variáveis, "Avaliar" e passo) o TypeScript, o C#, o Java, o Go, o
+      C++, o Python e o Free Pascal. O TypeScript só para se o clique vem depois de o js-debug
+      se anexar (uns segundos depois de a janela abrir);
+    - o editor (diagnósticos, dica, sugestões) responde no Rust, no TypeScript, no C#, no Java,
+      no Go, no C++, no Python e no Pascal (o pasls sem diagnósticos, como no Linux);
+    - o pylsp não abria ("Permission denied" no `__init__.py`): instalado por um processo
+      elevado (o SSH; também um terminal de administrador), o `pip --target` monta tudo numa
+      pasta do `mkdtemp`, que no Windows (Python 3.12.4+) só dá acesso ao dono, e o dono era o
+      grupo Administradores; a IDE, sem elevação, não lia. Agora a correção do pylsp roda
+      depois um `icacls <pasta> /reset /T` (`Fix::after`), e as permissões voltam às herdadas.
+      Conferido na VM: o editor do Python responde;
+    - **o Rust não depura no Windows** (na VM e nesta máquina, com o CodeLLDB 1.12.3): o app
+      lançado pelo `launch` do CodeLLDB carrega as bibliotecas e trava sem abrir a janela; o
+      LLDB acha que ele roda, e a thread nova espera o depurador no `LdrInitializeThunk`. Pelo
+      `lldb` direto e num programa sem janela não trava; anexado depois de aberto (como o C++),
+      funciona. E o "Parar" deixava o app travado vivo, prendendo a compilação seguinte.
+      Decidido pelo autor ("Anexar e esperar"): no Windows, a IDE abre o app com
+      `AYLIS_WAIT_DEBUGGER=30` e o `aylis-tool` avisa o processo assim que ele sobe
+      (`AYLIS_BACKEND_PID=`, como o aylis-host); o app com `dev` espera o depurador no começo do
+      `Application::run` (`aylis_platform_winit::wait_for_debugger`), e a IDE anexa o CodeLLDB
+      (`Session::attach_rust`, com os formatadores do Rust). Um app com o `aylis` de antes (o
+      do crates.io) não espera, mas é depurado do mesmo jeito a partir da anexação. Conferido
+      nesta máquina: com o OlaNome por um script, o app espera, o CodeLLDB se anexa e para na
+      primeira linha do `run_with_pump` (logo depois da espera); pela IDE (compilada à parte,
+      um projeto com o `aylis` do repositório), o Ctrl+F5 com ponto de parada no
+      `btnOi_click` para na linha, com a pilha e as variáveis, o passo leva 1 s e o Parar
+      encerra o app. Achado no caminho: o CodeLLDB do Windows cai ao avaliar um nome que não
+      existe no quadro, e o app morre junto (`STATUS_DEBUGGER_INACTIVE`). Agora o "Avaliar" de
+      um nome só vai se ele estiver entre as variáveis ("total não existe neste ponto"), e o
+      passo mede a memória do processo (o contador do aylis não é achado anexado). O `total`
+      do teste não aparecia nas variáveis: era uma constante só descartada (`let _ = (ui,
+      sender, total)`), e o compilador não a guarda; usada de verdade (`ui.push(total)`), o
+      LLDB do Windows mostra `total = 42` e avalia a expressão (conferido num programa à parte).
+      Falta: a VM (o projeto usa o `aylis` do crates.io: a espera chega na próxima versão).
   - Conferido: o instalador silencioso instala a IDE e o Rust (do `static.rust-lang.org`) com o
     Visual Studio Build Tools; a IDE abre; um projeto Rust novo compila (5 min 44 s) e abre
     (Direct2D, 136 fps).

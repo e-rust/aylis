@@ -112,12 +112,25 @@ pub fn run_lines_with_input(
     command: &mut Command,
     control: &Control,
     input: Option<&str>,
+    on_line: impl FnMut(String, bool),
+) -> Result<Option<i32>, String> {
+    run_lines_announced(command, control, input, |_| {}, on_line)
+}
+
+/// Como [`run_lines_with_input`], avisando o número do processo (`on_spawn`) assim que ele
+/// sobe (o depurador da IDE se anexa a ele).
+pub fn run_lines_announced(
+    command: &mut Command,
+    control: &Control,
+    input: Option<&str>,
+    on_spawn: impl FnOnce(u32),
     mut on_line: impl FnMut(String, bool),
 ) -> Result<Option<i32>, String> {
     control.check()?;
     let program = command.get_program().to_string_lossy().to_string();
     quiet(command).stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() }).stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = command.spawn().map_err(|e| format!("não consegui iniciar {program}: {e}"))?;
+    on_spawn(child.id());
     if let (Some(text), Some(mut stdin)) = (input, child.stdin.take()) {
         use std::io::Write;
         let _ = writeln!(stdin, "{text}");

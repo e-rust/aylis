@@ -424,6 +424,10 @@ pub fn drain(ui: &mut Ui, state: &Shared, ids: &Ids) -> bool {
                         }
                         if job.title == DEVICE_DEBUG {
                             st.status = text.clone();
+                        } else if st.status == format!("{}…", job.title) {
+                            // O "Verificando as linguagens…" ficava na barra para sempre na
+                            // tela inicial, onde nada mais escreve nela (visto no macOS, 22/11).
+                            st.status = String::new();
                         }
                         if [crate::toolpacksview::INSTALLING, crate::toolpacksview::REMOVING].contains(&job.title.as_str()) {
                             st.toolpacks_log = text.clone();
@@ -550,9 +554,11 @@ fn diagnostic_line(d: Diagnostic, base: &Path) -> OutputLine {
 // ---------------------------------------------------------------------------
 // Comandos
 
-/// O `aylis-host` ao lado da IDE (projetos Python e das outras linguagens).
+/// O `aylis-host` ao lado da IDE (projetos Python e das outras linguagens). Sem ele, onde
+/// deve ficar: quem usa confere o arquivo na hora, e o "Configurar linguagens" o compila no
+/// meio (a conferência seguinte o acha; antes, só na próxima abertura da IDE).
 pub fn aylis_host() -> Option<PathBuf> {
-    beside_ide("aylis-host")
+    beside_ide("aylis-host").or_else(|| std::env::current_exe().ok()?.parent().map(|d| d.join(env::exe("aylis-host"))))
 }
 
 /// O `aylis-tool` ao lado da IDE (o adaptador do jdb, para depurar Java).

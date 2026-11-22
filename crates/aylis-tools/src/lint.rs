@@ -541,8 +541,10 @@ fn classes(root: &Path, out: &mut Vec<Finding>) {
     // O registro das classes é do desktop (no navegador, o lint não roda: não há disco).
     #[cfg(not(target_arch = "wasm32"))]
     let ui = {
+        // Todas as classes (os controles, a mídia, os provedores): com só os controles, um não
+        // visual de outro crate (o `MediaInfo`, um provedor) contava como visual.
         let mut ui = aylis_core::Ui::new();
-        aylis_controls::register(&mut ui);
+        aylis_remote::register_all(&mut ui);
         ui
     };
     #[cfg(not(target_arch = "wasm32"))]

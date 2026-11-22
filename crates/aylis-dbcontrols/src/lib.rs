@@ -29,7 +29,7 @@ use aylis_core::{Canvas, Component, ComponentId, EventCtx, Key, KeyEvent, PaintC
 use aylis_data::{DataEvent, DataMessage, FieldLink, data_set};
 
 pub use chart::DBChart;
-pub use column::Column;
+pub use column::{Column, ColumnKind};
 pub use grid::{CellInfo, CellPainter, CellStyle, ColumnLayout, ColumnSpec, DataGrid, GRID_COLUMN_RECORD, GRID_TOTAL_RECORD, GridColumn, HorizontalWheel};
 pub use more::DBImage;
 pub use navigator::{DataNavigator, NavButton};

@@ -203,6 +203,11 @@ pub struct Project {
     /// pedem; sem isso, tirar o último componente de mídia tirava a feature do código.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub features: Vec<String>,
+    /// Ícones de pacote que o app usa sem citar pelo nome no form nem no código
+    /// (`["fluent:pause-fill"]`: o nome montado em execução). Entram no app junto dos citados;
+    /// a busca nos forms e no código acha os outros sozinha (decidido em 21/11).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub icons: Vec<String>,
     /// Os limites de segurança: `{ "tree_depth": 256, "event_nesting": 64 }` (a profundidade
     /// da árvore de componentes e os eventos aninhados); passar deles é um erro. Sem ele,
     /// esses padrões.
@@ -582,6 +587,9 @@ pub struct PublishOptions {
     /// As opções do Windows: o tipo de instalador e o que vai nele.
     #[serde(default, skip_serializing_if = "WindowsOptions::is_default")]
     pub windows: WindowsOptions,
+    /// As opções do Linux: o formato do pacote e o que vai nele (decidido em 21/11).
+    #[serde(default, skip_serializing_if = "LinuxOptions::is_default")]
+    pub linux: LinuxOptions,
     /// Projetos que não são em Rust, no celular e no navegador: o servidor onde o código
     /// roda (`wss://servidor:9443`, com `aylis-host --bridge` lá). O app leva os forms e
     /// conecta nele.
@@ -652,6 +660,72 @@ pub struct WindowsOptions {
     pub skip_signing: bool,
 }
 
+/// O pacote do Linux (Publicar → Linux → instalador). Vazio: o `.deb` com os padrões (o nome
+/// do projeto, a categoria `Utility`, os ícones e o atalho no menu). O relatório de um player
+/// de música portado para o Aylis (21/11) pediu cada um destes.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LinuxOptions {
+    /// `deb` (o padrão: Debian, Ubuntu, Mint), `rpm` (Fedora, RHEL, openSUSE), `appimage` (um
+    /// arquivo que roda em qualquer distribuição) ou `flatpak` (o pacote do Flathub).
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub installer: String,
+    /// O nome do pacote (`audio-player`): minúsculas, números e `-`. Vazio: o do projeto.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub package: String,
+    /// As categorias do menu (`AudioVideo`, `Audio`, `Player`: as da especificação do
+    /// freedesktop). Vazio: `Utility`.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub categories: Vec<String>,
+    /// A descrição do pacote e do atalho. Vazio: "Feito com o Aylis."
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Quem mantém o pacote (`Nome <email>`). Vazio: o `publisher`, ou o nome do app.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub maintainer: String,
+    /// Dependências a mais do `.deb` (`ffmpeg`, `libssl3`), além das do Aylis.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub depends: Vec<String>,
+    /// Dependências a mais do `.rpm` (com os nomes do Fedora: `ffmpeg-free`, `openssl-libs`).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rpm_depends: Vec<String>,
+    /// Os tipos de arquivo que o app abre (`audio/mpeg`, `audio/flac`): o menu "Abrir com".
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub mime_types: Vec<String>,
+    /// Flatpak: as permissões a mais (`--share=network`, `--filesystem=xdg-music`), além da
+    /// janela, da placa de vídeo e do som.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub flatpak_permissions: Vec<String>,
+    /// Publicar sem instalador: grava também o atalho no menu deste usuário
+    /// (`~/.local/share/applications`), apontando para a pasta publicada.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub menu_shortcut: bool,
+}
+
+/// O formato do pacote do Linux ([`LinuxOptions::installer`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LinuxInstaller {
+    Deb,
+    Rpm,
+    AppImage,
+    Flatpak,
+}
+
+impl LinuxOptions {
+    pub fn is_default(&self) -> bool {
+        *self == Self::default()
+    }
+
+    pub fn kind(&self) -> LinuxInstaller {
+        match self.installer.to_ascii_lowercase().as_str() {
+            "rpm" => LinuxInstaller::Rpm,
+            "appimage" => LinuxInstaller::AppImage,
+            "flatpak" => LinuxInstaller::Flatpak,
+            _ => LinuxInstaller::Deb,
+        }
+    }
+}
+
 /// O tipo de instalador do Windows ([`WindowsOptions::installer`]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WindowsInstaller {
@@ -708,6 +782,19 @@ impl Project {
     }
 
     /// Nome do aplicativo publicado.
+    /// O nome do pacote do Linux (`publish.linux.package`, ou o do projeto em minúsculas com
+    /// `-`): o do `.deb`/`.rpm`, o do atalho no `/usr/bin`, o do `.desktop` e o nome da classe
+    /// da janela (o `StartupWMClass`, que junta a janela aberta ao atalho no painel).
+    pub fn linux_package_id(&self) -> String {
+        let chosen = self.publish.linux.package.trim();
+        // Pelo nome do projeto, não pelo `Cargo.toml`: o app em execução (sem a pasta do
+        // projeto) chega ao mesmo nome para a classe da janela.
+        let base = if chosen.is_empty() { codegen::package_name(&self.name) } else { chosen.to_string() };
+        let id: String = base.to_lowercase().chars().map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '+' { c } else { '-' }).collect();
+        let id = id.trim_matches('-').to_string();
+        if id.is_empty() { "app".into() } else { id }
+    }
+
     pub fn app_name(&self) -> &str {
         if self.publish.app_name.is_empty() { &self.name } else { &self.publish.app_name }
     }
@@ -1256,6 +1343,7 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         zoom: None,
         time_zone: String::new(),
         features: Vec::new(),
+        icons: Vec::new(),
         limits: None,
         image_cache: None,
         output: OutputSettings::default(),

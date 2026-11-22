@@ -1,7 +1,8 @@
 //! [`DataGrid`]: grade de registros virtualizada.
 
 use std::any::Any;
-use std::collections::BTreeSet;
+use std::cell::RefCell;
+use std::collections::{BTreeSet, HashMap};
 
 use aylis_core::{
     Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, Key, KeyEvent,
@@ -12,7 +13,9 @@ use aylis_data::{DataEvent, DataMessage, DataSource, DataView, Field, FieldLink,
 
 use aylis_controls::Edit;
 
-use crate::column::{Column, ColumnsChanged};
+use crate::column::{Column, ColumnKind, ColumnsChanged};
+use aylis_core::PropEnum as _;
+use aylis_controls::{ImageList, Picture};
 use crate::{CellEditor, EditorCommand};
 
 const HEADER: f32 = 32.0;
@@ -44,6 +47,8 @@ pub struct GridColumn {
     pub text_color: Option<Color>,
     /// O componente `Column` de onde a coluna veio (sem ele, da lista `columns`).
     pub source: Option<ComponentId>,
+    /// O que a coluna mostra: o texto, um ícone do `ImageList` ou a imagem do campo.
+    pub kind: ColumnKind,
 }
 
 /// O registro de uma coluna da lista `columns` (e do `on_column_moved`) no acesso tipado:
@@ -57,6 +62,7 @@ pub const GRID_COLUMN_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
         ("read_only", aylis_core::PropKind::Bool),
         ("color", aylis_core::PropKind::Color),
         ("text_color", aylis_core::PropKind::Color),
+        ("kind", aylis_core::PropKind::Enum(&["text", "icon", "image"])),
     ],
 };
 
@@ -77,6 +83,9 @@ pub struct ColumnSpec {
     pub read_only: bool,
     pub color: Option<Color>,
     pub text_color: Option<Color>,
+    /// `text` (o padrão), `icon` (do `ImageList` da grade, pelo valor do campo) ou `image` (a
+    /// imagem guardada no campo).
+    pub kind: ColumnKind,
 }
 
 impl ColumnSpec {
@@ -102,6 +111,7 @@ impl ColumnSpec {
                     read_only: j["read_only"].as_bool().unwrap_or(false),
                     color: color("color"),
                     text_color: color("text_color"),
+                    kind: j["kind"].as_str().and_then(|k| ColumnKind::NAMES.iter().position(|n| *n == k.trim())).and_then(ColumnKind::from_index).unwrap_or_default(),
                 })
             })
             .collect()
@@ -121,6 +131,9 @@ impl ColumnSpec {
         }
         if self.read_only {
             o.insert("read_only".into(), true.into());
+        }
+        if self.kind != ColumnKind::Text {
+            o.insert("kind".into(), ColumnKind::NAMES[self.kind.index()].into());
         }
         for (k, c) in [("color", self.color), ("text_color", self.text_color)] {
             if let Some(c) = c {
@@ -173,6 +186,8 @@ fn parse_footer(text: &str) -> Vec<FooterTotal> {
 #[derive(Clone, Debug, Default, PartialEq)]
 struct CachedRow {
     texts: Vec<String>,
+    /// O ícone ou a imagem de cada coluna `icon`/`image` (as outras: `None`).
+    pictures: Vec<Option<Picture>>,
     /// Pintura personalizada (`on_draw_cell`): a da linha e a de cada coluna.
     row_style: CellStyle,
     cell_styles: Vec<CellStyle>,
@@ -364,6 +379,10 @@ pub struct DataGrid {
     pub base: ControlBase,
     /// O `DataSource` de onde vêm os registros.
     pub data_source: Option<ComponentId>,
+    /// O `ImageList` das colunas de ícone (`kind: icon`): o campo diz qual imagem.
+    pub images: Option<ComponentId>,
+    /// As imagens dos campos já decodificadas (pelos bytes), para não refazer a cada rolagem.
+    blob_images: RefCell<HashMap<u64, aylis_core::Image>>,
     /// As colunas a mostrar, na ordem: a lista de [`GRID_COLUMN_RECORD`] em JSON
     /// (`[{"field": "sigla", "width": 44}, {"field": "nome", "width": 170}, {"field": "regiao"}]`;
     /// no form, a lista de objetos). Vazio = todos os campos visíveis. Lida só quando muda
@@ -462,6 +481,8 @@ impl Default for DataGrid {
         Self { overscroll: aylis_core::Overscroll::Auto,
             base,
             data_source: None,
+            images: None,
+            blob_images: RefCell::default(),
             columns: String::new(),
             row_height: 30.0,
             read_only: false,
@@ -892,6 +913,7 @@ impl DataGrid {
                     color: column.and_then(|c| c.color).or(spec.and_then(|s| s.color)),
                     text_color: column.and_then(|c| c.text_color).or(spec.and_then(|s| s.text_color)),
                     source,
+                    kind: column.map(|c| c.kind).filter(|k| *k != ColumnKind::Text).or(spec.map(|s| s.kind)).unwrap_or_default(),
                 })
             })
             .collect();
@@ -927,6 +949,20 @@ impl DataGrid {
     /// dataset).
     pub fn refresh_rows(ui: &mut Ui, id: ComponentId) {
         ui.send_message(id, &Refill);
+    }
+
+    /// A imagem dos bytes de um campo, decodificada uma vez (pelo conteúdo): rolar não refaz.
+    /// Guarda até 512; passando, começa de novo.
+    fn blob_image(&self, bytes: &[u8]) -> aylis_core::Image {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        bytes.hash(&mut h);
+        let key = h.finish();
+        let mut cache = self.blob_images.borrow_mut();
+        if cache.len() > 512 {
+            cache.clear();
+        }
+        cache.entry(key).or_insert_with(|| aylis_core::Image::encoded(bytes.to_vec())).clone()
     }
 
     /// Prepara os textos das linhas visíveis.
@@ -993,8 +1029,26 @@ impl DataGrid {
                     }
                     None => (CellStyle::default(), Vec::new()),
                 };
+                // As colunas de ícone (o `ImageList`, pelo valor do campo) e de imagem (os bytes
+                // do campo, decodificados uma vez).
+                let pictures: Vec<Option<Picture>> = self
+                    .cols
+                    .iter()
+                    .map(|c| match c.kind {
+                        ColumnKind::Text => None,
+                        ColumnKind::Icon => {
+                            let key = v.visible_value(i, &c.field).ok().map(|x| x.to_string()).unwrap_or_default();
+                            self.images.and_then(|list| ImageList::picture(ui, list, &key))
+                        }
+                        ColumnKind::Image => match v.visible_value(i, &c.field) {
+                            Ok(aylis_data::Value::Blob(bytes)) if !bytes.is_empty() => Some(Picture::Image(self.blob_image(&bytes))),
+                            _ => None,
+                        },
+                    })
+                    .collect();
                 CachedRow {
                     texts,
+                    pictures,
                     row_style,
                     cell_styles,
                     checks: self.cols.iter().map(|c| if c.check { v.visible_value(i, &c.field).ok().and_then(|x| x.as_bool()) } else { None }).collect(),
@@ -1491,6 +1545,7 @@ impl Component for DataGrid {
     properties! {
         overscroll: aylis_core::Overscroll => "Behavior",
         data_source: Option<ComponentId> => "Data",
+        images: Option<ComponentId> => "Appearance",
         columns: String as RecordList(&GRID_COLUMN_RECORD) => "Data",
         row_height: f32 => "Appearance",
         read_only: bool => "Behavior",
@@ -1512,8 +1567,17 @@ impl Component for DataGrid {
     }
 
     /// Colunas, rodapé e linha de filtro mudam o que é preparado (e quantas linhas cabem).
+    fn notification(&mut self, freed: ComponentId) {
+        if self.images == Some(freed) {
+            self.images = None;
+        }
+        if self.data_source == Some(freed) {
+            self.data_source = None;
+        }
+    }
+
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
-        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source" | "indicator" | "top_row" | "scroll_left") {
+        if matches!(name, "columns" | "footer" | "filter_row" | "row_height" | "multi_select" | "data_source" | "indicator" | "top_row" | "scroll_left" | "images") {
             if name == "data_source" {
                 self.cols.clear();
             }
@@ -2158,6 +2222,32 @@ impl Component for DataGrid {
                     } else if c.check {
                         let on = row.checks.get(i).copied().flatten();
                         draw_check(canvas, Self::check_rect(cell), on, ctx);
+                    } else if let Some(picture) = row.pictures.get(i).cloned().flatten() {
+                        // O ícone (na cor do texto da célula) ou a imagem, no alinhamento da coluna.
+                        let inner = cell.inflate(-4.0);
+                        match picture {
+                            Picture::Icon(icon) => {
+                                let side = inner.width.min(inner.height).min(24.0);
+                                let x = match c.align {
+                                    TextAlign::Center => inner.x + (inner.width - side) / 2.0,
+                                    TextAlign::Trailing => inner.right() - side,
+                                    _ => inner.x + 4.0,
+                                };
+                                icon.draw(canvas, RectF::new(x, inner.y + (inner.height - side) / 2.0, side, side), style.color);
+                            }
+                            Picture::Image(image) => {
+                                if let Some(size) = canvas.image_size(&image) {
+                                    let (src, dest) = aylis_core::ImageFit::Contain.place(size, inner);
+                                    canvas.save();
+                                    canvas.clip_rect(cell);
+                                    canvas.draw_image(&image, src, dest, 1.0);
+                                    canvas.restore();
+                                }
+                            }
+                        }
+                    } else if c.kind != ColumnKind::Text {
+                        // Coluna de ícone ou de imagem sem figura (o item sem ícone, o campo
+                        // vazio): fica vazia, sem o número ou os bytes como texto.
                     } else {
                         let text = cell_style.and_then(|s| s.text.as_deref()).unwrap_or_else(|| row.texts.get(i).map_or("", String::as_str));
                         canvas.draw_text(text, RectF::new(x + 8.0, y, c.width - 16.0, self.row_height), &style);

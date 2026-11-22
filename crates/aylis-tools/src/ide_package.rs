@@ -211,6 +211,9 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
         "linux" => {
             let root = out.join("aylis-ide");
             let _ = std::fs::remove_dir_all(&root);
+            // Nenhum executável pedindo glibc mais nova que a mínima: os da 0.9.1, ligados na
+            // 2.43 do WSL, nem abriam no Mint 22 (22/11).
+            crate::glibc::check_if_elf("aylis-ide", &exe)?;
             write(&root.join("bin/aylis-ide"), &exe)?;
             if let Some(sdk) = sdk {
                 // Os outros executáveis compilados com ela (o `aylis-host` roda as outras
@@ -219,7 +222,9 @@ pub fn package(target: &str, binary: &Path, logo_ico: &Path, out: &Path, version
                 for (_, name) in crate::installer::BINARIES.iter().filter(|(_, n)| *n != "aylis-ide") {
                     let other = dir.join(name);
                     if other.is_file() {
-                        write(&root.join("bin").join(name), &std::fs::read(&other).map_err(|e| format!("{}: {e}", other.display()))?)?;
+                        let bytes = std::fs::read(&other).map_err(|e| format!("{}: {e}", other.display()))?;
+                        crate::glibc::check_if_elf(name, &bytes)?;
+                        write(&root.join("bin").join(name), &bytes)?;
                     }
                 }
                 copy_sdk(sdk, &root.join("bin/aylis"))?;

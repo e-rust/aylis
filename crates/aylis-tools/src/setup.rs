@@ -28,12 +28,12 @@ fn winget(description: &str, id: &str, extra: &[&str]) -> Fix {
     let mut args = vec!["winget", "install", "--id", id];
     args.extend(WINGET_QUIET);
     args.extend(extra);
-    Fix { description: format!("{description} (winget, {id})"), command: args.iter().map(|s| s.to_string()).collect(), interactive: false, fetch: None, env: Vec::new() }
+    Fix { description: format!("{description} (winget, {id})"), command: args.iter().map(|s| s.to_string()).collect(), interactive: false, fetch: None, env: Vec::new(), after: None }
 }
 
 fn shell(description: &str, script: &str) -> Fix {
     let (program, flag) = if cfg!(windows) { ("cmd", "/C") } else { ("sh", "-c") };
-    Fix { description: description.to_string(), command: vec![program.into(), flag.into(), script.into()], interactive: false, fetch: None, env: Vec::new() }
+    Fix { description: description.to_string(), command: vec![program.into(), flag.into(), script.into()], interactive: false, fetch: None, env: Vec::new(), after: None }
 }
 
 /// Os pacotes do sistema pelo gerenciador da distribuição (`packages`: os nomes no apt, dnf,
@@ -68,8 +68,13 @@ pub(crate) fn linux_toolchain(language: Language) -> (&'static str, [&'static st
     }
 }
 
+/// Pelo Homebrew. O macOS não o traz, e o Aylis não o instala (não é um pacote de versão
+/// fixa): sem ele, o passo diz o que fazer em vez do "brew: command not found" (Mac Intel, 22/11).
 fn brew(description: &str, packages: &str) -> Fix {
-    shell(description, &format!("brew install {packages}"))
+    shell(
+        description,
+        &format!("command -v brew >/dev/null || {{ echo 'falta o Homebrew: instale pelo https://brew.sh e rode de novo' >&2; exit 1; }}; brew install {packages}"),
+    )
 }
 
 /// O compilador ou o interpretador da linguagem (o que roda e compila os projetos dela).
@@ -85,6 +90,7 @@ pub fn install_toolchain(language: Language) -> Option<Fix> {
             interactive: false,
             fetch: None,
             env: Vec::new(),
+            after: None,
         });
     }
     if cfg!(windows) {
@@ -119,7 +125,7 @@ pub fn install_toolchain(language: Language) -> Option<Fix> {
             Language::CSharp => brew("Instala o .NET SDK 8 (Homebrew)", "--cask dotnet-sdk@8"),
             Language::Java => brew("Instala o JDK 17 (Homebrew)", "openjdk@17"),
             Language::Go => brew("Instala o Go (Homebrew)", "go"),
-            Language::Cpp => Fix { description: "Instala as ferramentas do Xcode (clang)".into(), command: vec!["xcode-select".into(), "--install".into()], interactive: true, fetch: None, env: Vec::new() },
+            Language::Cpp => Fix { description: "Instala as ferramentas do Xcode (clang)".into(), command: vec!["xcode-select".into(), "--install".into()], interactive: true, fetch: None, env: Vec::new(), after: None },
             Language::Pascal => brew("Instala o Free Pascal e o Lazarus (Homebrew)", "fpc && brew install --cask lazarus"),
         })
     } else {
@@ -220,6 +226,10 @@ pub fn refresh_path() {
     if !cfg!(windows) {
         add(PathBuf::from("/usr/local/go/bin"));
         add(PathBuf::from("/opt/homebrew/bin"));
+        // O Homebrew dos Macs Intel; a IDE aberta pelo Finder não herda o PATH do terminal.
+        if cfg!(target_os = "macos") {
+            add(PathBuf::from("/usr/local/bin"));
+        }
     }
     // Os pacotes de ferramentas do Aylis (`toolpacks`), só onde a máquina não tem a
     // ferramenta: as variáveis que faltam (decididas antes de mexer no PATH) e as pastas no

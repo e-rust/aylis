@@ -139,6 +139,10 @@ mod apple_push;
 mod windows_push;
 #[cfg(all(target_os = "linux", not(target_os = "android")))]
 mod linux_push;
+#[cfg(windows)]
+mod windows_media;
+#[cfg(all(target_os = "linux", not(target_os = "android")))]
+mod linux_media;
 #[cfg(all(feature = "nfc", not(any(web, mobile))))]
 mod desktop_nfc;
 #[cfg(windows)]
@@ -159,6 +163,8 @@ mod web;
 mod web_access;
 #[cfg(web)]
 mod web_device;
+#[cfg(web)]
+mod web_media;
 #[cfg(web)]
 mod web_radio;
 #[cfg(web)]
@@ -378,6 +384,32 @@ fn panel_memory() -> Option<aylis_core::memory_panel::ProcessMemory> {
     (working_set > 0).then_some(aylis_core::memory_panel::ProcessMemory { private, working_set })
 }
 
+/// Depurar na IDE (o app em Rust no Windows): com `AYLIS_WAIT_DEBUGGER=<segundos>`, espera o
+/// depurador se anexar (a IDE recebe o número do processo do `aylis-tool`), para os pontos de
+/// parada valerem desde o começo. No Windows, o CodeLLDB que lança o app trava antes da
+/// janela abrir (22/11); anexado ao app já aberto, não. Nas outras plataformas, e sem a
+/// variável, não faz nada.
+pub fn wait_for_debugger() {
+    #[cfg(windows)]
+    {
+        let Some(secs) = std::env::var("AYLIS_WAIT_DEBUGGER").ok().and_then(|s| s.parse::<u64>().ok()) else { return };
+        unsafe extern "system" {
+            fn IsDebuggerPresent() -> i32;
+        }
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+        // SAFETY: sem argumentos; só lê o estado do próprio processo.
+        while unsafe { IsDebuggerPresent() } == 0 {
+            if std::time::Instant::now() >= deadline {
+                eprintln!("aylis: o depurador não se anexou em {secs} s; seguindo sem ele");
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        // O depurador manda os pontos de parada logo depois de se anexar.
+        std::thread::sleep(std::time::Duration::from_millis(700));
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Options {
     pub renderer: Renderer,
@@ -390,6 +422,9 @@ pub struct Options {
     /// A pasta do `placements.json` (onde ficam as janelas com `remember_placement`). `None`: a
     /// pasta de dados do usuário com o nome do executável (o relatório do Tabernáculo, P09).
     pub placements_dir: Option<std::path::PathBuf>,
+    /// Linux: o identificador do app (o `app_id` do Wayland e o `WM_CLASS` do X11), o nome do
+    /// `.desktop` e o `StartupWMClass` do pacote. Vazio: o nome do executável.
+    pub app_id: String,
 }
 
 /// Abre o form principal numa janela e roda até ele ser fechado (como `Application.Run`).

@@ -32,6 +32,64 @@ pub fn encode_base64(bytes: &[u8]) -> String {
     out
 }
 
+/// O contrário de [`encode_base64`]: os bytes de um texto base64 (o padrão ou o de URL, com ou
+/// sem `=`, ignorando espaços e quebras). `None` com um caractere fora do alfabeto.
+pub fn decode_base64(text: &str) -> Option<Vec<u8>> {
+    let value = |c: u8| -> Option<u32> {
+        Some(match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            _ => return None,
+        } as u32)
+    };
+    let clean: Vec<u8> = text.bytes().filter(|c| !c.is_ascii_whitespace() && *c != b'=').collect();
+    let mut out = Vec::with_capacity(clean.len() * 3 / 4);
+    for chunk in clean.chunks(4) {
+        let mut n = 0u32;
+        for (i, c) in chunk.iter().enumerate() {
+            n |= value(*c)? << (18 - 6 * i);
+        }
+        for i in 0..chunk.len().saturating_sub(1) {
+            out.push((n >> (16 - 8 * i) & 0xFF) as u8);
+        }
+    }
+    Some(out)
+}
+
+/// A cor dominante de pixels RGBA (`width × height`, sem pré-multiplicar): a mais comum, numa
+/// amostra de até ~4 mil pixels agrupados em caixas de cor, sem os quase transparentes, os quase
+/// pretos e os quase brancos (o fundo de uma capa, o degradê que segue a foto). Só com esses, a
+/// média deles. `None` sem pixels.
+pub fn dominant_color(width: u32, height: u32, rgba: &[u8]) -> Option<crate::Color> {
+    let total = width as usize * height as usize;
+    if total == 0 || rgba.len() < total * 4 {
+        return None;
+    }
+    let step = (total / 4096).max(1);
+    // Caixas de 32 níveis por canal (8 × 8 × 8): a soma e a contagem de cada uma.
+    let mut boxes = vec![(0u64, 0u64, 0u64, 0u32); 512];
+    let mut all = (0u64, 0u64, 0u64, 0u32);
+    for px in rgba.chunks_exact(4).step_by(step) {
+        let (r, g, b, a) = (px[0] as u64, px[1] as u64, px[2] as u64, px[3]);
+        if a < 128 {
+            continue;
+        }
+        all = (all.0 + r, all.1 + g, all.2 + b, all.3 + 1);
+        let (max, min) = (r.max(g).max(b), r.min(g).min(b));
+        if max < 30 || min > 225 {
+            continue;
+        }
+        let i = ((r >> 5) << 6 | (g >> 5) << 3 | (b >> 5)) as usize;
+        let e = &mut boxes[i];
+        *e = (e.0 + r, e.1 + g, e.2 + b, e.3 + 1);
+    }
+    let (r, g, b, n) = boxes.into_iter().max_by_key(|e| e.3).filter(|e| e.3 > 0).unwrap_or(all);
+    (n > 0).then(|| crate::Color::rgb((r / n as u64) as u8, (g / n as u64) as u8, (b / n as u64) as u8))
+}
+
 /// Os bytes RGBA de uma imagem `width × height`, sem estouro e dentro dos limites. Todo
 /// lugar que reserva memória para pixels passa por aqui: as dimensões vêm do próprio arquivo,
 /// e um PNG de 1 KB pode declarar 40.000 × 40.000.
@@ -103,6 +161,19 @@ impl Image {
 
     pub fn source(&self) -> &ImageSource {
         &self.0.source
+    }
+
+    /// A cor dominante ([`dominant_color`]) de uma imagem já em pixels; a de um arquivo
+    /// codificado fica para quem decodifica (o componente `Image`): `None`.
+    pub fn dominant_color(&self) -> Option<crate::Color> {
+        match &self.0.source {
+            ImageSource::Rgba { width, height, pixels } => dominant_color(*width, *height, pixels),
+            ImageSource::Bgra { width, height, pixels } => {
+                let rgba: Vec<u8> = pixels.chunks_exact(4).flat_map(|p| [p[2], p[1], p[0], p[3]]).collect();
+                dominant_color(*width, *height, &rgba)
+            }
+            ImageSource::Encoded(_) => None,
+        }
     }
 
     /// Tamanho em pixels, quando já é conhecido sem decodificar (imagens RGBA).

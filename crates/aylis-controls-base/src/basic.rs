@@ -586,7 +586,7 @@ impl Component for Form {
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: ();
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String;
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -597,6 +597,9 @@ impl Component for Form {
             MethodInfo::new("request_attention", &[PropKind::Bool], None).params(&["critical"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
             MethodInfo::new("gpu_adapters", &[], Some(PropKind::List)),
+            // Onde caíram os arquivos do `on_files_drop` (nas coordenadas do form).
+            MethodInfo::new("drop_x", &[], Some(PropKind::Float)),
+            MethodInfo::new("drop_y", &[], Some(PropKind::Float)),
             // Atendido pelo `Ui::invoke` (o `Ui` pinta o form): os pixels RGBA em base64.
             MethodInfo::new("render_rgba", &[PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float, PropKind::Float], Some(PropKind::String))
                 .params(&["x", "y", "width", "height", "scale"]),
@@ -626,6 +629,10 @@ impl Component for Form {
             "gpu_adapter" => Ok(aylis_core::PropValue::String(ctx.ui.form_gpu(ctx.id).unwrap_or_default().to_string())),
             // As placas da máquina, separadas por `;` (o texto que a propriedade `gpu` aceita).
             "gpu_adapters" => Ok(aylis_core::PropValue::String(aylis_core::gpu::adapters().join(";"))),
+            "drop_x" | "drop_y" => {
+                let at = ctx.ui.files_drop_position(ctx.id).unwrap_or_default();
+                Ok(aylis_core::PropValue::Float(f64::from(if method == "drop_x" { at.x } else { at.y })))
+            }
             _ => Err(format!("Form não tem o método '{method}'")),
         }
     }
@@ -963,8 +970,16 @@ impl Component for Rectangle {
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        self.paint_filled(canvas, ctx, None);
+    }
+}
+
+impl Rectangle {
+    /// A pintura com outro fundo no lugar do `fill` (`None`: o de sempre): o `Panel` com o
+    /// mouse em cima.
+    pub fn paint_filled(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, fill_over: Option<Color>) {
         let corners = self.radius.unwrap_or(aylis_core::Bounds::all(ctx.style.radius));
-        let fill = self.fill.unwrap_or(ctx.style.fill);
+        let fill = fill_over.or(self.fill).unwrap_or(ctx.style.fill);
         // Um raio por canto (`radius: [8, 8, 0, 0]`, negativo curva para fora): pelo contorno.
         let uniform = corners.left == corners.top && corners.top == corners.right && corners.right == corners.bottom && corners.left >= 0.0;
         if !uniform {
@@ -1029,11 +1044,27 @@ pub struct Panel {
     pub char_map: String,
     /// O vão entre os filhos encaixados (o `gap` do CSS; L05 do Tabernáculo).
     pub gap: f32,
+    /// O fundo com o mouse em cima (nele ou num filho); vazio: como sem mouse.
+    pub hover_fill: Option<Color>,
+    /// O fundo apertado; vazio: o `hover_fill`.
+    pub pressed_fill: Option<Color>,
+    /// Reage ao mouse com as cores de estado do tema (o mesmo clarear dos botões), sem
+    /// escolher cor: a linha de uma lista, um "botão" feito de painel (decidido em 21/11). O
+    /// `hover_fill` e o `pressed_fill`, quando dados, mandam.
+    pub interactive: bool,
+    /// O fundo marcado (a linha escolhida de uma lista, o estado `checked`); vazio: com
+    /// `interactive`, a cor principal do tema, clara.
+    pub selected_fill: Option<Color>,
 }
 
 impl Panel {
     pub fn new(width: f32, height: f32) -> Self {
         Self { base: Rectangle::new(width, height), ..Default::default() }
+    }
+
+    /// Reage ao mouse (`interactive`, `hover_fill` ou `pressed_fill`).
+    fn reacts(&self) -> bool {
+        self.interactive || self.hover_fill.is_some() || self.pressed_fill.is_some() || self.selected_fill.is_some()
     }
 }
 
@@ -1058,6 +1089,54 @@ impl Component for Panel {
         chars_override: bool => "Keyboard",
         char_map: String => "Keyboard",
         gap: f32 => "Layout",
+        hover_fill: Option<Color> => "Appearance",
+        pressed_fill: Option<Color> => "Appearance",
+        interactive: bool => "Behavior",
+        selected_fill: Option<Color> => "Appearance",
+    }
+
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if matches!(name, "hover_fill" | "pressed_fill" | "interactive" | "selected_fill") {
+            let on = self.reacts();
+            self.base.base.set_hover_within(on);
+            if on && self.base.base.cursor() == aylis_core::CursorShape::Default && self.interactive {
+                self.base.base.set_cursor(aylis_core::CursorShape::Pointer);
+            }
+            ctx.repaint();
+        }
+    }
+
+    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        if !self.reacts() || ctx.design {
+            return self.base.paint(canvas, ctx);
+        }
+        let (hover, pressed) = ctx.ui.hover_within(ctx.id);
+        let (hover, pressed) = (hover || ctx.state.hover, pressed || ctx.state.pressed);
+        let rest = self.base.fill.unwrap_or(ctx.style.fill);
+        // Marcado (a linha escolhida): o fundo de marcado por baixo do mouse.
+        let rest = if ctx.state.checked {
+            self.selected_fill.unwrap_or_else(|| if self.interactive { rest.lerp(ctx.theme.color("primary"), 0.22) } else { rest })
+        } else {
+            rest
+        };
+        let fill = if pressed {
+            self.pressed_fill.or(self.hover_fill)
+        } else if hover {
+            self.hover_fill
+        } else {
+            None
+        };
+        // Sem cor própria: as do tema (o `hover` do tema, o clarear dos botões); marcado sem
+        // mouse, o fundo de marcado.
+        let fill = fill.or_else(|| {
+            (self.interactive && (hover || pressed)).then(|| {
+                let toward = ctx.theme.color("text");
+                let base = if rest.is_transparent() { toward.with_opacity(0.0) } else { rest };
+                base.lerp(toward, if pressed { 0.16 } else { 0.08 })
+            })
+        });
+        let fill = fill.or(ctx.state.checked.then_some(rest));
+        self.base.paint_filled(canvas, ctx, fill);
     }
 
     fn inner(&self) -> Option<&dyn Component> {
@@ -1118,6 +1197,9 @@ pub struct Label {
     pub line_height: f32,
     /// Sombra das letras (a legenda sobre vídeo): a cor, o desfoque e o deslocamento (T02).
     pub text_shadow: Option<aylis_core::Shadow>,
+    /// Com `wrap`, no máximo estas linhas, com o `trimming` na última (o `line-clamp` do CSS);
+    /// 0: as que couberem na altura.
+    pub max_lines: u32,
 }
 
 impl Default for Label {
@@ -1142,6 +1224,7 @@ impl Default for Label {
             outline_width: 0.0,
             line_height: 0.0,
             text_shadow: None,
+            max_lines: 0,
         }
     }
 }
@@ -1156,14 +1239,19 @@ impl Label {
         if self.line_height > 0.0 { self.line_height } else { style }
     }
 
-    /// O texto quebrado com a altura de linha `line_height` (em vezes a fonte), linha a linha.
-    fn paint_lines(canvas: &mut dyn Canvas, text: &str, area: RectF, style: &TextStyle, line_height: f32) {
+    /// O texto quebrado linha a linha, com a altura de linha `line_height` (em vezes a fonte;
+    /// 0: a da fonte). As linhas param na altura da área e em `max_lines` (0: sem limite), e o
+    /// `trimming` entra na última (antes descia além da altura, por cima dos vizinhos; o
+    /// relatório do player de música, 21/11).
+    fn paint_lines(canvas: &mut dyn Canvas, text: &str, area: RectF, style: &TextStyle, line_height: f32, max_lines: u32) {
         let mut one = style.clone();
         one.wrap = false;
         one.v_align = TextAlign::Center;
+        let step = if line_height > 0.0 { style.font.size * line_height } else { canvas.measure_text("Ag", &one).height.max(1.0) };
+        let fit = ((area.height + 0.5) / step).floor().max(1.0) as usize;
+        let limit = if max_lines > 0 { fit.min(max_lines as usize) } else { fit };
         let mut measure = |s: &str| canvas.measure_text(s, &one).width;
-        let lines = aylis_core::text::layout_lines(text, area.width, usize::MAX, true, style.trimming, &mut measure);
-        let step = style.font.size * line_height;
+        let lines = aylis_core::text::layout_lines(text, area.width, limit, true, style.trimming, &mut measure);
         let total = step * lines.len() as f32;
         let mut y = match style.v_align {
             TextAlign::Leading | TextAlign::Justify => area.y,
@@ -1225,6 +1313,7 @@ impl Component for Label {
         outline_width: f32 => "Appearance",
         line_height: f32 => "Appearance",
         text_shadow: Option<aylis_core::Shadow> => "Appearance",
+        max_lines: u32 => "Appearance",
         focus_control: Option<ComponentId> => "Behavior",
     }
 
@@ -1308,9 +1397,9 @@ impl Component for Label {
             let (text, _) = crate::mnemonic::caption(&text_case.apply(&self.text));
             Self::paint_text_shadow(canvas, &text, area, &style, shadow);
         }
-        if line_height > 0.0 && self.wrap && !self.markup && letter_spacing == 0.0 {
+        if (line_height > 0.0 || self.max_lines > 0) && self.wrap && !self.markup && letter_spacing == 0.0 {
             let (text, _) = crate::mnemonic::caption(&text_case.apply(&self.text));
-            Self::paint_lines(canvas, &text, area, &style, line_height);
+            Self::paint_lines(canvas, &text, area, &style, line_height, self.max_lines);
         } else if self.markup {
             paint_runs(canvas, markup_spans(&self.text), area, &style, letter_spacing, ctx.theme);
         } else if letter_spacing != 0.0 && self.wrap {
@@ -1357,11 +1446,16 @@ impl aylis_core::LayoutHooks for Label {
         let style = TextStyle { font, wrap: self.wrap, ..Default::default() };
         // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
         let inner = (width - pad.horizontal()).max(1.0) * if self.markup { 0.97 } else { 1.0 };
-        // Com a altura de linha própria: as linhas quebradas vezes ela.
-        if line_height > 0.0 && self.wrap && !self.markup {
+        // Com a altura de linha própria ou o `max_lines`: as linhas quebradas (até o limite)
+        // vezes a altura de cada uma.
+        if (line_height > 0.0 || self.max_lines > 0) && self.wrap && !self.markup {
             let mut measure = |s: &str| ui.measure_text(s, &style).width;
-            let lines = aylis_core::text::layout_lines(&text, inner, usize::MAX, true, Trimming::None, &mut measure).len().max(1);
-            return Some((lines as f32 * style.font.size * line_height).ceil() + pad.vertical() + 1.0);
+            let limit = if self.max_lines > 0 { self.max_lines as usize } else { usize::MAX };
+            let lines = aylis_core::text::layout_lines(&text, inner, limit, true, Trimming::None, &mut measure).len().max(1);
+            let mut one = style.clone();
+            one.wrap = false;
+            let step = if line_height > 0.0 { style.font.size * line_height } else { ui.measure_text("Ag", &one).height.max(1.0) };
+            return Some((lines as f32 * step).ceil() + pad.vertical() + 1.0);
         }
         let size = if self.wrap { ui.measure_text_wrapped(&text, &style, inner) } else { ui.measure_text(&text, &style) };
         Some(size.height + pad.vertical() + 1.0)

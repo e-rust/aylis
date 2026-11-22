@@ -766,7 +766,7 @@ fn has_fonts(project: &Project) -> bool {
 
 /// As features do crate `aylis` que o `.aylisproj` pode pedir (`features`).
 pub const APP_FEATURES: &[&str] =
-    &["data", "dbcontrols", "providers", "media", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones", "text-shaping"];
+    &["data", "dbcontrols", "providers", "media", "media-tags", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones", "text-shaping"];
 
 /// A linha `features = [...]` da dependência do aylis.
 fn features_list(features: &[&str]) -> String {
@@ -1038,6 +1038,9 @@ fn code_citations(project: &Project, packs: &[String]) -> std::collections::BTre
             scan_file_citations(&dir.join(&name), packs, &mut used);
         }
     }
+    // Os declarados no projeto (`icons`): os nomes que o código monta em execução.
+    let declared: String = project.icons.iter().map(|i| format!("\"{}\" ", i.trim())).collect();
+    scan_citations(&declared, packs, &mut used);
     used
 }
 
@@ -2033,7 +2036,8 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
         stubs.push_str(&format!("\n    pub fn {h}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {{\n{}    }}\n", indent(rust_stub_body(h))));
     }
     // No fim do `impl` da struct do form; sem ele, um `impl` novo no fim do arquivo.
-    match impl_end(&text, &ty) {
+    let present: Vec<&String> = handlers.iter().filter(|h| crate::sync::find_marker(Language::Rust, &text, &format!("fn {h}(")).is_some()).collect();
+    match impl_end(&text, &ty, &present) {
         Some(at) => {
             let stubs = if text[..at].trim_end().ends_with('{') { stubs.trim_start_matches('\n').to_string() } else { stubs };
             let line_start = text[..at].rfind('\n').map_or(0, |n| n + 1);
@@ -2062,11 +2066,23 @@ fn allow_non_snake_case(text: &mut String, ty: &str) {
     text.insert_str(line_start, "#[allow(non_snake_case)]\n");
 }
 
-/// Onde fica a chave que fecha o `impl Tipo {`.
-fn impl_end(text: &str, ty: &str) -> Option<usize> {
-    let start = text.find(&format!("impl {ty} {{"))?;
-    let open = start + text[start..].find('{')?;
-    matching_brace(text, open)
+/// Onde fica a chave que fecha o `impl Tipo {` dos handlers: com mais de um bloco (um com a
+/// lógica, outro com os handlers), o que já tem um handler do form; sem nenhum, o último.
+/// Antes era sempre o primeiro, e os stubs caíam no meio da lógica (o relatório do player de
+/// música, 21/11).
+fn impl_end(text: &str, ty: &str, handlers: &[&String]) -> Option<usize> {
+    let head = format!("impl {ty} {{");
+    let mut blocks = Vec::new();
+    let mut from = 0;
+    while let Some(i) = text[from..].find(&head) {
+        let start = from + i;
+        let open = start + head.len() - 1;
+        let Some(close) = matching_brace(text, open) else { break };
+        blocks.push((open, close));
+        from = close + 1;
+    }
+    let has_handler = |&(open, close): &(usize, usize)| handlers.iter().any(|h| text[open..close].contains(&format!("fn {h}(")));
+    blocks.iter().find(|b| has_handler(b)).or(blocks.last()).map(|&(_, close)| close)
 }
 
 /// A chave que fecha a que abre em `open`, num texto em Rust: as chaves dentro de strings,
@@ -2297,6 +2313,24 @@ mod rust_unit_tests {
         let mut py = update_python(None, &all, "frmPrincipal");
         assert_eq!(drop_unused_stubs(&mut py, &all[..1], Language::Python).len(), 3, "{py}");
         assert!(py.contains("def btnA_click("));
+    }
+
+    /// Com dois `impl` do form (um com a lógica, outro com os handlers), o handler novo entra no
+    /// dos handlers; sem handler em nenhum, no último (o relatório do player de música, 21/11:
+    /// caía no fim do primeiro, no meio da lógica).
+    #[test]
+    fn new_handlers_go_to_the_impl_that_has_the_handlers() {
+        let logic = "impl FrmPrincipal {\n    fn tocar(&mut self) {}\n}\n";
+        let with_handlers = "impl FrmPrincipal {\n    pub fn btnA_click(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n        let _ = (ui, sender, args);\n    }\n}\n";
+        let old = format!("{logic}\n{with_handlers}");
+        let all = ["btnA_click".to_string(), "btnB_click".to_string()];
+        let text = update_rust_unit(Some(old), &all, "frmPrincipal");
+        let (b, logic_end) = (text.find("fn btnB_click(").unwrap(), text.find("fn tocar").unwrap() + 30);
+        assert!(b > text.find("fn btnA_click(").unwrap() && b > logic_end, "{text}");
+        // Nenhum com handler: o último.
+        let two = format!("{logic}\n{logic}");
+        let text = update_rust_unit(Some(two), &["btnB_click".to_string()], "frmPrincipal");
+        assert!(text.find("fn btnB_click(").unwrap() > text.rfind("fn tocar").unwrap(), "{text}");
     }
 }
 

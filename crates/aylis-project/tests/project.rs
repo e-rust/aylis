@@ -807,3 +807,52 @@ fn generating_again_does_not_rewrite_unchanged_files() {
     assert_eq!(std::fs::read_to_string(local.join(".gitignore")).unwrap(), "sdk\n*\n");
     let _ = std::fs::remove_dir_all(dir);
 }
+
+/// A linha tipada do `VirtualList` (decidido em 21/11): uma struct com as peças do modelo e o
+/// `lstX_row(ui, i)` / `lstX_row_of(ui, componente)` no form e nos `Components`, mantendo o
+/// `VirtualList::part` de sempre.
+#[test]
+fn a_virtual_list_gets_a_typed_row() {
+    let base = temp("vlist_row");
+    let project = create(&base, "Player", Language::Rust).unwrap();
+    let form = project.dir().join("forms/principal.json");
+    std::fs::write(
+        &form,
+        r#"{ "aylis": 1, "root": { "class": "Form", "name": "frmPrincipal", "children": [
+            { "class": "VirtualList", "name": "lstMusicas", "children": [
+                { "class": "Panel", "name": "pnlLinha", "children": [
+                    { "class": "Label", "name": "lblTitulo" }, { "class": "Image", "name": "imgCapa" } ] } ] } ] } }"#,
+    )
+    .unwrap();
+    aylis_project::codegen::generate(&project).unwrap();
+    let code = std::fs::read_to_string(project.code_dir().join("generated/components/forms/principal.rs")).unwrap();
+    assert!(code.contains("pub struct FrmPrincipalLstMusicasRow {") && code.contains("pub lblTitulo: Label,") && code.contains("pub imgCapa: Image,"), "{code}");
+    assert!(code.contains("pub fn lstMusicas_row(&self, ui: &Ui, index: usize) -> Option<FrmPrincipalLstMusicasRow>"), "{code}");
+    assert!(code.contains("pub fn lstMusicas_row_of(&self, ui: &Ui, component: ComponentId)"));
+    assert!(code.contains("impl FrmPrincipalComponents {"), "também nos Components");
+    std::fs::remove_dir_all(&base).unwrap();
+}
+
+/// Vários modelos de linha: uma struct e um método por modelo (`lstX_<modelo>`); o
+/// `DataRepeater` ganha a mesma linha tipada (22/11).
+#[test]
+fn several_row_models_and_the_data_repeater_get_typed_rows() {
+    let base = temp("vlist_models");
+    let project = create(&base, "Player", Language::Rust).unwrap();
+    std::fs::write(
+        project.dir().join("forms/principal.json"),
+        r#"{ "aylis": 1, "root": { "class": "Form", "name": "frmPrincipal", "children": [
+            { "class": "VirtualList", "name": "lstMusicas", "children": [
+                { "class": "Panel", "name": "pnlMusica", "children": [ { "class": "Label", "name": "lblTitulo" } ] },
+                { "class": "Panel", "name": "pnlSecao", "children": [ { "class": "Label", "name": "lblSecao" } ] } ] },
+            { "class": "DataRepeater", "name": "repFaixas", "children": [
+                { "class": "Panel", "name": "pnlFaixa", "children": [ { "class": "Label", "name": "lblFaixa" } ] } ] } ] } }"#,
+    )
+    .unwrap();
+    aylis_project::codegen::generate(&project).unwrap();
+    let code = std::fs::read_to_string(project.code_dir().join("generated/components/forms/principal.rs")).unwrap();
+    assert!(code.contains("pub struct FrmPrincipalLstMusicasPnlMusicaRow {") && code.contains("pub struct FrmPrincipalLstMusicasPnlSecaoRow {"), "{code}");
+    assert!(code.contains("pub fn lstMusicas_pnlMusica(&self, ui: &Ui, index: usize)") && code.contains("pub fn lstMusicas_pnlSecao_of("), "{code}");
+    assert!(code.contains("pub fn repFaixas_row(&self, ui: &Ui, index: usize) -> Option<FrmPrincipalRepFaixasRow>"), "{code}");
+    std::fs::remove_dir_all(&base).unwrap();
+}

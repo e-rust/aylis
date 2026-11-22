@@ -616,6 +616,21 @@ pub fn register_used_icons(ui: &mut Ui, project: &Project, form: Option<&std::pa
             }
         }
     }
+    register_icons(ui, used);
+    if let Ok(text) = std::fs::read_to_string(project.dir().join("assets/icons/app.txt")) {
+        let _ = ui.register_icon_pack("app", &text);
+    }
+}
+
+/// Os ícones de pacote citados num texto (um layout, um valor de propriedade) ficam disponíveis
+/// no `ui` do designer, vindos dos pacotes da IDE. O `set_layout` e o `set_property` do MCP
+/// chamam: antes só os do form salvo apareciam, e os botões ficavam vazios até o primeiro
+/// "Gerar código" (o relatório do player de música, 21/11).
+pub fn register_icons_in(ui: &mut Ui, text: &str) {
+    register_icons(ui, aylis_project::codegen::icons_cited_in(text));
+}
+
+fn register_icons(ui: &mut Ui, used: std::collections::BTreeMap<String, std::collections::BTreeSet<String>>) {
     for (pack, names) in used {
         if names.iter().all(|n| ui.icon(&format!("{pack}:{n}")).is_some()) {
             continue;
@@ -626,9 +641,6 @@ pub fn register_used_icons(ui: &mut Ui, project: &Project, form: Option<&std::pa
                 ui.register_icon(&format!("{pack}:{name}"), icon);
             }
         }
-    }
-    if let Ok(text) = std::fs::read_to_string(project.dir().join("assets/icons/app.txt")) {
-        let _ = ui.register_icon_pack("app", &text);
     }
 }
 

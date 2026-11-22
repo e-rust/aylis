@@ -1659,7 +1659,7 @@ fn project_options_gather_what_rarely_changes() {
     // As seções numa lista à esquerda (abas laterais), não em botões.
     let nav = descendants(&ide.ui, hub).into_iter().find(|&id| ide.ui.get::<aylis_controls::ListBox>(id).is_some()).expect("a lista de seções");
     let items = ide.ui.get::<aylis_controls::ListBox>(nav).unwrap().items.clone();
-    let expected = ["Geral", "Aparência", "Fontes", "Ícone do app", "Android", "Windows", "iPhone (GitHub)", "Memória", "DataModules usados", "Traduções", "Confiar neste projeto"];
+    let expected = ["Geral", "Aparência", "Fontes", "Ícone do app", "Android", "Windows", "Linux", "iPhone (GitHub)", "Memória", "DataModules usados", "Traduções", "Confiar neste projeto"];
     assert_eq!(items.split(';').collect::<Vec<_>>(), expected);
     let buttons: Vec<String> = descendants(&ide.ui, hub).iter().filter_map(|&id| ide.ui.get::<aylis_controls::Button>(id).map(|b| b.text.clone())).collect();
     assert!(!buttons.iter().any(|b| b == "Geral" || b == "Memória"), "sem um botão por seção: {buttons:?}");

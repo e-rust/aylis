@@ -12,6 +12,9 @@ Painel: um `Rectangle` com o estilo `Panel` do tema (fundo, borda e cantos).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
+| `hover_fill` | Fundo com o mouse | cor | O fundo com o mouse em cima (nele ou num filho); vazio: como sem mouse. |
+| `pressed_fill` | Fundo apertado | cor | O fundo apertado; vazio: o `hover_fill`. |
+| `selected_fill` | Fundo marcado | cor | O fundo marcado (a linha escolhida de uma lista, o estado `checked`); vazio: com `interactive`, a cor principal do tema, clara. |
 | `fill2` | Segunda cor do degradê | cor | Segunda cor: com ela, o fundo vira um gradiente de `fill` até `fill2`. |
 | `fill_mid` | Cor do meio do degradê | cor | Cor do meio do gradiente (opcional), na posição `fill_mid_at`. |
 | `fill_mid_at` | Posição da cor do meio | número | Onde fica a `fill_mid`, de 0 a 1 (0 = no meio). |
@@ -20,6 +23,12 @@ Painel: um `Rectangle` com o estilo `Panel` do tema (fundo, borda e cantos).
 | `stroke` | Cor do traço | cor | Cor da borda; vazio: a do tema. |
 | `stroke_width` | Largura do traço | número | Espessura da borda, em pontos (0 = sem borda); vazio: a do tema. |
 | `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema. |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interactive` | Reage ao mouse | lógico | Reage ao mouse com as cores de estado do tema (o mesmo clarear dos botões), sem escolher cor: a linha de uma lista, um "botão" feito de painel (decidido em 21/11). O `hover_fill` e o `pressed_fill`, quando dados, mandam. |
 
 ### Teclado
 
@@ -57,3 +66,19 @@ impl FrmPrincipal {
 ```
 
 (Sem eventos próprios: o exemplo usa o `on_show` do form.)
+
+## Mais sobre o Panel
+
+### A ordem do `align`
+
+Os encaixados `top` e `bottom` ocupam a largura toda antes dos `left` e `right`,
+qualquer que seja a ordem em que foram declarados: um `bottom` declarado depois de um `left`
+ainda pega a largura inteira. Para uma barra lateral que vai até embaixo, ponha o rodapé dentro
+do painel do conteúdo (o `client`), ou use `most_left`/`most_bottom`, que encaixam antes.
+
+### Reagir ao mouse
+
+Uma linha de lista ou um "botão" feito de painel clareia com o mouse em cima com `interactive`
+(as cores de estado do tema) ou com `hover_fill` e `pressed_fill` (cores próprias). O mouse
+num filho (o ícone, o texto) conta como em cima do painel. Foco pelo teclado e Enter continuam
+sendo do `Button`.

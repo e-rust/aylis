@@ -172,9 +172,25 @@ extern "C" fn did_respond(_this: *mut AnyObject, _cmd: Sel, _center: Object, res
     handler.call(());
 }
 
+/// Se o processo é um app empacotado (tem `bundleIdentifier`). Fora de um `.app` (o
+/// executável rodado direto, como no `cargo run` do macOS), a
+/// `currentNotificationCenter` derruba o processo com uma asserção.
+fn has_bundle() -> bool {
+    // SAFETY: `mainBundle` e `bundleIdentifier` não têm argumentos e devolvem um objeto ou nil,
+    // que é conferido antes de usar.
+    unsafe {
+        let bundle: Object = msg_send![class!(NSBundle), mainBundle];
+        if bundle.is_null() {
+            return false;
+        }
+        let id: Object = msg_send![bundle, bundleIdentifier];
+        !id.is_null()
+    }
+}
+
 /// Acrescenta os métodos ao delegado do app e põe o delegado da central (uma vez).
 fn install() {
-    if INSTALLED.swap(true, Ordering::SeqCst) {
+    if !has_bundle() || INSTALLED.swap(true, Ordering::SeqCst) {
         return;
     }
     unsafe {
@@ -222,7 +238,7 @@ impl ApplePush {
 
 impl PushService for ApplePush {
     fn available(&self) -> bool {
-        true
+        has_bundle()
     }
 
     fn provider(&self) -> &'static str {
@@ -231,6 +247,10 @@ impl PushService for ApplePush {
 
     fn register(&mut self, config: &PushConfig) {
         FOREGROUND.store(config.show_in_foreground, Ordering::Relaxed);
+        if !has_bundle() {
+            push_event(PushEvent::Error(aylis_core::messages::t("o APNs só registra o app empacotado (.app)")));
+            return;
+        }
         install();
         unsafe {
             let center: Object = msg_send![class!(UNUserNotificationCenter), currentNotificationCenter];

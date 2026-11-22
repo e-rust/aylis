@@ -337,6 +337,8 @@ pub fn catalog(ui: &Ui) -> String {
                 ("seek(seconds:float)", "media:void"),
                 ("position()", "media:float"),
                 ("duration()", "media:float"),
+                ("playing()", "media:bool"),
+                ("ready()", "media:bool"),
             ],
             _ => &[],
         };

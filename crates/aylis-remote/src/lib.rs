@@ -43,7 +43,7 @@
 //! | `toast` | `text` | aviso rápido que some sozinho |
 //! | `message_dlg` | `text`, `kind` (`information`, `warning`, `error`, `confirmation`), `buttons` (`["yes", "no"]`), `handler`, `wait`? | caixa de mensagem; o handler recebe `on_modal_result`; com `wait: true`, a resposta é o botão (`"yes"`), quando a caixa fecha |
 //! | `execute` | `target` (OpenDialog ou SaveDialog) | abre o diálogo de arquivo; o resultado chega em `on_select`/`on_cancel` |
-//! | `media` | `target` (MediaPlayer ou VideoPlayer), `op`: `play`, `pause`, `stop`, `seek` (`seconds`), `position`, `duration`, `playing` | depende da operação |
+//! | `media` | `target` (MediaPlayer ou VideoPlayer), `op`: `play`, `pause`, `stop`, `seek` (`seconds`), `position`, `duration`, `playing`, `ready` | depende da operação |
 //! | `hello` | `protocol`, `client`?, `update_url`? | a **primeira** mensagem do backend: a versão do protocolo ([`PROTOCOL_VERSION`]); a tela devolve `{protocol, capabilities}` ou recusa, dizendo qual lado atualizar (e, na tela antiga, "há uma versão nova do aplicativo" com o `update_url`). Antes dela, todo comando é recusado |
 //! | `exception` | `message`, `path`?, `handler`? | um handler do backend falhou: a tela mostra o erro (a caixa do aylis ou o `on_exception` da aplicação), como um erro do próprio app |
 //! | `components` | `target` (o form) | os componentes da instância do form: `[{"name", "id", "class"}]` (as classes de form dos clientes se montam com eles) |
@@ -349,6 +349,16 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
         "invoke" => {
             let id = target(ui, obj)?;
             let method = string(obj, "method")?;
+            // Os comandos dos players pelo `invoke` também (o `seek` dava "não tem o método";
+            // o relatório do player de música, 21/11): o mesmo que o `media`.
+            if matches!(ui.class_name(id), Some("MediaPlayer" | "VideoPlayer")) && MEDIA_OPS.contains(&method) {
+                let mut media_cmd = obj.clone();
+                media_cmd.insert("op".into(), json!(method));
+                if let Some(seconds) = obj.get("args").and_then(Value::as_array).and_then(|a| a.first()).cloned() {
+                    media_cmd.insert("seconds".into(), seconds);
+                }
+                return media(ui, &media_cmd);
+            }
             let args: Vec<PropValue> = obj.get("args").and_then(Value::as_array).map(|a| a.iter().map(json_arg).collect()).unwrap_or_default();
             let result = ui.invoke(id, method, &args)?;
             // `"ref": true`: o componente devolvido com o id, o nome e a classe (como no `get`).
@@ -755,6 +765,9 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
     }
 }
 
+/// As operações do comando `media` (e do `invoke` num player).
+const MEDIA_OPS: &[&str] = &["play", "pause", "stop", "seek", "position", "duration", "playing", "ready"];
+
 /// Comandos dos players de mídia.
 fn media(ui: &mut Ui, obj: &Map<String, Value>) -> Result<Value, String> {
     use aylis_media::{MediaPlayer, VideoPlayer};
@@ -798,6 +811,8 @@ fn media(ui: &mut Ui, obj: &Map<String, Value>) -> Result<Value, String> {
         ("duration", false) => json!(MediaPlayer::duration(ui, id)),
         ("playing", true) => json!(VideoPlayer::is_playing(ui, id)),
         ("playing", false) => json!(MediaPlayer::is_playing(ui, id)),
+        ("ready", true) => json!(VideoPlayer::is_ready(ui, id)),
+        ("ready", false) => json!(MediaPlayer::is_ready(ui, id)),
         (other, _) => return Err(format!("operação de mídia desconhecida '{other}'")),
     })
 }

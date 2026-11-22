@@ -10,7 +10,7 @@ use aylis_core::{
 };
 
 use crate::audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
-use crate::output::{Tap, parse_outputs};
+use crate::output::{Tap, WeakTap, parse_outputs};
 use crate::video::{DecodeThread, Frame, FrameSink, Frames, MediaSource};
 
 /// Abre o áudio do aplicativo (pasta do projeto ou pacote) ou, se não houver, do disco, lido
@@ -58,6 +58,38 @@ fn report(ui: &mut Ui, id: ComponentId, error: &str) {
     ui.fire(id, "on_error", &EventArgs::Text(error.to_string()));
 }
 
+
+/// Quem escuta um player pelo componente (o [`AudioMixer`](crate::AudioMixer)): os pontos
+/// ficam no componente, e cada player de dentro novo (outro arquivo) é religado a eles. Antes o
+/// ponto era do player de dentro, e trocar o `file` desligava o mixer sem aviso (o relatório do
+/// player de música, 21/11).
+#[derive(Default)]
+struct Listeners(Vec<(WeakTap, bool)>);
+
+impl Listeners {
+    /// Um ponto novo, ligado já ao player aberto (se houver).
+    fn add(&mut self, player: Option<&AudioPlayer>, pre_volume: bool) -> Tap {
+        let tap = Tap::new();
+        self.0.retain(|(w, _)| w.upgrade().is_some());
+        self.0.push((tap.downgrade(), pre_volume));
+        if let Some(p) = player {
+            p.attach_tap(tap.clone(), pre_volume);
+        }
+        tap
+    }
+
+    /// Liga ao player novo os pontos que ainda têm quem escute.
+    fn attach(&mut self, player: &AudioPlayer) {
+        self.0.retain(|(w, pre)| match w.upgrade() {
+            Some(tap) => {
+                player.attach_tap(tap, *pre);
+                true
+            }
+            None => false,
+        });
+    }
+}
+
 // ---------------------------------------------------------------------------
 
 /// Toca áudio: MP3, AAC/M4A, WAV, FLAC, OGG. Não visual.
@@ -86,6 +118,7 @@ pub struct MediaPlayer {
     opening: Option<String>,
     /// O `play` chegou antes de abrir: toca quando ficar pronto.
     play_when_ready: bool,
+    listeners: Listeners,
 }
 
 impl Default for MediaPlayer {
@@ -100,6 +133,7 @@ impl Default for MediaPlayer {
             loaded: String::new(),
             opening: None,
             play_when_ready: false,
+            listeners: Listeners::default(),
         }
     }
 }
@@ -146,6 +180,8 @@ impl MediaPlayer {
             let ended = poster.clone();
             let on_end: Box<dyn Fn() + Send> = Box::new(move || ended.post(move |ui| {
                 ui.fire(id, "on_end", &EventArgs::None);
+                crate::playlist::Playlist::player_ended(ui, id);
+                crate::session::MediaSession::player_changed(ui, id);
             }));
             let opened = AudioPlayer::open_on(source, Some(on_end), parse_outputs(&output));
             poster.post(move |ui| Self::opened(ui, id, file, opened));
@@ -165,12 +201,16 @@ impl MediaPlayer {
             Ok(player) => {
                 player.set_volume(m.volume);
                 player.set_looping(m.looping);
+                m.listeners.attach(&player);
                 m.player = Some(player);
-                m.loaded = file;
+                m.loaded = file.clone();
+                crate::info::MediaInfo::player_opened(ui, id, &file);
                 ui.fire(id, "on_ready", &EventArgs::None);
                 if play {
                     let _ = Self::play(ui, id);
                 }
+                crate::playlist::Playlist::player_ready(ui, id);
+                crate::session::MediaSession::player_changed(ui, id);
             }
             Err(e) => report(ui, id, &e),
         }
@@ -180,13 +220,51 @@ impl MediaPlayer {
         ui.get::<MediaPlayer>(id)?.player.as_ref()
     }
 
-    /// O que o player toca, para o [`AudioMixer`](crate::AudioMixer) (abre o arquivo, se
-    /// preciso).
-    pub(crate) fn tap(ui: &mut Ui, id: ComponentId) -> Option<Tap> {
+    /// Deixa `file` na fila para tocar logo depois do atual, sem silêncio entre os dois (a
+    /// `Playlist` usa). Quando ele entra, o `file` do player passa a ser ele, os `MediaInfo`
+    /// ligados leem as tags e a `Playlist` ligada avança. Sem o atual aberto, nada.
+    pub fn queue_next(ui: &mut Ui, id: ComponentId, file: &str) -> Result<(), String> {
         if !Self::is_ready(ui, id) {
-            Self::open_now(ui, id).ok()?;
+            return Ok(());
         }
-        Self::with(ui, id).map(AudioPlayer::tap)
+        let opener = open_audio(ui, file)?;
+        let (poster, next) = (ui.poster(), file.to_string());
+        let on_switch: Box<dyn Fn() + Send> = Box::new(move || {
+            let next = next.clone();
+            poster.post(move |ui| {
+                if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
+                    // O campo direto: o `set_prop` do `file` fecharia o player que já toca.
+                    m.file = next.clone();
+                    m.loaded = next.clone();
+                }
+                crate::info::MediaInfo::player_opened(ui, id, &next);
+                crate::playlist::Playlist::player_advanced(ui, id);
+                ui.request_repaint();
+            });
+        });
+        if let Some(p) = Self::with(ui, id) {
+            p.queue_next(opener, on_switch);
+        }
+        Ok(())
+    }
+
+    /// Tira da fila a próxima faixa ([`queue_next`](Self::queue_next)).
+    pub fn clear_next(ui: &mut Ui, id: ComponentId) {
+        if let Some(p) = Self::with(ui, id) {
+            p.clear_next();
+        }
+    }
+
+    /// O que o player toca, para o [`AudioMixer`](crate::AudioMixer) (abre o arquivo, se
+    /// preciso). O ponto é do componente: segue tocando quando o `file` muda, e sem arquivo
+    /// ainda fica mudo até o primeiro abrir. `pre_volume`: o som sem o volume do player.
+    pub(crate) fn tap(ui: &mut Ui, id: ComponentId, pre_volume: bool) -> Option<Tap> {
+        if !Self::is_ready(ui, id) && ui.get::<MediaPlayer>(id).is_some_and(|m| !m.file.is_empty() && m.opening.is_none()) {
+            let _ = Self::open_now(ui, id);
+        }
+        let m = ui.get_mut::<MediaPlayer>(id)?;
+        let player = m.player.as_ref().filter(|_| m.loaded == m.file);
+        Some(m.listeners.add(player, pre_volume))
     }
 
     /// Abre o arquivo esperando (o [`AudioMixer`](crate::AudioMixer) precisa do som já aberto
@@ -203,14 +281,18 @@ impl MediaPlayer {
         let poster = ui.poster();
         let on_end: Box<dyn Fn() + Send> = Box::new(move || poster.post(move |ui| {
             ui.fire(id, "on_end", &EventArgs::None);
+            crate::playlist::Playlist::player_ended(ui, id);
+            crate::session::MediaSession::player_changed(ui, id);
         }));
         let player = AudioPlayer::open_on(source, Some(on_end), parse_outputs(&output))?;
         if let Some(m) = ui.get_mut::<MediaPlayer>(id) {
             player.set_volume(m.volume);
             player.set_looping(m.looping);
+            m.listeners.attach(&player);
             m.player = Some(player);
-            m.loaded = file;
+            m.loaded = file.clone();
             m.opening = None;
+            crate::info::MediaInfo::player_opened(ui, id, &file);
         }
         Ok(())
     }
@@ -234,6 +316,9 @@ impl MediaPlayer {
         if let Some(p) = Self::with(ui, id) {
             p.play();
         }
+        // Os `AudioSpectrum` ligados voltam a animar; os controles do sistema mostram "tocando".
+        crate::spectrum::AudioSpectrum::source_started(ui, id);
+        crate::session::MediaSession::player_changed(ui, id);
         Ok(())
     }
 
@@ -249,6 +334,7 @@ impl MediaPlayer {
         if let Some(p) = Self::with(ui, id) {
             p.pause();
         }
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     /// Para e volta ao começo.
@@ -256,12 +342,14 @@ impl MediaPlayer {
         if let Some(p) = Self::with(ui, id) {
             p.stop();
         }
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     pub fn seek(ui: &mut Ui, id: ComponentId, seconds: f64) {
         if let Some(p) = Self::with(ui, id) {
             p.seek(seconds);
         }
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     pub fn position(ui: &Ui, id: ComponentId) -> f64 {
@@ -390,6 +478,7 @@ pub struct VideoPlayer {
     opening: Option<String>,
     /// O `play` chegou antes de abrir: toca quando ficar pronto.
     play_when_ready: bool,
+    listeners: Listeners,
     /// O id deste componente (guardado na pintura, para os avisos da thread).
     id_hint: std::cell::Cell<Option<ComponentId>>,
     /// O tempo do último quadro avisado em `on_frame`.
@@ -423,6 +512,7 @@ impl Default for VideoPlayer {
             poster: None,
             opening: None,
             play_when_ready: false,
+            listeners: Listeners::default(),
             id_hint: std::cell::Cell::new(None),
             last_announced: std::cell::Cell::new(None),
             #[cfg(target_arch = "wasm32")]
@@ -437,8 +527,11 @@ impl VideoPlayer {
     }
 
     /// O som do vídeo, para o [`AudioMixer`](crate::AudioMixer) (depois de abrir o arquivo).
-    pub(crate) fn tap(ui: &Ui, id: ComponentId) -> Option<Tap> {
-        ui.get::<VideoPlayer>(id)?.audio.as_ref().map(AudioPlayer::tap)
+    /// O ponto é do componente, como no [`MediaPlayer::tap`]: segue com outro arquivo.
+    pub(crate) fn tap(ui: &mut Ui, id: ComponentId, pre_volume: bool) -> Option<Tap> {
+        let v = ui.get_mut::<VideoPlayer>(id)?;
+        let audio = v.audio.as_ref();
+        Some(v.listeners.add(audio, pre_volume))
     }
 
     fn sync(&mut self, name: &str) {
@@ -596,6 +689,9 @@ impl VideoPlayer {
                     }
                 }
                 v.decoder = o.decoder;
+                if let Some(a) = &o.audio {
+                    v.listeners.attach(a);
+                }
                 v.audio = o.audio;
                 v.audio_only = o.audio_only;
                 v.loaded = file;
@@ -658,6 +754,8 @@ impl VideoPlayer {
             }
         }
         ui.request_repaint();
+        crate::session::MediaSession::player_changed(ui, id);
+        crate::spectrum::AudioSpectrum::source_started(ui, id);
         Ok(())
     }
 
@@ -679,12 +777,14 @@ impl VideoPlayer {
                 a.pause();
             }
         }
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     /// Para e volta ao começo.
     pub fn stop(ui: &mut Ui, id: ComponentId) {
         Self::pause(ui, id);
         Self::seek(ui, id, 0.0);
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     pub fn seek(ui: &mut Ui, id: ComponentId, seconds: f64) {
@@ -708,6 +808,7 @@ impl VideoPlayer {
             }
         }
         ui.request_repaint();
+        crate::session::MediaSession::player_changed(ui, id);
     }
 
     pub fn position(ui: &Ui, id: ComponentId) -> f64 {

@@ -19,6 +19,7 @@ Escolher onde salvar um arquivo (diálogo do sistema).
 | `filter` | Filtro | texto | `Imagens\|*.png;*.jpg\|Todos\|*.*` |
 | `initial_dir` | Pasta inicial | texto | A pasta em que o diálogo abre; vazio: a que o sistema escolher. |
 | `multiple` | Vários | lógico | Deixa escolher vários arquivos de uma vez. |
+| `kind` | Tipo | um de: `file`, `folder` | `file` (o padrão) escolhe arquivos; `folder`, uma pasta (decidido em 21/11). Os filtros não valem no modo pasta, e no navegador e no celular ele volta como cancelado. |
 
 ### Dados
 

@@ -1121,13 +1121,14 @@ pub fn refresh(ui: &mut Ui, state: &Shared, ids: &Ids) {
         (where_, st.status.clone(), st.events_tab, st.doc.locked, st.doc.dark, caption, st.recent.clone())
     };
     let _ = ui.set_prop(ids.doc_title, "text", title);
-    let _ = ui.set_prop(ids.status, "text", ui.tr(&status));
+    let shown = status_tr(ui, &status);
+    let _ = ui.set_prop(ids.status, "text", shown.as_str());
     // A janela de código repete a situação enquanto há execução ou depuração.
     let busy = {
         let st = state.borrow();
         st.job.is_some() || st.debugger.active() || st.status.starts_with('⚠')
     };
-    let activity = if busy { ui.tr(&status).to_string() } else { String::new() };
+    let activity = if busy { shown } else { String::new() };
     crate::codewindow::show_activity(ui, &activity);
     let _ = ui.set_prop(ids.tab_props, "style", if events { "flat" } else { "" });
     let _ = ui.set_prop(ids.tab_events, "style", if events { "" } else { "flat" });
@@ -1169,6 +1170,19 @@ pub fn refresh(ui: &mut Ui, state: &Shared, ids: &Ids) {
     }
     crate::lang::translate(ui);
     ui.request_repaint();
+}
+
+/// O status no idioma da IDE. O de um trabalho em andamento é o título dele com "…"
+/// (`jobs::start`), e o dicionário tem só o título.
+fn status_tr(ui: &Ui, status: &str) -> String {
+    let full = ui.tr(status);
+    match status.strip_suffix('…') {
+        Some(stem) if full == status => {
+            let t = ui.tr(stem);
+            if t == stem { full } else { format!("{t}…") }
+        }
+        _ => full,
+    }
 }
 
 /// Usado pelos testes: o label do status.

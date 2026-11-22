@@ -39,6 +39,12 @@ fn version(program: &Path, args: &[&str]) -> Option<String> {
     Some(String::from_utf8_lossy(&text).lines().next().unwrap_or_default().trim().to_string()).filter(|s| !s.is_empty())
 }
 
+/// Se `program args` roda e termina bem (um atalho que só avisa que falta a ferramenta não).
+fn answers(program: &Path, args: &[&str]) -> bool {
+    crate::env_cache::note_path(program);
+    crate::env::output_within(crate::process::quiet(Command::new(program).args(args)), crate::env::PROCESS_LIMIT).is_ok_and(|o| o.status.success())
+}
+
 /// O `vcvars64.bat` do Visual C++ (pelo vswhere).
 fn vcvars() -> Option<PathBuf> {
     if let Some(p) = crate::settings::tool("vcvars") {
@@ -124,7 +130,16 @@ pub fn find(language: Language) -> Result<Toolchain, String> {
         }
         Language::Java => {
             let java_home = std::env::var_os("JAVA_HOME").map(|h| PathBuf::from(h).join("bin"));
-            let javac = crate::settings::tool("javac").or_else(|| which("javac")).or_else(|| java_home.as_ref().map(|b| b.join(exe("javac"))).filter(|p| p.is_file())).ok_or("JDK não encontrado (javac; o Java 17+)")?;
+            let in_path: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).map(|d| d.join(exe("javac"))).filter(|p| p.is_file()).collect()).unwrap_or_default();
+            // O primeiro que responde: o macOS tem um /usr/bin/javac que, sem um JDK instalado,
+            // só diz "Unable to locate a Java Runtime", e ele vinha antes do JDK do pacote
+            // (Mac, 22/11).
+            let javac = crate::settings::tool("javac")
+                .into_iter()
+                .chain(in_path)
+                .chain(java_home.as_ref().map(|b| b.join(exe("javac"))).filter(|p| p.is_file()))
+                .find(|p| answers(p, &["-version"]))
+                .ok_or("JDK não encontrado (javac; o Java 17+)")?;
             let java = crate::settings::tool("java").or_else(|| javac.parent().map(|d| d.join(exe("java")))).filter(|p| p.is_file()).ok_or("java não encontrado ao lado do javac")?;
             let v = version(&javac, &["-version"]).unwrap_or_default();
             tc(javac, Some(java), v)

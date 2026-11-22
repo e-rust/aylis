@@ -68,9 +68,13 @@ impl Screen {
 /// cortadas são refeitas em retas), e a beirada anti-aliasing dele muda alguns tons (até uns
 /// 40, só nos pixels da beirada; o navegador, que repinta por partes, tem o mesmo efeito). O
 /// corte fica 16 pixels fora da área (`SkiaRenderer::draw_region`); sem isso, um círculo
-/// cortado pela área passava de 50 tons. Resto de verdade (o desenho velho que ficou, o que
-/// passou da área) muda o pixel inteiro: mais de 200 tons nos defeitos que o teste já pegou.
-const TOLERANCE: u32 = 48;
+/// cortado pela área passava de 50 tons. Um caminho com curvas cortado pelo meio muda a
+/// beirada em qualquer ponto da curva, não só perto do corte: a estrela do `Icon` com a área
+/// começando no meio dela deu 77 tons em 2 pixels, 27 pixels abaixo do corte (22/11, quando
+/// as classes novas mudaram a grade e puseram o `Icon` ali). Resto de verdade (o desenho velho
+/// que ficou, o que passou da área) muda o pixel inteiro: mais de 200 tons nos defeitos que o
+/// teste já pegou.
+const TOLERANCE: u32 = 96;
 
 /// Os pixels que mudaram mais que [`TOLERANCE`] entre as duas imagens (quantos e o primeiro,
 /// para a mensagem).
@@ -791,7 +795,10 @@ fn the_end_of_scroll_effect_paints_by_parts_and_goes_back() {
                 screen.ui.pointer_move(form, touch(y));
                 frame(&mut screen, &mut previous, &format!("puxando {i}"));
             }
-            assert_ne!(differences(&previous, &before).0, 0, "{label}: o puxão aparece");
+            // O brilho do puxão é suave: qualquer mudança visível conta (não a `TOLERANCE`, que é
+            // a folga da beirada entre a pintura por parte e a inteira).
+            let shown = previous.iter().zip(&before).filter(|(a, b)| tones(**a, **b) > 8).count();
+            assert_ne!(shown, 0, "{label}: o puxão aparece");
             screen.ui.pointer_up(form, touch(280.0));
             for i in 0..90 {
                 if !screen.ui.is_animating() {

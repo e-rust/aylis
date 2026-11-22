@@ -49,7 +49,7 @@ fn the_tool_packages_screen_and_the_fix_without_a_source() {
 
     // O "Corrigir…" de um item que um pacote resolve, sem origem nenhuma: não roda, diz e
     // oferece as Opções.
-    let fix = Fix { description: "Instala o pacote JDK".into(), command: vec!["winget".into(), "install".into()], interactive: false, fetch: Some("jdk".into()), env: Vec::new() };
+    let fix = Fix { description: "Instala o pacote JDK".into(), command: vec!["winget".into(), "install".into()], interactive: false, fetch: Some("jdk".into()), env: Vec::new(), after: None };
     assert_eq!(fix.command_line(), "aylis-tool packages install jdk");
     state.borrow_mut().checks = vec![Check { target: Target::Android, name: "Java (JDK 17+)".into(), status: Status::Missing, detail: "não encontrado".into(), fix: Some(fix), help: None }];
     state.borrow_mut().env_language = Some(aylis_project::Language::Rust);

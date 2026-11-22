@@ -906,9 +906,12 @@ pub const APP_COMMAND_HELP: &str = "\
              - {\"cmd\":\"drag\",\"from\":\"lstOrigem\",\"to\":\"lstDestino\"}: aperta no meio de \"from\", anda em \"steps\" passos (10) e solta no meio de \"to\" (o arrastar e soltar entre componentes; \"from\" igual a \"to\" arrasta dentro de um; \"to\" noutro form arrasta de uma janela do app para outra), com \"from_x\"/\"from_y\"/\"to_x\"/\"to_y\" (dentro de cada um), \"modifiers\" e \"button\" como no click; sem \"to\", com \"screen_x\"/\"screen_y\", solta fora de todas as janelas nesse ponto da tela (a aba arrastada para longe vira janela);\n\
              - {\"cmd\":\"drag_window\",\"form\":\"frmClientes\",\"to\":\"tabForms\"}: a janela inteira do form arrastada pela barra de título até \"to\" (noutro form), como no arrasto de verdade: a faixa de abas com accept_forms recebe o form com dockable como aba; \"to_x\"/\"to_y\" dentro de \"to\"; devolve {\"received\": true/false};\n\
              - {\"cmd\":\"key\",\"target\":\"frmX\",\"key\":\"Ctrl+A\"} (\"Enter\", \"Shift+Tab\", \"Alt+S\"; \"modifiers\" soma: {\"key\":\"A\",\"modifiers\":[\"ctrl\"]}): a tecla no controle com foco do form; {\"cmd\":\"type\",\"target\":\"frmX\",\"text\":\"Ana\"}: o texto digitado nele;\n\
-             - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program);\n\
+             - {\"cmd\":\"trace\",\"on\":true}: o rastro de eventos (cada evento com handler vai para `output`, source program); \"events\":[\"on_click\"] deixa só esses, \"exclude\":[\"on_timer\",\"tmrTick.on_timer\"] tira esses;\n\
+             - {\"cmd\":\"media\",\"target\":\"mpPlayer\",\"op\":\"seek\",\"seconds\":90}: os players (MediaPlayer, VideoPlayer): op play, pause, stop, seek, position, duration, playing, ready (o invoke com esses nomes faz o mesmo);\n\
+             - a janela: {\"cmd\":\"set\",\"target\":\"frmX\",\"prop\":\"width\",\"value\":600} (ou height, left, top, window_state): o jeito de testar o layout em outras larguras;\n\
              - {\"cmd\":\"profile\",\"on\":true} começa a medir e {\"cmd\":\"profile_take\"} devolve os blocos medidos, as amostras e a memória ({\"cmd\":\"profile\",\"on\":false} para);\n\
              - {\"cmd\":\"reload\",\"kind\":\"form\"|\"theme\"|\"locale\",\"name\":\"frmX\",\"text\":\"...\"}: o hot reload (a IDE já manda ao salvar);\n\
+             - {\"cmd\":\"dialog_result\",\"files\":[\"C:/m/a.mp3\"]}: o próximo OpenDialog/SaveDialog do app devolve esses caminhos sem abrir a janela do sistema ([] cancela; várias chamadas enfileiram); {\"cmd\":\"drop_files\",\"target\":\"frmX\",\"files\":[...],\"x\":10,\"y\":20}: os arquivos soltos naquele ponto do form (sem x/y, no meio);\n\
              - {\"cmd\":\"close\"}: fecha o app;\n\
              - {\"cmd\":\"apps\"}: os apps conectados (respondido pela IDE).\n\
              O target é o nome, o caminho (\"frmX.fraY.lblTotal\") ou o id; um nome que está em mais de um lugar é recusado com os caminhos. Com mais de um app conectado, `app` escolhe (o pid ou o nome do projeto, como `apps` lista); sem ele, o último que conectou.";
@@ -1009,7 +1012,7 @@ pub fn ide_tools() -> Vec<Value> {
             json!({ "task": { "type": "integer" }, "max_wait": max_wait() }),
             &[],
         ),
-        tool("stop", "Para o programa em execução.", json!({}), &[]),
+        tool("stop", "Para o programa em execução e espera ele fechar (até 15 s): um run logo depois começa limpo.", json!({}), &[]),
         tool(
             "output",
             "As últimas linhas das mensagens, cada uma com a origem (`source`: build ou program) e o nível (`level`). Por padrão, as da última execução; `previous`: também as de antes (o histórico guarda 2000 linhas).",
@@ -1056,7 +1059,7 @@ pub fn ide_tools() -> Vec<Value> {
         tool(
             "set_theme",
             "Muda um token (`section` colors, `key` primary...) ou um estilo (`section` styles, `key` Button.danger, com o objeto do estilo) no tema do projeto; `value` null tira a chave. Com um tema da biblioteca, nasce um arquivo em themes/ partindo dele. Confere antes de gravar; os forms abertos mostram o tema novo.",
-            json!({ "section": s("colors, fonts, radius, spacing, durations, shadows, styles ou components"), "key": s("o token ou a classe do estilo"), "value": { "description": "o valor JSON (\"#RRGGBB\", número, objeto do estilo; null tira)" } }),
+            json!({ "section": s("colors, fonts, radius, spacing, durations, shadows, styles ou components"), "key": s("o token ou a classe do estilo"), "value": { "description": "o valor JSON (\"#RRGGBB\", número, objeto do estilo; null tira); um texto com JSON dentro também vale" } }),
             &["section", "key", "value"],
         ),
         tool(
@@ -1377,7 +1380,7 @@ mod argument_tests {
         let app = tool("app_command");
         let text = app["description"].as_str().unwrap();
         assert!(text.contains("\"cmd\":\"help\"") && text.contains("feature `dev`"), "{text}");
-        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "drag_window", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps"] {
+        for cmd in ["snapshot", "tree", "rect", "props", "set", "click", "drag", "drag_window", "key", "type", "invoke", "trace", "profile", "profile_take", "reload", "close", "apps", "media", "dialog_result", "drop_files"] {
             assert!(super::APP_COMMAND_HELP.contains(&format!("\"cmd\":\"{cmd}\"")), "falta {cmd}");
         }
         assert!(super::APP_COMMAND_HELP.contains("\"modifiers\"") && super::APP_COMMAND_HELP.contains("Ctrl+Shift"), "as teclas seguradas no clique e no arrasto");

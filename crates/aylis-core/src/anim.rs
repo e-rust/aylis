@@ -5,14 +5,18 @@
 //!
 //! - por código: [`Ui::animate`];
 //! - por componente filho: [`PropertyAnimation`] (`FloatAnimation` /
-//!   `ColorAnimation`), disparado por um [`Trigger`] (hover, pressed, focused, checked)
-//!   do controle pai, sem código.
+//!   `ColorAnimation`), disparado por um [`Trigger`] (hover, pressed, focused, checked,
+//!   appear, hover_within) do controle pai, sem código, ou pelos métodos `start` e `stop`.
+//!
+//! Numa lista que recicla as linhas (o `VirtualList`), a linha que vai para outro item recomeça
+//! as animações ([`Ui::reset_animations`]): o estado do item chega pronto, sem animar, e o
+//! `appear` vale uma vez por item.
 //!
 //! A plataforma chama [`Ui::tick`] a cada frame enquanto [`Ui::is_animating`] for
 //! verdadeiro; parado, nada roda.
 
 use crate::color::Color;
-use crate::component::{Component, ComponentId};
+use crate::component::{Component, ComponentId, MethodInfo};
 use crate::error::{Error, Result};
 use crate::prop::{PropEnum, PropInfo, PropKind, PropType, PropValue};
 use crate::ui::Ui;
@@ -199,15 +203,19 @@ pub enum Trigger {
     Focused,
     Checked,
     /// Ao aparecer na tela (o controle entrou na área visível, rolando ou não): uma vez só,
-    /// como o "scroll reveal" da web.
+    /// como o "scroll reveal" da web. Numa lista que recicla as linhas, uma vez por item.
     Appear,
+    /// O mouse está no controle ou em qualquer um dos de dentro dele (o `:hover` do CSS): a
+    /// linha inteira de uma lista com o mouse no título. O `hover` é só o controle debaixo do
+    /// mouse (decidido em 22/11: um gatilho novo, para não mudar os forms que já usam o `hover`).
+    HoverWithin,
 }
 
 impl PropEnum for Trigger {
-    const NAMES: &'static [&'static str] = &["none", "hover", "pressed", "focused", "checked", "appear"];
+    const NAMES: &'static [&'static str] = &["none", "hover", "pressed", "focused", "checked", "appear", "hover_within"];
 
     fn from_index(index: usize) -> Option<Self> {
-        [Trigger::None, Trigger::Hover, Trigger::Pressed, Trigger::Focused, Trigger::Checked, Trigger::Appear]
+        [Trigger::None, Trigger::Hover, Trigger::Pressed, Trigger::Focused, Trigger::Checked, Trigger::Appear, Trigger::HoverWithin]
             .get(index)
             .copied()
     }
@@ -474,16 +482,27 @@ impl Ui {
         }
     }
 
+    /// Para a [`PropertyAnimation`] `animation` (o valor fica onde está).
+    pub fn stop_animation(&mut self, animation: ComponentId) {
+        self.animations.retain(|r| r.owner != Some(animation));
+    }
+
     fn play_animation(&mut self, animation: ComponentId, forward: bool) -> Result<()> {
+        let mut a = self.get::<PropertyAnimation>(animation).ok_or(Error::InvalidId)?.clone();
+        let result = self.play_with(animation, &mut a, forward);
+        if let Some(anim) = self.get_mut::<PropertyAnimation>(animation) {
+            anim.original = a.original;
+        }
+        result
+    }
+
+    /// Roda a animação `a` (a do componente `animation`, que pode estar fora do `Ui` durante
+    /// o `invoke` dele) para a frente ou de volta ao valor original.
+    fn play_with(&mut self, animation: ComponentId, a: &mut PropertyAnimation, forward: bool) -> Result<()> {
         let target = self.parent(animation).ok_or(Error::InvalidId)?;
-        let a = self.get::<PropertyAnimation>(animation).ok_or(Error::InvalidId)?.clone();
         let current = self.get_prop(target, &a.property)?;
         let original = a.original.clone().unwrap_or_else(|| current.clone());
-        if a.original.is_none() {
-            if let Some(anim) = self.get_mut::<PropertyAnimation>(animation) {
-                anim.original = Some(original.clone());
-            }
-        }
+        a.original = Some(original.clone());
         let (from, to) = if forward {
             let from = if a.start_value == PropValue::Null { current } else { a.start_value.clone() };
             (from, a.stop_value.clone())
@@ -507,6 +526,140 @@ impl Ui {
             }
         }
         Ok(())
+    }
+
+    /// Põe a animação direto no fim (`forward`) ou no valor original, sem andar no tempo: o
+    /// estado que um item já tinha quando chega a uma linha reciclada. A que repete sem parar
+    /// não tem fim e roda.
+    fn settle_animation(&mut self, animation: ComponentId, forward: bool) {
+        self.stop_animation(animation);
+        let (Some(target), Some(mut a)) = (self.parent(animation), self.get::<PropertyAnimation>(animation).cloned()) else { return };
+        if !forward {
+            if let Some(original) = a.original {
+                let _ = self.set_prop(target, &a.property, original);
+            }
+            return;
+        }
+        if a.looping {
+            let _ = self.play_animation(animation, true);
+            return;
+        }
+        let Ok(current) = self.get_prop(target, &a.property) else { return };
+        let end = match parse_keyframes(&a.keyframes) {
+            Some(steps) => PropValue::Float(steps.last().map_or(0.0, |s| s.1)),
+            // Ida e volta termina onde começou.
+            None if a.auto_reverse => if a.start_value == PropValue::Null { current.clone() } else { a.start_value.clone() },
+            None => a.stop_value.clone(),
+        };
+        a.original.get_or_insert(current);
+        if let Some(anim) = self.get_mut::<PropertyAnimation>(animation) {
+            anim.original = a.original;
+        }
+        let _ = self.set_prop(target, &a.property, end);
+    }
+
+    /// As animações (`FloatAnimation`, `ColorAnimation`) em `root` e nos de dentro dele.
+    fn animations_within(&self, root: ComponentId) -> Vec<ComponentId> {
+        let mut out = Vec::new();
+        let mut stack = vec![root];
+        while let Some(c) = stack.pop() {
+            if self.get::<PropertyAnimation>(c).is_some() {
+                out.push(c);
+            }
+            stack.extend(self.children(c).iter().copied());
+        }
+        out
+    }
+
+    /// `root` ou algum dos de dentro tem animação (`FloatAnimation`, `ColorAnimation`): a lista
+    /// que recicla linhas só recomeça as animações quando o modelo tem alguma.
+    pub fn has_animations(&self, root: ComponentId) -> bool {
+        !self.animations_within(root).is_empty()
+    }
+
+    /// `root` passou a mostrar outra coisa (a linha reciclada de uma lista, que vai para outro
+    /// item): as animações dele e dos de dentro param e as propriedades voltam ao valor de antes
+    /// delas; o `appear` pode rodar de novo; e as dos estados que estão valendo (o mouse em
+    /// cima, o foco) ficam no fim, sem animar. Devolve se algum `appear` já tinha rodado (o item
+    /// que sai já apareceu).
+    pub fn reset_animations(&mut self, root: ComponentId) -> bool {
+        let mut appeared = false;
+        let animations = self.animations_within(root);
+        for &animation in &animations {
+            self.stop_animation(animation);
+            let Some(target) = self.parent(animation) else { continue };
+            let Some(a) = self.get_mut::<PropertyAnimation>(animation) else { continue };
+            let property = a.property.clone();
+            let original = a.original.take();
+            if a.trigger == Trigger::Appear {
+                appeared |= a.appeared;
+                a.appeared = false;
+                // Volta a esperar (sem refazer a lista de todas: rolar não percorre a tela).
+                if let Some(waiting) = self.appear_waiting.as_mut().filter(|w| !w.contains(&animation)) {
+                    waiting.push(animation);
+                }
+            }
+            if let Some(original) = original {
+                let _ = self.set_prop(target, &property, original);
+            }
+        }
+        for animation in animations {
+            let Some((target, trigger, enabled)) = self.parent(animation).zip(self.get::<PropertyAnimation>(animation).map(|a| (a.trigger, a.enabled))).map(|(t, (g, e))| (t, g, e)) else { continue };
+            let state = self.cb(target).map(|cb| cb.state()).unwrap_or_default();
+            let active = match trigger {
+                Trigger::Hover => state.hover,
+                Trigger::Pressed => state.pressed,
+                Trigger::Focused => state.focused,
+                Trigger::Checked => state.checked,
+                Trigger::HoverWithin => self.hover_within(target).0,
+                Trigger::None | Trigger::Appear => false,
+            };
+            if enabled && active {
+                self.settle_animation(animation, true);
+            }
+        }
+        appeared
+    }
+
+    /// Os `appear` de `root` e dos de dentro contam como já rodados e ficam no fim, sem animar:
+    /// o item que já apareceu e volta numa linha reciclada.
+    pub fn finish_appear(&mut self, root: ComponentId) {
+        for animation in self.animations_within(root) {
+            let Some(a) = self.get_mut::<PropertyAnimation>(animation).filter(|a| a.trigger == Trigger::Appear && a.enabled) else { continue };
+            a.appeared = true;
+            if let Some(waiting) = self.appear_waiting.as_mut() {
+                waiting.retain(|w| *w != animation);
+            }
+            self.settle_animation(animation, true);
+        }
+    }
+
+    /// As animações filhas de `control` com o gatilho `trigger` vão direto para o fim (`active`)
+    /// ou para o valor original, sem animar.
+    pub(crate) fn settle_triggers(&mut self, control: ComponentId, trigger: Trigger, active: bool) {
+        let animations: Vec<ComponentId> = self
+            .children(control)
+            .iter()
+            .copied()
+            .filter(|&c| self.get::<PropertyAnimation>(c).is_some_and(|a| a.enabled && a.trigger == trigger))
+            .collect();
+        for animation in animations {
+            self.settle_animation(animation, active);
+        }
+    }
+
+    /// Os controles com alguma animação `hover_within` filha (refeito quando a árvore muda).
+    pub(crate) fn hover_within_hosts(&mut self) -> &[ComponentId] {
+        if self.hover_within_hosts.is_none() {
+            let mut hosts: Vec<ComponentId> = self
+                .components()
+                .filter(|&c| self.get::<PropertyAnimation>(c).is_some_and(|a| a.trigger == Trigger::HoverWithin))
+                .filter_map(|c| self.parent(c))
+                .collect();
+            hosts.dedup();
+            self.hover_within_hosts = Some(hosts);
+        }
+        self.hover_within_hosts.as_deref().unwrap_or_default()
     }
 
     /// As animações `appear` cujo controle entrou na área visível rodam (uma vez). A lista
@@ -690,6 +843,10 @@ macro_rules! delegate_animation {
             fn inner_mut(&mut self) -> Option<&mut dyn Component> {
                 Some(&mut self.0)
             }
+
+            fn methods(&self) -> &'static [MethodInfo] {
+                self.0.methods()
+            }
         }
     };
 }
@@ -782,5 +939,24 @@ impl Component for PropertyAnimation {
             _ => return Err(Error::UnknownProperty(name.to_string())),
         }
         Ok(())
+    }
+
+    fn methods(&self) -> &'static [MethodInfo] {
+        const METHODS: &[MethodInfo] = &[MethodInfo::new("start", &[], None), MethodInfo::new("stop", &[], None)];
+        METHODS
+    }
+
+    /// `start` (a de `trigger: none`, ou uma linha da lista pelo código) e `stop` (o valor fica
+    /// onde está), em todas as linguagens (pelo protocolo), como o [`Ui::start_animation`].
+    fn invoke(&mut self, ctx: &mut crate::EventCtx<'_>, method: &str, _args: &[PropValue]) -> std::result::Result<PropValue, String> {
+        match method {
+            "start" => {
+                let id = ctx.id;
+                ctx.ui.play_with(id, self, true).map_err(|e| e.to_string())?;
+            }
+            "stop" => ctx.ui.stop_animation(ctx.id),
+            _ => return Err(format!("{} não tem o método '{method}'", self.class_name())),
+        }
+        Ok(PropValue::Null)
     }
 }

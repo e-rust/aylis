@@ -112,6 +112,8 @@ fn speed(v: PointF) -> f32 {
 pub(crate) struct InputState {
     /// O controle com arquivos do sistema passando por cima ([`Ui::files_hover`]).
     pub(crate) file_hover: Option<ComponentId>,
+    /// Onde caíram os últimos arquivos soltos no form ([`Ui::files_drop_position`]).
+    drop_at: Option<PointF>,
     hovered: Option<ComponentId>,
     captured: Option<ComponentId>,
     focused: Option<ComponentId>,
@@ -325,7 +327,10 @@ impl Ui {
     /// ponto e sobem pelos pais até um aceitar ([`Component::files_dropped`]). Se nenhum
     /// aceitar (o sistema nem sempre informa a posição), o primeiro controle à vista do form
     /// que aceita arquivos recebe (um escondido ou desabilitado, nem ele nem os filhos: o
-    /// relatório do Tabernáculo, F01). Devolve `true` se alguém aceitou.
+    /// relatório do Tabernáculo, F01). Antes da reserva, o form com handler no
+    /// `on_files_drop` recebe os caminhos (separados por `;`), com o ponto em
+    /// [`Ui::files_drop_position`] (decidido em 21/11: soltar sobre a lista sem uma zona
+    /// visível). Devolve `true` se alguém aceitou.
     pub fn drop_files(&mut self, root: ComponentId, pos: PointF, paths: Vec<String>) -> bool {
         let mut target = self.hit_test(root, pos);
         // Os que já receberam (e recusaram) não recebem de novo na procura de reserva.
@@ -337,6 +342,12 @@ impl Ui {
             }
             tried.push(id);
             target = self.parent(id);
+        }
+        if !paths.is_empty() && self.listens(root, "on_files_drop") {
+            self.input_state(root).drop_at = Some(pos);
+            self.fire(root, "on_files_drop", &EventArgs::Text(paths.join(";")));
+            self.process_events();
+            return true;
         }
         let mut stack = vec![root];
         while let Some(id) = stack.pop() {
@@ -441,6 +452,27 @@ impl Ui {
         self.input.get(&root)?.hovered
     }
 
+    /// Onde caíram (nas coordenadas do form) os últimos arquivos do `on_files_drop` do form.
+    pub fn files_drop_position(&self, root: ComponentId) -> Option<PointF> {
+        self.input.get(&root)?.drop_at
+    }
+
+    /// O mouse está em `id` ou num dos de dentro dele, e se o de baixo do mouse está apertado
+    /// (o `:hover` e o `:active` do CSS). Veja [`ControlBase::set_hover_within`].
+    pub fn hover_within(&self, id: ComponentId) -> (bool, bool) {
+        let Some(mut cur) = self.hovered(self.root_of(id)) else { return (false, false) };
+        let pressed = self.cb(cur).is_some_and(|cb| cb.state().pressed);
+        loop {
+            if cur == id {
+                return (true, pressed);
+            }
+            match self.parent(cur) {
+                Some(p) => cur = p,
+                None => return (false, false),
+            }
+        }
+    }
+
     /// Controle com o foco do teclado no form.
     pub fn focused(&self, root: ComponentId) -> Option<ComponentId> {
         self.input.get(&root)?.focused
@@ -524,6 +556,20 @@ impl Ui {
     }
 
     /// Chama um método do componente e devolve se ele marcou o evento como tratado.
+    /// Marca (ou desmarca) `id` no estado `checked` do tema, o mesmo do botão marcado: a linha
+    /// selecionada de uma lista, desenhada pelo estilo dela (os filhos com `inherit_state`
+    /// acompanham).
+    pub fn set_checked_state(&mut self, id: ComponentId, checked: bool) {
+        self.set_state_flag(id, Trigger::Checked, checked);
+    }
+
+    /// Como [`set_checked_state`](Self::set_checked_state), sem animar: as animações `checked`
+    /// vão direto para o fim (ou para o valor original). O item escolhido que volta à tela numa
+    /// linha reciclada chega marcado, sem parecer que acabou de ser escolhido.
+    pub fn set_checked_state_instant(&mut self, id: ComponentId, checked: bool) {
+        self.set_state_flag_with(id, Trigger::Checked, checked, false);
+    }
+
     pub(crate) fn deliver(&mut self, id: ComponentId, f: impl FnOnce(&mut dyn Component, &mut EventCtx<'_>)) -> bool {
         self.with_component(id, |c, ctx| {
             f(c, ctx);
@@ -533,6 +579,10 @@ impl Ui {
     }
 
     fn set_state_flag(&mut self, id: ComponentId, trigger: Trigger, value: bool) {
+        self.set_state_flag_with(id, trigger, value, true);
+    }
+
+    fn set_state_flag_with(&mut self, id: ComponentId, trigger: Trigger, value: bool, animate: bool) {
         let Some(cb) = self.cb_mut(id) else { return };
         let state = cb.state_mut();
         let flag = match trigger {
@@ -540,7 +590,7 @@ impl Ui {
             Trigger::Pressed => &mut state.pressed,
             Trigger::Focused => &mut state.focused,
             Trigger::Checked => &mut state.checked,
-            Trigger::None | Trigger::Appear => return,
+            Trigger::None | Trigger::Appear | Trigger::HoverWithin => return,
         };
         if *flag != value {
             *flag = value;
@@ -551,7 +601,11 @@ impl Ui {
             if heirs || !self.drawing_unchanged(id) {
                 self.damage(id);
             }
-            self.run_triggers(id, trigger, value);
+            if animate {
+                self.run_triggers(id, trigger, value);
+            } else {
+                self.settle_triggers(id, trigger, value);
+            }
         }
     }
 
@@ -565,6 +619,46 @@ impl Ui {
             return;
         }
         self.input_state(root).hovered = new;
+        // Quem pinta conforme o mouse dentro dele (`hover_within`): repinta quando o mouse
+        // entra ou sai de um dos de dentro (só os que mudaram, não os em comum).
+        let chain = |ui: &Self, from: Option<ComponentId>| {
+            let mut out = Vec::new();
+            let mut cur = from.filter(|&c| ui.contains(c));
+            while let Some(c) = cur {
+                if ui.cb(c).is_some_and(|cb| cb.hover_within()) {
+                    out.push(c);
+                }
+                cur = ui.parent(c);
+            }
+            out
+        };
+        let (left, entered) = (chain(self, old), chain(self, new));
+        for c in left.iter().filter(|c| !entered.contains(c)).chain(entered.iter().filter(|c| !left.contains(c))) {
+            self.damage(*c);
+        }
+        // As animações `hover_within`: dos controles que o mouse deixou (ele e os de dentro) e
+        // dos em que entrou. Sem nenhuma na tela, não custa nada.
+        if !self.hover_within_hosts().is_empty() {
+            let hosts = self.hover_within_hosts().to_vec();
+            let ancestors = |ui: &Self, from: Option<ComponentId>| {
+                let mut out = Vec::new();
+                let mut cur = from.filter(|&c| ui.contains(c));
+                while let Some(c) = cur {
+                    if hosts.contains(&c) {
+                        out.push(c);
+                    }
+                    cur = ui.parent(c);
+                }
+                out
+            };
+            let (left, entered) = (ancestors(self, old), ancestors(self, new));
+            for &c in left.iter().filter(|c| !entered.contains(c)) {
+                self.run_triggers(c, Trigger::HoverWithin, false);
+            }
+            for &c in entered.iter().filter(|c| !left.contains(c)) {
+                self.run_triggers(c, Trigger::HoverWithin, true);
+            }
+        }
         if let Some(old) = old.filter(|&o| self.contains(o)) {
             self.set_state_flag(old, Trigger::Hover, false);
             self.fire(old, "on_pointer_leave", &EventArgs::None);
@@ -739,6 +833,22 @@ impl Ui {
             self.fire(target, "on_dbl_click", &EventArgs::Pointer(e));
         }
         self.deliver(target, |c, ctx| c.pointer_down(ctx, &e));
+        if event.button == PointerButton::Primary {
+            self.tell_ancestors(target, |c, ctx| c.child_pressed(ctx, target, &e));
+        }
+    }
+
+    /// Avisa os ancestrais de `target` que pedem ([`crate::ChildPointer`]), de dentro para fora.
+    fn tell_ancestors(&mut self, target: ComponentId, f: impl Fn(&mut dyn crate::ChildPointer, &mut EventCtx<'_>)) {
+        let mut current = self.parent(target);
+        while let Some(id) = current {
+            self.with_component(id, |c, ctx| {
+                if let Some(watch) = c.child_pointer_mut() {
+                    f(watch, ctx);
+                }
+            });
+            current = self.parent(id);
+        }
     }
 
     /// As camadas do form que fecham com o mouse apertado fora
@@ -883,6 +993,9 @@ impl Ui {
 
         if event.button == PointerButton::Primary && hit == Some(target) && self.is_effectively_enabled(target) && !long_pressed {
             self.with_component(target, |c, ctx| c.click(ctx));
+            if self.contains(target) {
+                self.tell_ancestors(target, |c, ctx| c.child_clicked(ctx, target));
+            }
         }
         self.click_source = outer;
         if event.button == PointerButton::Secondary && hit == Some(target) {

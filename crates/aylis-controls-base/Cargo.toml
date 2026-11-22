@@ -9,12 +9,15 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.9.1", path = "../aylis-core" }
+aylis-core = { version = "0.9.2", path = "../aylis-core" }
 web-time = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Localizar e substituir com expressão regular (o editor e a pesquisa no projeto).
 regex = { version = "1", default-features = false, features = ["std", "unicode"] }
+# A cor dominante de uma foto (`Image.dominant_color`): decodifica a imagem reduzida. Os apps já
+# levam este crate com estes formatos (o `PaintBox` do `aylis-controls-editors`).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }
 
 # As gramáticas TextMate do VS Code: o Oniguruma, o motor do próprio VS Code (as expressões
 # enormes do C++ ficam milhares de vezes mais rápidas que no fancy-regex)...

@@ -81,6 +81,40 @@
             }
           ]
         },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "rustc-1.99.0-x86_64-apple-darwin.tar.gz",
+              "size": 104853876,
+              "sha256": "4b909ba0153d4a67eb83a31ef11157b7c54e5c04a323d80e46436b778c18df52",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustc-1.99.0-x86_64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "cargo-1.99.0-x86_64-apple-darwin.tar.gz",
+              "size": 13438914,
+              "sha256": "ec5bd1c782e5b9d58cfcafbc4131d19fd7ca2ec6b1a197f2fd1a1f953802a26a",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/cargo-1.99.0-x86_64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rust-std-1.99.0-x86_64-apple-darwin.tar.gz",
+              "size": 48896082,
+              "sha256": "7321ff86554726b8ab7b0a5c0d9ba0a3e763824f5d09b0c997e36bd72b80fa06",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-std-1.99.0-x86_64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rustfmt-1.99.0-x86_64-apple-darwin.tar.gz",
+              "size": 2345750,
+              "sha256": "54de2b0f84ac7d5fbc783af16e37a711099ef95ed2fc86076a8d4f8e2d5a7748",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rustfmt-1.99.0-x86_64-apple-darwin.tar.gz"
+            },
+            {
+              "name": "rust-analyzer-1.99.0-x86_64-apple-darwin.tar.gz",
+              "size": 13904924,
+              "sha256": "d3da72a0c17a59db6e43e88c381242266e9b7225289f79a67caa266ec6c4da85",
+              "url": "https://static.rust-lang.org/dist/2026-10-01/rust-analyzer-1.99.0-x86_64-apple-darwin.tar.gz"
+            }
+          ]
+        },
         "macos-aarch64": {
           "files": [
             {
@@ -254,6 +288,17 @@
             }
           ]
         },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "OpenJDK17U-jdk_x64_mac_hotspot_17.0.21_9.tar.gz",
+              "size": 180879475,
+              "sha256": "868f5c672b3389fdbe48e44f94ae170f01668b1401360944fc7159d7cc9772cc",
+              "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_mac_hotspot_17.0.21_9.tar.gz",
+              "prefix": "jdk-17.0.21+9/Contents/Home"
+            }
+          ]
+        },
         "macos-aarch64": {
           "files": [
             {
@@ -349,6 +394,40 @@
             }
           ]
         },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "commandlinetools-mac_x86_64-16111833_latest.zip",
+              "size": 155582504,
+              "sha256": "7e601c04e7173754b3d051a87bb4c3a8243c65a9d7bfa9356ed6499fb8953fa3",
+              "url": "https://dl.google.com/android/repository/commandlinetools-mac_x86_64-16111833_latest.zip",
+              "strip": 1,
+              "into": "cmdline-tools/latest"
+            },
+            {
+              "name": "platform-tools_r37.0.3-darwin.zip",
+              "size": 16597626,
+              "sha256": "df21339b9371fef9b19264404338dc686f59a88a1dce634b963da344909001d6",
+              "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-darwin.zip"
+            },
+            {
+              "name": "platform-34-ext7_r03.zip",
+              "size": 63180081,
+              "sha256": "16fdb74c55e59ae3ef52def135aec713508467bd56d7dabcd8c9be31fa8b20f3",
+              "url": "https://dl.google.com/android/repository/platform-34-ext7_r03.zip",
+              "strip": 1,
+              "into": "platforms/android-34"
+            },
+            {
+              "name": "build-tools_r34-macosx.zip",
+              "size": 76559180,
+              "sha256": "76bf668fe037b1a69197e298ddae5633d4d7f0f41af7ed17e537c80c1ed8a6f3",
+              "url": "https://dl.google.com/android/repository/build-tools_r34-macosx.zip",
+              "strip": 1,
+              "into": "build-tools/34.0.0"
+            }
+          ]
+        },
         "macos-aarch64": {
           "files": [
             {
@@ -361,8 +440,8 @@
             },
             {
               "name": "platform-tools_r37.0.3-darwin.zip",
-              "size": 16597640,
-              "sha256": "f89baeb829903ceaf3ac92a78a2d25152728049d6316ebeaaca06d716e64842d",
+              "size": 16597626,
+              "sha256": "df21339b9371fef9b19264404338dc686f59a88a1dce634b963da344909001d6",
               "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-darwin.zip"
             },
             {
@@ -458,6 +537,16 @@
             }
           ]
         },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "cargo-ndk-x86_64-apple-darwin-v4.1.2.tgz",
+              "size": 2397598,
+              "sha256": "ea30f5e7898ce0b1c7af89e0a2dd2db61c494d81ad1b36284f74f1ab5fd85956",
+              "url": "https://github.com/bbqsrc/cargo-ndk/releases/download/v4.1.2/cargo-ndk-x86_64-apple-darwin-v4.1.2.tgz"
+            }
+          ]
+        },
         "macos-aarch64": {
           "files": [
             {
@@ -502,6 +591,17 @@
               "size": 11695824,
               "sha256": "82d12bb940e2d4e72e0d5605387fc1b8ca179044e012b620f0ce4e7440e8320e",
               "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.129/wasm-bindgen-0.2.129-x86_64-unknown-linux-musl.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "wasm-bindgen-0.2.129-x86_64-apple-darwin.tar.gz",
+              "size": 8374457,
+              "sha256": "7e028879a68ec53dae14048b55cc5215f6df75b17a9c1426fac8fa086d3202fd",
+              "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.129/wasm-bindgen-0.2.129-x86_64-apple-darwin.tar.gz",
               "strip": 1
             }
           ]
@@ -582,6 +682,22 @@
             }
           ]
         },
+        "macos-x86_64": {
+          "exports": {
+            "path": [
+              "bin"
+            ]
+          },
+          "files": [
+            {
+              "name": "node-v26.13.1-darwin-x64.tar.gz",
+              "size": 59799324,
+              "sha256": "82bb96078a24ca50b9c9a38f2379e6be6d87171fcd400fc14c8934b3bce96e2f",
+              "url": "https://nodejs.org/dist/v26.13.1/node-v26.13.1-darwin-x64.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
         "macos-aarch64": {
           "exports": {
             "path": [
@@ -631,6 +747,16 @@
               "size": 217266728,
               "sha256": "6f8b64ef9644b11bcab6748ebfec088d2ae4868df26204bb2354c3ada0f09cbe",
               "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-linux-x64.tar.gz"
+            }
+          ]
+        },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "dotnet-sdk-8.0.428-osx-x64.tar.gz",
+              "size": 215163999,
+              "sha256": "6f6baf285598e2383a5dcd4e03f4559ba838e8b0bf1616ac1a776f66c026e871",
+              "url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.428/dotnet-sdk-8.0.428-osx-x64.tar.gz"
             }
           ]
         },
@@ -699,6 +825,17 @@
               "size": 70680823,
               "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840",
               "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
+              "strip": 1
+            }
+          ]
+        },
+        "macos-x86_64": {
+          "files": [
+            {
+              "name": "go1.27.4.darwin-amd64.tar.gz",
+              "size": 71756705,
+              "sha256": "2b799377704ef12db39bd254995d5c348c9cc8d86562ca817724390e56c38f43",
+              "url": "https://go.dev/dl/go1.27.4.darwin-amd64.tar.gz",
               "strip": 1
             }
           ]

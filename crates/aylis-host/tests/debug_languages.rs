@@ -20,7 +20,7 @@ use aylis_tools::{Control, Target, hostlang, run};
 /// marcada, onde fica o ponto de parada).
 fn body(lang: Language) -> (&'static str, &'static str, &'static str) {
     match lang {
-        Language::TypeScript => ("void aylis, ev;", "void aylis, ev; const marca = 1; void marca;", "const marca"),
+        Language::TypeScript => ("void aylis, sender;", "void aylis, sender; const marca = 1; void marca;", "const marca"),
         Language::CSharp => (
             "public static void tique(Aylis aylis, AylisEvent ev)\n    {\n",
             "public static void tique(Aylis aylis, AylisEvent ev)\n    {\n        int marca = 1; _ = marca;\n",

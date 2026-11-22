@@ -24,9 +24,10 @@ pub struct Options {
     pub script: Option<(Value, PathBuf)>,
     /// Python: espera o depurador do VS Code (`debugpy`) antes de começar.
     pub debug: bool,
-    /// Depurar dentro da IDE (as linguagens do `aylis-host`): o app sobe sem esperar, com o
-    /// inspetor do Node ou o JDWP do Java abertos, e o `aylis-host` informa o processo da
-    /// lógica (`AYLIS_BACKEND_PID=`), onde o depurador da linguagem se anexa.
+    /// Depurar dentro da IDE (as linguagens do `aylis-host`, e o Rust no Windows): o app sobe
+    /// sem esperar, com o inspetor do Node ou o JDWP do Java abertos, e o `aylis-host` (ou o
+    /// app em Rust, que espera o depurador) informa o processo (`AYLIS_BACKEND_PID=`), onde o
+    /// depurador da linguagem se anexa.
     pub ide_debug: bool,
     /// Desktop em Rust: compila otimizado (`cargo build --release`), ainda com o canal da IDE.
     pub release: bool,
@@ -174,9 +175,11 @@ fn written_exes(project: &Project, release: bool) -> Vec<PathBuf> {
 }
 
 /// O arquivo existe e está em uso (um executável rodando não abre para escrita): a compilação
-/// não conseguiria substituí-lo.
+/// não conseguiria substituí-lo. Só no Windows: no Linux e no macOS o cargo (e a cópia para a
+/// pasta de saída) troca o arquivo, e o app aberto segue com o antigo (antes a recusa valia
+/// para todos; o relatório do player de música, 21/11).
 fn in_use(path: &Path) -> bool {
-    path.is_file() && std::fs::OpenOptions::new().write(true).open(path).is_err()
+    cfg!(windows) && path.is_file() && std::fs::OpenOptions::new().write(true).open(path).is_err()
 }
 
 /// Antes de compilar: algum executável que a compilação vai gravar está em uso? Com
@@ -316,6 +319,11 @@ fn build_desktop_exe(project: &Project, release: bool, control: &Control, sink: 
     if let Some(dir) = target.parent() {
         std::fs::create_dir_all(dir).map_err(|e| format!("não consegui criar a pasta de saída {}: {e}", dir.display()))?;
     }
+    // No Linux e no macOS o executável em uso não abre para escrita, mas pode ser apagado: o
+    // processo aberto segue com o antigo, e a cópia entra como arquivo novo.
+    if !cfg!(windows) && target.is_file() {
+        let _ = std::fs::remove_file(&target);
+    }
     std::fs::copy(&exe, &target).map_err(|e| format!("não consegui copiar o executável para {} (ele está aberto?): {e}", target.display()))?;
     sink(Event::Line(format!("Executável em {}", target.display()), LineKind::Tool));
     Ok(target)
@@ -323,11 +331,32 @@ fn build_desktop_exe(project: &Project, release: bool, control: &Control, sink: 
 
 fn desktop_rust(project: &Project, options: &Options, control: &Control, sink: Sink) -> Result<String, String> {
     let exe = build_desktop(project, options.release, control, sink)?;
-    sink(Event::Step(format!("Executando {}…", project.name)));
     let mut command = Command::new(exe);
     command.current_dir(project.dir()).env("RUST_BACKTRACE", "1").args(dev_port_args(options));
     frame_env(&mut command, options);
-    watch_with(&mut command, start_line(None, options).as_deref(), control, sink)
+    let input = start_line(None, options);
+    if !options.ide_debug {
+        sink(Event::Step(format!("Executando {}…", project.name)));
+        return watch_with(&mut command, input.as_deref(), control, sink);
+    }
+    // Depurar na IDE (o Windows): o processo é avisado assim que sobe (`AYLIS_BACKEND_PID=`,
+    // como o aylis-host faz), e o CodeLLDB se anexa a ele. O app com o `aylis` novo espera o
+    // depurador no começo (`aylis_platform_winit::wait_for_debugger`); o de antes segue sem
+    // esperar, e os pontos de parada valem a partir da anexação.
+    sink(Event::Step(format!("Executando {} para depurar na IDE…", project.name)));
+    command.env("AYLIS_WAIT_DEBUGGER", "30");
+    let sink = std::cell::RefCell::new(sink);
+    let code = crate::process::run_lines_announced(
+        &mut command,
+        control,
+        input.as_deref(),
+        |pid| (sink.borrow_mut())(Event::Line(format!("AYLIS_BACKEND_PID={pid}"), LineKind::ProgramError)),
+        |line, is_err| (sink.borrow_mut())(Event::Line(line, if is_err { LineKind::ProgramError } else { LineKind::Program })),
+    )?;
+    Ok(match code {
+        Some(0) | None => "Programa terminou.".to_string(),
+        Some(c) => format!("Programa terminou com código {c}."),
+    })
 }
 
 fn desktop_python(project: &Project, options: &Options, control: &Control, sink: Sink) -> Result<String, String> {

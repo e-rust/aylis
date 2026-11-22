@@ -740,3 +740,29 @@ video_refresh	Taxa de atualização	Refresh rate	Frecuencia de actualización	Fr
 host	Embutido em	Host	Incrustado en	Hébergé dans	Eingebettet in	Встроено в	宿主	埋め込み先	مضمّن في	যেখানে বসানো	इसमें समाहित	Disematkan di
 dockable	Pode encaixar	Dockable	Acoplable	Ancrable	Andockbar	Прикрепляемая	可停靠	ドッキング可能	قابل للإرساء	যুক্ত করা যায়	डॉक करने योग्य	Dapat ditambatkan
 accept_forms	Aceitar forms	Accept forms	Aceptar formularios	Accepter les formulaires	Formulare annehmen	Принимать формы	接受窗体	フォームを受け入れる	قبول النماذج	ফর্ম গ্রহণ করুন	फ़ॉर्म स्वीकार करें	Terima formulir
+bands	Barras	Bars	Barras	Barres	Balken	Полосы	条数	バーの数	الأشرطة	বার	बार	Batang
+peaks	Picos	Peaks	Picos	Crêtes	Spitzen	Пики	峰值	ピーク	القمم	শীর্ষ	शिखर	Puncak
+hover_fill	Fundo com o mouse	Hover fill	Fondo al pasar el ratón	Fond au survol	Hintergrund bei Hover	Фон при наведении	悬停填充	ホバー時の塗り	التعبئة عند التمرير	হোভারে পটভূমি	होवर पर भराव	Isian saat diarahkan
+pressed_fill	Fundo apertado	Pressed fill	Fondo al presionar	Fond enfoncé	Hintergrund gedrückt	Фон при нажатии	按下填充	押下時の塗り	التعبئة عند الضغط	চাপলে পটভূমি	दबाने पर भराव	Isian saat ditekan
+interactive	Reage ao mouse	Interactive	Reacciona al ratón	Réagit à la souris	Reagiert auf Maus	Реагирует на мышь	响应鼠标	マウスに反応	تفاعلي	মাউসে সাড়া দেয়	माउस पर प्रतिक्रिया	Interaktif
+max_lines	Máximo de linhas	Max lines	Máximo de líneas	Lignes max.	Max. Zeilen	Макс. строк	最大行数	最大行数	أقصى عدد للأسطر	সর্বোচ্চ লাইন	अधिकतम पंक्तियाँ	Baris maks.
+album	Álbum	Album	Álbum	Album	Album	Альбом	专辑	アルバム	الألبوم	অ্যালবাম	एल्बम	Album
+artist	Artista	Artist	Artista	Artiste	Interpret	Исполнитель	艺术家	アーティスト	الفنان	শিল্পী	कलाकार	Artis
+track	Faixa	Track	Pista	Piste	Titelnummer	Дорожка	曲目	トラック	المقطع	ট্র্যাক	ट्रैक	Trek
+year	Ano	Year	Año	Année	Jahr	Год	年份	年	السنة	বছর	वर्ष	Tahun
+gapless	Sem silêncio entre faixas	Gapless	Sin silencio entre pistas	Sans blanc entre pistes	Lückenlos	Без пауз	无缝播放	ギャップレス	بلا فواصل	বিরতিহীন	बिना अंतराल	Tanpa jeda
+player	Player	Player	Reproductor	Lecteur	Player	Плеер	播放器	プレーヤー	المشغل	প্লেয়ার	प्लेयर	Pemutar
+shuffle	Aleatório	Shuffle	Aleatorio	Aléatoire	Zufällig	Перемешать	随机播放	シャッフル	عشوائي	এলোমেলো	शफ़ल	Acak
+show_labels	Mostrar os tempos	Show labels	Mostrar los tiempos	Afficher les temps	Zeiten anzeigen	Показывать время	显示时间	時間を表示	إظهار الأوقات	সময় দেখাও	समय दिखाएँ	Tampilkan waktu
+forward	Repassar ao player	Forward to the player	Reenviar al reproductor	Transmettre au lecteur	An den Player weitergeben	Передавать плееру	转给播放器	プレーヤーに渡す	تمرير إلى المشغل	প্লেয়ারে পাঠাও	प्लेयर को भेजें	Teruskan ke pemutar
+info	Tags da mídia	Media info	Etiquetas del medio	Infos du média	Medieninfo	Сведения о медиа	媒体信息	メディア情報	معلومات الوسائط	মিডিয়ার তথ্য	मीडिया जानकारी	Info media
+playlist	Lista de faixas	Playlist	Lista de pistas	Liste de lecture	Wiedergabeliste	Список воспроизведения	播放列表	プレイリスト	قائمة التشغيل	প্লেলিস্ট	प्लेलिस्ट	Daftar putar
+selected_fill	Fundo marcado	Selected fill	Fondo seleccionado	Fond sélectionné	Hintergrund ausgewählt	Фон выделения	选中填充	選択時の塗り	تعبئة التحديد	নির্বাচিত পটভূমি	चयनित भराव	Isian terpilih
+images	Imagens	Images	Imágenes	Images	Bilder	Изображения	图像	画像	الصور	ছবি	छवियाँ	Gambar
+kind_field	Campo do modelo	Kind field	Campo del modelo	Champ du modèle	Vorlagenfeld	Поле шаблона	模板字段	テンプレートの項目	حقل القالب	মডেলের ফিল্ড	मॉडल फ़ील्ड	Kolom model
+kinds	Modelos dos itens	Item kinds	Modelos de los ítems	Modèles des éléments	Elementvorlagen	Шаблоны элементов	项目模板	項目のテンプレート	قوالب العناصر	আইটেমের মডেল	आइटम मॉडल	Model item
+scroll_bar	Barra de rolagem	Scroll bar	Barra de desplazamiento	Barre de défilement	Bildlaufleiste	Полоса прокрутки	滚动条	スクロールバー	شريط التمرير	স্ক্রল বার	स्क्रॉल बार	Bilah gulir
+selection	Seleção	Selection	Selección	Sélection	Auswahl	Выделение	选择	選択	التحديد	নির্বাচন	चयन	Pilihan
+list	Lista	List	Lista	Liste	Liste	Список	列表	リスト	القائمة	তালিকা	सूची	Daftar
+sort_descending	Ordem decrescente	Sort descending	Orden descendente	Tri décroissant	Absteigend sortiert	По убыванию	降序	降順	ترتيب تنازلي	অবরোহী ক্রম	अवरोही क्रम	Urut menurun
+sort_part	Coluna da ordem	Sort column	Columna del orden	Colonne de tri	Sortierspalte	Столбец сортировки	排序列	並べ替えの列	عمود الترتيب	সাজানোর কলাম	क्रम स्तंभ	Kolom urutan

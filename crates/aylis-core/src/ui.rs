@@ -208,6 +208,8 @@ pub struct Ui {
     pub(crate) animations: Vec<Running>,
     /// As animações `appear` que ainda esperam aparecer (`None`: refazer a lista).
     pub(crate) appear_waiting: Option<Vec<ComponentId>>,
+    /// Os controles com animação `hover_within` filha (`None`: refazer a lista).
+    pub(crate) hover_within_hosts: Option<Vec<ComponentId>>,
     /// Alguma transição de estilo ainda está em andamento (marcado durante a pintura).
     pub(crate) style_animating: Cell<bool>,
     /// Os temas com as cores próprias de controles (pelo tema de base e as cores): não
@@ -435,6 +437,7 @@ impl Ui {
             screen_pointer: None,
             animations: Vec::new(),
             appear_waiting: None,
+            hover_within_hosts: None,
             style_animating: Cell::new(false),
             recolored: RefCell::new(HashMap::new()),
             wake_at: Cell::new(None),
@@ -541,8 +544,9 @@ impl Ui {
     }
 
     fn alloc(&mut self, entry: Entry) -> ComponentId {
-        // A árvore mudou: a lista das animações `appear` é refeita.
+        // A árvore mudou: as listas das animações `appear` e `hover_within` são refeitas.
         self.appear_waiting = None;
+        self.hover_within_hosts = None;
         if let Some(index) = self.free_slots.pop() {
             let slot = &mut self.slots[index as usize];
             slot.entry = Some(entry);
@@ -770,6 +774,7 @@ impl Ui {
         self.input.retain(|root, _| !gone(root));
         self.forget_forms(&doomed);
         self.appear_waiting = None;
+        self.hover_within_hosts = None;
         for t in self.timers.extract_if(.., |t| gone(&t.id)).collect::<Vec<_>>() {
             t.stop();
         }
@@ -1583,6 +1588,12 @@ impl Ui {
     }
 
     /// Um ícone pelo nome: os do app primeiro, depois os do aylis.
+    /// Algum ícone do pacote `prefix` (`fluent`) está registrado: o app leva o pacote.
+    pub fn has_icon_pack(&self, prefix: &str) -> bool {
+        let start = format!("{prefix}:");
+        self.icons.keys().any(|k| k.starts_with(&start))
+    }
+
     pub fn icon(&self, name: &str) -> Option<&crate::icons::Icon> {
         self.icons.get(name).or_else(|| crate::icons::builtin(name))
     }
@@ -1871,6 +1882,11 @@ impl Ui {
         let info = self.prop_info(id, name).ok_or_else(|| Error::UnknownProperty(name.to_string()))?;
         if info.read_only {
             return Err(Error::ReadOnly(name.to_string()));
+        }
+        // O gatilho de uma animação mudou depois de criada: as listas são refeitas.
+        if matches!(name, "trigger" | "enabled") && info.category == "Animation" {
+            self.appear_waiting = None;
+            self.hover_within_hosts = None;
         }
         // Cor com nome (`success`, `brand`, `text/85`): vira a cor do tema em uso e o nome
         // fica guardado. Qualquer outro valor desfaz o nome.
@@ -2373,9 +2389,17 @@ impl Ui {
     /// reagenda o próprio evento deixa o app lento, mas não congelado.
     pub fn process_events(&mut self) {
         let mut delivered = 0;
+        // Os eventos de quem está no meio de um método (fora do `Ui`, num `with_component` de
+        // fora deste): esperam ele voltar, senão o handler tipado não acha quem disparou (os
+        // `on_bind` do `VirtualList` no meio do `scroll_to`, com animações nas linhas).
+        let mut busy = Vec::new();
         while !self.pending.is_empty() {
             let mut batch = std::mem::take(&mut self.pending).into_iter();
             for (id, event, args, source) in batch.by_ref() {
+                if self.entry(id).is_some_and(|e| e.component.is_none()) {
+                    busy.push((id, event, args, source));
+                    continue;
+                }
                 self.count_repeat(id, &event);
                 // O ponteiro do clique vale só durante o handler deste evento (e o que ele
                 // chamar); um clique agendado pelo handler não herda o ponteiro de fora.
@@ -2390,13 +2414,16 @@ impl Ui {
                 // O que sobrou volta para o começo da fila, na ordem; a próxima volta continua.
                 let mut left: Vec<_> = batch.collect();
                 left.append(&mut self.pending);
-                self.pending = left;
+                busy.append(&mut left);
+                self.pending = busy;
                 if !self.pending.is_empty() {
                     self.poster().wake();
                     return;
                 }
+                busy = Vec::new();
             }
         }
+        self.pending = busy;
         self.repeat = None;
     }
 

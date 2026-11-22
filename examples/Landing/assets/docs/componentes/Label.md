@@ -27,6 +27,7 @@ Texto fixo na tela: um título, uma legenda, a explicação de um campo. Quebra 
 | `outline_width` | Largura do contorno | número | Espessura do contorno, em pixels (0 = sem contorno). |
 | `line_height` | Altura da linha | número | A altura de cada linha do texto quebrado, em vezes o tamanho da fonte (o `line-height` do CSS); 0: a do estilo (`line_height`) ou a da fonte. O relatório do Tabernáculo, T04. |
 | `text_shadow` | Sombra do texto | sombra | Sombra das letras (a legenda sobre vídeo): a cor, o desfoque e o deslocamento (T02). |
+| `max_lines` | Máximo de linhas | inteiro | Com `wrap`, no máximo estas linhas, com o `trimming` na última (o `line-clamp` do CSS); 0: as que couberem na altura. |
 
 ### Comportamento
 

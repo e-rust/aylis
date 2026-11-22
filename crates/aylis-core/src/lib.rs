@@ -111,7 +111,7 @@ pub use canvas::{
 };
 pub use color::Color;
 pub use component::{
-    ArrangeItem, ClipShape, ColorOverride, Component, ComponentId, Connection, ControlBase, ControlState, DesignHooks, DragDrop, LayoutHooks, Popup, Timed, AccessibleItems, FONT_WEIGHTS, FontOverride, MethodInfo, NativeCommand, NativeView, NativeViewSlot, PlatformHooks, WebMessage, navigation_allowed, url_origin,
+    ArrangeItem, ChildPointer, ClipShape, ColorOverride, Component, ComponentId, Connection, ControlBase, ControlState, DesignHooks, DragDrop, LayoutHooks, Popup, Timed, AccessibleItems, FONT_WEIGHTS, FontOverride, MethodInfo, NativeCommand, NativeView, NativeViewSlot, PlatformHooks, WebMessage, navigation_allowed, url_origin,
     prop_infos_of, read_prop,
 };
 pub use error::{Error, Result};

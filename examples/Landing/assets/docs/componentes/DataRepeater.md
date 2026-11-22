@@ -15,6 +15,7 @@ Lista virtual de registros: `data_source` dá a quantidade e os valores; `item_b
 | `item_height` | Altura do item | número | A altura de cada item, em pontos (na vertical). |
 | `item_width` | Largura do item | número | Na horizontal: a largura de cada item. |
 | `sizes` | Tamanhos da câmera | lista de números (separados por `;`) | Tamanhos próprios dos itens, em ordem (`80;120;80`; os que faltam usam `item_height` ou `item_width`). Só na lista (uma coluna). |
+| `scroll_bar` | Barra de rolagem | um de: `none`, `auto`, `always` | A barra de rolagem: `none` (como antes), `auto` ou `always`. |
 
 ### Comportamento
 
@@ -25,12 +26,17 @@ Lista virtual de registros: `data_source` dá a quantidade e os valores; `item_b
 | `item_form` | Form de cada item | nome de um form do projeto | Um form do projeto como modelo (vazio: o primeiro filho da lista). |
 | `item_bindings` | Ligações do item | lista de `ItemBinding` | O que cada componente do modelo mostra da fonte: a lista de `ITEM_BINDING` em JSON (`[{"component": "lblNome", "field": "nome"}, {"component": "pinEstado", "property": "fill", "field": "cor"}]`). Sem `property`: o texto, a imagem, o valor ou a marca (a primeira que o componente tiver). |
 | `swipe_actions` | Ações ao deslizar | texto | As ações que aparecem ao deslizar uma linha para a esquerda com o dedo (`Arquivar;Excluir`; vazio: sem). O toque numa dispara `on_swipe_action`. |
+| `selection` | Seleção | um de: `none`, `single`, `multiple` | Quantas linhas dá para escolher (`none`: nenhuma, como antes). |
+| `kinds` | Modelos dos itens | lista de textos (separados por `;`) | O modelo de cada item, pelo nome do filho (`pnlMusica;pnlMusica;pnlSecao`; o que falta e o nome desconhecido: o primeiro). Como o `sizes`, uma lista por item. |
+| `kind_field` | Campo do modelo | texto | O campo da fonte (o `DataRepeater`) com o nome do modelo de cada item, no lugar de `kinds`. |
 
 ### Dados
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `data_source` | Fonte de dados | componente | O `DataSource` dos registros: um item por registro, com os campos de `item_bindings`. |
+| `item_index` | Item escolhido | inteiro | O item escolhido (-1: nenhum); com `multiple`, o último escolhido. |
+| `selected` | Escolhidos | lista de números (separados por `;`) | Com `multiple`, os itens escolhidos, em ordem (`2;5;7`). |
 
 ### Posição e tamanho
 
@@ -46,6 +52,10 @@ Lista virtual de registros: `data_source` dá a quantidade e os valores; `item_b
 | `on_bind` | — | — |  |
 | `on_load_more` | — | — |  |
 | `on_swipe_action` | o toque numa ação da linha deslizada (`swipe_actions`): o item (`index`) e a ação (`action`) | — |  |
+| `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
+| `on_item_click` | — | — |  |
+| `on_item_dbl_click` | — | — |  |
+| `on_item_activate` | — | — |  |
 
 ## Em código
 

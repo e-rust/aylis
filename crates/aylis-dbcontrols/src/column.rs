@@ -4,6 +4,28 @@
 
 use aylis_core::{Color, Component, ComponentId, Error, EventCtx, PropEnum, PropInfo, PropKind, PropValue, Result, TextAlign};
 
+/// O que a coluna mostra do campo (decidido em 22/11).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ColumnKind {
+    /// O texto do campo.
+    #[default]
+    Text,
+    /// Um ícone do `ImageList` da grade (`images`): o campo diz qual (a posição ou o nome).
+    Icon,
+    /// A imagem guardada no campo (um `blob` com PNG, JPEG...), na altura da linha.
+    Image,
+}
+
+impl PropEnum for ColumnKind {
+    const NAMES: &'static [&'static str] = &["text", "icon", "image"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Text, Self::Icon, Self::Image].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 /// Uma coluna da grade. O que fica vazio vem do campo (`Field`): o título é o
 /// `display_label`, a largura o `display_width`, o alinhamento o do campo.
 #[derive(Clone)]
@@ -24,11 +46,13 @@ pub struct Column {
     pub color: Option<Color>,
     /// A cor do texto das células.
     pub text_color: Option<Color>,
+    /// O que a coluna mostra: o texto, um ícone do `ImageList` ou a imagem do campo.
+    pub kind: ColumnKind,
 }
 
 impl Default for Column {
     fn default() -> Self {
-        Self { field_name: String::new(), title: String::new(), width: 0.0, alignment: None, visible: true, read_only: false, color: None, text_color: None }
+        Self { field_name: String::new(), title: String::new(), width: 0.0, alignment: None, visible: true, read_only: false, color: None, text_color: None, kind: ColumnKind::Text }
     }
 }
 
@@ -61,6 +85,7 @@ const COLUMN_PROPS: &[PropInfo] = &[
     PropInfo::new("text_color", PropKind::Color, "Appearance"),
     PropInfo::new("visible", PropKind::Bool, "Behavior"),
     PropInfo::new("read_only", PropKind::Bool, "Behavior"),
+    PropInfo::new("kind", PropKind::Enum(<ColumnKind as PropEnum>::NAMES), "Appearance").rust_type("ColumnKind"),
 ];
 
 impl Component for Column {
@@ -83,6 +108,7 @@ impl Component for Column {
             "text_color" => color(self.text_color),
             "visible" => self.visible.into(),
             "read_only" => self.read_only.into(),
+            "kind" => PropValue::enum_value(self.kind),
             _ => return None,
         })
     }
@@ -108,6 +134,7 @@ impl Component for Column {
             "text_color" => self.text_color = color(value)?,
             "visible" => self.visible = value.to_bool()?,
             "read_only" => self.read_only = value.to_bool()?,
+            "kind" => self.kind = value.to_enum()?,
             _ => return Err(Error::UnknownProperty(name.to_string())),
         }
         Ok(())

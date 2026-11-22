@@ -168,6 +168,13 @@ fn set_theme(state: &Shared, args: &Value) -> Result<Value, String> {
         return Err("falta `key` (o token, como primary, ou a classe do estilo, como Button.danger)".into());
     }
     let value = args.get("value").cloned().unwrap_or(Value::Null);
+    // O valor mandado como texto JSON (`"\"#1DB954\""`, `"{...}"`) vale o que ele diz: a
+    // descrição pede "o valor JSON", e o cliente às vezes o manda já em texto (o relatório do
+    // player de música, 21/11). Uma cor crua (`#1DB954`) não é JSON e fica como está.
+    let value = match &value {
+        Value::String(s) => serde_json::from_str::<Value>(s.trim()).ok().unwrap_or(value),
+        _ => value,
+    };
     let (file, mut doc, created) = if project.theme.ends_with(".json") {
         let text = std::fs::read_to_string(project.file(&project.theme)).map_err(|e| format!("{}: {e}", project.theme))?;
         let doc: Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).map_err(|e| format!("{}: {e}", project.theme))?;

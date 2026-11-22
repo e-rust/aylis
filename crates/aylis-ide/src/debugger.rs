@@ -379,7 +379,9 @@ pub fn start(ui: &mut Ui, state: &Shared) {
     crate::actions::save_all(state);
     let breakpoints = breakpoint_map(state);
     match project.language {
-        Language::Rust => {
+        // No Windows o Rust vai pelo caminho das outras (o app abre, espera e o CodeLLDB se
+        // anexa): lançado pelo CodeLLDB, travava antes da janela (22/11).
+        Language::Rust if !cfg!(windows) => {
             let Some(adapter) = aylis_tools::dap::codelldb() else {
                 state.borrow_mut().status = "⚠ Falta o CodeLLDB para depurar Rust (Ferramentas → Verificar ambiente)".into();
                 return;
@@ -419,7 +421,7 @@ pub fn start(ui: &mut Ui, state: &Shared) {
             state.borrow_mut().debugger.pending = Some(rx);
         }
         // As outras: o app sobe pelo aylis-host e o depurador da linguagem se anexa ao
-        // processo da lógica.
+        // processo da lógica (o Rust no Windows: ao próprio app).
         other => {
             if let Err(missing) = attach_tools(other) {
                 let looked = aylis_tools::dap::tools_dir().map(|d| d.display().to_string()).unwrap_or_else(|| "(sem LOCALAPPDATA)".into());
@@ -441,7 +443,7 @@ pub fn start(ui: &mut Ui, state: &Shared) {
 fn attach_tools(language: Language) -> Result<(), &'static str> {
     use aylis_tools::dap;
     match language {
-        Language::Pascal | Language::Cpp => dap::codelldb().map(|_| ()).ok_or("o CodeLLDB"),
+        Language::Rust | Language::Pascal | Language::Cpp => dap::codelldb().map(|_| ()).ok_or("o CodeLLDB"),
         Language::Go => dap::delve().map(|_| ()).ok_or("o Delve (dlv)"),
         Language::CSharp => dap::netcoredbg().map(|_| ()).ok_or("o netcoredbg"),
         Language::TypeScript => {
@@ -472,6 +474,7 @@ fn attach_session(attach: Attach, pid: u32) -> Result<Session, String> {
     use aylis_tools::dap;
     let Attach { project, breakpoints } = attach;
     match project.language {
+        Language::Rust => Session::attach_rust(&dap::codelldb().ok_or("sem o CodeLLDB")?, pid, &breakpoints),
         Language::Pascal | Language::Cpp => Session::attach_native(&dap::codelldb().ok_or("sem o CodeLLDB")?, pid, &breakpoints),
         Language::Go => Session::attach_go(&dap::delve().ok_or("sem o Delve")?, pid, &breakpoints),
         Language::CSharp => Session::attach_dotnet(&dap::netcoredbg().ok_or("sem o netcoredbg")?, pid, &breakpoints),

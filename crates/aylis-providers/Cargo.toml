@@ -12,14 +12,18 @@ rust-version.workspace = true
 default = ["pdf"]
 # O PDF pelo krilla (o `PdfProvider` padrão do `Report` e da impressão fora do Windows).
 pdf = ["dep:krilla", "dep:skrifa", "dep:fontdb"]
+# As tags de mídia pelo lofty (o `LoftyTagsProvider` do `MediaInfo`).
+tags = ["dep:lofty"]
 
 [dependencies]
-aylis-core = { version = "0.9.1", path = "../aylis-core" }
-aylis-data = { version = "0.9.1", path = "../aylis-data" }
+aylis-core = { version = "0.9.2", path = "../aylis-core" }
+aylis-data = { version = "0.9.2", path = "../aylis-data" }
 # O QR Code do provedor padrão de códigos de barras (sem dependências).
 qrcode = { version = "0.14", default-features = false }
 # A planilha do XlsxProvider.
 rust_xlsxwriter = { version = "0.102", default-features = false }
+# As tags de mídia do `LoftyTagsProvider` (atrás da feature `tags`).
+lofty = { version = "0.25", optional = true }
 # As matrizes do OleObject (`get_values`/`set_values`).
 serde_json = "1"
 # O PDF dos relatórios (o `PdfProvider` padrão): o gerador do Typst, com as fontes embutidas em

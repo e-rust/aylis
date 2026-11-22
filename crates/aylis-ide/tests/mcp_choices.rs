@@ -70,7 +70,7 @@ fn the_same_button_text_gets_distinct_labels() {
     let state = shared(Document::new());
     let mut ide = app::build(state.clone());
     ide.ui.show(ide.form).unwrap();
-    let fix = |what: &str| Fix { description: format!("Instala o {what}"), command: vec!["echo".into(), what.into()], interactive: false, fetch: None, env: Vec::new() };
+    let fix = |what: &str| Fix { description: format!("Instala o {what}"), command: vec!["echo".into(), what.into()], interactive: false, fetch: None, env: Vec::new(), after: None };
     let check = |target, name: &str| Check { target, name: name.into(), status: Status::Missing, detail: "não encontrado".into(), fix: Some(fix(name)), help: None };
     // A verificação das linguagens que a IDE começa ao abrir desabilitaria os botões.
     state.borrow_mut().env_job = None;

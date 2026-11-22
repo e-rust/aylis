@@ -111,6 +111,12 @@ pub(crate) struct AndroidFileDialogs;
 
 impl FileDialogService for AndroidFileDialogs {
     fn show(&mut self, options: FileDialogOptions, done: Box<dyn FnOnce(Vec<String>) + Send>) {
+        // A pasta do Android é uma árvore de documentos (`content://`), não um caminho: ainda
+        // não; volta como cancelado.
+        if options.folder {
+            done(Vec::new());
+            return;
+        }
         let request = keep(&FILES, done);
         let ok = if options.save {
             let name = if options.file_name.is_empty() { "arquivo".to_string() } else { aylis_core::files::file_name(&options.file_name).to_string() };

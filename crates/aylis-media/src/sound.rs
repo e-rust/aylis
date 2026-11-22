@@ -260,6 +260,7 @@ pub const MIX_SOURCE_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
         ("volume", aylis_core::PropKind::Float),
         ("pan", aylis_core::PropKind::Float),
         ("mute", aylis_core::PropKind::Bool),
+        ("pre_volume", aylis_core::PropKind::Bool),
     ],
 };
 
@@ -274,6 +275,9 @@ pub struct MixSource {
     /// -1 (esquerda) a 1 (direita).
     pub pan: f32,
     pub mute: bool,
+    /// Um player ouvido antes do volume dele: o visualizador e o medidor ficam iguais em
+    /// qualquer volume e no mudo (desligado: como o player soa).
+    pub pre_volume: bool,
 }
 
 /// Lê a propriedade `sources` do mixer: a lista de [`MIX_SOURCE_RECORD`] em JSON, cada fonte
@@ -298,6 +302,7 @@ pub fn parse_sources(text: &str) -> Vec<MixSource> {
                 volume: number(&j["volume"]).map_or(1.0, |v| v.clamp(0.0, 4.0)),
                 pan: number(&j["pan"]).map_or(0.0, |v| v.clamp(-1.0, 1.0)),
                 mute: j["mute"].as_bool().unwrap_or(false),
+                pre_volume: j["pre_volume"].as_bool().unwrap_or(false),
             })
         })
         .collect()
@@ -424,8 +429,8 @@ impl AudioMixer {
                 let found = ui.find(&source.name);
                 let tap = found.and_then(|c| match ui.class_name(c) {
                     Some("Microphone") => crate::Microphone::tap(ui, c),
-                    Some("MediaPlayer") => crate::MediaPlayer::tap(ui, c),
-                    Some("VideoPlayer") => crate::VideoPlayer::tap(ui, c),
+                    Some("MediaPlayer") => crate::MediaPlayer::tap(ui, c, source.pre_volume),
+                    Some("VideoPlayer") => crate::VideoPlayer::tap(ui, c, source.pre_volume),
                     _ => None,
                 });
                 if tap.is_none() {
@@ -493,6 +498,7 @@ impl Component for AudioMixer {
             MethodInfo::new("record", &[], Some(PropKind::Bool)),
             MethodInfo::new("stop_recording", &[PropKind::String], Some(PropKind::Float)).params(&["path"]),
             MethodInfo::new("level", &[], Some(PropKind::Float)),
+            MethodInfo::new("take_samples", &[], Some(PropKind::NumberList)),
         ];
         METHODS
     }
@@ -512,6 +518,12 @@ impl Component for AudioMixer {
                 Ok(PropValue::Float(samples.len() as f64 / (MIX_RATE as f64 * MIX_CHANNELS as f64)))
             }
             "level" => Ok(PropValue::Float(f32::from_bits(shared.level.load(Ordering::Relaxed)) as f64)),
+            // As amostras desde a última vez (o `keep_samples`), para o acesso tipado e as
+            // outras linguagens (antes só pela função do Rust).
+            "take_samples" => {
+                let samples: Vec<f32> = shared.samples.lock().ok().and_then(|mut s| s.as_mut().map(|q| q.drain(..).collect())).unwrap_or_default();
+                Ok(PropValue::String(samples.iter().map(|s| format!("{s:.4}")).collect::<Vec<_>>().join(";")))
+            }
             _ => Err(format!("AudioMixer não tem o método '{method}'")),
         }
     }
@@ -650,7 +662,7 @@ mod tests {
             r#"[{"name": "micVoz", "volume": 1.2}, {"name": "loopback:Alto-falantes", "device": true, "volume": 0.4, "pan": -2}, {"name": "mpFundo", "mute": true}]"#,
         );
         assert_eq!(s.len(), 3);
-        assert_eq!(s[0], MixSource { name: "micVoz".into(), device: false, volume: 1.2, pan: 0.0, mute: false });
+        assert_eq!(s[0], MixSource { name: "micVoz".into(), device: false, volume: 1.2, pan: 0.0, mute: false, pre_volume: false });
         assert!(s[1].device);
         assert_eq!(s[1].name, "loopback:Alto-falantes");
         assert_eq!(s[1].pan, -1.0);

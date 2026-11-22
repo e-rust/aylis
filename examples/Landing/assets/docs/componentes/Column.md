@@ -15,6 +15,7 @@ Uma coluna do DataGrid: campo, título, largura, alinhamento, cores.
 | `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` | O alinhamento do texto (`None` = o do campo). |
 | `color` | Cor | cor | O fundo das células. |
 | `text_color` | Cor do texto | cor | A cor do texto das células. |
+| `kind` | Tipo | um de: `text`, `icon`, `image` | O que a coluna mostra: o texto, um ícone do `ImageList` ou a imagem do campo. |
 
 ### Comportamento
 

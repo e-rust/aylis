@@ -522,6 +522,12 @@ pub trait Component: Any {
         self.inner().and_then(|i| i.layout_hooks())
     }
 
+    /// O mouse nos componentes de dentro (veja [`ChildPointer`]). O padrão: o do componente de
+    /// dentro.
+    fn child_pointer_mut(&mut self) -> Option<&mut dyn ChildPointer> {
+        self.inner_mut().and_then(|i| i.child_pointer_mut())
+    }
+
     /// O comportamento de popup do próprio componente (veja [`Popup`]). O padrão: o do componente
     /// de dentro.
     fn popup(&self) -> Option<&dyn Popup> {
@@ -718,6 +724,19 @@ pub trait Timed {
 /// cursor (o `DragImage`) e o arrasto que ele recebe pelos ganchos `drop_*` (as abas que
 /// passam de uma faixa para outra, a janela de um form). O componente que usa devolve
 /// `Some(self)` em [`Component::drag_drop`] e [`Component::drag_drop_mut`].
+/// Um contêiner que precisa saber do mouse nos componentes de dentro, sem tomar os eventos
+/// deles: a lista que seleciona a linha clicada (a linha é uma cópia do modelo, e o clique cai
+/// num componente dela). O núcleo avisa cada ancestral que pede, depois de entregar ao
+/// componente; os handlers do app continuam os mesmos. O componente devolve `Some(self)` em
+/// [`Component::child_pointer_mut`].
+pub trait ChildPointer {
+    /// O botão apertou em `child`, um componente de dentro (`event.click_count` 2: o duplo
+    /// clique).
+    fn child_pressed(&mut self, ctx: &mut EventCtx<'_>, child: ComponentId, event: &PointerEvent);
+    /// O clique em `child` (apertou e soltou nele).
+    fn child_clicked(&mut self, ctx: &mut EventCtx<'_>, child: ComponentId);
+}
+
 pub trait DragDrop {
     /// O componente edita texto. No celular, quando ele tem o foco a plataforma abre o
     /// teclado virtual.
@@ -1093,6 +1112,9 @@ pub struct ControlBase {
     tab_stop: bool,
     /// No toque, arrastar rola o contêiner de fora em vez de ir para o controle.
     pan_on_touch: bool,
+    /// A pintura depende do mouse estar nele ou num filho (o `Panel` com `hover_fill`): o
+    /// núcleo repinta quando o mouse entra ou sai de qualquer um dos de dentro.
+    hover_within: bool,
     /// Menu de contexto: abre no clique direito.
     pub(crate) popup_menu: Option<ComponentId>,
     /// O cursor do mouse em cima dele.
@@ -1309,6 +1331,7 @@ impl ControlBase {
             drag: None,
             tab_stop: true,
             pan_on_touch: true,
+            hover_within: false,
             popup_menu: None,
             cursor: CursorShape::Default,
             opacity: 1.0,
@@ -1546,6 +1569,19 @@ impl ControlBase {
     /// Ver [`set_pan_on_touch`](Self::set_pan_on_touch).
     pub fn pan_on_touch(&self) -> bool {
         self.pan_on_touch
+    }
+
+    /// Ver [`set_hover_within`](Self::set_hover_within).
+    pub fn hover_within(&self) -> bool {
+        self.hover_within
+    }
+
+    /// A pintura depende do mouse estar no controle ou num filho dele (o `:hover` do CSS, que
+    /// vale com o mouse num filho): o núcleo repinta o controle quando o mouse entra ou sai de
+    /// qualquer um dos de dentro, e [`Ui::hover_within`](crate::Ui::hover_within) diz se está.
+    pub fn set_hover_within(&mut self, v: bool) -> &mut Self {
+        self.hover_within = v;
+        self
     }
 
     /// Cursor do mouse sobre o controle. `Default` herda o do pai.

@@ -12,7 +12,7 @@ Imagem de um campo: campo `blob` com os bytes da imagem (PNG, JPEG...) ou campo 
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `image` | Imagem | texto | Caminho do arquivo, relativo à pasta do projeto. |
+| `image` | Imagem | texto | Caminho do arquivo, relativo à pasta do projeto (só os do projeto; um do disco, pelo `ImageView::set_image_file`). |
 | `fit` | Ajuste | um de: `contain`, `cover`, `stretch`, `center`, `original` | Como a imagem ocupa o controle: `contain` (inteira, mantendo a proporção), `cover` (cobre, cortando as bordas), `stretch` (estica), `center` ou `original` (tamanho real). |
 | `radius` | Raio dos cantos | número | Arredonda os cantos (recorta a imagem). |
 

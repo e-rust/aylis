@@ -674,6 +674,10 @@ type
     procedure SetOnDock(Value: string);
     function GetOnUndock: string;
     procedure SetOnUndock(Value: string);
+    function GetOnFilesDrop: string;
+    procedure SetOnFilesDrop(Value: string);
+    function GetOnViewChange: string;
+    procedure SetOnViewChange(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -851,6 +855,8 @@ type
     procedure RequestAttention(ACritical: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
+    function DropX: Double;
+    function DropY: Double;
     function RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
     function Focused: string;
     procedure FocusNext;
@@ -913,6 +919,8 @@ type
     property OnGpuChange: string read GetOnGpuChange write SetOnGpuChange;
     property OnDock: string read GetOnDock write SetOnDock;
     property OnUndock: string read GetOnUndock write SetOnUndock;
+    property OnFilesDrop: string read GetOnFilesDrop write SetOnFilesDrop;
+    property OnViewChange: string read GetOnViewChange write SetOnViewChange;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -1034,6 +1042,8 @@ type
     procedure SetLineHeight(Value: Double);
     function GetTextShadow: TAylisShadow;
     procedure SetTextShadow(Value: TAylisShadow);
+    function GetMaxLines: Int64;
+    procedure SetMaxLines(Value: Int64);
     function GetFocusControl: TAylisComponent;
     procedure SetFocusControl(Value: TAylisComponent);
     function GetLeft: Double;
@@ -1222,6 +1232,7 @@ type
     property OutlineWidth: Double read GetOutlineWidth write SetOutlineWidth;
     property LineHeight: Double read GetLineHeight write SetLineHeight;
     property TextShadow: TAylisShadow read GetTextShadow write SetTextShadow;
+    property MaxLines: Int64 read GetMaxLines write SetMaxLines;
     property FocusControl: TAylisComponent read GetFocusControl write SetFocusControl;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
@@ -5192,6 +5203,26 @@ begin
   SetProp('on_undock', TJSONString.Create(Value));
 end;
 
+function TForm.GetOnFilesDrop: string;
+begin
+  Result := AsText(GetProp('on_files_drop'));
+end;
+
+procedure TForm.SetOnFilesDrop(Value: string);
+begin
+  SetProp('on_files_drop', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnViewChange: string;
+begin
+  Result := AsText(GetProp('on_view_change'));
+end;
+
+procedure TForm.SetOnViewChange(Value: string);
+begin
+  SetProp('on_view_change', TJSONString.Create(Value));
+end;
+
 function TForm.GetClientWidth: Double;
 begin
   Result := GetProp('client_width').AsFloat;
@@ -6072,6 +6103,16 @@ begin
   Result := AsList(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'gpu_adapters', 'args', TJSONArray.Create])));
 end;
 
+function TForm.DropX: Double;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'drop_x', 'args', TJSONArray.Create])).AsFloat;
+end;
+
+function TForm.DropY: Double;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'drop_y', 'args', TJSONArray.Create])).AsFloat;
+end;
+
 function TForm.RenderRgba(AX: Double; AY: Double; AWidth: Double; AHeight: Double; AScale: Double): string;
 begin
   Result := AsText(Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'render_rgba', 'args', TJSONArray.Create([AX, AY, AWidth, AHeight, AScale])])));
@@ -6240,6 +6281,16 @@ end;
 procedure TLabel.SetTextShadow(Value: TAylisShadow);
 begin
   SetProp('text_shadow', AylisShadowToJSON(Value));
+end;
+
+function TLabel.GetMaxLines: Int64;
+begin
+  Result := GetProp('max_lines').AsInt64;
+end;
+
+procedure TLabel.SetMaxLines(Value: Int64);
+begin
+  SetProp('max_lines', TJSONInt64Number.Create(Value));
 end;
 
 function TLabel.GetFocusControl: TAylisComponent;

@@ -334,6 +334,7 @@ fn check_to_json(c: &Check) -> Value {
             "interactive": f.interactive,
             "fetch": f.fetch,
             "env": f.env.iter().map(|(k, v)| json!([k, v])).collect::<Vec<_>>(),
+            "after": f.after,
         })),
         "help": c.help,
     })
@@ -349,6 +350,7 @@ fn check_from_json(v: &Value) -> Option<Check> {
             interactive: f["interactive"].as_bool().unwrap_or(false),
             fetch: text(&f["fetch"]),
             env: f["env"].as_array().into_iter().flatten().filter_map(|p| Some((text(&p[0])?, text(&p[1])?))).collect(),
+            after: f["after"].as_array().and_then(|a| a.iter().map(text).collect()),
         }),
     };
     Some(Check {
@@ -378,7 +380,7 @@ mod tests {
     use super::*;
 
     fn sample() -> Check {
-        let mut fix = Fix { description: "Adiciona os alvos".into(), command: vec!["rustup".into(), "target".into(), "add".into()], interactive: false, fetch: None, env: Vec::new() };
+        let mut fix = Fix { description: "Adiciona os alvos".into(), command: vec!["rustup".into(), "target".into(), "add".into()], interactive: false, fetch: None, env: Vec::new(), after: None };
         fix.env.push(("GOBIN".into(), "C:\\x".into()));
         Check { target: Target::Android, name: "Alvos do Rust para Android".into(), status: Status::Missing, detail: "faltam x".into(), fix: Some(fix), help: None }
     }

@@ -313,6 +313,9 @@ pub struct FileDialogOptions {
     pub save: bool,
     /// Abrir vários.
     pub multiple: bool,
+    /// Escolher uma pasta (no lugar de arquivos; com `multiple`, várias). Onde o sistema não
+    /// tem (o navegador, o celular), volta vazio, como cancelado.
+    pub folder: bool,
     /// O form dono do diálogo (a janela dele fica por baixo, como num modal); `None`: sem dona.
     pub owner: Option<crate::ComponentId>,
 }
@@ -909,6 +912,9 @@ pub struct Services {
     pub bluetooth: Option<Box<dyn BluetoothService>>,
     /// Notificações push (`PushNotifications`): FCM, APNs, Web Push, WNS, UnifiedPush.
     pub push: Option<Box<dyn PushService>>,
+    /// Os controles de mídia do sistema (`MediaSession`): o SMTC do Windows, o MPRIS do Linux,
+    /// o Media Session do navegador, o `MPNowPlayingInfoCenter` do macOS e do iOS.
+    pub media_session: Option<Box<dyn MediaSessionService>>,
     /// As ações do aparelho (`WakeAppAction`, `NotifyAction`) e as regras do `PushTrigger`
     /// executadas pela plataforma, também com o app fechado. Sem ele, os componentes fazem o
     /// que dá com o app aberto (mostrar o form, a notificação comum).
@@ -1117,6 +1123,69 @@ pub trait PushService {
     fn poll(&mut self) -> Vec<PushEvent> {
         Vec::new()
     }
+}
+
+/// O que toca agora, para os controles de mídia do sistema (o quadro do volume do Windows, o
+/// painel do Linux, a Central de Controle, a tela bloqueada).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct NowPlaying {
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    /// Em segundos (0: não se sabe).
+    pub duration: f64,
+    /// Em segundos.
+    pub position: f64,
+    pub playing: bool,
+    /// A capa (PNG ou JPEG, como está no arquivo).
+    pub cover: Option<Vec<u8>>,
+    /// Há faixa seguinte e anterior (os botões do sistema ficam ligados).
+    pub can_next: bool,
+    pub can_previous: bool,
+}
+
+/// O que o sistema pede ao app (as teclas de mídia, os botões do painel e do fone).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MediaCommand {
+    Play,
+    Pause,
+    /// Tocar ou pausar (a tecla única dos teclados).
+    Toggle,
+    Stop,
+    Next,
+    Previous,
+    /// Ir para a posição, em segundos.
+    Seek(f64),
+}
+
+impl MediaCommand {
+    /// O nome do comando (`play`, `pause`, `toggle`, `stop`, `next`, `previous`, `seek`).
+    pub fn name(self) -> &'static str {
+        match self {
+            MediaCommand::Play => "play",
+            MediaCommand::Pause => "pause",
+            MediaCommand::Toggle => "toggle",
+            MediaCommand::Stop => "stop",
+            MediaCommand::Next => "next",
+            MediaCommand::Previous => "previous",
+            MediaCommand::Seek(_) => "seek",
+        }
+    }
+}
+
+/// Quem recebe os comandos do sistema (de qualquer thread: o componente repassa à tela).
+pub type MediaCommandSink = std::sync::Arc<dyn Fn(MediaCommand) + Send + Sync>;
+
+/// Os controles de mídia do sistema (o componente `MediaSession`; decidido em 21/11). Onde
+/// não existe, o serviço fica vazio e o componente não liga.
+pub trait MediaSessionService {
+    /// Começa a sessão do app: `owner` é o form (o Windows liga a sessão a uma janela), e os
+    /// comandos do sistema chegam por `commands`. Erro: não deu para começar aqui.
+    fn start(&mut self, owner: Option<crate::ComponentId>, commands: MediaCommandSink) -> Result<(), String>;
+    /// O que toca agora (o título, a capa, tocando ou pausado).
+    fn update(&mut self, now: &NowPlaying);
+    /// Termina a sessão (o app sai dos controles do sistema).
+    fn stop(&mut self);
 }
 
 static PUSH_EVENTS: std::sync::Mutex<Vec<PushEvent>> = std::sync::Mutex::new(Vec::new());

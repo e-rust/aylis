@@ -262,6 +262,11 @@ struct Control {
     base: f64,
     /// Saídas novas para a thread abrir.
     outputs: Option<Vec<OutputSpec>>,
+    /// A próxima fonte, emendada sem silêncio no fim desta ([`AudioPlayer::queue_next`]), e o
+    /// aviso de quando ela entrou.
+    next: Option<(AudioOpener, Box<dyn Fn() + Send>)>,
+    /// A duração da fonte de agora, quando ela veio de um `queue_next`.
+    duration: Option<Option<f64>>,
 }
 
 struct Shared {
@@ -369,6 +374,12 @@ impl AudioPlayer {
         self.shared.taps.add(MIX_RATE, MIX_CHANNELS)
     }
 
+    /// Liga um ponto de escuta que já existe (o do componente, que sobrevive à troca de
+    /// arquivo); `pre_volume`: recebe o som antes do volume do player.
+    pub(crate) fn attach_tap(&self, tap: Tap, pre_volume: bool) {
+        self.shared.taps.attach(tap, MIX_RATE, MIX_CHANNELS, pre_volume);
+    }
+
     pub fn is_playing(&self) -> bool {
         self.shared.control.lock().is_ok_and(|c| c.playing && !c.finished)
     }
@@ -376,11 +387,26 @@ impl AudioPlayer {
     /// Posição em segundos (o que já saiu no alto-falante).
     pub fn position(&self) -> f64 {
         let base = self.shared.control.lock().map_or(0.0, |c| c.seek.unwrap_or(c.base));
-        base + played_seconds(&self.shared)
+        // Logo depois da troca de faixa (`queue_next`), o fim da anterior ainda sai: a nova
+        // fica em 0 até começar.
+        (base + played_seconds(&self.shared)).max(0.0)
     }
 
     pub fn duration(&self) -> Option<f64> {
-        self.duration
+        self.shared.control.lock().ok().and_then(|c| c.duration).unwrap_or(self.duration)
+    }
+
+    /// A fonte que toca em seguida, sem silêncio entre as duas (a playlist): quando esta termina,
+    /// a thread do áudio abre `next` e continua nas mesmas saídas; `on_switch` avisa (na thread
+    /// do áudio) quando ela entrou. Uma fonte que não abre é como o fim (o `on_end`). Outra
+    /// chamada troca a próxima.
+    pub fn queue_next(&self, next: AudioOpener, on_switch: Box<dyn Fn() + Send>) {
+        self.control(|c| c.next = Some((next, on_switch)));
+    }
+
+    /// Tira a próxima fonte da fila (a playlist mudou).
+    pub fn clear_next(&self) {
+        self.control(|c| c.next = None);
     }
 }
 
@@ -527,8 +553,7 @@ fn audio_thread(
                     }
                 }
                 if !shared.taps.is_empty() {
-                    let scaled: Vec<f32> = buffer.iter().map(|s| s * volume).collect();
-                    shared.taps.feed(&scaled, rate, channels);
+                    shared.taps.feed_with_volume(&buffer, rate, channels, volume);
                 }
                 continue;
             } else if looping {
@@ -536,6 +561,26 @@ fn audio_thread(
                     c.seek = Some(0.0);
                 }
                 continue;
+            } else if let Some((opener, on_switch)) = shared.control.lock().ok().and_then(|mut c| c.next.take()) {
+                // A próxima fonte, nas mesmas saídas: os conversores acompanham a taxa nova. A
+                // posição recomeça quando o que já está na fila acabar de sair.
+                match opener() {
+                    Ok(next) => {
+                        let pending = queued as f64 / master.rate.max(1) as f64;
+                        let played = played_seconds(&shared);
+                        if let Ok(mut c) = shared.control.lock() {
+                            c.base = -(played + pending);
+                            c.duration = Some(next.duration());
+                        }
+                        source = next;
+                        on_switch();
+                        continue;
+                    }
+                    Err(e) => {
+                        aylis_core::stderr_line!("aylis-media: a próxima faixa não abriu: {e}");
+                        ended = true;
+                    }
+                }
             } else {
                 ended = true;
             }

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <cerrno>
 #include <cstdio>
 #include <algorithm>
 #include <array>
@@ -40,6 +41,19 @@
 #endif
 
 namespace aylis {
+
+/// Uma linha do stdin. A leitura interrompida por um sinal (`EINTR`: o depurador que se anexa
+/// no macOS para o processo com SIGSTOP) é repetida, em vez de valer como a tela fechada.
+inline bool read_line(std::string& line) {
+    for (;;) {
+        errno = 0;
+        if (std::getline(std::cin, line)) return true;
+        // O std::cin marca fim de arquivo nos dois casos; o FILE do stdin distingue.
+        if (std::feof(stdin) || errno != EINTR) return false;
+        std::cin.clear();
+        std::clearerr(stdin);
+    }
+}
 
 /// Um valor JSON.
 class Json {
@@ -928,7 +942,7 @@ private:
             return true;
         }
         std::string line;
-        while (std::getline(std::cin, line)) {
+        while (read_line(line)) {
             if (!line.empty() && line.back() == '\r') line.pop_back();
             if (line.empty()) continue;
             out = Json::parse(line);
@@ -1004,7 +1018,7 @@ public:
 #endif
         Server server;
         std::string line;
-        while (std::getline(std::cin, line)) {
+        while (read_line(line)) {
             if (!line.empty() && line.back() == '\r') line.pop_back();
             if (line.empty()) continue;
             Json parsed = Json::parse(line);

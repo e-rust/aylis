@@ -116,6 +116,7 @@ pub fn choose_size(sizes: &[(u32, u32)], request: &CameraRequest) -> Option<(u32
 }
 
 /// Ordena do maior para o menor, sem repetir.
+#[cfg_attr(not(any(windows, target_os = "linux", target_os = "android")), allow(dead_code))]
 pub(crate) fn sort_sizes(mut sizes: Vec<(u32, u32)>) -> Vec<(u32, u32)> {
     sizes.sort_by_key(|&(w, h)| std::cmp::Reverse((w as u64 * h as u64, w)));
     sizes.dedup();

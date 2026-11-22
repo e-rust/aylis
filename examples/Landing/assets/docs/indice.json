@@ -360,8 +360,16 @@
           "arquivo": "componentes/HotkeyEdit.md"
         },
         {
+          "titulo": "ImageList",
+          "arquivo": "componentes/ImageList.md"
+        },
+        {
           "titulo": "Joystick",
           "arquivo": "componentes/Joystick.md"
+        },
+        {
+          "titulo": "ListHeader",
+          "arquivo": "componentes/ListHeader.md"
         },
         {
           "titulo": "ListView",
@@ -908,6 +916,10 @@
           "arquivo": "componentes/AudioOutput.md"
         },
         {
+          "titulo": "AudioSpectrum",
+          "arquivo": "componentes/AudioSpectrum.md"
+        },
+        {
           "titulo": "CameraView",
           "arquivo": "componentes/CameraView.md"
         },
@@ -932,12 +944,24 @@
           "arquivo": "componentes/MediaCard.md"
         },
         {
+          "titulo": "MediaInfo",
+          "arquivo": "componentes/MediaInfo.md"
+        },
+        {
           "titulo": "MediaPlayer",
           "arquivo": "componentes/MediaPlayer.md"
         },
         {
+          "titulo": "MediaSession",
+          "arquivo": "componentes/MediaSession.md"
+        },
+        {
           "titulo": "Microphone",
           "arquivo": "componentes/Microphone.md"
+        },
+        {
+          "titulo": "Playlist",
+          "arquivo": "componentes/Playlist.md"
         },
         {
           "titulo": "RecordButton",
@@ -954,6 +978,10 @@
         {
           "titulo": "Sound",
           "arquivo": "componentes/Sound.md"
+        },
+        {
+          "titulo": "SymphoniaTagsProvider",
+          "arquivo": "componentes/SymphoniaTagsProvider.md"
         },
         {
           "titulo": "VideoPlayer",
@@ -1045,6 +1073,10 @@
         {
           "titulo": "KrillaPdfProvider",
           "arquivo": "componentes/KrillaPdfProvider.md"
+        },
+        {
+          "titulo": "LoftyTagsProvider",
+          "arquivo": "componentes/LoftyTagsProvider.md"
         },
         {
           "titulo": "TileServerProvider",

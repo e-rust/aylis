@@ -115,9 +115,9 @@ pub mod prelude {
         FieldValue, GetTextRequest, MasterChange, ServerQuery, SetTextRequest,
     };
     #[cfg(feature = "dbcontrols")]
-    pub use aylis_dbcontrols::{BandKind, Column, ColumnLayout, ColumnSpec, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
+    pub use aylis_dbcontrols::{BandKind, Column, ColumnKind, ColumnLayout, ColumnSpec, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
     #[cfg(feature = "media")]
-    pub use aylis_media::{CameraQuality, MediaPlayer, MixSource, OutputSpec, VideoPlayer};
+    pub use aylis_media::{AudioSpectrum, CameraQuality, MediaInfo, MediaPlayer, MediaTagsInfo, MixSource, OutputSpec, MediaSession, Playlist, RepeatMode, SpectrumStyle, VideoPlayer};
     #[cfg(feature = "vector")]
     pub use aylis_vector::{Lottie, Svg};
     #[cfg(feature = "markdown")]
@@ -177,6 +177,8 @@ pub mod classes {
         Path: aylis_controls::shapes::PathShape => "Shapes",
         DataModule: aylis_controls::DataModule => "Standard",
         VirtualList: aylis_controls::VirtualList => "Additional",
+        ListHeader: aylis_controls::ListHeader => "Additional",
+        ImageList: aylis_controls::ImageList => "Additional",
         KpiCard: aylis_controls::bi::KpiCard => "BI",
         PivotTable: aylis_controls::bi::PivotTable => "BI",
         Slicer: aylis_controls::bi::Slicer => "BI",
@@ -368,6 +370,12 @@ pub mod classes {
         #[cfg(feature = "media")] Sound: aylis_media::Sound => "Media",
         #[cfg(feature = "media")] AudioMixer: aylis_media::AudioMixer => "Media",
         #[cfg(feature = "media")] CameraView: aylis_media::CameraView => "Media",
+        #[cfg(feature = "media")] MediaInfo: aylis_media::MediaInfo => "Media",
+        #[cfg(feature = "media")] SymphoniaTagsProvider: aylis_media::SymphoniaTagsProvider => "Providers",
+        #[cfg(feature = "media")] Playlist: aylis_media::Playlist => "Media",
+        #[cfg(feature = "media")] AudioSpectrum: aylis_media::AudioSpectrum => "Media",
+        #[cfg(feature = "media")] MediaSession: aylis_media::MediaSession => "Media",
+        #[cfg(feature = "media-tags")] LoftyTagsProvider: aylis_providers::LoftyTagsProvider => "Providers",
         #[cfg(feature = "vector")] Lottie: aylis_vector::Lottie => "Media",
         #[cfg(feature = "vector")] Svg: aylis_vector::Svg => "Additional",
         #[cfg(feature = "markdown")] Markdown: aylis_markdown::Markdown => "Additional",
@@ -623,6 +631,7 @@ impl Application {
             gpu: aylis_core::gpu::GpuChoice::parse(&self.project.gpu),
             present: aylis_core::gpu::PresentMode::parse(&self.project.present),
             placements_dir: self.placements_dir.clone(),
+            app_id: self.project.linux_package_id(),
         }
     }
 
@@ -634,16 +643,71 @@ impl Application {
 
     /// Abre o form principal e roda até ele fechar (como `Application.Run`).
     pub fn run(mut self) -> Result<(), Error> {
+        // Depurar na IDE: o depurador se anexa a este processo antes de tudo (veja
+        // `aylis_platform_winit::wait_for_debugger`).
+        #[cfg(all(feature = "dev", windows))]
+        aylis_platform_winit::wait_for_debugger();
         // Roteiro de teste (só no app com `dev`, na linha que o teste escreve no stdin): sem
         // janela, como o aylis-host faz nas outras linguagens (veja `aylis_remote::script`).
         #[cfg(all(feature = "dev", not(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))))]
         if let Some((script, output)) = aylis_remote::script::start_line().as_ref().and_then(aylis_remote::script::from_start) {
             return aylis_remote::script::run_in_process(&mut self.ui, self.main_form, &script, output.as_deref()).map_err(Into::into);
         }
+        // Linux: `--install-shortcut` e `--remove-shortcut` gravam (ou tiram) o atalho no menu
+        // deste usuário apontando para este executável, sem abrir a janela: quem recebe a pasta
+        // publicada sem instalador ganha o app no menu (decidido em 21/11).
+        #[cfg(all(target_os = "linux", not(target_os = "android")))]
+        if let Some(flag) = std::env::args().nth(1).filter(|a| a == "--install-shortcut" || a == "--remove-shortcut") {
+            return linux_shortcut(&self.project, &self.ui, flag == "--install-shortcut").map_err(Into::into);
+        }
         self.development();
         let options = self.options();
         aylis_platform_winit::run_with(self.ui, self.main_form, options)
     }
+}
+
+/// O atalho do app no menu deste usuário (`~/.local/share/applications/<pacote>.desktop`) e o
+/// ícone do projeto (`~/.local/share/icons/hicolor`), apontando para este executável; `false`
+/// tira os dois. O mesmo `.desktop` do pacote (o nome, as categorias, o `StartupWMClass`).
+#[cfg(all(target_os = "linux", not(target_os = "android")))]
+fn linux_shortcut(project: &aylis_project::Project, ui: &Ui, install: bool) -> Result<(), String> {
+    use std::path::PathBuf;
+    let home = std::env::var_os("HOME").map(PathBuf::from).ok_or("sem HOME: não sei onde fica o menu deste usuário")?;
+    let share = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|| home.join(".local/share"));
+    let id = project.linux_package_id();
+    let desktop = share.join("applications").join(format!("{id}.desktop"));
+    let icon_file = project.publish.icon.trim();
+    let svg = icon_file.to_ascii_lowercase().ends_with(".svg");
+    let icon = share.join("icons/hicolor").join(if svg { "scalable/apps".to_string() } else { "256x256/apps".to_string() }).join(format!("{id}.{}", if svg { "svg" } else { "png" }));
+    if !install {
+        let _ = std::fs::remove_file(&icon);
+        std::fs::remove_file(&desktop).map_err(|e| format!("{}: {e}", desktop.display()))?;
+        aylis_core::stderr_line!("atalho tirado: {}", desktop.display());
+        return Ok(());
+    }
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let has_icon = !icon_file.is_empty()
+        && ui.services().resources.as_ref().and_then(|r| r.read(icon_file)).is_some_and(|bytes| {
+            icon.parent().is_some_and(|d| std::fs::create_dir_all(d).is_ok()) && std::fs::write(&icon, bytes).is_ok()
+        });
+    let linux = &project.publish.linux;
+    let categories: String = if linux.categories.is_empty() { "Utility;".into() } else { linux.categories.iter().map(|c| format!("{};", c.trim().trim_end_matches(';'))).collect() };
+    let mime: String = linux.mime_types.iter().map(|m| format!("{};", m.trim())).collect();
+    let text = format!(
+        "[Desktop Entry]\nType=Application\nName={}\nExec=\"{}\"{}\n{}Terminal=false\nCategories={categories}\nStartupWMClass={id}\n{}",
+        project.app_name(),
+        exe.display().to_string().replace('"', "\\\""),
+        if mime.is_empty() { "" } else { " %F" },
+        if has_icon { format!("Icon={id}\n") } else { String::new() },
+        if mime.is_empty() { String::new() } else { format!("MimeType={mime}\n") },
+    );
+    if let Some(dir) = desktop.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    }
+    std::fs::write(&desktop, text).map_err(|e| format!("{}: {e}", desktop.display()))?;
+    let _ = std::process::Command::new("update-desktop-database").arg("-q").arg(share.join("applications")).status();
+    aylis_core::stderr_line!("atalho no menu: {}", desktop.display());
+    Ok(())
 }
 
 /// Android: chame em `android_main` (o código gerado faz isso). Erros vão para o logcat

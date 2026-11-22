@@ -28,7 +28,9 @@
   "SideSheet": { "size": [352, 260], "props": { "title": "Filtros", "open": true }, "children": [
     { "class": "CheckBox", "name": "chkFolha1", "text": "Só os ativos", "checked": true, "align": "top", "height": 32, "margins": [16, 8, 16, 0] },
     { "class": "CheckBox", "name": "chkFolha2", "text": "Com pedidos este mês", "align": "top", "height": 32, "margins": [16, 4, 16, 0] } ] },
-  "SeekBar": { "size": [352, 60], "props": { "duration": 240, "position": 75, "buffered": 150, "show_time": true } },
+  "SeekBar": { "size": [352, 60], "props": { "duration": 240, "position": 75, "buffered": 150, "show_time": true, "show_labels": true } },
+  "AudioSpectrum": { "size": [320, 96], "props": { "bands": 32 } },
+  "ListHeader": { "size": [360, 32], "props": { "columns": [{"title": "#", "part": "lblNumero", "width": 40}, {"title": "Título", "part": "lblTitulo", "width": 180, "sortable": true, "resizable": true}, {"title": "Duração", "part": "lblDuracao", "width": 80, "align": "right"}], "sort_part": "lblTitulo" } },
   "FlowLayout": { "size": [352, 152], "children": [
     { "class": "Chip", "name": "chpFluxo1", "text": "Rust" },
     { "class": "Chip", "name": "chpFluxo2", "text": "Python" },

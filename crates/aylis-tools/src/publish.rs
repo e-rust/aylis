@@ -220,20 +220,25 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
 fn linux_wsl(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
     let distro = crate::wsl::distro().ok_or("nenhuma distribuição Linux no WSL (Ferramentas → Verificar ambiente instala o Ubuntu)")?;
     let app_file = file_name(project.app_name());
-    // O Rust compila direto no WSL; as outras linguagens, pelo publicar do Linux (o
-    // `aylis-tool` de Linux no WSL), com a tela, o backend e o `.deb` iguais aos do Linux.
-    if project.language != Language::Rust {
+    // O Rust compila no WSL, na pasta-espelho (o `Cargo.toml` do projeto tem os caminhos do
+    // Windows); as outras linguagens, e os pacotes que só o Linux monta (o `.rpm`, o AppImage e
+    // o Flatpak), pelo publicar do Linux (o `aylis-tool` de Linux no WSL), com a tela, o
+    // backend e o pacote iguais aos do Linux. A distribuição é a `Ubuntu-22.04`, que tem a
+    // glibc mínima (`crate::glibc`): ligado na 2.43 do Ubuntu 26.04, o app não abria no Mint 22
+    // (22/11).
+    let linux_only = options.installer && project.publish.linux.kind() != aylis_project::LinuxInstaller::Deb;
+    if project.language != Language::Rust || linux_only {
         let script = crate::wsl::publish_with_tool_script(project, out, options.installer);
         match crate::wsl::run(&distro, &script, control, sink, false)? {
             Some(0) | None => {}
             Some(3) => return Err("o Rust não está instalado no Linux do WSL (Ferramentas → Verificar ambiente instala)".into()),
             Some(c) => return Err(format!("a publicação no WSL terminou com código {c} (veja as mensagens)")),
         }
-        let deb = std::fs::read_dir(out).ok().and_then(|d| d.flatten().map(|e| e.path()).find(|p| p.extension().is_some_and(|x| x == "deb")));
+        let deb = std::fs::read_dir(out).ok().and_then(|d| d.flatten().map(|e| e.path()).find(|p| p.extension().is_some_and(|x| ["deb", "rpm", "AppImage", "flatpak"].iter().any(|k| x.eq_ignore_ascii_case(k)))));
         let app = out.join(&app_file);
         return Ok(Published { main: deb.unwrap_or_else(|| app.join(&app_file)), dir: app });
     }
-    let script = crate::wsl::publish_script(project, out, &app_file, options.installer);
+    let script = crate::wsl::publish_script(project, out, &app_file);
     match crate::wsl::run(&distro, &script, control, sink, false)? {
         Some(0) | None => {}
         Some(3) => return Err("o Rust não está instalado no Linux do WSL (Ferramentas → Verificar ambiente instala)".into()),
@@ -241,12 +246,30 @@ fn linux_wsl(project: &Project, options: &Options, out: &Path, control: &Control
     }
     let exe = out.join(&app_file);
     sink(Event::Line(format!("{} ({})", exe.display(), size(&exe)), LineKind::Tool));
-    let deb = std::fs::read_dir(out).ok().and_then(|d| d.flatten().map(|e| e.path()).find(|p| p.extension().is_some_and(|x| x == "deb")));
-    Ok(Published { main: deb.unwrap_or(exe), dir: out.to_path_buf() })
+    check_glibc(&exe, sink);
+    if options.installer {
+        // O mesmo `.deb` do Linux, montado aqui (o executável veio do WSL).
+        let deb = linux_package(project, &[(app_file.clone(), exe)], &app_file, out, sink)?;
+        return Ok(Published { main: deb, dir: out.to_path_buf() });
+    }
+    Ok(Published { main: exe, dir: out.to_path_buf() })
 }
 
 fn profile(options: &Options) -> &'static str {
     if options.debug { "debug" } else { "release" }
+}
+
+/// Depois de compilar para o Linux: o que o executável pede à glibc (`crate::glibc`, a mínima
+/// decidida em 22/11). Passar dela é um aviso: o app abre nesta máquina, mas não nas
+/// distribuições mais antigas (os da 0.9.1, ligados no Ubuntu 26.04, no Mint 22).
+fn check_glibc(exe: &Path, sink: Sink) {
+    match crate::glibc::check_file(exe) {
+        Ok(req) => {
+            let asked = req.glibc.map(|v| v.iter().map(u32::to_string).collect::<Vec<_>>().join(".")).unwrap_or_else(|| "nenhuma".into());
+            sink(Event::Line(format!("glibc pedida: {asked} (abre na {} ou mais nova)", crate::glibc::minimum_text()), LineKind::Tool));
+        }
+        Err(e) => sink(Event::Line(format!("⚠ {e}"), LineKind::Tool)),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -271,6 +294,9 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
     let dest = out.join(&name);
     std::fs::copy(&exe_path, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
     sink(Event::Line(format!("{} ({})", dest.display(), size(&dest)), LineKind::Tool));
+    if cfg!(target_os = "linux") {
+        check_glibc(&dest, sink);
+    }
     let mut extra = ray_tracing_dlls(project, out, sink)?;
     // Os arquivos que o projeto pede ao lado do executável (DLLs de terceiros).
     if cfg!(windows) {
@@ -295,13 +321,15 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
         crate::codesign::apply(&signing, std::slice::from_ref(&main), false, control, sink)?;
         return Ok(Published { main, dir: out.to_path_buf() });
     }
-    // No Linux, o instalador é o `.deb` (o executável e os arquivos que o projeto pede).
+    // No Linux, o pacote de `publish.linux.installer` (o `.deb` por padrão), com o executável e
+    // os arquivos que o projeto pede.
     if options.installer && cfg!(target_os = "linux") {
         let mut files = vec![(name.clone(), dest.clone())];
         files.extend(extra.iter().filter_map(|p| Some((p.file_name()?.to_string_lossy().to_string(), p.clone()))));
-        let deb = debian_package(project, &files, &name, out, sink)?;
-        return Ok(Published { main: deb, dir: out.to_path_buf() });
+        let package = linux_package(project, &files, &name, out, sink)?;
+        return Ok(Published { main: package, dir: out.to_path_buf() });
     }
+    linux_menu_shortcut(project, &dest, sink);
     Ok(Published { main: dest, dir: out.to_path_buf() })
 }
 
@@ -463,6 +491,14 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
         .ok_or("o cargo não informou o executável")?;
     let dest = app.join(format!("{}{}", file_name(project.app_name()), std::env::consts::EXE_SUFFIX));
     std::fs::copy(&exe_path, &dest).map_err(|e| format!("{}: {e}", dest.display()))?;
+    // A tela e o backend compilado (o C++ pelo g++ da máquina) ligam na glibc desta máquina.
+    let backend_exe = backend_dir.join(exe("app"));
+    if cfg!(target_os = "linux") {
+        check_glibc(&dest, sink);
+        if backend_exe.is_file() {
+            check_glibc(&backend_exe, sink);
+        }
+    }
     ray_tracing_dlls(project, &app, sink)?;
     if cfg!(windows) {
         visual_cpp_runtime(&app, sink)?;
@@ -485,8 +521,11 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
         // No Linux, o `.deb` com a pasta inteira (a tela e o backend).
         if cfg!(target_os = "linux") {
             let main = dest.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-            let deb = debian_package(project, &crate::app_deb::files_in(&app)?, &main, out, sink)?;
-            return Ok(Published { main: deb, dir: app });
+            let package = linux_package(project, &crate::app_linux::files_in(&app)?, &main, out, sink)?;
+            return Ok(Published { main: package, dir: app });
+        }
+        if cfg!(target_os = "linux") {
+            linux_menu_shortcut(project, &dest, sink);
         }
         sink(Event::Line(format!("O instalador ainda não sai para projetos em {}: distribua a pasta {}", project.language.name(), app.display()), LineKind::Tool));
     }
@@ -2218,12 +2257,40 @@ fs.writeFileSync(path.join(process.argv[1], "package.json"), '{ "type": "module"
     crate::process::run_tool(&mut command, control, sink, LineKind::Tool)
 }
 
-/// O `.deb` do app (`crate::app_deb`), com a linha nas mensagens.
-fn debian_package(project: &Project, files: &[(String, PathBuf)], main: &str, out: &Path, sink: Sink) -> Result<PathBuf, String> {
-    sink(Event::Step("Montando o pacote .deb…".into()));
-    let deb = crate::app_deb::build(project, files, main, out)?;
-    sink(Event::Line(format!("{} ({}; instale com: sudo apt install ./{})", deb.display(), size(&deb), deb.file_name().unwrap_or_default().to_string_lossy()), LineKind::Tool));
-    Ok(deb)
+/// O pacote do Linux do app (`crate::app_linux`, no formato de `publish.linux.installer`), com
+/// a linha de como instalar nas mensagens.
+fn linux_package(project: &Project, files: &[(String, PathBuf)], main: &str, out: &Path, sink: Sink) -> Result<PathBuf, String> {
+    use aylis_project::LinuxInstaller;
+    let kind = project.publish.linux.kind();
+    let what = match kind {
+        LinuxInstaller::Deb => ".deb",
+        LinuxInstaller::Rpm => ".rpm",
+        LinuxInstaller::AppImage => "AppImage",
+        LinuxInstaller::Flatpak => "Flatpak",
+    };
+    sink(Event::Step(format!("Montando o pacote {what}…")));
+    let package = crate::app_linux::build(project, files, main, out)?;
+    let file = package.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let how = match kind {
+        LinuxInstaller::Deb => format!("instale com: sudo apt install ./{file}"),
+        LinuxInstaller::Rpm => format!("instale com: sudo dnf install ./{file}"),
+        LinuxInstaller::AppImage => format!("rode com: chmod +x {file} && ./{file}"),
+        LinuxInstaller::Flatpak => format!("instale com: flatpak install --user {file}"),
+    };
+    sink(Event::Line(format!("{} ({}; {how})", package.display(), size(&package)), LineKind::Tool));
+    Ok(package)
+}
+
+/// Publicar sem instalador no Linux, com `publish.linux.menu_shortcut`: o atalho no menu deste
+/// usuário apontando para o executável publicado. Uma falha só avisa (o app já foi publicado).
+fn linux_menu_shortcut(project: &Project, exe: &Path, sink: Sink) {
+    if !cfg!(target_os = "linux") || !project.publish.linux.menu_shortcut {
+        return;
+    }
+    match crate::app_linux::user_shortcut(project, exe) {
+        Ok(path) => sink(Event::Line(format!("Atalho no menu: {}", path.display()), LineKind::Tool)),
+        Err(e) => sink(Event::Line(format!("⚠ o atalho no menu não foi gravado: {e}"), LineKind::Tool)),
+    }
 }
 
 /// O cliente do protocolo no lugar do arquivo do projeto que só aponta para ele (o

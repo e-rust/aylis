@@ -251,6 +251,23 @@ fn call_tool(name: &str, args: Value, poster: &Poster) -> Value {
             Ok((_, Err(e))) | Err(e) => text_result(e, true),
         };
     }
+    // Parar: manda parar e espera o app (e a depuração) terminar, até 15 s. Antes respondia
+    // "parando" na hora, e um `run` logo depois era derrubado pela parada do anterior (o
+    // relatório do player de música, 21/11).
+    if name == "stop" {
+        if let Err(e) = on_ui(poster, |ui, state, ids| run_tool(ui, state, ids, "stop", &Value::Null)).and_then(|r| r) {
+            return text_result(e, true);
+        }
+        let deadline = std::time::Instant::now() + Duration::from_secs(15);
+        loop {
+            match peek(poster, |state| state.borrow().job.is_none() && !state.borrow().debugger.active()) {
+                Ok(true) => return text_result("parado", false),
+                Ok(false) if std::time::Instant::now() < deadline => std::thread::sleep(Duration::from_millis(200)),
+                Ok(false) => return text_result("ainda parando depois de 15 s (status diz quando terminar)", true),
+                Err(e) => return text_result(e, true),
+            }
+        }
+    }
     // Passado o prazo, "em andamento" com o número da tarefa, e a chamada continua: o
     // `task_status` traz o fim (M12 do Tabernáculo: respondia "a IDE não respondeu", e quem
     // chamou não sabia se a ação tinha acontecido).
@@ -1047,7 +1064,9 @@ fn apply_layout(state: &Shared, layout: &str, dry_run: bool) -> Result<Value, St
     if dry_run {
         return Ok(Value::String("o layout carrega sem erros (dry_run: nada foi trocado)".into()));
     }
-    state.borrow_mut().doc.replace_json(layout)?;
+    let mut st = state.borrow_mut();
+    crate::assetdialogs::register_icons_in(&mut st.doc.ui, layout);
+    st.doc.replace_json(layout)?;
     Ok(Value::String("layout trocado".into()))
 }
 
@@ -1196,6 +1215,9 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 return Ok(Value::String(if started && !status.is_empty() { format!("name alterado; {status}") } else { "name alterado".into() }));
             }
             let mut st = state.borrow_mut();
+            if let Some(text) = value.as_str() {
+                crate::assetdialogs::register_icons_in(&mut st.doc.ui, &format!("\"{text}\""));
+            }
             st.doc.begin_change();
             st.doc.set_prop(id, property, &value)?;
             Ok(Value::String(format!("{property} alterado")))
@@ -1235,7 +1257,9 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 if property == "name" {
                     return Err("o `name` muda por set_property (um componente por vez, com o resto do projeto)".into());
                 }
-                state.borrow_mut().doc.set_prop_many(&targets, property, value).map_err(|e| format!("{property}: {e}"))?;
+                let mut st = state.borrow_mut();
+                crate::assetdialogs::register_icons_in(&mut st.doc.ui, &value.to_string());
+                st.doc.set_prop_many(&targets, property, value).map_err(|e| format!("{property}: {e}"))?;
                 done.push(property.clone());
             }
             Ok(json!({ "components": targets.len(), "properties": done }))
@@ -1609,7 +1633,9 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             // As chamadas que passaram do prazo, ainda rodando ou com o resultado por ler (M12).
             let tasks = crate::mcp_tasks::list();
             let status = state.borrow().status.clone();
-            Ok(if tasks.as_array().is_some_and(|t| t.is_empty()) { Value::String(status) } else { json!({ "status": status, "tasks": tasks }) })
+            // A versão da IDE junto, para relatar problemas.
+            let version = env!("CARGO_PKG_VERSION");
+            Ok(if tasks.as_array().is_some_and(|t| t.is_empty()) { json!({ "status": status, "version": version }) } else { json!({ "status": status, "version": version, "tasks": tasks }) })
         }
         "stop" => {
             crate::actions::stop(state);

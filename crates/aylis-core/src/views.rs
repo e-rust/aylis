@@ -309,6 +309,12 @@ impl Ui {
                 continue;
             }
             self.restore_view_base(form);
+            // O código fica sabendo da vista nova (vazio: o base), para o que não é propriedade
+            // (o relatório do player de música, 21/11: ~200 linhas de `on_resize` à mão). No
+            // designer, quem escolhe a vista é a IDE: sem evento.
+            if !self.design_mode {
+                self.queue_event(form, "on_view_change", crate::EventArgs::Text(wanted.clone().unwrap_or_default()));
+            }
             let Some(view) = wanted.as_ref().and_then(|w| self.views[&form].views.iter().find(|v| &v.name == w).cloned()) else { continue };
             // Primeiro o lugar (o contêiner e depois a posição), depois as propriedades.
             let mut moves = Vec::new();

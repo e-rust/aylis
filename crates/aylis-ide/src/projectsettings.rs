@@ -26,7 +26,7 @@ enum Page {
 
 /// As seções: o título (também o texto que a IDE lite usa para saber se a seção vale lá),
 /// a descrição, o editor e como ele aparece.
-const SECTIONS: [(&str, &str, Open, Page); 11] = [
+const SECTIONS: [(&str, &str, Open, Page); 12] = [
     (
         "Geral",
         "Nome, linguagem, plataformas, form principal, idioma, fuso, renderizador e texto por plataforma, placa de vídeo e onde sai o executável.",
@@ -39,6 +39,7 @@ const SECTIONS: [(&str, &str, Open, Page); 11] = [
     ("Ícone do app", "O ícone de cada plataforma, gerado a partir de um PNG ou SVG.", crate::iconview::open, Page::Button("Escolher a imagem do ícone…")),
     ("Android", "Versões do SDK, orientação, tela cheia, permissões extras, links que abrem o app e o manifesto.", crate::androidview::open, Page::Embedded),
     ("Windows", "O instalador do Publicar (.msi, NSIS ou Inno Setup) e o que vai nele.", crate::windowsview::open, Page::Embedded),
+    ("Linux", "O pacote do Publicar (.deb, .rpm, AppImage ou Flatpak), o menu, as dependências e o atalho sem instalador.", crate::linuxview::open, Page::Embedded),
     ("iPhone (GitHub)", "Compilar o app de iOS numa máquina macOS do GitHub, sem Mac, e instalar em qualquer iPhone.", crate::iosview::open, Page::Embedded),
     (
         "Memória",

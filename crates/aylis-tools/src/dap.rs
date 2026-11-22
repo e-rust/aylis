@@ -709,6 +709,16 @@ impl Session {
 
     /// Calcula uma expressão no quadro.
     pub fn evaluate(&mut self, frame: i64, expression: &str) -> Result<String, String> {
+        // O CodeLLDB do Windows cai ao avaliar um nome que não existe no quadro (a variável
+        // antes do `let`, num app em Rust; 22/11), e o app morre junto. Um nome só vai se
+        // estiver entre as variáveis do quadro.
+        let name = expression.trim();
+        if cfg!(windows) && self.adapter == "lldb" && !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            let known = self.locals(frame).map(|vars| vars.iter().any(|v| v.name == name)).unwrap_or(true);
+            if !known {
+                return Err(format!("{name} não existe neste ponto"));
+            }
+        }
         let body = self.request("evaluate", json!({ "expression": expression, "frameId": frame, "context": "watch" }))?;
         if let Some(text) = body["type"].as_str().and_then(|kind| self.pascal_string(frame, expression, kind)) {
             return Ok(text);
@@ -1176,7 +1186,10 @@ pub fn js_debug() -> Option<PathBuf> {
 /// O `jdb` do JDK (Java): em `JAVA_HOME` ou no PATH.
 pub fn jdb() -> Option<PathBuf> {
     let exe = if cfg!(windows) { "jdb.exe" } else { "jdb" };
-    std::env::var_os("JAVA_HOME").map(|h| PathBuf::from(h).join("bin").join(exe)).filter(|p| p.is_file()).or_else(|| which(exe))
+    // O do JDK que compila o projeto antes do PATH: o /usr/bin/jdb do macOS é um atalho que,
+    // sem JDK instalado no sistema, só avisa (o JDK do pacote fica fora do PATH; Mac, 22/11).
+    let beside_javac = || crate::hostlang::find(aylis_project::Language::Java).ok().and_then(|tc| tc.program.parent().map(|d| d.join(exe))).filter(|p| p.is_file());
+    std::env::var_os("JAVA_HOME").map(|h| PathBuf::from(h).join("bin").join(exe)).filter(|p| p.is_file()).or_else(beside_javac).or_else(|| which(exe))
 }
 
 /// Uma porta livre nesta máquina.
@@ -1206,6 +1219,22 @@ impl Session {
         s.initialize("lldb")?;
         s.watch(pid);
         s.attach_with(json!({ "pid": pid, "stopOnEntry": false, "initCommands": LLDB_INIT }), breakpoints)
+    }
+
+    /// Rust no Windows: o CodeLLDB anexado ao app já aberto, que espera por ele
+    /// (`aylis_platform_winit::wait_for_debugger`). Lançado pelo `launch` do CodeLLDB, o app
+    /// travava antes de abrir a janela (na VM e nesta máquina, 22/11). A memória do passo é a
+    /// do processo: anexado, o CodeLLDB não acha o contador do aylis e cai ao procurá-lo.
+    pub fn attach_rust(adapter: &Path, pid: u32, breakpoints: &BTreeMap<PathBuf, Vec<Breakpoint>>) -> Result<Session, String> {
+        let mut command = Command::new(adapter);
+        if let Some(lib) = adapter.parent().and_then(Path::parent).map(|e| e.join("lldb/bin").join(if cfg!(windows) { "liblldb.dll" } else { "liblldb.so" })).filter(|p| p.is_file()) {
+            command.arg("--liblldb").arg(lib);
+        }
+        let mut s = Session::spawn(command)?;
+        s.initialize("lldb")?;
+        s.watch(pid);
+        let init: Vec<String> = LLDB_INIT.iter().map(|c| c.to_string()).chain(lldb_scripts()).collect();
+        s.attach_with(json!({ "pid": pid, "stopOnEntry": false, "sourceLanguages": ["rust"], "initCommands": init }), breakpoints)
     }
 
     /// Go: o `dlv dap` anexado ao processo.

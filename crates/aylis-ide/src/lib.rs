@@ -16,6 +16,7 @@ pub mod codewindow;
 pub mod coverage;
 pub mod androidview;
 pub mod windowsview;
+pub mod linuxview;
 pub mod iosview;
 pub mod grammars;
 pub mod reportview;

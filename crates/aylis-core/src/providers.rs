@@ -21,6 +21,7 @@ pub enum Provided<'a> {
     Export(&'a dyn ExportProvider),
     Pdf(&'a dyn PdfProvider),
     MapTiles(&'a dyn MapTileProvider),
+    MediaTags(&'a dyn MediaTagsProvider),
 }
 
 // ---------------------------------------------------------------------------
@@ -216,4 +217,39 @@ impl Ui {
     pub fn provided(&self, id: ComponentId) -> Option<Provided<'_>> {
         self.component(id)?.provided()
     }
+}
+
+// ---------------------------------------------------------------------------
+// Tags de mídia
+
+/// O que se lê de um arquivo de áudio ou vídeo: as tags, a duração e a capa embutida (o
+/// `MediaInfo`; decidido em 21/11: um componente com provedor, não propriedades do player).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct MediaTags {
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    /// O número da faixa no álbum (0: sem).
+    pub track: u32,
+    /// O ano (0: sem).
+    pub year: u32,
+    /// Em segundos (0: não se sabe).
+    pub duration: f64,
+    /// A imagem embutida (a capa do álbum), como está no arquivo (PNG, JPEG).
+    pub cover: Option<Vec<u8>>,
+}
+
+/// De onde ler: um caminho do disco ou os bytes (um arquivo do projeto), com a extensão.
+#[derive(Clone, Debug)]
+pub enum MediaInput {
+    Path(String),
+    Bytes(Vec<u8>, String),
+}
+
+/// Quem lê as tags: roda em outra thread (uma playlist inteira em segundo plano).
+pub type TagReader = std::sync::Arc<dyn Fn(&MediaInput) -> Result<MediaTags, String> + Send + Sync>;
+
+/// O provedor de tags de mídia: devolve o leitor (que vai para outra thread).
+pub trait MediaTagsProvider {
+    fn tag_reader(&self) -> TagReader;
 }

@@ -452,6 +452,27 @@ pub struct OpenDialog {
     pub file_name: String,
     /// Deixa escolher vários arquivos de uma vez.
     pub multiple: bool,
+    /// `file` (o padrão) escolhe arquivos; `folder`, uma pasta (decidido em 21/11). Os filtros
+    /// não valem no modo pasta, e no navegador e no celular ele volta como cancelado.
+    pub kind: DialogKind,
+}
+
+/// O que o [`OpenDialog`] escolhe.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DialogKind {
+    #[default]
+    File,
+    Folder,
+}
+
+impl PropEnum for DialogKind {
+    const NAMES: &'static [&'static str] = &["file", "folder"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::File, Self::Folder].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
 }
 
 
@@ -490,6 +511,7 @@ impl OpenDialog {
             save,
             multiple: self.multiple && !save,
             owner: None,
+            folder: self.kind == DialogKind::Folder && !save,
         }
     }
 
@@ -519,7 +541,8 @@ impl Component for OpenDialog {
         filter: String => "Behavior",
         initial_dir: String => "Behavior",
         file_name: String => "Data",
-        multiple: bool => "Behavior";
+        multiple: bool => "Behavior",
+        kind: DialogKind => "Behavior";
         events: on_select: Vec<String>, on_cancel: ()
     }
 }

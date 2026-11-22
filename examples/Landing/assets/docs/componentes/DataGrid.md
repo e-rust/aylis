@@ -12,6 +12,7 @@ Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, ed
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
+| `images` | Imagens | componente | O `ImageList` das colunas de ícone (`kind: icon`): o campo diz qual imagem. |
 | `row_height` | Altura da linha | número | A altura de cada linha, em pontos. |
 | `fixed_columns` | Colunas fixas | inteiro | Quantas colunas da esquerda ficam paradas ao rolar para os lados (0: nenhuma). |
 | `cursor_color` | Cor da linha atual | cor | A borda da célula atual; `None` usa a cor de destaque (`primary`) do tema. |
@@ -66,3 +67,19 @@ impl FrmPrincipal {
     }
 }
 ```
+
+## Mais sobre o DataGrid
+
+### Ícones e imagens nas colunas
+
+Uma coluna com `kind: icon` mostra um ícone do `ImageList` ligado em `images`: o campo do
+registro diz qual (a posição ou o nome). Com `kind: image`, a coluna desenha a imagem guardada
+no campo (um `blob` com PNG, JPEG...), inteira na altura da linha: para capas maiores, aumente
+o `row_height` (a altura de todas as linhas).
+
+```json
+{"class": "DataGrid", "name": "grdMusicas", "data_source": "dsMusicas", "images": "imgEstados", "row_height": 56,
+ "columns": [{"field": "estado", "kind": "icon", "width": 40}, {"field": "capa", "kind": "image", "width": 64}, {"field": "titulo"}]}
+```
+
+Vale nas 8 linguagens: o app só põe o número (ou o nome) e os bytes nos campos.

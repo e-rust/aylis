@@ -15,10 +15,19 @@
 //! itens por linha (ou por coluna, na horizontal). O tamanho de cada item pode variar: `sizes`
 //! (`80;120;80`, o resto com `item_height`) ou, pelo código, [`VirtualList::set_sizer`]; as
 //! posições ficam somadas, e achar o primeiro item à vista é uma busca binária.
+//!
+//! Decidido em 22/11 (o relatório de um player de música portado para o Aylis), sem impor
+//! colunas à linha: a seleção (`selection`, `item_index`, `selected`) com a linha marcada pelo
+//! estado `checked` do tema, os eventos com o índice (`on_item_click`, `on_item_dbl_click`,
+//! `on_item_activate`, `on_change`), o teclado, a barra de rolagem (`scroll_bar`) e vários
+//! modelos de linha: cada filho direto é um modelo, e `kinds` (ou `kind_field`, ou
+//! [`VirtualList::set_kind`]) diz qual vale em cada item. O cabeçalho é outro componente, o
+//! `ListHeader`, que alinha títulos a componentes do modelo pelo nome.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 
-use aylis_core::{ArrangeItem, Component, ComponentId, ControlBase, EventArgs, EventCtx, PropEnum, PropValue, RectF, Ui, WheelEvent, properties};
+use aylis_core::{ArrangeItem, ChildPointer, Component, ComponentId, ControlBase, EventArgs, EventCtx, Key, KeyEvent, PointerEvent, PropEnum, PropValue, RectF, Ui, WheelEvent, properties};
 
 use crate::leaf_control;
 
@@ -55,6 +64,54 @@ impl PropEnum for ListOrientation {
 
 /// O tamanho de cada item, pelo código (variável).
 pub type Sizer = Box<dyn Fn(usize) -> f32>;
+
+/// O modelo de cada item, pelo código: o nome de um dos modelos (vazio: o primeiro).
+pub type Kinder = Box<dyn Fn(usize) -> String>;
+
+/// Quantas linhas a lista deixa escolher.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SelectionMode {
+    /// Nenhuma (como antes): a lista não marca linha nem recebe o foco.
+    #[default]
+    None,
+    Single,
+    /// Várias, com Ctrl (uma a uma) e Shift (o intervalo).
+    Multiple,
+}
+
+impl PropEnum for SelectionMode {
+    const NAMES: &'static [&'static str] = &["none", "single", "multiple"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::None, Self::Single, Self::Multiple].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Quando aparece a barra de rolagem da lista.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ScrollBarMode {
+    /// Nunca (como antes): rola pela roda e pelo toque.
+    #[default]
+    None,
+    /// Quando os itens passam da área.
+    Auto,
+    Always,
+}
+
+impl PropEnum for ScrollBarMode {
+    const NAMES: &'static [&'static str] = &["none", "auto", "always"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::None, Self::Auto, Self::Always].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// A largura da barra de rolagem.
+const BAR: f32 = 10.0;
 
 /// Uma ligação do `item_bindings`: o componente do modelo, a propriedade (vazia: a principal) e
 /// o campo da fonte.
@@ -118,6 +175,36 @@ pub struct VirtualList {
     swiped: std::cell::Cell<Option<(usize, f32)>>,
     /// O dedo está arrastando a linha (até o `touch_end`).
     row_drag: std::cell::Cell<bool>,
+    /// Quantas linhas dá para escolher (`none`: nenhuma, como antes).
+    pub selection: SelectionMode,
+    /// O item escolhido (-1: nenhum); com `multiple`, o último escolhido.
+    pub item_index: i64,
+    /// Com `multiple`, os itens escolhidos, em ordem (`2;5;7`).
+    pub selected: String,
+    /// A barra de rolagem: `none` (como antes), `auto` ou `always`.
+    pub scroll_bar: ScrollBarMode,
+    /// O modelo de cada item, pelo nome do filho (`pnlMusica;pnlMusica;pnlSecao`; o que falta e
+    /// o nome desconhecido: o primeiro). Como o `sizes`, uma lista por item.
+    pub kinds: String,
+    /// O campo da fonte (o `DataRepeater`) com o nome do modelo de cada item, no lugar de `kinds`.
+    pub kind_field: String,
+    kinder: Option<Kinder>,
+    /// Os modelos: o nome, o componente e a altura desenhada.
+    templates: Vec<(String, ComponentId, f32)>,
+    /// O modelo de cada linha (a posição em `templates`).
+    row_kind: RefCell<HashMap<ComponentId, usize>>,
+    /// Onde começou a escolha com Shift.
+    anchor: Option<usize>,
+    /// Arrastando a barra: a distância do mouse ao começo do cursor dela.
+    bar_drag: Option<f32>,
+    /// Algum modelo tem animação: só então a linha reciclada recomeça as animações.
+    animated: bool,
+    /// O item que cada linha mostrou por último com as animações dele (não muda no
+    /// `refresh_item`, que volta ao mesmo item sem recomeçar).
+    bound: RefCell<HashMap<ComponentId, usize>>,
+    /// Os itens cujo `appear` já rodou (decidido em 22/11: uma vez por item). Esquecidos no
+    /// `refresh` e quando a quantidade muda.
+    appeared_items: RefCell<std::collections::HashSet<usize>>,
 }
 
 /// A largura de cada ação revelada ao deslizar a linha.
@@ -146,6 +233,20 @@ impl Default for VirtualList {
             pool: RefCell::default(),
             source: None,
             load_more_at: None,
+            selection: SelectionMode::None,
+            item_index: -1,
+            selected: String::new(),
+            scroll_bar: ScrollBarMode::None,
+            kinds: String::new(),
+            kind_field: String::new(),
+            kinder: None,
+            templates: Vec::new(),
+            row_kind: RefCell::default(),
+            anchor: None,
+            bar_drag: None,
+            animated: false,
+            bound: RefCell::default(),
+            appeared_items: RefCell::default(),
         }
     }
 }
@@ -189,15 +290,213 @@ impl VirtualList {
     /// guarda a ordem dos filhos.
     fn row_part(&self, ui: &Ui, index: usize, part: ComponentId) -> Option<ComponentId> {
         let row = self.pool.borrow().iter().find(|(_, i)| *i == Some(index)).map(|(id, _)| *id)?;
-        let template = self.template?;
+        // O modelo de `part` (com vários, o da linha tem de ser o mesmo).
         let mut path = Vec::new();
         let mut current = part;
-        while current != template {
+        let kind = loop {
+            if let Some(k) = self.templates.iter().position(|(_, t, _)| *t == current) {
+                break k;
+            }
+            if self.templates.is_empty() && Some(current) == self.template {
+                break 0;
+            }
             let parent = ui.parent(current)?;
             path.push(ui.children(parent).iter().position(|&c| c == current)?);
             current = parent;
+        };
+        if self.row_kind.borrow().get(&row).copied().unwrap_or(0) != kind {
+            return None;
         }
         path.iter().rev().try_fold(row, |at, &i| ui.children(at).get(i).copied())
+    }
+
+    /// Na linha do item `index`, o componente do modelo com o nome `name` (o `ListHeader` acha
+    /// as colunas assim).
+    pub fn part_named(ui: &Ui, list: ComponentId, index: usize, name: &str) -> Option<ComponentId> {
+        let row = ui.get::<VirtualList>(list)?.pool.borrow().iter().find(|(_, i)| *i == Some(index)).map(|(id, _)| *id)?;
+        ui.find_in(row, name)
+    }
+
+    /// As linhas (cópias dos modelos) e os modelos: quem muda a largura de uma peça em todas
+    /// (o `ListHeader`).
+    pub fn rows_and_templates(ui: &Ui, list: ComponentId) -> Vec<ComponentId> {
+        let Some(l) = ui.get::<VirtualList>(list) else { return Vec::new() };
+        let mut out: Vec<ComponentId> = l.pool.borrow().iter().map(|(id, _)| *id).collect();
+        out.extend(l.templates.iter().map(|(_, t, _)| *t));
+        out
+    }
+
+    /// O item escolhido (-1: nenhum) e, com `multiple`, todos.
+    pub fn selected(ui: &Ui, list: ComponentId) -> Vec<usize> {
+        ui.get::<VirtualList>(list).map(|l| l.selected_items()).unwrap_or_default()
+    }
+
+    /// Escolhe o item `index` (com `selection` ligada), rolando até ele.
+    pub fn select(ui: &mut Ui, list: ComponentId, index: usize) {
+        ui.send_message(list, &Select(index));
+    }
+
+    /// Mostra de novo só o item `index` (o `on_bind` dele de novo): a música que passou a tocar.
+    pub fn refresh_item(ui: &mut Ui, list: ComponentId, index: usize) {
+        if let Some(l) = ui.get_mut::<VirtualList>(list) {
+            for (_, i) in l.pool.borrow_mut().iter_mut() {
+                if *i == Some(index) {
+                    *i = None;
+                }
+            }
+        }
+        ui.send_message(list, &Refresh);
+    }
+
+    /// O modelo de cada item pelo código: o nome de um dos filhos (vazio: o primeiro).
+    pub fn set_kind(ui: &mut Ui, list: ComponentId, kind: impl Fn(usize) -> String + 'static) {
+        if let Some(l) = ui.get_mut::<VirtualList>(list) {
+            l.kinder = Some(Box::new(kind));
+            l.starts.borrow_mut().0 = usize::MAX;
+        }
+        Self::refresh(ui, list);
+    }
+
+    /// Os itens escolhidos (com `single`, o `item_index`).
+    fn selected_items(&self) -> Vec<usize> {
+        match self.selection {
+            SelectionMode::None => Vec::new(),
+            SelectionMode::Single => usize::try_from(self.item_index).ok().into_iter().collect(),
+            SelectionMode::Multiple => self.selected.split([';', ',']).filter_map(|s| s.trim().parse::<usize>().ok()).collect(),
+        }
+    }
+
+    fn set_selected_items(&mut self, items: &[usize]) {
+        self.selected = items.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(";");
+    }
+
+    /// Marca as linhas escolhidas pelo estado `checked` (o tema desenha).
+    fn mark_rows(&self, ctx: &mut EventCtx<'_>) {
+        self.mark_rows_with(ctx, &[]);
+    }
+
+    /// Como [`mark_rows`](Self::mark_rows); as linhas de `instant` acabaram de receber outro item
+    /// e chegam no estado dele sem animar (a escolhida que volta à tela).
+    fn mark_rows_with(&self, ctx: &mut EventCtx<'_>, instant: &[ComponentId]) {
+        let chosen = self.selected_items();
+        let rows: Vec<(ComponentId, bool)> = self.pool.borrow().iter().map(|(id, i)| (*id, i.is_some_and(|i| chosen.contains(&i)))).collect();
+        for (id, on) in rows {
+            if instant.contains(&id) {
+                ctx.ui.set_checked_state_instant(id, on);
+            } else {
+                ctx.ui.set_checked_state(id, on);
+            }
+        }
+    }
+
+    /// Escolhe `index` (o clique, o teclado, o `select`): com Ctrl, junta ou tira (só
+    /// `multiple`); com Shift, o intervalo desde o último escolhido.
+    fn choose(&mut self, ctx: &mut EventCtx<'_>, index: usize, ctrl: bool, shift: bool) {
+        if self.selection == SelectionMode::None {
+            return;
+        }
+        let before = (self.item_index, self.selected.clone());
+        if self.selection == SelectionMode::Multiple {
+            let mut items = self.selected_items();
+            if shift {
+                let from = self.anchor.unwrap_or(index);
+                items = (from.min(index)..=from.max(index)).collect();
+            } else if ctrl {
+                match items.iter().position(|&i| i == index) {
+                    Some(at) => {
+                        items.remove(at);
+                    }
+                    None => items.push(index),
+                }
+                self.anchor = Some(index);
+            } else {
+                items = vec![index];
+                self.anchor = Some(index);
+            }
+            self.set_selected_items(&items);
+        } else {
+            self.anchor = Some(index);
+        }
+        self.item_index = index as i64;
+        self.mark_rows(ctx);
+        if before != (self.item_index, self.selected.clone()) {
+            ctx.fire("on_change", EventArgs::Value(PropValue::Int(index as i64)));
+        }
+    }
+
+    /// Rola o mínimo para o item `index` ficar à vista.
+    fn ensure_visible(&mut self, ctx: &mut EventCtx<'_>, index: usize) {
+        let count = self.count(ctx.ui);
+        let line = index / self.lanes();
+        let (start, size) = (self.line_start(line, count), self.line_size(line));
+        let view = self.viewport();
+        if start < self.offset {
+            self.offset = start;
+        } else if start + size > self.offset + view {
+            self.offset = start + size - view;
+        }
+        self.sync(ctx);
+    }
+
+    /// O modelo do item `index` (a posição em `templates`).
+    fn kind_index(&self, ui: &Ui, index: usize) -> usize {
+        if self.templates.len() <= 1 {
+            return 0;
+        }
+        let name = if let Some(k) = &self.kinder {
+            k(index)
+        } else if let (Some(source), false) = (&self.source, self.kind_field.trim().is_empty()) {
+            source.value(ui, index, self.kind_field.trim()).unwrap_or_default()
+        } else {
+            self.kinds.split(';').nth(index).unwrap_or_default().trim().to_string()
+        };
+        self.templates.iter().position(|(n, _, _)| n.eq_ignore_ascii_case(name.trim())).unwrap_or(0)
+    }
+
+    /// O modelo do item pela lista `kinds` ou pelo código (sem o `Ui`: a altura de cada linha).
+    fn kind_without_ui(&self, index: usize) -> Option<usize> {
+        if self.templates.len() <= 1 {
+            return None;
+        }
+        let name = match &self.kinder {
+            Some(k) => k(index),
+            None if !self.kinds.trim().is_empty() => self.kinds.split(';').nth(index).unwrap_or_default().trim().to_string(),
+            None => return None,
+        };
+        Some(self.templates.iter().position(|(n, _, _)| n.eq_ignore_ascii_case(name.trim())).unwrap_or(0))
+    }
+
+    /// A barra de rolagem aparece agora.
+    fn shows_bar(&self, count: usize) -> bool {
+        match self.scroll_bar {
+            ScrollBarMode::None => false,
+            ScrollBarMode::Always => true,
+            ScrollBarMode::Auto => self.line_start(self.lines(count), count) > self.viewport() + 0.5,
+        }
+    }
+
+    /// O trilho da barra e o cursor dela (nas coordenadas da lista).
+    fn bar_rects(&self, count: usize, width: f32, height: f32) -> (RectF, RectF) {
+        let total = self.line_start(self.lines(count), count).max(1.0);
+        let (track, view) = if self.horizontal() { (RectF::new(0.0, height - BAR, width, BAR), width) } else { (RectF::new(width - BAR, 0.0, BAR, height), height) };
+        let length = if self.horizontal() { track.width } else { track.height };
+        let thumb_len = (view / total * length).clamp(24.0_f32.min(length), length);
+        let max = self.max_offset(count);
+        let at = if max > 0.0 { self.offset / max * (length - thumb_len) } else { 0.0 };
+        let thumb = if self.horizontal() { RectF::new(track.x + at, track.y + 2.0, thumb_len, BAR - 4.0) } else { RectF::new(track.x + 2.0, track.y + at, BAR - 4.0, thumb_len) };
+        (track, thumb)
+    }
+
+    /// O mouse na barra (a posição no sentido da lista): leva o cursor até lá.
+    fn bar_to(&mut self, ctx: &mut EventCtx<'_>, pos: f32, grab: f32) {
+        let count = self.count(ctx.ui);
+        let b = self.base.bounds();
+        let (track, thumb) = self.bar_rects(count, b.width, b.height);
+        let (length, thumb_len) = if self.horizontal() { (track.width, thumb.width) } else { (track.height, thumb.height) };
+        let free = (length - thumb_len).max(1.0);
+        self.offset = ((pos - grab) / free * self.max_offset(count)).clamp(0.0, self.max_offset(count));
+        self.sync(ctx);
+        ctx.repaint();
     }
 
     /// Os itens à vista agora, em ordem.
@@ -222,6 +521,7 @@ impl VirtualList {
             for (_, index) in l.pool.borrow_mut().iter_mut() {
                 *index = None;
             }
+            l.forget_items();
         }
         ui.send_message(list, &Refresh);
     }
@@ -242,6 +542,11 @@ impl VirtualList {
     /// recicladas), no lugar.
     fn apply_swipe(&self, ctx: &mut EventCtx<'_>) {
         let swiped = self.swiped.get();
+        // Sem `swipe_actions`, o `translate_x` da linha é do app (uma animação do modelo): a
+        // lista não mexe. Com elas, é do deslizar.
+        if swiped.is_none() && self.actions().is_empty() {
+            return;
+        }
         for &(row, index) in self.pool.borrow().iter() {
             let want = match (swiped, index) {
                 (Some((i, x)), Some(index)) if i == index => x,
@@ -274,7 +579,15 @@ impl VirtualList {
         for (_, index) in self.pool.borrow_mut().iter_mut() {
             *index = None;
         }
+        self.forget_items();
         self.sync(ctx);
+    }
+
+    /// Os dados mudaram: os itens já não são os mesmos, então as linhas recomeçam as animações
+    /// e o `appear` vale de novo para todos.
+    fn forget_items(&self) {
+        self.bound.borrow_mut().clear();
+        self.appeared_items.borrow_mut().clear();
     }
 
     /// Tamanho variável por código: `size(i)` é a altura (na horizontal, a largura) do item
@@ -310,9 +623,10 @@ impl VirtualList {
         if self.horizontal() { self.item_width.max(8.0) } else { self.item_height.max(8.0) }
     }
 
-    /// Os tamanhos variam (lista com `sizes` ou com o tamanho pelo código).
+    /// Os tamanhos variam (lista com `sizes`, com o tamanho pelo código ou com modelos de
+    /// alturas diferentes).
     fn variable(&self) -> bool {
-        self.lanes() == 1 && (self.sizer.is_some() || !self.sizes.trim().is_empty())
+        self.lanes() == 1 && (self.sizer.is_some() || !self.sizes.trim().is_empty() || self.kind_without_ui(0).is_some())
     }
 
     /// O tamanho da linha `line` (na grade, todas iguais).
@@ -323,7 +637,9 @@ impl VirtualList {
         if let Some(s) = &self.sizer {
             return s(line).max(1.0);
         }
-        self.sizes.split(';').nth(line).and_then(|s| s.trim().parse::<f32>().ok()).unwrap_or_else(|| self.uniform()).max(1.0)
+        // Com vários modelos (pela lista ou pelo código): a altura desenhada do modelo do item.
+        let by_kind = || self.kind_without_ui(line).and_then(|k| self.templates.get(k)).map(|(_, _, h)| *h).filter(|h| *h > 0.0);
+        self.sizes.split(';').nth(line).and_then(|s| s.trim().parse::<f32>().ok()).or_else(by_kind).unwrap_or_else(|| self.uniform()).max(1.0)
     }
 
     fn lines(&self, count: usize) -> usize {
@@ -386,23 +702,31 @@ impl VirtualList {
         (self.line_start(self.lines(count), count) - self.viewport()).max(0.0)
     }
 
-    /// Acha (ou cria) o modelo e esconde: as linhas são cópias dele.
+    /// Acha (ou cria) os modelos e esconde: as linhas são cópias deles. Os modelos são os
+    /// filhos diretos da lista (ou o form de `item_form`); o primeiro é o padrão.
     fn ensure_template(&mut self, ctx: &mut EventCtx<'_>) -> Option<ComponentId> {
-        if self.template.is_some_and(|t| ctx.ui.contains(t)) {
+        if self.template.is_some_and(|t| ctx.ui.contains(t)) && self.templates.iter().all(|(_, t, _)| ctx.ui.contains(*t)) {
             return self.template;
         }
         let pool: Vec<ComponentId> = self.pool.borrow().iter().map(|(id, _)| *id).collect();
-        let template = if self.item_form.is_empty() {
-            ctx.ui.children(ctx.id).iter().copied().find(|c| !pool.contains(c))?
+        let list: Vec<ComponentId> = if self.item_form.is_empty() {
+            ctx.ui.children(ctx.id).iter().copied().filter(|c| !pool.contains(c)).collect()
         } else {
             let form = ctx.ui.create_form(&self.item_form).ok()?;
-            ctx.ui.clone_component(form, Some(ctx.id)).ok()?
+            vec![ctx.ui.clone_component(form, Some(ctx.id)).ok()?]
         };
-        if let Some(cb) = ctx.ui.control_mut(template) {
-            cb.set_visible(false);
+        self.templates.clear();
+        for t in &list {
+            let height = ctx.ui.control(*t).map_or(0.0, |cb| cb.height());
+            self.templates.push((ctx.ui.name(*t).unwrap_or_default().to_string(), *t, height));
+            if let Some(cb) = ctx.ui.control_mut(*t) {
+                cb.set_visible(false);
+            }
         }
-        self.template = Some(template);
-        Some(template)
+        self.template = list.first().copied();
+        self.animated = list.iter().any(|t| ctx.ui.has_animations(*t));
+        self.starts.borrow_mut().0 = usize::MAX;
+        self.template
     }
 
     /// Põe as linhas nos itens à vista, criando as que faltam e reaproveitando as que
@@ -421,9 +745,37 @@ impl VirtualList {
         let lanes = self.lanes();
         let wanted: Vec<usize> = (first * lanes..((last + 1) * lanes).min(count)).collect();
 
-        // Linhas que bastam.
-        while self.pool.borrow().len() < wanted.len() {
-            let Ok(copy) = ctx.ui.clone_component(template, Some(ctx.id)) else { break };
+        let _ = template;
+        // O modelo de cada item à vista.
+        let kinds: Vec<usize> = wanted.iter().map(|&i| self.kind_index(ctx.ui, i)).collect();
+        // As que continuam no lugar (o mesmo item e o mesmo modelo) ficam; as outras ficam livres.
+        let mut fresh = Vec::new();
+        let mut unplaced = Vec::new();
+        {
+            let mut pool = self.pool.borrow_mut();
+            let row_kind = self.row_kind.borrow();
+            for (id, index) in pool.iter_mut() {
+                let keep = index.and_then(|i| wanted.iter().position(|&w| w == i)).is_some_and(|at| row_kind.get(id).copied().unwrap_or(0) == kinds[at]);
+                if !keep {
+                    *index = None;
+                }
+            }
+            let kept: Vec<usize> = pool.iter().filter_map(|(_, i)| *i).collect();
+            for (at, &item) in wanted.iter().enumerate().filter(|(_, i)| !kept.contains(i)) {
+                let kind = kinds[at];
+                match pool.iter_mut().find(|(id, i)| i.is_none() && row_kind.get(id).copied().unwrap_or(0) == kind) {
+                    Some((id, index)) => {
+                        *index = Some(item);
+                        fresh.push((*id, item));
+                    }
+                    None => unplaced.push((item, kind)),
+                }
+            }
+        }
+        // Linhas que faltam: cópias do modelo do item.
+        for (item, kind) in unplaced {
+            let Some(model) = self.templates.get(kind).map(|(_, t, _)| *t).or(self.template) else { continue };
+            let Ok(copy) = ctx.ui.clone_component(model, Some(ctx.id)) else { break };
             if let Some(cb) = ctx.ui.control_mut(copy) {
                 // Quem põe a linha no lugar é a lista (`arrange`, que só recebe os soltos): o
                 // modelo desenhado com `align: top` (o natural no designer) seria empilhado pelo
@@ -431,23 +783,9 @@ impl VirtualList {
                 // foi desenhado.
                 cb.set_visible(true).set_align(aylis_core::Align::None);
             }
-            self.pool.borrow_mut().push((copy, None));
-        }
-        // As que continuam no lugar ficam; as outras vão para os itens que faltam.
-        let mut fresh = Vec::new();
-        {
-            let mut pool = self.pool.borrow_mut();
-            let kept: Vec<usize> = pool.iter().filter_map(|(_, i)| i.filter(|i| wanted.contains(i))).collect();
-            let mut missing = wanted.iter().copied().filter(|i| !kept.contains(i));
-            for (id, index) in pool.iter_mut() {
-                if index.is_some_and(|i| wanted.contains(&i)) {
-                    continue;
-                }
-                *index = missing.next();
-                if let Some(i) = *index {
-                    fresh.push((*id, i));
-                }
-            }
+            self.pool.borrow_mut().push((copy, Some(item)));
+            self.row_kind.borrow_mut().insert(copy, kind);
+            fresh.push((copy, item));
         }
         for (id, _) in self.pool.borrow().iter() {
             let shown = self.pool.borrow().iter().any(|(p, i)| p == id && i.is_some());
@@ -455,6 +793,8 @@ impl VirtualList {
                 cb.set_visible(shown);
             }
         }
+        let instant = self.restart_animations(ctx, &fresh);
+        self.mark_rows_with(ctx, &instant);
         for (id, index) in fresh {
             self.bind(ctx, id, index);
             ctx.fire("on_bind", EventArgs::Value(PropValue::Int(index as i64)));
@@ -467,6 +807,33 @@ impl VirtualList {
         // A linha deslizada segue o item quando as linhas são recicladas.
         self.apply_swipe(ctx);
         ctx.ui.invalidate();
+    }
+
+    /// As linhas que foram para outro item recomeçam as animações (decidido em 22/11): a do item
+    /// anterior para e volta ao valor de antes, o `appear` roda só para o item que ainda não
+    /// apareceu, e o estado do item novo chega sem animar. Devolve essas linhas. Sem animação
+    /// nos modelos, não faz nada.
+    fn restart_animations(&self, ctx: &mut EventCtx<'_>, fresh: &[(ComponentId, usize)]) -> Vec<ComponentId> {
+        if !self.animated {
+            return Vec::new();
+        }
+        let mut moved = Vec::new();
+        for &(row, item) in fresh {
+            let previous = self.bound.borrow_mut().insert(row, item);
+            if previous == Some(item) {
+                continue; // o `refresh_item`: o mesmo item, as animações seguem
+            }
+            if ctx.ui.reset_animations(row) {
+                if let Some(p) = previous {
+                    self.appeared_items.borrow_mut().insert(p);
+                }
+            }
+            if self.appeared_items.borrow().contains(&item) {
+                ctx.ui.finish_appear(row);
+            }
+            moved.push(row);
+        }
+        moved
     }
 
     /// As ligações de `item_bindings`, lidas de novo só quando o texto muda.
@@ -508,6 +875,8 @@ impl VirtualList {
 struct Refresh;
 /// Mensagem interna: rolar até um item.
 struct ScrollTo(usize);
+/// Mensagem interna: escolher um item.
+struct Select(usize);
 
 impl Component for VirtualList {
     fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
@@ -526,8 +895,56 @@ impl Component for VirtualList {
         sizes: String as NumberList => "Appearance",
         item_form: String as FormName => "Behavior",
         item_bindings: String as RecordList(&ITEM_BINDING) => "Behavior",
-        swipe_actions: String => "Behavior";
-        events: on_bind: i64, on_load_more: i64, on_swipe_action: SwipeAction
+        swipe_actions: String => "Behavior",
+        selection: SelectionMode => "Behavior",
+        item_index: i64 => "Data",
+        selected: String as NumberList => "Data",
+        scroll_bar: ScrollBarMode => "Appearance",
+        kinds: String as List => "Behavior",
+        kind_field: String => "Behavior";
+        events: on_bind: i64, on_load_more: i64, on_swipe_action: SwipeAction, on_change: i64, on_item_click: i64, on_item_dbl_click: i64, on_item_activate: i64
+    }
+
+    fn child_pointer_mut(&mut self) -> Option<&mut dyn ChildPointer> {
+        Some(self)
+    }
+
+    fn captures_key(&self, event: &KeyEvent) -> bool {
+        self.selection != SelectionMode::None && matches!(event.key, Key::Up | Key::Down | Key::PageUp | Key::PageDown | Key::Home | Key::End | Key::Enter)
+    }
+
+    /// O teclado com `selection`: as setas, Page Up/Down, Home/End andam (com Shift, o
+    /// intervalo em `multiple`) e rolam até o item; Enter dispara o `on_item_activate`.
+    fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
+        if self.selection == SelectionMode::None {
+            return;
+        }
+        let count = self.count(ctx.ui);
+        if count == 0 {
+            return;
+        }
+        let current = usize::try_from(self.item_index).ok();
+        let page = ((self.viewport() / self.uniform()).floor() as usize).max(1) * self.lanes();
+        let lanes = self.lanes();
+        let last = count - 1;
+        let target = match (event.key, current) {
+            (Key::Enter, Some(i)) => {
+                ctx.fire("on_item_activate", EventArgs::Value(PropValue::Int(i as i64)));
+                ctx.set_handled();
+                return;
+            }
+            (Key::Up, Some(i)) => i.saturating_sub(lanes),
+            (Key::Down, Some(i)) => (i + lanes).min(last),
+            (Key::PageUp, Some(i)) => i.saturating_sub(page),
+            (Key::PageDown, Some(i)) => (i + page).min(last),
+            (Key::Home, _) => 0,
+            (Key::End, _) => last,
+            (Key::Up | Key::Down | Key::PageUp | Key::PageDown, None) => 0,
+            _ => return,
+        };
+        self.choose(ctx, target, false, event.modifiers.shift);
+        self.ensure_visible(ctx, target);
+        ctx.set_handled();
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
@@ -535,6 +952,10 @@ impl Component for VirtualList {
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("index_of", &[PropKind::Component], Some(PropKind::Int)).params(&["component"]),
             MethodInfo::new("part", &[PropKind::Int, PropKind::Component], Some(PropKind::Component)).params(&["index", "component"]),
+            MethodInfo::new("select", &[PropKind::Int], None).params(&["index"]),
+            MethodInfo::new("scroll_to", &[PropKind::Int], None).params(&["index"]),
+            MethodInfo::new("refresh_item", &[PropKind::Int], None).params(&["index"]),
+            MethodInfo::new("refresh", &[], None),
         ];
         METHODS
     }
@@ -556,6 +977,36 @@ impl Component for VirtualList {
                 };
                 Ok(PropValue::Component(self.row_part(ctx.ui, index, component(1)?)))
             }
+            "select" | "scroll_to" | "refresh_item" => {
+                let index = match args.first() {
+                    Some(PropValue::Int(i)) if *i >= 0 => *i as usize,
+                    _ => return Err(aylis_core::messages::t("informe o índice do item")),
+                };
+                match method {
+                    "select" => {
+                        self.choose(ctx, index, false, false);
+                        self.ensure_visible(ctx, index);
+                    }
+                    "scroll_to" => {
+                        let count = self.count(ctx.ui);
+                        self.offset = self.line_start(index / self.lanes(), count);
+                        self.sync(ctx);
+                    }
+                    _ => {
+                        for (_, i) in self.pool.borrow_mut().iter_mut() {
+                            if *i == Some(index) {
+                                *i = None;
+                            }
+                        }
+                        self.sync(ctx);
+                    }
+                }
+                Ok(PropValue::Null)
+            }
+            "refresh" => {
+                self.resync(ctx);
+                Ok(PropValue::Null)
+            }
             _ => Err(format!("VirtualList não tem o método '{method}'")),
         }
     }
@@ -572,11 +1023,24 @@ impl Component for VirtualList {
                 }
                 self.sync(ctx);
             }
-            "item_count" | "item_height" | "item_width" | "orientation" | "columns" | "sizes" => {
+            "selection" => {
+                // Escolher pede o foco (o teclado); sem escolha, como antes.
+                let on = self.selection != SelectionMode::None;
+                self.base.set_can_focus(on);
+                self.mark_rows(ctx);
+            }
+            "item_index" | "selected" => self.mark_rows(ctx),
+            "scroll_bar" => ctx.ui.invalidate(),
+            "item_count" | "item_height" | "item_width" | "orientation" | "columns" | "sizes" | "kinds" | "kind_field" => {
                 // As posições somadas são refeitas.
                 self.starts.borrow_mut().0 = usize::MAX;
                 if name == "item_count" && self.count(ctx.ui) < self.load_more_at.unwrap_or(0) {
                     self.load_more_at = None; // a lista diminuiu (filtro, recarga)
+                }
+                // Menos itens (filtro, recarga): os itens já não são os mesmos. Mais (a lista
+                // infinita carregando): os que já apareceram continuam.
+                if name == "item_count" && self.count(ctx.ui) < self.known_count.get() {
+                    self.forget_items();
                 }
                 // Antes da primeira medida (carregando o layout) as linhas esperam: os
                 // handlers ainda estão sendo ligados.
@@ -652,6 +1116,9 @@ impl Component for VirtualList {
     // O toque numa ação revelada (a faixa à direita da linha deslizada, que a linha descobriu):
     // `on_swipe_action` com o item e a ação; qualquer toque na lista fecha a linha.
     fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::PointerEvent) {
+        if self.bar_drag.take().is_some() {
+            return;
+        }
         let Some((index, x)) = self.swiped.get() else { return };
         let actions: Vec<String> = self.actions().iter().map(|a| a.to_string()).collect();
         let band = self.actions_band(index, self.count(ctx.ui), self.base.bounds().width);
@@ -669,8 +1136,44 @@ impl Component for VirtualList {
         ctx.set_handled();
     }
 
-    // As ações por baixo da linha deslizada (a linha anda para a esquerda e as descobre).
+    /// A barra de rolagem: apertar no cursor arrasta; no trilho, leva até o ponto.
+    fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        let count = self.count(ctx.ui);
+        if !self.shows_bar(count) {
+            return;
+        }
+        let b = self.base.bounds();
+        let (track, thumb) = self.bar_rects(count, b.width, b.height);
+        if !track.contains(event.position) {
+            return;
+        }
+        let pos = if self.horizontal() { event.position.x } else { event.position.y };
+        let start = if self.horizontal() { thumb.x - track.x } else { thumb.y - track.y };
+        let len = if self.horizontal() { thumb.width } else { thumb.height };
+        let grab = if thumb.contains(event.position) { pos - start } else { len / 2.0 };
+        self.bar_drag = Some(grab);
+        self.bar_to(ctx, pos, grab);
+        ctx.set_handled();
+    }
+
+    fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some(grab) = self.bar_drag {
+            let pos = if self.horizontal() { event.position.x } else { event.position.y };
+            self.bar_to(ctx, pos, grab);
+        }
+    }
+
+    // As ações por baixo da linha deslizada (a linha anda para a esquerda e as descobre) e a
+    // barra de rolagem.
     fn paint(&self, canvas: &mut dyn aylis_core::Canvas, ctx: &aylis_core::PaintCtx<'_>) {
+        let count = self.known_count.get();
+        if self.shows_bar(count) {
+            let (track, thumb) = self.bar_rects(count, ctx.rect.width, ctx.rect.height);
+            let at = |r: RectF| r.offset(ctx.rect.x, ctx.rect.y);
+            canvas.fill_rect(at(track), 0.0, &aylis_core::Brush::Solid(ctx.theme.color("text_muted").with_opacity(0.08)));
+            let alpha = if self.bar_drag.is_some() { 0.7 } else { 0.45 };
+            canvas.fill_rect(at(thumb), (BAR - 4.0) / 2.0, &aylis_core::Brush::Solid(ctx.theme.color("text_muted").with_opacity(alpha)));
+        }
         let Some((index, x)) = self.swiped.get().filter(|(_, x)| *x < 0.0) else { return };
         let _ = x;
         let actions = self.actions();
@@ -695,9 +1198,36 @@ impl Component for VirtualList {
             let count = self.count(ctx.ui);
             self.offset = self.line_start(*index / self.lanes(), count);
             self.sync(ctx);
+        } else if let Some(Select(index)) = message.downcast_ref::<Select>() {
+            self.choose(ctx, *index, false, false);
+            self.ensure_visible(ctx, *index);
         }
     }
 
+}
+
+impl ChildPointer for VirtualList {
+    /// O apertar numa linha: escolhe o item (com Ctrl e Shift em `multiple`) e, no duplo
+    /// clique, o `on_item_dbl_click` e o `on_item_activate`.
+    fn child_pressed(&mut self, ctx: &mut EventCtx<'_>, child: ComponentId, event: &PointerEvent) {
+        let Some(index) = self.row_index(ctx.ui, ctx.id, child) else { return };
+        if self.selection != SelectionMode::None {
+            if self.base.can_focus() {
+                ctx.ui.set_focus(ctx.id);
+            }
+            self.choose(ctx, index, event.modifiers.ctrl || event.modifiers.meta, event.modifiers.shift);
+        }
+        if event.click_count == 2 {
+            ctx.fire("on_item_dbl_click", EventArgs::Value(PropValue::Int(index as i64)));
+            ctx.fire("on_item_activate", EventArgs::Value(PropValue::Int(index as i64)));
+        }
+    }
+
+    fn child_clicked(&mut self, ctx: &mut EventCtx<'_>, child: ComponentId) {
+        if let Some(index) = self.row_index(ctx.ui, ctx.id, child) {
+            ctx.fire("on_item_click", EventArgs::Value(PropValue::Int(index as i64)));
+        }
+    }
 }
 
 impl aylis_core::LayoutHooks for VirtualList {
@@ -710,7 +1240,9 @@ impl aylis_core::LayoutHooks for VirtualList {
         }
         let lanes = self.lanes();
         let count = self.known_count.get();
-        let cross_total = if self.horizontal() { area.height } else { area.width };
+        // A barra de rolagem fica fora das linhas (o mouse nela é da lista).
+        let bar = if self.shows_bar(count) { BAR } else { 0.0 };
+        let cross_total = if self.horizontal() { area.height - bar } else { area.width - bar };
         let lane_size = cross_total / lanes as f32;
         Some(
             children

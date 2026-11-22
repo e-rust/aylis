@@ -1140,6 +1140,11 @@ pub struct SeekBar {
     pub markers: String,
     /// Mostra, sob o mouse, o horário daquele ponto.
     pub show_time: bool,
+    /// O tempo atual à esquerda e o total à direita da barra (todo player mostra; antes eram
+    /// dois `Label` à parte; o relatório do player de música, 21/11). Desligado: como antes.
+    pub show_labels: bool,
+    /// A largura de cada rótulo na última pintura (o clique usa a mesma barra).
+    label_width: Cell<f32>,
     dragging: bool,
     /// A posição escolhida com o mouse enquanto o botão está apertado: ganha de quem
     /// atualiza `position` de fora nesse meio tempo (o timer de um player).
@@ -1151,7 +1156,7 @@ impl Default for SeekBar {
     fn default() -> Self {
         let mut base = ControlBase::new(320.0, 28.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer).set_pan_on_touch(false);
-        Self { base, position: 0.0, duration: 100.0, buffered: 0.0, markers: String::new(), show_time: true, dragging: false, held: None, hover: Cell::new(None) }
+        Self { base, position: 0.0, duration: 100.0, buffered: 0.0, markers: String::new(), show_time: true, show_labels: false, label_width: Cell::new(0.0), dragging: false, held: None, hover: Cell::new(None) }
     }
 }
 
@@ -1176,8 +1181,9 @@ impl SeekBar {
     }
 
     fn fraction_at(&self, x: f32) -> f64 {
-        let w = (self.base.bounds().width - 2.0 * SEEK_PAD).max(1.0);
-        ((x - SEEK_PAD) / w).clamp(0.0, 1.0) as f64
+        let pad = SEEK_PAD + self.label_width.get();
+        let w = (self.base.bounds().width - 2.0 * pad).max(1.0);
+        ((x - pad) / w).clamp(0.0, 1.0) as f64
     }
 
     fn seek_to(&mut self, ctx: &mut EventCtx<'_>, position: f64) {
@@ -1206,7 +1212,8 @@ impl Component for SeekBar {
         duration: f64 => "Data",
         buffered: f64 => "Data",
         markers: String as NumberList => "Data",
-        show_time: bool => "Appearance";
+        show_time: bool => "Appearance",
+        show_labels: bool => "Appearance";
         events: on_change: f64, on_seek: f64;
         on_set: after_set
     }
@@ -1263,7 +1270,27 @@ impl Component for SeekBar {
         let r = ctx.rect;
         let active = self.dragging || self.hover.get().is_some() || ctx.state.focused;
         let thick = if active { 6.0 } else { 4.0 };
-        let track = RectF::new(r.x + SEEK_PAD, r.y + (r.height - thick) / 2.0, (r.width - 2.0 * SEEK_PAD).max(0.0), thick);
+        // Os rótulos (`show_labels`): a largura do maior tempo possível, para a barra não
+        // mudar de tamanho enquanto toca.
+        let label = if self.show_labels {
+            let mut style = ctx.text_style();
+            style.color = ctx.theme.color("text_muted");
+            style.v_align = TextAlign::Center;
+            let widest = format_time(self.duration.max(self.position)).chars().map(|c| if c.is_ascii_digit() { '0' } else { c }).collect::<String>();
+            let w = canvas.measure_text(&widest, &style).width.ceil() + 6.0;
+            let mut left = style.clone();
+            left.h_align = TextAlign::Leading;
+            canvas.draw_text(&format_time(self.position), RectF::new(r.x, r.y, w, r.height), &left);
+            let mut right = style;
+            right.h_align = TextAlign::Trailing;
+            canvas.draw_text(&format_time(self.duration), RectF::new(r.right() - w, r.y, w, r.height), &right);
+            w
+        } else {
+            0.0
+        };
+        self.label_width.set(label);
+        let pad = SEEK_PAD + label;
+        let track = RectF::new(r.x + pad, r.y + (r.height - thick) / 2.0, (r.width - 2.0 * pad).max(0.0), thick);
         let frac = |v: f64| if self.duration > 0.0 { (v / self.duration).clamp(0.0, 1.0) as f32 } else { 0.0 };
         let primary = ctx.theme.color("primary");
         canvas.fill_rect(track, thick / 2.0, &Brush::Solid(ctx.theme.color("track")));

@@ -80,9 +80,24 @@ pub fn distros() -> Vec<String> {
         .collect()
 }
 
-/// A distribuição usada: `AYLIS_WSL_DISTRO`, senão a primeira (o Ubuntu, normalmente).
+/// A distribuição usada: `AYLIS_WSL_DISTRO`; senão a `Ubuntu-22.04` (a glibc dela é a mínima
+/// dos apps do Linux, `crate::glibc`: compilado no Ubuntu 26.04, o app não abria no Mint 22,
+/// 22/11); senão a primeira.
 pub fn distro() -> Option<String> {
-    std::env::var("AYLIS_WSL_DISTRO").ok().filter(|d| !d.is_empty()).or_else(|| distros().into_iter().next())
+    if let Some(d) = std::env::var("AYLIS_WSL_DISTRO").ok().filter(|d| !d.is_empty()) {
+        return Some(d);
+    }
+    pick(&distros())
+}
+
+/// A escolha entre as instaladas: a do Ubuntu 22.04, senão a primeira.
+fn pick(installed: &[String]) -> Option<String> {
+    installed.iter().find(|d| d.eq_ignore_ascii_case(crate::glibc::WSL_DISTRO)).or_else(|| installed.first()).cloned()
+}
+
+/// A glibc da distribuição (pelo `ldd --version`).
+pub fn glibc(distro: &str) -> Option<(u32, u32)> {
+    shell_output(distro, "ldd --version").as_deref().and_then(crate::glibc::parse_ldd)
 }
 
 /// Roda `script` no bash da distribuição e devolve a saída (para conferir o ambiente).
@@ -107,7 +122,10 @@ fn quote(text: &str) -> String {
 }
 
 /// O começo de todo script: o cargo do rustup, a pasta-espelho (o projeto e, dentro dela, a
-/// pasta do código em Rust) e o `Cargo.toml` convertido; termina na pasta do crate.
+/// pasta do código em Rust) e o `Cargo.toml` convertido; termina na pasta do crate. No
+/// `Cargo.toml`, os caminhos do Windows (`C:/...`) viram os do Linux (`/mnt/c/...`), e os
+/// relativos (o `sdk` numa pasta, os exemplos do repositório: `../../crates/aylis`) passam a
+/// partir da pasta do código de verdade, não da espelho (antes não achavam o Aylis, 22/11).
 fn prepare(project: &Project) -> String {
     let package = project.package_name();
     format!(
@@ -131,6 +149,7 @@ for f in "$P/$C"/*; do
   ln -sfn "$f" "$S/$C/$n"
 done
 sed -E 's#"([A-Za-z]):/#"/mnt/\L\1/#g' "$P/$C/Cargo.toml" > "$S/$C/Cargo.toml"
+sed -E -i 's#(path *= *")([^/"][^:"]*")#\1'"$P/$C"'/\2#g' "$S/$C/Cargo.toml"
 export CARGO_TARGET_DIR="$HOME/.aylis-wsl/target"
 cd "$S/$C"
 "#,
@@ -161,99 +180,59 @@ pub fn run_script(project: &Project) -> String {
     s
 }
 
-/// O script da publicação: compila otimizado, copia o executável para `out` (no Windows) e,
-/// com `deb`, monta um pacote `.deb` (instala em `/opt/<app>`, com atalho no menu).
-pub fn publish_script(project: &Project, out: &Path, app_file: &str, deb: bool) -> String {
-    let package = project.package_name();
+/// O começo dos scripts que usam o `aylis-tool` de Linux: compila-o (só a primeira vez demora)
+/// e põe em `T`.
+fn linux_tool() -> String {
+    let root = quote(&to_linux(Path::new(&crate::aylis_root())));
+    format!(
+        "echo '▶ Preparando o aylis-tool do Linux (a primeira vez demora alguns minutos)…'\n\
+         cargo build --release --manifest-path {root}/Cargo.toml -p aylis-tools --bin aylis-tool\n\
+         T=\"$CARGO_TARGET_DIR/release/aylis-tool\"\n"
+    )
+}
+
+/// O script da publicação: compila otimizado e copia o executável para `out` (no Windows). O
+/// `.deb` sai depois, no Windows, pelo mesmo [`crate::app_linux`] do Linux (antes este script
+/// montava outro, pelo `dpkg-deb`, e os dois divergiam).
+pub fn publish_script(project: &Project, out: &Path, app_file: &str) -> String {
     let out_l = quote(&to_linux(out));
     let mut s = prepare(project);
     s.push_str(&format!("echo '▶ Compilando {} (Linux, otimizado)…'\n", project.name));
     let bin = project.bin_name();
     s.push_str(&format!("cargo build --release --bin {bin}\n"));
     s.push_str(&format!("mkdir -p {out_l}\ncp \"$CARGO_TARGET_DIR/release/{bin}\" {out_l}/{}\n", quote(app_file)));
-    if deb {
-        let id = package.replace('_', "-");
-        let version = project_version(project);
-        // Os prefixos dos `UrlScheme` ligados (decidido em 14/11): o `.desktop` do pacote os
-        // declara e recebe o endereço (`%u`); a instalação e a remoção atualizam a lista do
-        // sistema (`update-desktop-database`).
-        let schemes = crate::publish::url_schemes(project);
-        let (exec_arg, mime) = if schemes.is_empty() {
-            (String::new(), String::new())
-        } else {
-            (" %u".to_string(), format!("MimeType={}\n", schemes.iter().map(|(s, _)| format!("x-scheme-handler/{s};")).collect::<String>()))
-        };
-        s.push_str("echo '▶ Montando o pacote .deb…'\n");
-        s.push_str(&format!(
-            r#"D="$HOME/.aylis-wsl/deb/{id}"
-rm -rf "$D"; mkdir -p "$D/DEBIAN" "$D/opt/{id}" "$D/usr/share/applications" "$D/usr/bin"
-cp "$CARGO_TARGET_DIR/release/{package}" "$D/opt/{id}/{id}"
-ln -s /opt/{id}/{id} "$D/usr/bin/{id}"
-cat > "$D/DEBIAN/control" <<CONTROL
-Package: {id}
-Version: {version}
-Architecture: amd64
-Maintainer: {maintainer}
-Description: {app}
-Depends: libc6, libfontconfig1, libxkbcommon0, libgl1, libegl1
-CONTROL
-cat > "$D/usr/share/applications/{id}.desktop" <<DESKTOP
-[Desktop Entry]
-Type=Application
-Name={app}
-Exec=/opt/{id}/{id}{exec_arg}
-Terminal=false
-Categories=Utility;
-{mime}DESKTOP
-for hook in postinst postrm; do
-  printf '#!/bin/sh\nset -e\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q /usr/share/applications || true; fi\n' > "$D/DEBIAN/$hook"
-  chmod 755 "$D/DEBIAN/$hook"
-done
-dpkg-deb --build --root-owner-group "$D" {out_l}/{id}_{version}_amd64.deb >/dev/null
-echo "pacote: {id}_{version}_amd64.deb"
-"#,
-            app = project.app_name(),
-            maintainer = if project.publish.publisher.is_empty() { project.app_name().to_string() } else { project.publish.publisher.clone() },
-        ));
-    }
     s
 }
 
-/// O script da publicação das outras linguagens (Python, TypeScript, C#, Java, Go, C++, Free
-/// Pascal): o mesmo publicar do Linux, pelo `aylis-tool` de Linux compilado no WSL a partir do
-/// código do Aylis desta máquina (só a primeira vez demora; fica em `~/.aylis-wsl/target`). Ele
-/// prepara a linguagem no WSL (`setup`) e publica no `out` (no Windows), com o `.deb` quando
+/// O script da publicação das outras linguagens: o mesmo publicar do Linux, pelo `aylis-tool`
+/// de Linux compilado no WSL a partir do código do Aylis desta máquina (só a primeira vez
+/// demora; fica em `~/.aylis-wsl/target`). Ele prepara a linguagem no WSL (`setup`; o Rust do
+/// WSL é o do rustup, já conferido acima) e publica no `out` (no Windows), com o pacote quando
 /// `deb` (pedido do autor em 21/11: o `.deb` de um app no Windows e no Linux).
 pub fn publish_with_tool_script(project: &Project, out: &Path, deb: bool) -> String {
-    let root = quote(&to_linux(Path::new(&crate::aylis_root())));
+    let setup = if project.language == aylis_project::Language::Rust {
+        String::new()
+    } else {
+        format!(
+            "echo '▶ Preparando {language} no Linux…'\n\"$T\" setup {lang} || echo \"aviso: o {language} do Linux não ficou pronto (veja acima)\"\n",
+            language = project.language.name(),
+            lang = project.language.folder(),
+        )
+    };
     format!(
         r#"set -e
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 if ! command -v cargo >/dev/null; then echo "o Rust não está instalado no Linux do WSL (Ferramentas → Verificar ambiente instala)" >&2; exit 3; fi
 export CARGO_TARGET_DIR="$HOME/.aylis-wsl/target"
-echo '▶ Preparando o aylis-tool do Linux (a primeira vez demora alguns minutos)…'
-cargo build --release --manifest-path {root}/Cargo.toml -p aylis-tools --bin aylis-tool
-T="$CARGO_TARGET_DIR/release/aylis-tool"
-echo '▶ Preparando {language} no Linux…'
-"$T" setup {lang} || echo "aviso: o {language} do Linux não ficou pronto (veja acima)"
-echo '▶ Publicando {name} (Linux)…'
+{tool}{setup}echo '▶ Publicando {name} (Linux)…'
 "$T" publish {project} --out {out}{installer}
 "#,
-        language = project.language.name(),
-        lang = project.language.folder(),
+        tool = linux_tool(),
         name = project.name,
         project = quote(&to_linux(&project.path)),
         out = quote(&to_linux(out)),
         installer = if deb { " --installer" } else { "" },
     )
-}
-
-/// A versão do pacote (a do `Cargo.toml` do projeto).
-fn project_version(project: &Project) -> String {
-    std::fs::read_to_string(project.code_dir().join("Cargo.toml"))
-        .ok()
-        .and_then(|t| t.lines().find_map(|l| l.trim().strip_prefix("version = \"").and_then(|v| v.strip_suffix('"')).map(str::to_string)))
-        .unwrap_or_else(|| "1.0.0".into())
 }
 
 /// Roda um script no bash da distribuição, com cada linha nas mensagens. As linhas que
@@ -277,31 +256,16 @@ pub fn run(distro: &str, script: &str, control: &Control, sink: Sink, program_ou
     })
 }
 
-#[cfg(test)]
-mod deb_tests {
-    use std::path::Path;
 
-    /// O `.deb` declara os prefixos dos `UrlScheme` ligados (`x-scheme-handler`), recebe o
-    /// endereço (`%u`) e atualiza a lista do sistema ao instalar e ao remover (decidido em 14/11).
+#[cfg(test)]
+mod tests {
+    use super::*;
+
     #[test]
-    fn the_deb_declares_the_url_schemes() {
-        let base = std::env::temp_dir().join(format!("aylis_deb_schemes_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&base);
-        std::fs::create_dir_all(&base).unwrap();
-        let project = aylis_project::create(&base, "Loja", aylis_project::Language::Rust).unwrap();
-        let plain = super::publish_script(&project, Path::new("C:/out"), "loja", true);
-        assert!(!plain.contains("MimeType") && !plain.contains("%u"), "sem UrlScheme, nada de prefixo");
-        std::fs::write(
-            project.dir().join("forms").join("links.json"),
-            r#"{ "root": { "class": "Form", "children": [
-                { "class": "UrlScheme", "name": "a", "scheme": "Pedidos", "active": true },
-                { "class": "UrlScheme", "name": "b", "scheme": "desligado", "active": false } ] } }"#,
-        )
-        .unwrap();
-        let script = super::publish_script(&project, Path::new("C:/out"), "loja", true);
-        assert!(script.contains("%u\n") && script.contains("MimeType=x-scheme-handler/pedidos;\n"), "{script}");
-        assert!(!script.contains("desligado"));
-        assert!(script.contains("DEBIAN/$hook") && script.contains("update-desktop-database"), "{script}");
-        let _ = std::fs::remove_dir_all(&base);
+    fn the_ubuntu_22_04_is_preferred_for_its_glibc() {
+        let list = |l: &[&str]| l.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(pick(&list(&["Ubuntu", "Ubuntu-22.04"])).as_deref(), Some("Ubuntu-22.04"));
+        assert_eq!(pick(&list(&["Ubuntu", "Debian"])).as_deref(), Some("Ubuntu"));
+        assert_eq!(pick(&[]), None);
     }
 }

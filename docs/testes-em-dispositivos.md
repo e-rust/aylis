@@ -14,7 +14,7 @@ simulador) ou `publish --target ios --device` (o iPhone: o `.app` e o `.ipa` ass
 
 | O quê | Situação | Como conferir |
 |---|---|---|
-| Rodar no macOS (janela, renderizadores, teclado, mouse, touchpad) | compila no CI para macOS; nunca rodou | um exemplo qualquer, `cargo run --example components` |
+| Rodar no macOS (janela, renderizadores, teclado, mouse, touchpad) | rodou numa VM do macOS 15 Intel (Hyper-V, sem GPU): a IDE e os apps abrem e desenham, as linguagens rodam (22/11); falta um Mac de verdade (GPU, Apple Silicon, teclado, touchpad, Retina) | um exemplo qualquer, `cargo run --example components` |
 | Vídeo e áudio do AVFoundation depois da revisão de 31/10 (decodificador aberto na thread de vídeo, trilha lida do arquivo aos poucos, `cpal` 0.18, conferência do tamanho da linha) | só revisado; o `avf.rs` não compila fora do Mac | exemplo `Player` com um MP4 e um MP3 |
 | Rodar no iOS (janela, toque, teclado na tela) | compila para iOS; nunca rodou | `aylis-tool run app.aylisproj --target ios` com o simulador aberto |
 | Teclado do iOS reduzindo a área segura (`UIKeyboardWillChangeFrameNotification`) | compila | um form com campos embaixo; o campo com foco sobe acima do teclado |
@@ -173,3 +173,9 @@ campos).
   a janela à vista no ponto (17/11). Nos outros sistemas, o Aylis só procura outra janela quando
   o mouse sai da janela de origem; conferir se uma janela pequena por cima de uma grande recebe
   o soltar e, se não, achar a ordem das janelas em cada sistema.
+- **`MediaSession` (21/11):** no Windows, com um app tocando, o quadro do volume (as teclas de
+  volume ou de mídia) mostra o título, o artista e a capa, e play, pausa, próxima e anterior
+  controlam o app (o SMTC compila, mas não foi visto na tela). No Linux (a VM com o Fedora), o
+  painel do GNOME e o `playerctl metadata` mostram o mesmo (o MPRIS passou no D-Bus do WSL, sem
+  painel). No navegador, o controle de mídia do Chrome. No macOS, no iOS e no Android ainda não
+  há implementação.

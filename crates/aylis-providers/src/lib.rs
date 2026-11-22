@@ -10,6 +10,7 @@
 //! - [`KrillaPdfProvider`]: o PDF do `Report` e da impressão fora do Windows, pelo krilla (o
 //!   padrão: o [`register`] põe em `Services::pdf`), com as fontes embutidas;
 //! - [`TileServerProvider`]: o servidor dos blocos do `MapView` (o endereço e o crédito);
+//! - `LoftyTagsProvider` (feature `tags`): as tags de mídia do `MediaInfo` pelo lofty;
 //! - [`OleObject`]: a automação OLE de um programa instalado (Excel, Word...), no Windows;
 //! - [`WmiQuery`]: consultas e eventos do WMI (hardware, discos, processos), no Windows.
 //!
@@ -21,6 +22,8 @@ mod export;
 pub mod ole;
 #[cfg(feature = "pdf")]
 pub mod pdf;
+#[cfg(feature = "tags")]
+pub mod tags;
 pub mod wmi;
 
 pub use barcode::{Barcode, AylisBarcodeProvider};
@@ -30,6 +33,8 @@ pub use ole::OleObject;
 #[cfg(feature = "pdf")]
 pub use pdf::{KrillaPdf, KrillaPdfProvider};
 pub use wmi::WmiQuery;
+#[cfg(feature = "tags")]
+pub use tags::LoftyTagsProvider;
 
 use aylis_core::providers::{MapTileProvider, Provided, TileServer};
 use aylis_core::{Component, Ui, properties};
@@ -86,6 +91,8 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<AylisBarcodeProvider>("Providers");
     ui.register_class::<CsvProvider>("Providers");
     ui.register_class::<XlsxProvider>("Providers");
+    #[cfg(feature = "tags")]
+    ui.register_class::<LoftyTagsProvider>("Providers");
     #[cfg(feature = "pdf")]
     {
         ui.register_class::<KrillaPdfProvider>("Providers");

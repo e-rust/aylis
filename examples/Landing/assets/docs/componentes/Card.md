@@ -12,6 +12,9 @@ O cartão (`QCard`): um painel com a cara de cartão do tema (fundo, cantos e so
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
+| `hover_fill` | Fundo com o mouse | cor | O fundo com o mouse em cima (nele ou num filho); vazio: como sem mouse. |
+| `pressed_fill` | Fundo apertado | cor | O fundo apertado; vazio: o `hover_fill`. |
+| `selected_fill` | Fundo marcado | cor | O fundo marcado (a linha escolhida de uma lista, o estado `checked`); vazio: com `interactive`, a cor principal do tema, clara. |
 | `fill2` | Segunda cor do degradê | cor | Segunda cor: com ela, o fundo vira um gradiente de `fill` até `fill2`. |
 | `fill_mid` | Cor do meio do degradê | cor | Cor do meio do gradiente (opcional), na posição `fill_mid_at`. |
 | `fill_mid_at` | Posição da cor do meio | número | Onde fica a `fill_mid`, de 0 a 1 (0 = no meio). |
@@ -20,6 +23,12 @@ O cartão (`QCard`): um painel com a cara de cartão do tema (fundo, cantos e so
 | `stroke` | Cor do traço | cor | Cor da borda; vazio: a do tema. |
 | `stroke_width` | Largura do traço | número | Espessura da borda, em pontos (0 = sem borda); vazio: a do tema. |
 | `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema. |
+
+### Comportamento
+
+| Propriedade | No Object Inspector | Tipo | O que faz |
+|---|---|---|---|
+| `interactive` | Reage ao mouse | lógico | Reage ao mouse com as cores de estado do tema (o mesmo clarear dos botões), sem escolher cor: a linha de uma lista, um "botão" feito de painel (decidido em 21/11). O `hover_fill` e o `pressed_fill`, quando dados, mandam. |
 
 ### Teclado
 

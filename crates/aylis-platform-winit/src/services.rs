@@ -203,6 +203,15 @@ pub(crate) fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Rendere
     if services.push.is_none() {
         services.push = Some(Box::new(windows_push::WnsPush::default()));
     }
+    // Os controles de mídia do sistema (o `MediaSession`).
+    #[cfg(windows)]
+    if services.media_session.is_none() {
+        services.media_session = Some(Box::new(windows_media::WindowsMediaSession::default()));
+    }
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
+    if services.media_session.is_none() {
+        services.media_session = Some(Box::new(linux_media::Mpris::default()));
+    }
     #[cfg(any(target_os = "ios", target_os = "macos"))]
     if services.push.is_none() {
         services.push = Some(Box::new(apple_push::ApplePush::new()));
@@ -373,6 +382,10 @@ pub(crate) fn install_web_services(ui: &mut Ui) {
     if services.biometrics.is_none() {
         services.biometrics = Some(Box::new(web_device::WebBiometrics::new()));
     }
+    // Os controles de mídia do sistema (o `MediaSession`), pela Media Session API.
+    if services.media_session.is_none() {
+        services.media_session = Some(Box::new(web_media::WebMediaSession::default()));
+    }
     // Web NFC e Web Bluetooth (só no Chrome; onde não houver, `available` é falso).
     if services.nfc.is_none() {
         services.nfc = Some(Box::new(web_radio::WebNfc::default()));
@@ -420,7 +433,11 @@ impl aylis_core::platform::FileDialogService for SystemFileDialogs {
                 dialog = dialog.set_file_name(&options.file_name);
             }
             let to_string = |p: std::path::PathBuf| p.display().to_string();
-            let paths = if options.save {
+            let paths = if options.folder && options.multiple {
+                dialog.pick_folders().unwrap_or_default().into_iter().map(to_string).collect()
+            } else if options.folder {
+                dialog.pick_folder().map(to_string).into_iter().collect()
+            } else if options.save {
                 dialog.save_file().map(to_string).into_iter().collect()
             } else if options.multiple {
                 dialog.pick_files().unwrap_or_default().into_iter().map(to_string).collect()

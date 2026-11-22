@@ -39,7 +39,7 @@ pub(crate) fn answer(ui: &mut Ui, mix: &BTreeMap<String, String>, command: &Valu
     let id = command.get("id").cloned().unwrap_or(Value::Null);
     let result = match command.get("cmd").and_then(Value::as_str) {
         Some("reload") => reload(ui, mix, command),
-        Some("trace") => trace(ui, command.get("on").and_then(Value::as_bool).unwrap_or(false)),
+        Some("trace") => trace(ui, command),
         Some("profile") => {
             if command.get("on").and_then(Value::as_bool).unwrap_or(false) {
                 aylis_core::profile::start();
@@ -54,6 +54,8 @@ pub(crate) fn answer(ui: &mut Ui, mix: &BTreeMap<String, String>, command: &Valu
             Ok(Value::Null)
         }
         Some("profile_take") => Ok(profile_take()),
+        Some("dialog_result") => dialog_result(ui, command),
+        Some("drop_files") => drop_files(ui, command),
         Some("snapshot") => snapshot(ui, command),
         Some("close") => {
             ui.request_close();
@@ -88,10 +90,25 @@ fn reload(ui: &mut Ui, mix: &BTreeMap<String, String>, command: &Value) -> Resul
 }
 
 /// `{"cmd": "trace", "on": true}`: liga o rastro de eventos (cada evento com handler vai para
-/// a IDE).
-fn trace(ui: &mut Ui, on: bool) -> Result<Value, String> {
+/// a IDE). `"events": ["on_click", ...]` deixa só esses eventos; `"exclude": ["on_timer"]` tira
+/// esses (o nome do evento, ou `componente.evento`): um `Timer` de 40 ms enchia a saída e os
+/// eventos que interessam sumiam (o relatório do player de música, 21/11).
+fn trace(ui: &mut Ui, command: &Value) -> Result<Value, String> {
+    let on = command.get("on").and_then(Value::as_bool).unwrap_or(false);
+    let names = |key: &str| -> Vec<String> {
+        command.get(key).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_lowercase).collect()).unwrap_or_default()
+    };
+    let (only, exclude) = (names("events"), names("exclude"));
     if on {
-        ui.set_event_trace(Some(|ui: &Ui, id: ComponentId, event: &str, handler: &str| {
+        ui.set_event_trace(Some(move |ui: &Ui, id: ComponentId, event: &str, handler: &str| {
+            let matches = |list: &[String]| {
+                let event = event.to_lowercase();
+                let full = format!("{}.{event}", ui.name(id).unwrap_or_default().to_lowercase());
+                list.iter().any(|n| *n == event || *n == full)
+            };
+            if (!only.is_empty() && !matches(&only)) || matches(&exclude) {
+                return;
+            }
             let handler = if handler.is_empty() { "(código)" } else { handler };
             let line = format!("evento {}.{event} → {handler}", ui.path_of(id));
             // No navegador, também no console (no desktop a saída já vai para a IDE).
@@ -103,6 +120,66 @@ fn trace(ui: &mut Ui, on: bool) -> Result<Value, String> {
         ui.set_event_trace(None::<fn(&Ui, ComponentId, &str, &str)>);
     }
     Ok(Value::Null)
+}
+
+/// As respostas guardadas para os próximos diálogos de arquivo ([`dialog_result`]).
+type Scripted = std::sync::Arc<std::sync::Mutex<std::collections::VecDeque<Vec<String>>>>;
+
+/// Responde o próximo diálogo de arquivo no lugar do sistema.
+struct ScriptedDialogs {
+    queue: Scripted,
+    system: Option<Box<dyn aylis_core::platform::FileDialogService>>,
+}
+
+impl aylis_core::platform::FileDialogService for ScriptedDialogs {
+    fn show(&mut self, options: aylis_core::platform::FileDialogOptions, done: Box<dyn FnOnce(Vec<String>) + Send>) {
+        let answer = self.queue.lock().ok().and_then(|mut q| q.pop_front());
+        match (answer, self.system.as_mut()) {
+            (Some(paths), _) => done(paths),
+            (None, Some(system)) => system.show(options, done),
+            (None, None) => done(Vec::new()),
+        }
+    }
+}
+
+thread_local! {
+    static SCRIPTED: std::cell::RefCell<Option<Scripted>> = const { std::cell::RefCell::new(None) };
+}
+
+/// `{"cmd": "dialog_result", "files": ["/m/a.mp3"]}`: o próximo `OpenDialog`/`SaveDialog` não
+/// abre a janela do sistema e devolve esses caminhos (`[]`: cancelado). Só no app com a feature
+/// `dev` (o canal da IDE): a janela do sistema não é controlável pelo MCP, e o "abrir arquivo"
+/// do app não se testava (o relatório do player de música, 21/11). Várias chamadas enfileiram.
+fn dialog_result(ui: &mut Ui, command: &Value) -> Result<Value, String> {
+    let files: Vec<String> = command.get("files").and_then(Value::as_array).ok_or("falta \"files\" (a lista de caminhos; [] cancela)")?.iter().filter_map(Value::as_str).map(str::to_string).collect();
+    let queue = SCRIPTED.with(|s| s.borrow().clone());
+    let queue = match queue {
+        Some(q) => q,
+        None => {
+            let q: Scripted = Default::default();
+            let system = ui.services_mut().file_dialogs.take();
+            ui.services_mut().file_dialogs = Some(Box::new(ScriptedDialogs { queue: q.clone(), system }));
+            SCRIPTED.with(|s| *s.borrow_mut() = Some(q.clone()));
+            q
+        }
+    };
+    queue.lock().map_err(|e| e.to_string())?.push_back(files);
+    Ok(Value::Null)
+}
+
+/// `{"cmd": "drop_files", "target": "frmPrincipal", "files": [...], "x": 10, "y": 20}`: como se o
+/// usuário soltasse os arquivos naquele ponto do form (sem `x`/`y`, no meio). Devolve se algum
+/// controle (ou o `on_files_drop` do form) aceitou.
+fn drop_files(ui: &mut Ui, command: &Value) -> Result<Value, String> {
+    let target = command.get("target").ok_or("falta \"target\" (o form)")?;
+    let id = aylis_remote::resolve(ui, target)?;
+    let root = ui.root_of(id);
+    let files: Vec<String> = command.get("files").and_then(Value::as_array).ok_or("falta \"files\"")?.iter().filter_map(Value::as_str).map(str::to_string).collect();
+    ui.layout();
+    let size = ui.control(root).map(|c| c.bounds()).unwrap_or_default();
+    let coord = |k: &str, half: f32| command.get(k).and_then(Value::as_f64).map_or(half, |v| v as f32);
+    let at = aylis_core::PointF::new(coord("x", size.width / 2.0), coord("y", size.height / 2.0));
+    Ok(Value::Bool(ui.drop_files(root, at, files)))
 }
 
 /// `{"cmd": "profile_take"}`: os blocos medidos desde a última vez (veja

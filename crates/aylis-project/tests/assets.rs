@@ -104,6 +104,34 @@ fn the_app_gets_only_the_icons_it_cites() {
     assert!(!project.dir().join("assets/icons/material.txt").exists());
 }
 
+/// O relatório do player de música (21/11): o botão com `fluent:play-fill` no form e o código
+/// trocando para `fluent:pause-fill`. O "Gerar código" leva os dois para o app; um nome montado
+/// em execução entra pela lista `icons` do projeto.
+#[test]
+fn generating_keeps_the_icons_of_the_code_and_of_the_project_list() {
+    if !has_resources() {
+        return;
+    }
+    let base = temp("icons_code");
+    let mut project = create(&base, "Player", Language::Rust).unwrap();
+    let form = project.dir().join("forms/principal.json");
+    let text = std::fs::read_to_string(&form).unwrap();
+    let text = text.replacen("\"children\": [", "\"children\": [{ \"class\": \"Button\", \"name\": \"btnPlay\", \"icon\": \"fluent:play-fill\" },", 1);
+    let text = if text.contains("btnPlay") { text } else { text.replacen("\"class\": \"Form\"", "\"class\": \"Form\", \"children\": [{ \"class\": \"Button\", \"name\": \"btnPlay\", \"icon\": \"fluent:play-fill\" }]", 1) };
+    std::fs::write(&form, text).unwrap();
+    let code = project.code_dir().join("src/forms/principal.rs");
+    let mut source = std::fs::read_to_string(&code).unwrap();
+    source.push_str("\nfn _toggle(ui: &mut Ui, b: ComponentId) { let _ = ui.set_prop(b, \"icon\", \"fluent:pause-fill\"); }\n");
+    std::fs::write(&code, source).unwrap();
+    project.icons = vec!["fluent:next-fill".into()];
+    codegen::generate(&project).unwrap();
+    let pack = std::fs::read_to_string(project.dir().join("assets/icons/fluent.txt")).unwrap();
+    for name in ["play-fill", "pause-fill", "next-fill"] {
+        assert!(pack.lines().any(|l| l.starts_with(&format!("{name}\t"))), "falta {name}");
+    }
+    let _ = std::fs::remove_dir_all(&base);
+}
+
 #[test]
 fn an_imported_svg_joins_the_app_pack_on_the_24_grid() {
     let base = temp("svg");

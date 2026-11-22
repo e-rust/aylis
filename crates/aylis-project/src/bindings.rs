@@ -553,12 +553,15 @@ struct FormModel {
     module: String,
     /// Os componentes que só existem em algumas variantes (no código, opcionais).
     optional: BTreeSet<String>,
+    /// Cada `VirtualList` e as peças do modelo da linha dela (os componentes de dentro):
+    /// o acesso tipado da linha (`lstMusicas_row(ui, i).lblTitulo`; decidido em 21/11).
+    lists: Vec<(String, Vec<(String, Vec<String>)>)>,
 }
 
 /// O modelo de um form, lido do disco.
 fn form_model(project: &Project, entry: &crate::FormEntry, files: &mut crate::FormFiles) -> Result<FormModel, String> {
     {
-        let mut model = FormModel { name: entry.name.clone(), components: Vec::new(), module: crate::codegen::module_name(&entry.file), optional: BTreeSet::new() };
+        let mut model = FormModel { name: entry.name.clone(), components: Vec::new(), module: crate::codegen::module_name(&entry.file), optional: BTreeSet::new(), lists: Vec::new() };
         let mut each: Vec<BTreeSet<String>> = Vec::new();
         for (_, layout) in project.read_entry_variants(entry, files)? {
             let doc: Value = serde_json::from_str(layout.trim_start_matches('\u{feff}')).map_err(|e| format!("{}: {e}", entry.file))?;
@@ -569,6 +572,7 @@ fn form_model(project: &Project, entry: &crate::FormEntry, files: &mut crate::Fo
             let mut mine = Vec::new();
             for child in root.get("children").and_then(Value::as_array).into_iter().flatten() {
                 walk(child, &mut mine);
+                virtual_lists(child, &mut model.lists);
             }
             each.push(mine.iter().map(|(n, _)| n.clone()).collect());
             for c in mine {
@@ -582,6 +586,31 @@ fn form_model(project: &Project, entry: &crate::FormEntry, files: &mut crate::Fo
     }
 }
 
+/// As `VirtualList` de um nó e as peças do modelo de cada uma (os componentes com nome de
+/// dentro dela), sem repetir a lista (as variantes de plataforma).
+fn virtual_lists(node: &Value, out: &mut Vec<(String, Vec<(String, Vec<String>)>)>) {
+    let class = node.get("class").and_then(Value::as_str).unwrap_or_default();
+    let name = node.get("name").and_then(Value::as_str).unwrap_or_default();
+    // O `DataRepeater` é um `VirtualList` ligado a um dataset: a mesma linha tipada (22/11).
+    if matches!(class.split('.').next(), Some("VirtualList" | "DataRepeater")) && crate::is_identifier(name) {
+        // Cada filho direto é um modelo de linha, com as peças dele.
+        let mut models = Vec::new();
+        for child in node.get("children").and_then(Value::as_array).into_iter().flatten() {
+            let mut parts = Vec::new();
+            walk(child, &mut parts);
+            let model = child.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+            models.push((model, parts.into_iter().map(|(n, _)| n).collect()));
+        }
+        if !out.iter().any(|(n, _)| n == name) {
+            out.push((name.to_string(), models));
+        }
+        return;
+    }
+    for child in node.get("children").and_then(Value::as_array).into_iter().flatten() {
+        virtual_lists(child, out);
+    }
+}
+
 fn walk(node: &Value, out: &mut Vec<(String, String)>) {
     let name = node.get("name").and_then(Value::as_str).unwrap_or_default();
     let class = node.get("class").and_then(Value::as_str).unwrap_or_default();
@@ -592,6 +621,56 @@ fn walk(node: &Value, out: &mut Vec<(String, String)>) {
     for child in node.get("children").and_then(Value::as_array).into_iter().flatten() {
         walk(child, out);
     }
+}
+
+/// O código Rust das linhas tipadas das `VirtualList` de um form: as structs e os métodos
+/// (`lstX_row(ui, i)`, `lstX_row_of(ui, componente)`), iguais no form e nos `Components`.
+struct ListRows {
+    types: String,
+    methods: String,
+}
+
+fn rust_list_rows(f: &FormModel, ty: &str, optional: &dyn Fn(&str) -> bool) -> ListRows {
+    let mut out = ListRows { types: String::new(), methods: String::new() };
+    let class_of = |n: &str| f.components.iter().find(|(c, _)| c == n).map(|(_, k)| k.clone());
+    for (list, models) in &f.lists {
+        if optional(list) || RUST_FORM_FIELDS.contains(&list.as_str()) {
+            continue;
+        }
+        // Um modelo: `lstX_row`. Vários: um por modelo, `lstX_<modelo>` (`None` no item de outro).
+        let several = models.len() > 1;
+        for (model, parts) in models {
+            // Só com as peças sempre presentes (uma variante sem elas não teria a linha).
+            let parts: Vec<(&String, String)> = parts.iter().filter(|p| !optional(p)).filter_map(|p| Some((p, class_of(p)?))).collect();
+            if parts.is_empty() || (several && !crate::is_identifier(model)) {
+                continue;
+            }
+            let (row, method) = if several {
+                (format!("{ty}{}{}Row", pascal(list), pascal(model)), format!("{}_{}", rust_ident(list), model))
+            } else {
+                (format!("{ty}{}Row", pascal(list)), format!("{}_row", rust_ident(list)))
+            };
+            out.types.push_str(&format!("/// Uma linha do `{list}` (as cópias das peças do modelo na linha do item `index`).\n#[derive(Clone, Copy, Debug)]\npub struct {row} {{\n    pub index: usize,\n"));
+            for (p, class) in &parts {
+                out.types.push_str(&format!("    pub {}: {class},\n", rust_ident(p)));
+            }
+            out.types.push_str("}\n\n");
+            let fields: String = parts
+                .iter()
+                .map(|(p, class)| format!("            {f}: {class} {{ id: aylis::prelude::VirtualList::part(ui, self.{l}.id, index, self.{f}.id)? }},\n", f = rust_ident(p), l = rust_ident(list)))
+                .collect();
+            out.methods.push_str(&format!(
+                "    /// A linha do item `index` do `{list}` (no `on_bind`, as peças daquele item); `None`\n\
+                 \x20   /// fora da tela{other}.\n\
+                 \x20   pub fn {method}(&self, ui: &Ui, index: usize) -> Option<{row}> {{\n        Some({row} {{\n            index,\n{fields}        }})\n    }}\n\n\
+                 \x20   /// A linha do `{list}` em que está `component` (quem disparou um clique dentro da linha).\n\
+                 \x20   pub fn {method}_of(&self, ui: &Ui, component: ComponentId) -> Option<{row}> {{\n        let index = aylis::prelude::VirtualList::index_of(ui, self.{l}.id, component)?;\n        self.{method}(ui, index)\n    }}\n\n",
+                l = rust_ident(list),
+                other = if several { " ou com outro modelo" } else { "" }
+            ));
+        }
+    }
+    out
 }
 
 /// O arquivo gerado de cada linguagem (relativo à pasta dela).
@@ -1120,7 +1199,7 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 25: o `field` dos registros em Python e o campo com o nome do registro em C# (19/11).
 /// 26: o `problems` do `bind` sem o aviso de `mut` num form sem componentes (19/11).
 /// 27: o import do form em Python traz também as classes das anotações dos handlers (21/11).
-const GENERATOR_VERSION: u32 = 27;
+const GENERATOR_VERSION: u32 = 29;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1633,6 +1712,10 @@ fn rust(m: &Model) -> Out {
         for mth in m.methods(class) {
             let name = rust_ident(&mth.name);
             match mth.via.as_str() {
+                // Os bytes da imagem: no Rust, os bytes mesmo (pelo protocolo vão em base64).
+                "invoke" if class == "Image" && mth.name == "set_image_bytes" => s.push_str(
+                    "    /// Mostra uma imagem de bytes (PNG, JPEG...: a capa de uma música); vazio volta ao `image`.\n    pub fn set_image_bytes(self, ui: &mut Ui, bytes: &[u8]) {\n        aylis::prelude::ImageView::set_image_bytes(ui, self.id, bytes.to_vec());\n    }\n",
+                ),
                 "invoke" => {
                     let params: String = mth.arg_names().iter().zip(&mth.args).map(|(a, k)| format!(", {a}: {}", rust_arg(k, &m.enums))).collect();
                     let values: Vec<String> = mth.arg_names().iter().zip(&mth.args).map(|(a, k)| rust_value(a, k, &m.enums)).collect();
@@ -1665,6 +1748,8 @@ fn rust(m: &Model) -> Out {
                         "play" => ("", "", format!("let _ = aylis::prelude::{class}::play(ui, self.id);")),
                         "position" => ("", " -> f64", format!("aylis::prelude::{class}::position(ui, self.id)")),
                         "duration" => ("", " -> f64", format!("aylis::prelude::{class}::duration(ui, self.id).unwrap_or_default()")),
+                        "playing" => ("", " -> bool", format!("aylis::prelude::{class}::is_playing(ui, self.id)")),
+                        "ready" => ("", " -> bool", format!("aylis::prelude::{class}::is_ready(ui, self.id)")),
                         op => ("", "", format!("aylis::prelude::{class}::{op}(ui, self.id);")),
                     };
                     s.push_str(&format!("    pub fn {name}(self, ui: &mut Ui{params}){ret} {{\n        {body}\n    }}\n"));
@@ -1705,7 +1790,14 @@ fn rust(m: &Model) -> Out {
             s.push_str(&format!("    pub {}: {field},\n", rust_ident(n)));
         }
         s.push_str("}\n\n");
+        // A linha tipada de cada `VirtualList`: as cópias das peças do modelo na linha do item.
+        let rows = rust_list_rows(f, &ty, &optional);
+        s.push_str(&rows.types);
+        if !rows.methods.is_empty() {
+            s.push_str(&format!("impl {ty}Components {{\n{}}}\n\n", rows.methods));
+        }
         s.push_str(&format!("impl std::ops::Deref for {ty} {{\n    type Target = Form;\n    fn deref(&self) -> &Form {{\n        &self.form\n    }}\n}}\n\nimpl {ty} {{\n"));
+        s.push_str(&rows.methods);
         // A montagem: o que não bate impede o form de abrir.
         s.push_str(&format!(
             "    /// Monta a instância de um {name} recém-criado (o `register` liga). Um componente que\n\

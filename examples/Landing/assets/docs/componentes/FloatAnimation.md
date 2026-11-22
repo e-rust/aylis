@@ -16,7 +16,7 @@ Anima uma propriedade numérica (posição, tamanho, opacidade).
 | `duration` | Duração | duração (ms) | Quanto dura a ida, em milissegundos. |
 | `delay` | Atraso | duração (ms) | Espera antes de começar, em milissegundos (só na ida). |
 | `easing` | Curva de aceleração | curva de suavização | A curva de velocidade da animação (`linear`, `out_quad`...): como o valor anda no tempo. |
-| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear` | O estado do pai que dispara a animação (`hover`, `pressed`, `focused`, `checked`, `appear`); `none`: só por código. |
+| `trigger` | Gatilho | um de: `none`, `hover`, `pressed`, `focused`, `checked`, `appear`, `hover_within` | O estado do pai que dispara a animação (`hover`, `pressed`, `focused`, `checked`, `appear`); `none`: só por código. |
 | `auto_reverse` | Volta sozinho | lógico | Chegando ao fim, volta ao valor inicial pelo mesmo caminho. |
 | `looping` | Repetindo | lógico | Repete sem parar até ser desligada. |
 | `enabled` | Habilitado | lógico | Desligada, o gatilho não a dispara. |

@@ -36,6 +36,11 @@ fn main() -> ExitCode {
     if matches!(args.first().map(String::as_str), Some("check" | "build" | "run" | "publish" | "test" | "debug-android" | "agent-run" | "ci-ios")) {
         aylis_tools::setup::refresh_path();
     }
+    // A versão, para relatar problemas (antes imprimia o uso inteiro, como erro).
+    if matches!(args.first().map(String::as_str), Some("--version" | "-V" | "version")) {
+        println!("aylis-tool {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
     let result = match args.first().map(String::as_str) {
         Some("check") => check(&args[1..]),
         // Os textos da IDE sem tradução; com --apply, acrescenta as da tabela.
@@ -654,7 +659,9 @@ fn setup_run(args: &[String], utf16: bool, causes: &mut u8) -> Result<(), String
         return Err("uso: aylis-tool setup <linguagem>... | --all [--target android|web]... [--utf16-output]".into());
     }
     let list = if list.is_empty() { vec![Target::Desktop] } else { list };
-    let host = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(env::exe("aylis-host")))).filter(|p| p.is_file());
+    // Onde ele deve estar, exista ou não: a conferência olha o arquivo a cada vez, e a primeira
+    // linguagem o compila (antes, o resumo final ainda dizia "não encontrado"; macOS, 22/11).
+    let host = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(env::exe("aylis-host"))));
     let control = aylis_tools::process::Control::new();
     let mut missing = Vec::new();
     // A frase da causa de cada pacote que não veio (a primeira linha do erro), para o resumo.

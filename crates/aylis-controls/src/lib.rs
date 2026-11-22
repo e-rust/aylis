@@ -130,6 +130,8 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<shapes::Arc>("Shapes");
     ui.register_class::<shapes::PathShape>("Shapes");
     ui.register_class::<recycler::VirtualList>("Additional");
+    ui.register_class::<aylis_controls_base::ListHeader>("Additional");
+    ui.register_class::<aylis_controls_base::ImageList>("Additional");
     ui.register_class::<bi::KpiCard>("BI");
     ui.register_class::<bi::PivotTable>("BI");
     ui.register_class::<bi::Slicer>("BI");

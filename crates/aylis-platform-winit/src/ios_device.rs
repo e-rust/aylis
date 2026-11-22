@@ -134,6 +134,11 @@ pub(crate) struct IosFileDialogs;
 
 impl FileDialogService for IosFileDialogs {
     fn show(&mut self, options: FileDialogOptions, done: Box<dyn FnOnce(Vec<String>) + Send>) {
+        // Pasta: ainda não no iOS; volta como cancelado.
+        if options.folder {
+            done(Vec::new());
+            return;
+        }
         // Salvar: um arquivo na pasta Documentos do app (o app grava nele).
         if options.save {
             let name = if options.file_name.is_empty() { "arquivo".to_string() } else { aylis_core::files::file_name(&options.file_name).to_string() };

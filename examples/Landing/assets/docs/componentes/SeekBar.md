@@ -13,6 +13,7 @@ Barra de reprodução de mídia: posição, trecho já carregado (`buffered`), m
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `show_time` | Mostra o tempo | lógico | Mostra, sob o mouse, o horário daquele ponto. |
+| `show_labels` | Mostrar os tempos | lógico | O tempo atual à esquerda e o total à direita da barra (todo player mostra; antes eram dois `Label` à parte; o relatório do player de música, 21/11). Desligado: como antes. |
 
 ### Dados
 

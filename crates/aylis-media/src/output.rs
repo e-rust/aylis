@@ -283,34 +283,63 @@ impl Tap {
     pub(crate) fn orphan(&self) -> bool {
         Arc::strong_count(&self.inner) == 1
     }
+
+    /// Uma referência que não segura o ponto de escuta: quem produz o som guarda esta, para
+    /// religar o mesmo ponto quando troca o player de dentro (o `MediaPlayer` com outro arquivo).
+    pub(crate) fn downgrade(&self) -> WeakTap {
+        WeakTap(Arc::downgrade(&self.inner))
+    }
+}
+
+/// Um [`Tap`] guardado sem segurá-lo ([`Tap::downgrade`]): some quando quem escuta solta.
+#[derive(Clone)]
+pub(crate) struct WeakTap(std::sync::Weak<Mutex<VecDeque<f32>>>);
+
+impl WeakTap {
+    pub(crate) fn upgrade(&self) -> Option<Tap> {
+        self.0.upgrade().map(|inner| Tap { inner })
+    }
 }
 
 /// Os pontos de escuta de quem produz som: converte para o formato do mixer e entrega.
 #[derive(Default)]
 pub(crate) struct Taps {
-    list: Mutex<Vec<(Tap, crate::audio::Converter)>>,
+    /// O ponto, o conversor e se ele ouve antes do volume (`pre_volume`).
+    list: Mutex<Vec<(Tap, crate::audio::Converter, bool)>>,
 }
 
 impl Taps {
     pub(crate) fn add(&self, rate: u32, channels: u16) -> Tap {
         let tap = Tap::new();
-        if let Ok(mut l) = self.list.lock() {
-            l.push((tap.clone(), crate::audio::Converter::new(rate, channels, MIX_RATE, MIX_CHANNELS)));
-        }
+        self.attach(tap.clone(), rate, channels, false);
         tap
+    }
+
+    /// Liga um ponto que já existe; `pre_volume`: recebe o som sem o volume de quem produz.
+    pub(crate) fn attach(&self, tap: Tap, rate: u32, channels: u16, pre_volume: bool) {
+        if let Ok(mut l) = self.list.lock() {
+            l.push((tap, crate::audio::Converter::new(rate, channels, MIX_RATE, MIX_CHANNELS), pre_volume));
+        }
     }
 
     /// Entrega `input` (na taxa e nos canais de quem produz) a cada ponto de escuta.
     pub(crate) fn feed(&self, input: &[f32], rate: u32, channels: u16) {
+        self.feed_with_volume(input, rate, channels, 1.0);
+    }
+
+    /// Como [`Taps::feed`], com o volume de quem produz: os pontos `pre_volume` recebem o som
+    /// sem ele (o visualizador e o medidor iguais em qualquer volume e no mudo; o relatório do
+    /// player de música, 21/11), os outros, com ele.
+    pub(crate) fn feed_with_volume(&self, input: &[f32], rate: u32, channels: u16, volume: f32) {
         let Ok(mut l) = self.list.lock() else { return };
-        l.retain(|(t, _)| !t.orphan());
+        l.retain(|(t, _, _)| !t.orphan());
         let mut buffer = VecDeque::new();
-        for (tap, converter) in l.iter_mut() {
+        for (tap, converter, pre) in l.iter_mut() {
             if converter.in_rate != rate || converter.in_channels != channels.max(1) as usize {
                 *converter = crate::audio::Converter::new(rate, channels, MIX_RATE, MIX_CHANNELS);
             }
             buffer.clear();
-            converter.process(input, &mut buffer, 1.0);
+            converter.process(input, &mut buffer, if *pre { 1.0 } else { volume });
             tap.push(buffer.drain(..));
         }
     }

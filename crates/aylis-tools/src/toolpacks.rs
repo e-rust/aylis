@@ -925,43 +925,7 @@ pub(crate) fn extract(archive: &Path, to: &Path, strip: usize, prefix: Option<&s
     let file = File::open(archive).map_err(|e| format!("{}: {e}", archive.display()))?;
     let at = |e: String| format!("{name}: {e}");
     match archive_kind(&name).ok_or_else(|| format!("{name}: formato que o Aylis não extrai"))? {
-        ArchiveKind::TarGz => {
-            let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file)));
-            for entry in tar.entries().map_err(|e| at(e.to_string()))? {
-                control.check()?;
-                let mut entry = entry.map_err(|e| at(e.to_string()))?;
-                let raw = entry.path().map_err(|e| at(e.to_string()))?.into_owned();
-                let Some(rel) = entry_target(&raw, strip, prefix).map_err(at)? else { continue };
-                let path = to.join(rel);
-                let kind = entry.header().entry_type();
-                if kind.is_dir() {
-                    std::fs::create_dir_all(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-                } else if kind.is_file() || kind == tar::EntryType::Continuous {
-                    write_entry(&mut entry, &path)?;
-                    #[cfg(unix)]
-                    if let Ok(mode) = entry.header().mode() {
-                        use std::os::unix::fs::PermissionsExt;
-                        let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode));
-                    }
-                } else if kind.is_symlink() {
-                    // Um atalho relativo que fica dentro da pasta (os do JDK e do Node no
-                    // Linux); no Windows, os pacotes não têm.
-                    let target = entry.link_name().map_err(|e| at(e.to_string()))?.map(|t| t.into_owned()).unwrap_or_default();
-                    let inside = path.parent().map(|p| p.join(&target)).and_then(|p| normalize(&p)).is_some_and(|p| p.starts_with(to));
-                    if !inside || target.is_absolute() {
-                        return Err(at(format!("atalho para fora da pasta ({} → {})", raw.display(), target.display())));
-                    }
-                    #[cfg(unix)]
-                    {
-                        if let Some(parent) = path.parent() {
-                            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-                        }
-                        let _ = std::fs::remove_file(&path);
-                        std::os::unix::fs::symlink(&target, &path).map_err(|e| format!("{}: {e}", path.display()))?;
-                    }
-                }
-            }
-        }
+        ArchiveKind::TarGz => extract_tar(tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file))), to, strip, prefix, &name, control)?,
         ArchiveKind::Zip => {
             let mut zip = zip::ZipArchive::new(std::io::BufReader::new(file)).map_err(|e| at(e.to_string()))?;
             for i in 0..zip.len() {
@@ -982,6 +946,46 @@ pub(crate) fn extract(archive: &Path, to: &Path, strip: usize, prefix: Option<&s
                     use std::os::unix::fs::PermissionsExt;
                     let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode));
                 }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// As entradas de um `.tar` (já descomprimido pelo leitor) em `to`.
+fn extract_tar<R: Read>(mut tar: tar::Archive<R>, to: &Path, strip: usize, prefix: Option<&str>, name: &str, control: &Control) -> Result<(), String> {
+    let at = |e: String| format!("{name}: {e}");
+    for entry in tar.entries().map_err(|e| at(e.to_string()))? {
+        control.check()?;
+        let mut entry = entry.map_err(|e| at(e.to_string()))?;
+        let raw = entry.path().map_err(|e| at(e.to_string()))?.into_owned();
+        let Some(rel) = entry_target(&raw, strip, prefix).map_err(at)? else { continue };
+        let path = to.join(rel);
+        let kind = entry.header().entry_type();
+        if kind.is_dir() {
+            std::fs::create_dir_all(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+        } else if kind.is_file() || kind == tar::EntryType::Continuous {
+            write_entry(&mut entry, &path)?;
+            #[cfg(unix)]
+            if let Ok(mode) = entry.header().mode() {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode));
+            }
+        } else if kind.is_symlink() {
+            // Um atalho relativo que fica dentro da pasta (os do JDK e do Node no
+            // Linux); no Windows, os pacotes não têm.
+            let target = entry.link_name().map_err(|e| at(e.to_string()))?.map(|t| t.into_owned()).unwrap_or_default();
+            let inside = path.parent().map(|p| p.join(&target)).and_then(|p| normalize(&p)).is_some_and(|p| p.starts_with(to));
+            if !inside || target.is_absolute() {
+                return Err(at(format!("atalho para fora da pasta ({} → {})", raw.display(), target.display())));
+            }
+            #[cfg(unix)]
+            {
+                if let Some(parent) = path.parent() {
+                    std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                let _ = std::fs::remove_file(&path);
+                std::os::unix::fs::symlink(&target, &path).map_err(|e| format!("{}: {e}", path.display()))?;
             }
         }
     }

@@ -113,6 +113,8 @@ pub struct Fix {
     pub fetch: Option<String>,
     /// Variáveis de ambiente do comando (o `GOBIN` do `go install`).
     pub env: Vec<(String, String)>,
+    /// Um comando para depois do principal, se ele der certo (programa e argumentos).
+    pub after: Option<Vec<String>>,
 }
 
 /// O erro de um pacote sem de onde vir (a IDE mostra e leva às Opções).
@@ -121,7 +123,7 @@ pub const NO_PACKAGE_SOURCE: &str =
 
 impl Fix {
     fn new(description: impl Into<String>, command: &[&str]) -> Self {
-        Self { description: description.into(), command: command.iter().map(|s| s.to_string()).collect(), interactive: false, fetch: None, env: Vec::new() }
+        Self { description: description.into(), command: command.iter().map(|s| s.to_string()).collect(), interactive: false, fetch: None, env: Vec::new(), after: None }
     }
 
     /// Instalar o pacote de ferramentas `name` (sem alternativa), se houver para esta
@@ -162,7 +164,13 @@ impl Fix {
             }
         }
         command.envs(self.env.iter().map(|(k, v)| (k, v)));
-        crate::process::run_tool(&mut command, control, sink, crate::LineKind::Tool)
+        crate::process::run_tool(&mut command, control, sink, crate::LineKind::Tool)?;
+        if let Some((program, args)) = self.after.as_ref().and_then(|a| a.split_first()) {
+            let mut command = Command::new(program);
+            command.args(args);
+            crate::process::run_tool(&mut command, control, sink, crate::LineKind::Tool)?;
+        }
+        Ok(())
     }
 
     /// Um pacote com outro comando para quando não há origem.
@@ -751,6 +759,10 @@ fn note_desktop(language: Language, aylis_host: Option<&Path>) {
         note_path(&PathBuf::from(home).join(".vscode").join("extensions"));
     }
     note_var("JAVA_HOME");
+    // O modo de desenvolvedor do macOS fica no banco de autorizações: ligar muda o arquivo.
+    if cfg!(target_os = "macos") {
+        note_path(Path::new("/var/db/auth.db"));
+    }
     if cfg!(windows) {
         // As instalações do Visual Studio (o vswhere lê daqui).
         if let Some(data) = std::env::var_os("ProgramData") {
@@ -920,8 +932,27 @@ fn desktop(out: &mut Vec<Check>, language: Language, rust: &SharedRust, aylis_ho
             });
         }
     }
+    // No macOS, o LLDB e o Delve só se anexam ao app com o modo de desenvolvedor ligado; sem
+    // ele o depurador abria e não parava em nada (Mac Intel, 22/11). Ligar pede a senha de
+    // administrador, na janela do sistema.
+    if cfg!(target_os = "macos") && matches!(language, Language::Rust | Language::Cpp | Language::Pascal | Language::Go) && !mac_developer_mode() {
+        let mut fix = Fix::new(
+            "Liga o modo de desenvolvedor do macOS (pede a senha de administrador)",
+            &["osascript", "-e", "do shell script \"DevToolsSecurity -enable\" with administrator privileges"],
+        );
+        fix.interactive = true;
+        out.push(Check::warning(t, "Modo de desenvolvedor do macOS (depurar na IDE)", "desligado: o depurador não consegue parar no app").fix(fix));
+    }
     // O servidor de linguagem (sugestões, declaração, erros enquanto digita no editor).
     out.push(language_server(language));
+}
+
+/// Se o modo de desenvolvedor do macOS está ligado (`DevToolsSecurity -status`).
+fn mac_developer_mode() -> bool {
+    std::process::Command::new("DevToolsSecurity")
+        .arg("-status")
+        .output()
+        .is_ok_and(|o| String::from_utf8_lossy(&o.stdout).contains("enabled") && !String::from_utf8_lossy(&o.stdout).contains("disabled"))
 }
 
 /// TypeScript, C#, Java, Go, C++ e Free Pascal: o compilador e o aylis-host.
@@ -1074,10 +1105,19 @@ fn install_language_server(language: Language) -> Option<Fix> {
         Language::Python => {
             let (python, _) = python()?;
             let version = crate::downloads::version("python-lsp-server");
-            Fix::new(
+            let mut fix = Fix::new(
                 format!("Instala o python-lsp-server {version} (pip, com pyflakes, pycodestyle, autopep8 e rope) em {}", dir("pylsp")),
                 &[python.as_str(), "-m", "pip", "install", "--upgrade", "--target", &dir("pylsp"), &format!("python-lsp-server[pyflakes,pycodestyle,autopep8,rope]=={version}")],
-            )
+            );
+            // O `--target` monta tudo numa pasta temporária do `mkdtemp` e depois move: no
+            // Windows (Python 3.12.4+) ela só dá acesso ao dono, e os arquivos levam isso junto.
+            // Num terminal de administrador (ou pelo SSH do Windows) o dono é o grupo
+            // Administradores, e a IDE, sem elevação, não lia o pylsp ("Permission denied"; VM
+            // do Windows, 22/11). Depois de instalar, as permissões voltam às herdadas da pasta.
+            if cfg!(windows) {
+                fix.after = Some(["icacls", &dir("pylsp"), "/reset", "/T", "/C", "/Q"].iter().map(|s| s.to_string()).collect());
+            }
+            fix
         }
         Language::TypeScript => {
             // O TypeScript fica no 5 (o 7 não tem o tsserver). O npm confere a integridade.
@@ -1271,7 +1311,12 @@ pub fn java_bin() -> Option<PathBuf> {
             return Some(bin);
         }
     }
-    which("java").and_then(|j| j.parent().map(Path::to_path_buf))
+    // A pasta do `javac` que responde (o /usr/bin do macOS só tem atalhos sem um JDK no sistema).
+    crate::hostlang::find(Language::Java)
+        .ok()
+        .and_then(|tc| tc.program.parent().map(Path::to_path_buf))
+        .filter(|b| b.join(exe("java")).is_file())
+        .or_else(|| which("java").and_then(|j| j.parent().map(Path::to_path_buf)))
 }
 
 /// Os aparelhos conectados (`adb devices`): números de série.
@@ -1589,16 +1634,28 @@ fn linux_wsl(out: &mut Vec<Check>, language: Language) {
         (crate::wsl::available(), distro.join().ok().flatten())
     });
     if !available {
-        out.push(Check::missing(t, "WSL", "não instalado").fix(Fix::new("Instala o WSL com o Ubuntu (pede permissão de administrador e reiniciar)", &["wsl.exe", "--install", "-d", "Ubuntu"]).interactive()));
+        out.push(Check::missing(t, "WSL", "não instalado").fix(Fix::new("Instala o WSL com o Ubuntu 22.04 (pede permissão de administrador e reiniciar)", &["wsl.exe", "--install", "-d", crate::glibc::WSL_DISTRO]).interactive()));
         return;
     }
+    let install_jammy = || Fix::new("Instala o Ubuntu 22.04 no WSL", &["wsl.exe", "--install", "-d", crate::glibc::WSL_DISTRO, "--no-launch"]);
     let Some(distro) = distro else {
-        out.push(Check::missing(t, "Distribuição Linux", "nenhuma (a docker-desktop não serve)").fix(Fix::new("Instala o Ubuntu no WSL", &["wsl.exe", "--install", "-d", "Ubuntu", "--no-launch"])));
+        out.push(Check::missing(t, "Distribuição Linux", "nenhuma (a docker-desktop não serve)").fix(install_jammy()));
         return;
     };
-    out.push(Check::ok(t, "Distribuição Linux", &distro));
+    // O app sai preso à glibc da distribuição: a mínima é a do Ubuntu 22.04 (`crate::glibc`;
+    // compilado no Ubuntu 26.04, não abria no Mint 22, 22/11).
+    out.push(match crate::wsl::glibc(&distro) {
+        Some(v) if crate::glibc::too_new(v) => Check::warning(
+            t,
+            "Distribuição Linux",
+            format!("{distro} (glibc {}.{}): o app publicado só abre em distribuições com essa glibc ou mais nova, e o mínimo do Aylis é a {}", v.0, v.1, crate::glibc::minimum_text()),
+        )
+        .fix(install_jammy()),
+        Some(v) => Check::ok(t, "Distribuição Linux", format!("{distro} (glibc {}.{})", v.0, v.1)),
+        None => Check::ok(t, "Distribuição Linux", &distro),
+    });
     let run = |cmd: String| ["wsl.exe".to_string(), "-d".into(), distro.clone(), "--exec".into(), "bash".into(), "-lc".into(), cmd];
-    let fix = |description: &str, cmd: String| Fix { description: description.into(), command: run(cmd).to_vec(), interactive: false, fetch: None, env: Vec::new() };
+    let fix = |description: &str, cmd: String| Fix { description: description.into(), command: run(cmd).to_vec(), interactive: false, fetch: None, env: Vec::new(), after: None };
     // As bibliotecas (o que falta pelo dpkg).
     let list = crate::wsl::PACKAGES.join(" ");
     // As três perguntas ao Linux ao mesmo tempo.

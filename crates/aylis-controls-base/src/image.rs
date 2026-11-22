@@ -2,12 +2,15 @@
 
 use std::cell::{Cell, RefCell};
 
-use aylis_core::{Canvas, Component, ControlBase, EventCtx, GestureEvent, Image, ImageFit, PaintCtx, PointF, RectF, Stroke, WheelEvent, properties};
+use aylis_core::{Canvas, Color, Component, ComponentId, ControlBase, EventCtx, GestureEvent, Image, ImageFit, MethodInfo, PaintCtx, PointF, PropKind, PropValue, RectF, Stroke, Ui, WheelEvent, properties};
 
 use crate::leaf_control;
 
 /// Mostra uma imagem do aplicativo (`image: "assets/images/logo.png"`, lida pelo serviço
-/// de recursos do projeto) ou uma [`Image`] definida por código ([`set_picture`]).
+/// de recursos do projeto) ou uma [`Image`] definida por código ([`set_picture`]). Um arquivo
+/// do disco ou bytes na memória (a capa de uma música) vêm pelo código:
+/// [`ImageView::set_image_file`] e [`ImageView::set_image_bytes`] (decidido em 21/11: o form
+/// não aponta para uma pasta da máquina de quem desenhou).
 ///
 /// Na IDE (modo de design), sem imagem, mostra um contorno tracejado para ser encontrada.
 ///
@@ -19,7 +22,8 @@ use crate::leaf_control;
 #[derive(Default)]
 pub struct ImageView {
     pub base: ControlBase,
-    /// Caminho do arquivo, relativo à pasta do projeto.
+    /// Caminho do arquivo, relativo à pasta do projeto (só os do projeto; um do disco, pelo
+    /// [`ImageView::set_image_file`]).
     pub image: String,
     /// Como a imagem ocupa o controle: `contain` (inteira, mantendo a proporção), `cover`
     /// (cobre, cortando as bordas), `stretch` (estica), `center` ou `original` (tamanho real).
@@ -63,6 +67,29 @@ impl ImageView {
         (!self.image.is_empty()).then(|| ui.services().resources.as_ref()?.read(&self.image).map(Image::encoded)).flatten()
     }
 
+    /// Mostra um arquivo do disco (ou um `memory:/` do [`aylis_core::files`]) no lugar do
+    /// `image`. Erro: o arquivo não abre.
+    pub fn set_image_file(ui: &mut Ui, id: ComponentId, path: &str) -> Result<(), String> {
+        let bytes = aylis_core::files::read(path).map_err(|e| format!("{path}: {e}"))?;
+        Self::set_image_bytes(ui, id, bytes);
+        Ok(())
+    }
+
+    /// Mostra uma imagem de bytes (PNG, JPEG, GIF, BMP: a capa embutida num MP3, uma foto
+    /// baixada) no lugar do `image`. Vazio: volta ao `image`.
+    pub fn set_image_bytes(ui: &mut Ui, id: ComponentId, bytes: Vec<u8>) {
+        if let Some(v) = ui.get_mut::<ImageView>(id) {
+            v.picture = (!bytes.is_empty()).then(|| Image::encoded(bytes));
+        }
+        ui.request_repaint();
+    }
+
+    /// A cor dominante da imagem mostrada ([`aylis_core::image::dominant_color`]): o fundo que
+    /// segue a capa. `None` sem imagem ou com um arquivo que não decodifica.
+    pub fn dominant_color(ui: &Ui, id: ComponentId) -> Option<Color> {
+        dominant_of(&ui.get::<ImageView>(id)?.current_image(ui)?)
+    }
+
     fn zoom(&self) -> f32 {
         self.zoom.get().max(1.0)
     }
@@ -84,6 +111,12 @@ impl ImageView {
         let mut loaded = self.loaded.borrow_mut();
         if loaded.as_ref().is_none_or(|(path, _)| *path != self.image) {
             let image = ctx.resource(&self.image).map(Image::encoded);
+            // Não achou: o aviso, uma vez por caminho, no app compilado para depurar (o que a
+            // IDE roda). Antes ficava vazio sem dizer nada (o relatório do player de música).
+            if image.is_none() && !ctx.design && cfg!(debug_assertions) {
+                let hint = if std::path::Path::new(&self.image).is_absolute() { " (um caminho do disco vai pelo set_image_file)" } else { "" };
+                aylis_core::stderr_line!("aylis: aviso: Image: o arquivo {} não está no projeto{hint}", self.image);
+            }
             *loaded = Some((self.image.clone(), image));
         }
         loaded.as_ref().and_then(|(_, image)| image.clone())
@@ -103,6 +136,39 @@ impl Component for ImageView {
         fit: ImageFit => "Appearance",
         radius: f32 => "Appearance",
         zoomable: bool => "Behavior",
+    }
+
+    fn methods(&self) -> &'static [MethodInfo] {
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("set_image_file", &[PropKind::String], None).params(&["path"]),
+            MethodInfo::new("set_image_bytes", &[PropKind::String], None).params(&["data"]),
+            MethodInfo::new("dominant_color", &[], Some(PropKind::Color)),
+        ];
+        METHODS
+    }
+
+    /// Pelo protocolo e nas outras linguagens: o `set_image_bytes` recebe os bytes em base64
+    /// (o protocolo só leva texto); no Rust, o acesso tipado recebe os bytes.
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[PropValue]) -> Result<PropValue, String> {
+        let text = || args.first().and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
+        match method {
+            "set_image_file" => {
+                let path = text();
+                let bytes = aylis_core::files::read(&path).map_err(|e| format!("{path}: {e}"))?;
+                self.picture = Some(Image::encoded(bytes));
+            }
+            "set_image_bytes" => {
+                let bytes = aylis_core::image::decode_base64(&text()).ok_or("set_image_bytes: os bytes vão em base64")?;
+                self.picture = (!bytes.is_empty()).then(|| Image::encoded(bytes));
+            }
+            "dominant_color" => {
+                let image = self.current_image(ctx.ui);
+                return Ok(image.as_ref().and_then(dominant_of).map_or(PropValue::Null, PropValue::Color));
+            }
+            _ => return Err(format!("Image não tem o método '{method}'")),
+        }
+        ctx.repaint();
+        Ok(PropValue::Null)
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
@@ -171,4 +237,15 @@ impl Component for ImageView {
         canvas.draw_image(&image, src, dest, 1.0);
         canvas.restore();
     }
+}
+
+/// A cor dominante de uma imagem: a de pixels direto; a de um arquivo, decodificado reduzido
+/// (a conta usa uns poucos milhares de pixels).
+fn dominant_of(image: &Image) -> Option<Color> {
+    if let Some(c) = image.dominant_color() {
+        return Some(c);
+    }
+    let aylis_core::ImageSource::Encoded(bytes) = image.source() else { return None };
+    let decoded = ::image::load_from_memory(bytes).ok()?.thumbnail(128, 128).to_rgba8();
+    aylis_core::image::dominant_color(decoded.width(), decoded.height(), decoded.as_raw())
 }
