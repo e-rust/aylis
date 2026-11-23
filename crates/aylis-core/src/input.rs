@@ -929,7 +929,9 @@ impl Ui {
                         let moving = now - t.time < 0.1;
                         if moving && speed(t.velocity) >= FLING_MIN_SPEED {
                             state.fling = Some(Fling { target: t.target, position: t.start, velocity: t.velocity, time: now });
-                            self.request_repaint();
+                            // Só um quadro: o que a inércia anda vira cópia da rolagem (o
+                            // `request_repaint` pedia a janela inteira).
+                            self.repaint_requested = true;
                         }
                         if moving {
                             self.swipe_check(root, t);

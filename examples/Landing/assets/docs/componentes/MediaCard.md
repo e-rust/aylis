@@ -79,9 +79,8 @@ o clique fora grava no `title` e dispara `on_rename` com o nome novo (sem espaç
 pontas; vazio ou igual ao atual não dispara); Esc cancela. O app só grava o nome:
 
 ```rust
-pub fn card_rename(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) -> Result<()> {
-    let novo = args.text().unwrap_or_default();
-    biblioteca::renomear(&self.item_atual, novo)?;
+pub fn card_rename(&mut self, ui: &mut Ui, _sender: MediaCard, name: String) -> Result<()> {
+    biblioteca::renomear(&self.item_atual, &name)?;
     Ok(())
 }
 ```

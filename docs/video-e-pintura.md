@@ -23,7 +23,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 |---|---|---|---|
 | `render` (`"windows": "d2d"`, `"linux": "auto"`...) | Projeto → Opções | O renderizador de cada plataforma: `d2d`, `gpu` (Skia na placa), `cpu` (Skia na CPU) ou `auto` ([renderizadores.md](renderizadores.md)) | Direct2D no Windows, `auto` nas outras |
 | `gpu` | Projeto → Opções | A placa quando há mais de uma: `alto-desempenho`, `economia`, parte do nome ou `monitor` (segue o monitor da janela; [gpu-por-monitor.md](gpu-por-monitor.md)) | a do sistema |
-| `present` | Projeto → Opções | Como o quadro chega à janela no Windows: vazio (a swap chain da janela) ou `composition` (pelo compositor, como os navegadores) | vazio |
+| `present` | Projeto → Opções | Como o quadro chega à janela no Windows: vazio (a swap chain da janela), `composition` (pelo compositor, como os navegadores) ou `composed` (sempre composto, fora do MPO: forms de overlay em tela cheia) | vazio |
 | `image_cache.pixels_mb` | Opções do projeto → Memória | Megabytes de imagens em pixels (vídeo, câmera, prévias) guardadas na placa | 96 |
 | `image_cache.files` | Opções do projeto → Memória | Quantas imagens de arquivo ficam prontas | 256 |
 | `image_cache.layers_mb` | Opções do projeto → Memória | Megabytes das camadas guardadas (`cache_layer`, transições); `0` desliga | 128 |
@@ -38,6 +38,8 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 | `layer_cache` | Form | As camadas automáticas neste form: `project`, `on` ou `off` |
 | `frame_reuse_kb` | Form | Até quantos KB um quadro de vídeo reaproveita o bitmap do anterior nesta janela: `-1` (o padrão) é o do projeto; `0` sempre cria. Só no Direct2D (o Skia e o navegador não reaproveitam) |
 | `cache_layer` | todo controle | Guarda o desenho do controle como imagem enquanto ele anda ou esmaece |
+| `gpu` | Form | A placa deste form: vazia, a do projeto; `monitor`, `alto-desempenho`, `economia` ou parte do nome ([gpu-por-monitor.md](gpu-por-monitor.md)) |
+| `present` | Form | Como o quadro deste form chega à janela no Windows: `project` (o padrão), `window`, `composition` ou `composed` |
 | `span_monitors` | Form | No Windows, um form maior que um monitor vira uma janela por monitor |
 | `frames_ahead` | VideoPlayer | Quantos quadros o decodificador prepara à frente (`0`: 6) |
 | `show_video` | VideoPlayer | Desligado, só o áudio (não decodifica a imagem para a tela) |
@@ -71,7 +73,7 @@ do valor do app (o do projeto ou o que o `RenderSettings` pôs).
 |---|---|
 | `AYLIS_RENDERER=d2d`, `gpu` ou `cpu` | Força o renderizador |
 | `AYLIS_GPU=alto-desempenho` (ou `economia`, um nome) | Força a placa |
-| `AYLIS_PRESENT=window` ou `composition` | Força o jeito de apresentar no Windows |
+| `AYLIS_PRESENT=window`, `composition` ou `composed` | Força o jeito de apresentar no Windows |
 | `AYLIS_VSYNC=0` | Não espera o monitor (para medir o custo do quadro) |
 | `AYLIS_FRAME_REUSE_KB=N` | Força o limite do reaproveitamento de quadros (`0`: sempre cria) |
 | `AYLIS_BENCH=N` | Redesenha N quadros sem parar e escreve o tempo médio, o p50, o p95 e a memória |

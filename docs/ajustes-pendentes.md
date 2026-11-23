@@ -13,6 +13,49 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 22/11/2026: a rolagem da Landing no celular**
+
+Pedido do autor ("investigue a lentidão ao scrolar a landing page", depois "Sim, corrija"),
+medido no ZenFone 5 (Snapdragon 660, Edge 138, canvas de 1080 × 2030) pelo DevTools remoto,
+com toques do próprio DevTools (o `adb input swipe` chega sem `pointerType` e o winit trata
+como mouse: sem inércia, não serve para medir).
+
+- [ ] Feito, esperando a conferência do autor no celular:
+  - **o `ScrollBox` rola por cópia** (`Ui::scroll_content` → `Ui::scroll_children_damage`): os
+    filhos andam e os pixels deles com eles; só a faixa que aparece e a imagem velha e a nova
+    do polegar da barra são pintadas. Antes, só o `Memo` copiava, e cada passo de um
+    `ScrollBox` repintava a caixa inteira. A caixa pode ser transparente sobre um fundo liso:
+    o `InkCanvas` anota se o desenho de cada controle foi só um retângulo de cor única
+    (`ink::Plain`), e a cópia procura esse fundo nos ancestrais (com um irmão desenhado por
+    baixo, ou um fundo que não é liso, repinta como antes). Onde cada descendente desenhou anda
+    junto (`shift_painted`), senão a pintura seguinte achava que vazou da área;
+  - **a pintura por área pula o que está fora**: um contêiner que não recorta os filhos, fora
+    da área, não desenha o próprio fundo e a sombra, e não é percorrido quando nenhum
+    descendente chega à área (`Ui::descendants_reach`, só pela geometria). Na faixa de 36
+    pontos da Landing, de ~90 controles percorridos para ~18;
+  - o começo da inércia não pede mais a janela inteira (`request_repaint` → só um quadro);
+  - **web**: a sombra é montada de uma pronta em nove pedaços (o `shadowBlur` refazia o
+    desfoque a cada card, a cada quadro, e segurava a GPU do celular); o espelho de
+    acessibilidade em HTML só é refeito quando a árvore para de mudar (rolando, as posições
+    mudavam a cada 250 ms e refazer os elementos travava um quadro de 50–60 ms), e a
+    assinatura dele é um hash;
+  - teste `scrolling_a_scroll_box_copies_the_pixels_already_painted` (`partial_paint`: com e
+    sem a calha da barra, e com um irmão por baixo, a imagem por partes igual à inteira).
+- Medidas (inércia de um arremesso, quadros desenhados; `scratchpad` da sessão, fora do repositório):
+  - antes: cada quadro repintava a página (~1.600 chamadas ao canvas, 15–34 ms de JS+wasm) e,
+    na inércia, um quadro a cada 83 ms (p50; 12 fps);
+  - depois: ~150–200 chamadas e 8–10 ms de JS+wasm por quadro (p50), um quadro a cada 33 ms
+    (p50; 30 fps). Com a página parada 68% do tempo na inércia, o resto até 60 fps está na
+    composição do navegador ou na GPU (sem texto e sem imagens a cadência quase não muda).
+- Falta:
+  - a cópia só vale com o deslocamento em pixels inteiros: com escala quebrada (2,625 em muitos
+    Android), o `ScrollBox` rola em pontos inteiros e cada passo continua repintando a caixa.
+    Rolar em pixels inteiros pede que o `Ui` saiba a escala da tela;
+  - a Landing publicada tem um service worker que guarda o `pkg/` pelo nome: um build com o
+    mesmo nome de arquivo não chega a quem já abriu (os publicados levam o hash no nome);
+  - medir no Direct2D e no Skia (a mudança vale para os três; o `partial_paint` confere a
+    imagem) e publicar a Landing de novo para o autor conferir no celular.
+
 **Relatório de um player de música portado para o Aylis (21/11/2026)**
 
 Um player (um form, `MediaPlayer`, `AudioMixer`, `VirtualList`, `OpenDialog`, `FileDropZone` e
@@ -103,11 +146,14 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
   padrão dos pacotes, sem outra origem) e não se sabe se o Linux funciona. Levantado: os
   pacotes só vêm do cache, da pasta `pacotes` ou do espelho (o Drive); o Rust do Windows (MSVC)
   precisa das Build Tools do Visual Studio, que não são pacote (pelo `winget`); o Linux nunca
-  foi testado numa máquina limpa (o WSL usado já tinha as bibliotecas). Propostas, esperando o
-  autor: outras origens (os arquivos numa release do GitHub, a URL oficial como último recurso,
-  com o SHA-256 do manifesto: muda a decisão de 12/11), o kit offline publicado na release,
-  tirar as Build Tools do caminho (o `rust-lld` ou o Rust do MinGW, a pesquisar) e o teste em
-  máquina limpa (VM com Linux, Windows Sandbox).
+  foi testado numa máquina limpa (o WSL usado já tinha as bibliotecas).
+  - Decidido e feito em 20/11 (veja [pacotes.md](pacotes.md) e o histórico): a URL oficial do
+    fabricante é a última origem, ligada por padrão, com o SHA-256 do manifesto (o Drive saiu
+    do padrão e ficou só para o que o Aylis monta); sem origem, o erro traz o passo a passo.
+    As máquinas limpas foram testadas depois (o Fedora 45, o Windows 11, o Mint 22.3, o macOS).
+  - Ainda em aberto (propostas sem decisão): o kit offline publicado como arquivo da release
+    do GitHub, e tirar as Build Tools do Visual Studio do caminho do Rust no Windows (o
+    `rust-lld` ou o Rust do MinGW, a pesquisar; empacotá-las não pode, pela licença).
 - Pedido do autor em 20/11 ("prepare para ser compatível com .deb do linux"; ele instala o
   Linux numa VM para testar). Feito (`aylis-tools::ide_package::linux_deb`, `aylis-tool
   ide-package --target linux --binary aylis-ide --deb`): o `.deb` da IDE, montado em Rust (o
@@ -157,9 +203,9 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
     ferramentas: o `setup rust` baixou o Rust do `static.rust-lang.org` e o CodeLLDB do GitHub
     dele, em 68 s. Testes `the_official_url_is_the_last_source_and_the_error_says_how_to_do_it_by_hand`
     e `the_official_url_off_asks_nothing`.
-  - Falta: o `.rpm` para o Fedora (o `.tar.gz` funcionou); a chave `package_official` só pelo
+  - Falta: instalar o `.rpm` da IDE num Fedora (ele sai desde a 0.9.1; veja abaixo); a chave `package_official` só pelo
     `tools.json` (sem caixa nas Opções nem opção no `aylis-tool packages sources`).
-  - Falta: o autor testar o `.deb` numa VM limpa com Debian ou Ubuntu. O Rust não vem no `.deb` (o `cargo` do Ubuntu é velho
+  - Testado numa VM limpa com o Ubuntu 26.04 (21/11) e no Mint 22.3 (22/11); falta o Debian. O Rust não vem no `.deb` (o `cargo` do Ubuntu é velho
     para a edição 2024): vem pelos pacotes de ferramentas ou pelo rustup. Distribuições antigas
     (Ubuntu 20.04, Debian 10) não têm o `libfreetype-dev` com esse nome.
   - O "Corrigir" das linguagens no Linux mandava sempre o `apt` (no Fedora falhava): agora o
@@ -257,7 +303,7 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
   - O `.rpm` da IDE (`aylis-tool ide-package --target linux --rpm`, pelo `rpmbuild`; a mesma
     árvore do `.deb`, com as dependências pelos nomes do `dnf`) saiu na release 0.9.1, conferido
     por dentro (os arquivos, as permissões, os scripts e as dependências). Falta: instalar
-    num Fedora (o autor publicou sem esse teste, com a VM desligada), o `.rpm` dos apps e o
+    num Fedora (o autor publicou sem esse teste, com a VM desligada) e o
     Executar no WSL das outras linguagens (só o publicar).
   - Pedido do autor em 20/11 ("devemos ter a opção de baixar ainda de lá tudo que for
     preciso"): a pasta do Drive é o espelho do Aylis (`settings::AYLIS_MIRROR`), junto da origem
@@ -378,9 +424,8 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
     projeto Rust compila (5 min 44 s) e abre (Direct2D, 136 fps); um projeto em cada uma das 7
     publica e abre com o backend vivo (`node`, `dotnet`, `java`, `python`, os `app.exe` de Go,
     C++ e Pascal).
-  - Falta: a correção do `spawn_backend` chega aos apps na próxima versão do `aylis` no
-    crates.io (a casca publicada usa o do crates.io; na VM foi conferida com um
-    `[patch.crates-io]` para a cópia instalada).
+  - A correção do `spawn_backend` chegou ao crates.io na 0.9.2 (na VM foi conferida com um
+    `[patch.crates-io]` para a cópia instalada); falta conferir na VM com o `aylis` do crates.io.
   - Depurar e o editor pela IDE nas 8 linguagens, na mesma VM, em 22/11 (pedido do autor:
     "teste a depuração e o editor na VM do Windows"), com a IDE 0.9.1 do instalador:
     - a 0.9.0 que estava na VM caía (estouro de pilha) no passo do C++: é o realce do
@@ -418,7 +463,7 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
       do teste não aparecia nas variáveis: era uma constante só descartada (`let _ = (ui,
       sender, total)`), e o compilador não a guarda; usada de verdade (`ui.push(total)`), o
       LLDB do Windows mostra `total = 42` e avalia a expressão (conferido num programa à parte).
-      Falta: a VM (o projeto usa o `aylis` do crates.io: a espera chega na próxima versão).
+      Falta: a VM (a espera está no `aylis` 0.9.2 do crates.io).
   - Conferido: o instalador silencioso instala a IDE e o Rust (do `static.rust-lang.org`) com o
     Visual Studio Build Tools; a IDE abre; um projeto Rust novo compila (5 min 44 s) e abre
     (Direct2D, 136 fps).
@@ -750,8 +795,8 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
       `.ipa` nos Artifacts. Roda só pelo "Run workflow" (o minuto de macOS conta dez vezes em
       repositório privado). Com `--signed`, o `.p12`, a senha e o perfil vêm dos segredos do
       repositório para um Keychain temporário.
-    - Atenção: o workflow baixa a tag da versão do `aylis-tool` que o gerou, e a `v0.7.0` ainda
-      não tem o `--device`. Funciona a partir da próxima versão publicada.
+    - O workflow baixa a tag da versão do `aylis-tool` que o gerou (o `--device` existe desde a
+      0.8.0).
   - Pedido do autor em 18/11, depois: "quero essa configuração de workflow nas configurações do
     projeto pelo Aylis IDE, não quero ter que ficar decorando comandos". Feito: Projeto →
     Opções do projeto → **iPhone (GitHub)** (`crates/aylis-ide/src/iosview.rs`, a interface do
@@ -908,8 +953,7 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
   máquina. Teste `crates/aylis-project/tests/desktop_shell.rs`.
 - [ ] Falta: o instalador (`--installer`) dessas linguagens. Os três montadores (`.msi`, NSIS,
   Inno) só levam arquivos soltos ao lado do `.exe`, e o backend fica numa pasta; hoje o
-  publicar avisa e entrega a pasta. Com o projeto em `"sdk": "crates.io"`, a casca só compila
-  depois da versão que publicar o `aylis::spawn_backend` (a 0.5.1 do crates.io não tem).
+  publicar avisa e entrega a pasta.
 
 **Ajustes de 17/11/2026: a versão com beta e o "falta: Assinatura de código"**
 
@@ -1377,9 +1421,9 @@ Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 
     o 6º argumento, o limite do form: o do app em `0` cria 10800 bitmaps (7,0 ms por quadro), em
     `1024` cria 72 (1,8 ms); o do form ganha do app (app `1024` e form `0`: 10800, 7,6 ms; app `0`
     e form `1024`: 72, 2,0 ms).
-- O teste `aylis-ide --test mcp` falha cerca de uma vez em três com os quatro casos em paralelo
-  (`ConnectionReset` ao ler a resposta, `tests/mcp.rs:36`); um caso por vez passa. Já falhava
-  antes de 14/11 (na rodada da 0.3.0): para a sessão do MCP da IDE investigar.
+- O teste `aylis-ide --test mcp` falhava cerca de uma vez em três com os quatro casos em paralelo
+  (`ConnectionReset`): corrigido em 20/11 (o servidor do MCP encerra a escrita e espera o cliente
+  fechar, `aylis-remote/src/mcp/http.rs`).
 - [ ] O menu de texto dos campos no celular (relatado por outra sessão em 14/11: "No Motorola
   Edge 30 Neo (Android 14), ao cadastrar um servidor, o toque longo sobre o texto de um Edit não
   abre o menu de texto que todo campo do Android tem (Recortar, Copiar, Colar, Selecionar tudo),
@@ -1428,8 +1472,8 @@ Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 
 
 - [ ] Um componente para mudar a cor da barra de status do Android e do iOS (pedido do autor em
   14/11: "preciso de um componente que consiga manipular a cor da barra de status do Android ou
-  iOS"). Não começou. O que já existe e o que foi levantado:
-  - Hoje, no Android, a plataforma pinta sozinha a barra de status e a de navegação com o fundo do
+  iOS"). O que existia e o que foi levantado:
+  - Antes, no Android, a plataforma pintava sozinha a barra de status e a de navegação com o fundo do
     form principal, com ícones escuros sobre fundo claro (`sync_system_bars` no
     `aylis-platform-winit`, `setSystemBars` na `AylisActivity.java`); o app não escolhe.
   - Proposta: um componente não visual (`SystemBars`, família Device) com `status_bar_color` e
@@ -1494,7 +1538,7 @@ Conferido no código em 14/11 (a ordem sugerida: 1 e 2, depois 3 e 4, 5 medido, 
   controle (direção e velocidade; não dispara se a rolagem andou); a gaveta abre pela borda (32
   pontos) e fecha deslizando; o `Carousel` troca pelo `swipe`; o `TabControl` com `swipe`; o
   `ImageView` com `zoomable` (pinça, roda e arrastar); a `VirtualList` com `swipe_actions` e o
-  `on_swipe_action` (`{index, action}`). O `DataRepeater` ficou sem as ações. O toque passou a
+  `on_swipe_action` (`{index, action}`). O `DataRepeater` ganhou as mesmas ações em 22/11 (herda o `VirtualList`). O toque passou a
   achar o controle com o deslocamento (`translate`) somado. Testes em
   `crates/aylis-controls/tests/swipe.rs` (6).
 
@@ -1918,7 +1962,7 @@ desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
   uma pasta compartilhada do Drive, listada pela vista embutida; conferido em 12/11 com a pasta
   do autor: o nsis e o jdk de 183 MB baixados dela em 26 s e o java rodando), conferidos
   pelo SHA-256 do manifesto embutido; prazo, proxy das variáveis e do Windows (sem PAC/WPAD), e
-  nunca a URL oficial (só o `packages pack`/`update` a usam). Pacotes no Windows: rust 1.99.0
+  por último a URL oficial do manifesto (desde 20/11; `package_official = off` desliga). Pacotes no Windows: rust 1.99.0
   (+ rust-android, rust-wasm), jdk 17.0.21+9, android-sdk, android-ndk 27.2.12479018,
   cargo-ndk 4.1.2, wasm-bindgen 0.2.129, python 3.12.10, node 26.13.1, dotnet 8.0.428, go
   1.27.4, nsis 3.11, codelldb, netcoredbg, js-debug, clangd, bundletool e jdtls. Conferido: o
@@ -1944,8 +1988,8 @@ desenho em `docs/pacotes.md`, a decisão no histórico; roteiro 120 a 122):
     um programa de 64 bits); o pacote `wix` (o `.nupkg` oficial, que roda com `dotnet wix.dll`; a
     verificação de ambiente instala o pacote em vez do `dotnet tool install`); o `android-sdk` e o
     `dotnet` de Linux e de macOS ARM, e o `android-ndk` de Linux (o de macOS só sai em `.dmg`).
-    Falta subir o `fpc-3.2.2-x86_64-win64.zip`, o `wix.5.0.2.nupkg` e os de Linux e macOS para o
-    espelho (o `packages pack`), e conferir os de Linux e macOS numa máquina deles.
+    Falta conferir os pacotes de Linux e macOS numa máquina deles (o `wix` e os de Linux e macOS
+    vêm do fabricante desde 20/11; só o `fpc` e o Skia de 32 bits dependem do espelho do Aylis).
 - **Falta** (decidido pelo autor em 14/11, "Seguir todas"):
   - não fazer: empacotar o Build Tools da Microsoft (a licença não permite redistribuir; continua
     o instalador da Microsoft), pacotes para pylsp, tsls, gopls, delve, csharp-ls e pasls
@@ -2035,17 +2079,14 @@ feito; teste `aylis-media/tests/repaint.rs`):
   - Silencioso: `/ESPELHO=` (no lugar do `/PACOTES=`; o `/LINGUAGENS=` e o `/PLATAFORMAS=`
     saíram com a escolha, em 16/11: veja "a escolha das linguagens na IDE"). A pasta `pacotes` ao lado do instalador vale pela variável
     `AYLIS_PACKAGE_DIR` (sem ficar gravada nas Opções).
-  - O espelho padrão: a pasta do Drive (`settings::DEFAULT_PACKAGE_MIRROR`) vale enquanto
-    nada foi gravado em `package_mirrors`; apagada nas Opções, fica apagada (a lista vazia é
-    gravada). Antes, sem informar o espelho na página do instalador, nada era gravado (o
-    `tools.json` desta máquina não tinha espelho).
+  - O espelho padrão (a pasta do Drive) saiu em 20/11: sem espelho, os arquivos vêm do
+    fabricante, e o Drive ficou como `settings::AYLIS_MIRROR`, só para o `fpc` e o Skia de 32 bits.
   - Os exemplos não vão: o `Cargo.toml` instalado sai sem nenhum `examples/` nos membros. As
     páginas de referência dos componentes (o `component_docs` do MCP) vão para
     `aylis\docs\referencia`, onde o MCP procura primeiro.
   - Testes em `installer.rs` (a página agrupada, o Rust sempre, sem shell, sem exemplos) e em
     `settings.rs` (o espelho padrão). O instalador foi gerado; não foi rodado nesta máquina (ele
-    trocaria a instalação do autor). Falta: instalar numa máquina limpa (ou numa VM) com Python
-    e Android marcados e conferir que ficam prontos.
+    trocaria a instalação do autor).
 - **ComboBox: quantas opções a lista mostra, a barra e o caber na tela** (13/11; roteiro, item
   130). Pergunta: "O combobox tem scroll para os itens com possibilidade de definir quantos itens
   deve exibir?". Rolava (roda, dedo, setas), mas eram 10 linhas fixas no código e sem barra.
@@ -2274,7 +2315,7 @@ analisado, aplicado e corrigido em 11/11 (roteiro 104). Tudo em
 **Pedido de 11/11/2026**
 - [ ] **Uma pasta de compilação para todo o Rust da máquina:** "armazenamento está sendo o
   maior problema do rust, e o aylis deveria corrigir isso" — "por padrão é pra tudo ir pra um
-  só lugar", e quem quiser desmarca. Feito em 11/11 (roteiro 106):
+  só lugar", e quem quiser desmarca. Feito em 11/11 (roteiro 165):
   - `aylis_tools::cargo_config`: a IDE grava no `config.toml` global do cargo (`CARGO_HOME`
     ou `~/.cargo`) o `build.target-dir` com a pasta das Opções e o
     `profile.dev.package."*".debug = false`, ao abrir e no OK das Opções. Cada chave leva o
@@ -2519,12 +2560,10 @@ só esperam o autor conferir (o 7 continua suspeita).
     `bindings`, acesso tipado à linha e o índice do registro nos eventos.
 
 **Pedidos de 09/11/2026**
-- [x] O instalador não leva os exemplos IBGE e ERP (grandes, só de demonstração); o `Cargo.toml`
-  instalado sai sem eles entre os membros.
 - [ ] **Compilador separado da IDE:** um executável que gera o app passando pelas validações
   (gerar o código, verificar o projeto, compilar), usado pela linha de comando e pela IDE; a IDE
   deixa de gerar e verificar dentro do próprio processo e passa a chamar esse executável e mostrar
-  o progresso e as mensagens dele. Hoje a geração e a verificação rodam numa thread da IDE
+  o progresso e as mensagens dele. Antes, a geração e a verificação rodavam numa thread da IDE
   (`jobs.rs`, `aylis_project::check`) e só o `cargo`/as ferramentas das linguagens rodam fora.
   Decidido pelo autor em 09/11: um subcomando do `aylis-tool`. Feito em 09/11 (falta o autor
   confirmar; roteiro 97): `aylis-tool build <projeto> [--target t] [--release]
@@ -2544,29 +2583,6 @@ só esperam o autor conferir (o 7 continua suspeita).
   (`the_events_go_and_come_back_through_the_json`); à mão, um projeto novo compilado pelo
   subcomando e pelo `build_external`, e interrompido no meio de uma compilação release (nenhum
   cargo ou rustc sobrou).
-- [x] **Publicar no crates.io** (pedido do autor; os nomes `aylis`, `aylis-core`... e
-  `aylis-accesskit-android` estavam livres em 09/11). Preparado em 09/11: `cargo publish --dry-run` passou nos 27 crates, cada um empacotado e compilado a partir
-  do pacote. O que mudou: (1) o `emoji.tsv` foi para dentro do `aylis-controls-base`
-  (`data/emoji.tsv`; o `aylis-tool emoji` grava lá); fontes, ícones e animações não vão nos crates
-  (são copiados para o projeto), e cada crate tem menos de 1,5 MB; (2) a cópia do
-  `accesskit_android` vai como `aylis-accesskit-android` 0.9.1 (a biblioteca continua
-  `accesskit_android`; `third_party/accesskit_android/AYLIS.md`); (3) as 64 dependências por caminho
-  ganharam `version = "0.1.0"` (subir a versão do workspace pede subir essas também); (4)
-  `publish = false` na IDE, no `aylis-tools`, no `aylis-host`, no `aylis-capi` e no `aylis-migrate`
-  (os demos, a IDE web e os exemplos já tinham); (5) as descrições com "Aylis" maiúsculo e sem
-  comparações com outras ferramentas (como no site, item 28). O repositório ficou público em 09/11 (com a release
-  v0.1.0), e o `repository` está nos manifestos (`repository.workspace`; a cópia do AccessKit
-  também aponta para o Aylis, onde o código dela fica); o dry-run passou de novo sem avisos. Para publicar (o token é do autor, e publicar é permanente: só dá para "yank"):
-  `cargo login`, depois `cargo publish` (depois do commit) com os 27
-  `-p`: `aylis-accesskit-android aylis-core aylis-3d aylis-build aylis-controls-base
-  aylis-controls-charts aylis-controls-device aylis-controls-editors aylis-controls-industrial
-  aylis-controls aylis-data aylis-dbcontrols aylis-devlink aylis-docview aylis-json aylis-markdown
-  aylis-media aylis-skia aylis-web aylis-d2d aylis-platform-winit aylis-vector aylis-project
-  aylis-providers aylis-webview aylis-remote aylis` (o cargo publica na ordem das dependências).
-  Publicado em 13/11 (a 0.2.0 e a 0.2.1-beta.1, os 26 crates). Os projetos novos já nascem
-  com `sdk: "crates.io"` (decidido em 11/11, G11); a chave vazia continua a junção
-  `.aylis/sdk`. Um README curto por crate (decidido em 13/11, feito; o teste
-  `every_published_crate_has_a_readme`): aparece no crates.io na próxima versão publicada.
 
 **Arrastar**
 - [ ] Abas que saem e entram em janelas, como as do navegador (pedido em 06/11): arrastar a
@@ -2836,7 +2852,7 @@ só esperam o autor conferir (o 7 continua suspeita).
   projetos estão gerando quais arquivos"; "arquivos de bibliotecas compartilhadas manteria por
   mais tempo"). Feito em 05/11, falta o autor confirmar:
   - a pasta é configurável em Opções da IDE → Rust e Python (`target_dir` no `tools.json`; vazio
-    é a de antes: o `target` do repositório ou `%LOCALAPPDATA%\aylis\target`);
+    é o padrão, `%USERPROFILE%\.aylis\target`, desde 12/11);
   - toda compilação pelo aylis anota em `<target>/.aylis-index.json` que unidade do cargo cada
     projeto usou (`aylis_tools::build_index`, pelas mensagens JSON do cargo, também as unidades já
     prontas);
@@ -2858,8 +2874,6 @@ só esperam o autor conferir (o 7 continua suspeita).
   `agent-run` envia e executa, `agent-dap` repassa o DAP com os caminhos trocados; Android
   pelo Wi-Fi com `aylis-tool android-wifi` (`adb tcpip` + `adb connect`). Conferido nesta
   máquina, agente e cliente no mesmo PC.
-
-**Web**
 
 **Backend**
 - [ ] Sessões nos clientes TypeScript, C#, Java, Go, C++ e Free Pascal (feito; falta o autor
@@ -3567,7 +3581,7 @@ mudar a solução.
     pedidos), na aba "Providers" da paleta (as abas da paleta ficam em inglês, como as
     outras);
   - nas três listas de classes, no catálogo e com os rótulos das propriedades nos 12 idiomas.
-- [x] 26. Fonte enorme no editor de código (pedido do autor em 05/11: "no projeto ERP está lento
+- [ ] 26. Fonte enorme no editor de código (pedido do autor em 05/11: "no projeto ERP está lento
   a navegação no fonte mod.rs"; o minimapa, arrastado até embaixo, não chegava ao fim do
   fonte; "garanta que fique rápido com quantidade infinita de linhas, limitado apenas pela
   memória do computador").
@@ -3757,8 +3771,7 @@ mudar a solução.
   06/11: "vamos colocar os componentes de verdade na documentação, precisamos ter o
   carregamento em mais de um wasm para não ficar gigante e não travar o carregamento, o
   carregamento inicial deve ser rápido"). Hoje a Landing é um wasm só de ~11,8 MB (3D, Markdown
-  e vetores; sem os controles das outras famílias). Aguardando a decisão do formato (ver a
-  conversa de 06/11). Decidido em 06/11: um wasm por família (a categoria da paleta). Feito em
+  e vetores; sem os controles das outras famílias). Decidido em 06/11: um wasm por família (a categoria da paleta). Feito em
   06/11 (falta o autor confirmar): o crate `aylis-demos` (registra só as classes de
   `AYLIS_DEMO_FAMILY`, com `aylis_build::class_categories`) e `aylis-tool demos --out pasta` (as 18
   famílias, de 3 a 10 MB cada); a página de um componente visual, no navegador, mostra o
@@ -3937,7 +3950,7 @@ mudar a solução.
   lint` com as diretrizes checáveis, revisão e triagem por agente, a IDE sem janela na CI, o
   guia do agente e o `.mcp.json` nos projetos novos, ferramentas novas no MCP, rastro salvo e
   medido na CI, cobertura de handlers em qualquer linguagem e por linha no editor) e cinco
-  decisões para o autor. Nada implementado: espera as decisões.
+  decisões para o autor.
   Decisões do autor em 08/11 (roteiro 69): (1) ordem: 2b primeiro (as ferramentas que faltam no
   MCP, com os buracos achados na conferência), depois 1a → 2a → 4b → 3a/3b → 4a → 1d → 1b/1c → o
   resto; (2) o agente na CI só comenta; (3) o guia do projeto é opção do Novo projeto marcada por
@@ -4056,7 +4069,7 @@ mudar a solução.
   Conferido em 08/11 (roteiro 96): o texto com o `harfrust` igual ao de antes (acentos, negrito,
   emoji, o código no editor) e `cargo test -p aylis-ide --test visual` 4/4. Os testes do
   `aylis-tools` (`mcp`, `apps` inteiro nas 8 linguagens) e o `--test mcp` do `aylis-ide` também
-  passaram em 08/11; falta o resto do `aylis-tools`/`aylis-host`/`aylis-demos` e gerar o instalador.
+  passaram em 08/11.
 - [ ] 71. Duas sessões do Claude no mesmo projeto (pergunta do autor em 08/11: "se tiver duas
   sessões abertas e o usuário pedir para fazer alteração no mesmo projeto, oque acontece?";
   escolha: "Na mesma IDE"). Antes, cada sessão ficava numa IDE, e as duas podiam abrir o mesmo
@@ -4089,15 +4102,15 @@ mudar a solução.
   documentação (relato do autor em 11/11: "no smartphone o 3D não mostra e também a scroll é
   bem lenta [...] cada componente que vejo na documentação ele baixa o componente
   aproximadamente 2mb cada"). Feito em 11/11 (falta o autor confirmar no celular;
-  roteiro 105):
+  roteiro 164):
   - **Rolagem:** o `ScrollBox` refazia o layout do form inteiro a cada passo (na web, ~300
     `measureText` por quadro, cada texto umas 4 vezes; 12,6 ms de mediana e 38 ms no p90 por
     quadro num PC, em tamanho de celular). Agora `Ui::scroll_content` só anda os filhos diretos
-    e repinta a caixa (com layout pendente, faz o layout como antes); no nativo, 0,074 → 0,003
+    (com layout pendente, faz o layout como antes); no nativo, 0,074 → 0,003
     ms por passo (`scrolling_on_the_phone_does_not_lay_out_the_page_again`, no teste da
     Landing; `scrolling_moves_the_children_without_a_new_layout` em `scroll_box.rs`). E o
     Canvas 2D guarda as larguras medidas por fonte e texto (zeradas quando uma fonte termina
-    de carregar). Falta medir no navegador e no celular de verdade.
+    de carregar). Medido no ZenFone em 22/11 e trocado pela rolagem por cópia (veja o bloco de 22/11).
   - **3D:** no celular a vista "phone" esconde o `layLingote` de propósito, mas o `<iframe>`
     nascia no primeiro ciclo (o layout ainda no tamanho de projeto, 1200) e baixava os ~10 MB
     do 3D escondido. Agora a vista nativa só nasce com o layout em dia
@@ -4342,11 +4355,13 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   Feito em 08/11 (falta o autor confirmar): `output.close_running` (Opções do projeto → Geral,
   "Encerrar o app aberto antes de executar"): com o app já aberto (o instalado também), encerra
   antes de compilar; sem ela, o Executar e o Compilar param logo com a mensagem
-  (`run::close_or_refuse_running`).
+  (`run::close_or_refuse_running`). (Mudou em 11/11: só conta o executável que a compilação grava;
+  veja "Compilar com o app aberto em outro lugar".)
 - [ ] Antes de compilar, conferir se o `.exe` de saída pode ser sobrescrito, e avisar logo (ou
   encerrar pela propriedade acima).
   Feito em 08/11 (falta o autor confirmar): o app aberto com o mesmo nome de executável para a
-  compilação antes de começar, com a mensagem (ou é encerrado, com a propriedade acima).
+  compilação antes de começar, com a mensagem (ou é encerrado, com a propriedade acima). (Mudou
+  em 11/11: só conta o executável que a compilação grava.)
 - [ ] Comandos antes e depois da compilação (cmd e PowerShell). Decidido
   pelo autor: só em projeto confiado, e a janela "Confiar neste projeto?" mostra esses comandos. É
   exceção à diretriz "Texto não vira código nem comando" (ajustar o `CLAUDE.md` e o histórico).
@@ -4463,8 +4478,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   ("Object Inspector › (propriedade) › Ligar a campo…"); o `set` do `app_command` aceita
   `prop`/`value` e `props`; o Esc fecha a Galeria (e os Componentes não visuais e as Gravações); o
   `set_project_setting` aceita o valor como texto ou JSON. Teste
-  `an_agent_fills_the_dialogs_and_reads_the_menus`. O `menu` ainda acha um item de contexto só pelo
-  texto (clica no primeiro).
+  `an_agent_fills_the_dialogs_and_reads_the_menus`.
 - [ ] O guarda de edição deixa passar um pedido que não é JSON válido (roteiro 72): registrar ou
   recusar com mensagem.
   Feito em 08/11 (falta o autor confirmar): um pedido que não é JSON é recusado com mensagem clara e
@@ -4503,8 +4517,7 @@ tinha bloco acima ganhou lá a nota "Conferido em 08/11".
   nos títulos do índice e nos botões Anterior/Próxima.
   Feito em 08/11 (falta o autor confirmar): a busca destaca o texto achado na página aberta (o
   `Markdown` ganhou `highlight`); "Aylis" com maiúscula nos guias; as crases e o negrito saem dos
-  títulos do índice, da trilha, da busca e dos botões Anterior/Próxima. Falta rodar o `aylis-tool
-  docs` (as páginas de componente).
+  títulos do índice, da trilha, da busca e dos botões Anterior/Próxima.
 - [ ] Faltam exemplos e documentação: o `on_server_query` (só o nome do evento na página do
   `ClientDataSet`), o `Barcode` numa banda de relatório, o `on_close_query` no
   `ProcessamentoAssincrono`, e as variantes "Chart · Sankey" e "Chart · Waffle" na galeria.

@@ -89,6 +89,7 @@ protocolo remoto:
 | `ui_data` | Uma operação num ClientDataSet (navegar, `locate`, `edit`, `set_values`, `post`...) |
 | `ui_set` | Muda uma propriedade |
 | `ui_click`, `ui_click_item` | Clica num controle, ou num item dele pelo texto |
+| `ui_drag` | Arrasta de um componente a outro (ou entre pontos dele), em passos, com botão e modificadores |
 | `ui_type`, `ui_key` | Digita no controle, ou aperta uma tecla, como o teclado (passa pelas máscaras e validações) |
 | `ui_invoke` | Chama um método do componente |
 

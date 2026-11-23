@@ -60,13 +60,13 @@ Vale mostrar ao usuário, na primeira vez que ele liga o serviço, um aviso com 
 
 ## E notificações push (FCM/APNs)?
 
-O push é a reserva quando o serviço não pode ficar ligado. O servidor manda uma mensagem e o
-sistema acorda o app mesmo encerrado; no iOS é o único jeito. Avaliado em 01/11; fica para um
-componente próprio, porque pede:
+O push é a reserva quando o serviço não pode ficar ligado: o servidor manda uma mensagem e o
+sistema acorda o app mesmo encerrado; no iOS é o único jeito. É o componente
+`PushNotifications` (veja [push.md](push.md)), que pede:
 
-- no Android, o Firebase (`google-services.json`) e o FCM (a biblioteca Java do Google, que o
-  Aylis não usa hoje);
-- no iOS, o certificado ou a chave APNs e a capacidade de push no Xcode;
+- no Android, o projeto no Firebase (os valores do `google-services.json` nas propriedades;
+  o Aylis faz o que o SDK faz, sem a biblioteca Java do Google);
+- no iOS, a capacidade Push Notifications no App ID e o certificado do desenvolvedor;
 - um servidor que guarde os tokens dos aparelhos.
 
 Para apps que só precisam acordar de tempos em tempos, o serviço com `keep_alive` resolve sem

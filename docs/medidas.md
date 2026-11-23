@@ -7,9 +7,9 @@ repositório em 27/10/2026; ficam no histórico do git para medir de novo.
 
 **Disco.** Um executável release por componente: um form com **uma** instância daquela
 classe, registrando só ela (como o app enxuto). A coluna mostra quanto ele fica maior que
-o executável só com o form (**18,61 MB**, a base de todo app: Skia, dados de texto do ICU,
-janela e o núcleo do Aylis). Com o Direct2D no lugar do Skia, essa base cai para cerca de
-2 MB (veja [Renderizadores no Windows](renderizadores.md)).
+o executável só com o form (**18,61 MB** com o Skia, o renderizador destas medidas: Skia,
+dados de texto do ICU, janela e o núcleo do Aylis). Com o Direct2D, hoje o padrão no Windows,
+essa base cai para cerca de 2 MB (veja [Renderizadores no Windows](renderizadores.md)).
 
 **RAM.** Para cada classe, num processo separado: cria 1 instância e depois mais 999,
 faz o layout e pinta com o Skia de verdade (fora da tela).

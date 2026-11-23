@@ -338,6 +338,71 @@ thread_local! {
     static LAYERS: RefCell<aylis_core::LayerCache<HtmlCanvasElement>> = RefCell::new(aylis_core::LayerCache::named("Canvas 2D · camadas guardadas"));
     /// Os canvas das camadas de `save_layer` já usados, para o próximo quadro.
     static SPARE_LAYERS: RefCell<Vec<HtmlCanvasElement>> = const { RefCell::new(Vec::new()) };
+    /// As sombras prontas ([`shadow_tile`]), pelo raio, desfoque e cor em pixels.
+    static SHADOW_TILES: RefCell<std::collections::HashMap<(u32, u32, u32), ShadowTile>> = RefCell::new(std::collections::HashMap::new());
+}
+
+/// Quantas sombras prontas ficam guardadas (cada combinação de raio, desfoque e cor; as de
+/// uma tela são poucas).
+const SHADOW_TILES_MAX: usize = 64;
+
+/// A sombra de um retângulo arredondado pronta, para montar em nove pedaços (os cantos
+/// inteiros, as bordas e o meio esticados, como o `box-shadow` dos navegadores): o
+/// `shadowBlur` refaz o desfoque a cada desenho, e na GPU de um celular as sombras dos cards
+/// seguravam a rolagem em 12 quadros por segundo.
+#[derive(Clone)]
+struct ShadowTile {
+    canvas: HtmlCanvasElement,
+    /// A borda em volta da forma (até onde o desfoque vai) e o canto (o raio mais o
+    /// desfoque para dentro), em pixels: o pedaço de canto tem `pad + corner`.
+    pad: f64,
+    corner: f64,
+}
+
+/// A sombra pronta para o raio `radius`, o desfoque `blur` (o `shadowBlur`) e a cor, tudo em
+/// pixels da tela.
+fn shadow_tile(radius: f64, blur: f64, color: Color) -> Option<ShadowTile> {
+    let key = ((radius * 4.0).round() as u32, (blur * 4.0).round() as u32, u32::from_be_bytes([color.r, color.g, color.b, color.a]));
+    if let Some(tile) = SHADOW_TILES.with(|t| t.borrow().get(&key).cloned()) {
+        return Some(tile);
+    }
+    // O desfoque do canvas é gaussiano com sigma = blur / 2: some em uns 3 sigmas.
+    let pad = (blur * 1.5).ceil() + 2.0;
+    let corner = (radius + blur * 1.5).ceil() + 1.0;
+    let shape = 2.0 * corner + 1.0;
+    let size = (shape + 2.0 * pad) as u32;
+    let canvas = web_sys::window()?.document()?.create_element("canvas").ok()?.dyn_into::<HtmlCanvasElement>().ok()?;
+    canvas.set_width(size);
+    canvas.set_height(size);
+    let ctx = canvas.get_context("2d").ok().flatten()?.dyn_into::<CanvasRenderingContext2d>().ok()?;
+    // A forma fica longe e só a sombra, deslocada de volta, cai no canvas.
+    const FAR: f64 = 100_000.0;
+    ctx.set_shadow_color(&css_color(color));
+    ctx.set_shadow_blur(blur);
+    ctx.set_shadow_offset_x(FAR);
+    ctx.set_fill_style_str("#000");
+    let (x, y, r) = (pad - FAR, pad, radius.min(shape / 2.0));
+    ctx.begin_path();
+    if r > 0.0 {
+        ctx.move_to(x + r, y);
+        let _ = ctx.arc_to(x + shape, y, x + shape, y + shape, r);
+        let _ = ctx.arc_to(x + shape, y + shape, x, y + shape, r);
+        let _ = ctx.arc_to(x, y + shape, x, y, r);
+        let _ = ctx.arc_to(x, y, x + shape, y, r);
+        ctx.close_path();
+    } else {
+        ctx.rect(x, y, shape, shape);
+    }
+    ctx.fill();
+    let tile = ShadowTile { canvas, pad, corner };
+    SHADOW_TILES.with(|t| {
+        let mut t = t.borrow_mut();
+        if t.len() >= SHADOW_TILES_MAX {
+            t.clear();
+        }
+        t.insert(key, tile.clone());
+    });
+    Some(tile)
 }
 
 /// Um canvas `width` × `height` limpo, para uma camada (um guardado, se houver).
@@ -390,6 +455,49 @@ impl<'a> Canvas2d<'a> {
         let _ = ctx.arc_to(x, y + h, x, y, rad);
         let _ = ctx.arc_to(x, y, x + w, y, rad);
         ctx.close_path();
+    }
+
+    /// A sombra montada da pronta ([`shadow_tile`]), em nove pedaços. `false` quando não dá
+    /// (giro, escala diferente nos dois eixos, retângulo menor que os cantos): a sombra é
+    /// desenhada pelo `shadowBlur`.
+    fn draw_shadow_tiled(&self, rect: RectF, radius: f32, shadow: &aylis_core::Shadow) -> bool {
+        let Ok(m) = self.ctx.get_transform() else { return false };
+        let (a, d) = (m.a(), m.d());
+        if m.b() != 0.0 || m.c() != 0.0 || a <= 0.0 || (a - d).abs() > 1e-6 {
+            return false;
+        }
+        let r = rect.inflate(shadow.spread);
+        // Em pixels da tela: o deslocamento da sombra não segue a transformação (como no
+        // `shadowOffset` do canvas), só a escala.
+        let (x, y) = ((r.x as f64) * a + m.e() + shadow.offset.x as f64 * a, (r.y as f64) * d + m.f() + shadow.offset.y as f64 * d);
+        let (w, h) = (r.width as f64 * a, r.height as f64 * d);
+        let rad = (radius + shadow.spread).max(0.0) as f64 * a;
+        let Some(tile) = shadow_tile(rad.min(w / 2.0).min(h / 2.0), shadow.blur as f64 * a, shadow.color) else { return false };
+        let c = tile.corner;
+        if w < 2.0 * c || h < 2.0 * c {
+            return false;
+        }
+        // A caixa da sombra em pixels inteiros (meio pixel de uma sombra desfocada não se vê,
+        // e os pedaços se encontram sem fresta).
+        let (l, t) = ((x - tile.pad).round(), (y - tile.pad).round());
+        let (rr, b) = ((x + w + tile.pad).round(), (y + h + tile.pad).round());
+        let size = tile.canvas.width() as f64;
+        let k = tile.pad + c;
+        // Origem e destino de cada faixa: o canto, o meio (1 pixel esticado) e o outro canto.
+        let cols = [(0.0, k, l, l + k), (k, 1.0, l + k, rr - k), (k + 1.0, size - k - 1.0, rr - k, rr)];
+        let rows = [(0.0, k, t, t + k), (k, 1.0, t + k, b - k), (k + 1.0, size - k - 1.0, b - k, b)];
+        let ctx = &self.ctx;
+        ctx.save();
+        let _ = ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        for (sy, sh, dy0, dy1) in rows {
+            for (sx, sw, dx0, dx1) in cols {
+                if dx1 > dx0 && dy1 > dy0 {
+                    let _ = ctx.draw_image_with_html_canvas_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(&tile.canvas, sx, sy, sw, sh, dx0, dy0, dx1 - dx0, dy1 - dy0);
+                }
+            }
+        }
+        ctx.restore();
+        true
     }
 
     fn ellipse_path(&self, r: RectF) {
@@ -700,6 +808,9 @@ impl Canvas for Canvas2d<'_> {
     /// sombra (deslocada de volta) aparece.
     fn draw_shadow(&mut self, rect: RectF, radius: f32, shadow: &aylis_core::Shadow) {
         if shadow.color.a == 0 {
+            return;
+        }
+        if self.draw_shadow_tiled(rect, radius, shadow) {
             return;
         }
         const FAR: f32 = 100_000.0;

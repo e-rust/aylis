@@ -111,7 +111,7 @@ impl Component for StarRating {
         value: i64 => "Data",
         max: i64 => "Behavior",
         read_only: bool => "Behavior";
-        events: on_change;
+        events: on_change: i64;           // o que o evento leva: o handler do app recebe o i64
         on_set: after_set                 // chamado depois de cada set_prop (opcional)
     }
     // ...pintura e eventos (abaixo)
@@ -123,6 +123,10 @@ impl StarRating {
     }
 }
 ```
+
+Declare o tipo de cada evento (`on_change: i64`, `on_select: String`, `()` quando não leva
+nada): o acesso tipado gera o handler já com o `sender` na classe e o `value` no tipo. Um
+evento sem tipo fica com a assinatura de antes (`args: &EventArgs`).
 
 Tipos aceitos pela `properties!`: `bool`, inteiros, `f32`, `f64`, `String`, `Color`,
 `Option<f32>`, `Option<Color>`, `Bounds`, `Anchors`, `Option<ComponentId>` (referência a
@@ -190,7 +194,10 @@ Regras da pintura:
   (`ctx.repaint()` no componente, `ui.damage(id)` de fora). Sem a marca, o controle fica
   parado no desenho velho — nada mais repinta a janela inteira por ele;
 - `ctx.request_frame_at(t)` repinta só o próprio componente na hora `t`. Se nessa hora o
-  desenho de outro controle também muda, marque o outro.
+  desenho de outro controle também muda, marque o outro;
+- se a pintura não tem efeito colateral (não grava nada nos `Cell`, não pede quadro),
+  declare `fn paint_is_pure(&self) -> bool { true }`: o núcleo pode guardar e reaproveitar o
+  desenho.
 
 ### 4. Mouse e teclado
 
@@ -242,9 +249,11 @@ método mexer no componente e no `Ui` ao mesmo tempo): `ctx.ui.get(ctx.id)` devo
 ali, e `ctx.ui.get_prop`, `set_prop`, `invoke` e `send_message` nele respondem "está
 ocupado". Use os campos do próprio `self`. Os handlers das telas não sofrem com isso: o
 `ctx.fire` os entrega depois que o método termina. Os métodos disponíveis são `click`,
-`pointer_down/up/move/enter/leave`, `wheel`, `key_down/up`, `text_input` (com
-`accepts_text() -> true`), `focus_enter/exit`, `resized`, `property_changed`, `notification`
-(outro componente foi liberado) e `message`.
+`pointer_down/up/move/enter/leave`, `wheel`, `gesture`, `swipe`, `edge_swipe`, `touch_end`,
+`context_menu`, `key_down/up`, `shortcut`, `text_input` (com `accepts_text() -> true`),
+`focus_enter/exit`, `resized`, `property_changed`, `notification` (outro componente foi
+liberado), `attach` e `message`. Os métodos que o app chama pelo nome (no JSON, no protocolo e
+nos clientes) vão em `methods` e `invoke`.
 
 Os grupos que poucos componentes usam ficam em traits próprios, fora do `Component`: o
 componente implementa o trait e devolve `Some(self)` no acessor do `Component` (o padrão
@@ -302,9 +311,10 @@ Depois do registro, o componente:
 - é criado pelo nome (`ui.create("StarRating", Some(pai))`) e pelos forms em JSON;
 - aparece na paleta da IDE na aba "Meus componentes", com os subtipos;
 - tem as propriedades no Object Inspector e os eventos na aba de eventos;
-- é comandado pelo protocolo remoto (Python).
+- é comandado pelo protocolo remoto, pelos clientes das outras linguagens (Python,
+  TypeScript, C#, Java, Go, C++ e Free Pascal) e pela API C.
 
-Num projeto, registre as suas classes no `app()` (`src/lib.rs`), antes de os forms serem
+Num projeto, registre as suas classes no `app()` (`rust/src/lib.rs`), antes de os forms serem
 carregados.
 
 ### 7. "Herdar" de um componente existente
@@ -339,8 +349,8 @@ impl Component for BotaoGlow {
 `NumberBox` e `DateEdit` são feitos assim, a partir do `Edit`.
 
 Quando chamar a base (o `inherited`): num método que **acrescenta** algo
-(pintar um brilho, tratar uma tecla a mais), chame `self.base.metodo(...)` antes ou depois do
-seu código; num que **substitui** (o controle desenha de outro jeito, a tecla não deve chegar
+(pintar um brilho, tratar uma tecla a mais), chame o método do componente de dentro
+(`self.button.metodo(...)`, o mesmo que `inner` devolve) antes ou depois do seu código; num que **substitui** (o controle desenha de outro jeito, a tecla não deve chegar
 ao base), não chame. O padrão de todo método não sobrescrito já é repassar ao `inner`.
 Esquecer de chamar a base num método que só acrescentava é o erro mais comum: o hover ou o
 foco do base param de funcionar.
@@ -458,4 +468,16 @@ O `aylis-controls` junta todos e registra as classes. Para um componente novo:
 4. acrescente a classe em `aylis_build::CLASSES` e em `aylis::classes` (o teste
    `crates/aylis/tests/classes.rs` falha se esquecer): é o que permite ao app publicado
    levar só os componentes que usa (veja [Carregamento e app enxuto](carregamento.md));
-5. escreva os testes em `crates/aylis-controls/tests/`.
+5. se a classe depende de plataforma, ponha-a em `aylis_build::CLASS_PLATFORMS` (o componente
+   existe e não liga onde não há o recurso);
+6. rode `aylis-tool update-catalog` (o catálogo do acesso tipado e dos clientes;
+   `cargo test -p aylis-remote --test catalog` confere);
+7. traduza os rótulos das propriedades novas
+   (`crates/aylis-ide/resources/locales/properties.tsv`) e os textos novos
+   (`aylis-tool translations`);
+8. ponha um conteúdo de exemplo em `aylis::samples` (galeria e documentação ao vivo) e refaça
+   a documentação (`aylis-tool docs`);
+9. escreva os testes em `crates/aylis-controls/tests/`.
+
+O que depende de biblioteca de terceiros vai para o `aylis-providers`, ligado por um
+componente provedor (`aylis_core::providers`).

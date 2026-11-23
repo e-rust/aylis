@@ -5,8 +5,9 @@
 //! usa a versão fixada em [`version`]; o gerenciador confere a integridade.
 //!
 //! [`fetch`] (o `aylis-tool fetch`) instala o pacote pelas origens dos pacotes (a pasta
-//! `pacotes`, as pastas e os espelhos das Opções). Nunca cai na URL oficial do manifesto
-//! (decisão do autor em docs/pacotes.md): só o `pack` e o `update` a usam.
+//! `pacotes`, as pastas e os espelhos das Opções) e, por último, pela URL oficial do
+//! manifesto, ligada por padrão (`package_official = off` desliga; decisão de 20/11 em
+//! docs/pacotes.md).
 //!
 //! Mudar de versão: `aylis-tool update-tools` regrava estes pacotes no manifesto com os hashes
 //! publicados (os do GitHub, ou o `.sha256` ao lado do arquivo); com `--latest`, passa antes

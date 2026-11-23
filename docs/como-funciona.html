@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Como o aylis funciona</title>
-<meta name="description" content="Explicação visual e interativa do aylis por dentro: núcleo, componentes, layout, pintura, forms em JSON, dados e as linguagens.">
+<title>Como o Aylis funciona</title>
+<meta name="description" content="Explicação visual e interativa do Aylis por dentro: núcleo, componentes, layout, pintura, forms em JSON, dados e as linguagens.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 8h14v4h-5v8h5v4H9v-4h5v-8H9z' fill='white'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -332,7 +332,7 @@ table.rows td.null { color: var(--muted); font-style: italic; }
 
 <header class="top">
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2563eb"/><path d="M9 8h14v4h-5v8h5v4H9v-4h5v-8H9z" fill="#fff"/></svg>
-  <b>aylis por dentro</b>
+  <b>Aylis por dentro</b>
   <span class="sp"></span>
   <button class="icon-btn" id="themeBtn" type="button" title="Trocar o tema">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -357,10 +357,10 @@ table.rows td.null { color: var(--muted); font-style: italic; }
 <!-- ======================================================= 0 -->
 <section class="part hero" id="inicio">
   <div class="kicker">Explicação interativa</div>
-  <h1>Como o aylis funciona por dentro</h1>
-  <p class="lead">O aylis é um framework de interface em Rust. Os componentes descendem de um ancestral comum, o layout usa
+  <h1>Como o Aylis funciona por dentro</h1>
+  <p class="lead">O Aylis é um framework de interface em Rust. Os componentes descendem de um ancestral comum, o layout usa
   <code>align</code>, <code>anchors</code>, <code>margins</code> e <code>padding</code>, os eventos se ligam por nome, os forms são JSON
-  editados numa IDE feita com o próprio aylis e os dados ficam num <code>ClientDataSet</code>. O código do app pode ser em
+  editados numa IDE feita com o próprio Aylis e os dados ficam num <code>ClientDataSet</code>. O código do app pode ser em
   Rust, Python, TypeScript, C#, Java, Go, C++ ou Pascal.</p>
   <p class="lead">Cada parte abaixo tem um diagrama. Use <b>Avançar</b> para seguir passo a passo, <b>Repetir</b> para voltar ao começo e
   <b>Tocar</b> para ver tudo sozinho. Os nomes são os do código.</p>
@@ -458,7 +458,7 @@ table.rows td.null { color: var(--muted); font-style: italic; }
         <span class="p" data-k="named">frmClientes.btn_salvar_click</span><span class="arr">→</span>
         <span class="p" data-k="handler">handler</span><span class="arr">→</span>
         <span class="p" data-k="setprop">set_prop</span><span class="arr">→</span>
-        <span class="p" data-k="inval">invalidate</span>
+        <span class="p" data-k="inval">damage / invalidate_form</span>
         <div class="grp-label">Quadro</div>
         <span class="p" data-k="frame">needs_repaint</span><span class="arr">→</span>
         <span class="p" data-k="layout">layout</span><span class="arr">→</span>
@@ -584,9 +584,9 @@ table.rows td.null { color: var(--muted); font-style: italic; }
         <div class="proc" style="border-color:var(--accent)">
           <h5>Um processo <small>o executável do app</small></h5>
           <div class="part" data-k="r-lib">src/lib.rs<small>app(): aylis::Application::bundled(aylis::include_project!())</small></div>
-          <div class="part" data-k="r-mod">src/forms/mod.rs<small>forms::register(&amp;mut app.ui) chama o register de cada form</small></div>
-          <div class="part" data-k="r-form">src/forms/frm_clientes.rs<small>ui.register_handler("frmClientes.btn_salvar_click", btn_salvar_click)</small></div>
-          <div class="part" data-k="r-comp">src/forms/components.rs<small>frmClientes.lblStatus.set_text(ui, …) → ui.set_prop</small></div>
+          <div class="part" data-k="r-mod">generated/mod.rs<small>generated::register(&amp;mut app.ui): a classe de cada form e os handlers (a IDE refaz; não edite)</small></div>
+          <div class="part" data-k="r-form">src/forms/frm_clientes.rs<small>impl FrmClientes { pub fn btn_salvar_click(&amp;mut self, ui, sender: Button) }</small></div>
+          <div class="part" data-k="r-comp">generated/components.rs<small>self.lblStatus.set_text(ui, …) → ui.set_prop pelo id</small></div>
           <div class="part" data-k="r-ui">Ui (aylis-core)<small>a árvore, os eventos, o layout e a pintura</small></div>
           <div class="part" data-k="r-plat">aylis-platform-winit + renderizador<small>desktop; android_main no Android; aylis_start no navegador</small></div>
         </div>
@@ -827,27 +827,33 @@ function stepper(root, cfg) {
   const L = [
     ["Seu app", [["forms/*.json", "app-forms"], ["handlers", "app-code"]]],
     ["Fachada", [["aylis", "aylis"]]],
-    ["Componentes", [["aylis-controls"], ["aylis-data"], ["aylis-dbcontrols"], ["aylis-media"], ["aylis-3d"], ["aylis-docview"], ["aylis-vector"], ["aylis-markdown"], ["aylis-webview"]]],
+    ["Componentes", [["aylis-controls"], ["aylis-controls-base"], ["aylis-controls-charts"], ["aylis-controls-industrial"], ["aylis-controls-device"], ["aylis-controls-editors"], ["aylis-providers"], ["aylis-data"], ["aylis-dbcontrols"], ["aylis-media"], ["aylis-3d"], ["aylis-docview"], ["aylis-vector"], ["aylis-markdown"], ["aylis-webview"]]],
     ["Formatos", [["aylis-json"], ["aylis-project"], ["aylis-build"]]],
     ["Núcleo", [["aylis-core"]], "core"],
     ["Desenho", [["aylis-d2d"], ["aylis-skia"], ["aylis-web"]]],
     ["Sistema", [["aylis-platform-winit"]]],
     ["Outras linguagens", [["aylis-remote"], ["aylis-host"], ["aylis-capi"], ["clients/"]]],
-    ["Ferramentas", [["aylis-ide"], ["aylis-tools"]]],
+    ["Ferramentas", [["aylis-ide"], ["aylis-tools"], ["aylis-migrate"], ["aylis-demos"]]],
   ];
   const D = {
     "app-forms": ["forms/*.json", "O visual do projeto: um arquivo por form, mais <code>themes/</code>, <code>assets/</code> e <code>locales/</code>. É um só para todas as linguagens.", ["Lidos pelo <code>aylis-json</code>", "Editados no designer da IDE"]],
     "app-code": ["handlers", "O código dos eventos, numa pasta por linguagem (<code>rust/</code>, <code>python/</code>…; <code>Project::code_dir</code>). Ligado aos forms pelo nome do handler.", ["<code>\"on_click\": \"btn_salvar_click\"</code> no form", "<code>aylis_project::sync</code> diz o que falta portar entre linguagens (<code>code-sync.json</code>)"]],
     "aylis": ["aylis", "A fachada que os apps usam: junta tudo e tem o <code>aylis::Application</code> e o <code>aylis::classes</code>.", ["<code>Application::bundled(aylis::include_project!())</code>: o projeto embutido no executável", "<code>run_android</code>, <code>run_web</code>, <code>connect_backend</code>"]],
-    "aylis-controls": ["aylis-controls", "Os controles: Button, Edit, Memo, ComboBox, TabControl, Chart, VirtualList, Frame, formas, BI, trader…", ["Classe nova: registrar em <code>aylis_controls::register</code>, em <code>aylis_build::CLASSES</code> e em <code>aylis::classes</code>", "O teste <code>crates/aylis/tests/classes.rs</code> confere as três listas"]],
+    "aylis-controls": ["aylis-controls", "Junta as famílias de controles (<code>aylis-controls-base</code>, <code>-charts</code>, <code>-industrial</code>, <code>-device</code>, <code>-editors</code>), que compilam em paralelo, e registra as classes (<code>aylis_controls::register</code>). Só a base tem controles que usam outros.", ["Classe nova: registrar em <code>aylis_controls::register</code>, em <code>aylis_build::CLASSES</code> e em <code>aylis::classes</code>", "O teste <code>crates/aylis/tests/classes.rs</code> confere as três listas"]],
+    "aylis-controls-base": ["aylis-controls-base", "A família base de controles (Button, Edit, Memo, ComboBox, TabControl, VirtualList, Frame…): a única com controles que usam outros controles.", []],
+    "aylis-controls-charts": ["aylis-controls-charts", "A família dos gráficos: Chart, BI, trader, grafos e mapas; compila em paralelo com as outras.", []],
+    "aylis-controls-industrial": ["aylis-controls-industrial", "A família dos controles industriais; compila em paralelo com as outras.", []],
+    "aylis-controls-device": ["aylis-controls-device", "A família dos controles ligados ao aparelho: sensores, Bluetooth, NFC, push, barras do sistema; compila em paralelo com as outras.", []],
+    "aylis-controls-editors": ["aylis-controls-editors", "A família dos editores (com o PaintBox e o texto animado); compila em paralelo com as outras.", []],
+    "aylis-providers": ["aylis-providers", "Os componentes ligados a bibliotecas de terceiros (código de barras, CSV/XLSX, PDF, mapas).", ["Ligados ao componente que o app usa por um provedor (<code>aylis_core::providers</code>)"]],
     "aylis-data": ["aylis-data", "<code>ClientDataSet</code>, <code>Field</code> e <code>DataSource</code>: registros em memória (em colunas), cursor, filtros, índices, delta e reconciliação.", ["Não sabe nada de banco: os dados vêm do backend", "<code>RowBatch</code> e <code>load_batch</code> para milhões de linhas"]],
     "aylis-dbcontrols": ["aylis-dbcontrols", "Os controles ligados a dados: <code>DataGrid</code>, <code>DataNavigator</code>, <code>DBChart</code>, <code>DataRepeater</code>…", ["Ligados por <code>data_source</code> e <code>data_field</code>"]],
     "aylis-media": ["aylis-media", "Vídeo, áudio, câmera e microfone: <code>MediaPlayer</code>, <code>VideoPlayer</code>, <code>Sound</code>, <code>AudioOutput</code>, <code>AudioMixer</code>, <code>CameraView</code>, <code>Microphone</code>.", []],
     "aylis-3d": ["aylis-3d", "Cenas 3D com wgpu (<code>Model3D</code>).", []],
     "aylis-docview": ["aylis-docview", "Visualização de PDF e documentos Office.", []],
     "aylis-vector": ["aylis-vector", "Lottie e SVG.", []],
-    "aylis-markdown": ["aylis-markdown", "Markdown desenhado pelo aylis.", []],
-    "aylis-webview": ["aylis-webview", "A WebView nativa de cada sistema, posta sobre a tela do aylis.", []],
+    "aylis-markdown": ["aylis-markdown", "Markdown desenhado pelo Aylis.", []],
+    "aylis-webview": ["aylis-webview", "A WebView nativa de cada sistema, posta sobre a tela do Aylis.", []],
     "aylis-json": ["aylis-json", "Layouts e temas em JSON: carregar (<code>load</code>, <code>load_value</code>), salvar (<code>save</code>), JSON Schema e o recarregar sem recriar (<code>reload</code>).", ["Também é o formato do protocolo remoto"]],
     "aylis-project": ["aylis-project", "O projeto <code>.aylisproj</code>, a fábrica de forms (com os <code>Frame</code>), a geração de código (<code>codegen.rs</code>, <code>hostlang.rs</code>), o acesso tipado (<code>bindings.rs</code>) e as traduções.", []],
     "aylis-build": ["aylis-build", "O <code>build.rs</code> dos projetos em Rust: embute o projeto e gera o registro só com as classes usadas.", ["<code>CLASSES</code> e <code>CLASS_PLATFORMS</code>"]],
@@ -857,11 +863,13 @@ function stepper(root, cfg) {
     "aylis-web": ["aylis-web", "O <code>Canvas</code> no navegador, com o canvas 2D (WebAssembly).", []],
     "aylis-platform-winit": ["aylis-platform-winit", "Janelas e serviços de cada sistema (Windows, Linux, macOS, Android, iOS, web): teclado, mouse, toque, IME, acessibilidade, área de transferência.", ["Entrega a entrada ao <code>Ui</code> (<code>pointer_down</code>, <code>key_down</code>…) e pinta quando <code>needs_repaint()</code>"]],
     "aylis-remote": ["aylis-remote", "O protocolo JSON: comandos (<code>load</code>, <code>set</code>, <code>get</code>, <code>click</code>, <code>data</code>…), respostas com <code>id</code> e eventos voltando ao backend.", ["<code>handle_message</code> serve ao <code>aylis-host</code> e à C ABI"]],
-    "aylis-host": ["aylis-host", "Abre a tela e inicia o backend em outro processo; conversa por stdin/stdout, uma mensagem por linha, ou por WebSocket (<code>--connect</code>, <code>--listen</code>, <code>--bridge</code>).", []],
+    "aylis-host": ["aylis-host", "Abre a tela e inicia o backend em outro processo; conversa por stdin/stdout, uma mensagem por linha, ou por WebSocket (<code>--connect</code>: a tela conecta no backend, que é o servidor; <code>--bridge</code>: o servidor dos apps publicados).", []],
     "aylis-capi": ["aylis-capi", "A C ABI (<code>aylis.dll</code>, <code>libaylis.so</code>, <code>libaylis.dylib</code>): o mesmo protocolo no mesmo processo, com eventos síncronos.", []],
     "clients/": ["clients/", "Os clientes do protocolo, sem dependências além da biblioteca padrão: TypeScript, C#, Java, Go, C++, Free Pascal e Python.", ["API igual em todos: <code>send</code>, <code>call</code>, <code>on</code>, <code>run</code>/<code>loop</code>"]],
-    "aylis-ide": ["aylis-ide", "A IDE, feita com o próprio aylis: paleta, designer, Object Inspector, editor de código, depurador, F9 e publicação.", []],
+    "aylis-ide": ["aylis-ide", "A IDE, feita com o próprio Aylis: paleta, designer, Object Inspector, editor de código, depurador, F9 e publicação.", []],
     "aylis-tools": ["aylis-tools", "O <code>aylis-tool</code>: compilar, executar, publicar, verificar o ambiente, <code>new</code>, <code>generate</code>, <code>script</code>, <code>setup</code>…", []],
+    "aylis-migrate": ["aylis-migrate", "Converte projetos de uma versão anterior do formato.", []],
+    "aylis-demos": ["aylis-demos", "Os componentes ao vivo da documentação (um wasm por categoria).", []],
   };
   const host = $("#layers"), det = $("#crateDetail");
   L.forEach(([label, chips, cls]) => {
@@ -961,7 +969,7 @@ function stepper(root, cfg) {
         code: "let pnl = ui.add(Panel::default(), form);\nlet ok  = ui.add(Button::new(\"Salvar\"), pnl);\nui.set_name(ok, \"btnSalvar\")?;",
         set: S => { show(S, "pnl", "edt", "btn", "grid", "cds"); ["pnl", "edt", "btn", "grid", "cds"].forEach(k => S.hl.add(k)); S.x.slots = 6; S.x.hlSlot = 3; } },
       { t: "O trait Component",
-        d: "<p>Todo componente implementa <code>Component</code>. Só <code>class_name</code> é obrigatório; o resto tem padrão:</p><ul><li><code>control()</code>: o <code>ControlBase</code> (posição, <code>align</code>, <code>margins</code>, <code>visible</code>, <code>style</code>…);</li><li><code>props</code>/<code>get_prop</code>/<code>set_prop</code>: o que o Object Inspector, o JSON e o protocolo enxergam (a macro <code>properties!</code> escreve os três);</li><li><code>paint</code>, <code>pointer_down</code>, <code>key_down</code>…;</li><li><code>inner()</code>: herança por composição (um <code>NumberBox</code> guarda um <code>Edit</code>);</li><li><code>invoke()</code>: métodos pelo nome (<code>undo</code>, <code>save</code>).</li></ul>",
+        d: "<p>Todo componente implementa <code>Component</code>. Só <code>class_name</code> é obrigatório; o resto tem padrão:</p><ul><li><code>control()</code>: o <code>ControlBase</code> (posição, <code>align</code>, <code>margins</code>, <code>visible</code>, <code>style</code>…);</li><li><code>props</code>/<code>get_prop</code>/<code>set_prop</code>: o que o Object Inspector, o JSON e o protocolo enxergam (a macro <code>properties!</code> escreve os três);</li><li><code>paint</code>, <code>pointer_down</code>, <code>key_down</code>…;</li><li><code>inner()</code>: herança por composição (um <code>NumberBox</code> guarda um <code>Edit</code>);</li><li><code>invoke()</code>: métodos pelo nome (<code>undo</code>, <code>save</code>);</li><li>o que poucos usam fica num trait próprio, devolvido por um acessor (<code>timed()</code>, <code>layout_hooks()</code>, <code>drag_drop()</code>, <code>popup()</code>, <code>accessible_items()</code>): <code>Timed</code>, <code>LayoutHooks</code>, <code>DragDrop</code>, <code>Popup</code>, <code>AccessibleItems</code>.</li></ul>",
         code: "impl Component for Button {\n    fn class_name(&self) -> &'static str { \"Button\" }\n    fn control(&self) -> Option<&ControlBase> { Some(&self.base) }\n    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx) { … }\n    fn click(&mut self, ctx: &mut EventCtx) { ctx.fire(\"on_click\", EventArgs::None) }\n}",
         file: "<code>aylis-core/src/component.rs</code>",
         set: S => { S.hl.add("btn"); S.x.slots = 6; S.x.hlSlot = 3; } },
@@ -972,7 +980,7 @@ function stepper(root, cfg) {
       { t: "Frame: um form dentro do form",
         d: "<p>O <code>Frame</code> só reserva o lugar e diz qual form mostrar (<code>form</code>). Ao criar o form, a fábrica de forms do projeto cria o form do frame e o põe dentro, ocupando a área toda. O form de dentro tem os próprios nomes (<code>set_name_scope</code>): pode repetir nomes do form de fora.</p><p>Os componentes se acham pelo nome do form do frame, e os eventos vão para os handlers <b>desse</b> form (<code>fraGeral.salvar</code>). Um frame que usa o próprio form, direto ou por outro, dá erro ao carregar.</p>",
         code: "{ \"class\": \"Frame\", \"name\": \"frGeral\", \"form\": \"fraGeral\", \"align\": \"client\" }\n\nui.find_path(\"fraGeral.edtPasta\")\nfraGeral.edtPasta          // acesso tipado",
-        file: "<code>aylis-controls/src/basic.rs</code> (<code>Frame</code>), <code>aylis-project/src/lib.rs</code> (a fábrica)",
+        file: "<code>aylis-controls-base/src/basic.rs</code> (<code>Frame</code>), <code>aylis-project/src/lib.rs</code> (a fábrica)",
         set: S => { show(S, "frame", "fra", "pasta"); S.show.add("embLbl"); ["frame", "fra", "pasta", "e-fra", "e-pasta"].forEach(k => S.hl.add(k)); S.x.slots = 9; S.x.hlSlot = 7; } },
       { t: "Liberar: a geração muda",
         d: "<p><code>ui.free(id)</code> libera o componente e os filhos. O slot volta a ficar livre com a geração seguinte; quem guardou o id antigo recebe <code>Error::InvalidId</code> em vez de mexer em outro componente que ocupe o mesmo slot depois.</p>",
@@ -1063,17 +1071,17 @@ function stepper(root, cfg) {
         code: "for key in [\"frmClientes.btn_salvar_click\", \"btn_salvar_click\"] {\n    if let Some(f) = self.handlers.remove(key) { f(self, id, args); return true; }\n}\nif let Some(sink) = self.event_sink.take() { sink(self, id, event, handler_name, args); }",
         set: S => { S.hl.add("named"); S.x.cursor = [262, 58]; } },
       { t: "O seu código roda",
-        d: "<p>O handler gerado pela IDE recebe o <code>Ui</code> inteiro, quem disparou e os argumentos. Com o acesso tipado, <code>frmClientes.lblStatus.set_text</code> acha o componente pelo caminho e chama <code>set_prop</code>.</p>",
-        code: "pub fn btn_salvar_click(ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n    frmClientes.lblStatus.set_text(ui, \"Salvo\");\n}",
+        d: "<p>O handler é um método da struct do form (cada janela aberta tem a sua instância), e recebe o <code>Ui</code>, quem disparou (já com a classe) e o valor do evento, quando há. Os componentes são campos da struct: <code>self.lblStatus.set_text</code> chama <code>set_prop</code> pelo id.</p>",
+        code: "impl FrmClientes {\n    pub fn btn_salvar_click(&mut self, ui: &mut Ui, _sender: crate::generated::Button) {\n        self.lblStatus.set_text(ui, \"Salvo\");\n    }\n}",
         file: "<code>rust/src/forms/frm_clientes.rs</code>",
         set: S => { S.hl.add("handler"); S.x.cursor = [262, 58]; } },
-      { t: "set_prop e invalidate",
-        d: "<p><code>set_prop</code> confere a propriedade (<code>prop_info</code>, só leitura, cor com nome do tema), grava pela cadeia de <code>inner()</code> ou no <code>ControlBase</code> e chama <code>invalidate</code>. Nada é desenhado agora: só fica marcado que o layout e a tela estão velhos.</p>",
-        code: "pub fn invalidate(&mut self) {\n    self.layout_dirty = true;\n    self.repaint_requested = true;\n}",
-        file: "<code>Ui::set_prop</code>, <code>Ui::invalidate</code> em <code>ui.rs</code>",
+      { t: "set_prop e o que mudou",
+        d: "<p><code>set_prop</code> confere a propriedade (<code>prop_info</code>, só leitura, cor com nome do tema) e grava pela cadeia de <code>inner()</code> ou no <code>ControlBase</code>. Depois marca só o que mudou: uma propriedade só de pintura (as cores, <code>opacity</code>, <code>rotation</code>, <code>shadow</code>… e as que o componente declara em <code>paint_only_property</code>) marca a área do controle (<code>damage</code>), sem refazer o layout; as outras marcam o layout do form dele (<code>invalidate_form</code>). Nada é desenhado agora.</p>",
+        code: "if paint_only { self.damage(id); }\nelse { self.invalidate_form(id); }   // o layout só deste form",
+        file: "<code>Ui::set_prop</code> em <code>ui.rs</code>; <code>damage.rs</code>",
         set: S => { S.hl.add("setprop"); S.done.add("handler"); S.hl.add("inval"); S.show.add("dirty"); S.text.status = '"Salvo"'; S.x.cursor = [262, 58]; } },
       { t: "Um quadro novo: layout",
-        d: "<p>A plataforma pergunta <code>needs_repaint()</code> (mudança, layout pendente ou animação) e pede um quadro. <code>Ui::paint</code> começa com <code>update_layout</code>: como <code>layout_dirty</code> está ligado, o <code>layout</code> refaz posições e tamanhos (parte 4) e dispara <code>on_resize</code> em quem mudou de tamanho.</p>",
+        d: "<p>A plataforma pergunta <code>needs_repaint()</code> (mudança, layout pendente ou animação) e pede um quadro. O <code>update_layout</code> refaz posições e tamanhos dos forms marcados (parte 4), dispara <code>on_resize</code> em quem mudou de tamanho e marca a área de quem mudou de lugar ou de tamanho. A plataforma pinta só essas áreas (<code>take_frame</code> → <code>paint_regions</code>): recorta o canvas nelas e guarda o resto da imagem do quadro anterior; o que rolou anda por cópia, quando dá.</p>",
         code: "pub fn paint(&mut self, root: ComponentId, canvas: &mut dyn Canvas) {\n    self.update_layout();      // só se layout_dirty\n    self.paint_node(root, canvas, …);\n    …\n}",
         set: S => { S.hl.add("frame"); S.hl.add("layout"); S.show.delete("dirty"); S.text.status = '"Salvo"'; S.x.cursor = [262, 58]; } },
       { t: "paint_node percorre a árvore",
@@ -1208,7 +1216,7 @@ function stepper(root, cfg) {
         d: "<p><code>left</code> ocupa a altura que sobrou entre o que foi para cima e para baixo, e empurra a área para a direita.</p>",
         set: S => { S.x.step = 4; S.hl.add("pnlMenu"); } },
       { t: "client, center e os soltos (none + anchors)",
-        d: "<p>Depois dos encaixes, <code>client</code>, <code>center</code>, <code>fit</code>… usam a área que sobrou. <code>none</code> usa <code>left</code>/<code>top</code>/<code>width</code>/<code>height</code>, ajustados pelas <code>anchors</code> quando o pai muda de tamanho: o <code>btnNovo</code> tem <code>right</code> e <code>bottom</code> e fica sempre à mesma distância do canto. Arraste a largura.</p><p>Um contêiner que organiza os filhos (grade, fluxo) pode cuidar dos soltos com <code>Component::arrange</code>.</p>",
+        d: "<p>Depois dos encaixes, <code>client</code>, <code>center</code>, <code>fit</code>… usam a área que sobrou. <code>none</code> usa <code>left</code>/<code>top</code>/<code>width</code>/<code>height</code>, ajustados pelas <code>anchors</code> quando o pai muda de tamanho: o <code>btnNovo</code> tem <code>right</code> e <code>bottom</code> e fica sempre à mesma distância do canto. Arraste a largura.</p><p>Um contêiner que organiza os filhos (grade, fluxo) pode cuidar dos soltos com <code>LayoutHooks::arrange</code> (devolvido pelo <code>layout_hooks()</code> do componente).</p>",
         code: "Align::Client => inner,\nAlign::None => anchored(cb, full.size()),",
         set: S => { S.x.step = 5; S.hl.add("grdDados"); S.hl.add("btnNovo"); } },
       { t: "Desce para os filhos; ramos escondidos ficam de fora",
@@ -1216,7 +1224,7 @@ function stepper(root, cfg) {
         code: "for (&child, old) in children.iter().zip(old_sizes) {\n    // Escondido: o ramo inteiro fica para quando aparecer.\n    if !self.cb(child).is_some_and(|cb| cb.visible()) { continue; }\n    …\n    self.realign(child, resized);\n}",
         set: S => { S.x.step = 6; ["btnInicio", "btnVendas", "btnSair", "lblAviso"].forEach(k => S.hl.add(k)); } },
       { t: "on_resize em quem mudou",
-        d: "<p>No fim, quem mudou de tamanho recebe <code>resized</code> e o evento <code>on_resize</code>, e a tela é repintada. Tudo numa thread só, a da interface. O layout só roda de novo quando algo chamar <code>invalidate</code> (uma propriedade, o tamanho da janela, mostrar ou esconder).</p>",
+        d: "<p>No fim, quem mudou de tamanho recebe <code>resized</code> e o evento <code>on_resize</code>, e a tela é repintada. Tudo numa thread só, a da interface. O layout só roda de novo no form marcado (<code>invalidate_form</code>: uma propriedade de layout, o tamanho da janela, mostrar ou esconder); uma propriedade só de pintura repinta a área do controle sem layout, e a rolagem só anda os filhos.</p>",
         code: "for &id in &resized { self.with_component(id, |c, ctx| c.resized(ctx)); }\nfor id in resized { self.queue_event(id, \"on_resize\", EventArgs::None); }\nself.request_repaint();",
         set: S => { S.x.step = 7; } },
     ],
@@ -1290,12 +1298,12 @@ function stepper(root, cfg) {
     },
     steps: [
       { t: "aylis_json::load lê o documento",
-        d: "<p>O texto vira <code>serde_json::Value</code> (um BOM no começo é ignorado). O documento só aceita <code>\"aylis\"</code> (a versão do formato; mais nova que <code>FORMAT_VERSION</code> dá erro), <code>\"root\"</code> e <code>\"$schema\"</code>.</p>",
+        d: "<p>O texto vira <code>serde_json::Value</code> (um BOM no começo é ignorado). O documento só aceita <code>\"aylis\"</code> (a versão do formato; diferente de <code>FORMAT_VERSION</code>, mais nova ou mais antiga, dá erro: a conversão é do <code>aylis-migrate</code>), <code>\"root\"</code> e <code>\"$schema\"</code>.</p>",
         code: "let id = aylis_json::load(&mut ui, &texto, None)?;   // None: um form raiz",
         file: "<code>aylis-json/src/layout.rs</code>",
         set: S => lines(S, 0, 1, 2, 17, 18) },
       { t: "Cada nó: ui.create pela classe",
-        d: "<p>Para cada nó, <code>\"class\"</code> vai para <code>ui.create(class, parent)</code>, que acha o construtor no registro de classes. Depois, <code>\"name\"</code> vira <code>set_name</code>. As chaves reservadas são só <code>class</code>, <code>name</code> e <code>children</code>; todo o resto é propriedade.</p>",
+        d: "<p>Para cada nó, <code>\"class\"</code> vai para <code>ui.create(class, parent)</code>, que acha o construtor no registro de classes. Depois, <code>\"name\"</code> vira <code>set_name</code>. As chaves reservadas são <code>class</code>, <code>name</code>, <code>children</code>, <code>uses</code>, <code>bindings</code> e <code>views</code>; todo o resto é propriedade.</p>",
         code: "let id = self.ui.create(class, parent)?;\nif let Some(name) = name { self.ui.set_name(id, name)?; }",
         set: S => { lines(S, 3); showB(S, "form"); S.hl.add("b-form"); } },
       { t: "Cada chave: uma propriedade",
@@ -1427,22 +1435,22 @@ function stepper(root, cfg) {
   stepper($("#st-rust"), {
     steps: [
       { t: "O app é uma biblioteca Rust",
-        d: "<p>A geração de código cria <code>rust/</code> com <code>Cargo.toml</code>, <code>build.rs</code> (o <code>aylis_build</code> embute forms, temas e assets no executável), <code>src/lib.rs</code> e <code>src/main.rs</code>. A função <code>app()</code> abre o projeto embutido e registra os handlers de todos os forms.</p>",
-        code: "pub fn app() -> Result<aylis::Application, aylis::Error> {\n    let mut app = aylis::Application::bundled(aylis::include_project!())?;\n    forms::register(&mut app.ui);\n    Ok(app)\n}",
+        d: "<p>A geração de código cria <code>rust/</code> com <code>Cargo.toml</code>, <code>build.rs</code> (o <code>aylis_build</code> embute forms, temas e assets no executável), <code>src/lib.rs</code>, <code>src/main.rs</code> e <code>generated/</code> (o acesso tipado e o registro, que a IDE refaz). A função <code>app()</code> abre o projeto embutido e registra os handlers de todos os forms.</p>",
+        code: "pub fn app() -> Result<aylis::Application, aylis::Error> {\n    let mut app = aylis::Application::bundled(aylis::include_project!())?;\n    generated::register(&mut app.ui);\n    Ok(app)\n}",
         file: "<code>rust/src/lib.rs</code> (gerado por <code>aylis-project/src/codegen.rs</code>)",
         set: S => S.hl.add("r-lib") },
-      { t: "Um arquivo de eventos por form",
-        d: "<p><code>src/forms/mod.rs</code> é sempre refeito e chama o <code>register</code> de cada form. No arquivo do form, a IDE refaz só o bloco de registro; as funções que você escreveu ficam. Os nomes vêm do form (<code>btnSalvar</code> + <code>on_click</code> → <code>btn_salvar_click</code>), com o form na frente.</p>",
-        code: "pub fn register(ui: &mut Ui) {\n    // (gerado pela IDE; não edite este bloco)\n    ui.register_handler(\"frmClientes.btn_salvar_click\", btn_salvar_click);\n}\n\npub fn btn_salvar_click(ui: &mut Ui, sender: ComponentId, args: &EventArgs) {\n    …\n}",
-        file: "<code>rust/src/forms/frm_clientes.rs</code>",
+      { t: "O gerado e o seu código",
+        d: "<p><code>generated/mod.rs</code> é sempre refeito: registra a classe de cada form (<code>register_form_class</code>, que monta a instância ao abrir) e os handlers. O seu código fica em <code>src/forms/</code>, num <code>impl</code> da struct do form; a IDE só acrescenta handlers novos no fim dele. Os nomes vêm do form (<code>btnSalvar</code> + <code>on_click</code> → <code>btn_salvar_click</code>), com o form na frente no registro.</p>",
+        code: "// generated/mod.rs (não edite)\npub fn register(ui: &mut Ui) {\n    ui.register_form_class(\"frmClientes\", FrmClientes::bind);\n    ui.register_handler(\"frmClientes.btn_salvar_click\",\n        aylis::prelude::instances::form_handler(FrmClientes::btn_salvar_click));\n}",
+        file: "<code>rust/generated/mod.rs</code>; <code>rust/src/forms/frm_clientes.rs</code>",
         set: S => { S.hl.add("r-mod"); S.hl.add("r-form"); } },
-      { t: "Acesso tipado: components.rs",
-        d: "<p>Para cada form, uma instância global com o nome dele e um campo por componente; cada classe usada vira uma <code>struct</code> com as propriedades no tipo certo. Em Rust, ler e gravar chamam direto <code>get_prop</code> e <code>set_prop</code>, sem serializar nada.</p>",
-        code: "frmCalculadora.pnlLateral.set_visible(ui, !frmCalculadora.pnlLateral.visible(ui));\n\n// gerado:\nfn set(ui: &mut Ui, target: &str, prop: &str, value: impl Into<PropValue>) {\n    if let Some(id) = ui.find_path(target) { let _ = ui.set_prop(id, prop, value); }\n}",
-        file: "<code>rust/src/forms/components.rs</code> (de <code>aylis-project/src/bindings.rs</code>, a partir de <code>resources/components.json</code>)",
+      { t: "Acesso tipado: generated/components.rs",
+        d: "<p>Para cada form, uma struct com um campo por componente, resolvido pelo nome uma vez quando o form abre (um componente que sumiu ou mudou de classe impede o form de abrir, com a lista do que não bate). Cada classe usada vira um handle com as propriedades no tipo certo; ler e gravar chamam direto <code>get_prop</code> e <code>set_prop</code> pelo id, sem procurar nem serializar nada.</p>",
+        code: "self.pnlLateral.set_visible(ui, !self.pnlLateral.visible(ui));",
+        file: "<code>rust/generated/components.rs</code> (de <code>aylis-project/src/bindings.rs</code>, a partir de <code>resources/components.json</code>)",
         set: S => S.hl.add("r-comp") },
       { t: "O clique chama a função na mesma thread",
-        d: "<p>Um clique segue o caminho da parte 3 até <code>call_named</code>, que acha <code>frmClientes.btn_salvar_click</code> no mapa de handlers e chama a função Rust: mesma thread, mesmo <code>Ui</code>, sem mensagem nem cópia. O resultado de <code>set_prop</code> aparece no próximo quadro.</p>",
+        d: "<p>Um clique segue o caminho da parte 3 até <code>call_named</code>, que acha <code>frmClientes.btn_salvar_click</code> no mapa de handlers e chama o método da instância do form que disparou: mesma thread, mesmo <code>Ui</code>, sem mensagem nem cópia. O resultado de <code>set_prop</code> aparece no próximo quadro.</p>",
         set: S => { S.hl.add("r-ui"); S.hl.add("r-form"); } },
       { t: "O mesmo código em cada plataforma",
         d: "<p>No desktop, o <code>main.rs</code> roda o <code>app()</code> numa janela do <code>aylis-platform-winit</code>. No Android, a <code>NativeActivity</code> chama <code>android_main</code>; no navegador, a página chama <code>aylis_start</code> depois de carregar o WebAssembly. Os três usam o mesmo <code>app()</code>.</p>",
@@ -1556,13 +1564,13 @@ function stepper(root, cfg) {
         set: S => { S.hl.add("h-typed"); S.hl.add("h-ui"); S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk]); S.x.fresh = 1; },
         anim: async st => { await fly(st, "h", "get edtName.text"); fly(st, "b", "\"Ana\"", "res"); } },
       { t: "set: gravar na tela",
-        d: "<p>Gravar é um <code>set</code> sem resposta. Na tela vira <code>set_prop</code> → <code>invalidate</code> → um quadro novo, como em Rust. O acesso tipado gerado (<code>frmDemo.lblMsg.text = …</code>, com a grafia de cada linguagem) escreve exatamente esse comando.</p>",
+        d: "<p>Gravar é um <code>set</code> sem resposta. Na tela vira <code>set_prop</code> → a área ou o layout marcado → um quadro novo, como em Rust. O acesso tipado gerado (<code>frmDemo.lblMsg.text = …</code>, com a grafia de cada linguagem) escreve exatamente esse comando.</p>",
         code: M.set,
         set: S => { S.hl.add("h-typed"); S.hl.add("h-win"); S.text.lblMsg = "Olá, Ana!"; S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk], [TO_HOST, M.set]); S.x.fresh = 1; },
         anim: st => fly(st, "h", "set lblMsg") },
       { t: "Fechar, e o backend em outra máquina",
-        d: "<p>Ao fechar a janela, o backend recebe <code>{\"event\": \"closed\"}</code> e o stdin dele é fechado; <code>{\"cmd\": \"close\"}</code> fecha pelo backend. O mesmo protocolo anda por WebSocket: <code>--connect</code> (o backend é servidor), <code>--listen</code> (o backend conecta) e <code>--bridge</code>, o servidor dos apps publicados no celular e no navegador, com um backend por tela conectada.</p>",
-        code: "aylis-host --connect ws://servidor:9000/aylis\naylis-host --listen 127.0.0.1:9000\naylis-host --bridge 0.0.0.0:9000 -- python src/main.py",
+        d: "<p>Ao fechar a janela, o backend recebe <code>{\"event\": \"closed\"}</code> e o stdin dele é fechado; <code>{\"cmd\": \"close\"}</code> fecha pelo backend. O mesmo protocolo anda por WebSocket: <code>--connect</code> (o backend é servidor; a tela sempre conecta nele, nunca o contrário) e <code>--bridge</code>, o servidor dos apps publicados no celular e no navegador, com um backend por tela conectada.</p>",
+        code: "aylis-host --connect ws://servidor:9000/aylis\naylis-host --bridge 0.0.0.0:9000 -- python src/main.py",
         set: S => { S.text.lblMsg = "Olá, Ana!"; S.log.push([TO_HOST, M.load], [TO_HOST, M.run], [TO_BE, M.runOk], [TO_BE, M.ev], [TO_HOST, M.get], [TO_BE, M.getOk], [TO_HOST, M.set], [TO_BE, M.closed]); S.x.fresh = 1; },
         anim: st => fly(st, "b", "closed", "ev") },
     ],

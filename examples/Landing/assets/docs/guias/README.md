@@ -28,6 +28,15 @@ iOS e no navegador.
 | [Lottie, SVG, Markdown e WebView](lottie-svg-markdown-webview.md) | tocar animações (emojis Noto), desenhar SVG, mostrar Markdown e páginas da web no form |
 | [Fontes e ícones offline](fontes-e-icones.md) | usar fontes do Google Fonts e ícones Material/Fluent sem internet, com só o que o app usa indo para o executável |
 | [Testes em Mac e celular](testes-em-dispositivos.md) | saber o que já foi feito e ainda precisa ser conferido num Mac ou num celular de verdade |
+| [Seu primeiro projeto](tutorial-primeiro-projeto.md) | criar, desenhar e executar o primeiro app passo a passo |
+| [Seu primeiro componente](tutorial-componente.md) | o tutorial de um componente novo |
+| [Depurar na IDE](depuracao.md) | pontos de parada, passo a passo, o Profiler e o editor de código |
+| [Threads e a interface](threads.md) | trabalhar fora da thread da tela e voltar por `post`/`post_to` |
+| [Segundo plano](segundo-plano.md) | o `BackgroundService` |
+| [Forms em equipe](forms-em-equipe.md) | diferenças e conflitos de forms no git |
+| [A placa de vídeo de cada janela](gpu-por-monitor.md) | a GPU que segue o monitor |
+| [Testes do projeto](testes-do-projeto.md) | os testes de um projeto do Aylis |
+| [Pacotes de ferramentas](pacotes.md) | de onde o Aylis baixa e instala o Rust, os SDKs e os depuradores |
 
 O essencial em uma tabela:
 
@@ -35,8 +44,8 @@ O essencial em uma tabela:
 |---|---|
 | Componente e controle visual | trait `Component` + `ControlBase` |
 | O aplicativo e a tela | `aylis::Application`, `Ui` |
-| Achar um componente do form | `ui.find_in(form, "Button1")` → `ComponentId` |
-| Trocar uma propriedade | `ui.set_prop(id, "text", "Ok")` ou `ui.get_mut::<Button>(id).unwrap().text = ...` |
+| Achar um componente do form | o acesso tipado gerado (`self.btnSalvar`, `frmCliente.edtNome`); pelo nome (`ui.find_in(form, "Button1")`), só o criado em execução |
+| Trocar uma propriedade | `frmCliente.edtNome.text = ...` (acesso tipado) ou, por nome, `ui.set_prop(id, "text", "Ok")` |
 | Ligar um evento | `ui.on_click(id, ...)` ou handler pelo nome no form (gerado pela IDE) |
 | Registrar uma classe na paleta | `ui.register_class::<T>("Paleta")` |
 | O arquivo do form | `forms/*.json` |

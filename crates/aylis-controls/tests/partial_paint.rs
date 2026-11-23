@@ -608,6 +608,74 @@ fn scrolling_a_memo_copies_the_pixels_already_painted() {
     assert!(copied >= 5, "as rolagens não viraram cópia ({copied})");
 }
 
+/// Rolar um `ScrollBox` transparente sobre o fundo do form (a Landing no celular repintava a
+/// caixa inteira a cada passo, 15 a 27 ms por quadro): os filhos já pintados são copiados, só
+/// a faixa nova e a barra são pintadas, e a imagem sai igual à pintura inteira. Com a barra
+/// por cima do conteúdo (`gutter` desligado) também; com um irmão por baixo da caixa (o fundo
+/// atrás dela não é liso), nada é copiado e a imagem continua certa.
+#[test]
+fn scrolling_a_scroll_box_copies_the_pixels_already_painted() {
+    let renderer = aylis_skia::SkiaRenderer::new();
+    for (gutter, under) in [(true, false), (false, false), (true, true)] {
+        let label = format!("gutter {gutter}, irmão por baixo {under}");
+        let mut ui = Ui::new();
+        aylis_controls::register(&mut ui);
+        ui.services_mut().text = Some(Box::new(renderer.text_service()));
+        let form = ui.create("Form", None).unwrap();
+        ui.set_prop(form, "width", W as f64).unwrap();
+        ui.set_prop(form, "height", H as f64).unwrap();
+        ui.show(form).unwrap();
+        if under {
+            let below = ui.create("Rectangle", Some(form)).unwrap();
+            for (prop, value) in [("align", PropValue::from("none")), ("left", 60.0.into()), ("top", 200.0.into()), ("width", 200.0.into()), ("height", 200.0.into()), ("fill", "#3366CC".into())] {
+                ui.set_prop(below, prop, value).unwrap();
+            }
+        }
+        let scroll = ui.create("ScrollBox", Some(form)).unwrap();
+        for (prop, value) in [("align", PropValue::from("none")), ("left", 40.0.into()), ("top", 40.0.into()), ("width", 400.0.into()), ("height", 600.0.into()), ("gutter", gutter.into())] {
+            ui.set_prop(scroll, prop, value).unwrap();
+        }
+        for i in 0..40 {
+            let class = if i % 3 == 0 { "Panel" } else { "Button" };
+            let child = ui.create(class, Some(scroll)).unwrap();
+            for (prop, value) in [("align", PropValue::from("top")), ("height", 44.0.into()), ("text", format!("Linha {i}").into()), ("margins", "8,6,8,6".into())] {
+                let _ = ui.set_prop(child, prop, value);
+            }
+        }
+        ui.set_time(1000.0);
+        ui.layout();
+        let mut pixels = vec![0u32; (W * H) as usize];
+        let full = |ui: &mut Ui, pixels: &mut Vec<u32>| {
+            let _ = ui.take_frame(form);
+            renderer.render_area_to_pixels(pixels, W, H, 1.0, Color::WHITE, None, |c| ui.paint_region(form, c, None));
+        };
+        full(&mut ui, &mut pixels);
+        let at = PointF::new(240.0, 340.0);
+        let mut copied = 0;
+        for step in 0..8 {
+            let delta = if step < 6 { -37.0 } else { 52.0 };
+            ui.wheel(form, WheelEvent { position: at, delta: PointF::new(0.0, delta), ..Default::default() });
+            let frame = ui.take_frame(form).snapped(1.0);
+            let FrameDamage::Parts { moves, areas } = frame else { panic!("{label}, passo {step}: rolar não pode repintar a janela inteira") };
+            copied += moves.len();
+            if !under {
+                let painted: f32 = areas.iter().map(|a| a.width * a.height).sum();
+                assert!(painted < 400.0 * 600.0 * 0.4, "{label}, passo {step}: pintou demais ao rolar: {areas:?}");
+            }
+            let mut partial = pixels.clone();
+            renderer.render_parts_to_pixels(&mut partial, W, H, 1.0, Color::WHITE, &moves, &areas, |c, a| ui.paint_regions(form, c, a));
+            full(&mut ui, &mut pixels);
+            let (count, first) = differences(&partial, &pixels);
+            assert_eq!(count, 0, "{label}, passo {step}: a cópia deixou resto, o primeiro em {first:?}");
+        }
+        if under {
+            assert_eq!(copied, 0, "{label}: copiou sobre um fundo que não é liso");
+        } else {
+            assert!(copied >= 7, "{label}: as rolagens não viraram cópia ({copied})");
+        }
+    }
+}
+
 /// Girar a roda além do fim do Memo (a altura à vista sem número inteiro de linhas): a imagem
 /// por partes segue igual à inteira, e no fim nada é copiado nem deslocado. A roda calculava
 /// o fim com as linhas inteiras à vista, passava dele, a cópia era pedida e a pintura voltava

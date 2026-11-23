@@ -6,6 +6,10 @@ consultas devolvem `None` ou erro).
 
 ## Achar componentes
 
+Num projeto, use o acesso tipado gerado pela IDE (`self.edtNome`, `frmClientes.btnSalvar`):
+um nome errado é erro de compilação. O `ui.find`/`find_in`/`find_path` abaixo é para código
+fora de um projeto (testes, ferramentas, componentes criados em execução).
+
 ```rust
 // Pelo nome, dentro de um form (os nomes são únicos por form).
 let form = ui.find("frmClientes").unwrap();
@@ -21,8 +25,9 @@ let form_do_controle = ui.form_of(btn);
 let classe = ui.class_name(btn);            // Some("Button")
 ```
 
-Dentro de um handler de evento, o `sender` é o id de quem disparou, e o form vem de
-`ui.form_of(sender)`.
+Num handler do projeto, o `sender` chega já na classe de quem disparou
+(`sender: crate::generated::Button`); numa closure (`ui.on`), é o `ComponentId`, e o form vem
+de `ui.form_of(sender)`.
 
 ## Ler e trocar propriedades
 
@@ -57,12 +62,12 @@ if let Some(e) = ui.get_mut::<Edit>(edt) {
 let nota = ui.get::<NumberBox>(nb).map(|n| n.value);
 
 // Posição, tamanho, alinhamento, visibilidade... (o ControlBase de qualquer controle)
-ui.control_mut(btn).unwrap().set_visible(false).set_width(120.0);
-ui.invalidate();      // depois de mudar campos que afetam o layout direto na struct
+ui.control_mut(btn).unwrap().set_visible(false).set_width(120.0);   // já refaz o layout do form
 ```
 
-Mudando os campos direto, o `Ui` não fica sabendo. Chame `ui.invalidate()` para refazer o
-layout ou `ui.request_repaint()` para só repintar. O `set_prop` faz isso sozinho.
+O `get_mut` e o `control_mut` avisam o `Ui` sozinhos: o layout do form é refeito e o
+controle repintado. Só o que a pintura lê de fora do `Ui` (um dado compartilhado, o que chega
+de outra thread) precisa de `ui.damage(id)`.
 
 ## Criar e liberar em tempo de execução
 
@@ -99,13 +104,14 @@ ui.register_handler("btn_salvar_click", |ui, sender, _args| { /* ... */ });
 ui.click(btn);
 ```
 
-Os handlers gerados pela IDE ficam em `src/forms/<form>.rs`. A IDE cria a função na
-primeira vez e depois só refaz o bloco de registro; o corpo da função é seu.
+Os handlers do projeto ficam em `rust/src/forms/<form>.rs`, como métodos da struct do form.
+A IDE acrescenta o esqueleto de um handler novo no fim do `impl`; o registro e o acesso
+tipado ficam em `rust/generated/` (somente leitura, refeito a cada "Gerar código").
 
 ## Forms
 
 ```rust
-let f = ui.create_form("frmClientes")?;     // cria a partir de forms/clientes.json
+let f = FrmClientes::create(ui)?;          // cria a partir do form (o mesmo que ui.create_form("frmClientes"))
 ui.show(f)?;
 ui.show_modal(f, |ui, result| {             // modal com retorno (como ShowModal)
     if result == ModalResult::Ok { /* ... */ }
@@ -220,14 +226,11 @@ o seu código em Python (ou qualquer linguagem que fale JSON por pipe ou WebSock
 (`clients/python/aylis_client.py`):
 
 ```python
-from aylis_client import Aylis
-
-aylis = Aylis()
-
-@aylis.on("btn_salvar_click")                     # o handler pelo nome usado no form
-def salvar(event):
-    nome = aylis.call("get", target="edtNome", prop="text")
-    aylis.send("set", target="lblStatus", props={"text": f"Salvo: {nome}"})
-
-aylis.run("frmClientes")                          # abre o form e trata os eventos
+# python/src/forms/clientes.py: o handler ligado no form ("on_click": "btn_salvar_click")
+def btn_salvar_click(aylis, sender: "Button"):
+    frmClientes.lblStatus.text = f"Salvo: {frmClientes.edtNome.text}"
 ```
+
+O projeto em outra linguagem tem o mesmo acesso tipado (`frmClientes.edtNome.text`), gerado
+pela IDE; o `aylis.call`/`aylis.send` do `aylis_client.py` fica para quem fala o protocolo
+direto.

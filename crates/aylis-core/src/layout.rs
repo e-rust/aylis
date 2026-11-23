@@ -646,9 +646,12 @@ impl Ui {
 
     /// Rola o conteúdo de `id` até `offset` (`base` é o `ControlBase` dele, que num método de
     /// evento está fora do `Ui`). Sem layout pendente, os filhos diretos só andam a diferença
-    /// e a caixa é repintada: refazer o layout do form a cada passo da rolagem media de novo
-    /// todos os textos da página (a Landing no celular: ~300 medidas por quadro). Com layout
-    /// pendente, ele refaz tudo com a rolagem nova.
+    /// e os pixels já pintados andam junto ([`Ui::scroll_children_damage`]: só a faixa que
+    /// aparece é pintada, quando dá para copiar): refazer o layout do form a cada passo da
+    /// rolagem media de novo todos os textos da página (a Landing no celular: ~300 medidas por
+    /// quadro), e repintar a caixa inteira custava 15 a 27 ms por quadro no celular. Com
+    /// layout pendente, ele refaz tudo com a rolagem nova. O que a caixa desenha por cima dos
+    /// filhos (a barra) ela marca com [`Ui::damage_part`].
     pub fn scroll_content(&mut self, id: ComponentId, base: &mut ControlBase, offset: PointF) {
         let before = base.laid_out_scroll;
         base.set_scroll_offset(offset);
@@ -659,18 +662,40 @@ impl Ui {
             return;
         }
         let (dx, dy) = (before.x - offset.x, before.y - offset.y);
-        if dx != 0.0 || dy != 0.0 {
+        let moved = dx != 0.0 || dy != 0.0;
+        if moved {
             for child in self.children(id).to_vec() {
                 if let Some(cb) = self.cb_mut(child) {
                     cb.bounds = cb.bounds.offset(dx, dy);
                 }
             }
+            self.shift_painted(id, dx, dy);
         }
         base.laid_out_scroll = offset;
         // Uma janela presa a algo dentro da caixa (a lista de um ComboBox) acompanha.
         let root = self.root_of(id);
         self.place_followers(root);
-        self.damage(id);
+        if moved {
+            let b = base.bounds();
+            self.scroll_children_damage(id, RectF::new(0.0, 0.0, b.width, b.height), PointF::new(dx, dy));
+        } else {
+            self.damage(id);
+        }
+    }
+
+    /// Onde os descendentes de `id` desenharam na última pintura anda `(dx, dy)` com eles: a
+    /// cópia da rolagem leva os pixels junto, e a próxima pintura por parte não confunde o
+    /// lugar antigo com desenho que passou da área ([`crate::ink`]).
+    fn shift_painted(&self, id: ComponentId, dx: f32, dy: f32) {
+        let mut stack: Vec<ComponentId> = self.children(id).to_vec();
+        while let Some(c) = stack.pop() {
+            if let Some(entry) = self.entry(c) {
+                let mut v = entry.visual.borrow_mut();
+                v.ink = v.ink.map(|r| r.offset(dx, dy));
+                v.plain = v.plain.offset(dx, dy);
+            }
+            stack.extend_from_slice(self.children(c));
+        }
     }
 }
 

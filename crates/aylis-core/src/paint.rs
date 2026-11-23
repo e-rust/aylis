@@ -154,6 +154,9 @@ pub(crate) struct Visual {
     /// [`Component::opaque`](crate::Component::opaque), ou um filho do tamanho dele que cobre):
     /// o que fica inteiro atrás dele não é pintado nem pede quadros.
     pub(crate) covers: bool,
+    /// Se o próprio desenho dele na última pintura foi só um fundo liso: atrás de uma caixa
+    /// transparente, a rolagem copia os pixels ([`Ui::take_frame`]).
+    pub(crate) plain: crate::ink::Plain,
     /// A chave da camada guardada dele na última pintura (`begin_cached`): quando ela muda ou
     /// a camada deixa de valer, a imagem antiga é solta do renderizador (`forget_cached`), em
     /// vez de ocupar memória até sair pelo limite.
@@ -459,7 +462,7 @@ impl Ui {
         self.paint_area.set(area);
         self.paint_form.set(self.control(root).map(|cb| cb.bounds()));
         self.paint_count.set(0);
-        let mut ink = crate::ink::InkCanvas::new(&mut *canvas, &self.ink);
+        let mut ink = crate::ink::InkCanvas::new(&mut *canvas, &self.ink, &self.plain);
         // O modo de texto do app (`layout`/`core`: o núcleo mede e desenha o texto, veja `textcore.rs`).
         if self.text_mode == crate::textcore::TextMode::Native {
             self.paint_node(root, &mut ink, true, &mut classes, &self.theme, &Default::default(), visible);
@@ -974,14 +977,14 @@ impl Ui {
             RectF::new(b.x + t.x, b.y + t.y, b.width, b.height)
         };
         let contained = cb.clip_children() || entry.children.is_empty();
-        if contained && cb.rotation() == 0.0 && visible.is_some_and(|v| !v.iter().any(|r| place.inflate(CULL_MARGIN).intersects(*r))) {
-            // Ainda assim pinta se o desenho dele, da última vez, passou da borda até a área
-            // (a extensão está nas coordenadas do form; `visible`, nas do pai).
-            let ink = entry.visual.borrow().ink;
-            let reaches = ink.zip(self.absolute_rect(id)).zip(visible).is_some_and(|((ink, abs), v)| v.iter().any(|r| ink.offset(place.x - abs.x, place.y - abs.y).intersects(*r)));
-            if !reaches {
-                return;
-            }
+        // Fora da área: o próprio desenho dele não aparece (ainda assim pinta se o desenho dele,
+        // da última vez, passou da borda até a área; a extensão está nas coordenadas do form, e
+        // `visible`, nas do pai).
+        let away = cb.rotation() == 0.0
+            && visible.is_some_and(|v| !v.iter().any(|r| place.inflate(CULL_MARGIN).intersects(*r)))
+            && !entry.visual.borrow().ink.zip(self.absolute_rect(id)).zip(visible).is_some_and(|((ink, abs), v)| v.iter().any(|r| ink.offset(place.x - abs.x, place.y - abs.y).intersects(*r)));
+        if away && (contained || !self.descendants_reach(id, place, visible.unwrap_or(&[]))) {
+            return;
         }
         self.paint_count.set(self.paint_count.get() + 1);
         let look = self.look(id, component, cb, &entry.visual, parent_enabled, classes, inherited, parent_font, false);
@@ -1002,6 +1005,7 @@ impl Ui {
         // Daqui em diante, o que for desenhado é deste controle (os filhos guardam e devolvem
         // a conta do pai).
         let outer_ink = self.ink.borrow_mut().take();
+        let outer_plain = self.plain.replace(crate::ink::Plain::Nothing);
         let bounds = cb.bounds();
         // O quadro que ele pediu numa hora (`request_frame_at`) vale até ele se pintar de novo:
         // a pintura de agora pede o próximo, se precisar.
@@ -1050,6 +1054,11 @@ impl Ui {
         let pulled = self.overscroll_pull(id).and_then(|p| self.overscroll_of(id).map(|s| (p, s)));
         let shifts = pulled.is_some_and(|(_, s)| matches!(s, crate::Overscroll::Stretch | crate::Overscroll::Bounce));
         let cached = !flip && !shifts && blend == crate::BlendMode::Normal && (cb.cache_layer() || automatic);
+        // Um contêiner que não recorta os filhos, fora da área: os filhos (que podem passar da
+        // borda dele) seguem, e o desenho dele (o fundo e a sombra de um card, a borda) fica
+        // de fora. Numa faixa que a rolagem descobre, os cards da página inteira eram
+        // desenhados de novo, fora do recorte, a cada passo.
+        let skip_own = away && !cached && !flip;
 
         canvas.save();
         let shift = cb.translate();
@@ -1105,7 +1114,8 @@ impl Ui {
         }
         let cache_hit = layer_key.is_some_and(|key| canvas.begin_cached(key, ctx.rect.inflate(look.reach + 1.0)));
         if !cache_hit {
-            if traced {
+            if skip_own {
+            } else if traced {
                 let mut trace = crate::trace::TraceCanvas::new(Some(&mut *canvas), None, &mut hasher);
                 let painted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.paint_own(&mut trace, component, &ctx, paint_fill, cb.shadow().as_ref())));
                 volatile |= trace.volatile;
@@ -1115,7 +1125,9 @@ impl Ui {
             } else {
                 self.paint_own_with_hook(canvas, id, entry, component, &ctx, paint_fill, cb.shadow().as_ref(), flip);
             }
-            self.paint_reveal(canvas, &ctx, component.clip_shape());
+            if !skip_own {
+                self.paint_reveal(canvas, &ctx, component.clip_shape());
+            }
 
             // Um form rolado (o teclado aberto) não desenha por baixo das barras do sistema.
             let scrolled_form = cb.scroll_offset().y > 0.0 && self.parent(id).is_none();
@@ -1168,8 +1180,8 @@ impl Ui {
             if clip {
                 canvas.restore();
             }
-            if self.paint_failed(id) {
-                // Nada por cima: o retângulo de erro já está lá.
+            if self.paint_failed(id) || skip_own {
+                // Nada por cima: o retângulo de erro já está lá (ou ele está fora da área).
             } else if flip {
                 canvas.save();
                 canvas.translate(ctx.rect.width, 0.0);
@@ -1204,7 +1216,14 @@ impl Ui {
         }
         canvas.restore();
         let ink = std::mem::replace(&mut *self.ink.borrow_mut(), outer_ink);
+        let plain = self.plain.replace(outer_plain);
         let mut visual = entry.visual.borrow_mut();
+        if skip_own {
+            // O desenho dele na tela é o de antes: a extensão, o fundo liso e o resumo também.
+            visual.shift = shift;
+            drop(visual);
+            return;
+        }
         if let (Some(new), Some(area)) = (ink, self.paint_area.get()) {
             // Desenhou fora da área e além de onde desenhava antes: o que passou ficou
             // recortado na tela. Só conta o que fica dentro do form (a sombra e o anel de foco
@@ -1218,6 +1237,7 @@ impl Ui {
             }
         }
         visual.ink = ink;
+        visual.plain = plain.after(visual.plain);
         visual.shift = shift;
         visual.drawing = (traced && !cache_hit && !volatile && !self.paint_failed(id)).then(|| std::hash::Hasher::finish(&hasher));
         // Cobre o próprio retângulo: opaco ele mesmo, ou um filho do tamanho dele que cobre. Só
@@ -1525,6 +1545,42 @@ impl Canvas for Mirror<'_> {
     }
     fn draw_gpu_surface(&mut self, dest: crate::RectF, surface: &crate::GpuSurface) -> bool {
         self.inner.draw_gpu_surface(Self::rect(dest), surface)
+    }
+}
+
+impl Ui {
+    /// Algum descendente de `id` (que está fora da área e não recorta os filhos, em `place`
+    /// nas coordenadas do pai) desenha em `visible` (nas coordenadas do pai)? Só pela
+    /// geometria e pela extensão da última pintura, sem pintar: numa faixa que a rolagem
+    /// descobre, cada contêiner da página era percorrido (o `save`, a tradução e o estilo de
+    /// cada um) para chegar a filhos que também estavam fora. Na dúvida (escala, giro,
+    /// deslocamento), sim.
+    fn descendants_reach(&self, id: ComponentId, place: RectF, visible: &[RectF]) -> bool {
+        // Da extensão (nas coordenadas do form) para as do pai de `id`.
+        let Some(abs) = self.absolute_rect(id) else { return true };
+        let (ox, oy) = (place.x - abs.x, place.y - abs.y);
+        let hits = |r: RectF| visible.iter().any(|a| r.intersects(*a));
+        let mut stack: Vec<(ComponentId, PointF)> = self.children(id).iter().map(|&c| (c, place.origin())).collect();
+        while let Some((c, origin)) = stack.pop() {
+            let Some(entry) = self.entry(c) else { continue };
+            let Some(cb) = entry.component.as_deref().and_then(|c| c.control()) else { continue };
+            if !cb.visible() || (cb.design_only && !self.design_mode) {
+                continue;
+            }
+            if cb.rotation() != 0.0 || cb.scale() != 1.0 || cb.translate() != PointF::ZERO {
+                return true;
+            }
+            let r = cb.bounds().offset(origin.x, origin.y);
+            let visual = entry.visual.borrow();
+            if hits(r.inflate(CULL_MARGIN)) || visual.ink.is_some_and(|ink| hits(ink.offset(ox, oy))) {
+                return true;
+            }
+            // Quem recorta os filhos não deixa eles passarem do retângulo dele.
+            if !cb.clip_children() {
+                stack.extend(entry.children.iter().map(|&k| (k, r.origin())));
+            }
+        }
+        false
     }
 }
 

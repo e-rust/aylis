@@ -51,24 +51,67 @@ struct State {
     clip: Option<RectF>,
 }
 
+/// O que o próprio desenho de um controle foi na última pintura, para saber se o fundo atrás
+/// de uma rolagem é liso ([`Ui::take_frame`](crate::Ui::take_frame) copia os pixels de uma
+/// caixa transparente só sobre um fundo de cor única).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) enum Plain {
+    /// Não desenhou nada (um `Layout`, um `ScrollBox` sem fundo).
+    #[default]
+    Nothing,
+    /// Só um retângulo de cor sólida (`color`), sem cantos e sem giro (o fundo de um form),
+    /// aqui (nas coordenadas do form, já recortado).
+    Fill(RectF, crate::Color),
+    /// Qualquer outra coisa.
+    Other,
+}
+
+impl Plain {
+    /// O de uma pintura nova (`self`) somado ao da anterior: pintado só numa área (a pintura
+    /// por parte), o fundo da mesma cor continua liso onde já estava.
+    pub(crate) fn after(self, before: Plain) -> Plain {
+        match (self, before) {
+            (Plain::Fill(r, c), Plain::Fill(old, before)) if c == before => Plain::Fill(r.union(old), c),
+            _ => self,
+        }
+    }
+
+    /// Andou com a rolagem (a cópia levou os pixels junto).
+    pub(crate) fn offset(self, dx: f32, dy: f32) -> Plain {
+        match self {
+            Plain::Fill(r, c) => Plain::Fill(r.offset(dx, dy), c),
+            other => other,
+        }
+    }
+}
+
 /// O canvas que anota a extensão de cada desenho em `ink` (nas coordenadas em que a pintura
-/// começou) e repassa tudo a `inner`.
+/// começou) e repassa tudo a `inner`. Em `plain`, se o desenho foi só um fundo liso.
 pub(crate) struct InkCanvas<'a> {
     pub(crate) inner: &'a mut dyn Canvas,
     pub(crate) ink: &'a RefCell<Option<RectF>>,
+    plain: &'a std::cell::Cell<Plain>,
     state: State,
     stack: Vec<State>,
 }
 
 impl<'a> InkCanvas<'a> {
-    pub(crate) fn new(inner: &'a mut dyn Canvas, ink: &'a RefCell<Option<RectF>>) -> Self {
-        Self { inner, ink, state: State { transform: Affine::IDENTITY, clip: None }, stack: Vec::new() }
+    pub(crate) fn new(inner: &'a mut dyn Canvas, ink: &'a RefCell<Option<RectF>>, plain: &'a std::cell::Cell<Plain>) -> Self {
+        Self { inner, ink, plain, state: State { transform: Affine::IDENTITY, clip: None }, stack: Vec::new() }
     }
 
-    /// Anota `r` (nas coordenadas atuais), recortado pelo clip.
+    /// Anota `r` (nas coordenadas atuais), recortado pelo clip: um desenho qualquer.
     fn mark(&mut self, r: RectF) {
+        if self.mark_area(r).is_some() {
+            self.plain.set(Plain::Other);
+        }
+    }
+
+    /// Anota `r` e devolve onde ele ficou (nas coordenadas do começo, recortado); `None` se
+    /// ficou todo fora do recorte.
+    fn mark_area(&mut self, r: RectF) -> Option<RectF> {
         if !(r.width.is_finite() && r.height.is_finite()) {
-            return;
+            return None;
         }
         let mut r = self.state.transform.map_rect(r);
         if let Some(c) = self.state.clip {
@@ -76,12 +119,13 @@ impl<'a> InkCanvas<'a> {
             let y = r.y.max(c.y);
             let (right, bottom) = (r.right().min(c.right()), r.bottom().min(c.bottom()));
             if right <= x || bottom <= y {
-                return;
+                return None;
             }
             r = RectF::new(x, y, right - x, bottom - y);
         }
         let mut ink = self.ink.borrow_mut();
         *ink = Some(ink.map_or(r, |i| i.union(r)));
+        Some(r)
     }
 
     fn mark_stroke(&mut self, r: RectF, stroke: &Stroke) {
@@ -168,7 +212,19 @@ impl Canvas for InkCanvas<'_> {
         self.inner.save_layer_blend(opacity, mode, bounds);
     }
     fn fill_rect(&mut self, rect: RectF, radius: f32, brush: &Brush) {
-        self.mark(rect);
+        // O primeiro desenho, um retângulo liso sem giro: pode ser um fundo de cor única.
+        let [_, b, c, ..] = self.state.transform.0;
+        let flat = match brush {
+            Brush::Solid(color) if color.a == 255 && radius <= 0.0 && b == 0.0 && c == 0.0 => Some(*color),
+            _ => None,
+        };
+        let first = self.plain.get() == Plain::Nothing;
+        if let Some(r) = self.mark_area(rect) {
+            self.plain.set(match flat {
+                Some(color) if first => Plain::Fill(r, color),
+                _ => Plain::Other,
+            });
+        }
         self.inner.fill_rect(rect, radius, brush);
     }
     fn stroke_rect(&mut self, rect: RectF, radius: f32, stroke: &Stroke) {

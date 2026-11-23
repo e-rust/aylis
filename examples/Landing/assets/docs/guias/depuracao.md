@@ -85,16 +85,18 @@ A IDE fala o protocolo de depuração do VS Code (DAP) com um adaptador por ling
 
 | Linguagem | Adaptador | De onde vem |
 |---|---|---|
-| Rust (Windows, Linux, macOS) | CodeLLDB | Ferramentas → Verificar ambiente baixa a última versão do GitHub e guarda em `%LOCALAPPDATA%\aylis\tools\codelldb` (ou usa o da extensão do VS Code, se instalada) |
+| Rust (Windows, Linux, macOS) | CodeLLDB | o pacote `codelldb` (versão fixada, em `%USERPROFILE%\.aylis\tools`), que Ferramentas → Verificar ambiente instala; ou o da extensão do VS Code, se instalada |
 | Python | `debugpy` | Verificar ambiente instala com o `pip` |
 | Go | Delve (`dlv dap`) | Verificar ambiente instala com o `go install` |
-| C# | netcoredbg | Verificar ambiente baixa do GitHub (não há versão para macOS) |
+| C# | netcoredbg | o pacote `netcoredbg`, que Verificar ambiente instala (no macOS, só em ARM) |
 | TypeScript | js-debug (o do VS Code) | Verificar ambiente baixa a v1.140.0; o backend roda no Node 22.6+ (`--experimental-strip-types`), não no Bun, para o depurador entrar |
 | Java | `aylis-tool jdb-dap` | um adaptador DAP do próprio Aylis sobre o `jdb` do JDK |
 | Free Pascal e C++ | CodeLLDB | o mesmo do Rust |
 
-- **Rust:** a IDE compila o executável de desenvolvimento (o mesmo do F9) e o CodeLLDB roda
-  o programa. No Windows o LLDB lê os símbolos da Microsoft (PDB): variáveis, tipos e
+- **Rust:** a IDE compila o executável de desenvolvimento (o mesmo do F9). No Windows, ela
+  abre o app com `AYLIS_WAIT_DEBUGGER`: o app (com `dev`) espera o depurador no começo do
+  `Application::run`, e o CodeLLDB se anexa, como no C++ (fica de fora só o `main` antes do
+  `run`). No Linux e no macOS, o CodeLLDB roda o programa (`launch`). No Windows o LLDB lê os símbolos da Microsoft (PDB): variáveis, tipos e
   passos funcionam. Uma diferença do Visual Studio: na última linha de um bloco (o `}`), as
   variáveis daquele bloco já saíram de escopo.
 - **Python:** o `aylis-host` roda o backend com o `debugpy` esperando, e a IDE conecta nele.
@@ -106,7 +108,8 @@ A IDE fala o protocolo de depuração do VS Code (DAP) com um adaptador por ling
 
 O código fica em `crates/aylis-tools/src/dap.rs` (o cliente do protocolo, testado com os
 dois adaptadores em `crates/aylis-tools/tests/dap.rs`) e `crates/aylis-ide/src/debugger.rs`
-(a parte da IDE). A IDE não tem mais o "Depurar no VS Code" (saiu em 03/11): depura-se nela.
+(a parte da IDE). A IDE não tem mais o "Depurar no VS Code" (saiu em 03/11): no desktop, depura-se nela; só o
+Android (Depurar no aparelho) ainda usa o VS Code.
 
 Detalhes de robustez:
 - O CodeLLDB no Windows às vezes não avisa que o programa terminou (fica mudo). A sessão
@@ -124,7 +127,10 @@ rodando.
 **Executar até o cursor (F4).** Roda até a linha do cursor com um ponto de parada
 temporário, que sai quando o programa para; sem depuração em andamento, começa uma.
 
-Ainda não: depurar no Android e no navegador (lá vale o Inspetor do app e o hot reload).
+No Android (projetos em Rust): Executar → Depurar no aparelho (ou `aylis-tool debug-android
+app.aylisproj [--lldb]`) põe o `lldb-server` do NDK no app e abre o VS Code em "aylis: anexar
+(Android)"; ainda não na janela de código da IDE. No navegador, ainda não (lá vale o Inspetor
+do app e o hot reload).
 
 ## Editor de código
 
@@ -136,7 +142,7 @@ A janela de código tem o que se usa no VS Code. A inteligência vem do servidor
 | Rust | rust-analyzer (do rustup) |
 | Python | python-lsp-server (pylsp) |
 | TypeScript | typescript-language-server com o TypeScript 5 |
-| C# | csharp-ls (0.16 no .NET 8; a última no .NET 9+) |
+| C# | csharp-ls (0.16 no .NET 8, 0.20 no .NET 9 e 0.28 no .NET 10+; versões fixadas no manifesto) |
 | Java | Eclipse JDT LS 1.38 (a IDE cria o `.project` e o `.classpath` com a pasta `src`) |
 | Go | gopls |
 | C++ | clangd 23 (a IDE gera o `compile_commands.json`) |

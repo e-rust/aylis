@@ -127,7 +127,8 @@ e Android. No iOS, por enquanto, só existe o Skia CPU.
   renderizador dele: o executável do Windows não leva o Skia, e o do Linux não leva o
   Direct2D.
 - **Ao abrir:** o app usa a escolha da plataforma em que está rodando
-  (`Application::options`). `AYLIS_RENDERER` ainda força outro, para testes.
+  (`Application::options`). `AYLIS_RENDERER` ainda força outro, para testes, só com o app
+  compilado em debug pela IDE (a feature `dev`); em release o app não lê variável de ambiente.
 
 Um projeto novo, com um form de Label, Edit, CheckBox e Button, compilado em release no
 Windows: **1,97 MB** com o padrão (Direct2D), contra 19,02 MB com o Skia. Ao abrir, a
@@ -146,8 +147,8 @@ eram. Para mudar, escolha em Projeto → Opções: se o `Cargo.toml` usa
 | Máquina sem GPU, área de trabalho remota, memória curta | Skia CPU |
 | Multiplataforma (Linux, macOS, Android, iOS) | Skia: o Direct2D só existe no Windows |
 
-O app pode levar o Skia e o Direct2D juntos e escolher na hora (`AYLIS_RENDERER`), mas o
-tamanho do executável só cai quando o Skia fica de fora.
+O app pode levar o Skia e o Direct2D juntos e escolher na hora (`Options { renderer }`; em
+debug, também `AYLIS_RENDERER`), mas o tamanho do executável só cai quando o Skia fica de fora.
 
 ## Como medir de novo
 
@@ -160,7 +161,7 @@ cargo build --release -p aylis-platform-winit --features d2d --example modern
 ```
 
 ```bash
-AYLIS_RENDERER=d2d AYLIS_BENCH=600 target/release/examples/modern.exe
+AYLIS_RENDERER=d2d AYLIS_BENCH=600 ~/.aylis/target/release/examples/modern.exe
 ```
 
 Para medir todos os exemplos de uma vez e comparar com uma medição anterior:
@@ -182,7 +183,11 @@ Num PC com mais de uma placa (a integrada e a dedicada de um notebook), o projet
 qual usar em Opções do projeto → **Placa de vídeo** (`gpu` no `.aylisproj`):
 - `auto` (o padrão): a que o sistema dá;
 - `alto-desempenho` ou `economia`: a dedicada ou a integrada;
+- `monitor`: a placa do monitor em que a janela está, trocando quando ela passa para outro
+  ([gpu-por-monitor.md](gpu-por-monitor.md));
 - o nome (ou parte dele) de uma placa: `Radeon`, `RTX 4060`.
+
+Cada form pode ter a sua pela propriedade `gpu` (vazia: a do projeto).
 
 A variável `AYLIS_GPU` (mesmos valores) passa por cima do projeto, para testar. A escolha
 vale para o Direct2D (o adaptador do DXGI), para o 3D (`wgpu`, com `aylis_3d::adapters()`
@@ -201,9 +206,18 @@ Com o Direct2D, o projeto escolhe em Opções do projeto → **Apresentação (W
 - `composition`, **DirectComposition**: a swap chain vira uma camada que o compositor do
   Windows (DWM) junta à janela, como nos navegadores, no Electron e no WebView2. Sempre
   composto, sem tearing; a tela cheia não troca o modo de exibição (no NoOBS, o mouse deixou
-  de parar). Não tira o aviso do Radeon Software em tela cheia.
+  de parar). Não tira o aviso do Radeon Software em tela cheia;
+- `composed`, **Composto**: a swap chain no modelo de cópia (*blit*), que o DWM sempre compõe
+  e que nunca vai a um plano de overlay (MPO) nem a *independent flip*. É para forms em tela
+  cheia por cima do resto (seleção de área, print, overlay): numa placa AMD com MPO, o cursor
+  congelava sobre um form assim (NoOBS, 15/11). Custa uma cópia a mais por quadro e não tem
+  tearing.
+
+Cada form escolhe o seu pela propriedade `present` (`project`, o padrão, `window`,
+`composition` ou `composed`). O form transparente ou com forma (`transparent`,
+`window_shape`) usa a composição com alfa por pixel.
 
 Se o DirectComposition não abrir, o Aylis cai para a swap chain da janela. Com os
-diagnósticos ligados (o app com `dev`), `AYLIS_PRESENT=composition` ou `window` passa por
+diagnósticos ligados (o app com `dev`), `AYLIS_PRESENT=window`, `composition` ou `composed` passa por
 cima do projeto. O código fica em `aylis_core::gpu` (`PresentMode`) e no `aylis-d2d`
 (`compose_into`).

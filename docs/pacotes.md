@@ -96,15 +96,17 @@ Quem distribui roda o comando, depois o `pack`, e sobe o arquivo com os outros.
 (o .NET do pacote `dotnet` ou o instalado). A verificação de ambiente instala o pacote, sem o
 `dotnet tool install`, que baixaria do nuget.org.
 
-**Linux e macOS:** o `android-sdk` e o `dotnet` têm os arquivos das duas (macOS só em ARM), e o
+**Linux e macOS:** o `android-sdk` e o `dotnet` têm os arquivos das duas (macOS em Intel e em ARM), e o
 `android-ndk` só o de Linux: o do macOS sai só em `.dmg`, que o Aylis não extrai (instale pelo
 Android Studio).
 
 ## Onde aparecem
 
-- **`aylis-tool packages`**: `list`, `install <nome>...`, `remove <nome>`, `sources`, `pack`.
-- **A IDE**: Ferramentas → Pacotes (a lista, instalar e remover, com o progresso; as origens nas
-  Opções). O "Corrigir…" da verificação de ambiente instala o pacote que resolve o item.
+- **`aylis-tool packages`**: `list`, `install <nome>...`, `remove <nome>`, `sources`, `pack`,
+  `update` (preenche os hashes e os tamanhos no manifesto) e `env` (o `PATH` e as variáveis que
+  os pacotes instalados dão).
+- **A IDE**: Ferramentas → Pacotes de ferramentas… (a lista, instalar e remover, com o
+  progresso; as origens na aba Pacotes das Opções da IDE). O "Corrigir…" da verificação de ambiente instala o pacote que resolve o item.
 - **O instalador da IDE**: uma página só, agrupada. A IDE com o Rust é obrigatória (sem ele o
   Aylis não funciona); as outras linguagens e as plataformas de destino (Android, navegador) são
   opcionais, e cada uma marcada vem com tudo o que precisa: no fim, o `aylis-tool setup` dela

@@ -67,7 +67,7 @@ ActiveWorkbook.SaveAs("C:\Relatorios\vendas.xlsx")
 ### Exemplo: o dataset no Excel
 
 ```rust
-pub fn btn_excel_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) -> Result<()> {
+pub fn btn_excel_click(&mut self, ui: &mut Ui, _sender: Button) -> Result<()> {
     let excel = self.oleExcel;
     excel.set_value(ui, "Visible", "true")?;
     excel.call(ui, "Workbooks.Add")?;

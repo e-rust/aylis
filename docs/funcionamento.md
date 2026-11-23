@@ -3,7 +3,7 @@
 ## Visão geral
 
 ```
-           seu app (forms/*.json + handlers em Rust ou Python)
+           seu app (forms/*.json + handlers em Rust, Python, TypeScript, C#, Java, Go, C++ ou Free Pascal)
                                │
    ┌───────────────┬──────────┴───────────┬────────────────┐
 aylis-controls   aylis-data   aylis-dbcontrols   aylis-media     (componentes)
@@ -11,16 +11,17 @@ aylis-controls   aylis-data   aylis-dbcontrols   aylis-media     (componentes)
                           aylis-core        (Ui, Component, layout, eventos, tema, Canvas)
                                │
           ┌────────────────────┼─────────────────────┐
-     aylis-skia (CPU/GPU)   aylis-web (canvas 2D)   aylis-platform-winit (janelas, teclado, toque)
+     aylis-d2d (Direct2D) · aylis-skia (CPU/GPU) · aylis-web (canvas 2D) · aylis-platform-winit (janelas, teclado, toque)
 ```
 
 | Crate | O que tem |
 |---|---|
 | `aylis-core` | o `Ui` (a árvore de componentes), o trait `Component`, o `ControlBase`, propriedades, alinhamento, eventos, foco, temas, animações, timers, forms, o trait `Canvas`, caminhos e ícones. **Não conhece o sistema operacional nem o Skia.** |
-| `aylis-controls` | os controles: Button, Edit, Memo, ComboBox, ListView, Chart, TabControl... e os modernos (Badge, Banner, Avatar, SegmentedControl, LevelMeter, SeekBar, NodeGraph, ChatView...) |
+| `aylis-controls` | junta as famílias de controles e registra as classes (`aylis_controls::register`): `aylis-controls-base` (Button, Edit, Memo, ComboBox, ListView, TabControl... e os únicos que usam outros controles), `-charts`, `-industrial`, `-device`, `-editors` |
+| `aylis-providers` | os componentes ligados a bibliotecas de terceiros (código de barras, CSV/XLSX, PDF, mapas) |
 | `aylis-data` | `ClientDataSet`, `Field`, `DataSource`, filtros, índices, delta e reconciliação |
 | `aylis-dbcontrols` | `DataGrid`, `DataNavigator`, `DataRepeater`, `DBImage`, `DBChart`... |
-| `aylis-media` | `MediaPlayer` (áudio) e `VideoPlayer` |
+| `aylis-media` | `MediaPlayer`, `VideoPlayer`, `Sound`, `AudioOutput`, `AudioMixer`, `Microphone`, `CameraView`, `AudioSpectrum`, `MediaInfo`, `Playlist`, `MediaSession` |
 | `aylis-skia` | o `Canvas` em Skia (CPU ou GPU) e a medição de texto |
 | `aylis-web` | o `Canvas` no navegador (canvas 2D) |
 | `aylis-d2d` | o `Canvas` no Windows sem Skia: Direct2D, DirectWrite e WIC (veja [Renderizadores](renderizadores.md)) |
@@ -105,7 +106,8 @@ A plataforma entrega ao `Ui` eventos de baixo nível (`pointer_down`, `key_down`
 Teclas vão para o controle com foco e sobem para os pais até alguém tratar
 (`ctx.set_handled()`). Tab e Shift+Tab andam pelo foco (`tab_stop`). Clique direito abre
 o `popup_menu`. Toque longo dispara `on_long_press`. Mouse parado sobre um controle com
-`hint` abre o balão da dica depois de 0,6 s.
+`hint` abre o balão da dica depois de 1 s (o tema troca com `durations.hint`, em ms; o app,
+com `ui.set_hint_delay`).
 
 Dois dedos na tela viram gesto (`on_gesture`): o controle sob o
 primeiro dedo recebe um `GestureEvent` com a fase (começo, andamento, fim), o centro entre
@@ -153,8 +155,8 @@ Os eventos disparados dentro de um método de componente são entregues **depois
 método termina. Por isso um handler pode alterar o próprio componente que disparou o
 evento.
 
-**A roda do mouse** anda `wheel_step` pontos por dente (40 por padrão; navegadores usam
-100) e pode deslizar até o destino (`smooth`, `smooth_ms`) em vez de saltar. No projeto:
+**A roda do mouse** anda `wheel_step` pontos por dente (100 por padrão, como nos
+navegadores) e desliza até o destino (`smooth`, `smooth_ms`) em vez de saltar. No projeto:
 `"scroll": { "wheel_step": 100, "smooth": true, "smooth_ms": 160 }` no `.aylisproj`; pelo
 código, `ui.set_scroll_options(ScrollOptions { .. })`. O passo vale em todo controle que
 rola; o `ScrollBox` aceita os seus (`wheel_step` > 0 e `smooth`: `default`, `on`, `off`). O
@@ -222,7 +224,7 @@ qualquer controle; o exemplo `titlebar` mostra.
 ### Ícone na bandeja
 
 O `TrayIcon` (paleta "System", não visual) põe o app na bandeja do sistema, perto do
-relógio (Windows e macOS, feature `tray`): `icons` com um arquivo (parado) ou vários
+relógio (Windows, macOS e Linux, feature `tray`): `icons` com um arquivo (parado) ou vários
 (animação a cada `interval` ms), `hint`, `badge` (um ponto `•` ou um número, desenhado sobre
 o ícone, como os apps de mensagem) e `menu_items` (a lista de itens em JSON:
 `[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`) com `menu_theme`
@@ -238,16 +240,16 @@ notificações e a notificação do Android: `title`, `text`, `image` (PNG ao la
 arquivo ou asset), `app_name` e `app_id` (`empresa.app`). Mais: `notification_id`
 (mostrar de novo com o mesmo número atualiza), `channel`/`channel_name` (o canal do
 Android, que o usuário configura), `priority` (low, default, high: aparece por cima),
-`actions` (`"ver:Ver pedido;ok:Recebi"`; o toque chega em `on_action` com o
-identificador), `on_click` (toque no corpo), `progress` (0 a 1), `ongoing` (fixa) e
+`actions` (`[{"id": "ver", "text": "Ver pedido"}, {"id": "ok", "text": "Recebi"}]`; o
+toque chega em `on_action` com o `id`), `on_click` (toque no corpo), `progress` (0 a 1), `ongoing` (fixa) e
 `Notification::cancel`. Com `form` (o nome de um form do projeto), o form inteiro é
 desenhado fora da tela (`Ui::render_png`, `form_width` x `form_height`) e vira a imagem
 grande da notificação: um layout personalizado feito no designer. No Android 13+ a
 permissão é pedida na primeira notificação. `Notification::show(ui, id)` mostra. Para o Windows mostrar o nome do app,
 o AppUserModelID precisa estar registrado para o usuário; o Aylis registra em
 `HKCU\Software\Classes\AppUserModelId\<app_id>` na primeira notificação (um instalador
-faria o mesmo). Onde o sistema não oferece (navegador, celular), vira o `toast` dentro do
-app.
+faria o mesmo). Onde o Aylis não tem o serviço do sistema (macOS, Linux, iOS e navegador),
+vira o `toast` dentro do app.
 
 ### Caixas de mensagem
 
@@ -315,7 +317,7 @@ Para achar a causa de um problema (no desenvolvimento e na implantação), na pa
     - erros, inclusive pânicos: a última linha antes de o app cair.
   - **Bloqueado:** a entrada que um modal bloqueou também entra, marcada `blocked`.
   - **Começa sozinho** com `active`; também por `EventRecorder::start`/`stop`.
-  - **Onde grava:** em `%LOCALAPPDATA%\<app>\ecordings` (ou `folder`), mantendo as `keep`
+  - **Onde grava:** em `%LOCALAPPDATA%\<app>\recordings` (ou `folder`), mantendo as `keep`
     mais novas.
 - **`Analytics`**: métricas de uso somadas entre as sessões em `analytics.json`.
   - **O que soma:**
@@ -335,7 +337,7 @@ quem estiver ouvindo, sem o núcleo saber de arquivos. Nada vai para a rede.
 - **Abrir:** Arquivo → Abrir gravação… mostra o resumo (por tipo, mais clicados, atalhos,
   erros) e a linha do tempo, com busca, filtro e, ao clicar numa linha, o acontecimento
   completo e os cinco anteriores.
-- **A IDE grava o próprio uso** em `%LOCALAPPDATA%\aylis\ecordings`, e os avisos "⚠" dela
+- **A IDE grava o próprio uso** em `%LOCALAPPDATA%\aylis\recordings`, e os avisos "⚠" dela
   entram como erros.
 - **Ligar/desligar:** Ajuda → Gravar o uso da IDE; Ajuda → Abrir pasta das gravações.
 - **Em PNG:** `aylis-ide --png saida.png --recording arquivo.aylisrec` desenha o visualizador.
@@ -569,7 +571,8 @@ pela classe e pelas classes de base, então o `CellEditor` da grade é um campo 
 - **Ações:** clicar (Invoke), focar e mudar o valor chegam ao controle sem evento de mouse
   na janela.
 - **Itens desenhados:** os itens que o próprio controle desenha também são nós, com papel,
-  nome, posição e estado (`Component::access_items` e `access_action`, em
+  nome, posição e estado (o trait `AccessibleItems`, devolvido por
+  `Component::accessible_items`, com `access_items` e `access_action`; os tipos em
   `aylis_core::automation`). Clicar ou selecionar um deles faz o mesmo que o mouse:
 
 | Controle | Itens | Clicar / selecionar |
@@ -587,15 +590,17 @@ pela classe e pelas classes de base, então o `CellEditor` da grade é um campo 
 - Exemplo: `cargo run -p aylis-platform-winit --example automation`.
 
 `AYLIS_ACCESSIBILITY=0` (no Android, `debug.aylis.accessibility`) desliga. Só custa algo
-quando uma tecnologia assistiva está ligada (no navegador, a árvore é refeita no máximo 4
-vezes por segundo, e só quando muda).
+quando uma tecnologia assistiva está ligada (no navegador, a árvore é conferida no máximo 4
+vezes por segundo, e os elementos só são refeitos quando ela mudou e ficou parada até a
+conferência seguinte: rolando, nada é refeito).
 
 Tudo isso acontece numa thread só, a da interface. Trabalho demorado vai para outra thread
 e volta pela fila (`ui.poster().post(...)`); veja [Threads e a interface](threads.md).
 
 ## Pintura
 
-A cada quadro, o `Ui` percorre a árvore e, para cada controle visível:
+A cada quadro, o `Ui` pinta só a área que mudou (veja abaixo) e, para cada controle visível
+dentro dela:
 
 1. resolve o **estilo** do tema para a classe, a variante (`style`) e o estado (hover,
    pressed...), com transição animada quando o tema pede;
@@ -606,10 +611,17 @@ A cada quadro, o `Ui` percorre a árvore e, para cada controle visível:
 
 O `Canvas` é um trait com retângulos, elipses, linhas, **caminhos** (`fill_path`,
 `stroke_path`, com SVG `d`), sombras, texto com quebra e reticências, e imagens. O
-`aylis-skia` e o `aylis-web` implementam o trait, e a quebra de linha e as reticências usam
-a mesma regra (`aylis_core::text`) nos dois. A plataforma só repinta quando algo mudou ou
-quando um controle pediu (`ctx.request_frame()` para animação contínua,
+`aylis-d2d`, o `aylis-skia` e o `aylis-web` implementam o trait, e a quebra de linha e as
+reticências usam a mesma regra (`aylis_core::text`) nos três. A plataforma só repinta quando
+algo mudou ou quando um controle pediu (`ctx.request_frame()` para animação contínua,
 `ctx.request_frame_at(t)` para um horário).
+
+**Repintar só o que mudou.** O controle que muda o próprio desenho chama `ctx.repaint()`
+(`Ui::damage`), e a plataforma repinta só essa área, por cima do quadro anterior;
+`Ui::damage_part` marca um pedaço (a barra de rolagem, o cursor). A rolagem copia os pixels já
+pintados e pinta só a faixa nova (`Ui::scroll_damage`); no `ScrollBox` os filhos andam junto
+(`Ui::scroll_content`), também com a caixa transparente sobre um fundo liso. Os contêineres
+fora da área não são percorridos nem desenhados (`Ui::descendants_reach`).
 
 **Quadros por segundo.** Uma animação contínua sai, no máximo, na taxa do monitor (o
 renderizador de CPU não espera o vsync; sem esse teto, uma animação passava de 5.000
@@ -622,8 +634,9 @@ por segundo). O exemplo `fps` mostra os dois.
 vetorial) pode ficar guardado como imagem: `canvas.begin_cached(chave, rect)` devolve
 `true` quando a imagem guardada já foi desenhada; com `false`, o componente desenha e chama
 `canvas.end_cached()`, que guarda e compõe. A chave muda com tudo o que muda o desenho
-(cores, destaque, área); o tamanho em pixels já entra nela. O Direct2D guarda até 16; os
-outros renderizadores desenham sempre. O `Svg` usa isso: o mapa de Minas Gerais (853
+(cores, destaque, área); o tamanho em pixels já entra nela. Os três renderizadores guardam; o
+limite é em megabytes (`image_cache.layers_mb`, abaixo), e sai a camada usada há mais tempo. A
+camada que deixa de valer é solta na hora (`Canvas::forget_cached`). O `Svg` usa isso: o mapa de Minas Gerais (853
 municípios, desenhado duas vezes no exemplo do IBGE) custava 34 ms a cada repintura da
 janela e passou a 1,3 ms. O `Svg` também não desenha as formas fora da área visível (o
 município com zoom) e divide o arquivo lido entre os `Svg` que mostram o mesmo conteúdo.
@@ -639,7 +652,7 @@ voltar: a tela não erra, só a pintura fica mais lenta). Ficam no `.aylisproj`,
 Opções do projeto → Memória:
 
 ```json
-"image_cache": { "pixels_mb": 96, "files": 256 }
+"image_cache": { "pixels_mb": 96, "files": 256, "layers_mb": 128, "auto_layers": true, "frame_reuse_kb": 1024 }
 ```
 
 - `pixels_mb` (8 a 4096): imagens em pixels na placa — quadros de vídeo e de câmera, prévias,
@@ -647,9 +660,16 @@ Opções do projeto → Memória:
   inteiro visível ocupa ~33 MB).
 - `files` (16 a 65.536): imagens de arquivo (PNG, JPEG, SVG...) decodificadas e na placa.
   Precisa caber as que aparecem juntas numa tela (ícones, miniaturas, uma galeria).
+- `layers_mb` (0 a 4096): as camadas guardadas — o controle com `cache_layer`, as páginas de
+  uma transição; `0` não guarda nenhuma.
+- `auto_layers`: as camadas automáticas (transição, contêiner animando) em todos os forms;
+  cada form troca pelo `layer_cache` (`project`, `on`, `off`).
+- `frame_reuse_kb`: até quantos KB um quadro de vídeo ou câmera reaproveita o bitmap do
+  anterior na placa (`0` desliga; o form também tem `frame_reuse_kb`).
 
 Pelo código: `aylis_core::image_cache::set_limits(ImageCacheLimits { .. })`. Valem para o
-processo todo (Direct2D, Skia e o navegador).
+processo todo (Direct2D, Skia e o navegador). Em execução, o componente `RenderSettings` lê e
+troca os mesmos valores.
 
 **Painel de memória.** No app em depuração (compilado com `dev`, o que a IDE roda), um quadro
 no canto de cima à direita do form principal mostra, a cada segundo:
@@ -729,12 +749,13 @@ mesmo que vinte.
   imagem, textos, botões), ou um form inteiro do projeto em `item_form`. Cada linha é uma
   cópia (`Ui::clone_component`), com os nomes de dentro repetidos sem conflito.
 - `item_count` e `item_height` dizem quantos itens e a altura de cada um.
-- `on_bind` chega com o índice: `VirtualList::item(ui, lista, i)` dá a linha, e
-  `ui.find_in(linha, "lblNome")` os componentes dela.
+- `on_bind` chega com o índice; no acesso tipado, `lstX_row(ui, i).lblNome` dá os
+  componentes da linha (`VirtualList::item(ui, lista, i)` dá a raiz dela).
 - `on_load_more` avisa perto do fim (uma vez por quantidade): o handler busca a próxima
   página e aumenta `item_count`. É a lista infinita.
-- `bindings` (`"lblNome=nome;imgFoto=foto"`) preenche os componentes sozinho a partir de
-  uma fonte (`RowSource`). A `DataRepeater` (paleta "Data Controls") já vem ligada a um
+- `item_bindings` (`[{"component": "lblNome", "field": "nome"}, {"component": "imgFoto",
+  "property": "image", "field": "foto"}]`; `property` vazia é a principal) preenche os
+  componentes sozinho a partir de uma fonte (`RowSource`). A `DataRepeater` (paleta "Data Controls") já vem ligada a um
   `DataSource`: um item por registro, e ela acompanha o dataset.
 - `VirtualList::scroll_to` e `refresh` (dados mudaram) completam.
 - **Tamanho por item:** `sizes` (`"80;120;80"`; os que faltam usam `item_height`) ou
@@ -871,8 +892,10 @@ A ordem de prioridade: valor da instância > variante > estilo da classe
 > estilo da classe base > tokens. "Aylis Light" e "Aylis Dark" são os temas nativos, com
 cores próprias do Aylis.
 
-Também há temas que imitam as plataformas (Material 2 e 3, iOS 7, 13 e 26, Windows 7, 10
-e 11), que mudam até a forma dos controles: veja [Temas de plataforma](temas.md).
+Também há temas que imitam as plataformas (Material 2 e 3, Android 7, iOS 7, 13 e 26,
+WinUI 3, Windows 7, 10 e 11, Win32, Windows Phone) e os frameworks da web (Vuetify 3,
+Bootstrap 5, shadcn/ui, Ant Design 5, Chakra UI, Quasar 2), que mudam até a forma dos
+controles: veja [Temas de plataforma](temas.md).
 
 ### Abas do navegador (TabStrip)
 
@@ -880,8 +903,8 @@ O `TabStrip` (paleta Layouts) é a faixa de abas de um navegador, como a do Edge
 ativa tem os cantos de cima arredondados e se junta ao conteúdo de baixo; cada aba tem
 ícone, título e o × (na ativa e na que está sob o mouse); o "+" no fim pede uma nova; as
 abas encolhem para caber; arrastar troca a ordem; o clique do meio fecha. É só a faixa: o
-`on_change` diz qual conteúdo mostrar. No layout, `tabs: "Início|home;Relatório"` (título
-e ícone). Eventos: `on_change` (o índice), `on_close` (o índice; com `auto_close` a aba
+`on_change` diz qual conteúdo mostrar. No layout, `"tabs": [{"title": "Início", "icon":
+"home"}, {"title": "Relatório"}]` (também `hint` e `modified`). Eventos: `on_change` (o índice), `on_close` (o índice; com `auto_close` a aba
 sai sozinha, sem ele o código decide e chama `remove`), `on_add` e `on_reorder`
 (`"de,para"`). Por código: `add`, `remove`, `set_title`, `set_modified` (o ponto de não
 salvo no lugar do ×) e `move_tab`.
@@ -1067,12 +1090,15 @@ A célula atual tem a borda na cor de destaque do tema (`primary`); a propriedad
 As colunas vêm, nesta ordem de preferência:
 
 - dos componentes `Column` filhos da grade (como as colunas persistentes): cada um com
-  `field_name`, `title`, `width`, `alignment`, `color`, `text_color`, `visible` e
-  `read_only`; o que fica vazio vem do `Field` (o rótulo, a largura, o alinhamento);
+  `field_name`, `title`, `width`, `alignment`, `color`, `text_color`, `visible`,
+  `read_only` e `kind`; o que fica vazio vem do `Field` (o rótulo, a largura, o alinhamento);
 - da lista `columns`, uma lista de registros `ColumnSpec` (`field` e, opcionais, `title`,
-  `width`, `read_only`, `color`, `text_color`):
+  `width`, `read_only`, `color`, `text_color`, `kind`):
   `[{"field": "sigla", "width": 44}, {"field": "nome", "width": 170}, {"field": "regiao"}]`;
 - dos campos visíveis do dataset.
+
+Com `kind: icon`, a célula mostra a imagem do `ImageList` ligado em `images` cujo índice (ou
+nome) vem do campo; com `kind: image`, desenha a imagem guardada no campo (`blob`).
 
 No designer a grade já mostra as colunas, mesmo com o dataset fechado. O duplo clique no
 DataGrid (ou "Editor de colunas…" no Object Inspector) abre a janela de colunas: a lista na
@@ -1143,7 +1169,7 @@ Vendas/
   assets/              imagens, sons, vídeos, fontes
   locales/*.json       traduções
   code-sync.json       o que cada linguagem já tem (veja abaixo)
-  rust/                o código em Rust: Cargo.toml, build.rs, src/lib.rs, src/forms/<form>.rs
+  rust/                o código em Rust: Cargo.toml, build.rs, src/ (do usuário: lib.rs, forms/<form>.rs) e generated/ (da IDE, somente leitura)
   python/ ... pascal/  o código nas outras linguagens que o projeto tiver
 ```
 
@@ -1198,13 +1224,18 @@ cliente e o arquivo de eventos de cada form ganha o `import`/`uses` da instânci
   componentes tipados (`linha.lblNome.set_text(ui, "…")`); `FraLinha::components_of(ui, raiz)`
   acha os de uma instância.
 - Ler é um `get` na tela (espera a resposta; no TypeScript, `await`); gravar é um `set`.
-  Cores, enums e referências são texto (`"#0067C0"`, `"client"`, o nome do componente).
+  Nada que tenha tipo vai como texto: enums (`Align`), conjuntos, cores, margens e
+  referências a componente têm tipo em cada linguagem (no Rust, os do framework), e `style`,
+  `theme` e as referências a form viram enums (`ThemeName`, `FormName`, um por classe para o
+  `style`). No fio, os valores seguem como texto.
 - Métodos também são tipados: os do componente (`Component::methods`, como os do
   `PaintCanvas`: `pcDesenho.Undo`, `pcDesenho.Save(Caminho)`), o `Close`/`Show` do form, o
   `Execute` dos diálogos e o `Play`/`Pause`/`Stop`/`Seek`/`Position`/`Duration` da mídia.
-  No catálogo eles entram com os parênteses: `"save(string)": "invoke:bool"`.
-- Nome que só se sabe na hora (o componente pelo nome, ou quem disparou o evento): `FindButton(Nome)`
-  e `SenderAsButton(Event)` (um par por classe usada no form):
+  No catálogo eles entram com os parâmetros: `"save(path:string)": "invoke:bool"`.
+- O handler gerado já recebe quem disparou na classe dele e o valor do evento no tipo
+  (`sender: Button`, `value: i64`); o handler de antes, com o evento inteiro, continua sendo
+  chamado. Para um nome que só se sabe na hora: `FindButton(Nome)` e `SenderAsButton(Event)`
+  (um par por classe usada no form):
 
 | Linguagem | O botão que disparou o evento |
 |---|---|
@@ -1240,7 +1271,7 @@ instala tudo de cada uma, sem passo manual: o compilador ou o interpretador, o d
 servidor de linguagem do editor, conferindo de novo até não sobrar nada que dê para
 instalar. Numa instalação nova (nenhuma linguagem instalada) o assistente abre sozinho.
 
-| Linguagem | Compilador (Windows, pelo winget) | Depurador | Servidor de linguagem |
+| Linguagem | Compilador | Depurador | Servidor de linguagem |
 |---|---|---|---|
 | Rust | rustup + toolchain stable, Build Tools do Visual Studio (C++) | CodeLLDB | rust-analyzer |
 | Python | Python 3.12 (do usuário, no PATH) | debugpy | python-lsp-server |
@@ -1251,21 +1282,28 @@ instalar. Numa instalação nova (nenhuma linguagem instalada) o assistente abre
 | C++ | Build Tools do Visual Studio (C++) | CodeLLDB | clangd |
 | Free Pascal | Lazarus (traz o Free Pascal de 64 bits) | CodeLLDB | pasls (compilado com o Lazarus; o git vem junto se faltar) |
 
-O winget roda sem perguntas (`--silent` e os termos aceitos); o Windows ainda pede a
-permissão de administrador nos pacotes que instalam para a máquina. No macOS vem pelo
-Homebrew e no Linux pelo apt (o `pkexec` pede a senha). Depois de cada instalação a IDE
+O que tem pacote de ferramentas do Aylis (o Rust, o Python, o Node, o .NET, o JDK, o Go, o
+CodeLLDB, o netcoredbg, o js-debug, o clangd, o JDT LS...) vem dele, com versão fixa e SHA-256
+conferido (`resources/packages.lock.json`, [Pacotes](pacotes.md)), das origens na ordem: o
+cache, a pasta `pacotes`, os espelhos das Opções e, por último, a URL oficial do fabricante
+(`package_official`, ligada por padrão). Sem pacote (o Lazarus, os Build Tools da Microsoft)
+ou sem origem, o último recurso é o gerenciador do sistema: o winget sem perguntas no
+Windows, o Homebrew no macOS e o apt/dnf/zypper/pacman no Linux (o `pkexec` pede a senha).
+Quando nada dá, o erro traz o passo a passo para instalar à mão. Depois de cada instalação a IDE
 relê o PATH do registro: o que acabou de entrar já vale sem reiniciar. Pela linha de
 comando: `aylis-tool setup go csharp` ou `aylis-tool setup --all`.
 
 Como o projeto vira executável, e por que ele só leva os componentes usados, está em
 [Carregamento e app enxuto](carregamento.md).
 
-**Agentes de IA (MCP).** Executar → Servidor MCP liga a IDE como servidor do Model
-Context Protocol em `http://127.0.0.1:7341/mcp` (só este computador; pedidos com
-`Origin` de outro site são recusados). No Claude Code:
+**Agentes de IA (MCP).** Ferramentas → Servidor MCP para agentes de IA liga a IDE como
+servidor do Model Context Protocol em `127.0.0.1:7341` (só este computador, com token em
+`%LOCALAPPDATA%\aylis\mcp.json`; pedidos com `Origin` de outro site são recusados). Os agentes
+conectam pela ponte, que lê o token sozinha (Ferramentas → Opções da IDE → MCP configura). No
+Claude Code:
 
 ```bash
-claude mcp add --transport http aylis http://127.0.0.1:7341/mcp
+claude mcp add --scope user aylis -- <pasta da IDE>/aylis-tool mcp
 ```
 
 O agente vê o projeto (`project_info`), abre forms (`open_form`, inclusive variantes),
@@ -1289,8 +1327,9 @@ funciona em todas.
 ### Paleta, designer e editores
 
 **A paleta:**
-- **Abas Windows / Apple / Android / aylis.** Em cada plataforma, as versões (WinUI 3,
-  Windows 11..., iOS 26..., Material 3...) são grupos com todos os componentes visuais.
+- **Abas Windows / Apple / Android / Web / aylis.** Em cada plataforma, as versões (WinUI 3,
+  Windows 11..., iOS 26..., Material 3..., Vuetify 3, Bootstrap 5...) são grupos com todos os
+  componentes visuais.
   O escolhido ali entra no form com `theme` = a família (`"iOS 26"`). Um nome de família
   vale como tema e segue o claro ou o escuro do app (`Ui::theme_named`). A aba aylis é a
   paleta por categoria, sem tema próprio.
@@ -1312,7 +1351,7 @@ funciona em todas.
 - **Bandeja dos não visuais:** cada chip tem um X para excluir o componente.
 
 **A galeria** (o botão de grade ao lado da busca da paleta):
-- Tem as mesmas abas Windows / Apple / Android / aylis e, numa plataforma, as versões.
+- Tem as mesmas abas Windows / Apple / Android / Web / aylis e, numa plataforma, as versões.
 - Os componentes vivos aparecem no tema da versão, e o "Usar" escolhe `Classe@Família`,
   inclusive os subtipos.
 - Abre na aba em que a paleta está.
@@ -1381,7 +1420,7 @@ IDE avisa nas mensagens quando a mesma letra aparece duas vezes no form.
 **Listas suspensas** (combo, autocomplete, cor, data, hora):
 - Ficam presas ao controle que as abriu (`Ui::follow`): a rolagem leva junto, e elas
   somem enquanto o controle está fora da parte visível.
-- Saem junto com ele quando ele é liberado (`Component::dies_with`).
+- Saem junto com ele quando ele é liberado (`Popup::dies_with`, pelo `Component::popup`).
 
 **Cada janela pinta em separado:** o pedido de "mais um quadro" (uma transição, a bolinha
 do editor de suavização, o cursor piscando) fica guardado por form. A pintura de uma
@@ -1450,9 +1489,9 @@ execução vale a variante do sistema, depois a do grupo (`android` antes de `mo
 são os mesmos: o código liga os eventos pelo nome, então `btnSalvar` em qualquer variante
 chama o mesmo `salvar`.
 
-Quando o form tem variantes, o código gerado traz `Componentes::de(ui)`: um campo por
-componente, `ComponentId` nos que existem em todas e `Option<ComponentId>` (com o
-comentário dizendo onde falta) nos que só existem em algumas, para o handler conferir.
+Quando o form tem variantes, o acesso tipado junta os componentes de todas: os que existem
+em todas vêm na classe deles (`self.btnSalvar`), e os que só existem em algumas vêm opcionais
+(no Rust, `Option<Button>`), para o handler conferir.
 Não há herança de form: cada variante é um layout completo.
 
 Na IDE, Projeto → Nova variante do form copia o layout padrão para a plataforma escolhida;
@@ -1499,8 +1538,9 @@ ocupando a área toda; sem `fill` próprio, o fundo dele fica transparente. Um f
 ter frames. Os componentes de um frame se acham pelo nome do form dele
 (`ui.find_path("fraGeneral.edtPasta")`, e no acesso tipado `fraGeneral.edtPasta`), e os
 eventos vão para os handlers desse form (`fraGeneral.salvar`, no `src/forms/` dele).
-Cada form entra uma vez só, e um frame que usa o próprio form (direto ou por outro) dá
-erro ao carregar. Os forms dos frames ficam no projeto sem "criar no início".
+O mesmo form pode entrar em mais de um frame: cada cópia ganha um nome livre (`fraLinha2`) e
+a sua instância, com os handlers do form. Um frame que usa o próprio form (direto ou por
+outro) dá erro ao carregar. Os forms dos frames ficam no projeto sem "criar no início".
 
 Na IDE, o designer mostra o conteúdo do frame, mas clicar nele seleciona o frame, a
 estrutura não lista o que é do frame e salvar não grava esse conteúdo (ele é do arquivo

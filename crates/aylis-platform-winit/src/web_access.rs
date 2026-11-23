@@ -4,7 +4,10 @@
 //! TalkBack no Chrome) navega por eles; ativar um botão clica no controle do aylis.
 //!
 //! O foco do teclado continua no canvas (o aylis recebe as teclas); os elementos só são a
-//! "descrição" da tela. A árvore é refeita no máximo 4 vezes por segundo, e só se mudou.
+//! "descrição" da tela. A árvore é conferida no máximo 4 vezes por segundo, e os elementos
+//! só são refeitos quando ela mudou e ficou parada até a conferência seguinte: rolando, as
+//! posições mudam a cada vez, e refazer centenas de elementos a cada 250 ms travava um quadro
+//! (50 a 60 ms no celular) a cada quatro de rolagem.
 
 use std::collections::HashMap;
 
@@ -18,8 +21,10 @@ pub(crate) struct WebAccess {
     root: HtmlElement,
     canvas: HtmlCanvasElement,
     poster: Poster,
-    /// A assinatura da última árvore (texto): igual, nada a refazer.
-    last: String,
+    /// A assinatura da última árvore: igual, nada a refazer.
+    last: u64,
+    /// A de uma árvore nova vista na conferência anterior (ainda mudando?).
+    pending: Option<u64>,
     last_time: f64,
     placed: String,
     _clicks: Vec<Closure<dyn FnMut(web_sys::Event)>>,
@@ -53,23 +58,15 @@ fn aria(role: Role) -> Option<&'static str> {
     })
 }
 
-fn signature(update: &TreeUpdate) -> String {
-    let mut s = String::new();
+/// O resumo da árvore (num hash: montar o texto de cada nó custava mais que a árvore).
+fn signature(update: &TreeUpdate) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::hash::DefaultHasher::new();
     for (id, n) in &update.nodes {
         let b = n.bounds().map(|b| (b.x0 as i32, b.y0 as i32, b.x1 as i32, b.y1 as i32));
-        s.push_str(&format!(
-            "{}|{:?}|{:?}|{:?}|{:?}|{:?}|{}|{:?}\n",
-            id.0,
-            n.role(),
-            n.label(),
-            n.value(),
-            b,
-            n.toggled(),
-            n.is_disabled(),
-            n.numeric_value()
-        ));
+        (id.0, n.role(), n.label(), n.value(), b, n.toggled(), n.is_disabled(), n.numeric_value().map(f64::to_bits)).hash(&mut h);
     }
-    s
+    h.finish()
 }
 
 impl WebAccess {
@@ -82,10 +79,11 @@ impl WebAccess {
         }
         let _ = root.set_attribute("data-aylis", "acessibilidade");
         document.body()?.append_child(&root).ok()?;
-        Some(Self { root, canvas, poster, last: String::new(), last_time: -1.0, placed: String::new(), _clicks: Vec::new() })
+        Some(Self { root, canvas, poster, last: 0, pending: None, last_time: -1.0, placed: String::new(), _clicks: Vec::new() })
     }
 
-    /// Refaz os elementos se a árvore mudou (no máximo a cada 250 ms). `now` em segundos.
+    /// Refaz os elementos se a árvore mudou e parou de mudar (conferida no máximo a cada
+    /// 250 ms). `now` em segundos.
     pub(crate) fn update(&mut self, now: f64, tree: impl FnOnce() -> TreeUpdate) {
         if now - self.last_time < 0.25 && self.last_time >= 0.0 {
             return;
@@ -95,8 +93,14 @@ impl WebAccess {
         let update = tree();
         let sig = signature(&update);
         if sig == self.last {
+            self.pending = None;
             return;
         }
+        // Mudou desde a conferência anterior: espera assentar (a rolagem, uma animação).
+        if self.pending.replace(sig) != Some(sig) {
+            return;
+        }
+        self.pending = None;
         self.last = sig;
         self.root.set_inner_html("");
         self._clicks.clear();

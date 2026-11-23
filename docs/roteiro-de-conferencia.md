@@ -31,7 +31,7 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
 97. **O compilador separado da IDE** (pedido de 09/11). Antes, recompile também o `aylis-tools`
     (`cargo build -p aylis-tools`, com as conversas do Claude fechadas: a ponte do MCP prende o
     `aylis-tool.exe`). Abra o Paint (Rust) e dê Ctrl+F9; depois F9; depois Parar (Ctrl+F2)
-    no meio de um "Compilar (release)". *Esperado:* nas MENSAGENS, "Gerando o código", "Verificando
+    no meio de um "Compilar em release". *Esperado:* nas MENSAGENS, "Gerando o código", "Verificando
     o projeto" e a compilação, com os erros clicáveis como antes; o Gerenciador de Tarefas mostra um
     `aylis-tool.exe` enquanto compila; o Parar encerra o `aylis-tool` e o `cargo` juntos. Num
     terminal, `aylis-tool build examples/Paint/Paint.aylisproj` faz o mesmo, e a Calculadora (Free Pascal)
@@ -43,7 +43,7 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     a 1.92 desde a 0.5.0, o `rust-version` dos crates: um Rust mais velho aparece como
     desatualizado.)
 99. **O aviso de versão nova** (pedido de 10/11, como no NoOBS). Na IDE, Ajuda → Verificar
-    atualizações. *Esperado:* "O Aylis está atualizado (versão 0.2.0-beta.1)." Ajuda → "Avisar de novas
+    atualizações. *Esperado:* "O Aylis está atualizado (versão <a da IDE, hoje 0.9.2>)." Ajuda → "Avisar de novas
     versões" vem marcado e desmarca/marca. Com uma release mais nova no GitHub, a IDE instalada
     (não a do `target/`, que só consulta pelo menu) mostra, uma vez por dia depois das 6 h, a faixa
     "Nova versão do Aylis disponível" abaixo da barra, com "Abrir página" e o ✕.
@@ -198,14 +198,15 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
 121. **Pacotes de ferramentas na IDE** (12/11). Monte uma pasta com `aylis-tool packages pack
     --out <pasta> node jdk`, ponha-a nas Opções → Pacotes e clique em "Testar as origens". Em
     Ferramentas → Pacotes de ferramentas, instale o Node e o JDK (o andamento, o Cancelar) e
-    remova; o Corrigir do JDK ou do NDK numa máquina sem eles, com e sem origem (sem origem, a
-    mensagem leva às Opções). Suba a pasta no Google Drive, monte o `pacotes.json` com os ids
+    remova; o Corrigir do JDK ou do NDK numa máquina sem eles: sem pasta nem espelho, baixa do
+    fabricante; com `package_official = off` no `tools.json` e sem origem, o erro traz o passo a
+    passo (o endereço, o SHA-256, o comando que confere e a pasta). Suba a pasta no Google Drive, monte o `pacotes.json` com os ids
     (`"drive"`) e use-o como espelho.
 
 122. **Instalador com os pacotes** (12/11). Gere o kit com `aylis-tool installer-ide
-    --with-packages node,codelldb` e, numa máquina de teste, rode o setup pela tela: a página dos
-    pacotes, a do espelho, a instalação deles no fim; marque um pacote que não está no kit e veja
-    o aviso. Desinstale e confira que os pacotes, o cache e as compilações saíram rápido.
+    --with-packages node,codelldb` e, numa máquina de teste sem internet, rode o setup ao lado da
+    pasta `pacotes`: o Rust e o CodeLLDB vêm do kit; depois, na primeira abertura, o "Configurar
+    linguagens" instala o Node do kit. Desinstale e confira que os pacotes, o cache e as compilações saíram rápido.
 
 123. **Automação OLE (`OleObject`)** (12/11; detalhes nos pendentes). Num form, ponha um
     `OleObject` (paleta System), um `ClientDataSet` com alguns registros e o `DataSource`. Num
@@ -274,8 +275,8 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     Navegador). Marque Python e Android e instale: o andamento mostra os dois, e no fim Rust e
     Python aparecem prontos e o Android também. Feche e abra a IDE de novo: o assistente não
     abre mais (fica em Ferramentas → Configurar linguagens). Com uma conversa do Claude ligada
-    ao MCP, rode o instalador de novo por cima: instala sem pedir para fechar nada. Em Ferramentas → Opções → Pacotes, o
-    espelho é o link da sua pasta do Drive. Na pasta instalada
+    ao MCP, rode o instalador de novo por cima: instala sem pedir para fechar nada. Em Ferramentas → Opções da IDE → Pacotes,
+    sem espelho (a origem oficial ligada); com `/ESPELHO=<url>` no setup, o espelho aparece lá. Na pasta instalada
     (`%LOCALAPPDATA%\Programs\aylis\aylis`), não há `examples`, e um projeto novo em Rust
     compila. Pelo MCP, `component_docs` do Button responde.
 
@@ -320,7 +321,7 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     Android (e para a web): o APK sai e o app abre no aparelho; o executável do Windows continua
     `rtsplayer-app`.
 136. **O motivo exato quando um pacote não vem** (13/11; detalhes nos pendentes). Gere o
-    instalador e rode-o (marcando, por exemplo, Python) em três situações: sem internet e sem a
+    instalador e rode-o (o Rust e o CodeLLDB) em três situações: sem internet e sem a
     pasta `pacotes` ao lado; com a pasta `pacotes`, mas com um arquivo trocado por outro de mesmo
     nome; sem internet e com a pasta `pacotes` sem um dos arquivos. *Esperado:* no fim, a caixa
     diz em cada linguagem a causa ("sem internet", "os arquivos não estão ao lado do instalador",
@@ -347,15 +348,16 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     - um `on_back` no form que troca de frame e responde `handled`: a tecla Voltar volta ao frame
       anterior em vez de tirar o app da frente; sem tratar, o de antes;
     - um `NavigationDrawer` fechado: deslizar da borda esquerda abre, deslizar para a esquerda fecha;
-      um `TabControl` com `swipe`: o dedo troca de página; um `ImageView` com `zoomable`: a pinça
+      um `TabControl` com `swipe`: o dedo troca de página; um `Image` com `zoomable`: a pinça
       aproxima e o dedo arrasta; uma `VirtualList` com `swipe_actions` "Excluir": deslizar o item
       mostra o botão, e o toque chega no `on_swipe_action`;
     - uma lista rolada até o fim: no Android 12 ou mais o conteúdo estica e volta; num Android 11, o
       brilho na cor do tema; `overscroll` `none` desliga.
 141. **Testes do projeto em Java, C++ e Pascal** (14/11). Na Calculadora, troque a linguagem para
-    Java, C++ e Pascal e rode Projeto → Testes (ou o `test` do MCP): os testes de `tests/` rodam e o
+    Java, C++ e Pascal e rode a ferramenta `test` do MCP da IDE (não há item de menu nem
+    subcomando do `aylis-tool` para isso): os testes de `tests/` rodam e o
     resultado aparece por teste; quebre um de propósito e ele aparece como falha, com a linha.
-142. **Novo DataModule com pasta e o tema chegando ao app** (14/11). Arquivo → Novo DataModule:
+142. **Novo DataModule com pasta e o tema chegando ao app** (14/11). Projeto → Novo DataModule…:
     o diálogo pede o nome e a pasta, e o arquivo vai para ela. Com o app aberto pelo F9, troque o tema
     pelo MCP (`set_theme`): o app muda sem reiniciar.
 143. **Clique com Ctrl, arrastar e teclas no `McpServer` do app** (14/11). Num app com `McpServer`, peça
@@ -383,7 +385,8 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
       ... --update`.
     - Um app com `Analytics` e `performance` ligado: o `analytics.json` traz os tempos.
 147. **Pacotes do Free Pascal e do WiX** (14/11). Ferramentas → Pacotes de ferramentas: instale `fpc`
-    e `wix` (da pasta de pacotes ou do espelho, depois de subidos). Um projeto em Pascal compila sem
+    e `wix` (o `wix` do fabricante; o `fpc`, montado pelo Aylis, da pasta de pacotes ou do
+    espelho do Aylis). Um projeto em Pascal compila sem
     o Lazarus; o publicar com instalador `.msi` usa o WiX do pacote.
 148. **O editor com um fonte enorme** (14/11; detalhes nos pendentes, item 26). `cargo run --release
     -p aylis-controls --example large_text 1000000`: digitar, apagar, Ctrl+Z e colar sem travar; a
@@ -416,7 +419,7 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     `RenderSettings` não muda nada na IDE, e as propriedades não aparecem no Object Inspector nem
     no JSON do form.
 154. **A tela Sobre** (14/11). Ajuda → Sobre o Aylis: o logo da IDE à esquerda, ao lado "Aylis IDE" e
-    "Versão 0.3.0" em destaque, e a descrição embaixo; em English (Exibir → Idioma), o texto
+    "Versão 0.9.2" (a da IDE) em destaque, e a descrição embaixo; em English (Exibir → Idioma), o texto
     traduzido.
 155. **A orientação da tela no celular** (14/11; detalhes nos pendentes e em
     `docs/funcionamento.md`, "Orientação da tela"). Na IDE, Opções do projeto → Geral →
@@ -523,9 +526,11 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     o vidro com o canto de baixo à esquerda quase reto (`shape_radii` = `32,32,32,4`). Na IDE,
     `shape_path` com `M 5 0 L 10 5 L 5 10 L 0 5 Z`: o form vira um losango no designer.
 
-105. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
+164. **A Landing no celular** (11/11; detalhes nos pendentes, item 72). Publique de novo a página e
     os demos (`aylis-tool publish ... --target web`, `ide-web`, `demos`) e abra no celular: a
-    rolagem acompanha o dedo sem engasgar; o 3D do topo não aparece no celular (escondido pela
+    rolagem acompanha o dedo sem engasgar (de novo em 22/11: o `ScrollBox` rola por cópia; no
+    ZenFone a inércia foi de 12 para 30 quadros/s, veja "Ajustes de 22/11" nos pendentes; antes,
+    republique a página, porque o service worker guarda o `pkg/` pelo nome); o 3D do topo não aparece no celular (escondido pela
     vista) e as ferramentas do navegador não mostram o `demos/3d` baixado; no PC o lingote aparece.
     Na documentação, a página do `Model3D` num navegador sem WebGPU (no Chrome, `chrome://flags`
     → WebGPU desligado, ou um iPhone antes do iOS 26) mostra o modelo girando.
@@ -533,7 +538,7 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     componente ao vivo sem baixar nada além da página (aba Rede do navegador); a de um
     componente pesado (Gauge, DataGrid, Model3D) baixa o wasm da família dele (o Additional
     ~3,1 MB comprimido, antes ~4,5 MB). A página inicial baixa ~2,6 MB comprimido (antes ~3,2 MB).
-106. **Uma pasta de compilação para todo o Rust** (11/11; detalhes nos pendentes). Abra a IDE
+165. **Uma pasta de compilação para todo o Rust** (11/11; detalhes nos pendentes). Abra a IDE
     recompilada e veja `%USERPROFILE%\.cargo\config.toml`: `[build] target-dir` com a pasta das
     Opções e `[profile.dev.package."*"] debug = false`, cada um com o comentário "Gravado pelo
     Aylis". Num projeto Rust qualquer, fora do Aylis, `cargo build` no terminal compila nessa

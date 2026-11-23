@@ -33,9 +33,9 @@ chegaram, entre um quadro e outro.
 | Quem | Faz na thread dele | Volta pela fila |
 |---|---|---|
 | Áudio (`MediaPlayer`) | decodifica e toca | `on_end` |
-| Vídeo (`VideoPlayer`) | decodifica até 6 quadros à frente | o quadro novo (troca de imagem) |
+| Vídeo (`VideoPlayer`) | decodifica à frente do relógio (`frames_ahead`; o padrão, 6 quadros) | o quadro novo (troca de imagem) |
 | Hot reload (desktop) | lê os arquivos do projeto a cada 400 ms | aplica o form, o tema, as traduções |
-| Inspetor do app (TCP) e canal de desenvolvimento (WebSocket) | lê os comandos da IDE | executa e devolve a resposta |
+| Canal de desenvolvimento (WebSocket cifrado, o app conecta na IDE): o Inspetor do app e o hot reload empurrado | lê os comandos da IDE | executa e devolve a resposta |
 | `aylis-host` (backend em outro processo) | lê as mensagens do backend | executa cada comando |
 | IDE: Executar e Publicar | compila, roda o `cargo` e o `adb` | as linhas da saída |
 

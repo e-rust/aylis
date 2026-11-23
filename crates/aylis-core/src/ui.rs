@@ -333,6 +333,8 @@ pub struct Ui {
     /// A extensão do desenho do controle sendo pintado ([`crate::ink`]) e se algum desenhou
     /// fora da área de uma pintura por parte (o próximo quadro repinta tudo).
     pub(crate) ink: RefCell<Option<RectF>>,
+    /// Se o desenho do controle sendo pintado foi só um fundo liso ([`crate::ink::Plain`]).
+    pub(crate) plain: Cell<crate::ink::Plain>,
     pub(crate) spilled: Cell<bool>,
     pub(crate) paint_area: Cell<Option<RectF>>,
     /// O retângulo do form sendo pintado: o desenho que passa dele (a sombra de um controle na
@@ -350,7 +352,7 @@ pub struct Ui {
     /// As partes que mudaram de um controle (nas coordenadas dele): [`Ui::damage_part`].
     pub(crate) part_ids: std::cell::RefCell<Vec<(ComponentId, RectF)>>,
     /// O conteúdo que andou (a rolagem): [`Ui::scroll_damage`].
-    pub(crate) scroll_moves: std::cell::RefCell<Vec<(ComponentId, RectF, crate::PointF)>>,
+    pub(crate) scroll_moves: std::cell::RefCell<Vec<(ComponentId, RectF, crate::PointF, bool)>>,
     /// Muda a cada pintura inteira: as camadas guardadas (`cache_layer`) só valem entre
     /// pinturas por parte, em que o `Ui` sabe o que mudou.
     pub(crate) layer_epoch: std::cell::Cell<u64>,
@@ -499,6 +501,7 @@ impl Ui {
             damage_epoch: 0,
             painted_epoch: HashMap::new(),
             ink: Default::default(),
+            plain: Default::default(),
             spilled: Default::default(),
             paint_area: Default::default(),
             paint_form: Default::default(),

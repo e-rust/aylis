@@ -87,7 +87,7 @@ a coluna do mesmo nome, sem diferenciar maiúsculas, e o que não vier fica vazi
 ### Exemplo: os discos numa grade
 
 ```rust
-pub fn btn_discos_click(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) -> Result<()> {
+pub fn btn_discos_click(&mut self, ui: &mut Ui, _sender: Button) -> Result<()> {
     self.wmiDiscos.set_query(ui, "SELECT Name, Size, FreeSpace FROM Win32_LogicalDisk WHERE DriveType = 3");
     let discos = self.wmiDiscos.execute(ui)?;
     let serie = self.wmiDiscos.get_value(ui, "SELECT SerialNumber FROM Win32_BIOS", "SerialNumber")?;

@@ -101,9 +101,10 @@ clientes:
 | `gpu_adapters()` | método → texto | As placas da máquina, separadas por `;` |
 | `span_monitors` | propriedade (bool) | O form maior que um monitor vira uma janela por monitor (veja abaixo) |
 
-No núcleo, `Ui::form_gpu`, `Ui::set_form_gpu`, `Ui::gpu_adapters` e `Ui::set_gpu_adapters`
-guardam o que a plataforma informa (o `on_gpu_change` sai do `set_form_gpu` quando a placa
-muda, não na primeira vez).
+No núcleo, `Ui::form_gpu` e `Ui::set_form_gpu` guardam a placa de cada janela que a
+plataforma informa (o `on_gpu_change` sai do `set_form_gpu` quando a placa muda, não na
+primeira vez); as placas da máquina vêm de `aylis_core::gpu::adapters()`, que a plataforma
+liga com `set_adapter_list`.
 
 Exemplo em Rust, um form que fica sempre na placa do monitor e avisa a troca:
 

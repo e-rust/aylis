@@ -130,9 +130,24 @@ impl ScrollBox {
         if y == self.scroll() {
             return false;
         }
-        // Só os filhos andam (sem refazer o layout do form a cada passo).
+        // Só os filhos andam (sem refazer o layout do form a cada passo), e os pixels deles
+        // com eles. A barra é pintada por cima: a cópia leva a imagem velha dela junto, e só
+        // ela e a nova são repintadas (a faixa inteira da barra cruza quase todos os filhos
+        // de uma página e os repintava a cada passo).
+        let before = (self.thumb(), self.scroll());
         let offset = if self.horizontal { PointF::new(y, 0.0) } else { PointF::new(0.0, y) };
         ctx.ui.scroll_content(ctx.id, &mut self.base, offset);
+        let b = self.base.bounds();
+        let moved = before.1 - self.scroll();
+        let bar = match (before.0, self.thumb()) {
+            (Some(old), Some(new)) => {
+                let ghost = if self.horizontal { old.offset(moved, 0.0) } else { old.offset(0.0, moved) };
+                ghost.union(old).union(new).inflate(1.0)
+            }
+            _ if self.horizontal => RectF::new(0.0, b.height - BAR - 2.0, b.width, BAR + 2.0),
+            _ => RectF::new(b.width - BAR - 2.0, 0.0, BAR + 2.0, b.height),
+        };
+        ctx.repaint_part(bar);
         // Chegou perto do fim: avisa uma vez por tamanho de conteúdo (rolagem infinita).
         let max = self.max_scroll();
         if max > 0.0 && y >= max - END_MARGIN && self.end_fired_at != Some(max) {

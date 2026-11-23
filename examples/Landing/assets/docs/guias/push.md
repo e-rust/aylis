@@ -28,15 +28,15 @@ Métodos: `register()`, `unregister()` e `data_value("chave")` (um valor dos dad
 ```rust
 // rust/src/forms/principal.rs (o componente se chama `push` no form)
 impl FrmPrincipal {
-    pub fn push_token(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
+    pub fn push_token(&mut self, ui: &mut Ui, sender: crate::generated::PushNotifications, value: String) {
         // Mande ao servidor: ele envia para este aparelho por aqui.
-        let token = args.text().unwrap_or_default();
-        api::save_device(&token, &self.push.provider(ui));
+        api::save_device(&value, &sender.provider(ui));
     }
 
-    pub fn push_opened(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
-        let order = self.push.data_value(ui, "order");
-        self.open_order(ui, &order);
+    pub fn push_opened(&mut self, ui: &mut Ui, _sender: crate::generated::PushNotifications, _value: String) {
+        if let Ok(order) = self.push.data_value(ui, "order") {
+            self.open_order(ui, &order);
+        }
     }
 }
 ```
@@ -71,7 +71,8 @@ Três peças a mais, cada uma com os seus eventos; quem liga uma à outra é o a
 `kind!=chat`, `caller` = a chave existe e não é vazia; vazio aceita tudo). Os dados incluem
 também `title`, `body` e `message_id` da mensagem. `action` é qualquer componente com o
 método `execute(dados)`. `replace_default` (padrão: ligado) não deixa aparecer a notificação
-comum da mensagem. Evento: `on_trigger` (os dados).
+comum da mensagem; `active` (padrão: ligado) desliga a regra. Eventos: `on_trigger` (os
+dados) e `on_error`. Método: `matches(dados)` diz se uma mensagem casaria com o `filter`.
 
 **`WakeAppAction`**: `form` (o form que abre; vazio, o do componente), `title` e `text`
 (modelos: `{caller}` vira o valor da chave nos dados; `{{` e `}}` são as chaves), `buttons`
@@ -92,7 +93,8 @@ Android, um endereço `https`), `channel`, `channel_name`, `priority`, `buttons`
 Um app de chamadas, por exemplo: `push1` (`PushNotifications`) → `regraChamada`
 (`PushTrigger`, `source = push1`, `filter = kind=call`, `action = tocar`) → `tocar`
 (`WakeAppAction`, `form = frmChamada`, `title = {caller}`, `text = Chamada de voz`,
-`buttons = answer:Atender;reject:Recusar`, `call_style`). O servidor manda uma mensagem só de
+`buttons = [{"id": "answer", "text": "Atender"}, {"id": "reject", "text": "Recusar"}]`,
+`call_style`). O servidor manda uma mensagem só de
 dados, com prioridade alta:
 
 ```json

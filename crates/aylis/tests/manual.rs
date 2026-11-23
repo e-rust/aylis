@@ -36,7 +36,7 @@ impl Component for StarRating {
         value: i64 => "Data",
         max: i64 => "Behavior",
         read_only: bool => "Behavior";
-        events: on_change;
+        events: on_change: i64;
         on_set: after_set
     }
 

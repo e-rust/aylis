@@ -42,9 +42,9 @@ Onde está cada coisa:
 | `aylis-skia`, `aylis-d2d`, `aylis-web` | Renderizadores (Skia CPU/GPU, Direct2D, Canvas 2D do navegador) |
 | `aylis-platform-winit` | Janelas e serviços de cada sistema (Windows, Linux, macOS, Android, iOS, web) |
 | `aylis-media`, `aylis-3d`, `aylis-docview`, `aylis-vector`, `aylis-markdown`, `aylis-webview` | Vídeo/áudio/câmera/microfone, 3D (wgpu), PDF/Office, Lottie/SVG, Markdown, WebView |
-| `aylis-remote`, `aylis-host`, `aylis-capi` | Protocolo JSON do backend em outro processo; o host (stdio, WebSocket, `--bridge`); a API C |
+| `aylis-remote`, `aylis-host`, `aylis-capi`, `aylis-devlink` | Protocolo JSON do backend em outro processo; o host (stdio, WebSocket, `--bridge`); a API C; o canal de desenvolvimento app ↔ IDE (Noise `NKpsk0`) |
 | `aylis-project`, `aylis-build`, `aylis-tools` | Projeto `.aylisproj` e gerador de código; empacotar no build; compilar, executar, publicar, verificar ambiente (`aylis-tool`) |
-| `aylis-ide`, `aylis-demos` | A IDE; os componentes ao vivo da documentação (um wasm por categoria) |
+| `aylis-ide`, `aylis-ide-web`, `aylis-demos` | A IDE; a entrada da IDE lite no navegador; os componentes ao vivo da documentação (um wasm por categoria) |
 | `aylis-migrate` | Converte projetos de uma versão anterior do formato |
 | `aylis` | A fachada que os apps usam (`aylis::Application`, `aylis::classes`, `aylis::samples`) |
 | `clients/` | Clientes do protocolo em TypeScript, C#, Java, Go, C++, Free Pascal e Python |
@@ -206,8 +206,10 @@ A base para decidir onde entra uma melhoria (aprovada em 15/11):
 ### Segurança
 
 - **Nenhuma porta para fora:**
-  - servidores (MCP da IDE, `McpServer` do app, canal de desenvolvimento) só em `127.0.0.1`,
-    com token ou segredo, e recusando `Origin` de outro site;
+  - servidores (MCP da IDE, `McpServer` do app) só em `127.0.0.1`, com token ou segredo, e
+    recusando `Origin` de outro site; o canal de desenvolvimento também nasce em
+    `127.0.0.1:7342` e só ouve na rede quando o projeto põe um IP no "Endereço da IDE" (o
+    celular sem cabo), sempre com o Noise `NKpsk0` (chave da IDE e segredo do projeto);
   - segredo em `%LOCALAPPDATA%\aylis`, nunca no repositório nem no projeto;
   - a tela conecta no backend, nunca o contrário (sem `--listen`).
 - **Texto não vira código nem comando:**
@@ -219,8 +221,10 @@ A base para decidir onde entra uma melhoria (aprovada em 15/11):
 - **Dependências e ferramentas:** as dependências passam pelo `cargo-deny` (`deny.toml`,
   `aylis-tool audit`). Ferramenta baixada é pacote, com versão fixa e SHA-256
   (`resources/packages.lock.json`, `aylis_tools::toolpacks`, docs/pacotes.md); só das origens
-  configuradas (a pasta `pacotes`, as pastas e os espelhos das Opções), nunca da URL oficial
-  (essa só o `aylis-tool packages pack`/`update` usa).
+  configuradas (a pasta `pacotes`, as pastas e os espelhos das Opções) e, por último, a URL
+  oficial do fabricante, ligada por padrão (`package_official = off` no `tools.json` desliga,
+  para a empresa que só aceita as origens dela); o espelho do Aylis
+  (`settings::AYLIS_MIRROR`) só para o que o Aylis monta e não tem fabricante.
 - **Projeto de fora é não confiável até o usuário dizer:** no modo restrito, sem compilar,
   executar, servidor de linguagem nem publicar. O MCP não confirma confiança.
 - **Dados sensíveis:**
@@ -259,11 +263,13 @@ cargo run -p aylis-tools --bin aylis-tool -- <subcomando>  # as ferramentas
 ```
 
 **Onde ficam as compilações:** todo o Rust desta máquina, o repositório do Aylis inclusive,
-compila em `%USERPROFILE%\.aylis\target` (o `config.toml` global do cargo, gravado pela IDE:
-`aylis_tools::cargo_config`), e não no `target/` do repositório. Os executáveis
-(`aylis-tool.exe`, `aylis-ide.exe`) estão em `%USERPROFILE%\.aylis\target\debug`. Código que
-procura o que o repositório compilou usa `aylis_tools::cargo_target_dir` (testes:
-`CARGO_TARGET_TMPDIR`), nunca `<repositório>/target`.
+compila numa pasta só (o `config.toml` global do cargo, gravado pela IDE:
+`aylis_tools::cargo_config`), e não no `target/` do repositório. O padrão é
+`%USERPROFILE%\.aylis\target`; **nesta máquina, desde 22/11, é `E:\aylis\target`** (o C: enchia;
+`target_dir` no `%USERPROFILE%\.aylis\tools.json`, Opções da IDE → Rust e Python). Os executáveis
+(`aylis-tool.exe`, `aylis-ide.exe`) estão em `E:\aylis\target\debug`. Na dúvida, `cargo metadata`
+diz a pasta (`target_directory`). Código que procura o que o repositório compilou usa
+`aylis_tools::cargo_target_dir` (testes: `CARGO_TARGET_TMPDIR`), nunca `<repositório>/target`.
 
 Fora do `AppData` de propósito: o Claude Desktop é um pacote MSIX, e o que ele abre (as sessões, o
 `cargo`, a IDE aberta pelo MCP) grava o `AppData` numa cópia privada
@@ -310,7 +316,9 @@ verificação de ambiente guardada (`environment.json`) ficam em `%USERPROFILE%\
 **Plataformas**
 - Android: `aylis-tool run app.aylisproj --target android` (emulador `aylis_pixel`; `adb` em
   `%LOCALAPPDATA%\Android\Sdk\platform-tools`).
-- Linux: Docker `rust:1-bookworm` com Xvfb.
+- Linux: no Windows, o WSL com a distribuição `Ubuntu-22.04` (publicar e Executar para Linux;
+  a glibc mínima é a 2.35, conferida pelo `aylis_tools::glibc`); `AYLIS_WSL_DISTRO` escolhe
+  outra. Para conferir de verdade, as VMs de teste (Fedora).
 - Web: a IDE lite é a mesma IDE sem a feature `desktop` (`crates/aylis-ide/src/lite.rs`).
   O site, nesta ordem (o `publish` limpa a pasta): `aylis-tool publish
   examples/Landing/Landing.aylisproj --target web --out <página>`, depois `ide-web --out
@@ -319,7 +327,7 @@ verificação de ambiente guardada (`environment.json`) ficam em `%USERPROFILE%\
   serve.
 
 **Ferramentas do `aylis-tool`** (nada de scripts Python: ferramenta nova vira subcomando)
-- `docs` regrava as ~250 páginas da documentação da Landing (componentes e guias).
+- `docs` regrava as ~275 páginas da documentação da Landing (componentes e guias).
 - `resources` baixa ícones, fontes e animações; `emoji` refaz o seletor de emoji; `bench`
   mede os exemplos; `test-docs` refaz os documentos de teste do `aylis-docview`.
 - `installer-ide` gera `dist/aylis-ide-<versão>-setup.exe` (NSIS). A pasta do Aylis é achada em

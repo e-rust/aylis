@@ -20,7 +20,7 @@ plataforma.
 | — (flex com quebra) | `FlowLayout` |
 | VSheet, VCard | `Panel`, `Panel.card` |
 | VDivider | `Divider` (horizontal, vertical, com texto) |
-| VAppBar, VToolbar | `ToolBar` |
+| VAppBar, VToolbar | `AppBar` (título, ícone de navegação e ações), `ToolBar` |
 | VSystemBar, VFooter | `StatusBar` |
 | VNavigationDrawer | `NavigationDrawer` (aberta, fechada, só ícones) |
 | VBottomNavigation | `BottomNavigation` |
@@ -31,12 +31,12 @@ plataforma.
 | VCarousel | `Carousel` (setas, bolinhas, arrastar, troca automática) |
 | VExpansionPanel | `Expander` |
 | VResponsive | `aspect_ratio` (em qualquer controle) |
-| VVirtualScroll, VInfiniteScroll | `ListView` (virtualizada), `ScrollBox.on_end_reached` |
+| VVirtualScroll, VInfiniteScroll | `VirtualList` (recicla os itens, `on_bind`, `on_load_more`; `DBVirtualList` ligada a um DataSource), `ScrollBox.on_end_reached` |
 | VPullToRefresh | `ScrollBox.pull_to_refresh` (`on_refresh`, `refreshing`) |
 | VSlideGroup | `ChipGroup.slide` (uma linha, setas), `ScrollBox.horizontal` |
 | VLazy, VNoSsr, VParallax | — |
 | VDefaultsProvider, VThemeProvider, VLocaleProvider | `theme` por controle, `Theme::mix`, locale do `Ui` |
-| VHover | `pointer_enter`/`pointer_leave`, `state.hover` |
+| VHover | `on_pointer_enter`/`on_pointer_leave`, `state.hover` |
 
 ## Botões e ações
 
@@ -121,7 +121,7 @@ plataforma.
 | VAvatar | `Avatar` |
 | VAvatarGroup | `AvatarGroup` |
 | VCode | `Label.mono`, `Markdown` |
-| VAudio, VVideo (labs) | `MediaPlayer`, `VideoPlayer` |
+| VAudio, VVideo (labs) | `MediaPlayer`, `VideoPlayer`; `MediaCard` (o cartão do item, com miniatura e nome), `Playlist` (a fila de faixas, sem silêncio entre elas), `AudioSpectrum` (as barras do som), `MediaSession` (os controles de mídia do sistema) |
 | VMediaProgressBar, VMediaVolume (labs) | `SeekBar`, `TrackBar` |
 | VInfiniteCarousel (labs) | `Carousel` com `cycle` |
 
@@ -130,11 +130,12 @@ detalhe sem efeito num app nativo (a proporção fixa do `VResponsive`).
 
 ## Por dentro
 
-- `Component::arrange` é o gancho de layout novo. Um contêiner pode organizar os filhos
-  soltos (`align = None`); é o que usam o `GridLayout` e o `FlowLayout`.
+- `LayoutHooks::arrange` (pelo acessor `Component::layout_hooks`) é o gancho de layout. Um
+  contêiner pode organizar os filhos soltos (`align = None`); é o que usam o `GridLayout` e
+  o `FlowLayout`.
 - `Component::attach` prende um controle ao canto de um irmão: o layout o reposiciona
   sempre que o alvo muda de lugar. É o que usa o `Badge` com `target`.
-- `Component::files_dropped` e `Ui::drop_files` tratam os arquivos arrastados do sistema. O
+- `PlatformHooks::files_dropped` (pelo acessor `Component::platform_hooks`) e `Ui::drop_files` tratam os arquivos arrastados do sistema. O
   winit entrega cada arquivo; a plataforma passa para o controle sob o ponteiro ou, se a
   posição não ajudar, para o primeiro que aceita.
 - Todos os componentes novos pegam as cores do tema, inclusive dos temas de plataforma

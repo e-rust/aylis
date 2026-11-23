@@ -1,7 +1,6 @@
 # Testes do projeto
 
-O `test` da IDE (e a ferramenta `test` do MCP) roda os testes do projeto na linguagem ativa e
-devolve o resultado de cada um: os que passaram, os que falharam (com a mensagem) e os
+A ferramenta `test` do MCP da IDE roda os testes do projeto na linguagem ativa e devolve o resultado de cada um: os que passaram, os que falharam (com a mensagem) e os
 pulados. Os testes ficam na pasta do código da linguagem (`<projeto>/<linguagem>`).
 
 | Linguagem | Onde ficam | Como o Aylis roda |

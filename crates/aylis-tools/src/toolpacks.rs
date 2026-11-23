@@ -8,8 +8,9 @@
 //! - Os arquivos vêm das origens ([`Sources`]), na ordem: o cache
 //!   (`%USERPROFILE%\.aylis\downloads`), as pastas de pacotes (a `pacotes` ao lado do
 //!   executável e as das Opções) e os espelhos (um `pacotes.json` com o lugar de cada arquivo,
-//!   uma URL ou um id do Google Drive). O primeiro com o hash certo vence; a origem nunca é
-//!   confiável por si. A URL oficial do manifesto só é usada pelo `pack` e pelo `update`.
+//!   uma URL ou um id do Google Drive) e, por último, a URL oficial do manifesto, ligada por
+//!   padrão (`package_official = off` desliga; decisão de 20/11). O primeiro com o hash certo
+//!   vence; a origem nunca é confiável por si.
 //! - Instalado vai para `%USERPROFILE%\.aylis\tools\<nome>\<versão>` (fora do `AppData`, que
 //!   o Claude Desktop desvia), com o registro em `installed.json`. A troca é atômica: extrai
 //!   numa pasta nova e só no fim põe no lugar.
@@ -74,7 +75,8 @@ pub struct FileSpec {
     pub size: u64,
     /// O SHA-256 fixado (vazio: falta o `aylis-tool packages update`).
     pub sha256: String,
-    /// A URL oficial: só o `pack` e o `update` usam.
+    /// A URL oficial (o fabricante): a última origem, ligada por padrão
+    /// (`settings::package_official`), e a do `pack` e do `update`.
     pub url: Option<String>,
     /// Quantas pastas do começo de cada entrada tirar (`jdk-17.0.21+9/bin` → `bin`).
     pub strip: usize,

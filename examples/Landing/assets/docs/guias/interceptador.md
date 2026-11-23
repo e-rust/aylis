@@ -39,12 +39,13 @@ interceptador).
 ### Rust
 
 ```rust
-pub fn interceptar(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) {
-    let EventArgs::Intercept(e) = args else { return };
+pub fn interceptar(&mut self, ui: &mut Ui, _sender: ComponentId, args: &EventArgs) -> Result<(), String> {
+    let EventArgs::Intercept(e) = args else { return Ok(()) };
     let botao = e.sender.and_then(|s| ui.name(s)).unwrap_or_default();
     if e.event == "on_click" && botao.starts_with("btnExcluir") && !usuario_pode_excluir() {
-        ui.refuse("Você não tem permissão para excluir");  // cancela, com a mensagem
+        return Err("Você não tem permissão para excluir".into());  // cancela, com a mensagem
     }
+    Ok(())
 }
 ```
 

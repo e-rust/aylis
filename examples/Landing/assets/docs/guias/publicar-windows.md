@@ -15,7 +15,9 @@ O Aylis cuida de duas partes disso ao publicar para o Windows:
 ## Dados de versão (VERSIONINFO)
 
 Todo app compilado pelo Aylis no Windows leva os dados que o Explorer mostra em
-Propriedades → Detalhes, tirados do projeto (Projeto → Opções → Publicação):
+Propriedades → Detalhes, tirados do `publish` do projeto (o nome do app e a versão no diálogo
+Projeto → Publicar; o fabricante, `publish.publisher`, no `.aylisproj` ou pelo
+`set_project_setting` do MCP):
 
 | Campo | De onde vem |
 |---|---|
@@ -51,7 +53,7 @@ válida depois que o certificado vence. O padrão é o servidor público da Digi
 - O `signtool.exe`, que vem com o **Windows SDK** (o Visual Studio com "Desenvolvimento para
   desktop com C++" já instala). O Aylis procura nas Opções, no PATH e em
   `C:\Program Files (x86)\Windows Kits\10\bin\<versão>\x64`.
-- Um certificado de assinatura de código, configurado em **Ferramentas → Opções → Assinatura**.
+- Um certificado de assinatura de código, configurado em **Ferramentas → Opções da IDE → Assinatura**.
   Fica em `%USERPROFILE%\.aylis\tools.json`, da máquina: **nunca no projeto** (quem clona o
   projeto não leva o certificado).
 

@@ -139,19 +139,34 @@ impl Ui {
     /// senão, `rect` inteiro é repintado. O que muda fora de `rect` (a barra) o controle marca
     /// com [`Ui::damage_part`].
     pub fn scroll_damage(&mut self, id: ComponentId, rect: RectF, delta: crate::PointF) {
+        self.push_scroll(id, rect, delta, false);
+    }
+
+    /// Como [`Ui::scroll_damage`], quando quem andou foram os filhos de `id` (o `ScrollBox`,
+    /// [`Ui::scroll_content`]): eles vão junto na cópia, e a caixa pode ser transparente sobre
+    /// um fundo liso. O que ela desenha por cima dos filhos (a barra) ela marca com
+    /// [`Ui::damage_part`].
+    pub(crate) fn scroll_children_damage(&mut self, id: ComponentId, rect: RectF, delta: crate::PointF) {
+        self.push_scroll(id, rect, delta, true);
+    }
+
+    fn push_scroll(&mut self, id: ComponentId, rect: RectF, delta: crate::PointF, children: bool) {
         // Não andou (a rolagem já no fim): nada a copiar nem a pintar.
         if delta.x == 0.0 && delta.y == 0.0 {
             return;
         }
         self.repaint_requested = true;
-        self.scroll_moves.borrow_mut().push((id, rect, delta));
+        self.scroll_moves.borrow_mut().push((id, rect, delta, children));
     }
 
     /// Onde os pixels de `rect` (de `id`, nas coordenadas dele) podem ser copiados para andar
     /// com a rolagem, nas coordenadas do form: o pedaço que aparece (recortado pelos
     /// ancestrais e pelo form), se nada é pintado por cima dele e se o fundo do controle é
-    /// opaco e parado. `None`: repinta.
-    fn movable(&self, root: ComponentId, id: ComponentId, rect: RectF) -> Option<RectF> {
+    /// opaco e parado. `None`: repinta. Com `children` (os filhos andaram junto), os filhos não
+    /// contam como "por cima", e a caixa pode ser transparente se o que aparece atrás dela é
+    /// um fundo de cor única (os ancestrais até o primeiro que pintou só um retângulo liso não
+    /// desenharam nada, e nenhum irmão pintado antes passa por baixo).
+    fn movable(&self, root: ComponentId, id: ComponentId, rect: RectF, children: bool) -> Option<RectF> {
         // Com escala, os pixels não andam o mesmo que o conteúdo: repinta.
         if self.scaled(id) {
             return None;
@@ -159,19 +174,26 @@ impl Ui {
         let abs = self.damage_rect(id)?;
         let entry = self.entry(id)?;
         let cb = self.control(id)?;
-        {
+        // Transparente: procura o fundo liso atrás (abaixo, subindo pelos ancestrais).
+        let mut backdrop = {
             let v = entry.visual.borrow();
             let style = v.shown.as_ref()?;
-            if v.shift != cb.translate() || style.fill.a != 255 || style.material != crate::theme::Material::None || style.opacity < 1.0 || cb.opacity() < 1.0 {
+            let see_through = children && style.fill.a == 0;
+            if v.shift != cb.translate() || (style.fill.a != 255 && !see_through) || style.material != crate::theme::Material::None || style.opacity < 1.0 || cb.opacity() < 1.0 {
                 return None;
             }
-        }
+            // Os filhos recortados nos cantos arredondados não andam com o retângulo copiado.
+            if children && style.radius > 0.0 {
+                return None;
+            }
+            see_through
+        };
         // Nada por cima: os filhos dele, e os irmãos pintados depois dele e de cada ancestral.
         let mut region = rect.offset(abs.x, abs.y);
         let covers = |c: ComponentId, region: RectF| {
             self.control(c).is_some_and(|ccb| ccb.visible()) && self.damage_rect(c).and_then(|r| self.extent(c, r)).is_none_or(|r| r.intersects(region))
         };
-        if self.children(id).iter().any(|&c| covers(c, region)) {
+        if !children && self.children(id).iter().any(|&c| covers(c, region)) {
             return None;
         }
         let mut node = id;
@@ -188,8 +210,27 @@ impl Ui {
             if siblings[at + 1..].iter().any(|&c| covers(c, region)) {
                 return None;
             }
+            if backdrop {
+                // Por baixo: os irmãos pintados antes (onde desenharam de verdade, sem a folga
+                // da borda: o cabeçalho que termina onde a caixa começa não passa por baixo
+                // dela) e o desenho do próprio pai.
+                let below = |c: ComponentId| {
+                    let own = self.entry(c).and_then(|e| e.visual.borrow().ink);
+                    self.control(c).is_some_and(|ccb| ccb.visible()) && [own, self.subtree_ink(c)].into_iter().flatten().any(|r| r.intersects(region))
+                };
+                if siblings[..at].iter().any(|&c| below(c)) {
+                    return None;
+                }
+                let plain = self.entry(parent)?.visual.borrow().plain;
+                match plain {
+                    crate::ink::Plain::Nothing => {}
+                    crate::ink::Plain::Fill(r, _) if r.contains_rect(region) => backdrop = false,
+                    _ => return None,
+                }
+            }
             node = parent;
         }
+        // Sem ninguém que pintasse por baixo: o fundo da janela, de uma cor só.
         let form = self.control(root).map(|f| RectF::new(0.0, 0.0, f.width(), f.height()))?;
         intersection(region, form)
     }
@@ -269,28 +310,29 @@ impl Ui {
             }
         }
         // As rolagens: as de um mesmo controle no quadro se somam.
-        let mut scrolled: Vec<(ComponentId, RectF, crate::PointF)> = Vec::new();
-        for (id, rect, delta) in scrolls {
+        let mut scrolled: Vec<(ComponentId, RectF, crate::PointF, bool)> = Vec::new();
+        for (id, rect, delta, children) in scrolls {
             if !self.contains(id) {
                 continue;
             }
             if self.root_of(id) != root {
-                other_scrolls.push((id, rect, delta));
+                other_scrolls.push((id, rect, delta, children));
                 continue;
             }
-            match scrolled.iter_mut().find(|(i, _, _)| *i == id) {
+            match scrolled.iter_mut().find(|(i, ..)| *i == id) {
                 Some(s) => {
                     s.1 = rect;
                     s.2 = crate::PointF::new(s.2.x + delta.x, s.2.y + delta.y);
+                    s.3 &= children;
                 }
-                None => scrolled.push((id, rect, delta)),
+                None => scrolled.push((id, rect, delta, children)),
             }
         }
         // Algo por cima de tudo (a dica aberta, o arrasto): nada se copia.
         let floating = self.visible_hint(root).is_some() || self.drag_view(root).is_some();
-        for (id, rect, d) in scrolled {
+        for (id, rect, d, children) in scrolled {
             self.bump_versions(id, true);
-            let region = if floating || changed.contains(&id) { None } else { self.movable(root, id, rect) };
+            let region = if floating || changed.contains(&id) { None } else { self.movable(root, id, rect, children) };
             match region {
                 Some(r) if d.x.abs() < r.width && d.y.abs() < r.height && (d.x != 0.0 || d.y != 0.0) => {
                     // O que estava em `dest - d` vai para `dest`; a faixa que sobra aparece.
@@ -371,7 +413,7 @@ impl Ui {
         let placed = self.placed_ids.borrow();
         let parts = self.part_ids.borrow();
         let scrolls = self.scroll_moves.borrow();
-        let all = ids.iter().chain(placed.iter()).copied().chain(parts.iter().map(|(id, _)| *id)).chain(scrolls.iter().map(|(id, _, _)| *id));
+        let all = ids.iter().chain(placed.iter()).copied().chain(parts.iter().map(|(id, _)| *id)).chain(scrolls.iter().map(|(id, ..)| *id));
         for id in all {
             if self.contains(id) {
                 marked.insert(self.root_of(id));

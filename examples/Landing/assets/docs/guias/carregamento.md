@@ -6,21 +6,23 @@ leva os componentes que os forms usam.
 ## Do projeto ao executável
 
 ```
- Vendas/                         cargo build
+ Vendas/                         cargo build (em rust/)
  ├─ Vendas.aylisproj   ─┐
- ├─ forms/*.json       │  build.rs: aylis_build::project()
+ ├─ forms/*.json       │  rust/build.rs: aylis_build::project()
  ├─ themes/*.json      ├──►  OUT_DIR/project.aylispkg     (o projeto empacotado)
  ├─ assets/ locales/   │     OUT_DIR/aylis_classes.rs     (registro das classes usadas)
- │                    ─┘     OUT_DIR/icon.res            (ícone do .exe, no Windows)
- ├─ src/lib.rs   ── aylis::include_project!() embute os dois primeiros no executável
- ├─ src/main.rs  ── vendas::app()?.run()
- └─ Cargo.toml   ── aylis = { ..., default-features = false, features = [...] }
+ ├─ packages/         ─┘     OUT_DIR/icon.res            (ícone do .exe, no Windows)
+ └─ rust/
+    ├─ src/lib.rs   ── aylis::include_project!() embute os dois primeiros no executável
+    ├─ src/main.rs  ── vendas::app()?.run()
+    └─ Cargo.toml   ── aylis = { ..., default-features = false, features = [...] }
 ```
 
 1. **`build.rs`** (gerado pela IDE) chama `aylis_build::project()`, que:
-   - empacota o `.aylisproj`, `forms/`, `themes/`, `assets/` e `locales/` num arquivo só
-     (`project.aylispkg`). O app publicado é um executável só, em qualquer plataforma;
-   - **lê os forms e junta as classes usadas** (um subtipo, como `"Button.icon"`, conta
+   - empacota o `.aylisproj`, `forms/`, `themes/`, `assets/`, `locales/` e `packages/` (os
+     pacotes de componente usados) num arquivo só (`project.aylispkg`). O app publicado é um
+     executável só, em qualquer plataforma;
+   - **lê os forms e junta as classes usadas** (as dos forms e as dos forms dos pacotes; um subtipo, como `"Button.icon"`, conta
      como `Button`), mais as citadas pelo nome no código Rust do crate (`ui.create("MediaCard",
      ...)` num `src/**/*.rs`: todo `"Nome"` de uma classe conhecida), e gera
      `aylis_classes.rs`, uma função que registra só essas classes;
@@ -76,6 +78,16 @@ Além dos componentes, partes inteiras do Aylis são opcionais na fachada `aylis
 | `media` | `aylis-media` (MediaPlayer, VideoPlayer; decodificadores de áudio e vídeo) | algum form usa MediaPlayer ou VideoPlayer |
 | `remote` | `aylis-remote` (inspetor do app em execução, app web remoto) | app web remoto; ao executar pela IDE vem com a `dev` |
 | `dev` | o canal cifrado com a IDE (`aylis-devlink`), os forms da pasta do projeto, os diagnósticos | só ao executar pela IDE (feature `dev` do projeto); a publicação nunca |
+| `providers` | `aylis-providers` (código de barras, CSV/XLSX, servidor de mapa, OLE, WMI) | algum form usa `Barcode`, `Export` ou um provedor |
+| `pdf` | o PDF do relatório pelo krilla | algum form usa `Report` ou `ReportPreview` |
+| `media-tags` | as tags de mídia pelo lofty | algum form usa `LoftyTagsProvider` |
+| `markdown`, `vector`, `webview`, `3d`, `docview` | `Markdown`; `Lottie`/`Svg`; `WebView`; `Model3D`; `DocViewer` | algum form usa a classe |
+| `tray`, `nfc`, `bluetooth` | `TrayIcon`; `Nfc` no desktop; `Bluetooth` no desktop | algum form usa a classe |
+| `mcp` | o app como servidor MCP (`McpServer`, `McpTool`) | algum form usa a classe |
+| `time-zones` | a tabela de fusos (IANA) | o projeto tem `time_zone` |
+| `text-shaping` | o texto das fontes do projeto pelo núcleo (`harfrust`) | o projeto tem fontes em `assets/fonts` |
+
+O código pode pedir outras na lista `features` do `.aylisproj`.
 
 O `Cargo.toml` gerado usa `default-features = false` e a lista de features que os forms
 pedem. A cada "Gerar código", a IDE confere os forms e atualiza a lista. Um projeto sem
@@ -86,8 +98,15 @@ dados nem mídia nem compila esses crates (nem as dependências deles: symphonia
 aylis = { path = "...", default-features = false, features = ["data"] }
 
 [features]
-# Ligada pela IDE ao executar: o "Inspetor do app". Fica fora do app publicado.
-inspect = ["aylis/remote"]
+# Ligada pela IDE ao executar: o canal cifrado com a IDE (inspetor, hot reload,
+# rastro). Fica fora do app publicado.
+dev = ["aylis/dev"]
+
+# aylis:render: o renderizador de cada plataforma (Projeto → Opções do projeto → Geral; a IDE reescreve este bloco)
+[target.'cfg(windows)'.dependencies]
+aylis = { path = "...", default-features = false, features = ["d2d"] }
+# ... um bloco por plataforma
+# aylis:render-end
 ```
 
 ## Medições
@@ -110,9 +129,10 @@ já vem no Windows) essa base some: o mesmo app tem 1,97 MB. Veja
 
 (MB aqui é 1024 × 1024 bytes, como no Explorer do Windows.)
 
-Com todas as features, o registro enxuto economiza menos porque a feature `remote` (o
-inspetor) cita todos os componentes de propósito: ela precisa poder criar qualquer um.
-Por isso o inspetor fica numa feature que só a IDE liga ao executar.
+Com todas as features, o registro enxuto economiza menos porque a feature `remote` cita
+todos os componentes de propósito: o app comandado de fora (o inspetor, o app casca ligado a
+um backend) precisa poder criar qualquer um. A `dev`, que a IDE liga ao executar, liga a
+`remote` junto; o app publicado só a leva quando é a casca de um projeto em outra linguagem.
 
 ## Desenvolvimento e publicação
 
@@ -127,7 +147,7 @@ Por isso o inspetor fica numa feature que só a IDE liga ao executar.
 
 O app que a IDE compila para executar (desktop, Android, iOS, navegador; debug ou release)
 leva a feature `dev`: ele **conecta na IDE**, no endereço embutido na compilação (Projeto →
-Opções, "Endereço da IDE"; o padrão é `127.0.0.1:7342`). O app não abre porta nenhuma e não
+Opções do projeto → Geral, "Endereço da IDE"; o padrão é `127.0.0.1:7342`). O app não abre porta nenhuma e não
 lê variável de ambiente, parâmetro ou URL para isso. Sem a IDE, segue tentando em silêncio.
 
 - **Cifrado e autenticado:** Noise `NKpsk0` (X25519, ChaCha20-Poly1305, BLAKE2s, crate
@@ -181,7 +201,8 @@ antes do cursor, M depois, insere este texto"; o Aylis aplica no controle com fo
 Sem a `AylisActivity` (um APK montado à mão com a `NativeActivity`), o Aylis usa o teclado
 simples (só teclas).
 
-Num projeto, o nome e o ícone vêm do `.aylisproj` (Projeto → Opções na IDE).
+Num projeto, o nome vem do `.aylisproj` (Projeto → Opções do projeto → Geral) e o ícone de
+Projeto → Opções do projeto → Ícone do app.
 
 ### Android: Activity recriada com o processo vivo
 
@@ -203,12 +224,8 @@ Componentes que o app cria (veja [Criar um componente](criar-componente.md)) nã
 aylis: o `aylis_classes.rs` só os cita num comentário, e o app registra cada um no `app()`
 (`ui.register_class::<StarRating>("Meus componentes")`), antes de carregar os forms.
 
-## Projetos antigos
-
-Projetos criados antes desta versão continuam funcionando, registrando só as classes
-usadas. Para tirar também os crates não usados, troque no `Cargo.toml` a linha do Aylis por
-`aylis = { path = "...", default-features = false, features = [] }` e acrescente
-`[features] inspect = ["aylis/remote"]`. A partir daí a IDE mantém a lista atualizada.
+Um projeto de uma versão anterior é regenerado pela IDE (o `GENERATOR_VERSION`); conversões
+de formato, a partir da 1.0.0, vão para o `aylis-migrate`.
 
 ## Para quem mexe no Aylis
 
@@ -235,12 +252,13 @@ Google gera o `.aab` e o `jarsigner` assina. O Verificar ambiente baixa o `bundl
 Conferido aqui: o `bundletool validate` aceita, e o APK universal gerado do AAB instala e
 abre no emulador.
 
-**Instalador do Windows (`.msi`).** Marque "Windows: instalador .msi" (ou `--msi`): o WiX
-5 monta um MSI que instala em Arquivos de Programas, põe o atalho no menu Iniciar e
-aparece em Aplicativos para desinstalar. O código de atualização é derivado do
-identificador do projeto, então a versão nova substitui a anterior. O Verificar ambiente
-instala o WiX (`dotnet tool`, precisa do .NET SDK). Fabricante: `publish.publisher` no
-projeto.
+**Instaladores (Windows e Linux).** Marque "Instalador" no Publicar (ou `--installer`). O
+tipo fica em Projeto → Opções do projeto: no Windows, `.msi` (o padrão: WiX, por máquina, em
+Arquivos de Programas, atalho no menu Iniciar, em Aplicativos para desinstalar), NSIS ou
+Inno Setup; no Linux, `.deb`, `.rpm`, AppImage ou Flatpak. O código de atualização do `.msi`
+é derivado do identificador do projeto, então a versão nova substitui a anterior. O WiX é um
+pacote de ferramenta (Ferramentas → Pacotes de ferramentas, ou o "Corrigir" do Verificar
+ambiente) e roda pelo .NET 6 ou mais novo. Fabricante: `publish.publisher` no projeto.
 
 **Outras linguagens no celular e no navegador.** O código de um projeto em Python,
 TypeScript, C#, Java, Go, C++ ou Free Pascal não roda no celular nem no navegador; ele roda

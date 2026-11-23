@@ -81,4 +81,5 @@ do painel do conteúdo (o `client`), ou use `most_left`/`most_bottom`, que encai
 Uma linha de lista ou um "botão" feito de painel clareia com o mouse em cima com `interactive`
 (as cores de estado do tema) ou com `hover_fill` e `pressed_fill` (cores próprias). O mouse
 num filho (o ícone, o texto) conta como em cima do painel. Foco pelo teclado e Enter continuam
-sendo do `Button`.
+sendo do `Button`. A linha escolhida de uma lista (o estado `checked`) usa o `selected_fill`
+ou, só com `interactive`, a cor principal do tema, clara.

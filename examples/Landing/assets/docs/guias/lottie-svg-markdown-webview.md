@@ -115,7 +115,12 @@ ui.on(md, "on_link", |_, _, args| {
 Propriedades:
 
 - `text`, ou `source` (um `.md` do projeto);
-- `font_size`: 0 usa o tamanho do tema.
+- `font_size`: 0 usa o tamanho do tema;
+- `anchor`: o título para onde rolar (o identificador, com ou sem `#`, ou o texto dele);
+- `highlight`: o texto a destacar (sem diferença de maiúsculas); cada ocorrência ganha um
+  fundo, e a página rola até a primeira;
+- `editor_look`: os blocos de código com a cara do editor, com `code_theme` (vazio: o do
+  app) e `code_language` (a linguagem dos blocos sem linguagem na cerca).
 
 `content_height()` informa a altura do texto, para quem quiser ajustar o tamanho do
 controle.
@@ -124,16 +129,17 @@ controle.
 
 O `WebView` mostra uma página da web dentro do form.
 
-O controle não desenha a página. Ele pede uma vista nativa (`Component::native_view`), e a
+O controle não desenha a página. Ele pede uma vista nativa (`PlatformHooks::native_view`, devolvido pelo `platform_hooks()` do componente), e a
 plataforma põe um navegador de verdade sobre ele, acompanhando a posição, o tamanho, a
 visibilidade e a rolagem dos contêineres:
 
 | Onde | Navegador | Situação |
 |---|---|---|
 | Windows | WebView2 (Edge, já vem no Windows 10 e 11) | testado |
-| macOS | WKWebView | compila; não testado |
+| macOS, iOS | WKWebView | escrito; falta conferir num Mac (veja `docs/testes-em-dispositivos.md`) |
+| Linux | WebKitGTK (precisa da `libwebkit2gtk-4.1`; só X11) | — |
+| Android | o `WebView` do sistema, numa janela sobre o app (precisa da `AylisActivity`: publique pela IDE ou pelo `aylis-tool`) | — |
 | Navegador (wasm) | `<iframe>` sobre o canvas | testado |
-| Linux, Android, iOS | — | por enquanto o controle mostra um aviso |
 
 No designer da IDE não abre navegador: o controle mostra uma barra de endereço com a URL.
 
@@ -148,13 +154,26 @@ ui.on(web, "on_message", |ui, id, args| {
 });
 ```
 
-**Propriedades:** `url`, ou `html` para mostrar um HTML dado.
+**Propriedades:**
+
+- `url`, ou `html` para mostrar um HTML dado;
+- `allowed_origins`: as origens que podem mandar mensagens (separadas por vírgula ou
+  espaço); vazia, só a origem do `url` (com `html`, só o próprio conteúdo);
+- `allowed_navigation`: para onde a página pode navegar; vazia, qualquer lugar;
+- `sandbox`: o atributo `sandbox` do `<iframe>` no navegador;
+- `skeleton`: com o app rodando, blocos no tom do fundo enquanto a página carrega;
+- `background_color`: a cor da vista antes da primeira pintura (sem ela, branca);
+- `data_dir`: a pasta de dados do navegador (cookies, cache); vazia, a do sistema;
+- `browser_args`: argumentos do navegador do sistema (o WebView2), sem a depuração remota;
+- `message_url` (só leitura): quem mandou a mensagem, dentro do `on_message`. No Linux e
+  no Android é a página principal, mesmo quando quem mandou é um iframe dela.
 
 **Eventos:**
 
 - `on_load`: a página terminou de carregar.
 - `on_navigate`: o navegador vai abrir um endereço.
-- `on_message`: a página mandou uma mensagem.
+- `on_blocked`: uma navegação para fora de `allowed_navigation` foi impedida.
+- `on_message`: a página mandou uma mensagem (só das origens permitidas).
 
 **Métodos:** `navigate`, `load_html`, `eval`, `back`, `forward` e `reload`.
 
@@ -162,8 +181,8 @@ No navegador (wasm), o `eval` e o histórico só funcionam com páginas do mesmo
 política do próprio navegador.
 
 O exemplo `cargo run -p aylis-platform-winit --example browser --features webview` mostra
-a página e o app conversando. No demo web, a URL `?novos` mostra WebView, Markdown e Svg
-juntos.
+a página e o app conversando. No navegador, a página de cada componente na documentação
+mostra ele de verdade, no painel "Ao vivo" (o crate `aylis-demos`).
 
 ## Por dentro
 
@@ -172,7 +191,8 @@ juntos.
   `end_mask`), implementados no Skia, no Direct2D e no navegador. No navegador a máscara
   ainda usa o recorte pelo contorno.
 - **Vistas nativas:**
-  - `Component::native_view` e `take_native_commands` são o gancho do componente;
+  - `PlatformHooks::native_view` e `take_native_commands` (pelo acessor
+    `Component::platform_hooks`) são o gancho do componente;
   - `Ui::native_views(form)` lista onde cada vista fica;
   - o módulo `native` do `aylis-platform-winit` (feature `webview`) cria as vistas e entrega
     os eventos.

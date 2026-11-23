@@ -25,6 +25,7 @@ gradiente, o campo do Windows 11 tem o traço de baixo...
 | shadcn/ui (web, Tailwind) | shadcn/ui Light, shadcn/ui Dark | `aylis` |
 | Ant Design 5 (web) | Ant Design 5 Light, Ant Design 5 Dark | `aylis` |
 | Chakra UI (web) | Chakra UI Light, Chakra UI Dark | `aylis` |
+| Quasar 2 (web) | Quasar 2 Light, Quasar 2 Dark | `material2` |
 
 Três temas compartilham a forma com outro e mudam o resto:
 
@@ -71,7 +72,12 @@ os raios e as fontes padrão de cada framework (os tokens da documentação dele
   (escuro), bordas finas, `Button.ghost`;
 - **Ant Design 5:** azul `#1677ff`, texto de 14, o botão "default" (`Button.secondary`) branco
   com borda que fica azul no hover;
-- **Chakra UI:** `blue.500`, o botão cinza `gray.100` como secundário, cartão com sombra.
+- **Chakra UI:** `blue.500`, o botão cinza `gray.100` como secundário, cartão com sombra;
+- **Quasar 2:** azul `#1976D2` (mais `secondary`, `accent`, `positive`, `negative`, `info` e
+  `warning` da marca), Roboto, o QBtn elevado de cantos 4 em maiúsculas, com os estilos
+  `Button.flat`, `.outline`, `.push`, `.unelevated`, `.rounded`, `.round` e `.glossy`; o
+  campo padrão é o "standard" (só a linha de baixo), e `Edit.outlined` e `Edit.filled` são
+  os outros dois.
 
 Os estilos comuns a todos: `Button` (o primário), `Button.secondary`, `Button.outline`,
 `Button.text`, `Button.danger`, `Button.success`, `Panel.card` e `Panel.outlined`.
