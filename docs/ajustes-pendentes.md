@@ -31,6 +31,11 @@ Os recursos e as correções de 23/11 (as decisões no [histórico](historico-de
   - a linha de filtro do `DataGrid` grava `fold([campo]) like ...` no `filter` (era
     `[campo] like ...`);
   - o menu da bandeja `light`/`dark` usa as cores dos temas do Aylis (o tom muda um pouco).
+- [ ] **Para o autor conferir:** a auditoria do instalador da 0.10.0 barrou dois avisos novos,
+  que entraram como exceção no `deny.toml`, cada uma com o motivo: o `chrono` sem manutenção
+  (RUSTSEC-2026-0543; nenhuma versão corrigida; vem do `trash` e da feature opcional `chrono`
+  do `Date`) e o `cookie` 0.18.2 pelo `wry` (RUSTSEC-2026-0594; a falha é só no `PrivateJar`,
+  da feature `private`, desligada). Saem quando o `trash` e o `wry` trocarem.
 - [ ] **Medições** (release):
   - `set_prop` com o mesmo valor e o layout só do contêiner alcançado: a volta do timer de 64
     frames de 20 controles, 13,76 ms → 0,014 ms (mesmo valor) e 0,27 ms (valor que muda); no

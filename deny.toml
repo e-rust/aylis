@@ -22,6 +22,14 @@ ignore = [
     # quando o accesskit passar para o zbus 6.
     { id = "RUSTSEC-2026-0194", reason = "quick-xml 0.38 via zbus_xml: XML do D-Bus do sistema" },
     { id = "RUSTSEC-2026-0195", reason = "quick-xml 0.38 via zbus_xml: XML do D-Bus do sistema" },
+    # chrono sem manutenção (nenhuma versão corrigida; não é falha conhecida): vem do `trash`
+    # (a lixeira no Linux) e da feature opcional `chrono` do `Date` (só para quem já usa o
+    # chrono no app). Sai quando o `trash` trocar de biblioteca de datas.
+    { id = "RUSTSEC-2026-0543", reason = "chrono sem manutenção, via trash e a feature opcional chrono" },
+    # cookie 0.18.2 pelo wry (WebView), só com as features padrão: a falha é nos cookies
+    # cifrados (`private`, desligada), então o código afetado nem compila. Sai quando o wry
+    # passar para o cookie 0.19 (hoje só candidata).
+    { id = "RUSTSEC-2026-0594", reason = "cookie via wry sem a feature private: o PrivateJar não compila" },
 ]
 
 [licenses]
