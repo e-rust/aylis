@@ -117,6 +117,26 @@ medido de dois jeitos na mesma janela. O núcleo só conhece as fontes do projet
 um caractere que nenhuma delas tem (um emoji, o japonês sem uma fonte japonesa) fica com o
 renderizador, como no `native`. Muda em Projeto → Opções do projeto ("Texto por plataforma").
 
+#### A suavização do texto (`"text_antialias"` no `.aylisproj`)
+
+O texto sai em cinza por padrão (`"text_antialias": "grayscale"`), igual nos três
+renderizadores. No Direct2D, o desenho é o simétrico do DirectWrite (`NATURAL_SYMMETRIC`),
+que suaviza também na vertical: as diagonais da letra pequena não saem em degraus. Só muda o
+desenho: o tamanho medido do texto é o mesmo.
+
+Com `"text_antialias": "cleartype"` (Projeto → Opções do projeto, "Texto em ClearType"), o
+texto usa o subpixel do monitor no Direct2D e no Skia, **só onde o fundo é opaco**: a janela
+com fundo sólido e os recortes dentro dela. Continuam em cinza:
+
+- a janela transparente (o subpixel precisa da cor de trás);
+- as camadas guardadas e as de opacidade (o subpixel não se mistura);
+- o navegador, que não faz subpixel: **é uma diferença aceita** entre os renderizadores, por
+  escolha do app (o padrão continua igual em todos);
+- o modo de texto `core`, em que o núcleo desenha as letras como caminhos.
+
+Pelo código: `aylis_core::canvas::set_text_antialias(TextAntialias::ClearType)`, que vale na
+próxima pintura.
+
 ## Ícones
 
 **Projeto → Ícones…** (Ctrl+Alt+I) abre os pacotes:

@@ -13,6 +13,110 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 24/11/2026: a IDE aberta por um agente**
+
+O autor, com a IDE aberta pelo MCP: apertou F12 num fonte enquanto o agente editava o mesmo
+arquivo, e uma linha sumiu. Pediu: "deveria ter um readonly por padrão na IDE aberta pelo MCP e
+um botão que eu pudesse liberar a edição... o Ctrl+Z nesses casos desfaz até o que a LLM fez e
+pode perder o trabalho dela". A decisão está no [histórico](historico-decisoes.md), seção 18; a
+conferência, no roteiro, item 183.
+
+- **A causa (confirmada pelo teste):** o agente gravou o fonte por fora (a ferramenta Edit
+  dele) e o buffer da IDE, sem alteração, ainda não tinha passado pelo `disk::check` (que roda
+  no foco e antes de cada ferramenta do MCP). O F12 (`actions::open_code`) regravou o fonte com
+  o `generate_form`, e o `codewindow::follow_generation` juntou o trecho gerado no texto velho do
+  buffer, sem a linha do agente, e pôs a marca do disco de agora, como salvo. O salvar seguinte
+  (o `save_memo`, que gravava sem conferir a marca: Ctrl+S, o `save_all` antes de Executar, o
+  `save` do MCP) gravou o buffer velho por cima.
+- [ ] Feito, esperando a conferência do autor (sem commit):
+  - antes de gerar (o F12 e o Gerar código na thread da tela), o fonte aberto sem alteração que
+    ficou atrás do disco recarrega do disco (`codewindow::sync_with_disk`, o mesmo do
+    `disk::check`);
+  - o `follow_generation` recebe também a marca do disco de antes da geração
+    (`codewindow::Snapshot`): o buffer sem alteração que estava atrás fica com o disco inteiro
+    (vale para o Gerar código em segundo plano); o com alteração que estava atrás continua com a
+    marca velha, e o conflito aparece na próxima conferência; a marca só muda quando o texto foi
+    de fato aplicado, e o somente leitura é desligado e religado em volta, como no
+    `reload_from_disk`;
+  - o salvar confere a marca: o disco mudou desde que a aba leu ou salvou, não grava por cima.
+    Sem alteração na aba, recarrega; com alteração, vira conflito pelo caminho do
+    `disk::check`/`disk::ask` (o gancho novo `Hooks::changed_on_disk`), e pelo MCP o `edit_code`
+    com `save` devolve o erro com o diff e o `resolve_conflict`;
+  - **só leitura com a IDE aberta pelo MCP:** com `AYLIS_IDE_MCP` presente ao iniciar (a ponte
+    do `aylis-tool mcp`), os fontes do usuário abrem travados para o teclado, com a faixa
+    "Aberto por um agente (MCP): só leitura para evitar mexer no que ele está editando" e o
+    botão **Liberar edição**. A trava é separada do `read_only` dos gerados (`Tab::agent_lock`):
+    o `edit_code`, o `editor_type` e o `editor_key` do agente continuam editando, e o gerado
+    continua recusado. O botão libera **só a aba à vista** (as outras que o agente abriu
+    continuam travadas), e o desfazer recomeça dali (`Memo::clear_undo`, novo no
+    `memo_code.rs`): o Ctrl+Z do usuário não desfaz o que o agente fez antes;
+  - o Ctrl+Z, o Ctrl+Y e o Editar → Desfazer não fazem nada num `Memo` somente leitura (antes
+    desfaziam o que o código pôs nele, como o recarregar do gerado);
+  - Opções da IDE → MCP: "Abrir os fontes só leitura quando aberta por um agente", ligada por
+    padrão (`agent_read_only` no config da IDE); vale para os fontes que abrirem depois;
+  - na IDE aberta pelo usuário, nada muda; os 5 textos novos traduzidos.
+- Testes: `crates/aylis-ide/tests/agent_editing.rs` (a linha de fora continua depois do F12 e
+  do salvar; o conflito no salvar, com o diff pelo MCP; a trava, o agente editando, o Liberar
+  edição e o Ctrl+Z; a IDE aberta pelo usuário sem trava). Sem a correção, os dois primeiros
+  falham como no relato (a linha some do editor; o salvar grava por cima). Em 24/11: o
+  `cargo test -p aylis-ide` passou, menos o `docs_fresh` (a Landing desatualizada por
+  mudanças de outras sessões: `Screen.md` e guias), o `visual` sem mudança (a faixa nasce
+  escondida), o `aylis-controls-base` e os `controls`/`text`/`text_menu` do
+  `aylis-controls` passaram, e o check de wasm da IDE lite também.
+- Falta:
+  - o `apply_to_open_file` (substituir na pesquisa do projeto) num fonte travado não troca
+    nada no editor e não grava o arquivo; não avisa;
+  - o `Memo::clear_undo` só existe na API Rust (o `Memo` não tem métodos no `invoke`);
+  - a IDE aberta pelo agente sem a ponte (o usuário liga o MCP pelo menu) não trava: só o
+    `AYLIS_IDE_MCP` ao iniciar conta.
+
+**Recursos de 24/11/2026: a versão pela série de tags e o app que troca só o `.exe`**
+
+As decisões no [histórico](historico-decisoes.md), seção 18; a documentação em
+[publicar-windows.md](publicar-windows.md); as conferências no roteiro, itens 184 a 186.
+
+- [ ] Feito, esperando a conferência do autor (sem commit):
+  - `publish.tag_prefix` (a série: `git describe --tags --long --match "<prefixo>*"`, o prefixo
+    tirado), `publish.dev_version_after_tag` (fora de uma tag limpa, o último número + 1 e
+    `-dev`; os números do `.exe` sem o sufixo) e `publish.product_name` (o `ProductName`; o
+    `app_name` segue dando o nome do `.exe`). Valem no build (`aylis_build::git_version`,
+    `TagSeries`), na publicação de todas as plataformas (`Project::published_version`) e na
+    tela Publicar;
+  - `publish.windows.static_crt`: o `+crt-static` no `.cargo/config.toml` do projeto
+    (`process::write_cargo_config`; na linha de comando onde o arquivo não é do Aylis), e a
+    publicação sem as DLLs do runtime. Conferido com o `dumpbin /dependents` de um app
+    publicado com Direct2D e WebView (sem `VCRUNTIME140.dll` nem `api-ms-win-crt-*`) e o app
+    abrindo com o WebView;
+  - `publish.windows.webview2: fixed`: a publicação põe o runtime de versão fixa na pasta
+    `WebView2` ao lado do `.exe` (os três instaladores levam a pasta), e o app aponta para ela
+    pela `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` ao criar o primeiro `WebView`
+    (`aylis-platform-winit`, `native.rs`). Conferido com uma cópia do runtime instalado na
+    pasta: o `msedgewebview2.exe` rodou de lá. O carregador já ia dentro do `.exe` (o
+    `WebView2LoaderStatic.lib` do `webview2-com-sys`); os pacotes extraem `.cab` (o
+    `expand.exe`).
+- Testes: `aylis-build` `the_version_comes_from_the_tag_series_and_marks_development_builds`,
+  `aylis-project` `published_version`, `aylis-tools` `static_crt` (o cargo de verdade e os
+  imports do PE) e `toolpacks::tests::a_cab_is_extracted_with_its_folders`.
+- Falta:
+  - **o pacote `webview2-fixed`**: fixar o hash pede baixar os ~420 MB do `.cab`, o que é aceitar
+    a licença do runtime da Microsoft; fica para o autor. A entrada para o
+    `resources/packages.lock.json` (depois, `aylis-tool packages update webview2-fixed`):
+    `"webview2-fixed": {"title": "WebView2 de versão fixa 158", "version": "158.0.4370.33",
+    "install": "extract", "platforms": {"windows-x86_64": {"files": [{"name":
+    "Microsoft.WebView2.FixedVersionRuntime.158.0.4370.33.x64.cab", "size": 437849994,
+    "sha256": "", "url": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/ecc2761e-1380-46ee-9552-995b039e4e47/Microsoft.WebView2.FixedVersionRuntime.158.0.4370.33.x64.cab",
+    "strip": 1}]}}}` (o `strip` supõe a pasta de cima dentro do `.cab`, a conferir). Até lá, a
+    publicação com `fixed` para e diz como pôr a pasta à mão;
+  - **o Skia com o `+crt-static`**: o rust-skia não publica binário estático para o Windows
+    (nenhum `skia-binaries-*-static` na 0.153.3), e sem o LLVM a publicação para. Um pacote
+    feito pelo Aylis, como o `skia-android-armv7`, resolveria;
+  - no **Windows 10**, o runtime fixo a partir da 120 pede o `icacls` das contas de contêiner na
+    pasta (está na documentação; os instaladores não fazem);
+  - achado à parte: o `WebView` com `html` e sem `url` no form não abre (o `url` nasce
+    `"https://"`, e a vista nativa navega para ele: `0x80070057` do WebView2). O
+    `aylis-webview` já trata o `"https://"` como vazio no `caption` e nas mensagens, mas não no
+    `native_view`.
+
 **Ajustes de 23/11/2026: as notas da versão e as medições**
 
 Os recursos e as correções de 23/11 (as decisões no [histórico](historico-decisoes.md), seção

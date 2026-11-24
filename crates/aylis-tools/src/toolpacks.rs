@@ -883,6 +883,9 @@ pub(crate) fn sha256_file(path: &Path) -> Result<String, String> {
 enum ArchiveKind {
     Zip,
     TarGz,
+    /// O gabinete da Microsoft (o runtime de versão fixa do WebView2), pelo `expand.exe` do
+    /// Windows.
+    Cab,
 }
 
 fn archive_kind(name: &str) -> Option<ArchiveKind> {
@@ -891,6 +894,8 @@ fn archive_kind(name: &str) -> Option<ArchiveKind> {
         Some(ArchiveKind::Zip)
     } else if n.ends_with(".tar.gz") || n.ends_with(".tgz") {
         Some(ArchiveKind::TarGz)
+    } else if n.ends_with(".cab") {
+        Some(ArchiveKind::Cab)
     } else {
         None
     }
@@ -920,13 +925,15 @@ fn entry_target(raw: &Path, strip: usize, prefix: Option<&str>) -> Result<Option
     Ok(Some(parts[strip..].iter().collect()))
 }
 
-/// Extrai um zip (`.zip`, `.vsix`, `.nupkg`, `.whl`) ou um `.tar.gz` em `to`.
+/// Extrai um zip (`.zip`, `.vsix`, `.nupkg`, `.whl`), um `.tar.gz` ou, no Windows, um `.cab` em
+/// `to`.
 pub(crate) fn extract(archive: &Path, to: &Path, strip: usize, prefix: Option<&str>, control: &Control) -> Result<(), String> {
     std::fs::create_dir_all(to).map_err(|e| format!("{}: {e}", to.display()))?;
     let name = archive.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
     let file = File::open(archive).map_err(|e| format!("{}: {e}", archive.display()))?;
     let at = |e: String| format!("{name}: {e}");
     match archive_kind(&name).ok_or_else(|| format!("{name}: formato que o Aylis não extrai"))? {
+        ArchiveKind::Cab => extract_cab(archive, to, strip, prefix, &name, control)?,
         ArchiveKind::TarGz => extract_tar(tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file))), to, strip, prefix, &name, control)?,
         ArchiveKind::Zip => {
             let mut zip = zip::ZipArchive::new(std::io::BufReader::new(file)).map_err(|e| at(e.to_string()))?;
@@ -992,6 +999,50 @@ fn extract_tar<R: Read>(mut tar: tar::Archive<R>, to: &Path, strip: usize, prefi
         }
     }
     Ok(())
+}
+
+/// Um `.cab` em `to`: o `expand.exe` do Windows (o que a Microsoft indica para o runtime de
+/// versão fixa do WebView2: o Explorer pode trocar a estrutura das pastas) numa pasta ao lado,
+/// e cada arquivo dela vai para `to` com o `strip` e o `prefix`, recusando o que sairia da pasta.
+fn extract_cab(archive: &Path, to: &Path, strip: usize, prefix: Option<&str>, name: &str, control: &Control) -> Result<(), String> {
+    let at = |e: String| format!("{name}: {e}");
+    if !cfg!(windows) {
+        return Err(at("o .cab só é extraído no Windows".into()));
+    }
+    let expand = std::env::var_os("SystemRoot").map(|r| PathBuf::from(r).join("System32").join("expand.exe")).filter(|p| p.is_file()).ok_or_else(|| at("o expand.exe do Windows não foi achado".into()))?;
+    let work = to.with_file_name(format!("{}.cab-extract", to.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()));
+    let _ = std::fs::remove_dir_all(&work);
+    std::fs::create_dir_all(&work).map_err(|e| format!("{}: {e}", work.display()))?;
+    let output = crate::process::quiet(std::process::Command::new(expand).arg(archive).arg("-F:*").arg(&work).stdin(std::process::Stdio::null()))
+        .output()
+        .map_err(|e| at(e.to_string()))?;
+    if !output.status.success() {
+        let _ = std::fs::remove_dir_all(&work);
+        return Err(at(format!("o expand.exe falhou: {}", String::from_utf8_lossy(&output.stdout).trim())));
+    }
+    let result = (|| {
+        let mut pending = vec![work.clone()];
+        while let Some(dir) = pending.pop() {
+            for entry in std::fs::read_dir(&dir).map_err(|e| format!("{}: {e}", dir.display()))?.flatten() {
+                control.check()?;
+                let path = entry.path();
+                if path.is_dir() {
+                    pending.push(path);
+                    continue;
+                }
+                let raw = path.strip_prefix(&work).map_err(|e| at(e.to_string()))?;
+                let Some(rel) = entry_target(raw, strip, prefix).map_err(at)? else { continue };
+                let dest = to.join(rel);
+                if let Some(parent) = dest.parent() {
+                    std::fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
+                }
+                std::fs::rename(&path, &dest).or_else(|_| std::fs::copy(&path, &dest).map(|_| ())).map_err(|e| format!("{}: {e}", dest.display()))?;
+            }
+        }
+        Ok(())
+    })();
+    let _ = std::fs::remove_dir_all(&work);
+    result
 }
 
 fn write_entry(reader: &mut dyn Read, path: &Path) -> Result<(), String> {

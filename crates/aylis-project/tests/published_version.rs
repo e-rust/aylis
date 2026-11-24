@@ -53,5 +53,21 @@ fn the_published_version_comes_from_the_project_or_from_the_git_tag() {
     let published = project.with_published_version().unwrap();
     assert_eq!(published.version(), "3.0.1");
     assert_eq!(project.version(), "1.2.0", "o projeto em si não muda");
+
+    // A série de tags (`Client-v*`, com um `Server-v*` mais novo) e o `-dev` fora da tag.
+    project.publish.tag_prefix = "Client-v".into();
+    project.publish.dev_version_after_tag = true;
+    project.publish.product_name = "Cliente".into();
+    project.save().unwrap();
+    let again = Project::open(&project.path).unwrap();
+    assert_eq!((again.publish.tag_prefix.as_str(), again.publish.dev_version_after_tag, again.publish.product_name.as_str()), ("Client-v", true, "Cliente"));
+    let error = project.published_version().unwrap_err();
+    assert!(error.contains("Client-v*") && error.contains("git tag Client-v1.0.0"), "{error}");
+    assert!(git(&dir, &["commit", "-q", "-am", "dois"]));
+    assert!(git(&dir, &["tag", "Client-v1.0.0.28"]));
+    assert!(git(&dir, &["tag", "Server-v9.0.0"]));
+    assert_eq!(project.published_version().unwrap(), "1.0.0.28");
+    std::fs::write(dir.join("rust/src/lib.rs"), "// alterado\n").unwrap();
+    assert_eq!(project.published_version().unwrap(), "1.0.0.29-dev", "alteração pendente");
     let _ = std::fs::remove_dir_all(&base);
 }

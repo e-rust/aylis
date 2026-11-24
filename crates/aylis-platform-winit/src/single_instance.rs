@@ -14,11 +14,17 @@
 //!
 //! A instância de outro usuário (`machine`) não recebe os argumentos: a segunda abertura só sai,
 //! com o aviso no stderr.
+//!
+//! O projeto pode dar o nome exato da trava (`single_instance_name`: o mesmo de um programa
+//! anterior, para os dois não rodarem juntos), fazer a segunda abertura sair calada
+//! (`single_instance_second = quiet`: sem entregar nada e sem trazer a primeira) e soltar a trava
+//! antes de relançar a si mesmo ([`release_single_instance`]).
 
 use std::io::{Read, Write};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use aylis_core::SingleInstance;
+use aylis_core::{SecondInstance, SingleInstance};
 
 /// O maior pedido aceito (os argumentos de uma abertura).
 const MAX_MESSAGE: u64 = 64 * 1024;
@@ -27,30 +33,86 @@ const MAX_MESSAGE: u64 = 64 * 1024;
 /// a fila.
 static INBOX: Mutex<(Option<aylis_core::Poster>, Vec<Vec<String>>)> = Mutex::new((None, Vec::new()));
 
+/// O canal servido por este processo (para a soltura acordar quem espera nele).
+static SERVED: Mutex<Option<u64>> = Mutex::new(None);
+
+/// A trava foi solta ([`release_single_instance`]): o canal para de receber.
+static RELEASED: AtomicBool = AtomicBool::new(false);
+
+/// A thread do canal já fechou depois da soltura.
+static STOPPED: AtomicBool = AtomicBool::new(false);
+
+/// O maior nome de trava aceito (o do mutex do Windows vai até 260).
+const MAX_NAME: usize = 200;
+
 /// Na abertura, antes da janela: `true`, este processo segue (é a primeira instância, ou
 /// `off`); `false`, outra instância recebeu os argumentos (ou é de outro usuário) e este deve
 /// sair sem abrir nada. `app_id` separa um app do outro (o identificador do pacote).
 pub fn claim_single_instance(mode: SingleInstance, app_id: &str) -> bool {
+    claim_single_instance_with(mode, app_id, "", SecondInstance::Forward)
+}
+
+/// Como [`claim_single_instance`], com o nome da trava e o que a segunda abertura faz.
+///
+/// - `name`: o nome exato da trava (o `single_instance_name` do projeto); vazio, o gerado do
+///   `app_id`. No Windows é o nome do mutex, como está: com `Global\` vale entre as sessões
+///   (o de um programa anterior que use o mesmo nome impede os dois juntos), sem prefixo vale só
+///   na sessão. No Linux e no macOS, o nome do arquivo travado (`/` e `\` viram `-`).
+/// - `second`: `Forward` entrega os argumentos à primeira (que vem para a frente); `Quiet` sai
+///   calada, sem entregar nada (e a primeira nem abre o canal).
+pub fn claim_single_instance_with(mode: SingleInstance, app_id: &str, name: &str, second: SecondInstance) -> bool {
     if mode == SingleInstance::Off {
         return true;
     }
     let user = user_name();
-    let app = hash(app_id.trim().to_lowercase().as_bytes());
-    let channel = hash(format!("{app_id}|{user}").to_lowercase().as_bytes());
-    let lock_name = match mode {
-        SingleInstance::Machine => format!("aylis-single-{app:016x}"),
-        _ => format!("aylis-single-{channel:016x}"),
+    let name = name.trim();
+    let (lock_name, channel) = if name.is_empty() {
+        let app = hash(app_id.trim().to_lowercase().as_bytes());
+        let channel = hash(format!("{app_id}|{user}").to_lowercase().as_bytes());
+        let lock = match mode {
+            SingleInstance::Machine => format!("aylis-single-{app:016x}"),
+            _ => format!("aylis-single-{channel:016x}"),
+        };
+        (lock, channel)
+    } else {
+        // O nome do projeto vale como está (só sem o que não cabe num nome de trava).
+        let clean: String = name.chars().filter(|c| !c.is_control()).take(MAX_NAME).collect();
+        (clean, hash(format!("{name}|{user}").to_lowercase().as_bytes()))
     };
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    if platform::lock(&lock_name, mode) {
-        platform::serve(channel);
+    RELEASED.store(false, Ordering::SeqCst);
+    if platform::lock(&lock_name, mode, !name.is_empty()) {
+        if second == SecondInstance::Forward {
+            platform::serve(channel);
+            if let Ok(mut served) = SERVED.lock() {
+                *served = Some(channel);
+            }
+        }
         return true;
     }
+    if second == SecondInstance::Quiet {
+        return false;
+    }
+    let args: Vec<String> = std::env::args().skip(1).collect();
     if platform::forward(channel, &args) {
         return false;
     }
-    aylis_core::stderr_line!("aylis: o app já está aberto (por outro usuário desta máquina); esta abertura sai");
+    aylis_core::stderr_line!("aylis: o app já está aberto (por outro usuário desta máquina, ou por outro programa com a mesma trava); esta abertura sai");
     false
+}
+
+/// Solta a trava da instância única antes de o app relançar a si mesmo (a atualização que
+/// troca o exe e abre o novo): a trava e o canal dos argumentos saem, e a próxima abertura
+/// passa a ser a primeira. Esta instância continua rodando, sem receber as outras aberturas.
+/// Sem a trava, não faz nada.
+pub fn release_single_instance() {
+    if RELEASED.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    platform::unlock();
+    let served = SERVED.lock().ok().and_then(|mut s| s.take());
+    if let Some(channel) = served {
+        platform::stop_serving(channel);
+    }
 }
 
 /// O `Ui` passa a receber os argumentos (o `run` chama ao começar): os que chegaram antes
@@ -109,18 +171,52 @@ mod platform {
         format!(r"\\.\pipe\aylis-single-{channel:016x}")
     }
 
+    /// O handle do mutex deste processo (aberto até o fim, ou até a soltura).
+    static MUTEX: std::sync::Mutex<Option<usize>> = std::sync::Mutex::new(None);
+
     /// O mutex com nome: o primeiro a criar fica com ele até o processo acabar. No `Global\`,
     /// vale entre as sessões (o RDP e o console do mesmo usuário, ou de todos com `machine`).
-    pub(super) fn lock(name: &str, _mode: SingleInstance) -> bool {
-        // SAFETY: cria (ou abre) o mutex; o handle fica aberto de propósito até o fim do processo.
+    /// `exact`: o nome do projeto, como está (com ou sem o `Global\`).
+    pub(super) fn lock(name: &str, _mode: SingleInstance, exact: bool) -> bool {
+        let full = if exact { name.to_string() } else { format!(r"Global\{name}") };
+        // SAFETY: cria (ou abre) o mutex; o handle fica aberto de propósito até o fim do processo
+        // (ou até o `unlock`), e o da segunda abertura também, que logo sai.
         unsafe {
-            let created = CreateMutexW(None, false, &HSTRING::from(format!(r"Global\{name}")));
+            let created = CreateMutexW(None, false, &HSTRING::from(full));
             let exists = GetLastError() == ERROR_ALREADY_EXISTS;
             match created {
-                Ok(_) => !exists,
+                Ok(handle) if !exists => {
+                    if let Ok(mut m) = MUTEX.lock() {
+                        *m = Some(handle.0 as usize);
+                    }
+                    true
+                }
+                Ok(_) => false,
                 // Sem acesso ao mutex: é de outro usuário (que o criou com a segurança dele).
                 Err(_) => false,
             }
+        }
+    }
+
+    /// Fecha o mutex: com o último handle fechado, o nome fica livre para a próxima abertura.
+    pub(super) fn unlock() {
+        let handle = MUTEX.lock().ok().and_then(|mut m| m.take());
+        if let Some(handle) = handle {
+            // SAFETY: o handle é o do mutex criado no `lock`, fechado uma vez só (saiu do `MUTEX`).
+            let _ = unsafe { windows::Win32::Foundation::CloseHandle(HANDLE(handle as *mut _)) };
+        }
+    }
+
+    /// Acorda a thread do canal (parada no `ConnectNamedPipe`) para ela fechar o pipe e sair: a
+    /// próxima abertura cria o pipe dela como o primeiro.
+    pub(super) fn stop_serving(channel: u64) {
+        let _ = std::fs::OpenOptions::new().write(true).open(pipe_name(channel));
+        // Espera a thread fechar o pipe (até 1 s): quem relança logo depois já acha o nome livre.
+        for _ in 0..50 {
+            if super::STOPPED.load(Ordering::SeqCst) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
     }
 
@@ -147,6 +243,13 @@ mod platform {
                 // SAFETY: o handle é um pipe criado aqui e ainda aberto.
                 let connected = unsafe { ConnectNamedPipe(current, None) };
                 let connected = connected.is_ok() || connected.is_err_and(|e| e.code() == ERROR_PIPE_CONNECTED.to_hresult());
+                // Solta (`release_single_instance`): fecha o pipe sem abrir o próximo.
+                if super::RELEASED.load(Ordering::SeqCst) {
+                    // SAFETY: o handle é o pipe criado aqui, fechado uma vez só.
+                    let _ = unsafe { windows::Win32::Foundation::CloseHandle(current) };
+                    super::STOPPED.store(true, Ordering::SeqCst);
+                    return;
+                }
                 let Some(next) = create(&name, false) else { return };
                 // SAFETY: o `File` fica dono do handle do pipe (e fecha ao sair do escopo).
                 let file = unsafe { <std::fs::File as std::os::windows::io::FromRawHandle>::from_raw_handle(current.0) };
@@ -205,10 +308,14 @@ mod platform {
         user_dir().join(format!("aylis-single-{channel:016x}.sock"))
     }
 
+    /// O arquivo travado deste processo (até o fim, ou até a soltura).
+    static LOCKED: std::sync::Mutex<Option<std::fs::File>> = std::sync::Mutex::new(None);
+
     /// O arquivo travado até o fim do processo: na pasta do usuário (`user`) ou em `/tmp`
-    /// (`machine`, para todos).
-    pub(super) fn lock(name: &str, mode: SingleInstance) -> bool {
+    /// (`machine`, para todos). O nome do projeto (`exact`) sem as barras.
+    pub(super) fn lock(name: &str, mode: SingleInstance, exact: bool) -> bool {
         let dir = if mode == SingleInstance::Machine { std::env::temp_dir() } else { user_dir() };
+        let name = if exact { name.replace(['/', '\\'], "-") } else { name.to_string() };
         let Ok(file) = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(dir.join(format!("{name}.lock"))) else {
             // Sem como travar (o arquivo é de outro usuário, sem escrita): a outra está aberta.
             return false;
@@ -218,12 +325,28 @@ mod platform {
         }
         match file.try_lock() {
             Ok(()) => {
-                // Fica aberto (e travado) até o processo acabar.
-                std::mem::forget(file);
+                // Fica aberto (e travado) até o processo acabar, ou até o `unlock`.
+                if let Ok(mut l) = LOCKED.lock() {
+                    *l = Some(file);
+                }
                 true
             }
             Err(_) => false,
         }
+    }
+
+    /// Fecha o arquivo travado: a trava sai com ele.
+    pub(super) fn unlock() {
+        let file = LOCKED.lock().ok().and_then(|mut l| l.take());
+        drop(file);
+    }
+
+    /// Acorda a thread do canal (parada no `accept`) para ela sair, e tira o socket do disco: a
+    /// próxima abertura cria o dela.
+    pub(super) fn stop_serving(channel: u64) {
+        let path = socket(channel);
+        let _ = UnixStream::connect(&path);
+        let _ = std::fs::remove_file(&path);
     }
 
     pub(super) fn serve(channel: u64) {
@@ -234,6 +357,11 @@ mod platform {
         let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
         let _ = std::thread::Builder::new().name("aylis-single-instance".into()).spawn(move || {
             for stream in listener.incoming().flatten() {
+                // Solta (`release_single_instance`): o socket fecha com a thread.
+                if super::RELEASED.load(Ordering::SeqCst) {
+                    super::STOPPED.store(true, Ordering::SeqCst);
+                    return;
+                }
                 deliver(&read_message(stream));
             }
         });
@@ -268,11 +396,16 @@ mod tests {
     /// O identificador do app nos dois processos do teste abaixo (único por rodada).
     const APP_ENV: &str = "AYLIS_SINGLE_INSTANCE_TEST_APP";
 
+    /// A trava é uma por processo (a soltura para o canal de quem travou): os testes que travam
+    /// rodam um por vez.
+    static SERIAL: Mutex<()> = Mutex::new(());
+
     /// A segunda abertura de verdade, noutro processo (este mesmo executável de teste, rodando só
     /// o `second_instance_helper`): ela entrega os argumentos e sai; a primeira recebe pelo
     /// `Ui`, sem janela.
     #[test]
     fn the_second_instance_hands_its_arguments_to_the_first() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
         let app = format!("dev.aylis.single-test-{}", std::process::id());
         assert!(claim_single_instance(SingleInstance::User, &app), "a primeira abertura segue");
         let mut ui = aylis_core::Ui::new();
@@ -300,5 +433,46 @@ mod tests {
     fn second_instance_helper() {
         let Ok(app) = std::env::var(APP_ENV) else { return };
         assert!(!claim_single_instance(SingleInstance::User, &app), "com a primeira aberta, a segunda não segue");
+    }
+
+    /// A trava com o nome do projeto, o que a outra abertura espera dela.
+    const NAME_ENV: &str = "AYLIS_SINGLE_INSTANCE_TEST_NAME";
+    const EXPECT_ENV: &str = "AYLIS_SINGLE_INSTANCE_TEST_EXPECT";
+
+    /// Roda o `named_instance_helper` noutro processo: ele tenta a trava `name` calado e confere
+    /// se seguiu como `expect` diz.
+    fn other_opening(name: &str, expect: bool) -> std::time::Duration {
+        let started = std::time::Instant::now();
+        let status = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "single_instance::tests::named_instance_helper", "--ignored", "--nocapture", "--test-threads=1"])
+            .env(NAME_ENV, name)
+            .env(EXPECT_ENV, if expect { "1" } else { "0" })
+            .status()
+            .unwrap();
+        assert!(status.success(), "a outra abertura não fez o esperado ({expect}): {status}");
+        started.elapsed()
+    }
+
+    /// O nome da trava escolhido pelo projeto, a segunda abertura calada e a soltura: com a
+    /// trava, a outra abertura sai (sem esperar o canal, que a calada nem abre); solta, a outra
+    /// passa a ser a primeira. Um teste só, porque a trava é do processo.
+    #[test]
+    fn the_named_lock_keeps_the_quiet_second_out_until_it_is_released() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let name = format!("dev.aylis.single-named-{}", std::process::id());
+        assert!(claim_single_instance_with(SingleInstance::User, "outro.app", &name, SecondInstance::Quiet), "a primeira segue");
+        let took = other_opening(&name, false);
+        // A calada não espera o canal (a que entrega espera até 3 s).
+        assert!(took < std::time::Duration::from_secs(20), "{took:?}");
+        release_single_instance();
+        other_opening(&name, true);
+    }
+
+    #[test]
+    #[ignore = "a outra abertura do teste acima, noutro processo"]
+    fn named_instance_helper() {
+        let (Ok(name), Ok(expect)) = (std::env::var(NAME_ENV), std::env::var(EXPECT_ENV)) else { return };
+        let claimed = claim_single_instance_with(SingleInstance::User, "outro.app", &name, SecondInstance::Quiet);
+        assert_eq!(claimed, expect == "1");
     }
 }

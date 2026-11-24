@@ -177,7 +177,16 @@ mod desktop;
 #[cfg(not(any(web, mobile)))]
 mod single_instance;
 #[cfg(not(any(web, mobile)))]
-pub use single_instance::claim_single_instance;
+pub use single_instance::{claim_single_instance, claim_single_instance_with};
+mod login;
+pub use login::{set_app_identity, set_start_with_login, start_with_login};
+
+/// Solta a trava da instância única antes de o app relançar a si mesmo (veja
+/// [`aylis_core::Ui::release_single_instance`]). No celular e no navegador, não há trava.
+pub fn release_single_instance() {
+    #[cfg(not(any(web, mobile)))]
+    single_instance::release_single_instance();
+}
 #[cfg(any(native_tray, windows))]
 mod badge;
 #[cfg(windows)]
@@ -662,6 +671,10 @@ fn run_on(
     if let Some(on) = ui.services().desktop.as_ref().and_then(|d| d.transparency()) {
         ui.set_system_transparency(on);
     }
+    // A sessão de agora (bloqueada, conectada): o `on_session_change` conta a partir daqui.
+    if let Some((locked, connected)) = ui.services().desktop.as_ref().and_then(|d| d.session_state()) {
+        ui.set_system_session(locked, connected);
+    }
     // Campos que já tinham texto antes do motor de texto existir (o form carregado do
     // JSON, o texto posto antes do `run`): conferem agora.
     if ui.services().text_assist.is_some() {
@@ -1046,6 +1059,14 @@ struct App {
 impl App {
     fn index_of(&self, id: WindowId) -> Option<usize> {
         self.windows.iter().position(|w| w.window.id() == id)
+    }
+
+    /// Quando o laço tem de acordar pelos timers (o `exact` um pouco antes, e termina esperando
+    /// ativo no `about_to_wait`).
+    fn next_wake(&self) -> Option<Instant> {
+        let wake = self.ui.next_wake().map(|at| self.started + Duration::from_secs_f64(at.max(0.0)));
+        let exact = self.ui.exact_timer_due().map(|at| self.started + Duration::from_secs_f64(at.max(0.0)));
+        wake.into_iter().chain(exact.map(|at| at.checked_sub(aylis_core::timing::SPIN).unwrap_or(at))).min()
     }
 
     fn window_of(&self, form: ComponentId) -> Option<&FormWindow> {
@@ -1820,6 +1841,14 @@ impl ApplicationHandler for App {
         }
         // A composição do sistema mudou: o desfoque (`WindowSettings.blur`) é refeito com um
         // compositor novo.
+        // A sessão mudou (bloqueio, desbloqueio, a sessão remota conectando ou saindo): o
+        // `on_session_change` do `Screen`.
+        #[cfg(windows)]
+        if win32::take_session_changed() {
+            if let Some((locked, connected)) = win32::session_state() {
+                self.ui.set_system_session(locked, connected);
+            }
+        }
         #[cfg(windows)]
         if win32::take_composition_changed() {
             // Os "Efeitos de transparência" podem ter mudado (o `on_transparency_change` do `Screen`).
@@ -1918,6 +1947,9 @@ impl ApplicationHandler for App {
             self.quit(event_loop);
             return;
         }
+        // Os pedidos à janela feitos pelos timers (o `Show` do form escondido) valem já: com as
+        // janelas escondidas, nada mais acordaria o laço para a próxima volta.
+        self.apply_window_commands();
         if let Some(at) = self.frame_due().filter(|_| self.ui.needs_repaint()) {
             // Limite de FPS: espera a vez do próximo quadro.
             event_loop.set_control_flow(ControlFlow::WaitUntil(at));
@@ -1928,12 +1960,14 @@ impl ApplicationHandler for App {
             for w in self.windows.iter().filter(|w| paint.contains(&w.form) && !w.is_extra()) {
                 w.window.request_redraw();
             }
-            event_loop.set_control_flow(ControlFlow::Wait);
+            // A janela escondida não pinta (o pedido de quadro não chega): os timers continuam
+            // acordando o laço, e não só o quadro.
+            match self.next_wake() {
+                Some(at) => event_loop.set_control_flow(ControlFlow::WaitUntil(at)),
+                None => event_loop.set_control_flow(ControlFlow::Wait),
+            }
         } else {
-            let wake = self.ui.next_wake().map(|at| self.started + Duration::from_secs_f64(at.max(0.0)));
-            // O `exact` acorda um pouco antes e termina esperando ativo (acima).
-            let exact = self.ui.exact_timer_due().map(|at| self.started + Duration::from_secs_f64(at.max(0.0)));
-            let wake = wake.into_iter().chain(exact.map(|at| at.checked_sub(aylis_core::timing::SPIN).unwrap_or(at))).min();
+            let wake = self.next_wake();
             // Conferindo a área segura: acorda a cada 50 ms até o prazo.
             let watch = self.watch_insets_until.map(|_| Instant::now() + Duration::from_millis(50));
             // Ícone animado na bandeja: o próximo quadro.

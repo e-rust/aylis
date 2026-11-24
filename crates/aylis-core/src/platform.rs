@@ -887,6 +887,21 @@ pub trait DesktopService {
     fn capture_monitor(&mut self, _area: (i32, i32, u32, u32), _max_width: u32, done: Box<dyn FnOnce(Result<crate::Image, String>) + Send>) {
         done(Err(crate::messages::t("A captura da tela não existe neste sistema.")));
     }
+    /// A sessão do usuário agora: bloqueada e conectada (`None`: o sistema não informa; só o
+    /// Windows informa).
+    fn session_state(&self) -> Option<(bool, bool)> {
+        None
+    }
+    /// O app abre sozinho quando o usuário entra no sistema (veja [`Ui::start_with_login`](crate::Ui::start_with_login)).
+    fn start_with_login(&self) -> bool {
+        false
+    }
+    /// Liga ou desliga a abertura do app com o login.
+    fn set_start_with_login(&mut self, _on: bool) -> Result<(), String> {
+        Err(crate::messages::t("Iniciar com o sistema não existe nesta plataforma."))
+    }
+    /// Solta a trava da instância única (veja [`Ui::release_single_instance`](crate::Ui::release_single_instance)).
+    fn release_single_instance(&mut self) {}
 }
 
 /// Quantas instâncias do app podem rodar (o `single_instance` do projeto).
@@ -914,6 +929,34 @@ impl crate::prop::PropEnum for SingleInstance {
 
 impl SingleInstance {
     /// O valor do projeto: vazio e o que não é um dos nomes são `off`.
+    pub fn parse(text: &str) -> Self {
+        <Self as crate::prop::PropEnum>::from_name(text.trim()).unwrap_or_default()
+    }
+}
+
+/// O que a segunda abertura faz quando o app já está aberto (o `single_instance_second` do
+/// projeto).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum SecondInstance {
+    /// Entrega os argumentos à primeira, que vem para a frente (o `on_second_instance`), e sai.
+    #[default]
+    Forward,
+    /// Sai calada: não entrega nada e não traz a primeira para a frente.
+    Quiet,
+}
+
+impl crate::prop::PropEnum for SecondInstance {
+    const NAMES: &'static [&'static str] = &["forward", "quiet"];
+    fn from_index(i: usize) -> Option<Self> {
+        [SecondInstance::Forward, SecondInstance::Quiet].get(i).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+impl SecondInstance {
+    /// O valor do projeto: vazio e o que não é um dos nomes são `forward`.
     pub fn parse(text: &str) -> Self {
         <Self as crate::prop::PropEnum>::from_name(text.trim()).unwrap_or_default()
     }
@@ -948,6 +991,36 @@ impl crate::Ui {
     /// recebe separados por `;`). Vazio antes da primeira.
     pub fn second_instance_args(&self) -> &[String] {
         self.extension_ref::<SecondInstanceArgs>().map_or(&[], |a| a.0.as_slice())
+    }
+
+    /// Solta a trava da instância única (o `single_instance` do projeto) antes de o app relançar
+    /// a si mesmo (a atualização que troca o exe e abre o novo): a nova abertura passa a ser a
+    /// primeira, e esta deixa de receber os argumentos das outras. Sem a trava (ou fora do
+    /// desktop), não faz nada.
+    pub fn release_single_instance(&mut self) {
+        if let Some(d) = self.services_mut().desktop.as_mut() {
+            d.release_single_instance();
+        }
+    }
+
+    /// O app abre sozinho quando o usuário entra no sistema: no Windows, o valor do app na
+    /// chave `Run` do usuário apontando para este exe; no Linux, o `.desktop` no
+    /// `~/.config/autostart`; no macOS, o agente de login em `~/Library/LaunchAgents`. No
+    /// celular e no navegador, `false`.
+    pub fn start_with_login(&self) -> bool {
+        self.services().desktop.as_ref().is_some_and(|d| d.start_with_login())
+    }
+
+    /// Liga ou desliga a abertura do app com o login (veja [`Ui::start_with_login`]). A
+    /// decisão é do app (uma opção nas preferências dele); o Aylis só grava. O erro diz por que
+    /// não deu (no celular e no navegador, o recurso não existe). Vale com o app aberto (nos
+    /// handlers: os serviços da plataforma entram no `run`); antes dele, em Rust, o
+    /// `aylis::start_with_login(on)`.
+    pub fn set_start_with_login(&mut self, on: bool) -> Result<(), String> {
+        match self.services_mut().desktop.as_mut() {
+            Some(d) => d.set_start_with_login(on),
+            None => Err(crate::messages::t("Iniciar com o sistema não existe nesta plataforma.")),
+        }
     }
 }
 

@@ -24,7 +24,7 @@ ou pelo `set_project_setting` do MCP):
 | CompanyName | `publish.publisher` (vazio: o nome do app) |
 | LegalCopyright | `publish.copyright` (vazio: `© ` e o fabricante) |
 | FileDescription | `publish.description` (vazio: o nome do app) |
-| ProductName | `publish.app_name` (vazio: o nome do projeto) |
+| ProductName | `publish.product_name` ("Produto" em Publicar; vazio: `publish.app_name`, e vazio esse, o nome do projeto). O `app_name` continua dando o nome do `.exe` |
 | FileVersion, ProductVersion | `publish.version` (vazio: `1.0.0`) ou a última tag do git (abaixo); a parte numérica tem 4 números (`1.2.0-beta` → `1.2.0.0`) |
 | OriginalFilename, InternalName | o nome do `.exe` publicado (`Vendas.exe`) |
 
@@ -47,6 +47,23 @@ que sai dela), o iOS, o `.deb`, o `.rpm` e o AppImage. Não há variável de amb
   já sai com ela.
 - O `Cargo.toml` gerado continua com a `publish.version` (a tag não muda arquivo do projeto).
 
+**Mais de uma série de tags no mesmo repositório.** Num repositório com o cliente e o servidor
+(`Client-v1.0.0.28` e `Server-v3.1.0`), a última tag de qualquer série seria a errada.
+`publish.tag_prefix` ("Prefixo das tags" em Publicar) escolhe a série: a versão sai de
+`git describe --tags --match "<prefixo>*"` e o prefixo é tirado (`Client-v1.0.0.28` →
+`1.0.0.28`). Vazio, como antes: a última tag, sem o `v`.
+
+**O build de desenvolvimento.** Com `publish.dev_version_after_tag` ("-dev fora da tag" em
+Publicar), fora de uma tag limpa (commits depois dela, ou alteração pendente nos arquivos do
+git) a versão sai com o último número + 1 e o sufixo `-dev` no texto: na tag
+`Client-v1.0.0.28` com um commit a mais, `1.0.0.29-dev`, e nos números do `VS_FIXEDFILEINFO`
+`1.0.0.29`, sem o sufixo. Assim o app que se atualiza sozinho e compara a versão instalada com a
+publicada nunca troca o build de desenvolvimento pela 1.0.0.28. Uma tag com pré-release perde
+a pré-release (`2.0.0-beta.1` → `2.0.1-dev`). Os commits contam no repositório inteiro (um
+commit no servidor também tira o cliente da tag limpa). O build refaz a cada commit; uma
+alteração pendente aparece na próxima compilação que o cargo refizer (a publicação sempre
+confere).
+
 O idioma da tabela segue o `locale` do projeto (português do Brasil, `0416`, ou inglês,
 `0409`). O `aylis-build` grava esses dados no mesmo arquivo de recursos do ícone, sem precisar
 do `rc.exe`. Os instaladores do NSIS e do Inno Setup já levavam os mesmos campos.
@@ -54,6 +71,56 @@ do `rc.exe`. Os instaladores do NSIS e do Inno Setup já levavam os mesmos campo
 Preencha ao menos o **fabricante** (`publish.publisher`) com o nome da empresa: é ele que
 aparece no SmartScreen e no aviso do Windows ao instalar, e deve ser o mesmo nome do
 certificado.
+
+## O app que se atualiza trocando só o `.exe`
+
+Um app que se atualiza baixando só o executável (sem instalador) não pode depender de nada
+ao lado dele. Duas opções em Projeto → Opções → Windows cuidam disso.
+
+### O runtime do Visual C++ dentro do executável
+
+Os executáveis do Rust no Windows (e o Skia, em C++) carregam o runtime do Visual C++
+(`VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`, `MSVCP140.dll`), que não vem com o Windows; por
+padrão, a publicação copia essas DLLs ao lado do `.exe`. Com `publish.windows.static_crt`
+("Runtime do Visual C++ dentro do executável"), o runtime vai ligado dentro do `.exe`:
+
+- o Aylis grava no `.cargo/config.toml` **do projeto** (o arquivo que ele já mantém, desta
+  máquina e fora do git) `[target.'cfg(all(windows, target_env = "msvc"))'] rustflags =
+  ["-C", "target-feature=+crt-static"]`, e o cargo de fora (terminal, editor) compila igual.
+  Nunca no `config.toml` global, que vale para todos os projetos. Onde o arquivo não é do Aylis
+  (escrito pelo autor do projeto), as flags vão na linha de comando do cargo;
+- a publicação deixa de copiar as DLLs; o `dumpbin /dependents` do `.exe` não mostra mais o
+  `VCRUNTIME140.dll` nem os `api-ms-win-crt-*` (conferido com um app com Direct2D e WebView);
+- a primeira compilação com a opção refaz as dependências (as flags mudam); as das duas formas
+  convivem na pasta de compilação, e trocar a opção refaz só o executável;
+- **com o Skia** no Windows, o rust-skia não publica o Skia já compilado com o runtime estático,
+  e o `skia-bindings` compila o Skia do código-fonte, o que pede o LLVM (`clang-cl`) e demora
+  muito na primeira vez. Sem o LLVM, a publicação para antes de compilar e diz isso. Com o
+  Direct2D (o padrão no Windows), nada disso.
+
+### O WebView2
+
+O **carregador** do WebView2 já vai dentro do `.exe`: o `webview2-com` liga o
+`WebView2LoaderStatic.lib` no MSVC, e o `.exe` não pede o `WebView2Loader.dll`. O **runtime**
+(o navegador) é do sistema e não cabe no executável. `publish.windows.webview2` escolhe qual:
+
+- `evergreen` (vazio, o padrão): o do Windows (o Windows 11 já traz; no 10, o instalador da
+  Microsoft), atualizado pela própria Microsoft;
+- `fixed`: o runtime de **versão fixa** da Microsoft, na pasta `WebView2` ao lado do executável
+  (a publicação copia; os instaladores do NSIS, do Inno e o `.msi` levam a pasta inteira). Ao
+  criar o primeiro `WebView`, o app aponta para ela pela `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER`
+  (quem já definiu a variável vale). Sem a pasta, o do Windows.
+
+O de versão fixa tem cerca de 420 MB (x64, 158.0.4370.33), **não se atualiza sozinho** (as
+correções de segurança chegam só quando o app publica de novo com a versão nova) e a Microsoft o
+documenta para ser levado junto do app ("Fixed Version distribution mode"), sob os termos de
+licença do runtime aceitos ao baixá-lo. Os cuidados da Microsoft: extrair com o `expand
+<arquivo.cab> -F:* <pasta>` (o Explorer pode trocar a estrutura), não rodar de pasta de rede e,
+no **Windows 10**, a partir da versão 120, dar leitura às contas das apps em contêiner
+(`icacls <pasta> /grant *S-1-15-2-2:(OI)(CI)(RX)` e `*S-1-15-2-1`), o que o instalador do app tem
+de fazer. O pacote de ferramenta `webview2-fixed` (versão fixa e SHA-256 no
+`resources/packages.lock.json`) ainda espera o hash; até lá, a publicação diz como pôr a pasta à
+mão.
 
 ## Assinatura de código
 

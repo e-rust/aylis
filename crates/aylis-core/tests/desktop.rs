@@ -117,6 +117,33 @@ fn the_system_transparency_defaults_to_on_and_counts_the_changes() {
     assert_eq!(ui.system_transparency_version(), 1);
 }
 
+/// A sessão: desbloqueada e conectada onde o sistema não diz; o primeiro valor da plataforma
+/// não é mudança, e cada troca conta uma (o `on_session_change` do `Screen` compara).
+#[test]
+fn the_session_defaults_to_unlocked_and_connected_and_counts_the_changes() {
+    let mut ui = Ui::new();
+    assert!(!ui.session_locked() && ui.session_connected(), "o sistema que não informa");
+    ui.set_system_session(false, true);
+    assert_eq!(ui.system_session_version(), 0, "o primeiro valor não é mudança");
+    ui.set_system_session(true, true);
+    assert!(ui.session_locked());
+    ui.set_system_session(true, true);
+    assert_eq!(ui.system_session_version(), 1, "o mesmo valor de novo não conta");
+    ui.set_system_session(false, false);
+    assert!(!ui.session_locked() && !ui.session_connected());
+    assert_eq!(ui.system_session_version(), 2);
+}
+
+/// Sem a plataforma do desktop (o celular, o navegador, um teste), iniciar com o sistema dá
+/// erro e conta como desligado, e soltar a instância única não faz nada.
+#[test]
+fn the_start_with_login_needs_the_platform() {
+    let mut ui = Ui::new();
+    assert!(!ui.start_with_login());
+    assert!(ui.set_start_with_login(true).is_err());
+    ui.release_single_instance();
+}
+
 #[test]
 fn the_monitor_capture_needs_the_project_option() {
     let (mut ui, _) = ui_with(FakeDesktop { cursor: None, form: None, transparency: None });

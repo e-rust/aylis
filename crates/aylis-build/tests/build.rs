@@ -283,3 +283,57 @@ fn the_version_comes_from_the_latest_git_tag() {
     assert_eq!(git_tag(&dir), Err(GitTagError::Invalid("release-final".into())));
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// Duas séries de tags no mesmo repositório (`Client-v*` e `Server-v*`): o prefixo escolhe a
+/// série e sai da versão, o `Server-v*` mais novo não é pego, e com `dev_after_tag` o build
+/// fora de uma tag limpa (commit depois dela, ou alteração pendente) sai com o número seguinte
+/// e `-dev`, com os números do `.exe` sem o sufixo.
+#[test]
+fn the_version_comes_from_the_tag_series_and_marks_development_builds() {
+    if std::process::Command::new("git").arg("--version").output().is_err() {
+        eprintln!("sem o git: pulado");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!("aylis_build_tag_series_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    assert!(git(&dir, &["init", "-q"]));
+    std::fs::write(dir.join("a.txt"), "1").unwrap();
+    assert!(git(&dir, &["add", "a.txt"]));
+    assert!(git(&dir, &["commit", "-q", "-m", "um"]));
+    let client = TagSeries { prefix: "Client-v".into(), dev_after_tag: false };
+    let dev = TagSeries { prefix: "Client-v".into(), dev_after_tag: true };
+    assert_eq!(git_version(&dir, &client), Err(GitTagError::NoTag));
+    assert!(git(&dir, &["tag", "Client-v1.0.0.28"]));
+    std::fs::write(dir.join("a.txt"), "2").unwrap();
+    assert!(git(&dir, &["commit", "-q", "-am", "dois"]));
+    assert!(git(&dir, &["tag", "-a", "Server-v3.1.0", "-m", "servidor"]));
+    // Sem prefixo, a última de qualquer série (como antes): a do servidor, que não é versão.
+    assert_eq!(git_tag(&dir), Err(GitTagError::Invalid("Server-v3.1.0".into())));
+    // Com o prefixo, a do cliente, mesmo com a do servidor mais nova.
+    assert_eq!(git_version(&dir, &client), Ok("1.0.0.28".to_string()));
+    // Um commit depois da tag: o número seguinte com `-dev`.
+    assert_eq!(git_version(&dir, &dev), Ok("1.0.0.29-dev".to_string()));
+    // Na tag, limpa: a própria versão; com alteração pendente, `-dev` de novo.
+    assert!(git(&dir, &["tag", "Client-v1.0.0.29"]));
+    assert_eq!(git_version(&dir, &dev), Ok("1.0.0.29".to_string()));
+    std::fs::write(dir.join("a.txt"), "3").unwrap();
+    assert_eq!(git_version(&dir, &dev), Ok("1.0.0.30-dev".to_string()));
+    // O build: o `.aylisproj` embutido e os dados de versão, com o produto separado do nome do
+    // `.exe`.
+    let project = dir.join("App.aylisproj");
+    std::fs::write(
+        &project,
+        r#"{"aylis_project": 1, "name": "App", "publish": {"version": "1.0.0", "version_from_git_tag": true, "tag_prefix": "Client-v", "dev_version_after_tag": true, "app_name": "ClienteBandeja", "product_name": "Cliente da Bandeja"}}"#,
+    )
+    .unwrap();
+    let tagged = tagged_project(&project).expect("a versão da tag");
+    assert_eq!(tagged["publish"]["version"], "1.0.0.30-dev");
+    let info = VersionInfo::of_value(&tagged);
+    assert_eq!((info.version.as_str(), info.product.as_str(), info.original_filename.as_str()), ("1.0.0.30-dev", "Cliente da Bandeja", "ClienteBandeja.exe"));
+    assert_eq!(version_numbers(&info.version), [1, 0, 0, 30], "os números do .exe sem o -dev");
+    // O número seguinte com pré-release e com três partes.
+    assert_eq!(next_dev_version("2.0.0-beta.1"), "2.0.1-dev");
+    assert_eq!(next_dev_version("1.4.0"), "1.4.1-dev");
+    let _ = std::fs::remove_dir_all(&dir);
+}

@@ -722,3 +722,47 @@ pub fn decorate_line(canvas: &mut dyn Canvas, font: &FontSpec, color: Color, x: 
         canvas.draw_line(PointF::new(x, y), PointF::new(x + width, y), &stroke);
     }
 }
+
+/// A suavização do texto no app inteiro (o `text_antialias` do `.aylisproj`, que o projeto
+/// aplica ao abrir). O padrão, `Grayscale`, sai igual nos três renderizadores; `ClearType`
+/// usa o subpixel onde há (Direct2D e Skia) e só onde o destino é opaco (a janela com fundo
+/// sólido): nas camadas transparentes, na janela transparente e no navegador, que não faz
+/// subpixel, o texto continua em cinza. É uma diferença aceita entre os renderizadores, por
+/// escolha do app.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum TextAntialias {
+    #[default]
+    Grayscale,
+    ClearType,
+}
+
+impl TextAntialias {
+    /// O nome gravado no projeto (`grayscale`, `cleartype`).
+    pub fn name(self) -> &'static str {
+        match self {
+            TextAntialias::Grayscale => "grayscale",
+            TextAntialias::ClearType => "cleartype",
+        }
+    }
+
+    /// Pelo nome; outro qualquer: `None`.
+    pub fn parse(name: &str) -> Option<TextAntialias> {
+        match name {
+            "grayscale" => Some(TextAntialias::Grayscale),
+            "cleartype" => Some(TextAntialias::ClearType),
+            _ => None,
+        }
+    }
+}
+
+static TEXT_ANTIALIAS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Troca a suavização do texto do app inteiro (vale na próxima pintura).
+pub fn set_text_antialias(mode: TextAntialias) {
+    TEXT_ANTIALIAS.store(mode == TextAntialias::ClearType, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// A suavização do texto que vale agora ([`set_text_antialias`]).
+pub fn text_antialias() -> TextAntialias {
+    if TEXT_ANTIALIAS.load(std::sync::atomic::Ordering::Relaxed) { TextAntialias::ClearType } else { TextAntialias::Grayscale }
+}

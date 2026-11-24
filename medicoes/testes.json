@@ -1,9 +1,9 @@
 {
   "_": "aylis-tool test-all: o resultado de cada alvo de teste do workspace (sem os tempos: duas rodadas boas dão o mesmo arquivo).",
   "summary": {
-    "targets": 356,
+    "targets": 360,
     "failed": 0,
-    "tests": 1780
+    "tests": 1800
   },
   "targets": {
     "abas/arrastar": {
@@ -80,7 +80,7 @@
     },
     "aylis-build/build": {
       "status": "ok",
-      "passed": 10,
+      "passed": 11,
       "failed": 0,
       "ignored": 0
     },
@@ -260,7 +260,7 @@
     },
     "aylis-controls/desktop": {
       "status": "ok",
-      "passed": 6,
+      "passed": 8,
       "failed": 0,
       "ignored": 0
     },
@@ -386,7 +386,7 @@
     },
     "aylis-controls/menu_items": {
       "status": "ok",
-      "passed": 3,
+      "passed": 4,
       "failed": 0,
       "ignored": 0
     },
@@ -518,7 +518,7 @@
     },
     "aylis-controls/reveal_highlight": {
       "status": "ok",
-      "passed": 2,
+      "passed": 4,
       "failed": 0,
       "ignored": 0
     },
@@ -680,7 +680,7 @@
     },
     "aylis-controls/tray": {
       "status": "ok",
-      "passed": 1,
+      "passed": 4,
       "failed": 0,
       "ignored": 0
     },
@@ -782,7 +782,7 @@
     },
     "aylis-core/desktop": {
       "status": "ok",
-      "passed": 7,
+      "passed": 9,
       "failed": 0,
       "ignored": 0
     },
@@ -969,6 +969,12 @@
     "aylis-d2d/text_and_layers": {
       "status": "ok",
       "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    "aylis-d2d/text_antialias": {
+      "status": "ok",
+      "passed": 1,
       "failed": 0,
       "ignored": 0
     },
@@ -1209,6 +1215,12 @@
     "aylis-ide-web/lib": {
       "status": "ok",
       "passed": 0,
+      "failed": 0,
+      "ignored": 0
+    },
+    "aylis-ide/agent_editing": {
+      "status": "ok",
+      "passed": 4,
       "failed": 0,
       "ignored": 0
     },
@@ -1490,7 +1502,7 @@
     },
     "aylis-json/theme_icon_and_scroll_bar": {
       "status": "ok",
-      "passed": 3,
+      "passed": 4,
       "failed": 0,
       "ignored": 0
     },
@@ -1776,6 +1788,12 @@
       "failed": 0,
       "ignored": 0
     },
+    "aylis-skia/text_antialias": {
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
     "aylis-tools/apps": {
       "status": "ok",
       "passed": 2,
@@ -1808,7 +1826,7 @@
     },
     "aylis-tools/lib": {
       "status": "ok",
-      "passed": 188,
+      "passed": 189,
       "failed": 0,
       "ignored": 1
     },
@@ -1819,6 +1837,12 @@
       "ignored": 2
     },
     "aylis-tools/prelude_names": {
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "aylis-tools/static_crt": {
       "status": "ok",
       "passed": 1,
       "failed": 0,

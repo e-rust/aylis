@@ -297,7 +297,7 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
         state.borrow_mut().status = "Pare o programa em execução antes de publicar (Ctrl+F2)".into();
         return;
     }
-    let d = new_dialog(ui, "Publicar", 640.0, 740.0);
+    let d = new_dialog(ui, "Publicar", 640.0, 812.0);
     let _ = ui.set_name(d.form, "frmPublicar");
     let names: Vec<&str> = Target::ALL.iter().map(|t| t.name()).collect();
     let line = field(ui, d.body, "Plataforma");
@@ -313,6 +313,20 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
         let _ = ui.set_prop(from_tag, "checked", true);
     }
     let version = edit(ui, line, project.version());
+    // A série das tags (`publish.tag_prefix`, num repositório com `Client-v*` e `Server-v*`) e
+    // o número seguinte com `-dev` fora de uma tag limpa (`publish.dev_version_after_tag`).
+    let line = field(ui, d.body, "Prefixo das tags");
+    let dev_after_tag = ui.add(CheckBox::new("-dev fora da tag"), line);
+    ui.control_mut(dev_after_tag).unwrap().set_align(Align::Right).set_width(190.0).set_margins([8.0, 0.0, 0.0, 0.0]);
+    let _ = ui.set_prop(dev_after_tag, "hint", "Com commits depois da tag ou alteração pendente: o último número + 1 e -dev (1.0.0.29-dev)");
+    if project.publish.dev_version_after_tag {
+        let _ = ui.set_prop(dev_after_tag, "checked", true);
+    }
+    let tag_prefix = edit(ui, line, &project.publish.tag_prefix);
+    let _ = ui.set_prop(tag_prefix, "placeholder", "Client-v; vazio: a última tag, sem o v");
+    let line = field(ui, d.body, "Produto");
+    let product_name = edit(ui, line, &project.publish.product_name);
+    let _ = ui.set_prop(product_name, "placeholder", "nos detalhes do executável; vazio: o nome do aplicativo");
     let line = field(ui, d.body, "Descrição");
     let description = edit(ui, line, &project.publish.description);
     let _ = ui.set_prop(description, "placeholder", "nos detalhes do executável; vazio: o nome do aplicativo");
@@ -408,6 +422,9 @@ pub fn publish(ui: &mut Ui, state: &Shared, ids: &Ids) {
             p.publish.app_name = Some(text_of(ui, app_name)).filter(|n| n != &p.name).unwrap_or_default();
             p.publish.version = text_of(ui, version);
             p.publish.version_from_git_tag = matches!(ui.get_prop(from_tag, "checked"), Ok(aylis_core::PropValue::Bool(true)));
+            p.publish.tag_prefix = text_of(ui, tag_prefix).trim().to_string();
+            p.publish.dev_version_after_tag = matches!(ui.get_prop(dev_after_tag, "checked"), Ok(aylis_core::PropValue::Bool(true)));
+            p.publish.product_name = text_of(ui, product_name).trim().to_string();
             p.publish.description = text_of(ui, description);
             p.publish.copyright = text_of(ui, copyright);
             p.publish.identifier = Some(text_of(ui, identifier)).filter(|i| *i != p.identifier()).unwrap_or_default();

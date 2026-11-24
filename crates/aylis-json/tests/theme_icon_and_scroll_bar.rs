@@ -53,3 +53,15 @@ fn the_new_tokens_are_saved_back() {
     assert_eq!(back.scroll_bar(None, true), theme.scroll_bar(None, true));
     assert!(aylis_json::load_theme(r#"{ "styles": { "Edit": { "icon_size": "grande" } } }"#).is_err(), "o tamanho é número");
 }
+
+#[test]
+fn the_menu_sizes_are_read_and_saved_back() {
+    let json = r#"{ "styles": { "PopupMenu": { "width": 260, "item_height": 28, "separator_height": 7, "fill": "surface" } } }"#;
+    let theme = aylis_json::load_theme(json).unwrap();
+    let m = theme.menu_metrics();
+    assert_eq!((m.width, m.item_height, m.separator_height), (Some(260.0), Some(28.0), Some(7.0)));
+    let back = aylis_json::load_theme(&aylis_json::save_theme(&theme)).unwrap();
+    assert_eq!(back.menu_metrics(), m);
+    assert_eq!(Theme::light().menu_metrics(), aylis_core::MenuMetrics::default(), "sem os tokens: os de cada menu");
+    assert!(aylis_json::load_theme(r#"{ "styles": { "PopupMenu": { "item_height": "alto" } } }"#).is_err(), "a altura é número");
+}

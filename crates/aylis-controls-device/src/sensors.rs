@@ -1015,10 +1015,16 @@ impl aylis_core::Timed for Gamepad {
 /// "Efeitos de transparência"; `true` onde o sistema não diz) e o `on_transparency_change`
 /// quando mudam, e `capture_monitor(i, max_width)`, que tira a imagem do monitor (só com o
 /// `allow_screen_capture` do projeto) e responde no `on_capture`.
+///
+/// A sessão do usuário: `session_locked()` (bloqueada: Win+L, a proteção de tela com senha) e
+/// `session_connected()` (`false` com a sessão remota desconectada ou deixada de lado pela troca
+/// de usuário), e o `on_session_change` quando um dos dois muda. Só o Windows informa; nos
+/// outros sistemas, desbloqueada, conectada e sem o evento.
 #[derive(Default)]
 pub struct Screen {
     version: Option<u64>,
     transparency: Option<u64>,
+    session: Option<u64>,
 }
 
 // Sem propriedades, só os métodos: o `get_prop` gerado não tem casos.
@@ -1038,7 +1044,7 @@ impl Component for Screen {
 
     properties! {
         ;
-        events: on_change: (), on_transparency_change: bool, on_capture: String
+        events: on_change: (), on_transparency_change: bool, on_capture: String, on_session_change: ()
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
@@ -1046,6 +1052,8 @@ impl Component for Screen {
             MethodInfo::new("cursor_position", &[], Some(PropKind::Record(&aylis_core::monitors::CURSOR_POSITION_RECORD))),
             MethodInfo::new("form_at", &[PropKind::Int, PropKind::Int], Some(PropKind::Component)).params(&["x", "y"]),
             MethodInfo::new("system_transparency", &[], Some(PropKind::Bool)),
+            MethodInfo::new("session_locked", &[], Some(PropKind::Bool)),
+            MethodInfo::new("session_connected", &[], Some(PropKind::Bool)),
             MethodInfo::new("capture_monitor", &[PropKind::Int, PropKind::Int], None).params(&["index", "max_width"]),
             MethodInfo::new("count", &[], Some(PropKind::Int)),
             MethodInfo::new("primary", &[], Some(PropKind::Int)),
@@ -1072,6 +1080,8 @@ impl Component for Screen {
                 })
             }
             "system_transparency" => PropValue::Bool(ctx.ui.system_transparency()),
+            "session_locked" => PropValue::Bool(ctx.ui.session_locked()),
+            "session_connected" => PropValue::Bool(ctx.ui.session_connected()),
             // A resposta no `on_capture`: `{"monitor", "width", "height", "rgba"}` (os pixels em
             // base64) ou `{"monitor", "error"}`.
             "capture_monitor" => {
@@ -1129,6 +1139,13 @@ impl aylis_core::Timed for Screen {
             ctx.fire("on_transparency_change", EventArgs::Value(PropValue::Bool(on)));
         }
         self.transparency = Some(now);
+        // A sessão bloqueou, desbloqueou, conectou ou desconectou: o app lê o estado novo no
+        // `session_locked()` e no `session_connected()`.
+        let now = ctx.ui.system_session_version();
+        if self.session.is_some_and(|v| v != now) {
+            ctx.fire("on_session_change", EventArgs::None);
+        }
+        self.session = Some(now);
     }
 }
 

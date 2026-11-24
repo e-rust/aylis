@@ -1465,20 +1465,27 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             }
             let all = args.get("all").and_then(Value::as_bool).unwrap_or(false);
             let (count, line) = crate::codewindow::edit_text(ui, &file, arg(args, "old"), arg(args, "new"), all)?;
-            let saved = args.get("save").and_then(Value::as_bool).unwrap_or(false) && crate::codewindow::save_file(ui, &file);
+            let saved = if args.get("save").and_then(Value::as_bool).unwrap_or(false) {
+                crate::codewindow::save_file(ui, &file).map_err(|e| format!("a troca foi feita no editor ({count} vez(es), linha {line}), mas {e}"))?
+            } else {
+                false
+            };
             Ok(json!({ "file": file.display().to_string(), "replaced": count, "line": line, "saved": saved }))
         }
         "editor_type" => {
             let form = crate::codewindow::code_form(ui).ok_or("a janela de código não está aberta (open_code)")?;
-            ui.text_input(form, arg(args, "text"));
+            // O agente digita mesmo no fonte travado para o usuário (a IDE aberta por ele).
+            crate::codewindow::as_agent(ui, |ui| ui.text_input(form, arg(args, "text")));
             Ok(crate::codewindow::editor_state(ui))
         }
         "editor_key" => {
             let form = crate::codewindow::code_form(ui).ok_or("a janela de código não está aberta (open_code)")?;
             let (modifiers, key) = aylis_core::parse_shortcut(arg(args, "key")).ok_or("tecla inválida")?;
             let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
-            ui.key_down(form, event);
-            ui.key_up(form, event);
+            crate::codewindow::as_agent(ui, |ui| {
+                ui.key_down(form, event);
+                ui.key_up(form, event);
+            });
             Ok(crate::codewindow::editor_state(ui))
         }
         "editor_hover" => {

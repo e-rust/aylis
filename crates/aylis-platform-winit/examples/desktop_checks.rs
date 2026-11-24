@@ -25,6 +25,14 @@
 //!   primeiro é recusado, o segundo abre; aos 3 s o `open_menu` abre por código no mouse;
 //! - `transparency` (item 21): os "Efeitos de transparência" agora e cada mudança (desligue e
 //!   ligue em Configurações → Personalização → Cores).
+//! - `session`: a sessão agora (bloqueada, conectada) e cada mudança (`on_session_change`):
+//!   bloqueie com Win+L e volte, ou feche a janela do RDP sem sair e reconecte;
+//! - `quiet [nome]`: a instância única com o nome de trava dado (padrão
+//!   `aylis-desktop-checks-quiet`) e a segunda abertura calada: a segunda sai sem entregar nada
+//!   e sem trazer a primeira; aos 5 s a primeira solta a trava (`release_single_instance`), e
+//!   a próxima abertura passa a ser a primeira;
+//! - `login [on|off]`: liga ou desliga o início com o sistema (`start_with_login`) e escreve o
+//!   estado; sem argumento, só o estado.
 
 use aylis_core::*;
 
@@ -35,6 +43,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("outra instância recebeu os argumentos; esta sai");
         return Ok(());
     }
+    let lock_name = args.get(2).cloned().unwrap_or_else(|| "aylis-desktop-checks-quiet".into());
+    if scenario == "quiet" && !aylis_platform_winit::claim_single_instance_with(SingleInstance::User, "dev.aylis.desktop-checks", &lock_name, SecondInstance::Quiet) {
+        println!("a trava {lock_name} está com outra abertura; esta sai calada");
+        return Ok(());
+    }
+    aylis_platform_winit::set_app_identity("dev.aylis.desktop-checks", "desktop_checks");
     let mut ui = Ui::new();
     aylis_controls::register(&mut ui);
     let form = ui.create("Form", None)?;
@@ -201,6 +215,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "transparency" => {
             say(format!("agora: {}", ui.system_transparency()));
             ui.on(screen, "on_transparency_change", move |ui, _, args| say(format!("on_transparency_change: {args:?} (agora {})", ui.system_transparency())));
+        }
+        "session" => {
+            say(format!("agora: bloqueada {}, conectada {}", ui.session_locked(), ui.session_connected()));
+            ui.on(screen, "on_session_change", move |ui, _, _| say(format!("on_session_change: bloqueada {}, conectada {}", ui.session_locked(), ui.session_connected())));
+        }
+        "quiet" => {
+            say(format!("primeira com a trava {lock_name}; solta em 5 s"));
+            ui.set_timeout(5000, move |ui| {
+                ui.release_single_instance();
+                say("trava solta: a próxima abertura é a primeira".into());
+            });
+        }
+        "login" => {
+            // Com a janela aberta: os serviços da plataforma entram no `run`.
+            let choice = args.get(2).cloned().unwrap_or_default();
+            ui.set_timeout(300, move |ui| {
+                if choice == "on" || choice == "off" {
+                    match ui.set_start_with_login(choice == "on") {
+                        Ok(()) => say(format!("gravado: {choice}")),
+                        Err(e) => say(format!("erro: {e}")),
+                    }
+                }
+                say(format!("start_with_login: {}", ui.start_with_login()));
+            });
         }
         other => say(format!("cenário desconhecido: {other}")),
     }

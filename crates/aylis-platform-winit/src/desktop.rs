@@ -1,6 +1,7 @@
 //! A área de trabalho fora das janelas do app ([`aylis_core::DesktopService`]): o mouse na tela,
-//! o form sob um ponto, os "Efeitos de transparência", a imagem de um monitor e o Caps Lock e
-//! o Num Lock.
+//! o form sob um ponto, os "Efeitos de transparência", a imagem de um monitor, o Caps Lock e
+//! o Num Lock, a sessão do usuário (bloqueada, conectada; só o Windows), o início com o sistema
+//! (`login.rs`) e a soltura da instância única.
 //!
 //! - **Windows:** tudo (`GetCursorPos`, a ordem real das janelas, o registro do tema, o GDI).
 //! - **macOS:** o mouse e o Caps Lock pelo `NSEvent`; a captura ainda não (pede a permissão de
@@ -64,6 +65,25 @@ impl DesktopService for Desktop {
         if let Err(e) = spawned {
             aylis_core::stderr_line!("aylis: a captura da tela não começou ({e})");
         }
+    }
+
+    fn session_state(&self) -> Option<(bool, bool)> {
+        #[cfg(windows)]
+        return crate::win32::session_state();
+        #[allow(unreachable_code)]
+        None
+    }
+
+    fn start_with_login(&self) -> bool {
+        crate::login::start_with_login()
+    }
+
+    fn set_start_with_login(&mut self, on: bool) -> Result<(), String> {
+        crate::login::set_start_with_login(on)
+    }
+
+    fn release_single_instance(&mut self) {
+        crate::single_instance::release_single_instance();
     }
 }
 

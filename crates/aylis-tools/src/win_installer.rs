@@ -334,7 +334,9 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     line(&format!("  SetOutPath \"{exe_dir}\""));
     line(&format!("  File {}", nsis_str(&p.exe.display().to_string())));
     for f in &p.extra {
-        line(&format!("  File {}", nsis_str(&f.display().to_string())));
+        // Uma pasta (o runtime de versão fixa do WebView2) vai inteira, com o nome dela.
+        let recursive = if f.is_dir() { "/r " } else { "" };
+        line(&format!("  File {recursive}{}", nsis_str(&f.display().to_string())));
     }
     line("  SetOutPath \"$INSTDIR\"");
     line("  WriteUninstaller \"$INSTDIR\\uninstall.exe\"");
@@ -435,7 +437,8 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
     line(&format!("  Delete \"{exe_target}\""));
     for f in &p.extra {
         if let Some(name) = f.file_name() {
-            line(&format!("  Delete \"{exe_dir}\\{}\"", name.to_string_lossy()));
+            let remove = if f.is_dir() { "RMDir /r" } else { "Delete" };
+            line(&format!("  {remove} \"{exe_dir}\\{}\"", name.to_string_lossy()));
         }
     }
     line(&format!("  RMDir \"{exe_dir}\""));
@@ -553,7 +556,15 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     line("[Files]");
     line(&format!("Source: {}; DestDir: \"{exe_dir}\"; Flags: ignoreversion", inno_str(&p.exe.display().to_string())));
     for f in &p.extra {
-        line(&format!("Source: {}; DestDir: \"{exe_dir}\"; Flags: ignoreversion", inno_str(&f.display().to_string())));
+        match f.file_name().filter(|_| f.is_dir()) {
+            // Uma pasta (o runtime de versão fixa do WebView2) vai inteira, com o nome dela.
+            Some(name) => line(&format!(
+                "Source: {}; DestDir: \"{exe_dir}\\{}\"; Flags: ignoreversion recursesubdirs createallsubdirs",
+                inno_str(&f.join("*").display().to_string()),
+                name.to_string_lossy()
+            )),
+            None => line(&format!("Source: {}; DestDir: \"{exe_dir}\"; Flags: ignoreversion", inno_str(&f.display().to_string()))),
+        }
     }
     line("");
     line("[Icons]");

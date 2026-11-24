@@ -488,6 +488,11 @@ pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
     let about = label(ui, mcp, "Só programas com o token (guardado nesta máquina, fora dos projetos) usam o servidor. Os clientes conectam pelo aylis-tool mcp, que lê o token sozinho.", Align::Top, 44.0);
     let _ = ui.set_prop(about, "wrap", true);
     muted(ui, about);
+    // A IDE aberta por um agente (a ponte do MCP): os fontes abrem travados para o teclado.
+    let agent_lock = ui.add(CheckBox::new("Abrir os fontes só leitura quando aberta por um agente"), mcp);
+    ui.control_mut(agent_lock).unwrap().set_align(Align::Top).set_height(30.0);
+    let _ = ui.set_prop(agent_lock, "checked", crate::actions::config_flag(crate::codewindow::AGENT_READ_ONLY_OPTION, true));
+    let _ = ui.set_prop(agent_lock, "hint", "Evita mexer no que o agente está editando; o \"Liberar edição\" do editor destrava o fonte");
     let buttons = ui.add(Layout::default(), mcp);
     ui.control_mut(buttons).unwrap().set_align(Align::Top).set_height(34.0).set_margins([0.0, 8.0, 0.0, 0.0]);
     let code = ui.add(Button::new("Configurar o Claude Code"), buttons);
@@ -545,7 +550,7 @@ pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
             if !errors.is_empty() {
                 state2.borrow_mut().status = format!("⚠ {}", errors.join("; "));
             }
-            apply(ui, &state2, &ids2, &fields, [record, mask, splash], &build, mcp_on, port);
+            apply(ui, &state2, &ids2, &fields, [record, mask, splash, agent_lock], &build, mcp_on, port);
         }
         state2.borrow_mut().sources_view = None;
         ui.free(form);
@@ -553,11 +558,11 @@ pub fn open_at(ui: &mut Ui, state: &Shared, ids: &Ids, tab: &str) {
     });
 }
 
-/// O OK: grava tudo. `general` são as caixas da aba Geral: gravar o uso, mascarar o editor e
-/// a tela de abertura.
+/// O OK: grava tudo. `general` são as caixas da aba Geral (gravar o uso, mascarar o editor e
+/// a tela de abertura) e a dos fontes só leitura com a IDE aberta por um agente (aba MCP).
 #[allow(clippy::too_many_arguments)]
-fn apply(ui: &mut Ui, state: &Shared, ids: &Ids, fields: &[(&'static str, ComponentId, ComponentId)], general: [ComponentId; 3], build: &BuildFolder, mcp_on: ComponentId, port: ComponentId) {
-    let [record, mask, splash] = general;
+fn apply(ui: &mut Ui, state: &Shared, ids: &Ids, fields: &[(&'static str, ComponentId, ComponentId)], general: [ComponentId; 4], build: &BuildFolder, mcp_on: ComponentId, port: ComponentId) {
+    let [record, mask, splash, agent_lock] = general;
     let checked = |ui: &Ui, id| ui.get_prop(id, "checked").ok().and_then(|v| v.to_bool().ok()).unwrap_or(false);
     let mut errors = Vec::new();
     for (key, edit, _) in fields {
@@ -575,6 +580,8 @@ fn apply(ui: &mut Ui, state: &Shared, ids: &Ids, fields: &[(&'static str, Compon
     crate::actions::update_config("mask_editor_text", serde_json::Value::from(masked));
     crate::codewindow::set_sensitive(ui, masked);
     crate::splash::set_enabled(checked(ui, splash));
+    // Vale para os fontes que abrirem daqui em diante (os abertos ficam como estão).
+    crate::actions::update_config(crate::codewindow::AGENT_READ_ONLY_OPTION, serde_json::Value::from(checked(ui, agent_lock)));
     let port: u16 = crate::dialogs::text_of(ui, port).parse().unwrap_or(aylis_tools::mcp::DEFAULT_PORT);
     let old_port = aylis_tools::mcp::access().map(|a| a.port).unwrap_or(aylis_tools::mcp::DEFAULT_PORT);
     if port != old_port {

@@ -189,6 +189,16 @@ fn run(args: Args) -> Result<(), Error> {
     // canal cifrado com a IDE (inspetor, rastro de eventos).
     let start = if args.dev { aylis_remote::script::start_line().ok_or("--dev: o stdin não trouxe a linha de início")? } else { Value::Null };
     let script = aylis_remote::script::from_start(&start);
+    // O app com janela, como o de Rust: quem ele é (o início com o sistema) e uma instância só
+    // (`single_instance` do projeto). A segunda abertura sai antes de iniciar o backend.
+    if let Some(p) = &project {
+        aylis_platform_winit::set_app_identity(&p.linux_package_id(), p.app_name());
+        let mode = aylis_core::SingleInstance::parse(&p.single_instance);
+        let second = aylis_core::SecondInstance::parse(&p.single_instance_second);
+        if script.is_none() && args.png.is_none() && !aylis_platform_winit::claim_single_instance_with(mode, &p.linux_package_id(), &p.single_instance_name, second) {
+            return Ok(());
+        }
+    }
     if args.dev && script.is_none() {
         if let Some(p) = &project {
             aylis_project::hot_reload(&mut ui, p);

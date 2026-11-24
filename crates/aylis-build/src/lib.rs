@@ -814,11 +814,13 @@ pub fn tagged_project(project: &Path) -> Option<serde_json::Value> {
         return None;
     }
     let dir = project.parent().unwrap_or(Path::new("."));
-    // Refaz o build quando uma tag nasce ou o HEAD muda de ramo.
-    for watched in git_watched(dir) {
+    let series = TagSeries::of_value(&value);
+    // Refaz o build quando uma tag nasce ou o HEAD muda de ramo (com o `-dev`, também a cada
+    // commit).
+    for watched in git_watched(dir, series.dev_after_tag) {
         println!("cargo:rerun-if-changed={}", watched.display());
     }
-    match git_tag(dir) {
+    match git_version(dir, &series) {
         Ok(version) => {
             value["publish"]["version"] = serde_json::Value::String(version);
             Some(value)
@@ -854,26 +856,91 @@ impl std::fmt::Display for GitTagError {
     }
 }
 
+/// De que tags sai a versão: a série (`publish.tag_prefix`) e o número de desenvolvimento fora
+/// de uma tag limpa (`publish.dev_version_after_tag`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TagSeries {
+    /// O começo das tags da série (`Client-v`, num repositório que também tem `Server-v*`),
+    /// tirado da versão. Vazio: qualquer tag, sem o `v` do começo.
+    pub prefix: String,
+    /// Fora de uma tag limpa (commits depois dela, ou alteração pendente), o número seguinte
+    /// com `-dev` ([`next_dev_version`]).
+    pub dev_after_tag: bool,
+}
+
+impl TagSeries {
+    /// Do JSON do `.aylisproj` (`publish.tag_prefix` e `publish.dev_version_after_tag`).
+    pub fn of_value(value: &serde_json::Value) -> TagSeries {
+        TagSeries {
+            prefix: value["publish"]["tag_prefix"].as_str().unwrap_or("").trim().to_string(),
+            dev_after_tag: value["publish"]["dev_version_after_tag"] == serde_json::Value::Bool(true),
+        }
+    }
+}
+
 /// A versão da última tag do git alcançável do commit atual (`git describe --tags --abbrev=0`),
 /// sem o `v` do começo (`v1.4.0` → `1.4.0`). O `git` roda como processo, com os argumentos
 /// separados (nunca por shell).
 pub fn git_tag(dir: &Path) -> Result<String, GitTagError> {
-    let output = git(dir, &["describe", "--tags", "--abbrev=0"]).map_err(|_| GitTagError::NoGit)?;
+    git_version(dir, &TagSeries::default())
+}
+
+/// A versão da última tag da série alcançável do commit atual (`git describe --tags --long
+/// --match "<prefixo>*"`), sem o prefixo (`Client-v1.0.0.28` → `1.0.0.28`; sem prefixo, sem o
+/// `v` do começo). Com `dev_after_tag`, fora de uma tag limpa (commits depois dela, ou
+/// alteração pendente nos arquivos do git), o número seguinte com `-dev`: o build de
+/// desenvolvimento nunca se passa pela versão publicada.
+pub fn git_version(dir: &Path, series: &TagSeries) -> Result<String, GitTagError> {
+    let pattern = format!("{}*", series.prefix);
+    let mut args = vec!["describe", "--tags", "--long"];
+    if !series.prefix.is_empty() {
+        args.extend(["--match", pattern.as_str()]);
+    }
+    if series.dev_after_tag {
+        args.push("--dirty");
+    }
+    let output = git(dir, &args).map_err(|_| GitTagError::NoGit)?;
     if !output.status.success() {
         // O `rev-parse` separa "sem repositório" de "sem tag" sem ler o texto do git (que muda
         // com o idioma).
         let inside = git(dir, &["rev-parse", "--is-inside-work-tree"]).is_ok_and(|o| o.status.success());
         return Err(if inside { GitTagError::NoTag } else { GitTagError::NotRepository });
     }
-    let tag = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let version = tag.strip_prefix(['v', 'V']).unwrap_or(&tag);
-    if is_valid_version(version) { Ok(version.to_string()) } else { Err(GitTagError::Invalid(tag)) }
+    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    // `<tag>-<commits depois dela>-g<hash>[-dirty]`: a tag pode ter `-` (`v2.0.0-beta.1`), então
+    // se corta pelo fim.
+    let (described, dirty) = match text.strip_suffix("-dirty") {
+        Some(rest) => (rest, true),
+        None => (text.as_str(), false),
+    };
+    let mut parts = described.rsplitn(3, '-');
+    let (_hash, after, tag) = (parts.next(), parts.next().and_then(|n| n.parse::<u32>().ok()), parts.next());
+    let (Some(after), Some(tag)) = (after, tag) else { return Err(GitTagError::Invalid(text)) };
+    let version = match series.prefix.as_str() {
+        "" => tag.strip_prefix(['v', 'V']).unwrap_or(tag),
+        prefix => tag.strip_prefix(prefix).unwrap_or(tag),
+    };
+    if !is_valid_version(version) {
+        return Err(GitTagError::Invalid(tag.to_string()));
+    }
+    Ok(if series.dev_after_tag && (after > 0 || dirty) { next_dev_version(version) } else { version.to_string() })
+}
+
+/// O número de desenvolvimento depois de uma versão: o último número da parte numérica + 1, sem
+/// a pré-release, e `-dev` no texto (`1.0.0.28` → `1.0.0.29-dev`, `2.0.0-beta.1` →
+/// `2.0.1-dev`). Os dados de versão do `.exe` levam só os números ([`version_numbers`]).
+pub fn next_dev_version(version: &str) -> String {
+    let mut parts: Vec<u32> = version_core(version).split('.').map(|p| p.parse().unwrap_or(0)).collect();
+    if let Some(last) = parts.last_mut() {
+        *last = (*last + 1).min(65535);
+    }
+    format!("{}-dev", parts.iter().map(u32::to_string).collect::<Vec<_>>().join("."))
 }
 
 /// Os arquivos do git que mudam quando a última tag pode mudar: o `HEAD` (troca de ramo), as
-/// tags soltas e as empacotadas. Só os que existem (o cargo refaria o build sempre por um que
-/// não existe).
-fn git_watched(dir: &Path) -> Vec<PathBuf> {
+/// tags soltas e as empacotadas; com `commits`, o registro do `HEAD` (cada commit, para o
+/// `-dev`). Só os que existem (o cargo refaria o build sempre por um que não existe).
+fn git_watched(dir: &Path, commits: bool) -> Vec<PathBuf> {
     let Ok(output) = git(dir, &["rev-parse", "--absolute-git-dir", "--git-common-dir"]) else { return Vec::new() };
     if !output.status.success() {
         return Vec::new();
@@ -881,7 +948,8 @@ fn git_watched(dir: &Path) -> Vec<PathBuf> {
     let text = String::from_utf8_lossy(&output.stdout).to_string();
     let mut lines = text.lines().map(|l| dir.join(l.trim()));
     let (Some(git_dir), Some(common)) = (lines.next(), lines.next()) else { return Vec::new() };
-    [git_dir.join("HEAD"), common.join("refs").join("tags"), common.join("packed-refs")].into_iter().filter(|p| p.exists()).collect()
+    let log = commits.then(|| git_dir.join("logs").join("HEAD"));
+    [git_dir.join("HEAD"), common.join("refs").join("tags"), common.join("packed-refs")].into_iter().chain(log).filter(|p| p.exists()).collect()
 }
 
 /// O `git` na pasta, sem janela de console no Windows (a IDE chama pela publicação).
@@ -1209,12 +1277,14 @@ impl VersionInfo {
         // A descrição e os direitos do projeto; sem eles, o nome do app e "© empresa".
         let description = text(&value["publish"]["description"]).unwrap_or_else(|| app.clone());
         let copyright = text(&value["publish"]["copyright"]).unwrap_or_else(|| format!("© {company}"));
+        // O produto pode ser outro que o nome do `.exe` (`publish.product_name`).
+        let product = text(&value["publish"]["product_name"]).unwrap_or(app);
         VersionInfo {
             copyright,
             company,
             description,
             version,
-            product: app,
+            product,
             original_filename: exe.clone(),
             internal_name: exe,
             language,

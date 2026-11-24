@@ -952,6 +952,20 @@ pub fn build(state: Shared) -> Ide {
                     }
                 })
             },
+            changed_on_disk: {
+                let (state, ids) = (state.clone(), final_ids.clone());
+                Box::new(move |ui| {
+                    // O salvar não gravou por cima do que mudou no disco: confere e pergunta, como
+                    // ao voltar o foco. No meio de uma ação, a próxima conferência pega.
+                    if state.try_borrow_mut().is_err() {
+                        return;
+                    }
+                    let (_, conflicts) = crate::disk::check(ui, &state);
+                    if let Some(ids) = ids.get().copied().filter(|_| !conflicts.is_empty()) {
+                        crate::disk::ask(ui, &state, &ids, conflicts);
+                    }
+                })
+            },
         });
     }
     // Design | Código (o F12 alterna): "Código" mostra o código do form da aba (abre se

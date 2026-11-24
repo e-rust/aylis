@@ -221,6 +221,11 @@ pub struct Project {
     /// Sem ele, esses padrões (`aylis_core::ImageCacheLimits`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_cache: Option<ImageCacheSettings>,
+    /// A suavização do texto (`grayscale`, o padrão, ou `cleartype`): o ClearType usa o
+    /// subpixel no Direct2D e no Skia, só sobre fundo opaco; no navegador, que não tem
+    /// subpixel, fica em cinza (`aylis_core::TextAntialias`).
+    #[serde(default, skip_serializing_if = "TextAntialiasSetting::is_default")]
+    pub text_antialias: TextAntialiasSetting,
     /// Onde fica o executável de desenvolvimento: o Executar
     /// e a depuração compilam, copiam o executável para lá e rodam de lá (ao lado das DLLs
     /// e dos arquivos que o app precisa). Sem ela, roda do `target` do cargo.
@@ -285,6 +290,17 @@ pub struct Project {
     /// (o `on_second_instance` do `ApplicationEvents`) e sai. Só no desktop.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub single_instance: String,
+    /// O nome exato da trava do `single_instance` (vazio: o gerado pelo Aylis). Serve para o
+    /// app conviver com um programa anterior que use a mesma trava: os dois não rodam juntos.
+    /// No Windows é o nome do mutex, como está (com `Global\` vale entre as sessões; sem
+    /// prefixo, só na sessão).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub single_instance_name: String,
+    /// O que a segunda abertura faz (os nomes de [`aylis_core::SecondInstance`]): vazio ou
+    /// `forward` entrega os argumentos à primeira, que vem para a frente; `quiet` sai calada,
+    /// sem entregar nada e sem trazer a primeira.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub single_instance_second: String,
     /// Liga o `ui.capture_monitor` (a imagem de um monitor, com o que os outros programas
     /// mostram): desligado por padrão, por privacidade.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -324,6 +340,32 @@ impl LimitSettings {
             out.push(format!("limits.event_nesting = {} passa do máximo seguro ({}): a pilha pode estourar antes", self.event_nesting, aylis_core::SAFE_EVENT_NESTING));
         }
         out
+    }
+}
+
+/// A suavização do texto (o `text_antialias` do `.aylisproj`); veja
+/// [`aylis_core::TextAntialias`].
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TextAntialiasSetting {
+    /// Em cinza, igual nos três renderizadores.
+    #[default]
+    Grayscale,
+    /// O ClearType (o subpixel) no Direct2D e no Skia, sobre fundo opaco.
+    Cleartype,
+}
+
+impl TextAntialiasSetting {
+    pub fn is_default(&self) -> bool {
+        *self == TextAntialiasSetting::Grayscale
+    }
+
+    /// O valor do núcleo, que os renderizadores leem.
+    pub fn mode(self) -> aylis_core::TextAntialias {
+        match self {
+            TextAntialiasSetting::Grayscale => aylis_core::TextAntialias::Grayscale,
+            TextAntialiasSetting::Cleartype => aylis_core::TextAntialias::ClearType,
+        }
     }
 }
 
@@ -574,6 +616,21 @@ pub struct PublishOptions {
     /// `.rpm`, e o app lê em execução a que foi gravada. Sem git ou sem tag, a publicação para.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub version_from_git_tag: bool,
+    /// Com `version_from_git_tag`: o começo das tags da série do app (`Client-v`, num
+    /// repositório que também tem `Server-v*`), tirado da versão (`Client-v1.0.0.28` →
+    /// `1.0.0.28`). Vazio: a última tag de qualquer série, sem o `v` do começo.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub tag_prefix: String,
+    /// Com `version_from_git_tag`: fora de uma tag limpa (commits depois dela, ou alteração
+    /// pendente), a versão sai com o último número + 1 e `-dev` no texto (`1.0.0.29-dev`; os
+    /// números do `.exe` sem o sufixo), e o build de desenvolvimento nunca se passa pela versão
+    /// publicada.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub dev_version_after_tag: bool,
+    /// O produto nos dados de versão do `.exe` (`ProductName`). Vazio: o nome do aplicativo,
+    /// que segue dando o nome do `.exe`.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub product_name: String,
     /// A descrição nos dados de versão do `.exe` (Propriedades → Detalhes). Vazio: o nome do
     /// aplicativo.
     #[serde(default, skip_serializing_if = "String::is_empty")]
@@ -686,7 +743,33 @@ pub struct WindowsOptions {
     /// máquina (Opções da IDE → Assinatura). O certificado nunca fica no projeto.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub skip_signing: bool,
+    /// O runtime do Visual C++ ligado dentro do `.exe` (`-C target-feature=+crt-static`, no
+    /// `.cargo/config.toml` do projeto): a publicação deixa de copiar o `VCRUNTIME140.dll` e
+    /// os outros, e o app que se atualiza trocando só o `.exe` não depende de nada ao lado.
+    /// Desligado: as DLLs vão ao lado do executável. Muda as flags do compilador, então a
+    /// primeira compilação com ele refaz as dependências.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub static_crt: bool,
+    /// O runtime do WebView2: `evergreen` (vazio, o padrão: o do Windows, atualizado pela
+    /// Microsoft) ou `fixed` (o de versão fixa, na pasta `WebView2` ao lado do executável,
+    /// que o app usa sozinho; ninguém o atualiza além do próprio app). O carregador do
+    /// WebView2 já vai dentro do `.exe` nos dois.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub webview2: String,
 }
+
+/// De onde vem o runtime do WebView2 (`publish.windows.webview2`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WebView2Runtime {
+    /// O do Windows (Evergreen), atualizado pela Microsoft.
+    Evergreen,
+    /// O de versão fixa, na pasta [`WEBVIEW2_FIXED_DIR`] ao lado do executável.
+    Fixed,
+}
+
+/// A pasta, ao lado do executável, do runtime de versão fixa do WebView2: o app aponta o
+/// WebView2 para ela quando ela existe (`WEBVIEW2_BROWSER_EXECUTABLE_FOLDER`).
+pub const WEBVIEW2_FIXED_DIR: &str = "WebView2";
 
 /// O pacote do Linux (Publicar → Linux → instalador). Vazio: o `.deb` com os padrões (o nome
 /// do projeto, a categoria `Utility`, os ícones e o atalho no menu). O relatório de um player
@@ -775,6 +858,14 @@ impl WindowsOptions {
             _ => WindowsInstaller::Msi,
         }
     }
+
+    /// O runtime do WebView2 pedido (desconhecido ou vazio: o do Windows).
+    pub fn webview2_runtime(&self) -> WebView2Runtime {
+        match self.webview2.to_ascii_lowercase().as_str() {
+            "fixed" => WebView2Runtime::Fixed,
+            _ => WebView2Runtime::Evergreen,
+        }
+    }
 }
 
 impl Project {
@@ -842,7 +933,11 @@ impl Project {
         }
         use aylis_build::GitTagError;
         use aylis_core::messages::{t, tf};
-        aylis_build::git_tag(&self.dir()).map_err(|e| match e {
+        let series = aylis_build::TagSeries { prefix: self.publish.tag_prefix.trim().to_string(), dev_after_tag: self.publish.dev_version_after_tag };
+        aylis_build::git_version(&self.dir(), &series).map_err(|e| match e {
+            GitTagError::NoTag if !series.prefix.is_empty() => {
+                tf("O projeto usa a versão das tags {0}*, mas o repositório não tem nenhuma. Crie uma (git tag {0}1.0.0) ou troque o prefixo das tags em Publicar.", &[&series.prefix])
+            }
             GitTagError::NoGit => t("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar."),
             GitTagError::NotRepository => t("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório."),
             GitTagError::NoTag => t("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar."),
@@ -1386,6 +1481,7 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         icons: Vec::new(),
         limits: None,
         image_cache: None,
+        text_antialias: TextAntialiasSetting::Grayscale,
         output: OutputSettings::default(),
         fonts: Default::default(),
         theme_mix: Default::default(),
@@ -1404,6 +1500,8 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         device: String::new(),
         orientation: String::new(),
         single_instance: String::new(),
+        single_instance_name: String::new(),
+        single_instance_second: String::new(),
         allow_screen_capture: false,
         path: dir.join(format!("{name}.{EXTENSION}")),
     };
@@ -2035,6 +2133,7 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
     aylis_core::image_cache::set_limits(image_cache.limits());
     aylis_core::image_cache::set_auto_layers(image_cache.auto_layers);
     aylis_core::image_cache::set_frame_reuse_kb(image_cache.frame_reuse_kb);
+    aylis_core::canvas::set_text_antialias(project.text_antialias.mode());
     if let Some(z) = project.zoom {
         ui.set_zoom(z.value);
         ui.set_zoom_keys(z.keys);

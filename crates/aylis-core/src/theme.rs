@@ -120,8 +120,13 @@ pub struct StyleProps {
     pub icon_size: Option<f32>,
     pub icon_color: Option<ColorRef>,
     pub icon_gap: Option<f32>,
-    /// A largura da barra de rolagem, no estilo `ScrollBar` (ou no `scroll_bar` de um estilo).
+    /// A largura da barra de rolagem, no estilo `ScrollBar` (ou no `scroll_bar` de um estilo);
+    /// no estilo `PopupMenu`, a do menu da bandeja (sem ela, a do texto mais longo).
     pub width: Option<f32>,
+    /// A altura de cada item de menu, no estilo `PopupMenu` (sem ela, a de cada menu).
+    pub item_height: Option<f32>,
+    /// A altura da divisória entre os itens de menu, no estilo `PopupMenu` (sem ela, 9).
+    pub separator_height: Option<f32>,
     /// A cor do polegar da barra de rolagem; no estado `hover`, a do polegar com o mouse em
     /// cima (ou sendo arrastado). O trilho é o `fill`.
     pub thumb: Option<ColorRef>,
@@ -325,6 +330,12 @@ impl StyleProps {
         }
         if other.width.is_some() {
             self.width = other.width;
+        }
+        if other.item_height.is_some() {
+            self.item_height = other.item_height;
+        }
+        if other.separator_height.is_some() {
+            self.separator_height = other.separator_height;
         }
         if other.thumb.is_some() {
             self.thumb.clone_from(&other.thumb);
@@ -1290,6 +1301,16 @@ impl Theme {
         }
     }
 
+    /// As medidas do estilo `PopupMenu`: `item_height` e `separator_height` valem no menu do
+    /// form e no da bandeja, e `width`, só no da bandeja (o do form sai do texto). O que o tema
+    /// não diz fica `None`.
+    pub fn menu_metrics(&self) -> MenuMetrics {
+        let Some(style) = self.styles.get("PopupMenu") else { return MenuMetrics::default() };
+        let p = &style.base;
+        let positive = |v: Option<f32>| v.filter(|v| *v > 0.0);
+        MenuMetrics { width: positive(p.width), item_height: positive(p.item_height), separator_height: p.separator_height.map(|v| v.max(0.0)) }
+    }
+
     /// A barra de rolagem de um controle: o estilo `ScrollBar` do tema e, por cima, o
     /// `scroll_bar` do estilo do controle (`own`, de [`ResolvedStyle::scroll_bar`]); `hover`
     /// com o mouse no polegar ou arrastando. O que nenhum dos dois diz fica `None`, e o
@@ -1312,6 +1333,17 @@ impl Theme {
             radius: acc.radius.as_ref().map(|m| Self::metric(&self.radius, m)),
         }
     }
+}
+
+/// As medidas do estilo `PopupMenu` ([`Theme::menu_metrics`]): `None` é o padrão do menu.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct MenuMetrics {
+    /// A largura do menu.
+    pub width: Option<f32>,
+    /// A altura de cada item.
+    pub item_height: Option<f32>,
+    /// A altura da divisória.
+    pub separator_height: Option<f32>,
 }
 
 /// A barra de rolagem resolvida ([`Theme::scroll_bar`]): `None` é o padrão do controle.

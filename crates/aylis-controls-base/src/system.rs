@@ -234,6 +234,12 @@ impl Component for DataModule {
 /// `single_instance` do projeto, `on_second_instance` recebe os argumentos de outra abertura
 /// do app (que sai logo depois; a janela já veio para a frente). O form em que a tecla chegou
 /// está no `form` do `KeyEvent`.
+///
+/// Os métodos do app inteiro, para todas as linguagens: `start_with_login()` e
+/// `set_start_with_login(on)` (o app abre sozinho quando o usuário entra no sistema; a decisão é
+/// do app, que costuma pôr a opção nas preferências) e `release_single_instance()` (solta a
+/// trava do `single_instance` antes de o app relançar a si mesmo, na atualização). Em Rust,
+/// também direto: `ui.set_start_with_login(on)`, `ui.release_single_instance()`.
 #[derive(Default)]
 pub struct ApplicationEvents {
     /// Um número livre para o código (não muda nada).
@@ -248,6 +254,33 @@ impl Component for ApplicationEvents {
     properties! {
         tag: i64 => "Misc";
         events: on_key_down, on_key_press, on_exception: ExceptionEvent, on_terminate: (), on_second_instance: Vec<String>
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropKind};
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("start_with_login", &[], Some(PropKind::Bool)),
+            MethodInfo::new("set_start_with_login", &[PropKind::Bool], None).params(&["on"]),
+            MethodInfo::new("release_single_instance", &[], None),
+        ];
+        METHODS
+    }
+
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        use aylis_core::PropValue;
+        Ok(match method {
+            "start_with_login" => PropValue::Bool(ctx.ui.start_with_login()),
+            "set_start_with_login" => {
+                let on = args.first().and_then(|v| v.to_bool().ok()).ok_or("set_start_with_login pede true ou false")?;
+                ctx.ui.set_start_with_login(on)?;
+                PropValue::Null
+            }
+            "release_single_instance" => {
+                ctx.ui.release_single_instance();
+                PropValue::Null
+            }
+            _ => return Err(format!("ApplicationEvents não tem o método '{method}'")),
+        })
     }
 }
 

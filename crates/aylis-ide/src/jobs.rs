@@ -111,7 +111,7 @@ pub enum Msg {
     Issues(Vec<aylis_project::check::Issue>),
     /// A geração de código mexeu no disco: o texto dos arquivos abertos antes dela (o editor
     /// acompanha, `codewindow::follow_generation`).
-    Generated(Vec<(PathBuf, String)>),
+    Generated(crate::codewindow::Snapshot),
     /// Os pacotes de ferramentas, com o que está instalado e o que a máquina já tem.
     ToolPacks(Vec<crate::toolpacksview::Row>),
     /// O que cada origem de pacotes tem (o "Testar as origens" das Opções).

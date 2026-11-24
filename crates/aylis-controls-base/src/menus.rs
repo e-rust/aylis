@@ -163,14 +163,17 @@ fn is_inside(ui: &Ui, id: ComponentId, ancestor: ComponentId) -> bool {
     false
 }
 
-/// A altura da linha do item: a divisória, a linha comum ou a do conteúdo, se for maior.
+/// A altura da linha do item: a divisória, a linha comum ou a do conteúdo, se for maior
+/// (as do estilo `PopupMenu`, `separator_height` e `item_height`, quando o tema as tem).
 fn row_height(ui: &Ui, id: ComponentId) -> f32 {
+    let metrics = ui.theme().menu_metrics();
     if item(ui, id).is_some_and(MenuItem::is_separator) {
-        return SEPARATOR;
+        return metrics.separator_height.unwrap_or(SEPARATOR);
     }
+    let row = metrics.item_height.unwrap_or(ROW);
     match content_of(ui, id).and_then(|c| ui.control(c)) {
-        Some(cb) => ROW.max(cb.height() + 6.0),
-        None => ROW,
+        Some(cb) => row.max(cb.height() + 6.0),
+        None => row,
     }
 }
 

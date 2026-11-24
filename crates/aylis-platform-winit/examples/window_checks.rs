@@ -14,6 +14,9 @@
 //!   passada, 2,5 s depois `SetFullscreen(false)` + `Maximize`; escreve o lugar em cada passo;
 //! - `topmost` (item 6): `topmost` com `no_activate`; a cada 2 s (até 10 s) pede `UpdateLevel` e, aos 3 s,
 //!   `MoveTo` (o foco não pode vir para ela);
+//! - `hide_show`: `topmost` com `no_activate` (sem mexer no `activate_on_show`); 1,5 s depois
+//!   `Hide`, 3 s depois `Show`, 4,5 s depois `Hide` de novo e 6 s depois `Place` sem ativar (a
+//!   janela tem de voltar nos dois casos sem tirar o foco de quem está na frente);
 //! - `enter` (item 12): o botão com foco abre uma pergunta no Enter; escreve a resposta;
 //! - `text` (o `VK_PACKET`): um `Edit` com foco escreve cada texto que recebe;
 //! - `center` (item 33): um segundo form `position = center` abre, é movido, fecha e abre de
@@ -97,6 +100,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ui.window_command(form, WindowCommand::MoveTo(100, 100));
                 say("passo: MoveTo".into());
             });
+        }
+        "hide_show" => {
+            ui.set_prop(form, "topmost", true)?;
+            let settings = ui.create("WindowSettings", Some(form))?;
+            ui.set_prop(settings, "no_activate", true)?;
+            let steps: [(u64, &'static str); 4] = [(1500, "Hide"), (3000, "Show"), (4500, "Hide"), (6000, "Place")];
+            for (at, step) in steps {
+                ui.set_timeout(at, move |ui| {
+                    ui.window_command(
+                        form,
+                        match step {
+                            "Hide" => WindowCommand::Hide,
+                            "Show" => WindowCommand::Show,
+                            _ => WindowCommand::Place { monitor: 0, x: 200, y: 200, width: 500, height: 300, activate: false },
+                        },
+                    );
+                    say(format!("passo: {step}"));
+                });
+            }
         }
         "enter" => {
             let button = ui.create("Button", Some(form))?;

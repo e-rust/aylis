@@ -183,7 +183,7 @@ impl SkiaRenderer {
         // SAFETY: u8 não tem requisito de alinhamento e o slice cobre exatamente a mesma
         // memória dos u32, que fica emprestada só durante este bloco.
         let bytes = unsafe { std::slice::from_raw_parts_mut(pixels.as_mut_ptr().cast::<u8>(), pixels.len() * 4) };
-        let Some(mut surface) = sk::surfaces::wrap_pixels(&info, bytes, Some(width as usize * 4), None) else {
+        let Some(mut surface) = sk::surfaces::wrap_pixels(&info, bytes, Some(width as usize * 4), surface_props(background).as_ref()) else {
             return false;
         };
         self.draw_area(surface.canvas(), scale, background, area, paint);
@@ -216,7 +216,7 @@ impl SkiaRenderer {
         let info = sk::ImageInfo::new((width as i32, height as i32), sk::ColorType::BGRA8888, sk::AlphaType::Premul, None);
         // SAFETY: como em `render_area_to_pixels`.
         let bytes = unsafe { std::slice::from_raw_parts_mut(pixels.as_mut_ptr().cast::<u8>(), pixels.len() * 4) };
-        let Some(mut surface) = sk::surfaces::wrap_pixels(&info, bytes, Some(width as usize * 4), None) else {
+        let Some(mut surface) = sk::surfaces::wrap_pixels(&info, bytes, Some(width as usize * 4), surface_props(background).as_ref()) else {
             return false;
         };
         apply_moves(&mut surface, scale, moves);
@@ -240,7 +240,8 @@ impl SkiaRenderer {
         paint: impl FnOnce(&mut SkiaCanvas<'_>),
     ) -> Option<Vec<u8>> {
         aylis_core::image::checked_size(width, height).ok()?;
-        let mut surface = sk::surfaces::raster_n32_premul((width as i32, height as i32))?;
+        let info = sk::ImageInfo::new_n32_premul((width as i32, height as i32), None);
+        let mut surface = sk::surfaces::raster(&info, None, surface_props(background).as_ref())?;
         self.draw(surface.canvas(), scale, background, paint);
         let image = surface.image_snapshot();
         let data = image.encode(None, sk::EncodedImageFormat::PNG, 100)?;
@@ -257,8 +258,11 @@ impl SkiaRenderer {
         paint: impl FnOnce(&mut SkiaCanvas<'_>),
     ) -> Option<Vec<u8>> {
         aylis_core::image::checked_size(width, height).ok()?;
-        let info = rgba_info(width, height);
-        let mut surface = sk::surfaces::raster(&info, None, None)?;
+        // O subpixel do rasterizador só sai no formato nativo (BGRA, o da janela): com ele, a
+        // pintura vai nesse formato e a leitura converte para RGBA.
+        let props = surface_props(background);
+        let info = if props.is_some() { sk::ImageInfo::new_n32_premul((width as i32, height as i32), None) } else { rgba_info(width, height) };
+        let mut surface = sk::surfaces::raster(&info, None, props.as_ref())?;
         self.draw(surface.canvas(), scale, background, paint);
         read_rgba(&mut surface, width, height)
     }
@@ -568,7 +572,8 @@ impl<'a> Canvas for SkiaCanvas<'a> {
             return false;
         }
         let info = sk::ImageInfo::new_n32_premul((w as i32, h as i32), None);
-        let Some(mut surface) = self.canvas.new_surface(&info, None) else {
+        // A camada guardada é transparente: sem o subpixel (o texto nela em cinza).
+        let Some(mut surface) = self.canvas.new_surface(&info, Some(&sk::SurfaceProps::default())) else {
             self.cached.push(None);
             return false;
         };
@@ -862,7 +867,7 @@ fn line_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Rc<P
         family: font.family.clone(),
         size: font.size.to_bits(),
         weight: font.weight as u16,
-        flags: u8::from(font.italic) | u8::from(font.underline) << 1 | u8::from(font.strikeout) << 2 | u8::from(style.wrap) << 3,
+        flags: u8::from(font.italic) | u8::from(font.underline) << 1 | u8::from(font.strikeout) << 2 | u8::from(style.wrap) << 3 | u8::from(lcd_text()) << 4,
         color: u32::from_be_bytes([style.color.r, style.color.g, style.color.b, style.color.a]),
         align: style.h_align as u8,
         spacing: style.letter_spacing.to_bits(),
@@ -927,6 +932,35 @@ pub fn decode_rgba(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     let info = rgba_info(w, h).with_alpha_type(sk::AlphaType::Unpremul);
     let mut pixels = vec![0u8; aylis_core::image::checked_size(w, h).ok()?];
     image.read_pixels(&info, &mut pixels, w as usize * 4, (0, 0), sk::image::CachingHint::Allow).then_some((pixels, w, h))
+}
+
+thread_local! {
+    /// O modo de texto (subpixel ou não) com que cada coleção de fontes guardou as linhas
+    /// já montadas.
+    static SHAPED_LCD: RefCell<HashMap<usize, bool>> = RefCell::new(HashMap::new());
+}
+
+/// O cache de parágrafos do Skia não leva a suavização na chave (só as fontes): a linha
+/// montada num modo voltaria no outro. Trocou o modo, a coleção esquece o que montou.
+fn forget_shaping_on_mode_change(fonts: &FontCollection) {
+    let lcd = lcd_text();
+    let id = fonts as *const FontCollection as usize;
+    let changed = SHAPED_LCD.with(|m| m.borrow_mut().insert(id, lcd).is_some_and(|before| before != lcd));
+    if changed {
+        fonts.clone().paragraph_cache_mut().reset();
+    }
+}
+
+/// O `text_antialias` do projeto pede o ClearType.
+fn lcd_text() -> bool {
+    aylis_core::canvas::text_antialias() == aylis_core::TextAntialias::ClearType
+}
+
+/// As propriedades da superfície da janela (ou da imagem): com o ClearType do projeto e o
+/// fundo opaco, a geometria do subpixel (RGB na horizontal, a dos monitores comuns); senão,
+/// as padrão (sem subpixel: o texto em cinza, como no navegador).
+fn surface_props(background: Color) -> Option<sk::SurfaceProps> {
+    (lcd_text() && background.a == 255).then(|| sk::SurfaceProps::new(sk::SurfacePropsFlags::default(), sk::PixelGeometry::RGBH))
 }
 
 fn rgba_info(width: u32, height: u32) -> sk::ImageInfo {
@@ -1056,9 +1090,11 @@ pub mod gl {
             self.target.as_ref()?;
             // A imagem guardada, do tamanho da janela; nova (ou outro tamanho), o quadro é inteiro.
             let mut parts = parts;
-            if self.layer.as_ref().is_none_or(|(_, s)| *s != size) {
+            // O subpixel (o ClearType do projeto, com o fundo opaco) é da imagem em que se pinta.
+            let props = crate::surface_props(background).unwrap_or_default();
+            if self.layer.as_ref().is_none_or(|(l, s)| *s != size || *l.props() != props) {
                 let info = sk::ImageInfo::new(size, sk::ColorType::RGBA8888, sk::AlphaType::Premul, None);
-                self.layer = gpu::surfaces::render_target(&mut self.context, gpu::Budgeted::Yes, &info, None, gpu::SurfaceOrigin::TopLeft, None, false, None)
+                self.layer = gpu::surfaces::render_target(&mut self.context, gpu::Budgeted::Yes, &info, None, gpu::SurfaceOrigin::TopLeft, Some(&props), false, None)
                     .map(|surface| (surface, size));
                 parts = None;
             }
@@ -1119,7 +1155,7 @@ pub mod gl {
                 &info,
                 None,
                 gpu::SurfaceOrigin::TopLeft,
-                None,
+                crate::surface_props(background).as_ref(),
                 false,
                 None,
             )?;
@@ -1261,6 +1297,12 @@ fn build_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Par
     }
 
     let mut text_style = sk::textlayout::TextStyle::new();
+    // O ClearType do projeto: o subpixel, que só aparece na superfície opaca com a geometria
+    // do monitor (`surface_props`); nas outras o Skia desenha em cinza.
+    forget_shaping_on_mode_change(fonts);
+    if lcd_text() {
+        text_style.set_font_edging(sk::font::Edging::SubpixelAntiAlias);
+    }
     text_style.set_color(to_sk(style.color));
     text_style.set_font_size(style.font.size);
     text_style.set_font_families(&font_families(&style.font));

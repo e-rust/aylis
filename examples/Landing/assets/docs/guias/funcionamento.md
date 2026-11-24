@@ -228,7 +228,8 @@ relógio (Windows, macOS e Linux, feature `tray`): `icons` com um arquivo (parad
 (animação a cada `interval` ms), `hint`, `badge` (um ponto `•` ou um número, desenhado sobre
 o ícone, como os apps de mensagem) e `menu_items` (a lista de itens em JSON:
 `[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`) com `menu_theme`
-`light`, `dark` ou uma cor. O menu é um form do Aylis aberto no ponto do clique, por cima de
+`light`, `dark` ou uma cor (as medidas vêm do estilo `PopupMenu` do tema e, com o `menu_theme`
+padrão, também as cores e a fonte; veja docs/temas.md). O menu é um form do Aylis aberto no ponto do clique, por cima de
 tudo e fora da barra de tarefas, e fecha ao perder o foco. Eventos: `on_click`,
 `on_dbl_click`, `on_menu` (o item). Para isso os forms ganharam `topmost`,
 `show_in_taskbar`, `on_activate` e `on_deactivate`. Exemplo `tray`.
@@ -561,9 +562,39 @@ para a API do Windows direto: o tema escuro da barra de título, o selo na barra
 
 **Janela na bandeja.** `ui.window_command(form, WindowCommand::Hide)` esconde a janela sem
 fechar o form (o app continua rodando, como um app que vai para a bandeja);
-`WindowCommand::Show` traz de volta (desminimiza e dá o foco). Para o app que começa
+`WindowCommand::Show` traz de volta (desminimiza e dá o foco; o form com o `no_activate` do
+`WindowSettings` ou o `activate_on_show` desligado volta sem ativar, e o teclado fica com o
+programa em que se digita). O `WindowCommand::Place` também mostra a janela escondida, no
+lugar novo e ativando só com `activate`. Para o app que começa
 escondido, `ui.set_start_hidden(form, true)` antes de rodar: a janela nasce invisível.
 `WindowCommand::SetFullscreen(true)` põe em tela cheia (sem bordas) no monitor da janela.
+
+**Uma instância só.** O `single_instance` do projeto (`user` ou `machine`) faz a segunda
+abertura entregar os argumentos à primeira (o `on_second_instance` do `ApplicationEvents`),
+que vem para a frente, e sair. Com `single_instance_second: "quiet"`, a segunda sai calada,
+sem entregar nada e sem trazer a primeira. O `single_instance_name` dá o nome exato da trava,
+para o app não rodar junto com um programa anterior que use o mesmo (no Windows, o nome do
+mutex como está: com `Global\` vale entre as sessões, sem prefixo só na sessão). Antes de o
+app relançar a si mesmo (a atualização que troca o exe e abre o novo),
+`ui.release_single_instance()` (ou `aylis::release_single_instance()`; nas outras linguagens,
+o `release_single_instance` do `ApplicationEvents`) solta a trava, e a nova abertura passa a
+ser a primeira. Vale no Rust e nas outras linguagens (o `aylis-host` com o projeto).
+
+**A sessão do usuário.** `ui.session_locked()` (Win+L, a proteção de tela com senha) e
+`ui.session_connected()` (`false` com a sessão remota desconectada ou deixada de lado pela troca
+de usuário), e o `on_session_change` do `Screen` quando um dos dois muda: o app pausa o que só
+faz sentido com alguém olhando. Nas outras linguagens, os métodos `session_locked` e
+`session_connected` do `Screen`. Só o Windows informa; nos outros sistemas, desbloqueada,
+conectada e sem o evento.
+
+**Iniciar com o sistema.** `ui.set_start_with_login(true)` faz o app abrir sozinho quando o
+usuário entra (só para ele, sem administrador), e `ui.start_with_login()` diz se está ligado
+(apontando para este exe). A decisão é do app, que costuma pôr a opção nas preferências. No
+Windows, o valor do app na chave `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`; no Linux,
+o `.desktop` em `~/.config/autostart`; no macOS, o agente de login em `~/Library/LaunchAgents`.
+No celular e no navegador, o erro. Vale com o app aberto (os serviços da plataforma entram no
+`run`); antes, em Rust, `aylis::start_with_login(on)`. Nas outras linguagens, os métodos
+`start_with_login` e `set_start_with_login` do `ApplicationEvents`.
 
 **Rodar depois de um tempo.** `ui.set_timeout(ms, |ui| ...)` roda uma função uma vez,
 depois de `ms` milissegundos, na thread da interface (como o `setTimeout` do navegador);
@@ -992,8 +1023,9 @@ Para apps de gravação (o NoOBS usa todos):
 `solid_thumb` (o `input[type=range]` da web: polegar cheio e trilho de ponta a ponta) e
 `limit`: acima dele o trilho e o polegar ficam na cor de perigo, com uma marca no ponto
 (volume amplificado acima de 100 %). O `PopupMenu` segue o estilo `PopupMenu` do tema
-quando ele existe (fundo, borda, raio, fonte, a cor sob o mouse e o recuo do texto em
-`padding`; sem ícones no painel, o texto começa no recuo); o `MenuItem` com `danger` sai
+quando ele existe (fundo, borda, raio, fonte, a cor sob o mouse, o recuo do texto em
+`padding` e as alturas `item_height` e `separator_height`; sem ícones no painel, o texto
+começa no recuo); o `MenuItem` com `danger` sai
 na cor `danger_text` (ou `danger`) e, sob o mouse, em fundo `danger`.
 
 **Texto com marcas e contorno.** O `Label` com `markup` interpreta `<b>`, `<code>` e

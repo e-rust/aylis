@@ -175,8 +175,23 @@ impl TrayIcon {
             ui.close(old);
             ui.free(old);
         }
-        let height = items.iter().map(|i| if i.separator { 9.0 } else { 32.0 }).sum::<f32>() + 8.0;
-        let width = 220.0;
+        // As medidas do estilo `PopupMenu` (`item_height`, `separator_height`, `width`); sem
+        // elas, as de sempre, e a largura cresce para o texto mais longo caber.
+        let metrics = ui.theme().menu_metrics();
+        let sizes = MenuSizes { item: metrics.item_height.unwrap_or(MENU_ITEM), separator: metrics.separator_height.unwrap_or(MENU_SEPARATOR) };
+        let height = items.iter().map(|i| sizes.of(i)).sum::<f32>() + MENU_PAD * 2.0;
+        let width = metrics.width.unwrap_or_else(|| {
+            // A fonte com que a lista pinta: a do estilo `PopupMenu` ou a do tema.
+            let font = colors.font.clone().unwrap_or_else(|| ui.theme().resolve(&["TrayMenuList"], "", aylis_core::ControlState::default()).font);
+            items.iter().filter(|i| !i.separator).fold(MENU_WIDTH, |w, i| {
+                let mut style = aylis_core::TextStyle { font: font.clone(), ..Default::default() };
+                if i.header {
+                    style.font.weight = aylis_core::FontWeight::SemiBold;
+                }
+                let text = ui.measure_text(&i.text, &style).width;
+                w.max((MENU_PAD + MENU_TEXT_X + i.depth as f32 * MENU_INDENT + text + MENU_TEXT_RIGHT + MENU_PAD).ceil())
+            })
+        });
         let form = ui.add_root(crate::Form::new("", width, height));
         for (name, value) in [("border_style", "none"), ("topmost", "true"), ("show_in_taskbar", "false")] {
             let _ = match value {
@@ -184,7 +199,7 @@ impl TrayIcon {
                 v => ui.set_prop(form, name, aylis_core::PropValue::Enum(v.into())),
             };
         }
-        let list = ui.add(MenuList { items, colors, ..Default::default() }, form);
+        let list = ui.add(MenuList { items, colors, sizes, ..Default::default() }, form);
         ui.control_mut(list).unwrap().set_align(aylis_core::Align::Client);
         // Acima do clique (a barra de tarefas costuma estar embaixo), dentro da tela.
         let (w, h) = ((width * scale) as i32, (height * scale) as i32);
@@ -403,12 +418,43 @@ struct MenuColors {
     font: Option<aylis_core::FontSpec>,
 }
 
+/// As medidas de sempre do menu da bandeja (sem `width`, `item_height` e `separator_height`
+/// no estilo `PopupMenu`): a largura mínima, o item, a divisória, a margem em volta, onde
+/// começa o texto, o recuo de cada nível e o espaço depois do texto.
+const MENU_WIDTH: f32 = 220.0;
+const MENU_ITEM: f32 = 32.0;
+const MENU_SEPARATOR: f32 = 9.0;
+const MENU_PAD: f32 = 4.0;
+const MENU_TEXT_X: f32 = 30.0;
+const MENU_INDENT: f32 = 14.0;
+const MENU_TEXT_RIGHT: f32 = 16.0;
+
+/// A altura do item e a da divisória do menu da bandeja.
+#[derive(Clone, Copy)]
+struct MenuSizes {
+    item: f32,
+    separator: f32,
+}
+
+impl Default for MenuSizes {
+    fn default() -> Self {
+        Self { item: MENU_ITEM, separator: MENU_SEPARATOR }
+    }
+}
+
+impl MenuSizes {
+    fn of(&self, entry: &Entry) -> f32 {
+        if entry.separator { self.separator } else { self.item }
+    }
+}
+
 /// A lista do menu da bandeja (as cores do `menu_theme` ou do estilo `PopupMenu`).
 #[derive(Default)]
 struct MenuList {
     base: ControlBase,
     items: Vec<Entry>,
     colors: MenuColors,
+    sizes: MenuSizes,
     hover: Cell<Option<usize>>,
     /// O item escolhido (o `MenuItem`, com o `popup_menu`).
     chosen: Cell<Option<ComponentId>>,
@@ -416,14 +462,14 @@ struct MenuList {
 
 impl MenuList {
     fn rows(&self) -> Vec<(usize, RectF)> {
-        let mut y = 4.0;
+        let mut y = MENU_PAD;
         let w = self.base.bounds().width;
         self.items
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                let h = if item.separator { 9.0 } else { 32.0 };
-                let r = RectF::new(4.0, y, w - 8.0, h);
+                let h = self.sizes.of(item);
+                let r = RectF::new(MENU_PAD, y, w - MENU_PAD * 2.0, h);
                 y += h;
                 (i, r)
             })
@@ -491,7 +537,7 @@ impl Component for MenuList {
             if entry.header {
                 s.font.weight = aylis_core::FontWeight::SemiBold;
             }
-            let left = row.x + 30.0 + entry.depth as f32 * 14.0;
+            let left = row.x + MENU_TEXT_X + entry.depth as f32 * MENU_INDENT;
             if entry.checked {
                 canvas.draw_text("✓", RectF::new(row.x + 10.0, row.y, 18.0, row.height), &s);
             }

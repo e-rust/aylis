@@ -199,8 +199,31 @@ struct Page<'a> {
     browser_args: &'a str,
 }
 
+/// O runtime de versão fixa do WebView2 (`publish.windows.webview2 = fixed`): a pasta
+/// `WebView2` ao lado do executável, que a publicação põe ali. O wry cria o ambiente sem pasta
+/// do navegador, e o carregador do WebView2 (ligado dentro do `.exe`) lê então a
+/// `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER`; quem já a definiu (o administrador, um teste) vale.
+#[cfg(all(native_webview, target_os = "windows"))]
+fn fixed_webview2_runtime() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        const VAR: &str = "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER";
+        if std::env::var_os(VAR).is_some() {
+            return;
+        }
+        let Some(dir) = std::env::current_exe().ok().and_then(|exe| exe.parent().map(|d| d.join("WebView2"))) else { return };
+        if dir.join("msedgewebview2.exe").is_file() {
+            // SAFETY: no Windows, o `SetEnvironmentVariableW` é seguro entre threads (a exigência
+            // de `unsafe` vem do `setenv` do POSIX); roda uma vez, antes da primeira vista.
+            unsafe { std::env::set_var(VAR, &dir) };
+        }
+    });
+}
+
 #[cfg(native_webview)]
 fn create(window: &Rc<Window>, id: ComponentId, page: &Page<'_>, rect: RectF, visible: bool, focused: bool, events: &Events) -> Option<Hosted> {
+    #[cfg(target_os = "windows")]
+    fixed_webview2_runtime();
     let (e1, e2, e3) = (events.clone(), events.clone(), events.clone());
     let navigation = Rc::new(RefCell::new(page.navigation.to_vec()));
     let allowed = navigation.clone();
@@ -277,7 +300,41 @@ fn place(h: &Hosted) {
 
 #[cfg(native_webview)]
 fn show(h: &Hosted) {
+    let refocus = !h.visible && holds_focus(h);
     let _ = h.view.set_visible(h.visible);
+    if refocus {
+        give_focus_back(h);
+    }
+}
+
+/// O foco do teclado do sistema está na vista (ou numa janela dentro dela). O WebView2 toma o
+/// foco quando a página põe o cursor num campo, mesmo sem clique; escondida ou liberada, a
+/// vista continuava com ele, e o teclado ia para uma janela que não aparece.
+#[cfg(all(native_webview, target_os = "windows"))]
+fn holds_focus(h: &Hosted) -> bool {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::Input::KeyboardAndMouse::GetFocus;
+    use windows::Win32::UI::WindowsAndMessaging::IsChild;
+    use wry::WebViewExtWindows;
+    let view = HWND(h.view.hwnd().0);
+    // SAFETY: só leituras; `view` é a janela viva da vista, e `IsChild` aceita qualquer valor.
+    unsafe {
+        let focus = GetFocus();
+        !focus.is_invalid() && (focus == view || IsChild(view, focus).as_bool())
+    }
+}
+
+/// O WebKit do Linux e o do macOS devolvem o foco sozinhos ao esconder a vista.
+#[cfg(all(native_webview, not(target_os = "windows")))]
+fn holds_focus(_h: &Hosted) -> bool {
+    false
+}
+
+/// O foco do teclado volta à janela do form: o `Ui` continua com o controle que tinha o foco
+/// no form, e as teclas voltam a ele.
+#[cfg(native_webview)]
+fn give_focus_back(h: &Hosted) {
+    let _ = h.view.focus_parent();
 }
 
 #[cfg(native_webview)]
@@ -291,7 +348,11 @@ fn command(h: &Hosted, c: &NativeCommand) {
 }
 
 #[cfg(native_webview)]
-fn destroy(_h: &Hosted) {}
+fn destroy(h: &Hosted) {
+    if holds_focus(h) {
+        give_focus_back(h);
+    }
+}
 
 /// Linux: o WebKitGTK precisa do laço do GTK andando (o aylis chama a cada volta).
 #[cfg(all(native_webview, target_os = "linux"))]

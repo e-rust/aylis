@@ -2,7 +2,8 @@
 //! `.exe` do NSIS ou do Inno Setup) e o que vai nele: os arquivos ao lado do executável, a
 //! pasta de instalação, iniciar com o Windows, atalho na área de trabalho, abrir como
 //! administrador (só a escolha, no registro), fechar o app aberto,
-//! abrir no fim, a pasta de dados que o desinstalar oferece apagar e se assina ao publicar.
+//! abrir no fim, a pasta de dados que o desinstalar oferece apagar, se assina ao publicar, o
+//! runtime do Visual C++ dentro do executável e o runtime do WebView2.
 
 use aylis_controls::CheckBox;
 use aylis_core::{Align, ComponentId, PropValue, Ui};
@@ -17,6 +18,8 @@ use crate::widgets::{label, muted};
 const INSTALLERS: [&str; 3] = ["msi (WiX)", "nsis (NSIS)", "inno (Inno Setup)"];
 /// Como oferecer uma opção na instalação (`autostart`, `desktop_shortcut`): vazio, `on`, `off`.
 const OFFERS: [&str; 3] = ["Não oferecer", "Oferecer marcado", "Oferecer desmarcado"];
+/// O runtime do WebView2 (`publish.windows.webview2`): vazio ou `fixed`.
+const WEBVIEW2: [&str; 2] = ["O do Windows (atualizado pela Microsoft)", "Versão fixa, na pasta WebView2 ao lado do executável"];
 
 fn check(ui: &mut Ui, parent: ComponentId, text: &str, on: bool) -> ComponentId {
     let c = ui.add(CheckBox::new(text), parent);
@@ -55,7 +58,7 @@ fn offer_value(label: &str) -> String {
 pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let Some(project) = state.borrow().project.clone() else { return };
     let w = project.publish.windows.clone();
-    let d = dialogs::new_dialog(ui, "Windows", 680.0, 760.0);
+    let d = dialogs::new_dialog(ui, "Windows", 680.0, 840.0);
     let line = field(ui, d.body, "Instalador");
     let current = match w.kind() {
         aylis_project::WindowsInstaller::Msi => INSTALLERS[0],
@@ -104,6 +107,13 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
     let line = field(ui, d.body, "");
     let sign = check(ui, line, "Assinar o executável e o instalador ao publicar", !w.skip_signing);
     let _ = ui.set_prop(sign, "hint", "Com o certificado das Opções da IDE (Assinatura); sem certificado, a publicação só avisa");
+    // O app que se atualiza trocando só o .exe: o runtime do Visual C++ dentro dele e o do
+    // WebView2 escolhido.
+    let line = field(ui, d.body, "");
+    let static_crt = check(ui, line, "Runtime do Visual C++ dentro do executável (sem DLLs ao lado)", w.static_crt);
+    let _ = ui.set_prop(static_crt, "hint", "O +crt-static no .cargo/config.toml do projeto; a primeira compilação refaz as dependências. Com o Skia, pede o LLVM");
+    let line = field(ui, d.body, "WebView2");
+    let webview2 = combo(ui, line, &WEBVIEW2, if w.webview2_runtime() == aylis_project::WebView2Runtime::Fixed { WEBVIEW2[1] } else { WEBVIEW2[0] });
 
     let read = move |ui: &Ui| -> WindowsOptions {
         let kind = dialogs::combo_text(ui, installer);
@@ -120,6 +130,8 @@ pub fn open(ui: &mut Ui, state: &Shared, ids: &Ids) {
             run_after_install: checked(ui, run_after),
             data_dir: text_of(ui, data_dir).trim().to_string(),
             skip_signing: !checked(ui, sign),
+            static_crt: checked(ui, static_crt),
+            webview2: if dialogs::combo_text(ui, webview2) == WEBVIEW2[1] { "fixed".into() } else { String::new() },
         }
     };
     let (state, ids) = (state.clone(), *ids);

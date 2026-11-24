@@ -223,6 +223,11 @@
   "aylis-host/websocket": "pure",
   "aylis-host/wss": "pure",
   "aylis-ide-web/lib": "pure",
+  "aylis-ide/agent_editing": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
   "aylis-ide/assets": [
     "resources/components.json",
     "resources/icons",

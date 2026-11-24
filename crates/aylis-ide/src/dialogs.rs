@@ -319,11 +319,14 @@ pub fn gpu_value(text: &str) -> String {
 /// As escolhas do `single_instance`, na ordem de `aylis_core::SingleInstance`.
 pub const SINGLE_INSTANCE_CHOICES: [&str; 3] = ["Quantas abrirem", "Uma por usuário", "Uma na máquina"];
 
+/// As escolhas do `single_instance_second`, na ordem de `aylis_core::SecondInstance`.
+pub const SECOND_INSTANCE_CHOICES: [&str; 2] = ["Entregar os argumentos à primeira", "Sair calada"];
+
 pub const ORIENTATION_CHOICES: [&str; 5] =
     ["Gira com o aparelho", "Em pé", "Deitado", "Em pé (os dois sentidos)", "Deitado (os dois sentidos)"];
 
 pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: impl FnOnce(&mut Ui, Project) + 'static) {
-    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1430.0);
+    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1514.0);
     let line = field(ui, d.body, "Nome");
     let name = edit(ui, line, &project.name);
     let line = field(ui, d.body, "Linguagem");
@@ -391,6 +394,20 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
         "hint",
         "Só no desktop. A segunda abertura traz a primeira para a frente, entrega os argumentos a ela (on_second_instance do ApplicationEvents) e sai.",
     );
+    // O que a segunda abertura faz (o `single_instance_second`) e o nome da trava (o
+    // `single_instance_name`), para conviver com um programa anterior.
+    let line = field(ui, d.body, "Segunda abertura");
+    let second_now = <aylis_core::SecondInstance as aylis_core::PropEnum>::index(aylis_core::SecondInstance::parse(&project.single_instance_second));
+    let single_second = combo(ui, line, &SECOND_INSTANCE_CHOICES, SECOND_INSTANCE_CHOICES[second_now]);
+    let _ = ui.set_prop(single_second, "hint", "Com a instância única: entregar os argumentos e trazer a primeira para a frente, ou sair calada, sem entregar nada.");
+    let line = field(ui, d.body, "Nome da trava");
+    let single_name = edit(ui, line, &project.single_instance_name);
+    let _ = ui.set_prop(single_name, "placeholder", "(o gerado pelo Aylis)   ex.: Global\\MeuProgramaAntigo");
+    let _ = ui.set_prop(
+        single_name,
+        "hint",
+        "O nome exato da trava, para o app não rodar junto com um programa anterior que use o mesmo. No Windows, o nome do mutex: com Global\\ vale entre as sessões.",
+    );
     let line = field(ui, d.body, "");
     let screen_capture = ui.add(CheckBox::new("Permitir capturar a imagem de um monitor (capture_monitor)"), line);
     ui.control_mut(screen_capture).unwrap().set_align(Align::Client);
@@ -398,6 +415,12 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let _ = ui.set_prop(screen_capture, "hint", "Desligado por privacidade: a imagem leva o que os outros programas mostram na tela.");
     let render = render_section(ui, d.body, project.render());
     let text_modes = text_section(ui, d.body, project.text());
+    // O ClearType (o `text_antialias`), desligado por padrão.
+    let line = field(ui, d.body, "");
+    let cleartype = ui.add(CheckBox::new("Texto em ClearType (Direct2D e Skia, sobre fundo opaco)"), line);
+    ui.control_mut(cleartype).unwrap().set_align(Align::Client);
+    let _ = ui.set_prop(cleartype, "checked", project.text_antialias == aylis_project::TextAntialiasSetting::Cleartype);
+    let _ = ui.set_prop(cleartype, "hint", "O texto pelo subpixel do monitor. No navegador, que não tem subpixel, continua em cinza.");
     // A placa de vídeo: as quatro escolhas fixas e as desta máquina pelo nome.
     let line = field(ui, d.body, "Placa de vídeo");
     let mut gpus: Vec<String> = GPU_CHOICES.iter().map(|s| s.to_string()).collect();
@@ -524,11 +547,19 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
                 aylis_core::SingleInstance::Off => String::new(),
                 other => <aylis_core::SingleInstance as aylis_core::PropEnum>::name(other).to_string(),
             };
+            let chosen = ui.get::<ComboBox>(single_second).map_or(0, |c| c.item_index.max(0) as usize);
+            p.single_instance_second = match <aylis_core::SecondInstance as aylis_core::PropEnum>::from_index(chosen).unwrap_or_default() {
+                aylis_core::SecondInstance::Forward => String::new(),
+                other => <aylis_core::SecondInstance as aylis_core::PropEnum>::name(other).to_string(),
+            };
+            p.single_instance_name = text_of(ui, single_name).trim().to_string();
             p.allow_screen_capture = ui.get::<CheckBox>(screen_capture).is_some_and(|c| c.checked);
             p.render = Some(render_value(ui, &render));
             // Sem `text` no arquivo e nada mudado, continua sem (antes, aplicar gravava o padrão).
             let text = text_value(ui, &text_modes);
             p.text = if p.text.is_none() && text == aylis_project::TextOptions::legacy() { None } else { Some(text) };
+            let cleartype = ui.get::<CheckBox>(cleartype).is_some_and(|c| c.checked);
+            p.text_antialias = if cleartype { aylis_project::TextAntialiasSetting::Cleartype } else { aylis_project::TextAntialiasSetting::Grayscale };
             // Os itens vêm traduzidos na tela: a escolha de lista volta ao texto original (a placa
             // também aceita um nome digitado).
             let gpu_text = combo_text(ui, gpu);

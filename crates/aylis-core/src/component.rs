@@ -68,6 +68,16 @@ pub enum ClipShape {
 }
 
 impl ClipShape {
+    /// O retângulo com estes raios por canto: o `RoundRect` quando são iguais (e não
+    /// negativos), senão o `Corners`.
+    pub fn from_corners(c: crate::Bounds) -> ClipShape {
+        if c.left == c.top && c.top == c.right && c.right == c.bottom && c.left >= 0.0 {
+            ClipShape::RoundRect(c.left)
+        } else {
+            ClipShape::Corners(c)
+        }
+    }
+
     /// O raio que vale como o de um retângulo arredondado (a sombra e o vidro): na elipse, o
     /// do menor lado; com um raio por canto, o maior; no contorno, nenhum.
     pub fn radius(&self, rect: crate::RectF) -> f32 {
@@ -240,6 +250,14 @@ pub trait Component: Any {
     /// raio do estilo no fundo.
     fn clip_shape(&self) -> Option<ClipShape> {
         self.inner().and_then(|i| i.clip_shape())
+    }
+
+    /// A forma que o próprio `paint` desenhou, quando não é a do recorte nem o raio do estilo
+    /// (o `radius` do `Rectangle`, um por canto): o Reveal acende por ela. Ao contrário do
+    /// [`clip_shape`](Component::clip_shape), não recorta os filhos nem muda o fundo. `None`
+    /// (o padrão): a do recorte e, sem ela, o raio do estilo.
+    fn painted_shape(&self) -> Option<ClipShape> {
+        self.clip_shape().or_else(|| self.inner().and_then(|i| i.painted_shape()))
     }
 
     /// Pinta por cima dos filhos (bordas, anel de foco...).

@@ -35,7 +35,9 @@ pub enum WindowCommand {
     SetTopmost(bool),
     /// Esconde a janela sem fechar o form (o app continua, como ir para a bandeja).
     Hide,
-    /// Mostra a janela escondida (ou minimizada) e a traz para a frente.
+    /// Mostra a janela escondida (ou minimizada) e a traz para a frente. O form que não toma o
+    /// foco (o `no_activate` do `WindowSettings` ou o `activate_on_show` desligado) aparece sem
+    /// ativar: o teclado fica com o programa em que se digita.
     Show,
     /// Tela cheia (sem bordas, no monitor da janela) ou de volta.
     SetFullscreen(bool),
@@ -49,7 +51,8 @@ pub enum WindowCommand {
     /// origem no canto do monitor `monitor` (índice em [`Ui::monitors`](crate::Ui::monitors);
     /// fora da lista, a área de trabalho inteira). Maximizada ou em tela cheia, volta ao normal
     /// antes. `activate`: traz a janela para a frente com o foco; sem ele, nem o foco nem a
-    /// ordem mudam (o painel de avisos no canto, sempre por cima).
+    /// ordem mudam (o painel de avisos no canto, sempre por cima). A janela escondida pelo
+    /// [`Hide`](Self::Hide) aparece no lugar novo, ativada só com `activate`.
     Place { monitor: usize, x: i32, y: i32, width: u32, height: u32, activate: bool },
     /// A propriedade `gpu` do form mudou: a janela confere em que placa de vídeo desenha
     /// (veja [`crate::gpu`]).

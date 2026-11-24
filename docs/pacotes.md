@@ -17,7 +17,8 @@ WiX. Cada pacote tem:
   arquivos: nome, tamanho e **SHA-256** — o manifesto embutido no Aylis
   (`resources/packages.lock.json`, sucessor do `tools.lock.json`). O hash vem só dele: a origem
   do arquivo nunca é confiável por si;
-- o que instalar faz: extrair (zip, tar.gz, tar.xz) numa pasta própria e, se preciso, um passo
+- o que instalar faz: extrair (zip, tar.gz, tar.xz; no Windows, o `.cab` pelo `expand.exe` do
+  sistema, o formato do runtime de versão fixa do WebView2) numa pasta própria e, se preciso, um passo
   fixo do Aylis (ligar o toolchain do Rust, apontar o `JAVA_HOME`, instalar as wheels do pip
   sem rede...). Nada de script vindo do pacote;
 - de quais outros depende (`rust-android` precisa de `rust`, `android-ndk` de `android-sdk`).

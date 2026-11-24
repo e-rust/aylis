@@ -146,7 +146,7 @@ pub fn theme_from_value(value: &Value) -> Result<Theme> {
         }
     }
     // Sem `"dark"` no arquivo (nem um `base` escuro), o fundo decide: um tema de fundo escuro
-    // é escuro (relatório do InsightDB, 11/11: `ui.theme().dark` vinha false com o tema escuro).
+    // é escuro (antes, `ui.theme().dark` vinha false com o tema escuro).
     if !root.contains_key("dark") && root.get("base").is_none() {
         let bg = theme.color("background");
         let luminance = 0.2126 * bg.r as f32 + 0.7152 * bg.g as f32 + 0.0722 * bg.b as f32;
@@ -335,7 +335,9 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
             "icon_size" => p.icon_size = Some(v.as_f64().ok_or("\"icon_size\" deve ser número")? as f32),
             "icon_color" => p.icon_color = Some(color_ref(v)?),
             "icon_gap" => p.icon_gap = Some(v.as_f64().ok_or("\"icon_gap\" deve ser número")? as f32),
-            "width" => p.width = Some(v.as_f64().ok_or("\"width\" deve ser número (a largura da barra de rolagem)")? as f32),
+            "width" => p.width = Some(v.as_f64().ok_or("\"width\" deve ser número (a largura da barra de rolagem ou do menu)")? as f32),
+            "item_height" => p.item_height = Some(v.as_f64().ok_or("\"item_height\" deve ser número (a altura do item de menu)")? as f32),
+            "separator_height" => p.separator_height = Some(v.as_f64().ok_or("\"separator_height\" deve ser número (a altura da divisória do menu)")? as f32),
             "thumb" => p.thumb = Some(color_ref(v)?),
             "scroll_bar" => p.scroll_bar = Some(Box::new(style(v).map_err(|m| format!("scroll_bar: {m}"))?)),
             "border_sides" => p.border_sides = Some(bounds(v)?),
@@ -358,7 +360,7 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
                 return Err(format!(
                     "chave desconhecida '{other}' (use fill, text, border, border_color, border_width, border_sides, \
                      border_style, radius, padding, font, font_weight, font_size, italic, line_height, opacity, transition, shadow, \
-                     material, text_case, letter_spacing, gap, icon_size, icon_color, icon_gap, width, thumb, scroll_bar{})",
+                     material, text_case, letter_spacing, gap, icon_size, icon_color, icon_gap, width, item_height, separator_height, thumb, scroll_bar{})",
                     if allow_states { " e os estados hover, pressed, focused, checked, disabled" } else { "" }
                 ));
             }
@@ -478,6 +480,12 @@ fn props_value(p: &StyleProps) -> Map<String, Value> {
     }
     if let Some(v) = p.width {
         map.insert("width".into(), number(v as f64));
+    }
+    if let Some(v) = p.item_height {
+        map.insert("item_height".into(), number(v as f64));
+    }
+    if let Some(v) = p.separator_height {
+        map.insert("separator_height".into(), number(v as f64));
     }
     if let Some(c) = &p.thumb {
         map.insert("thumb".into(), color(c));

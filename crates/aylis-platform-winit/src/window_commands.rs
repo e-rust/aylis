@@ -3,6 +3,18 @@
 use super::*;
 
 impl App {
+    /// A janela do form mostrada encoberta aparece com o próximo quadro pintado.
+    #[cfg_attr(not(windows), allow(unused_variables))]
+    fn uncloak_after_draw(&mut self, form: ComponentId) {
+        #[cfg(windows)]
+        {
+            self.ui.request_repaint();
+            if let Some(i) = self.windows.iter().position(|w| w.form == form && !w.is_extra()) {
+                self.windows[i].uncloak_after_draw = true;
+            }
+        }
+    }
+
     /// A borda de redimensionar sob `p`, num form `custom` não maximizado.
     pub(crate) fn resize_edge(&self, index: usize, p: PointF) -> Option<winit::window::ResizeDirection> {
         use winit::window::ResizeDirection as D;
@@ -146,27 +158,13 @@ impl App {
                     #[cfg(windows)]
                     win32::set_shown(window, false);
                 }
+                // O form que não toma o foco (`no_activate`, `activate_on_show` desligado) volta
+                // sem ativar: o painel sempre por cima que some e reaparece não tira o teclado de
+                // quem digita em outro programa.
                 WindowCommand::Show => {
-                    // Escondida até aqui (nunca pintada, ou com o quadro de antes): aparece com o
-                    // próximo quadro, encoberta até ele.
-                    #[cfg(windows)]
-                    let hidden_before = window.is_visible() == Some(false);
-                    #[cfg(windows)]
-                    if hidden_before {
-                        win32::set_cloaked(window, true);
-                    }
-                    window.set_visible(true);
-                    window.set_minimized(false);
-                    #[cfg(windows)]
-                    win32::set_shown(window, true);
-                    bring_to_front(&self.ui, form, window);
-                    #[cfg(windows)]
-                    if hidden_before {
-                        window.request_redraw();
-                        self.ui.request_repaint();
-                        if let Some(i) = self.windows.iter().position(|w| w.form == form && !w.is_extra()) {
-                            self.windows[i].uncloak_after_draw = true;
-                        }
+                    let activate = self.takes_focus(form);
+                    if show_window(&self.ui, form, window, activate) {
+                        self.uncloak_after_draw(form);
                     }
                 }
                 WindowCommand::SetFullscreen(on) => {
@@ -240,9 +238,17 @@ impl App {
                             window.focus_window();
                         }
                     }
-                    #[cfg(windows)]
-                    if activate {
-                        bring_to_front(&self.ui, form, window);
+                    // Escondida pelo `Hide`: aparece no lugar novo, ativando só com `activate` (o
+                    // `SetWindowPos` sem ativar não mostra a janela escondida).
+                    if window.is_visible() == Some(false) {
+                        if show_window(&self.ui, form, window, activate) {
+                            self.uncloak_after_draw(form);
+                        }
+                    } else {
+                        #[cfg(windows)]
+                        if activate {
+                            bring_to_front(&self.ui, form, window);
+                        }
                     }
                 }
                 // A área cliente do tamanho do form (J11): o tamanho pedido é o de dentro, e o
@@ -480,4 +486,42 @@ impl App {
             self.windows[index].clipped_monitor = false;
         }
     }
+}
+
+/// Mostra a janela do form (escondida, minimizada ou atrás), ativando só com `activate`.
+/// Devolve se ela estava escondida e foi mostrada encoberta (no Windows, aparece com o
+/// próximo quadro, sem o quadro de antes).
+///
+/// Sem ativar, no Windows, a janela é mostrada com `SW_SHOWNOACTIVATE` antes de o winit saber:
+/// o `set_visible` dele faz `SW_SHOW` (que ativa) quando a janela nasceu ativável, e sobre a
+/// janela já visível não faz nada.
+fn show_window(ui: &Ui, form: ComponentId, window: &Window, activate: bool) -> bool {
+    #[cfg(windows)]
+    let hidden_before = window.is_visible() == Some(false);
+    #[cfg(windows)]
+    if hidden_before {
+        win32::set_cloaked(window, true);
+    }
+    #[cfg(windows)]
+    if !activate {
+        win32::show_no_activate(window);
+    }
+    window.set_visible(true);
+    // Sem saber (o X11 e o Wayland às vezes não dizem), desminimiza do mesmo jeito.
+    if window.is_minimized() != Some(false) {
+        window.set_minimized(false);
+    }
+    #[cfg(windows)]
+    win32::set_shown(window, true);
+    if activate {
+        bring_to_front(ui, form, window);
+    }
+    #[cfg(windows)]
+    if hidden_before {
+        window.request_redraw();
+    }
+    #[cfg(windows)]
+    return hidden_before;
+    #[cfg(not(windows))]
+    false
 }

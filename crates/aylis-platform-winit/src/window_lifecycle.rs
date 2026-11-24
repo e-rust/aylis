@@ -17,8 +17,11 @@ impl App {
             // A barra de título do sistema clara ou escura como o tema (no Windows, pelo DWM;
             // o relatório do Tabernáculo, J04).
             .with_theme(Some(if self.ui.theme().dark { winit::window::Theme::Dark } else { winit::window::Theme::Light }));
-        // Mostrar sem tomar o foco (`activate_on_show` desligado; J05).
-        if matches!(self.ui.get_prop(form, "activate_on_show"), Ok(PropValue::Bool(false))) {
+        // Mostrar sem tomar o foco (`activate_on_show` desligado ou `no_activate`; J05). No
+        // Windows, o winit guarda isto para sempre: sem ele, todo `ShowWindow` que ele faz (a
+        // janela que volta depois de escondida, e até a troca do nível "sempre por cima") é um
+        // `SW_SHOW`, que ativa a janela e tira o teclado do programa em que se digita.
+        if !self.takes_focus(form) {
             attributes = attributes.with_active(false);
         }
         match self.enum_prop(form, "border_style").as_str() {
@@ -508,7 +511,9 @@ impl App {
                 }
             }
         }
-        if let Some(form) = self.ui.take_activation() {
+        // O núcleo pede a ativação do form aberto ou trazido à frente; o `no_activate` do
+        // `WindowSettings` é da plataforma, e o form com ele não toma o foco nem assim.
+        if let Some(form) = self.ui.take_activation().filter(|&f| self.takes_focus(f)) {
             if let Some(w) = self.window_of(form) {
                 bring_to_front(&self.ui, form, &w.window);
             }

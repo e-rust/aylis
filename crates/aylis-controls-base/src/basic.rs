@@ -990,6 +990,12 @@ impl Component for Rectangle {
         self.fill2.is_none() && self.fill.unwrap_or(style.fill).a == 255 && square
     }
 
+    /// O `radius` próprio (um por canto, inclusive) para o Reveal acender pelos mesmos cantos
+    /// que o fundo; sem ele, o raio do estilo.
+    fn painted_shape(&self) -> Option<aylis_core::ClipShape> {
+        self.radius.map(aylis_core::ClipShape::from_corners)
+    }
+
     leaf_control!("Rectangle");
 
     properties! {
@@ -2062,6 +2068,11 @@ impl Button {
 impl Component for Button {
     fn layout_hooks(&self) -> Option<&dyn aylis_core::LayoutHooks> {
         Some(self)
+    }
+
+    /// O `radius` próprio: o Reveal acende pelos mesmos cantos que o fundo.
+    fn painted_shape(&self) -> Option<aylis_core::ClipShape> {
+        self.radius.map(aylis_core::ClipShape::from_corners)
     }
 
     leaf_control!("Button");

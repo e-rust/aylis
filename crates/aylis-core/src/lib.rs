@@ -107,7 +107,7 @@ pub use i18n::{tr, tr_with};
 pub use anim::{AnimationOptions, ColorAnimation, Easing, FloatAnimation, PropertyAnimation, Trigger};
 pub use canvas::{
     BlendMode, Brush, Canvas, FontSpec, FontWeight, GpuDevice, GpuSurface, GradientStop, LineCap, LineJoin, Shadow, Stroke, TextAlign,
-    TextService, TextStyle, decorate_line,
+    TextAntialias, TextService, TextStyle, decorate_line,
 };
 pub use color::Color;
 pub use component::{
@@ -142,13 +142,13 @@ pub use date::{Date, DateTime, Time};
 pub use prop::RecordInfo;
 pub use event_value::{DateRange, EventArg, EventValue, FromSender};
 pub use gpu::FormPresent;
-pub use platform::{Biometry, CursorShape, DesktopService, NotificationPriority, Permission, PermissionState, SingleInstance};
+pub use platform::{Biometry, CursorShape, DesktopService, NotificationPriority, Permission, PermissionState, SecondInstance, SingleInstance};
 pub use providers::ErrorCorrection;
 pub use post::Poster;
 pub use prop::{PropEnum, PropInfo, PropKind, PropValue};
 pub use registry::{ClassInfo, ClassRegistry, VariantInfo, split_variant};
 pub use text::{TextCase, Trimming};
-pub use theme::{ColorRef, Look, Material, Metric, ResolvedStyle, ScrollBarLook, Style, StyleProps, Theme};
+pub use theme::{ColorRef, Look, Material, MenuMetrics, Metric, ResolvedStyle, ScrollBarLook, Style, StyleProps, Theme};
 pub use ui::ThemeSource;
 pub use ui::Ui;
 pub use exception::Exception;

@@ -198,6 +198,10 @@ Sem mexer no tema, as variantes prontas `Button.reveal` (borda e fundo) e `Panel
 (a borda) ligam o efeito num controle só: `style = reveal`. O mouse que anda repinta só a
 parte dos controles com Reveal que a luz alcança. Com o toque, não há luz.
 
+A luz segue os cantos que o controle pintou: o `radius` próprio do `Rectangle`, do `Panel` e
+do `Button` (inclusive um por canto, `[8, 8, 0, 0]`) vale no Reveal, sem repetir o raio no
+estilo; sem ele, o `radius` do estilo.
+
 ## O ícone dos campos
 
 O ícone do `Edit` (`icon`) e o "×" de limpar do `Edit` e do `ComboBox` seguem o estilo do
@@ -242,6 +246,25 @@ estilo de um controle (ou de uma variante) muda só a barra dele:
 O que o tema não diz fica como era em cada controle (os temas embutidos não têm o
 `ScrollBar`: a barra de hoje). A lista aberta do `ComboBox` segue o `scroll_bar` do estilo
 do `ComboBox` que a abriu.
+
+## As medidas do menu
+
+O estilo `PopupMenu` dá, além das cores, da borda, do raio e da fonte, as medidas do menu:
+
+```json
+"styles": {
+  "PopupMenu": { "fill": "surface", "radius": 8, "font": "small",
+                 "item_height": 28, "separator_height": 7, "width": 240 }
+}
+```
+
+- `item_height`: a altura de cada item (sem ela, 30 no menu do form e 32 no da bandeja); o
+  item com um controle dentro (`content`) cresce até caber;
+- `separator_height`: a altura da divisória (9);
+- `width`: a largura do menu da bandeja (`TrayIcon`); sem ela, 220, ou mais, até caber o
+  texto mais longo. O menu do form sai sempre do texto.
+
+Sem esses tokens, o menu fica como era.
 
 ## Cores do projeto e cores com nome
 

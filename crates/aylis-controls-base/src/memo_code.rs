@@ -232,6 +232,12 @@ impl Memo {
         self.history_key = self.text_key();
     }
 
+    /// Esquece o desfazer e o refazer: o Ctrl+Z não volta para antes daqui (a IDE, ao liberar
+    /// a edição de um fonte que um agente estava editando, não deixa desfazer o que ele fez).
+    pub fn clear_undo(&mut self) {
+        self.clear_history();
+    }
+
     /// Quanto o desfazer guarda (em bytes de texto).
     #[cfg(test)]
     pub(super) fn history_bytes(&self) -> usize {
@@ -891,12 +897,14 @@ impl Memo {
             ctx.repaint();
             return true;
         }
-        // Desfazer e refazer valem em todo Memo.
+        // Desfazer e refazer valem em todo Memo que se pode editar (no somente leitura, o Ctrl+Z
+        // desfazia o que o código pôs nele, como o fonte gerado que a IDE recarrega).
         let mut changed = false;
+        let editable = !self.read_only;
         match event.key {
-            Key::Char('z') if ctrl && !shift && !alt => changed = self.undo(),
-            Key::Char('y') if ctrl && !alt => changed = self.redo(),
-            Key::Char('z') if ctrl && shift && !alt => changed = self.redo(),
+            Key::Char('z') if ctrl && !shift && !alt && editable => changed = self.undo(),
+            Key::Char('y') if ctrl && !alt && editable => changed = self.redo(),
+            Key::Char('z') if ctrl && shift && !alt && editable => changed = self.redo(),
             _ if !self.code_editing => return false,
             Key::Char(' ') if ctrl && !shift => {
                 ctx.fire("on_complete_request", EventArgs::Value((self.caret as i64).into()));

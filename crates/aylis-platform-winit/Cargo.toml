@@ -283,6 +283,10 @@ required-features = ["cpu"]
 name = "browser"
 required-features = ["webview"]
 
+[[example]]
+name = "webview_focus"
+required-features = ["webview"]
+
 # O 3D no contexto OpenGL do Skia, numa janela invisível (o winit precisa da thread
 # principal: sem o harness de testes).
 [[test]]

@@ -282,6 +282,7 @@ fn check_glibc(exe: &Path, sink: Sink) {
 // Desktop
 
 fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
+    static_crt_renderer(project)?;
     sink(Event::Step(format!("Compilando {} ({})…", project.name, if options.debug { "desenvolvimento" } else { "otimizado" })));
     // O binário do projeto (`output.bin`, ou o `[[bin]]`; I08 do Tabernáculo).
     let package = project.bin_name();
@@ -306,7 +307,8 @@ fn desktop_rust(project: &Project, options: &Options, out: &Path, control: &Cont
     let mut extra = ray_tracing_dlls(project, out, sink)?;
     // Os arquivos que o projeto pede ao lado do executável (DLLs de terceiros).
     if cfg!(windows) {
-        extra.extend(visual_cpp_runtime(out, sink)?);
+        extra.extend(visual_cpp_runtime(project, out, sink)?);
+        extra.extend(webview2_fixed_runtime(project, out, control, sink)?);
         extra.extend(win_installer::copy_extra_files(project, out, sink)?);
     }
     // A assinatura (Authenticode) com o certificado da máquina: o `.exe` antes de entrar no
@@ -362,7 +364,15 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     let exe_name = exe_path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let upgrade = stable_guid(&project.identifier());
     // Os arquivos ao lado do executável (o compilador DXC do traçado de raios).
-    let extra_files: String = extra.iter().enumerate().map(|(i, p)| format!("\n          <File Id=\"Extra{i}\" Source=\"{}\" />", xml_escape(&p.display().to_string()))).collect();
+    let extra_files: String = extra.iter().enumerate().filter(|(_, p)| !p.is_dir()).map(|(i, p)| format!("\n          <File Id=\"Extra{i}\" Source=\"{}\" />", xml_escape(&p.display().to_string()))).collect();
+    // As pastas (o runtime de versão fixa do WebView2) vão inteiras, com o nome delas: o
+    // `Files` do WiX 5 gera um componente por arquivo.
+    let extra_dirs: Vec<(usize, &PathBuf)> = extra.iter().enumerate().filter(|(_, p)| p.is_dir()).collect();
+    let dir_entries: String = extra_dirs
+        .iter()
+        .map(|(i, p)| format!("\n        <Directory Id=\"ExtraDir{i}\" Name=\"{}\" />", xml_escape(&p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())))
+        .collect();
+    let dir_files: String = extra_dirs.iter().map(|(i, p)| format!("\n      <Files Directory=\"ExtraDir{i}\" Include=\"{}\\**\" />", xml_escape(&p.display().to_string()))).collect();
     let icon = if project.publish.icon.is_empty() { String::new() } else { format!("\n    <Property Id=\"ARPPRODUCTICON\" Value=\"AppIcon\" />\n    <Icon Id=\"AppIcon\" SourceFile=\"{}\" />", xml_escape(&exe_path.display().to_string())) };
     // Os prefixos dos `UrlScheme`: registrados na instalação e tirados na desinstalação.
     let schemes = url_schemes(project);
@@ -394,7 +404,7 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
       <Directory Id="INSTALLFOLDER" Name="{app}">
         <Component Id="MainExe" Guid="*">
           <File Id="AppExe" Source="{source}" KeyPath="yes" />{extra_files}
-        </Component>
+        </Component>{dir_entries}
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
@@ -405,7 +415,7 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
     </StandardDirectory>
     <Feature Id="Main" Title="{app}">
       <ComponentRef Id="MainExe" />
-      <ComponentRef Id="StartMenu" />{scheme_ref}
+      <ComponentRef Id="StartMenu" />{scheme_ref}{dir_files}
     </Feature>
   </Package>
 </Wix>
@@ -427,6 +437,7 @@ fn windows_installer(project: &Project, exe_path: &Path, extra: &[PathBuf], out:
 /// (`aylis_project::codegen::local_shell`), que inicia o backend da pasta `backend/` (o
 /// programa da linguagem, compilado e otimizado; Python e TypeScript vão como fontes).
 fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Control, sink: Sink) -> Result<Published, String> {
+    static_crt_renderer(project)?;
     aylis_project::codegen::generate(project)?;
     let app = out.join(file_name(project.app_name()));
     let backend_dir = app.join("backend");
@@ -507,7 +518,8 @@ fn desktop_shell(project: &Project, options: &Options, out: &Path, control: &Con
     }
     ray_tracing_dlls(project, &app, sink)?;
     if cfg!(windows) {
-        visual_cpp_runtime(&app, sink)?;
+        visual_cpp_runtime(project, &app, sink)?;
+        webview2_fixed_runtime(project, &app, control, sink)?;
         win_installer::copy_extra_files(project, &app, sink)?;
     }
     let signing = if cfg!(windows) && !options.debug {
@@ -2316,9 +2328,76 @@ fn bundle_client(project: &Project, client: &str, dest: &Path) -> Result<(), Str
     std::fs::copy(&from, dest).map(|_| ()).map_err(|e| format!("{}: {e}", from.display()))
 }
 
+/// O `+crt-static` (`publish.windows.static_crt`) com o Skia no Windows: o rust-skia não publica
+/// o Skia já compilado com o runtime estático (nenhum `skia-binaries-*-static` na 0.153.3), então
+/// o `skia-bindings` compila o Skia do código-fonte, o que pede o LLVM e demora. Sem o LLVM, a
+/// publicação para antes de compilar, com o motivo e o que fazer; o Direct2D não tem isso.
+pub fn static_crt_renderer(project: &Project) -> Result<(), String> {
+    use aylis_project::render::{Platform, RenderChoice};
+    if !cfg!(windows) || !project.publish.windows.static_crt || project.render().get(Platform::Windows) == RenderChoice::D2d {
+        return Ok(());
+    }
+    let llvm = std::env::var_os("LIBCLANG_PATH").map(PathBuf::from).into_iter().chain([PathBuf::from("C:/Program Files/LLVM/bin")]).any(|d| d.join("clang-cl.exe").is_file() || d.join("libclang.dll").is_file());
+    if llvm {
+        return Ok(());
+    }
+    Err("o runtime do Visual C++ dentro do .exe (Projeto → Windows) com o Skia obriga a compilar o Skia do código-fonte, \
+         porque não há o Skia pronto com o runtime estático, e isso pede o LLVM (clang-cl), que não foi achado. \
+         Use o Direct2D no Windows (Projeto → Opções → Renderizador), instale o LLVM (demora na primeira compilação) \
+         ou desligue a opção."
+        .into())
+}
+
+/// O pacote de ferramenta com o runtime de versão fixa do WebView2 (o `.cab` da Microsoft,
+/// x64), com versão e SHA-256 fixos no `resources/packages.lock.json`.
+pub const WEBVIEW2_FIXED_PACKAGE: &str = "webview2-fixed";
+
+/// Com `publish.windows.webview2 = fixed`, o runtime de versão fixa do WebView2 na pasta
+/// `WebView2` ao lado do executável (o pacote [`WEBVIEW2_FIXED_PACKAGE`], instalado na primeira
+/// vez); o app aponta o WebView2 para ela ao abrir. Devolve a pasta, que os instaladores levam
+/// inteira. Com o do Windows (o padrão), nada.
+fn webview2_fixed_runtime(project: &Project, dir: &Path, control: &Control, sink: Sink) -> Result<Option<PathBuf>, String> {
+    if !cfg!(windows) || project.publish.windows.webview2_runtime() != aylis_project::WebView2Runtime::Fixed {
+        return Ok(None);
+    }
+    let runtime = match crate::toolpacks::installed_dir(WEBVIEW2_FIXED_PACKAGE) {
+        Some(found) => found,
+        // O pacote entra no manifesto com o SHA-256 fixado; até lá, quem quer a versão fixa
+        // extrai o `.cab` da Microsoft na pasta ao lado do executável.
+        None if crate::toolpacks::Manifest::embedded().package(WEBVIEW2_FIXED_PACKAGE).is_none() => {
+            return Err(format!(
+                "o runtime de versão fixa do WebView2 ainda não está nos pacotes de ferramentas desta versão do Aylis. Use o do Windows \
+                 (Projeto → Windows → WebView2) ou extraia o .cab da Microsoft (expand <arquivo.cab> -F:* <pasta>) na pasta {} ao lado do executável: o app usa a que estiver lá.",
+                aylis_project::WEBVIEW2_FIXED_DIR
+            ));
+        }
+        None => {
+            sink(Event::Step("Instalando o runtime de versão fixa do WebView2…".into()));
+            env::install_package(WEBVIEW2_FIXED_PACKAGE, control, sink)?;
+            crate::toolpacks::installed_dir(WEBVIEW2_FIXED_PACKAGE).ok_or("o runtime de versão fixa do WebView2 não ficou instalado")?
+        }
+    };
+    if !runtime.join("msedgewebview2.exe").is_file() {
+        return Err(format!("o pacote {WEBVIEW2_FIXED_PACKAGE} não tem o msedgewebview2.exe ({})", runtime.display()));
+    }
+    let dest = dir.join(aylis_project::WEBVIEW2_FIXED_DIR);
+    let _ = std::fs::remove_dir_all(&dest);
+    crate::copy_dir(&runtime, &dest)?;
+    sink(Event::Line(
+        format!("O runtime de versão fixa do WebView2 ao lado do executável ({}): o app usa este, e atualizá-lo é republicar.", aylis_project::WEBVIEW2_FIXED_DIR),
+        LineKind::Tool,
+    ));
+    Ok(Some(dest))
+}
+
 /// No Windows, o runtime do Visual C++ ao lado do executável: sem ele, o app não abre numa
 /// máquina que não tem o Visual Studio nem o redistribuível (testado num Windows limpo em 20/11).
-fn visual_cpp_runtime(dir: &Path, sink: Sink) -> Result<Vec<PathBuf>, String> {
+/// Com `publish.windows.static_crt`, o runtime já vai dentro do `.exe` e nada é copiado.
+fn visual_cpp_runtime(project: &Project, dir: &Path, sink: Sink) -> Result<Vec<PathBuf>, String> {
+    if project.publish.windows.static_crt {
+        sink(Event::Line("O runtime do Visual C++ vai dentro do executável (+crt-static): nenhuma DLL ao lado.".into(), LineKind::Tool));
+        return Ok(Vec::new());
+    }
     let copied = crate::vcruntime::copy_beside(dir)?;
     if copied.is_empty() {
         sink(Event::Line(

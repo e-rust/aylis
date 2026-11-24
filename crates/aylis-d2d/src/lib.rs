@@ -432,6 +432,9 @@ pub struct D2dRenderer {
     /// Uma mistura já abriu dentro de uma camada de opacidade com desenho: daí em diante, as
     /// camadas de opacidade são abertas fora da tela (veja `isolate_open_layer`).
     isolate_layers: std::cell::Cell<bool>,
+    /// Os parâmetros de desenho do texto (a suavização simétrica), feitos uma vez: em cinza e
+    /// em ClearType.
+    text_params: RefCell<Option<[Option<IDWriteRenderingParams>; 2]>>,
 }
 
 /// Um dispositivo do Direct3D 11 (com o do Direct2D por cima) para as janelas de uma placa.
@@ -525,6 +528,48 @@ pub fn adapters() -> Vec<String> {
     }
 }
 
+/// Abre uma camada (com a máscara `mask` e a opacidade `opacity`) em `target`. Com
+/// `cleartype` (o alvo opaco, em ClearType), o texto dentro dela continua em ClearType: no
+/// contexto do Direct2D 1.1, a camada começa com o fundo e ignora o alfa; sem ele, a opção do
+/// Direct2D 1.0. Sem a opção, o Direct2D desenha o texto da camada em cinza.
+fn push_layer_on(target: &ID2D1RenderTarget, mask: Option<ID2D1Geometry>, mask_antialias: D2D1_ANTIALIAS_MODE, opacity: f32, cleartype: bool) {
+    let dc = if cleartype { target.cast::<ID2D1DeviceContext>().ok() } else { None };
+    // SAFETY: chamadas COM no alvo válido; os parâmetros vivem até a chamada e soltam a
+    // máscara (o `ManuallyDrop`) logo depois.
+    unsafe {
+        match dc {
+            Some(dc) => {
+                let mut params = D2D1_LAYER_PARAMETERS1 {
+                    contentBounds: INFINITE,
+                    geometricMask: std::mem::ManuallyDrop::new(mask),
+                    maskAntialiasMode: mask_antialias,
+                    maskTransform: Matrix3x2::identity(),
+                    opacity,
+                    opacityBrush: std::mem::ManuallyDrop::new(None),
+                    layerOptions: D2D1_LAYER_OPTIONS1_INITIALIZE_FROM_BACKGROUND | D2D1_LAYER_OPTIONS1_IGNORE_ALPHA,
+                };
+                dc.PushLayer(&params, None::<&ID2D1Layer>);
+                std::mem::ManuallyDrop::drop(&mut params.geometricMask);
+                std::mem::ManuallyDrop::drop(&mut params.opacityBrush);
+            }
+            None => {
+                let mut params = D2D1_LAYER_PARAMETERS {
+                    contentBounds: INFINITE,
+                    geometricMask: std::mem::ManuallyDrop::new(mask),
+                    maskAntialiasMode: mask_antialias,
+                    maskTransform: Matrix3x2::identity(),
+                    opacity,
+                    opacityBrush: std::mem::ManuallyDrop::new(None),
+                    layerOptions: if cleartype { D2D1_LAYER_OPTIONS_INITIALIZE_FOR_CLEARTYPE } else { D2D1_LAYER_OPTIONS_NONE },
+                };
+                target.PushLayer(&params, None::<&ID2D1Layer>);
+                std::mem::ManuallyDrop::drop(&mut params.geometricMask);
+                std::mem::ManuallyDrop::drop(&mut params.opacityBrush);
+            }
+        }
+    }
+}
+
 /// O nome da placa na descrição do DXGI.
 fn adapter_name(description: &[u16]) -> String {
     let end = description.iter().position(|&c| c == 0).unwrap_or(description.len());
@@ -532,6 +577,34 @@ fn adapter_name(description: &[u16]) -> String {
 }
 
 impl D2dRenderer {
+    /// A suavização do texto de `target`: ClearType ou cinza, sempre com o desenho simétrico
+    /// (`NATURAL_SYMMETRIC`: suaviza também na vertical, e as diagonais da letra pequena não
+    /// saem em degraus). Só muda a pintura: o tamanho medido vem do layout do DirectWrite.
+    fn set_text_mode(&self, target: &ID2D1RenderTarget, cleartype: bool) {
+        let mut params = self.text_params.borrow_mut();
+        let params = params.get_or_insert_with(|| {
+            // SAFETY: chamadas COM na fábrica do DirectWrite, viva enquanto o renderizador.
+            let make = |cleartype: bool| unsafe {
+                // O gama, o contraste e o subpixel do monitor (os do sistema); no cinza, sem o
+                // nível de ClearType.
+                let base = self.text.dwrite.CreateRenderingParams().ok()?;
+                let level = if cleartype { base.GetClearTypeLevel() } else { 0.0 };
+                self.text
+                    .dwrite
+                    .CreateCustomRenderingParams(base.GetGamma(), base.GetEnhancedContrast(), level, base.GetPixelGeometry(), DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC)
+                    .ok()
+            };
+            [make(false), make(true)]
+        });
+        // SAFETY: o alvo é válido (quem chama o tem emprestado) e os parâmetros vivem no cache.
+        unsafe {
+            target.SetTextAntialiasMode(if cleartype { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE } else { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE });
+            if let Some(p) = &params[usize::from(cleartype)] {
+                target.SetTextRenderingParams(p);
+            }
+        }
+    }
+
     pub fn new() -> Result<Self, Error> {
         unsafe {
             // O winit (ou o próprio app) já pode ter iniciado o COM: tanto faz o resultado.
@@ -558,6 +631,7 @@ impl D2dRenderer {
                 decoded: RefCell::new(ImageCache::named("Direct2D · arquivos decodificados")),
                 devices: RefCell::default(),
                 isolate_layers: std::cell::Cell::new(false),
+                text_params: RefCell::new(None),
             })
         }
     }
@@ -934,7 +1008,10 @@ impl D2dRenderer {
         unsafe {
             target.BeginDraw();
             target.SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            target.SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+            // O ClearType (`text_antialias` do projeto) só com o fundo opaco: o subpixel
+            // precisa da cor de trás; a janela transparente fica em cinza.
+            let cleartype = background.a == 255 && aylis_core::canvas::text_antialias() == aylis_core::TextAntialias::ClearType;
+            self.set_text_mode(target, cleartype);
             // Só as áreas (em pixels inteiros): o resto do alvo fica com o quadro anterior. O
             // recorte entra como o primeiro da pilha do canvas, que o reabre quando precisa
             // fechar tudo (o desfoque do fundo copia o alvo).
@@ -955,19 +1032,7 @@ impl D2dRenderer {
                 // inteiros, então a borda da máscara não suaviza nada).
                 let rects: Vec<Option<ID2D1Geometry>> = areas.iter().map(|a| self.factory.CreateRectangleGeometry(&pixels(a)).ok().and_then(|g| g.cast::<ID2D1Geometry>().ok())).collect();
                 let group = self.factory.CreateGeometryGroup(D2D1_FILL_MODE_WINDING, &rects).ok().and_then(|g| g.cast::<ID2D1Geometry>().ok());
-                let params = D2D1_LAYER_PARAMETERS {
-                    contentBounds: INFINITE,
-                    geometricMask: std::mem::ManuallyDrop::new(group.clone()),
-                    maskAntialiasMode: D2D1_ANTIALIAS_MODE_ALIASED,
-                    maskTransform: Matrix3x2::identity(),
-                    opacity: 1.0,
-                    opacityBrush: std::mem::ManuallyDrop::new(None),
-                    layerOptions: D2D1_LAYER_OPTIONS_NONE,
-                };
-                target.PushLayer(&params, None::<&ID2D1Layer>);
-                let mut params = params;
-                std::mem::ManuallyDrop::drop(&mut params.geometricMask);
-                std::mem::ManuallyDrop::drop(&mut params.opacityBrush);
+                push_layer_on(target, group.clone(), D2D1_ANTIALIAS_MODE_ALIASED, 1.0, cleartype);
                 pushes.push(Push::Layer(group, 1.0, Matrix3x2::identity(), 0));
             }
 
@@ -1912,21 +1977,12 @@ impl D2dCanvas<'_> {
     }
 
     fn push_layer_raw(&self, mask: Option<ID2D1Geometry>, opacity: f32) {
-        let params = D2D1_LAYER_PARAMETERS {
-            contentBounds: INFINITE,
-            geometricMask: std::mem::ManuallyDrop::new(mask),
-            maskAntialiasMode: D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
-            maskTransform: Matrix3x2::identity(),
-            opacity,
-            opacityBrush: std::mem::ManuallyDrop::new(None),
-            layerOptions: D2D1_LAYER_OPTIONS_NONE,
-        };
-        unsafe { self.target.PushLayer(&params, None::<&ID2D1Layer>) };
-        let mut params = params;
-        unsafe {
-            std::mem::ManuallyDrop::drop(&mut params.geometricMask);
-            std::mem::ManuallyDrop::drop(&mut params.opacityBrush);
-        }
+        // Com o ClearType no alvo, a camada opaca (um recorte) leva o fundo para dentro e o
+        // texto nela continua em ClearType; a translúcida fica em cinza (o subpixel não se
+        // mistura).
+        // SAFETY: só lê o modo do alvo atual, que é válido.
+        let cleartype = opacity >= 1.0 && unsafe { self.target.GetTextAntialiasMode() } == D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+        push_layer_on(&self.target, mask, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE, opacity, cleartype);
     }
 
     /// Fecha os recortes e camadas abertos, roda `f` e reabre tudo igual (o Direct2D não
@@ -2768,7 +2824,8 @@ impl Canvas for D2dCanvas<'_> {
         unsafe {
             content.BeginDraw();
             content.SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            content.SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+            // A camada guardada é transparente: sempre em cinza.
+            self.renderer.set_text_mode(&as_target, false);
             content.Clear(Some(&color(Color::TRANSPARENT)));
         }
         let main = std::mem::replace(&mut self.target, as_target);

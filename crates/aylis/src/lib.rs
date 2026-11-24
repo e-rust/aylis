@@ -533,6 +533,26 @@ pub type Error = Box<dyn std::error::Error>;
 
 static APP_VERSION: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
 
+/// Solta a trava do `single_instance` do projeto antes de o app relançar a si mesmo (a
+/// atualização que troca o exe e abre o novo): a nova abertura passa a ser a primeira. O
+/// mesmo que `ui.release_single_instance()`, sem o `Ui` à mão.
+pub fn release_single_instance() {
+    aylis_platform_winit::release_single_instance();
+}
+
+/// Liga ou desliga a abertura do app quando o usuário entra no sistema (a chave `Run` do
+/// usuário no Windows, o autostart no Linux, o agente de login no macOS; no celular e no
+/// navegador, o erro). A decisão é do app: o Aylis só grava. O mesmo que
+/// `ui.set_start_with_login(on)`.
+pub fn start_with_login(on: bool) -> Result<(), String> {
+    aylis_platform_winit::set_start_with_login(on)
+}
+
+/// O app abre sozinho com o login (o registro aponta para este exe).
+pub fn starts_with_login() -> bool {
+    aylis_platform_winit::start_with_login()
+}
+
 /// A versão do app em execução: a que a publicação gravou (a `publish.version` do projeto ou,
 /// com `publish.version_from_git_tag`, a da última tag do git no build), a mesma dos dados do
 /// `.exe`, do Android e dos pacotes do Linux. Vale em qualquer handler, sem o [`Application`]
@@ -778,10 +798,18 @@ impl Application {
         if let Some(flag) = std::env::args().nth(1).filter(|a| a == "--install-shortcut" || a == "--remove-shortcut") {
             return linux_shortcut(&self.project, &self.ui, flag == "--install-shortcut").map_err(Into::into);
         }
+        // Quem é o app: o nome do início com o sistema (`start_with_login`).
+        aylis_platform_winit::set_app_identity(&self.project.linux_package_id(), self.project.app_name());
         // Uma instância só (`single_instance` do projeto): a segunda abertura entrega os
-        // argumentos à primeira, que vem para a frente, e sai sem abrir janela.
+        // argumentos à primeira, que vem para a frente, e sai sem abrir janela (ou sai calada,
+        // com `single_instance_second = quiet`). A trava com o nome do projeto, se ele deu um.
         #[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
-        if !aylis_platform_winit::claim_single_instance(aylis_core::SingleInstance::parse(&self.project.single_instance), &self.project.linux_package_id()) {
+        if !aylis_platform_winit::claim_single_instance_with(
+            aylis_core::SingleInstance::parse(&self.project.single_instance),
+            &self.project.linux_package_id(),
+            &self.project.single_instance_name,
+            aylis_core::SecondInstance::parse(&self.project.single_instance_second),
+        ) {
             return Ok(());
         }
         self.development();

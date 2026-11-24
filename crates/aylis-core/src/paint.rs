@@ -1163,7 +1163,7 @@ impl Ui {
                 self.paint_own_with_hook(canvas, id, entry, component, &ctx, paint_fill, cb.shadow().as_ref(), flip);
             }
             if !skip_own {
-                self.paint_reveal(canvas, &ctx, component.clip_shape());
+                self.paint_reveal(canvas, &ctx, component.painted_shape());
             }
 
             // Um form rolado (o teclado aberto) não desenha por baixo das barras do sistema.

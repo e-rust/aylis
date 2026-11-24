@@ -93,6 +93,46 @@ fn the_screen_answers_outside_the_windows() {
     assert!(last.contains("monitor") && last.contains("allow_screen_capture"), "{last}");
 }
 
+/// A sessão pelo nome (as outras linguagens): o estado no `session_locked` e no
+/// `session_connected`, e o `on_session_change` a cada mudança (a primeira informação não é
+/// mudança).
+#[test]
+fn the_screen_tells_the_session_state_and_its_changes() {
+    let mut ui = ui();
+    let form = ui.create("Form", None).unwrap();
+    let screen = ui.create("Screen", Some(form)).unwrap();
+    ui.show(form).unwrap();
+    assert_eq!(ui.invoke(screen, "session_locked", &[]).unwrap(), PropValue::Bool(false));
+    assert_eq!(ui.invoke(screen, "session_connected", &[]).unwrap(), PropValue::Bool(true));
+    let got: Rc<RefCell<Vec<(bool, bool)>>> = Rc::default();
+    let sink = got.clone();
+    ui.on(screen, "on_session_change", move |ui, _, _| sink.borrow_mut().push((ui.session_locked(), ui.session_connected())));
+    ui.set_system_session(false, true);
+    ui.advance(1.1);
+    ui.run_timers();
+    ui.set_system_session(true, true);
+    ui.advance(1.1);
+    ui.run_timers();
+    ui.set_system_session(true, false);
+    ui.advance(1.1);
+    ui.run_timers();
+    assert_eq!(*got.borrow(), vec![(true, true), (true, false)]);
+    assert_eq!(ui.invoke(screen, "session_locked", &[]).unwrap(), PropValue::Bool(true));
+}
+
+/// Os métodos do app inteiro no `ApplicationEvents`: sem a plataforma do desktop, iniciar com o
+/// sistema é desligado e ligar dá o erro; soltar a instância única não faz nada.
+#[test]
+fn the_application_events_answer_the_app_wide_methods() {
+    let mut ui = ui();
+    let form = ui.create("Form", None).unwrap();
+    let app = ui.create("ApplicationEvents", Some(form)).unwrap();
+    assert_eq!(ui.invoke(app, "start_with_login", &[]).unwrap(), PropValue::Bool(false));
+    assert!(ui.invoke(app, "set_start_with_login", &[true.into()]).is_err());
+    assert!(ui.invoke(app, "set_start_with_login", &[]).is_err(), "sem o valor");
+    assert_eq!(ui.invoke(app, "release_single_instance", &[]).unwrap(), PropValue::Null);
+}
+
 /// O clique direito no ícone, como a plataforma entrega.
 fn right_click(ui: &mut Ui, tray: ComponentId) {
     let event = TrayEvent { kind: TrayEventKind::RightClick, screen: PointF::new(500.0, 400.0), scale: 1.0 };

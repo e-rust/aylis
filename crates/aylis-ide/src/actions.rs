@@ -1943,6 +1943,9 @@ pub fn fields_editor(ui: &mut Ui, state: &Shared, ids: &Ids, cds: ComponentId) {
 /// Gera o código dos eventos (do projeto inteiro ou do form solto); os editores abertos
 /// acompanham o que a geração puser neles.
 pub fn generate_code(ui: &mut Ui, state: &Shared) -> Result<Vec<PathBuf>, String> {
+    // O editor sem alteração que ficou atrás do disco (um agente gravou por fora) recarrega
+    // antes: a geração junta o trecho dela no texto atual (relatado pelo autor em 24/11).
+    crate::codewindow::sync_with_disk(ui);
     let before = crate::codewindow::snapshot(&crate::codewindow::open_paths());
     let result = generate_code_on_disk(state);
     follow_generation(ui, state, before);
@@ -1950,7 +1953,7 @@ pub fn generate_code(ui: &mut Ui, state: &Shared) -> Result<Vec<PathBuf>, String
 }
 
 /// O editor acompanha a geração; o que não deu para juntar vira aviso na situação.
-fn follow_generation(ui: &mut Ui, state: &Shared, before: Vec<(PathBuf, String)>) {
+fn follow_generation(ui: &mut Ui, state: &Shared, before: crate::codewindow::Snapshot) {
     let failed = crate::codewindow::follow_generation(ui, before);
     if let Some(file) = failed.first() {
         state.borrow_mut().status = format!("⚠ A geração acrescentou código em {}, que tem alterações não salvas no editor: salve e gere de novo", file.display());
@@ -2059,6 +2062,9 @@ pub fn open_code(ui: &mut Ui, state: &Shared, handler: Option<&str>) {
         if save_forms(state, false) > 0 {
             Err("salve os forms novos antes (Salvar)".to_string())
         } else {
+            // O F12 regrava o fonte do form: o editor atrás do disco recarrega antes (a corrida
+            // com um agente que gravou por fora apagava a linha dele; relatado em 24/11).
+            crate::codewindow::sync_with_disk(ui);
             let before = crate::codewindow::snapshot(&crate::codewindow::open_paths());
             let result = {
                 let st = state.borrow();

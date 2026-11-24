@@ -227,12 +227,16 @@ const EN: &[(&str, &str)] = &[
     ("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar.", "The project uses the version of the latest git tag, but git was not found. Install git or uncheck \"Version from git tag\" in Publish."),
     ("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório.", "The project uses the version of the latest git tag, but the project folder is not in a git repository. Uncheck \"Version from git tag\" in Publish or create the repository."),
     ("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar.", "The project uses the version of the latest git tag, but the repository has no tag. Create one (git tag v1.0.0) or uncheck \"Version from git tag\" in Publish."),
+    ("O projeto usa a versão das tags {0}*, mas o repositório não tem nenhuma. Crie uma (git tag {0}1.0.0) ou troque o prefixo das tags em Publicar.", "The project uses the version of the {0}* tags, but the repository has none. Create one (git tag {0}1.0.0) or change the tag prefix in Publish."),
     ("A última tag do git ({0}) não é uma versão. Use tags como v1.2.0 ou 1.2.0-beta.1.", "The latest git tag ({0}) is not a version. Use tags like v1.2.0 or 1.2.0-beta.1."),
     // A captura de um monitor (`Ui::capture_monitor`, a plataforma).
     ("A captura da tela não existe neste sistema.", "Screen capture is not available on this system."),
     ("A captura da tela está desligada no projeto (allow_screen_capture).", "Screen capture is turned off in the project (allow_screen_capture)."),
     ("O monitor {0} não existe.", "Monitor {0} does not exist."),
     ("A captura da tela não deu certo.", "The screen capture failed."),
+    // Iniciar com o sistema (`Ui::set_start_with_login`, a plataforma).
+    ("Iniciar com o sistema não existe nesta plataforma.", "Starting with the system is not available on this platform."),
+    ("Não foi possível gravar o início com o sistema: {0}", "Could not save the start with the system: {0}"),
 ];
 
 const ES: &[(&str, &str)] = &[
@@ -394,12 +398,16 @@ const ES: &[(&str, &str)] = &[
     ("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar.", "El proyecto usa la versión de la última etiqueta de git, pero no se encontró git. Instale git o desmarque \"Versión de la etiqueta de git\" en Publicar."),
     ("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório.", "El proyecto usa la versión de la última etiqueta de git, pero la carpeta del proyecto no está en un repositorio de git. Desmarque \"Versión de la etiqueta de git\" en Publicar o cree el repositorio."),
     ("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar.", "El proyecto usa la versión de la última etiqueta de git, pero el repositorio no tiene etiquetas. Cree una (git tag v1.0.0) o desmarque \"Versión de la etiqueta de git\" en Publicar."),
+    ("O projeto usa a versão das tags {0}*, mas o repositório não tem nenhuma. Crie uma (git tag {0}1.0.0) ou troque o prefixo das tags em Publicar.", "El proyecto usa la versión de las etiquetas {0}*, pero el repositorio no tiene ninguna. Cree una (git tag {0}1.0.0) o cambie el prefijo de las etiquetas en Publicar."),
     ("A última tag do git ({0}) não é uma versão. Use tags como v1.2.0 ou 1.2.0-beta.1.", "La última etiqueta de git ({0}) no es una versión. Use etiquetas como v1.2.0 o 1.2.0-beta.1."),
     // A captura de um monitor (`Ui::capture_monitor`, a plataforma).
     ("A captura da tela não existe neste sistema.", "La captura de pantalla no existe en este sistema."),
     ("A captura da tela está desligada no projeto (allow_screen_capture).", "La captura de pantalla está desactivada en el proyecto (allow_screen_capture)."),
     ("O monitor {0} não existe.", "El monitor {0} no existe."),
     ("A captura da tela não deu certo.", "La captura de pantalla falló."),
+    // Iniciar com o sistema (`Ui::set_start_with_login`, a plataforma).
+    ("Iniciar com o sistema não existe nesta plataforma.", "Iniciar con el sistema no existe en esta plataforma."),
+    ("Não foi possível gravar o início com o sistema: {0}", "No se pudo guardar el inicio con el sistema: {0}"),
 ];
 
 #[cfg(test)]

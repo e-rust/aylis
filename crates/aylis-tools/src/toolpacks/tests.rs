@@ -187,6 +187,33 @@ fn strip_and_prefix_choose_what_is_extracted() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// O `.cab` (o runtime de versão fixa do WebView2 vem assim), feito pelo `makecab` do Windows
+/// com uma pasta de cima e uma subpasta: o `strip` tira a de cima e a subpasta fica.
+#[test]
+#[cfg(windows)]
+fn a_cab_is_extracted_with_its_folders() {
+    let dir = temp("cab");
+    std::fs::write(dir.join("msedgewebview2.exe"), b"exe").unwrap();
+    std::fs::write(dir.join("dados.pak"), b"pak").unwrap();
+    let ddf = format!(
+        ".OPTION EXPLICIT\r\n.Set CabinetNameTemplate=runtime.cab\r\n.Set DiskDirectoryTemplate={0}\r\n.Set Cabinet=on\r\n.Set Compress=on\r\n.Set DestinationDir=Runtime.1.x64\r\n\"{1}\"\r\n.Set DestinationDir=Runtime.1.x64\\Locales\r\n\"{2}\"\r\n",
+        dir.display(),
+        dir.join("msedgewebview2.exe").display(),
+        dir.join("dados.pak").display()
+    );
+    std::fs::write(dir.join("runtime.ddf"), ddf).unwrap();
+    let made = std::process::Command::new("makecab").arg("/F").arg(dir.join("runtime.ddf")).current_dir(&dir).output();
+    if !made.is_ok_and(|o| o.status.success()) || !dir.join("runtime.cab").is_file() {
+        eprintln!("sem o makecab: pulado");
+        return;
+    }
+    extract(&dir.join("runtime.cab"), &dir.join("WebView2"), 1, None, &Control::default()).unwrap();
+    assert_eq!(std::fs::read(dir.join("WebView2/msedgewebview2.exe")).unwrap(), b"exe");
+    assert_eq!(std::fs::read(dir.join("WebView2/Locales/dados.pak")).unwrap(), b"pak");
+    assert!(!dir.join("WebView2.cab-extract").exists(), "a pasta de trabalho sai");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 /// Um pacote `tool` com um zip na pasta `pkgs`.
 fn tool_package(version: &str, zip: &[u8]) -> serde_json::Value {
     json!({

@@ -227,7 +227,13 @@ pub fn cargo(
     for (k, v) in envs {
         command.env(k, v);
     }
-    write_cargo_config(dir, &target);
+    // O runtime do Visual C++ dentro do `.exe` (`publish.windows.static_crt`): no
+    // `.cargo/config.toml` do projeto, para o cargo de fora compilar igual; onde o Aylis não
+    // grava o arquivo (o repositório do Aylis, um arquivo do autor), na linha de comando.
+    let static_crt = project_static_crt(dir);
+    if !write_cargo_config(dir, &target, static_crt) && static_crt {
+        command.args(["--config", &format!("target.'{STATIC_CRT_TARGET}'.{STATIC_CRT_FLAGS}")]);
+    }
     let mut out = CargoOutput::default();
     let mut success = None;
     // O que esta compilação usou, para o índice da limpeza (mesmo se falhar: o que compilou
@@ -291,36 +297,55 @@ pub const DEPENDENCY_DEBUG: &str = "debug = false";
 /// Grava em `<projeto>/.cargo/config.toml` a pasta de compilação compartilhada: o cargo de
 /// fora do aylis (no terminal, o servidor de linguagem do editor) usa a mesma pasta, em vez de
 /// compilar o aylis inteiro de novo num `target/` do projeto. Fica de fora o que está dentro do
-/// repositório do aylis (os exemplos de lá cuidam disso no próprio repositório).
-pub fn write_cargo_config(dir: &Path, target: &Path) {
+/// repositório do aylis (os exemplos de lá cuidam disso no próprio repositório). Com
+/// `static_crt`, também as flags do runtime do Visual C++ dentro do `.exe`: só neste arquivo,
+/// do projeto (o `config.toml` global vale para todos os projetos da máquina). Devolve se o
+/// arquivo é do Aylis e ficou gravado; senão, quem chama passa as flags na linha de comando.
+pub fn write_cargo_config(dir: &Path, target: &Path, static_crt: bool) -> bool {
     if !dir.join("Cargo.toml").is_file() {
-        return;
+        return false;
     }
     let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     if canon(dir).starts_with(canon(&crate::aylis_root())) {
-        return;
+        return false;
     }
     let file = dir.join(".cargo").join("config.toml");
     let current = std::fs::read_to_string(&file).ok();
     if current.as_deref().is_some_and(|c| !c.starts_with(CARGO_CONFIG_MARK)) {
-        return;
+        return false;
     }
+    let crt = if static_crt { format!("\n# O runtime do Visual C++ dentro do .exe (Projeto → Windows).\n[target.'{STATIC_CRT_TARGET}']\n{STATIC_CRT_FLAGS}\n") } else { String::new() };
     // Uma string literal do TOML (entre aspas simples): as barras invertidas valem como estão.
     // O perfil é o mesmo do `cargo` acima: com outro, o cargo de fora compilaria as
     // dependências de novo e a pasta guardaria as duas cópias.
     let text = format!(
-        "{CARGO_CONFIG_MARK}: o cargo fora do aylis (terminal, editor) compila na mesma pasta\n# e do mesmo jeito que a IDE (Opções → Rust e Python). Pode apagar: o aylis grava de novo.\n[build]\ntarget-dir = '{}'\n\n[profile.dev.package.\"*\"]\n{DEPENDENCY_DEBUG}\n",
+        "{CARGO_CONFIG_MARK}: o cargo fora do aylis (terminal, editor) compila na mesma pasta\n# e do mesmo jeito que a IDE (Opções → Rust e Python). Pode apagar: o aylis grava de novo.\n[build]\ntarget-dir = '{}'\n\n[profile.dev.package.\"*\"]\n{DEPENDENCY_DEBUG}\n{crt}",
         target.display()
     );
-    if current.as_deref() != Some(text.as_str()) {
-        let _ = std::fs::create_dir_all(file.parent().unwrap()).and_then(|_| std::fs::write(&file, text));
-    }
+    let written = current.as_deref() == Some(text.as_str()) || std::fs::create_dir_all(file.parent().unwrap()).and_then(|_| std::fs::write(&file, &text)).is_ok();
     // A pasta de compilação é desta máquina (o caminho tem o nome do usuário): o arquivo não vai
     // para o git do projeto. O `.gitignore` ao lado dele vale em qualquer repositório.
     let ignore = dir.join(".cargo").join(".gitignore");
     if !ignore.exists() {
         let _ = std::fs::write(&ignore, format!("{CARGO_CONFIG_MARK}: o config.toml é desta máquina.\nconfig.toml\n.gitignore\n"));
     }
+    written
+}
+
+/// Os alvos do `+crt-static` (`publish.windows.static_crt`): o Windows com o MSVC, em qualquer
+/// arquitetura.
+pub const STATIC_CRT_TARGET: &str = "cfg(all(windows, target_env = \"msvc\"))";
+
+/// As flags do runtime do Visual C++ dentro do `.exe`.
+pub const STATIC_CRT_FLAGS: &str = "rustflags = [\"-C\", \"target-feature=+crt-static\"]";
+
+/// Se o projeto de `dir` pede o runtime do Visual C++ dentro do `.exe`
+/// (`publish.windows.static_crt`). `dir` é a pasta do código (`<projeto>/rust`), a do projeto
+/// ou a do app casca (`<projeto>/.aylis/shell`).
+pub fn project_static_crt(dir: &Path) -> bool {
+    let Some(project) = dir.ancestors().take(3).find_map(aylis_build::find_project) else { return false };
+    let Some(value) = std::fs::read_to_string(project).ok().and_then(|t| serde_json::from_str::<Value>(t.trim_start_matches('\u{feff}')).ok()) else { return false };
+    value["publish"]["windows"]["static_crt"] == Value::Bool(true)
 }
 
 fn same_dir(a: &Path, b: &Path) -> bool {

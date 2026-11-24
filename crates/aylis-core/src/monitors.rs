@@ -253,6 +253,10 @@ struct DesktopState {
     transparency_version: u64,
     /// A captura de monitor ligada pelo projeto (`allow_screen_capture`).
     allow_capture: bool,
+    /// A sessão do usuário (bloqueada, conectada), a última informada (`None`: nunca informou).
+    session: Option<(bool, bool)>,
+    /// Conta as mudanças da sessão (o `Screen` compara para o `on_session_change`).
+    session_version: u64,
 }
 
 /// O que a captura devolve, na thread da tela.
@@ -315,6 +319,45 @@ impl Ui {
     /// `on_transparency_change`).
     pub fn system_transparency_version(&self) -> u64 {
         self.extension_ref::<DesktopState>().map_or(0, |d| d.transparency_version)
+    }
+
+    /// A sessão do usuário está bloqueada (no Windows, Win+L ou a proteção de tela com senha):
+    /// o app pode pausar o que só faz sentido com alguém olhando. A mudança chega pelo
+    /// `on_session_change` do `Screen`. Só o Windows informa; nos outros sistemas, `false`.
+    pub fn session_locked(&self) -> bool {
+        self.session_state().0
+    }
+
+    /// A sessão do usuário está conectada à tela: `false` com a sessão remota desconectada (a
+    /// janela do RDP fechada sem sair) ou deixada de lado pela troca rápida de usuário. A
+    /// mudança chega pelo `on_session_change` do `Screen`. Só o Windows informa; nos outros
+    /// sistemas, `true`.
+    pub fn session_connected(&self) -> bool {
+        self.session_state().1
+    }
+
+    /// Bloqueada e conectada: o último valor da plataforma, ou o que o serviço diz agora.
+    fn session_state(&self) -> (bool, bool) {
+        self.extension_ref::<DesktopState>()
+            .and_then(|d| d.session)
+            .or_else(|| self.services().desktop.as_ref().and_then(|d| d.session_state()))
+            .unwrap_or((false, true))
+    }
+
+    /// A plataforma informa a sessão (ao abrir e a cada mudança): bloqueada e conectada.
+    pub fn set_system_session(&mut self, locked: bool, connected: bool) {
+        let state = self.extension::<DesktopState>();
+        if state.session != Some((locked, connected)) {
+            if state.session.is_some() {
+                state.session_version += 1;
+            }
+            state.session = Some((locked, connected));
+        }
+    }
+
+    /// Conta as mudanças da sessão (o `Screen` compara para disparar o `on_session_change`).
+    pub fn system_session_version(&self) -> u64 {
+        self.extension_ref::<DesktopState>().map_or(0, |d| d.session_version)
     }
 
     /// Liga a captura de monitor ([`Ui::capture_monitor`]): o projeto, pela opção

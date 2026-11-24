@@ -34,6 +34,9 @@ struct Tab {
     disk: Option<aylis_project::FileStamp>,
     /// Já avisou que fechar descarta as alterações.
     warned: bool,
+    /// Travado para o teclado do usuário porque a IDE foi aberta por um agente (o MCP continua
+    /// editando; o "Liberar edição" da faixa destrava). Separado do `read_only` dos gerados.
+    agent_lock: bool,
 }
 
 /// Um editor: o embutido na IDE ou uma janela de código.
@@ -74,6 +77,8 @@ struct Editor {
     breadcrumb: ComponentId,
     /// A faixa do arquivo gerado pela IDE (somente leitura: a geração o refaz).
     generated_banner: ComponentId,
+    /// A faixa do fonte travado porque a IDE foi aberta por um agente, com o "Liberar edição".
+    agent_banner: ComponentId,
 }
 
 /// A barra de localizar e substituir.
@@ -137,6 +142,9 @@ pub struct Hooks {
     /// O fonte foi salvo pelo editor (Ctrl+S, o botão): a IDE salva junto o form dele, se
     /// alterado (conferência de 08/11).
     pub saved: Box<dyn Fn(&mut Ui, &Path)>,
+    /// O salvar achou o fonte mudado no disco desde que foi lido (um agente, outro editor) e não
+    /// gravou por cima: a IDE confere o disco e pergunta, como ao voltar o foco ([`crate::disk`]).
+    pub changed_on_disk: Box<dyn Fn(&mut Ui)>,
 }
 
 /// Avisa a IDE de que as abas do código mudaram.
@@ -180,10 +188,12 @@ pub fn save_all(ui: &mut Ui) -> usize {
     crate::inspector::commit_pending(ui);
     let memos: Vec<(ComponentId, ComponentId)> =
         with_editors(ui, |list| list.iter().flat_map(|ed| ed.tabs.iter().filter(|t| t.modified).map(move |t| (ed.form, t.memo))).collect()).unwrap_or_default();
+    let mut conflict = false;
     for &(form, memo) in &memos {
         CURRENT.with(|c| c.set(Some(form)));
-        save_memo(ui, memo);
+        conflict |= matches!(save_memo(ui, memo), Saved::Conflict { .. });
     }
+    after_save(ui, conflict);
     memos.len()
 }
 
@@ -199,9 +209,11 @@ pub fn save_embedded(ui: &mut Ui, all: bool) -> usize {
     })
     .unwrap_or_default();
     CURRENT.with(|c| c.set(Some(form)));
+    let mut conflict = false;
     for &memo in &memos {
-        save_memo(ui, memo);
+        conflict |= matches!(save_memo(ui, memo), Saved::Conflict { .. });
     }
+    after_save(ui, conflict);
     memos.len()
 }
 
@@ -873,6 +885,22 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
     let generated_banner = ui.add(Label::new("Gerado pela IDE do Aylis a cada \"Gerar código\": somente leitura (mude o form ou o seu código, e gere de novo)"), area);
     ui.control_mut(generated_banner).unwrap().set_align(Align::Top).set_height(26.0).set_padding([8.0, 0.0, 8.0, 0.0]).set_visible(false);
     let _ = ui.set_prop(generated_banner, "style", "warning");
+    // A IDE aberta por um agente (MCP): os fontes do usuário abrem travados para o teclado,
+    // com o "Liberar edição" (o agente continua editando pelo `edit_code`).
+    let agent_banner = ui.add(Panel::new(0.0, 32.0), area);
+    ui.control_mut(agent_banner).unwrap().set_align(Align::Top).set_padding([8.0, 3.0, 6.0, 3.0]).set_visible(false);
+    let release = ui.add(Button::new("Liberar edição"), agent_banner);
+    ui.control_mut(release).unwrap().set_align(Align::Right).set_width(130.0).set_margins([8.0, 0.0, 0.0, 0.0]);
+    let _ = ui.set_prop(release, "hint", "Destrava este fonte para digitar (o Ctrl+Z não desfaz o que o agente fez antes)");
+    ui.on_click(release, |ui, sender| {
+        select_of(ui, sender);
+        if let Some((file, _)) = active(ui) {
+            release_editing(ui, &file);
+        }
+    });
+    let agent_text = ui.add(Label::new("Aberto por um agente (MCP): só leitura para evitar mexer no que ele está editando"), agent_banner);
+    ui.control_mut(agent_text).unwrap().set_align(Align::Client);
+    let _ = ui.set_prop(agent_text, "style", "warning");
     let breadcrumb = ui.add(Label::new(""), area);
     ui.control_mut(breadcrumb).unwrap().set_align(Align::Top).set_height(24.0).set_margins([6.0, 2.0, 6.0, 0.0]).set_cursor(aylis_core::CursorShape::Pointer);
     let _ = ui.set_prop(breadcrumb, "font_size", 12);
@@ -910,6 +938,7 @@ fn create(ui: &mut Ui, host: Option<ComponentId>) -> ComponentId {
             color_theme: crate::actions::config_text("code_theme"),
             breadcrumb,
             generated_banner,
+            agent_banner,
             area,
         })
     });
@@ -933,8 +962,13 @@ fn add_tab(ui: &mut Ui, file: &Path) -> Result<usize, String> {
     // Opções da IDE: o código digitado entra nas gravações de uso só mascarado.
     editor.memo.sensitive = crate::actions::config_flag("mask_editor_text", false);
     // O que a IDE refaz a cada geração: somente leitura (a faixa explica).
+    let mut agent_lock = false;
     if is_generated(file, &editor.memo.text) {
         editor.memo.read_only = true;
+    } else if agent_read_only() {
+        // Aberta por um agente: travado para o teclado do usuário (a faixa e o "Liberar edição").
+        editor.memo.read_only = true;
+        agent_lock = true;
     }
     let opened_text = editor.memo.text.clone();
     let area = with_editor(ui, |ed| ed.area).unwrap_or(form);
@@ -1058,7 +1092,7 @@ fn add_tab(ui: &mut Ui, file: &Path) -> Result<usize, String> {
     }
     lsp_event(ui, LspEvent::Opened { file: file.to_path_buf(), text: opened_text });
     let index = with_editor(ui, |ed| {
-        ed.tabs.push(Tab { file: file.to_path_buf(), memo, modified: false, warned: false, disk: aylis_project::FileStamp::read(file) });
+        ed.tabs.push(Tab { file: file.to_path_buf(), memo, modified: false, warned: false, disk: aylis_project::FileStamp::read(file), agent_lock });
         ed.tabs.len() - 1
     })
     .ok_or("janela de código fechada")?;
@@ -1075,23 +1109,28 @@ fn activate(ui: &mut Ui, index: usize) {
     crate::hovertip::hide(ui);
     let Some((form, strip, current, tabs)) = with_editor(ui, |ed| {
         ed.active = index.min(ed.tabs.len().saturating_sub(1));
-        (ed.form, ed.tab_bar, ed.active, ed.tabs.iter().enumerate().map(|(i, t)| (i == ed.active, t.memo, t.file.clone())).collect::<Vec<_>>())
+        (ed.form, ed.tab_bar, ed.active, ed.tabs.iter().enumerate().map(|(i, t)| (i == ed.active, t.memo, t.file.clone(), t.agent_lock)).collect::<Vec<_>>())
     }) else {
         return;
     };
     if let Some(s) = ui.get_mut::<TabStrip>(strip) {
         s.tab_index = current as i64;
     }
-    for (on, memo, file) in tabs {
+    for (on, memo, file, agent_lock) in tabs {
         if let Some(c) = ui.control_mut(memo) {
             c.set_visible(on);
         }
         if on {
             let _ = ui.set_prop(form, "caption", format!("Código — {}", file_name(&file)));
-            let banner = with_editor(ui, |ed| ed.generated_banner);
-            let generated = ui.get::<Memo>(memo).is_some_and(|m| m.read_only) && std::fs::read_to_string(&file).is_ok_and(|t| is_generated(&file, &t));
-            if let Some(c) = banner.and_then(|b| ui.control_mut(b)) {
-                c.set_visible(generated);
+            let banners = with_editor(ui, |ed| (ed.generated_banner, ed.agent_banner));
+            let generated = !agent_lock && ui.get::<Memo>(memo).is_some_and(|m| m.read_only) && std::fs::read_to_string(&file).is_ok_and(|t| is_generated(&file, &t));
+            if let Some((generated_banner, agent_banner)) = banners {
+                if let Some(c) = ui.control_mut(generated_banner) {
+                    c.set_visible(generated);
+                }
+                if let Some(c) = ui.control_mut(agent_banner) {
+                    c.set_visible(agent_lock);
+                }
             }
         }
     }
@@ -1164,15 +1203,56 @@ fn update_breadcrumb(ui: &mut Ui) {
 /// Salva a aba ativa.
 fn save_active(ui: &mut Ui) {
     if let Some((_, memo)) = active(ui) {
-        save_memo(ui, memo);
+        let conflict = matches!(save_memo(ui, memo), Saved::Conflict { .. });
+        after_save(ui, conflict);
     }
 }
 
-/// Salva a aba do editor `memo` (no editor atual).
-fn save_memo(ui: &mut Ui, memo: ComponentId) {
-    let Some(file) = with_editor(ui, |ed| ed.tabs.iter().find(|t| t.memo == memo).map(|t| t.file.clone())).flatten() else { return };
+/// O que o salvar de uma aba fez.
+enum Saved {
+    /// Gravou (ou não havia aba).
+    Done,
+    /// O disco mudou por fora e a aba não tinha alteração: ela recarregou do disco, sem gravar.
+    Reloaded,
+    /// O disco mudou por fora e a aba também tem alteração: não gravou por cima (os dois textos).
+    Conflict { file: PathBuf, ide: String, disk: String },
+    /// Não conseguiu gravar.
+    Failed,
+}
+
+/// Depois de salvar pela tela: o conflito vai para a IDE perguntar ([`Hooks::changed_on_disk`]).
+fn after_save(ui: &mut Ui, conflict: bool) {
+    if conflict {
+        if let Some(h) = hooks() {
+            (h.changed_on_disk)(ui);
+        }
+    }
+}
+
+/// Salva a aba do editor `memo` (no editor atual). Antes, confere a marca do disco: mudou desde
+/// que a aba leu ou salvou (um agente gravou por fora e a IDE ainda não tinha conferido), não
+/// grava por cima, que apagava o que foi gravado por fora (relatado pelo autor em 24/11).
+fn save_memo(ui: &mut Ui, memo: ComponentId) -> Saved {
+    let Some((file, stamp, modified)) = with_editor(ui, |ed| ed.tabs.iter().find(|t| t.memo == memo).map(|t| (t.file.clone(), t.disk, t.modified))).flatten() else {
+        return Saved::Done;
+    };
     let status = with_editor(ui, |ed| ed.status);
     let text = ui.get::<Memo>(memo).map(|m| m.text.clone()).unwrap_or_default();
+    let now = aylis_project::FileStamp::read(&file);
+    if now.is_some() && now != stamp {
+        if let Ok(disk) = std::fs::read_to_string(&file) {
+            if disk != text {
+                if !modified {
+                    reload_from_disk(ui, &file, &disk);
+                    return Saved::Reloaded;
+                }
+                if let Some(status) = status {
+                    let _ = ui.set_prop(status, "text", format!("⚠ {} mudou fora da IDE: não salvei por cima", file_name(&file)));
+                }
+                return Saved::Conflict { file, ide: text, disk };
+            }
+        }
+    }
     match std::fs::write(&file, &text) {
         Ok(()) => {
             let stamp = aylis_project::FileStamp::read(&file);
@@ -1186,11 +1266,13 @@ fn save_memo(ui: &mut Ui, memo: ComponentId) {
             // As linhas dos marcadores como ficaram no arquivo salvo.
             save_bookmarks_of(ui, memo);
             lsp_event(ui, LspEvent::Saved { file, text });
+            Saved::Done
         }
         Err(e) => {
             if let Some(status) = status {
                 let _ = ui.set_prop(status, "text", format!("⚠ não consegui salvar: {e}"));
             }
+            Saved::Failed
         }
     }
 }
@@ -1454,8 +1536,8 @@ fn clipboard_items(ui: &mut Ui, parent: ComponentId) {
 /// Editar, Navegar e Exibir.
 fn create_menus(ui: &mut Ui, menu: ComponentId, embedded: bool) {
     let edit = ui.add(MenuItem::new("Editar"), menu);
-    add_menu_item(ui, edit, "Desfazer", "Ctrl+Z", |ui| with_active_memo(ui, |m, _| m.undo()));
-    add_menu_item(ui, edit, "Refazer", "Ctrl+Y", |ui| with_active_memo(ui, |m, _| m.redo()));
+    add_menu_item(ui, edit, "Desfazer", "Ctrl+Z", |ui| with_active_memo(ui, |m, _| !m.read_only && m.undo()));
+    add_menu_item(ui, edit, "Refazer", "Ctrl+Y", |ui| with_active_memo(ui, |m, _| !m.read_only && m.redo()));
     menu_separator(ui, edit);
     // No menu do botão direito eles já estão no topo.
     if !embedded {
@@ -2150,14 +2232,25 @@ pub fn apply_file_edits(ui: &mut Ui, file: &Path, edits: &[(Pos, Pos, String)]) 
     true
 }
 
-/// Salva o arquivo aberto numa aba (`false`: não está aberto).
-pub fn save_file(ui: &mut Ui, file: &Path) -> bool {
+/// Salva o arquivo aberto numa aba (`Ok(false)`: não está aberto). O disco mudado por fora com
+/// alteração na aba não é gravado por cima: o erro leva o diff (`-` só na IDE, `+` só no disco),
+/// para o agente resolver com o `resolve_conflict`.
+pub fn save_file(ui: &mut Ui, file: &Path) -> Result<bool, String> {
     let key = crate::debugger::norm(file);
-    let Some((form, i)) = find_file(ui, &key) else { return false };
-    let Some(memo) = with_editor_at(ui, form, |ed| ed.tabs.get(i).map(|t| t.memo)).flatten() else { return false };
+    let Some((form, i)) = find_file(ui, &key) else { return Ok(false) };
+    let Some(memo) = with_editor_at(ui, form, |ed| ed.tabs.get(i).map(|t| t.memo)).flatten() else { return Ok(false) };
     CURRENT.with(|c| c.set(Some(form)));
-    save_memo(ui, memo);
-    true
+    match save_memo(ui, memo) {
+        // Recarregado: o disco já tem o que o editor mostra.
+        Saved::Done | Saved::Reloaded => Ok(true),
+        Saved::Failed => Err(format!("não consegui salvar {}", file.display())),
+        Saved::Conflict { file, ide, disk } => Err(format!(
+            "{} mudou no disco desde que a IDE o leu, e o editor tem alterações: não salvei por cima (`-` só na IDE, `+` só no disco). \
+             Resolva com `resolve_conflict` (`file` e `keep`: \"disk\" ou \"ide\"):\n{}",
+            file.display(),
+            crate::disk::line_diff(&ide, &disk)
+        )),
+    }
 }
 
 /// O `edit_code` do MCP: troca `old` por `new` no texto do editor do arquivo (aberto antes,
@@ -2173,9 +2266,11 @@ pub fn edit_text(ui: &mut Ui, file: &Path, old: &str, new: &str, all: bool) -> R
     }
     let memo = memo_of(ui, file).ok_or_else(|| format!("não consegui abrir {}", file.display()))?;
     let now = ui.time();
+    // A trava da IDE aberta por um agente é só para o teclado do usuário: o agente edita.
+    let agent_lock = is_agent_locked(ui, memo);
     let result = {
         let m = ui.get_mut::<Memo>(memo).ok_or("o editor sumiu")?;
-        if m.read_only {
+        if m.read_only && !agent_lock {
             return Err(format!("{} é somente leitura (código gerado pela IDE: mude o form, e o Gerar código refaz)", file.display()));
         }
         let starts: Vec<usize> = m.text.match_indices(old).map(|(i, _)| i).collect();
@@ -2189,7 +2284,9 @@ pub fn edit_text(ui: &mut Ui, file: &Path, old: &str, new: &str, all: bool) -> R
         let line = m.text[..starts[0]].matches('\n').count() + 1;
         let edits: Vec<(usize, usize, String)> = starts.iter().map(|&b| (chars(b), chars(b) + old_chars, new.to_string())).collect();
         let count = edits.len();
+        let read_only = std::mem::replace(&mut m.read_only, false);
         m.apply_edits(edits, now);
+        m.read_only = read_only;
         (count, line)
     };
     let text = ui.get::<Memo>(memo).map(|m| m.text.clone()).unwrap_or_default();
@@ -2648,6 +2745,114 @@ pub fn is_open(ui: &Ui, file: &Path) -> bool {
     find_file(ui, file).is_some()
 }
 
+/// A opção das Opções da IDE: os fontes abrem só leitura quando a IDE foi aberta por um agente.
+pub const AGENT_READ_ONLY_OPTION: &str = "agent_read_only";
+
+thread_local! {
+    /// A IDE foi aberta por um agente (`None`: ainda não olhou o ambiente).
+    static OPENED_BY_AGENT: std::cell::Cell<Option<bool>> = const { std::cell::Cell::new(None) };
+}
+
+/// A IDE foi aberta pela ponte do MCP (o `aylis-tool mcp` põe `AYLIS_IDE_MCP` ao iniciá-la).
+pub fn opened_by_agent() -> bool {
+    OPENED_BY_AGENT.with(|o| match o.get() {
+        Some(on) => on,
+        None => {
+            let on = std::env::var_os("AYLIS_IDE_MCP").is_some();
+            o.set(Some(on));
+            on
+        }
+    })
+}
+
+/// Diz se a IDE foi aberta por um agente (os testes; a IDE de verdade olha o ambiente).
+pub fn set_opened_by_agent(on: bool) {
+    OPENED_BY_AGENT.with(|o| o.set(Some(on)));
+}
+
+/// O fonte que abre agora fica travado para o teclado do usuário: a IDE foi aberta por um
+/// agente e a opção está ligada (o padrão). Pedido do autor em 24/11: o F12 dele no fonte que o
+/// agente editava apagou uma linha, e o Ctrl+Z desfazia até o que o agente fez.
+fn agent_read_only() -> bool {
+    opened_by_agent() && crate::actions::config_flag(AGENT_READ_ONLY_OPTION, true)
+}
+
+/// A aba do editor `memo` está travada para o usuário porque a IDE foi aberta por um agente.
+fn is_agent_locked(ui: &Ui, memo: ComponentId) -> bool {
+    with_editors(ui, |list| list.iter().flat_map(|ed| &ed.tabs).any(|t| t.memo == memo && t.agent_lock)).unwrap_or(false)
+}
+
+/// O fonte aberto está travado para o usuário (a IDE aberta por um agente).
+pub fn is_locked_for_user(ui: &Ui, file: &Path) -> bool {
+    memo_of(ui, file).is_some_and(|memo| is_agent_locked(ui, memo))
+}
+
+/// O "Liberar edição" da faixa: destrava o fonte para o teclado do usuário. O desfazer recomeça
+/// daqui: o Ctrl+Z do usuário não desfaz o que o agente fez antes. Só esta aba (as outras que o
+/// agente abriu continuam travadas). `false`: o fonte não estava travado.
+pub fn release_editing(ui: &mut Ui, file: &Path) -> bool {
+    let key = crate::debugger::norm(file);
+    let Some((form, i)) = find_file(ui, &key) else { return false };
+    let unlocked = with_editor_at(ui, form, |ed| {
+        let t = ed.tabs.get_mut(i).filter(|t| t.agent_lock)?;
+        t.agent_lock = false;
+        Some(t.memo)
+    });
+    let Some(memo) = unlocked.flatten() else { return false };
+    if let Some(m) = ui.get_mut::<Memo>(memo) {
+        m.read_only = false;
+        m.clear_undo();
+    }
+    if let Some(banner) = with_editor_at(ui, form, |ed| ed.agent_banner) {
+        if let Some(c) = ui.control_mut(banner) {
+            c.set_visible(false);
+        }
+    }
+    CURRENT.with(|c| c.set(Some(form)));
+    ui.set_focus(memo);
+    ui.request_repaint();
+    true
+}
+
+/// Roda `f` como o agente (o `editor_type` e o `editor_key` do MCP digitam como um usuário): os
+/// fontes travados para o usuário destravam durante `f` e voltam a travar depois.
+pub fn as_agent<R>(ui: &mut Ui, f: impl FnOnce(&mut Ui) -> R) -> R {
+    let locked: Vec<ComponentId> = with_editors(ui, |list| list.iter().flat_map(|ed| &ed.tabs).filter(|t| t.agent_lock).map(|t| t.memo).collect()).unwrap_or_default();
+    for &memo in &locked {
+        if let Some(m) = ui.get_mut::<Memo>(memo) {
+            m.read_only = false;
+        }
+    }
+    let result = f(ui);
+    for &memo in &locked {
+        if let Some(m) = ui.get_mut::<Memo>(memo) {
+            m.read_only = true;
+        }
+    }
+    result
+}
+
+/// Os fontes abertos sem alteração que ficaram atrás do disco (gravados por fora) passam a ter o
+/// texto do disco, como o [`crate::disk::check`] faria. Antes de gerar o código: sem isto, a
+/// geração juntava o trecho dela num texto velho e marcava como salvo, e o próximo salvar
+/// apagava o que foi gravado por fora (relatado pelo autor em 24/11). Devolve quantos recarregou.
+pub fn sync_with_disk(ui: &mut Ui) -> usize {
+    let mut reloaded = 0;
+    for (file, modified, ide) in disk_changes(ui) {
+        if modified {
+            continue;
+        }
+        let Ok(disk) = std::fs::read_to_string(&file) else { continue };
+        if disk == ide {
+            keep_editor(ui, &file);
+        } else {
+            reload_from_disk(ui, &file, &disk);
+            reloaded += 1;
+        }
+    }
+    reloaded
+}
+
 /// Fica o texto do editor: a marca passa a ser a de agora (não pergunta de novo até o disco
 /// mudar outra vez).
 pub fn keep_editor(ui: &mut Ui, file: &Path) {
@@ -2690,9 +2895,12 @@ pub fn open_paths() -> Vec<PathBuf> {
     EDITORS.with(|e| e.borrow().iter().flat_map(|ed| ed.tabs.iter().map(|t| t.file.clone())).collect())
 }
 
-/// O texto no disco dos arquivos abertos, antes de a geração mexer.
-pub fn snapshot(files: &[PathBuf]) -> Vec<(PathBuf, String)> {
-    files.iter().filter_map(|f| std::fs::read_to_string(f).ok().map(|t| (f.clone(), t))).collect()
+/// O que havia no disco de cada arquivo aberto antes de a geração mexer: o texto e a marca.
+pub type Snapshot = Vec<(PathBuf, String, Option<aylis_project::FileStamp>)>;
+
+/// O texto (e a marca) no disco dos arquivos abertos, antes de a geração mexer.
+pub fn snapshot(files: &[PathBuf]) -> Snapshot {
+    files.iter().filter_map(|f| std::fs::read_to_string(f).ok().map(|t| (f.clone(), t, aylis_project::FileStamp::read(f)))).collect()
 }
 
 /// A geração de código mexeu no disco de arquivos abertos (`before`: o texto deles antes): o
@@ -2700,32 +2908,56 @@ pub fn snapshot(files: &[PathBuf]) -> Vec<(PathBuf, String)> {
 /// igual ao disco e continua "salvo"; com alteração não salva, o que a geração pôs entra no
 /// meio do texto do editor, no mesmo lugar (senão salvar o editor apagava os handlers novos,
 /// achado na conferência de 08/11). Devolve os arquivos em que não deu para juntar.
-pub fn follow_generation(ui: &mut Ui, before: Vec<(PathBuf, String)>) -> Vec<PathBuf> {
+///
+/// O editor sem alteração que estava atrás do disco (gravado por fora antes da geração) fica
+/// com o disco inteiro; o com alteração que estava atrás continua com a marca velha, e o
+/// conflito aparece na próxima conferência (antes, a marca nova escondia o que se gravou por
+/// fora, e o salvar apagava; relatado pelo autor em 24/11).
+pub fn follow_generation(ui: &mut Ui, before: Snapshot) -> Vec<PathBuf> {
     let mut failed = Vec::new();
-    for (file, old) in before {
+    for (file, old, old_stamp) in before {
         let Ok(new) = std::fs::read_to_string(&file) else { continue };
         if new == old {
             continue;
         }
         let Some((form, i)) = find_file(ui, &file) else { continue };
-        let Some((memo, modified)) = with_editor_at(ui, form, |ed| ed.tabs.get(i).map(|t| (t.memo, t.modified))).flatten() else { continue };
+        let Some((memo, modified, stamp_before)) = with_editor_at(ui, form, |ed| ed.tabs.get(i).map(|t| (t.memo, t.modified, t.disk))).flatten() else { continue };
         let Some(text) = ui.get::<Memo>(memo).map(|m| m.text.clone()) else { continue };
-        let Some(edit) = merge_generated(&old, &new, &text) else {
+        // O editor conhecia o disco de antes da geração (a marca dele era a do disco).
+        let current = stamp_before.is_some() && stamp_before == old_stamp;
+        let edit = if !modified && text != old {
+            // Sem alteração, mas atrás do disco: o disco inteiro.
+            Some((0, text.chars().count(), new.clone()))
+        } else {
+            merge_generated(&old, &new, &text)
+        };
+        let Some(edit) = edit else {
             failed.push(file);
             continue;
         };
         let now = ui.time();
-        if let Some(m) = ui.get_mut::<Memo>(memo) {
-            m.apply_edits(vec![edit], now);
+        // O somente leitura (o gerado, o travado para o usuário) também acompanha a geração.
+        let applied = ui.get_mut::<Memo>(memo).is_some_and(|m| {
+            let read_only = std::mem::replace(&mut m.read_only, false);
+            let applied = m.apply_edits(vec![edit], now);
+            m.read_only = read_only;
+            applied
+        });
+        if !applied {
+            failed.push(file);
+            continue;
         }
         let text = ui.get::<Memo>(memo).map(|m| m.text.clone()).unwrap_or_default();
         ui.fire(memo, "on_change", &aylis_core::EventArgs::Value(text.into()));
         // O editor já tem o que a geração gravou: a marca do disco é a nova (senão parecia
-        // mudado por fora). Igual ao disco, continua salvo.
+        // mudado por fora). Igual ao disco, continua salvo. Com alteração e atrás do disco, a
+        // marca fica a velha: o que se gravou por fora vira conflito, e não some ao salvar.
         let stamp = aylis_project::FileStamp::read(&file);
         with_editor_at(ui, form, |ed| {
             if let Some(t) = ed.tabs.get_mut(i) {
-                t.disk = stamp;
+                if current || !modified {
+                    t.disk = stamp;
+                }
                 if !modified {
                     t.modified = false;
                 }

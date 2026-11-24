@@ -862,6 +862,103 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
       `on_key_down` que escreve `form`, `form_id`, `caps_lock` e `num_lock` do evento.
       *Esperado:* o `KeyEvent` gerado tem os campos, e a tecla mostra o nome do form em que
       chegou e o estado do Caps Lock.
+178. **O Reveal com o raio do controle** (24/11). Num form, um `Rectangle` com `radius: 12`,
+    `fill` e `style: reveal`, e no tema do projeto `"Rectangle.reveal": { "reveal": "border",
+    "border_width": 2 }` (sem `radius`). Rode com Direct2D, depois com Skia (Opções do projeto →
+    Aparência) e no navegador (publicar para web). Passe o mouse perto do cartão. *Esperado:* a
+    borda acesa acompanha os cantos arredondados nos três (sem quina reta por cima); com
+    `radius: [12, 12, 0, 0]`, os de baixo ficam retos também na luz. Um controle dentro do
+    cartão continua aparecendo inteiro (o raio não recorta os filhos).
+179. **As medidas do menu da bandeja pelo tema** (24/11). Um app com `TrayIcon` e
+    `menu_items` (exemplo `tray`). Sem nada no tema, o menu igual ao de antes (220 de largura,
+    itens de 32). Depois, no tema, `"PopupMenu": { "item_height": 26, "separator_height": 7,
+    "width": 260, "font": "small" }`. *Esperado:* o menu da bandeja com 260 de largura, itens
+    mais baixos e a fonte menor, e os cliques no item certo; o `PopupMenu` do form também com
+    os itens de 26 e a divisória de 7. Tirando o `width` e pondo um item de texto bem longo, o
+    menu da bandeja alarga até o texto caber.
+180. **O painel sem ativar volta sem tirar o teclado** (24/11). Abra o Bloco de Notas e
+    deixe-o com o cursor; num terminal, `cargo run -p aylis-platform-winit --example
+    window_checks -- hide_show` e volte a clicar no Bloco de Notas antes de 1,5 s. Continue
+    digitando por uns 8 s. *Esperado:* o form `topmost` com `no_activate` some (`Hide`), volta
+    (`Show`), some de novo e volta noutro lugar (`Place` sem ativar), sempre por cima e sem
+    nunca tirar o teclado do Bloco de Notas (nada do que se digita se perde, e o console não
+    escreve `ativado`). O mesmo vale para um form só com `activate_on_show` desligado.
+181. **O teclado volta ao form quando o `WebView` some** (24/11). `cargo run -p
+    aylis-platform-winit --features webview --example webview_focus`; assim que a janela
+    abrir, clique dentro do campo grande da página. *Esperado:* no console, `foco antes: uma
+    janela filha (a vista)`; o WebView some, `foco depois: a janela do form`, e o que se digita
+    em seguida aparece no `Edit` de cima (`texto: ...`), sem precisar de Alt+Tab. Com
+    `-- --free` (o WebView liberado em vez de escondido), o mesmo.
+182. **O texto em cinza simétrico e o ClearType do projeto** (24/11). Na IDE recompilada, um
+    projeto com rótulos de letra pequena (11 a 13 px, com "w", "v", "x" e "/"), o modo de
+    texto `native` e o fundo do form sólido:
+    - rode com Direct2D. *Esperado:* em cinza, as diagonais suaves, sem degraus (compare com a
+      0.10.0); a largura dos rótulos com `auto_size` não muda;
+    - Projeto → Opções do projeto, marque "Texto em ClearType (Direct2D e Skia, sobre fundo
+      opaco)" e dê OK. *Esperado:* o `.aylisproj` com `"text_antialias": "cleartype"`
+      (desmarcando, a chave some). Rode de novo com Direct2D e com Skia: com a lupa do Windows,
+      a borda das letras com franjas coloridas; um rótulo dentro de um painel com cantos
+      arredondados também em ClearType; um controle com `opacity` abaixo de 1 em cinza;
+    - publique para web. *Esperado:* no navegador, em cinza (a diferença aceita);
+    - a própria IDE continua em cinza.
+183. **A IDE aberta por um agente: só leitura e o F12 sem perder linha** (24/11). Numa conversa
+    do Claude, peça para abrir um projeto pelo Aylis (a IDE abre pela ponte do MCP):
+    - abra o código de um form (F12). *Esperado:* em cima do editor, a faixa "Aberto por um
+      agente (MCP): só leitura..." com o botão **Liberar edição**; o que se digita não entra; o
+      Ctrl+Z não desfaz nada;
+    - peça ao agente uma troca no mesmo fonte (`edit_code`). *Esperado:* a troca aparece no
+      editor, que continua travado para você;
+    - clique em **Liberar edição**. *Esperado:* a faixa some e dá para digitar; o Ctrl+Z desfaz
+      só o que você digitou, nunca a troca do agente; outro fonte aberto pelo agente continua
+      travado (o botão libera a aba à vista);
+    - peça ao agente que grave uma linha no fonte por fora (a ferramenta Edit dele, não o
+      `edit_code`) e, logo em seguida, sem trocar de janela, aperte F12 no designer e depois
+      Ctrl+S no código. *Esperado:* a linha do agente continua no editor e no disco;
+    - com alteração sua não salva no fonte, peça ao agente outra linha por fora e aperte Ctrl+S.
+      *Esperado:* não grava por cima: a IDE pergunta se recarrega a versão do disco;
+    - Opções da IDE → MCP, desmarque "Abrir os fontes só leitura quando aberta por um agente" e
+      abra outro fonte. *Esperado:* ele abre livre, sem a faixa. Com a IDE aberta por você (sem
+      a conversa), nenhum fonte abre travado.
+184. **A versão pela série de tags e o `-dev`** (24/11). Num projeto num repositório git, crie
+    as tags `Client-v1.0.0.28` e, num commit depois, `Server-v3.1.0`. Em Projeto → Publicar,
+    marque "Versão da tag do git", ponha "Client-v" em "Prefixo das tags", marque "-dev fora da
+    tag" e escreva um "Produto" diferente do nome do aplicativo; publique para Windows.
+    *Esperado:* Propriedades → Detalhes do `.exe` com a versão `1.0.0.29-dev` (há um commit
+    depois da tag do cliente), o produto escrito e o nome do arquivo pelo nome do aplicativo.
+    Crie a tag `Client-v1.0.0.29` no commit atual, sem alteração pendente, e publique de novo:
+    `1.0.0.29`, sem o `-dev`. Com o prefixo `Beta-v` (sem nenhuma tag assim), a publicação para
+    dizendo que o repositório não tem tags `Beta-v*`.
+185. **O runtime do Visual C++ dentro do `.exe`** (24/11). Num projeto com Direct2D no Windows
+    e um `WebView`, Projeto → Opções → Windows, marque "Runtime do Visual C++ dentro do
+    executável" e publique para Windows. *Esperado:* a pasta publicada só com o `.exe` (sem
+    `vcruntime140.dll`, `vcruntime140_1.dll` nem `msvcp140.dll`), o
+    `<projeto>/rust/.cargo/config.toml` com o `+crt-static`, e o `.exe` abrindo numa VM com o
+    Windows limpo (sem o Visual Studio nem o redistribuível). Com o Skia no Windows e sem o
+    LLVM instalado, a publicação para antes de compilar e explica por quê.
+186. **O WebView2 de versão fixa** (24/11; falta o pacote, veja os pendentes). Extraia o `.cab`
+    da versão fixa (x64) com `expand <arquivo.cab> -F:* <pasta>` e copie a pasta de dentro
+    para `WebView2`, ao lado do `.exe` publicado de um app com `WebView`. *Esperado:* o app abre
+    a página, e o Gerenciador de Tarefas mostra o `msedgewebview2.exe` rodando dessa pasta (não
+    do `Program Files (x86)\Microsoft\EdgeWebView`). Sem a pasta, o do Windows.
+187. **A instância única configurável** (24/11). Na IDE recompilada, Projeto → Opções do projeto
+    → Geral: *Esperado:* abaixo de "Instância única", "Segunda abertura" (entregar os argumentos
+    ou sair calada) e "Nome da trava". Num projeto Rust com `user`, "Sair calada" e o nome
+    `Global\MeuTeste`, abra o app publicado duas vezes: a segunda some sem trazer a primeira e
+    sem `on_second_instance`. Com um handler que chama `ui.release_single_instance()` (num botão)
+    e depois abre o próprio exe: o novo abre como primeiro. O mesmo num projeto Python (o
+    `release_single_instance` do `ApplicationEvents`). No terminal, `cargo run -p
+    aylis-platform-winit --example desktop_checks -- quiet` e, antes de 5 s, de novo: a segunda
+    escreve "sai calada"; depois de 5 s, a próxima fica aberta como primeira.
+188. **A sessão do Windows bloqueada e conectada** (24/11). `cargo run -p aylis-platform-winit
+    --example desktop_checks -- session`; bloqueie com Win+L e volte. *Esperado:*
+    `on_session_change: bloqueada true, conectada true` ao bloquear e `bloqueada false` ao
+    voltar. Por RDP (ou na VM do Windows 11): feche a janela do RDP sem sair e reconecte; o
+    console mostra `conectada false` e depois `true`.
+189. **Iniciar com o sistema** (24/11). `cargo run -p aylis-platform-winit --example
+    desktop_checks -- login on`. *Esperado:* `start_with_login: true`, e o Gerenciador de
+    Tarefas → Aplicativos de inicialização mostra o `desktop_checks`; saia da conta e entre: o
+    exemplo abre sozinho. `-- login off`: some da lista e não abre mais. Num app com um
+    `CheckBox` "Abrir com o Windows" ligado ao `set_start_with_login`, o mesmo.
 
 ## Os ajustes de 08/11 que faltam conferir
 

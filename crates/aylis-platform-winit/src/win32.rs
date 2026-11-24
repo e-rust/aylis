@@ -370,6 +370,10 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
         wake();
     } else if composition_message(message, lparam.0) {
         COMPOSITION_CHANGED.set(true);
+        // O mesmo aviso diz que a sessão mudou (o `Ui::session_locked`).
+        if message == 0x02B1 {
+            SESSION_CHANGED.set(true);
+        }
         wake();
     } else if message == WM_CAPTURECHANGED && capture_taken(hwnd, lparam.0) {
         CAPTURE_LOSSES.with(|c| c.borrow_mut().push(form as u64));
@@ -519,7 +523,51 @@ pub(crate) fn attach(window: &winit::window::Window, form: ComponentId, proxy: &
         unsafe {
             let _ = SetWindowSubclass(hwnd, Some(subclass), 1, form.to_u64() as usize);
         }
+        // O bloqueio e a conexão da sessão (`Ui::session_locked`), em toda janela de form.
+        watch_session(hwnd);
     }
+}
+
+/// A sessão do usuário agora: bloqueada e conectada (`None`: o Windows não respondeu). Pela
+/// `wtsapi32.dll` carregada na hora, como o [`watch_session`].
+pub(crate) fn session_state() -> Option<(bool, bool)> {
+    use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+    use windows::core::{s, w};
+    type Query = unsafe extern "system" fn(isize, u32, i32, *mut *mut u8, *mut u32) -> i32;
+    type Free = unsafe extern "system" fn(*mut u8);
+    const WTS_CURRENT_SESSION: u32 = u32::MAX;
+    const WTS_SESSION_INFO_EX: i32 = 25;
+    // O `WTS_CONNECTSTATE_CLASS`: ativa (0) e conectada (1) estão na tela; desconectada (4) não.
+    const WTS_ACTIVE: i32 = 0;
+    const WTS_CONNECTED: i32 = 1;
+    // O `SessionFlags` do `WTSINFOEX_LEVEL1_W` (no Windows 8 em diante; no 7, invertido).
+    const WTS_SESSIONSTATE_LOCK: i32 = 0;
+    // SAFETY: a `wtsapi32.dll` é do sistema; as funções achadas têm as assinaturas de
+    // `WTSQuerySessionInformationW` e `WTSFreeMemory`. O buffer devolvido tem `bytes` bytes e é
+    // um `WTSINFOEXW`: `Level` (u32) e, alinhado a 8, o `WTSINFOEX_LEVEL1_W` (`SessionId`,
+    // `SessionState`, `SessionFlags`, todos de 4 bytes); só é lido o que cabe, e é liberado no fim.
+    unsafe {
+        let module = LoadLibraryW(w!("wtsapi32.dll")).ok()?;
+        let query: Query = std::mem::transmute::<unsafe extern "system" fn() -> isize, Query>(GetProcAddress(module, s!("WTSQuerySessionInformationW"))?);
+        let free: Free = std::mem::transmute::<unsafe extern "system" fn() -> isize, Free>(GetProcAddress(module, s!("WTSFreeMemory"))?);
+        let (mut buffer, mut bytes) = (std::ptr::null_mut::<u8>(), 0u32);
+        if query(0, WTS_CURRENT_SESSION, WTS_SESSION_INFO_EX, &mut buffer, &mut bytes) == 0 || buffer.is_null() {
+            return None;
+        }
+        let read = |offset: usize| (offset + 4 <= bytes as usize).then(|| buffer.add(offset).cast::<i32>().read_unaligned());
+        let state = match (read(0), read(12), read(16)) {
+            (Some(1), Some(state), Some(flags)) => Some((flags == WTS_SESSIONSTATE_LOCK, state == WTS_ACTIVE || state == WTS_CONNECTED)),
+            _ => None,
+        };
+        free(buffer);
+        state
+    }
+}
+
+/// A sessão mudou desde a última vez (o `WM_WTSSESSION_CHANGE`: bloqueio, desbloqueio,
+/// conexão, desconexão).
+pub(crate) fn take_session_changed() -> bool {
+    SESSION_CHANGED.replace(false)
 }
 
 /// Mostra ou esconde pela API do Windows (além do winit, que guarda o estado dele e não
@@ -532,6 +580,27 @@ pub(crate) fn set_shown(window: &winit::window::Window, shown: bool) {
         if IsWindowVisible(hwnd).as_bool() != shown {
             let _ = ShowWindow(hwnd, if shown { SW_SHOW } else { SW_HIDE });
         }
+    }
+}
+
+/// Mostra a janela sem ativá-la (`SW_SHOWNOACTIVATE`) e a põe na frente das outras do mesmo
+/// nível: o teclado fica com quem estava. A minimizada volta ao tamanho de antes, também sem
+/// ativar.
+pub(crate) fn show_no_activate(window: &winit::window::Window) {
+    if let Some(hwnd) = hwnd_of(window) {
+        show_hwnd_no_activate(hwnd);
+    }
+}
+
+fn show_hwnd_no_activate(hwnd: HWND) {
+    use windows::Win32::UI::WindowsAndMessaging::{HWND_TOP, IsIconic, IsWindowVisible, SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER, SWP_NOSIZE, SetWindowPos, ShowWindow};
+    // SAFETY: a janela existe (a do form, ou a do teste); só a visibilidade e a ordem mudam, sem
+    // ativar.
+    unsafe {
+        if !IsWindowVisible(hwnd).as_bool() || IsIconic(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+        }
+        let _ = SetWindowPos(hwnd, Some(HWND_TOP), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     }
 }
 
@@ -1209,6 +1278,43 @@ mod caption_tests {
             assert!(KEPT_EX_STYLES.with(|k| !k.borrow().contains_key(&(hwnd.0 as isize))), "a anotação sai com a janela");
         }
     }
+
+    /// A sessão em que o teste roda: o Windows responde (a `wtsapi32.dll` e o `WTSINFOEXW` lidos
+    /// certo) e diz conectada. Bloqueada não se confere: quem roda o teste pode ter bloqueado.
+    #[test]
+    fn the_session_state_is_read_from_windows() {
+        let (_, connected) = session_state().expect("o Windows informa a sessão");
+        assert!(connected, "o teste roda numa sessão conectada");
+    }
+
+    /// O `Show` do form que não toma o foco: a janela escondida aparece (a escondida e a
+    /// minimizada) sem virar a ativa, e o teclado fica com quem estava.
+    #[test]
+    fn the_window_shown_without_activating_appears_and_does_not_become_active() {
+        use windows::Win32::UI::WindowsAndMessaging::{
+            CreateWindowExW, DestroyWindow, IsIconic, IsWindowVisible, SW_HIDE, SW_SHOWMINNOACTIVE, ShowWindow, WINDOW_EX_STYLE, WS_OVERLAPPEDWINDOW,
+        };
+        use windows::Win32::UI::Input::KeyboardAndMouse::GetActiveWindow;
+        use windows::core::w;
+        // SAFETY: uma janela escondida da classe pronta "STATIC", desta thread, destruída no fim.
+        unsafe {
+            let hwnd = CreateWindowExW(WINDOW_EX_STYLE(0), w!("STATIC"), w!(""), WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, None, None, None, None).expect("janela");
+            let active = GetActiveWindow();
+            show_hwnd_no_activate(hwnd);
+            assert!(IsWindowVisible(hwnd).as_bool(), "a escondida aparece");
+            assert_ne!(GetActiveWindow(), hwnd, "sem virar a ativa");
+            assert_eq!(GetActiveWindow(), active);
+            // Escondida de novo (o `Hide`) e mostrada outra vez, e minimizada e mostrada.
+            let _ = ShowWindow(hwnd, SW_HIDE);
+            show_hwnd_no_activate(hwnd);
+            assert!(IsWindowVisible(hwnd).as_bool(), "aparece de novo depois do Hide");
+            let _ = ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+            show_hwnd_no_activate(hwnd);
+            assert!(!IsIconic(hwnd).as_bool(), "a minimizada volta");
+            assert_ne!(GetActiveWindow(), hwnd, "e continua sem virar a ativa");
+            let _ = DestroyWindow(hwnd);
+        }
+    }
 }
 
 /// A forma da janela (`window_shape`) como a região do Windows (`SetWindowRgn`): fora dela, os
@@ -1375,6 +1481,8 @@ thread_local! {
     /// A composição do sistema mudou desde a última vez (o DWM reiniciou, a transparência foi
     /// ligada ou desligada, a sessão voltou).
     static COMPOSITION_CHANGED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    /// Chegou um `WM_WTSSESSION_CHANGE` (veja [`take_session_changed`]).
+    static SESSION_CHANGED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 fn compositor() -> Option<windows::UI::Composition::Compositor> {

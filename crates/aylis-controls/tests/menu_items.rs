@@ -105,3 +105,24 @@ fn an_item_without_text_gives_the_whole_row_to_the_content() {
     let r = ui.control(panel).unwrap().bounds();
     assert!((r.width - (row.width - 8.0)).abs() < 0.5 && r.height == 50.0, "{r:?} em {row:?}");
 }
+
+/// O `item_height` e o `separator_height` do estilo `PopupMenu` valem também no menu do form.
+#[test]
+fn the_popup_menu_rows_follow_the_theme_sizes() {
+    let mut ui = Ui::new();
+    let f = form(&mut ui);
+    let mut theme = ui.theme().clone();
+    let props = aylis_core::StyleProps { item_height: Some(40.0), separator_height: Some(15.0), ..Default::default() };
+    theme.styles.insert("PopupMenu".into(), aylis_core::Style::new(props));
+    ui.set_theme(theme);
+    let menu = ui.add(PopupMenu::default(), f);
+    ui.add(MenuItem::new("Abrir"), menu);
+    ui.add(MenuItem::new("-"), menu);
+    ui.add(MenuItem::new("Sair"), menu);
+    PopupMenu::popup(&mut ui, menu, PointF::new(20.0, 20.0));
+    let o = overlay(&ui, f).expect("o menu abriu");
+    let rows: Vec<_> = ui.access_items(o).iter().filter_map(|i| i.rect).collect();
+    assert_eq!(rows.len(), 2, "{rows:?}");
+    assert_eq!(rows[0].height, 40.0);
+    assert_eq!(rows[1].y - rows[0].bottom(), 15.0, "a divisória do tema");
+}
